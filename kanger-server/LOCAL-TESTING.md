@@ -9,12 +9,13 @@ intended for API development and qualification on macOS or Linux.
 - JDK 8 or JDK 21
 - Maven 3.8+
 - curl
+- Python 3 for authenticated smoke response parsing
 
-## 1. Select the server branch
+## 1. Select the current server branch
 
 ```bash
 git fetch origin
-git switch server/0.2-http-boundary
+git switch server/0.6-authenticated-smoke
 ```
 
 ## 2. Start the isolated local server
@@ -54,7 +55,7 @@ curl --fail --silent --show-error http://127.0.0.1:1964/health
 curl --fail --silent --show-error http://127.0.0.1:1964/version
 ```
 
-Or run the supplied smoke check:
+Or run the supplied transport smoke check:
 
 ```bash
 bash kanger-server/scripts/smoke-local.sh
@@ -81,7 +82,36 @@ http://localhost:1964/health
 The explicit `127.0.0.1` form is used in scripts to make the IPv4 loopback
 boundary unambiguous.
 
-## 4. Change local settings
+## 4. Verify authentication and session lifecycle
+
+With the server still running, execute:
+
+```bash
+bash kanger-server/scripts/smoke-auth-local.sh
+```
+
+The authenticated smoke scenario:
+
+1. registers a unique temporary user in the isolated sandbox;
+2. receives a cryptographic session token;
+3. executes an authenticated `ping` command;
+4. logs out and verifies that the old token is rejected;
+5. logs in again using the stored PBKDF2 credential;
+6. verifies that a new session token is issued;
+7. executes another authenticated command and closes the session.
+
+The script does not send e-mail and does not require SMTP settings. Every run
+creates a unique smoke user inside the local sandbox. Remove the sandbox as
+described below when those records are no longer needed.
+
+When using another local port, pass the base URL explicitly:
+
+```bash
+KANGER_BASE_URL=http://127.0.0.1:1965 \
+  bash kanger-server/scripts/smoke-auth-local.sh
+```
+
+## 5. Change local settings
 
 Edit:
 
@@ -95,15 +125,10 @@ For example, to use another port:
 server.port=1965
 ```
 
-Restart the server after changing settings. When changing the port, pass the
-same address to the smoke script:
+Restart the server after changing settings. Pass the same address to either
+smoke script through `KANGER_BASE_URL`.
 
-```bash
-KANGER_BASE_URL=http://127.0.0.1:1965 \
-  bash kanger-server/scripts/smoke-local.sh
-```
-
-## 5. Reset the local sandbox
+## 6. Reset the local sandbox
 
 Stop the server, then remove only the isolated runtime directory:
 
@@ -112,10 +137,15 @@ rm -rf kanger-server/run/local
 ```
 
 The next local start creates a clean environment. Repository sources and the
-production operating-system home directory are unaffected.
+normal operating-system home directory are unaffected.
 
 ## Current qualification boundary
 
-`/health` and `/version` are safe transport-level checks. Authentication,
-registration and persistent user sessions remain under active stabilization;
-they should not yet be treated as a production security contract.
+The transport, credential migration, cryptographic session tokens, per-user
+request serialization, logout/timeout cleanup and filesystem-facing input
+confinement are covered by automated Java 8/21 qualification. The authenticated
+smoke is also executed against a real loopback server process in GitHub Actions.
+
+This remains a local and pre-deployment qualification scenario. Public exposure
+still requires the nginx/systemd deployment slice and the remaining outbound
+TLS, settings, mail and operational-hardening work.
