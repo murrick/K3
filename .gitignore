@@ -4,3 +4,4 @@ obj/
 target/
 libs/*/*.so
 .DS_Store
+/.idea/
