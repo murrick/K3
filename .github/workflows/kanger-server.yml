@@ -56,6 +56,30 @@ jobs:
           unzip -p kanger-server/target/kanger-server.jar META-INF/MANIFEST.MF \
             | grep -q '^Main-Class: org.kanger.Kanger'
 
+      - name: Verify VPS deployment assets
+        shell: bash
+        run: |
+          test -f kanger-server/deploy/install.sh
+          test -f kanger-server/deploy/verify-installed.sh
+          test -f kanger-server/deploy/systemd/kanger-server.service
+          test -f kanger-server/deploy/nginx/kanger-server.conf.template
+          test -f kanger-server/deploy/kanger.conf.example
+          test -f kanger-server/DEPLOYMENT.md
+
+          bash -n kanger-server/deploy/install.sh
+          bash -n kanger-server/deploy/verify-installed.sh
+
+          grep -q '^server.bind.address=127.0.0.1$' \
+            kanger-server/deploy/kanger.conf.example
+          grep -q '^server.port=1964$' \
+            kanger-server/deploy/kanger.conf.example
+          grep -q 'ExecStart=/usr/bin/java -Duser.home=/var/lib/kanger-server' \
+            kanger-server/deploy/systemd/kanger-server.service
+          grep -q 'KillSignal=SIGTERM' \
+            kanger-server/deploy/systemd/kanger-server.service
+          grep -q 'proxy_pass http://kanger_server_backend' \
+            kanger-server/deploy/nginx/kanger-server.conf.template
+
       - name: Run authenticated loopback and shutdown smoke
         if: matrix.java == '21'
         shell: bash
