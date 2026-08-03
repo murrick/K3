@@ -51,8 +51,18 @@ require_result() {
 suffix="$(date +%s)-$$-${RANDOM}"
 login="smoke-${suffix}"
 password="Kanger-Smoke-${suffix}"
+mail_login="mail-disabled-${suffix}"
+mail_password="Mail-Disabled-${suffix}"
 
-echo "[1/6] Registering isolated smoke user ${login}"
+echo "[1/8] Rejecting e-mail registration while mail transport is disabled"
+mail_response="$(post "{\"context\":\"login\",\"parameters\":{\"register\":\"${mail_login}\",\"password\":\"${mail_password}\",\"token\":\"\",\"email\":\"${mail_login}@example.org\",\"privacy\":true}}")"
+require_result "${mail_response}" "error" "disabled-mail registration"
+
+echo "[2/8] Verifying rejected e-mail registration created no credential"
+mail_login_response="$(post "{\"context\":\"login\",\"parameters\":{\"login\":\"${mail_login}\",\"password\":\"${mail_password}\"}}")"
+require_result "${mail_login_response}" "error" "disabled-mail credential rejection"
+
+echo "[3/8] Registering isolated smoke user ${login}"
 register_response="$(post "{\"context\":\"login\",\"parameters\":{\"register\":\"${login}\",\"password\":\"${password}\",\"token\":\"\",\"privacy\":true}}")"
 require_result "${register_response}" "OK" "registration"
 first_token="$(json_field "${register_response}" token)"
@@ -61,19 +71,19 @@ first_token="$(json_field "${register_response}" token)"
   exit 1
 }
 
-echo "[2/6] Executing authenticated ping"
+echo "[4/8] Executing authenticated ping"
 ping_response="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${first_token}\",\"ping\":\"\"}}")"
 require_result "${ping_response}" "OK" "first ping"
 
-echo "[3/6] Logging out first session"
+echo "[5/8] Logging out first session"
 logout_response="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${first_token}\",\"quit\":\"\"}}")"
 require_result "${logout_response}" "OK" "first logout"
 
-echo "[4/6] Verifying logged-out token is rejected"
+echo "[6/8] Verifying logged-out token is rejected"
 rejected_response="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${first_token}\",\"ping\":\"\"}}")"
 require_result "${rejected_response}" "error" "logged-out token rejection"
 
-echo "[5/6] Logging in again with stored credential"
+echo "[7/8] Logging in again with stored credential"
 login_response="$(post "{\"context\":\"login\",\"parameters\":{\"login\":\"${login}\",\"password\":\"${password}\"}}")"
 require_result "${login_response}" "OK" "login"
 second_token="$(json_field "${login_response}" token)"
@@ -85,7 +95,7 @@ second_token="$(json_field "${login_response}" token)"
 second_ping="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${second_token}\",\"ping\":\"\"}}")"
 require_result "${second_ping}" "OK" "second ping"
 
-echo "[6/6] Closing second session"
+echo "[8/8] Closing second session"
 second_logout="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${second_token}\",\"quit\":\"\"}}")"
 require_result "${second_logout}" "OK" "second logout"
 
