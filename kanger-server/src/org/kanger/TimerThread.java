@@ -25,23 +25,16 @@
 
 package org.kanger;
 
-import java.util.Map;
 import java.util.TimerTask;
 
+/**
+ * Periodic inactive-session reaper. Expiration and resource cleanup are
+ * centralized in {@link UserFactory}; this task owns no mutable session state.
+ */
 public class TimerThread extends TimerTask {
-
-    private Map<Long, Long> activity;
-
-    public TimerThread(Map<Long, Long> activity) {
-        this.activity = activity;
-    }
 
     @Override
     public void run() {
-        for (Map.Entry<Long, Long> e : activity.entrySet()) {
-            if (System.currentTimeMillis() - e.getValue() > UserFactory.INACTIVITY_TIME) {
-                UserFactory.dropUser(e.getKey());
-            }
-        }
+        UserFactory.expireInactiveSessions();
     }
 }
