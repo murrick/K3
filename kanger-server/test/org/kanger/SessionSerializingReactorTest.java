@@ -2,6 +2,9 @@ package org.kanger;
 
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
+import org.kanger.interfaces.IReactor;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -42,5 +45,50 @@ class SessionSerializingReactorTest {
     void missingParametersProduceEmptyObject() {
         assertFalse(SessionSerializingReactor.parameters(new JSONObject())
                 .keys().hasNext());
+    }
+
+    @Test
+    void unsafeFilesystemIdentifierNeverReachesLegacyProcessor() throws Exception {
+        AtomicInteger calls = new AtomicInteger();
+        SessionSerializingReactor reactor = new SessionSerializingReactor(
+                new IReactor<JSONObject>() {
+                    @Override
+                    public Object run(JSONObject request) {
+                        calls.incrementAndGet();
+                        return new JSONObject().put("result", "OK");
+                    }
+                });
+        JSONObject packet = new JSONObject()
+                .put("body", new JSONObject())
+                .put("query", new JSONObject()
+                        .put("context", "command")
+                        .put("parameters", new JSONObject()
+                                .put("put", "../../outside.k")));
+
+        JSONObject response = (JSONObject) reactor.run(packet);
+
+        assertEquals(0, calls.get());
+        assertEquals("error", response.getString("result"));
+    }
+
+    @Test
+    void safeFilesystemIdentifierReachesLegacyProcessor() throws Exception {
+        AtomicInteger calls = new AtomicInteger();
+        SessionSerializingReactor reactor = new SessionSerializingReactor(
+                request -> {
+                    calls.incrementAndGet();
+                    return new JSONObject().put("result", "OK");
+                });
+        JSONObject packet = new JSONObject()
+                .put("body", new JSONObject())
+                .put("query", new JSONObject()
+                        .put("context", "command")
+                        .put("parameters", new JSONObject()
+                                .put("put", "mind.k")));
+
+        JSONObject response = (JSONObject) reactor.run(packet);
+
+        assertEquals(1, calls.get());
+        assertEquals("OK", response.getString("result"));
     }
 }
