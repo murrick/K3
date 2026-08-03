@@ -6,10 +6,12 @@ on:
       - "server/**"
     paths:
       - "kanger-server/**"
+      - "kanger/**"
       - ".github/workflows/kanger-server.yml"
   pull_request:
     paths:
       - "kanger-server/**"
+      - "kanger/**"
       - ".github/workflows/kanger-server.yml"
   workflow_dispatch:
 
@@ -55,6 +57,8 @@ jobs:
           jar tf kanger-server/target/kanger-server.jar | grep -q '^org/kanger/Mind.class$'
           unzip -p kanger-server/target/kanger-server.jar META-INF/MANIFEST.MF \
             | grep -q '^Main-Class: org.kanger.Kanger'
+          unzip -p kanger-server/target/kanger-server.jar org/kanger/build.properties \
+            | grep -q '^server.version=server-0.12$'
 
       - name: Verify VPS deployment assets
         shell: bash
@@ -130,11 +134,16 @@ jobs:
           test "${ready}" = true
           test -f "${runtime}/home/KANGER/kanger.active"
 
+          health_response="$(curl --fail --silent --show-error \
+            http://127.0.0.1:1964/health)"
+          echo "${health_response}" | grep -q '"version":"server-0.12"'
+
           ready_response="$(curl --fail --silent --show-error \
             --dump-header "${runtime}/ready.headers" \
             --header 'X-Request-ID: ci-ready-check' \
             http://127.0.0.1:1964/ready)"
           echo "${ready_response}" | grep -q '"status":"READY"'
+          echo "${ready_response}" | grep -q '"version":"server-0.12"'
           echo "${ready_response}" | grep -q '"queue_capacity":16'
           grep -qi '^X-Request-ID: ci-ready-check' "${runtime}/ready.headers"
 
