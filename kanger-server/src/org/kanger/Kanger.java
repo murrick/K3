@@ -25,10 +25,7 @@
 
 package org.kanger;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.security.KeyManagementException;
@@ -46,6 +43,7 @@ public class Kanger {
     public static void main(String[] args) throws Exception {
         boolean wrapper = false;
 
+
         for (String a : args) {
             if ("--wrapper".equals(a) || "-W".equals(a)) {
                 wrapper = true;
@@ -60,8 +58,7 @@ public class Kanger {
             try {
                 Settings.setActive(true);
                 Timer timer = new Timer(true);
-                timer.scheduleAtFixedRate(new Watchdog(), 0,
-                        Long.parseLong(Settings.getProperty("server.watchdog.period", 1000 + "")));
+                timer.scheduleAtFixedRate(new Watchdog(), 0, Long.parseLong(Settings.getProperty("server.watchdog.period", 1000 + "")));
 
                 Watchdog.log("HTTP Server starting...");
                 httpServer = new HttpServer();
@@ -72,7 +69,6 @@ public class Kanger {
                         httpServer.stop();
                     }
                 } catch (Exception ex) {
-                    // shutdown continues
                 }
                 UserFactory.shutdown();
                 System.out.println("FORCE REBOOT Server");
@@ -89,7 +85,7 @@ public class Kanger {
         try {
             do {
                 String options = "-jar " + String.join(" ", Settings.getByPrefix("server.wrapper.option."));
-                String[] cmd = new String[]{"java",
+                String cmd[] = new String[]{"java",
                         options.trim(),
                         cd + "/kanger-server.jar"};
 
@@ -107,7 +103,6 @@ public class Kanger {
                 }
             } while (!serviceTerminate);
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
             System.err.println(new Date());
             e.printStackTrace(System.err);
         } catch (IOException e) {
@@ -118,6 +113,7 @@ public class Kanger {
 
     public static void stop() {
         try {
+
             Settings.setActive(false);
 
             String cd = getModuleWorkingDir();
@@ -131,8 +127,8 @@ public class Kanger {
                 serviceDescriptor.waitFor();
                 System.out.println("BUILT-IN-WRAPPER: Process done");
             }
+
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
             System.err.println(new Date());
             e.printStackTrace(System.err);
         } catch (Exception e) {
@@ -142,31 +138,34 @@ public class Kanger {
     }
 
     private static void registerShutdownHook() {
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                Kanger.stop();
-            }
-        });
+        Runtime.getRuntime().addShutdownHook(
+                new Thread() {
+                    @Override
+                    public void run() {
+                        Kanger.stop();
+                    }
+                }
+        );
     }
 
-    public static boolean launch(String[] cmdarray) throws IOException, InterruptedException {
+    public static boolean launch(String[] cmdarray) throws IOException, InterruptedException, IOException {
         final boolean[] reboot = {false};
-        final byte[] buffer = new byte[256];
+        byte[] buffer = new byte[256];
         ProcessBuilder processBuilder = new ProcessBuilder(cmdarray);
         serviceDescriptor = processBuilder.start();
-        final InputStream in = serviceDescriptor.getInputStream();
+        InputStream in = serviceDescriptor.getInputStream();
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     StringBuffer history = new StringBuffer(4096);
                     while (true) {
-                        int r = in.read(buffer);
+                        int r = 0;
+                        r = in.read(buffer);
                         if (r <= 0) {
                             break;
                         }
-                        history.append(new String(buffer, 0, r));
+                        history.append(new String(buffer));
                         reboot[0] = history.indexOf("FORCE REBOOT Server") != -1;
                         if (history.length() > 4096) {
                             history.delete(0, history.length() - 4096);
@@ -186,15 +185,21 @@ public class Kanger {
                 }
             }
         }).start();
-        final InputStream er = serviceDescriptor.getErrorStream();
+        InputStream er = serviceDescriptor.getErrorStream();
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
+                    StringBuffer history = new StringBuffer(4096);
                     while (true) {
-                        int r = er.read(buffer);
+                        int r = 0;
+                        r = er.read(buffer);
                         if (r <= 0) {
                             break;
+                        }
+                        history.append(new String(buffer));
+                        if (history.length() > 4096) {
+                            history.delete(0, history.length() - 4096);
                         }
                         System.err.write(buffer, 0, r);
                     }
@@ -218,16 +223,11 @@ public class Kanger {
     public static String getModuleWorkingDir() {
         URL location = Kanger.class.getProtectionDomain().getCodeSource().getLocation();
         try {
-            String sub = location.getFile().substring(2, 3).equals(":")
-                    && location.getFile().substring(0, 1).equals("/")
-                    ? location.getFile().substring(1)
-                    : location.getFile();
-            String classLocation = URLDecoder.decode(
-                    sub.replace('/', File.separatorChar), "utf-8");
+            String sub = location.getFile().substring(2, 3).equals(":") && location.getFile().substring(0, 1).equals("/") ? location.getFile().substring(1) : location.getFile();
+            String classLocation = URLDecoder.decode(sub.replace('/', File.separatorChar), "utf-8" /*Charset.defaultCharset()*/);
             int pos = classLocation.indexOf(".jar");
             if (pos != -1) {
-                return classLocation.substring(0,
-                        classLocation.lastIndexOf(File.separatorChar));
+                return classLocation.substring(0, classLocation.lastIndexOf(File.separatorChar));
             }
         } catch (UnsupportedEncodingException e) {
             System.err.println(new Date());
@@ -237,18 +237,10 @@ public class Kanger {
     }
 
     /**
-     * Compatibility facade for historical callers.
-     *
-     * <p>HTTPS validation is delegated to the JVM platform defaults. This
-     * method no longer installs a global trust manager or disables hostname
-     * verification.</p>
+     * Historical compatibility facade for outbound HTTP calls.
+     * HTTPS uses the JVM platform trust store and default hostname verifier.
      */
-    public static String httpRequest(String url,
-                                     String post,
-                                     String enc,
-                                     int timeout,
-                                     Map<String, String> headers)
-            throws IOException, KeyManagementException, NoSuchAlgorithmException {
+    public static String httpRequest(String url, String post, String enc, int timeout, Map<String, String> headers) throws IOException, KeyManagementException, NoSuchAlgorithmException {
         return OutboundHttpClient.request(url, post, enc, timeout, headers);
     }
 
