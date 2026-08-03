@@ -63,23 +63,31 @@ public class Watchdog extends TimerTask {
     }
 
     public static void log(String log) {
-        System.out.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()) + " [DEBUG] " + log);
+        System.out.println(timestamp() + " [DEBUG] " + log);
+    }
+
+    public static void warn(String log) {
+        System.err.println(timestamp() + " [WARN] " + log);
     }
 
     public static void err(String log) {
-        System.err.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()) + " [ERROR] " + log);
+        System.err.println(timestamp() + " [ERROR] " + log);
     }
 
     public static void log(IUser user, String log) throws Exception {
-        System.out.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()) + " [DEBUG] " +
+        System.out.println(timestamp() + " [DEBUG] " +
                 user.getProperty("reg.login", "unknown") + ": " +
                 log);
     }
 
     public static void err(IUser user, String log) throws Exception {
-        System.err.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date()) + " [ERROR] " +
+        System.err.println(timestamp() + " [ERROR] " +
                 user.getProperty("reg.login", "unknown") + ": " +
                 log);
+    }
+
+    private static String timestamp() {
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date());
     }
 
     @Override
