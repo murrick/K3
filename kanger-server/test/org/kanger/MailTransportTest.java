@@ -22,6 +22,7 @@ class MailTransportTest {
         assertEquals("true", startTlsProperties.getProperty("mail.smtp.starttls.enable"));
         assertEquals("true", startTlsProperties.getProperty("mail.smtp.starttls.required"));
         assertEquals("false", startTlsProperties.getProperty("mail.smtp.ssl.enable"));
+        assertEquals("true", startTlsProperties.getProperty("mail.smtp.ssl.checkserveridentity"));
         assertFalse(startTlsProperties.containsKey("mail.smtps.ssl.enable"));
 
         MailTransport.Config smtps = config(MailTransport.Mode.SMTPS, 465, 1, 8);
@@ -29,6 +30,7 @@ class MailTransportTest {
         assertEquals("smtps", smtpsProperties.getProperty("mail.transport.protocol"));
         assertEquals("true", smtpsProperties.getProperty("mail.smtps.ssl.enable"));
         assertEquals("false", smtpsProperties.getProperty("mail.smtps.starttls.enable"));
+        assertEquals("true", smtpsProperties.getProperty("mail.smtps.ssl.checkserveridentity"));
         assertFalse(smtpsProperties.containsKey("mail.smtp.starttls.enable"));
     }
 
