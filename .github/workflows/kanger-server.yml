@@ -1,0 +1,65 @@
+name: KANGER Server
+
+on:
+  push:
+    branches:
+      - "server/**"
+    paths:
+      - "kanger-server/**"
+      - ".github/workflows/kanger-server.yml"
+  pull_request:
+    paths:
+      - "kanger-server/**"
+      - ".github/workflows/kanger-server.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build on Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java:
+          - "8"
+          - "21"
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+
+      - name: Build standalone server JAR
+        shell: bash
+        run: |
+          mvn -B -ntp \
+            -f kanger-server/pom.xml \
+            -Dkanger.build.branch.override="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" \
+            clean verify
+
+      - name: Verify distribution shape
+        shell: bash
+        run: |
+          test -f kanger-server/target/kanger-server.jar
+          jar tf kanger-server/target/kanger-server.jar | grep -q '^org/kanger/Kanger.class$'
+          jar tf kanger-server/target/kanger-server.jar | grep -q '^org/kanger/HttpServer.class$'
+          jar tf kanger-server/target/kanger-server.jar | grep -q '^org/kanger/Mind.class$'
+          unzip -p kanger-server/target/kanger-server.jar META-INF/MANIFEST.MF \
+            | grep -q '^Main-Class: org.kanger.Kanger'
+
+      - name: Upload Java 21 distribution
+        if: matrix.java == '21'
+        uses: actions/upload-artifact@v7
+        with:
+          name: kanger-server-java21
+          path: kanger-server/target/kanger-server.jar
+          if-no-files-found: error
