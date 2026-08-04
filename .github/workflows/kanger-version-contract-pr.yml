@@ -1,0 +1,45 @@
+name: KANGER Server public confirmation qualification
+
+on:
+  pull_request:
+    branches:
+      - "server/0.12.1-update-automation"
+    paths:
+      - ".github/workflows/kanger-version-contract-pr.yml"
+      - "kanger-server/test/apply-confirmation-fix.py"
+
+permissions:
+  contents: write
+
+jobs:
+  apply-confirmation-flow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out artifact branch
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply public confirmation contract
+        shell: bash
+        run: python3 kanger-server/test/apply-confirmation-fix.py
+
+      - name: Qualify confirmation routing and persistence contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n kanger-server/scripts/smoke-local.sh
+          bash -n kanger-server/scripts/smoke-auth-local.sh
+          mvn -B -ntp -f kanger-server/pom.xml clean verify
+
+      - name: Commit qualified non-workflow changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f kanger-server/test/apply-confirmation-fix.py
+          git config user.name "KANGER Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add kanger-server
+          git commit -m "fix public e-mail confirmation routing"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
