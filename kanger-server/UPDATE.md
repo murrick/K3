@@ -61,25 +61,31 @@ install -m 0755 \
 5. reads the production deployment receipt from
    `/opt/kanger-server/deployment.properties` when present;
 6. when the same source commit is already deployed, skips Maven and restart but
-   still re-runs service, nginx and public-boundary verification;
-7. otherwise runs `mvn clean verify` for `kanger-server/pom.xml`;
-8. validates the packaged JAR and its build metadata;
-9. rejects empty or operational public versions such as `deployment` and
-   `first-vps-deploy`;
-10. calculates the local JAR SHA-256 and verifies it after upload;
-11. serializes installation through
+   still re-runs service, nginx and public-API verification;
+7. when a previous run installed the qualified cached JAR but stopped before
+   writing its receipt, compares the cached and installed SHA-256 values and
+   recovers the receipt without Maven or restart;
+8. otherwise runs `mvn clean verify` for `kanger-server/pom.xml`;
+9. validates the packaged JAR and its build metadata;
+10. rejects empty or operational public versions such as `deployment` and
+    `first-vps-deploy`;
+11. calculates the local JAR SHA-256 and verifies it after upload;
+12. serializes installation through
     `/run/lock/kanger-server-update.lock` so concurrent update attempts cannot
     replace the JAR simultaneously;
-12. delegates installation and automatic rollback to the existing `install.sh`;
-13. runs `verify-installed.sh` to confirm systemd, readiness, loopback binding
+13. delegates installation and automatic rollback to the existing `install.sh`;
+14. runs `verify-installed.sh` to confirm systemd, readiness, loopback binding
     and nginx configuration;
-14. confirms that local `/health` and `/ready` expose the expected artifact
+15. confirms that local `/health` and `/ready` expose the expected artifact
     version;
-15. confirms through the public boundary that `/health` is UP, `/ready` remains
-    HTTP 403, and the UI responds;
-16. writes an auditable production receipt containing artifact version, source
+16. confirms through the public API boundary that `/health` is UP and `/ready`
+    remains HTTP 403;
+17. writes an auditable production receipt containing artifact version, source
     ref, source commit, JAR checksum, build date and deployment time;
-17. prints the same deployment identity as the local completion receipt.
+18. checks the separate public UI with a bounded `HEAD` request. UI timeout or an
+    unexpected UI status is reported as a warning and cannot invalidate an
+    already verified backend deployment;
+19. prints the same deployment identity as the local completion receipt.
 
 Temporary VPS staging files are removed on both success and failure.
 
@@ -87,6 +93,18 @@ The source-commit receipt is necessary because the JAR contains build time
 metadata. Two builds of the same source commit can therefore have different
 binary checksums even though no source update exists. Commit identity decides
 whether an update is required; SHA-256 validates the exact binary being moved.
+
+## Interrupted completion recovery
+
+A backend deployment can succeed while a later external check is interrupted.
+The updater therefore treats the public API as the authoritative deployment
+boundary and the separate UI as advisory.
+
+When the exact JAR from the previous qualified checkout is already installed,
+the next run compares its SHA-256 with the VPS JAR. If the checkout still points
+to the same resolved source commit, the updater verifies the service and public
+API, writes the missing receipt and exits without rebuilding or restarting the
+server.
 
 ## Preview
 
@@ -166,8 +184,9 @@ deployed.at=<UTC deployment timestamp>
 ```
 
 The receipt is operational metadata, contains no credential, and is installed
-read-only for ordinary users. It is written only after installation and all
-local/public verification steps succeed.
+read-only for ordinary users. It is written only after installation, local
+verification and required public-API verification succeed. A timeout from the
+independent public UI check does not suppress the receipt.
 
 ## Failure and rollback semantics
 
