@@ -83,6 +83,32 @@ class CredentialStoreTest {
     }
 
     @Test
+    void exactPublicationUsesRequestedRecoveryUserId() throws Exception {
+        CredentialMaterial material = store.preparePassword("pending password");
+
+        long userId = store.publishPrepared(17L, "rick", material);
+
+        assertEquals(17L, userId);
+        assertEquals(Long.valueOf(17L), store.findUserId("rick"));
+        assertEquals(17L, store.authenticate("rick", "pending password"));
+    }
+
+    @Test
+    void exactPublicationRejectsExistingLoginOrUserId() throws Exception {
+        CredentialMaterial first = store.preparePassword("first password");
+        CredentialMaterial second = store.preparePassword("second password");
+        store.publishPrepared(17L, "rick", first);
+
+        assertThrows(AuthenticationErrorException.class,
+                () -> store.publishPrepared(18L, "rick", second));
+        assertThrows(AuthenticationErrorException.class,
+                () -> store.publishPrepared(17L, "other", second));
+        assertEquals(17L, store.authenticate("rick", "first password"));
+        assertThrows(AuthenticationErrorException.class,
+                () -> store.authenticate("other", "second password"));
+    }
+
+    @Test
     void failedPreparationPublishesNoCredentialAndAllowsRetry() throws Exception {
         assertThrows(IllegalStateException.class,
                 () -> store.createPrepared(
