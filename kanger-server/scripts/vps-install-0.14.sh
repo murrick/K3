@@ -8,6 +8,8 @@ DEPLOY_DIR="/tmp/kanger-deploy"
 CONFIG="/etc/kanger-server/kanger.conf"
 TARGET_JAR="/opt/kanger-server/kanger-server.jar"
 PREVIOUS_JAR="/opt/kanger-server/kanger-server.jar.previous"
+UNIT_FILE="/etc/systemd/system/kanger-server.service"
+ADMIN_BIN="/usr/local/bin/kanger-admin"
 SERVICE="kanger-server.service"
 HEALTH_URL="http://127.0.0.1:1964/health"
 READY_URL="http://127.0.0.1:1964/ready"
@@ -17,7 +19,7 @@ if [[ "${EUID}" -ne 0 ]]; then
   exit 1
 fi
 
-for command in awk curl install mv sha256sum systemctl unzip; do
+for command in awk curl date grep install mktemp mv rm seq sha256sum sleep systemctl unzip; do
   command -v "${command}" >/dev/null 2>&1 || {
     echo "Required command not found: ${command}" >&2
     exit 1
@@ -30,9 +32,10 @@ for path in \
   "${DEPLOY_DIR}/verify-installed.sh" \
   "${DEPLOY_DIR}/kanger-admin" \
   "${DEPLOY_DIR}/systemd/kanger-server.service" \
-  "${CONFIG}"; do
+  "${CONFIG}" \
+  "${UNIT_FILE}"; do
   [[ -f "${path}" ]] || {
-    echo "Required staged file is absent: ${path}" >&2
+    echo "Required staged or installed file is absent: ${path}" >&2
     exit 1
   }
 done
@@ -58,16 +61,36 @@ grep -q '"server_version":"server-0.13"' <<<"${pre_health}"
 
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 config_backup="${CONFIG}.pre-0.14-${stamp}"
+unit_backup="${UNIT_FILE}.pre-0.14-${stamp}"
+admin_backup="${ADMIN_BIN}.pre-0.14-${stamp}"
+admin_preexisting=false
+
 install -o root -g kanger -m 0640 "${CONFIG}" "${config_backup}"
+install -o root -g root -m 0644 "${UNIT_FILE}" "${unit_backup}"
+if [[ -f "${ADMIN_BIN}" ]]; then
+  install -o root -g root -m 0755 "${ADMIN_BIN}" "${admin_backup}"
+  admin_preexisting=true
+fi
+
 echo "Configuration rollback copy: ${config_backup}"
+echo "Systemd rollback copy:      ${unit_backup}"
 
 rollback() {
   local exit_code=$?
   trap - ERR INT TERM
   set +e
 
-  echo "Server 0.14 deployment failed; restoring Server 0.13 boundary..." >&2
+  echo "Server 0.14 deployment failed; restoring exact Server 0.13 boundary..." >&2
+  systemctl stop "${SERVICE}" || true
+
   install -o root -g kanger -m 0640 "${config_backup}" "${CONFIG}"
+  install -o root -g root -m 0644 "${unit_backup}" "${UNIT_FILE}"
+
+  if [[ "${admin_preexisting}" == true && -f "${admin_backup}" ]]; then
+    install -o root -g root -m 0755 "${admin_backup}" "${ADMIN_BIN}"
+  else
+    rm -f "${ADMIN_BIN}"
+  fi
 
   if [[ -f "${TARGET_JAR}" ]]; then
     current_sha="$(sha256sum "${TARGET_JAR}" 2>/dev/null | awk '{print $1}')"
@@ -76,21 +99,27 @@ rollback() {
   fi
 
   if [[ "${current_sha}" == "${EXPECTED_JAR_SHA256}" && -f "${PREVIOUS_JAR}" ]]; then
-    systemctl stop "${SERVICE}" || true
     install -o root -g kanger -m 0640 "${PREVIOUS_JAR}" "${TARGET_JAR}"
   fi
 
   systemctl daemon-reload || true
   systemctl restart "${SERVICE}" || true
 
+  recovered_ok=false
   for _ in $(seq 1 30); do
     recovered="$(curl --silent --show-error --max-time 2 "${HEALTH_URL}" 2>/dev/null || true)"
     if grep -q '"server_version":"server-0.13"' <<<"${recovered}"; then
+      recovered_ok=true
       echo "Rollback recovery: server-0.13 / UP" >&2
       break
     fi
     sleep 1
   done
+
+  if [[ "${recovered_ok}" != true ]]; then
+    echo "Rollback could not prove server-0.13 recovery." >&2
+    systemctl status "${SERVICE}" --no-pager --full || true
+  fi
 
   exit "${exit_code}"
 }
@@ -175,6 +204,7 @@ echo "KANGER Server 0.14 guarded installation complete"
 echo "DEPLOYMENT_GATE=PASS"
 echo "INSTALLED_SHA256=${installed_sha256}"
 echo "CONFIG_ROLLBACK_COPY=${config_backup}"
+echo "SYSTEMD_ROLLBACK_COPY=${unit_backup}"
 echo "PREVIOUS_JAR_IDENTITY=server-0.13"
 echo "SERVICE_ACTIVE=$(systemctl is-active "${SERVICE}")"
 echo "${post_health}"
