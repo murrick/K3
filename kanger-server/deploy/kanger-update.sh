@@ -3,7 +3,7 @@ set -euo pipefail
 
 PROGRAM_NAME="$(basename "$0")"
 DEFAULT_REPO_URL="https://github.com/murrick/K3.git"
-DEFAULT_REF="develop/server/0.12"
+DEFAULT_REF="develop/server/0.13"
 DEFAULT_CHECKOUT_DIR="${XDG_CACHE_HOME:-${HOME}/.cache}/kanger-server-updater/K3"
 DEFAULT_SSH_TARGET="murray@94.103.94.41"
 DEFAULT_SSH_PORT="4211"

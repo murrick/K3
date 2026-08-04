@@ -37,7 +37,7 @@ bash kanger-server/deploy/kanger-deploy.sh
 Defaults:
 
 ```text
-source ref: develop/server/0.12
+source ref: develop/server/0.13
 SSH target: murray@94.103.94.41
 SSH port:   4211
 API:        https://api.kanger.org

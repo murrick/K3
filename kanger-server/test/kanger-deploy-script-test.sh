@@ -32,7 +32,7 @@ git -C "${ORIGIN}" config user.email test@example.invalid
 git -C "${ORIGIN}" config user.name "KANGER Deploy Test"
 git -C "${ORIGIN}" add .
 git -C "${ORIGIN}" commit -qm initial
-git -C "${ORIGIN}" branch -M develop/server/0.12
+git -C "${ORIGIN}" branch -M develop/server/0.13
 
 cat > "${FAKE_BIN}/mvn" <<EOF
 #!/usr/bin/env bash
@@ -50,7 +50,7 @@ cat > "${FAKE_BIN}/unzip" <<'EOF'
 #!/usr/bin/env bash
 cat <<'PROPERTIES'
 branch=server-0.12
-source.branch=develop/server/0.12
+source.branch=develop/server/0.13
 server.version=server-0.12
 date=2026-08-04_08:00:00
 PROPERTIES

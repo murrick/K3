@@ -13,7 +13,7 @@ VPS. `kanger-update.sh` performs every later shelf-to-production update.
 Both scripts default to the approved shelf branch:
 
 ```text
-develop/server/0.12
+develop/server/0.13
 ```
 
 Both resolve one exact Git commit, run Maven qualification, validate packaged

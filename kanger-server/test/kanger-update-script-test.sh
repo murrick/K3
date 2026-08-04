@@ -32,7 +32,7 @@ git -C "${ORIGIN}" config user.email test@example.invalid
 git -C "${ORIGIN}" config user.name "KANGER Update Test"
 git -C "${ORIGIN}" add .
 git -C "${ORIGIN}" commit -qm initial
-git -C "${ORIGIN}" branch -M develop/server/0.12
+git -C "${ORIGIN}" branch -M develop/server/0.13
 SOURCE_COMMIT="$(git -C "${ORIGIN}" rev-parse HEAD)"
 
 cat > "${FAKE_BIN}/mvn" <<EOF
@@ -51,7 +51,7 @@ cat > "${FAKE_BIN}/unzip" <<'EOF'
 #!/usr/bin/env bash
 cat <<'PROPERTIES'
 branch=server-0.12
-source.branch=develop/server/0.12
+source.branch=develop/server/0.13
 server.version=server-0.12
 date=2026-08-04_07:00:00
 PROPERTIES
@@ -95,7 +95,7 @@ EOF
 chmod +x "${FAKE_BIN}/"*
 
 bash -n "${UPDATER}"
-bash "${UPDATER}" --help | grep -q 'stable shelf branch develop/server/0.12'
+bash "${UPDATER}" --help | grep -q 'stable shelf branch develop/server/0.13'
 bash "${UPDATER}" --dry-run --target test@example.invalid \
   | grep -q 'no repository, build, SSH or HTTP action was performed'
 
@@ -122,7 +122,7 @@ grep -q 'https://api.kanger.org/ready' "${CALL_LOG}"
 JAR_SHA="$(sha256sum "${CHECKOUT}/kanger-server/target/kanger-server.jar" | awk '{print $1}')"
 cat > "${REMOTE_RECEIPT_FILE}" <<EOF
 artifact.version=server-0.12
-source.ref=develop/server/0.12
+source.ref=develop/server/0.13
 source.commit=${SOURCE_COMMIT}
 jar.sha256=${JAR_SHA}
 build.date=2026-08-04_07:00:00

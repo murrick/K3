@@ -12,7 +12,7 @@ kanger-server/deploy/kanger-update.sh
 Its default production source is the shelf branch:
 
 ```text
-develop/server/0.12
+develop/server/0.13
 ```
 
 The updater deliberately does not deploy the latest arbitrary working branch.
@@ -30,7 +30,7 @@ The current project defaults are:
 
 ```text
 repository: https://github.com/murrick/K3.git
-source ref: develop/server/0.12
+source ref: develop/server/0.13
 SSH target: murray@94.103.94.41
 SSH port:   4211
 public API: https://api.kanger.org
@@ -124,7 +124,7 @@ bash kanger-server/deploy/kanger-update.sh \
 ```
 
 This capability is intended for controlled qualification. Production updates
-should normally use `develop/server/0.12` or a later approved shelf branch.
+should normally use `develop/server/0.13` or a later approved shelf branch.
 
 ## Other options
 
@@ -158,7 +158,7 @@ KANGER_PUBLIC_UI_URL
 Example with environment variables:
 
 ```bash
-KANGER_REF=develop/server/0.12 \
+KANGER_REF=develop/server/0.13 \
 KANGER_SSH_TARGET=murray@94.103.94.41 \
 KANGER_SSH_PORT=4211 \
   "$HOME/bin/kanger-update.sh"
@@ -176,7 +176,7 @@ Example shape:
 
 ```properties
 artifact.version=server-0.12
-source.ref=develop/server/0.12
+source.ref=develop/server/0.13
 source.commit=3cdb39dece2d2294046e150808e02753bc7bf36e
 jar.sha256=<qualified JAR SHA-256>
 build.date=<JAR build metadata date>
