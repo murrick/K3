@@ -108,6 +108,7 @@ class AccountLifecycleServiceTest {
                 new ActiveAccountRequest(
                         "pending-user",
                         restored,
+                        AccountActivationSource.EMAIL_CONFIRMATION,
                         "pending@example.org",
                         "Pending User",
                         "Austria",
@@ -123,6 +124,23 @@ class AccountLifecycleServiceTest {
         assertFalse(new String(
                 Files.readAllBytes(account.getHome().resolve("kanger.conf")),
                 StandardCharsets.UTF_8).contains("pending password"));
+    }
+
+    @Test
+    void emailConfirmationAuthorityRequiresAnEmailAddress() throws Exception {
+        CredentialStore store = new CredentialStore(credentialFile);
+        CredentialMaterial material = store.preparePassword("pending password");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new ActiveAccountRequest(
+                        "pending-user",
+                        material,
+                        AccountActivationSource.EMAIL_CONFIRMATION,
+                        "",
+                        "Pending User",
+                        "Austria",
+                        "Vienna",
+                        Boolean.TRUE));
     }
 
     @Test
