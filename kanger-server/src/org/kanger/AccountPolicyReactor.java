@@ -114,8 +114,13 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
         return "login".equalsIgnoreCase(context(packet))
                 && has(parameters, "register")
                 && has(parameters, "password")
-                && !string(parameters, "token").isEmpty()
-                && has(parameters, "email");
+                && !string(parameters, "token").isEmpty();
+    }
+
+    static JSONObject accountLoginChangeViolation(String currentLogin,
+                                                  String requestedLogin) {
+        return normalizeLogin(currentLogin).equals(normalizeLogin(requestedLogin))
+                ? null : accountLoginImmutable();
     }
 
     static JSONObject verifiedEmailChangeViolation(boolean confirmed,
@@ -141,6 +146,13 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
                 .put("result", "error")
                 .put("code", AccountErrorCode.VERIFIED_EMAIL_IMMUTABLE.code())
                 .put("description", "A verified e-mail address cannot be changed");
+    }
+
+    static JSONObject accountLoginImmutable() {
+        return new JSONObject()
+                .put("result", "error")
+                .put("code", AccountErrorCode.ACCOUNT_LOGIN_IMMUTABLE.code())
+                .put("description", "The account login cannot be changed");
     }
 
     private static String context(JSONObject packet) {
@@ -175,6 +187,10 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
         }
     }
 
+    private static String normalizeLogin(String value) {
+        return value == null ? "" : value.trim();
+    }
+
     private static String normalizeEmail(String value) {
         return value == null ? ""
                 : value.trim().toLowerCase(Locale.ROOT);
@@ -205,6 +221,15 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
         @Override
         public JSONObject violation(JSONObject parameters) throws Exception {
             IUser user = UserFactory.getUser(string(parameters, "token"));
+            JSONObject loginViolation = accountLoginChangeViolation(
+                    user.getProperty("reg.login", ""),
+                    string(parameters, "register"));
+            if (loginViolation != null) {
+                return loginViolation;
+            }
+            if (!has(parameters, "email")) {
+                return null;
+            }
             boolean confirmed = Boolean.parseBoolean(user.getProperty(
                     "reg.email.confirmed",
                     user.getProperty("reg.agreed", "false")));
