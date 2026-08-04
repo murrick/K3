@@ -10,6 +10,7 @@ on:
       - "kanger-server/deploy/kanger-update.sh"
       - "kanger-server/test/kanger-deploy-script-test.sh"
       - "kanger-server/test/kanger-update-script-test.sh"
+      - "kanger-server/test/kanger-update-interrupted-receipt-test.sh"
       - "kanger-server/DEPLOY-AUTOMATION.md"
       - "kanger-server/FIRST-DEPLOY.md"
       - "kanger-server/FIRST-DEPLOY-AUTOMATION.md"
@@ -21,6 +22,7 @@ on:
       - "kanger-server/deploy/kanger-update.sh"
       - "kanger-server/test/kanger-deploy-script-test.sh"
       - "kanger-server/test/kanger-update-script-test.sh"
+      - "kanger-server/test/kanger-update-interrupted-receipt-test.sh"
       - "kanger-server/DEPLOY-AUTOMATION.md"
       - "kanger-server/FIRST-DEPLOY.md"
       - "kanger-server/FIRST-DEPLOY-AUTOMATION.md"
@@ -48,6 +50,7 @@ jobs:
           bash -n kanger-server/deploy/kanger-update.sh
           bash -n kanger-server/test/kanger-deploy-script-test.sh
           bash -n kanger-server/test/kanger-update-script-test.sh
+          bash -n kanger-server/test/kanger-update-interrupted-receipt-test.sh
 
           bash kanger-server/deploy/kanger-deploy.sh --help \
             | grep -q 'first KANGER Server application deployment'
@@ -71,6 +74,12 @@ jobs:
           set -euo pipefail
           bash kanger-server/test/kanger-update-script-test.sh
 
+      - name: Exercise interrupted receipt recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash kanger-server/test/kanger-update-interrupted-receipt-test.sh
+
       - name: Verify operational safety invariants
         shell: bash
         run: |
@@ -89,6 +98,8 @@ jobs:
             kanger-server/deploy/kanger-deploy.sh
           grep -q '/run/lock/kanger-server-update.lock' \
             kanger-server/deploy/kanger-deploy.sh
+          grep -q 'checking public UI (advisory)' \
+            kanger-server/deploy/kanger-deploy.sh
           grep -q 'expected 403' \
             kanger-server/deploy/kanger-deploy.sh
 
@@ -97,6 +108,10 @@ jobs:
           grep -q 'install.sh owns rollback' \
             kanger-server/deploy/kanger-update.sh
           grep -q 'source commit is already deployed; skipping build and restart' \
+            kanger-server/deploy/kanger-update.sh
+          grep -q 'receipt recovery (qualified JAR already installed)' \
+            kanger-server/deploy/kanger-update.sh
+          grep -q 'checking public UI (advisory)' \
             kanger-server/deploy/kanger-update.sh
           grep -q 'expected 403' \
             kanger-server/deploy/kanger-update.sh
