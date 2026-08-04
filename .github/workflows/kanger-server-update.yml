@@ -1,3 +1,4 @@
+# Qualifies the paired first-deploy and repeatable-update entrypoints.
 name: KANGER Server deployment automation
 
 on:
