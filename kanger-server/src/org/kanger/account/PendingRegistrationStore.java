@@ -368,6 +368,31 @@ public final class PendingRegistrationStore {
         }
     }
 
+    /**
+     * Removes stale pending state for an exact active-account login. This is an
+     * operator deletion revocation primitive and requires the caller to hold the
+     * shared registration authority.
+     */
+    public PendingRegistration removeByLogin(String login) throws Exception {
+        String normalized = normalizeLogin(login);
+        if (normalized.isEmpty()) {
+            throw new IllegalArgumentException("login must not be empty");
+        }
+        synchronized (STORE_AUTHORITY_LOCK) {
+            Load load = read(clock.now());
+            MutableRecord record = findByLogin(load.records, normalized);
+            if (record == null) {
+                if (load.changed) {
+                    write(load.records);
+                }
+                return null;
+            }
+            load.records.remove(record);
+            write(load.records);
+            return snapshot(record);
+        }
+    }
+
     public boolean containsLogin(String login) throws IOException {
         synchronized (STORE_AUTHORITY_LOCK) {
             Load load = read(clock.now());
