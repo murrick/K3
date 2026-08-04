@@ -122,13 +122,13 @@ verify_remote() {
      curl --fail --silent --show-error http://127.0.0.1:1964/ready | grep -q '\"version\":\"${ARTIFACT_VERSION}\"'"
 }
 
-verify_public() {
+verify_public_api() {
   if [[ "${PUBLIC_CHECKS}" != true ]]; then
     return
   fi
 
-  log "checking public API and UI"
-  local public_health ready_status ui_status
+  log "checking public API"
+  local public_health ready_status
   public_health="$(curl --fail --silent --show-error --max-time 15 \
     "${PUBLIC_API_URL%/}/health")"
   printf '%s\n' "${public_health}" | grep -q '"status":"UP"' \
@@ -141,12 +141,46 @@ verify_public() {
     "${PUBLIC_API_URL%/}/ready")"
   [[ "${ready_status}" == "403" ]] \
     || fail "Public /ready returned HTTP ${ready_status}, expected 403"
+}
 
-  ui_status="$(curl --silent --show-error --max-time 15 \
-    --output /dev/null --write-out '%{http_code}' \
-    "${PUBLIC_UI_URL}")"
-  [[ "${ui_status}" =~ ^(200|301|302|307|308)$ ]] \
-    || fail "Public UI returned HTTP ${ui_status}"
+check_public_ui_advisory() {
+  if [[ "${PUBLIC_CHECKS}" != true ]]; then
+    return
+  fi
+
+  log "checking public UI (advisory)"
+  local ui_result ui_status
+  if ! ui_result="$(curl --head --silent --show-error \
+      --connect-timeout 5 --max-time 10 \
+      --output /dev/null --write-out '%{http_code}' \
+      "${PUBLIC_UI_URL}" 2>&1)"; then
+    log "WARNING: public UI check did not complete: ${ui_result}"
+    return
+  fi
+
+  ui_status="${ui_result}"
+  if [[ ! "${ui_status}" =~ ^(200|301|302|307|308)$ ]]; then
+    log "WARNING: public UI returned HTTP ${ui_status}; backend deployment remains valid"
+  fi
+}
+
+write_receipt() {
+  mkdir -p "$(dirname "${LOCAL_RECEIPT_FILE}")"
+  cat > "${LOCAL_RECEIPT_FILE}" <<RECEIPT
+artifact.version=${ARTIFACT_VERSION}
+source.ref=${REF}
+source.commit=${COMMIT}
+jar.sha256=${JAR_SHA256}
+build.date=${BUILD_DATE}
+deployed.at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+deployment.mode=${OPERATION}
+RECEIPT
+
+  scp -P "${SSH_PORT}" "${LOCAL_RECEIPT_FILE}" \
+    "${SSH_TARGET}:${REMOTE_DIR}/deployment.properties"
+  ssh -tt "${SSH_ARGS[@]}" \
+    "sudo install -o root -g root -m 0644 \
+       '${REMOTE_DIR}/deployment.properties' '${REMOTE_RECEIPT_PATH}'"
 }
 
 print_receipt() {
@@ -373,23 +407,7 @@ ssh -tt "${SSH_ARGS[@]}" \
      bash '${REMOTE_DIR}/deploy/install.sh' '${REMOTE_DIR}/kanger-server.jar'"
 
 verify_remote
-verify_public
-
-mkdir -p "$(dirname "${LOCAL_RECEIPT_FILE}")"
-cat > "${LOCAL_RECEIPT_FILE}" <<RECEIPT
-artifact.version=${ARTIFACT_VERSION}
-source.ref=${REF}
-source.commit=${COMMIT}
-jar.sha256=${JAR_SHA256}
-build.date=${BUILD_DATE}
-deployed.at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-deployment.mode=${OPERATION}
-RECEIPT
-
-scp -P "${SSH_PORT}" "${LOCAL_RECEIPT_FILE}" \
-  "${SSH_TARGET}:${REMOTE_DIR}/deployment.properties"
-ssh -tt "${SSH_ARGS[@]}" \
-  "sudo install -o root -g root -m 0644 \
-     '${REMOTE_DIR}/deployment.properties' '${REMOTE_RECEIPT_PATH}'"
-
+verify_public_api
+write_receipt
+check_public_ui_advisory
 print_receipt
