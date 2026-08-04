@@ -146,6 +146,27 @@ class PendingRegistrationReactorTest {
     }
 
     @Test
+    void legacyResendWithoutScopedTokenNeverDelegatesOrQueuesMail()
+            throws Exception {
+        FakeGateway gateway = new FakeGateway();
+        FakeMail mail = new FakeMail();
+        AtomicBoolean delegated = new AtomicBoolean();
+        PendingRegistrationReactor reactor = new PendingRegistrationReactor(
+                gateway, mail, delegate(delegated));
+
+        JSONObject response = (JSONObject) reactor.run(packet(new JSONObject()
+                .put("token", "ordinary-session-token")
+                .put("resend", true)));
+
+        assertFalse(delegated.get());
+        assertFalse(mail.queued);
+        assertEquals("error", response.getString("result"));
+        assertEquals(AccountErrorCode.AUTHENTICATION_FAILED.code(),
+                response.getString("code"));
+        assertFalse(response.has("token"));
+    }
+
+    @Test
     void ordinaryActiveLoginAndUnrelatedRequestsDelegate() throws Exception {
         FakeGateway gateway = new FakeGateway();
         AtomicBoolean delegated = new AtomicBoolean();
