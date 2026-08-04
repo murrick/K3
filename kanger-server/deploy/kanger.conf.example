@@ -9,6 +9,16 @@ server.queue.capacity=128
 server.request.max.body.bytes=1048576
 server.watchdog.period=1000
 
+# Local host-operator plane. This listener must remain loopback-only and is not
+# proxied by nginx. kanger-admin reads the owner-only bearer token from the
+# service state home and calls this listener; it never edits account files.
+server.admin.enabled=true
+server.admin.bind.address=127.0.0.1
+server.admin.port=1965
+server.admin.request.max.body.bytes=65536
+# Relative paths resolve under the service user home.
+server.admin.token.file=KANGER/admin.token
+
 # Browser clients require exact origins. The public UI is served separately from
 # the API, so allow the exact UI origins that will call https://api.kanger.org.
 # server.cors.allowed.origin.1=https://kanger.org
