@@ -90,16 +90,16 @@ EOF
 chmod +x "${FAKE_BIN}/"*
 
 bash -n "${DEPLOYER}"
-"${DEPLOYER}" --help | grep -q 'first KANGER Server application deployment'
-"${DEPLOYER}" --dry-run --target test@example.invalid \
+bash "${DEPLOYER}" --help | grep -q 'first KANGER Server application deployment'
+bash "${DEPLOYER}" --dry-run --target test@example.invalid \
   | grep -q 'no repository, build, SSH or HTTP action was performed'
 
-if "${DEPLOYER}" --dry-run --ref 'unsafe ref' >/dev/null 2>&1; then
+if bash "${DEPLOYER}" --dry-run --ref 'unsafe ref' >/dev/null 2>&1; then
   echo "Unsafe Git ref was accepted" >&2
   exit 1
 fi
 
-PATH="${FAKE_BIN}:${PATH}" "${DEPLOYER}" \
+PATH="${FAKE_BIN}:${PATH}" bash "${DEPLOYER}" \
   --repo-url "${ORIGIN}" \
   --checkout "${CHECKOUT}" \
   --target test@example.invalid \
@@ -117,7 +117,7 @@ grep -q 'deployment.properties' "${CALL_LOG}"
 touch "${EXISTING_FLAG}"
 : > "${CALL_LOG}"
 
-if PATH="${FAKE_BIN}:${PATH}" "${DEPLOYER}" \
+if PATH="${FAKE_BIN}:${PATH}" bash "${DEPLOYER}" \
     --repo-url "${ORIGIN}" \
     --checkout "${CHECKOUT}" \
     --target test@example.invalid \
@@ -133,7 +133,7 @@ if grep -q '^mvn ' "${CALL_LOG}"; then
 fi
 
 : > "${CALL_LOG}"
-PATH="${FAKE_BIN}:${PATH}" "${DEPLOYER}" \
+PATH="${FAKE_BIN}:${PATH}" bash "${DEPLOYER}" \
   --force \
   --repo-url "${ORIGIN}" \
   --checkout "${CHECKOUT}" \
