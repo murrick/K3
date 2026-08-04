@@ -36,7 +36,11 @@ public final class PendingRegistrationService {
         }
     }
 
-    private static final Object ACTIVATION_AUTHORITY_LOCK = new Object();
+    /**
+     * Serializes public registration uniqueness, pending e-mail replacement
+     * and activation reconciliation inside one server JVM.
+     */
+    private static final Object REGISTRATION_AUTHORITY_LOCK = new Object();
     private static volatile PendingRegistrationService runtime;
 
     private final PendingRegistrationStore store;
@@ -89,15 +93,17 @@ public final class PendingRegistrationService {
                                                      String city,
                                                      Boolean privacyConsent)
             throws Exception {
-        ensureActiveUnique(login, email);
-        return store.create(new PendingRegistrationStore.Draft(
-                login,
-                email,
-                accounts.prepareCredential(password),
-                name,
-                country,
-                city,
-                privacyConsent));
+        synchronized (REGISTRATION_AUTHORITY_LOCK) {
+            ensureActiveUnique(login, email);
+            return store.create(new PendingRegistrationStore.Draft(
+                    login,
+                    email,
+                    accounts.prepareCredential(password),
+                    name,
+                    country,
+                    city,
+                    privacyConsent));
+        }
     }
 
     public PendingRegistrationStore.Authenticated authenticate(
@@ -114,12 +120,14 @@ public final class PendingRegistrationService {
     public PendingRegistrationStore.Rotation changeEmail(
             String actionToken,
             String email) throws Exception {
-        Long activeOwner = accounts.findUserIdByEmail(email);
-        if (activeOwner != null) {
-            throw failure(AccountErrorCode.EMAIL_ALREADY_USED,
-                    "E-mail already belongs to an active account");
+        synchronized (REGISTRATION_AUTHORITY_LOCK) {
+            Long activeOwner = accounts.findUserIdByEmail(email);
+            if (activeOwner != null) {
+                throw failure(AccountErrorCode.EMAIL_ALREADY_USED,
+                        "E-mail already belongs to an active account");
+            }
+            return store.changeEmail(actionToken, email);
         }
-        return store.changeEmail(actionToken, email);
     }
 
     public PendingRegistration cancel(String actionToken) throws Exception {
@@ -141,7 +149,7 @@ public final class PendingRegistrationService {
      * </ol>
      */
     public Activation confirm(String confirmationToken) throws Exception {
-        synchronized (ACTIVATION_AUTHORITY_LOCK) {
+        synchronized (REGISTRATION_AUTHORITY_LOCK) {
             PendingRegistration pending = store.resolveConfirmation(
                     confirmationToken);
             Long credentialUserId = accounts.findCredentialUserId(
