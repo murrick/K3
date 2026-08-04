@@ -122,13 +122,52 @@ class CredentialStoreTest {
         assertThrows(AuthenticationErrorException.class,
                 () -> store.authenticate("rick", "correct horse battery staple"));
 
-        assertEquals(1L,
+        assertEquals(2L,
                 store.createPrepared(
                         "rick",
                         "correct horse battery staple",
                         userId -> {
-                            // retry succeeds without manual cleanup
+                            // retry succeeds without manual cleanup; id 1 remains retired
                         }));
+    }
+
+    @Test
+    void deletedUserIdIsNeverReused() throws Exception {
+        long first = store.create("first", "first password");
+        assertEquals(1L, first);
+        assertTrue(store.delete(first));
+
+        long second = store.create("second", "second password");
+
+        assertEquals(2L, second);
+        assertEquals(2L, store.authenticate("second", "second password"));
+    }
+
+    @Test
+    void failedDeletionPreparationLeavesCredentialUsable() throws Exception {
+        long userId = store.create("rick", "correct password");
+
+        assertThrows(IllegalStateException.class,
+                () -> store.deletePrepared(userId, preparedUserId -> {
+                    throw new IllegalStateException("synthetic runtime close failure");
+                }));
+
+        assertEquals(userId, store.authenticate("rick", "correct password"));
+        assertTrue(store.containsUserId(userId));
+    }
+
+    @Test
+    void successfulPreparedDeletionRemovesCredentialAfterCallback()
+            throws Exception {
+        long userId = store.create("rick", "correct password");
+        AtomicLong prepared = new AtomicLong(-1L);
+
+        assertTrue(store.deletePrepared(userId, prepared::set));
+
+        assertEquals(userId, prepared.get());
+        assertFalse(store.containsUserId(userId));
+        assertThrows(AuthenticationErrorException.class,
+                () -> store.authenticate("rick", "correct password"));
     }
 
     @Test
