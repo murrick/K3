@@ -28,19 +28,19 @@ public final class PendingRegistration {
     private final int resendCount;
     private final long lastResendAt;
 
-    PendingRegistration(String id,
-                        String login,
-                        String email,
-                        CredentialMaterial credentialMaterial,
-                        String name,
-                        String country,
-                        String city,
-                        Boolean privacyConsent,
-                        long createdAt,
-                        long expiresAt,
-                        long confirmationExpiresAt,
-                        int resendCount,
-                        long lastResendAt) {
+    public PendingRegistration(String id,
+                               String login,
+                               String email,
+                               CredentialMaterial credentialMaterial,
+                               String name,
+                               String country,
+                               String city,
+                               Boolean privacyConsent,
+                               long createdAt,
+                               long expiresAt,
+                               long confirmationExpiresAt,
+                               int resendCount,
+                               long lastResendAt) {
         this.id = id;
         this.login = login;
         this.email = email;
