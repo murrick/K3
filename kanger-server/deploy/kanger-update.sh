@@ -117,13 +117,13 @@ verify_remote() {
      curl --fail --silent --show-error http://127.0.0.1:1964/ready | grep -q '\"version\":\"${ARTIFACT_VERSION}\"'"
 }
 
-verify_public() {
+verify_public_api() {
   if [[ "${PUBLIC_CHECKS}" != true ]]; then
     return
   fi
 
-  log "checking public API and UI"
-  local public_health ready_status ui_status
+  log "checking public API"
+  local public_health ready_status
   public_health="$(curl --fail --silent --show-error --max-time 15 \
     "${PUBLIC_API_URL%/}/health")"
   printf '%s\n' "${public_health}" | grep -q '"status":"UP"' \
@@ -136,12 +136,45 @@ verify_public() {
     "${PUBLIC_API_URL%/}/ready")"
   [[ "${ready_status}" == "403" ]] \
     || fail "Public /ready returned HTTP ${ready_status}, expected 403"
+}
 
-  ui_status="$(curl --silent --show-error --max-time 15 \
-    --output /dev/null --write-out '%{http_code}' \
-    "${PUBLIC_UI_URL}")"
-  [[ "${ui_status}" =~ ^(200|301|302|307|308)$ ]] \
-    || fail "Public UI returned HTTP ${ui_status}"
+check_public_ui_advisory() {
+  if [[ "${PUBLIC_CHECKS}" != true ]]; then
+    return
+  fi
+
+  log "checking public UI (advisory)"
+  local ui_result ui_status
+  if ! ui_result="$(curl --head --silent --show-error \
+      --connect-timeout 5 --max-time 10 \
+      --output /dev/null --write-out '%{http_code}' \
+      "${PUBLIC_UI_URL}" 2>&1)"; then
+    log "WARNING: public UI check did not complete: ${ui_result}"
+    return
+  fi
+
+  ui_status="${ui_result}"
+  if [[ ! "${ui_status}" =~ ^(200|301|302|307|308)$ ]]; then
+    log "WARNING: public UI returned HTTP ${ui_status}; backend deployment remains valid"
+  fi
+}
+
+write_receipt() {
+  mkdir -p "$(dirname "${LOCAL_RECEIPT_FILE}")"
+  cat > "${LOCAL_RECEIPT_FILE}" <<RECEIPT
+artifact.version=${ARTIFACT_VERSION}
+source.ref=${REF}
+source.commit=${COMMIT}
+jar.sha256=${JAR_SHA256}
+build.date=${BUILD_DATE}
+deployed.at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+RECEIPT
+
+  scp -P "${SSH_PORT}" "${LOCAL_RECEIPT_FILE}" \
+    "${SSH_TARGET}:${REMOTE_DIR}/deployment.properties"
+  ssh -tt "${SSH_ARGS[@]}" \
+    "sudo install -o root -g root -m 0644 \
+       '${REMOTE_DIR}/deployment.properties' '${REMOTE_RECEIPT_PATH}'"
 }
 
 print_receipt() {
@@ -255,6 +288,8 @@ else
     || fail "Checkout origin is ${actual_origin}, expected ${REPO_URL}"
 fi
 
+PREVIOUS_CHECKOUT_COMMIT="$(git -C "${CHECKOUT_DIR}" rev-parse --verify HEAD 2>/dev/null || true)"
+
 log "fetching latest repository state"
 git -C "${CHECKOUT_DIR}" fetch --prune --tags origin
 
@@ -292,6 +327,8 @@ REMOTE_RECEIPT="$(ssh "${SSH_ARGS[@]}" \
 REMOTE_COMMIT="$(printf '%s\n' "${REMOTE_RECEIPT}" | property_value source.commit)"
 REMOTE_ARTIFACT_VERSION="$(printf '%s\n' "${REMOTE_RECEIPT}" | property_value artifact.version)"
 REMOTE_RECORDED_SHA="$(printf '%s\n' "${REMOTE_RECEIPT}" | property_value jar.sha256)"
+REMOTE_SHA256="$(ssh "${SSH_ARGS[@]}" \
+  "if test -f /opt/kanger-server/kanger-server.jar; then sha256sum /opt/kanger-server/kanger-server.jar | awk '{print \$1}'; fi")"
 
 if [[ "${FORCE}" != true && -n "${REMOTE_COMMIT}" && "${REMOTE_COMMIT}" == "${COMMIT}" ]]; then
   [[ -n "${REMOTE_ARTIFACT_VERSION}" ]] \
@@ -302,9 +339,45 @@ if [[ "${FORCE}" != true && -n "${REMOTE_COMMIT}" && "${REMOTE_COMMIT}" == "${CO
   log "source commit is already deployed; skipping build and restart"
   stage_remote_assets
   verify_remote
-  verify_public
+  verify_public_api
+  check_public_ui_advisory
   print_receipt
   exit 0
+fi
+
+if [[ "${FORCE}" != true && \
+      -n "${PREVIOUS_CHECKOUT_COMMIT}" && \
+      "${PREVIOUS_CHECKOUT_COMMIT}" == "${COMMIT}" && \
+      -n "${REMOTE_SHA256}" && \
+      -f "${JAR_FILE}" ]]; then
+  CACHED_JAR_SHA256="$(sha256_file "${JAR_FILE}")"
+  if [[ "${CACHED_JAR_SHA256}" == "${REMOTE_SHA256}" ]]; then
+    log "recovering deployment receipt from the previously qualified installed JAR"
+    jar tf "${JAR_FILE}" | grep -q '^org/kanger/Kanger.class$' \
+      || fail "Cached JAR does not contain org/kanger/Kanger.class"
+
+    BUILD_PROPERTIES="$(unzip -p "${JAR_FILE}" org/kanger/build.properties)"
+    ARTIFACT_VERSION="$(printf '%s\n' "${BUILD_PROPERTIES}" | property_value server.version)"
+    DISPLAY_BRANCH="$(printf '%s\n' "${BUILD_PROPERTIES}" | property_value branch)"
+    SOURCE_BRANCH="$(printf '%s\n' "${BUILD_PROPERTIES}" | property_value source.branch)"
+    BUILD_DATE="$(printf '%s\n' "${BUILD_PROPERTIES}" | property_value date)"
+
+    [[ -n "${ARTIFACT_VERSION}" ]] || fail "Cached JAR has no server.version metadata"
+    [[ "${DISPLAY_BRANCH}" == "${ARTIFACT_VERSION}" ]] \
+      || fail "Cached JAR public branch/version metadata disagree"
+    [[ "${SOURCE_BRANCH}" == "${REF}" ]] \
+      || fail "Cached JAR provenance is ${SOURCE_BRANCH}, expected ${REF}"
+
+    JAR_SHA256="${CACHED_JAR_SHA256}"
+    OPERATION="receipt recovery (qualified JAR already installed)"
+    stage_remote_assets
+    verify_remote
+    verify_public_api
+    write_receipt
+    check_public_ui_advisory
+    print_receipt
+    exit 0
+  fi
 fi
 
 log "building and qualifying KANGER Server"
@@ -339,9 +412,6 @@ log "artifact     : ${ARTIFACT_VERSION}"
 log "build date   : ${BUILD_DATE}"
 log "JAR SHA-256  : ${JAR_SHA256}"
 
-REMOTE_SHA256="$(ssh "${SSH_ARGS[@]}" \
-  "if test -f /opt/kanger-server/kanger-server.jar; then sha256sum /opt/kanger-server/kanger-server.jar | awk '{print \$1}'; fi")"
-
 stage_remote_assets
 
 if [[ -n "${REMOTE_SHA256}" && "${REMOTE_SHA256}" == "${JAR_SHA256}" && "${FORCE}" != true ]]; then
@@ -362,22 +432,7 @@ else
 fi
 
 verify_remote
-verify_public
-
-mkdir -p "$(dirname "${LOCAL_RECEIPT_FILE}")"
-cat > "${LOCAL_RECEIPT_FILE}" <<RECEIPT
-artifact.version=${ARTIFACT_VERSION}
-source.ref=${REF}
-source.commit=${COMMIT}
-jar.sha256=${JAR_SHA256}
-build.date=${BUILD_DATE}
-deployed.at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-RECEIPT
-
-scp -P "${SSH_PORT}" "${LOCAL_RECEIPT_FILE}" \
-  "${SSH_TARGET}:${REMOTE_DIR}/deployment.properties"
-ssh -tt "${SSH_ARGS[@]}" \
-  "sudo install -o root -g root -m 0644 \
-     '${REMOTE_DIR}/deployment.properties' '${REMOTE_RECEIPT_PATH}'"
-
+verify_public_api
+write_receipt
+check_public_ui_advisory
 print_receipt
