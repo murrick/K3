@@ -7,7 +7,7 @@ if [[ "${EUID}" -ne 0 ]]; then
   exit 1
 fi
 
-for command in systemctl tar sha256sum curl install stat; do
+for command in systemctl tar sha256sum curl stat getent cut id chown chmod awk hostname seq sleep; do
   command -v "${command}" >/dev/null 2>&1 || {
     echo "Required command not found: ${command}" >&2
     exit 1
@@ -18,6 +18,7 @@ SERVICE="kanger-server.service"
 HEALTH_URL="http://127.0.0.1:1964/health"
 READY_URL="http://127.0.0.1:1964/ready"
 TRANSFER_USER="${SUDO_USER:-root}"
+TRANSFER_GROUP="$(id -gn "${TRANSFER_USER}")"
 TRANSFER_HOME="$(getent passwd "${TRANSFER_USER}" | cut -d: -f6)"
 
 [[ -n "${TRANSFER_HOME}" && -d "${TRANSFER_HOME}" ]] || {
@@ -72,6 +73,7 @@ fi
 service_restored=false
 restore_service() {
   local exit_code=$?
+  trap - EXIT INT TERM
   if [[ "${was_active}" == true && "${service_restored}" != true ]]; then
     echo "Restoring ${SERVICE} after backup interruption..." >&2
     systemctl start "${SERVICE}" || true
@@ -83,10 +85,10 @@ trap restore_service EXIT INT TERM
 if [[ "${was_active}" == true ]]; then
   echo "Stopping ${SERVICE} for a transactionally quiet snapshot..."
   systemctl stop "${SERVICE}"
-  systemctl is-active --quiet "${SERVICE}" && {
+  if systemctl is-active --quiet "${SERVICE}"; then
     echo "Service did not stop cleanly" >&2
     exit 1
-  }
+  fi
 fi
 
 umask 077
@@ -112,9 +114,10 @@ umask 077
 } > "${manifest_path}"
 
 tar -C / -czf "${archive_path}" "${existing_paths[@]}"
+tar -tzf "${archive_path}" >/dev/null
 sha256sum "${archive_path}" > "${checksum_path}"
 
-chown "${TRANSFER_USER}:${TRANSFER_USER}" \
+chown "${TRANSFER_USER}:${TRANSFER_GROUP}" \
   "${archive_path}" "${checksum_path}" "${manifest_path}"
 chmod 0600 "${archive_path}" "${checksum_path}" "${manifest_path}"
 
