@@ -115,6 +115,13 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
                         "A scoped pending action token is required");
             }
             if (isLogin(parameters)
+                    && SessionSerializingReactor.hasAuthenticatedCredential(packet)) {
+                // A successfully authenticated credential is an ACTIVE account.
+                // A stale pending record left by post-publication cleanup must
+                // never shadow ordinary login.
+                return delegate.run(packet);
+            }
+            if (isLogin(parameters)
                     && registrations.containsLogin(string(parameters, "login"))) {
                 return pendingLogin(parameters);
             }
