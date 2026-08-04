@@ -10,7 +10,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.kanger.account.AccountErrorCode;
 import org.kanger.account.RegistrationPolicy;
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IReactor;
+import org.kanger.interfaces.IUser;
+import org.kanger.storage.DB;
+import org.kanger.udf.UDF;
 
 /**
  * Enforces account-registration topology before the historical request
@@ -19,16 +23,29 @@ import org.kanger.interfaces.IReactor;
  */
 final class AccountPolicyReactor implements IReactor<JSONObject> {
 
+    interface TrustedAccountActivator {
+        void activate(JSONObject parameters) throws Exception;
+    }
+
     private final RegistrationPolicy policy;
     private final IReactor<JSONObject> delegate;
+    private final TrustedAccountActivator trustedAccountActivator;
 
     AccountPolicyReactor(RegistrationPolicy policy,
                          IReactor<JSONObject> delegate) {
-        if (policy == null || delegate == null) {
-            throw new IllegalArgumentException("policy and delegate must not be null");
+        this(policy, delegate, new LegacyTrustedAccountActivator());
+    }
+
+    AccountPolicyReactor(RegistrationPolicy policy,
+                         IReactor<JSONObject> delegate,
+                         TrustedAccountActivator trustedAccountActivator) {
+        if (policy == null || delegate == null || trustedAccountActivator == null) {
+            throw new IllegalArgumentException(
+                    "policy, delegate and trusted account activator must not be null");
         }
         this.policy = policy;
         this.delegate = delegate;
+        this.trustedAccountActivator = trustedAccountActivator;
     }
 
     @Override
@@ -38,6 +55,10 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
                 && !policy.allowsPublicSelfRegistration()) {
             return registrationDisabled();
         }
+        if (policy == RegistrationPolicy.TRUSTED
+                && isExistingCredentialLogin(packet, parameters)) {
+            trustedAccountActivator.activate(parameters);
+        }
         return delegate.run(packet);
     }
 
@@ -45,6 +66,15 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
                                            JSONObject parameters) {
         return "login".equalsIgnoreCase(context(packet))
                 && has(parameters, "register")
+                && has(parameters, "password")
+                && string(parameters, "token").isEmpty();
+    }
+
+    static boolean isExistingCredentialLogin(JSONObject packet,
+                                             JSONObject parameters) {
+        return "login".equalsIgnoreCase(context(packet))
+                && !has(parameters, "register")
+                && has(parameters, "login")
                 && has(parameters, "password")
                 && string(parameters, "token").isEmpty();
     }
@@ -86,6 +116,26 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
             return parameters.getString(key).trim();
         } catch (JSONException error) {
             return "";
+        }
+    }
+
+    private static final class LegacyTrustedAccountActivator
+            implements TrustedAccountActivator {
+        @Override
+        public void activate(JSONObject parameters) throws Exception {
+            IUser user = UserFactory.getUser(
+                    string(parameters, "login"),
+                    string(parameters, "password"));
+            try {
+                ((User) user).getData();
+            } catch (RuntimeErrorException absent) {
+                new DB().init(user);
+            }
+            try {
+                ((User) user).getUdf();
+            } catch (RuntimeErrorException absent) {
+                new UDF().init(user);
+            }
         }
     }
 }
