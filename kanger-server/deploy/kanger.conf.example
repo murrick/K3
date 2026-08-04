@@ -21,8 +21,18 @@ server.watchdog.period=1000
 # Browser destination after a successful e-mail confirmation.
 # server.confirmation.redirect.url=https://kanger.org/
 
-# Confirmation mail is disabled until a complete explicit profile is supplied.
-# Choose exactly one mode: disabled, starttls, or smtps.
+# Registration policy and mail transport are selected together by this mode.
+#
+# disabled -> TRUSTED
+#   Public self-registration is disabled. Complete ACTIVE accounts are created
+#   through the local kanger-admin operator plane.
+#
+# starttls | smtps -> EMAIL_VERIFIED
+#   Public self-registration creates a PendingRegistration. A complete ACTIVE
+#   account exists only after successful e-mail confirmation.
+#
+# Server 0.14 resolves this value once into RegistrationPolicy. Account
+# lifecycle code must not branch directly on transport-mode strings.
 server.email.mode=disabled
 server.email.debug=false
 server.email.auth=true
