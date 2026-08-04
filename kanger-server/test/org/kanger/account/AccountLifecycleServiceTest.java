@@ -163,6 +163,31 @@ class AccountLifecycleServiceTest {
     }
 
     @Test
+    void existingCanonicalHomeIsNeverOverwrittenOrPublishedAsCredential()
+            throws Exception {
+        CredentialStore store = new CredentialStore(credentialFile);
+        Path existingHome = accountRoot.resolve("1");
+        Files.createDirectories(existingHome);
+        Path sentinel = existingHome.resolve("preserve.me");
+        Files.write(sentinel,
+                java.util.Collections.singletonList("operator recovery evidence"),
+                StandardCharsets.UTF_8);
+        AccountLifecycleService service = service(
+                store,
+                new FileAccountWorkspace(accountRoot, directory.toString()));
+
+        IOException failure = assertThrows(IOException.class,
+                () -> service.createActiveAccount(
+                        new ActiveAccountRequest("rick", "secret")));
+
+        assertTrue(failure.getMessage().contains("already exists"));
+        assertTrue(Files.isRegularFile(sentinel));
+        assertFalse(Files.exists(accountRoot.resolve(".creating")));
+        assertThrows(AuthenticationErrorException.class,
+                () -> store.authenticate("rick", "secret"));
+    }
+
+    @Test
     void duplicateLoginDoesNotDisturbExistingCompleteAccount() throws Exception {
         CredentialStore store = new CredentialStore(credentialFile);
         AccountLifecycleService service = service(
