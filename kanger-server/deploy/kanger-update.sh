@@ -24,6 +24,7 @@ DRY_RUN=false
 PUBLIC_CHECKS=true
 REMOTE_DIR=""
 REMOTE_CREATED=false
+LOCAL_CACHED_JAR=""
 ARTIFACT_VERSION=""
 JAR_SHA256=""
 BUILD_DATE=""
@@ -93,6 +94,9 @@ cleanup() {
   if [[ "${REMOTE_CREATED}" == true && -n "${REMOTE_DIR}" ]]; then
     ssh -p "${SSH_PORT}" "${SSH_TARGET}" \
       "rm -rf -- '${REMOTE_DIR}'" >/dev/null 2>&1 || true
+  fi
+  if [[ -n "${LOCAL_CACHED_JAR}" ]]; then
+    rm -f -- "${LOCAL_CACHED_JAR}" >/dev/null 2>&1 || true
   fi
   exit "${status}"
 }
@@ -289,6 +293,11 @@ else
 fi
 
 PREVIOUS_CHECKOUT_COMMIT="$(git -C "${CHECKOUT_DIR}" rev-parse --verify HEAD 2>/dev/null || true)"
+PREVIOUS_JAR_FILE="${CHECKOUT_DIR}/kanger-server/target/kanger-server.jar"
+if [[ -f "${PREVIOUS_JAR_FILE}" ]]; then
+  LOCAL_CACHED_JAR="$(mktemp "${TMPDIR:-/tmp}/kanger-update-cached.XXXXXX.jar")"
+  cp -- "${PREVIOUS_JAR_FILE}" "${LOCAL_CACHED_JAR}"
+fi
 
 log "fetching latest repository state"
 git -C "${CHECKOUT_DIR}" fetch --prune --tags origin
@@ -349,14 +358,15 @@ if [[ "${FORCE}" != true && \
       -n "${PREVIOUS_CHECKOUT_COMMIT}" && \
       "${PREVIOUS_CHECKOUT_COMMIT}" == "${COMMIT}" && \
       -n "${REMOTE_SHA256}" && \
-      -f "${JAR_FILE}" ]]; then
-  CACHED_JAR_SHA256="$(sha256_file "${JAR_FILE}")"
+      -n "${LOCAL_CACHED_JAR}" && \
+      -f "${LOCAL_CACHED_JAR}" ]]; then
+  CACHED_JAR_SHA256="$(sha256_file "${LOCAL_CACHED_JAR}")"
   if [[ "${CACHED_JAR_SHA256}" == "${REMOTE_SHA256}" ]]; then
     log "recovering deployment receipt from the previously qualified installed JAR"
-    jar tf "${JAR_FILE}" | grep -q '^org/kanger/Kanger.class$' \
+    jar tf "${LOCAL_CACHED_JAR}" | grep -q '^org/kanger/Kanger.class$' \
       || fail "Cached JAR does not contain org/kanger/Kanger.class"
 
-    BUILD_PROPERTIES="$(unzip -p "${JAR_FILE}" org/kanger/build.properties)"
+    BUILD_PROPERTIES="$(unzip -p "${LOCAL_CACHED_JAR}" org/kanger/build.properties)"
     ARTIFACT_VERSION="$(printf '%s\n' "${BUILD_PROPERTIES}" | property_value server.version)"
     DISPLAY_BRANCH="$(printf '%s\n' "${BUILD_PROPERTIES}" | property_value branch)"
     SOURCE_BRANCH="$(printf '%s\n' "${BUILD_PROPERTIES}" | property_value source.branch)"
