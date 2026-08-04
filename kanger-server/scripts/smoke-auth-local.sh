@@ -105,7 +105,7 @@ printf '%s\n' "[4/10] Verifying rejected registration created no credential"
 rejected_login="$(post "{\"context\":\"login\",\"parameters\":{\"login\":\"${login}\",\"password\":\"${password}\"}}")"
 require_result "${rejected_login}" "error" "trusted credential rejection"
 
-printf '%s\n' "[5/10] Provisioning isolated Server 0.13 credential fixture"
+printf '%s\n' "[5/10] Provisioning unconfirmed Server 0.13 credential fixture"
 state_dir="${STATE_HOME}/KANGER"
 user_dir="${state_dir}/1"
 mkdir -p "${user_dir}"
@@ -114,11 +114,11 @@ printf '# isolated Server 0.13 migration fixture\n%s=1\n' \
   "${credential_token}" > "${state_dir}/users.conf"
 cat > "${user_dir}/kanger.conf" <<EOF
 reg.login=${login}
-reg.agreed=true
-reg.email.confirmed=true
+reg.agreed=false
+reg.email.confirmed=false
 EOF
 
-printf '%s\n' "[6/10] Logging in with the existing credential"
+printf '%s\n' "[6/10] Logging in with the existing unconfirmed credential"
 login_response="$(post "{\"context\":\"login\",\"parameters\":{\"login\":\"${login}\",\"password\":\"${password}\"}}")"
 require_result "${login_response}" "OK" "existing-account login"
 first_token="$(json_field "${login_response}" token)"
