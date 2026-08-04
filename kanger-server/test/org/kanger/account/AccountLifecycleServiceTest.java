@@ -50,7 +50,7 @@ class AccountLifecycleServiceTest {
     }
 
     @Test
-    void publishesCompleteActiveAccountBeforeCredentialBecomesVisible()
+    void operatorPublishesActiveAccountWithoutClaimingEmailVerification()
             throws Exception {
         CredentialStore store = new CredentialStore(credentialFile);
         AccountLifecycleService service = service(
@@ -80,8 +80,8 @@ class AccountLifecycleServiceTest {
         Properties profile = load(account.getHome().resolve("kanger.conf"));
         assertEquals("rick", profile.getProperty("reg.login"));
         assertEquals("rick@example.org", profile.getProperty("reg.email"));
-        assertEquals("true", profile.getProperty("reg.agreed"));
-        assertEquals("true", profile.getProperty("reg.email.confirmed"));
+        assertEquals("false", profile.getProperty("reg.agreed"));
+        assertEquals("false", profile.getProperty("reg.email.confirmed"));
         assertEquals("true", profile.getProperty("reg.privacy"));
         assertEquals(directory(account.getHome()), profile.getProperty("user.dir"));
         assertEquals(directory(account.getHome().resolve("SRC")),
@@ -95,7 +95,7 @@ class AccountLifecycleServiceTest {
     }
 
     @Test
-    void persistedCredentialMaterialActivatesWithoutRecoveringPassword()
+    void persistedCredentialMaterialActivatesVerifiedEmailWithoutPassword()
             throws Exception {
         CredentialStore store = new CredentialStore(credentialFile);
         AccountLifecycleService service = service(
@@ -117,6 +117,9 @@ class AccountLifecycleServiceTest {
         assertEquals(1L, account.getUserId());
         assertEquals(1L,
                 store.authenticate("pending-user", "pending password"));
+        Properties profile = load(account.getHome().resolve("kanger.conf"));
+        assertEquals("true", profile.getProperty("reg.agreed"));
+        assertEquals("true", profile.getProperty("reg.email.confirmed"));
         assertFalse(new String(
                 Files.readAllBytes(account.getHome().resolve("kanger.conf")),
                 StandardCharsets.UTF_8).contains("pending password"));
