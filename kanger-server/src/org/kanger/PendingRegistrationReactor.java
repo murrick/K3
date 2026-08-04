@@ -83,13 +83,16 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
     @Override
     public Object run(JSONObject packet) throws Exception {
         JSONObject parameters = SessionSerializingReactor.parameters(packet);
-        if (!"login".equalsIgnoreCase(context(packet))) {
-            return delegate.run(packet);
-        }
 
         try {
+            // The browser confirmation link is a root GET and therefore has no
+            // application context. It must be consumed before context routing,
+            // otherwise it falls through to the historical confirmation path.
             if (has(parameters, "confirm")) {
                 return confirm(string(parameters, "confirm"));
+            }
+            if (!"login".equalsIgnoreCase(context(packet))) {
+                return delegate.run(packet);
             }
             if (isNewRegistration(parameters)) {
                 return register(parameters);
