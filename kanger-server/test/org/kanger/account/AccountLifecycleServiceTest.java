@@ -10,6 +10,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.kanger.exception.AuthenticationErrorException;
+import org.kanger.security.CredentialMaterial;
 import org.kanger.security.CredentialStore;
 
 import java.io.File;
@@ -94,6 +95,34 @@ class AccountLifecycleServiceTest {
     }
 
     @Test
+    void persistedCredentialMaterialActivatesWithoutRecoveringPassword()
+            throws Exception {
+        CredentialStore store = new CredentialStore(credentialFile);
+        AccountLifecycleService service = service(
+                store,
+                new FileAccountWorkspace(accountRoot, directory.toString()));
+        CredentialMaterial prepared = service.prepareCredential("pending password");
+        CredentialMaterial restored = CredentialMaterial.decode(prepared.encode());
+
+        ActiveAccount account = service.createActiveAccount(
+                new ActiveAccountRequest(
+                        "pending-user",
+                        restored,
+                        "pending@example.org",
+                        "Pending User",
+                        "Austria",
+                        "Vienna",
+                        Boolean.TRUE));
+
+        assertEquals(1L, account.getUserId());
+        assertEquals(1L,
+                store.authenticate("pending-user", "pending password"));
+        assertFalse(new String(
+                Files.readAllBytes(account.getHome().resolve("kanger.conf")),
+                StandardCharsets.UTF_8).contains("pending password"));
+    }
+
+    @Test
     void preparationFailureLeavesNoCredentialOrWorkspaceAndRetrySucceeds()
             throws Exception {
         CredentialStore store = new CredentialStore(credentialFile);
@@ -127,12 +156,20 @@ class AccountLifecycleServiceTest {
     @Test
     void credentialPublicationFailureRollsBackAlreadyPublishedHome()
             throws Exception {
+        final CredentialStore materialStore = new CredentialStore(
+                directory.resolve("material.conf"));
         AccountLifecycleService.CredentialAuthority failingCredentials =
                 new AccountLifecycleService.CredentialAuthority() {
                     @Override
+                    public CredentialMaterial preparePassword(String password)
+                            throws Exception {
+                        return materialStore.preparePassword(password);
+                    }
+
+                    @Override
                     public long createPrepared(
                             String login,
-                            String password,
+                            CredentialMaterial material,
                             AccountLifecycleService.Preparation preparation)
                             throws Exception {
                         preparation.prepare(17L);
@@ -212,14 +249,20 @@ class AccountLifecycleServiceTest {
         return new AccountLifecycleService(
                 new AccountLifecycleService.CredentialAuthority() {
                     @Override
+                    public CredentialMaterial preparePassword(String password)
+                            throws Exception {
+                        return store.preparePassword(password);
+                    }
+
+                    @Override
                     public long createPrepared(
                             String login,
-                            String password,
+                            CredentialMaterial material,
                             final AccountLifecycleService.Preparation preparation)
                             throws Exception {
                         return store.createPrepared(
                                 login,
-                                password,
+                                material,
                                 preparation::prepare);
                     }
 
