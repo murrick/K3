@@ -162,6 +162,74 @@ class PendingRegistrationServiceTest {
     }
 
     @Test
+    void repeatedConfirmationPublishesMissingCredentialForExactHome()
+            throws Exception {
+        PendingRegistrationStore.Created created = register(service);
+        PendingRegistration record = pending.resolveConfirmation(
+                created.getConfirmationToken());
+        FileAccountWorkspace workspace = new FileAccountWorkspace(
+                accountRoot, directory.toString());
+        AccountLifecycleService.PreparedWorkspace prepared = workspace.prepare(
+                7L,
+                new ActiveAccountRequest(
+                        record.getLogin(),
+                        record.getCredentialMaterial(),
+                        AccountActivationSource.EMAIL_CONFIRMATION,
+                        record.getEmail(),
+                        record.getName(),
+                        record.getCountry(),
+                        record.getCity(),
+                        record.getPrivacyConsent(),
+                        record.getId()));
+        prepared.publish();
+
+        assertTrue(Files.isDirectory(accountRoot.resolve("7")));
+        assertThrows(AuthenticationErrorException.class,
+                () -> credentials.authenticate("rick", "pending password"));
+        assertEquals(1, service.pendingCount());
+
+        PendingRegistrationService.Activation recovered =
+                service.confirm(created.getConfirmationToken());
+
+        assertTrue(recovered.isRecovered());
+        assertEquals(7L, recovered.getUserId());
+        assertEquals(7L, credentials.authenticate("rick", "pending password"));
+        assertEquals(0, service.pendingCount());
+        assertFalse(Files.exists(accountRoot.resolve("1")));
+    }
+
+    @Test
+    void unrelatedHomeWithSameLoginDoesNotConsumePending() throws Exception {
+        PendingRegistrationStore.Created created = register(service);
+        PendingRegistration record = pending.resolveConfirmation(
+                created.getConfirmationToken());
+        FileAccountWorkspace workspace = new FileAccountWorkspace(
+                accountRoot, directory.toString());
+        AccountLifecycleService.PreparedWorkspace prepared = workspace.prepare(
+                7L,
+                new ActiveAccountRequest(
+                        record.getLogin(),
+                        record.getCredentialMaterial(),
+                        AccountActivationSource.EMAIL_CONFIRMATION,
+                        record.getEmail(),
+                        record.getName(),
+                        record.getCountry(),
+                        record.getCity(),
+                        record.getPrivacyConsent(),
+                        "different-pending-reference"));
+        prepared.publish();
+
+        PendingRegistrationException failure = assertThrows(
+                PendingRegistrationException.class,
+                () -> service.confirm(created.getConfirmationToken()));
+
+        assertEquals(AccountErrorCode.LOGIN_ALREADY_USED, failure.getCode());
+        assertEquals(1, service.pendingCount());
+        assertThrows(AuthenticationErrorException.class,
+                () -> credentials.authenticate("rick", "pending password"));
+    }
+
+    @Test
     void existingActiveLoginOrEmailRejectsNewPendingRegistration()
             throws Exception {
         accounts.createActiveAccount(new ActiveAccountRequest(
@@ -271,6 +339,14 @@ class PendingRegistrationServiceTest {
                             throws Exception {
                         return store.createPrepared(
                                 login, material, preparation::prepare);
+                    }
+
+                    @Override
+                    public long publishPrepared(long userId,
+                                                String login,
+                                                CredentialMaterial material)
+                            throws Exception {
+                        return store.publishPrepared(userId, login, material);
                     }
 
                     @Override
