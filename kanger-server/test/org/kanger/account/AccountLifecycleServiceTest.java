@@ -198,6 +198,13 @@ class AccountLifecycleServiceTest {
                     }
 
                     @Override
+                    public long publishPrepared(long userId,
+                                                String login,
+                                                CredentialMaterial material) {
+                        throw new AssertionError("recovery publication must not be called");
+                    }
+
+                    @Override
                     public boolean delete(long userId) {
                         return false;
                     }
@@ -246,6 +253,64 @@ class AccountLifecycleServiceTest {
     }
 
     @Test
+    void exactRecoveryPublishesCredentialForMatchingExistingWorkspace()
+            throws Exception {
+        CredentialStore store = new CredentialStore(credentialFile);
+        FileAccountWorkspace workspace = new FileAccountWorkspace(
+                accountRoot, directory.toString());
+        AccountLifecycleService service = service(store, workspace);
+        CredentialMaterial material = store.preparePassword("pending password");
+        ActiveAccountRequest request = new ActiveAccountRequest(
+                "rick",
+                material,
+                AccountActivationSource.EMAIL_CONFIRMATION,
+                "rick@example.org",
+                "Rick",
+                "Austria",
+                "Vienna",
+                Boolean.TRUE,
+                "pending-reference");
+        AccountLifecycleService.PreparedWorkspace prepared =
+                workspace.prepare(7L, request);
+        prepared.publish();
+
+        long userId = service.publishCredentialForExistingWorkspace(
+                7L, "rick", material, "pending-reference");
+
+        assertEquals(7L, userId);
+        assertEquals(7L, store.authenticate("rick", "pending password"));
+        assertTrue(Files.isDirectory(accountRoot.resolve("7")));
+    }
+
+    @Test
+    void exactRecoveryRejectsDifferentActivationReference() throws Exception {
+        CredentialStore store = new CredentialStore(credentialFile);
+        FileAccountWorkspace workspace = new FileAccountWorkspace(
+                accountRoot, directory.toString());
+        AccountLifecycleService service = service(store, workspace);
+        CredentialMaterial material = store.preparePassword("pending password");
+        AccountLifecycleService.PreparedWorkspace prepared = workspace.prepare(
+                7L,
+                new ActiveAccountRequest(
+                        "rick",
+                        material,
+                        AccountActivationSource.EMAIL_CONFIRMATION,
+                        "rick@example.org",
+                        "Rick",
+                        "Austria",
+                        "Vienna",
+                        Boolean.TRUE,
+                        "original-reference"));
+        prepared.publish();
+
+        assertThrows(IllegalStateException.class,
+                () -> service.publishCredentialForExistingWorkspace(
+                        7L, "rick", material, "different-reference"));
+        assertThrows(AuthenticationErrorException.class,
+                () -> store.authenticate("rick", "pending password"));
+    }
+
+    @Test
     void duplicateLoginDoesNotDisturbExistingCompleteAccount() throws Exception {
         CredentialStore store = new CredentialStore(credentialFile);
         AccountLifecycleService service = service(
@@ -285,6 +350,14 @@ class AccountLifecycleServiceTest {
                                 login,
                                 material,
                                 preparation::prepare);
+                    }
+
+                    @Override
+                    public long publishPrepared(long userId,
+                                                String login,
+                                                CredentialMaterial material)
+                            throws Exception {
+                        return store.publishPrepared(userId, login, material);
                     }
 
                     @Override
