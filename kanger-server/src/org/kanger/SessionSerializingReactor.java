@@ -108,11 +108,11 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
     private Object invokeAuthenticatedCredential(JSONObject packet,
                                                  JSONObject parameters)
             throws Exception {
-        packet.put(AUTHENTICATED_CREDENTIAL_MARKER, true);
+        markAuthenticatedCredential(packet);
         try {
             return invoke(packet, parameters);
         } finally {
-            packet.remove(AUTHENTICATED_CREDENTIAL_MARKER);
+            clearAuthenticatedCredential(packet);
         }
     }
 
@@ -122,6 +122,19 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
             return violation;
         }
         return delegate.run(packet);
+    }
+
+    static void markAuthenticatedCredential(JSONObject packet) {
+        if (packet == null) {
+            throw new IllegalArgumentException("packet must not be null");
+        }
+        packet.put(AUTHENTICATED_CREDENTIAL_MARKER, true);
+    }
+
+    static void clearAuthenticatedCredential(JSONObject packet) {
+        if (packet != null) {
+            packet.remove(AUTHENTICATED_CREDENTIAL_MARKER);
+        }
     }
 
     static boolean hasAuthenticatedCredential(JSONObject packet) {
