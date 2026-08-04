@@ -4,6 +4,7 @@ set -euo pipefail
 BASE_URL="${KANGER_BASE_URL:-http://127.0.0.1:1964}"
 PYTHON="${PYTHON:-python3}"
 STATE_HOME="${KANGER_SMOKE_HOME:-${RUNNER_TEMP:-}/kanger-server-smoke/home}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 command -v curl >/dev/null 2>&1 || {
   echo "curl is required" >&2
@@ -153,3 +154,13 @@ second_logout="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${se
 require_result "${second_logout}" "OK" "second logout"
 
 printf '%s\n' "TRUSTED policy and existing-account authentication smoke passed"
+
+server_jar="${KANGER_SERVER_JAR:-${GITHUB_WORKSPACE:-}/kanger-server/target/kanger-server.jar}"
+[[ -f "${server_jar}" ]] || {
+  echo "KANGER_SERVER_JAR is required for operator-plane smoke" >&2
+  exit 1
+}
+KANGER_BASE_URL="${BASE_URL}" \
+KANGER_SMOKE_HOME="${STATE_HOME}" \
+KANGER_SERVER_JAR="${server_jar}" \
+  bash "${SCRIPT_DIR}/smoke-admin-local.sh"
