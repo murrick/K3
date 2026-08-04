@@ -76,6 +76,19 @@ public final class CredentialStore {
     }
 
     /**
+     * Derives an opaque verifier that may be persisted by PendingRegistration
+     * and later published without retaining or recovering plaintext.
+     */
+    public synchronized CredentialMaterial preparePassword(String password)
+            throws Exception {
+        validatePassword(password);
+        byte[] salt = new byte[SALT_BYTES];
+        random.nextBytes(salt);
+        byte[] hash = derive(password, salt, iterations);
+        return new CredentialMaterial(iterations, salt, hash);
+    }
+
+    /**
      * Authenticates a user. A matching legacy record is replaced atomically by
      * a PBKDF2 record only after successful authentication.
      */
@@ -86,7 +99,7 @@ public final class CredentialStore {
 
             CredentialRecord record = findByLogin(snapshot.records, login);
             if (record != null) {
-                if (!verify(password, record)) {
+                if (!verify(password, record.material)) {
                     throw new AuthenticationErrorException();
                 }
                 return record.userId;
@@ -99,7 +112,10 @@ public final class CredentialStore {
             }
 
             removeByUserId(snapshot.records, userId.longValue());
-            snapshot.records.add(createRecord(login, password, userId.longValue()));
+            snapshot.records.add(new CredentialRecord(
+                    login,
+                    userId.longValue(),
+                    preparePassword(password)));
             writeSnapshot(snapshot);
             return userId.longValue();
         }
@@ -118,31 +134,58 @@ public final class CredentialStore {
     }
 
     /**
-     * Allocates an id, performs complete account preparation and publishes the
-     * credential only after preparation succeeds.
-     *
-     * <p>Authentication, migration, update and other creation calls are blocked
-     * on the same authority lock for the full operation. If preparation or the
-     * final atomic snapshot replacement fails, no credential is published.</p>
+     * Derives verification material from plaintext, prepares the complete
+     * account and publishes the credential last.
      */
     public synchronized long createPrepared(String login,
                                             String password,
                                             AccountPreparation preparation)
             throws Exception {
+        validateInput(login, password);
+        return createPreparedInternal(
+                login,
+                preparePassword(password),
+                legacyToken(login, password),
+                preparation);
+    }
+
+    /**
+     * Allocates an id, performs complete account preparation and publishes
+     * already-derived verification material only after preparation succeeds.
+     *
+     * <p>This overload is the activation boundary for PendingRegistration: the
+     * original password is neither required nor recoverable.</p>
+     */
+    public synchronized long createPrepared(String login,
+                                            CredentialMaterial material,
+                                            AccountPreparation preparation)
+            throws Exception {
+        validateLogin(login);
+        if (material == null) {
+            throw new IllegalArgumentException("credential material must not be null");
+        }
+        return createPreparedInternal(login, material, null, preparation);
+    }
+
+    private long createPreparedInternal(String login,
+                                        CredentialMaterial material,
+                                        String legacyCandidate,
+                                        AccountPreparation preparation)
+            throws Exception {
         if (preparation == null) {
             throw new IllegalArgumentException("account preparation must not be null");
         }
         synchronized (STORE_AUTHORITY_LOCK) {
-            validateInput(login, password);
             Snapshot snapshot = readSnapshot();
 
             if (findByLogin(snapshot.records, login) != null
-                    || snapshot.legacy.containsKey(legacyToken(login, password))) {
+                    || (legacyCandidate != null
+                    && snapshot.legacy.containsKey(legacyCandidate))) {
                 throw new AuthenticationErrorException("User already exists");
             }
 
             long userId = maxUserId(snapshot) + 1L;
-            CredentialRecord record = createRecord(login, password, userId);
+            CredentialRecord record = new CredentialRecord(login, userId, material);
             preparation.prepare(userId);
             snapshot.records.add(record);
             writeSnapshot(snapshot);
@@ -169,7 +212,10 @@ public final class CredentialStore {
 
             removeByUserId(snapshot.records, userId);
             removeLegacyByUserId(snapshot.legacy, userId);
-            snapshot.records.add(createRecord(login, password, userId));
+            snapshot.records.add(new CredentialRecord(
+                    login,
+                    userId,
+                    preparePassword(password)));
             writeSnapshot(snapshot);
         }
     }
@@ -201,9 +247,7 @@ public final class CredentialStore {
      */
     public synchronized Long findUserId(String login) throws Exception {
         synchronized (STORE_AUTHORITY_LOCK) {
-            if (login == null || login.isEmpty()) {
-                throw new IllegalArgumentException("login must not be empty");
-            }
+            validateLogin(login);
             CredentialRecord record = findByLogin(readSnapshot().records, login);
             return record == null ? null : Long.valueOf(record.userId);
         }
@@ -216,17 +260,13 @@ public final class CredentialStore {
         return String.format("%04x%04x", login.hashCode(), password.hashCode());
     }
 
-    private CredentialRecord createRecord(String login, String password, long userId)
+    private static boolean verify(String password, CredentialMaterial material)
             throws Exception {
-        byte[] salt = new byte[SALT_BYTES];
-        random.nextBytes(salt);
-        byte[] hash = derive(password, salt, iterations);
-        return new CredentialRecord(login, userId, iterations, salt, hash);
-    }
-
-    private static boolean verify(String password, CredentialRecord record) throws Exception {
-        byte[] candidate = derive(password, record.salt, record.iterations);
-        return MessageDigest.isEqual(record.hash, candidate);
+        byte[] candidate = derive(
+                password,
+                material.salt(),
+                material.iterations());
+        return MessageDigest.isEqual(material.hash(), candidate);
     }
 
     private static byte[] derive(String password, byte[] salt, int iterations) throws Exception {
@@ -280,14 +320,14 @@ public final class CredentialStore {
         try {
             String login = new String(decode(values[1]), StandardCharsets.UTF_8);
             long userId = Long.parseLong(values[2]);
-            int iterations = Integer.parseInt(values[3]);
-            byte[] salt = decode(values[4]);
-            byte[] hash = decode(values[5]);
-            if (login.isEmpty() || userId < 0L || iterations <= 0
-                    || salt.length < 16 || hash.length < 32) {
+            CredentialMaterial material = new CredentialMaterial(
+                    Integer.parseInt(values[3]),
+                    decode(values[4]),
+                    decode(values[5]));
+            if (login.isEmpty() || userId < 0L) {
                 throw new IOException("Invalid versioned credential values");
             }
-            return new CredentialRecord(login, userId, iterations, salt, hash);
+            return new CredentialRecord(login, userId, material);
         } catch (IllegalArgumentException ex) {
             throw new IOException("Invalid versioned credential encoding", ex);
         }
@@ -314,9 +354,9 @@ public final class CredentialStore {
             lines.add(VERSION + "\t"
                     + encode(record.login.getBytes(StandardCharsets.UTF_8)) + "\t"
                     + record.userId + "\t"
-                    + record.iterations + "\t"
-                    + encode(record.salt) + "\t"
-                    + encode(record.hash));
+                    + record.material.iterations() + "\t"
+                    + encode(record.material.salt()) + "\t"
+                    + encode(record.material.hash()));
         }
 
         List<Map.Entry<String, Long>> legacy =
@@ -387,9 +427,17 @@ public final class CredentialStore {
     }
 
     private static void validateInput(String login, String password) {
+        validateLogin(login);
+        validatePassword(password);
+    }
+
+    private static void validateLogin(String login) {
         if (login == null || login.isEmpty()) {
             throw new IllegalArgumentException("login must not be empty");
         }
+    }
+
+    private static void validatePassword(String password) {
         if (password == null || password.isEmpty()) {
             throw new IllegalArgumentException("password must not be empty");
         }
@@ -411,20 +459,14 @@ public final class CredentialStore {
     private static final class CredentialRecord {
         private final String login;
         private final long userId;
-        private final int iterations;
-        private final byte[] salt;
-        private final byte[] hash;
+        private final CredentialMaterial material;
 
         private CredentialRecord(String login,
                                  long userId,
-                                 int iterations,
-                                 byte[] salt,
-                                 byte[] hash) {
+                                 CredentialMaterial material) {
             this.login = login;
             this.userId = userId;
-            this.iterations = iterations;
-            this.salt = salt.clone();
-            this.hash = hash.clone();
+            this.material = material;
         }
     }
 }
