@@ -20,7 +20,9 @@ import org.kanger.interfaces.IReactor;
  * <p>The account-registration policy is resolved once when this boundary is
  * constructed. The policy reactor remains inside the session boundary and
  * before all mail and legacy account side effects. EMAIL_VERIFIED also installs
- * the persistent pending-registration boundary before the legacy processor.</p>
+ * the persistent pending-registration boundary before the legacy processor.
+ * The public capability reactor exposes the same resolved policy through the
+ * ordinary version response, without leaking SMTP transport configuration.</p>
  */
 final class SessionSerializingReactor implements IReactor<JSONObject> {
 
@@ -51,7 +53,9 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
                         failure);
             }
         }
-        this.delegate = new AccountPolicyReactor(policy, accountDelegate);
+        this.delegate = new PublicAuthCapabilitiesReactor(
+                policy,
+                new AccountPolicyReactor(policy, accountDelegate));
     }
 
     @Override
