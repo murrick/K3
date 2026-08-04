@@ -6,15 +6,21 @@
 
 package org.kanger.account;
 
+import org.kanger.security.CredentialMaterial;
+
 /**
  * Complete operator- or confirmation-authorized account creation request.
- * Password material is retained only for the duration of the synchronous
- * lifecycle call and is never written to the user profile.
+ *
+ * <p>An operator request may carry plaintext only for the duration of one
+ * synchronous call. A confirmed PendingRegistration carries already-derived
+ * {@link CredentialMaterial}; the original password is not retained or
+ * recoverable.</p>
  */
 public final class ActiveAccountRequest {
 
     private final String login;
     private final String password;
+    private final CredentialMaterial credentialMaterial;
     private final String email;
     private final String name;
     private final String country;
@@ -22,7 +28,7 @@ public final class ActiveAccountRequest {
     private final Boolean privacyConsent;
 
     public ActiveAccountRequest(String login, String password) {
-        this(login, password, "", "", "", "", null);
+        this(login, password, null, "", "", "", "", null);
     }
 
     public ActiveAccountRequest(String login,
@@ -32,8 +38,36 @@ public final class ActiveAccountRequest {
                                 String country,
                                 String city,
                                 Boolean privacyConsent) {
+        this(login, password, null, email, name, country, city, privacyConsent);
+    }
+
+    public ActiveAccountRequest(String login,
+                                CredentialMaterial credentialMaterial) {
+        this(login, null, credentialMaterial, "", "", "", "", null);
+    }
+
+    public ActiveAccountRequest(String login,
+                                CredentialMaterial credentialMaterial,
+                                String email,
+                                String name,
+                                String country,
+                                String city,
+                                Boolean privacyConsent) {
+        this(login, null, credentialMaterial,
+                email, name, country, city, privacyConsent);
+    }
+
+    private ActiveAccountRequest(String login,
+                                 String password,
+                                 CredentialMaterial credentialMaterial,
+                                 String email,
+                                 String name,
+                                 String country,
+                                 String city,
+                                 Boolean privacyConsent) {
         this.login = required(login, "login").trim();
-        this.password = required(password, "password");
+        this.password = password;
+        this.credentialMaterial = credentialMaterial;
         this.email = optional(email);
         this.name = optional(name);
         this.country = optional(country);
@@ -42,14 +76,26 @@ public final class ActiveAccountRequest {
         if (this.login.isEmpty()) {
             throw new IllegalArgumentException("login must not be empty");
         }
+        if ((password == null || password.isEmpty()) == (credentialMaterial == null)) {
+            throw new IllegalArgumentException(
+                    "exactly one password source must be supplied");
+        }
     }
 
     public String getLogin() {
         return login;
     }
 
-    public String getPassword() {
+    String getPassword() {
         return password;
+    }
+
+    CredentialMaterial getCredentialMaterial() {
+        return credentialMaterial;
+    }
+
+    public boolean hasPreparedCredential() {
+        return credentialMaterial != null;
     }
 
     public String getEmail() {
