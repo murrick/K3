@@ -12,20 +12,21 @@ import org.kanger.interfaces.IUser;
 import org.kanger.security.CredentialStore;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * Records the Server 0.13 account-lifecycle surface before it is replaced by
- * the Server 0.14 lifecycle service.
+ * Records the Server 0.13 account-lifecycle entrypoints that remain present
+ * during the staged Server 0.14 migration.
  *
- * <p>These assertions describe the migration starting point, not the target
- * architecture. A later stage may replace this test with target-state gates
- * when the legacy entrypoints are deliberately removed.</p>
+ * <p>The immutable develop/server/0.14.1 shelf retains the original
+ * characterization that CredentialStore had no deletion contract. The working
+ * 0.14.2 branch intentionally supersedes that single fact while preserving the
+ * historical UserFactory surface until PendingRegistration replaces it.</p>
  */
 class Server013AccountLifecycleCharacterizationTest {
 
     @Test
-    void userFactoryCombinesCredentialCreationAndUserResolution() throws Exception {
+    void userFactoryStillCombinesCredentialCreationAndUserResolution()
+            throws Exception {
         assertEquals(IUser.class,
                 UserFactory.class
                         .getMethod("createUser", String.class, String.class)
@@ -41,15 +42,17 @@ class Server013AccountLifecycleCharacterizationTest {
     }
 
     @Test
-    void credentialStoreHasNoAccountDeletionContract() {
-        assertThrows(NoSuchMethodException.class,
-                () -> CredentialStore.class.getMethod("delete", long.class));
-        assertThrows(NoSuchMethodException.class,
-                () -> CredentialStore.class.getMethod("delete", String.class));
+    void credentialStoreNowExposesLifecycleDeletionByExactUserId()
+            throws Exception {
+        assertEquals(Boolean.TYPE,
+                CredentialStore.class
+                        .getMethod("delete", long.class)
+                        .getReturnType());
     }
 
     @Test
-    void dropUserIsRuntimeClosureRatherThanAccountDeletion() throws Exception {
+    void dropUserRemainsRuntimeClosureRatherThanAccountDeletion()
+            throws Exception {
         assertEquals(Void.TYPE,
                 UserFactory.class.getMethod("dropUser", IUser.class).getReturnType());
         assertEquals(Void.TYPE,
