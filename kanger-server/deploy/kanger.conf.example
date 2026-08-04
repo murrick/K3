@@ -37,6 +37,15 @@ server.watchdog.period=1000
 # Server 0.14 resolves this value once into RegistrationPolicy. Account
 # lifecycle code must not branch directly on transport-mode strings.
 server.email.mode=disabled
+
+# EMAIL_VERIFIED pending-registration lifecycle. Pending records are transient
+# registration intent, not accounts; they live under KANGER/pending-registrations.conf.
+server.registration.pending.ttl.hours=168
+server.registration.confirmation.ttl.hours=24
+server.registration.action.ttl.minutes=15
+server.registration.resend.cooldown.seconds=60
+server.registration.pending.max.records=10000
+
 server.email.debug=false
 server.email.auth=true
 server.email.connection.timeout.millis=10000
