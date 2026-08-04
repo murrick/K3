@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.security.CredentialStore;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -81,6 +82,14 @@ class AccountLifecycleServiceTest {
         assertEquals("true", profile.getProperty("reg.agreed"));
         assertEquals("true", profile.getProperty("reg.email.confirmed"));
         assertEquals("true", profile.getProperty("reg.privacy"));
+        assertEquals(directory(account.getHome()), profile.getProperty("user.dir"));
+        assertEquals(directory(account.getHome().resolve("SRC")),
+                profile.getProperty("sources.dir"));
+        assertEquals(directory(account.getHome().resolve("DB")),
+                profile.getProperty("database.dir"));
+        for (Object value : profile.values()) {
+            assertFalse(value.toString().contains(".creating"));
+        }
         assertFalse(profile.containsValue("correct horse battery staple"));
     }
 
@@ -208,6 +217,10 @@ class AccountLifecycleServiceTest {
             properties.load(reader);
         }
         return properties;
+    }
+
+    private static String directory(Path path) {
+        return path.toAbsolutePath().normalize().toString() + File.separator;
     }
 
     private static void deleteTree(Path root) throws Exception {
