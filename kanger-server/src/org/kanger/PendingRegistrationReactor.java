@@ -109,6 +109,11 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
                     && has(parameters, "resend")) {
                 return resend(parameters);
             }
+            if (isPendingAction(parameters)) {
+                return error(
+                        AccountErrorCode.AUTHENTICATION_FAILED,
+                        "A scoped pending action token is required");
+            }
             if (isLogin(parameters)
                     && registrations.containsLogin(string(parameters, "login"))) {
                 return pendingLogin(parameters);
@@ -275,6 +280,12 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
                 && has(parameters, "password")
                 && !has(parameters, "register")
                 && string(parameters, "token").isEmpty();
+    }
+
+    private static boolean isPendingAction(JSONObject parameters) {
+        return has(parameters, "resend")
+                || has(parameters, "change_pending_email")
+                || has(parameters, "cancel_pending");
     }
 
     private static Boolean privacy(JSONObject parameters) {
