@@ -13,12 +13,30 @@ run() {
   "$@" 2>&1 || printf '[exit=%s]\n' "$?"
 }
 
+run_bounded() {
+  local duration="$1"
+  shift
+  if command -v timeout >/dev/null 2>&1; then
+    run timeout --foreground "${duration}" "$@"
+  else
+    run "$@"
+  fi
+}
+
 if [[ "${EUID}" -eq 0 ]]; then
   SUDO=()
 elif command -v sudo >/dev/null 2>&1; then
-  SUDO=(sudo)
+  # The caller must prime credentials explicitly with `sudo -v` in the same
+  # remote TTY. The inventory itself never prompts or consumes script input.
+  if ! sudo -n true 2>/dev/null; then
+    echo 'sudo credentials are not primed for this TTY.' >&2
+    echo 'Run this script through: sudo -v && /path/to/vps-inventory.sh' >&2
+    exit 2
+  fi
+  SUDO=(sudo -n)
 else
-  SUDO=()
+  echo 'This inventory requires root or sudo for protected read-only checks.' >&2
+  exit 2
 fi
 
 section "identity and clock"
@@ -46,9 +64,9 @@ done
 run java -version
 
 section "KANGER service state"
-run "${SUDO[@]}" systemctl is-enabled kanger-server.service
-run "${SUDO[@]}" systemctl is-active kanger-server.service
-run "${SUDO[@]}" systemctl status kanger-server.service --no-pager --full -n 30
+run_bounded 15s "${SUDO[@]}" systemctl is-enabled kanger-server.service
+run_bounded 15s "${SUDO[@]}" systemctl is-active kanger-server.service
+run_bounded 15s "${SUDO[@]}" systemctl status kanger-server.service --no-pager --full -n 30
 
 section "installed files and permissions"
 for path in \
@@ -94,16 +112,12 @@ run curl --fail --silent --show-error --max-time 5 http://127.0.0.1:1964/ready
 printf '\n'
 
 section "listeners"
-if [[ "${#SUDO[@]}" -gt 0 ]]; then
-  "${SUDO[@]}" ss -ltnp 2>&1 | grep -E ':(80|443|1964|1965|4211)\b' || true
-else
-  ss -ltnp 2>&1 | grep -E ':(80|443|1964|1965|4211)\b' || true
-fi
+"${SUDO[@]}" ss -ltnp 2>&1 | grep -E ':(80|443|1964|1965|4211)\b' || true
 
 section "nginx"
-run "${SUDO[@]}" nginx -t
-run "${SUDO[@]}" systemctl is-enabled nginx
-run "${SUDO[@]}" systemctl is-active nginx
+run_bounded 15s "${SUDO[@]}" nginx -t
+run_bounded 15s "${SUDO[@]}" systemctl is-enabled nginx
+run_bounded 15s "${SUDO[@]}" systemctl is-active nginx
 if "${SUDO[@]}" test -d /etc/nginx/sites-enabled; then
   run "${SUDO[@]}" ls -la /etc/nginx/sites-enabled
   "${SUDO[@]}" grep -RHE '^[[:space:]]*(listen|server_name|proxy_pass)[[:space:]]' \
@@ -112,12 +126,12 @@ fi
 
 section "containers and host firewall"
 if command -v docker >/dev/null 2>&1; then
-  run "${SUDO[@]}" docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Ports}}'
+  run_bounded 15s "${SUDO[@]}" docker ps --format 'table {{.ID}}\t{{.Names}}\t{{.Ports}}'
 else
   echo 'docker not installed'
 fi
 if command -v ufw >/dev/null 2>&1; then
-  run "${SUDO[@]}" ufw status verbose
+  run_bounded 15s "${SUDO[@]}" ufw status verbose
 else
   echo 'ufw not installed'
 fi
