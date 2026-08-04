@@ -1,0 +1,206 @@
+name: KANGER Server 0.13 version contract bootstrap
+
+on:
+  push:
+    branches:
+      - "server/0.13-version-identity"
+    paths:
+      - ".github/workflows/kanger-version-contract-bootstrap.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply-version-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out artifact branch
+        uses: actions/checkout@v5
+        with:
+          ref: server/0.13-version-identity
+          fetch-depth: 0
+
+      - name: Apply the version identity contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              file = Path(path)
+              text = file.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one occurrence, found {count}: {old!r}")
+              file.write_text(text.replace(old, new, 1))
+
+          def replace_count(path, old, new, expected):
+              file = Path(path)
+              text = file.read_text()
+              count = text.count(old)
+              if count != expected:
+                  raise SystemExit(f"{path}: expected {expected} occurrences, found {count}: {old!r}")
+              file.write_text(text.replace(old, new))
+
+          http = "kanger-server/src/org/kanger/HttpServer.java"
+          replace_once(
+              http,
+              '    static final int DEFAULT_MAX_BODY_BYTES = 1024 * 1024;\n',
+              '    static final int DEFAULT_MAX_BODY_BYTES = 1024 * 1024;\n'
+              '    static final String API_VERSION_S = "1";\n')
+          replace_once(
+              http,
+              '    private static void sendJson(HttpExchange exchange,\n'
+              '                                 int status,\n'
+              '                                 JSONObject response,\n'
+              '                                 String allowedOrigin,\n'
+              '                                 String requestId) throws IOException {\n'
+              '        byte[] body = response == null\n'
+              '                ? new byte[0]\n'
+              '                : response.toString().getBytes(StandardCharsets.UTF_8);\n',
+              '    static JSONObject withVersionIdentity(JSONObject response) {\n'
+              '        if (response == null) {\n'
+              '            return null;\n'
+              '        }\n'
+              '        return response\n'
+              '                .put("version", Version.CORE_VERSION_S)\n'
+              '                .put("core_version", Version.CORE_VERSION_S)\n'
+              '                .put("api_version", API_VERSION_S)\n'
+              '                .put("server_version", Version.SERVER_VERSION_S);\n'
+              '    }\n\n'
+              '    private static void sendJson(HttpExchange exchange,\n'
+              '                                 int status,\n'
+              '                                 JSONObject response,\n'
+              '                                 String allowedOrigin,\n'
+              '                                 String requestId) throws IOException {\n'
+              '        JSONObject versionedResponse = withVersionIdentity(response);\n'
+              '        byte[] body = versionedResponse == null\n'
+              '                ? new byte[0]\n'
+              '                : versionedResponse.toString().getBytes(StandardCharsets.UTF_8);\n')
+
+          replace_once(
+              "kanger-server/pom.xml",
+              '<kanger.server.artifact.version>server-0.12</kanger.server.artifact.version>',
+              '<kanger.server.artifact.version>server-0.13</kanger.server.artifact.version>')
+
+          version_test = "kanger-server/test/org/kanger/VersionTest.java"
+          replace_count(version_test, 'server-0.12', 'server-0.13', 6)
+
+          http_test = "kanger-server/test/org/kanger/HttpServerTest.java"
+          replace_once(
+              http_test,
+              '    @Test\n'
+              '    void saturatedQueueRunsOnlyRejectionResponseInline() throws Exception {\n',
+              '    @Test\n'
+              '    void everyJsonResponseCarriesCoreApiAndServerIdentity() {\n'
+              '        JSONObject response = HttpServer.withVersionIdentity(\n'
+              '                new JSONObject()\n'
+              '                        .put("result", "OK")\n'
+              '                        .put("version", "legacy"));\n\n'
+              '        assertEquals("3.3", response.getString("version"));\n'
+              '        assertEquals("3.3", response.getString("core_version"));\n'
+              '        assertEquals("1", response.getString("api_version"));\n'
+              '        assertEquals("server-0.13", response.getString("server_version"));\n'
+              '    }\n\n'
+              '    @Test\n'
+              '    void saturatedQueueRunsOnlyRejectionResponseInline() throws Exception {\n')
+
+          smoke = "kanger-server/scripts/smoke-local.sh"
+          replace_once(
+              smoke,
+              'trap \'rm -f "${HEADERS}"\' EXIT\n',
+              'trap \'rm -f "${HEADERS}"\' EXIT\n\n'
+              'EXPECTED_CORE_VERSION="${KANGER_EXPECTED_CORE_VERSION:-3.3}"\n'
+              'EXPECTED_API_VERSION="${KANGER_EXPECTED_API_VERSION:-1}"\n'
+              'EXPECTED_SERVER_VERSION="${KANGER_EXPECTED_SERVER_VERSION:-server-0.13}"\n\n'
+              'assert_version_identity() {\n'
+              '  local response="$1"\n'
+              '  echo "${response}" | grep -q "\\\"version\\\":\\\"${EXPECTED_CORE_VERSION}\\\""\n'
+              '  echo "${response}" | grep -q "\\\"core_version\\\":\\\"${EXPECTED_CORE_VERSION}\\\""\n'
+              '  echo "${response}" | grep -q "\\\"api_version\\\":\\\"${EXPECTED_API_VERSION}\\\""\n'
+              '  echo "${response}" | grep -q "\\\"server_version\\\":\\\"${EXPECTED_SERVER_VERSION}\\\""\n'
+              '}\n')
+          replace_once(
+              smoke,
+              'echo "${HEALTH}" | grep -q \'"status":"UP"\'\n',
+              'echo "${HEALTH}" | grep -q \'"status":"UP"\'\n'
+              'assert_version_identity "${HEALTH}"\n')
+          replace_once(
+              smoke,
+              'echo "${READY}" | grep -q \'"queue_capacity"\'\n',
+              'echo "${READY}" | grep -q \'"queue_capacity"\'\n'
+              'assert_version_identity "${READY}"\n')
+          replace_once(
+              smoke,
+              'echo "${VERSION}" | grep -q \'"result":"OK"\'\n',
+              'echo "${VERSION}" | grep -q \'"result":"OK"\'\n'
+              'assert_version_identity "${VERSION}"\n')
+
+          workflow = ".github/workflows/kanger-server.yml"
+          workflow_path = Path(workflow)
+          workflow_text = workflow_path.read_text().replace('server-0.12', 'server-0.13')
+          workflow_path.write_text(workflow_text)
+          replace_once(
+              workflow,
+              '          echo "${health_response}" | grep -q \'"version":"server-0.13"\'\n',
+              '          echo "${health_response}" | grep -q \'"version":"3.3"\'\n'
+              '          echo "${health_response}" | grep -q \'"core_version":"3.3"\'\n'
+              '          echo "${health_response}" | grep -q \'"api_version":"1"\'\n'
+              '          echo "${health_response}" | grep -q \'"server_version":"server-0.13"\'\n')
+          replace_once(
+              workflow,
+              '          echo "${ready_response}" | grep -q \'"version":"server-0.13"\'\n',
+              '          echo "${ready_response}" | grep -q \'"version":"3.3"\'\n'
+              '          echo "${ready_response}" | grep -q \'"core_version":"3.3"\'\n'
+              '          echo "${ready_response}" | grep -q \'"api_version":"1"\'\n'
+              '          echo "${ready_response}" | grep -q \'"server_version":"server-0.13"\'\n')
+
+          for script in (
+              "kanger-server/deploy/kanger-deploy.sh",
+              "kanger-server/deploy/kanger-update.sh",
+          ):
+              replace_count(
+                  script,
+                  "grep -q '\\\"version\\\":\\\"${ARTIFACT_VERSION}\\\"'",
+                  "grep -Eq '\\\"(server_version|version)\\\":\\\"${ARTIFACT_VERSION}\\\"'",
+                  2)
+              replace_once(
+                  script,
+                  'grep -q "\\\"version\\\":\\\"${ARTIFACT_VERSION}\\\""',
+                  'grep -Eq "\\\"(server_version|version)\\\":\\\"${ARTIFACT_VERSION}\\\""')
+              replace_once(
+                  script,
+                  'Public /health does not expose ${ARTIFACT_VERSION}',
+                  'Public /health does not expose server version ${ARTIFACT_VERSION}')
+
+          automation_workflow = ".github/workflows/kanger-server-update.yml"
+          replace_once(
+              automation_workflow,
+              "          grep -q 'expected 403' \\\n            kanger-server/deploy/kanger-update.sh\n",
+              "          grep -q 'expected 403' \\\n            kanger-server/deploy/kanger-update.sh\n"
+              "          grep -q '(server_version|version)' \\\n            kanger-server/deploy/kanger-deploy.sh\n"
+              "          grep -q '(server_version|version)' \\\n            kanger-server/deploy/kanger-update.sh\n")
+
+          Path("kanger-server/VERSION-CONTRACT.md").write_text('''# KANGER Server version identity\n\nEvery non-empty JSON response produced by the HTTP boundary carries the same\nversion identity:\n\n```json\n{\n  "version": "3.3",\n  "core_version": "3.3",\n  "api_version": "1",\n  "server_version": "server-0.13"\n}\n```\n\n`version` is the user-facing compatibility alias for `core_version`. It names\nthe semantic KANGER product reached through the API.\n\n`core_version` changes when KANGER semantics or core compatibility changes.\n\n`api_version` identifies the public protocol contract independently from both\nthe core and its transport implementation.\n\n`server_version` identifies the qualified deployable REST-server artifact. It is\nthe value used by deployment receipts, rollback diagnostics and\n`kanger-deploy.sh` / `kanger-update.sh` qualification.\n\nDuring the transition from Server 0.12, the deployment scripts accept the old\n`version` field as a fallback for server-artifact verification. Newly built\nresponses are verified through `server_version`; the fallback exists only so a\ncurrent production installation can be inspected safely during a rolling\nupgrade.\n\nHTTP 204 responses have no body and therefore carry no version fields. All JSON\nsuccess and error responses, including `/health`, `/ready` and `/version`, are\ndecorated at the transport boundary rather than independently by each handler.\n''')
+          PY
+
+      - name: Qualify the implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n kanger-server/deploy/kanger-deploy.sh
+          bash -n kanger-server/deploy/kanger-update.sh
+          bash -n kanger-server/scripts/smoke-local.sh
+          mvn -B -ntp -f kanger-server/pom.xml clean verify
+
+      - name: Commit the qualified artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/kanger-version-contract-bootstrap.yml
+          git config user.name "KANGER Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Server 0.13: expose core, API and server versions"
+          git push origin HEAD:server/0.13-version-identity
