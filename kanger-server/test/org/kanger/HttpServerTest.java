@@ -98,6 +98,24 @@ class HttpServerTest {
     }
 
     @Test
+    void successfulEmailConfirmationRedirectsOnlyForPublicGet() {
+        JSONObject parameters = new JSONObject().put("confirm", "opaque-token");
+        JSONObject success = new JSONObject().put("result", "OK");
+        JSONObject failure = new JSONObject().put("result", "error");
+
+        assertTrue(HttpServer.shouldRedirectEmailConfirmation(
+                "GET", "", parameters, success));
+        assertTrue(HttpServer.shouldRedirectEmailConfirmation(
+                "GET", "login", parameters, success));
+        assertFalse(HttpServer.shouldRedirectEmailConfirmation(
+                "POST", "login", parameters, success));
+        assertFalse(HttpServer.shouldRedirectEmailConfirmation(
+                "GET", "command", parameters, success));
+        assertFalse(HttpServer.shouldRedirectEmailConfirmation(
+                "GET", "login", parameters, failure));
+    }
+
+    @Test
     void saturatedQueueRunsOnlyRejectionResponseInline() throws Exception {
         HttpServer.OperationalState state = new HttpServer.OperationalState();
         ThreadPoolExecutor executor = HttpServer.createWorkerPool(1, 1, state);

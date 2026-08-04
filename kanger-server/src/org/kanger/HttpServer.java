@@ -295,6 +295,22 @@ public final class HttpServer {
         return Boolean.TRUE.equals(OVERLOAD_DISPATCH.get());
     }
 
+    static boolean shouldRedirectEmailConfirmation(String method,
+                                                     String context,
+                                                     JSONObject parameters,
+                                                     JSONObject response) {
+        boolean confirmationContext = context != null
+                && (context.isEmpty() || "login".equalsIgnoreCase(context));
+        return "GET".equals(method)
+                && confirmationContext
+                && parameters != null
+                && parameters.has("confirm")
+                && !parameters.isNull("confirm")
+                && !parameters.optString("confirm", "").trim().isEmpty()
+                && response != null
+                && "OK".equalsIgnoreCase(response.optString("result", ""));
+    }
+
     private static String decode(String value) throws MalformedRequestException {
         try {
             return URLDecoder.decode(value, StandardCharsets.UTF_8.name());
@@ -359,6 +375,23 @@ public final class HttpServer {
                 .put("core_version", Version.CORE_VERSION_S)
                 .put("api_version", API_VERSION_S)
                 .put("server_version", Version.SERVER_VERSION_S);
+    }
+
+    private static void sendRedirect(HttpExchange exchange,
+                                     String location,
+                                     String allowedOrigin,
+                                     String requestId) throws IOException {
+        Headers headers = exchange.getResponseHeaders();
+        headers.set("Location", location);
+        headers.set("Cache-Control", "no-store");
+        headers.set("X-Content-Type-Options", "nosniff");
+        headers.set("Referrer-Policy", "no-referrer");
+        headers.set("X-Request-ID", requestId);
+        if (allowedOrigin != null) {
+            headers.set("Access-Control-Allow-Origin", allowedOrigin);
+            headers.set("Vary", "Origin");
+        }
+        exchange.sendResponseHeaders(303, -1L);
     }
 
     private static void sendJson(HttpExchange exchange,
@@ -550,9 +583,18 @@ public final class HttpServer {
                             "Reactor returned unsupported response type");
                 }
                 JSONObject response = (JSONObject) applicationResponse;
+                JSONObject queryParameters = packet.getJSONObject("query")
+                        .getJSONObject("parameters");
                 if (response == null) {
                     status = 404;
                     sendJson(exchange, status, error("Unknown API context"),
+                            allowedOrigin, requestId);
+                } else if (shouldRedirectEmailConfirmation(
+                        method, context, queryParameters, response)) {
+                    status = 303;
+                    sendRedirect(exchange,
+                            getSetting("server.confirmation.redirect.url",
+                                    "https://kanger.org/"),
                             allowedOrigin, requestId);
                 } else {
                     status = 200;
