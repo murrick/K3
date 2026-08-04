@@ -100,8 +100,9 @@ final class FileAccountWorkspace implements AccountLifecycleService.WorkspaceAut
         properties.setProperty("sources.dir", directory(canonical.resolve("SRC")));
         properties.setProperty("database.dir", directory(canonical.resolve("DB")));
         properties.setProperty("reg.login", request.getLogin());
-        properties.setProperty("reg.agreed", Boolean.TRUE.toString());
-        properties.setProperty("reg.email.confirmed", Boolean.TRUE.toString());
+        String emailVerified = Boolean.toString(request.isEmailVerified());
+        properties.setProperty("reg.agreed", emailVerified);
+        properties.setProperty("reg.email.confirmed", emailVerified);
         putIfPresent(properties, "reg.email", request.getEmail());
         putIfPresent(properties, "reg.name", request.getName());
         putIfPresent(properties, "reg.country", request.getCountry());
