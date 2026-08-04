@@ -172,6 +172,7 @@ public final class PendingRegistrationService {
                     public Activation run() throws Exception {
                         PendingRegistration pending = store.resolveConfirmation(
                                 confirmationToken);
+                        ensureNotDeleting(pending.getLogin());
                         Long credentialUserId = accounts.findCredentialUserId(
                                 pending.getLogin());
                         Long workspaceUserId = accounts.findWorkspaceUserId(
@@ -264,6 +265,7 @@ public final class PendingRegistrationService {
     }
 
     private void ensureActiveUnique(String login, String email) throws Exception {
+        ensureNotDeleting(login);
         if (accounts.findUserId(login) != null) {
             throw failure(AccountErrorCode.LOGIN_ALREADY_USED,
                     "Login already belongs to an active account");
@@ -271,6 +273,13 @@ public final class PendingRegistrationService {
         if (accounts.findUserIdByEmail(email) != null) {
             throw failure(AccountErrorCode.EMAIL_ALREADY_USED,
                     "E-mail already belongs to an active account");
+        }
+    }
+
+    private void ensureNotDeleting(String login) throws Exception {
+        if (accounts.isDeletionInProgress(login)) {
+            throw failure(AccountErrorCode.LOGIN_ALREADY_USED,
+                    "Login is reserved by an account deletion in progress");
         }
     }
 
