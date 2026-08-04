@@ -9,7 +9,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -96,6 +103,42 @@ class CredentialStoreTest {
                         userId -> {
                             // retry succeeds without manual cleanup
                         }));
+    }
+
+    @Test
+    void separateFacadesCoordinateOneCredentialAuthority() throws Exception {
+        final CredentialStore first = new CredentialStore(
+                file, 1000, new SecureRandom());
+        final CredentialStore second = new CredentialStore(
+                file, 1000, new SecureRandom());
+        final CountDownLatch start = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<Long> firstId = executor.submit(() -> {
+                start.await();
+                return first.createPrepared("first", "first password", userId -> {
+                    // prepared
+                });
+            });
+            Future<Long> secondId = executor.submit(() -> {
+                start.await();
+                return second.createPrepared("second", "second password", userId -> {
+                    // prepared
+                });
+            });
+
+            start.countDown();
+            Set<Long> allocated = new HashSet<Long>(Arrays.asList(
+                    firstId.get(), secondId.get()));
+
+            assertEquals(new HashSet<Long>(Arrays.asList(1L, 2L)), allocated);
+            assertEquals(first.findUserId("first").longValue(),
+                    first.authenticate("first", "first password"));
+            assertEquals(second.findUserId("second").longValue(),
+                    second.authenticate("second", "second password"));
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     @Test
