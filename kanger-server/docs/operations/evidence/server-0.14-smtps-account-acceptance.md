@@ -23,6 +23,8 @@ Mail mode: `smtps`
 
 4. The user then performed an ordinary sign-in with the newly registered credentials.
 5. Sign-in succeeded and the authenticated KANGER console opened.
+6. The user performed two complete logout → ordinary sign-in cycles.
+7. Both logout operations ended the current authenticated browser session, and both subsequent sign-ins created working sessions and reopened the console.
 
 No login, e-mail address, password, session token, confirmation token, or confirmation URL is recorded in this evidence.
 
@@ -35,10 +37,14 @@ account activation/publication:    PASS
 ordinary credential login:         PASS
 session creation:                  PASS
 authenticated console load:        PASS
+logout/session invalidation:       PASS (2 observed cycles)
+repeated ordinary login:           PASS (2 observed cycles)
 confirmation browser UX:           FINDING
 ```
 
 The successful ordinary login proves that the pending registration had already been activated into a complete ACTIVE account before the browser received `CONFIRMATION_TOKEN_INVALID`. Confirmation did not create a browser session; the separate ordinary login did.
+
+Two subsequent logout/sign-in cycles additionally demonstrate that the production browser session can be invalidated and recreated repeatedly without stale-session interference.
 
 ## Production finding
 
@@ -56,6 +62,8 @@ pending intent
 → complete ACTIVE account
 → separate ordinary login
 → application session
+→ logout/session invalidation
+→ repeatable ordinary login
 ```
 
 It is an operational/UX and confirmation-protocol finding for a follow-up artifact. A safer confirmation design should avoid irreversible account activation directly on a prefetchable GET request and should provide an idempotent already-confirmed outcome where possible.
