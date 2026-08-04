@@ -9,6 +9,8 @@ DEFAULT_SSH_TARGET="murray@94.103.94.41"
 DEFAULT_SSH_PORT="4211"
 DEFAULT_PUBLIC_API_URL="https://api.kanger.org"
 DEFAULT_PUBLIC_UI_URL="https://kanger.org"
+REMOTE_RECEIPT_PATH="/opt/kanger-server/deployment.properties"
+REMOTE_LOCK_PATH="/run/lock/kanger-server-update.lock"
 
 REPO_URL="${KANGER_REPO_URL:-${DEFAULT_REPO_URL}}"
 REF="${KANGER_REF:-${DEFAULT_REF}}"
@@ -22,6 +24,10 @@ DRY_RUN=false
 PUBLIC_CHECKS=true
 REMOTE_DIR=""
 REMOTE_CREATED=false
+ARTIFACT_VERSION=""
+JAR_SHA256=""
+BUILD_DATE=""
+OPERATION=""
 
 usage() {
   cat <<USAGE
@@ -38,7 +44,7 @@ Options:
   --port PORT            SSH port
   --api-url URL          Public API base URL
   --ui-url URL           Public UI URL
-  --force                Reinstall even when the remote JAR checksum matches
+  --force                Rebuild and reinstall even when source commit matches
   --no-public-checks     Skip checks through Cloudflare/public nginx
   --dry-run              Print the resolved plan without changing anything
   -h, --help             Show this help
@@ -61,6 +67,11 @@ log() {
 
 require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "Required command not found: $1"
+}
+
+property_value() {
+  local property_name="$1"
+  awk -F= -v name="${property_name}" '$1 == name {sub(/^[^=]*=/, ""); print; exit}'
 }
 
 sha256_file() {
@@ -86,6 +97,68 @@ cleanup() {
   exit "${status}"
 }
 trap cleanup EXIT
+
+stage_remote_assets() {
+  REMOTE_DIR="/tmp/kanger-update-${SHORT_COMMIT}-$$"
+  log "preparing remote staging directory ${REMOTE_DIR}"
+  ssh "${SSH_ARGS[@]}" \
+    "rm -rf -- '${REMOTE_DIR}' && mkdir -m 700 -- '${REMOTE_DIR}' '${REMOTE_DIR}/deploy'"
+  REMOTE_CREATED=true
+
+  scp -P "${SSH_PORT}" -r "${DEPLOY_DIR}/." \
+    "${SSH_TARGET}:${REMOTE_DIR}/deploy/"
+}
+
+verify_remote() {
+  log "verifying installed service and nginx boundary"
+  ssh -tt "${SSH_ARGS[@]}" \
+    "sudo bash '${REMOTE_DIR}/deploy/verify-installed.sh' && \
+     curl --fail --silent --show-error http://127.0.0.1:1964/health | grep -q '\"version\":\"${ARTIFACT_VERSION}\"' && \
+     curl --fail --silent --show-error http://127.0.0.1:1964/ready | grep -q '\"version\":\"${ARTIFACT_VERSION}\"'"
+}
+
+verify_public() {
+  if [[ "${PUBLIC_CHECKS}" != true ]]; then
+    return
+  fi
+
+  log "checking public API and UI"
+  local public_health ready_status ui_status
+  public_health="$(curl --fail --silent --show-error --max-time 15 \
+    "${PUBLIC_API_URL%/}/health")"
+  printf '%s\n' "${public_health}" | grep -q '"status":"UP"' \
+    || fail "Public /health is not UP"
+  printf '%s\n' "${public_health}" | grep -q "\"version\":\"${ARTIFACT_VERSION}\"" \
+    || fail "Public /health does not expose ${ARTIFACT_VERSION}"
+
+  ready_status="$(curl --silent --show-error --max-time 15 \
+    --output /dev/null --write-out '%{http_code}' \
+    "${PUBLIC_API_URL%/}/ready")"
+  [[ "${ready_status}" == "403" ]] \
+    || fail "Public /ready returned HTTP ${ready_status}, expected 403"
+
+  ui_status="$(curl --silent --show-error --max-time 15 \
+    --output /dev/null --write-out '%{http_code}' \
+    "${PUBLIC_UI_URL}")"
+  [[ "${ui_status}" =~ ^(200|301|302|307|308)$ ]] \
+    || fail "Public UI returned HTTP ${ui_status}"
+}
+
+print_receipt() {
+  cat <<RECEIPT
+
+KANGER Server update completed.
+  operation: ${OPERATION}
+  artifact : ${ARTIFACT_VERSION}
+  source   : ${REF}
+  commit   : ${COMMIT}
+  SHA-256  : ${JAR_SHA256:-recorded on VPS}
+  target   : ${SSH_TARGET}:${SSH_PORT}
+
+Persistent configuration and state were retained by install.sh.
+Registration/login continuity should be checked with the existing production user.
+RECEIPT
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -163,7 +236,7 @@ if [[ "${DRY_RUN}" == true ]]; then
   exit 0
 fi
 
-for command in git mvn java jar unzip ssh scp curl awk grep sed mktemp; do
+for command in git mvn java jar unzip ssh scp curl awk grep find date; do
   require_command "${command}"
 done
 
@@ -207,9 +280,32 @@ git -C "${CHECKOUT_DIR}" clean -ffd
 POM="${CHECKOUT_DIR}/kanger-server/pom.xml"
 JAR_FILE="${CHECKOUT_DIR}/kanger-server/target/kanger-server.jar"
 DEPLOY_DIR="${CHECKOUT_DIR}/kanger-server/deploy"
+LOCAL_RECEIPT_FILE="${CHECKOUT_DIR}/kanger-server/target/deployment.properties"
 [[ -f "${POM}" ]] || fail "Server POM not found at ${POM}"
 [[ -f "${DEPLOY_DIR}/install.sh" ]] || fail "Installer not found in ${DEPLOY_DIR}"
 [[ -f "${DEPLOY_DIR}/verify-installed.sh" ]] || fail "Verifier not found in ${DEPLOY_DIR}"
+
+SSH_ARGS=(-p "${SSH_PORT}" "${SSH_TARGET}")
+REMOTE_RECEIPT="$(ssh "${SSH_ARGS[@]}" \
+  "command -v sha256sum >/dev/null && command -v flock >/dev/null; \
+   if test -r '${REMOTE_RECEIPT_PATH}'; then cat '${REMOTE_RECEIPT_PATH}'; fi")"
+REMOTE_COMMIT="$(printf '%s\n' "${REMOTE_RECEIPT}" | property_value source.commit)"
+REMOTE_ARTIFACT_VERSION="$(printf '%s\n' "${REMOTE_RECEIPT}" | property_value artifact.version)"
+REMOTE_RECORDED_SHA="$(printf '%s\n' "${REMOTE_RECEIPT}" | property_value jar.sha256)"
+
+if [[ "${FORCE}" != true && -n "${REMOTE_COMMIT}" && "${REMOTE_COMMIT}" == "${COMMIT}" ]]; then
+  [[ -n "${REMOTE_ARTIFACT_VERSION}" ]] \
+    || fail "Deployment receipt has source.commit but no artifact.version"
+  ARTIFACT_VERSION="${REMOTE_ARTIFACT_VERSION}"
+  JAR_SHA256="${REMOTE_RECORDED_SHA}"
+  OPERATION="no-op (source commit already deployed)"
+  log "source commit is already deployed; skipping build and restart"
+  stage_remote_assets
+  verify_remote
+  verify_public
+  print_receipt
+  exit 0
+fi
 
 log "building and qualifying KANGER Server"
 mvn -B -ntp \
@@ -222,10 +318,10 @@ jar tf "${JAR_FILE}" | grep -q '^org/kanger/Kanger.class$' \
   || fail "JAR does not contain org/kanger/Kanger.class"
 
 BUILD_PROPERTIES="$(unzip -p "${JAR_FILE}" org/kanger/build.properties)"
-ARTIFACT_VERSION="$(printf '%s\n' "${BUILD_PROPERTIES}" | awk -F= '$1 == "server.version" {print $2; exit}')"
-DISPLAY_BRANCH="$(printf '%s\n' "${BUILD_PROPERTIES}" | awk -F= '$1 == "branch" {print $2; exit}')"
-SOURCE_BRANCH="$(printf '%s\n' "${BUILD_PROPERTIES}" | awk -F= '$1 == "source.branch" {print $2; exit}')"
-BUILD_DATE="$(printf '%s\n' "${BUILD_PROPERTIES}" | awk -F= '$1 == "date" {print $2; exit}')"
+ARTIFACT_VERSION="$(printf '%s\n' "${BUILD_PROPERTIES}" | property_value server.version)"
+DISPLAY_BRANCH="$(printf '%s\n' "${BUILD_PROPERTIES}" | property_value branch)"
+SOURCE_BRANCH="$(printf '%s\n' "${BUILD_PROPERTIES}" | property_value source.branch)"
+BUILD_DATE="$(printf '%s\n' "${BUILD_PROPERTIES}" | property_value date)"
 
 [[ -n "${ARTIFACT_VERSION}" ]] || fail "JAR has no server.version metadata"
 [[ "${DISPLAY_BRANCH}" == "${ARTIFACT_VERSION}" ]] \
@@ -243,22 +339,16 @@ log "artifact     : ${ARTIFACT_VERSION}"
 log "build date   : ${BUILD_DATE}"
 log "JAR SHA-256  : ${JAR_SHA256}"
 
-SSH_ARGS=(-p "${SSH_PORT}" "${SSH_TARGET}")
 REMOTE_SHA256="$(ssh "${SSH_ARGS[@]}" \
   "if test -f /opt/kanger-server/kanger-server.jar; then sha256sum /opt/kanger-server/kanger-server.jar | awk '{print \$1}'; fi")"
 
-REMOTE_DIR="/tmp/kanger-update-${SHORT_COMMIT}-$$"
-log "preparing remote staging directory ${REMOTE_DIR}"
-ssh "${SSH_ARGS[@]}" \
-  "rm -rf -- '${REMOTE_DIR}' && mkdir -m 700 -- '${REMOTE_DIR}' '${REMOTE_DIR}/deploy'"
-REMOTE_CREATED=true
-
-scp -P "${SSH_PORT}" -r "${DEPLOY_DIR}/." \
-  "${SSH_TARGET}:${REMOTE_DIR}/deploy/"
+stage_remote_assets
 
 if [[ -n "${REMOTE_SHA256}" && "${REMOTE_SHA256}" == "${JAR_SHA256}" && "${FORCE}" != true ]]; then
+  OPERATION="receipt adoption (exact JAR already installed)"
   log "remote already contains this exact JAR; skipping restart"
 else
+  OPERATION="installed"
   scp -P "${SSH_PORT}" "${JAR_FILE}" \
     "${SSH_TARGET}:${REMOTE_DIR}/kanger-server.jar"
 
@@ -267,46 +357,27 @@ else
 
   log "installing qualified JAR; install.sh owns rollback"
   ssh -tt "${SSH_ARGS[@]}" \
-    "sudo bash '${REMOTE_DIR}/deploy/install.sh' '${REMOTE_DIR}/kanger-server.jar'"
+    "sudo flock -n '${REMOTE_LOCK_PATH}' \
+       bash '${REMOTE_DIR}/deploy/install.sh' '${REMOTE_DIR}/kanger-server.jar'"
 fi
 
-log "verifying installed service and nginx boundary"
-ssh -tt "${SSH_ARGS[@]}" \
-  "sudo bash '${REMOTE_DIR}/deploy/verify-installed.sh' && \
-   curl --fail --silent --show-error http://127.0.0.1:1964/health | grep -q '\"version\":\"${ARTIFACT_VERSION}\"' && \
-   curl --fail --silent --show-error http://127.0.0.1:1964/ready | grep -q '\"version\":\"${ARTIFACT_VERSION}\"'"
+verify_remote
+verify_public
 
-if [[ "${PUBLIC_CHECKS}" == true ]]; then
-  log "checking public API and UI"
-  PUBLIC_HEALTH="$(curl --fail --silent --show-error --max-time 15 \
-    "${PUBLIC_API_URL%/}/health")"
-  printf '%s\n' "${PUBLIC_HEALTH}" | grep -q '"status":"UP"' \
-    || fail "Public /health is not UP"
-  printf '%s\n' "${PUBLIC_HEALTH}" | grep -q "\"version\":\"${ARTIFACT_VERSION}\"" \
-    || fail "Public /health does not expose ${ARTIFACT_VERSION}"
-
-  READY_STATUS="$(curl --silent --show-error --max-time 15 \
-    --output /dev/null --write-out '%{http_code}' \
-    "${PUBLIC_API_URL%/}/ready")"
-  [[ "${READY_STATUS}" == "403" ]] \
-    || fail "Public /ready returned HTTP ${READY_STATUS}, expected 403"
-
-  UI_STATUS="$(curl --silent --show-error --max-time 15 \
-    --output /dev/null --write-out '%{http_code}' \
-    "${PUBLIC_UI_URL}")"
-  [[ "${UI_STATUS}" =~ ^(200|301|302|307|308)$ ]] \
-    || fail "Public UI returned HTTP ${UI_STATUS}"
-fi
-
-cat <<RECEIPT
-
-KANGER Server update completed.
-  artifact : ${ARTIFACT_VERSION}
-  source   : ${REF}
-  commit   : ${COMMIT}
-  SHA-256  : ${JAR_SHA256}
-  target   : ${SSH_TARGET}:${SSH_PORT}
-
-Persistent configuration and state were retained by install.sh.
-Registration/login continuity should be checked with the existing production user.
+mkdir -p "$(dirname "${LOCAL_RECEIPT_FILE}")"
+cat > "${LOCAL_RECEIPT_FILE}" <<RECEIPT
+artifact.version=${ARTIFACT_VERSION}
+source.ref=${REF}
+source.commit=${COMMIT}
+jar.sha256=${JAR_SHA256}
+build.date=${BUILD_DATE}
+deployed.at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 RECEIPT
+
+scp -P "${SSH_PORT}" "${LOCAL_RECEIPT_FILE}" \
+  "${SSH_TARGET}:${REMOTE_DIR}/deployment.properties"
+ssh -tt "${SSH_ARGS[@]}" \
+  "sudo install -o root -g root -m 0644 \
+     '${REMOTE_DIR}/deployment.properties' '${REMOTE_RECEIPT_PATH}'"
+
+print_receipt
