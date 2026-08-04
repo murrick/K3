@@ -65,6 +65,40 @@ class AccountPolicyReactorTest {
     }
 
     @Test
+    void trustedExistingLoginActivatesBeforeDelegate() throws Exception {
+        AtomicBoolean activated = new AtomicBoolean();
+        AtomicBoolean called = new AtomicBoolean();
+        AccountPolicyReactor reactor = new AccountPolicyReactor(
+                RegistrationPolicy.TRUSTED,
+                delegate(called),
+                parameters -> activated.set(true));
+
+        JSONObject response = (JSONObject) reactor.run(packet(
+                "login", credentials()));
+
+        assertTrue(activated.get());
+        assertTrue(called.get());
+        assertEquals("OK", response.getString("result"));
+    }
+
+    @Test
+    void emailVerifiedExistingLoginDoesNotUseTrustedActivator() throws Exception {
+        AtomicBoolean activated = new AtomicBoolean();
+        AtomicBoolean called = new AtomicBoolean();
+        AccountPolicyReactor reactor = new AccountPolicyReactor(
+                RegistrationPolicy.EMAIL_VERIFIED,
+                delegate(called),
+                parameters -> activated.set(true));
+
+        JSONObject response = (JSONObject) reactor.run(packet(
+                "login", credentials()));
+
+        assertFalse(activated.get());
+        assertTrue(called.get());
+        assertEquals("OK", response.getString("result"));
+    }
+
+    @Test
     void authenticatedProfileUpdatePassesInTrustedMode() throws Exception {
         AtomicBoolean called = new AtomicBoolean();
         AccountPolicyReactor reactor = new AccountPolicyReactor(
@@ -103,6 +137,12 @@ class AccountPolicyReactorTest {
                 .put("register", "rick")
                 .put("password", "correct horse battery staple")
                 .put("token", token);
+    }
+
+    private static JSONObject credentials() {
+        return new JSONObject()
+                .put("login", "rick")
+                .put("password", "correct horse battery staple");
     }
 
     private static JSONObject packet(String context, JSONObject parameters) {
