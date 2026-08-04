@@ -67,8 +67,7 @@ final class FileAccountWorkspace implements AccountLifecycleService.WorkspaceAut
             throw new IllegalArgumentException("valid user id and request are required");
         }
 
-        Path canonical = root.resolve(Long.toString(userId)).normalize();
-        ensureChild(canonical);
+        Path canonical = canonicalHome(userId);
         if (Files.exists(canonical)) {
             throw new IOException("Account home already exists: " + canonical);
         }
@@ -105,6 +104,66 @@ final class FileAccountWorkspace implements AccountLifecycleService.WorkspaceAut
             removeIfEmpty(stagingRoot);
             throw failure;
         }
+    }
+
+    @Override
+    public ActiveAccountIdentity inspect(long userId) throws Exception {
+        Path home = canonicalHome(userId);
+        if (!Files.isDirectory(home)) {
+            return null;
+        }
+        Properties profile = readProfile(home);
+        String login = profile.getProperty("reg.login", "").trim();
+        if (login.isEmpty()) {
+            throw new IOException("Canonical account profile has no login: " + home);
+        }
+        return new ActiveAccountIdentity(
+                userId,
+                login,
+                profile.getProperty("reg.email", ""),
+                home);
+    }
+
+    @Override
+    public Path quarantine(AccountDeletion deletion) throws Exception {
+        if (deletion == null) {
+            throw new IllegalArgumentException("deletion record must not be null");
+        }
+        Path canonical = canonicalHome(deletion.getUserId());
+        if (!canonical.equals(deletion.getCanonicalHome())) {
+            throw new IOException(
+                    "Deletion canonical home does not match workspace authority");
+        }
+
+        Path quarantineRoot = root.resolve(".quarantine").normalize();
+        Path target = deletion.getQuarantineHome().toAbsolutePath().normalize();
+        if (!target.startsWith(quarantineRoot) || target.equals(quarantineRoot)) {
+            throw new IOException("Quarantine path escapes account root: " + target);
+        }
+
+        boolean sourceExists = Files.exists(canonical);
+        boolean targetExists = Files.exists(target);
+        if (sourceExists && targetExists) {
+            throw new IOException(
+                    "Canonical and quarantine homes both exist for user "
+                            + deletion.getUserId());
+        }
+        if (!sourceExists && targetExists) {
+            return target;
+        }
+        if (!sourceExists) {
+            throw new IOException(
+                    "Neither canonical nor quarantine home exists for user "
+                            + deletion.getUserId());
+        }
+
+        Files.createDirectories(quarantineRoot);
+        try {
+            Files.move(canonical, target, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException unsupported) {
+            Files.move(canonical, target);
+        }
+        return target;
     }
 
     @Override
@@ -157,13 +216,21 @@ final class FileAccountWorkspace implements AccountLifecycleService.WorkspaceAut
         if (reference == null || reference.isEmpty()) {
             return false;
         }
-        Path home = root.resolve(Long.toString(userId)).normalize();
-        ensureChild(home);
+        Path home = canonicalHome(userId);
         if (!Files.isDirectory(home)) {
             return false;
         }
         return reference.equals(readProfile(home).getProperty(
                 "reg.activation.reference", ""));
+    }
+
+    private Path canonicalHome(long userId) throws IOException {
+        if (userId <= 0L) {
+            throw new IllegalArgumentException("user id must be positive");
+        }
+        Path canonical = root.resolve(Long.toString(userId)).normalize();
+        ensureChild(canonical);
+        return canonical;
     }
 
     private void writeProfile(Path staging,
