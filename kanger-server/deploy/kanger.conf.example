@@ -18,6 +18,9 @@ server.watchdog.period=1000
 # Public API URL used in generated confirmation links.
 # server.url=https://api.kanger.org
 
+# Browser destination after a successful e-mail confirmation.
+# server.confirmation.redirect.url=https://kanger.org/
+
 # Confirmation mail is disabled until a complete explicit profile is supplied.
 # Choose exactly one mode: disabled, starttls, or smtps.
 server.email.mode=disabled

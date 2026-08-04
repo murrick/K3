@@ -138,6 +138,23 @@ public class QueryProcessor implements IReactor<JSONObject> {
         return result;
     }
 
+    static final String EMAIL_CONFIRMED_PROPERTY = "reg.email.confirmed";
+
+    static boolean isLegacyRootConfirmation(String context, JSONObject parameters) {
+        return context != null
+                && context.isEmpty()
+                && parameters != null
+                && parameters.has("confirm")
+                && !parameters.isNull("confirm")
+                && !parameters.optString("confirm", "").trim().isEmpty();
+    }
+
+    private static boolean isEmailConfirmed(IUser user) throws Exception {
+        String legacy = user.getProperty("reg.agreed", false + "");
+        return Boolean.parseBoolean(user.getProperty(
+                EMAIL_CONFIRMED_PROPERTY, legacy));
+    }
+
     @Override
     public Object run(JSONObject o) throws Exception {
         JSONObject result = null;
@@ -159,7 +176,8 @@ public class QueryProcessor implements IReactor<JSONObject> {
         }
         if (context != null) {
             try {
-                if ("login".equalsIgnoreCase(context)) {
+                if ("login".equalsIgnoreCase(context)
+                        || isLegacyRootConfirmation(context, parameters)) {
                     result = processLogin(parameters);
                 } else if ("version".equalsIgnoreCase(context)) {
                     result = new JSONObject();
@@ -482,7 +500,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
         } else if (!parameters.isNull("login") && !parameters.isNull("password")) {
             try {
                 IUser user = UserFactory.getUser(parameters.getString("login"), parameters.getString("password"));
-                if (user.containsProperty("reg.agreed") && Boolean.parseBoolean(user.getProperty("reg.agreed", false + ""))) {
+                if (isEmailConfirmed(user)) {
                     try {
                         ((User) user).getData();
                     } catch (RuntimeErrorException e) {
@@ -508,19 +526,18 @@ public class QueryProcessor implements IReactor<JSONObject> {
             try {
                 String userToken = parameters.getString("confirm");
                 IUser user = UserFactory.getUserByToken(userToken);
-                String token = UserFactory.addUser(user);
-                if (Boolean.parseBoolean(user.getProperty("reg.agreed", false + ""))) {
-                    result.put("result", "OK");
-                    result.put("description", "E-mail " + user.getProperty("reg.email", "") + " already confirmed");
-                    result.put("token", token);
-                    Watchdog.log(user, "E-mail " + user.getProperty("reg.email", "") + " already confirmed");
-                } else {
+                String email = user.getProperty("reg.email", "");
+                boolean alreadyConfirmed = isEmailConfirmed(user);
+                if (!alreadyConfirmed) {
                     user.setProperty("reg.agreed", true + "");
-                    result.put("result", "OK");
-                    result.put("description", "E-mail " + user.getProperty("reg.email", "") + " confirmed");
-                    result.put("token", token);
-                    Watchdog.log(user, "E-mail " + user.getProperty("reg.email", "") + " confirmed");
+                    user.setProperty(EMAIL_CONFIRMED_PROPERTY, true + "");
                 }
+                result.put("result", "OK");
+                result.put("description", "E-mail " + email
+                        + (alreadyConfirmed ? " already confirmed" : " confirmed"));
+                result.put("email_confirmed", true);
+                Watchdog.log(user, "E-mail " + email
+                        + (alreadyConfirmed ? " already confirmed" : " confirmed"));
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());
@@ -593,6 +610,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
                         userToken = UserFactory.token(parameters.getString("register"), parameters.getString("password"));
                         user = UserFactory.createUser(parameters.getString("register"), parameters.getString("password"));
                         user.setProperty("reg.agreed", false + "");
+                        user.setProperty(EMAIL_CONFIRMED_PROPERTY, false + "");
                     } else {
                         newUser = false;
                         user = UserFactory.getUser(token);
@@ -618,7 +636,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
                         user.setProperty("reg.privacy", parameters.getBoolean("privacy") + "");
                     }
                     if (newUser) {
-                        if (user.containsProperty("reg.agreed") && Boolean.parseBoolean(user.getProperty("reg.agreed", false + ""))) {
+                        if (isEmailConfirmed(user)) {
                             try {
                                 ((User) user).getData();
                             } catch (RuntimeErrorException e) {
@@ -683,7 +701,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
                         login +
                         ". Please confirm your e-mail by following link: " +
                         Settings.getProperty("server.url", "https://kanger.org") +
-                        "/?confirm=" + userToken,
+                        "/login?confirm=" + userToken,
                 Settings.getProperty("server.email.from", ""),
                 "utf-8",
                 Settings.getProperty("server.email.login", ""),

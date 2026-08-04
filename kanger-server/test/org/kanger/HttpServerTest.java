@@ -85,6 +85,37 @@ class HttpServerTest {
     }
 
     @Test
+    void everyJsonResponseCarriesCoreApiAndServerIdentity() {
+        JSONObject response = HttpServer.withVersionIdentity(
+                new JSONObject()
+                        .put("result", "OK")
+                        .put("version", "legacy"));
+
+        assertEquals("3.3", response.getString("version"));
+        assertEquals("3.3", response.getString("core_version"));
+        assertEquals("1", response.getString("api_version"));
+        assertEquals("server-0.13", response.getString("server_version"));
+    }
+
+    @Test
+    void successfulEmailConfirmationRedirectsOnlyForPublicGet() {
+        JSONObject parameters = new JSONObject().put("confirm", "opaque-token");
+        JSONObject success = new JSONObject().put("result", "OK");
+        JSONObject failure = new JSONObject().put("result", "error");
+
+        assertTrue(HttpServer.shouldRedirectEmailConfirmation(
+                "GET", "", parameters, success));
+        assertTrue(HttpServer.shouldRedirectEmailConfirmation(
+                "GET", "login", parameters, success));
+        assertFalse(HttpServer.shouldRedirectEmailConfirmation(
+                "POST", "login", parameters, success));
+        assertFalse(HttpServer.shouldRedirectEmailConfirmation(
+                "GET", "command", parameters, success));
+        assertFalse(HttpServer.shouldRedirectEmailConfirmation(
+                "GET", "login", parameters, failure));
+    }
+
+    @Test
     void saturatedQueueRunsOnlyRejectionResponseInline() throws Exception {
         HttpServer.OperationalState state = new HttpServer.OperationalState();
         ThreadPoolExecutor executor = HttpServer.createWorkerPool(1, 1, state);
