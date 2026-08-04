@@ -110,6 +110,12 @@ delete_output="$(java \
   echo "delete-user leaked plaintext password" >&2
   exit 1
 }
+delection_id="$(printf '%s' "${delete_output}" \
+  | sed -n 's/^Deletion \([^[:space:]]*\) reached COMPLETE$/\1/p')"
+[[ -n "${deletion_id}" ]] || {
+  echo "delete-user returned no deletion id" >&2
+  exit 1
+}
 
 printf '%s\n' "[admin 4/6] Verifying credential and session revocation"
 rejected_login="$(post_public "{\"context\":\"login\",\"parameters\":{\"login\":\"${login}\",\"password\":\"${password}\"}}")"
@@ -123,9 +129,14 @@ rejected_session="$(post_public "{\"context\":\"command\",\"parameters\":{\"toke
   exit 1
 }
 
-printf '%s\n' "[admin 5/6] Verifying canonical-home quarantine"
+printf '%s\n' "[admin 5/6] Verifying canonical-home quarantine and journal"
 [[ ! -e "${STATE_HOME}/KANGER/${user_id}" ]] || {
   echo "deleted canonical home still exists" >&2
+  exit 1
+}
+quarantine_home="${STATE_HOME}/KANGER/.quarantine/${user_id}-${deletion_id:0:16}"
+[[ -d "${quarantine_home}" ]] || {
+  echo "exact quarantine tree is missing: ${quarantine_home}" >&2
   exit 1
 }
 quarantine_count="$(find "${STATE_HOME}/KANGER/.quarantine" \
@@ -134,7 +145,46 @@ quarantine_count="$(find "${STATE_HOME}/KANGER/.quarantine" \
   echo "expected one exact quarantine tree, found ${quarantine_count}" >&2
   exit 1
 }
-grep -q "${login}" "${STATE_HOME}/KANGER/account-deletions.conf"
+
+journal="${STATE_HOME}/KANGER/account-deletions.conf"
+[[ -s "${journal}" ]] || {
+  echo "account deletion journal is missing" >&2
+  exit 1
+}
+"${PYTHON}" - "${journal}" "${deletion_id}" "${user_id}" \
+  "${login}" "${quarantine_home}" <<'PY'
+import base64
+import json
+import os
+import sys
+
+journal, deletion_id, user_id, login, quarantine_home = sys.argv[1:]
+record = None
+with open(journal, encoding="utf-8") as stream:
+    for original in stream:
+        line = original.strip()
+        if not line or line.startswith(("#", "!")):
+            continue
+        version, payload = line.split("\t", 1)
+        if version != "v1":
+            raise SystemExit("unexpected deletion journal version")
+        payload += "=" * (-len(payload) % 4)
+        candidate = json.loads(base64.urlsafe_b64decode(payload).decode("utf-8"))
+        if candidate.get("id") == deletion_id:
+            record = candidate
+            break
+
+if record is None:
+    raise SystemExit("exact deletion journal record is missing")
+if int(record.get("userId", -1)) != int(user_id):
+    raise SystemExit("deletion journal userId mismatch")
+if record.get("login") != login:
+    raise SystemExit("deletion journal login mismatch")
+if record.get("state") != "COMPLETE":
+    raise SystemExit("deletion journal did not reach COMPLETE")
+if os.path.realpath(record.get("quarantineHome", "")) != os.path.realpath(quarantine_home):
+    raise SystemExit("deletion journal quarantine path mismatch")
+PY
 
 printf '%s\n' "[admin 6/6] Verifying public listener cannot dispatch admin paths"
 public_admin_response="$(curl --fail --silent --show-error \
