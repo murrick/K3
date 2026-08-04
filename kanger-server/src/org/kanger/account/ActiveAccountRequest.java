@@ -12,10 +12,10 @@ import org.kanger.security.CredentialMaterial;
  * Complete operator- or confirmation-authorized account creation request.
  *
  * <p>An operator request may carry plaintext only for the duration of one
- * synchronous call. A confirmed PendingRegistration carries already-derived
- * {@link CredentialMaterial}; the original password is not retained or
- * recoverable. The activation source independently records whether an optional
- * e-mail address has actually been verified.</p>
+ * synchronous call or may carry pre-derived {@link CredentialMaterial}. A
+ * confirmed PendingRegistration also carries pre-derived material; the
+ * activation source, not the password representation, independently records
+ * whether an e-mail address has actually been verified.</p>
  */
 public final class ActiveAccountRequest {
 
@@ -60,7 +60,7 @@ public final class ActiveAccountRequest {
     public ActiveAccountRequest(String login,
                                 CredentialMaterial credentialMaterial) {
         this(login, null, credentialMaterial,
-                AccountActivationSource.EMAIL_CONFIRMATION,
+                AccountActivationSource.LOCAL_OPERATOR,
                 "", "", "", "", null);
     }
 
@@ -72,7 +72,7 @@ public final class ActiveAccountRequest {
                                 String city,
                                 Boolean privacyConsent) {
         this(login, null, credentialMaterial,
-                AccountActivationSource.EMAIL_CONFIRMATION,
+                AccountActivationSource.LOCAL_OPERATOR,
                 email, name, country, city, privacyConsent);
     }
 
@@ -101,7 +101,7 @@ public final class ActiveAccountRequest {
         this.password = password;
         this.credentialMaterial = credentialMaterial;
         this.activationSource = required(activationSource, "activation source");
-        this.email = optional(email);
+        this.email = optional(email).trim();
         this.name = optional(name);
         this.country = optional(country);
         this.city = optional(city);
@@ -112,6 +112,10 @@ public final class ActiveAccountRequest {
         if ((password == null || password.isEmpty()) == (credentialMaterial == null)) {
             throw new IllegalArgumentException(
                     "exactly one password source must be supplied");
+        }
+        if (this.activationSource.isEmailVerified() && this.email.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "verified e-mail activation requires an e-mail address");
         }
     }
 
