@@ -26,7 +26,8 @@ class RegistrationPolicyTest {
 
     @Test
     void mailTransportModesSelectEmailVerifiedRegistration() {
-        for (String mode : new String[]{"starttls", "smtps", " STARTTLS "}) {
+        for (String mode : new String[]{
+                "starttls", "smtps", "ssl", " STARTTLS "}) {
             RegistrationPolicy policy = RegistrationPolicy.fromEmailMode(mode);
 
             assertEquals(RegistrationPolicy.EMAIL_VERIFIED, policy);
