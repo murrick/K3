@@ -27,7 +27,7 @@ class PublicAuthUiContractTest {
 
         assertTrue(index.contains("registration_policy"));
         assertTrue(index.contains("public_registration"));
-        assertTrue(index.contains("confirmation_creates_session"));
+        assertTrue(index.contains("sign-in remains a separate step"));
         assertTrue(index.contains("EMAIL_CONFIRMATION_REQUIRED"));
         assertTrue(index.contains("pending_action_token"));
         assertTrue(index.contains("change_pending_email"));
