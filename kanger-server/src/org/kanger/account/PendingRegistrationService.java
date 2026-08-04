@@ -1,0 +1,234 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2021 Dmitry G. Quznetsov
+ */
+
+package org.kanger.account;
+
+import org.kanger.Settings;
+import org.kanger.UserFactory;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+/**
+ * Coordinates persistent pending intent with complete ACTIVE account
+ * publication. No method creates an authenticated session.
+ */
+public final class PendingRegistrationService {
+
+    public static final class Activation {
+        private final long userId;
+        private final boolean recovered;
+
+        private Activation(long userId, boolean recovered) {
+            this.userId = userId;
+            this.recovered = recovered;
+        }
+
+        public long getUserId() {
+            return userId;
+        }
+
+        public boolean isRecovered() {
+            return recovered;
+        }
+    }
+
+    private static volatile PendingRegistrationService runtime;
+
+    private final PendingRegistrationStore store;
+    private final AccountLifecycleService accounts;
+
+    PendingRegistrationService(PendingRegistrationStore store,
+                               AccountLifecycleService accounts) {
+        if (store == null || accounts == null) {
+            throw new IllegalArgumentException(
+                    "pending store and account lifecycle must not be null");
+        }
+        this.store = store;
+        this.accounts = accounts;
+    }
+
+    public static PendingRegistrationService runtime() throws Exception {
+        PendingRegistrationService current = runtime;
+        if (current != null) {
+            return current;
+        }
+        synchronized (PendingRegistrationService.class) {
+            if (runtime == null) {
+                Path root = Paths.get(UserFactory.getDir(UserFactory.rootDir));
+                Path file = root.resolve("pending-registrations.conf");
+                runtime = new PendingRegistrationService(
+                        new PendingRegistrationStore(
+                                file,
+                                hours("server.registration.pending.ttl.hours", 168L),
+                                hours("server.registration.confirmation.ttl.hours", 24L),
+                                minutes("server.registration.action.ttl.minutes", 15L),
+                                seconds("server.registration.resend.cooldown.seconds", 60L),
+                                integer("server.registration.pending.max.records", 10000)),
+                        AccountLifecycleService.runtime());
+            }
+            return runtime;
+        }
+    }
+
+    static void resetRuntimeForTests() {
+        synchronized (PendingRegistrationService.class) {
+            runtime = null;
+        }
+    }
+
+    public PendingRegistrationStore.Created register(String login,
+                                                     String password,
+                                                     String email,
+                                                     String name,
+                                                     String country,
+                                                     String city,
+                                                     Boolean privacyConsent)
+            throws Exception {
+        ensureActiveUnique(login, email);
+        return store.create(new PendingRegistrationStore.Draft(
+                login,
+                email,
+                accounts.prepareCredential(password),
+                name,
+                country,
+                city,
+                privacyConsent));
+    }
+
+    public PendingRegistrationStore.Authenticated authenticate(
+            String login,
+            String password) throws Exception {
+        return store.authenticate(login, password);
+    }
+
+    public PendingRegistrationStore.Rotation resend(String actionToken)
+            throws Exception {
+        return store.resend(actionToken);
+    }
+
+    public PendingRegistrationStore.Rotation changeEmail(
+            String actionToken,
+            String email) throws Exception {
+        Long activeOwner = accounts.findUserIdByEmail(email);
+        if (activeOwner != null) {
+            throw failure(AccountErrorCode.EMAIL_ALREADY_USED,
+                    "E-mail already belongs to an active account");
+        }
+        return store.changeEmail(actionToken, email);
+    }
+
+    public PendingRegistration cancel(String actionToken) throws Exception {
+        return store.cancel(actionToken);
+    }
+
+    /**
+     * Activates the pending record and removes it only after complete account
+     * publication succeeds.
+     *
+     * <p>If a prior process stopped after publication but before pending
+     * removal, the exact activation reference reconciles the already-created
+     * account and completes pending cleanup without a duplicate.</p>
+     */
+    public Activation confirm(String confirmationToken) throws Exception {
+        PendingRegistration pending = store.resolveConfirmation(confirmationToken);
+        Long activeUserId = accounts.findUserId(pending.getLogin());
+        if (activeUserId != null) {
+            if (!accounts.hasActivationReference(
+                    activeUserId.longValue(), pending.getId())) {
+                throw failure(AccountErrorCode.LOGIN_ALREADY_USED,
+                        "Login already belongs to another active account");
+            }
+            if (!store.complete(pending.getId(), confirmationToken)) {
+                throw new IllegalStateException(
+                        "Activated pending registration could not be completed");
+            }
+            return new Activation(activeUserId.longValue(), true);
+        }
+
+        Long emailOwner = accounts.findUserIdByEmail(pending.getEmail());
+        if (emailOwner != null) {
+            throw failure(AccountErrorCode.EMAIL_ALREADY_USED,
+                    "E-mail already belongs to an active account");
+        }
+
+        ActiveAccount account = accounts.createActiveAccount(
+                new ActiveAccountRequest(
+                        pending.getLogin(),
+                        pending.getCredentialMaterial(),
+                        AccountActivationSource.EMAIL_CONFIRMATION,
+                        pending.getEmail(),
+                        pending.getName(),
+                        pending.getCountry(),
+                        pending.getCity(),
+                        pending.getPrivacyConsent(),
+                        pending.getId()));
+
+        if (!store.complete(pending.getId(), confirmationToken)) {
+            throw new IllegalStateException(
+                    "Account was activated but pending cleanup did not complete");
+        }
+        return new Activation(account.getUserId(), false);
+    }
+
+    public boolean containsLogin(String login) throws Exception {
+        return store.containsLogin(login);
+    }
+
+    public int pendingCount() throws Exception {
+        return store.size();
+    }
+
+    private void ensureActiveUnique(String login, String email) throws Exception {
+        if (accounts.findUserId(login) != null) {
+            throw failure(AccountErrorCode.LOGIN_ALREADY_USED,
+                    "Login already belongs to an active account");
+        }
+        if (accounts.findUserIdByEmail(email) != null) {
+            throw failure(AccountErrorCode.EMAIL_ALREADY_USED,
+                    "E-mail already belongs to an active account");
+        }
+    }
+
+    private static PendingRegistrationException failure(AccountErrorCode code,
+                                                         String message) {
+        return new PendingRegistrationException(code, message);
+    }
+
+    private static long hours(String key, long fallback) {
+        return positiveLong(key, fallback) * 60L * 60L * 1000L;
+    }
+
+    private static long minutes(String key, long fallback) {
+        return positiveLong(key, fallback) * 60L * 1000L;
+    }
+
+    private static long seconds(String key, long fallback) {
+        return positiveLong(key, fallback) * 1000L;
+    }
+
+    private static long positiveLong(String key, long fallback) {
+        String value = Settings.getProperty(key, Long.toString(fallback));
+        try {
+            long parsed = Long.parseLong(value.trim());
+            if (parsed <= 0L) {
+                throw new IllegalArgumentException(key + " must be positive");
+            }
+            return parsed;
+        } catch (NumberFormatException error) {
+            throw new IllegalArgumentException(key + " must be an integer", error);
+        }
+    }
+
+    private static int integer(String key, int fallback) {
+        long value = positiveLong(key, fallback);
+        if (value > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException(key + " exceeds integer range");
+        }
+        return (int) value;
+    }
+}
