@@ -9,7 +9,6 @@ package org.kanger.account;
 import org.kanger.Settings;
 import org.kanger.UserFactory;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -37,6 +36,7 @@ public final class PendingRegistrationService {
         }
     }
 
+    private static final Object ACTIVATION_AUTHORITY_LOCK = new Object();
     private static volatile PendingRegistrationService runtime;
 
     private final PendingRegistrationStore store;
@@ -130,49 +130,76 @@ public final class PendingRegistrationService {
      * Activates the pending record and removes it only after complete account
      * publication succeeds.
      *
-     * <p>If a prior process stopped after publication but before pending
-     * removal, the exact activation reference reconciles the already-created
-     * account and completes pending cleanup without a duplicate.</p>
+     * <p>The whole reconciliation is serialized in one JVM. Two distinct crash
+     * windows are recovered explicitly:</p>
+     *
+     * <ol>
+     *   <li>credential and canonical home both exist, but pending cleanup did
+     *   not complete;</li>
+     *   <li>canonical home exists with the exact activation reference, but the
+     *   process stopped before final credential publication.</li>
+     * </ol>
      */
     public Activation confirm(String confirmationToken) throws Exception {
-        PendingRegistration pending = store.resolveConfirmation(confirmationToken);
-        Long activeUserId = accounts.findUserId(pending.getLogin());
-        if (activeUserId != null) {
-            if (!accounts.hasActivationReference(
-                    activeUserId.longValue(), pending.getId())) {
-                throw failure(AccountErrorCode.LOGIN_ALREADY_USED,
-                        "Login already belongs to another active account");
-            }
-            if (!store.complete(pending.getId(), confirmationToken)) {
-                throw new IllegalStateException(
-                        "Activated pending registration could not be completed");
-            }
-            return new Activation(activeUserId.longValue(), true);
-        }
+        synchronized (ACTIVATION_AUTHORITY_LOCK) {
+            PendingRegistration pending = store.resolveConfirmation(
+                    confirmationToken);
+            Long credentialUserId = accounts.findCredentialUserId(
+                    pending.getLogin());
+            Long workspaceUserId = accounts.findWorkspaceUserId(
+                    pending.getLogin());
 
-        Long emailOwner = accounts.findUserIdByEmail(pending.getEmail());
-        if (emailOwner != null) {
-            throw failure(AccountErrorCode.EMAIL_ALREADY_USED,
-                    "E-mail already belongs to an active account");
-        }
+            if (credentialUserId != null) {
+                if (workspaceUserId == null
+                        || credentialUserId.longValue()
+                        != workspaceUserId.longValue()) {
+                    throw new IllegalStateException(
+                            "Credential and account workspace disagree for login "
+                                    + pending.getLogin());
+                }
+                requireActivationReference(workspaceUserId.longValue(), pending);
+                completePending(pending, confirmationToken);
+                return new Activation(credentialUserId.longValue(), true);
+            }
 
-        ActiveAccount account = accounts.createActiveAccount(
-                new ActiveAccountRequest(
+            if (workspaceUserId != null) {
+                requireActivationReference(workspaceUserId.longValue(), pending);
+                Long emailOwner = accounts.findUserIdByEmail(pending.getEmail());
+                if (emailOwner != null
+                        && emailOwner.longValue() != workspaceUserId.longValue()) {
+                    throw failure(AccountErrorCode.EMAIL_ALREADY_USED,
+                            "E-mail already belongs to another account workspace");
+                }
+                accounts.publishCredentialForExistingWorkspace(
+                        workspaceUserId.longValue(),
                         pending.getLogin(),
                         pending.getCredentialMaterial(),
-                        AccountActivationSource.EMAIL_CONFIRMATION,
-                        pending.getEmail(),
-                        pending.getName(),
-                        pending.getCountry(),
-                        pending.getCity(),
-                        pending.getPrivacyConsent(),
-                        pending.getId()));
+                        pending.getId());
+                completePending(pending, confirmationToken);
+                return new Activation(workspaceUserId.longValue(), true);
+            }
 
-        if (!store.complete(pending.getId(), confirmationToken)) {
-            throw new IllegalStateException(
-                    "Account was activated but pending cleanup did not complete");
+            Long emailOwner = accounts.findUserIdByEmail(pending.getEmail());
+            if (emailOwner != null) {
+                throw failure(AccountErrorCode.EMAIL_ALREADY_USED,
+                        "E-mail already belongs to an active account");
+            }
+
+            ActiveAccount account = accounts.createActiveAccount(
+                    new ActiveAccountRequest(
+                            pending.getLogin(),
+                            pending.getCredentialMaterial(),
+                            AccountActivationSource.EMAIL_CONFIRMATION,
+                            pending.getEmail(),
+                            pending.getName(),
+                            pending.getCountry(),
+                            pending.getCity(),
+                            pending.getPrivacyConsent(),
+                            pending.getId()));
+
+            completePending(pending, confirmationToken);
+            return new Activation(account.getUserId(), false);
         }
-        return new Activation(account.getUserId(), false);
     }
 
     public boolean containsLogin(String login) throws Exception {
@@ -181,6 +208,23 @@ public final class PendingRegistrationService {
 
     public int pendingCount() throws Exception {
         return store.size();
+    }
+
+    private void requireActivationReference(long userId,
+                                            PendingRegistration pending)
+            throws Exception {
+        if (!accounts.hasActivationReference(userId, pending.getId())) {
+            throw failure(AccountErrorCode.LOGIN_ALREADY_USED,
+                    "Login already belongs to another account or workspace");
+        }
+    }
+
+    private void completePending(PendingRegistration pending,
+                                 String confirmationToken) throws Exception {
+        if (!store.complete(pending.getId(), confirmationToken)) {
+            throw new IllegalStateException(
+                    "Activated pending registration could not be completed");
+        }
     }
 
     private void ensureActiveUnique(String login, String email) throws Exception {
