@@ -137,10 +137,10 @@ quarantine_count="$(find "${STATE_HOME}/KANGER/.quarantine" \
 grep -q "${login}" "${STATE_HOME}/KANGER/account-deletions.conf"
 
 printf '%s\n' "[admin 6/6] Verifying public listener cannot dispatch admin paths"
-public_admin_status="$(curl --silent --output /dev/null --write-out '%{http_code}' \
+public_admin_response="$(curl --fail --silent --show-error \
   --request POST --header 'Content-Type: application/json' --data '{}' \
   "${BASE_URL}/create-user")"
-[[ "${public_admin_status}" != "200" ]] || {
+[[ "$(json_field "${public_admin_response}" result)" = "error" ]] || {
   echo "public listener unexpectedly dispatched admin operation" >&2
   exit 1
 }
