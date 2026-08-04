@@ -45,6 +45,8 @@ public final class AccountLifecycleService {
         PreparedWorkspace prepare(long userId,
                                   ActiveAccountRequest request) throws Exception;
 
+        Long findUserIdByLogin(String login) throws Exception;
+
         Long findUserIdByEmail(String email) throws Exception;
 
         boolean hasActivationReference(long userId, String reference)
@@ -158,7 +160,8 @@ public final class AccountLifecycleService {
     }
 
     Long findUserId(String login) throws Exception {
-        return credentials.findUserId(login);
+        Long versioned = credentials.findUserId(login);
+        return versioned != null ? versioned : workspaces.findUserIdByLogin(login);
     }
 
     Long findUserIdByEmail(String email) throws Exception {
