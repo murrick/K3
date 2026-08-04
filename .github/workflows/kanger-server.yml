@@ -58,13 +58,14 @@ jobs:
           unzip -p kanger-server/target/kanger-server.jar META-INF/MANIFEST.MF \
             | grep -q '^Main-Class: org.kanger.Kanger'
           unzip -p kanger-server/target/kanger-server.jar org/kanger/build.properties \
-            | grep -q '^server.version=server-0.13$'
+            | grep -q '^server.version=server-0.14$'
 
       - name: Verify VPS deployment assets
         shell: bash
         run: |
           test -f kanger-server/deploy/install.sh
           test -f kanger-server/deploy/verify-installed.sh
+          test -f kanger-server/deploy/kanger-admin
           test -f kanger-server/deploy/systemd/kanger-server.service
           test -f kanger-server/deploy/nginx/kanger-server.conf.template
           test -f kanger-server/deploy/kanger.conf.example
@@ -73,11 +74,18 @@ jobs:
 
           bash -n kanger-server/deploy/install.sh
           bash -n kanger-server/deploy/verify-installed.sh
+          bash -n kanger-server/deploy/kanger-admin
           bash -n kanger-server/scripts/smoke-local.sh
 
           grep -q '^server.bind.address=127.0.0.1$' \
             kanger-server/deploy/kanger.conf.example
           grep -q '^server.port=1964$' \
+            kanger-server/deploy/kanger.conf.example
+          grep -q '^server.admin.enabled=true$' \
+            kanger-server/deploy/kanger.conf.example
+          grep -q '^server.admin.bind.address=127.0.0.1$' \
+            kanger-server/deploy/kanger.conf.example
+          grep -q '^server.admin.port=1965$' \
             kanger-server/deploy/kanger.conf.example
           grep -q 'ExecStart=/usr/bin/java -Duser.home=/var/lib/kanger-server' \
             kanger-server/deploy/systemd/kanger-server.service
@@ -89,6 +97,10 @@ jobs:
             kanger-server/deploy/nginx/kanger-server.conf.template
           grep -q 'location = /ready' \
             kanger-server/deploy/nginx/kanger-server.conf.template
+          grep -q 'assert_loopback_listener 1964 "application"' \
+            kanger-server/deploy/verify-installed.sh
+          grep -q 'assert_loopback_listener 1965 "operator"' \
+            kanger-server/deploy/verify-installed.sh
 
       - name: Run authenticated loopback and shutdown smoke
         if: matrix.java == '21'
@@ -140,7 +152,7 @@ jobs:
           echo "${health_response}" | grep -q '"version":"3.3"'
           echo "${health_response}" | grep -q '"core_version":"3.3"'
           echo "${health_response}" | grep -q '"api_version":"1"'
-          echo "${health_response}" | grep -q '"server_version":"server-0.13"'
+          echo "${health_response}" | grep -q '"server_version":"server-0.14"'
 
           ready_response="$(curl --fail --silent --show-error \
             --dump-header "${runtime}/ready.headers" \
@@ -150,7 +162,7 @@ jobs:
           echo "${ready_response}" | grep -q '"version":"3.3"'
           echo "${ready_response}" | grep -q '"core_version":"3.3"'
           echo "${ready_response}" | grep -q '"api_version":"1"'
-          echo "${ready_response}" | grep -q '"server_version":"server-0.13"'
+          echo "${ready_response}" | grep -q '"server_version":"server-0.14"'
           echo "${ready_response}" | grep -q '"queue_capacity":16'
           grep -qi '^X-Request-ID: ci-ready-check' "${runtime}/ready.headers"
 
