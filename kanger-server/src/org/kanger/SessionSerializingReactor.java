@@ -19,10 +19,12 @@ import org.kanger.interfaces.IReactor;
  *
  * <p>The account-registration policy is resolved once when this boundary is
  * constructed. The policy reactor remains inside the session boundary and
- * before all mail and legacy account side effects.</p>
+ * before all mail and legacy account side effects. EMAIL_VERIFIED also installs
+ * the persistent pending-registration boundary before the legacy processor.</p>
  */
 final class SessionSerializingReactor implements IReactor<JSONObject> {
 
+    private final RegistrationPolicy policy;
     private final IReactor<JSONObject> delegate;
 
     SessionSerializingReactor(IReactor<JSONObject> delegate) {
@@ -35,7 +37,18 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
         if (policy == null || delegate == null) {
             throw new IllegalArgumentException("policy and delegate must not be null");
         }
-        this.delegate = new AccountPolicyReactor(policy, delegate);
+        this.policy = policy;
+        IReactor<JSONObject> accountDelegate = delegate;
+        if (policy == RegistrationPolicy.EMAIL_VERIFIED) {
+            try {
+                accountDelegate = new PendingRegistrationReactor(delegate);
+            } catch (Exception failure) {
+                throw new IllegalStateException(
+                        "Pending registration boundary could not be initialized",
+                        failure);
+            }
+        }
+        this.delegate = new AccountPolicyReactor(policy, accountDelegate);
     }
 
     @Override
@@ -75,6 +88,12 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
                             }
                         });
             } catch (AuthenticationErrorException rejected) {
+                if (policy == RegistrationPolicy.EMAIL_VERIFIED) {
+                    // Credentials may belong to PendingRegistration rather than
+                    // CredentialStore. The pending boundary performs its own
+                    // verifier check and delegates ordinary failures.
+                    return invoke(packet, parameters);
+                }
                 return authenticationRejected(rejected);
             }
         }
