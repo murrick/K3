@@ -95,6 +95,28 @@ final class FileAccountWorkspace implements AccountLifecycleService.WorkspaceAut
     }
 
     @Override
+    public Long findUserIdByLogin(String login) throws Exception {
+        String normalized = normalizeLogin(login);
+        if (normalized.isEmpty() || !Files.isDirectory(root)) {
+            return null;
+        }
+        try (DirectoryStream<Path> homes = Files.newDirectoryStream(root)) {
+            for (Path home : homes) {
+                String name = home.getFileName().toString();
+                if (!Files.isDirectory(home) || !name.matches("[0-9]+")) {
+                    continue;
+                }
+                Properties profile = readProfile(home);
+                if (normalized.equals(normalizeLogin(
+                        profile.getProperty("reg.login", "")))) {
+                    return Long.valueOf(name);
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
     public Long findUserIdByEmail(String email) throws Exception {
         String normalized = normalizeEmail(email);
         if (normalized.isEmpty() || !Files.isDirectory(root)) {
@@ -186,6 +208,10 @@ final class FileAccountWorkspace implements AccountLifecycleService.WorkspaceAut
 
     private static String directory(Path value) {
         return value.toAbsolutePath().normalize().toString() + File.separator;
+    }
+
+    private static String normalizeLogin(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private static String normalizeEmail(String value) {
