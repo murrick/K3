@@ -36,6 +36,10 @@ public final class AccountLifecycleService {
                             CredentialMaterial material,
                             Preparation preparation) throws Exception;
 
+        long publishPrepared(long userId,
+                             String login,
+                             CredentialMaterial material) throws Exception;
+
         boolean delete(long userId) throws Exception;
 
         Long findUserId(String login) throws Exception;
@@ -151,6 +155,28 @@ public final class AccountLifecycleService {
     }
 
     /**
+     * Completes the crash window where a canonical account home with the exact
+     * pending activation reference exists but its credential snapshot was not
+     * yet published.
+     */
+    long publishCredentialForExistingWorkspace(long userId,
+                                               String login,
+                                               CredentialMaterial material,
+                                               String activationReference)
+            throws Exception {
+        Long workspaceUserId = workspaces.findUserIdByLogin(login);
+        if (workspaceUserId == null || workspaceUserId.longValue() != userId) {
+            throw new IllegalStateException(
+                    "Recovery workspace does not match the requested login and user id");
+        }
+        if (!workspaces.hasActivationReference(userId, activationReference)) {
+            throw new IllegalStateException(
+                    "Recovery workspace does not match the pending activation reference");
+        }
+        return credentials.publishPrepared(userId, login, material);
+    }
+
+    /**
      * Credential-authority primitive used by the later safe deletion workflow.
      * Physical home quarantine and runtime revocation remain mandatory higher
      * layers and are not bypassed by public APIs.
@@ -159,9 +185,17 @@ public final class AccountLifecycleService {
         return credentials.delete(userId);
     }
 
+    Long findCredentialUserId(String login) throws Exception {
+        return credentials.findUserId(login);
+    }
+
+    Long findWorkspaceUserId(String login) throws Exception {
+        return workspaces.findUserIdByLogin(login);
+    }
+
     Long findUserId(String login) throws Exception {
-        Long versioned = credentials.findUserId(login);
-        return versioned != null ? versioned : workspaces.findUserIdByLogin(login);
+        Long versioned = findCredentialUserId(login);
+        return versioned != null ? versioned : findWorkspaceUserId(login);
     }
 
     Long findUserIdByEmail(String email) throws Exception {
@@ -210,6 +244,14 @@ public final class AccountLifecycleService {
                             preparation.prepare(userId);
                         }
                     });
+        }
+
+        @Override
+        public long publishPrepared(long userId,
+                                    String login,
+                                    CredentialMaterial material)
+                throws Exception {
+            return store.publishPrepared(userId, login, material);
         }
 
         @Override
