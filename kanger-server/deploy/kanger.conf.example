@@ -31,6 +31,9 @@ server.watchdog.period=1000
 #   Public self-registration creates a PendingRegistration. A complete ACTIVE
 #   account exists only after successful e-mail confirmation.
 #
+# Historical alias ssl is accepted as smtps-compatible input during migration,
+# but smtps is the canonical configuration value.
+#
 # Server 0.14 resolves this value once into RegistrationPolicy. Account
 # lifecycle code must not branch directly on transport-mode strings.
 server.email.mode=disabled
