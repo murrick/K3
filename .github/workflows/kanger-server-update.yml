@@ -55,7 +55,7 @@ jobs:
           bash kanger-server/deploy/kanger-deploy.sh --help \
             | grep -q 'first KANGER Server application deployment'
           bash kanger-server/deploy/kanger-update.sh --help \
-            | grep -q 'stable shelf branch develop/server/0.12'
+            | grep -q 'stable shelf branch develop/server/0.13'
 
           bash kanger-server/deploy/kanger-deploy.sh --dry-run \
             | grep -q 'no repository, build, SSH or HTTP action was performed'
@@ -85,9 +85,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          grep -q 'DEFAULT_REF="develop/server/0.12"' \
+          grep -q 'DEFAULT_REF="develop/server/0.13"' \
             kanger-server/deploy/kanger-deploy.sh
-          grep -q 'DEFAULT_REF="develop/server/0.12"' \
+          grep -q 'DEFAULT_REF="develop/server/0.13"' \
             kanger-server/deploy/kanger-update.sh
 
           grep -q 'use kanger-update.sh or pass --force deliberately' \
