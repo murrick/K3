@@ -14,13 +14,15 @@ import org.kanger.security.CredentialMaterial;
  * <p>An operator request may carry plaintext only for the duration of one
  * synchronous call. A confirmed PendingRegistration carries already-derived
  * {@link CredentialMaterial}; the original password is not retained or
- * recoverable.</p>
+ * recoverable. The activation source independently records whether an optional
+ * e-mail address has actually been verified.</p>
  */
 public final class ActiveAccountRequest {
 
     private final String login;
     private final String password;
     private final CredentialMaterial credentialMaterial;
+    private final AccountActivationSource activationSource;
     private final String email;
     private final String name;
     private final String country;
@@ -28,7 +30,8 @@ public final class ActiveAccountRequest {
     private final Boolean privacyConsent;
 
     public ActiveAccountRequest(String login, String password) {
-        this(login, password, null, "", "", "", "", null);
+        this(login, password, null, AccountActivationSource.LOCAL_OPERATOR,
+                "", "", "", "", null);
     }
 
     public ActiveAccountRequest(String login,
@@ -38,12 +41,27 @@ public final class ActiveAccountRequest {
                                 String country,
                                 String city,
                                 Boolean privacyConsent) {
-        this(login, password, null, email, name, country, city, privacyConsent);
+        this(login, password, null, AccountActivationSource.LOCAL_OPERATOR,
+                email, name, country, city, privacyConsent);
+    }
+
+    public ActiveAccountRequest(String login,
+                                String password,
+                                AccountActivationSource activationSource,
+                                String email,
+                                String name,
+                                String country,
+                                String city,
+                                Boolean privacyConsent) {
+        this(login, password, null, activationSource,
+                email, name, country, city, privacyConsent);
     }
 
     public ActiveAccountRequest(String login,
                                 CredentialMaterial credentialMaterial) {
-        this(login, null, credentialMaterial, "", "", "", "", null);
+        this(login, null, credentialMaterial,
+                AccountActivationSource.EMAIL_CONFIRMATION,
+                "", "", "", "", null);
     }
 
     public ActiveAccountRequest(String login,
@@ -54,12 +72,26 @@ public final class ActiveAccountRequest {
                                 String city,
                                 Boolean privacyConsent) {
         this(login, null, credentialMaterial,
+                AccountActivationSource.EMAIL_CONFIRMATION,
+                email, name, country, city, privacyConsent);
+    }
+
+    public ActiveAccountRequest(String login,
+                                CredentialMaterial credentialMaterial,
+                                AccountActivationSource activationSource,
+                                String email,
+                                String name,
+                                String country,
+                                String city,
+                                Boolean privacyConsent) {
+        this(login, null, credentialMaterial, activationSource,
                 email, name, country, city, privacyConsent);
     }
 
     private ActiveAccountRequest(String login,
                                  String password,
                                  CredentialMaterial credentialMaterial,
+                                 AccountActivationSource activationSource,
                                  String email,
                                  String name,
                                  String country,
@@ -68,6 +100,7 @@ public final class ActiveAccountRequest {
         this.login = required(login, "login").trim();
         this.password = password;
         this.credentialMaterial = credentialMaterial;
+        this.activationSource = required(activationSource, "activation source");
         this.email = optional(email);
         this.name = optional(name);
         this.country = optional(country);
@@ -98,6 +131,14 @@ public final class ActiveAccountRequest {
         return credentialMaterial != null;
     }
 
+    public AccountActivationSource getActivationSource() {
+        return activationSource;
+    }
+
+    public boolean isEmailVerified() {
+        return activationSource.isEmailVerified();
+    }
+
     public String getEmail() {
         return email;
     }
@@ -121,6 +162,13 @@ public final class ActiveAccountRequest {
     private static String required(String value, String name) {
         if (value == null || value.isEmpty()) {
             throw new IllegalArgumentException(name + " must not be empty");
+        }
+        return value;
+    }
+
+    private static <T> T required(T value, String name) {
+        if (value == null) {
+            throw new IllegalArgumentException(name + " must not be null");
         }
         return value;
     }
