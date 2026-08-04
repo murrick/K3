@@ -116,10 +116,15 @@ chmod 0644 "${new_target}/SHA256SUMS.installed"
 
 nginx -t
 
+rollback_started=false
 rollback() {
   local exit_code=$?
+  if [[ "${rollback_started}" == true ]]; then
+    exit "${exit_code}"
+  fi
+  rollback_started=true
   trap - ERR INT TERM
-  set +e
+  set +Ee
   echo "Server 0.14 UI deployment failed; restoring ${old_target}..." >&2
   rm -f "${temp_link}"
   ln -s "${old_target}" "${temp_link}"
@@ -132,13 +137,17 @@ trap rollback ERR INT TERM
 ln -s "${new_target}" "${temp_link}"
 mv -Tf "${temp_link}" "${PUBLIC_LINK}"
 
-origin_index="$(curl --fail --silent --show-error --max-time 10 \
+# The origin is pinned to 127.0.0.1 and validated only for content identity.
+# This host may serve a Cloudflare Origin CA or otherwise private origin chain
+# that is intentionally not trusted by the operating-system CA bundle. Public
+# certificate validation is performed separately below without --insecure.
+origin_index="$(curl --insecure --fail --silent --show-error --max-time 10 \
   --resolve kanger.org:443:127.0.0.1 \
   "https://kanger.org/?deployment=${stamp}")"
-origin_config="$(curl --fail --silent --show-error --max-time 10 \
+origin_config="$(curl --insecure --fail --silent --show-error --max-time 10 \
   --resolve kanger.org:443:127.0.0.1 \
   "https://kanger.org/config.js?deployment=${stamp}")"
-origin_console="$(curl --fail --silent --show-error --max-time 10 \
+origin_console="$(curl --insecure --fail --silent --show-error --max-time 10 \
   --resolve kanger.org:443:127.0.0.1 \
   "https://kanger.org/console.html?deployment=${stamp}")"
 
