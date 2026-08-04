@@ -10,6 +10,7 @@ ORIGIN="${TEST_ROOT}/origin"
 CHECKOUT="${TEST_ROOT}/checkout"
 FAKE_BIN="${TEST_ROOT}/bin"
 CALL_LOG="${TEST_ROOT}/calls.log"
+REMOTE_RECEIPT_FILE="${TEST_ROOT}/remote-receipt.properties"
 REMOTE_SHA_FILE="${TEST_ROOT}/remote.sha"
 mkdir -p "${ORIGIN}/kanger-server/deploy" "${FAKE_BIN}"
 
@@ -32,6 +33,7 @@ git -C "${ORIGIN}" config user.name "KANGER Update Test"
 git -C "${ORIGIN}" add .
 git -C "${ORIGIN}" commit -qm initial
 git -C "${ORIGIN}" branch -M develop/server/0.12
+SOURCE_COMMIT="$(git -C "${ORIGIN}" rev-parse HEAD)"
 
 cat > "${FAKE_BIN}/mvn" <<EOF
 #!/usr/bin/env bash
@@ -59,6 +61,11 @@ cat > "${FAKE_BIN}/ssh" <<EOF
 #!/usr/bin/env bash
 echo "ssh \$*" >> "${CALL_LOG}"
 case "\$*" in
+  *"cat '/opt/kanger-server/deployment.properties'"*)
+    if [[ -s "${REMOTE_RECEIPT_FILE}" ]]; then
+      cat "${REMOTE_RECEIPT_FILE}"
+    fi
+    ;;
   *'/opt/kanger-server/kanger-server.jar'*)
     if [[ -s "${REMOTE_SHA_FILE}" ]]; then
       cat "${REMOTE_SHA_FILE}"
@@ -104,15 +111,31 @@ PATH="${FAKE_BIN}:${PATH}" bash "${UPDATER}" \
   --port 4211 \
   > "${TEST_ROOT}/deploy.out"
 
-grep -q 'KANGER Server update completed' "${TEST_ROOT}/deploy.out"
+grep -q 'operation: installed' "${TEST_ROOT}/deploy.out"
 grep -q 'install.sh' "${CALL_LOG}"
+grep -q 'flock -n' "${CALL_LOG}"
 grep -q 'verify-installed.sh' "${CALL_LOG}"
+grep -q 'deployment.properties' "${CALL_LOG}"
 grep -q 'https://api.kanger.org/health' "${CALL_LOG}"
 grep -q 'https://api.kanger.org/ready' "${CALL_LOG}"
 
 JAR_SHA="$(sha256sum "${CHECKOUT}/kanger-server/target/kanger-server.jar" | awk '{print $1}')"
-printf '%s\n' "${JAR_SHA}" > "${REMOTE_SHA_FILE}"
+cat > "${REMOTE_RECEIPT_FILE}" <<EOF
+artifact.version=server-0.12
+source.ref=develop/server/0.12
+source.commit=${SOURCE_COMMIT}
+jar.sha256=${JAR_SHA}
+build.date=2026-08-04_07:00:00
+deployed.at=2026-08-04T07:00:00Z
+EOF
 : > "${CALL_LOG}"
+
+cat > "${FAKE_BIN}/mvn" <<EOF
+#!/usr/bin/env bash
+echo unexpected-mvn >> "${CALL_LOG}"
+exit 99
+EOF
+chmod +x "${FAKE_BIN}/mvn"
 
 PATH="${FAKE_BIN}:${PATH}" bash "${UPDATER}" \
   --repo-url "${ORIGIN}" \
@@ -121,10 +144,12 @@ PATH="${FAKE_BIN}:${PATH}" bash "${UPDATER}" \
   --port 4211 \
   > "${TEST_ROOT}/noop.out"
 
-grep -q 'remote already contains this exact JAR; skipping restart' \
+grep -q 'source commit is already deployed; skipping build and restart' \
   "${TEST_ROOT}/noop.out"
-if grep -q 'install.sh' "${CALL_LOG}"; then
-  echo "No-op update unexpectedly invoked install.sh" >&2
+grep -q 'operation: no-op (source commit already deployed)' \
+  "${TEST_ROOT}/noop.out"
+if grep -q 'unexpected-mvn\|install.sh' "${CALL_LOG}"; then
+  echo "Source-commit no-op unexpectedly built or installed the server" >&2
   exit 1
 fi
 grep -q 'verify-installed.sh' "${CALL_LOG}"
