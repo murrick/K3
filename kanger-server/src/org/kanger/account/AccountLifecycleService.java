@@ -44,6 +44,11 @@ public final class AccountLifecycleService {
     interface WorkspaceAuthority {
         PreparedWorkspace prepare(long userId,
                                   ActiveAccountRequest request) throws Exception;
+
+        Long findUserIdByEmail(String email) throws Exception;
+
+        boolean hasActivationReference(long userId, String reference)
+                throws Exception;
     }
 
     interface PreparedWorkspace {
@@ -154,6 +159,15 @@ public final class AccountLifecycleService {
 
     Long findUserId(String login) throws Exception {
         return credentials.findUserId(login);
+    }
+
+    Long findUserIdByEmail(String email) throws Exception {
+        return workspaces.findUserIdByEmail(email);
+    }
+
+    boolean hasActivationReference(long userId, String reference)
+            throws Exception {
+        return workspaces.hasActivationReference(userId, reference);
     }
 
     private static Path resolveCredentialFile() {
