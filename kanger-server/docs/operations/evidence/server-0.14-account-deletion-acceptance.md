@@ -41,9 +41,28 @@ quarantine/purge distinction:          preserved
 
 The repeated result is expected. COMPLETE deletion records are retained as audit identity. A later delete-by-login lookup finds that completed journal record after the credential and canonical workspace are already absent, and returns it rather than creating a new deletion operation.
 
+## Re-registration clarification
+
+A later registration created a distinct ACTIVE identity with a different login string and a monotonically allocated new user id. Production inspection showed:
+
+```text
+old deleted identity: user_id=4, login=<original-login>
+new active identity:  user_id=5, login=<different-login>
+users.sequence:       6
+new credential:       present
+new canonical home:   present
+new pending record:   absent
+```
+
+Authentication attempts made with the original deleted login reached `CredentialStore.authenticate` at the no-matching-login branch. The operator command using the original deleted login therefore correctly returned the old COMPLETE deletion record. This observation is not an identity-reuse or orphan-workspace defect.
+
+The distinct new ACTIVE identity must be authenticated and, if required, deleted using its exact login string.
+
 ## Remaining production checks
 
 The account deletion lifecycle is not fully closed until both session authorities are observed from the browser boundary:
 
 1. an already-open authenticated console session is rejected after deletion;
 2. a fresh ordinary sign-in with the deleted credentials is rejected.
+
+The first condition was not observed because the user logged out before deletion. The second condition passed: fresh sign-in with the deleted login was rejected.
