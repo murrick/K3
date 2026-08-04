@@ -167,6 +167,40 @@ public final class CredentialStore {
         return createPreparedInternal(login, material, null, preparation);
     }
 
+    /**
+     * Publishes verification material for an exact pre-existing account home.
+     *
+     * <p>This is a narrow crash-recovery primitive for the window where the
+     * canonical home was durably published but the process stopped before the
+     * final credential snapshot replacement. Both login and user id must still
+     * be absent from every versioned and legacy credential record.</p>
+     */
+    public synchronized long publishPrepared(long userId,
+                                             String login,
+                                             CredentialMaterial material)
+            throws Exception {
+        if (userId <= 0L) {
+            throw new IllegalArgumentException("user id must be positive");
+        }
+        validateLogin(login);
+        if (material == null) {
+            throw new IllegalArgumentException("credential material must not be null");
+        }
+
+        synchronized (STORE_AUTHORITY_LOCK) {
+            Snapshot snapshot = readSnapshot();
+            if (findByLogin(snapshot.records, login) != null
+                    || findByUserId(snapshot.records, userId) != null
+                    || containsLegacyUserId(snapshot.legacy, userId)) {
+                throw new AuthenticationErrorException(
+                        "Credential or user id already exists");
+            }
+            snapshot.records.add(new CredentialRecord(login, userId, material));
+            writeSnapshot(snapshot);
+            return userId;
+        }
+    }
+
     private long createPreparedInternal(String login,
                                         CredentialMaterial material,
                                         String legacyCandidate,
@@ -393,6 +427,26 @@ public final class CredentialStore {
             }
         }
         return null;
+    }
+
+    private static CredentialRecord findByUserId(List<CredentialRecord> records,
+                                                 long userId) {
+        for (CredentialRecord record : records) {
+            if (record.userId == userId) {
+                return record;
+            }
+        }
+        return null;
+    }
+
+    private static boolean containsLegacyUserId(Map<String, Long> legacy,
+                                                long userId) {
+        for (Long owner : legacy.values()) {
+            if (owner.longValue() == userId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void removeByUserId(List<CredentialRecord> records, long userId) {
