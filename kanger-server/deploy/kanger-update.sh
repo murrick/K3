@@ -117,8 +117,8 @@ verify_remote() {
   log "verifying installed service and nginx boundary"
   ssh -tt "${SSH_ARGS[@]}" \
     "sudo bash '${REMOTE_DIR}/deploy/verify-installed.sh' && \
-     curl --fail --silent --show-error http://127.0.0.1:1964/health | grep -q '\"version\":\"${ARTIFACT_VERSION}\"' && \
-     curl --fail --silent --show-error http://127.0.0.1:1964/ready | grep -q '\"version\":\"${ARTIFACT_VERSION}\"'"
+     curl --fail --silent --show-error http://127.0.0.1:1964/health | grep -Eq '\"(server_version|version)\":\"${ARTIFACT_VERSION}\"' && \
+     curl --fail --silent --show-error http://127.0.0.1:1964/ready | grep -Eq '\"(server_version|version)\":\"${ARTIFACT_VERSION}\"'"
 }
 
 verify_public_api() {
@@ -132,8 +132,8 @@ verify_public_api() {
     "${PUBLIC_API_URL%/}/health")"
   printf '%s\n' "${public_health}" | grep -q '"status":"UP"' \
     || fail "Public /health is not UP"
-  printf '%s\n' "${public_health}" | grep -q "\"version\":\"${ARTIFACT_VERSION}\"" \
-    || fail "Public /health does not expose ${ARTIFACT_VERSION}"
+  printf '%s\n' "${public_health}" | grep -Eq "\"(server_version|version)\":\"${ARTIFACT_VERSION}\"" \
+    || fail "Public /health does not expose server version ${ARTIFACT_VERSION}"
 
   ready_status="$(curl --silent --show-error --max-time 15 \
     --output /dev/null --write-out '%{http_code}' \

@@ -71,6 +71,7 @@ public final class HttpServer {
     static final int DEFAULT_MAX_THREADS = 32;
     static final int DEFAULT_QUEUE_CAPACITY = 128;
     static final int DEFAULT_MAX_BODY_BYTES = 1024 * 1024;
+    static final String API_VERSION_S = "1";
 
     private static final ThreadLocal<Boolean> OVERLOAD_DISPATCH =
             new ThreadLocal<Boolean>();
@@ -349,14 +350,26 @@ public final class HttpServer {
         return context;
     }
 
+    static JSONObject withVersionIdentity(JSONObject response) {
+        if (response == null) {
+            return null;
+        }
+        return response
+                .put("version", Version.CORE_VERSION_S)
+                .put("core_version", Version.CORE_VERSION_S)
+                .put("api_version", API_VERSION_S)
+                .put("server_version", Version.SERVER_VERSION_S);
+    }
+
     private static void sendJson(HttpExchange exchange,
                                  int status,
                                  JSONObject response,
                                  String allowedOrigin,
                                  String requestId) throws IOException {
-        byte[] body = response == null
+        JSONObject versionedResponse = withVersionIdentity(response);
+        byte[] body = versionedResponse == null
                 ? new byte[0]
-                : response.toString().getBytes(StandardCharsets.UTF_8);
+                : versionedResponse.toString().getBytes(StandardCharsets.UTF_8);
 
         Headers headers = exchange.getResponseHeaders();
         headers.set("Content-Type", "application/json; charset=UTF-8");
