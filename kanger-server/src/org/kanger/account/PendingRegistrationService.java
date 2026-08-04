@@ -36,11 +36,6 @@ public final class PendingRegistrationService {
         }
     }
 
-    /**
-     * Serializes public registration uniqueness, pending e-mail replacement
-     * and activation reconciliation inside one server JVM.
-     */
-    private static final Object REGISTRATION_AUTHORITY_LOCK = new Object();
     private static volatile PendingRegistrationService runtime;
 
     private final PendingRegistrationStore store;
@@ -85,25 +80,29 @@ public final class PendingRegistrationService {
         }
     }
 
-    public PendingRegistrationStore.Created register(String login,
-                                                     String password,
-                                                     String email,
-                                                     String name,
-                                                     String country,
-                                                     String city,
-                                                     Boolean privacyConsent)
+    public PendingRegistrationStore.Created register(final String login,
+                                                     final String password,
+                                                     final String email,
+                                                     final String name,
+                                                     final String country,
+                                                     final String city,
+                                                     final Boolean privacyConsent)
             throws Exception {
-        synchronized (REGISTRATION_AUTHORITY_LOCK) {
-            ensureActiveUnique(login, email);
-            return store.create(new PendingRegistrationStore.Draft(
-                    login,
-                    email,
-                    accounts.prepareCredential(password),
-                    name,
-                    country,
-                    city,
-                    privacyConsent));
-        }
+        return AccountRegistrationAuthority.execute(
+                new AccountRegistrationAuthority.Work<PendingRegistrationStore.Created>() {
+                    @Override
+                    public PendingRegistrationStore.Created run() throws Exception {
+                        ensureActiveUnique(login, email);
+                        return store.create(new PendingRegistrationStore.Draft(
+                                login,
+                                email,
+                                accounts.prepareCredential(password),
+                                name,
+                                country,
+                                city,
+                                privacyConsent));
+                    }
+                });
     }
 
     public PendingRegistrationStore.Authenticated authenticate(
@@ -118,20 +117,38 @@ public final class PendingRegistrationService {
     }
 
     public PendingRegistrationStore.Rotation changeEmail(
-            String actionToken,
-            String email) throws Exception {
-        synchronized (REGISTRATION_AUTHORITY_LOCK) {
-            Long activeOwner = accounts.findUserIdByEmail(email);
-            if (activeOwner != null) {
-                throw failure(AccountErrorCode.EMAIL_ALREADY_USED,
-                        "E-mail already belongs to an active account");
-            }
-            return store.changeEmail(actionToken, email);
-        }
+            final String actionToken,
+            final String email) throws Exception {
+        return AccountRegistrationAuthority.execute(
+                new AccountRegistrationAuthority.Work<PendingRegistrationStore.Rotation>() {
+                    @Override
+                    public PendingRegistrationStore.Rotation run() throws Exception {
+                        Long activeOwner = accounts.findUserIdByEmail(email);
+                        if (activeOwner != null) {
+                            throw failure(AccountErrorCode.EMAIL_ALREADY_USED,
+                                    "E-mail already belongs to an active account");
+                        }
+                        return store.changeEmail(actionToken, email);
+                    }
+                });
     }
 
     public PendingRegistration cancel(String actionToken) throws Exception {
         return store.cancel(actionToken);
+    }
+
+    /**
+     * Operator deletion revokes stale pending state for an active-account login.
+     */
+    public PendingRegistration revokeForAccount(final String login)
+            throws Exception {
+        return AccountRegistrationAuthority.execute(
+                new AccountRegistrationAuthority.Work<PendingRegistration>() {
+                    @Override
+                    public PendingRegistration run() throws Exception {
+                        return store.removeByLogin(login);
+                    }
+                });
     }
 
     /**
@@ -148,66 +165,77 @@ public final class PendingRegistrationService {
      *   process stopped before final credential publication.</li>
      * </ol>
      */
-    public Activation confirm(String confirmationToken) throws Exception {
-        synchronized (REGISTRATION_AUTHORITY_LOCK) {
-            PendingRegistration pending = store.resolveConfirmation(
-                    confirmationToken);
-            Long credentialUserId = accounts.findCredentialUserId(
-                    pending.getLogin());
-            Long workspaceUserId = accounts.findWorkspaceUserId(
-                    pending.getLogin());
+    public Activation confirm(final String confirmationToken) throws Exception {
+        return AccountRegistrationAuthority.execute(
+                new AccountRegistrationAuthority.Work<Activation>() {
+                    @Override
+                    public Activation run() throws Exception {
+                        PendingRegistration pending = store.resolveConfirmation(
+                                confirmationToken);
+                        Long credentialUserId = accounts.findCredentialUserId(
+                                pending.getLogin());
+                        Long workspaceUserId = accounts.findWorkspaceUserId(
+                                pending.getLogin());
 
-            if (credentialUserId != null) {
-                if (workspaceUserId == null
-                        || credentialUserId.longValue()
-                        != workspaceUserId.longValue()) {
-                    throw new IllegalStateException(
-                            "Credential and account workspace disagree for login "
-                                    + pending.getLogin());
-                }
-                requireActivationReference(workspaceUserId.longValue(), pending);
-                completePending(pending, confirmationToken);
-                return new Activation(credentialUserId.longValue(), true);
-            }
+                        if (credentialUserId != null) {
+                            if (workspaceUserId == null
+                                    || credentialUserId.longValue()
+                                    != workspaceUserId.longValue()) {
+                                throw new IllegalStateException(
+                                        "Credential and account workspace disagree for login "
+                                                + pending.getLogin());
+                            }
+                            requireActivationReference(
+                                    workspaceUserId.longValue(), pending);
+                            completePending(pending, confirmationToken);
+                            return new Activation(
+                                    credentialUserId.longValue(), true);
+                        }
 
-            if (workspaceUserId != null) {
-                requireActivationReference(workspaceUserId.longValue(), pending);
-                Long emailOwner = accounts.findUserIdByEmail(pending.getEmail());
-                if (emailOwner != null
-                        && emailOwner.longValue() != workspaceUserId.longValue()) {
-                    throw failure(AccountErrorCode.EMAIL_ALREADY_USED,
-                            "E-mail already belongs to another account workspace");
-                }
-                accounts.publishCredentialForExistingWorkspace(
-                        workspaceUserId.longValue(),
-                        pending.getLogin(),
-                        pending.getCredentialMaterial(),
-                        pending.getId());
-                completePending(pending, confirmationToken);
-                return new Activation(workspaceUserId.longValue(), true);
-            }
+                        if (workspaceUserId != null) {
+                            requireActivationReference(
+                                    workspaceUserId.longValue(), pending);
+                            Long emailOwner = accounts.findUserIdByEmail(
+                                    pending.getEmail());
+                            if (emailOwner != null
+                                    && emailOwner.longValue()
+                                    != workspaceUserId.longValue()) {
+                                throw failure(AccountErrorCode.EMAIL_ALREADY_USED,
+                                        "E-mail already belongs to another account workspace");
+                            }
+                            accounts.publishCredentialForExistingWorkspace(
+                                    workspaceUserId.longValue(),
+                                    pending.getLogin(),
+                                    pending.getCredentialMaterial(),
+                                    pending.getId());
+                            completePending(pending, confirmationToken);
+                            return new Activation(
+                                    workspaceUserId.longValue(), true);
+                        }
 
-            Long emailOwner = accounts.findUserIdByEmail(pending.getEmail());
-            if (emailOwner != null) {
-                throw failure(AccountErrorCode.EMAIL_ALREADY_USED,
-                        "E-mail already belongs to an active account");
-            }
+                        Long emailOwner = accounts.findUserIdByEmail(
+                                pending.getEmail());
+                        if (emailOwner != null) {
+                            throw failure(AccountErrorCode.EMAIL_ALREADY_USED,
+                                    "E-mail already belongs to an active account");
+                        }
 
-            ActiveAccount account = accounts.createActiveAccount(
-                    new ActiveAccountRequest(
-                            pending.getLogin(),
-                            pending.getCredentialMaterial(),
-                            AccountActivationSource.EMAIL_CONFIRMATION,
-                            pending.getEmail(),
-                            pending.getName(),
-                            pending.getCountry(),
-                            pending.getCity(),
-                            pending.getPrivacyConsent(),
-                            pending.getId()));
+                        ActiveAccount account = accounts.createActiveAccount(
+                                new ActiveAccountRequest(
+                                        pending.getLogin(),
+                                        pending.getCredentialMaterial(),
+                                        AccountActivationSource.EMAIL_CONFIRMATION,
+                                        pending.getEmail(),
+                                        pending.getName(),
+                                        pending.getCountry(),
+                                        pending.getCity(),
+                                        pending.getPrivacyConsent(),
+                                        pending.getId()));
 
-            completePending(pending, confirmationToken);
-            return new Activation(account.getUserId(), false);
-        }
+                        completePending(pending, confirmationToken);
+                        return new Activation(account.getUserId(), false);
+                    }
+                });
     }
 
     public boolean containsLogin(String login) throws Exception {
