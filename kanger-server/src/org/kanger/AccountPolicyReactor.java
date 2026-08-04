@@ -16,6 +16,8 @@ import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 
+import java.util.Locale;
+
 /**
  * Enforces account-registration topology before the historical request
  * processor can create credentials, user directories, sessions or mail side
@@ -27,25 +29,45 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
         void activate(JSONObject parameters) throws Exception;
     }
 
+    interface ProfileUpdateGuard {
+        JSONObject violation(JSONObject parameters) throws Exception;
+    }
+
     private final RegistrationPolicy policy;
     private final IReactor<JSONObject> delegate;
     private final ExistingAccountActivator existingAccountActivator;
+    private final ProfileUpdateGuard profileUpdateGuard;
 
     AccountPolicyReactor(RegistrationPolicy policy,
                          IReactor<JSONObject> delegate) {
-        this(policy, delegate, new LegacyExistingAccountActivator());
+        this(policy,
+                delegate,
+                new LegacyExistingAccountActivator(),
+                new LegacyProfileUpdateGuard());
     }
 
     AccountPolicyReactor(RegistrationPolicy policy,
                          IReactor<JSONObject> delegate,
                          ExistingAccountActivator existingAccountActivator) {
-        if (policy == null || delegate == null || existingAccountActivator == null) {
+        this(policy,
+                delegate,
+                existingAccountActivator,
+                new LegacyProfileUpdateGuard());
+    }
+
+    AccountPolicyReactor(RegistrationPolicy policy,
+                         IReactor<JSONObject> delegate,
+                         ExistingAccountActivator existingAccountActivator,
+                         ProfileUpdateGuard profileUpdateGuard) {
+        if (policy == null || delegate == null
+                || existingAccountActivator == null || profileUpdateGuard == null) {
             throw new IllegalArgumentException(
-                    "policy, delegate and existing account activator must not be null");
+                    "policy, delegate, activator and profile guard must not be null");
         }
         this.policy = policy;
         this.delegate = delegate;
         this.existingAccountActivator = existingAccountActivator;
+        this.profileUpdateGuard = profileUpdateGuard;
     }
 
     @Override
@@ -54,6 +76,12 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
         if (isNewPublicRegistration(packet, parameters)
                 && !policy.allowsPublicSelfRegistration()) {
             return registrationDisabled();
+        }
+        if (isAuthenticatedProfileUpdate(packet, parameters)) {
+            JSONObject violation = profileUpdateGuard.violation(parameters);
+            if (violation != null) {
+                return violation;
+            }
         }
         if (SessionSerializingReactor.hasAuthenticatedCredential(packet)
                 && isExistingCredentialLogin(packet, parameters)) {
@@ -81,12 +109,28 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
                 && string(parameters, "token").isEmpty();
     }
 
+    static boolean isAuthenticatedProfileUpdate(JSONObject packet,
+                                                JSONObject parameters) {
+        return "login".equalsIgnoreCase(context(packet))
+                && has(parameters, "register")
+                && has(parameters, "password")
+                && !string(parameters, "token").isEmpty()
+                && has(parameters, "email");
+    }
+
     static JSONObject registrationDisabled() {
         return new JSONObject()
                 .put("result", "error")
                 .put("code", AccountErrorCode.REGISTRATION_DISABLED.code())
                 .put("description",
                         "Public registration is disabled by the server registration policy");
+    }
+
+    static JSONObject verifiedEmailImmutable() {
+        return new JSONObject()
+                .put("result", "error")
+                .put("code", AccountErrorCode.VERIFIED_EMAIL_IMMUTABLE.code())
+                .put("description", "A verified e-mail address cannot be changed");
     }
 
     private static String context(JSONObject packet) {
@@ -121,6 +165,11 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
         }
     }
 
+    private static String normalizeEmail(String value) {
+        return value == null ? ""
+                : value.trim().toLowerCase(Locale.ROOT);
+    }
+
     private static final class LegacyExistingAccountActivator
             implements ExistingAccountActivator {
         @Override
@@ -138,6 +187,23 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
             } catch (RuntimeErrorException absent) {
                 new UDF().init(user);
             }
+        }
+    }
+
+    private static final class LegacyProfileUpdateGuard
+            implements ProfileUpdateGuard {
+        @Override
+        public JSONObject violation(JSONObject parameters) throws Exception {
+            IUser user = UserFactory.getUser(string(parameters, "token"));
+            boolean confirmed = Boolean.parseBoolean(user.getProperty(
+                    "reg.email.confirmed",
+                    user.getProperty("reg.agreed", "false")));
+            if (!confirmed) {
+                return null;
+            }
+            String current = normalizeEmail(user.getProperty("reg.email", ""));
+            String requested = normalizeEmail(string(parameters, "email"));
+            return current.equals(requested) ? null : verifiedEmailImmutable();
         }
     }
 }
