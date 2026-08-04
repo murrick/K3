@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AccountPolicyReactorTest {
@@ -96,10 +97,60 @@ class AccountPolicyReactorTest {
     }
 
     @Test
+    void verifiedEmailChangeStopsBeforeLegacyProfileUpdate() throws Exception {
+        AtomicBoolean called = new AtomicBoolean();
+        AccountPolicyReactor reactor = new AccountPolicyReactor(
+                RegistrationPolicy.EMAIL_VERIFIED,
+                delegate(called),
+                parameters -> { },
+                parameters -> AccountPolicyReactor.verifiedEmailImmutable());
+
+        JSONObject response = (JSONObject) reactor.run(packet(
+                "login", profileUpdate("active-session-token", "new@example.org")));
+
+        assertFalse(called.get());
+        assertEquals("error", response.getString("result"));
+        assertEquals(AccountErrorCode.VERIFIED_EMAIL_IMMUTABLE.code(),
+                response.getString("code"));
+    }
+
+    @Test
+    void allowedProfileUpdateStillReachesLegacyProcessor() throws Exception {
+        AtomicBoolean called = new AtomicBoolean();
+        AccountPolicyReactor reactor = new AccountPolicyReactor(
+                RegistrationPolicy.EMAIL_VERIFIED,
+                delegate(called),
+                parameters -> { },
+                parameters -> null);
+
+        JSONObject response = (JSONObject) reactor.run(packet(
+                "login", profileUpdate("active-session-token", "same@example.org")));
+
+        assertTrue(called.get());
+        assertEquals("OK", response.getString("result"));
+    }
+
+    @Test
+    void verifiedEmailComparisonIsSemanticAndUnverifiedEmailRemainsEditable() {
+        JSONObject changed = AccountPolicyReactor.verifiedEmailChangeViolation(
+                true, "old@example.org", "new@example.org");
+        assertEquals(AccountErrorCode.VERIFIED_EMAIL_IMMUTABLE.code(),
+                changed.getString("code"));
+
+        assertNull(AccountPolicyReactor.verifiedEmailChangeViolation(
+                true, " Rick@Example.org ", "rick@example.org"));
+        assertNull(AccountPolicyReactor.verifiedEmailChangeViolation(
+                false, "old@example.org", "new@example.org"));
+    }
+
+    @Test
     void authenticatedProfileUpdatePassesInTrustedMode() throws Exception {
         AtomicBoolean called = new AtomicBoolean();
         AccountPolicyReactor reactor = new AccountPolicyReactor(
-                RegistrationPolicy.TRUSTED, delegate(called));
+                RegistrationPolicy.TRUSTED,
+                delegate(called),
+                parameters -> { },
+                parameters -> null);
 
         JSONObject response = (JSONObject) reactor.run(packet(
                 "login", registration("active-session-token")));
@@ -126,7 +177,8 @@ class AccountPolicyReactorTest {
         AccountPolicyReactor reactor = new AccountPolicyReactor(
                 policy,
                 delegate(called),
-                parameters -> activated.set(true));
+                parameters -> activated.set(true),
+                parameters -> null);
         JSONObject packet = packet("login", credentials());
         SessionSerializingReactor.markAuthenticatedCredential(packet);
 
@@ -152,6 +204,10 @@ class AccountPolicyReactorTest {
                 .put("register", "rick")
                 .put("password", "correct horse battery staple")
                 .put("token", token);
+    }
+
+    private static JSONObject profileUpdate(String token, String email) {
+        return registration(token).put("email", email);
     }
 
     private static JSONObject credentials() {
