@@ -85,6 +85,7 @@ class PendingRegistrationReactorTest {
                 .put("password", "pending password")));
 
         assertFalse(delegated.get());
+        assertTrue(gateway.authenticatedPending);
         assertEquals("error", response.getString("result"));
         assertEquals(AccountErrorCode.EMAIL_CONFIRMATION_REQUIRED.code(),
                 response.getString("code"));
@@ -164,6 +165,26 @@ class PendingRegistrationReactorTest {
         assertEquals(AccountErrorCode.AUTHENTICATION_FAILED.code(),
                 response.getString("code"));
         assertFalse(response.has("token"));
+    }
+
+    @Test
+    void authenticatedActiveLoginWinsOverStalePendingRecord()
+            throws Exception {
+        FakeGateway gateway = new FakeGateway();
+        gateway.pendingLogin = true;
+        AtomicBoolean delegated = new AtomicBoolean();
+        PendingRegistrationReactor reactor = new PendingRegistrationReactor(
+                gateway, new FakeMail(), delegate(delegated));
+        JSONObject packet = packet(new JSONObject()
+                .put("login", "rick")
+                .put("password", "active password"));
+        SessionSerializingReactor.markAuthenticatedCredential(packet);
+
+        JSONObject response = (JSONObject) reactor.run(packet);
+
+        assertTrue(delegated.get());
+        assertFalse(gateway.authenticatedPending);
+        assertEquals("delegated", response.getString("state"));
     }
 
     @Test
@@ -266,6 +287,7 @@ class PendingRegistrationReactorTest {
             implements PendingRegistrationReactor.Gateway {
         private boolean registered;
         private boolean pendingLogin;
+        private boolean authenticatedPending;
         private boolean cancelled;
 
         @Override
@@ -285,6 +307,7 @@ class PendingRegistrationReactorTest {
         public PendingRegistrationStore.Authenticated authenticate(
                 String login,
                 String password) throws Exception {
+            authenticatedPending = true;
             return authenticated();
         }
 
