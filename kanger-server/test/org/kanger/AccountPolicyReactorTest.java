@@ -52,7 +52,8 @@ class AccountPolicyReactorTest {
     }
 
     @Test
-    void emailVerifiedPolicyPassesNewRegistrationToDelegate() throws Exception {
+    void emailVerifiedPolicyPassesNewRegistrationToPendingDelegate()
+            throws Exception {
         AtomicBoolean called = new AtomicBoolean();
         AccountPolicyReactor reactor = new AccountPolicyReactor(
                 RegistrationPolicy.EMAIL_VERIFIED, delegate(called));
@@ -65,24 +66,20 @@ class AccountPolicyReactorTest {
     }
 
     @Test
-    void trustedExistingLoginActivatesBeforeDelegate() throws Exception {
-        AtomicBoolean activated = new AtomicBoolean();
-        AtomicBoolean called = new AtomicBoolean();
-        AccountPolicyReactor reactor = new AccountPolicyReactor(
-                RegistrationPolicy.TRUSTED,
-                delegate(called),
-                parameters -> activated.set(true));
-
-        JSONObject response = (JSONObject) reactor.run(packet(
-                "login", credentials()));
-
-        assertTrue(activated.get());
-        assertTrue(called.get());
-        assertEquals("OK", response.getString("result"));
+    void authenticatedExistingCredentialActivatesInTrustedMode()
+            throws Exception {
+        assertExistingCredentialActivates(RegistrationPolicy.TRUSTED);
     }
 
     @Test
-    void emailVerifiedExistingLoginDoesNotUseTrustedActivator() throws Exception {
+    void authenticatedExistingCredentialActivatesInEmailVerifiedMode()
+            throws Exception {
+        assertExistingCredentialActivates(RegistrationPolicy.EMAIL_VERIFIED);
+    }
+
+    @Test
+    void unmarkedPendingLoginNeverUsesExistingCredentialActivator()
+            throws Exception {
         AtomicBoolean activated = new AtomicBoolean();
         AtomicBoolean called = new AtomicBoolean();
         AccountPolicyReactor reactor = new AccountPolicyReactor(
@@ -120,6 +117,24 @@ class AccountPolicyReactorTest {
         reactor.run(packet("command", new JSONObject().put("ping", "")));
 
         assertTrue(called.get());
+    }
+
+    private static void assertExistingCredentialActivates(
+            RegistrationPolicy policy) throws Exception {
+        AtomicBoolean activated = new AtomicBoolean();
+        AtomicBoolean called = new AtomicBoolean();
+        AccountPolicyReactor reactor = new AccountPolicyReactor(
+                policy,
+                delegate(called),
+                parameters -> activated.set(true));
+        JSONObject packet = packet("login", credentials());
+        SessionSerializingReactor.markAuthenticatedCredential(packet);
+
+        JSONObject response = (JSONObject) reactor.run(packet);
+
+        assertTrue(activated.get());
+        assertTrue(called.get());
+        assertEquals("OK", response.getString("result"));
     }
 
     private static IReactor<JSONObject> delegate(final AtomicBoolean called) {
