@@ -7,6 +7,7 @@
 package org.kanger.account;
 
 import org.kanger.UserFactory;
+import org.kanger.security.CredentialMaterial;
 import org.kanger.security.CredentialStore;
 
 import java.io.File;
@@ -29,8 +30,10 @@ public final class AccountLifecycleService {
     }
 
     interface CredentialAuthority {
+        CredentialMaterial preparePassword(String password) throws Exception;
+
         long createPrepared(String login,
-                            String password,
+                            CredentialMaterial material,
                             Preparation preparation) throws Exception;
 
         boolean delete(long userId) throws Exception;
@@ -94,8 +97,17 @@ public final class AccountLifecycleService {
     }
 
     /**
+     * Derives persistable verifier material for a PendingRegistration without
+     * creating an account, allocating an id or publishing a credential.
+     */
+    public CredentialMaterial prepareCredential(String password) throws Exception {
+        return credentials.preparePassword(password);
+    }
+
+    /**
      * Creates one complete ACTIVE account without opening an authenticated
-     * session.
+     * session. Operator requests derive material synchronously; confirmed
+     * pending registrations supply the previously persisted material directly.
      */
     public ActiveAccount createActiveAccount(final ActiveAccountRequest request)
             throws Exception {
@@ -103,11 +115,14 @@ public final class AccountLifecycleService {
             throw new IllegalArgumentException("active account request must not be null");
         }
 
+        final CredentialMaterial material = request.hasPreparedCredential()
+                ? request.getCredentialMaterial()
+                : credentials.preparePassword(request.getPassword());
         final PreparedWorkspace[] prepared = new PreparedWorkspace[1];
         try {
             long userId = credentials.createPrepared(
                     request.getLogin(),
-                    request.getPassword(),
+                    material,
                     new Preparation() {
                         @Override
                         public void prepare(long userId) throws Exception {
@@ -160,13 +175,18 @@ public final class AccountLifecycleService {
         }
 
         @Override
+        public CredentialMaterial preparePassword(String password) throws Exception {
+            return store.preparePassword(password);
+        }
+
+        @Override
         public long createPrepared(String login,
-                                   String password,
+                                   CredentialMaterial material,
                                    final Preparation preparation)
                 throws Exception {
             return store.createPrepared(
                     login,
-                    password,
+                    material,
                     new CredentialStore.AccountPreparation() {
                         @Override
                         public void prepare(long userId) throws Exception {
