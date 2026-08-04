@@ -24,6 +24,9 @@ import org.kanger.interfaces.IReactor;
  */
 final class SessionSerializingReactor implements IReactor<JSONObject> {
 
+    private static final String AUTHENTICATED_CREDENTIAL_MARKER =
+            "_kanger_authenticated_credential";
+
     private final RegistrationPolicy policy;
     private final IReactor<JSONObject> delegate;
 
@@ -84,7 +87,8 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
                         new SessionRegistry.Work<Object>() {
                             @Override
                             public Object run() throws Exception {
-                                return invoke(packet, parameters);
+                                return invokeAuthenticatedCredential(
+                                        packet, parameters);
                             }
                         });
             } catch (AuthenticationErrorException rejected) {
@@ -101,12 +105,28 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
         return invoke(packet, parameters);
     }
 
+    private Object invokeAuthenticatedCredential(JSONObject packet,
+                                                 JSONObject parameters)
+            throws Exception {
+        packet.put(AUTHENTICATED_CREDENTIAL_MARKER, true);
+        try {
+            return invoke(packet, parameters);
+        } finally {
+            packet.remove(AUTHENTICATED_CREDENTIAL_MARKER);
+        }
+    }
+
     private Object invoke(JSONObject packet, JSONObject parameters) throws Exception {
         JSONObject violation = ApiInputPolicy.violation(parameters);
         if (violation != null) {
             return violation;
         }
         return delegate.run(packet);
+    }
+
+    static boolean hasAuthenticatedCredential(JSONObject packet) {
+        return packet != null
+                && packet.optBoolean(AUTHENTICATED_CREDENTIAL_MARKER, false);
     }
 
     static JSONObject authenticationRejected(AuthenticationErrorException rejected) {
