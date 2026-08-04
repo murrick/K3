@@ -41,6 +41,14 @@ public final class CredentialStore {
         void prepare(long userId) throws Exception;
     }
 
+    /**
+     * Revocation work performed while the credential authority is exclusively
+     * locked and before an exact credential is removed.
+     */
+    public interface AccountDeletionPreparation {
+        void prepare(long userId) throws Exception;
+    }
+
     public static final int DEFAULT_ITERATIONS = 210000;
 
     private static final String VERSION = "v2";
@@ -58,6 +66,7 @@ public final class CredentialStore {
     private final Path file;
     private final int iterations;
     private final SecureRandom random;
+    private final UserIdSequence userIds;
 
     public CredentialStore(Path file) {
         this(file, DEFAULT_ITERATIONS, new SecureRandom());
@@ -73,6 +82,7 @@ public final class CredentialStore {
         this.file = file;
         this.iterations = iterations;
         this.random = random;
+        this.userIds = new UserIdSequence(file);
     }
 
     /**
@@ -111,6 +121,7 @@ public final class CredentialStore {
                 throw new AuthenticationErrorException();
             }
 
+            userIds.advanceBeyond(userId.longValue());
             removeByUserId(snapshot.records, userId.longValue());
             snapshot.records.add(new CredentialRecord(
                     login,
@@ -195,6 +206,7 @@ public final class CredentialStore {
                 throw new AuthenticationErrorException(
                         "Credential or user id already exists");
             }
+            userIds.advanceBeyond(userId);
             snapshot.records.add(new CredentialRecord(login, userId, material));
             writeSnapshot(snapshot);
             return userId;
@@ -218,7 +230,8 @@ public final class CredentialStore {
                 throw new AuthenticationErrorException("User already exists");
             }
 
-            long userId = maxUserId(snapshot) + 1L;
+            long minimum = maxUserId(snapshot) + 1L;
+            long userId = userIds.allocate(minimum);
             CredentialRecord record = new CredentialRecord(login, userId, material);
             preparation.prepare(userId);
             snapshot.records.add(record);
@@ -244,6 +257,7 @@ public final class CredentialStore {
                 throw new Exception("Login and password used by another user");
             }
 
+            userIds.advanceBeyond(userId);
             removeByUserId(snapshot.records, userId);
             removeLegacyByUserId(snapshot.legacy, userId);
             snapshot.records.add(new CredentialRecord(
@@ -256,22 +270,44 @@ public final class CredentialStore {
 
     /**
      * Removes every versioned or legacy credential belonging to an exact user
-     * id. Returns false when the authority contained no matching credential.
+     * id after prepared revocation work succeeds under the same authority lock.
+     * Returns false when no matching credential exists.
      */
-    public synchronized boolean delete(long userId) throws Exception {
+    public synchronized boolean deletePrepared(
+            long userId,
+            AccountDeletionPreparation preparation) throws Exception {
+        if (userId <= 0L) {
+            throw new IllegalArgumentException("user id must be positive");
+        }
+        if (preparation == null) {
+            throw new IllegalArgumentException("deletion preparation must not be null");
+        }
         synchronized (STORE_AUTHORITY_LOCK) {
             Snapshot snapshot = readSnapshot();
-            int recordsBefore = snapshot.records.size();
-            int legacyBefore = snapshot.legacy.size();
+            boolean exists = findByUserId(snapshot.records, userId) != null
+                    || containsLegacyUserId(snapshot.legacy, userId);
+            if (!exists) {
+                return false;
+            }
+
+            preparation.prepare(userId);
             removeByUserId(snapshot.records, userId);
             removeLegacyByUserId(snapshot.legacy, userId);
-            boolean changed = recordsBefore != snapshot.records.size()
-                    || legacyBefore != snapshot.legacy.size();
-            if (changed) {
-                writeSnapshot(snapshot);
-            }
-            return changed;
+            writeSnapshot(snapshot);
+            return true;
         }
+    }
+
+    /**
+     * Immediate compatibility deletion without external revocation work.
+     */
+    public synchronized boolean delete(long userId) throws Exception {
+        return deletePrepared(userId, new AccountDeletionPreparation() {
+            @Override
+            public void prepare(long ignored) {
+                // compatibility path
+            }
+        });
     }
 
     /**
@@ -284,6 +320,25 @@ public final class CredentialStore {
             validateLogin(login);
             CredentialRecord record = findByLogin(readSnapshot().records, login);
             return record == null ? null : Long.valueOf(record.userId);
+        }
+    }
+
+    /**
+     * Resolves a versioned login by exact user id. Legacy records do not retain
+     * login text and must be cross-checked against the canonical account profile.
+     */
+    public synchronized String findLogin(long userId) throws Exception {
+        synchronized (STORE_AUTHORITY_LOCK) {
+            CredentialRecord record = findByUserId(readSnapshot().records, userId);
+            return record == null ? null : record.login;
+        }
+    }
+
+    public synchronized boolean containsUserId(long userId) throws Exception {
+        synchronized (STORE_AUTHORITY_LOCK) {
+            Snapshot snapshot = readSnapshot();
+            return findByUserId(snapshot.records, userId) != null
+                    || containsLegacyUserId(snapshot.legacy, userId);
         }
     }
 
