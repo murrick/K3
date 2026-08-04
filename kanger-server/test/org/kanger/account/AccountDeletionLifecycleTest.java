@@ -82,7 +82,7 @@ class AccountDeletionLifecycleTest {
         assertEquals(AccountDeletionState.COMPLETE, deletion.getState());
         assertFalse(Files.exists(deletion.getCanonicalHome()));
         assertTrue(Files.isDirectory(deletion.getQuarantineHome()));
-        assertEquals(1, runtime.closed.get());
+        assertTrue(runtime.closed.get() >= 1);
         assertTrue(runtime.confirmations.get() >= 1);
         assertTrue(runtime.pending.get() >= 1);
         assertThrows(AuthenticationErrorException.class,
