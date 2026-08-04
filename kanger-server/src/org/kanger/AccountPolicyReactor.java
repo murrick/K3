@@ -118,6 +118,16 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
                 && has(parameters, "email");
     }
 
+    static JSONObject verifiedEmailChangeViolation(boolean confirmed,
+                                                   String currentEmail,
+                                                   String requestedEmail) {
+        if (!confirmed) {
+            return null;
+        }
+        return normalizeEmail(currentEmail).equals(normalizeEmail(requestedEmail))
+                ? null : verifiedEmailImmutable();
+    }
+
     static JSONObject registrationDisabled() {
         return new JSONObject()
                 .put("result", "error")
@@ -198,12 +208,10 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
             boolean confirmed = Boolean.parseBoolean(user.getProperty(
                     "reg.email.confirmed",
                     user.getProperty("reg.agreed", "false")));
-            if (!confirmed) {
-                return null;
-            }
-            String current = normalizeEmail(user.getProperty("reg.email", ""));
-            String requested = normalizeEmail(string(parameters, "email"));
-            return current.equals(requested) ? null : verifiedEmailImmutable();
+            return verifiedEmailChangeViolation(
+                    confirmed,
+                    user.getProperty("reg.email", ""),
+                    string(parameters, "email"));
         }
     }
 }
