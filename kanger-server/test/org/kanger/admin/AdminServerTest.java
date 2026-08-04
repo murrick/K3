@@ -97,14 +97,14 @@ class AdminServerTest {
 
         Response missing = request("/delete-user", TOKEN,
                 new JSONObject().put("login", "rick").toString());
+        assertEquals(400, missing.status);
+        assertEquals(0, lifecycle.deleteCalls.get());
+
         Response confirmed = request("/delete-user", TOKEN,
                 new JSONObject()
                         .put("login", "rick")
                         .put("confirm", "DELETE")
                         .toString());
-
-        assertEquals(400, missing.status);
-        assertEquals(0, lifecycle.deleteCallsAtFirstSuccess);
         assertEquals(200, confirmed.status);
         assertEquals(1, lifecycle.deleteCalls.get());
         assertTrue(confirmed.body.contains("\"state\":\"COMPLETE\""));
@@ -160,6 +160,9 @@ class AdminServerTest {
     }
 
     private static String read(InputStream input) throws Exception {
+        if (input == null) {
+            return "";
+        }
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
         int read;
@@ -207,7 +210,6 @@ class AdminServerTest {
         private final AtomicInteger createCalls = new AtomicInteger();
         private final AtomicInteger deleteCalls = new AtomicInteger();
         private ActiveAccountRequest lastCreate;
-        private int deleteCallsAtFirstSuccess;
 
         @Override
         public ActiveAccount create(ActiveAccountRequest request) throws Exception {
@@ -218,14 +220,12 @@ class AdminServerTest {
 
         @Override
         public AccountDeletion deleteByLogin(String login) throws Exception {
-            deleteCallsAtFirstSuccess = deleteCalls.get();
             deleteCalls.incrementAndGet();
             return deletion();
         }
 
         @Override
         public AccountDeletion deleteByUserId(long userId) throws Exception {
-            deleteCallsAtFirstSuccess = deleteCalls.get();
             deleteCalls.incrementAndGet();
             return deletion();
         }
