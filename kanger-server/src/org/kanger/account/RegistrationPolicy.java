@@ -14,7 +14,9 @@ import java.util.Locale;
  *
  * <p>The transport value is interpreted once at the configuration boundary.
  * Account lifecycle code must depend on this policy rather than scatter string
- * comparisons for {@code disabled}, {@code starttls} and {@code smtps}.</p>
+ * comparisons for {@code disabled}, {@code starttls} and {@code smtps}. The
+ * historical transport alias {@code ssl} remains accepted as SMTPS-compatible
+ * input during Server 0.14 migration.</p>
  */
 public enum RegistrationPolicy {
 
@@ -55,7 +57,9 @@ public enum RegistrationPolicy {
         if ("disabled".equals(normalized)) {
             return TRUSTED;
         }
-        if ("starttls".equals(normalized) || "smtps".equals(normalized)) {
+        if ("starttls".equals(normalized)
+                || "smtps".equals(normalized)
+                || "ssl".equals(normalized)) {
             return EMAIL_VERIFIED;
         }
         throw new IllegalArgumentException(
