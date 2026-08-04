@@ -23,29 +23,29 @@ import org.kanger.udf.UDF;
  */
 final class AccountPolicyReactor implements IReactor<JSONObject> {
 
-    interface TrustedAccountActivator {
+    interface ExistingAccountActivator {
         void activate(JSONObject parameters) throws Exception;
     }
 
     private final RegistrationPolicy policy;
     private final IReactor<JSONObject> delegate;
-    private final TrustedAccountActivator trustedAccountActivator;
+    private final ExistingAccountActivator existingAccountActivator;
 
     AccountPolicyReactor(RegistrationPolicy policy,
                          IReactor<JSONObject> delegate) {
-        this(policy, delegate, new LegacyTrustedAccountActivator());
+        this(policy, delegate, new LegacyExistingAccountActivator());
     }
 
     AccountPolicyReactor(RegistrationPolicy policy,
                          IReactor<JSONObject> delegate,
-                         TrustedAccountActivator trustedAccountActivator) {
-        if (policy == null || delegate == null || trustedAccountActivator == null) {
+                         ExistingAccountActivator existingAccountActivator) {
+        if (policy == null || delegate == null || existingAccountActivator == null) {
             throw new IllegalArgumentException(
-                    "policy, delegate and trusted account activator must not be null");
+                    "policy, delegate and existing account activator must not be null");
         }
         this.policy = policy;
         this.delegate = delegate;
-        this.trustedAccountActivator = trustedAccountActivator;
+        this.existingAccountActivator = existingAccountActivator;
     }
 
     @Override
@@ -55,9 +55,11 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
                 && !policy.allowsPublicSelfRegistration()) {
             return registrationDisabled();
         }
-        if (policy == RegistrationPolicy.TRUSTED
+        if (SessionSerializingReactor.hasAuthenticatedCredential(packet)
                 && isExistingCredentialLogin(packet, parameters)) {
-            trustedAccountActivator.activate(parameters);
+            // Every credential that predates the pending-registration cutover
+            // is an existing ACTIVE account in both registration policies.
+            existingAccountActivator.activate(parameters);
         }
         return delegate.run(packet);
     }
@@ -119,8 +121,8 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
         }
     }
 
-    private static final class LegacyTrustedAccountActivator
-            implements TrustedAccountActivator {
+    private static final class LegacyExistingAccountActivator
+            implements ExistingAccountActivator {
         @Override
         public void activate(JSONObject parameters) throws Exception {
             IUser user = UserFactory.getUser(
