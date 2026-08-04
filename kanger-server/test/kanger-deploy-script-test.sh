@@ -11,6 +11,7 @@ CHECKOUT="${TEST_ROOT}/checkout"
 FAKE_BIN="${TEST_ROOT}/bin"
 CALL_LOG="${TEST_ROOT}/calls.log"
 EXISTING_FLAG="${TEST_ROOT}/existing.flag"
+UI_TIMEOUT_FLAG="${TEST_ROOT}/ui-timeout.flag"
 mkdir -p "${ORIGIN}/kanger-server/deploy" "${FAKE_BIN}"
 
 cat > "${ORIGIN}/kanger-server/pom.xml" <<'EOF'
@@ -81,7 +82,13 @@ cat > "${FAKE_BIN}/curl" <<EOF
 echo "curl \$*" >> "${CALL_LOG}"
 case "\$*" in
   *'/ready'*) printf 403 ;;
-  *'https://kanger.org'*) printf 200 ;;
+  *'https://kanger.org'*)
+    if [[ -f "${UI_TIMEOUT_FLAG}" ]]; then
+      echo 'curl: (28) Operation timed out after 10000 milliseconds with 19139 bytes received' >&2
+      exit 28
+    fi
+    printf 200
+    ;;
   *'/health'*) printf '{"result":"OK","status":"UP","version":"server-0.12"}' ;;
   *) exit 0 ;;
 esac
@@ -133,6 +140,7 @@ if grep -q '^mvn ' "${CALL_LOG}"; then
 fi
 
 : > "${CALL_LOG}"
+touch "${UI_TIMEOUT_FLAG}"
 PATH="${FAKE_BIN}:${PATH}" bash "${DEPLOYER}" \
   --force \
   --repo-url "${ORIGIN}" \
@@ -140,7 +148,11 @@ PATH="${FAKE_BIN}:${PATH}" bash "${DEPLOYER}" \
   --target test@example.invalid \
   --port 4211 \
   > "${TEST_ROOT}/force.out"
+
 grep -q 'operation: forced redeployment' "${TEST_ROOT}/force.out"
 grep -q 'install.sh' "${CALL_LOG}"
+grep -q 'deployment.properties' "${CALL_LOG}"
+grep -q 'WARNING: public UI check did not complete' "${TEST_ROOT}/force.out"
+grep -q 'KANGER Server deployment completed' "${TEST_ROOT}/force.out"
 
 echo "KANGER deploy orchestrator tests passed."
