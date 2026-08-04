@@ -58,26 +58,35 @@ install -m 0755 \
 3. resolves the requested shelf branch, tag or commit to one exact commit SHA;
 4. checks out that commit in detached mode and removes stale untracked build
    output from the dedicated checkout;
-5. runs `mvn clean verify` for `kanger-server/pom.xml`;
-6. validates the packaged JAR and its build metadata;
-7. rejects empty or operational public versions such as `deployment` and
+5. reads the production deployment receipt from
+   `/opt/kanger-server/deployment.properties` when present;
+6. when the same source commit is already deployed, skips Maven and restart but
+   still re-runs service, nginx and public-boundary verification;
+7. otherwise runs `mvn clean verify` for `kanger-server/pom.xml`;
+8. validates the packaged JAR and its build metadata;
+9. rejects empty or operational public versions such as `deployment` and
    `first-vps-deploy`;
-8. calculates the local JAR SHA-256 and compares it with the installed JAR;
-9. skips installation and restart when the exact same JAR is already installed;
-10. otherwise stages the qualified JAR and deployment assets through SSH/SCP;
-11. verifies the uploaded checksum on the VPS;
-12. invokes `install.sh`, which preserves configuration/state and restores the
-    previous JAR automatically when loopback health/readiness fail;
+10. calculates the local JAR SHA-256 and verifies it after upload;
+11. serializes installation through
+    `/run/lock/kanger-server-update.lock` so concurrent update attempts cannot
+    replace the JAR simultaneously;
+12. delegates installation and automatic rollback to the existing `install.sh`;
 13. runs `verify-installed.sh` to confirm systemd, readiness, loopback binding
     and nginx configuration;
 14. confirms that local `/health` and `/ready` expose the expected artifact
     version;
 15. confirms through the public boundary that `/health` is UP, `/ready` remains
     HTTP 403, and the UI responds;
-16. prints a deployment receipt with artifact version, source ref, commit and
-    SHA-256.
+16. writes an auditable production receipt containing artifact version, source
+    ref, source commit, JAR checksum, build date and deployment time;
+17. prints the same deployment identity as the local completion receipt.
 
 Temporary VPS staging files are removed on both success and failure.
+
+The source-commit receipt is necessary because the JAR contains build time
+metadata. Two builds of the same source commit can therefore have different
+binary checksums even though no source update exists. Commit identity decides
+whether an update is required; SHA-256 validates the exact binary being moved.
 
 ## Preview
 
@@ -113,6 +122,9 @@ should normally use `develop/server/0.12` or a later approved shelf branch.
 --dry-run
 ```
 
+`--force` rebuilds and reinstalls even when the production receipt already names
+the same source commit.
+
 The equivalent environment variables are:
 
 ```text
@@ -133,6 +145,29 @@ KANGER_SSH_TARGET=murray@94.103.94.41 \
 KANGER_SSH_PORT=4211 \
   "$HOME/bin/kanger-update.sh"
 ```
+
+## Deployment receipt
+
+After a successful update the VPS contains:
+
+```text
+/opt/kanger-server/deployment.properties
+```
+
+Example shape:
+
+```properties
+artifact.version=server-0.12
+source.ref=develop/server/0.12
+source.commit=3cdb39dece2d2294046e150808e02753bc7bf36e
+jar.sha256=<qualified JAR SHA-256>
+build.date=<JAR build metadata date>
+deployed.at=<UTC deployment timestamp>
+```
+
+The receipt is operational metadata, contains no credential, and is installed
+read-only for ordinary users. It is written only after installation and all
+local/public verification steps succeed.
 
 ## Failure and rollback semantics
 
