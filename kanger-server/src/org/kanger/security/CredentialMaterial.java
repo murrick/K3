@@ -6,7 +6,10 @@
 
 package org.kanger.security;
 
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.util.Base64;
 
 /**
@@ -71,6 +74,27 @@ public final class CredentialMaterial {
                     decodeBytes(values[3]));
         } catch (IllegalArgumentException error) {
             throw new IOException("invalid credential material", error);
+        }
+    }
+
+    /**
+     * Verifies a candidate password without exposing the stored verifier.
+     */
+    public boolean matches(String password) throws Exception {
+        if (password == null || password.isEmpty()) {
+            return false;
+        }
+        char[] chars = password.toCharArray();
+        PBEKeySpec specification = new PBEKeySpec(
+                chars, salt, iterations, hash.length * 8);
+        try {
+            SecretKeyFactory factory = SecretKeyFactory.getInstance(
+                    "PBKDF2WithHmacSHA256");
+            byte[] candidate = factory.generateSecret(specification).getEncoded();
+            return MessageDigest.isEqual(hash, candidate);
+        } finally {
+            specification.clearPassword();
+            java.util.Arrays.fill(chars, '\0');
         }
     }
 
