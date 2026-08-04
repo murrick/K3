@@ -93,6 +93,25 @@ public final class ConfirmationTokenStore {
         return userId.longValue();
     }
 
+    /**
+     * Revokes every historical confirmation record for an exact user id.
+     */
+    public synchronized boolean revoke(long userId) throws IOException {
+        long now = System.currentTimeMillis();
+        List<Record> records = readActive(now);
+        int before = records.size();
+        for (int index = records.size() - 1; index >= 0; index--) {
+            if (records.get(index).userId == userId) {
+                records.remove(index);
+            }
+        }
+        boolean changed = before != records.size();
+        if (changed || Files.exists(file)) {
+            write(records);
+        }
+        return changed;
+    }
+
     private List<Record> readActive(long now) throws IOException {
         List<Record> records = new ArrayList<Record>();
         if (!Files.exists(file)) {
