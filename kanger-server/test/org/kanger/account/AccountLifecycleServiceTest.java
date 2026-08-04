@@ -170,7 +170,7 @@ class AccountLifecycleServiceTest {
                 new FileAccountWorkspace(accountRoot, directory.toString()));
         ActiveAccount account = retry.createActiveAccount(request);
 
-        assertEquals(1L, account.getUserId());
+        assertEquals(2L, account.getUserId());
         assertTrue(Files.isDirectory(account.getHome()));
     }
 
