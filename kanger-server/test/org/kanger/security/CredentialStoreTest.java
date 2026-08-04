@@ -10,9 +10,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -59,6 +61,55 @@ class CredentialStoreTest {
     }
 
     @Test
+    void preparedCreationPublishesCredentialAfterPreparation() throws Exception {
+        AtomicLong preparedUserId = new AtomicLong(-1L);
+
+        long userId = store.createPrepared(
+                "rick",
+                "correct horse battery staple",
+                preparedUserId::set);
+
+        assertEquals(userId, preparedUserId.get());
+        assertEquals(Long.valueOf(userId), store.findUserId("rick"));
+        assertEquals(userId,
+                store.authenticate("rick", "correct horse battery staple"));
+    }
+
+    @Test
+    void failedPreparationPublishesNoCredentialAndAllowsRetry() throws Exception {
+        assertThrows(IllegalStateException.class,
+                () -> store.createPrepared(
+                        "rick",
+                        "correct horse battery staple",
+                        userId -> {
+                            throw new IllegalStateException("synthetic preparation failure");
+                        }));
+
+        assertNull(store.findUserId("rick"));
+        assertThrows(AuthenticationErrorException.class,
+                () -> store.authenticate("rick", "correct horse battery staple"));
+
+        assertEquals(1L,
+                store.createPrepared(
+                        "rick",
+                        "correct horse battery staple",
+                        userId -> {
+                            // retry succeeds without manual cleanup
+                        }));
+    }
+
+    @Test
+    void deleteRemovesVersionedCredential() throws Exception {
+        long userId = store.create("rick", "correct horse battery staple");
+
+        assertTrue(store.delete(userId));
+        assertFalse(store.delete(userId));
+        assertNull(store.findUserId("rick"));
+        assertThrows(AuthenticationErrorException.class,
+                () -> store.authenticate("rick", "correct horse battery staple"));
+    }
+
+    @Test
     void failedAuthenticationDoesNotRewriteCredentialFile() throws Exception {
         store.create("rick", "correct password");
         byte[] before = Files.readAllBytes(file);
@@ -86,6 +137,20 @@ class CredentialStoreTest {
         assertTrue(content.contains("v2\t"));
         assertFalse(content.contains(legacy + "=7"));
         assertEquals(7L, store.authenticate(login, password));
+    }
+
+    @Test
+    void deleteRemovesLegacyCredentialByUserId() throws Exception {
+        String login = "legacy-user";
+        String password = "legacy-password";
+        String legacy = CredentialStore.legacyToken(login, password);
+        Files.write(file,
+                java.util.Collections.singletonList(legacy + "=7"),
+                StandardCharsets.UTF_8);
+
+        assertTrue(store.delete(7L));
+        assertThrows(AuthenticationErrorException.class,
+                () -> store.authenticate(login, password));
     }
 
     @Test
