@@ -13,13 +13,16 @@ import org.kanger.udf.UDF;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -91,6 +94,43 @@ final class FileAccountWorkspace implements AccountLifecycleService.WorkspaceAut
         }
     }
 
+    @Override
+    public Long findUserIdByEmail(String email) throws Exception {
+        String normalized = normalizeEmail(email);
+        if (normalized.isEmpty() || !Files.isDirectory(root)) {
+            return null;
+        }
+        try (DirectoryStream<Path> homes = Files.newDirectoryStream(root)) {
+            for (Path home : homes) {
+                String name = home.getFileName().toString();
+                if (!Files.isDirectory(home) || !name.matches("[0-9]+")) {
+                    continue;
+                }
+                Properties profile = readProfile(home);
+                if (normalized.equals(normalizeEmail(
+                        profile.getProperty("reg.email", "")))) {
+                    return Long.valueOf(name);
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public boolean hasActivationReference(long userId, String reference)
+            throws Exception {
+        if (reference == null || reference.isEmpty()) {
+            return false;
+        }
+        Path home = root.resolve(Long.toString(userId)).normalize();
+        ensureChild(home);
+        if (!Files.isDirectory(home)) {
+            return false;
+        }
+        return reference.equals(readProfile(home).getProperty(
+                "reg.activation.reference", ""));
+    }
+
     private void writeProfile(Path staging,
                               Path canonical,
                               ActiveAccountRequest request) throws Exception {
@@ -107,6 +147,8 @@ final class FileAccountWorkspace implements AccountLifecycleService.WorkspaceAut
         putIfPresent(properties, "reg.name", request.getName());
         putIfPresent(properties, "reg.country", request.getCountry());
         putIfPresent(properties, "reg.city", request.getCity());
+        putIfPresent(properties, "reg.activation.reference",
+                request.getActivationReference());
         if (request.getPrivacyConsent() != null) {
             properties.setProperty("reg.privacy",
                     request.getPrivacyConsent().toString());
@@ -122,6 +164,18 @@ final class FileAccountWorkspace implements AccountLifecycleService.WorkspaceAut
         }
     }
 
+    private static Properties readProfile(Path home) throws Exception {
+        Properties properties = new Properties();
+        Path file = home.resolve("kanger.conf");
+        if (!Files.isRegularFile(file)) {
+            return properties;
+        }
+        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            properties.load(reader);
+        }
+        return properties;
+    }
+
     private static void putIfPresent(Properties properties,
                                      String key,
                                      String value) {
@@ -132,6 +186,11 @@ final class FileAccountWorkspace implements AccountLifecycleService.WorkspaceAut
 
     private static String directory(Path value) {
         return value.toAbsolutePath().normalize().toString() + File.separator;
+    }
+
+    private static String normalizeEmail(String value) {
+        return value == null ? ""
+                : value.trim().toLowerCase(Locale.ROOT);
     }
 
     private void ensureChild(Path value) throws IOException {
