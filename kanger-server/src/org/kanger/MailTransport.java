@@ -245,10 +245,20 @@ final class MailTransport implements MailBoundaryReactor.MailGateway {
         if (user == null) {
             throw new IllegalArgumentException("user must not be null");
         }
-        String recipient = user.getProperty("reg.email", "");
-        String login = user.getProperty("reg.login", "");
-        validateRecipient(recipient);
+        queueConfirmation(
+                user.getProperty("reg.login", ""),
+                user.getProperty("reg.email", ""),
+                confirmationToken);
+    }
 
+    /**
+     * Queues confirmation directly from pending registration data. No IUser or
+     * account artifacts are required.
+     */
+    void queueConfirmation(String login,
+                           String recipient,
+                           String confirmationToken) throws Exception {
+        validateRecipient(recipient);
         String publicUrl = Settings.getProperty("server.url", "https://kanger.org");
         Envelope envelope = new Envelope(
                 recipient,

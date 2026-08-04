@@ -8,6 +8,7 @@ package org.kanger;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.kanger.account.RegistrationPolicy;
 import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.interfaces.IReactor;
 
@@ -15,16 +16,46 @@ import org.kanger.interfaces.IReactor;
  * Holds the per-user session lock around the complete legacy application
  * request. The delegate therefore observes one uninterrupted mutable workflow
  * from token lookup through response construction.
+ *
+ * <p>The account-registration policy is resolved once when this boundary is
+ * constructed. The policy reactor remains inside the session boundary and
+ * before all mail and legacy account side effects. EMAIL_VERIFIED also installs
+ * the persistent pending-registration boundary before the legacy processor.
+ * The public capability reactor exposes the same resolved policy through the
+ * ordinary version response, without leaking SMTP transport configuration.</p>
  */
 final class SessionSerializingReactor implements IReactor<JSONObject> {
 
+    private static final String AUTHENTICATED_CREDENTIAL_MARKER =
+            "_kanger_authenticated_credential";
+
+    private final RegistrationPolicy policy;
     private final IReactor<JSONObject> delegate;
 
     SessionSerializingReactor(IReactor<JSONObject> delegate) {
-        if (delegate == null) {
-            throw new IllegalArgumentException("delegate must not be null");
+        this(RegistrationPolicy.fromEmailMode(
+                Settings.getProperty("server.email.mode", "disabled")), delegate);
+    }
+
+    SessionSerializingReactor(RegistrationPolicy policy,
+                              IReactor<JSONObject> delegate) {
+        if (policy == null || delegate == null) {
+            throw new IllegalArgumentException("policy and delegate must not be null");
         }
-        this.delegate = delegate;
+        this.policy = policy;
+        IReactor<JSONObject> accountDelegate = delegate;
+        if (policy == RegistrationPolicy.EMAIL_VERIFIED) {
+            try {
+                accountDelegate = new PendingRegistrationReactor(delegate);
+            } catch (Exception failure) {
+                throw new IllegalStateException(
+                        "Pending registration boundary could not be initialized",
+                        failure);
+            }
+        }
+        this.delegate = new PublicAuthCapabilitiesReactor(
+                policy,
+                new AccountPolicyReactor(policy, accountDelegate));
     }
 
     @Override
@@ -60,15 +91,33 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
                         new SessionRegistry.Work<Object>() {
                             @Override
                             public Object run() throws Exception {
-                                return invoke(packet, parameters);
+                                return invokeAuthenticatedCredential(
+                                        packet, parameters);
                             }
                         });
             } catch (AuthenticationErrorException rejected) {
+                if (policy == RegistrationPolicy.EMAIL_VERIFIED) {
+                    // Credentials may belong to PendingRegistration rather than
+                    // CredentialStore. The pending boundary performs its own
+                    // verifier check and delegates ordinary failures.
+                    return invoke(packet, parameters);
+                }
                 return authenticationRejected(rejected);
             }
         }
 
         return invoke(packet, parameters);
+    }
+
+    private Object invokeAuthenticatedCredential(JSONObject packet,
+                                                 JSONObject parameters)
+            throws Exception {
+        markAuthenticatedCredential(packet);
+        try {
+            return invoke(packet, parameters);
+        } finally {
+            clearAuthenticatedCredential(packet);
+        }
     }
 
     private Object invoke(JSONObject packet, JSONObject parameters) throws Exception {
@@ -77,6 +126,24 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
             return violation;
         }
         return delegate.run(packet);
+    }
+
+    static void markAuthenticatedCredential(JSONObject packet) {
+        if (packet == null) {
+            throw new IllegalArgumentException("packet must not be null");
+        }
+        packet.put(AUTHENTICATED_CREDENTIAL_MARKER, true);
+    }
+
+    static void clearAuthenticatedCredential(JSONObject packet) {
+        if (packet != null) {
+            packet.remove(AUTHENTICATED_CREDENTIAL_MARKER);
+        }
+    }
+
+    static boolean hasAuthenticatedCredential(JSONObject packet) {
+        return packet != null
+                && packet.optBoolean(AUTHENTICATED_CREDENTIAL_MARKER, false);
     }
 
     static JSONObject authenticationRejected(AuthenticationErrorException rejected) {

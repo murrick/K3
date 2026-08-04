@@ -1,2090 +1,443 @@
-<!--
-  ~ MIT License
-  ~
-  ~ Copyright (c) 2021 Dmitry G. Quznetsov
-  ~  
-  ~  Permission is hereby granted, free of charge, to any person obtaining a copy
-  ~  of this software and associated documentation files (the "Software"), to
-  ~  deal in the Software without restriction, including without limitation the
-  ~  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-  ~  sell copies of the Software, and to permit persons to whom the Software is
-  ~  furnished to do so, subject to the following conditions:
-  ~  
-  ~  The above copyright notice and this permission notice shall be included in
-  ~  all copies or substantial portions of the Software.
-  ~  
-  ~  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  ~  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  ~  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  ~  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  ~  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-  ~  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-  ~  IN THE SOFTWARE.
-  ~
-  -->
-
 <!DOCTYPE html>
-<html lang="en" style="height:100%; padding:0; margin:0; font-family: helvetica; font-size: 15px;">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>KANGER III</title>
-
-    <script charset="UTF-8" language="javascript" src="jquery-3.6.0.min.js" type="text/javascript"></script>
-    <script src="codemirror.js"></script>
-    <script src="javascript.js"></script>
-    <link href="codemirror.css" rel="stylesheet">
-
-    <script>
-        //window.apihost = "https://x.kanger.org";
-        window.apihost = "http://localhost:1964";
-        window.token = "";
-        window.sizeX = null;
-        window.sizeY = null;
-
-        jQuery(document).ready(function(){
-
-            if(window.location.href.includes("?confirm=")) {
-                var token = window.location.href.split("=")[1];
-                post({
-                    context: "login",
-                    parameters: {
-                        confirm: token
-                    }
-                }, function(data){
-                    if(data.result == "OK") {
-                        setCookie("token", data.token);
-                        var url = window.location.href.split("?confirm")[0];
-                        window.location.href = url;
-                    } else {
-                        alert(data.description);
-                    }
-                });
-            }
-
-            if(window.token == null || window.token == "") {
-                window.token = getCookie("token");
-            }
-            if(window.token == null || window.token == "") {
-
-                document.getElementById("super").style.display = "none";
-                document.getElementById("register").style.display = "none";
-                document.getElementById("password").style.display = "none";
-                document.getElementById("login").style.display = "";
-                document.getElementById("login-in").focus();
-
-                var w = document.getElementById("version-code-login");
-                var r = document.getElementById("version-code-reg");
-                post({context: "version", parameters: {}}, function(data){
-                    if(data.result == "OK") {
-                        w.innerHTML = data.version;
-                        r.innerHTML = data.version;
-                    }
-                });
-
-            } else {
-                document.getElementById("super").style.display = "";
-                document.getElementById("register").style.display = "none";
-                document.getElementById("login").style.display = "none";
-                document.getElementById("password").style.display = "none";
-
-                var v = document.getElementById("version-code");
-                var u = document.getElementById("user-name");
-                var d = document.getElementById("db-name");
-                if(v) {
-                    post({context: "version", parameters: {}}, function(data){
-                        if(data.result == "OK") {
-                            v.innerHTML = data.version;
-                        }
-                    });
-                }
-                if(u) {
-                    loginCheck(function(data) {
-                        if(data.result == "OK") {
-                            u.innerHTML = getCookie("login");
-                            window.token = data.token;
-                            setCookie("token", data.token);
-
-                            if(d) {
-                                post({
-                                    context: "command",
-                                    parameters: {
-                                        token : window.token,
-                                        used: ""
-                                    }
-                                }, function(data){
-                                    if(data.result == "OK") {
-                                        d.style.color = "#000";
-                                        d.style.fontWeight = "bold";
-                                        d.innerHTML = data.name;
-                                    } else {
-                                        d.style.color = "#777";
-                                        d.innerHTML = "unused";
-                                    }
-                                });
-
-                                showResults();
-                                showStatements();
-                                showFunctions();
-                                showSolutions();
-                                showHypothesis();
-                                showLog();
-
-                                post({
-                                    context: "history",
-                                    parameters: {
-                                        token : window.token,
-                                        get : ""
-                                    }
-                                }, function(data){
-                                    if(data.result == "OK") {
-                                        var queryHistory = document.getElementById("query-history");
-                                        if(data.size > 0) {
-                                            for(var i=0; i < data.size; ++i) {
-                                                var h = decodeURIComponent(data.list[i].replace(/\+/g, '%20'));
-                                                var mode = h.charAt(0);
-                                                h = h.substr(1);
-                                                var color = h.split("~~~")[0];
-                                                h = h.split("~~~")[1];
-                                                var div;
-                                                if(mode == "Q") {
-                                                    div = logRequestRaw(h);
-                                                } else {
-                                                    div = logResponseRaw(null, h);
-                                                }
-                                                div.style.color = color;
-                                            }
-                                        } else {
-                                            logRequest("// KANGER session started at " + new Date(), function(){
-                                                logRequest("help", function(){
-                                                    command("help", function(){
-                                                        logRequest("use", function(){
-                                                            command("use", function(){
-                                                                logRequest("get", function(){
-                                                                    command("get");
-                                                                });
-                                                            });
-                                                        });
-                                                    });
-                                                });
-                                            });
-                                        }
-
-                                        showTransactionLevel(data);
-                                    }
-                                });
-
-                                window.editor = CodeMirror.fromTextArea(document.getElementById("editor-input"), {
-                                    lineNumbers: true,
-                                    lineWrapping:true,
-                                    autofocus:true,
-                                });
-
-                                placeElements(data);
-                                var queryInput = document.getElementById("query-input");
-                                if(queryInput) {
-                                    queryInput.focus();
-                                }
-                            }
-
-                        } else {
-                            alert(data.description);
-                        }
-                    });
-                }
-            }
-        });
-
-        function loginCheck(callback) {
-            post({
-                context: "command",
-                parameters: {
-                    token : window.token,
-                    ping: ""
-                }
-            }, function(data){
-                if(data.result == "OK") {
-                    callback({
-                        result: "OK",
-                        token: window.token
-                    });
-                } else {
-                    setCookie("token", "");
-                    document.location.reload();
-                }
-            });
-        }
-
-        function login() {
-            var loginStr = document.getElementById("login-in").value;
-            var passwordStr = document.getElementById("password-in").value;
-            post({
-                context: "login",
-                parameters: {
-                    login: loginStr,
-                    password: passwordStr
-                }
-            }, function(data) {
-                if(data.result == "OK") {
-                    setCookie("token", data.token);
-                    setCookie("login", loginStr);
-                }
-                document.location.reload();
-            });
-        }
-
-        function post(data, callback) {
-            $.post(
-                window.apihost,
-                JSON.stringify(data),
-                callback);
-        }
-
-        function showTransactionLevel(data) {
-            if(data.transaction != null && data.empty != null) {
-                var transactionLevel = document.getElementById("transaction-level");
-                transactionLevel.innerHTML = data.transaction;
-                if(data.empty) {
-                    transactionLevel.style.color = "#777";
-                    transactionLevel.style.fontWeight = "";
-                } else {
-                    transactionLevel.style.color = "#282";
-                    transactionLevel.style.fontWeight = "bold";
-                }
-            }
-        }
-
-        function auto_grow(element) {
-            //element.style.height = "0px";
-            //element.style.height = (element.scrollHeight)+"px";
-        }
-
-        function storeHistory(queryText, callback) {
-            //var uri = encodeURIComponent(queryText);
-            post({
-                context: "history",
-                parameters: {
-                    token: window.token,
-                    put: encodeURIComponent(queryText)
-                }
-            }, function(data) {
-                if(callback) {
-                    callback(data);
-                }
-            });
-        }
-
-        function check_enter() {
-            var e = window.event;
-            var queryInput = document.getElementById("query-input");
-            if (!e.ctrlKey && (e.keyCode == 13 || e.keyCode == 10)) {
-                var queryText = queryInput.value.trim();
-
-                logRequest(queryText, function(){
-                    setTimeout(function() {
-                        queryInput.value = "";
-                        queryInput.style.height = "20px";
-                    }, 100);
-
-                    if(queryText.charAt(0) == '!'
-                        || queryText.charAt(0) == '?'
-                        || queryText.charAt(0) == '+'
-                        || queryText.charAt(0) == '-'
-                        || queryText.charAt(0) == '=') {
-                        query(queryText);
-                    } else {
-                        command(queryText);
-                    }
-                });
-
-                return false;
-            } else {
-                return true;
-            }
-        }
-
-        function resendConfirmation() {
-            logRequest("// Resend confirmation e-mail", function(){
-                post({
-                    context: "login",
-                    parameters: {
-                        resend: "",
-                        token: window.token
-                    }
-                }, function(data) {
-                    logResponse(data);
-                });
-            });
-        }
-
-        function logRequest(queryText, callback) {
-            var div = logRequestRaw(queryText);
-            storeHistory("Q" + div.style.color + "~~~" + div.innerHTML, callback);
-        }
-
-        function logRequestRaw(queryText) {
-            var div = document.createElement("div");
-            div.style.padding = "2px 2px 2px 8px";
-            div.innerHTML = queryText;
-            div.style.fontFamily = "monospace";
-            div.style.fontSize = "13px";
-            if(!queryText.startsWith("//")) {
-                div.style.cursor = "pointer";
-                div.onmouseover = function(e){
-                    this.style.backgroundColor="#DDD";
-                };
-                div.onmouseout = function(e){
-                    this.style.backgroundColor="";
-                };
-                div.onclick = function(e){
-                    var queryInput = document.getElementById("query-input");
-                    document.getElementById("query-input").value = decodeEntities(this.innerHTML);
-                    queryInput.focus();
-                    queryInput.selectionStart = queryInput.selectionEnd = queryInput.value.length;
-                };
-            }
-            var queryHistory = document.getElementById("query-history");
-            queryHistory.append(div);
-            scrollToBottom();
-            return div;
-        }
-
-        function logError(ln) {
-            var queryHistory = document.getElementById("query-history");
-            var div = document.createElement("div");
-            div.style.padding = "2px 2px 4px 32px";
-            div.style.fontSize = "13px";
-            div.style.fontFamily = "monospace";
-            div.innerHTML = ln;
-            div.style.color = "#A55";
-            queryHistory.append(div);
-            scrollToBottom();
-        }
-
-        function logResponseRaw(data, ln) {
-            var queryHistory = document.getElementById("query-history");
-            var div = document.createElement("div");
-            div.style.padding = "2px 2px 4px 32px";
-            div.style.fontSize = "13px";
-            div.style.fontFamily = "monospace";
-            if(!ln && data) {
-                ln = data.description.replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
-                showTransactionLevel(data);
-            }
-            if(data) {
-                placeElements(data);
-            }
-            div.innerHTML = ln;
-            if(data == null || data.result == "OK") {
-                div.style.color = "#777";
-            } else {
-                div.style.color = "#A55";
-            }
-            queryHistory.append(div);
-            scrollToBottom();
-            return div;
-        }
-
-        function logResponse(data, ln, callback) {
-            var div = logResponseRaw(data, ln);
-            storeHistory("R" + div.style.color + "~~~" + div.innerHTML, callback);
-        }
-
-        function command(queryText, callback) {
-            var cmd = queryText.split(" ");
-            switch(cmd[0]) {
-                case "used" :
-                case "use" :
-                    commandUse(cmd, callback);
-                    break;
-                case "close" :
-                    commandClose(cmd, callback);
-                    break;
-                case "drop" :
-                    commandDrop(cmd, callback);
-                    break;
-                case "reindex" :
-                    commandReindex(cmd, callback);
-                    break;
-                case "get" :
-                    commandGet(cmd, callback);
-                    break;
-                case "put" :
-                    commandPut(cmd, callback);
-                    break;
-                case "delete" :
-                    commandDelete(cmd, callback);
-                    break;
-                case "erase" :
-                    commandErase(cmd, callback);
-                    break;
-                case "transaction" :
-                case "create" :
-                case "commit" :
-                case "rollback" :
-                    commandTransaction(cmd, callback);
-                    break;
-                case "help":
-                    commandHelp(callback);
-                    break;
-                case "quit":
-                    commandQuit();
-                    break;
-                default:
-                    logError("Unknown command");
-            }
-        }
-
-        function commandHelp(callback) {
-                post({
-                    context: "command",
-                    parameters: {
-                        token : window.token,
-                        help : ""
-                    }
-                }, function(data){
-                    logResponse(data);
-                    if(callback) {
-                        callback(data);
-                    }
-                });
-        }
-
-        function commandQuit() {
-                post({
-                    context: "command",
-                    parameters: {
-                        token : window.token,
-                        quit : ""
-                    }
-                }, function(data){
-                    setCookie("token", "");
-                    document.location.reload();
-                });
-        }
-
-        function refreshScreen(data, ln) {
-            showResults();
-            showStatements();
-            showFunctions();
-            showSolutions();
-            showHypothesis();
-            showLog();
-            logResponse(data, ln);
-        }
-
-        function commandTransaction(cmd, callback) {
-            if(cmd.length == 2 && cmd[0] == "transaction") {
-                post({
-                    context: "query",
-                    parameters: {
-                        token : window.token,
-                        transaction : cmd[1]
-                    }
-                }, function(data){
-                    refreshScreen(data);
-                    if(callback) {
-                        callback(data);
-                    }
-                });
-            } else if(cmd[0] != "transaction") {
-                post({
-                    context: "query",
-                    parameters: {
-                        token: window.token,
-                        transaction: cmd[0]
-                    }
-                }, function(data){
-                    refreshScreen(data);
-                    if(callback) {
-                        callback(data);
-                    }
-                });
-            } else {
-                post({
-                    context: "query",
-                    parameters: {
-                        token: window.token,
-                        transaction: "create"
-                    }
-                }, function(data){
-                    refreshScreen(data);
-                    if(callback) {
-                        callback(data);
-                    }
-                });
-            }
-        }
-
-        function commandErase(cmd, callback) {
-            post({
-                context: "command",
-                parameters: {
-                    token: window.token,
-                    erase: ""
-                }
-            }, function(data){
-                if(data.result == "OK") {
-                    refreshScreen(data, "Workspace erased");
-                } else {
-                    logResponse(data);
-                }
-                if(callback) {
-                    callback(data);
-                }
-            });
-        }
-
-        function commandGet(cmd, callback) {
-            if(cmd.length == 2) {
-                if(!cmd[1].toLowerCase().trim().endsWith(".k")) {
-                    cmd[1] = cmd[1].trim() + ".k";
-                }
-                post({
-                    context: "command",
-                    parameters: {
-                        token: window.token,
-                        get: cmd[1]
-                    }
-                }, function(data){
-                    refreshScreen(data);
-                    if(callback) {
-                        callback(data);
-                    }
-                });
-            } else {
-                post({
-                    context: "command",
-                    parameters: {
-                        token: window.token,
-                        get: ""
-                    }
-                }, function(data){
-                    if(data.result == "OK") {
-                        if(data.size > 0) {
-                            var ln = "Available sources: ";
-                            for(var i = 0; i < data.list.length; ++i) {
-                                ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
-                                    "onclick=\"logRequest(\'get " + data.list[i] + "\', function(){ command(\'get " + data.list[i] + "\'); });\"" +
-                                    "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
-                                    "onmouseout=\"this.style.backgroundColor=\'\'\"" +
-                                    ">" +
-                                    data.list[i] +
-                                    "</span> ";
-                            }
-                            logResponse(data, ln);
-                        } else {
-                            logResponse(data, "No source files available");
-                        }
-                    } else {
-                        logResponse(data);
-                    }
-                    if(callback) {
-                        callback(data);
-                    }
-                });
-            }
-        }
-
-        function commandPut(cmd, callback) {
-            if(cmd.length == 2) {
-                if(!cmd[1].toLowerCase().trim().endsWith(".k")) {
-                    cmd[1] = cmd[1].trim() + ".k";
-                }
-                post({
-                    context: "command",
-                    parameters: {
-                        token: window.token,
-                        put: cmd[1]
-                    }
-                }, function(data){
-                    logResponse(data);
-                    if(callback) {
-                        callback(data);
-                    }
-                });
-            } else {
-                post({
-                    context: "command",
-                    parameters: {
-                        token: window.token,
-                        get: ""
-                    }
-                }, function(data){
-                    if(data.result == "OK") {
-                        if(data.size > 0) {
-                            var ln = "Save current source to: ";
-                            for(var i = 0; i < data.list.length; ++i) {
-                                ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
-                                    "onclick=\"logRequest(\'put " + data.list[i] + "\', function(){ command(\'put " + data.list[i] + "\'); });\"" +
-                                    "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
-                                    "onmouseout=\"this.style.backgroundColor=\'\'\"" +
-                                    ">" +
-                                    data.list[i] +
-                                    "</span> ";
-                            }
-                            logResponse(data, ln);
-                        } else {
-                            logResponse(data, "You have to select a source file name");
-                        }
-                    } else {
-                        logResponse(data);
-                    }
-                    if(callback) {
-                        callback(data);
-                    }
-                });
-            }
-        }
-
-        function commandDelete(cmd, callback) {
-            if(cmd.length == 2) {
-                if(!cmd[1].toLowerCase().trim().endsWith(".k")) {
-                    cmd[1] = cmd[1].trim() + ".k";
-                }
-                post({
-                    context: "command",
-                    parameters: {
-                        token: window.token,
-                        delete: cmd[1]
-                    }
-                }, function(data){
-                    logResponse(data);
-                    if(callback) {
-                        callback(data);
-                    }
-                });
-            } else {
-                post({
-                    context: "command",
-                    parameters: {
-                        token: window.token,
-                        get: ""
-                    }
-                }, function(data){
-                    if(data.result == "OK") {
-                        if(data.size > 0) {
-                            var ln = "Select file for delete: ";
-                            for(var i = 0; i < data.list.length; ++i) {
-                                ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
-                                    "onclick=\"logRequest(\'delete " + data.list[i] + "\', function(){ command(\'delete " + data.list[i] + "\'); });\"" +
-                                    "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
-                                    "onmouseout=\"this.style.backgroundColor=\'\'\"" +
-                                    ">" +
-                                    data.list[i] +
-                                    "</span> ";
-                            }
-                            logResponse(data, ln);
-                        } else {
-                            logResponse(data, "No source files available");
-                        }
-                    } else {
-                        logResponse(data);
-                    }
-                    if(callback) {
-                        callback(data);
-                    }
-                });
-            }
-        }
-
-        function commandClose(cmd, callback) {
-            post({
-                context: "command",
-                parameters: {
-                    token: window.token,
-                    used: ""
-                }
-            }, function(data){
-                var d = document.getElementById("db-name");
-                if(data.result == "OK") {
-                    var name = data.name;
-                    post({
-                        context: "command",
-                        parameters: {
-                            token: window.token,
-                            close: ""
-                        }
-                    }, function(data){
-                        if(data.result == "OK") {
-                            refreshScreen(data, "Database " + name + " closed");
-                            d.style.color = "#777";
-                            d.innerHTML = "unused";
-                        } else {
-                            logResponse(data);
-                        }
-                    });
-                } else {
-                    logResponse(data, "No database used");
-                    d.style.color = "#777";
-                    d.innerHTML = "unused";
-                }
-                if(callback) {
-                    callback(data);
-                }
-            });
-        }
-
-        function commandUse(cmd, callback) {
-            if(cmd.length == 2 && cmd[0] == "use") {
-                post({
-                    context: "command",
-                    parameters: {
-                        token: window.token,
-                        use: cmd[1]
-                    }
-                }, function(data){
-                    refreshScreen(data);
-
-                    var d = document.getElementById("db-name");
-                    if(data.result == "OK") {
-                        d.style.color = "#000";
-                        d.style.fontWeight = "bold";
-                        d.innerHTML = data.name;
-                    } else {
-                        d.style.color = "#777";
-                        d.innerHTML = "unused";
-                    }
-                    if(callback) {
-                        callback(data);
-                    }
-
-                });
-            } else if(cmd[0] == "use") {
-                post({
-                    context: "command",
-                    parameters: {
-                        token: window.token,
-                        use: ""
-                    }
-                }, function(data){
-                    if(data.result == "OK") {
-                        if(data.size > 0) {
-                            var ln = "Available DBs: ";
-                            for(var i = 0; i < data.list.length; ++i) {
-                                ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
-                                "onclick=\"logRequest(\'use " + data.list[i] + "\', function(){ command(\'use " + data.list[i] + "\'); });\"" +
-                                "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
-                                "onmouseout=\"this.style.backgroundColor=\'\'\"" +
-                                ">" + data.list[i] + "</span> ";
-                            }
-                            logResponse(data, ln);
-                        } else {
-                            logResponse(data, "No databases was created");
-                        }
-                    } else {
-                        logResponse(data);
-                    }
-                    if(callback) {
-                        callback(data);
-                    }
-                });
-            } else {
-                post({
-                    context: "command",
-                    parameters: {
-                        token: window.token,
-                        used: ""
-                    }
-                }, function(data){
-                    logResponse(data);
-                    var d = document.getElementById("db-name");
-                    if(data.result == "OK") {
-                        d.style.color = "#000";
-                        d.style.fontWeight = "bold";
-                        d.innerHTML = data.name;
-                    } else {
-                        d.style.color = "#777";
-                        d.innerHTML = "unused";
-                    }
-                    if(callback) {
-                        callback(data);
-                    }
-                });
-            }
-        }
-
-        function commandDrop(cmd, callback) {
-            if(cmd.length == 2 && cmd[0] == "drop") {
-                post({
-                    context: "command",
-                    parameters: {
-                        token: window.token,
-                        drop: cmd[1]
-                    }
-                }, function(data){
-                    var d = document.getElementById("db-name");
-                    if(data.result == "OK") {
-                        refreshScreen(data, "Database " + cmd[1] + " dropped");
-                        d.style.color = "#777";
-                        d.innerHTML = "unused";
-                    } else {
-                        logResponse(data);
-                    }
-                    if(callback) {
-                        callback(data);
-                    }
-                });
-            } else if(cmd[0] == "drop") {
-                post({
-                    context: "command",
-                    parameters: {
-                        token: window.token,
-                        use: ""
-                    }
-                }, function(data){
-                    if(data.result == "OK") {
-                        if(data.size > 0) {
-                            var ln = "Select DB for drop: ";
-                            for(var i = 0; i < data.list.length; ++i) {
-                                ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
-                                "onclick=\"logRequest(\'drop " + data.list[i] + "\', function(){ command(\'drop " + data.list[i] + "\'); });\"" +
-                                "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
-                                "onmouseout=\"this.style.backgroundColor=\'\'\"" +
-                                ">" + data.list[i] + "</span> ";
-                            }
-                            logResponse(data, ln);
-                        } else {
-                            logResponse(data, "No databases was created");
-                        }
-                    } else {
-                        logResponse(data);
-                    }
-                    if(callback) {
-                        callback(data);
-                    }
-                });
-            }
-        }
-
-        function commandReindex(cmd, callback) {
-            if(cmd.length == 2 && cmd[0] == "reindex") {
-                post({
-                    context: "command",
-                    parameters: {
-                        token: window.token,
-                        reindex: cmd[1]
-                    }
-                }, function(data){
-                    if(data.result == "OK") {
-                        refreshScreen(data, "Database " + cmd[1] + " indexed");
-                    } else {
-                        logResponse(data);
-                    }
-                    if(callback) {
-                        callback(data);
-                    }
-
-                });
-            } else if(cmd[0] == "reindex") {
-                post({
-                    context: "command",
-                    parameters: {
-                        token: window.token,
-                        use: ""
-                    }
-                }, function(data){
-                    if(data.result == "OK") {
-                        if(data.size > 0) {
-                            var ln = "Select DB for reindex: ";
-                            for(var i = 0; i < data.list.length; ++i) {
-                                ln += "<span style=\"cursor: pointer; padding: 0 3px 0 3px\" " +
-                                "onclick=\"logRequest(\'reindex " + data.list[i] + "\', function(){ command(\'reindex " + data.list[i] + "\'); });\"" +
-                                "onmouseover=\"this.style.backgroundColor=\'#DDD\'\"" +
-                                "onmouseout=\"this.style.backgroundColor=\'\'\"" +
-                                ">" + data.list[i] + "</span> ";
-                            }
-                            logResponse(data, ln);
-                        } else {
-                            logResponse(data, "No databases was created");
-                        }
-                    } else {
-                        logResponse(data);
-                    }
-                    if(callback) {
-                        callback(data);
-                    }
-                });
-            }
-        }
-
-        function query(queryText, callback) {
-            var uri = encodeURIComponent(queryText);
-            setQueryStatus("Processing query");
-            post({
-                context: "query",
-                parameters: {
-                    token: window.token,
-                    request: uri
-                }
-            }, function(data){
-                dropQueryStatus();
-                refreshScreen(data);
-                if(callback) {
-                    callback(data);
-                }
-            });
-        }
-
-        function showStatements() {
-            var statements = document.getElementById("statements");
-            if(statements) {
-                statements.innerHTML = "";
-                post({
-                    context: "query",
-                    parameters: {
-                        token: window.token,
-                        predicates: "",
-                        statements: true
-                    }
-                }, function(data) {
-                    if(data.result == "OK") {
-                        for(var i = 0; i < data.size; ++i) {
-                            var div = document.createElement("div");
-                            div.id = "PR" + data.list[i].id;
-                            div.style.fontSize = "13px";
-                            div.style.fontFamily = "monospace";
-                            div.style.whiteSpace = "nowrap";
-                            div.style.cursor = "pointer";
-                            if(data.list[i].deleted) {
-                                div.style.color = "#777";
-                            }
-                            div.innerHTML = "<div id=\"SN" + data.list[i].id + "\" style=\"width: 10px; height: 10px; float:left\">" +
-                                (data.list[i].statements.length ? "+" : "-") +
-                                "</div>&nbsp;" +
-                                ("0000" + data.list[i].id).substr(-4) + "&nbsp;<b>" +
-                                data.list[i].name + "</b>(" + data.list[i].range + ")" + " " +
-                                data.list[i].statements.length;
-                            statements.append(div);
-
-                            if(data.list[i].statements.length) {
-                                div.onclick = function(e) {
-                                    var x = "PRL" + this.id.substr(2);
-                                    var y = document.getElementById(x);
-                                    var a = "SN" + this.id.substr(2);
-                                    var z = document.getElementById(a);
-                                    if(y.style.display == "none") {
-                                        y.style.display = "";
-                                        z.innerHTML = "-";
-                                    } else {
-                                        y.style.display = "none";
-                                        z.innerHTML = "+";
-                                    }
-                                }
-
-                                div = document.createElement("div");
-                                div.id = "PRL" + data.list[i].id;
-                                div.style.fontSize = "13px";
-                                div.style.fontFamily = "monospace";
-                                div.style.whiteSpace = "nowrap";
-                                div.style.paddingLeft = "16px";
-                                div.style.display = "none";
-
-                                statements.append(div);
-
-                                for(var j = 0; j < data.list[i].statements.length; ++j) {
-                                    var d = document.createElement("div");
-                                    d.id = "PS" + data.list[i].statements[j].id;
-                                    d.style.fontSize = "13px";
-                                    d.style.fontFamily = "monospace";
-                                    d.style.whiteSpace = "nowrap";
-                                    d.style.cursor = "pointer";
-                                    if(data.list[i].statements[j].deleted) {
-                                        d.style.color = "#777";
-                                    } else if(data.list[i].statements[j].generated) {
-                                        d.style.color = "#282";
-                                    } else {
-                                        d.style.color = "#228";
-                                    }
-                                    d.onclick = function(e) {
-                                        showTree(e.currentTarget.id.substr(2));
-                                    }
-                                    d.innerHTML = ("0000" + data.list[i].statements[j].id).substr(-4) + "&nbsp;<b>" +
-                                        data.list[i].statements[j].origin;
-                                    div.append(d);
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        function recurseTree(causes, level) {
-            var str = "";
-            var prefix = "";
-            for(var i = 0; i < level; ++i) {
-                prefix += "&nbsp;&nbsp;&nbsp;&nbsp;";
-            }
-            for(var i = 0; i < causes.length; ++i) {
-                var color = causes[i].donor.generated == null || causes[i].donor.generated ? "#3A3" : "#33A";
-                str += prefix + "<span style=\"font-weight: bold;\">" + causes[i].rule.origin + "</span><br>" +
-                        prefix + "<span style=\"color: " + color + ";\">" + causes[i].donor.origin + "</span><br>" +
-                        recurseTree(causes[i].causes, level + 1);
-
-            }
-            return str;
-        }
-
-        function showTree(id) {
-            post({
-                context: "query",
-                parameters: {
-                    token: window.token,
-                    statements: "",
-                    id: id,
-                    causes: true
-                }
-            }, function(data) {
-                if(data.result == "OK" && data.size == 1) {
-                    logRequest("// Inference tree for: <b>" +  data.list[0].origin + "</b>", function(){
-                        var str = recurseTree(data.list[0].causes, 0);
-                        logResponse(null, str);
-                    });
-                }
-            });
-        }
-
-        function showFunctions() {
-            var functions = document.getElementById("functions");
-            functions.innerHTML = "";
-            post({
-                context: "query",
-                parameters: {
-                    token: window.token,
-                    functions: ""
-                }
-            }, function(data) {
-                if(data.size > 0) {
-                    for(var i = 0; i < data.size; ++i) {
-                        var div = document.createElement("div");
-                        div.id = "FN" + data.list[i].id;
-                        div.style.fontSize = "13px";
-                        div.style.fontFamily = "monospace";
-                        div.style.whiteSpace = "nowrap";
-                        div.style.cursor = "pointer";
-                        if(data.list[i].deleted) {
-                            div.style.color = "#777";
-                        }
-                        div.onclick = function(e) {
-                            var x = this.id.substr(2);
-                            showFunctionEditor(x);
-                        }
-                        div.innerHTML = ("0000" + data.list[i].id).substr(-4) + "&nbsp;<b>" +
-                            data.list[i].name + "</b>(" + data.list[i].range + ")";
-                        functions.append(div);
-                    }
-                }
-            });
-        }
-
-        function showResults() {
-            var queryResults = document.getElementById("query-results");
-            if(queryResults) {
-                queryResults.innerHTML = "";
-                post({
-                    context: "query",
-                    parameters: {
-                        token: window.token,
-                        results: ""
-                    }
-                }, function(data) {
-                    if(data.result == "OK" && data.size > 0) {
-                        var titles = [];
-
-                        var table = document.createElement("table");
-                        queryResults.append(table);
-
-                        var row = document.createElement("tr");
-                        table.append(row);
-
-                        var col = document.createElement("td");
-                        row.append(col);
-                        col.style.backgroundColor = "#444";
-                        col.style.color = "#FFF";
-                        col.style.fontWeight = "bold";
-                        col.style.fontFamily = "monospace";
-                        col.style.fontSize = "13px";
-                        col.style.padding = "6px";
-                        col.innerHTML = "#";
-
-                        for(var i = 0; i < data.list.length; ++i) {
-                            for(var j=0; j < data.list[i].length; ++j) {
-                                if(!titles.includes(data.list[i][j].name)) {
-                                    titles.push(data.list[i][j].name);
-                                    var col = document.createElement("td");
-                                    row.append(col);
-                                    col.style.backgroundColor = "#444";
-                                    col.style.color = "#FFF";
-                                    col.style.fontWeight = "bold";
-                                    col.style.fontFamily = "monospace";
-                                    col.style.fontSize = "13px";
-                                    col.style.padding = "6px";
-                                    col.innerHTML = data.list[i][j].name;
-                                }
-                            }
-                        }
-
-                        for(var i = 0; i < data.list.length; ++i) {
-                            var row = document.createElement("tr");
-                            table.append(row);
-                            var col = document.createElement("td");
-                            row.append(col);
-                            col.style.backgroundColor = i % 2 ? "#FFF" : "#EEE";
-                            col.style.color = "#000";
-                            col.style.fontFamily = "monospace";
-                            col.style.fontSize = "13px";
-                            col.style.padding = "2px 6px 2px 6px";
-                            col.style.textAlign = "right";
-                            col.innerHTML = (i+1) + "";
-                            for(var k = 0; k < titles.length; ++k) {
-                                col = document.createElement("td");
-                                row.append(col);
-                                col.style.backgroundColor = i % 2 ? "#FFF" : "#EEE";
-                                col.style.color = "#000";
-                                col.style.fontFamily = "monospace";
-                                col.style.fontSize = "13px";
-                                col.style.padding = "2px 6px 2px 6px";
-                                for(var j = 0; j < data.list[i].length; ++j) {
-                                    if(data.list[i][j].name == titles[k]) {
-                                        col.innerHTML = data.list[i][j].value;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        function showSolutions() {
-            var querySolutions = document.getElementById("query-solutions");
-            if(querySolutions) {
-                querySolutions.innerHTML = "";
-                post({
-                    context: "query",
-                    parameters: {
-                        token: window.token,
-                        solutions: ""
-                    }
-                }, function(data){
-                    if(data.result == "OK") {
-                        for(var i = 0; i < data.list.length; ++i) {
-                            var div = document.createElement("div");
-                            div.id = "SOL" + data.list[i].id;
-                            div.style.fontSize = "13px";
-                            div.style.fontFamily = "monospace";
-                            div.style.whiteSpace = "nowrap";
-                            div.style.cursor = "pointer";
-                            var id = data.list[i].id;
-                            div.onclick = function(e) {
-                                showTree(e.currentTarget.id.substr(3));
-                            }
-                            switch(data.list[i].origin.charAt(0)) {
-                                case "!":
-                                    div.style.color = "#272";
-                                    break;
-                                case "?":
-                                    div.style.color = "#722";
-                                    break;
-                            }
-                            div.innerHTML = ("0000" + data.list[i].id).substr(-4) + "&nbsp;<b>" + data.list[i].origin + "</b>";
-                            querySolutions.append(div);
-                        }
-                    }
-                });
-            }
-        }
-
-        function showHypothesis() {
-            var queryHypothesis = document.getElementById("query-hypothesis");
-            if(queryHypothesis) {
-                queryHypothesis.innerHTML = "";
-                setQueryStatus("Analyzing hypothesis...");
-                post({
-                    context: "query",
-                    parameters: {
-                        token: window.token,
-                        hypothesis: ""
-                    }
-                }, function(data){
-                    dropQueryStatus();
-                    if(data.result == "OK") {
-                        for(var i = 0; i < data.list.length; ++i) {
-                            var div = document.createElement("div");
-                            div.id = "HYL" + i;
-                            div.style.fontSize = "13px";
-                            div.style.fontFamily = "monospace";
-                            div.style.whiteSpace = "nowrap";
-                            div.style.cursor = "pointer";
-                            switch(data.list[i].origin.charAt(0)) {
-                                case "!":
-                                    div.style.color = "#272";
-                                    break;
-                                case "?":
-                                    div.style.color = "#722";
-                                    break;
-                            }
-                            div.innerHTML = ("0000" + i).substr(-4) +
-                                "&nbsp;<span style=\"font-weight: bold;\">" +
-                                data.list[i].origin +
-                                "</span>";
-                            div.origin = data.list[i].origin;
-                            div.onclick = function(e){
-                                var queryInput = document.getElementById("query-input");
-                                var s = this.origin.charAt(0) == "?" ? "!~" + this.origin.substr(1) : this.origin;
-                                queryInput.value = decodeEntities(s);
-                                queryInput.focus();
-                                queryInput.selectionStart = queryInput.selectionEnd = queryInput.value.length;
-                            };
-                            queryHypothesis.append(div);
-                        }
-                    }
-                });
-            }
-        }
-
-        function showLog() {
-            var queryLog = document.getElementById("query-log");
-            if(queryLog) {
-                queryLog.innerHTML = "";
-                post({
-                    context: "query",
-                    parameters: {
-                        token: window.token,
-                        log: ""
-                    }
-                }, function(data){
-                    if(data.result == "OK") {
-                        for(var i = 0; i < data.list.length; ++i) {
-                            var div = document.createElement("div");
-                            div.style.fontSize = "13px";
-                            div.style.fontFamily = "monospace";
-                            div.style.whiteSpace = "nowrap";
-                            switch(data.list[i].type) {
-                                case "ANALYZER":
-                                    div.style.color = "#000";
-                                    break;
-                                case "VALUES":
-                                case "SOLVES":
-                                    div.style.color = "#272";
-                                    break;
-                                case "STORAGE":
-                                    div.style.color = "#227";
-                                    break;
-                                default:
-                                    div.style.color = "#777";
-                            }
-                            div.innerHTML = data.list[i].record;
-                            queryLog.append(div);
-                        }
-                    }
-                });
-            }
-        }
-
-        function getCookie(name) {
-            cookies = document.cookie.split(";");
-            for(var i = 0; i < cookies.length; ++i) {
-                var coo = cookies[i].split("=");
-                if(coo[0].trim() == name) {
-                    if(coo.length > 1) {
-                        return decodeURIComponent(coo[1].replace(/\+/g, '%20'));
-                    } else {
-                        return "";
-                    }
-                }
-            }
-            return "";
-        }
-
-        function setCookie(name, value) {
-            document.cookie = encodeURIComponent(name) + '=' + encodeURIComponent(value);
-        }
-
-        function placeElements(data) {
-
-            post({
-                context: "query",
-                parameters: {
-                    token: window.token,
-                    functions: ""
-                }
-            }, function(tmp) {
-
-                var screenWidth = $("#super").width();
-                var screenHeight = $("#super").height();
-
-                var containerLeft = document.getElementById("container-left");
-                var containerRight = document.getElementById("container-right");
-
-                var statements = document.getElementById("statements");
-                var functions = document.getElementById("functions");
-                var titleFunctions = document.getElementById("title-functions");
-
-                var sx = getCookie("sx");
-                if(sx == "") {
-                    sx = "200px";
-                    setCookie("sx", sx);
-                }
-                containerLeft.style.width = sx;
-                var w = $(containerLeft).width();
-                var h = $(containerLeft).height();
-
-                if(tmp.size > 0) {
-                    statements.style.width = (w - 16) + "px";
-                    statements.style.height = (h * 0.6 - 40) + "px";
-
-                    functions.style.display = "";
-                    titleFunctions.style.display = "";
-
-                    functions.style.width = (w - 16) + "px";
-                    functions.style.height = (h * 0.4 - 40) + "px";
-                } else {
-                    statements.style.width = (w - 16) + "px";
-                    statements.style.height = (h - 40) + "px";
-
-                    functions.style.display = "none";
-                    titleFunctions.style.display = "none";
-                }
-
-                containerRight.style.width = (screenWidth - w - 2) + "px";
-                containerRight.style.left = (w + 2) + "px";
-
-                var qy = getCookie("qy");
-                if(qy == "") {
-                    qy = "400px";
-                    setCookie("qy", qy);
-                }
-
-                var containerDiv = document.getElementById("container-div");
-                containerDiv.style.height = qy;
-
-                var containerConsole = document.getElementById("container-console");
-                var consoleInput = document.getElementById("console-input");
-                var editorInput = document.getElementById("editor-input");
-                var console = document.getElementById("console");
-                var editor = document.getElementById("editor");
-                containerConsole.style.height = (screenHeight - 24 - 24 - 9 - $(containerDiv).height()) + "px";
-                console.style.height = ($(containerConsole).height() - 26 - $(consoleInput).height()) + "px";
-                editor.style.height = ($(containerConsole).height() - 26) + "px";
-
-                //editorInput.style.height = ($(editor).height() - 2) + "px";
-                //editorInput.style.width = ($(editor).width() - 15) + "px";
-
-                //var w = ($(editorInput).width() + 16) + "px";
-                //var h = ($(editorInput).height() + 4) + "px";
-
-                window.editor.setSize($(editor).width() + "px", $(editor).height() + "px");
-
-                var containerResults = document.getElementById("container-results");
-                var containerSolutions = document.getElementById("container-solutions");
-                var containerHypothesis = document.getElementById("container-hypothesis");
-                var containerLogging = document.getElementById("container-logging");
-
-                var queryResults = document.getElementById("query-results");
-                var querySolutions = document.getElementById("query-solutions");
-                var queryHypothesis = document.getElementById("query-hypothesis");
-                var queryLog = document.getElementById("query-log");
-
-                if(data) {
-                    if(data.results != null && data.results > 0) {
-                        containerResults.style.display = "";
-                    } else {
-                        containerResults.style.display = "none";
-                    }
-                    if(data.solutions != null && data.solutions > 0) {
-                        containerSolutions.style.display = "";
-                    } else {
-                        containerSolutions.style.display = "none";
-                    }
-                    if(data.hypothesis != null && data.hypothesis > 0) {
-                        containerHypothesis.style.display = "";
-                    } else {
-                        containerHypothesis.style.display = "none";
-                    }
-                }
-
-                var cnt = 0;
-                if(containerResults.style.display != "none") {
-                    ++cnt;
-                }
-                if(containerSolutions.style.display != "none") {
-                    ++cnt;
-                }
-                if(containerHypothesis.style.display != "none") {
-                    ++cnt;
-                }
-                if(containerLogging.style.display != "none") {
-                    ++cnt;
-                }
-
-                containerDiv.style.height = qy;
-                var divHeight = parseInt($(containerDiv).height());
-                var divWidth = parseInt($(containerDiv).width()) - 1;
-
-
-                var lx = ((divWidth / cnt) - 1);
-
-                containerLogging.style.height = divHeight + "px";
-                containerLogging.style.width = lx + "px";
-                queryLog.style.height = (divHeight - 40) + "px";
-
-                if(containerResults.style.display != "none") {
-                    containerResults.style.height = divHeight + "px";
-                    containerResults.style.width = lx + "px";
-                    queryResults.style.height = (divHeight - 40) + "px";
-                }
-                if(containerSolutions.style.display != "none") {
-                    containerSolutions.style.height = divHeight + "px";
-                    containerSolutions.style.width = lx + "px";
-                    querySolutions.style.height = (divHeight - 40) + "px";
-                }
-                if(containerHypothesis.style.display != "none") {
-                    containerHypothesis.style.height = divHeight + "px";
-                    containerHypothesis.style.width = lx + "px";
-                    queryHypothesis.style.height = (divHeight - 40) + "px";
-                }
-
-
-            });
-        }
-
-        function scrollToBottom() {
-            var queryHistory = document.getElementById("query-history");
-            queryHistory.scrollTop = queryHistory.scrollHeight - queryHistory.clientHeight;
-        }
-
-        function onMouseDownX(e) {
-            if (document.all)  {
-                window.sizeX = e.x + document.body.scrollLeft;
-            } else {
-                window.sizeX = e.pageX;
-            }
-            window.sizeY = null;
-            window.widthFrom = $("#container-left").width();
-        }
-
-        function onMouseDownY(e) {
-            if (document.all)  {
-                window.sizeY = e.y + document.body.scrollTop;
-            } else {
-                window.sizeY = e.pageY;
-            }
-            window.sizeX = null;
-            window.heightFrom = $("#container-div").height();
-        }
-
-        function onMouseUp(e) {
-            if(window.sizeX != null || window.sizeY != null) {
-                window.sizeX = null;
-                window.sizeY = null;
-            }
-        }
-
-        function onMouseMove(e) {
-            if(window.sizeX != null) {
-                var x;
-                if (document.all)  {
-                    x = e.x + document.body.scrollLeft;
-                } else {
-                    x = e.pageX;
-                }
-                var width = window.widthFrom + (x - window.sizeX);
-                window.widthFrom = width;
-                window.sizeX = x;
-                setCookie("sx", window.widthFrom + "px");
-                placeElements();
-            } else if(window.sizeY != null) {
-                var y;
-                if (document.all)  {
-                    y = e.y + document.body.scrollTop;
-                } else {
-                    y = e.pageY;
-                }
-                var height = window.heightFrom + (window.sizeY - y);
-                window.heightFrom = height;
-                window.sizeY = y;
-                setCookie("qy", window.heightFrom + "px");
-                placeElements();
-            }
-        }
-
-        function decodeEntities(encodedString) {
-            var textArea = document.createElement('textarea');
-            textArea.innerHTML = encodedString;
-            return textArea.value;
-        }
-
-        function openConsole() {
-            var consoleInput = document.getElementById("console-input");
-            var console = document.getElementById("console");
-            var editor = document.getElementById("editor");
-            var consoleTitle = document.getElementById("console-title");
-            var consoleButton = document.getElementById("console-button");
-            var consoleClose = document.getElementById("console-close");
-
-            editor.style.display = "none";
-            consoleClose.style.display = "none";
-            consoleInput.style.display = "";
-            console.style.display = "";
-
-            consoleTitle.innerHTML = "Console";
-            consoleButton.innerHTML = "Editor";
-            consoleButton.onclick = showSourceEditor;
-        }
-
-        function openEditor(text) {
-            if(text != null) {
-                var consoleInput = document.getElementById("console-input");
-                var console = document.getElementById("console");
-                var editorInput = document.getElementById("editor-input");
-                var editor = document.getElementById("editor");
-                var consoleTitle = document.getElementById("console-title");
-                var consoleButton = document.getElementById("console-button");
-                var consoleClose = document.getElementById("console-close");
-
-                consoleInput.style.display = "none";
-                console.style.display = "none";
-                editor.style.display = "";
-                consoleClose.style.display = "";
-
-                consoleTitle.innerHTML = "Editor";
-                consoleButton.innerHTML = "Compile";
-                consoleButton.onclick = compileSource;
-                consoleClose.onclick = openConsole;
-
-                //editorInput.value = text;
-
-                //editorInput.selectionStart = editorInput.selectionEnd = 0;
-                //editorInput.scrollTop = 0;
-                //editorInput.focus();
-
-                window.editor.setValue(text);
-                window.editor.setCursor(0,0);
-            }
-        }
-
-        function showSourceEditor(id) {
-            post({
-                context: "query",
-                parameters: {
-                    token: window.token,
-                    source: ""
-                }
-            }, function(data) {
-                if(data.result == "OK") {
-                    var text = data.source;
-                    openEditor(text);
-                }
-            });
-        }
-
-        function showFunctionEditor(id) {
-            post({
-                context: "query",
-                parameters: {
-                    token: window.token,
-                    functions: "",
-                    id: id,
-                    sources: true
-                }
-            }, function(data) {
-                if(data.result == "OK" && data.size == 1) {
-                    var text = "=" + data.list[0].name + "(";
-                    for(var i = 0; i < data.list[0].range; ++i) {
-                        if(i > 0) {
-                            text += ", ";
-                        }
-                        text += data.list[0].parameters[i];
-                    }
-                    text += ") ";
-                    for(var i = 0; i < data.list[0].scripts.length; ++i) {
-                        text += "\n{" + data.list[0].scripts[i] + "}";
-                    }
-                    text = text.trim() + ";";
-                    openEditor(text);
-                }
-            });
-        }
-
-        function compileSource() {
-            //var editorInput = document.getElementById("editor-input");
-            var src = window.editor.getValue(); //editorInput.value;
-            var uri = encodeURIComponent(src);
-
-            post({
-                context: "query",
-                parameters: {
-                    token: window.token,
-                    compile: uri
-                }
-            }, function(data) {
-                logRequest("// Compile", function(){
-                    refreshScreen(data);
-                    openConsole();
-                });
-            });
-        }
-
-        function passwordForm() {
-            document.getElementById("super").style.display = "none";
-            document.getElementById("login").style.display = "none";
-            document.getElementById("password").style.display = "";
-            document.getElementById("register").style.display = "none";
-
-            document.getElementById("login-pass").value = getCookie("login");
-        }
-
-        function password() {
-            post({
-                context: "login",
-                parameters: {
-                    currentpassword: document.getElementById("password-old-pass").value,
-                    currentlogin: getCookie("login"),
-                    login: document.getElementById("login-pass").value,
-                    password: document.getElementById("password-pass").value,
-                    token: window.token
-                }
-            }, function(data) {
-                if(data.result == "OK") {
-                    setCookie("login", data.login);
-                    setCookie("token", data.token);
-                    document.location.reload();
-                } else {
-                    alert(data.description);
-                }
-            });
-        }
-
-        function registerForm(init) {
-            document.getElementById("super").style.display = "none";
-            document.getElementById("login").style.display = "none";
-            document.getElementById("password").style.display = "none";
-            document.getElementById("register").style.display = "";
-            if(init) {
-                post({
-                    context: "login",
-                    parameters: {
-                        info: "",
-                        token: window.token
-                    }
-                }, function(data){
-                    if(data.result == "OK") {
-                        document.getElementById("password-reg").parentNode.parentNode.style.display = "none";
-                        document.getElementById("password-repeat-reg").parentNode.parentNode.style.display = "none";
-                        document.getElementById("privacy-reg").parentNode.parentNode.style.display = "none";
-                        document.getElementById("login-reg").setAttribute("readonly", true);
-                        document.getElementById("login-reg").setAttribute("disabled", true);
-
-                        document.getElementById("login-reg").value = data.login;
-                        document.getElementById("email-reg").value = data.email;
-                        document.getElementById("name-reg").value = decodeURIComponent(data.name.replace(/\+/g, '%20'));
-                        document.getElementById("country-reg").value = decodeURIComponent(data.country.replace(/\+/g, '%20'));
-                        document.getElementById("city-reg").value = decodeURIComponent(data.city.replace(/\+/g, '%20'));
-                    } else {
-                        alert(data.description);
-                    }
-                });
-            } else {
-                document.getElementById("password-reg").parentNode.parentNode.style.display = "";
-                document.getElementById("password-repeat-reg").parentNode.parentNode.style.display = "";
-                document.getElementById("privacy-reg").parentNode.parentNode.style.display = "";
-                document.getElementById("login-reg").removeAttribute("readonly");
-                document.getElementById("login-reg").removeAttribute("disabled");
-            }
-        }
-
-        function register() {
-            var update = window.token && window.token != "";
-            if(!update && document.getElementById("password-reg").value != document.getElementById("password-repeat-reg").value) {
-                alert("Password confirmation does not match");
-            } else if(!update && !document.getElementById("privacy-reg").checked) {
-                alert("Consent to the processing of personal data doesn't received");
-            } else {
-                post({
-                    context: "login",
-                    parameters: {
-                        register: document.getElementById("login-reg").value,
-                        password: document.getElementById("password-reg").value,
-                        email: document.getElementById("email-reg").value,
-                        name: encodeURIComponent(document.getElementById("name-reg").value),
-                        country: encodeURIComponent(document.getElementById("country-reg").value),
-                        city: encodeURIComponent(document.getElementById("city-reg").value),
-                        privacy: document.getElementById("privacy-reg").checked,
-                        token: (window.token ? window.token : "")
-                    }
-                }, function(data) {
-                    if(data.result == "OK") {
-                        setCookie("login", data.login);
-                        setCookie("token", data.token);
-                        document.location.reload();
-                    } else {
-                        alert(data.description);
-                    }
-                });
-            }
-        }
-
-        function onKeyPressLogin(event) {
-            if(event.keyCode == 13) {
-                document.getElementById("login-submit").click();
-            }
-        }
-
-        function onKeyPressReg(event) {
-            if(event.keyCode == 13) {
-                document.getElementById("login-submit-reg").click();
-            }
-        }
-
-        function onKeyPressPass(event) {
-            if(event.keyCode == 13) {
-                document.getElementById("login-submit-pass").click();
-            }
-        }
-
-        function setQueryStatus(str) {
-            var queryInput = document.getElementById("query-input");
-            var queryMessage = document.getElementById("query-message");
-            queryInput.style.display = "none";
-            queryMessage.style.display = "";
-            if(str) {
-                queryMessage.innerHTML = str;
-            } else {
-                queryMessage.innerHTML = "Processing query";
-            }
-            window.dots = setInterval(function() {
-                var queryMessage = document.getElementById("query-message");
-                var str = queryMessage.innerHTML;
-                if(str.includes(".......")) {
-                    str = str.replace(".......", "");
-                }
-                str += ".";
-                queryMessage.innerHTML = str;
-            }, 500);
-        }
-
-        function dropQueryStatus() {
-            if(window.dots) {
-                clearInterval(window.dots);
-            }
-            var queryInput = document.getElementById("query-input");
-            var queryMessage = document.getElementById("query-message");
-            queryInput.style.display = "";
-            queryMessage.style.display = "none";
-            queryInput.focus();
-        }
-
-    </script>
-
+    <script src="config.js"></script>
+    <style>
+        :root { color-scheme: light; font-family: Helvetica, Arial, sans-serif; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; background: #f3f4f6; color: #202124; }
+        .shell { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+        .card { width: min(440px, 100%); background: #fff; border: 1px solid #d8dce2; border-radius: 10px; box-shadow: 0 8px 28px rgba(0,0,0,.08); padding: 28px; }
+        h1 { margin: 0 0 4px; font-size: 24px; font-weight: 600; }
+        .version { color: #6a717c; font-size: 13px; margin-bottom: 24px; }
+        .field { margin-bottom: 14px; }
+        label { display: block; font-size: 13px; margin-bottom: 5px; color: #4b525c; }
+        input { width: 100%; border: 1px solid #b8bec7; border-radius: 5px; padding: 10px 11px; font-size: 15px; }
+        input:focus { outline: 2px solid #6d8f6d; outline-offset: 1px; }
+        .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; flex-wrap: wrap; }
+        button { border: 1px solid #777f89; border-radius: 5px; background: #fff; padding: 9px 14px; cursor: pointer; font-size: 14px; }
+        button.primary { background: #405b40; color: #fff; border-color: #405b40; }
+        button.danger { color: #8d2d2d; border-color: #b77; }
+        button:disabled { opacity: .55; cursor: default; }
+        .notice { min-height: 22px; margin: 14px 0 2px; font-size: 14px; line-height: 1.4; white-space: pre-wrap; }
+        .notice.error { color: #9b2f2f; }
+        .notice.success { color: #286b35; }
+        .policy { margin: 12px 0 18px; padding: 10px 12px; background: #f7f8fa; border-left: 3px solid #7b858f; font-size: 13px; line-height: 1.45; }
+        .check { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.35; }
+        .check input { width: auto; margin-top: 2px; }
+        .hidden { display: none !important; }
+        #console-view { position: fixed; inset: 0; background: #fff; }
+        #console-frame { width: 100%; height: 100%; border: 0; display: block; }
+        .pending-email { font-weight: 600; }
+    </style>
 </head>
-<body onmousemove="onMouseMove(event)" onmouseup="onMouseUp(event)" onresize="placeElements()"
-      style="height:100%; padding:0; margin:0; overflow: hidden;">
+<body>
+<div id="auth-shell" class="shell">
+    <main class="card" aria-live="polite">
+        <h1>KANGER III</h1>
+        <div id="version" class="version">Connecting to server…</div>
+        <div id="policy" class="policy">Loading authentication policy…</div>
 
-<div id="login" style="height:100%; width:100%">
-    <div style="width: 400px; height: 220px; background-color: #EEE; position: absolute; top:0; bottom: 0; left: 0; right: 0; margin: auto;">
-        <table cellpadding="0" cellspacing="0" style="width:200px; border: none; margin-top: 50px; margin-left: 22px;">
-            <tr>
-                <td colspan="2" style="padding-bottom: 12px;">
-                    <span style="padding: 0 0 0 8px; font-weight: bold">KANGER III</span> Version
-                    <span id="version-code-login" style="font-weight: bold"></span> authorization
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div style="width: 100px; padding: 8px; float: left;">login:</div>
-                </td>
-                <td>
-                    <input id="login-in" onkeypress="onKeyPressLogin(event)" style="width: 200px;" type="text">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div style="width: 100px; padding: 8px; float: left;">password:</div>
-                </td>
-                <td>
-                    <input id="password-in" onkeypress="onKeyPressLogin(event)" style="width: 200px;" type="password">
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <button id="login-submit" onclick="login()" style="float: right; width: 80px; margin-top:20px;">Ok
-                    </button>
-                    <button id="login-register" onclick="registerForm()"
-                            style="float: right; width: 80px; margin-top:20px; margin-right: 4px;">Register
-                    </button>
-                </td>
-            </tr>
-        </table>
-    </div>
+        <section id="login-view">
+            <form id="login-form">
+                <div class="field">
+                    <label for="login">Login</label>
+                    <input id="login" name="login" autocomplete="username" required>
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password" autocomplete="current-password" required>
+                </div>
+                <div class="actions">
+                    <button id="open-register" type="button" class="hidden">Register</button>
+                    <button type="submit" class="primary">Sign in</button>
+                </div>
+            </form>
+        </section>
+
+        <section id="register-view" class="hidden">
+            <form id="register-form">
+                <div class="field"><label for="register-login">Login</label><input id="register-login" autocomplete="username" required></div>
+                <div class="field"><label for="register-email">E-mail</label><input id="register-email" type="email" autocomplete="email" required></div>
+                <div class="field"><label for="register-name">Name</label><input id="register-name" autocomplete="name"></div>
+                <div class="field"><label for="register-country">Country</label><input id="register-country" autocomplete="country-name"></div>
+                <div class="field"><label for="register-city">City</label><input id="register-city" autocomplete="address-level2"></div>
+                <div class="field"><label for="register-password">Password</label><input id="register-password" type="password" autocomplete="new-password" required></div>
+                <div class="field"><label for="register-password-repeat">Repeat password</label><input id="register-password-repeat" type="password" autocomplete="new-password" required></div>
+                <label class="check"><input id="privacy" type="checkbox" required><span>I consent to the processing of personal data for account registration.</span></label>
+                <div class="actions">
+                    <button id="cancel-register" type="button">Back</button>
+                    <button type="submit" class="primary">Create registration</button>
+                </div>
+            </form>
+        </section>
+
+        <section id="pending-view" class="hidden">
+            <p>E-mail confirmation is required for <span id="pending-email" class="pending-email"></span>.</p>
+            <p>The confirmation link activates the account but does not sign you in. Return here and use the ordinary login form afterwards.</p>
+            <div class="field"><label for="pending-new-email">New unconfirmed e-mail</label><input id="pending-new-email" type="email"></div>
+            <div class="actions">
+                <button id="pending-back" type="button">Back to login</button>
+                <button id="pending-resend" type="button">Resend</button>
+                <button id="pending-change" type="button">Change e-mail</button>
+                <button id="pending-cancel" type="button" class="danger">Cancel registration</button>
+            </div>
+        </section>
+
+        <div id="notice" class="notice"></div>
+    </main>
 </div>
+<div id="console-view" class="hidden"><iframe id="console-frame" title="KANGER owner console"></iframe></div>
 
-<div id="register" style="display: none; height:100%; width:100%">
-    <div style="width: 500px; height: 420px; background-color: #EEE; position: absolute; top:0; bottom: 0; left: 0; right: 0; margin: auto;">
-        <table cellpadding="0" cellspacing="0" style="width:400px; border: none; margin-top: 50px; margin-left: 22px;">
-            <tr>
-                <td colspan="2" style="padding-bottom: 12px;">
-                    <span style="padding: 0 0 0 8px; font-weight: bold">KANGER III</span> Version
-                    <span id="version-code-reg" style="font-weight: bold"></span> registration
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div style="width: 100%; padding: 8px; float: left;">login:</div>
-                </td>
-                <td>
-                    <input id="login-reg" onkeypress="onKeyPressReg(event)" style="width: 200px;" type="text">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div style="width: 100%; padding: 8px; float: left;">password:</div>
-                </td>
-                <td>
-                    <input id="password-reg" onkeypress="onKeyPressReg(event)" style="width: 200px;" type="password">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div style="width: 100%; padding: 8px; float: left; white-space: nowrap;">repeat password:</div>
-                </td>
-                <td>
-                    <input id="password-repeat-reg" onkeypress="onKeyPressReg(event)" style="width: 200px;"
-                           type="password">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div style="width: 100%; padding: 8px; float: left;">e-mail:</div>
-                </td>
-                <td>
-                    <input id="email-reg" onkeypress="onKeyPressReg(event)" style="width: 200px;" type="text">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div style="width: 100%; padding: 8px; float: left;">your name:</div>
-                </td>
-                <td>
-                    <input id="name-reg" onkeypress="onKeyPressReg(event)" style="width: 200px;" type="text">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div style="width: 100%; padding: 8px; float: left;">your country:</div>
-                </td>
-                <td>
-                    <input id="country-reg" onkeypress="onKeyPressReg(event)" style="width: 200px;" type="text">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div style="width: 100%; padding: 8px; float: left;">your city:</div>
-                </td>
-                <td>
-                    <input id="city-reg" onkeypress="onKeyPressReg(event)" style="width: 200px;" type="text">
-                </td>
-            </tr>
-            <tr>
-                <td>
+<script>
+(function () {
+    'use strict';
 
-                </td>
-                <td>
-                    <input id="privacy-reg" type="checkbox">
-                    <label for="privacy-reg">consent to the processing of personal data</label>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <button id="login-submit-reg" onclick="register()"
-                            style="float: right; width: 80px; margin-top:20px;">Ok
-                    </button>
-                    <button id="login-cancel-reg" onclick="document.location.reload();"
-                            style="float: right; width: 80px; margin-top:20px; margin-right: 8px;">Cancel
-                    </button>
-                </td>
-            </tr>
-        </table>
-    </div>
-</div>
+    var API_HOST = String(window.KANGER_API_HOST || '').replace(/\/$/, '');
+    var state = {
+        capabilities: null,
+        pendingActionToken: sessionStorage.getItem('kanger.pendingActionToken') || '',
+        consoleTemplate: null,
+        tokenMonitor: null
+    };
 
-<div id="password" style="display: none; height:100%; width:100%">
-    <div style="width: 500px; height: 420px; background-color: #EEE; position: absolute; top:0; bottom: 0; left: 0; right: 0; margin: auto;">
-        <table cellpadding="0" cellspacing="0" style="width:400px; border: none; margin-top: 50px; margin-left: 22px;">
-            <tr>
-                <td colspan="2" style="padding-bottom: 12px;">
-                    <span style="padding: 0 0 0 8px; font-weight: bold">KANGER III</span> Version
-                    <span id="version-code-pass" style="font-weight: bold"></span> registration
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div style="width: 100%; padding: 8px; float: left; white-space: nowrap;">current password:</div>
-                </td>
-                <td>
-                    <input id="password-old-pass" onkeypress="onKeyPressPass(event)" style="width: 200px;"
-                           type="password">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div style="width: 100%; padding: 8px; float: left;">new login:</div>
-                </td>
-                <td>
-                    <input id="login-pass" onkeypress="onKeyPressPass(event)" style="width: 200px;" type="text">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div style="width: 100%; padding: 8px; float: left;">new password:</div>
-                </td>
-                <td>
-                    <input id="password-pass" onkeypress="onKeyPressPass(event)" style="width: 200px;" type="password">
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <button id="login-submit-pass" onclick="password()"
-                            style="float: right; width: 80px; margin-top:20px;">Ok
-                    </button>
-                    <button id="login-cancel-pass" onclick="document.location.reload();"
-                            style="float: right; width: 80px; margin-top:20px; margin-right: 8px;">Cancel
-                    </button>
-                </td>
-            </tr>
-        </table>
-    </div>
-</div>
+    var views = {
+        login: document.getElementById('login-view'),
+        register: document.getElementById('register-view'),
+        pending: document.getElementById('pending-view')
+    };
+    var notice = document.getElementById('notice');
+    var policy = document.getElementById('policy');
+    var version = document.getElementById('version');
+    var registerButton = document.getElementById('open-register');
 
-<div id="super" style="display: none; height:100%; width:100%; display: none;">
-    <div style="background: #CCC; width:100%; height: 24px; padding: 4px 0 4px 0;">
-        <span style="padding: 0 0 0 8px;">KANGER III Version</span>
-        <span id="version-code"></span>
-        <span id="user-name" onmouseout="document.getElementById('user-menu').style.display='none'"
-              onmouseover="document.getElementById('user-menu').style.display='block'"
-              style="padding: 0 8px 0 8px; float: right;"></span>
-        <span id="db-name" style="padding: 0 8px 0 8px; border-right: 1px solid #777; float: right;"></span>
-        <span id="transaction" style="padding: 0 8px 0 8px; border-right: 1px solid #777; float: right;">
-                Transaction level <span id="transaction-level">0</span></span>
-        <div id="user-menu" onmouseout="this.style.display='none'"
-             onmouseover="this.style.display='block'"
-             style="display: none; position: absolute; top: 20px; right: 0px; width: auto; height: auto; border: 1px solid #777;z-index:100; background-color: #EEE; padding: 8px">
-            <div onclick="registerForm(true)"
-                 onmouseout="this.style.backgroundColor='#EEE'"
-                 onmouseover="this.style.backgroundColor='#AAA'" style="cursor: pointer; padding: 2px;">Personal data
-            </div>
-            <div onclick="resendConfirmation()"
-                 onmouseout="this.style.backgroundColor='#EEE'"
-                 onmouseover="this.style.backgroundColor='#AAA'" style="cursor: pointer; padding: 2px;">Resend
-                confirmation e-mail
-            </div>
-            <div onclick="passwordForm()"
-                 onmouseout="this.style.backgroundColor='#EEE'"
-                 onmouseover="this.style.backgroundColor='#AAA'" style="cursor: pointer; padding: 2px;">Change login
-                &amp; password
-            </div>
-            <div onclick="command('quit')"
-                 onmouseout="this.style.backgroundColor='#EEE'"
-                 onmouseover="this.style.backgroundColor='#AAA'" style="cursor: pointer; padding: 2px;">Quit
-            </div>
-        </div>
-    </div>
-    <div id="container"
-         style="width: 100%; height:100%; position:fixed; top: 24px; vertical-align:top; background-color: #FFF; ;">
-        <div id="container-left" style="width: 300px; height:100%; vertical-align:top; float: left;">
-            <div style="height: 20px; width: auto; ; padding:2px 2px 2px 8px; background-color: #444; color: #EEE">
-                Statements
-            </div>
-            <div id="statements" style="height: 100%; width: auto;  padding:8px; overflow: auto">
-                ---
-            </div>
-            <div id="title-functions"
-                 style="height: 20px; width: auto; ; padding:2px 2px 2px 8px; background-color: #444; color: #EEE">
-                Functions
-            </div>
-            <div id="functions" style="height: 100%; width: auto;  padding:8px; overflow: auto">
-                ---
-            </div>
-        </div>
-        <div id="container-left-size" onmousedown="onMouseDownX(event)"
-             style="width: 2px; height:100%; vertical-align:top; float: left; cursor: col-resize; background-color:#AAA;">
-        </div>
-        <div id="container-right"
-             style="background-color: #FFF; float: left; height: 100%; width: 100%; position:fixed; left:300px;">
+    function setCookie(name, value) {
+        var secure = location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = encodeURIComponent(name) + '=' + encodeURIComponent(value)
+                + '; Path=/; SameSite=Lax' + secure;
+    }
 
-            <div id="container-console" style="height: 400px; width: 100%; display: flex; flex-direction: column; ">
-                <div style="height: 20px; width: auto; padding:2px 2px 2px 8px; background-color: #444; color: #EEE; ">
-                    <span id="console-title" style="float:left;">Console</span>
-                    <span id="console-button" onclick="showSourceEditor()"
-                          style="float:right; cursor:pointer; padding-right:8px;">Editor</span>
-                    <span id="console-close" style="display: none; float:right; cursor:pointer; padding-right:8px;">Close</span>
-                </div>
-                <div id="editor"
-                     style="display: none; width: 100%; font-size: 13px; vertical-align:top; background: #FFF; padding: 0px 0 0 12px;">
-                    <textarea id="editor-input"
-                              style="font-family: monospace; width: 100%; height: 100%; border: none; outline-style: none; "></textarea>
-                </div>
-                <div id="console" style="width: 100%; vertical-align:top; background: #FFF; ">
-                    <div id="query-history" style="width: 100%; height: 100%; vertical-align:top; overflow-y: auto">
-                    </div>
-                </div>
-                <div id="console-input" style="height: 24px; width: 100%; background: #FFF; ">
-                    <span style="float: left; position: fixed; ">&nbsp;:&nbsp;</span>
-                    <span id="query-message" style="float: left; position: fixed; display: none; margin-left: 32px">Processing query</span>
-                    <textarea id="query-input"
-                              oninput="auto_grow(this)"
-                              onkeypress="check_enter()"
-                              style="font-family: monospace; margin-left: 20px; resize: none; overflow: hidden; min-height: 20px; max-height: 100px; height: 16px; border: none; outline-style: none; width: 95%;"></textarea>
-                </div>
-            </div>
-            <div id="container-div-resize" onmousedown="onMouseDownY(event)"
-                 style="width: 100%; height: 2px; cursor: row-resize; background-color:#AAA;">
-            </div>
-            <div id="container-div"
-                 style="border-bottom: 1px #999 solid; border-right: 1px #999 solid; vertical-align:top; width: 100%">
-                <div id="container-results"
-                     style="border-bottom: 1px #999 solid; border-right: 1px #999 solid; vertical-align:top; float: left">
-                    <div style="height: 20px; width: auto; padding:2px 2px 2px 8px; background-color: #444; color: #EEE; ">
-                        Results
-                    </div>
-                    <div id="query-results" style="height: auto; width: auto; padding:8px; overflow: auto; ">
-                        ---
-                    </div>
-                </div>
-                <div id="container-solutions"
-                     style="border-bottom: 1px #999 solid; border-right: 1px #999 solid; vertical-align:top; float: left">
-                    <div style="height: 20px; width: auto; padding:2px 2px 2px 8px; background-color: #444; color: #EEE; ">
-                        Solutions
-                    </div>
-                    <div id="query-solutions" style="height: auto; width: auto; padding:8px; overflow: auto; ">
-                        ---
-                    </div>
-                </div>
-                <div id="container-hypothesis"
-                     style="border-bottom: 1px #999 solid; border-right: 1px #999 solid; vertical-align:top; float: left">
-                    <div style="height: 20px; width: auto; padding:2px 2px 2px 8px; background-color: #444; color: #EEE; ">
-                        Hypothesis
-                    </div>
-                    <div id="query-hypothesis" style="height: auto; width: auto; padding:8px; overflow: auto; ">
-                        ---
-                    </div>
-                </div>
-                <div id="container-logging"
-                     style="border-bottom: 1px #999 solid; border-right: 1px #999 solid; vertical-align:top; float: left">
-                    <div style="height: 20px; width: auto; padding:2px 2px 2px 8px; background-color: #444; color: #EEE; ">
-                        Logging
-                    </div>
-                    <div id="query-log" style="height: auto; width: auto; padding:8px; overflow: auto; ">
-                        ---
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div style="background: #CCC; width: 100%; height: 24px; bottom: 0px; padding: 4px 0 4px 0; position: fixed">
-        <span id="copyright" style="padding: 0 0 0 8px;">Copyright &copy; 2021, Dmitry G. Quznetsov</span>
-    </div>
-</div>
+    function getCookie(name) {
+        var prefix = encodeURIComponent(name) + '=';
+        var parts = document.cookie.split(';');
+        for (var i = 0; i < parts.length; i++) {
+            var item = parts[i].trim();
+            if (item.indexOf(prefix) === 0) {
+                return decodeURIComponent(item.substring(prefix.length));
+            }
+        }
+        return '';
+    }
 
+    function clearApplicationSession() {
+        setCookie('token', '');
+        setCookie('login', '');
+    }
+
+    function setPendingToken(token) {
+        state.pendingActionToken = token || '';
+        if (state.pendingActionToken) {
+            sessionStorage.setItem('kanger.pendingActionToken', state.pendingActionToken);
+        } else {
+            sessionStorage.removeItem('kanger.pendingActionToken');
+        }
+    }
+
+    function showView(name) {
+        Object.keys(views).forEach(function (key) {
+            views[key].classList.toggle('hidden', key !== name);
+        });
+    }
+
+    function message(text, type) {
+        notice.textContent = text || '';
+        notice.className = 'notice' + (type ? ' ' + type : '');
+    }
+
+    function describeError(data, fallback) {
+        if (data && data.description) {
+            return String(data.description);
+        }
+        return fallback;
+    }
+
+    async function post(context, parameters) {
+        if (!API_HOST) {
+            throw new Error('KANGER API host is not configured');
+        }
+        var response = await fetch(API_HOST + '/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            cache: 'no-store',
+            credentials: 'omit',
+            body: JSON.stringify({context: context, parameters: parameters || {}})
+        });
+        var text = await response.text();
+        var data;
+        try {
+            data = text ? JSON.parse(text) : {};
+        } catch (error) {
+            throw new Error('Server returned an invalid JSON response');
+        }
+        if (!response.ok) {
+            throw new Error(describeError(data, 'HTTP ' + response.status));
+        }
+        return data;
+    }
+
+    function applyCapabilities(data) {
+        var auth = data && data.auth;
+        if (!auth || typeof auth.public_registration !== 'boolean'
+                || !auth.registration_policy) {
+            state.capabilities = null;
+            registerButton.classList.add('hidden');
+            policy.textContent = 'The server did not publish a valid authentication capability snapshot. Public registration is unavailable.';
+            throw new Error('Authentication capabilities are unavailable');
+        }
+        state.capabilities = auth;
+        registerButton.classList.toggle('hidden', !auth.public_registration);
+        if (auth.registration_policy === 'TRUSTED') {
+            policy.textContent = 'Trusted deployment: accounts are provisioned by the server operator. Public registration is disabled.';
+        } else if (auth.registration_policy === 'EMAIL_VERIFIED') {
+            policy.textContent = 'E-mail verified deployment: registration creates a pending request. Confirmation activates the account; sign-in remains a separate step.';
+        } else {
+            registerButton.classList.add('hidden');
+            policy.textContent = 'Unknown authentication policy. Public registration is unavailable.';
+            throw new Error('Unknown authentication policy');
+        }
+    }
+
+    async function loadCapabilities() {
+        var data = await post('version', {});
+        version.textContent = data.version || data.server_version || 'KANGER Server';
+        applyCapabilities(data);
+    }
+
+    async function validateStoredSession() {
+        var token = getCookie('token');
+        if (!token) {
+            return false;
+        }
+        var data = await post('command', {token: token, ping: ''});
+        if (data.result !== 'OK') {
+            clearApplicationSession();
+            return false;
+        }
+        return true;
+    }
+
+    function updatePendingFromResponse(data) {
+        if (data && data.pending_action_token) {
+            setPendingToken(String(data.pending_action_token));
+        }
+        document.getElementById('pending-email').textContent = data && data.email_hint
+                ? String(data.email_hint) : 'the registered address';
+    }
+
+    async function login(event) {
+        event.preventDefault();
+        message('Signing in…');
+        var loginValue = document.getElementById('login').value.trim();
+        var password = document.getElementById('password').value;
+        try {
+            var data = await post('login', {login: loginValue, password: password});
+            document.getElementById('password').value = '';
+            if (data.result === 'OK' && data.token) {
+                setPendingToken('');
+                setCookie('token', String(data.token));
+                setCookie('login', loginValue);
+                message('');
+                await launchConsole();
+                return;
+            }
+            if (data.code === 'EMAIL_CONFIRMATION_REQUIRED'
+                    && data.pending_action_token) {
+                updatePendingFromResponse(data);
+                showView('pending');
+                message('Confirm the e-mail address, or use one of the scoped pending-registration actions.');
+                return;
+            }
+            message(describeError(data, 'Authentication failed'), 'error');
+        } catch (error) {
+            document.getElementById('password').value = '';
+            message(error.message, 'error');
+        }
+    }
+
+    async function register(event) {
+        event.preventDefault();
+        if (!state.capabilities || !state.capabilities.public_registration) {
+            message('Public registration is disabled by server policy.', 'error');
+            return;
+        }
+        var password = document.getElementById('register-password').value;
+        var repeated = document.getElementById('register-password-repeat').value;
+        if (password !== repeated) {
+            message('Password confirmation does not match.', 'error');
+            return;
+        }
+        if (!document.getElementById('privacy').checked) {
+            message('Privacy consent is required.', 'error');
+            return;
+        }
+        message('Creating pending registration…');
+        var parameters = {
+            register: document.getElementById('register-login').value.trim(),
+            password: password,
+            email: document.getElementById('register-email').value.trim(),
+            name: document.getElementById('register-name').value.trim(),
+            country: document.getElementById('register-country').value.trim(),
+            city: document.getElementById('register-city').value.trim(),
+            privacy: true,
+            token: ''
+        };
+        try {
+            var data = await post('login', parameters);
+            document.getElementById('register-password').value = '';
+            document.getElementById('register-password-repeat').value = '';
+            if (data.result === 'OK' && data.state === 'PENDING_CONFIRMATION') {
+                document.getElementById('login').value = parameters.register;
+                showView('login');
+                message('Registration is pending for ' + (data.email_hint || 'the supplied e-mail')
+                        + '. Follow the confirmation link, then sign in here.', 'success');
+                return;
+            }
+            var suffix = data && data.state === 'PENDING_CONFIRMATION'
+                    ? ' The pending registration remains available; sign in with the same credentials to manage it.' : '';
+            message(describeError(data, 'Registration failed') + suffix, 'error');
+        } catch (error) {
+            document.getElementById('register-password').value = '';
+            document.getElementById('register-password-repeat').value = '';
+            message(error.message, 'error');
+        }
+    }
+
+    async function pendingAction(parameters, successText) {
+        if (!state.pendingActionToken) {
+            showView('login');
+            message('Sign in with the pending registration credentials to obtain a scoped action token.', 'error');
+            return;
+        }
+        parameters.pending_action_token = state.pendingActionToken;
+        try {
+            var data = await post('login', parameters);
+            updatePendingFromResponse(data);
+            if (data.result === 'OK') {
+                message(successText, 'success');
+            } else {
+                message(describeError(data, 'Pending registration action failed'), 'error');
+            }
+        } catch (error) {
+            message(error.message, 'error');
+        }
+    }
+
+    async function cancelPending() {
+        if (!state.pendingActionToken) {
+            showView('login');
+            message('No scoped pending-registration token is available.', 'error');
+            return;
+        }
+        try {
+            var data = await post('login', {
+                pending_action_token: state.pendingActionToken,
+                cancel_pending: ''
+            });
+            if (data.result === 'OK') {
+                setPendingToken('');
+                showView('login');
+                message('Pending registration cancelled.', 'success');
+            } else {
+                message(describeError(data, 'Pending registration could not be cancelled'), 'error');
+            }
+        } catch (error) {
+            message(error.message, 'error');
+        }
+    }
+
+    async function launchConsole() {
+        document.getElementById('auth-shell').classList.add('hidden');
+        document.getElementById('console-view').classList.remove('hidden');
+        try {
+            if (!state.consoleTemplate) {
+                var response = await fetch('console.html', {cache: 'no-store'});
+                if (!response.ok) {
+                    throw new Error('Owner console payload is unavailable');
+                }
+                state.consoleTemplate = await response.text();
+            }
+            var marker = 'window.apihost = "http://localhost:1964";';
+            if (state.consoleTemplate.indexOf(marker) < 0) {
+                throw new Error('Owner console API marker is unavailable');
+            }
+            var consoleDocument = state.consoleTemplate.replace(
+                    marker, 'window.apihost = ' + JSON.stringify(API_HOST) + ';');
+            consoleDocument = consoleDocument.replace('<head>', '<head><base href="./">');
+            document.getElementById('console-frame').srcdoc = consoleDocument;
+            if (state.tokenMonitor) {
+                clearInterval(state.tokenMonitor);
+            }
+            state.tokenMonitor = setInterval(function () {
+                if (!getCookie('token')) {
+                    clearInterval(state.tokenMonitor);
+                    state.tokenMonitor = null;
+                    document.getElementById('console-frame').srcdoc = '';
+                    document.getElementById('console-view').classList.add('hidden');
+                    document.getElementById('auth-shell').classList.remove('hidden');
+                    showView('login');
+                    message('Session closed. Sign in again.');
+                }
+            }, 500);
+        } catch (error) {
+            document.getElementById('console-view').classList.add('hidden');
+            document.getElementById('auth-shell').classList.remove('hidden');
+            clearApplicationSession();
+            message(error.message, 'error');
+        }
+    }
+
+    document.getElementById('login-form').addEventListener('submit', login);
+    document.getElementById('register-form').addEventListener('submit', register);
+    registerButton.addEventListener('click', function () { showView('register'); message(''); });
+    document.getElementById('cancel-register').addEventListener('click', function () { showView('login'); message(''); });
+    document.getElementById('pending-back').addEventListener('click', function () { showView('login'); message(''); });
+    document.getElementById('pending-resend').addEventListener('click', function () {
+        pendingAction({resend: ''}, 'A new confirmation e-mail was queued.');
+    });
+    document.getElementById('pending-change').addEventListener('click', function () {
+        var email = document.getElementById('pending-new-email').value.trim();
+        if (!email) {
+            message('Enter the new unconfirmed e-mail address.', 'error');
+            return;
+        }
+        pendingAction({change_pending_email: '', email: email}, 'The pending e-mail address was changed and a new confirmation was queued.');
+    });
+    document.getElementById('pending-cancel').addEventListener('click', cancelPending);
+
+    (async function initialize() {
+        try {
+            await loadCapabilities();
+            var query = new URLSearchParams(location.search);
+            if (query.get('confirmation') === 'success'
+                    || query.get('confirmed') === 'true') {
+                message('E-mail confirmed. Sign in to create a session.', 'success');
+                history.replaceState(null, '', location.pathname);
+            }
+            if (await validateStoredSession()) {
+                await launchConsole();
+            } else {
+                showView('login');
+                document.getElementById('login').focus();
+            }
+        } catch (error) {
+            showView('login');
+            message(error.message, 'error');
+        }
+    }());
+}());
+</script>
 </body>
 </html>

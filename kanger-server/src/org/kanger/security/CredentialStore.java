@@ -33,15 +33,40 @@ import java.util.UUID;
  */
 public final class CredentialStore {
 
+    /**
+     * Preparation performed while the credential authority is exclusively
+     * locked and before the credential becomes visible to authentication.
+     */
+    public interface AccountPreparation {
+        void prepare(long userId) throws Exception;
+    }
+
+    /**
+     * Revocation work performed while the credential authority is exclusively
+     * locked and before an exact credential is removed.
+     */
+    public interface AccountDeletionPreparation {
+        void prepare(long userId) throws Exception;
+    }
+
     public static final int DEFAULT_ITERATIONS = 210000;
 
     private static final String VERSION = "v2";
     private static final int SALT_BYTES = 16;
     private static final int HASH_BYTES = 32;
 
+    /**
+     * Coordinates all CredentialStore instances in one server JVM. The server
+     * lifecycle service and the historical UserFactory may hold separate
+     * facades over the same file during the 0.14 migration, but they must never
+     * publish competing snapshots.
+     */
+    private static final Object STORE_AUTHORITY_LOCK = new Object();
+
     private final Path file;
     private final int iterations;
     private final SecureRandom random;
+    private final UserIdSequence userIds;
 
     public CredentialStore(Path file) {
         this(file, DEFAULT_ITERATIONS, new SecureRandom());
@@ -57,6 +82,20 @@ public final class CredentialStore {
         this.file = file;
         this.iterations = iterations;
         this.random = random;
+        this.userIds = new UserIdSequence(file);
+    }
+
+    /**
+     * Derives an opaque verifier that may be persisted by PendingRegistration
+     * and later published without retaining or recovering plaintext.
+     */
+    public synchronized CredentialMaterial preparePassword(String password)
+            throws Exception {
+        validatePassword(password);
+        byte[] salt = new byte[SALT_BYTES];
+        random.nextBytes(salt);
+        byte[] hash = derive(password, salt, iterations);
+        return new CredentialMaterial(iterations, salt, hash);
     }
 
     /**
@@ -64,67 +103,243 @@ public final class CredentialStore {
      * a PBKDF2 record only after successful authentication.
      */
     public synchronized long authenticate(String login, String password) throws Exception {
-        validateInput(login, password);
-        Snapshot snapshot = readSnapshot();
+        synchronized (STORE_AUTHORITY_LOCK) {
+            validateInput(login, password);
+            Snapshot snapshot = readSnapshot();
 
-        CredentialRecord record = findByLogin(snapshot.records, login);
-        if (record != null) {
-            if (!verify(password, record)) {
+            CredentialRecord record = findByLogin(snapshot.records, login);
+            if (record != null) {
+                if (!verify(password, record.material)) {
+                    throw new AuthenticationErrorException();
+                }
+                return record.userId;
+            }
+
+            String legacy = legacyToken(login, password);
+            Long userId = snapshot.legacy.remove(legacy);
+            if (userId == null) {
                 throw new AuthenticationErrorException();
             }
-            return record.userId;
-        }
 
-        String legacy = legacyToken(login, password);
-        Long userId = snapshot.legacy.remove(legacy);
-        if (userId == null) {
-            throw new AuthenticationErrorException();
+            userIds.advanceBeyond(userId.longValue());
+            removeByUserId(snapshot.records, userId.longValue());
+            snapshot.records.add(new CredentialRecord(
+                    login,
+                    userId.longValue(),
+                    preparePassword(password)));
+            writeSnapshot(snapshot);
+            return userId.longValue();
         }
-
-        removeByUserId(snapshot.records, userId.longValue());
-        snapshot.records.add(createRecord(login, password, userId.longValue()));
-        writeSnapshot(snapshot);
-        return userId.longValue();
     }
 
     /**
      * Creates a new credential and returns the allocated user id.
      */
     public synchronized long create(String login, String password) throws Exception {
-        validateInput(login, password);
-        Snapshot snapshot = readSnapshot();
+        return createPrepared(login, password, new AccountPreparation() {
+            @Override
+            public void prepare(long userId) {
+                // Historical direct creation has no preparation callback.
+            }
+        });
+    }
 
-        if (findByLogin(snapshot.records, login) != null
-                || snapshot.legacy.containsKey(legacyToken(login, password))) {
-            throw new AuthenticationErrorException("User already exists");
+    /**
+     * Derives verification material from plaintext, prepares the complete
+     * account and publishes the credential last.
+     */
+    public synchronized long createPrepared(String login,
+                                            String password,
+                                            AccountPreparation preparation)
+            throws Exception {
+        validateInput(login, password);
+        return createPreparedInternal(
+                login,
+                preparePassword(password),
+                legacyToken(login, password),
+                preparation);
+    }
+
+    /**
+     * Allocates an id, performs complete account preparation and publishes
+     * already-derived verification material only after preparation succeeds.
+     *
+     * <p>This overload is the activation boundary for PendingRegistration: the
+     * original password is neither required nor recoverable.</p>
+     */
+    public synchronized long createPrepared(String login,
+                                            CredentialMaterial material,
+                                            AccountPreparation preparation)
+            throws Exception {
+        validateLogin(login);
+        if (material == null) {
+            throw new IllegalArgumentException("credential material must not be null");
+        }
+        return createPreparedInternal(login, material, null, preparation);
+    }
+
+    /**
+     * Publishes verification material for an exact pre-existing account home.
+     *
+     * <p>This is a narrow crash-recovery primitive for the window where the
+     * canonical home was durably published but the process stopped before the
+     * final credential snapshot replacement. Both login and user id must still
+     * be absent from every versioned and legacy credential record.</p>
+     */
+    public synchronized long publishPrepared(long userId,
+                                             String login,
+                                             CredentialMaterial material)
+            throws Exception {
+        if (userId <= 0L) {
+            throw new IllegalArgumentException("user id must be positive");
+        }
+        validateLogin(login);
+        if (material == null) {
+            throw new IllegalArgumentException("credential material must not be null");
         }
 
-        long userId = maxUserId(snapshot) + 1L;
-        snapshot.records.add(createRecord(login, password, userId));
-        writeSnapshot(snapshot);
-        return userId;
+        synchronized (STORE_AUTHORITY_LOCK) {
+            Snapshot snapshot = readSnapshot();
+            if (findByLogin(snapshot.records, login) != null
+                    || findByUserId(snapshot.records, userId) != null
+                    || containsLegacyUserId(snapshot.legacy, userId)) {
+                throw new AuthenticationErrorException(
+                        "Credential or user id already exists");
+            }
+            userIds.advanceBeyond(userId);
+            snapshot.records.add(new CredentialRecord(login, userId, material));
+            writeSnapshot(snapshot);
+            return userId;
+        }
+    }
+
+    private long createPreparedInternal(String login,
+                                        CredentialMaterial material,
+                                        String legacyCandidate,
+                                        AccountPreparation preparation)
+            throws Exception {
+        if (preparation == null) {
+            throw new IllegalArgumentException("account preparation must not be null");
+        }
+        synchronized (STORE_AUTHORITY_LOCK) {
+            Snapshot snapshot = readSnapshot();
+
+            if (findByLogin(snapshot.records, login) != null
+                    || (legacyCandidate != null
+                    && snapshot.legacy.containsKey(legacyCandidate))) {
+                throw new AuthenticationErrorException("User already exists");
+            }
+
+            long minimum = maxUserId(snapshot) + 1L;
+            long userId = userIds.allocate(minimum);
+            CredentialRecord record = new CredentialRecord(login, userId, material);
+            preparation.prepare(userId);
+            snapshot.records.add(record);
+            writeSnapshot(snapshot);
+            return userId;
+        }
     }
 
     /**
      * Replaces all credentials belonging to a user with one versioned record.
      */
     public synchronized void update(long userId, String login, String password) throws Exception {
-        validateInput(login, password);
-        Snapshot snapshot = readSnapshot();
+        synchronized (STORE_AUTHORITY_LOCK) {
+            validateInput(login, password);
+            Snapshot snapshot = readSnapshot();
 
-        CredentialRecord duplicate = findByLogin(snapshot.records, login);
-        if (duplicate != null && duplicate.userId != userId) {
-            throw new Exception("Login and password used by another user");
-        }
-        Long legacyOwner = snapshot.legacy.get(legacyToken(login, password));
-        if (legacyOwner != null && legacyOwner.longValue() != userId) {
-            throw new Exception("Login and password used by another user");
-        }
+            CredentialRecord duplicate = findByLogin(snapshot.records, login);
+            if (duplicate != null && duplicate.userId != userId) {
+                throw new Exception("Login and password used by another user");
+            }
+            Long legacyOwner = snapshot.legacy.get(legacyToken(login, password));
+            if (legacyOwner != null && legacyOwner.longValue() != userId) {
+                throw new Exception("Login and password used by another user");
+            }
 
-        removeByUserId(snapshot.records, userId);
-        removeLegacyByUserId(snapshot.legacy, userId);
-        snapshot.records.add(createRecord(login, password, userId));
-        writeSnapshot(snapshot);
+            userIds.advanceBeyond(userId);
+            removeByUserId(snapshot.records, userId);
+            removeLegacyByUserId(snapshot.legacy, userId);
+            snapshot.records.add(new CredentialRecord(
+                    login,
+                    userId,
+                    preparePassword(password)));
+            writeSnapshot(snapshot);
+        }
+    }
+
+    /**
+     * Removes every versioned or legacy credential belonging to an exact user
+     * id after prepared revocation work succeeds under the same authority lock.
+     * Returns false when no matching credential exists.
+     */
+    public synchronized boolean deletePrepared(
+            long userId,
+            AccountDeletionPreparation preparation) throws Exception {
+        if (userId <= 0L) {
+            throw new IllegalArgumentException("user id must be positive");
+        }
+        if (preparation == null) {
+            throw new IllegalArgumentException("deletion preparation must not be null");
+        }
+        synchronized (STORE_AUTHORITY_LOCK) {
+            Snapshot snapshot = readSnapshot();
+            boolean exists = findByUserId(snapshot.records, userId) != null
+                    || containsLegacyUserId(snapshot.legacy, userId);
+            if (!exists) {
+                return false;
+            }
+
+            preparation.prepare(userId);
+            removeByUserId(snapshot.records, userId);
+            removeLegacyByUserId(snapshot.legacy, userId);
+            writeSnapshot(snapshot);
+            return true;
+        }
+    }
+
+    /**
+     * Immediate compatibility deletion without external revocation work.
+     */
+    public synchronized boolean delete(long userId) throws Exception {
+        return deletePrepared(userId, new AccountDeletionPreparation() {
+            @Override
+            public void prepare(long ignored) {
+                // compatibility path
+            }
+        });
+    }
+
+    /**
+     * Resolves a versioned login without authenticating. Legacy records do not
+     * retain login text and therefore cannot be resolved by this method until
+     * their first successful migration.
+     */
+    public synchronized Long findUserId(String login) throws Exception {
+        synchronized (STORE_AUTHORITY_LOCK) {
+            validateLogin(login);
+            CredentialRecord record = findByLogin(readSnapshot().records, login);
+            return record == null ? null : Long.valueOf(record.userId);
+        }
+    }
+
+    /**
+     * Resolves a versioned login by exact user id. Legacy records do not retain
+     * login text and must be cross-checked against the canonical account profile.
+     */
+    public synchronized String findLogin(long userId) throws Exception {
+        synchronized (STORE_AUTHORITY_LOCK) {
+            CredentialRecord record = findByUserId(readSnapshot().records, userId);
+            return record == null ? null : record.login;
+        }
+    }
+
+    public synchronized boolean containsUserId(long userId) throws Exception {
+        synchronized (STORE_AUTHORITY_LOCK) {
+            Snapshot snapshot = readSnapshot();
+            return findByUserId(snapshot.records, userId) != null
+                    || containsLegacyUserId(snapshot.legacy, userId);
+        }
     }
 
     /**
@@ -134,17 +349,13 @@ public final class CredentialStore {
         return String.format("%04x%04x", login.hashCode(), password.hashCode());
     }
 
-    private CredentialRecord createRecord(String login, String password, long userId)
+    private static boolean verify(String password, CredentialMaterial material)
             throws Exception {
-        byte[] salt = new byte[SALT_BYTES];
-        random.nextBytes(salt);
-        byte[] hash = derive(password, salt, iterations);
-        return new CredentialRecord(login, userId, iterations, salt, hash);
-    }
-
-    private static boolean verify(String password, CredentialRecord record) throws Exception {
-        byte[] candidate = derive(password, record.salt, record.iterations);
-        return MessageDigest.isEqual(record.hash, candidate);
+        byte[] candidate = derive(
+                password,
+                material.salt(),
+                material.iterations());
+        return MessageDigest.isEqual(material.hash(), candidate);
     }
 
     private static byte[] derive(String password, byte[] salt, int iterations) throws Exception {
@@ -198,14 +409,14 @@ public final class CredentialStore {
         try {
             String login = new String(decode(values[1]), StandardCharsets.UTF_8);
             long userId = Long.parseLong(values[2]);
-            int iterations = Integer.parseInt(values[3]);
-            byte[] salt = decode(values[4]);
-            byte[] hash = decode(values[5]);
-            if (login.isEmpty() || userId < 0L || iterations <= 0
-                    || salt.length < 16 || hash.length < 32) {
+            CredentialMaterial material = new CredentialMaterial(
+                    Integer.parseInt(values[3]),
+                    decode(values[4]),
+                    decode(values[5]));
+            if (login.isEmpty() || userId < 0L) {
                 throw new IOException("Invalid versioned credential values");
             }
-            return new CredentialRecord(login, userId, iterations, salt, hash);
+            return new CredentialRecord(login, userId, material);
         } catch (IllegalArgumentException ex) {
             throw new IOException("Invalid versioned credential encoding", ex);
         }
@@ -232,9 +443,9 @@ public final class CredentialStore {
             lines.add(VERSION + "\t"
                     + encode(record.login.getBytes(StandardCharsets.UTF_8)) + "\t"
                     + record.userId + "\t"
-                    + record.iterations + "\t"
-                    + encode(record.salt) + "\t"
-                    + encode(record.hash));
+                    + record.material.iterations() + "\t"
+                    + encode(record.material.salt()) + "\t"
+                    + encode(record.material.hash()));
         }
 
         List<Map.Entry<String, Long>> legacy =
@@ -273,6 +484,26 @@ public final class CredentialStore {
         return null;
     }
 
+    private static CredentialRecord findByUserId(List<CredentialRecord> records,
+                                                 long userId) {
+        for (CredentialRecord record : records) {
+            if (record.userId == userId) {
+                return record;
+            }
+        }
+        return null;
+    }
+
+    private static boolean containsLegacyUserId(Map<String, Long> legacy,
+                                                long userId) {
+        for (Long owner : legacy.values()) {
+            if (owner.longValue() == userId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static void removeByUserId(List<CredentialRecord> records, long userId) {
         for (int index = records.size() - 1; index >= 0; index--) {
             if (records.get(index).userId == userId) {
@@ -305,9 +536,17 @@ public final class CredentialStore {
     }
 
     private static void validateInput(String login, String password) {
+        validateLogin(login);
+        validatePassword(password);
+    }
+
+    private static void validateLogin(String login) {
         if (login == null || login.isEmpty()) {
             throw new IllegalArgumentException("login must not be empty");
         }
+    }
+
+    private static void validatePassword(String password) {
         if (password == null || password.isEmpty()) {
             throw new IllegalArgumentException("password must not be empty");
         }
@@ -329,20 +568,14 @@ public final class CredentialStore {
     private static final class CredentialRecord {
         private final String login;
         private final long userId;
-        private final int iterations;
-        private final byte[] salt;
-        private final byte[] hash;
+        private final CredentialMaterial material;
 
         private CredentialRecord(String login,
                                  long userId,
-                                 int iterations,
-                                 byte[] salt,
-                                 byte[] hash) {
+                                 CredentialMaterial material) {
             this.login = login;
             this.userId = userId;
-            this.iterations = iterations;
-            this.salt = salt.clone();
-            this.hash = hash.clone();
+            this.material = material;
         }
     }
 }

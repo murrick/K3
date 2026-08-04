@@ -25,6 +25,8 @@
 
 package org.kanger;
 
+import org.kanger.admin.AdminServer;
+
 import java.io.*;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -40,6 +42,7 @@ public class Kanger {
     private static Process serviceDescriptor = null;
     private static boolean serviceTerminate = false;
     private static HttpServer httpServer = null;
+    private static AdminServer adminServer = null;
     private static final AtomicBoolean serverShutdown = new AtomicBoolean(false);
 
     public static void main(String[] args) throws Exception {
@@ -63,6 +66,12 @@ public class Kanger {
                 Settings.setActive(true);
                 Timer timer = new Timer(true);
                 timer.scheduleAtFixedRate(new Watchdog(), 0, Long.parseLong(Settings.getProperty("server.watchdog.period", 1000 + "")));
+
+                if (AdminServer.isEnabled()) {
+                    Watchdog.log("Admin Server starting...");
+                    adminServer = AdminServer.fromSettings();
+                    adminServer.start();
+                }
 
                 Watchdog.log("HTTP Server starting...");
                 httpServer = new HttpServer();
@@ -166,6 +175,17 @@ public class Kanger {
         try {
             HttpServer current = httpServer;
             httpServer = null;
+            if (current != null) {
+                current.stop();
+            }
+        } catch (Exception error) {
+            System.err.println(new Date());
+            error.printStackTrace(System.err);
+        }
+
+        try {
+            AdminServer current = adminServer;
+            adminServer = null;
             if (current != null) {
                 current.stop();
             }

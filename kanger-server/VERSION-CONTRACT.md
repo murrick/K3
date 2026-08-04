@@ -1,14 +1,14 @@
 # KANGER Server version identity
 
 Every non-empty JSON response produced by the HTTP boundary carries the same
-version identity:
+four-part version identity:
 
 ```json
 {
   "version": "3.3",
   "core_version": "3.3",
   "api_version": "1",
-  "server_version": "server-0.13"
+  "server_version": "server-0.14"
 }
 ```
 
@@ -21,14 +21,31 @@ the semantic KANGER product reached through the API.
 the core and its transport implementation.
 
 `server_version` identifies the qualified deployable REST-server artifact. It is
-the value used by deployment receipts, rollback diagnostics and
-`kanger-deploy.sh` / `kanger-update.sh` qualification.
+the value used by build qualification, deployment receipts, rollback diagnostics
+and release verification.
 
-During the transition from Server 0.12, the deployment scripts accept the old
-`version` field as a fallback for server-artifact verification. Newly built
-responses are verified through `server_version`; the fallback exists only so a
-current production installation can be inspected safely during a rolling
-upgrade.
+The fields are deliberately independent:
+
+```text
+version == core_version
+server_version != version
+```
+
+Release tooling must verify `server_version` when it needs the deployable server
+artifact identity. It must not use `version` as a fallback because `version`
+continues to report semantic core compatibility (`3.3`) across server releases.
+
+The generated `org/kanger/build.properties` resource records both:
+
+```properties
+branch=server-0.14
+server.version=server-0.14
+source.branch=<source Git branch>
+```
+
+The source branch is provenance, not public release identity. Building the same
+qualified release from a shelf, pull-request branch or local checkout must not
+change `server_version`.
 
 HTTP 204 responses have no body and therefore carry no version fields. All JSON
 success and error responses, including `/health`, `/ready` and `/version`, are

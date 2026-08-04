@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+JAR="/opt/kanger-server/kanger-server.jar"
+MAIN="org.kanger.admin.KangerAdmin"
+HOME_DIR="/var/lib/kanger-server"
+
+[[ -r "${JAR}" ]] || {
+  echo "kanger-admin: server JAR is not installed" >&2
+  exit 3
+}
+
+if [[ "${EUID}" -eq 0 ]]; then
+  exec runuser -u kanger -- \
+    java -Duser.home="${HOME_DIR}" -cp "${JAR}" "${MAIN}" "$@"
+fi
+
+if [[ "$(id -un)" = "kanger" ]]; then
+  exec java -Duser.home="${HOME_DIR}" -cp "${JAR}" "${MAIN}" "$@"
+fi
+
+echo "kanger-admin: run with sudo so the owner-only admin token remains protected" >&2
+exit 3

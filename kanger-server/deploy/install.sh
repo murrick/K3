@@ -19,11 +19,12 @@ CONFIG_DIR="/etc/kanger-server"
 UNIT_FILE="/etc/systemd/system/kanger-server.service"
 TARGET_JAR="${INSTALL_DIR}/kanger-server.jar"
 PREVIOUS_JAR="${INSTALL_DIR}/kanger-server.jar.previous"
+ADMIN_BIN="/usr/local/bin/kanger-admin"
 HEALTH_URL="http://127.0.0.1:1964/health"
 READY_URL="http://127.0.0.1:1964/ready"
 
 for command in java systemctl systemd-analyze journalctl curl install \
-  getent groupadd useradd readlink; do
+  getent groupadd useradd readlink runuser; do
   command -v "${command}" >/dev/null 2>&1 || {
     echo "Required command not found: ${command}" >&2
     exit 1
@@ -68,6 +69,10 @@ fi
 
 install -o root -g kanger -m 0640 "${SOURCE_JAR}" "${TARGET_JAR}.new"
 mv -f "${TARGET_JAR}.new" "${TARGET_JAR}"
+
+install -o root -g root -m 0755 \
+  "${SCRIPT_DIR}/kanger-admin" \
+  "${ADMIN_BIN}"
 
 install -o root -g root -m 0644 \
   "${SCRIPT_DIR}/systemd/kanger-server.service" \
@@ -116,4 +121,5 @@ echo
 echo "KANGER Server is healthy and ready:"
 echo "  ${HEALTH_URL}"
 echo "  ${READY_URL}"
+echo "Local operator CLI: sudo kanger-admin --help"
 echo "Public nginx exposure is a separate explicit step."

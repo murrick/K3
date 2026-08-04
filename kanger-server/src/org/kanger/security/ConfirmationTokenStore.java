@@ -28,6 +28,13 @@ public final class ConfirmationTokenStore {
 
     private static final String VERSION = "v1";
 
+    /**
+     * Coordinates every ConfirmationTokenStore facade in one server JVM.
+     * UserFactory and account lifecycle may hold distinct instances over the
+     * same file; the whole read-modify-write cycle must remain one authority.
+     */
+    private static final Object STORE_AUTHORITY_LOCK = new Object();
+
     private final Path file;
 
     public ConfirmationTokenStore(Path file) {
@@ -58,16 +65,18 @@ public final class ConfirmationTokenStore {
             throw new IllegalArgumentException("confirmation ttl must be positive");
         }
 
-        long now = System.currentTimeMillis();
-        List<Record> records = readActive(now);
-        for (int index = records.size() - 1; index >= 0; index--) {
-            Record record = records.get(index);
-            if (record.userId == userId || record.token.equals(token)) {
-                records.remove(index);
+        synchronized (STORE_AUTHORITY_LOCK) {
+            long now = System.currentTimeMillis();
+            List<Record> records = readActive(now);
+            for (int index = records.size() - 1; index >= 0; index--) {
+                Record record = records.get(index);
+                if (record.userId == userId || record.token.equals(token)) {
+                    records.remove(index);
+                }
             }
+            records.add(new Record(token, userId, now + ttlMillis));
+            write(records);
         }
-        records.add(new Record(token, userId, now + ttlMillis));
-        write(records);
     }
 
     public synchronized long consume(String token) throws Exception {
@@ -75,22 +84,46 @@ public final class ConfirmationTokenStore {
             throw new AuthenticationErrorException();
         }
 
-        long now = System.currentTimeMillis();
-        List<Record> records = readActive(now);
-        Long userId = null;
-        for (int index = records.size() - 1; index >= 0; index--) {
-            Record record = records.get(index);
-            if (record.token.equals(token)) {
-                userId = record.userId;
-                records.remove(index);
-                break;
+        synchronized (STORE_AUTHORITY_LOCK) {
+            long now = System.currentTimeMillis();
+            List<Record> records = readActive(now);
+            Long userId = null;
+            for (int index = records.size() - 1; index >= 0; index--) {
+                Record record = records.get(index);
+                if (record.token.equals(token)) {
+                    userId = record.userId;
+                    records.remove(index);
+                    break;
+                }
             }
+            write(records);
+            if (userId == null) {
+                throw new AuthenticationErrorException(
+                        "Confirmation token is invalid or expired");
+            }
+            return userId.longValue();
         }
-        write(records);
-        if (userId == null) {
-            throw new AuthenticationErrorException("Confirmation token is invalid or expired");
+    }
+
+    /**
+     * Revokes every historical confirmation record for an exact user id.
+     */
+    public synchronized boolean revoke(long userId) throws IOException {
+        synchronized (STORE_AUTHORITY_LOCK) {
+            long now = System.currentTimeMillis();
+            List<Record> records = readActive(now);
+            int before = records.size();
+            for (int index = records.size() - 1; index >= 0; index--) {
+                if (records.get(index).userId == userId) {
+                    records.remove(index);
+                }
+            }
+            boolean changed = before != records.size();
+            if (changed || Files.exists(file)) {
+                write(records);
+            }
+            return changed;
         }
-        return userId.longValue();
     }
 
     private List<Record> readActive(long now) throws IOException {

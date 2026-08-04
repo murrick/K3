@@ -11,6 +11,32 @@ for command in systemctl curl ss nginx; do
   }
 done
 
+assert_loopback_listener() {
+  local port="$1"
+  local label="$2"
+  local listeners
+
+  listeners="$(ss -H -ltn "( sport = :${port} )")"
+  [[ -n "${listeners}" ]] || {
+    echo "No ${label} listener found on port ${port}" >&2
+    exit 1
+  }
+
+  echo "${listeners}" \
+    | grep -Eq "127\\.0\\.0\\.1:${port}|\\[::ffff:127\\.0\\.0\\.1\\]:${port}" || {
+      echo "KANGER ${label} listener is not confined to IPv4 loopback:" >&2
+      echo "${listeners}" >&2
+      exit 1
+    }
+
+  if echo "${listeners}" \
+      | grep -Eq "(^|[[:space:]])(0\\.0\\.0\\.0|\\[::\\]):${port}"; then
+    echo "KANGER ${label} listener is publicly bound on port ${port}" >&2
+    echo "${listeners}" >&2
+    exit 1
+  fi
+}
+
 systemctl is-enabled --quiet kanger-server.service
 systemctl is-active --quiet kanger-server.service
 
@@ -20,25 +46,12 @@ echo "${health}"
 echo "${ready}"
 echo "${health}" | grep -q '"status":"UP"'
 echo "${ready}" | grep -q '"status":"READY"'
+echo "${health}" | grep -q '"server_version":"server-0.14"'
+echo "${ready}" | grep -q '"server_version":"server-0.14"'
 
-listeners="$(ss -H -ltn '( sport = :1964 )')"
-[[ -n "${listeners}" ]] || {
-  echo "No listener found on port 1964" >&2
-  exit 1
-}
-
-echo "${listeners}" | grep -Eq '127\.0\.0\.1:1964|\[::ffff:127\.0\.0\.1\]:1964' || {
-  echo "KANGER Server is not confined to IPv4 loopback:" >&2
-  echo "${listeners}" >&2
-  exit 1
-}
-
-if echo "${listeners}" | grep -Eq '(^|[[:space:]])(0\.0\.0\.0|\[::\]):1964'; then
-  echo "KANGER Server is publicly bound on port 1964" >&2
-  echo "${listeners}" >&2
-  exit 1
-fi
+assert_loopback_listener 1964 "application"
+assert_loopback_listener 1965 "operator"
 
 nginx -t
 
-echo "KANGER service, readiness, loopback confinement and nginx configuration are valid."
+echo "KANGER Server 0.14 service, readiness, application/operator loopback confinement and nginx configuration are valid."

@@ -9,6 +9,16 @@ server.queue.capacity=128
 server.request.max.body.bytes=1048576
 server.watchdog.period=1000
 
+# Local host-operator plane. This listener must remain loopback-only and is not
+# proxied by nginx. kanger-admin reads the owner-only bearer token from the
+# service state home and calls this listener; it never edits account files.
+server.admin.enabled=true
+server.admin.bind.address=127.0.0.1
+server.admin.port=1965
+server.admin.request.max.body.bytes=65536
+# Relative paths resolve under the service user home.
+server.admin.token.file=KANGER/admin.token
+
 # Browser clients require exact origins. The public UI is served separately from
 # the API, so allow the exact UI origins that will call https://api.kanger.org.
 # server.cors.allowed.origin.1=https://kanger.org
@@ -21,9 +31,31 @@ server.watchdog.period=1000
 # Browser destination after a successful e-mail confirmation.
 # server.confirmation.redirect.url=https://kanger.org/
 
-# Confirmation mail is disabled until a complete explicit profile is supplied.
-# Choose exactly one mode: disabled, starttls, or smtps.
+# Registration policy and mail transport are selected together by this mode.
+#
+# disabled -> TRUSTED
+#   Public self-registration is disabled. Complete ACTIVE accounts are created
+#   through the local kanger-admin operator plane.
+#
+# starttls | smtps -> EMAIL_VERIFIED
+#   Public self-registration creates a PendingRegistration. A complete ACTIVE
+#   account exists only after successful e-mail confirmation.
+#
+# Historical alias ssl is accepted as smtps-compatible input during migration,
+# but smtps is the canonical configuration value.
+#
+# Server 0.14 resolves this value once into RegistrationPolicy. Account
+# lifecycle code must not branch directly on transport-mode strings.
 server.email.mode=disabled
+
+# EMAIL_VERIFIED pending-registration lifecycle. Pending records are transient
+# registration intent, not accounts; they live under KANGER/pending-registrations.conf.
+server.registration.pending.ttl.hours=168
+server.registration.confirmation.ttl.hours=24
+server.registration.action.ttl.minutes=15
+server.registration.resend.cooldown.seconds=60
+server.registration.pending.max.records=10000
+
 server.email.debug=false
 server.email.auth=true
 server.email.connection.timeout.millis=10000
