@@ -30,6 +30,7 @@ class AccountErrorCodeTest {
                 "CONFIRMATION_TOKEN_EXPIRED",
                 "EMAIL_ALREADY_USED",
                 "VERIFIED_EMAIL_IMMUTABLE",
+                "ACCOUNT_LOGIN_IMMUTABLE",
                 "LOGIN_ALREADY_USED",
                 "RESEND_RATE_LIMITED",
                 "MAIL_DELIVERY_UNAVAILABLE"), codes);
