@@ -73,6 +73,19 @@ final class FileAccountWorkspace implements AccountLifecycleService.WorkspaceAut
             throw new IOException("Account home already exists: " + canonical);
         }
 
+        Long loginOwner = findUserIdByLogin(request.getLogin());
+        if (loginOwner != null) {
+            throw new IOException(
+                    "Account login already belongs to user " + loginOwner);
+        }
+        if (!request.getEmail().isEmpty()) {
+            Long emailOwner = findUserIdByEmail(request.getEmail());
+            if (emailOwner != null) {
+                throw new IOException(
+                        "Account e-mail already belongs to user " + emailOwner);
+            }
+        }
+
         Path stagingRoot = root.resolve(".creating").normalize();
         Path staging = stagingRoot.resolve(userId + "-" + UUID.randomUUID()).normalize();
         ensureChild(staging);
