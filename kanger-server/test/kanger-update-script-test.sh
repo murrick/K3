@@ -88,16 +88,16 @@ EOF
 chmod +x "${FAKE_BIN}/"*
 
 bash -n "${UPDATER}"
-"${UPDATER}" --help | grep -q 'stable shelf branch develop/server/0.12'
-"${UPDATER}" --dry-run --target test@example.invalid \
+bash "${UPDATER}" --help | grep -q 'stable shelf branch develop/server/0.12'
+bash "${UPDATER}" --dry-run --target test@example.invalid \
   | grep -q 'no repository, build, SSH or HTTP action was performed'
 
-if "${UPDATER}" --dry-run --ref 'unsafe ref' >/dev/null 2>&1; then
+if bash "${UPDATER}" --dry-run --ref 'unsafe ref' >/dev/null 2>&1; then
   echo "Unsafe Git ref was accepted" >&2
   exit 1
 fi
 
-PATH="${FAKE_BIN}:${PATH}" "${UPDATER}" \
+PATH="${FAKE_BIN}:${PATH}" bash "${UPDATER}" \
   --repo-url "${ORIGIN}" \
   --checkout "${CHECKOUT}" \
   --target test@example.invalid \
@@ -114,7 +114,7 @@ JAR_SHA="$(sha256sum "${CHECKOUT}/kanger-server/target/kanger-server.jar" | awk 
 printf '%s\n' "${JAR_SHA}" > "${REMOTE_SHA_FILE}"
 : > "${CALL_LOG}"
 
-PATH="${FAKE_BIN}:${PATH}" "${UPDATER}" \
+PATH="${FAKE_BIN}:${PATH}" bash "${UPDATER}" \
   --repo-url "${ORIGIN}" \
   --checkout "${CHECKOUT}" \
   --target test@example.invalid \
