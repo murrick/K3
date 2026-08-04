@@ -45,16 +45,24 @@ public final class AccountLifecycleService {
                              String login,
                              CredentialMaterial material) throws Exception;
 
-        boolean deletePrepared(long userId,
-                               DeletionPreparation preparation) throws Exception;
+        default boolean deletePrepared(long userId,
+                                       DeletionPreparation preparation)
+                throws Exception {
+            preparation.prepare(userId);
+            return delete(userId);
+        }
 
         boolean delete(long userId) throws Exception;
 
         Long findUserId(String login) throws Exception;
 
-        String findLogin(long userId) throws Exception;
+        default String findLogin(long userId) throws Exception {
+            return null;
+        }
 
-        boolean containsUserId(long userId) throws Exception;
+        default boolean containsUserId(long userId) throws Exception {
+            return false;
+        }
     }
 
     interface WorkspaceAuthority {
