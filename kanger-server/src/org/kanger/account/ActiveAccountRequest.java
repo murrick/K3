@@ -28,10 +28,11 @@ public final class ActiveAccountRequest {
     private final String country;
     private final String city;
     private final Boolean privacyConsent;
+    private final String activationReference;
 
     public ActiveAccountRequest(String login, String password) {
         this(login, password, null, AccountActivationSource.LOCAL_OPERATOR,
-                "", "", "", "", null);
+                "", "", "", "", null, "");
     }
 
     public ActiveAccountRequest(String login,
@@ -42,7 +43,7 @@ public final class ActiveAccountRequest {
                                 String city,
                                 Boolean privacyConsent) {
         this(login, password, null, AccountActivationSource.LOCAL_OPERATOR,
-                email, name, country, city, privacyConsent);
+                email, name, country, city, privacyConsent, "");
     }
 
     public ActiveAccountRequest(String login,
@@ -54,14 +55,14 @@ public final class ActiveAccountRequest {
                                 String city,
                                 Boolean privacyConsent) {
         this(login, password, null, activationSource,
-                email, name, country, city, privacyConsent);
+                email, name, country, city, privacyConsent, "");
     }
 
     public ActiveAccountRequest(String login,
                                 CredentialMaterial credentialMaterial) {
         this(login, null, credentialMaterial,
                 AccountActivationSource.LOCAL_OPERATOR,
-                "", "", "", "", null);
+                "", "", "", "", null, "");
     }
 
     public ActiveAccountRequest(String login,
@@ -73,7 +74,7 @@ public final class ActiveAccountRequest {
                                 Boolean privacyConsent) {
         this(login, null, credentialMaterial,
                 AccountActivationSource.LOCAL_OPERATOR,
-                email, name, country, city, privacyConsent);
+                email, name, country, city, privacyConsent, "");
     }
 
     public ActiveAccountRequest(String login,
@@ -85,7 +86,21 @@ public final class ActiveAccountRequest {
                                 String city,
                                 Boolean privacyConsent) {
         this(login, null, credentialMaterial, activationSource,
-                email, name, country, city, privacyConsent);
+                email, name, country, city, privacyConsent, "");
+    }
+
+    public ActiveAccountRequest(String login,
+                                CredentialMaterial credentialMaterial,
+                                AccountActivationSource activationSource,
+                                String email,
+                                String name,
+                                String country,
+                                String city,
+                                Boolean privacyConsent,
+                                String activationReference) {
+        this(login, null, credentialMaterial, activationSource,
+                email, name, country, city, privacyConsent,
+                activationReference);
     }
 
     private ActiveAccountRequest(String login,
@@ -96,7 +111,8 @@ public final class ActiveAccountRequest {
                                  String name,
                                  String country,
                                  String city,
-                                 Boolean privacyConsent) {
+                                 Boolean privacyConsent,
+                                 String activationReference) {
         this.login = required(login, "login").trim();
         this.password = password;
         this.credentialMaterial = credentialMaterial;
@@ -106,6 +122,7 @@ public final class ActiveAccountRequest {
         this.country = optional(country);
         this.city = optional(city);
         this.privacyConsent = privacyConsent;
+        this.activationReference = optional(activationReference).trim();
         if (this.login.isEmpty()) {
             throw new IllegalArgumentException("login must not be empty");
         }
@@ -161,6 +178,10 @@ public final class ActiveAccountRequest {
 
     public Boolean getPrivacyConsent() {
         return privacyConsent;
+    }
+
+    public String getActivationReference() {
+        return activationReference;
     }
 
     private static String required(String value, String name) {
