@@ -2,7 +2,7 @@
 
 Date: 2026-08-05
 Repository: `murrick/K3`
-Draft PR: `#63 — KANGER Server 0.14: VPS deployment and acceptance`
+PR: `#63 — KANGER Server 0.14: VPS deployment and acceptance`
 Operational branch: `ops/server/0.14-vps-acceptance`
 Immutable source shelf: `develop/server/0.14 @ e5f9a1bfa47437636705f0935cb659cffb4d179e`
 
@@ -10,7 +10,7 @@ Immutable source shelf: `develop/server/0.14 @ e5f9a1bfa47437636705f0935cb659cff
 
 ```text
 SERVER 0.14 VPS ACCEPTANCE: TECHNICALLY COMPLETE
-PR #63:                      OPEN / DRAFT
+PR #63:                      OPEN / READY FOR REVIEW
 MERGE:                       NOT PERFORMED
 ```
 
@@ -65,7 +65,7 @@ off-host predeployment backup:              PASS
 guarded Server 0.13 -> 0.14 cutover:         PASS
 production public/operator boundary:        PASS
 guarded browser UI cutover:                 PASS
-origin and public UI verification:          PASS
+origin and public UI verification:           PASS
 SMTPS delivery and lifecycle:               PASS
 TRUSTED registration-policy lifecycle:      PASS
 STARTTLS delivery and lifecycle:             PASS
@@ -219,23 +219,23 @@ No SMTP password, TLS private key, owner token, confirmation token, session toke
 
 ## Final PR closure decision
 
-The operational acceptance scope of PR #63 is complete. There is no remaining production gate requiring the PR to remain Draft.
+The operational acceptance scope of PR #63 is complete. PR #63 was explicitly marked Ready for review after technical closure.
 
 ```text
 TECHNICAL ACCEPTANCE DECISION: PASS
-ELIGIBLE TO MARK READY:         YES
+PR REVIEW STATE:               READY FOR REVIEW
 ELIGIBLE TO MERGE:              YES, after the normal final repository review
-CURRENT PR STATE:               OPEN / DRAFT
+MERGE:                          NOT PERFORMED
 ```
 
-Changing PR #63 from Draft to Ready or merging it remains a separate explicit repository action. Neither action is performed by this closure commit.
+Merging PR #63 remains a separate explicit repository action.
 
 ## Repository boundary
 
 ```text
 base: develop/server/0.14 @ e5f9a1bfa47437636705f0935cb659cffb4d179e
-head before final closure update:
-      f57248ab9443851fbd7639ff4ff90c16105e3393
+head before readiness-state synchronization:
+      29084f732fc44422fec13c67ecc171f81c8907dc
 ```
 
 This document is the authoritative final closure record for KANGER Server 0.14 VPS acceptance.
