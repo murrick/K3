@@ -8,6 +8,13 @@ on:
       - ".github/workflows/kanger-3.5.2-vps-soak.yml"
       - "kanger-server/deploy/**"
       - "kanger-server/VPS-SOAK-3.5.2.md"
+  pull_request:
+    branches:
+      - "develop/3.5.2.9-integration-release-shelf"
+    paths:
+      - ".github/workflows/kanger-3.5.2-vps-soak.yml"
+      - "kanger-server/deploy/**"
+      - "kanger-server/VPS-SOAK-3.5.2.md"
   workflow_dispatch:
 
 permissions:
