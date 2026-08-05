@@ -57,7 +57,10 @@ public class DestructiveStopLossReactorTest {
                     reactor, user, token, storageName);
             transactionBlocksDestructiveCommand(reactor, user, token);
             utf8SourceRoundTripIsTruthful(reactor, user, token);
-            nestedStorageDropTargetsCanonicalGeneration(reactor, user, token);
+            failedStorageSwitchPreservesCurrentGeneration(
+                    reactor, user, token, storageName);
+            nestedStorageReindexAndDropUseCanonicalIdentity(
+                    reactor, user, token);
         } finally {
             UserFactory.dropUser(user);
         }
@@ -140,7 +143,38 @@ public class DestructiveStopLossReactorTest {
                 "Deleting absent source returned success");
     }
 
-    private void nestedStorageDropTargetsCanonicalGeneration(
+    private void failedStorageSwitchPreservesCurrentGeneration(
+            DestructiveStopLossReactor reactor,
+            IUser user,
+            String token,
+            String currentStorage) throws Exception {
+        IMind mind = user.getCurrentMind();
+        String sourceBefore = mind.getSourceCode();
+        Map<String, String> generationBefore = hashGeneration(user, currentStorage);
+
+        String corruptName = "corrupt-switch-target";
+        Path corruptBase = Paths.get(user.getDatabaseDir()).resolve(corruptName);
+        Files.createDirectories(corruptBase.getParent());
+        Files.write(Paths.get(corruptBase.toString() + ".store"),
+                new byte[]{0x00, 0x01, 0x02, 0x03});
+        try {
+            JSONObject response = invoke(reactor, "command", new JSONObject()
+                    .put("token", token)
+                    .put("use", corruptName));
+
+            assertEquals("error", response.optString("result"), response.toString());
+            assertEquals(currentStorage, user.getCurrentMind().getStorageName(),
+                    "Failed use changed the selected database");
+            assertEquals(sourceBefore, user.getCurrentMind().getSourceCode(),
+                    "Failed use changed the logical workspace");
+            assertEquals(generationBefore, hashGeneration(user, currentStorage),
+                    "Failed use changed the current persistent generation");
+        } finally {
+            deleteGeneration(user, corruptName);
+        }
+    }
+
+    private void nestedStorageReindexAndDropUseCanonicalIdentity(
             DestructiveStopLossReactor reactor,
             IUser user,
             String token) throws Exception {
@@ -155,6 +189,15 @@ public class DestructiveStopLossReactorTest {
                 "Nested storage source was rejected");
         assertFalse(hashGeneration(user, storageName).isEmpty(),
                 "Nested storage generation was not created");
+
+        JSONObject reindex = invoke(reactor, "command", new JSONObject()
+                .put("token", token)
+                .put("reindex", "nested.one"));
+        assertEquals("OK", reindex.optString("result"), reindex.toString());
+        assertEquals(storageName, user.getCurrentMind().getStorageName(),
+                "Nested reindex did not reopen the canonical storage");
+        assertTrue(user.getCurrentMind().getSourceCode().contains("nested"),
+                "Nested reindex lost the logical source");
 
         JSONObject drop = invoke(reactor, "command", new JSONObject()
                 .put("token", token)
@@ -188,6 +231,26 @@ public class DestructiveStopLossReactorTest {
             }
         }
         return result;
+    }
+
+    private void deleteGeneration(IUser user, String storageName) throws Exception {
+        Path base = Paths.get(user.getDatabaseDir()).resolve(storageName);
+        for (String suffix : GENERATION_SUFFIXES) {
+            Files.deleteIfExists(Paths.get(base.toString() + suffix));
+        }
+        Path directory = base.getParent();
+        if (directory != null && Files.isDirectory(directory)) {
+            String prefix = base.getFileName().toString() + ".wal.";
+            try (java.nio.file.DirectoryStream<Path> stream =
+                         Files.newDirectoryStream(directory)) {
+                for (Path entry : stream) {
+                    if (Files.isRegularFile(entry)
+                            && entry.getFileName().toString().startsWith(prefix)) {
+                        Files.deleteIfExists(entry);
+                    }
+                }
+            }
+        }
     }
 
     private String sha256(byte[] value) throws Exception {
