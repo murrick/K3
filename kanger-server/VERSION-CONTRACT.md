@@ -8,7 +8,7 @@ four-part version identity:
   "version": "3.3",
   "core_version": "3.3",
   "api_version": "1",
-  "server_version": "server-0.14"
+  "server_version": "server-0.15"
 }
 ```
 
@@ -38,8 +38,8 @@ continues to report semantic core compatibility (`3.3`) across server releases.
 The generated `org/kanger/build.properties` resource records both:
 
 ```properties
-branch=server-0.14
-server.version=server-0.14
+branch=server-0.15
+server.version=server-0.15
 source.branch=<source Git branch>
 ```
 
