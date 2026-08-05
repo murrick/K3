@@ -1,6 +1,6 @@
-# KANGER Server 0.15 VPS deployment
+# KANGER Server 0.16 VPS deployment
 
-This guide deploys the qualified standalone KANGER Server 0.15 JAR on a
+This guide deploys the qualified standalone KANGER Server 0.16 JAR on a
 Debian/Ubuntu-style systemd host behind nginx.
 
 ## Release topology
@@ -39,7 +39,7 @@ The qualified release identity is:
   "version": "3.3",
   "core_version": "3.3",
   "api_version": "1",
-  "server_version": "server-0.15"
+  "server_version": "server-0.16"
 }
 ```
 
@@ -52,12 +52,12 @@ Use the qualified three-digit shelf after it has been created:
 
 ```bash
 git fetch origin
-git switch develop/server/0.15
+git switch develop/server/0.16
 git status --short
 
 mvn -B -ntp \
   -f kanger-server/pom.xml \
-  -Dkanger.build.branch.override=develop/server/0.15 \
+  -Dkanger.build.branch.override=develop/server/0.16 \
   clean verify
 ```
 
@@ -65,9 +65,9 @@ Do not deploy from a working tree with unexplained local changes. The generated
 `org/kanger/build.properties` must contain:
 
 ```properties
-branch=server-0.15
-server.version=server-0.15
-source.branch=develop/server/0.15
+branch=server-0.16
+server.version=server-0.16
+source.branch=develop/server/0.16
 ```
 
 The deployable file is:
@@ -235,7 +235,7 @@ sudo systemctl status kanger-server.service --no-pager
 
 ## 6. Choose the registration policy
 
-Server 0.15 resolves `server.email.mode` once into the account registration
+Server 0.16 resolves `server.email.mode` once into the account registration
 policy.
 
 ### TRUSTED deployment
@@ -333,8 +333,8 @@ It proves:
 
 ```text
 systemd service enabled and active
-/health reports server-0.15
-/ready reports server-0.15
+/health reports server-0.16
+/ready reports server-0.16
 application listener 127.0.0.1:1964
 operator listener 127.0.0.1:1965
 neither Java listener publicly bound
@@ -365,7 +365,7 @@ Expected health identity:
   "version": "3.3",
   "core_version": "3.3",
   "api_version": "1",
-  "server_version": "server-0.15"
+  "server_version": "server-0.16"
 }
 ```
 
@@ -432,7 +432,7 @@ The response must contain:
 
 ```text
 "version":"3.3"
-"server_version":"server-0.15"
+"server_version":"server-0.16"
 ```
 
 A public request to `/ready` must be rejected with HTTP `403`. The operator port

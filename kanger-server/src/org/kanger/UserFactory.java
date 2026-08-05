@@ -26,7 +26,6 @@
 package org.kanger;
 
 import org.kanger.enums.Enums;
-import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.security.ConfirmationTokenStore;
 import org.kanger.security.CredentialStore;
@@ -275,14 +274,10 @@ public class UserFactory {
     private static void closeRuntime(IUser user) throws Exception {
         Exception failure = null;
         try {
-            IMind mind = user.getCurrentMind();
-            if (mind != null) {
-                mind.closeStorage();
-            }
+            MindRuntimeLifecycle.close(user);
         } catch (Exception ex) {
             failure = ex;
         } finally {
-            user.setCurrentMind(null);
             history.remove(user.getId());
         }
         if (failure != null) {
