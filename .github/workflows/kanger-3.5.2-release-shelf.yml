@@ -1,0 +1,153 @@
+name: KANGER 3.5.2 release shelf
+
+on:
+  push:
+    branches:
+      - "develop/3.5.2.9-integration-release-shelf"
+  pull_request:
+    branches:
+      - "develop/3.5.2"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shelf-contract:
+    name: Cumulative ancestry and browser authorities
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out complete history
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Qualify the integrated release shelf
+        shell: bash
+        run: |
+          bash kanger-server/scripts/qualify-3.5.2-release-shelf.sh \
+            "${GITHUB_WORKSPACE}"
+
+  server-build:
+    name: Server 0.17 on Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ["8", "21"]
+    steps:
+      - name: Check out complete history
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+
+      - name: Build and test the complete server artifact
+        shell: bash
+        run: |
+          mvn -B -ntp \
+            -f kanger-server/pom.xml \
+            -Dkanger.build.branch.override="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" \
+            clean verify
+
+      - name: Verify immutable release identities
+        shell: bash
+        run: |
+          test -f kanger-server/target/kanger-server.jar
+          jar tf kanger-server/target/kanger-server.jar \
+            | grep -q '^org/kanger/Kanger.class$'
+          jar tf kanger-server/target/kanger-server.jar \
+            | grep -q '^org/kanger/DestructiveStopLossReactor.class$'
+          jar tf kanger-server/target/kanger-server.jar \
+            | grep -q '^org/kanger/MindLifecycleReactor.class$'
+          jar tf kanger-server/target/kanger-server.jar \
+            | grep -q '^org/kanger/WorkspaceStateReactor.class$'
+          unzip -p kanger-server/target/kanger-server.jar \
+            org/kanger/build.properties \
+            | grep -q '^server.version=server-0.17$'
+
+      - name: Run authenticated integration smoke and clean shutdown
+        if: matrix.java == '21'
+        shell: bash
+        run: |
+          set -euo pipefail
+          runtime="${RUNNER_TEMP}/kanger-3.5.2-shelf"
+          mkdir -p "${runtime}/home"
+          cat > "${runtime}/home/kanger.conf" <<'EOF_CONFIG'
+          server.bind.address=127.0.0.1
+          server.port=1964
+          server.backlog=16
+          server.maxthreads=4
+          server.queue.capacity=16
+          server.request.max.body.bytes=1048576
+          server.watchdog.period=1000
+          EOF_CONFIG
+
+          java \
+            -Duser.home="${runtime}/home" \
+            -jar kanger-server/target/kanger-server.jar \
+            >"${runtime}/server.log" 2>&1 &
+          server_pid=$!
+
+          cleanup() {
+            if [[ -n "${server_pid:-}" ]] \
+                && kill -0 "${server_pid}" 2>/dev/null; then
+              kill "${server_pid}" 2>/dev/null || true
+              wait "${server_pid}" 2>/dev/null || true
+            fi
+            echo "--- KANGER 3.5.2 release-shelf smoke log ---"
+            cat "${runtime}/server.log"
+          }
+          trap cleanup EXIT
+
+          ready=false
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent \
+                http://127.0.0.1:1964/health >/dev/null; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          test "${ready}" = true
+          test -f "${runtime}/home/KANGER/kanger.active"
+
+          KANGER_BASE_URL=http://127.0.0.1:1964 \
+            bash kanger-server/scripts/smoke-local.sh
+          KANGER_BASE_URL=http://127.0.0.1:1964 \
+          KANGER_SMOKE_HOME="${runtime}/home" \
+            bash kanger-server/scripts/smoke-auth-local.sh
+
+          kill -TERM "${server_pid}"
+          set +e
+          wait "${server_pid}"
+          shutdown_status=$?
+          set -e
+          server_pid=""
+
+          test "${shutdown_status}" -eq 0 \
+            -o "${shutdown_status}" -eq 143
+          test ! -e "${runtime}/home/KANGER/kanger.active"
+          ! curl --silent --max-time 1 \
+            http://127.0.0.1:1964/health >/dev/null 2>&1
+          grep -q 'FORCE REBOOT Server' "${runtime}/server.log"
+          echo "RELEASE_SHELF_PASS server-smoke"
+
+      - name: Upload the Java 21 candidate JAR
+        if: matrix.java == '21'
+        uses: actions/upload-artifact@v7
+        with:
+          name: kanger-3.5.2-server-0.17-java21
+          path: kanger-server/target/kanger-server.jar
+          if-no-files-found: error
