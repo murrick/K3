@@ -88,7 +88,7 @@ final class MindLifecycleReactor implements IReactor<JSONObject> {
         IUser user = null;
         try {
             user = UserFactory.getUser(token);
-            if (user.getCurrentMind() == null) {
+            if (!"quit".equals(operation) && user.getCurrentMind() == null) {
                 user.setCurrentMind(new Mind(user));
             }
 
@@ -179,17 +179,17 @@ final class MindLifecycleReactor implements IReactor<JSONObject> {
             }
 
             return queryResponse(parent, response);
-        } catch (Exception failure) {
+        } catch (Throwable failure) {
             if (!finalizationStarted) {
                 try {
                     parent.release(child);
-                } catch (Exception cleanupFailure) {
+                } catch (Throwable cleanupFailure) {
                     if (cleanupFailure != failure) {
                         failure.addSuppressed(cleanupFailure);
                     }
                 }
             }
-            throw failure;
+            throw asException(failure);
         }
     }
 
@@ -303,6 +303,16 @@ final class MindLifecycleReactor implements IReactor<JSONObject> {
                 .put("result", "error")
                 .put("code", code)
                 .put("description", description == null ? "" : description);
+    }
+
+    private static Exception asException(Throwable failure) {
+        if (failure instanceof Error) {
+            throw (Error) failure;
+        }
+        if (failure instanceof Exception) {
+            return (Exception) failure;
+        }
+        return new RuntimeException(failure);
     }
 
     private static final class Request {
