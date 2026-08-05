@@ -136,8 +136,10 @@ class PublicAuthUiContractTest {
 
         int vendorPosition = modeLoader.indexOf("javascript-mode-vendor.js");
         int operationPosition = modeLoader.indexOf("operation.js");
+        int workspacePosition = modeLoader.indexOf("workspace.js");
         assertTrue(vendorPosition >= 0);
         assertTrue(operationPosition > vendorPosition);
+        assertTrue(workspacePosition > operationPosition);
         assertTrue(modeVendor.contains(
                 "CodeMirror.defineMode(\"javascript\""));
         assertTrue(modeVendor.contains(
@@ -175,6 +177,29 @@ class PublicAuthUiContractTest {
         assertFalse(operation.contains("document.cookie"));
         assertFalse(operation.contains("eval("));
         assertFalse(operation.contains("new Function"));
+    }
+
+    @Test
+    void supportedConsoleUsesCanonicalWorkspaceProjectionAfterOperations()
+            throws Exception {
+        String workspace = read(Paths.get("..", "html", "workspace.js"));
+
+        assertTrue(workspace.contains("KANGER_WORKSPACE_STATE"));
+        assertTrue(workspace.contains("observeOperationProtocol"));
+        assertTrue(workspace.contains("canonicalSourceName"));
+        assertTrue(workspace.contains("canonicalStorageName"));
+        assertTrue(workspace.contains("repository_state"));
+        assertTrue(workspace.contains("physical_generation"));
+        assertTrue(workspace.contains("applyProjection"));
+        assertTrue(workspace.contains("responseGeneration < state.generation"));
+        assertTrue(workspace.contains("finally"));
+        assertTrue(workspace.contains("["));
+        assertTrue(workspace.contains("data.code"));
+
+        assertFalse(workspace.contains("innerHTML"));
+        assertFalse(workspace.contains("document.cookie"));
+        assertFalse(workspace.contains("eval("));
+        assertFalse(workspace.contains("new Function"));
     }
 
     private static String read(Path path) throws Exception {

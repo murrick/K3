@@ -66,6 +66,35 @@ require_code() {
   fi
 }
 
+require_workspace() {
+  local response="$1"
+  local transaction_level="$2"
+  local phase="$3"
+  "${PYTHON}" - "${response}" "${transaction_level}" "${phase}" <<'PY'
+import json
+import sys
+
+response = json.loads(sys.argv[1])
+expected_level = int(sys.argv[2])
+phase = sys.argv[3]
+workspace = response.get("workspace")
+if not isinstance(workspace, dict) or workspace.get("schema") != 1:
+    raise SystemExit("%s returned no workspace schema 1: %r" % (phase, response))
+source = workspace.get("source") or {}
+storage = workspace.get("storage") or {}
+transaction = workspace.get("transaction") or {}
+if source.get("repository_state") not in {"unbound", "missing", "saved", "modified"}:
+    raise SystemExit("%s returned invalid source state: %r" % (phase, source))
+if not isinstance(source.get("dirty"), bool):
+    raise SystemExit("%s returned no source dirty flag: %r" % (phase, source))
+if storage.get("active") is not False:
+    raise SystemExit("%s unexpectedly has active storage: %r" % (phase, storage))
+if transaction.get("level") != expected_level:
+    raise SystemExit("%s returned transaction level %r, expected %r" %
+                     (phase, transaction.get("level"), expected_level))
+PY
+}
+
 legacy_token() {
   local login="$1"
   local password="$2"
@@ -148,9 +177,10 @@ first_token="$(json_field "${login_response}" token)"
   exit 1
 }
 
-printf '%s\n' "[8/12] Executing authenticated ping"
+printf '%s\n' "[8/12] Executing authenticated ping with canonical workspace projection"
 ping_response="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${first_token}\",\"ping\":\"\"}}")"
 require_result "${ping_response}" "OK" "first ping"
+require_workspace "${ping_response}" 0 "first ping"
 
 printf '%s\n' "[9/12] Logging out and rejecting the closed token"
 logout_response="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${first_token}\",\"quit\":\"\"}}")"
@@ -168,16 +198,19 @@ second_token="$(json_field "${second_login}" token)"
 }
 second_ping="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${second_token}\",\"ping\":\"\"}}")"
 require_result "${second_ping}" "OK" "second ping"
+require_workspace "${second_ping}" 0 "second ping"
 
 printf '%s\n' "[11/12] Opening two explicit transaction levels"
 first_transaction="$(post "{\"context\":\"query\",\"parameters\":{\"token\":\"${second_token}\",\"transaction\":\"create\"}}")"
 require_result "${first_transaction}" "OK" "first transaction create"
+require_workspace "${first_transaction}" 1 "first transaction create"
 second_transaction="$(post "{\"context\":\"query\",\"parameters\":{\"token\":\"${second_token}\",\"transaction\":\"create\"}}")"
 require_result "${second_transaction}" "OK" "second transaction create"
 [[ "$(json_field "${second_transaction}" transaction)" = "2" ]] || {
   echo "nested transaction depth was not published: ${second_transaction}" >&2
   exit 1
 }
+require_workspace "${second_transaction}" 2 "second transaction create"
 
 printf '%s\n' "[12/12] Closing the nested session and rejecting its token"
 second_logout="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${second_token}\",\"quit\":\"\"}}")"
@@ -185,7 +218,7 @@ require_result "${second_logout}" "OK" "nested second logout"
 second_closed="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${second_token}\",\"ping\":\"\"}}")"
 require_result "${second_closed}" "error" "nested logged-out token rejection"
 
-printf '%s\n' "TRUSTED policy, public capabilities, nested lifecycle and existing-account authentication smoke passed"
+printf '%s\n' "TRUSTED policy, canonical workspace, nested lifecycle and existing-account authentication smoke passed"
 
 server_jar="${KANGER_SERVER_JAR:-${GITHUB_WORKSPACE:-}/kanger-server/target/kanger-server.jar}"
 [[ -f "${server_jar}" ]] || {

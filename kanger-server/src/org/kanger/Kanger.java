@@ -77,9 +77,10 @@ public class Kanger {
                 httpServer = new HttpServer();
                 httpServer.start(new SessionSerializingReactor(
                         new MailBoundaryReactor(
-                                new DestructiveStopLossReactor(
-                                        new MindLifecycleReactor(
-                                                new QueryProcessor())))));
+                                new WorkspaceStateReactor(
+                                        new DestructiveStopLossReactor(
+                                                new MindLifecycleReactor(
+                                                        new QueryProcessor()))))));
             } finally {
                 shutdownServer();
                 System.out.println("FORCE REBOOT Server");

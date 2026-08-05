@@ -1,0 +1,53 @@
+name: KANGER browser workspace state
+
+on:
+  push:
+    branches:
+      - "server/**"
+    paths:
+      - "html/workspace.js"
+      - "html/javascript-mode.js"
+      - "kanger-server/scripts/qualify-workspace-state.js"
+      - ".github/workflows/kanger-browser-workspace.yml"
+  pull_request:
+    paths:
+      - "html/workspace.js"
+      - "html/javascript-mode.js"
+      - "kanger-server/scripts/qualify-workspace-state.js"
+      - ".github/workflows/kanger-browser-workspace.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    name: Canonical source and storage projection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Validate workspace authority artifact
+        shell: bash
+        run: |
+          node --check html/workspace.js
+          node --check kanger-server/scripts/qualify-workspace-state.js
+          grep -q 'workspace.js' html/javascript-mode.js
+          grep -q 'KANGER_WORKSPACE_STATE' html/workspace.js
+          grep -q 'canonicalSourceName' html/workspace.js
+          grep -q 'canonicalStorageName' html/workspace.js
+          grep -q 'storage_switch_failed' kanger-server/scripts/qualify-workspace-state.js
+          ! grep -q 'innerHTML' html/workspace.js
+          ! grep -q 'document.cookie' html/workspace.js
+          ! grep -q 'eval(' html/workspace.js
+
+      - name: Run source and storage UX qualification
+        shell: bash
+        run: |
+          node kanger-server/scripts/qualify-workspace-state.js
