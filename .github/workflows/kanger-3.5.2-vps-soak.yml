@@ -70,6 +70,19 @@ jobs:
           bash -n kanger-server/deploy/deploy-soak.sh
           bash -n kanger-server/deploy/rollback-soak.sh
 
+          grep -q '/home/murray/sites/kanger' \
+            kanger-server/deploy/snapshot-current.sh
+          grep -q '/var/www/html/kanger' \
+            kanger-server/deploy/snapshot-current.sh
+          grep -q 'ui_update_mode=managed-file-overlay' \
+            kanger-server/deploy/deploy-soak.sh
+          grep -q 'unmanaged_ui_files_preserved=true' \
+            kanger-server/deploy/rollback-soak.sh
+          ! grep -q 'KANGER_UI_LINK' \
+            kanger-server/deploy/snapshot-current.sh \
+            kanger-server/deploy/deploy-soak.sh \
+            kanger-server/deploy/rollback-soak.sh
+
       - name: Build and test Server 0.17
         shell: bash
         run: |
@@ -130,7 +143,7 @@ jobs:
             "${root}/deploy/rollback-soak.sh"
 
           cat > "${root}/SOURCE.txt" <<EOF_SOURCE
-          schema=1
+          schema=2
           artifact=3.5.2-vps-soak
           canonical_source_branch=develop/3.5.2.9-integration-release-shelf
           canonical_source_head=${canonical}
@@ -140,6 +153,9 @@ jobs:
           core_version=3.3
           api_version=1
           browser_files=15
+          ui_directory=/home/murray/sites/kanger
+          public_ui_link=/var/www/html/kanger
+          ui_update_mode=managed-file-overlay
           production_before_soak=server-0.14
           release_acceptance=NOT_PERFORMED
           production_release_cutover=NOT_PERFORMED
