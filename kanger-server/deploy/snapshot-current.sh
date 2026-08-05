@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${EUID}" -ne 0 ]]; then
+  echo "Run as root: sudo bash $0" >&2
+  exit 1
+fi
+
+SERVICE="${KANGER_SERVICE:-kanger-server.service}"
+HEALTH_URL="${KANGER_HEALTH_URL:-http://127.0.0.1:1964/health}"
+READY_URL="${KANGER_READY_URL:-http://127.0.0.1:1964/ready}"
+UI_LINK="${KANGER_UI_LINK:-/home/murray/sites/kanger}"
+EXPECTED_SERVER_VERSION="${KANGER_EXPECTED_CURRENT_SERVER_VERSION:-server-0.14}"
+EXPECTED_JAR_SHA256="${KANGER_EXPECTED_CURRENT_JAR_SHA256:-e089497d0a8f041a872a3a5a09581f8d94f5962a277794747b7f54e209882a19}"
+EXPECTED_UI_TARGET="${KANGER_EXPECTED_CURRENT_UI_TARGET:-/home/murray/sites/kanger-server-0.14-20260804T181706Z}"
+SNAPSHOT_ROOT="${KANGER_SNAPSHOT_ROOT:-/root/kanger-snapshots}"
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+NAME="kanger-vps-before-3.5.2-${STAMP}"
+WORK_DIR="${SNAPSHOT_ROOT}/${NAME}"
+ARCHIVE="${SNAPSHOT_ROOT}/${NAME}.tar.gz"
+PAYLOAD="${WORK_DIR}/host-root.tar"
+EVIDENCE="${WORK_DIR}/evidence"
+PATH_LIST="${WORK_DIR}/payload-paths.txt"
+
+for command in systemctl curl sha256sum tar readlink find sort ss nginx java; do
+  command -v "${command}" >/dev/null 2>&1 || {
+    echo "Required command not found: ${command}" >&2
+    exit 1
+  }
+done
+
+umask 077
+mkdir -p "${EVIDENCE}"
+
+service_was_active=false
+service_stopped=false
+if systemctl is-active --quiet "${SERVICE}"; then
+  service_was_active=true
+fi
+
+recover_service() {
+  if [[ "${service_was_active}" = true && "${service_stopped}" = true ]]; then
+    systemctl start "${SERVICE}" || true
+  fi
+}
+trap recover_service EXIT
+
+capture_http() {
+  local url="$1"
+  local output="$2"
+  curl --fail --silent --show-error --max-time 5 "${url}" | tee "${output}"
+}
+
+health_before="$(capture_http "${HEALTH_URL}" "${EVIDENCE}/health-before.json")"
+ready_before="$(capture_http "${READY_URL}" "${EVIDENCE}/ready-before.json")"
+echo "${health_before}" | grep -q "\"server_version\":\"${EXPECTED_SERVER_VERSION}\""
+echo "${ready_before}" | grep -q "\"server_version\":\"${EXPECTED_SERVER_VERSION}\""
+
+CURRENT_JAR="/opt/kanger-server/kanger-server.jar"
+[[ -f "${CURRENT_JAR}" ]] || {
+  echo "Current JAR not found: ${CURRENT_JAR}" >&2
+  exit 1
+}
+current_jar_sha="$(sha256sum "${CURRENT_JAR}" | awk '{print $1}')"
+[[ "${current_jar_sha}" = "${EXPECTED_JAR_SHA256}" ]] || {
+  echo "Unexpected current JAR SHA-256: ${current_jar_sha}" >&2
+  exit 1
+}
+printf '%s  %s\n' "${current_jar_sha}" "${CURRENT_JAR}" \
+  > "${EVIDENCE}/current-jar.sha256"
+
+[[ -L "${UI_LINK}" ]] || {
+  echo "Expected UI symlink not found: ${UI_LINK}" >&2
+  exit 1
+}
+ui_target="$(readlink -f "${UI_LINK}")"
+[[ "${ui_target}" = "${EXPECTED_UI_TARGET}" ]] || {
+  echo "Unexpected current UI target: ${ui_target}" >&2
+  exit 1
+}
+printf '%s\n' "${UI_LINK} -> ${ui_target}" > "${EVIDENCE}/ui-target.txt"
+find "${ui_target}" -maxdepth 1 -type f -print0 \
+  | sort -z \
+  | xargs -0 -r sha256sum > "${EVIDENCE}/ui-files.sha256"
+
+systemctl --no-pager --full status "${SERVICE}" > "${EVIDENCE}/systemd-status-before.txt"
+systemctl cat "${SERVICE}" > "${EVIDENCE}/systemd-unit.txt"
+ss -ltnp > "${EVIDENCE}/listeners-before.txt"
+nginx -T > "${EVIDENCE}/nginx-effective.conf" 2>&1
+java -version > "${EVIDENCE}/java-version.txt" 2>&1
+
+{
+  echo "etc/kanger-server"
+  echo "var/lib/kanger-server"
+  echo "opt/kanger-server"
+  echo "etc/systemd/system/kanger-server.service"
+  echo "etc/nginx"
+  echo "${UI_LINK#/}"
+  echo "${ui_target#/}"
+} | sort -u > "${PATH_LIST}"
+
+while IFS= read -r path; do
+  [[ -e "/${path}" || -L "/${path}" ]] || {
+    echo "Snapshot path does not exist: /${path}" >&2
+    exit 1
+  }
+done < "${PATH_LIST}"
+
+systemctl stop "${SERVICE}"
+service_stopped=true
+for attempt in $(seq 1 30); do
+  if ! systemctl is-active --quiet "${SERVICE}"; then
+    break
+  fi
+  sleep 1
+done
+! systemctl is-active --quiet "${SERVICE}"
+
+if [[ -e /var/lib/kanger-server/KANGER/kanger.active ]]; then
+  echo "Active marker remained after shutdown" >&2
+  exit 1
+fi
+
+tar --numeric-owner --acls --xattrs -C / -cf "${PAYLOAD}" -T "${PATH_LIST}"
+sha256sum "${PAYLOAD}" > "${EVIDENCE}/host-root.tar.sha256"
+tar -tf "${PAYLOAD}" > "${EVIDENCE}/host-root.tar.list"
+
+systemctl start "${SERVICE}"
+service_stopped=false
+for attempt in $(seq 1 30); do
+  if curl --fail --silent --max-time 2 "${HEALTH_URL}" >/dev/null 2>&1 \
+      && curl --fail --silent --max-time 2 "${READY_URL}" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+
+health_after="$(capture_http "${HEALTH_URL}" "${EVIDENCE}/health-after.json")"
+ready_after="$(capture_http "${READY_URL}" "${EVIDENCE}/ready-after.json")"
+echo "${health_after}" | grep -q "\"server_version\":\"${EXPECTED_SERVER_VERSION}\""
+echo "${ready_after}" | grep -q "\"server_version\":\"${EXPECTED_SERVER_VERSION}\""
+systemctl --no-pager --full status "${SERVICE}" > "${EVIDENCE}/systemd-status-after.txt"
+ss -ltnp > "${EVIDENCE}/listeners-after.txt"
+
+cat > "${WORK_DIR}/SNAPSHOT.txt" <<EOF
+schema=1
+created_utc=${STAMP}
+host=$(hostname -f 2>/dev/null || hostname)
+service=${SERVICE}
+expected_server_version=${EXPECTED_SERVER_VERSION}
+current_jar_sha256=${current_jar_sha}
+ui_link=${UI_LINK}
+ui_target=${ui_target}
+payload=host-root.tar
+contains_secrets=true
+purpose=pre-3.5.2-vps-soak rollback and disaster recovery
+EOF
+
+tar -C "${SNAPSHOT_ROOT}" -czf "${ARCHIVE}" "${NAME}"
+archive_sha="$(sha256sum "${ARCHIVE}" | awk '{print $1}')"
+printf '%s  %s\n' "${archive_sha}" "${ARCHIVE}" > "${ARCHIVE}.sha256"
+chmod 0600 "${ARCHIVE}" "${ARCHIVE}.sha256"
+
+trap - EXIT
+
+echo "SNAPSHOT_OK"
+echo "archive=${ARCHIVE}"
+echo "sha256=${archive_sha}"
+echo "contains_secrets=true"
+echo "Copy the archive and .sha256 file off-host before deployment."
