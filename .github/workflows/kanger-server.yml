@@ -63,6 +63,7 @@ jobs:
           favicon.ico
           gateway.js
           index.html
+          javascript-mode.js
           javascript.js
           jquery-3.6.0.min.js
           EOF
@@ -74,6 +75,8 @@ jobs:
 
           node --check html/config.js
           node --check html/gateway.js
+          node --check html/javascript-mode.js
+          node --check html/javascript.js
 
           grep -q '<script src="config.js"></script>' html/index.html
           grep -q '<script src="gateway.js"></script>' html/index.html
@@ -91,6 +94,15 @@ jobs:
           grep -q "session.credentials.change" html/gateway.js
           ! grep -Fq "setCookie('token'" html/gateway.js
           ! grep -Fq 'setCookie("token"' html/gateway.js
+
+          grep -q 'javascript-mode.js' html/javascript.js
+          grep -q 'KANGER_TRUSTED_RENDERING' html/javascript.js
+          grep -q "HISTORY_PREFIX = '@K2@'" html/javascript.js
+          grep -q 'tokenizeLegacyMarkup' html/javascript.js
+          grep -q 'document.createTextNode' html/javascript.js
+          ! grep -q 'insertAdjacentHTML' html/javascript.js
+          ! grep -q 'outerHTML' html/javascript.js
+          ! grep -q 'onclick=' html/javascript.js
 
       - name: Verify distribution shape
         shell: bash
