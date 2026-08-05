@@ -94,7 +94,7 @@ class HttpServerTest {
         assertEquals("3.3", response.getString("version"));
         assertEquals("3.3", response.getString("core_version"));
         assertEquals("1", response.getString("api_version"));
-        assertEquals("server-0.14", response.getString("server_version"));
+        assertEquals("server-0.15", response.getString("server_version"));
     }
 
     @Test

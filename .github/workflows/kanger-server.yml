@@ -58,7 +58,7 @@ jobs:
           unzip -p kanger-server/target/kanger-server.jar META-INF/MANIFEST.MF \
             | grep -q '^Main-Class: org.kanger.Kanger'
           unzip -p kanger-server/target/kanger-server.jar org/kanger/build.properties \
-            | grep -q '^server.version=server-0.14$'
+            | grep -q '^server.version=server-0.15$'
 
       - name: Verify VPS deployment assets
         shell: bash
@@ -152,7 +152,7 @@ jobs:
           echo "${health_response}" | grep -q '"version":"3.3"'
           echo "${health_response}" | grep -q '"core_version":"3.3"'
           echo "${health_response}" | grep -q '"api_version":"1"'
-          echo "${health_response}" | grep -q '"server_version":"server-0.14"'
+          echo "${health_response}" | grep -q '"server_version":"server-0.15"'
 
           ready_response="$(curl --fail --silent --show-error \
             --dump-header "${runtime}/ready.headers" \
@@ -162,7 +162,7 @@ jobs:
           echo "${ready_response}" | grep -q '"version":"3.3"'
           echo "${ready_response}" | grep -q '"core_version":"3.3"'
           echo "${ready_response}" | grep -q '"api_version":"1"'
-          echo "${ready_response}" | grep -q '"server_version":"server-0.14"'
+          echo "${ready_response}" | grep -q '"server_version":"server-0.15"'
           echo "${ready_response}" | grep -q '"queue_capacity":16'
           grep -qi '^X-Request-ID: ci-ready-check' "${runtime}/ready.headers"
 
