@@ -7,11 +7,13 @@ on:
     paths:
       - "kanger-server/**"
       - "kanger/**"
+      - "html/**"
       - ".github/workflows/kanger-server.yml"
   pull_request:
     paths:
       - "kanger-server/**"
       - "kanger/**"
+      - "html/**"
       - ".github/workflows/kanger-server.yml"
   workflow_dispatch:
 
@@ -47,6 +49,48 @@ jobs:
             -f kanger-server/pom.xml \
             -Dkanger.build.branch.override="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" \
             clean verify
+
+      - name: Verify browser gateway artifact
+        if: matrix.java == '21'
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_files="$(cat <<'EOF'
+          codemirror.css
+          codemirror.js
+          config.js
+          console.html
+          favicon.ico
+          gateway.js
+          index.html
+          javascript.js
+          jquery-3.6.0.min.js
+          EOF
+          )"
+          actual_files="$(
+            find html -mindepth 1 -maxdepth 1 -type f -printf '%f\n' | sort
+          )"
+          test "${actual_files}" = "${expected_files}"
+
+          node --check html/config.js
+          node --check html/gateway.js
+
+          grep -q '<script src="config.js"></script>' html/index.html
+          grep -q '<script src="gateway.js"></script>' html/index.html
+          grep -q 'id="console-frame"' html/index.html
+          ! grep -q 'document.cookie' html/index.html
+          ! grep -q 'tokenMonitor' html/index.html
+
+          grep -q "kanger.applicationSession.v1" html/gateway.js
+          grep -q "KANGER_SESSION_BOOTSTRAP" html/gateway.js
+          grep -q "var PROBE_VALID = 'valid';" html/gateway.js
+          grep -q "var PROBE_INVALID = 'invalid';" html/gateway.js
+          grep -q "var PROBE_UNAVAILABLE = 'unavailable';" html/gateway.js
+          grep -q "event.source !== consoleFrame.contentWindow" html/gateway.js
+          grep -q "session.logout" html/gateway.js
+          grep -q "session.credentials.change" html/gateway.js
+          ! grep -Fq "setCookie('token'" html/gateway.js
+          ! grep -Fq 'setCookie("token"' html/gateway.js
 
       - name: Verify distribution shape
         shell: bash
