@@ -1,0 +1,44 @@
+name: KANGER browser session authority
+
+on:
+  push:
+    branches:
+      - "server/**"
+    paths:
+      - "html/**"
+      - "kanger-server/scripts/qualify-gateway-session.js"
+      - ".github/workflows/kanger-browser-session.yml"
+  pull_request:
+    paths:
+      - "html/**"
+      - "kanger-server/scripts/qualify-gateway-session.js"
+      - ".github/workflows/kanger-browser-session.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    name: Parent-owned session lifecycle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Validate browser JavaScript syntax
+        shell: bash
+        run: |
+          node --check html/config.js
+          node --check html/gateway.js
+          node --check kanger-server/scripts/qualify-gateway-session.js
+
+      - name: Run session authority qualification
+        shell: bash
+        run: |
+          node kanger-server/scripts/qualify-gateway-session.js
