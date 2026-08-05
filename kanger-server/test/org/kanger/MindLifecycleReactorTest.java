@@ -22,7 +22,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -120,6 +119,14 @@ class MindLifecycleReactorTest {
         try {
             Mind child = new Mind(fixture.root);
             addDirectRule(child, "mind_lifecycle_commit_failure");
+
+            Mind sibling = new Mind(fixture.root);
+            addDirectRule(sibling, "mind_lifecycle_commit_sibling");
+            assertTrue(fixture.root.commit(sibling),
+                    "Fixture sibling commit unexpectedly failed");
+            assertEquals(1, counter(fixture.root),
+                    "Sibling commit did not preserve the original child reservation");
+
             fixture.user.setCurrentMind(child);
             replaceAnalyzer(fixture.root, new FailingAnalyzer(fixture.root));
 
