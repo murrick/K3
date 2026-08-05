@@ -60,11 +60,14 @@ public final class KangerTestRunner {
             IMind c3Mind = new Mind(c3User);
             boolean c3Success = KangerC3BindingTest.test(c3Mind, prefix);
 
+            boolean stopLossSuccess = DestructiveStopLossQualification.test();
+
             exitCode = legacySuccess
                     && stabilizationSuccess
                     && c1Success
                     && c4Success
-                    && c3Success ? 0 : 1;
+                    && c3Success
+                    && stopLossSuccess ? 0 : 1;
         } catch (Throwable error) {
             error.printStackTrace(System.err);
         }
