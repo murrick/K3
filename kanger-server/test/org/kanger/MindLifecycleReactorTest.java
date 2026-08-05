@@ -22,6 +22,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -52,6 +53,32 @@ class MindLifecycleReactorTest {
                     "Failed request displaced the authoritative root");
             assertEquals(0, counter(fixture.root),
                     "Failed request leaked an unreachable child reservation");
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
+    void requestErrorAlsoReleasesHiddenChildReservation() throws Exception {
+        Fixture fixture = fixture("hidden-error");
+        try {
+            MindLifecycleReactor reactor = new MindLifecycleReactor(
+                    rejectingDelegate(),
+                    new MindLifecycleReactor.ChildFactory() {
+                        @Override
+                        public Mind create(IMind parent) throws Exception {
+                            return new FailingQueryErrorMind(parent);
+                        }
+                    });
+
+            assertThrows(InjectedQueryError.class,
+                    () -> invoke(reactor, "query", new JSONObject()
+                            .put("token", fixture.token)
+                            .put("request", encode("?hidden_error;"))));
+            assertSame(fixture.root, fixture.user.getCurrentMind(),
+                    "Error path displaced the authoritative root");
+            assertEquals(0, counter(fixture.root),
+                    "Error path leaked an unreachable child reservation");
         } finally {
             fixture.close();
         }
@@ -163,7 +190,7 @@ class MindLifecycleReactorTest {
                 "Logout leaked the grandchild reservation");
         assertEquals(0, counter(fixture.root),
                 "Logout leaked the child reservation");
-        assertEquals(null, fixture.user.getCurrentMind());
+        assertNull(fixture.user.getCurrentMind());
         assertThrows(AuthenticationErrorException.class,
                 () -> UserFactory.getUser(fixture.token));
     }
@@ -284,6 +311,17 @@ class MindLifecycleReactorTest {
         }
     }
 
+    private static final class FailingQueryErrorMind extends Mind {
+        private FailingQueryErrorMind(IMind parent) throws Exception {
+            super(parent);
+        }
+
+        @Override
+        public Boolean query(String query) {
+            throw new InjectedQueryError();
+        }
+    }
+
     private static final class FailingAnalyzer extends Analyzer {
         private FailingAnalyzer(Mind mind) {
             super(mind);
@@ -296,6 +334,10 @@ class MindLifecycleReactorTest {
     }
 
     private static final class InjectedQueryFailure extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+    }
+
+    private static final class InjectedQueryError extends AssertionError {
         private static final long serialVersionUID = 1L;
     }
 
