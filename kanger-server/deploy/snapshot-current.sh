@@ -9,11 +9,11 @@ fi
 SERVICE="${KANGER_SERVICE:-kanger-server.service}"
 HEALTH_URL="${KANGER_HEALTH_URL:-http://127.0.0.1:1964/health}"
 READY_URL="${KANGER_READY_URL:-http://127.0.0.1:1964/ready}"
-UI_DIR="${KANGER_UI_DIR:-/home/murray/sites/kanger}"
+EDITABLE_UI_DIR="${KANGER_EDITABLE_UI_DIR:-/home/murray/sites/kanger}"
 PUBLIC_UI_LINK="${KANGER_PUBLIC_UI_LINK:-/var/www/html/kanger}"
+EXPECTED_PUBLIC_UI_TARGET="${KANGER_EXPECTED_PUBLIC_UI_TARGET:-/home/murray/sites/kanger-server-0.14-20260804T181706Z}"
 EXPECTED_SERVER_VERSION="${KANGER_EXPECTED_CURRENT_SERVER_VERSION:-server-0.14}"
 EXPECTED_JAR_SHA256="${KANGER_EXPECTED_CURRENT_JAR_SHA256:-e089497d0a8f041a872a3a5a09581f8d94f5962a277794747b7f54e209882a19}"
-EXPECTED_PUBLIC_UI_TARGET="${KANGER_EXPECTED_PUBLIC_UI_TARGET:-${UI_DIR}}"
 SNAPSHOT_ROOT="${KANGER_SNAPSHOT_ROOT:-/root/kanger-snapshots}"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 NAME="kanger-vps-before-3.5.2-${STAMP}"
@@ -23,7 +23,7 @@ PAYLOAD="${WORK_DIR}/host-root.tar"
 EVIDENCE="${WORK_DIR}/evidence"
 PATH_LIST="${WORK_DIR}/payload-paths.txt"
 
-for command in systemctl curl sha256sum tar readlink find sort ss nginx java; do
+for command in systemctl curl sha256sum tar readlink find sort ss nginx java awk xargs; do
   command -v "${command}" >/dev/null 2>&1 || {
     echo "Required command not found: ${command}" >&2
     exit 1
@@ -70,12 +70,8 @@ current_jar_sha="$(sha256sum "${CURRENT_JAR}" | awk '{print $1}')"
 printf '%s  %s\n' "${current_jar_sha}" "${CURRENT_JAR}" \
   > "${EVIDENCE}/current-jar.sha256"
 
-[[ -d "${UI_DIR}" && ! -L "${UI_DIR}" ]] || {
-  echo "Expected editable UI directory not found: ${UI_DIR}" >&2
-  exit 1
-}
-[[ -f "${UI_DIR}/index.html" ]] || {
-  echo "Current UI index is missing: ${UI_DIR}/index.html" >&2
+[[ -d "${EDITABLE_UI_DIR}" && ! -L "${EDITABLE_UI_DIR}" ]] || {
+  echo "Expected editable UI directory not found: ${EDITABLE_UI_DIR}" >&2
   exit 1
 }
 [[ -L "${PUBLIC_UI_LINK}" ]] || {
@@ -87,14 +83,24 @@ public_ui_target="$(readlink -f "${PUBLIC_UI_LINK}")"
   echo "Unexpected public UI target: ${public_ui_target}" >&2
   exit 1
 }
+[[ -d "${public_ui_target}" && -f "${public_ui_target}/index.html" ]] || {
+  echo "Published UI target is incomplete: ${public_ui_target}" >&2
+  exit 1
+}
+
 printf '%s\n' "${PUBLIC_UI_LINK} -> $(readlink "${PUBLIC_UI_LINK}")" \
   > "${EVIDENCE}/public-ui-link.txt"
 printf '%s\n' "${public_ui_target}" > "${EVIDENCE}/public-ui-target.txt"
-find "${UI_DIR}" -type f -print0 \
+find "${EDITABLE_UI_DIR}" -type f -print0 \
   | sort -z \
-  | xargs -0 -r sha256sum > "${EVIDENCE}/ui-files.sha256"
-find "${UI_DIR}" -printf '%M %u %g %p\n' \
-  | sort > "${EVIDENCE}/ui-tree.txt"
+  | xargs -0 -r sha256sum > "${EVIDENCE}/editable-ui-files.sha256"
+find "${EDITABLE_UI_DIR}" -printf '%M %u %g %p\n' \
+  | sort > "${EVIDENCE}/editable-ui-tree.txt"
+find "${public_ui_target}" -type f -print0 \
+  | sort -z \
+  | xargs -0 -r sha256sum > "${EVIDENCE}/published-ui-files.sha256"
+find "${public_ui_target}" -printf '%M %u %g %p\n' \
+  | sort > "${EVIDENCE}/published-ui-tree.txt"
 
 systemctl --no-pager --full status "${SERVICE}" > "${EVIDENCE}/systemd-status-before.txt"
 systemctl cat "${SERVICE}" > "${EVIDENCE}/systemd-unit.txt"
@@ -108,7 +114,8 @@ java -version > "${EVIDENCE}/java-version.txt" 2>&1
   echo "opt/kanger-server"
   echo "etc/systemd/system/kanger-server.service"
   echo "etc/nginx"
-  echo "${UI_DIR#/}"
+  echo "${EDITABLE_UI_DIR#/}"
+  echo "${public_ui_target#/}"
   echo "${PUBLIC_UI_LINK#/}"
 } | sort -u > "${PATH_LIST}"
 
@@ -156,15 +163,16 @@ systemctl --no-pager --full status "${SERVICE}" > "${EVIDENCE}/systemd-status-af
 ss -ltnp > "${EVIDENCE}/listeners-after.txt"
 
 cat > "${WORK_DIR}/SNAPSHOT.txt" <<EOF
-schema=2
+schema=3
 created_utc=${STAMP}
 host=$(hostname -f 2>/dev/null || hostname)
 service=${SERVICE}
 expected_server_version=${EXPECTED_SERVER_VERSION}
 current_jar_sha256=${current_jar_sha}
-ui_directory=${UI_DIR}
+editable_ui_directory=${EDITABLE_UI_DIR}
 public_ui_link=${PUBLIC_UI_LINK}
 public_ui_target=${public_ui_target}
+ui_publication_mode=versioned-directory-atomic-symlink
 payload=host-root.tar
 contains_secrets=true
 purpose=pre-3.5.2-vps-soak rollback and disaster recovery
@@ -180,7 +188,8 @@ trap - EXIT
 echo "SNAPSHOT_OK"
 echo "archive=${ARCHIVE}"
 echo "sha256=${archive_sha}"
-echo "ui_directory=${UI_DIR}"
+echo "editable_ui_directory=${EDITABLE_UI_DIR}"
 echo "public_ui_link=${PUBLIC_UI_LINK}"
+echo "public_ui_target=${public_ui_target}"
 echo "contains_secrets=true"
 echo "Copy the archive and .sha256 file off-host before deployment."
