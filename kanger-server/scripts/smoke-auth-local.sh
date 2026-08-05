@@ -88,7 +88,7 @@ password="Kanger-Smoke-${suffix}"
 mail_login="mail-disabled-${suffix}"
 mail_password="Mail-Disabled-${suffix}"
 
-printf '%s\n' "[1/11] Reading the public TRUSTED authentication capability snapshot"
+printf '%s\n' "[1/12] Reading the public TRUSTED authentication capability snapshot"
 capability_response="$(post '{"context":"version","parameters":{}}')"
 require_result "${capability_response}" "OK" "authentication capability snapshot"
 printf '%s' "${capability_response}" | "${PYTHON}" -c '
@@ -108,25 +108,25 @@ for key, value in expected.items():
         raise SystemExit("unexpected auth capability %s=%r in %r" % (key, auth.get(key), auth))
 '
 
-printf '%s\n' "[2/11] Rejecting e-mail registration in TRUSTED mode"
+printf '%s\n' "[2/12] Rejecting e-mail registration in TRUSTED mode"
 mail_response="$(post "{\"context\":\"login\",\"parameters\":{\"register\":\"${mail_login}\",\"password\":\"${mail_password}\",\"token\":\"\",\"email\":\"${mail_login}@example.org\",\"privacy\":true}}")"
 require_result "${mail_response}" "error" "trusted e-mail registration"
 require_code "${mail_response}" "REGISTRATION_DISABLED" "trusted e-mail registration"
 
-printf '%s\n' "[3/11] Verifying rejected e-mail registration created no credential"
+printf '%s\n' "[3/12] Verifying rejected e-mail registration created no credential"
 mail_login_response="$(post "{\"context\":\"login\",\"parameters\":{\"login\":\"${mail_login}\",\"password\":\"${mail_password}\"}}")"
 require_result "${mail_login_response}" "error" "trusted e-mail credential rejection"
 
-printf '%s\n' "[4/11] Rejecting registration without e-mail in TRUSTED mode"
+printf '%s\n' "[4/12] Rejecting registration without e-mail in TRUSTED mode"
 register_response="$(post "{\"context\":\"login\",\"parameters\":{\"register\":\"${login}\",\"password\":\"${password}\",\"token\":\"\",\"privacy\":true}}")"
 require_result "${register_response}" "error" "trusted registration"
 require_code "${register_response}" "REGISTRATION_DISABLED" "trusted registration"
 
-printf '%s\n' "[5/11] Verifying rejected registration created no credential"
+printf '%s\n' "[5/12] Verifying rejected registration created no credential"
 rejected_login="$(post "{\"context\":\"login\",\"parameters\":{\"login\":\"${login}\",\"password\":\"${password}\"}}")"
 require_result "${rejected_login}" "error" "trusted credential rejection"
 
-printf '%s\n' "[6/11] Provisioning unconfirmed Server 0.13 credential fixture"
+printf '%s\n' "[6/12] Provisioning unconfirmed Server 0.13 credential fixture"
 state_dir="${STATE_HOME}/KANGER"
 user_dir="${state_dir}/1"
 mkdir -p "${user_dir}"
@@ -139,7 +139,7 @@ reg.agreed=false
 reg.email.confirmed=false
 EOF
 
-printf '%s\n' "[7/11] Logging in with the existing unconfirmed credential"
+printf '%s\n' "[7/12] Logging in with the existing unconfirmed credential"
 login_response="$(post "{\"context\":\"login\",\"parameters\":{\"login\":\"${login}\",\"password\":\"${password}\"}}")"
 require_result "${login_response}" "OK" "existing-account login"
 first_token="$(json_field "${login_response}" token)"
@@ -148,17 +148,17 @@ first_token="$(json_field "${login_response}" token)"
   exit 1
 }
 
-printf '%s\n' "[8/11] Executing authenticated ping"
+printf '%s\n' "[8/12] Executing authenticated ping"
 ping_response="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${first_token}\",\"ping\":\"\"}}")"
 require_result "${ping_response}" "OK" "first ping"
 
-printf '%s\n' "[9/11] Logging out and rejecting the closed token"
+printf '%s\n' "[9/12] Logging out and rejecting the closed token"
 logout_response="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${first_token}\",\"quit\":\"\"}}")"
 require_result "${logout_response}" "OK" "first logout"
 closed_response="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${first_token}\",\"ping\":\"\"}}")"
 require_result "${closed_response}" "error" "logged-out token rejection"
 
-printf '%s\n' "[10/11] Logging in again and requiring token rotation"
+printf '%s\n' "[10/12] Logging in again and requiring token rotation"
 second_login="$(post "{\"context\":\"login\",\"parameters\":{\"login\":\"${login}\",\"password\":\"${password}\"}}")"
 require_result "${second_login}" "OK" "second login"
 second_token="$(json_field "${second_login}" token)"
@@ -169,11 +169,23 @@ second_token="$(json_field "${second_login}" token)"
 second_ping="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${second_token}\",\"ping\":\"\"}}")"
 require_result "${second_ping}" "OK" "second ping"
 
-printf '%s\n' "[11/11] Closing the second session"
-second_logout="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${second_token}\",\"quit\":\"\"}}")"
-require_result "${second_logout}" "OK" "second logout"
+printf '%s\n' "[11/12] Opening two explicit transaction levels"
+first_transaction="$(post "{\"context\":\"query\",\"parameters\":{\"token\":\"${second_token}\",\"transaction\":\"create\"}}")"
+require_result "${first_transaction}" "OK" "first transaction create"
+second_transaction="$(post "{\"context\":\"query\",\"parameters\":{\"token\":\"${second_token}\",\"transaction\":\"create\"}}")"
+require_result "${second_transaction}" "OK" "second transaction create"
+[[ "$(json_field "${second_transaction}" transaction)" = "2" ]] || {
+  echo "nested transaction depth was not published: ${second_transaction}" >&2
+  exit 1
+}
 
-printf '%s\n' "TRUSTED policy, public capabilities and existing-account authentication smoke passed"
+printf '%s\n' "[12/12] Closing the nested session and rejecting its token"
+second_logout="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${second_token}\",\"quit\":\"\"}}")"
+require_result "${second_logout}" "OK" "nested second logout"
+second_closed="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${second_token}\",\"ping\":\"\"}}")"
+require_result "${second_closed}" "error" "nested logged-out token rejection"
+
+printf '%s\n' "TRUSTED policy, public capabilities, nested lifecycle and existing-account authentication smoke passed"
 
 server_jar="${KANGER_SERVER_JAR:-${GITHUB_WORKSPACE:-}/kanger-server/target/kanger-server.jar}"
 [[ -f "${server_jar}" ]] || {
