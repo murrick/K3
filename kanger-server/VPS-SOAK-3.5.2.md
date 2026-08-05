@@ -1,6 +1,6 @@
 # KANGER 3.5.2 VPS soak protocol
 
-Status: operations candidate; no release acceptance or production-release authorization.
+Status: operations candidate; no release acceptance or permanent production authorization.
 
 ## Fixed identities
 
@@ -16,75 +16,73 @@ public API:              https://api.kanger.org
 application listener:    127.0.0.1:1964
 operator listener:       127.0.0.1:1965
 editable UI directory:   /home/murray/sites/kanger
-public UI symlink:       /var/www/html/kanger -> /home/murray/sites/kanger
+public UI symlink:       /var/www/html/kanger
+current public target:   /home/murray/sites/kanger-server-0.14-20260804T181706Z
 ```
 
-The soak package changes no KANGER product source after the qualified `3.5.2`
-head. It packages the matched Server 0.17 JAR and 15-file browser distribution,
-plus backup, deployment and rollback tools.
+The soak package contains the qualified Server 0.17 JAR, the exact 15-file
+browser distribution and operations-only snapshot/deploy/rollback tools. It
+contains no product-code delta after canonical head `7946d3969302`.
 
-## UI publication model
+## Actual UI publication model
 
-The VPS intentionally uses a stable editable directory owned by `murray`:
+The VPS has two distinct UI locations:
 
 ```text
 /home/murray/sites/kanger
 ```
 
-nginx reaches it through:
+is an editable directory owned by `murray`, but it is not the directory
+currently served by nginx.
+
+The public path is:
 
 ```text
-/var/www/html/kanger -> /home/murray/sites/kanger
+/var/www/html/kanger
+  -> /home/murray/sites/kanger-server-0.14-20260804T181706Z
 ```
 
-The soak must preserve this topology. It does not repoint either path. The
-deployment overlays only the 15 KANGER-managed browser files in the editable
-directory. Site-specific and otherwise unmanaged files, including ownership
-verification files, are left in place.
+The soak preserves this versioned-directory publication model:
 
-Before the overlay, the complete editable UI directory is copied to a
-timestamped sibling directory. Automatic rollback and normal soak rollback
-remove the 15 candidate-managed files and restore the pre-soak copy. Unmanaged
-files created during the soak are not removed by normal rollback.
+1. copy the complete current public target into a new Server 0.17 soak
+   directory;
+2. overlay the exact 15 candidate-managed browser files there;
+3. preserve all other files inherited from the current public target;
+4. atomically replace `/var/www/html/kanger` with a symlink to the candidate
+   directory;
+5. leave `/home/murray/sites/kanger` untouched.
 
-## Safety model
+Normal rollback atomically repoints the public symlink to the exact prior target.
+The candidate directory is retained for evidence.
 
-The procedure has three separate recovery levels:
+## Recovery levels
 
-1. **Automatic failed-deployment rollback** restores the previous JAR and
-   managed UI files if installation or verification fails.
-2. **Normal soak rollback** restores the matched `server-0.14` JAR/UI pair but
-   intentionally keeps database state and unmanaged site files produced during
-   the soak.
+1. **Automatic failed-deployment rollback** restores the previous JAR and prior
+   public UI symlink target if deployment verification fails.
+2. **Normal soak rollback** restores Server 0.14 and the exact prior public UI
+   target while preserving database state produced during the soak.
 3. **Full snapshot restore** restores config, state, server installation,
-   nginx, systemd, the editable UI directory and its public symlink. It is
-   disaster recovery and discards state changes made after the snapshot.
+   nginx, systemd, the editable UI directory, the published versioned UI
+   directory and the public symlink. It discards changes after the snapshot.
 
 The full snapshot contains account data and configuration secrets. Keep it mode
-`0600`, transfer it over SSH, and store it privately.
+`0600`, transfer it only over SSH and store it privately.
 
 ## 1. Obtain and verify the package
 
-Use the latest successful `KANGER 3.5.2 VPS soak package` GitHub Actions
-artifact named:
+Use only the latest successful `KANGER 3.5.2 VPS soak package` artifact named:
 
 ```text
 kanger-3.5.2-server-0.17-vps-soak
 ```
 
-Do not reuse an earlier package whose scripts expect
-`/home/murray/sites/kanger` itself to be a symlink.
-
-The artifact contains a `.tar.gz`, its SHA-256 file, `SOURCE.txt` and the
-component `SHA256SUMS`.
-
-On the local workstation:
+On the workstation:
 
 ```bash
 shasum -a 256 -c kanger-3.5.2-server-0.17-vps-soak-*.tar.gz.sha256
 ```
 
-Upload and extract it:
+Upload and extract:
 
 ```bash
 scp -P 4211 \
@@ -99,19 +97,19 @@ sha256sum -c SHA256SUMS
 cat SOURCE.txt
 ```
 
-Do not deploy unless `SOURCE.txt` contains exactly:
+Required `SOURCE.txt` anchors:
 
 ```text
+schema=3
 canonical_source_head=7946d3969302aa198fea506f419a885565db118a
 server_version=server-0.17
-ui_directory=/home/murray/sites/kanger
+editable_ui_directory=/home/murray/sites/kanger
 public_ui_link=/var/www/html/kanger
-ui_update_mode=managed-file-overlay
+production_ui_target=/home/murray/sites/kanger-server-0.14-20260804T181706Z
+ui_publication_mode=versioned-directory-atomic-symlink
 ```
 
-## 2. Verify the current production anchors
-
-Before the snapshot:
+## 2. Verify current production anchors
 
 ```bash
 curl --fail --silent http://127.0.0.1:1964/health; echo
@@ -121,16 +119,19 @@ test -d /home/murray/sites/kanger
 test ! -L /home/murray/sites/kanger
 test -L /var/www/html/kanger
 readlink -f /var/www/html/kanger
+sudo systemctl is-active kanger-server.service
 sudo nginx -t
 ```
 
-Required anchors:
+Required values:
 
 ```text
 server_version:        server-0.14
 JAR SHA-256:           e089497d0a8f041a872a3a5a09581f8d94f5962a277794747b7f54e209882a19
 editable UI directory: /home/murray/sites/kanger
-public UI target:      /home/murray/sites/kanger
+public UI target:      /home/murray/sites/kanger-server-0.14-20260804T181706Z
+systemd:               active
+nginx:                 configuration valid
 ```
 
 ## 3. Create a transactionally quiet host snapshot
@@ -141,9 +142,9 @@ From the extracted package directory:
 sudo bash deploy/snapshot-current.sh | tee /tmp/kanger-snapshot-result.txt
 ```
 
-The script stops KANGER cleanly, verifies removal of the active marker, captures
-the state, starts Server 0.14 and re-verifies health/readiness before returning
-success.
+The script validates all production anchors, stops KANGER cleanly, verifies that
+`kanger.active` disappeared, captures the snapshot, restarts Server 0.14 and
+re-verifies health/readiness.
 
 The snapshot includes:
 
@@ -154,21 +155,21 @@ The snapshot includes:
 /etc/systemd/system/kanger-server.service
 /etc/nginx
 /home/murray/sites/kanger
+/home/murray/sites/kanger-server-0.14-20260804T181706Z
 /var/www/html/kanger
 health/readiness responses
-JAR and complete UI hashes
-UI tree ownership/modes
+JAR hashes
+editable and published UI hashes and trees
 systemd unit/status
-listener evidence
-nginx effective configuration
+listeners
+effective nginx configuration
 Java identity
 ```
 
 ## 4. Copy the snapshot off-host
 
-The root-owned archive must not remain the only copy. Read the exact archive
-path and SHA-256 from `/tmp/kanger-snapshot-result.txt`, then expose a temporary
-owner-only handoff copy:
+Read the exact archive path from `/tmp/kanger-snapshot-result.txt` and make a
+temporary owner-only handoff copy:
 
 ```bash
 archive="$(sudo awk -F= '$1 == "archive" {print $2}' /tmp/kanger-snapshot-result.txt)"
@@ -179,7 +180,7 @@ sudo install -o murray -g murray -m 0600 \
   "${archive}.sha256" /home/murray/kanger-backups/
 ```
 
-On the local workstation:
+On the workstation:
 
 ```bash
 scp -P 4211 \
@@ -189,7 +190,7 @@ scp -P 4211 \
 shasum -a 256 -c kanger-vps-before-3.5.2-*.tar.gz.sha256
 ```
 
-Create proof of the verified off-host copy:
+Create and upload a receipt:
 
 ```bash
 archive_file="$(ls -1t kanger-vps-before-3.5.2-*.tar.gz | head -1)"
@@ -204,12 +205,12 @@ scp -P 4211 offhost-receipt.txt \
   murray@94.103.94.41:/tmp/kanger-offhost-receipt.txt
 ```
 
-The deployment script refuses to run unless this receipt matches the on-host
+`deploy-soak.sh` refuses to proceed unless this receipt matches the on-host
 snapshot byte-for-byte.
 
 ## 5. Start the soak deployment
 
-On the VPS, from `/tmp`:
+On the VPS:
 
 ```bash
 bundle="$(find /tmp -maxdepth 1 -type d \
@@ -225,33 +226,33 @@ sudo bash "${bundle}/deploy/deploy-soak.sh" \
 
 The script:
 
-- re-verifies the complete package;
-- verifies the real UI topology;
-- records the previous JAR and complete editable UI;
-- creates a timestamped pre-soak UI backup;
-- stages the exact 15-file candidate UI separately;
+- re-verifies package checksums, canonical head and exact browser inventory;
+- re-verifies Server 0.14, the current JAR and exact current public UI target;
+- copies the complete current published UI to a new versioned candidate
+  directory;
+- overlays the exact 15 candidate browser files;
+- preserves all unrelated files inherited from the prior target;
 - installs Server 0.17 through the rollback-capable installer;
-- proves health, readiness, loopback confinement and nginx validity;
-- atomically replaces each managed file in `/home/murray/sites/kanger`;
-- leaves unmanaged files in that directory untouched;
-- verifies the origin UI contains the containment boundary;
-- writes deployment evidence under `/root/kanger-deployments`;
+- verifies health, readiness, listener confinement and nginx;
+- atomically switches `/var/www/html/kanger` to the candidate directory;
+- verifies the browser containment boundary from the local HTTPS origin;
+- writes evidence under `/root/kanger-deployments`;
 - prints the exact rollback command.
 
-Any failure before final success restores the previous JAR and managed UI files.
+Any failure before final success restores the previous JAR and prior UI target.
 
 ## 6. Soak checks
 
 Use a dedicated test account and dedicated databases. Do not use destructive
 commands against valuable production data.
 
-Minimum functional route:
+Minimum route:
 
 ```text
 login and token rotation
 plain query and semantic views
 source get / edit / put / delete
-missing source and failed save errors
+missing source and failed-save errors
 use a dedicated test database
 failed use preserves the confirmed active database
 drop a different test database
@@ -271,10 +272,10 @@ child document contains no bearer token
 child direct network access is blocked
 parent broker remains the only API authority
 transport uncertainty does not erase the session
-workspace source/storage/transaction indicators remain truthful
+workspace indicators remain truthful
 ```
 
-Operational observation:
+Operational checks:
 
 ```bash
 sudo systemctl --no-pager --full status kanger-server.service
@@ -286,27 +287,28 @@ sudo ss -ltnp | grep -E ':(1964|1965)'
 readlink -f /var/www/html/kanger
 ```
 
-Keep the deployment evidence directory and record meaningful incidents in
-`06_KANGER` with exact UTC timestamps.
+## 7. Normal rollback
 
-## 7. Normal rollback after or during the soak
-
-Use the exact command printed by `deploy-soak.sh`, or:
+Use the exact command printed by `deploy-soak.sh`:
 
 ```bash
 sudo bash "${bundle}/deploy/rollback-soak.sh" \
   /root/kanger-deployments/3.5.2-soak-<UTC-STAMP>
 ```
 
-This restores Server 0.14 and the pre-soak versions of the 15 managed UI files.
-The editable directory and public symlink remain in their original topology.
-Database state and unrelated site files are preserved. The full pre-soak
-snapshot remains untouched.
+This restores Server 0.14 and atomically repoints `/var/www/html/kanger` to:
+
+```text
+/home/murray/sites/kanger-server-0.14-20260804T181706Z
+```
+
+Database state is preserved. The candidate UI directory and full snapshot remain
+available for evidence and disaster recovery.
 
 ## 8. Full disaster recovery
 
-Use only if config/state was corrupted and code rollback is insufficient. This
-discards all changes since the snapshot.
+Use only when config or state corruption makes normal rollback insufficient.
+This discards all changes since the snapshot.
 
 ```bash
 sudo systemctl stop kanger-server.service
@@ -321,21 +323,21 @@ sudo systemctl start kanger-server.service
 sudo systemctl reload nginx
 ```
 
-Then verify Server 0.14, `/var/www/html/kanger ->
-/home/murray/sites/kanger`, loopback listeners and public routing.
+Then verify Server 0.14, the exact public UI target, loopback listeners and
+public routing.
 
 ## Acceptance boundary
 
-A successful soak does not by itself create or accept `release/3.5.2`.
-Throughout the soak:
+A successful soak does not create or accept `release/3.5.2`.
 
 ```text
 PR #72:                  draft and unmerged
+PR #73:                  draft and unmerged
 release/3.5.2:           not created
 tag/GitHub Release:      not created
 accepted production:     release/3.5.1 + server-0.14
-running VPS code:        temporary qualified 3.5.2/server-0.17 soak candidate
+running VPS during soak: temporary qualified 3.5.2/server-0.17 candidate
 ```
 
 Release fixation and permanent production acceptance remain a separate explicit
-decision after the observation period.
+decision after observation.
