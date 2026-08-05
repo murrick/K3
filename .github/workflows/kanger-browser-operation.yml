@@ -1,0 +1,58 @@
+name: KANGER browser operation protocol
+
+on:
+  push:
+    branches:
+      - "server/**"
+    paths:
+      - "html/operation.js"
+      - "html/javascript-mode.js"
+      - "html/javascript-mode-vendor.js"
+      - "kanger-server/scripts/qualify-operation-snapshot.js"
+      - ".github/workflows/kanger-browser-operation.yml"
+  pull_request:
+    paths:
+      - "html/operation.js"
+      - "html/javascript-mode.js"
+      - "html/javascript-mode-vendor.js"
+      - "kanger-server/scripts/qualify-operation-snapshot.js"
+      - ".github/workflows/kanger-browser-operation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    name: Serialized mutation and coherent snapshot
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Validate operation protocol artifact
+        shell: bash
+        run: |
+          node --check html/javascript-mode.js
+          node --check html/javascript-mode-vendor.js
+          node --check html/operation.js
+          node --check kanger-server/scripts/qualify-operation-snapshot.js
+
+          test "$(git hash-object html/javascript-mode-vendor.js)" = \
+            "047395622eb2501dea6fbb9e6be2389e02bf2c77"
+          grep -q 'javascript-mode-vendor.js' html/javascript-mode.js
+          grep -q 'operation.js' html/javascript-mode.js
+          grep -q 'KANGER_OPERATION_PROTOCOL' html/operation.js
+          grep -q 'operation_busy' html/operation.js
+          grep -q 'operation_timeout' html/operation.js
+          grep -q 'client_snapshot_id' html/operation.js
+
+      - name: Run operation and snapshot qualification
+        shell: bash
+        run: |
+          node kanger-server/scripts/qualify-operation-snapshot.js

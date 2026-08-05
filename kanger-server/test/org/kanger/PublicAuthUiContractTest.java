@@ -39,7 +39,8 @@ class PublicAuthUiContractTest {
         assertTrue(gateway.contains("pending_action_token"));
         assertTrue(gateway.contains("change_pending_email"));
         assertTrue(gateway.contains("cancel_pending"));
-        assertTrue(gateway.contains("E-mail confirmed. Sign in to create a session."));
+        assertTrue(gateway.contains(
+                "E-mail confirmed. Sign in to create a session."));
         assertFalse(gateway.contains("?confirm="));
         assertFalse(gateway.contains("innerHTML"));
 
@@ -49,15 +50,19 @@ class PublicAuthUiContractTest {
         assertTrue(gateway.contains("KANGER_SESSION_BOOTSTRAP"));
         assertTrue(gateway.contains("Object.freeze"));
         assertTrue(gateway.contains("kanger.session.v1"));
-        assertTrue(gateway.contains("event.source !== consoleFrame.contentWindow"));
-        assertTrue(gateway.contains("data.generation !== state.session.generation"));
+        assertTrue(gateway.contains(
+                "event.source !== consoleFrame.contentWindow"));
+        assertTrue(gateway.contains(
+                "data.generation !== state.session.generation"));
         assertTrue(gateway.contains("session.logout"));
         assertTrue(gateway.contains("session.credentials.change"));
         assertTrue(gateway.contains("state.loginInFlight"));
         assertTrue(gateway.contains("preloadConsoleTemplate"));
         assertTrue(gateway.contains("assertConsoleTemplate"));
-        assertTrue(gateway.contains("localStorage.getItem(layoutPrefix + name)"));
-        assertTrue(gateway.contains("if (name === 'token' || name === 'login') { return; }"));
+        assertTrue(gateway.contains(
+                "localStorage.getItem(layoutPrefix + name)"));
+        assertTrue(gateway.contains(
+                "if (name === 'token' || name === 'login') { return; }"));
         assertFalse(gateway.contains("setCookie('token'"));
         assertFalse(gateway.contains("setCookie(\"token\""));
         assertFalse(gateway.contains("getCookie('token'"));
@@ -75,17 +80,17 @@ class PublicAuthUiContractTest {
         assertFalse(gateway.contains("var valid = await probeSession"));
         assertFalse(gateway.contains("var stillValid = await probeSession"));
 
-        String consoleMarker = "window.apihost = \"http://localhost:1964\";\n"
+        String consoleMarker =
+                "window.apihost = \"http://localhost:1964\";\n"
                 + "        window.token = \"\";";
         assertTrue(console.contains(consoleMarker));
-        assertTrue(gateway.contains("window.apihost = \"http://localhost:1964\";\\n"
+        assertTrue(gateway.contains(
+                "window.apihost = \"http://localhost:1964\";\\n"
                 + "        window.token = \"\";"));
 
         assertTrue(config.contains("http://localhost:1964"));
         assertTrue(config.contains("https://api.kanger.org"));
 
-        // The historical console remains the semantic UI implementation. The
-        // gateway injects its session adapter before jQuery.ready executes.
         assertTrue(console.contains("function registerForm"));
         assertTrue(console.contains("function command("));
         assertTrue(console.contains("function commandQuit"));
@@ -95,38 +100,81 @@ class PublicAuthUiContractTest {
     @Test
     void supportedConsoleInstallsTrustedRenderingBeforeHistoricalReady()
             throws Exception {
-        String loader = read(Paths.get("..", "html", "javascript.js"));
-        String mode = read(Paths.get("..", "html", "javascript-mode.js"));
+        String rendering = read(Paths.get("..", "html", "javascript.js"));
+        String modeLoader = read(
+                Paths.get("..", "html", "javascript-mode.js"));
+        String modeVendor = read(
+                Paths.get("..", "html", "javascript-mode-vendor.js"));
 
-        assertTrue(loader.contains("javascript-mode.js"));
-        assertTrue(loader.contains("wrapJQueryReady"));
-        assertTrue(loader.contains("KANGER_TRUSTED_RENDERING"));
-        assertTrue(loader.contains("Object.freeze({version: 1, installed: true})"));
+        assertTrue(rendering.contains("javascript-mode.js"));
+        assertTrue(rendering.contains("wrapJQueryReady"));
+        assertTrue(rendering.contains("KANGER_TRUSTED_RENDERING"));
+        assertTrue(rendering.contains(
+                "Object.freeze({version: 1, installed: true})"));
 
-        assertTrue(loader.contains("HISTORY_PREFIX = '@K2@'"));
-        assertTrue(loader.contains("encodeHistoryText"));
-        assertTrue(loader.contains("decodeHistoryText"));
-        assertTrue(loader.contains("legacyDescriptionText"));
-        assertTrue(loader.contains("tokenizeLegacyMarkup"));
-        assertTrue(loader.contains("protectTextOnlyElement"));
+        assertTrue(rendering.contains("HISTORY_PREFIX = '@K2@'"));
+        assertTrue(rendering.contains("encodeHistoryText"));
+        assertTrue(rendering.contains("decodeHistoryText"));
+        assertTrue(rendering.contains("legacyDescriptionText"));
+        assertTrue(rendering.contains("tokenizeLegacyMarkup"));
+        assertTrue(rendering.contains("protectTextOnlyElement"));
 
-        assertTrue(loader.contains("document.createTextNode"));
-        assertTrue(loader.contains("document.createElement('strong')"));
-        assertTrue(loader.contains("span.addEventListener('click'"));
-        assertTrue(loader.contains("row.textContent = stringValue(entry.record)"));
-        assertTrue(loader.contains("cell.textContent = stringValue(value)"));
+        assertTrue(rendering.contains("document.createTextNode"));
+        assertTrue(rendering.contains("document.createElement('strong')"));
+        assertTrue(rendering.contains("span.addEventListener('click'"));
+        assertTrue(rendering.contains(
+                "row.textContent = stringValue(entry.record)"));
+        assertTrue(rendering.contains(
+                "cell.textContent = stringValue(value)"));
 
-        assertFalse(loader.contains("insertAdjacentHTML"));
-        assertFalse(loader.contains("outerHTML"));
-        assertFalse(loader.contains("onclick="));
-        assertFalse(loader.contains("div.innerHTML"));
-        assertFalse(loader.contains("row.innerHTML"));
-        assertFalse(loader.contains("cell.innerHTML"));
+        assertFalse(rendering.contains("insertAdjacentHTML"));
+        assertFalse(rendering.contains("outerHTML"));
+        assertFalse(rendering.contains("onclick="));
+        assertFalse(rendering.contains("div.innerHTML"));
+        assertFalse(rendering.contains("row.innerHTML"));
+        assertFalse(rendering.contains("cell.innerHTML"));
 
-        // The vendored CodeMirror mode is preserved byte-for-byte under an
-        // explicit name; javascript.js is now the parser-time KANGER loader.
-        assertTrue(mode.contains("CodeMirror.defineMode(\"javascript\""));
-        assertTrue(mode.contains("CodeMirror.defineMIME(\"text/javascript\""));
+        int vendorPosition = modeLoader.indexOf("javascript-mode-vendor.js");
+        int operationPosition = modeLoader.indexOf("operation.js");
+        assertTrue(vendorPosition >= 0);
+        assertTrue(operationPosition > vendorPosition);
+        assertTrue(modeVendor.contains(
+                "CodeMirror.defineMode(\"javascript\""));
+        assertTrue(modeVendor.contains(
+                "CodeMirror.defineMIME(\"text/javascript\""));
+    }
+
+    @Test
+    void supportedConsoleSerializesMutationsAndCommitsCoherentSnapshots()
+            throws Exception {
+        String operation = read(Paths.get("..", "html", "operation.js"));
+
+        assertTrue(operation.contains("KANGER_OPERATION_PROTOCOL"));
+        assertTrue(operation.contains("observeTrustedRendering"));
+        assertTrue(operation.contains("isMutationPacket"));
+        assertTrue(operation.contains("activeMutation"));
+        assertTrue(operation.contains("operation_busy"));
+        assertTrue(operation.contains("operation_timeout"));
+        assertTrue(operation.contains("client_operation_id"));
+        assertTrue(operation.contains("client_generation"));
+        assertTrue(operation.contains("client_snapshot_id"));
+
+        assertTrue(operation.contains("snapshot.staging"));
+        assertTrue(operation.contains("snapshot.pending"));
+        assertTrue(operation.contains("maybeCommitSnapshot"));
+        assertTrue(operation.contains("moveChildren"));
+        assertTrue(operation.contains("snapshotIsCurrent"));
+        assertTrue(operation.contains("generation !== state.generation"));
+
+        assertTrue(operation.contains("original.logRequest(queryText);"));
+        assertTrue(operation.contains("original.logResponse(data, presentation);"));
+        assertTrue(operation.contains("callback();"));
+        assertTrue(operation.contains("scheduleSnapshot(data);"));
+
+        assertFalse(operation.contains("innerHTML"));
+        assertFalse(operation.contains("document.cookie"));
+        assertFalse(operation.contains("eval("));
+        assertFalse(operation.contains("new Function"));
     }
 
     private static String read(Path path) throws Exception {
