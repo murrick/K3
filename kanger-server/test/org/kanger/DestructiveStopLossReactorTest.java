@@ -73,7 +73,7 @@ public class DestructiveStopLossReactorTest {
 
         JSONObject response = invoke(reactor, "query", new JSONObject()
                 .put("token", token)
-                .put("compile", URLEncoder.encode("!broken(", "UTF-8")));
+                .put("compile", URLEncoder.encode("!conflict; ?conflict;", "UTF-8")));
 
         assertEquals("error", response.optString("result"), response.toString());
         assertEquals(sourceBefore, user.getCurrentMind().getSourceCode(),
