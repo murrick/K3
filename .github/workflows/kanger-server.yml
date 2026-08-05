@@ -63,9 +63,11 @@ jobs:
           favicon.ico
           gateway.js
           index.html
+          javascript-mode-vendor.js
           javascript-mode.js
           javascript.js
           jquery-3.6.0.min.js
+          operation.js
           EOF
           )"
           actual_files="$(
@@ -75,8 +77,13 @@ jobs:
 
           node --check html/config.js
           node --check html/gateway.js
+          node --check html/javascript-mode-vendor.js
           node --check html/javascript-mode.js
           node --check html/javascript.js
+          node --check html/operation.js
+
+          test "$(git hash-object html/javascript-mode-vendor.js)" = \
+            "047395622eb2501dea6fbb9e6be2389e02bf2c77"
 
           grep -q '<script src="config.js"></script>' html/index.html
           grep -q '<script src="gateway.js"></script>' html/index.html
@@ -103,6 +110,15 @@ jobs:
           ! grep -q 'insertAdjacentHTML' html/javascript.js
           ! grep -q 'outerHTML' html/javascript.js
           ! grep -q 'onclick=' html/javascript.js
+
+          grep -q 'javascript-mode-vendor.js' html/javascript-mode.js
+          grep -q 'operation.js' html/javascript-mode.js
+          grep -q 'KANGER_OPERATION_PROTOCOL' html/operation.js
+          grep -q 'operation_busy' html/operation.js
+          grep -q 'operation_timeout' html/operation.js
+          grep -q 'client_snapshot_id' html/operation.js
+          ! grep -q 'innerHTML' html/operation.js
+          ! grep -q 'document.cookie' html/operation.js
 
       - name: Verify distribution shape
         shell: bash
