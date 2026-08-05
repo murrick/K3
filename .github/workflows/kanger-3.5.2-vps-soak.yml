@@ -170,8 +170,11 @@ jobs:
           )
 
           tar -C "${RUNNER_TEMP}" -czf "${artifact_dir}/${package}.tar.gz" "${package}"
-          sha256sum "${artifact_dir}/${package}.tar.gz" \
-            > "${artifact_dir}/${package}.tar.gz.sha256"
+          (
+            cd "${artifact_dir}"
+            sha256sum "${package}.tar.gz" > "${package}.tar.gz.sha256"
+            sha256sum -c "${package}.tar.gz.sha256"
+          )
           cp "${root}/SOURCE.txt" "${artifact_dir}/${package}.SOURCE.txt"
           cp "${root}/SHA256SUMS" "${artifact_dir}/${package}.SHA256SUMS"
 
