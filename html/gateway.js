@@ -188,6 +188,15 @@
         return fallback;
     }
 
+    function stringifyForInlineScript(value) {
+        return JSON.stringify(value)
+                .replace(/</g, '\\u003c')
+                .replace(/>/g, '\\u003e')
+                .replace(/&/g, '\\u0026')
+                .replace(/\u2028/g, '\\u2028')
+                .replace(/\u2029/g, '\\u2029');
+    }
+
     function setFormBusy(form, busy) {
         Array.prototype.forEach.call(form.elements, function (control) {
             control.disabled = !!busy;
@@ -377,9 +386,10 @@
     function buildConsoleDocument(session) {
         assertConsoleTemplate();
         var bridge = consoleBridgeSource(session);
-        var replacement = 'window.apihost = ' + JSON.stringify(API_HOST) + ';\n'
+        var replacement = 'window.apihost = '
+                + stringifyForInlineScript(API_HOST) + ';\n'
                 + '        window.KANGER_SESSION_BOOTSTRAP = Object.freeze('
-                + JSON.stringify(bridge.bootstrap) + ');\n'
+                + stringifyForInlineScript(bridge.bootstrap) + ');\n'
                 + '        window.token = window.KANGER_SESSION_BOOTSTRAP.token;';
         var documentText = state.consoleTemplate.replace(
                 CONSOLE_SESSION_MARKER, replacement);
