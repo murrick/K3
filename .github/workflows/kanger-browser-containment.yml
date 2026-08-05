@@ -1,0 +1,61 @@
+name: KANGER browser error and containment boundary
+
+on:
+  push:
+    paths:
+      - "html/containment.js"
+      - "html/error.js"
+      - "html/index.html"
+      - "html/javascript-mode.js"
+      - "kanger-server/scripts/qualify-error-containment.js"
+      - ".github/workflows/kanger-browser-containment.yml"
+  pull_request:
+    paths:
+      - "html/containment.js"
+      - "html/error.js"
+      - "html/index.html"
+      - "html/javascript-mode.js"
+      - "kanger-server/scripts/qualify-error-containment.js"
+      - ".github/workflows/kanger-browser-containment.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    name: Opaque console and structured browser errors
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Validate containment artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check html/containment.js
+          node --check html/error.js
+          node --check kanger-server/scripts/qualify-error-containment.js
+
+          grep -q 'sandbox="allow-scripts"' html/index.html
+          grep -q 'referrerpolicy="no-referrer"' html/index.html
+          ! grep -q 'allow-same-origin' html/index.html
+          grep -q 'containment.js' html/index.html
+          grep -q 'error.js' html/javascript-mode.js
+          grep -q "connect-src 'none'" html/containment.js
+          grep -q '__KANGER_PARENT_SESSION__' html/containment.js
+          grep -q 'KANGER_ERROR_BOUNDARY' html/error.js
+          ! grep -q 'document.cookie' html/containment.js
+          ! grep -q 'innerHTML' html/containment.js
+          ! grep -q 'eval(' html/containment.js
+          ! grep -q 'new Function' html/containment.js
+
+      - name: Run error and containment qualification
+        shell: bash
+        run: node kanger-server/scripts/qualify-error-containment.js "${GITHUB_WORKSPACE}"
