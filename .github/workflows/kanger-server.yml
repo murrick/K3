@@ -68,6 +68,7 @@ jobs:
           javascript.js
           jquery-3.6.0.min.js
           operation.js
+          workspace.js
           EOF
           )"
           actual_files="$(
@@ -81,6 +82,7 @@ jobs:
           node --check html/javascript-mode.js
           node --check html/javascript.js
           node --check html/operation.js
+          node --check html/workspace.js
 
           test "$(git hash-object html/javascript-mode-vendor.js)" = \
             "047395622eb2501dea6fbb9e6be2389e02bf2c77"
@@ -113,12 +115,20 @@ jobs:
 
           grep -q 'javascript-mode-vendor.js' html/javascript-mode.js
           grep -q 'operation.js' html/javascript-mode.js
+          grep -q 'workspace.js' html/javascript-mode.js
           grep -q 'KANGER_OPERATION_PROTOCOL' html/operation.js
           grep -q 'operation_busy' html/operation.js
           grep -q 'operation_timeout' html/operation.js
           grep -q 'client_snapshot_id' html/operation.js
           ! grep -q 'innerHTML' html/operation.js
           ! grep -q 'document.cookie' html/operation.js
+
+          grep -q 'KANGER_WORKSPACE_STATE' html/workspace.js
+          grep -q 'canonicalSourceName' html/workspace.js
+          grep -q 'canonicalStorageName' html/workspace.js
+          grep -q 'repository_state' html/workspace.js
+          ! grep -q 'innerHTML' html/workspace.js
+          ! grep -q 'document.cookie' html/workspace.js
 
       - name: Verify distribution shape
         shell: bash
@@ -127,10 +137,11 @@ jobs:
           jar tf kanger-server/target/kanger-server.jar | grep -q '^org/kanger/Kanger.class$'
           jar tf kanger-server/target/kanger-server.jar | grep -q '^org/kanger/HttpServer.class$'
           jar tf kanger-server/target/kanger-server.jar | grep -q '^org/kanger/Mind.class$'
+          jar tf kanger-server/target/kanger-server.jar | grep -q '^org/kanger/WorkspaceStateReactor.class$'
           unzip -p kanger-server/target/kanger-server.jar META-INF/MANIFEST.MF \
             | grep -q '^Main-Class: org.kanger.Kanger'
           unzip -p kanger-server/target/kanger-server.jar org/kanger/build.properties \
-            | grep -q '^server.version=server-0.16$'
+            | grep -q '^server.version=server-0.17$'
 
       - name: Verify VPS deployment assets
         shell: bash
@@ -224,7 +235,7 @@ jobs:
           echo "${health_response}" | grep -q '"version":"3.3"'
           echo "${health_response}" | grep -q '"core_version":"3.3"'
           echo "${health_response}" | grep -q '"api_version":"1"'
-          echo "${health_response}" | grep -q '"server_version":"server-0.16"'
+          echo "${health_response}" | grep -q '"server_version":"server-0.17"'
 
           ready_response="$(curl --fail --silent --show-error \
             --dump-header "${runtime}/ready.headers" \
@@ -234,7 +245,7 @@ jobs:
           echo "${ready_response}" | grep -q '"version":"3.3"'
           echo "${ready_response}" | grep -q '"core_version":"3.3"'
           echo "${ready_response}" | grep -q '"api_version":"1"'
-          echo "${ready_response}" | grep -q '"server_version":"server-0.16"'
+          echo "${ready_response}" | grep -q '"server_version":"server-0.17"'
           echo "${ready_response}" | grep -q '"queue_capacity":16'
           grep -qi '^X-Request-ID: ci-ready-check' "${runtime}/ready.headers"
 
