@@ -55,6 +55,7 @@ class PublicAuthUiContractTest {
         assertTrue(gateway.contains("session.credentials.change"));
         assertTrue(gateway.contains("state.loginInFlight"));
         assertTrue(gateway.contains("preloadConsoleTemplate"));
+        assertTrue(gateway.contains("assertConsoleTemplate"));
         assertTrue(gateway.contains("localStorage.getItem(layoutPrefix + name)"));
         assertTrue(gateway.contains("if (name === 'token' || name === 'login') { return; }"));
         assertFalse(gateway.contains("setCookie('token'"));
@@ -62,6 +63,17 @@ class PublicAuthUiContractTest {
         assertFalse(gateway.contains("getCookie('token'"));
         assertFalse(gateway.contains("getCookie(\"token\""));
         assertFalse(gateway.contains("tokenMonitor"));
+
+        assertTrue(gateway.contains("var PROBE_VALID = 'valid';"));
+        assertTrue(gateway.contains("var PROBE_INVALID = 'invalid';"));
+        assertTrue(gateway.contains("var PROBE_UNAVAILABLE = 'unavailable';"));
+        assertTrue(gateway.contains("return PROBE_UNAVAILABLE;"));
+        assertTrue(gateway.contains("probe === PROBE_INVALID"));
+        assertTrue(gateway.contains("probe === PROBE_UNAVAILABLE"));
+        assertTrue(gateway.contains("It was retained for a later retry."));
+        assertTrue(gateway.contains("revocation was not confirmed"));
+        assertFalse(gateway.contains("var valid = await probeSession"));
+        assertFalse(gateway.contains("var stillValid = await probeSession"));
 
         String consoleMarker = "window.apihost = \"http://localhost:1964\";\n"
                 + "        window.token = \"\";";
