@@ -16,7 +16,8 @@ BUNDLE_DIR="$(readlink -f "$1")"
 SNAPSHOT_ARCHIVE="$(readlink -f "$2")"
 OFFHOST_RECEIPT="$(readlink -f "$3")"
 SERVICE="${KANGER_SERVICE:-kanger-server.service}"
-UI_LINK="${KANGER_UI_LINK:-/home/murray/sites/kanger}"
+UI_DIR="${KANGER_UI_DIR:-/home/murray/sites/kanger}"
+PUBLIC_UI_LINK="${KANGER_PUBLIC_UI_LINK:-/var/www/html/kanger}"
 SITE_ROOT="${KANGER_SITE_ROOT:-/home/murray/sites}"
 HEALTH_URL="${KANGER_HEALTH_URL:-http://127.0.0.1:1964/health}"
 READY_URL="${KANGER_READY_URL:-http://127.0.0.1:1964/ready}"
@@ -27,10 +28,11 @@ EXPECTED_SOURCE_HEAD="7946d3969302aa198fea506f419a885565db118a"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 RECORD_DIR="${KANGER_DEPLOYMENT_RECORD_ROOT:-/root/kanger-deployments}/3.5.2-soak-${STAMP}"
 CANDIDATE_UI="${SITE_ROOT}/kanger-server-0.17-soak-${STAMP}"
+PRIOR_UI_BACKUP="${SITE_ROOT}/kanger-server-0.14-before-3.5.2-${STAMP}"
 CURRENT_JAR="/opt/kanger-server/kanger-server.jar"
 PREVIOUS_JAR="/opt/kanger-server/kanger-server.jar.previous"
 
-for command in systemctl curl sha256sum readlink install cp mv ln nginx grep awk find sort; do
+for command in systemctl curl sha256sum readlink install cp mv nginx grep awk find sort; do
   command -v "${command}" >/dev/null 2>&1 || {
     echo "Required command not found: ${command}" >&2
     exit 1
@@ -46,8 +48,16 @@ done
 [[ -f "${BUNDLE_DIR}/deploy/verify-installed.sh" ]]
 [[ -f "${BUNDLE_DIR}/SOURCE.txt" ]]
 [[ -f "${BUNDLE_DIR}/SHA256SUMS" ]]
-[[ -L "${UI_LINK}" ]] || {
-  echo "Expected UI symlink not found: ${UI_LINK}" >&2
+[[ -d "${UI_DIR}" && ! -L "${UI_DIR}" ]] || {
+  echo "Expected editable UI directory not found: ${UI_DIR}" >&2
+  exit 1
+}
+[[ -L "${PUBLIC_UI_LINK}" ]] || {
+  echo "Expected public UI symlink not found: ${PUBLIC_UI_LINK}" >&2
+  exit 1
+}
+[[ "$(readlink -f "${PUBLIC_UI_LINK}")" = "${UI_DIR}" ]] || {
+  echo "Public UI symlink does not resolve to ${UI_DIR}" >&2
   exit 1
 }
 
@@ -112,25 +122,52 @@ printf '%s\n' "${ready_before}" > "${RECORD_DIR}/ready-before.json"
 cp -f "${OFFHOST_RECEIPT}" "${RECORD_DIR}/offhost-receipt.txt"
 cp -f "${BUNDLE_DIR}/SOURCE.txt" "${RECORD_DIR}/SOURCE.txt"
 cp -f "${BUNDLE_DIR}/SHA256SUMS" "${RECORD_DIR}/SHA256SUMS"
+printf '%s\n' "${expected_browser_files}" > "${RECORD_DIR}/managed-ui-files.txt"
 
-prior_ui_target="$(readlink -f "${UI_LINK}")"
+prior_public_ui_target="$(readlink -f "${PUBLIC_UI_LINK}")"
 prior_jar_sha="$(sha256sum "${CURRENT_JAR}" | awk '{print $1}')"
 candidate_jar_sha="$(sha256sum "${BUNDLE_DIR}/kanger-server.jar" | awk '{print $1}')"
-printf '%s\n' "${prior_ui_target}" > "${RECORD_DIR}/prior-ui-target.txt"
+printf '%s\n' "${prior_public_ui_target}" > "${RECORD_DIR}/prior-public-ui-target.txt"
 printf '%s\n' "${prior_jar_sha}" > "${RECORD_DIR}/prior-jar.sha256"
 printf '%s\n' "${candidate_jar_sha}" > "${RECORD_DIR}/candidate-jar.sha256"
 printf '%s\n' "${SNAPSHOT_ARCHIVE}" > "${RECORD_DIR}/snapshot-archive.txt"
+find "${UI_DIR}" -type f -print0 \
+  | sort -z \
+  | xargs -0 -r sha256sum > "${RECORD_DIR}/prior-ui.sha256"
+
+install -d -o murray -g www-data -m 0755 "${PRIOR_UI_BACKUP}"
+cp -a "${UI_DIR}/." "${PRIOR_UI_BACKUP}/"
+install -d -o murray -g www-data -m 0755 "${CANDIDATE_UI}"
+while IFS= read -r file; do
+  [[ -n "${file}" ]] || continue
+  install -o murray -g www-data -m 0644 \
+    "${BUNDLE_DIR}/html/${file}" "${CANDIDATE_UI}/${file}"
+done <<< "${expected_browser_files}"
+find "${CANDIDATE_UI}" -maxdepth 1 -type f -print0 \
+  | sort -z \
+  | xargs -0 -r sha256sum > "${RECORD_DIR}/candidate-ui.sha256"
 
 server_installed=false
-ui_switched=false
+ui_updated=false
 deployment_complete=false
 
-atomic_link() {
-  local target="$1"
-  local temporary="${UI_LINK}.new.$$"
-  rm -f "${temporary}"
-  ln -s "${target}" "${temporary}"
-  mv -Tf "${temporary}" "${UI_LINK}"
+restore_prior_ui() {
+  while IFS= read -r file; do
+    [[ -n "${file}" ]] || continue
+    rm -f "${UI_DIR}/${file}"
+  done < "${RECORD_DIR}/managed-ui-files.txt"
+  cp -a "${PRIOR_UI_BACKUP}/." "${UI_DIR}/"
+}
+
+install_candidate_ui() {
+  local file temporary
+  while IFS= read -r file; do
+    [[ -n "${file}" ]] || continue
+    temporary="${UI_DIR}/.${file}.new.$$"
+    install -o murray -g www-data -m 0644 \
+      "${CANDIDATE_UI}/${file}" "${temporary}"
+    mv -f "${temporary}" "${UI_DIR}/${file}"
+  done < "${RECORD_DIR}/managed-ui-files.txt"
 }
 
 rollback_on_error() {
@@ -140,10 +177,6 @@ rollback_on_error() {
   fi
   echo "Deployment failed; restoring matched Server 0.14/UI pair" >&2
   set +e
-  if [[ "${ui_switched}" = true ]]; then
-    atomic_link "${prior_ui_target}"
-    nginx -t && systemctl reload nginx
-  fi
   if [[ "${server_installed}" = true && -f "${PREVIOUS_JAR}" ]]; then
     systemctl stop "${SERVICE}"
     cp -f "${PREVIOUS_JAR}" "${CURRENT_JAR}"
@@ -151,18 +184,15 @@ rollback_on_error() {
     chmod 0640 "${CURRENT_JAR}"
     systemctl start "${SERVICE}"
   fi
+  if [[ "${ui_updated}" = true ]]; then
+    restore_prior_ui
+    nginx -t && systemctl reload nginx
+  fi
   printf 'FAILED_ROLLED_BACK status=%s utc=%s\n' "${status}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     > "${RECORD_DIR}/STATUS"
   exit "${status}"
 }
 trap rollback_on_error EXIT
-
-install -d -o murray -g murray -m 0755 "${CANDIDATE_UI}"
-cp -a "${BUNDLE_DIR}/html/." "${CANDIDATE_UI}/"
-chown -R murray:murray "${CANDIDATE_UI}"
-find "${CANDIDATE_UI}" -maxdepth 1 -type f -print0 \
-  | sort -z \
-  | xargs -0 -r sha256sum > "${RECORD_DIR}/candidate-ui.sha256"
 
 bash "${BUNDLE_DIR}/deploy/install.sh" "${BUNDLE_DIR}/kanger-server.jar"
 server_installed=true
@@ -171,11 +201,12 @@ server_installed=true
 bash "${BUNDLE_DIR}/deploy/verify-installed.sh" \
   | tee "${RECORD_DIR}/verify-installed.txt"
 
-atomic_link "${CANDIDATE_UI}"
-ui_switched=true
+ui_updated=true
+install_candidate_ui
 nginx -t
 systemctl reload nginx
 
+[[ "$(readlink -f "${PUBLIC_UI_LINK}")" = "${UI_DIR}" ]]
 origin_index="$(curl --fail --silent --show-error --insecure --max-time 10 \
   --resolve kanger.org:443:127.0.0.1 https://kanger.org/)"
 printf '%s\n' "${origin_index}" > "${RECORD_DIR}/origin-index.html"
@@ -189,6 +220,9 @@ echo "${health_after}" | grep -q "\"server_version\":\"${EXPECTED_CANDIDATE_SERV
 echo "${ready_after}" | grep -q "\"server_version\":\"${EXPECTED_CANDIDATE_SERVER}\""
 printf '%s\n' "${health_after}" > "${RECORD_DIR}/health-after.json"
 printf '%s\n' "${ready_after}" > "${RECORD_DIR}/ready-after.json"
+find "${UI_DIR}" -type f -print0 \
+  | sort -z \
+  | xargs -0 -r sha256sum > "${RECORD_DIR}/active-ui.sha256"
 
 if public_health="$(curl --fail --silent --show-error --max-time 10 "${PUBLIC_HEALTH_URL}" 2>/dev/null)"; then
   printf '%s\n' "${public_health}" > "${RECORD_DIR}/public-health.json"
@@ -197,7 +231,7 @@ else
 fi
 
 cat > "${RECORD_DIR}/DEPLOYMENT.txt" <<EOF
-schema=1
+schema=2
 status=SOAK_ACTIVE
 started_utc=${STAMP}
 canonical_source_head=${EXPECTED_SOURCE_HEAD}
@@ -205,9 +239,13 @@ server_version=${EXPECTED_CANDIDATE_SERVER}
 candidate_jar_sha256=${candidate_jar_sha}
 prior_server_version=${EXPECTED_CURRENT_SERVER}
 prior_jar_sha256=${prior_jar_sha}
-ui_link=${UI_LINK}
-prior_ui_target=${prior_ui_target}
-candidate_ui_target=${CANDIDATE_UI}
+ui_directory=${UI_DIR}
+public_ui_link=${PUBLIC_UI_LINK}
+public_ui_target=${prior_public_ui_target}
+prior_ui_backup=${PRIOR_UI_BACKUP}
+candidate_ui_staging=${CANDIDATE_UI}
+ui_update_mode=managed-file-overlay
+unmanaged_ui_files_preserved=true
 snapshot_archive=${SNAPSHOT_ARCHIVE}
 snapshot_sha256=${actual_snapshot_sha}
 rollback_command=sudo bash ${BUNDLE_DIR}/deploy/rollback-soak.sh ${RECORD_DIR}
@@ -220,5 +258,7 @@ trap - EXIT
 echo "SOAK_DEPLOYMENT_OK"
 echo "record=${RECORD_DIR}"
 echo "server=${EXPECTED_CANDIDATE_SERVER}"
-echo "ui=${CANDIDATE_UI}"
+echo "ui_directory=${UI_DIR}"
+echo "public_ui_link=${PUBLIC_UI_LINK}"
+echo "candidate_staging=${CANDIDATE_UI}"
 echo "rollback=sudo bash ${BUNDLE_DIR}/deploy/rollback-soak.sh ${RECORD_DIR}"
