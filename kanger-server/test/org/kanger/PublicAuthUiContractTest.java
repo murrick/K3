@@ -92,6 +92,43 @@ class PublicAuthUiContractTest {
         assertTrue(console.contains("function loginCheck"));
     }
 
+    @Test
+    void supportedConsoleInstallsTrustedRenderingBeforeHistoricalReady()
+            throws Exception {
+        String loader = read(Paths.get("..", "html", "javascript.js"));
+        String mode = read(Paths.get("..", "html", "javascript-mode.js"));
+
+        assertTrue(loader.contains("javascript-mode.js"));
+        assertTrue(loader.contains("wrapJQueryReady"));
+        assertTrue(loader.contains("KANGER_TRUSTED_RENDERING"));
+        assertTrue(loader.contains("Object.freeze({version: 1, installed: true})"));
+
+        assertTrue(loader.contains("HISTORY_PREFIX = '@K2@'"));
+        assertTrue(loader.contains("encodeHistoryText"));
+        assertTrue(loader.contains("decodeHistoryText"));
+        assertTrue(loader.contains("legacyDescriptionText"));
+        assertTrue(loader.contains("tokenizeLegacyMarkup"));
+        assertTrue(loader.contains("protectTextOnlyElement"));
+
+        assertTrue(loader.contains("document.createTextNode"));
+        assertTrue(loader.contains("document.createElement('strong')"));
+        assertTrue(loader.contains("span.addEventListener('click'"));
+        assertTrue(loader.contains("row.textContent = stringValue(entry.record)"));
+        assertTrue(loader.contains("cell.textContent = stringValue(value)"));
+
+        assertFalse(loader.contains("insertAdjacentHTML"));
+        assertFalse(loader.contains("outerHTML"));
+        assertFalse(loader.contains("onclick="));
+        assertFalse(loader.contains("div.innerHTML"));
+        assertFalse(loader.contains("row.innerHTML"));
+        assertFalse(loader.contains("cell.innerHTML"));
+
+        // The vendored CodeMirror mode is preserved byte-for-byte under an
+        // explicit name; javascript.js is now the parser-time KANGER loader.
+        assertTrue(mode.contains("CodeMirror.defineMode(\"javascript\""));
+        assertTrue(mode.contains("CodeMirror.defineMIME(\"text/javascript\""));
+    }
+
     private static String read(Path path) throws Exception {
         assertTrue(Files.isRegularFile(path), "Missing UI file: " + path);
         return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
