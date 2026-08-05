@@ -1,38 +1,52 @@
-# KANGER Server 0.14 — VPS acceptance closure checkpoint
+# KANGER Server 0.14 — VPS acceptance closure
 
-Date: 2026-08-04
+Date: 2026-08-05
 Repository: `murrick/K3`
 Draft PR: `#63 — KANGER Server 0.14: VPS deployment and acceptance`
 Operational branch: `ops/server/0.14-vps-acceptance`
 Immutable source shelf: `develop/server/0.14 @ e5f9a1bfa47437636705f0935cb659cffb4d179e`
 
+## Closure status
+
+```text
+SERVER 0.14 VPS ACCEPTANCE: TECHNICALLY COMPLETE
+PR #63:                      OPEN / DRAFT
+MERGE:                       NOT PERFORMED
+```
+
+All production acceptance gates defined for PR #63 have passed. Remaining observations are classified as non-blocking operational or application-security debt and are explicitly separated from the Server 0.14 deployment artifact.
+
 ## Production target
 
 ```text
 host:       murray@94.103.94.41:4211
-public:     https://kanger.org/
+public UI:  https://kanger.org/
+public API: https://api.kanger.org/
 service:    kanger-server.service
-public API: 127.0.0.1:1964 behind nginx/Cloudflare
-operator:   127.0.0.1:1965 through sudo kanger-admin
+application plane: 127.0.0.1:1964 behind nginx
+operator plane:    127.0.0.1:1965 through sudo kanger-admin
 ```
 
-## Installed server identity
+## Final installed identity
 
 ```text
 server version: server-0.14
-source commit:  e5f9a1bfa47437636705f0935cb659cffb4d179e
-JAR SHA-256:   e089497d0a8f041a872a3a5a09581f8d94f5962a277794747b7f54e209882a19
-health:        UP
-readiness:     READY
+source shelf:   develop/server/0.14
+git commit:     e5f9a1bfa47437636705f0935cb659cffb4d179e
+JAR SHA-256:    e089497d0a8f041a872a3a5a09581f8d94f5962a277794747b7f54e209882a19
+config SHA-256: 3f6b95b4cd567d946e0d6d4c634b0db6f2f3c6aa5d7c594a62f4a715c53209dc
+runtime policy: EMAIL_VERIFIED
+health:         UP
+readiness:      READY
 ```
 
-The previous `server-0.13` artifact and pre-0.14 configuration/systemd rollback copies remain retained.
+The configuration hash is the exact restored SMTPS production baseline.
 
-## Installed browser UI identity
+## Final browser UI identity
 
 ```text
-previous target: /home/murray/sites/kanger
 current target:  /home/murray/sites/kanger-server-0.14-20260804T181706Z
+previous target: /home/murray/sites/kanger
 index SHA-256:   747104f9e9a7599679b5329eb098590b190a876ff949f01e232f67a1e1b8baae
 config SHA-256:  d44e67c862f12065d62259055043922ff573271dd5fac2f373cc454172757715
 console SHA-256: 24d74b6608d4d49a5464d62dd368354c3f30d5f90b90b6a8717531d8e7719dca
@@ -40,43 +54,49 @@ origin UI:       PASS
 public UI:       PASS
 ```
 
-The previous UI target remains available as rollback evidence.
+The previous UI target remains available as an explicit rollback boundary.
 
-## Closed production gates
+## Closed acceptance gates
 
 ```text
-read-only VPS inventory:                 PASS
-local exact-shelf qualification:         PASS
-off-host predeployment backup:           PASS
-guarded server cutover:                  PASS
-production public/operator boundary:     PASS
-guarded browser UI cutover:              PASS
-origin and public UI verification:       PASS
-SMTPS delivery:                          PASS
-EMAIL_VERIFIED pending registration:     PASS
-confirmation and ACTIVE publication:     PASS
-confirmation_creates_session=false:      PASS
-ordinary login and console opening:      PASS
-logout and repeated login:               PASS
-operator account deletion:               PASS
-canonical workspace quarantine:          PASS
-active browser-session revocation:       PASS
-fresh post-deletion login rejection:     PASS
-repeat deletion idempotency:             PASS
-monotonic user-id allocation:             PASS
+read-only VPS inventory:                    PASS
+local exact-shelf qualification:            PASS
+off-host predeployment backup:              PASS
+guarded Server 0.13 -> 0.14 cutover:         PASS
+production public/operator boundary:        PASS
+guarded browser UI cutover:                 PASS
+origin and public UI verification:          PASS
+SMTPS delivery and lifecycle:               PASS
+TRUSTED registration-policy lifecycle:      PASS
+STARTTLS delivery and lifecycle:             PASS
+restoration to exact SMTPS baseline:         PASS
+controlled service restart:                 PASS
+controlled same-version update:             PASS
+manual rollback to Server 0.13:              PASS
+restoration from Server 0.13 to Server 0.14: PASS
+durable-state metadata non-interference:    PASS
+nginx routing and syntax:                    PASS
+HTTPS certificates and redirects:           PASS
+CORS allow/deny policy:                      PASS
+application listener confinement:           PASS
+operator listener confinement:              PASS
+public readiness rejection:                 PASS
+legacy default-site exposure removal:       PASS
+public PHP exposure removal:                PASS
 ```
 
-## Account lifecycle acceptance interpretation
+## Account and transport acceptance
 
-The production lifecycle was observed end-to-end:
+The following lifecycle was observed under production SMTP/SMTPS and STARTTLS transport:
 
 ```text
 registration
   -> persistent pending intent
-  -> e-mail confirmation
+  -> confirmation e-mail delivery
+  -> explicit confirmation
   -> complete ACTIVE account publication
   -> separate ordinary login
-  -> authenticated session
+  -> authenticated browser session
   -> operator deletion
   -> credential revocation
   -> runtime/session revocation
@@ -84,54 +104,138 @@ registration
   -> fresh authentication rejection
 ```
 
-A temporary diagnostic confusion was traced to browser autocomplete: a later registration used an e-mail address as the login string, creating a distinct ACTIVE identity with a new monotonically allocated user id. No identity reuse, orphan workspace, or credential/workspace disagreement was present.
+TRUSTED policy acceptance separately proved that public registration was hidden and rejected while operator-created accounts could log in and be deleted through the supported operator boundary.
 
-## Open production findings
-
-### 1. Confirmation link is a state-changing GET
-
-The confirmation e-mail points directly to a prefetchable `GET /?confirm=<token>` action. A mail scanner, preview, or link-prefetch mechanism can consume the one-time token before the human opens the link. Reopening the consumed link returns `CONFIRMATION_TOKEN_INVALID`, even though the account may already be ACTIVE.
-
-Recommended future fix:
+The Server 0.14 runtime was finally restored to:
 
 ```text
-GET confirmation landing page
-  -> explicit user confirmation
-  -> state-changing POST
-  -> idempotent already-confirmed outcome
+registration_policy=EMAIL_VERIFIED
+public_registration=true
+email_confirmation_required=true
+confirmation_creates_session=false
+pending_registration_actions=true
+email transport=SMTPS
 ```
 
-This finding does not invalidate the completed account lifecycle acceptance.
+## Update and rollback acceptance
 
-### 2. Default nginx document-root artifacts require later review
-
-`/var/www/html/info.php` and `/var/www/html/test.php` were observed outside the KANGER UI root. Their enabled-site reachability must be audited before any deletion decision. No removal was performed under this acceptance artifact.
-
-## Remaining PR #63 acceptance scope
-
-The following gates remain open and must be continued in a new work session:
-
-1. `TRUSTED` registration-policy acceptance:
-   - public registration hidden/disabled;
-   - operator-created account;
-   - ordinary login;
-   - operator deletion.
-2. STARTTLS transport acceptance, followed by restoration of SMTPS.
-3. Controlled service restart acceptance.
-4. Controlled same-version update acceptance.
-5. Manual rollback rehearsal and restoration to Server 0.14.
-6. Final nginx/HTTPS/CORS/firewall and enabled-site audit.
-7. Classification of residual findings and final PR closure decision.
-
-Changing production registration policy, restarting the service, performing rollback, deleting files, marking PR #63 ready, or merging it remain explicit approval boundaries.
-
-## Current repository boundary
+The standard installer rotates the current JAR into `kanger-server.jar.previous`. Before same-version update, the accepted Server 0.13 rollback boundary was therefore preserved independently:
 
 ```text
-PR #63: open, Draft, mergeable
-base:   develop/server/0.14 @ e5f9a1bfa47437636705f0935cb659cffb4d179e
-head before this closure commit:
-        951be60009d3f54ac010e1d5cbd7e590e06d0bad
+/opt/kanger-server/rollback/server-0.13-4eb4bd33
 ```
 
-This document is the authoritative continuation checkpoint for the next KANGER III chat. Detailed proof remains in the sibling evidence files under `kanger-server/docs/operations/evidence/`.
+The exact Server 0.14 JAR was then reinstalled through the standard installer. The service restarted onto the same accepted binary, while configuration, systemd unit, operator wrapper and durable-state metadata remained unchanged.
+
+Manual rollback then proved:
+
+```text
+Server 0.14 -> Server 0.13: PASS
+Server 0.13 health/readiness: UP / READY
+Server 0.13 public health:    PASS
+Server 0.13 public /ready:    HTTP 403
+Server 0.13 -> Server 0.14:   PASS
+final Server 0.14 identity:   exact accepted JAR/config hashes
+```
+
+Relevant protected restoration snapshots include:
+
+```text
+/opt/kanger-server/rollback/server-0.14-pre-same-version-20260805T065524Z
+/opt/kanger-server/rollback/server-0.14-pre-manual-rollback-20260805T071605Z
+/opt/kanger-server/rollback/server-0.13-pre-restore-0.14-20260805T073739Z
+```
+
+## Final network and perimeter acceptance
+
+The final perimeter audit proved:
+
+```text
+nginx active/enabled and syntactically valid
+kanger.org and www.kanger.org UI routing valid
+api.kanger.org upstream resolves only to loopback port 1964
+operator port 1965 absent from nginx routing
+TLS hostname validation passed for all three public names
+HTTP redirects to HTTPS
+UI public/origin hashes match the accepted artifact
+API public/origin health reports Server 0.14 / UP
+public /ready returns HTTP 403
+CORS allows only kanger.org and www.kanger.org
+external and null origins are rejected
+CORS credentials remain disabled
+```
+
+### Legacy default-site closure
+
+The final audit found an enabled default nginx virtual host exposing legacy `/var/www/html/info.php` and `/var/www/html/test.php` artifacts through the host IP. Classification proved that this was a real default-site/PHP surface, not leakage through the KANGER API virtual host.
+
+The exposure was closed under a guarded mutation:
+
+```text
+disabled:   /etc/nginx/sites-enabled/default
+quarantine: /opt/kanger-server/rollback/nginx-default-site-20260805T083900Z
+nginx:      reload only
+KANGER:     no restart
+```
+
+The default configuration and both artifacts remain retained with a manifest and checksums. The public root no longer contains the PHP artifacts, raw-IP requests no longer expose or execute them, and all KANGER health, UI, CORS and listener checks remained unchanged.
+
+## Residual non-blocking observations
+
+### Confirmation link semantics
+
+The confirmation link still uses a state-changing GET action. Mail scanners or link-prefetch mechanisms can consume the one-time token before a human follows the link. A future design should use an inert GET landing page followed by an explicit state-changing POST and an idempotent already-confirmed result.
+
+This finding does not invalidate the completed lifecycle acceptance.
+
+### Unknown API path semantics
+
+Unknown API paths currently return a generic JSON fallback with HTTP 200. Paths such as `/info.php`, `/test.php` and a random unknown audit path returned identical responses, proving that no default-root or PHP-handler leakage was present through `api.kanger.org`.
+
+HTTP unknown-path status semantics remain a future application/security improvement.
+
+### Host firewall posture
+
+UFW is absent and the observed nftables/iptables filter policies remain permissive. This posture predates Server 0.14 and is not a deployment blocker because both KANGER planes are confined to loopback and the operator plane is not proxied by nginx.
+
+Firewall policy remains separate host-hardening debt. Existing SSH, VPN, Tailscale and Docker endpoints are outside this artifact and were not modified.
+
+### Build provenance metadata
+
+The accepted JAR exposes the version and source branch but its embedded source-commit property is empty. The artifact remains identified by its exact accepted SHA-256 and immutable source shelf. Future builds should embed the full source commit in build metadata.
+
+## Evidence index
+
+Detailed sanitized evidence remains in sibling files under `kanger-server/docs/operations/evidence/`, including:
+
+- production cutover and boundary acceptance;
+- browser UI cutover;
+- SMTP/SMTPS account acceptance;
+- account deletion acceptance;
+- final update, rollback and perimeter acceptance:
+  `server-0.14-update-rollback-perimeter-acceptance.md`.
+
+No SMTP password, TLS private key, owner token, confirmation token, session token or account-state content is committed.
+
+## Final PR closure decision
+
+The operational acceptance scope of PR #63 is complete. There is no remaining production gate requiring the PR to remain Draft.
+
+```text
+TECHNICAL ACCEPTANCE DECISION: PASS
+ELIGIBLE TO MARK READY:         YES
+ELIGIBLE TO MERGE:              YES, after the normal final repository review
+CURRENT PR STATE:               OPEN / DRAFT
+```
+
+Changing PR #63 from Draft to Ready or merging it remains a separate explicit repository action. Neither action is performed by this closure commit.
+
+## Repository boundary
+
+```text
+base: develop/server/0.14 @ e5f9a1bfa47437636705f0935cb659cffb4d179e
+head before final closure update:
+      f57248ab9443851fbd7639ff4ff90c16105e3393
+```
+
+This document is the authoritative final closure record for KANGER Server 0.14 VPS acceptance.
