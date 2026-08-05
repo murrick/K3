@@ -28,7 +28,6 @@ import org.json.JSONObject;
 import org.kanger.compiler.Token;
 import org.kanger.enums.LogMode;
 import org.kanger.enums.Tools;
-import org.kanger.interfaces.IHypothesis;
 import org.kanger.interfaces.ILogEntry;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
@@ -38,15 +37,16 @@ import org.kanger.stores.HypothesisStore;
 import java.net.URLDecoder;
 
 /**
- * Completes the lifecycle of request-local Mind transactions that are hidden
- * inside the historical query protocol.
+ * Completes the lifecycle of server-owned Mind transactions hidden behind the
+ * historical browser protocol.
  *
- * <p>The legacy processor creates a child Mind for an execution request but
- * publishes only its parent through {@link IUser#getCurrentMind()}. An
- * exception before commit/release therefore used to leave an unreachable
- * reservation on the parent. This boundary owns that child explicitly and
- * releases it on every pre-finalization failure while preserving the legacy
- * response shape for successful requests.</p>
+ * <p>The legacy processor creates request-local children without publishing
+ * them through {@link IUser#getCurrentMind()}, publishes explicit transaction
+ * children separately, and clears the compatibility slot before session
+ * logout. Those three paths previously had different failure semantics. This
+ * boundary owns them as one lifecycle: every request-local child is finalized,
+ * explicit transaction publication follows commit/release completion, and
+ * logout delegates chain closure to the session runtime authority.</p>
  */
 final class MindLifecycleReactor implements IReactor<JSONObject> {
 
@@ -79,40 +79,71 @@ final class MindLifecycleReactor implements IReactor<JSONObject> {
     @Override
     public Object run(JSONObject packet) throws Exception {
         Request request = Request.parse(packet);
-        if (request == null
-                || !"query".equalsIgnoreCase(request.context)
-                || request.parameters == null
-                || !request.parameters.has("request")
-                || request.parameters.isNull("request")
-                || !request.parameters.has("token")
-                || request.parameters.isNull("token")) {
+        String operation = operation(request);
+        if (operation == null) {
             return delegate.run(packet);
         }
 
-        IUser user;
+        String token = request.parameters.optString("token", "");
+        IUser user = null;
         try {
-            user = UserFactory.getUser(request.parameters.getString("token"));
+            user = UserFactory.getUser(token);
             if (user.getCurrentMind() == null) {
                 user.setCurrentMind(new Mind(user));
             }
-            return decorate(execute(request.parameters, user), user);
+
+            if ("query".equals(operation)) {
+                return decorate(executeQuery(request.parameters, user), user);
+            }
+            if ("transaction".equals(operation)) {
+                return decorate(executeTransaction(request.parameters, user), user);
+            }
+            if ("quit".equals(operation)) {
+                UserFactory.logout(token);
+                Watchdog.log(user, "User left system");
+                return ok("User left system");
+            }
+            return delegate.run(packet);
         } catch (Exception failure) {
-            JSONObject result = error("query_execution_failed", failure.toString());
-            try {
-                String token = request.parameters.optString("token", "");
-                if (!token.isEmpty()) {
-                    user = UserFactory.getUser(token);
-                    return decorate(result, user);
-                }
-            } catch (Exception ignored) {
-                // Authentication/session failure is already represented by the
-                // original error and must not hide it.
+            JSONObject result = error(operation + "_failed", failure.toString());
+            if (user != null && user.getCurrentMind() != null) {
+                return decorate(result, user);
             }
             return result;
         }
     }
 
-    private JSONObject execute(JSONObject parameters, IUser user) throws Exception {
+    private String operation(Request request) {
+        if (request == null || request.parameters == null
+                || !request.parameters.has("token")
+                || request.parameters.isNull("token")) {
+            return null;
+        }
+        if ("query".equalsIgnoreCase(request.context)) {
+            if (request.parameters.has("request")
+                    && !request.parameters.isNull("request")) {
+                return "query";
+            }
+            if (request.parameters.has("transaction")
+                    && !request.parameters.isNull("transaction")) {
+                String action = request.parameters.optString("transaction", "");
+                if ("create".equalsIgnoreCase(action)
+                        || "commit".equalsIgnoreCase(action)
+                        || "rollback".equalsIgnoreCase(action)) {
+                    return "transaction";
+                }
+            }
+        }
+        if ("command".equalsIgnoreCase(request.context)
+                && request.parameters.has("quit")
+                && !request.parameters.isNull("quit")) {
+            return "quit";
+        }
+        return null;
+    }
+
+    private JSONObject executeQuery(JSONObject parameters, IUser user)
+            throws Exception {
         IMind parent = user.getCurrentMind();
         parent.clearLog();
         ((HypothesisStore) parent.getHypothesis()).clear();
@@ -162,6 +193,67 @@ final class MindLifecycleReactor implements IReactor<JSONObject> {
         }
     }
 
+    private JSONObject executeTransaction(JSONObject parameters, IUser user)
+            throws Exception {
+        IMind active = user.getCurrentMind();
+        long requestedId = active.getId();
+        String action = parameters.optString("transaction", "");
+        JSONObject result = new JSONObject();
+
+        if ("create".equalsIgnoreCase(action)) {
+            IMind child = childFactory.create(active);
+            user.setCurrentMind(child);
+            result.put("result", "OK");
+            result.put("description", "New transaction created");
+        } else if ("commit".equalsIgnoreCase(action)) {
+            IMind parent = active.getNext();
+            if (parent == null) {
+                return noTransaction(requestedId);
+            }
+
+            boolean applied;
+            try {
+                applied = parent.commit(active);
+            } finally {
+                // Mind.commit owns the reservation on every success, rejection
+                // and qualified exception path. The published slot must never
+                // remain on the now-finished child.
+                user.setCurrentMind(parent);
+            }
+            result.put("result", applied ? "OK" : "error");
+            result.put("description", transactionDescription(
+                    parent, "Transaction committed"));
+        } else if ("rollback".equalsIgnoreCase(action)) {
+            IMind parent = active.getNext();
+            if (parent == null) {
+                return noTransaction(requestedId);
+            }
+
+            parent.release(active);
+            user.setCurrentMind(parent);
+            result.put("result", "OK");
+            result.put("description", transactionDescription(
+                    parent, "Transaction rolled back"));
+        }
+
+        result.put("id", requestedId);
+        return result;
+    }
+
+    private JSONObject noTransaction(long requestedId) {
+        return new JSONObject()
+                .put("result", "error")
+                .put("code", "no_transaction")
+                .put("description", "No transactions was created")
+                .put("id", requestedId);
+    }
+
+    private String transactionDescription(IMind mind, String fallback) {
+        return mind.getLog().isEmpty()
+                ? fallback
+                : mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord();
+    }
+
     private JSONObject queryResponse(IMind mind, Boolean response) throws Exception {
         JSONObject result = new JSONObject();
         result.put("response", response == null
@@ -198,6 +290,12 @@ final class MindLifecycleReactor implements IReactor<JSONObject> {
             result.put("empty", mind.isEmptyLevel());
         }
         return result;
+    }
+
+    private JSONObject ok(String description) {
+        return new JSONObject()
+                .put("result", "OK")
+                .put("description", description == null ? "" : description);
     }
 
     private JSONObject error(String code, String description) {
