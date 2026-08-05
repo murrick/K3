@@ -11,8 +11,12 @@
     var SESSION_SEQUENCE_KEY = 'kanger.applicationSession.sequence';
     var PENDING_TOKEN_KEY = 'kanger.pendingActionToken';
     var BRIDGE_CHANNEL = 'kanger.session.v1';
+    var CONSOLE_SESSION_MARKER = 'window.apihost = "http://localhost:1964";\n        window.token = "";';
     var REQUEST_TIMEOUT_MS = 15000;
     var SESSION_PROBE_MS = 30000;
+    var PROBE_VALID = 'valid';
+    var PROBE_INVALID = 'invalid';
+    var PROBE_UNAVAILABLE = 'unavailable';
 
     var state = {
         capabilities: null,
@@ -85,10 +89,19 @@
         };
     }
 
+    function storeSession(session) {
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+            token: session.token,
+            login: session.login,
+            generation: session.generation
+        }));
+    }
+
     function loadStoredSession() {
         var stored = null;
         try {
-            stored = normalizedSession(JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'));
+            stored = normalizedSession(JSON.parse(
+                    sessionStorage.getItem(SESSION_KEY) || 'null'));
         } catch (ignored) {
             sessionStorage.removeItem(SESSION_KEY);
         }
@@ -102,11 +115,7 @@
                     generation: nextGeneration(),
                     status: 'active'
                 };
-                sessionStorage.setItem(SESSION_KEY, JSON.stringify({
-                    token: stored.token,
-                    login: stored.login,
-                    generation: stored.generation
-                }));
+                storeSession(stored);
             }
         }
 
@@ -125,11 +134,7 @@
         if (!session.token) {
             throw new Error('Server returned an empty session token');
         }
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify({
-            token: session.token,
-            login: session.login,
-            generation: session.generation
-        }));
+        storeSession(session);
         state.session = session;
         return session;
     }
@@ -137,7 +142,8 @@
     function clearStoredSession(expected) {
         var stored = null;
         try {
-            stored = normalizedSession(JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'));
+            stored = normalizedSession(JSON.parse(
+                    sessionStorage.getItem(SESSION_KEY) || 'null'));
         } catch (ignored) {
             sessionStorage.removeItem(SESSION_KEY);
             return;
@@ -264,8 +270,16 @@
         applyCapabilities(data);
     }
 
+    function assertConsoleTemplate() {
+        if (!state.consoleTemplate
+                || state.consoleTemplate.indexOf(CONSOLE_SESSION_MARKER) < 0) {
+            throw new Error('Owner console session marker is unavailable');
+        }
+    }
+
     async function preloadConsoleTemplate() {
         if (state.consoleTemplate) {
+            assertConsoleTemplate();
             return;
         }
         var response = await fetchWithTimeout('console.html', {
@@ -276,6 +290,7 @@
             throw new Error('Owner console payload is unavailable');
         }
         state.consoleTemplate = await response.text();
+        assertConsoleTemplate();
     }
 
     function consoleBridgeSource(session) {
@@ -360,16 +375,14 @@
     }
 
     function buildConsoleDocument(session) {
-        var marker = 'window.apihost = "http://localhost:1964";\n        window.token = "";';
-        if (!state.consoleTemplate || state.consoleTemplate.indexOf(marker) < 0) {
-            throw new Error('Owner console session marker is unavailable');
-        }
+        assertConsoleTemplate();
         var bridge = consoleBridgeSource(session);
         var replacement = 'window.apihost = ' + JSON.stringify(API_HOST) + ';\n'
                 + '        window.KANGER_SESSION_BOOTSTRAP = Object.freeze('
                 + JSON.stringify(bridge.bootstrap) + ');\n'
                 + '        window.token = window.KANGER_SESSION_BOOTSTRAP.token;';
-        var documentText = state.consoleTemplate.replace(marker, replacement);
+        var documentText = state.consoleTemplate.replace(
+                CONSOLE_SESSION_MARKER, replacement);
         documentText = documentText.replace('<head>', '<head><base href="./">');
         documentText = documentText.replace('</head>', bridge.source + '\n</head>');
         return documentText;
@@ -418,23 +431,24 @@
     async function probeSession(expected, closeWhenInvalid) {
         if (!expected || !sameSession(state.session, expected)
                 || expected.status !== 'active' || state.sessionProbeInFlight) {
-            return false;
+            return PROBE_UNAVAILABLE;
         }
         state.sessionProbeInFlight = true;
         try {
             var data = await post('command', {token: expected.token, ping: ''});
             if (!sameSession(state.session, expected)) {
-                return false;
+                return PROBE_UNAVAILABLE;
             }
             if (data.result !== 'OK') {
                 if (closeWhenInvalid) {
-                    closeLocalSession(expected, 'Session expired or was replaced. Sign in again.');
+                    closeLocalSession(expected,
+                            'Session expired or was replaced. Sign in again.');
                 }
-                return false;
+                return PROBE_INVALID;
             }
-            return true;
+            return PROBE_VALID;
         } catch (ignored) {
-            return false;
+            return PROBE_UNAVAILABLE;
         } finally {
             state.sessionProbeInFlight = false;
         }
@@ -464,18 +478,23 @@
                 return;
             }
             expected.status = 'active';
-            var valid = await probeSession(expected, false);
-            if (!valid) {
+            var probe = await probeSession(expected, false);
+            if (probe === PROBE_INVALID) {
                 closeLocalSession(expected, 'Session was already closed.');
             } else {
                 postToConsole('session.error', {
-                    description: describeError(data, 'Server refused to close the session')
+                    description: probe === PROBE_UNAVAILABLE
+                            ? 'Logout result could not be verified; the local session was retained.'
+                            : describeError(data, 'Server refused to close the session')
                 }, expected);
             }
         } catch (error) {
             if (sameSession(state.session, expected)) {
                 expected.status = 'active';
-                postToConsole('session.error', {description: error.message}, expected);
+                postToConsole('session.error', {
+                    description: error.message
+                            + '. The local session was retained because revocation was not confirmed.'
+                }, expected);
             }
         }
     }
@@ -500,7 +519,8 @@
             if (data.result === 'OK' && data.token) {
                 clearStoredSession(expected);
                 var replacement = persistSession(
-                        String(data.token), String(data.login || payload.login || expected.login));
+                        String(data.token),
+                        String(data.login || payload.login || expected.login));
                 await launchConsole(replacement);
                 return;
             }
@@ -508,15 +528,18 @@
             postToConsole('session.credentials.error', {
                 description: describeError(data, 'Credential change failed')
             }, expected);
-            var stillValid = await probeSession(expected, false);
-            if (!stillValid && sameSession(state.session, expected)) {
+            var probe = await probeSession(expected, false);
+            if (probe === PROBE_INVALID && sameSession(state.session, expected)) {
                 closeLocalSession(expected,
                         'Credential change failed and the previous session is no longer valid.',
                         'error');
             }
         } catch (error) {
             if (sameSession(state.session, expected)) {
-                postToConsole('session.credentials.error', {description: error.message}, expected);
+                postToConsole('session.credentials.error', {
+                    description: error.message
+                            + '. The existing local session was retained pending verification.'
+                }, expected);
             }
         } finally {
             state.credentialChangeInFlight = false;
@@ -556,7 +579,10 @@
         var password = document.getElementById('password').value;
         try {
             await preloadConsoleTemplate();
-            var data = await post('login', {login: loginValue, password: password});
+            var data = await post('login', {
+                login: loginValue,
+                password: password
+            });
             document.getElementById('password').value = '';
             if (data.result === 'OK' && data.token) {
                 setPendingToken('');
@@ -615,12 +641,15 @@
             if (data.result === 'OK' && data.state === 'PENDING_CONFIRMATION') {
                 document.getElementById('login').value = parameters.register;
                 showView('login');
-                message('Registration is pending for ' + (data.email_hint || 'the supplied e-mail')
-                        + '. Follow the confirmation link, then sign in here.', 'success');
+                message('Registration is pending for '
+                        + (data.email_hint || 'the supplied e-mail')
+                        + '. Follow the confirmation link, then sign in here.',
+                        'success');
                 return;
             }
             var suffix = data && data.state === 'PENDING_CONFIRMATION'
-                    ? ' The pending registration remains available; sign in with the same credentials to manage it.' : '';
+                    ? ' The pending registration remains available; sign in with the same credentials to manage it.'
+                    : '';
             message(describeError(data, 'Registration failed') + suffix, 'error');
         } catch (error) {
             document.getElementById('register-password').value = '';
@@ -642,7 +671,8 @@
             if (data.result === 'OK') {
                 message(successText, 'success');
             } else {
-                message(describeError(data, 'Pending registration action failed'), 'error');
+                message(describeError(data,
+                        'Pending registration action failed'), 'error');
             }
         } catch (error) {
             message(error.message, 'error');
@@ -665,7 +695,8 @@
                 showView('login');
                 message('Pending registration cancelled.', 'success');
             } else {
-                message(describeError(data, 'Pending registration could not be cancelled'), 'error');
+                message(describeError(data,
+                        'Pending registration could not be cancelled'), 'error');
             }
         } catch (error) {
             message(error.message, 'error');
@@ -696,9 +727,18 @@
 
     loginForm.addEventListener('submit', login);
     document.getElementById('register-form').addEventListener('submit', register);
-    registerButton.addEventListener('click', function () { showView('register'); message(''); });
-    document.getElementById('cancel-register').addEventListener('click', function () { showView('login'); message(''); });
-    document.getElementById('pending-back').addEventListener('click', function () { showView('login'); message(''); });
+    registerButton.addEventListener('click', function () {
+        showView('register');
+        message('');
+    });
+    document.getElementById('cancel-register').addEventListener('click', function () {
+        showView('login');
+        message('');
+    });
+    document.getElementById('pending-back').addEventListener('click', function () {
+        showView('login');
+        message('');
+    });
     document.getElementById('pending-resend').addEventListener('click', function () {
         pendingAction({resend: ''}, 'A new confirmation e-mail was queued.');
     });
@@ -731,14 +771,22 @@
             }
             if (state.session) {
                 var restored = state.session;
-                var valid = await probeSession(restored, false);
-                if (valid && sameSession(state.session, restored)) {
+                var probe = await probeSession(restored, false);
+                if (probe === PROBE_VALID && sameSession(state.session, restored)) {
                     await launchConsole(restored);
                     return;
                 }
-                closeLocalSession(restored, 'Stored session is no longer valid. Sign in again.');
+                if (probe === PROBE_INVALID) {
+                    closeLocalSession(restored,
+                            'Stored session is no longer valid. Sign in again.');
+                } else {
+                    showView('login');
+                    message('The stored session could not be validated because the server is unavailable. It was retained for a later retry.',
+                            'error');
+                }
+            } else {
+                showView('login');
             }
-            showView('login');
             document.getElementById('login').focus();
         } catch (error) {
             showView('login');
