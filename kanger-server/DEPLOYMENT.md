@@ -1,7 +1,7 @@
 # KANGER Server 0.17 deployment
 
 This document is the deployment contract for the qualified KANGER Server
-`server-0.17` artifact.
+`server-0.17` artifact and its matched supported browser distribution.
 
 The complete Server 0.16 installation procedure is preserved byte-for-byte as
 [`DEPLOYMENT-0.16.md`](DEPLOYMENT-0.16.md). Systemd, nginx, loopback-listener,
@@ -33,7 +33,7 @@ and deployable identities:
 Release verification must check `server_version`; it must not infer the server
 artifact from `version`.
 
-## Server 0.17 contract delta
+## Server 0.17 workspace contract
 
 Server 0.17 adds one canonical workspace projection to authenticated responses.
 It does not change KANGER core version, API version, account-storage format,
@@ -88,6 +88,80 @@ storage_not_used
 
 The original diagnostic description remains present.
 
+## Browser containment and error contract
+
+The browser-only `3.5.2.8` stage does not change the Java deployable identity;
+it remains `server-0.17`. It changes the matched browser security boundary.
+
+The bearer token belongs exclusively to the parent gateway page. Before the
+console document enters the iframe, the parent containment controller removes
+every occurrence of the token and replaces the historical token value with the
+non-secret sentinel:
+
+```text
+__KANGER_PARENT_SESSION__
+```
+
+The console iframe is required to use exactly:
+
+```html
+sandbox="allow-scripts"
+referrerpolicy="no-referrer"
+```
+
+`allow-same-origin` is forbidden. The resulting child has an opaque `null`
+origin and cannot read parent DOM, sessionStorage, localStorage or the bearer
+token.
+
+All child API operations cross the parent broker through a generation-bound
+`postMessage` channel. The parent:
+
+```text
+validates exact frame source
+requires child origin = null
+requires the active session generation
+rejects duplicate and oversized requests
+allows only supported console contexts
+removes any child-supplied token
+adds the authoritative parent token
+returns the structured response to the same request id
+```
+
+The contained document receives a CSP equivalent to:
+
+```text
+default-src 'none'
+script-src 'unsafe-inline' <browser-origin>
+style-src 'unsafe-inline' <browser-origin>
+font-src <browser-origin>
+img-src data:
+connect-src 'none'
+object-src 'none'
+frame-src 'none'
+worker-src 'none'
+form-action 'none'
+```
+
+Direct child `fetch`, XHR, WebSocket, EventSource and `sendBeacon` paths are also
+blocked programmatically. The child can therefore request parent-mediated
+KANGER operations but cannot exfiltrate data through a direct network channel.
+
+Browser failures use error schema 1:
+
+```text
+error
+  schema = 1
+  domain = application | operation | session | transport | protocol | containment
+  code
+  retryable
+  session_action = retain | verify
+  operation_outcome = confirmed | not_applied | unknown
+```
+
+Transport uncertainty retains the parent session. A session-classified response
+requires an independent parent probe before local credentials are removed.
+Application failures remain ordinary confirmed server responses.
+
 ## Qualified browser artifact
 
 The supported browser distribution contains exactly these top-level files:
@@ -97,6 +171,8 @@ codemirror.css
 codemirror.js
 config.js
 console.html
+containment.js
+error.js
 favicon.ico
 gateway.js
 index.html
@@ -111,10 +187,12 @@ workspace.js
 The capability order is:
 
 ```text
-parent gateway session authority
+parent bearer/session authority
+    -> opaque iframe containment and parent API broker
     -> trusted rendering boundary
     -> operation and coherent snapshot protocol
     -> canonical workspace state authority
+    -> structured browser error boundary
     -> historical console callback
 ```
 
@@ -232,8 +310,9 @@ and readiness, and restores the previous artifact automatically if startup
 qualification fails.
 
 Server 0.17 introduces no durable account or database format migration. The
-workspace projection is an additive transport contract. Nevertheless, take a
-transactionally quiet backup before production cutover:
+workspace projection and browser containment boundary are additive runtime
+contracts. Nevertheless, take a transactionally quiet backup before production
+cutover:
 
 ```bash
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -324,19 +403,26 @@ Set the public API endpoint in `html/config.js`:
 window.KANGER_API_HOST = "https://api.kanger.org";
 ```
 
-Publish the qualified 13-file browser artifact. Purge or version CDN/browser
-caches so `javascript-mode.js`, `operation.js` and `workspace.js` cannot be
-served from incompatible generations.
+Publish the qualified 15-file browser artifact. Purge or version CDN/browser
+caches so `containment.js`, `javascript-mode.js`, `operation.js`, `workspace.js`
+and `error.js` cannot be served from incompatible generations.
 
 Post-cutover checks:
 
 ```text
 login creates one parent-owned session
+iframe sandbox is exactly allow-scripts
+iframe origin is opaque and child messages arrive with origin null
+child srcdoc contains no bearer token
+child direct network requests are blocked
+parent broker replaces child token input with the authoritative token
+transport uncertainty retains the parent session
+session errors trigger verification rather than immediate local deletion
 source indicator reflects missing/saved/modified state
 active DB indicator survives dropping a different database
 failed storage switch preserves the confirmed active DB
 nested transaction indicator reaches levels 1 and 2
-logout revokes the token and destroys the console frame
+logout revokes the token and destroys or reloads the console frame
 ```
 
 ## Rollback
@@ -366,7 +452,10 @@ A production cutover record must capture:
 ```text
 release shelf and exact commit
 JAR SHA-256
-browser artifact inventory and digest
+15-file browser artifact inventory and digest
+iframe sandbox and CSP evidence
+bearer-redaction qualification result
+parent broker request/response qualification result
 pre-cutover backup location
 /health and /ready responses
 loopback listener evidence
