@@ -7,11 +7,13 @@ on:
     paths:
       - "html/**"
       - "kanger-server/scripts/qualify-gateway-session.js"
+      - "kanger-server/scripts/qualify-gateway-bootstrap.js"
       - ".github/workflows/kanger-browser-session.yml"
   pull_request:
     paths:
       - "html/**"
       - "kanger-server/scripts/qualify-gateway-session.js"
+      - "kanger-server/scripts/qualify-gateway-bootstrap.js"
       - ".github/workflows/kanger-browser-session.yml"
   workflow_dispatch:
 
@@ -37,8 +39,10 @@ jobs:
           node --check html/config.js
           node --check html/gateway.js
           node --check kanger-server/scripts/qualify-gateway-session.js
+          node --check kanger-server/scripts/qualify-gateway-bootstrap.js
 
       - name: Run session authority qualification
         shell: bash
         run: |
           node kanger-server/scripts/qualify-gateway-session.js
+          node kanger-server/scripts/qualify-gateway-bootstrap.js
