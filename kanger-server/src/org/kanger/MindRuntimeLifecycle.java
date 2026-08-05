@@ -31,7 +31,7 @@ import org.kanger.interfaces.IUser;
  *
  * <p>The browser protocol publishes the deepest user transaction through
  * {@link IUser#getCurrentMind()}. Session logout, expiry and process shutdown
- * must therefore roll every unpublished child back to the root before closing
+ * must therefore roll every published child back to the root before closing
  * storage. Merely clearing the objects through {@code User.close(...)} leaves
  * parent transaction reservations unfinished.</p>
  */
@@ -70,11 +70,11 @@ final class MindRuntimeLifecycle {
             return;
         }
 
-        Exception failure = null;
+        Throwable failure = null;
         IMind current = user.getCurrentMind();
         try {
             current = rollbackToRoot(user);
-        } catch (Exception rollbackFailure) {
+        } catch (Throwable rollbackFailure) {
             failure = rollbackFailure;
             current = user.getCurrentMind();
         }
@@ -84,7 +84,7 @@ final class MindRuntimeLifecycle {
                 current = current.closeStorage();
                 user.setCurrentMind(current);
             }
-        } catch (Exception closeFailure) {
+        } catch (Throwable closeFailure) {
             if (failure == null) {
                 failure = closeFailure;
             } else if (failure != closeFailure) {
@@ -95,7 +95,17 @@ final class MindRuntimeLifecycle {
         }
 
         if (failure != null) {
-            throw failure;
+            throw asException(failure);
         }
+    }
+
+    private static Exception asException(Throwable failure) {
+        if (failure instanceof Error) {
+            throw (Error) failure;
+        }
+        if (failure instanceof Exception) {
+            return (Exception) failure;
+        }
+        return new RuntimeException(failure);
     }
 }
