@@ -225,9 +225,11 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
 
         Path target = sourcePath(user, fileName);
         Path directory = target.getParent();
-        if (directory != null) {
-            Files.createDirectories(directory);
+        if (directory == null) {
+            directory = Paths.get(".").toAbsolutePath().normalize();
+            target = directory.resolve(target.getFileName());
         }
+        Files.createDirectories(directory);
         boolean existed = Files.exists(target);
         Path temporary = Files.createTempFile(directory,
                 target.getFileName().toString() + ".", ".tmp");
@@ -274,28 +276,45 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
         }
 
         String text = new String(Files.readAllBytes(source), StandardCharsets.UTF_8);
-        IMind mind = user.getCurrentMind();
-        if (mind.isStorageUsed()) {
-            mind = new Mind(mind);
+        IMind parent = user.getCurrentMind();
+        IMind mind = parent;
+        boolean childCreated = false;
+        try {
+            if (mind.isStorageUsed()) {
+                mind = new Mind(mind);
+                childCreated = true;
+            }
+            mind.setSourceFileName(source.getFileName().toString());
+            boolean accepted = mind.compile(text);
+            String description = mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord();
+            if (accepted) {
+                description += "<br>File " + source.getFileName() + " loaded";
+            }
+            if (childCreated && mind.isEmptyLevel()) {
+                parent.release(mind);
+                mind = parent;
+                childCreated = false;
+            }
+            if (mind.getTransactionLevel() > 0) {
+                description += "<br>Transaction level "
+                        + mind.getTransactionLevel() + " (" + mind.getId() + ")";
+            }
+            ((Mind) mind).setQueryResult(accepted);
+            user.setCurrentMind(mind);
+            return accepted
+                    ? ok(description)
+                    : error("source_compile_rejected", description);
+        } catch (Exception failure) {
+            if (childCreated) {
+                try {
+                    parent.release(mind);
+                } catch (Exception releaseFailure) {
+                    failure.addSuppressed(releaseFailure);
+                }
+                user.setCurrentMind(parent);
+            }
+            throw failure;
         }
-        mind.setSourceFileName(source.getFileName().toString());
-        boolean accepted = mind.compile(text);
-        String description = mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord();
-        if (accepted) {
-            description += "<br>File " + source.getFileName() + " loaded";
-        }
-        if (mind.isStorageUsed() && mind.isEmptyLevel()) {
-            IMind parent = mind.getNext();
-            parent.release(mind);
-            mind = parent;
-        }
-        if (mind.getTransactionLevel() > 0) {
-            description += "<br>Transaction level "
-                    + mind.getTransactionLevel() + " (" + mind.getId() + ")";
-        }
-        ((Mind) mind).setQueryResult(accepted);
-        user.setCurrentMind(mind);
-        return accepted ? ok(description) : error("source_compile_rejected", description);
     }
 
     private JSONObject deleteSource(JSONObject parameters, IUser user) throws Exception {
@@ -345,17 +364,32 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
             }
 
             if (!previousSource.isEmpty()) {
-                IMind overlay = new Mind(mind);
-                if (overlay.compile(previousSource)) {
-                    if (!overlay.isEmptyLevel()) {
-                        mind = overlay;
+                IMind overlay = null;
+                try {
+                    overlay = new Mind(mind);
+                    if (overlay.compile(previousSource)) {
+                        if (!overlay.isEmptyLevel()) {
+                            mind = overlay;
+                            overlay = null;
+                        } else {
+                            mind.release(overlay);
+                            overlay = null;
+                        }
                     } else {
                         mind.release(overlay);
+                        overlay = null;
+                        throw new IOException("Current workspace conflicts with database "
+                                + displayName);
                     }
-                } else {
-                    mind.release(overlay);
-                    throw new IOException("Current workspace conflicts with database "
-                            + displayName);
+                } catch (Exception overlayFailure) {
+                    if (overlay != null) {
+                        try {
+                            mind.release(overlay);
+                        } catch (Exception releaseFailure) {
+                            overlayFailure.addSuppressed(releaseFailure);
+                        }
+                    }
+                    throw overlayFailure;
                 }
             }
             user.setCurrentMind(mind);
