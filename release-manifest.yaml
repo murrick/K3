@@ -1,0 +1,37 @@
+schema_version: 1
+updated: "2026-08-05"
+
+repository:
+  latest_release:
+    artifact: "3.5.1"
+    branch: "release/3.5.1"
+    commit: "35166d91d8082ec267d892d4451504bcb9890330"
+  current_develop:
+    artifact: "3.5.2"
+    branch: "develop/3.5.2"
+  previous_release:
+    artifact: "3.5.0"
+    branch: "release/3.5.0"
+    commit: "10bd30e08a6b45465a4de4369608d995df2dbbb9"
+
+product:
+  core:
+    compatibility_version: "3.3"
+    consolidation_baseline_branch: "develop/3.5.0.7"
+    consolidation_baseline_commit: "10bd30e08a6b45465a4de4369608d995df2dbbb9"
+  api:
+    version: "1"
+  server:
+    version: "server-0.14"
+    accepted_source_commit: "e5f9a1bfa47437636705f0935cb659cffb4d179e"
+    jar_sha256: "e089497d0a8f041a872a3a5a09581f8d94f5962a277794747b7f54e209882a19"
+    configuration_sha256: "3f6b95b4cd567d946e0d6d4c634b0db6f2f3c6aa5d7c594a62f4a715c53209dc"
+    production_acceptance: "PASS"
+  browser_ui:
+    index_sha256: "747104f9e9a7599679b5329eb098590b190a876ff949f01e232f67a1e1b8baae"
+    config_sha256: "d44e67c862f12065d62259055043922ff573271dd5fac2f373cc454172757715"
+    console_sha256: "24d74b6608d4d49a5464d62dd368354c3f30d5f90b90b6a8717531d8e7719dca"
+
+next_artifact:
+  branch: "audit/3.5.2.1-browser-js"
+  scope: "read-only Browser UI JavaScript and DOM audit before stabilization"
