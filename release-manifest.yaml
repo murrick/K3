@@ -12,6 +12,8 @@ repository:
     corrected_shelf_commit: "03310482cebdf55b34829f3d59bdd197edb6275b"
     candidate_branch: "server/3.5.2.11-server-0.18"
     candidate_baseline_commit: "03310482cebdf55b34829f3d59bdd197edb6275b"
+    candidate_qualified_code_commit: "a16ec7abb9b2df1aebbaed921088184f0e571c47"
+    candidate_pull_request: 75
     baseline_branch: "develop/3.5.2"
     baseline_commit: "22918a09ce443e87cf0ee7397ff1b9f1b70f09e8"
     implementation_checkpoint: "9e2db22ea78de9c8660dd521b12d05a44a35c283"
@@ -19,7 +21,8 @@ repository:
     lifecycle_correction_pull_request: 74
     integration_pull_request: 72
     integration_qualification: "PASS"
-    candidate_qualification: "NOT_PERFORMED"
+    candidate_qualification: "PASS"
+    candidate_documentation: "IN_BRANCH"
     acceptance: "NOT_PERFORMED"
     production_cutover: "NOT_PERFORMED"
   previous_release:
@@ -110,8 +113,9 @@ stages:
   - stage: "3.5.2.11"
     kind: "Server 0.18 candidate identity and qualification"
     branch: "server/3.5.2.11-server-0.18"
-    commit: null
-    pull_request: null
+    commit: "a16ec7abb9b2df1aebbaed921088184f0e571c47"
+    pull_request: 75
+    qualification: "PASS"
 
 release_boundary:
   merge_authorized: false
