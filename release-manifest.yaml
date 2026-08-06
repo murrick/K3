@@ -13,6 +13,8 @@ repository:
     candidate_branch: "server/3.5.2.11-server-0.18"
     candidate_baseline_commit: "03310482cebdf55b34829f3d59bdd197edb6275b"
     candidate_qualified_code_commit: "a16ec7abb9b2df1aebbaed921088184f0e571c47"
+    candidate_documentation_commit: "0213e82023a313641b05ff62d7381da5adc6da09"
+    integrated_server_018_commit: "b967846832586858d42a5e21091154c682948d00"
     candidate_pull_request: 75
     baseline_branch: "develop/3.5.2"
     baseline_commit: "22918a09ce443e87cf0ee7397ff1b9f1b70f09e8"
@@ -22,7 +24,9 @@ repository:
     integration_pull_request: 72
     integration_qualification: "PASS"
     candidate_qualification: "PASS"
-    candidate_documentation: "IN_BRANCH"
+    candidate_documentation: "INTEGRATED"
+    candidate_integration: "PASS"
+    release_contract_qualification: "PASS"
     acceptance: "NOT_PERFORMED"
     production_cutover: "NOT_PERFORMED"
   previous_release:
@@ -101,24 +105,35 @@ stages:
     commit: "9e2db22ea78de9c8660dd521b12d05a44a35c283"
     pull_request: 70
   - stage: "3.5.2.9"
-    kind: "integration and release-shelf qualification"
+    kind: "integration and original release-shelf qualification"
     branch: "develop/3.5.2.9-integration-release-shelf"
     commit: "7946d3969302aa198fea506f419a885565db118a"
     pull_request: 72
+    runtime_result: "SERVER_0_17_SOAK_FAILED"
   - stage: "3.5.2.10"
     kind: "explicit storage lifecycle correction and shelf integration"
     branch: "develop/3.5.2.10-explicit-storage-lifecycle"
     commit: "99185db7e1effccd810c9e8479bdceca5d61b31a"
+    integrated_commit: "03310482cebdf55b34829f3d59bdd197edb6275b"
     pull_request: 74
   - stage: "3.5.2.11"
-    kind: "Server 0.18 candidate identity and qualification"
+    kind: "Server 0.18 candidate identity, qualification and integration"
     branch: "server/3.5.2.11-server-0.18"
     commit: "a16ec7abb9b2df1aebbaed921088184f0e571c47"
+    documentation_commit: "0213e82023a313641b05ff62d7381da5adc6da09"
+    integrated_commit: "b967846832586858d42a5e21091154c682948d00"
     pull_request: 75
     qualification: "PASS"
+    integration: "PASS"
+  - stage: "3.5.2.12"
+    kind: "integrated Server 0.18 release contract"
+    branch: "fix/3.5.2.12-server-0.18-release-contract"
+    commit: null
+    pull_request: null
+    qualification: "PASS_REQUIRED_BEFORE_OPERATIONS"
 
 release_boundary:
-  merge_authorized: false
+  merge_authorized: true
   release_branch_created: false
   tag_created: false
   github_release_created: false
