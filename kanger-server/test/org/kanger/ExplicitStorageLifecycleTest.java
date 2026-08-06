@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.kanger.enums.Enums;
 import org.kanger.exception.AuthenticationErrorException;
+import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -38,6 +40,68 @@ class ExplicitStorageLifecycleTest {
     private static final String[] GENERATION_SUFFIXES = {
             ".index", ".store", ".integrity", ".integrity.delta"
     };
+
+    @Test
+    void ordinaryCoreUserOwnsTheLifecycleContract() throws Exception {
+        Fixture fixture = fixture("core-contract");
+        try {
+            assertEquals(User.class, fixture.user.getClass(),
+                    "Server session still depends on a lifecycle subclass");
+
+            IMind root = fixture.user.getCurrentMind();
+            root = root.useStorage("core" + Enums.FILE_SEPARATOR + "contract");
+            fixture.user.setCurrentMind(root);
+            root.query("!core_contract_fact;");
+
+            IMind checkpointed = fixture.user.checkpoint(root);
+            assertSame(root, checkpointed);
+            assertTrue(root.isStorageUsed());
+            assertEquals(0, root.getTransactionLevel());
+
+            StorageLifecycleException repeatedUse = assertThrows(
+                    StorageLifecycleException.class,
+                    () -> root.useStorage(
+                            "core" + Enums.FILE_SEPARATOR + "contract"));
+            assertEquals("STORAGE_ALREADY_OPEN", repeatedUse.getCode());
+            assertEquals("EXPLICIT_CLOSE_REQUIRED",
+                    repeatedUse.getRequiredAction());
+            assertTrue(root.isStorageUsed());
+
+            Mind child = new Mind(root);
+            fixture.user.setCurrentMind(child);
+            StorageLifecycleException activeClose = assertThrows(
+                    StorageLifecycleException.class, child::closeStorage);
+            assertEquals("ACTIVE_TRANSACTION", activeClose.getCode());
+            assertEquals("TRANSACTION_RESOLUTION_REQUIRED",
+                    activeClose.getRequiredAction());
+            assertSame(child, fixture.user.getCurrentMind());
+            assertTrue(child.isStorageUsed());
+
+            root.release(child);
+            fixture.user.setCurrentMind(root);
+            root = root.closeStorage();
+            fixture.user.setCurrentMind(root);
+            assertFalse(root.isStorageUsed());
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
+    void rootCommitWithoutStorageHasStableTypedRejection() throws Exception {
+        Fixture fixture = fixture("root-no-storage");
+        try {
+            JSONObject response = transaction(fixture, "commit");
+            assertEquals("error", response.optString("result"),
+                    response.toString());
+            assertEquals("NO_STORAGE_OPEN", response.optString("code"));
+            assertEquals(0, response.optInt("transaction", -1));
+            assertSame(fixture.user.getCurrentMind(),
+                    fixture.user.getCurrentMind().getTop());
+        } finally {
+            fixture.close();
+        }
+    }
 
     @Test
     void rootCommitIsRepeatableCheckpointAndLeavesStorageOpen() throws Exception {
@@ -88,13 +152,24 @@ class ExplicitStorageLifecycleTest {
                     .optInt("transaction", -1));
             mutate(fixture, "nested_reopen_fact");
 
-            assertEquals(1, transaction(fixture, "commit")
-                    .optInt("transaction", -1));
+            JSONObject nestedCommit = transaction(fixture, "commit");
+            assertEquals("OK", nestedCommit.optString("result"),
+                    nestedCommit.toString());
+            assertEquals("Transaction committed",
+                    nestedCommit.optString("description"));
+            assertEquals(1, nestedCommit.optInt("transaction", -1));
+
             JSONObject rootCommit = transaction(fixture, "commit");
             assertEquals("OK", rootCommit.optString("result"),
                     rootCommit.toString());
+            assertEquals("Transaction committed",
+                    rootCommit.optString("description"));
             assertEquals(0, rootCommit.optInt("transaction", -1));
             assertTrue(fixture.user.getCurrentMind().isStorageUsed());
+
+            JSONObject checkpoint = transaction(fixture, "commit");
+            assertEquals("Storage checkpoint completed",
+                    checkpoint.optString("description"));
 
             close(fixture);
             JSONObject reopen = use(fixture, "nested.reopen");
@@ -138,11 +213,15 @@ class ExplicitStorageLifecycleTest {
 
             JSONObject same = use(fixture, "use.reject.current");
             assertEquals("error", same.optString("result"), same.toString());
-            assertEquals("storage_already_open", same.optString("code"));
+            assertEquals("STORAGE_ALREADY_OPEN", same.optString("code"));
+            assertEquals("EXPLICIT_CLOSE_REQUIRED",
+                    same.optString("required_action"));
 
             JSONObject other = use(fixture, "use.reject-target");
             assertEquals("error", other.optString("result"), other.toString());
-            assertEquals("storage_already_open", other.optString("code"));
+            assertEquals("STORAGE_ALREADY_OPEN", other.optString("code"));
+            assertEquals("EXPLICIT_CLOSE_REQUIRED",
+                    other.optString("required_action"));
 
             assertSame(active, fixture.user.getCurrentMind());
             assertEquals(level, active.getTransactionLevel());
@@ -178,7 +257,9 @@ class ExplicitStorageLifecycleTest {
             JSONObject rejectedOne = closeResponse(fixture);
             assertEquals("error", rejectedOne.optString("result"),
                     rejectedOne.toString());
-            assertEquals("transaction_open", rejectedOne.optString("code"));
+            assertEquals("ACTIVE_TRANSACTION", rejectedOne.optString("code"));
+            assertEquals("TRANSACTION_RESOLUTION_REQUIRED",
+                    rejectedOne.optString("required_action"));
             assertSame(levelOne, fixture.user.getCurrentMind());
             assertEquals(1, levelOne.getTransactionLevel());
             assertTrue(levelOne.isStorageUsed());
@@ -192,7 +273,9 @@ class ExplicitStorageLifecycleTest {
             JSONObject rejectedTwo = closeResponse(fixture);
             assertEquals("error", rejectedTwo.optString("result"),
                     rejectedTwo.toString());
-            assertEquals("transaction_open", rejectedTwo.optString("code"));
+            assertEquals("ACTIVE_TRANSACTION", rejectedTwo.optString("code"));
+            assertEquals("TRANSACTION_RESOLUTION_REQUIRED",
+                    rejectedTwo.optString("required_action"));
             assertSame(levelTwo, fixture.user.getCurrentMind());
             assertEquals(2, levelTwo.getTransactionLevel());
             assertTrue(levelTwo.isStorageUsed());
@@ -221,7 +304,9 @@ class ExplicitStorageLifecycleTest {
             mutate(fixture, "cycle_a_baseline");
             transaction(fixture, "create");
             mutate(fixture, "cycle_a_rolled_back");
-            transaction(fixture, "rollback");
+            JSONObject rollback = transaction(fixture, "rollback");
+            assertEquals("Transaction rolled back",
+                    rollback.optString("description"));
             close(fixture);
 
             use(fixture, "cycles.a");
