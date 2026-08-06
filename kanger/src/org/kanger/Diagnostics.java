@@ -102,6 +102,14 @@ public final class Diagnostics {
             long deletes = 0L;
             long flushes = 0L;
 
+            boolean requestsSupported = false;
+            boolean hitsSupported = false;
+            boolean missesSupported = false;
+            boolean readsSupported = false;
+            boolean writesSupported = false;
+            boolean deletesSupported = false;
+            boolean flushesSupported = false;
+
             out.append("storage.schemas:\n");
             for (String schema : SCHEMAS) {
                 IBase base = user.getStorage(schema);
@@ -117,13 +125,34 @@ public final class Diagnostics {
                 long schemaWrites = metric(base, "getWriteCount");
                 long schemaDeletes = metric(base, "getDeleteCount");
                 long schemaFlushes = metric(base, "getFlushCount");
-                requests += positive(schemaRequests);
-                hits += positive(schemaHits);
-                misses += positive(schemaMisses);
-                reads += positive(schemaReads);
-                writes += positive(schemaWrites);
-                deletes += positive(schemaDeletes);
-                flushes += positive(schemaFlushes);
+                if (schemaRequests >= 0L) {
+                    requests += schemaRequests;
+                    requestsSupported = true;
+                }
+                if (schemaHits >= 0L) {
+                    hits += schemaHits;
+                    hitsSupported = true;
+                }
+                if (schemaMisses >= 0L) {
+                    misses += schemaMisses;
+                    missesSupported = true;
+                }
+                if (schemaReads >= 0L) {
+                    reads += schemaReads;
+                    readsSupported = true;
+                }
+                if (schemaWrites >= 0L) {
+                    writes += schemaWrites;
+                    writesSupported = true;
+                }
+                if (schemaDeletes >= 0L) {
+                    deletes += schemaDeletes;
+                    deletesSupported = true;
+                }
+                if (schemaFlushes >= 0L) {
+                    flushes += schemaFlushes;
+                    flushesSupported = true;
+                }
 
                 out.append("  ").append(schema)
                         .append(": cache=").append(base.getUsedCacheSize())
@@ -140,13 +169,20 @@ public final class Diagnostics {
                 out.append('\n');
             }
             out.append("storage.total.cache: ").append(used).append('/').append(max).append('\n');
-            out.append("storage.total.get: ").append(requests).append('\n');
-            out.append("storage.total.cache.hit: ").append(hits).append('\n');
-            out.append("storage.total.cache.miss: ").append(misses).append('\n');
-            out.append("storage.total.physical.read: ").append(reads).append('\n');
-            out.append("storage.total.write: ").append(writes).append('\n');
-            out.append("storage.total.delete: ").append(deletes).append('\n');
-            out.append("storage.total.flush: ").append(flushes).append('\n');
+            out.append("storage.total.get: ")
+                    .append(formatMetric(requestsSupported, requests)).append('\n');
+            out.append("storage.total.cache.hit: ")
+                    .append(formatMetric(hitsSupported, hits)).append('\n');
+            out.append("storage.total.cache.miss: ")
+                    .append(formatMetric(missesSupported, misses)).append('\n');
+            out.append("storage.total.physical.read: ")
+                    .append(formatMetric(readsSupported, reads)).append('\n');
+            out.append("storage.total.write: ")
+                    .append(formatMetric(writesSupported, writes)).append('\n');
+            out.append("storage.total.delete: ")
+                    .append(formatMetric(deletesSupported, deletes)).append('\n');
+            out.append("storage.total.flush: ")
+                    .append(formatMetric(flushesSupported, flushes)).append('\n');
         }
 
         out.append("====================================================\n");
@@ -231,8 +267,8 @@ public final class Diagnostics {
         }
     }
 
-    private static long positive(long value) {
-        return value < 0L ? 0L : value;
+    private static String formatMetric(boolean supported, long value) {
+        return supported ? Long.toString(value) : "N/A";
     }
 
     public static final class Watchdog implements AutoCloseable {
