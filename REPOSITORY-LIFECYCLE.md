@@ -58,9 +58,27 @@ develop/3.5.2
 3.5.2.9
   branch: develop/3.5.2.9-integration-release-shelf
   role:   cumulative ancestry, identity and cross-layer qualification
+  original qualified shelf: 7946d3969302aa198fea506f419a885565db118a
+  runtime result: Server 0.17 VPS soak failed
+
+3.5.2.10
+  branch: develop/3.5.2.10-explicit-storage-lifecycle
+  head:   99185db7e1effccd810c9e8479bdceca5d61b31a
+  PR:     #74, merged
+  role:   Core-wide explicit storage lifecycle correction
+  integrated shelf: 03310482cebdf55b34829f3d59bdd197edb6275b
+
+3.5.2.11
+  branch: server/3.5.2.11-server-0.18
+  base:   03310482cebdf55b34829f3d59bdd197edb6275b
+  role:   fresh Server 0.18 candidate identity, qualification and packaging
 ```
 
-The `3.5.2.9` branch is a candidate shelf, not an accepted release branch. Its integration-only commit may add or update evidence, manifests, lifecycle documentation and qualification workflows. Product code after the exact `3.5.2.8` checkpoint is forbidden unless a new scoped corrective stage is created and independently qualified.
+The original `3.5.2.9` shelf at `7946d396...`, Server 0.17 JAR and its operations package are immutable failed-soak evidence. They must not be reused, repaired in place or treated as a deployable candidate.
+
+The corrected shelf at `03310482...` is the sole baseline for Server 0.18 work. The `3.5.2.11` identity stage may change only the deployable server identity, its exact qualification assertions, release manifest and lifecycle/closure documentation. It must not introduce an unrelated Core, API or Browser runtime delta.
+
+The Server 0.18 candidate remains unqualified until exact-head automated qualification succeeds. It remains undeployable until a fresh operations package, new checksums and a new disposable-database VPS soak succeed.
 
 ## Integration rule for component changes
 
@@ -74,7 +92,7 @@ The final integration stage must prove all of the following from one source tree
 
 ```text
 complete ancestry from the develop baseline through every scoped checkpoint
-no product-code delta after the final implementation checkpoint
+no undeclared product-code delta after the final implementation checkpoint
 independent core, storage, DUMB, server and browser qualification
 exact product and distribution identities
 matched browser/server deployment and rollback contract

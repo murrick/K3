@@ -1,5 +1,5 @@
 schema_version: 2
-updated: "2026-08-05"
+updated: "2026-08-06"
 
 repository:
   latest_accepted_release:
@@ -9,11 +9,17 @@ repository:
   release_candidate:
     artifact: "3.5.2"
     integration_branch: "develop/3.5.2.9-integration-release-shelf"
+    corrected_shelf_commit: "03310482cebdf55b34829f3d59bdd197edb6275b"
+    candidate_branch: "server/3.5.2.11-server-0.18"
+    candidate_baseline_commit: "03310482cebdf55b34829f3d59bdd197edb6275b"
     baseline_branch: "develop/3.5.2"
     baseline_commit: "22918a09ce443e87cf0ee7397ff1b9f1b70f09e8"
     implementation_checkpoint: "9e2db22ea78de9c8660dd521b12d05a44a35c283"
+    lifecycle_correction_head: "99185db7e1effccd810c9e8479bdceca5d61b31a"
+    lifecycle_correction_pull_request: 74
     integration_pull_request: 72
     integration_qualification: "PASS"
+    candidate_qualification: "NOT_PERFORMED"
     acceptance: "NOT_PERFORMED"
     production_cutover: "NOT_PERFORMED"
   previous_release:
@@ -27,7 +33,8 @@ product:
   api:
     version: "1"
   server:
-    candidate_version: "server-0.17"
+    candidate_version: "server-0.18"
+    previous_failed_candidate_version: "server-0.17"
     production_version: "server-0.14"
   browser_ui:
     inventory_count: 15
@@ -93,8 +100,18 @@ stages:
   - stage: "3.5.2.9"
     kind: "integration and release-shelf qualification"
     branch: "develop/3.5.2.9-integration-release-shelf"
-    commit: null
+    commit: "7946d3969302aa198fea506f419a885565db118a"
     pull_request: 72
+  - stage: "3.5.2.10"
+    kind: "explicit storage lifecycle correction and shelf integration"
+    branch: "develop/3.5.2.10-explicit-storage-lifecycle"
+    commit: "99185db7e1effccd810c9e8479bdceca5d61b31a"
+    pull_request: 74
+  - stage: "3.5.2.11"
+    kind: "Server 0.18 candidate identity and qualification"
+    branch: "server/3.5.2.11-server-0.18"
+    commit: null
+    pull_request: null
 
 release_boundary:
   merge_authorized: false
