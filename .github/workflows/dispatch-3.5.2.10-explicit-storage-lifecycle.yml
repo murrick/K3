@@ -1,0 +1,77 @@
+name: Dispatch 3.5.2.10 explicit storage lifecycle
+
+on:
+  pull_request:
+    types: [opened]
+    branches:
+      - "develop/3.5.2.9-integration-release-shelf"
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-qualify:
+    if: github.event.pull_request.head.ref == 'develop/3.5.2.10-explicit-storage-lifecycle'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Execute staged lifecycle patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          workflow = Path('.github/workflows/apply-3.5.2.10-explicit-storage-lifecycle.yml')
+          lines = workflow.read_text(encoding='utf-8').splitlines()
+          marker = '      - name: Apply lifecycle contract, production changes and regressions'
+          marker_index = lines.index(marker)
+          run_index = next(
+              i for i in range(marker_index + 1, len(lines))
+              if lines[i] == '        run: |'
+          )
+          body = []
+          for line in lines[run_index + 1:]:
+              if line.startswith('      - name: '):
+                  break
+              if not line:
+                  body.append('')
+              elif line.startswith('          '):
+                  body.append(line[10:])
+              else:
+                  raise SystemExit('Unexpected staged workflow indentation: ' + line)
+          if not body or body[0] != "python3 - <<'PY'":
+              raise SystemExit('Staged apply script was not found')
+          Path('/tmp/apply-3.5.2.10.sh').write_text(
+              '\n'.join(body) + '\n', encoding='utf-8')
+          PY
+          bash -euo pipefail /tmp/apply-3.5.2.10.sh
+
+      - name: Run Java 21 clean verification
+        run: mvn -B -ntp -f kanger-server/pom.xml clean verify
+
+      - name: Publish qualified implementation to the stage branch
+        shell: bash
+        run: |
+          test -n "$(git status --porcelain)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            kanger/src/org/kanger/User.java \
+            kanger/src/org/kanger/Mind.java \
+            kanger-server/src/org/kanger/MindLifecycleReactor.java \
+            kanger-server/src/org/kanger/QueryProcessor.java \
+            kanger-server/src/org/kanger/DestructiveStopLossReactor.java \
+            kanger-server/test/org/kanger/ExplicitStorageLifecycleTest.java \
+            3.5.2.10-explicit-storage-lifecycle.md
+          git commit -m "3.5.2.10: enforce explicit storage lifecycle"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
