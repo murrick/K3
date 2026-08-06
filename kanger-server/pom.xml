@@ -22,7 +22,7 @@
         <org.json.version>20201115</org.json.version>
         <javax.mail.version>1.6.2</javax.mail.version>
         <junit.jupiter.version>5.10.3</junit.jupiter.version>
-        <kanger.server.artifact.version>server-0.17</kanger.server.artifact.version>
+        <kanger.server.artifact.version>server-0.18</kanger.server.artifact.version>
     </properties>
 
     <dependencies>

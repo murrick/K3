@@ -22,9 +22,9 @@ class VersionTest {
     @Test
     void serverArtifactVersionIsIndependentFromCoreVersion() {
         assertEquals("3.3", Version.CORE_VERSION_S);
-        assertEquals("server-0.17", Version.BRANCH);
-        assertEquals("server-0.17", Version.VERSION_S);
-        assertEquals("server-0.17", Version.SERVER_VERSION_S);
+        assertEquals("server-0.18", Version.BRANCH);
+        assertEquals("server-0.18", Version.VERSION_S);
+        assertEquals("server-0.18", Version.SERVER_VERSION_S);
         assertFalse(Version.SERVER_VERSION_S.contains("deployment"));
         assertFalse(Version.SERVER_VERSION_S.contains("first-vps-deploy"));
     }
@@ -38,11 +38,11 @@ class VersionTest {
             properties.load(input);
         }
 
-        assertEquals("server-0.17", properties.getProperty("branch"));
-        assertEquals("server-0.17", properties.getProperty("server.version"));
+        assertEquals("server-0.18", properties.getProperty("branch"));
+        assertEquals("server-0.18", properties.getProperty("server.version"));
         String sourceBranch = properties.getProperty("source.branch");
         assertNotNull(sourceBranch);
         assertFalse(sourceBranch.trim().isEmpty());
-        assertNotEquals("server-0.17", sourceBranch);
+        assertNotEquals("server-0.18", sourceBranch);
     }
 }
