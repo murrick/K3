@@ -29,15 +29,16 @@ package org.kanger.interfaces;
  * Внешний пользовательский контекст KANGER и граница пользовательского владения.
  *
  * <p><strong>Архитектурная роль.</strong> {@code IUser} связывает приложение
- * с пользовательскими параметрами и caller-managed ссылкой на активный
- * {@link IMind}. Пользователь не является частью логического вывода: он задаёт
- * внешний контекст размещения, конфигурации и навигации между Mind, но не
- * определяет canonical identity правил, термов или иных сущностей знания.</p>
+ * с пользовательскими параметрами, физическим storage lifecycle и
+ * caller-managed ссылкой на активный {@link IMind}. Пользователь не является
+ * частью логического вывода: он задаёт внешний контекст размещения,
+ * конфигурации и владения storage, но не определяет canonical identity правил,
+ * термов или иных сущностей знания.</p>
  *
  * <p><strong>Inside.</strong> Собственное состояние пользователя состоит из
- * прикладного идентификатора, набора строковых параметров и compatibility slot
- * текущего Mind. Это состояние принадлежит объекту пользователя и может быть
- * изменено независимо от транзакционного состояния любого Mind.</p>
+ * прикладного идентификатора, набора строковых параметров, выбранного storage
+ * module и compatibility slot текущего Mind. Это состояние принадлежит
+ * объекту пользователя и не является transaction overlay.</p>
  *
  * <p><strong>Outside.</strong> Связи пользователя с файловой системой,
  * storage-модулем и текущим Mind являются внешними проекциями. Значения
@@ -45,15 +46,18 @@ package org.kanger.interfaces;
  * пути другим компонентам. {@link #getCurrentMind()} не вычисляет вершину
  * transaction chain и не является lifecycle authority.</p>
  *
- * <p><strong>Lifecycle и persistence.</strong> Параметры могут сохраняться в
- * {@code kanger.conf}, если задан {@code user.dir}. Чтение с default имеет
- * побочный эффект: отсутствующее значение регистрируется и может быть записано
- * в файл. Поэтому {@code IUser} не является immutable property view.</p>
+ * <p><strong>Lifecycle и persistence.</strong> Transaction lifecycle и
+ * physical storage lifecycle разделены. {@link #use(IMind, String)} допустим
+ * только при закрытом storage; {@link #checkpoint(IMind)} фиксирует root state
+ * без закрытия; {@link #close(IMind)} допустим только на transaction level 0 и
+ * завершает physical storage lifecycle. Ни одна из этих операций не выполняет
+ * неявный commit или rollback пользовательской транзакции.</p>
  *
  * <p><strong>Инварианты.</strong> Идентификатор пользователя не является
  * идентификатором Mind; currentMind не является опубликованной транзакцией;
  * изменение параметров пользователя не выполняет commit или rollback;
- * очистка currentMind не завершает lifecycle ранее сохранённого объекта.</p>
+ * повторный use не закрывает уже открытый storage; close не уничтожает
+ * незавершённую транзакцию.</p>
  */
 public interface IUser {
 
@@ -195,6 +199,52 @@ public interface IUser {
      * @param dir путь к каталогу баз данных пользователя
      */
     void setSourceDir(String dir);
+
+    /**
+     * Открыть или создать physical storage для указанного Mind.
+     *
+     * <p>Операция допустима только когда storage пользователя закрыт. Уже
+     * открытый storage, включая тот же target, не закрывается и не заменяется:
+     * вызывающая сторона обязана сначала успешно выполнить
+     * {@link #close(IMind)}. Rejection происходит до открытия target и не
+     * изменяет active Mind или physical generation.</p>
+     *
+     * @param mind актуальный Mind; при {@code null} создаётся новый root Mind
+     * @param name физическое имя storage
+     * @return актуальный Mind, связанный с открытым storage
+     * @throws Exception при ошибке storage или нарушении lifecycle precondition
+     */
+    IMind use(IMind mind, String name) throws Exception;
+
+    /**
+     * Выполнить durable checkpoint открытого storage без его закрытия.
+     *
+     * <p>Операция допустима только на transaction level 0. Реализация повторно
+     * использует квалифицированный root-finalization path, включая
+     * pack/update/flush ordering, но не выполняет compaction, close или
+     * очистку runtime context.</p>
+     *
+     * @param mind актуальный root Mind
+     * @return тот же актуальный Mind; storage остаётся открытым
+     * @throws Exception при отсутствии открытого storage, активной транзакции
+     * или ошибке durable publication
+     */
+    IMind checkpoint(IMind mind) throws Exception;
+
+    /**
+     * Закрыть physical storage без неявного решения транзакции.
+     *
+     * <p>При transaction level больше нуля операция отвергается до checkpoint,
+     * flush, compaction, cleanup или physical close. На level 0 сначала
+     * выполняется durable checkpoint, затем обычный physical close и очистка
+     * storage-bound runtime state. Повторный close уже закрытого storage
+     * является безопасной no-op.</p>
+     *
+     * @param mind актуальный Mind
+     * @return актуальный root Mind после закрытия
+     * @throws Exception при активной транзакции или ошибке checkpoint/close
+     */
+    IMind close(IMind mind) throws Exception;
 
     /**
      * Возвращает сохранённую приложением ссылку на текущий Mind.
