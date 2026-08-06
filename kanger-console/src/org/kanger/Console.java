@@ -30,6 +30,7 @@ import org.kanger.enums.*;
 import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
+import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.*;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.stores.HypothesisStore;
@@ -313,6 +314,16 @@ public class Console {
 //                System.out.println("^");
             } catch (CommandErrorException ex) {
                 System.err.println(ex.toString());
+            } catch (StorageLifecycleException ex) {
+                String action = ex.getRequiredAction();
+                System.err.printf(
+                        "ERROR: %s%s: %s%n",
+                        ex.getCode(),
+                        action == null || action.isEmpty()
+                                ? ""
+                                : " [" + action + "]",
+                        ex.toString()
+                );
             } catch (RuntimeErrorException ex) {
                 System.err.println(ex.toString());
             } catch (Exception e) {
@@ -349,6 +360,9 @@ public class Console {
                             } else {
                                 System.out.printf("WARNING: Commit rejected. See xplanation log for details\n");
                             }
+                        } else if (mind.isStorageUsed()) {
+                            mind = mind.getUser().checkpoint(mind);
+                            System.out.printf("SUCCESS: Storage checkpoint completed\n");
                         }
                     }
                     break;
@@ -814,25 +828,25 @@ public class Console {
     }
 
     private static void showDBrief(IMind mind) throws Exception {
-        System.out.println("Database used: " + mind.getStorageName().replace(Enums.FILE_SEPARATOR, "."));
-        System.out.println("Rules: " + mind.getTop().getRules().size() + ", Predicates: " + mind.getTop().getPredicates().size() + ", Dictionary: " + mind.getTerms().size() + ", UDF: " + mind.getTop().getLibrary().size());
+        IMind root = mind.getTop();
+        System.out.println("Database used: "
+                + mind.getStorageName().replace(Enums.FILE_SEPARATOR, "."));
+        System.out.println("Transaction level: "
+                + mind.getTransactionLevel()
+                + " (" + mind.getId() + ")");
+        System.out.println("Root state: Rules "
+                + root.getRules().size()
+                + ", UDF " + root.getLibrary().size());
+        System.out.println("Runtime canonical cache: Predicates "
+                + mind.getPredicates().size()
+                + ", Dictionary " + mind.getTerms().size());
     }
 
     private static IMind closeDatabase(IMind mind, Scanner sc) throws Exception {
         if (mind.isStorageUsed()) {
-            if (mind.getTransactionLevel() > 0 && !mind.isEmptyLevel()) {
-                System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
-                System.out.printf("Are you sure to close database " + mind.getStorageName() + "? [y/N]? ");
-                String s = sc.nextLine().toUpperCase();
-                if (!s.isEmpty() && s.charAt(0) == 'Y') {
-                    mind = mind.closeStorage();
-                    System.out.println("No database used");
-                }
-            } else {
-                String tmp = mind.getStorageName();
-                mind = mind.closeStorage();
-                System.out.printf("Database " + tmp + " closed\n");
-            }
+            String tmp = mind.getStorageName();
+            mind = mind.closeStorage();
+            System.out.printf("Database " + tmp + " closed\n");
         } else {
             System.out.println("No database used");
         }
@@ -1041,7 +1055,7 @@ public class Console {
                         + "      append <n>             hypothesis with index = n\n"
                         + "   transaction             - Show current transaction level\n"
                         + "      transaction start      start new transaction\n"
-                        + "      transaction commit     commit current transaction\n"
+                        + "      transaction commit     commit current transaction or checkpoint root storage\n"
                         + "      transaction rollback   rollback current transaction\n"
                         + "\n"
                         + "SOURCE FILES:\n"
@@ -1199,7 +1213,10 @@ public class Console {
                 IPredicate p = mind.getPredicates().get(id);
                 if (p != null && (name.isEmpty() || p.getName(mind).equalsIgnoreCase(name))) {
                     if (preds) {
-                        System.out.printf("Predicate %03d: %s", p.getId(), p.toString());
+                        System.out.printf(
+                                "Predicate %03d: %s",
+                                p.getId(),
+                                ((org.kanger.units.Predicate) p).toString(mind));
                     } else {
                         showPred(mind, p, tree);
                     }
@@ -1222,7 +1239,10 @@ public class Console {
                         && (name.isEmpty() || p.getName(mind).equalsIgnoreCase(name))) {
                     if (preds) {
                         found = true;
-                        System.out.printf("Predicate %03d: %s;\n", p.getId(), p.toString());
+                        System.out.printf(
+                                "Predicate %03d: %s;%n",
+                                p.getId(),
+                                ((org.kanger.units.Predicate) p).toString(mind));
                     } else {
                         found = true;
                         showPred(mind, p, tree);

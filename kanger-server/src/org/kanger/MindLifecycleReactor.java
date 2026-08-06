@@ -28,6 +28,7 @@ import org.json.JSONObject;
 import org.kanger.compiler.Token;
 import org.kanger.enums.LogMode;
 import org.kanger.enums.Tools;
+import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.ILogEntry;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
@@ -47,6 +48,10 @@ import java.net.URLDecoder;
  * boundary owns them as one lifecycle: every request-local child is finalized,
  * explicit transaction publication follows commit/release completion, and
  * logout delegates chain closure to the session runtime authority.</p>
+ *
+ * <p>Transaction responses are stable protocol results. Analyzer output is
+ * exposed separately as optional {@code details}; it never replaces the
+ * transaction description.</p>
  */
 final class MindLifecycleReactor implements IReactor<JSONObject> {
 
@@ -104,6 +109,15 @@ final class MindLifecycleReactor implements IReactor<JSONObject> {
                 return ok("User left system");
             }
             return delegate.run(packet);
+        } catch (StorageLifecycleException rejected) {
+            JSONObject result = error(rejected.getCode(), rejected.toString());
+            if (rejected.getRequiredAction() != null) {
+                result.put("required_action", rejected.getRequiredAction());
+            }
+            if (user != null && user.getCurrentMind() != null) {
+                return decorate(result, user);
+            }
+            return result;
         } catch (Exception failure) {
             JSONObject result = error(operation + "_failed", failure.toString());
             if (user != null && user.getCurrentMind() != null) {
@@ -221,8 +235,9 @@ final class MindLifecycleReactor implements IReactor<JSONObject> {
                 user.setCurrentMind(parent);
             }
             result.put("result", applied ? "OK" : "error");
-            result.put("description", transactionDescription(
-                    parent, "Transaction committed"));
+            result.put("description", applied
+                    ? "Transaction committed" : "Transaction rejected");
+            addTransactionDetails(result, parent);
         } else if ("rollback".equalsIgnoreCase(action)) {
             IMind parent = active.getNext();
             if (parent == null) {
@@ -232,8 +247,8 @@ final class MindLifecycleReactor implements IReactor<JSONObject> {
             parent.release(active);
             user.setCurrentMind(parent);
             result.put("result", "OK");
-            result.put("description", transactionDescription(
-                    parent, "Transaction rolled back"));
+            result.put("description", "Transaction rolled back");
+            addTransactionDetails(result, parent);
         }
 
         result.put("id", requestedId);
@@ -243,15 +258,18 @@ final class MindLifecycleReactor implements IReactor<JSONObject> {
     private JSONObject noTransaction(long requestedId) {
         return new JSONObject()
                 .put("result", "error")
-                .put("code", "no_transaction")
-                .put("description", "No transactions was created")
+                .put("code", "NO_ACTIVE_TRANSACTION")
+                .put("legacy_code", "no_transaction")
+                .put("required_action", "CREATE_TRANSACTION")
+                .put("description", "No active transaction exists")
                 .put("id", requestedId);
     }
 
-    private String transactionDescription(IMind mind, String fallback) {
-        return mind.getLog().isEmpty()
-                ? fallback
-                : mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord();
+    private void addTransactionDetails(JSONObject result, IMind mind) {
+        if (mind != null && !mind.getLog().isEmpty()) {
+            result.put("details",
+                    mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
+        }
     }
 
     private JSONObject queryResponse(IMind mind, Boolean response) throws Exception {
