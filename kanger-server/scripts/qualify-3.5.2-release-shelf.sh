@@ -5,81 +5,91 @@ ROOT="${1:-$(pwd)}"
 cd "${ROOT}"
 
 BASE="22918a09ce443e87cf0ee7397ff1b9f1b70f09e8"
-STAGE_2="f5c2a76cd757c9e4179d3f90abc02b99f38fdba8"
-STAGE_3="c5fa90d41e6577bb83bef4db403b9bec7c4cfb2e"
-STAGE_4="f011bf378cc3f29f7a13b422810c92708efe85e5"
-STAGE_5="8c62a1c3fcf7fb68f93c9c46fafc429b389f8cea"
-STAGE_6="8fc389f41459b9f996df2dc194c842fba388e5b2"
-STAGE_7="42216f0b14099c6069fec28b34b01282608ebeaa"
 STAGE_8="9e2db22ea78de9c8660dd521b12d05a44a35c283"
+LIFECYCLE_CORRECTION="99185db7e1effccd810c9e8479bdceca5d61b31a"
+CORRECTED_SHELF="03310482cebdf55b34829f3d59bdd197edb6275b"
+SERVER_018_CODE="a16ec7abb9b2df1aebbaed921088184f0e571c47"
+SERVER_018_DOCS="0213e82023a313641b05ff62d7381da5adc6da09"
+SERVER_018_INTEGRATION="b967846832586858d42a5e21091154c682948d00"
 
-CHAIN=(
-  "${BASE}"
-  "${STAGE_2}"
-  "${STAGE_3}"
-  "${STAGE_4}"
-  "${STAGE_5}"
-  "${STAGE_6}"
-  "${STAGE_7}"
-  "${STAGE_8}"
-)
-
-for commit in "${CHAIN[@]}"; do
+for commit in \
+  "${BASE}" \
+  "${STAGE_8}" \
+  "${LIFECYCLE_CORRECTION}" \
+  "${CORRECTED_SHELF}" \
+  "${SERVER_018_CODE}" \
+  "${SERVER_018_DOCS}" \
+  "${SERVER_018_INTEGRATION}"; do
   git cat-file -e "${commit}^{commit}"
 done
 
-for ((index = 0; index < ${#CHAIN[@]} - 1; index++)); do
-  git merge-base --is-ancestor "${CHAIN[index]}" "${CHAIN[index + 1]}"
-done
-
-git merge-base --is-ancestor "${STAGE_8}" HEAD
-
-test "$(git merge-base "${BASE}" "${STAGE_8}")" = "${BASE}"
-test "$(git rev-list --count "${BASE}..${STAGE_8}")" = "57"
+git merge-base --is-ancestor "${BASE}" "${STAGE_8}"
+git merge-base --is-ancestor "${STAGE_8}" "${LIFECYCLE_CORRECTION}"
+git merge-base --is-ancestor "${LIFECYCLE_CORRECTION}" "${CORRECTED_SHELF}"
+git merge-base --is-ancestor "${CORRECTED_SHELF}" "${SERVER_018_CODE}"
+git merge-base --is-ancestor "${SERVER_018_CODE}" "${SERVER_018_DOCS}"
+git merge-base --is-ancestor "${SERVER_018_DOCS}" "${SERVER_018_INTEGRATION}"
+git merge-base --is-ancestor "${SERVER_018_INTEGRATION}" HEAD
 
 echo "RELEASE_SHELF_PASS ancestry"
 
-expected_integration_files="$(cat <<'EOF_FILES'
+expected_release_contract_files="$(cat <<'EOF_FILES'
 .github/workflows/kanger-3.5.2-release-shelf.yml
 3.5.2-closure.md
+3.5.2.11-server-0.18.md
 REPOSITORY-LIFECYCLE.md
+kanger-server/DEPLOYMENT.md
 kanger-server/scripts/qualify-3.5.2-release-shelf.sh
 release-manifest.yaml
 EOF_FILES
 )"
-actual_integration_files="$(git diff --name-only "${STAGE_8}..HEAD" | sort)"
-test "${actual_integration_files}" = "${expected_integration_files}"
+actual_release_contract_files="$(
+  git diff --name-only "${SERVER_018_INTEGRATION}..HEAD" | sort
+)"
+test "${actual_release_contract_files}" = "${expected_release_contract_files}"
 
-if git diff --name-only "${STAGE_8}..HEAD" \
-    | grep -Eq '^(html/|kanger/|kanger-data-dumb/|kanger-udf/|kanger-server/src/|kanger-server/pom.xml$)'; then
-  echo "Product-code delta detected after 3.5.2.8" >&2
+if git diff --name-only "${SERVER_018_INTEGRATION}..HEAD" \
+    | grep -Eq '^(html/|kanger/|kanger-data-dumb/|kanger-udf/|kanger-server/src/|kanger-server/test/|kanger-server/pom.xml$)'; then
+  echo "Product or test-code delta detected in release-contract stage" >&2
   exit 1
 fi
 
-echo "RELEASE_SHELF_PASS integration-only-delta"
+echo "RELEASE_SHELF_PASS release-contract-only-delta"
 
 grep -q 'artifact: "3.5.2"' release-manifest.yaml
-grep -q 'baseline_commit: "22918a09ce443e87cf0ee7397ff1b9f1b70f09e8"' release-manifest.yaml
-grep -q 'implementation_checkpoint: "9e2db22ea78de9c8660dd521b12d05a44a35c283"' release-manifest.yaml
-grep -q 'integration_pull_request: 72' release-manifest.yaml
-grep -q 'candidate_version: "server-0.17"' release-manifest.yaml
+grep -q 'integrated_server_018_commit: "b967846832586858d42a5e21091154c682948d00"' \
+  release-manifest.yaml
+grep -q 'candidate_qualified_code_commit: "a16ec7abb9b2df1aebbaed921088184f0e571c47"' \
+  release-manifest.yaml
+grep -q 'candidate_pull_request: 75' release-manifest.yaml
+grep -q 'candidate_version: "server-0.18"' release-manifest.yaml
+grep -q 'previous_failed_candidate_version: "server-0.17"' release-manifest.yaml
 grep -q 'production_version: "server-0.14"' release-manifest.yaml
-grep -q 'integration_qualification: "PASS"' release-manifest.yaml
+grep -q 'candidate_qualification: "PASS"' release-manifest.yaml
+grep -q 'candidate_integration: "PASS"' release-manifest.yaml
 grep -q 'acceptance: "NOT_PERFORMED"' release-manifest.yaml
 grep -q 'production_cutover: "NOT_PERFORMED"' release-manifest.yaml
-grep -q 'server_version: server-0.17' 3.5.2-closure.md
-grep -q 'integration qualification: PASS' 3.5.2-closure.md
-grep -q 'production remains:       release/3.5.1 + server-0.14' 3.5.2-closure.md
-grep -q 'Qualification does not itself authorize merge' REPOSITORY-LIFECYCLE.md
 
-grep -q '<kanger.server.artifact.version>server-0.17</kanger.server.artifact.version>' \
+grep -q 'server_version: server-0.18' 3.5.2-closure.md
+grep -q 'PR #75:.*merged' 3.5.2-closure.md
+grep -q 'integration commit:.*b967846832586858d42a5e21091154c682948d00' \
+  3.5.2-closure.md
+grep -q 'MERGED / RELEASE CONTRACT QUALIFIED' 3.5.2.11-server-0.18.md
+grep -q 'Server 0.17.*immutable failed-soak evidence' \
+  3.5.2.11-server-0.18.md
+
+grep -q '<kanger.server.artifact.version>server-0.18</kanger.server.artifact.version>' \
   kanger-server/pom.xml
-grep -Fq 'EXPECTED_SERVER_VERSION="${KANGER_EXPECTED_SERVER_VERSION:-server-0.17}"' \
+grep -Fq 'EXPECTED_SERVER_VERSION="${KANGER_EXPECTED_SERVER_VERSION:-server-0.18}"' \
   kanger-server/scripts/smoke-local.sh
-grep -q '"server_version":"server-0.17"' \
+grep -q '"server_version":"server-0.18"' \
   kanger-server/deploy/verify-installed.sh
+grep -q 'Server 0.18 deployment contract' kanger-server/DEPLOYMENT.md
+grep -q 'fresh disposable database' kanger-server/DEPLOYMENT.md
+grep -q 'must not be opened, repaired, reindexed or deleted' \
+  kanger-server/DEPLOYMENT.md
 
-echo "RELEASE_SHELF_PASS identity"
+echo "RELEASE_SHELF_PASS identity-and-record"
 
 expected_browser_files="$(cat <<'EOF_BROWSER'
 codemirror.css
@@ -144,7 +154,7 @@ test -f kanger-server/VERSION-CONTRACT.md
 grep -q 'Publish the qualified 15-file browser artifact' \
   kanger-server/DEPLOYMENT.md
 grep -q 'sandbox="allow-scripts"' kanger-server/DEPLOYMENT.md
-grep -q 'server-0.17' kanger-server/VERSION-CONTRACT.md
+grep -q 'server-0.18' kanger-server/VERSION-CONTRACT.md
 ! grep -q 'allow-same-origin is permitted' kanger-server/DEPLOYMENT.md
 
 echo "RELEASE_SHELF_PASS deployment-contract"
