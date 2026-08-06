@@ -1,170 +1,76 @@
-# KANGER Server 0.17 deployment
+# KANGER Server 0.18 deployment contract
 
-This document is the deployment contract for the qualified KANGER Server
-`server-0.17` artifact and its matched supported browser distribution.
+Status: integrated source candidate; operations package and VPS evidence are separate artifacts.  
+Date: 2026-08-06
 
-The complete Server 0.16 installation procedure is preserved byte-for-byte as
-[`DEPLOYMENT-0.16.md`](DEPLOYMENT-0.16.md). Systemd, nginx, loopback-listener,
-operator-plane, backup and host-hardening mechanics that are not explicitly
-changed below remain applicable.
+This is the deployment contract for KANGER repository candidate `3.5.2`,
+Core `3.3`, API `1` and deployable Server identity `server-0.18`.
 
-This document does **not** authorize deployment from a draft pull request.
-Create the integrated release shelf and complete its qualification before any
-production cutover.
+The complete historical Server 0.16 procedure remains preserved as
+[`DEPLOYMENT-0.16.md`](DEPLOYMENT-0.16.md). This document supersedes the failed
+Server 0.17 deployment contract.
 
-## Release identity
+Server 0.17, its operations package and its damaged soak database are immutable
+failed-soak evidence. They must not be reused. The damaged database must not be
+opened, repaired, reindexed or deleted.
 
-Every non-empty JSON response continues to carry independent semantic, protocol
-and deployable identities:
+## Fixed source identities
+
+```text
+integration branch:        develop/3.5.2.9-integration-release-shelf
+corrected shelf:           03310482cebdf55b34829f3d59bdd197edb6275b
+qualified Server 0.18 code: a16ec7abb9b2df1aebbaed921088184f0e571c47
+qualified documentation:   0213e82023a313641b05ff62d7381da5adc6da09
+integrated Server 0.18:     b967846832586858d42a5e21091154c682948d00
+integration PR:             #75, merged
+```
+
+Every non-empty JSON response must report:
 
 ```json
 {
   "version": "3.3",
   "core_version": "3.3",
   "api_version": "1",
-  "server_version": "server-0.17"
+  "server_version": "server-0.18"
 }
 ```
 
-`version` and `core_version` identify KANGER semantic compatibility.
-`api_version` identifies the public protocol family.
-`server_version` identifies the exact deployable server artifact.
+The generated resource must report:
 
-Release verification must check `server_version`; it must not infer the server
-artifact from `version`.
+```properties
+branch=server-0.18
+server.version=server-0.18
+source.branch=<exact source branch>
+```
 
-## Server 0.17 workspace contract
+## Corrected storage lifecycle included
 
-Server 0.17 adds one canonical workspace projection to authenticated responses.
-It does not change KANGER core version, API version, account-storage format,
-DUMB format, listener topology or operator-plane authentication.
+Server 0.18 contains the integrated explicit-storage-lifecycle correction:
+
+- transaction commit never closes physical storage;
+- a level-zero checkpoint is durable and leaves storage open;
+- `use` requires the current storage to be CLOSED and rejects before validating
+  the target;
+- `close` rejects active transaction levels without implicit commit or rollback;
+- ordinary Core `User` owns `use`, `checkpoint` and `close`;
+- typed lifecycle failures are shared across Core, Console and Server.
+
+The first VPS qualification route must therefore use a fresh disposable database
+and start at the previous failure boundary:
 
 ```text
-workspace
-  schema = 1
-  source
-    logical_name
-    has_text
-    bytes_utf8
-    repository_state = unbound | missing | saved | modified
-    persisted
-    dirty
-  storage
-    active
-    logical_name
-    canonical_name
-    physical_generation
-      present
-      artifacts
-      wal_segments
-  transaction
-    level
-    empty
+nested transaction
+-> commit to level zero
+-> explicit close
+-> use/reopen
 ```
 
-The projection is post-operation state. It is returned after successful and
-failed authenticated operations whenever the session runtime remains available.
-A failed storage switch therefore reports the confirmed previous storage rather
-than an optimistic target.
+Only after that boundary passes may the broader soak continue.
 
-Logical storage names use dotted notation. `canonical_name` preserves the
-runtime storage separator. `physical_generation` reports generation evidence
-separately from logical identity.
+## Matched browser distribution
 
-Workspace operation failures receive typed codes where the lower boundary
-reported only `operation_failed`, including:
-
-```text
-source_load_failed
-source_save_failed
-source_delete_failed
-source_compile_failed
-storage_switch_failed
-storage_close_failed
-storage_drop_failed
-storage_reindex_failed
-storage_not_used
-```
-
-The original diagnostic description remains present.
-
-## Browser containment and error contract
-
-The browser-only `3.5.2.8` stage does not change the Java deployable identity;
-it remains `server-0.17`. It changes the matched browser security boundary.
-
-The bearer token belongs exclusively to the parent gateway page. Before the
-console document enters the iframe, the parent containment controller removes
-every occurrence of the token and replaces the historical token value with the
-non-secret sentinel:
-
-```text
-__KANGER_PARENT_SESSION__
-```
-
-The console iframe is required to use exactly:
-
-```html
-sandbox="allow-scripts"
-referrerpolicy="no-referrer"
-```
-
-`allow-same-origin` is forbidden. The resulting child has an opaque `null`
-origin and cannot read parent DOM, sessionStorage, localStorage or the bearer
-token.
-
-All child API operations cross the parent broker through a generation-bound
-`postMessage` channel. The parent:
-
-```text
-validates exact frame source
-requires child origin = null
-requires the active session generation
-rejects duplicate and oversized requests
-allows only supported console contexts
-removes any child-supplied token
-adds the authoritative parent token
-returns the structured response to the same request id
-```
-
-The contained document receives a CSP equivalent to:
-
-```text
-default-src 'none'
-script-src 'unsafe-inline' <browser-origin>
-style-src 'unsafe-inline' <browser-origin>
-font-src <browser-origin>
-img-src data:
-connect-src 'none'
-object-src 'none'
-frame-src 'none'
-worker-src 'none'
-form-action 'none'
-```
-
-Direct child `fetch`, XHR, WebSocket, EventSource and `sendBeacon` paths are also
-blocked programmatically. The child can therefore request parent-mediated
-KANGER operations but cannot exfiltrate data through a direct network channel.
-
-Browser failures use error schema 1:
-
-```text
-error
-  schema = 1
-  domain = application | operation | session | transport | protocol | containment
-  code
-  retryable
-  session_action = retain | verify
-  operation_outcome = confirmed | not_applied | unknown
-```
-
-Transport uncertainty retains the parent session. A session-classified response
-requires an independent parent probe before local credentials are removed.
-Application failures remain ordinary confirmed server responses.
-
-## Qualified browser artifact
-
-The supported browser distribution contains exactly these top-level files:
+Publish the qualified 15-file browser artifact together with Server 0.18:
 
 ```text
 codemirror.css
@@ -184,70 +90,46 @@ operation.js
 workspace.js
 ```
 
-The capability order is:
+The console iframe remains:
 
-```text
-parent bearer/session authority
-    -> opaque iframe containment and parent API broker
-    -> trusted rendering boundary
-    -> operation and coherent snapshot protocol
-    -> canonical workspace state authority
-    -> structured browser error boundary
-    -> historical console callback
+```html
+sandbox="allow-scripts"
+referrerpolicy="no-referrer"
 ```
 
-Deploy the qualified `html/` artifact together with Server 0.17. Do not publish
-`console.html` as an independently supported entry point.
+`allow-same-origin` is forbidden. The bearer token remains parent-owned and all
+child API traffic crosses the generation-bound parent broker.
 
-## Build the immutable artifact
+## Build boundary
 
-After integration, build from the qualified Server 0.17 shelf:
+Build only from a fresh operations branch derived exactly from the integrated
+Server 0.18 shelf head. The operations branch may add packaging, snapshot,
+deployment, rollback and evidence files, but no product-code delta.
+
+The canonical Maven build is:
 
 ```bash
-git fetch origin
-git switch develop/server/0.17
-git status --short
-
 mvn -B -ntp \
   -f kanger-server/pom.xml \
-  -Dkanger.build.branch.override=develop/server/0.17 \
+  -Dkanger.build.branch.override=develop/3.5.2.9-integration-release-shelf \
   clean verify
 ```
 
-The generated resource must contain:
-
-```properties
-branch=server-0.17
-server.version=server-0.17
-source.branch=develop/server/0.17
-```
-
-The deployable JAR is:
-
-```text
-kanger-server/target/kanger-server.jar
-```
-
-Before copying any distribution, run:
+Before packaging, verify:
 
 ```bash
-bash kanger-server/scripts/run-local.sh
+test -f kanger-server/target/kanger-server.jar
+unzip -p kanger-server/target/kanger-server.jar \
+  org/kanger/build.properties
+git diff --name-only \
+  b967846832586858d42a5e21091154c682948d00..HEAD
 ```
 
-In another terminal:
-
-```bash
-bash kanger-server/scripts/smoke-local.sh
-bash kanger-server/scripts/smoke-auth-local.sh
-```
-
-The authenticated smoke proves session rotation, canonical workspace schema,
-transaction levels `0`, `1` and `2`, nested logout cleanup and operator-plane
-availability.
+The diff must contain operations-only files declared by the package workflow.
 
 ## Host topology
 
-The required topology is unchanged:
+The production topology remains:
 
 ```text
 Internet
@@ -271,198 +153,159 @@ host operator
         owner-only operator API
 ```
 
-Both Java listeners must remain loopback-only. nginx proxies only port `1964`.
-Port `1965` and its owner bearer token must never enter nginx or browser
-configuration.
+Neither Java listener may bind to `0.0.0.0`, `[::]`, a public address or a
+container bridge. nginx proxies only the application listener on port `1964`.
 
-Minimum persistent configuration:
+Current accepted production anchors before the Server 0.18 soak are:
 
-```properties
-server.bind.address=127.0.0.1
-server.port=1964
-
-server.admin.enabled=true
-server.admin.bind.address=127.0.0.1
-server.admin.port=1965
-server.admin.token.file=KANGER/admin.token
-
-server.url=https://api.kanger.org
-server.confirmation.redirect.url=https://kanger.org/
-server.cors.allowed.origin.1=https://kanger.org
-server.cors.allowed.origin.2=https://www.kanger.org
-server.cors.allow.credentials=false
+```text
+release:              release/3.5.1
+server:               server-0.14
+JAR SHA-256:          e089497d0a8f041a872a3a5a09581f8d94f5962a277794747b7f54e209882a19
+editable UI:          /home/murray/sites/kanger
+public UI symlink:    /var/www/html/kanger
+public UI target:     /home/murray/sites/kanger-server-0.14-20260804T181706Z
 ```
 
-Never bind either Java port to `0.0.0.0`, `[::]`, a public address or a
-container bridge.
+## Required operations package
 
-## Install or update
+The Server 0.18 package must contain at least:
 
-Use the existing rollback-capable installer:
-
-```bash
-sudo bash /tmp/kanger-deploy/install.sh \
-  /tmp/kanger-server.jar
+```text
+kanger-server.jar
+html/                         exact 15-file browser distribution
+deploy/install.sh
+deploy/verify-installed.sh
+deploy/kanger-admin
+deploy/snapshot-current.sh
+deploy/deploy-soak.sh
+deploy/rollback-soak.sh
+docs/DEPLOYMENT.md
+docs/VPS-SOAK-3.5.2.md
+SOURCE.txt
+SHA256SUMS
 ```
 
-The installer preserves the previous JAR, restarts the service, waits for health
-and readiness, and restores the previous artifact automatically if startup
-qualification fails.
+`SOURCE.txt` must fix the canonical integrated head, packaging branch and head,
+product identities, browser inventory, current production anchors and UI
+publication mode. The bundle and each component must have verified SHA-256
+checksums.
 
-Server 0.17 introduces no durable account or database format migration. The
-workspace projection and browser containment boundary are additive runtime
-contracts. Nevertheless, take a transactionally quiet backup before production
-cutover:
+## Pre-deployment safety gate
+
+Before installing anything:
+
+1. verify current Server 0.14 health/readiness, JAR checksum, service state,
+   listeners, nginx and the exact public UI target;
+2. create a transactionally quiet host snapshot while KANGER is stopped;
+3. verify removal of `KANGER/kanger.active` before archiving persistent state;
+4. restart and re-verify Server 0.14;
+5. copy the snapshot and checksum off-host over SSH;
+6. create an off-host receipt containing the archive basename and digest.
+
+Deployment must refuse to proceed without a matching off-host receipt.
+
+## Soak deployment
+
+The guarded soak procedure must:
+
+- verify the complete package and canonical source head;
+- verify current Server 0.14 and its exact JAR checksum;
+- copy the complete currently published UI into a new versioned Server 0.18
+  candidate directory;
+- overlay only the qualified 15 browser files;
+- preserve unrelated files inherited from the prior public target;
+- install Server 0.18 through the rollback-capable installer;
+- verify `/health`, `/ready`, exact `server-0.18`, loopback confinement and
+  nginx;
+- atomically repoint `/var/www/html/kanger` with `mv -Tf`;
+- verify the containment boundary through the local HTTPS origin;
+- write immutable deployment evidence and print the exact rollback command.
+
+Any failure before final success must restore Server 0.14 and the exact prior
+public UI target.
+
+## Installed-service verification
+
+Run the package verifier after installation:
 
 ```bash
-stamp="$(date -u +%Y%m%dT%H%M%SZ)"
-sudo systemctl stop kanger-server.service
-sudo tar -C / -czf "/root/kanger-server-${stamp}.tar.gz" \
-  etc/kanger-server \
-  var/lib/kanger-server
-sudo systemctl start kanger-server.service
-```
-
-Copy the archive off-host.
-
-## Verify the installed service
-
-Run:
-
-```bash
-sudo bash /tmp/kanger-deploy/verify-installed.sh
+sudo bash deploy/verify-installed.sh
 ```
 
 It must prove:
 
 ```text
 systemd service enabled and active
-/health reports server-0.17
-/ready reports server-0.17
+/health reports server-0.18
+/ready reports server-0.18
 application listener confined to 127.0.0.1:1964
 operator listener confined to 127.0.0.1:1965
 neither Java listener publicly bound
 nginx configuration valid
 ```
 
-Manual identity checks:
+## Initial Server 0.18 qualification route
 
-```bash
-curl --fail --silent --show-error \
-  http://127.0.0.1:1964/health
-echo
+Use a dedicated account and a fresh disposable database. Do not reuse any
+Server 0.17 database generation.
 
-curl --fail --silent --show-error \
-  http://127.0.0.1:1964/ready
-echo
-```
-
-Expected identity:
+Required first route:
 
 ```text
-"version":"3.3"
-"api_version":"1"
-"server_version":"server-0.17"
+login and token rotation
+create/use fresh disposable database
+begin transaction level 1
+begin nested transaction level 2
+commit to level 1
+commit to level 0
+explicit close
+use/reopen the same disposable database
+verify persisted facts and storage identity
+logout and token rejection
+clean service restart
+reopen and verify again
 ```
 
-The detailed `/ready` route remains local. A public request to `/ready` must be
-rejected, and port `1965` must not be publicly reachable.
+Record exact UTC timestamps, responses and relevant journal excerpts. Stop the
+soak immediately on any manifest, storage identity, persistence or lifecycle
+anomaly.
 
-## Verify the workspace response
+## Normal rollback
 
-With an authenticated token, a ping must include schema 1:
+Normal rollback restores the matched Server 0.14 JAR/UI pair while preserving
+database state produced during the soak. It must atomically restore the exact
+prior public UI symlink target and verify Server 0.14 health/readiness.
 
-```json
-{
-  "context": "command",
-  "parameters": {
-    "token": "<session-token>",
-    "ping": ""
-  }
-}
-```
+The candidate UI directory, deployment record and full pre-soak snapshot remain
+available as evidence.
 
-Required response properties:
+## Full disaster recovery
+
+Full snapshot restore is reserved for config or persistent-state corruption that
+cannot be handled by normal code/UI rollback. It restores config, state,
+installation, systemd, nginx, editable UI, published UI and symlink state, and
+therefore discards all changes after the snapshot.
+
+## Evidence boundary
+
+The deployment record must capture:
 
 ```text
-result = OK
-workspace.schema = 1
-workspace.source.repository_state is recognized
-workspace.source.dirty is boolean
-workspace.storage.active is boolean
-workspace.transaction.level is integer
-```
-
-Do not log or persist the bearer token while performing this check.
-
-## Browser cutover
-
-Set the public API endpoint in `html/config.js`:
-
-```javascript
-window.KANGER_API_HOST = "https://api.kanger.org";
-```
-
-Publish the qualified 15-file browser artifact. Purge or version CDN/browser
-caches so `containment.js`, `javascript-mode.js`, `operation.js`, `workspace.js`
-and `error.js` cannot be served from incompatible generations.
-
-Post-cutover checks:
-
-```text
-login creates one parent-owned session
-iframe sandbox is exactly allow-scripts
-iframe origin is opaque and child messages arrive with origin null
-child srcdoc contains no bearer token
-child direct network requests are blocked
-parent broker replaces child token input with the authoritative token
-transport uncertainty retains the parent session
-session errors trigger verification rather than immediate local deletion
-source indicator reflects missing/saved/modified state
-active DB indicator survives dropping a different database
-failed storage switch preserves the confirmed active DB
-nested transaction indicator reaches levels 1 and 2
-logout revokes the token and destroys or reloads the console frame
-```
-
-## Rollback
-
-Rollback the server and browser artifacts as a matched release pair.
-
-```bash
-sudo systemctl stop kanger-server.service
-sudo cp \
-  /opt/kanger-server/kanger-server.jar.previous \
-  /opt/kanger-server/kanger-server.jar
-sudo chown root:kanger /opt/kanger-server/kanger-server.jar
-sudo chmod 0640 /opt/kanger-server/kanger-server.jar
-sudo systemctl start kanger-server.service
-```
-
-Restore the matching prior `html/` artifact, purge caches, then run the prior
-release verifier.
-
-Rollback changes code and response shape, not account or database data. Review
-all later migration notes before rolling back from a release newer than 0.17.
-
-## Production evidence
-
-A production cutover record must capture:
-
-```text
-release shelf and exact commit
+canonical source and packaging heads
 JAR SHA-256
-15-file browser artifact inventory and digest
-iframe sandbox and CSP evidence
-bearer-redaction qualification result
-parent broker request/response qualification result
-pre-cutover backup location
-/health and /ready responses
-loopback listener evidence
-nginx validation
-workspace schema smoke result
-rollback artifact identity
+bundle SHA-256
+component SHA256SUMS
+15-file browser inventory and hashes
+pre-deployment Server 0.14 anchors
+snapshot archive and off-host receipt
+health/readiness before and after
+listener and nginx evidence
+prior and candidate public UI targets
+nested close/reopen persistence evidence
+rollback command and prior artifact identity
 ```
 
-Draft PR qualification is not production evidence and must not be described as a
-deployment.
+Integration and package qualification do not create `release/3.5.2`, a tag or a
+GitHub Release. Production acceptance remains a separate decision after the VPS
+soak evidence is reviewed.
