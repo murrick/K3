@@ -1,0 +1,704 @@
+name: Apply 3.5.2.10 explicit storage lifecycle
+
+on:
+  push:
+    branches:
+      - "develop/3.5.2.10-explicit-storage-lifecycle"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.head_commit.message == '3.5.2.10: stage explicit storage lifecycle patch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Apply lifecycle contract, production changes and regressions
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding="utf-8")
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one match, found {count}")
+              p.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          def replace_between(path, start, end, replacement):
+              p = Path(path)
+              text = p.read_text(encoding="utf-8")
+              i = text.index(start)
+              j = text.index(end, i)
+              p.write_text(text[:i] + replacement + text[j:], encoding="utf-8")
+
+          replace_between(
+              "kanger/src/org/kanger/User.java",
+              "    public IMind close(IMind mind) throws Exception {",
+              "\n\n\n    public boolean isClosed()",
+              '''    public IMind close(IMind mind) throws Exception {
+                  if (mind != null && mind.getTransactionLevel() > 0) {
+                      throw new RuntimeErrorException(
+                              "Cannot close database while transaction level "
+                                      + mind.getTransactionLevel()
+                                      + " is active; commit or rollback first");
+                  }
+
+                  if (data == null || data.isClosed()) {
+                      return mind;
+                  }
+                  if (mind == null) {
+                      throw new IllegalStateException(
+                              "Cannot close an open database without an active Mind");
+                  }
+
+                  Mind root = (Mind) mind.getTop();
+                  root.checkpointStorage();
+
+                  for (Map.Entry<String, IBase> e : storage.entrySet()) {
+                      e.getValue().clearCache();
+                  }
+                  data.close();
+
+                  IMind result = mind;
+                  for (IMind m = mind; m != null; m = m.getNext()) {
+                      ((Mind) m).clearMind();
+                      result = m;
+                  }
+                  return result;
+              }''')
+
+          replace_once(
+              "kanger/src/org/kanger/User.java",
+              '''            if (!data.isClosed()) {
+                          mind = close(mind);
+                      }
+          ''',
+              '''            if (!data.isClosed()) {
+                          throw new RuntimeErrorException(
+                                  "A database is already open; explicit close is required before use");
+                      }
+          ''')
+
+          replace_once(
+              "kanger/src/org/kanger/Mind.java",
+              '''    private void finishTransactionLocked() throws Exception {
+                  if (transactionCounter <= 0) {
+                      throw new IllegalStateException("Transaction counter underflow for Mind " + id);
+                  }
+                  --transactionCounter;
+                  if (next == null && transactionCounter == 0) {
+                      pack();
+                      update();
+                  }
+              }
+          ''',
+              '''    /**
+               * Publishes the root state to the currently open physical storage without
+               * closing the generation or clearing the runtime context.
+               */
+              void checkpointStorage() throws Exception {
+                  synchronized (locker) {
+                      checkpointStorageLocked();
+                  }
+              }
+
+              private void checkpointStorageLocked() throws Exception {
+                  if (next != null) {
+                      throw new IllegalStateException(
+                              "Only the root Mind can checkpoint storage");
+                  }
+                  if (transactionCounter != 0) {
+                      throw new IllegalStateException(
+                              "Cannot checkpoint storage with active child transactions: "
+                                      + transactionCounter);
+                  }
+                  pack();
+                  update();
+              }
+
+              private void finishTransactionLocked() throws Exception {
+                  if (transactionCounter <= 0) {
+                      throw new IllegalStateException("Transaction counter underflow for Mind " + id);
+                  }
+                  --transactionCounter;
+                  if (next == null && transactionCounter == 0) {
+                      checkpointStorageLocked();
+                  }
+              }
+          ''')
+
+          replace_between(
+              "kanger-server/src/org/kanger/MindLifecycleReactor.java",
+              '''        } else if ("commit".equalsIgnoreCase(action)) {''',
+              '''        } else if ("rollback".equalsIgnoreCase(action)) {''',
+              '''        } else if ("commit".equalsIgnoreCase(action)) {
+                  IMind parent = active.getNext();
+                  if (parent == null) {
+                      ((Mind) active).checkpointStorage();
+                      result.put("result", "OK");
+                      result.put("description", "Storage checkpoint completed");
+                  } else {
+                      boolean applied;
+                      try {
+                          applied = parent.commit(active);
+                      } finally {
+                          // Mind.commit owns the reservation on every success, rejection
+                          // and qualified exception path. The published slot must never
+                          // remain on the now-finished child.
+                          user.setCurrentMind(parent);
+                      }
+                      result.put("result", applied ? "OK" : "error");
+                      result.put("description", transactionDescription(
+                              parent, "Transaction committed"));
+                  }
+          ''')
+
+          replace_between(
+              "kanger-server/src/org/kanger/QueryProcessor.java",
+              '''        } else if ("commit".equalsIgnoreCase(parameters.getString("transaction"))) {''',
+              '''        } else if ("rollback".equalsIgnoreCase(parameters.getString("transaction"))) {''',
+              '''        } else if ("commit".equalsIgnoreCase(parameters.getString("transaction"))) {
+                  IMind m = mind.getNext();
+                  if (m != null) {
+                      if (m.commit(mind)) {
+                          result.put("result", "OK");
+                      } else {
+                          result.put("result", "error");
+                      }
+                      user.setCurrentMind(m);
+                      if (!m.getLog().isEmpty()) {
+                          result.put("description", m.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
+                      } else {
+                          result.put("description", "Transaction committed");
+                      }
+                  } else {
+                      ((Mind) mind).checkpointStorage();
+                      result.put("result", "OK");
+                      result.put("description", "Storage checkpoint completed");
+                  }
+          ''')
+
+          replace_between(
+              "kanger-server/src/org/kanger/DestructiveStopLossReactor.java",
+              '''    private JSONObject useStorage(JSONObject parameters, IUser user) throws Exception {''',
+              '''    private void probeStorage(IUser sourceUser, String storageName) throws Exception {''',
+              '''    private JSONObject useStorage(JSONObject parameters, IUser user) throws Exception {
+                  JSONObject blocked = requireRootTransaction(user, "use");
+                  if (blocked != null) {
+                      return blocked;
+                  }
+
+                  IMind mind = user.getCurrentMind();
+                  if (mind.isStorageUsed()) {
+                      return error("storage_already_open",
+                              "Database " + mind.getStorageName()
+                                      + " is already open; close it before use");
+                  }
+
+                  String displayName = parameters.optString("use", "");
+                  String storageName = canonicalStorageName(displayName);
+                  String previousSource = mind.getSourceCode();
+
+                  probeStorage(user, storageName);
+                  try {
+                      mind = mind.useStorage(storageName);
+                      user.setCurrentMind(mind);
+                      if (!mind.isStorageUsed()) {
+                          throw new IOException("Error opening database " + displayName);
+                      }
+
+                      if (!previousSource.isEmpty()) {
+                          IMind overlay = null;
+                          try {
+                              overlay = new Mind(mind);
+                              if (overlay.compile(previousSource)) {
+                                  if (!overlay.isEmptyLevel()) {
+                                      mind = overlay;
+                                      overlay = null;
+                                  } else {
+                                      mind.release(overlay);
+                                      overlay = null;
+                                  }
+                              } else {
+                                  mind.release(overlay);
+                                  overlay = null;
+                                  throw new IOException("Current workspace conflicts with database "
+                                          + displayName);
+                              }
+                          } catch (Exception overlayFailure) {
+                              if (overlay != null) {
+                                  try {
+                                      mind.release(overlay);
+                                  } catch (Exception releaseFailure) {
+                                      overlayFailure.addSuppressed(releaseFailure);
+                                  }
+                              }
+                              throw overlayFailure;
+                          }
+                      }
+                      user.setCurrentMind(mind);
+                      return storageInfo(mind);
+                  } catch (Exception openFailure) {
+                      try {
+                          restoreStorage(user, null, previousSource);
+                      } catch (Exception restoreFailure) {
+                          openFailure.addSuppressed(restoreFailure);
+                      }
+                      return error("storage_open_failed", openFailure.toString());
+                  }
+              }
+
+          ''')
+
+          Path("kanger-server/test/org/kanger/ExplicitStorageLifecycleTest.java").write_text(r'''/*
+           * MIT License
+           *
+           * Copyright (c) 2021 Dmitry G. Quznetsov
+           */
+          package org.kanger;
+
+          import org.json.JSONObject;
+          import org.junit.jupiter.api.Test;
+          import org.kanger.enums.Enums;
+          import org.kanger.exception.AuthenticationErrorException;
+          import org.kanger.interfaces.IMind;
+          import org.kanger.interfaces.IReactor;
+          import org.kanger.interfaces.IUser;
+          import org.kanger.storage.DB;
+          import org.kanger.udf.UDF;
+
+          import java.net.URLEncoder;
+          import java.nio.file.Files;
+          import java.nio.file.Path;
+          import java.nio.file.Paths;
+          import java.security.MessageDigest;
+          import java.util.LinkedHashMap;
+          import java.util.Map;
+          import java.util.UUID;
+
+          import static org.junit.jupiter.api.Assertions.assertEquals;
+          import static org.junit.jupiter.api.Assertions.assertFalse;
+          import static org.junit.jupiter.api.Assertions.assertNotEquals;
+          import static org.junit.jupiter.api.Assertions.assertSame;
+          import static org.junit.jupiter.api.Assertions.assertTrue;
+
+          /** Regression contract for explicit transaction and storage lifecycle. */
+          class ExplicitStorageLifecycleTest {
+
+              private static final String[] GENERATION_SUFFIXES = {
+                      ".index", ".store", ".integrity", ".integrity.delta"
+              };
+
+              @Test
+              void rootCommitIsRepeatableCheckpointAndKeepsDatabaseOpen() throws Exception {
+                  Fixture fixture = fixture("root-checkpoint");
+                  try {
+                      use(fixture, "root.checkpoint");
+                      IMind root = fixture.user.getCurrentMind();
+                      mutate(fixture, "root_checkpoint_fact");
+
+                      JSONObject first = transaction(fixture, "commit");
+                      assertEquals("OK", first.optString("result"), first.toString());
+                      assertEquals("Storage checkpoint completed",
+                              first.optString("description"));
+                      assertSame(root, fixture.user.getCurrentMind());
+                      assertTrue(root.isStorageUsed());
+                      assertEquals(0, root.getTransactionLevel());
+
+                      JSONObject second = transaction(fixture, "commit");
+                      assertEquals("OK", second.optString("result"), second.toString());
+                      assertSame(root, fixture.user.getCurrentMind());
+                      assertTrue(root.isStorageUsed());
+                      assertEquals("yes", ask(fixture, "root_checkpoint_fact")
+                              .optString("response"));
+
+                      mutate(fixture, "after_root_checkpoint");
+                      close(fixture);
+                      assertFalse(fixture.user.getCurrentMind().isStorageUsed());
+
+                      use(fixture, "root.checkpoint");
+                      assertEquals("yes", ask(fixture, "root_checkpoint_fact")
+                              .optString("response"));
+                      assertEquals("yes", ask(fixture, "after_root_checkpoint")
+                              .optString("response"));
+                  } finally {
+                      fixture.close();
+                  }
+              }
+
+              @Test
+              void nestedCommitExplicitCloseReopenPassesManifestValidation() throws Exception {
+                  Fixture fixture = fixture("nested-reopen");
+                  try {
+                      use(fixture, "nested.reopen");
+                      assertEquals(1, transaction(fixture, "create")
+                              .optInt("transaction", -1));
+                      assertEquals(2, transaction(fixture, "create")
+                              .optInt("transaction", -1));
+                      mutate(fixture, "nested_reopen_fact");
+
+                      assertEquals(1, transaction(fixture, "commit")
+                              .optInt("transaction", -1));
+                      JSONObject rootCommit = transaction(fixture, "commit");
+                      assertEquals("OK", rootCommit.optString("result"),
+                              rootCommit.toString());
+                      assertEquals(0, rootCommit.optInt("transaction", -1));
+                      assertTrue(fixture.user.getCurrentMind().isStorageUsed());
+
+                      close(fixture);
+                      JSONObject reopen = use(fixture, "nested.reopen");
+                      assertEquals("OK", reopen.optString("result"), reopen.toString());
+                      assertEquals("yes", ask(fixture, "nested_reopen_fact")
+                              .optString("response"));
+
+                      for (int cycle = 0; cycle < 3; ++cycle) {
+                          close(fixture);
+                          reopen = use(fixture, "nested.reopen");
+                          assertEquals("OK", reopen.optString("result"),
+                                  "reopen cycle " + cycle + ": " + reopen);
+                          assertEquals("yes", ask(fixture, "nested_reopen_fact")
+                                  .optString("response"));
+                      }
+                  } finally {
+                      fixture.close();
+                  }
+              }
+
+              @Test
+              void useWhileOpenRejectsSameAndDifferentTargetWithoutTouchingEither() throws Exception {
+                  Fixture fixture = fixture("use-reject");
+                  Path corruptStore = null;
+                  try {
+                      use(fixture, "use.reject.current");
+                      IMind active = fixture.user.getCurrentMind();
+                      String source = active.getSourceCode();
+                      int level = active.getTransactionLevel();
+                      Map<String, String> currentBefore = hashGeneration(
+                              fixture.user, active.getStorageName());
+
+                      String corruptName = "use" + Enums.FILE_SEPARATOR + "reject-target";
+                      Path corruptBase = Paths.get(fixture.user.getDatabaseDir())
+                              .resolve(corruptName);
+                      Files.createDirectories(corruptBase.getParent());
+                      corruptStore = Paths.get(corruptBase.toString() + ".store");
+                      byte[] sentinel = new byte[]{0x41, 0x42, 0x43, 0x44};
+                      Files.write(corruptStore, sentinel);
+                      String corruptBefore = sha256(sentinel);
+
+                      JSONObject same = use(fixture, "use.reject.current");
+                      assertEquals("error", same.optString("result"), same.toString());
+                      assertEquals("storage_already_open", same.optString("code"));
+
+                      JSONObject other = use(fixture, "use.reject-target");
+                      assertEquals("error", other.optString("result"), other.toString());
+                      assertEquals("storage_already_open", other.optString("code"));
+
+                      assertSame(active, fixture.user.getCurrentMind());
+                      assertEquals(level, active.getTransactionLevel());
+                      assertEquals(source, active.getSourceCode());
+                      assertEquals("use" + Enums.FILE_SEPARATOR + "reject" +
+                                      Enums.FILE_SEPARATOR + "current",
+                              active.getStorageName());
+                      assertEquals(currentBefore,
+                              hashGeneration(fixture.user, active.getStorageName()));
+                      assertEquals(corruptBefore,
+                              sha256(Files.readAllBytes(corruptStore)));
+                      assertFalse(Files.exists(Paths.get(corruptBase + ".integrity")),
+                              "Rejected use opened or validated the target generation");
+                      assertFalse(Files.exists(Paths.get(corruptBase + ".index")),
+                              "Rejected use created target index state");
+                  } finally {
+                      if (corruptStore != null) {
+                          Files.deleteIfExists(corruptStore);
+                      }
+                      fixture.close();
+                  }
+              }
+
+              @Test
+              void closeRejectsEveryActiveLevelAndPreservesTransientRules() throws Exception {
+                  Fixture fixture = fixture("close-reject");
+                  try {
+                      use(fixture, "close.reject");
+                      String storageName = fixture.user.getCurrentMind().getStorageName();
+                      Map<String, String> durableBefore = hashGeneration(
+                              fixture.user, storageName);
+
+                      transaction(fixture, "create");
+                      mutate(fixture, "transient_level_one");
+                      IMind levelOne = fixture.user.getCurrentMind();
+                      JSONObject rejectedOne = closeResponse(fixture);
+                      assertEquals("error", rejectedOne.optString("result"),
+                              rejectedOne.toString());
+                      assertEquals("transaction_open", rejectedOne.optString("code"));
+                      assertSame(levelOne, fixture.user.getCurrentMind());
+                      assertEquals(1, levelOne.getTransactionLevel());
+                      assertTrue(levelOne.isStorageUsed());
+                      assertEquals("yes", ask(fixture, "transient_level_one")
+                              .optString("response"));
+                      assertEquals(durableBefore,
+                              hashGeneration(fixture.user, storageName));
+
+                      transaction(fixture, "create");
+                      mutate(fixture, "transient_level_two");
+                      IMind levelTwo = fixture.user.getCurrentMind();
+                      JSONObject rejectedTwo = closeResponse(fixture);
+                      assertEquals("error", rejectedTwo.optString("result"),
+                              rejectedTwo.toString());
+                      assertEquals("transaction_open", rejectedTwo.optString("code"));
+                      assertSame(levelTwo, fixture.user.getCurrentMind());
+                      assertEquals(2, levelTwo.getTransactionLevel());
+                      assertTrue(levelTwo.isStorageUsed());
+                      assertEquals("yes", ask(fixture, "transient_level_two")
+                              .optString("response"));
+                      assertEquals(durableBefore,
+                              hashGeneration(fixture.user, storageName));
+
+                      transaction(fixture, "rollback");
+                      transaction(fixture, "rollback");
+                      close(fixture);
+                      use(fixture, "close.reject");
+                      assertNotEquals("yes", ask(fixture, "transient_level_one")
+                              .optString("response"));
+                      assertNotEquals("yes", ask(fixture, "transient_level_two")
+                              .optString("response"));
+                  } finally {
+                      fixture.close();
+                  }
+              }
+
+              @Test
+              void rollbackCloseReopenAndCrossStorageCyclesRemainExplicit() throws Exception {
+                  Fixture fixture = fixture("rollback-cycles");
+                  try {
+                      use(fixture, "cycles.a");
+                      mutate(fixture, "cycle_a_baseline");
+                      transaction(fixture, "create");
+                      mutate(fixture, "cycle_a_rolled_back");
+                      transaction(fixture, "rollback");
+                      close(fixture);
+
+                      use(fixture, "cycles.a");
+                      assertEquals("yes", ask(fixture, "cycle_a_baseline")
+                              .optString("response"));
+                      assertNotEquals("yes", ask(fixture, "cycle_a_rolled_back")
+                              .optString("response"));
+                      close(fixture);
+
+                      use(fixture, "cycles.b");
+                      mutate(fixture, "cycle_b_baseline");
+                      close(fixture);
+
+                      use(fixture, "cycles.a");
+                      assertEquals("yes", ask(fixture, "cycle_a_baseline")
+                              .optString("response"));
+                      assertNotEquals("yes", ask(fixture, "cycle_b_baseline")
+                              .optString("response"));
+                  } finally {
+                      fixture.close();
+                  }
+              }
+
+              private Fixture fixture(String purpose) throws Exception {
+                  String identity = "explicit-storage-" + purpose + "-"
+                          + UUID.randomUUID();
+                  IUser user = UserFactory.createUser(identity, identity);
+                  new UDF().init(user);
+                  new DB().init(user);
+                  Mind root = new Mind(user);
+                  user.setCurrentMind(root);
+                  String token = UserFactory.addUser(user);
+                  IReactor<JSONObject> reactor = new DestructiveStopLossReactor(
+                          new MindLifecycleReactor(new QueryProcessor()));
+                  return new Fixture(user, token, reactor);
+              }
+
+              private JSONObject use(Fixture fixture, String name) throws Exception {
+                  return invoke(fixture, "command", new JSONObject()
+                          .put("token", fixture.token)
+                          .put("use", name));
+              }
+
+              private void close(Fixture fixture) throws Exception {
+                  JSONObject response = closeResponse(fixture);
+                  assertEquals("OK", response.optString("result"), response.toString());
+              }
+
+              private JSONObject closeResponse(Fixture fixture) throws Exception {
+                  return invoke(fixture, "command", new JSONObject()
+                          .put("token", fixture.token)
+                          .put("close", ""));
+              }
+
+              private JSONObject transaction(Fixture fixture, String action)
+                      throws Exception {
+                  return invoke(fixture, "query", new JSONObject()
+                          .put("token", fixture.token)
+                          .put("transaction", action));
+              }
+
+              private void mutate(Fixture fixture, String fact) throws Exception {
+                  JSONObject response = query(fixture, "!" + fact + ";");
+                  assertEquals("OK", response.optString("result"), response.toString());
+              }
+
+              private JSONObject ask(Fixture fixture, String fact) throws Exception {
+                  return query(fixture, "?" + fact + ";");
+              }
+
+              private JSONObject query(Fixture fixture, String source) throws Exception {
+                  return invoke(fixture, "query", new JSONObject()
+                          .put("token", fixture.token)
+                          .put("request", URLEncoder.encode(source, "UTF-8")));
+              }
+
+              private JSONObject invoke(Fixture fixture,
+                                        String context,
+                                        JSONObject parameters) throws Exception {
+                  JSONObject packet = new JSONObject().put("body", new JSONObject()
+                          .put("context", context)
+                          .put("parameters", parameters));
+                  Object response = fixture.reactor.run(packet);
+                  assertTrue(response instanceof JSONObject,
+                          "Lifecycle response is not JSON: " + response);
+                  return (JSONObject) response;
+              }
+
+              private Map<String, String> hashGeneration(IUser user, String storageName)
+                      throws Exception {
+                  Map<String, String> result = new LinkedHashMap<String, String>();
+                  Path base = Paths.get(user.getDatabaseDir()).resolve(storageName);
+                  for (String suffix : GENERATION_SUFFIXES) {
+                      Path file = Paths.get(base.toString() + suffix);
+                      if (Files.exists(file)) {
+                          result.put(suffix, sha256(Files.readAllBytes(file)));
+                      }
+                  }
+                  return result;
+              }
+
+              private String sha256(byte[] value) throws Exception {
+                  byte[] digest = MessageDigest.getInstance("SHA-256").digest(value);
+                  StringBuilder result = new StringBuilder();
+                  for (byte one : digest) {
+                      result.append(String.format("%02x", one & 0xff));
+                  }
+                  return result.toString();
+              }
+
+              private static final class Fixture {
+                  private final IUser user;
+                  private final String token;
+                  private final IReactor<JSONObject> reactor;
+
+                  private Fixture(IUser user,
+                                  String token,
+                                  IReactor<JSONObject> reactor) {
+                      this.user = user;
+                      this.token = token;
+                      this.reactor = reactor;
+                  }
+
+                  private void close() throws Exception {
+                      try {
+                          UserFactory.logout(token);
+                      } catch (AuthenticationErrorException alreadyClosed) {
+                          // A test may already have closed the session.
+                      }
+                  }
+              }
+          }
+          ''', encoding="utf-8")
+
+          Path("3.5.2.10-explicit-storage-lifecycle.md").write_text('''# KANGER III 3.5.2.10 — explicit storage lifecycle
+
+Status: implementation and qualification stage opened after failed VPS soak.  
+Base: `develop/3.5.2.9-integration-release-shelf` at `7946d3969302aa198fea506f419a885565db118a`.
+
+## Release-blocking incident
+
+The qualified `3.5.2 / server-0.17` candidate failed the VPS soak during the sequence:
+
+```text
+nested transaction
+-> commit to level 0
+-> close
+-> use the same database
+```
+
+Reopen integrity validation reported:
+
+```text
+DUMB storage corruption:
+index id is absent from manifest base=1 id=0
+```
+
+The server remained UP/READY and the destructive stop-loss boundary did not publish the damaged database. Production was rolled back to the accepted `release/3.5.1 / server-0.14` pair. Release acceptance and production cutover were not performed. The damaged test generation and the complete operator evidence remain immutable investigation inputs.
+
+This stage does not claim that the lifecycle correction proves or fixes the manifest corruption root cause.
+
+## Normative invariant
+
+Transaction lifecycle and physical storage lifecycle do not perform implicit transitions into one another.
+
+```text
+CLOSED -- use --> OPEN, level 0
+OPEN, level N -- commit/rollback --> OPEN, level N-1
+OPEN, level 0 -- commit --> OPEN, level 0 + durable checkpoint
+OPEN, level 0 -- close --> CLOSED
+```
+
+Forbidden transitions:
+
+```text
+commit -> implicit close
+OPEN -> use same or different database
+OPEN, level > 0 -> close
+```
+
+## Scope
+
+1. Root-level commit is a repeatable durable checkpoint and never closes storage.
+2. `use` rejects immediately whenever any storage is already open, before target open, validation, protective transaction or context mutation.
+3. `close` rejects every active transaction level without flush, compact, rollback, commit or context cleanup.
+4. Allowed close at level 0 checkpoints, closes physical resources and clears storage-bound context.
+5. An isolated DUMB regression repeats nested commit, explicit close and reopen with manifest validation.
+
+## Qualification boundary
+
+The predecessor shelf head remains the immutable diagnostic point for the failed Server 0.17 soak. This branch is not an accepted release, does not modify production and must remain unmerged until its local and CI qualification plus an independent VPS soak of a newly built candidate are complete.
+''', encoding="utf-8")
+          PY
+
+      - name: Run Java 21 clean verification
+        run: mvn -B -ntp -f kanger-server/pom.xml clean verify
+
+      - name: Commit qualified implementation
+        shell: bash
+        run: |
+          test -n "$(git status --porcelain)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            kanger/src/org/kanger/User.java \
+            kanger/src/org/kanger/Mind.java \
+            kanger-server/src/org/kanger/MindLifecycleReactor.java \
+            kanger-server/src/org/kanger/QueryProcessor.java \
+            kanger-server/src/org/kanger/DestructiveStopLossReactor.java \
+            kanger-server/test/org/kanger/ExplicitStorageLifecycleTest.java \
+            3.5.2.10-explicit-storage-lifecycle.md
+          git commit -m "3.5.2.10: enforce explicit storage lifecycle"
+          git push origin HEAD
