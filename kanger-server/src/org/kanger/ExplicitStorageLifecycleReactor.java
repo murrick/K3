@@ -12,12 +12,16 @@ import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 
 /**
- * Earliest server boundary for storage lifecycle preconditions.
+ * Earliest server boundary for explicit storage lifecycle preconditions.
  *
  * <p>An already-open database makes every {@code use} request invalid,
  * including a request for the same database. The rejection is deliberately
  * performed before the destructive stop-loss layer canonicalizes, probes,
  * opens or validates the requested target.</p>
+ *
+ * <p>A root-level {@code commit} is handled here as a repeatable durable
+ * checkpoint. It never reaches the historical no-transaction response and
+ * never closes or clears the active storage context.</p>
  */
 final class ExplicitStorageLifecycleReactor implements IReactor<JSONObject> {
 
@@ -34,12 +38,14 @@ final class ExplicitStorageLifecycleReactor implements IReactor<JSONObject> {
     public Object run(JSONObject packet) throws Exception {
         Request request = Request.parse(packet);
         if (request == null
-                || !"command".equalsIgnoreCase(request.context)
                 || !request.parameters.has("token")
-                || request.parameters.isNull("token")
-                || !request.parameters.has("use")
-                || request.parameters.isNull("use")
-                || request.parameters.optString("use", "").isEmpty()) {
+                || request.parameters.isNull("token")) {
+            return delegate.run(packet);
+        }
+
+        boolean use = isUse(request);
+        boolean rootCommit = isCommit(request);
+        if (!use && !rootCommit) {
             return delegate.run(packet);
         }
 
@@ -50,18 +56,45 @@ final class ExplicitStorageLifecycleReactor implements IReactor<JSONObject> {
         }
 
         IMind active = user.getCurrentMind();
-        if (!active.isStorageUsed()) {
+        if (use) {
+            if (!active.isStorageUsed()) {
+                return delegate.run(packet);
+            }
+            return new JSONObject()
+                    .put("result", "error")
+                    .put("code", "storage_already_open")
+                    .put("description", "Database " + active.getStorageName()
+                            + " is already open; explicit close is required before use")
+                    .put("transaction", active.getTransactionLevel())
+                    .put("empty", active.isEmptyLevel());
+        }
+
+        if (active.getNext() != null || !active.isStorageUsed()) {
             return delegate.run(packet);
         }
 
-        JSONObject result = new JSONObject()
-                .put("result", "error")
-                .put("code", "storage_already_open")
-                .put("description", "Database " + active.getStorageName()
-                        + " is already open; explicit close is required before use")
+        StorageCheckpoint.checkpoint(active);
+        return new JSONObject()
+                .put("result", "OK")
+                .put("description", "Storage checkpoint completed")
+                .put("id", active.getId())
                 .put("transaction", active.getTransactionLevel())
                 .put("empty", active.isEmptyLevel());
-        return result;
+    }
+
+    private boolean isUse(Request request) {
+        return "command".equalsIgnoreCase(request.context)
+                && request.parameters.has("use")
+                && !request.parameters.isNull("use")
+                && !request.parameters.optString("use", "").isEmpty();
+    }
+
+    private boolean isCommit(Request request) {
+        return "query".equalsIgnoreCase(request.context)
+                && request.parameters.has("transaction")
+                && !request.parameters.isNull("transaction")
+                && "commit".equalsIgnoreCase(
+                        request.parameters.optString("transaction", ""));
     }
 
     private static final class Request {
