@@ -82,7 +82,7 @@ grep -q '<kanger.server.artifact.version>server-0.18</kanger.server.artifact.ver
   kanger-server/pom.xml
 grep -Fq 'EXPECTED_SERVER_VERSION="${KANGER_EXPECTED_SERVER_VERSION:-server-0.18}"' \
   kanger-server/scripts/smoke-local.sh
-grep -q '"server_version":"server-0.18"' \
+grep -Fq '\"server_version\":\"server-0.18\"' \
   kanger-server/deploy/verify-installed.sh
 grep -q 'Server 0.18 deployment contract' kanger-server/DEPLOYMENT.md
 grep -q 'fresh disposable database' kanger-server/DEPLOYMENT.md
