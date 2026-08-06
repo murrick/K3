@@ -62,7 +62,7 @@ jobs:
           set -euo pipefail
           test -d kanger-qualification/src
           count="$(find kanger-qualification/src -type f -name '*Runner.java' | wc -l | tr -d ' ')"
-          test "$count" -eq 37
+          test "$count" -eq 38
           mvn --batch-mode --no-transfer-progress -DskipTests test-compile
           java -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerParserTerminalDelimiterSafetyRunner
