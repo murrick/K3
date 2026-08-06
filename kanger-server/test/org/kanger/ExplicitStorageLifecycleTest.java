@@ -60,7 +60,7 @@ class ExplicitStorageLifecycleTest {
 
             StorageLifecycleException repeatedUse = assertThrows(
                     StorageLifecycleException.class,
-                    () -> root.useStorage(
+                    () -> fixture.user.getCurrentMind().useStorage(
                             "core" + Enums.FILE_SEPARATOR + "contract"));
             assertEquals("STORAGE_ALREADY_OPEN", repeatedUse.getCode());
             assertEquals("EXPLICIT_CLOSE_REQUIRED",
@@ -79,9 +79,9 @@ class ExplicitStorageLifecycleTest {
 
             root.release(child);
             fixture.user.setCurrentMind(root);
-            root = root.closeStorage();
-            fixture.user.setCurrentMind(root);
-            assertFalse(root.isStorageUsed());
+            IMind closed = root.closeStorage();
+            fixture.user.setCurrentMind(closed);
+            assertFalse(closed.isStorageUsed());
         } finally {
             fixture.close();
         }
