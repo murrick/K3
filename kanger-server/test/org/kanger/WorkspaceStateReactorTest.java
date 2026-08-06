@@ -113,8 +113,10 @@ public class WorkspaceStateReactorTest {
                     .put("use", "other"));
             assertEquals("error", rejectedOther.getString("result"),
                     rejectedOther.toString());
-            assertEquals("storage_already_open",
+            assertEquals("STORAGE_ALREADY_OPEN",
                     rejectedOther.getString("code"));
+            assertEquals("EXPLICIT_CLOSE_REQUIRED",
+                    rejectedOther.getString("required_action"));
             assertStorage(rejectedOther, "nested.one",
                     "nested" + Enums.FILE_SEPARATOR + "one");
 
@@ -160,8 +162,10 @@ public class WorkspaceStateReactorTest {
                     .put("use", "corrupt-target"));
             assertEquals("error", rejectedCorrupt.getString("result"),
                     rejectedCorrupt.toString());
-            assertEquals("storage_already_open",
+            assertEquals("STORAGE_ALREADY_OPEN",
                     rejectedCorrupt.getString("code"));
+            assertEquals("EXPLICIT_CLOSE_REQUIRED",
+                    rejectedCorrupt.getString("required_action"));
             assertStorage(rejectedCorrupt, "other", "other");
 
             JSONObject close = invoke(reactor, "command", new JSONObject()
