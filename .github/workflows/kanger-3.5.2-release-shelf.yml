@@ -1,4 +1,4 @@
-name: KANGER 3.5.2 release shelf
+name: KANGER 3.5.2 Server 0.18 release shelf
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - "develop/3.5.2.9-integration-release-shelf"
   pull_request:
     branches:
-      - "develop/3.5.2"
+      - "develop/3.5.2.9-integration-release-shelf"
   workflow_dispatch:
 
 permissions:
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   shelf-contract:
-    name: Cumulative ancestry and browser authorities
+    name: Integrated ancestry, identities and distribution contract
     runs-on: ubuntu-latest
     steps:
       - name: Check out complete history
@@ -27,14 +27,14 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Qualify the integrated release shelf
+      - name: Qualify the integrated Server 0.18 shelf
         shell: bash
         run: |
           bash kanger-server/scripts/qualify-3.5.2-release-shelf.sh \
             "${GITHUB_WORKSPACE}"
 
   server-build:
-    name: Server 0.17 on Java ${{ matrix.java }}
+    name: Server 0.18 on Java ${{ matrix.java }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -53,7 +53,7 @@ jobs:
           java-version: ${{ matrix.java }}
           cache: maven
 
-      - name: Build and test the complete server artifact
+      - name: Build and test the complete Server 0.18 artifact
         shell: bash
         run: |
           mvn -B -ntp \
@@ -75,14 +75,14 @@ jobs:
             | grep -q '^org/kanger/WorkspaceStateReactor.class$'
           unzip -p kanger-server/target/kanger-server.jar \
             org/kanger/build.properties \
-            | grep -q '^server.version=server-0.17$'
+            | grep -q '^server.version=server-0.18$'
 
       - name: Run authenticated integration smoke and clean shutdown
         if: matrix.java == '21'
         shell: bash
         run: |
           set -euo pipefail
-          runtime="${RUNNER_TEMP}/kanger-3.5.2-shelf"
+          runtime="${RUNNER_TEMP}/kanger-3.5.2-server-0.18-shelf"
           mkdir -p "${runtime}/home"
           cat > "${runtime}/home/kanger.conf" <<'EOF_CONFIG'
           server.bind.address=127.0.0.1
@@ -106,7 +106,7 @@ jobs:
               kill "${server_pid}" 2>/dev/null || true
               wait "${server_pid}" 2>/dev/null || true
             fi
-            echo "--- KANGER 3.5.2 release-shelf smoke log ---"
+            echo "--- KANGER 3.5.2 Server 0.18 shelf smoke log ---"
             cat "${runtime}/server.log"
           }
           trap cleanup EXIT
@@ -142,12 +142,13 @@ jobs:
           ! curl --silent --max-time 1 \
             http://127.0.0.1:1964/health >/dev/null 2>&1
           grep -q 'FORCE REBOOT Server' "${runtime}/server.log"
-          echo "RELEASE_SHELF_PASS server-smoke"
+          echo "RELEASE_SHELF_PASS server-0.18-smoke"
 
-      - name: Upload the Java 21 candidate JAR
+      - name: Upload the Java 21 Server 0.18 candidate JAR
         if: matrix.java == '21'
         uses: actions/upload-artifact@v7
         with:
-          name: kanger-3.5.2-server-0.17-java21
+          name: kanger-3.5.2-server-0.18-java21
           path: kanger-server/target/kanger-server.jar
           if-no-files-found: error
+          retention-days: 90
