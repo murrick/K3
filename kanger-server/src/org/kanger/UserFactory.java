@@ -156,7 +156,7 @@ public class UserFactory {
     private static IUser getUserById(long userId) throws Exception {
         IUser user = sessions.findActiveUser(userId);
         if (user == null) {
-            user = new User();
+            user = new ExplicitLifecycleUser();
             user.setProperty("user.home", getHome());
             user.setId(userId);
 
