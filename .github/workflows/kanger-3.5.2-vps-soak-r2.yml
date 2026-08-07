@@ -48,7 +48,13 @@ jobs:
           set -euo pipefail
           canonical="f9419c9428424b958bd938db0f6cf29650acf3f0"
           packaging_branch="ops/3.5.2-server-0.18-vps-soak-r2"
-          git merge-base --is-ancestor "${canonical}" HEAD
+          packaging_head="$(git rev-parse "origin/${packaging_branch}")"
+
+          git merge-base --is-ancestor "${canonical}" "${packaging_head}"
+          git diff --quiet "${packaging_head}..HEAD" || {
+            echo "Workflow checkout tree differs from exact operations branch head ${packaging_head}" >&2
+            exit 1
+          }
 
           expected="$(cat <<'EOF_FILES'
           .github/workflows/kanger-3.5.2-vps-soak-r2.yml
@@ -58,7 +64,7 @@ jobs:
           kanger-server/deploy/snapshot-current.sh
           EOF_FILES
           )"
-          actual="$(git diff --name-only "${canonical}..HEAD" | sort)"
+          actual="$(git diff --name-only "${canonical}..${packaging_head}" | sort)"
           test "${actual}" = "${expected}"
 
           if echo "${actual}" | grep -Eq \
@@ -90,6 +96,7 @@ jobs:
           grep -q 'fresh disposable database' kanger-server/VPS-SOAK-3.5.2.md
           grep -q 'explicit close' kanger-server/VPS-SOAK-3.5.2.md
 
+          echo "SOAK_PACKAGE_R2_PASS exact-branch-provenance ${packaging_head}"
           echo "SOAK_PACKAGE_R2_PASS operations-only-delta"
 
       - name: Build and test Server 0.18
@@ -136,10 +143,14 @@ jobs:
         run: |
           set -euo pipefail
           canonical="f9419c9428424b958bd938db0f6cf29650acf3f0"
+          packaging_branch="ops/3.5.2-server-0.18-vps-soak-r2"
+          packaging_head="$(git rev-parse "origin/${packaging_branch}")"
           short="${canonical:0:12}"
           package="kanger-3.5.2-server-0.18-vps-soak-r2-${short}"
           root="${RUNNER_TEMP}/${package}"
           artifact_dir="${GITHUB_WORKSPACE}/dist"
+
+          git diff --quiet "${packaging_head}..HEAD"
 
           mkdir -p "${root}/html" "${root}/deploy" "${root}/docs" "${artifact_dir}"
           cp kanger-server/target/kanger-server.jar "${root}/kanger-server.jar"
@@ -160,9 +171,9 @@ jobs:
           artifact=3.5.2-server-0.18-vps-soak-r2
           canonical_source_branch=develop/3.5.2.9-integration-release-shelf
           canonical_source_head=${canonical}
-          packaging_branch=ops/3.5.2-server-0.18-vps-soak-r2
+          packaging_branch=${packaging_branch}
           packaging_generation=r2
-          packaging_head=${GITHUB_SHA}
+          packaging_head=${packaging_head}
           server_version=server-0.18
           core_version=3.3
           api_version=1
@@ -202,12 +213,13 @@ jobs:
             grep -q '^canonical_source_head=f9419c9428424b958bd938db0f6cf29650acf3f0$' SOURCE.txt
             grep -q '^packaging_branch=ops/3.5.2-server-0.18-vps-soak-r2$' SOURCE.txt
             grep -q '^packaging_generation=r2$' SOURCE.txt
-            grep -q '^packaging_head='"${GITHUB_SHA}"'$' SOURCE.txt
+            grep -q '^packaging_head='"${packaging_head}"'$' SOURCE.txt
             grep -q '^server_version=server-0.18$' SOURCE.txt
             grep -q '^browser_files=15$' SOURCE.txt
           )
 
           echo "SOAK_PACKAGE_R2_OK"
+          echo "packaging_head=${packaging_head}"
           cat "${artifact_dir}/${package}.tar.gz.sha256"
           sha256sum "${root}/kanger-server.jar"
 
