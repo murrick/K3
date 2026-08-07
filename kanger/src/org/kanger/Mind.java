@@ -1339,18 +1339,6 @@ public class Mind implements IMind {
                 } else {
                     hypothesis.commit(m.getHypothesis());
                     tempHypothesis.commit(m.getTempHypothesis());
-//                    if(!m.getTempHypothesis().isEmpty()) {
-//                        for (IHypothesis tmp : m.getTempHypothesis()) {
-//                            IRule rx = getRules().find((Hypothesis) tmp);
-//                            if (hypothesis.find(tmp) == null && (rx == null || rx.isDeleted(this))) {
-//                                hypothesis.add(tmp);
-//                                if (logging) {
-//                                    log.add(LogMode.ANALYZER, "Hypothesis moved: " + ((Hypothesis) tmp).toString(this));
-//                                }
-//                            }
-//                        }
-//                        tempHypothesis.clear();
-//                    }
 
                     if (!hypothesis.isEmpty()) {
                         Set<IHypothesis> toDelete = new HashSet<>();
@@ -1872,6 +1860,18 @@ public class Mind implements IMind {
     public int incTransactionCounter() {
         synchronized (locker) {
             return ++transactionCounter;
+        }
+    }
+
+    /**
+     * Package-private lifecycle probe used by the owning {@link User}. A root
+     * Mind can be referenced directly while one or more child reservations are
+     * still open, so {@link #getTransactionLevel()} alone is not sufficient to
+     * prove storage-lifecycle quiescence.
+     */
+    boolean hasPendingTransactions() {
+        synchronized (locker) {
+            return transactionCounter > 0;
         }
     }
 
