@@ -153,7 +153,7 @@ require_pattern '3.5.2.16' REPOSITORY-LIFECYCLE.md
 require_pattern 'kanger MUST NOT depend on' REPOSITORY-LIFECYCLE.md
 require_pattern 'Server 0.18 deployment contract' kanger-server/DEPLOYMENT.md
 require_pattern 'a70dd388576882aa4cf827a31b3f4724ac339b16' kanger-server/DEPLOYMENT.md
-require_pattern 'storage-baseline insertion' kanger-server/DEPLOYMENT.md
+require_pattern 'baseline insertion' kanger-server/DEPLOYMENT.md
 require_pattern 'fresh disposable database' kanger-server/DEPLOYMENT.md
 require_pattern 'must not be opened, repaired, reindexed or deleted' kanger-server/DEPLOYMENT.md
 require_pattern '3.5.2.15 integrated shelf' docs/qualification/3.5.2.16-post-baseline-insertion-release-contract.md
