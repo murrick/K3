@@ -58,10 +58,13 @@ import java.util.*;
  *
  * <p><strong>Жизненный цикл.</strong> Transaction lifecycle и physical storage
  * lifecycle являются независимыми state machines. {@link #use(IMind, String)}
- * не закрывает уже открытый storage; {@link #checkpoint(IMind)} публикует
- * durable root state, сохраняя storage и runtime context открытыми;
- * {@link #close(IMind)} не принимает решение за незавершённую транзакцию и
- * допустим только на level 0.</p>
+ * не закрывает уже открытый storage и допустим только при отсутствии
+ * незавершённых child-транзакций; вызывающая оболочка может после успешного
+ * открытия вставить новый persistent baseline под прежний level-0 workspace,
+ * повторно канонизировав workspace как новый level-1 overlay.
+ * {@link #checkpoint(IMind)} публикует durable root state, сохраняя storage и
+ * runtime context открытыми; {@link #close(IMind)} не принимает решение за
+ * незавершённую транзакцию и допустим только на level 0.</p>
  *
  * <p><strong>Persistence.</strong> При открытом хранилище идентификаторы схем
  * выделяются соответствующими {@code IBase}; без открытого хранилища
@@ -295,6 +298,14 @@ public class User implements IUser {
                 throw new StorageLifecycleException(
                         StorageLifecycleErrorCode.STORAGE_ALREADY_OPEN,
                         "A database is already open; explicit close is required before use");
+            }
+
+            if (mind != null && mind.getTransactionLevel() > 0) {
+                throw new StorageLifecycleException(
+                        StorageLifecycleErrorCode.ACTIVE_TRANSACTION,
+                        "Cannot open database while transaction level "
+                                + mind.getTransactionLevel()
+                                + " is active; commit or rollback first");
             }
 
             if (mind == null) {
