@@ -209,7 +209,7 @@ public final class KangerConsoleLifecycleBindingRunner {
              * so persistence expectations match the actual operator surface.
              */
             String insertionStorage =
-                    "console.baseline.insertion." + suffix;
+                    "console_baseline_insertion_" + suffix;
 
             query(processQuery, "!workspacepending;", mind);
             mind = use(useDatabase,
