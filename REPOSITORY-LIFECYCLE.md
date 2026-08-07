@@ -32,6 +32,22 @@ server_version
 repository release artifact
 ```
 
+## Architectural dependency principle
+
+The Core remains a self-contained library boundary:
+
+```text
+kanger MUST NOT depend on:
+  kanger-console
+  kanger-data-dumb
+  a concrete UDF implementation
+
+Console / DB / UDF implementations MAY depend on kanger.
+Qualification MAY depend on all of them.
+```
+
+This is a standing architectural principle. It is not a new 3.5.2 product change and is not a release blocker because the current repository already respects the boundary.
+
 ## Established cornerstone artifacts
 
 ```text
@@ -92,13 +108,45 @@ develop/3.5.2
 
 3.5.2.14
   branch: fix/3.5.2.14-post-shutdown-release-contract
-  base: ddbf5ab380b4124013f58bbd655a2131ccba536b
-  role: re-qualify the canonical release shelf and operations provenance after 3.5.2.13
+  qualified head: 628295ead2fcd627c5e0302140278978caaeeff6
+  PR: #79, merged
+  integrated shelf: f9419c9428424b958bd938db0f6cf29650acf3f0
+  role: re-qualify release shelf and operations provenance after 3.5.2.13
+
+3.5.2.15
+  branch: fix/3.5.2.15-storage-baseline-insertion
+  qualified product head: 6b4b8e51c8ab4023cb5e81c2b2d9ec9ad9d5cdc3
+  final documentation head: d894e6e3d17a3c7bfb6c7a5c110664f838c489bf
+  PR: #81, merged
+  integrated shelf: a70dd388576882aa4cf827a31b3f4724ac339b16
+  role: storage baseline insertion and transaction quiescence stabilization
+  manual torture qualification: PASS
+  server identity: unchanged server-0.18
+
+3.5.2.16
+  branch: fix/3.5.2.16-post-baseline-insertion-release-contract
+  base: a70dd388576882aa4cf827a31b3f4724ac339b16
+  role: re-qualify canonical release shelf and operations provenance after 3.5.2.15
 ```
 
 The original `3.5.2.9` shelf at `7946d396...`, Server 0.17 JAR, operations package and damaged soak database are immutable failed-soak evidence. They must not be reused, repaired in place or treated as a deployable candidate. The damaged database must not be opened, repaired, reindexed or deleted.
 
-Server 0.18 was source-qualified and integrated before `3.5.2.13`. The Console shutdown defect is outside the `kanger-server` Maven production roots, so its correction does not change Server 0.18 product identity. Nevertheless it changes the complete repository candidate and therefore invalidates the earlier operations provenance until the release shelf is re-qualified and the VPS package is regenerated from the new canonical head.
+Server 0.18 was source-qualified before the Console-only and Core/Console storage-baseline stages. These later changes leave the Server product identity at `server-0.18`, but each changes the complete repository candidate and therefore requires repository-level release-contract qualification and fresh operations provenance.
+
+## Storage baseline insertion contract
+
+The only supported workspace-preserving `use` transformation in 3.5.2 is:
+
+```text
+offline workspace L0
+        -> use database
+workspace overlay L1
+persistent database L0
+```
+
+The workspace is replayed/recompiled in the database context and remains provisional until explicit commit. Rollback leaves the database unchanged. Generated rules are derived state and are rebuilt in the new context rather than replayed as source.
+
+A normal L1+ transaction stack cannot open a database. Generalized multi-level rebase is deliberately out of scope. `use`, `checkpoint` and `close` require both visible transaction level zero and no pending root child reservations.
 
 ## Integration rule for component changes
 
@@ -120,12 +168,12 @@ matched browser/server deployment and rollback contract
 explicit unresolved-risk and exclusion record
 ```
 
-For `3.5.2.14`, the qualifier must separately prove:
+For `3.5.2.16`, the qualifier must separately prove:
 
 ```text
-b0ed1cee... -> ddbf5ab... = exactly the six declared 3.5.2.13 files
-ddbf5ab... -> HEAD         = release-contract/documentation files only
-server identity            = server-0.18 unchanged
+f9419c... -> a70dd388... = exactly the five declared 3.5.2.15 files
+a70dd388... -> HEAD         = release-contract/documentation files only
+server identity             = server-0.18 unchanged
 ```
 
 A successful shelf is described as **qualified**, not **released** or **deployed**.
@@ -141,7 +189,7 @@ qualified candidate shelf
 
 ## Operations boundary
 
-A fresh Server 0.18 operations line must derive exactly from the post-`3.5.2.13` release-contract-qualified shelf and must prove:
+A fresh Server 0.18 operations line must derive exactly from the post-`3.5.2.15` release-contract-qualified shelf and must prove:
 
 ```text
 operations-only delta
@@ -153,9 +201,11 @@ atomic versioned-directory UI publication
 rollback to the exact Server 0.14 JAR/UI pair
 fresh disposable database
 nested transaction -> level-zero commit -> explicit close -> use/reopen
+storage-baseline insertion -> explicit commit/rollback -> reopen
+clean restart and abrupt-shutdown persistence checks
 ```
 
-The previous Server 0.18 package built from `b0ed1cee...` is superseded as deployment provenance even if its Server JAR bits are identical. It may remain as historical build evidence but must not be used for the new soak.
+All earlier Server 0.18 packages are superseded as deployment provenance for the current complete candidate. They may remain historical build evidence but must not be used for the new soak.
 
 An operations package is deployment evidence, not a source release. It must not be merged as product code or used as a base for successor development.
 
