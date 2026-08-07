@@ -747,101 +747,148 @@ public class Console {
 
         if (line.split(" ").length == 2) {
             String name = line.split("\\ ")[1].replace(".", Enums.FILE_SEPARATOR);
-            mind = mind.useStorage(name);
-            if (mind.isStorageUsed()) {
-                if (!backup.isEmpty()) {
-                    IMind m = new Mind(mind);
-                    if (m.compile(backup)) {
-                        if (!m.isEmptyLevel()) {
-                            mind = m;
-                            System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
-                        } else {
-                            mind.release(m);
-                        }
-                        showDBrief(mind);
-                    } else {
-                        mind = mind.closeStorage();
-                        mind.compile(backup);
-                        mind.clearLog();
-                        mind.release(m);
-                        if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                            System.out.println(mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
-                        }
-                        System.out.println("Use XPLAIN command for analisys");
-                        System.out.println("No database used");
-                    }
-                } else {
-                    showDBrief(mind);
-                }
-            } else {
-                System.out.println("No database used");
-            }
-        } else if (mind.isStorageUsed()) {
-            showDBrief(mind);
-        } else {
-            List<String> list = (List<String>) mind.getStoragesList();
-            if (list.size() > 0) {
-                System.out.println("DBs available:");
-                int i = 0;
-                int n = 1;
-                int cnt = 4;
-                for (String s : list) {
-                    System.out.printf("\t%d: %s", n, s);
-                    if (++i >= cnt) {
-                        System.out.println();
-                        i = 0;
-                    }
-                    ++n;
-                }
-                System.out.printf("\nEnter DB name %s: ", list.isEmpty() ? "" : "or file number");
-                line = sc.nextLine();
-                try {
-                    int ps = Integer.parseInt(line);
-                    ps -= 1;
-                    if (ps < list.size()) {
-                        line = list.get(ps);
-                    }
-                } catch (Exception ex) {
-                }
-                if (!line.isEmpty()) {
-                    line = line.replace(".", Enums.FILE_SEPARATOR);
-                    mind = mind.useStorage(line);
-                    if (mind.isStorageUsed()) {
-                        if (!backup.isEmpty()) {
-                            IMind m = new Mind(mind);
-                            if (m.compile(backup)) {
-                                if (!m.isEmptyLevel()) {
-                                    mind = m;
-                                    System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
-                                } else {
-                                    mind.release(m);
-                                }
-                                showDBrief(mind);
-                            } else {
-                                mind = mind.closeStorage();
-                                mind.compile(backup);
-                                mind.clearLog();
-                                mind.release(m);
-                                if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-                                    System.out.println(mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
-                                }
-                                System.out.println("Use XPLAIN command for analisys");
-                                System.out.println("No database used");
-                            }
-                        } else {
-                            showDBrief(mind);
-                        }
-                    } else {
-                        System.out.println("No database used");
-                    }
-                } else {
-                    System.out.println("No database used");
-                }
-            } else {
-                System.out.println("No database used");
-            }
+            return insertStorageBaseline(name, mind, backup);
         }
-        return mind;
+
+        if (mind.isStorageUsed()) {
+            showDBrief(mind);
+            return mind;
+        }
+
+        List<String> list = (List<String>) mind.getStoragesList();
+        if (list.isEmpty()) {
+            System.out.println("No database used");
+            return mind;
+        }
+
+        System.out.println("DBs available:");
+        int i = 0;
+        int n = 1;
+        int cnt = 4;
+        for (String s : list) {
+            System.out.printf("\t%d: %s", n, s);
+            if (++i >= cnt) {
+                System.out.println();
+                i = 0;
+            }
+            ++n;
+        }
+        System.out.printf("\nEnter DB name %s: ", "or file number");
+        String name = sc.nextLine();
+        try {
+            int ps = Integer.parseInt(name) - 1;
+            if (ps >= 0 && ps < list.size()) {
+                name = list.get(ps);
+            }
+        } catch (Exception ex) {
+        }
+
+        if (name.isEmpty()) {
+            System.out.println("No database used");
+            return mind;
+        }
+
+        name = name.replace(".", Enums.FILE_SEPARATOR);
+        return insertStorageBaseline(name, mind, backup);
+    }
+
+    /**
+     * Insert the selected persistent database underneath a level-0 offline
+     * workspace. The database becomes level 0; the previous workspace is
+     * recompiled as a provisional level-1 overlay so canonical IDs and
+     * generated consequences are rebuilt in the database context.
+     *
+     * <p>Multi-level stack rebasing is intentionally not performed here;
+     * {@link User#use(IMind, String)} rejects such calls before storage is
+     * acquired. Failed workspace import first releases its child reservation,
+     * then closes the newly opened storage, and only then reconstructs the
+     * original offline workspace.</p>
+     */
+    private static IMind insertStorageBaseline(
+            String name,
+            IMind mind,
+            String backup) throws Exception {
+
+        mind = mind.useStorage(name);
+        if (!mind.isStorageUsed()) {
+            System.out.println("No database used");
+            return mind;
+        }
+
+        if (backup.isEmpty()) {
+            showDBrief(mind);
+            return mind;
+        }
+
+        IMind imported = new Mind(mind);
+        try {
+            if (imported.compile(backup)) {
+                if (!imported.isEmptyLevel()) {
+                    mind = imported;
+                    System.out.printf(
+                            "Transaction level %d (%d)\n",
+                            mind.getTransactionLevel(),
+                            mind.getId());
+                } else {
+                    mind.release(imported);
+                }
+                showDBrief(mind);
+                return mind;
+            }
+
+            List<ILogEntry> importLog = new ArrayList<>();
+            for (ILogEntry entry : imported.getLog()) {
+                importLog.add(entry);
+            }
+
+            mind.release(imported);
+            mind = mind.closeStorage();
+
+            if (!mind.compile(backup)) {
+                throw new IllegalStateException(
+                        "Cannot restore offline workspace after rejected database insertion");
+            }
+            mind.clearLog();
+            org.kanger.stores.LogStore restoredLog =
+                    (org.kanger.stores.LogStore) mind.getLog();
+            for (ILogEntry entry : importLog) {
+                restoredLog.add(entry.getType(), entry.getRecord());
+            }
+
+            if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+                System.out.println(
+                        mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
+            }
+            System.out.println("Use XPLAIN command for analisys");
+            System.out.println("No database used");
+            return mind;
+        } catch (Exception failure) {
+            if (imported.getNext() == mind) {
+                try {
+                    mind.release(imported);
+                } catch (Exception rollbackFailure) {
+                    failure.addSuppressed(rollbackFailure);
+                }
+            }
+            if (mind.isStorageUsed()) {
+                try {
+                    mind = mind.closeStorage();
+                } catch (Exception closeFailure) {
+                    failure.addSuppressed(closeFailure);
+                }
+            }
+            if (!backup.isEmpty() && !mind.isStorageUsed()) {
+                try {
+                    if (!mind.compile(backup)) {
+                        failure.addSuppressed(new IllegalStateException(
+                                "Cannot restore offline workspace after insertion failure"));
+                    }
+                } catch (Exception restoreFailure) {
+                    failure.addSuppressed(restoreFailure);
+                }
+            }
+            throw failure;
+        }
     }
 
     private static void showDBrief(IMind mind) throws Exception {
@@ -1438,13 +1485,9 @@ public class Console {
             } catch (Exception e) {
                 throw new CommandErrorException();
             }
-//            System.out.printf("Statement is true or false [true/false]? ");
-//            n = sc.nextLine();
-//            antc = n.trim().toUpperCase().charAt(0) == 'Y' || n.trim().toUpperCase().charAt(0) == 'F';
         }
         --i;
         try {
-//            mind.getHypothesisStore().get(i).setAntc(antc);
             String temp = ((Hypothesis) mind.getHypothesis().get(i)).toString(mind);
             String h = String.format("%s;", temp.replaceAll(String.format("%c", Enums.EOLN), ""));
 
@@ -1507,7 +1550,6 @@ public class Console {
         return f;
     }
 
-    //TODO: Нужна проверка на наличие правила в базе на уровне дерева
     public static IMind loadSourceFile(IMind mind, File f) throws Exception {
         boolean res = false;
         if (f == null) {
