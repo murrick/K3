@@ -14,6 +14,10 @@ SERVER_018_INTEGRATION="b967846832586858d42a5e21091154c682948d00"
 RELEASE_CONTRACT_012="b0ed1cee70d6a4bbaf3b7690df766b9eae41f891"
 CONSOLE_SHUTDOWN_QUALIFIED="df738ca6657fcc1fa15619e1d2b3cccd4e51b397"
 CONSOLE_SHUTDOWN_INTEGRATION="ddbf5ab380b4124013f58bbd655a2131ccba536b"
+POST_SHUTDOWN_RELEASE_CONTRACT="f9419c9428424b958bd938db0f6cf29650acf3f0"
+BASELINE_INSERTION_QUALIFIED="6b4b8e51c8ab4023cb5e81c2b2d9ec9ad9d5cdc3"
+BASELINE_INSERTION_DOCS="d894e6e3d17a3c7bfb6c7a5c110664f838c489bf"
+BASELINE_INSERTION_INTEGRATION="a70dd388576882aa4cf827a31b3f4724ac339b16"
 
 require_pattern() {
   local pattern="$1"
@@ -43,7 +47,11 @@ for commit in \
   "${SERVER_018_INTEGRATION}" \
   "${RELEASE_CONTRACT_012}" \
   "${CONSOLE_SHUTDOWN_QUALIFIED}" \
-  "${CONSOLE_SHUTDOWN_INTEGRATION}"; do
+  "${CONSOLE_SHUTDOWN_INTEGRATION}" \
+  "${POST_SHUTDOWN_RELEASE_CONTRACT}" \
+  "${BASELINE_INSERTION_QUALIFIED}" \
+  "${BASELINE_INSERTION_DOCS}" \
+  "${BASELINE_INSERTION_INTEGRATION}"; do
   git cat-file -e "${commit}^{commit}"
 done
 
@@ -56,74 +64,99 @@ git merge-base --is-ancestor "${SERVER_018_DOCS}" "${SERVER_018_INTEGRATION}"
 git merge-base --is-ancestor "${SERVER_018_INTEGRATION}" "${RELEASE_CONTRACT_012}"
 git merge-base --is-ancestor "${RELEASE_CONTRACT_012}" "${CONSOLE_SHUTDOWN_QUALIFIED}"
 git merge-base --is-ancestor "${CONSOLE_SHUTDOWN_QUALIFIED}" "${CONSOLE_SHUTDOWN_INTEGRATION}"
-git merge-base --is-ancestor "${CONSOLE_SHUTDOWN_INTEGRATION}" HEAD
+git merge-base --is-ancestor "${CONSOLE_SHUTDOWN_INTEGRATION}" "${POST_SHUTDOWN_RELEASE_CONTRACT}"
+git merge-base --is-ancestor "${POST_SHUTDOWN_RELEASE_CONTRACT}" "${BASELINE_INSERTION_QUALIFIED}"
+git merge-base --is-ancestor "${BASELINE_INSERTION_QUALIFIED}" "${BASELINE_INSERTION_DOCS}"
+git merge-base --is-ancestor "${BASELINE_INSERTION_DOCS}" "${BASELINE_INSERTION_INTEGRATION}"
+git merge-base --is-ancestor "${BASELINE_INSERTION_INTEGRATION}" HEAD
 
 echo "RELEASE_SHELF_PASS ancestry"
 
-expected_stage_13_files="$(cat <<'EOF_FILES'
-docs/qualification/3.5.2.13-console-shutdown-lifecycle.md
+expected_stage_15_files="$(cat <<'EOF_FILES'
+docs/qualification/3.5.2.15-storage-baseline-insertion.md
 kanger-console/src/org/kanger/Console.java
-kanger-console/src/org/kanger/Kanger.java
-kanger-console/src/org/kanger/ShutdownHook.java
 kanger-qualification/src/org/kanger/KangerConsoleLifecycleBindingRunner.java
-kanger-qualification/src/org/kanger/KangerDiagnosticRunner.java
+kanger/src/org/kanger/Mind.java
+kanger/src/org/kanger/User.java
 EOF_FILES
 )"
-actual_stage_13_files="$(git diff --name-only "${RELEASE_CONTRACT_012}..${CONSOLE_SHUTDOWN_INTEGRATION}" | sort)"
-test "${actual_stage_13_files}" = "${expected_stage_13_files}"
+actual_stage_15_files="$(git diff --name-only "${POST_SHUTDOWN_RELEASE_CONTRACT}..${BASELINE_INSERTION_INTEGRATION}" | sort)"
+test "${actual_stage_15_files}" = "${expected_stage_15_files}" || {
+  echo "Unexpected 3.5.2.15 file set" >&2
+  echo "Expected:" >&2
+  printf '%s\n' "${expected_stage_15_files}" >&2
+  echo "Actual:" >&2
+  printf '%s\n' "${actual_stage_15_files}" >&2
+  exit 1
+}
 
-if git diff --name-only "${RELEASE_CONTRACT_012}..${CONSOLE_SHUTDOWN_INTEGRATION}" \
-    | grep -Eq '^(html/|kanger/|kanger-data-dumb/|kanger-udf/|kanger-server/src/|kanger-server/test/|kanger-server/pom.xml$)'; then
-  echo "Unexpected Server/Core/Browser product delta in Console shutdown stage" >&2
+if git diff --name-only "${POST_SHUTDOWN_RELEASE_CONTRACT}..${BASELINE_INSERTION_INTEGRATION}" \
+    | grep -Eq '^(html/|kanger-data-dumb/|kanger-udf/|kanger-server/src/|kanger-server/test/|kanger-server/pom.xml$)'; then
+  echo "Unexpected Server/Browser/DB/UDF product delta in baseline-insertion stage" >&2
   exit 1
 fi
 
-echo "RELEASE_SHELF_PASS console-shutdown-stage"
+echo "RELEASE_SHELF_PASS baseline-insertion-stage"
 
 expected_release_contract_files="$(cat <<'EOF_FILES'
 3.5.2-closure.md
 REPOSITORY-LIFECYCLE.md
-docs/qualification/3.5.2.14-post-shutdown-release-contract.md
+docs/qualification/3.5.2.16-post-baseline-insertion-release-contract.md
 kanger-server/DEPLOYMENT.md
 kanger-server/scripts/qualify-3.5.2-release-shelf.sh
 release-manifest.yaml
 EOF_FILES
 )"
-actual_release_contract_files="$(git diff --name-only "${CONSOLE_SHUTDOWN_INTEGRATION}..HEAD" | sort)"
-test "${actual_release_contract_files}" = "${expected_release_contract_files}"
+actual_release_contract_files="$(git diff --name-only "${BASELINE_INSERTION_INTEGRATION}..HEAD" | sort)"
+test "${actual_release_contract_files}" = "${expected_release_contract_files}" || {
+  echo "Unexpected 3.5.2.16 release-contract file set" >&2
+  echo "Expected:" >&2
+  printf '%s\n' "${expected_release_contract_files}" >&2
+  echo "Actual:" >&2
+  printf '%s\n' "${actual_release_contract_files}" >&2
+  exit 1
+}
 
-if git diff --name-only "${CONSOLE_SHUTDOWN_INTEGRATION}..HEAD" \
+if git diff --name-only "${BASELINE_INSERTION_INTEGRATION}..HEAD" \
     | grep -Eq '^(html/|kanger/|kanger-console/src/|kanger-data-dumb/|kanger-qualification/src/|kanger-udf/|kanger-server/src/|kanger-server/test/|kanger-server/pom.xml$)'; then
-  echo "Product or qualification-code delta detected in post-shutdown release-contract stage" >&2
+  echo "Product or qualification-code delta detected in post-baseline-insertion release-contract stage" >&2
   exit 1
 fi
 
-echo "RELEASE_SHELF_PASS post-shutdown-release-contract-only-delta"
+echo "RELEASE_SHELF_PASS post-baseline-insertion-release-contract-only-delta"
 
 require_pattern 'artifact: "3.5.2"' release-manifest.yaml
 require_pattern 'integrated_server_018_commit: "b967846832586858d42a5e21091154c682948d00"' release-manifest.yaml
-require_pattern 'release_contract_012_merge_commit: "b0ed1cee70d6a4bbaf3b7690df766b9eae41f891"' release-manifest.yaml
-require_pattern 'console_shutdown_qualified_commit: "df738ca6657fcc1fa15619e1d2b3cccd4e51b397"' release-manifest.yaml
-require_pattern 'console_shutdown_integrated_commit: "ddbf5ab380b4124013f58bbd655a2131ccba536b"' release-manifest.yaml
-require_pattern 'console_shutdown_pull_request: 78' release-manifest.yaml
+require_pattern 'post_shutdown_release_contract_integrated_commit: "f9419c9428424b958bd938db0f6cf29650acf3f0"' release-manifest.yaml
+require_pattern 'baseline_insertion_qualified_commit: "6b4b8e51c8ab4023cb5e81c2b2d9ec9ad9d5cdc3"' release-manifest.yaml
+require_pattern 'baseline_insertion_documentation_commit: "d894e6e3d17a3c7bfb6c7a5c110664f838c489bf"' release-manifest.yaml
+require_pattern 'baseline_insertion_integrated_commit: "a70dd388576882aa4cf827a31b3f4724ac339b16"' release-manifest.yaml
+require_pattern 'baseline_insertion_pull_request: 81' release-manifest.yaml
+require_pattern 'current_product_shelf_commit: "a70dd388576882aa4cf827a31b3f4724ac339b16"' release-manifest.yaml
 require_pattern 'candidate_version: "server-0.18"' release-manifest.yaml
 require_pattern 'previous_failed_candidate_version: "server-0.17"' release-manifest.yaml
 require_pattern 'production_version: "server-0.14"' release-manifest.yaml
-require_pattern 'release_contract_012_qualification: "PASS"' release-manifest.yaml
-require_pattern 'post_shutdown_release_contract_qualification: "PASS_REQUIRED_BEFORE_OPERATIONS"' release-manifest.yaml
+require_pattern 'post_shutdown_release_contract_qualification: "PASS"' release-manifest.yaml
+require_pattern 'baseline_insertion_qualification: "PASS"' release-manifest.yaml
+require_pattern 'baseline_insertion_manual_torture_qualification: "PASS"' release-manifest.yaml
+require_pattern 'baseline_insertion_integration: "PASS"' release-manifest.yaml
+require_pattern 'post_baseline_insertion_release_contract_qualification: "PASS_REQUIRED_BEFORE_OPERATIONS"' release-manifest.yaml
 require_pattern 'acceptance: "NOT_PERFORMED"' release-manifest.yaml
 require_pattern 'production_cutover: "NOT_PERFORMED"' release-manifest.yaml
 
 require_pattern 'server_version: server-0.18' 3.5.2-closure.md
-require_pattern '3.5.2.13.*Console shutdown lifecycle' 3.5.2-closure.md
-require_pattern 'ddbf5ab380b4124013f58bbd655a2131ccba536b' 3.5.2-closure.md
-require_pattern 'post-shutdown release contract' 3.5.2-closure.md
-require_pattern '3.5.2.13' REPOSITORY-LIFECYCLE.md
-require_pattern '3.5.2.14' REPOSITORY-LIFECYCLE.md
+require_pattern '3.5.2.15.*Storage baseline insertion' 3.5.2-closure.md
+require_pattern 'a70dd388576882aa4cf827a31b3f4724ac339b16' 3.5.2-closure.md
+require_pattern 'manual torture qualification' 3.5.2-closure.md
+require_pattern '3.5.2.15' REPOSITORY-LIFECYCLE.md
+require_pattern '3.5.2.16' REPOSITORY-LIFECYCLE.md
+require_pattern 'kanger MUST NOT depend on' REPOSITORY-LIFECYCLE.md
 require_pattern 'Server 0.18 deployment contract' kanger-server/DEPLOYMENT.md
-require_pattern 'ddbf5ab380b4124013f58bbd655a2131ccba536b' kanger-server/DEPLOYMENT.md
+require_pattern 'a70dd388576882aa4cf827a31b3f4724ac339b16' kanger-server/DEPLOYMENT.md
+require_pattern 'baseline insertion' kanger-server/DEPLOYMENT.md
 require_pattern 'fresh disposable database' kanger-server/DEPLOYMENT.md
 require_pattern 'must not be opened, repaired, reindexed or deleted' kanger-server/DEPLOYMENT.md
+require_pattern '3.5.2.15 integrated shelf' docs/qualification/3.5.2.16-post-baseline-insertion-release-contract.md
 
 require_pattern '<kanger.server.artifact.version>server-0.18</kanger.server.artifact.version>' kanger-server/pom.xml
 require_fixed 'EXPECTED_SERVER_VERSION="${KANGER_EXPECTED_SERVER_VERSION:-server-0.18}"' kanger-server/scripts/smoke-local.sh

@@ -1,6 +1,6 @@
 # KANGER Server 0.18 deployment contract
 
-Status: post-Console-shutdown integrated candidate; fresh operations package required.  
+Status: post-baseline-insertion integrated candidate; fresh operations package required.  
 Date: 2026-08-07
 
 This is the deployment contract for KANGER repository candidate `3.5.2`, Core `3.3`, API `1` and deployable Server identity `server-0.18`.
@@ -10,17 +10,19 @@ The complete historical Server 0.16 procedure remains preserved as [`DEPLOYMENT-
 ## Fixed source identities
 
 ```text
-integration branch:             develop/3.5.2.9-integration-release-shelf
-explicit lifecycle shelf:       03310482cebdf55b34829f3d59bdd197edb6275b
-qualified Server 0.18 code:     a16ec7abb9b2df1aebbaed921088184f0e571c47
-integrated Server 0.18:          b967846832586858d42a5e21091154c682948d00
-Server 0.18 release contract:    b0ed1cee70d6a4bbaf3b7690df766b9eae41f891
-Console shutdown qualified:      df738ca6657fcc1fa15619e1d2b3cccd4e51b397
-post-shutdown product shelf:     ddbf5ab380b4124013f58bbd655a2131ccba536b
-Console shutdown integration PR: #78, merged
+integration branch:                develop/3.5.2.9-integration-release-shelf
+explicit lifecycle shelf:          03310482cebdf55b34829f3d59bdd197edb6275b
+qualified Server 0.18 code:        a16ec7abb9b2df1aebbaed921088184f0e571c47
+integrated Server 0.18:             b967846832586858d42a5e21091154c682948d00
+Server 0.18 release contract:       b0ed1cee70d6a4bbaf3b7690df766b9eae41f891
+Console shutdown integrated shelf:  ddbf5ab380b4124013f58bbd655a2131ccba536b
+post-shutdown contract shelf:       f9419c9428424b958bd938db0f6cf29650acf3f0
+baseline insertion qualified:       6b4b8e51c8ab4023cb5e81c2b2d9ec9ad9d5cdc3
+baseline insertion integrated:      a70dd388576882aa4cf827a31b3f4724ac339b16
+baseline insertion PR:              #81, merged
 ```
 
-The final operations source must be the exact post-shutdown **release-contract-qualified** head descended from `ddbf5ab380b4124013f58bbd655a2131ccba536b`. Packaging must record that exact head in `SOURCE.txt`; do not substitute the earlier `b0ed1cee...` shelf.
+The final operations source must be the exact post-baseline-insertion **release-contract-qualified** head descended from `a70dd388576882aa4cf827a31b3f4724ac339b16`. Packaging must record that exact head in `SOURCE.txt`; no earlier Server 0.18 package is valid deployment provenance for the current complete candidate.
 
 Every non-empty JSON response must report:
 
@@ -43,19 +45,23 @@ source.branch=<exact source branch>
 
 ## Lifecycle included
 
-Server 0.18 contains the integrated explicit-storage-lifecycle correction:
+The complete candidate includes the integrated explicit-storage, shutdown and storage-baseline lifecycle corrections:
 
-- transaction commit never closes physical storage;
+- transaction commit never implicitly closes physical storage;
 - a level-zero checkpoint is durable and leaves storage open;
-- `use` requires the current storage to be CLOSED and rejects before validating the target;
-- `close` rejects active transaction levels without implicit commit or rollback;
-- ordinary Core `User` owns `use`, `checkpoint` and `close`.
+- storage `close`, `checkpoint` and `use` require a quiescent root: visible transaction level zero and no pending child reservations;
+- opening a database while an ordinary L1+ stack is active is rejected before storage acquisition or factory rebinding;
+- a non-empty offline L0 workspace can open a database by inserting the persistent DB as L0 and replaying the workspace as provisional L1;
+- that replay intentionally recompiles logical source in the database context so canonical identities and generated consequences are rebuilt;
+- explicit commit publishes the workspace once; rollback leaves the database unchanged;
+- generalized multi-level rebase is deliberately unsupported;
+- interactive Console JVM shutdown retains the active `IMind`, rolls unfinished child transactions back to root and delegates physical shutdown to ordinary `closeStorage()`.
 
-The complete repository additionally contains `3.5.2.13`, which repairs the interactive Console JVM shutdown path by retaining the active `IMind`, rolling unfinished child transactions back to root, and delegating physical shutdown to ordinary `closeStorage()`. This correction does not change Server 0.18 product bytes or identity, but it changes release provenance and therefore requires a fresh operations package.
+These corrections do not change Server 0.18 product identity, but they change complete-repository release provenance and require a fresh operations package.
 
 ## First VPS qualification route
 
-Use a dedicated account and a fresh disposable database. Start at the previous failure boundary:
+Use a dedicated account and fresh disposable databases. Start at the previous failure and newly corrected lifecycle boundaries:
 
 ```text
 login and token rotation
@@ -67,12 +73,23 @@ commit to level 0
 explicit close
 use/reopen the same disposable database
 verify persisted facts and storage identity
-logout and token rejection
+
+close database
+offline workspace assertion
+use same/fresh disposable database
+verify database is L0 and workspace is provisional L1
+rollback; close/reopen; verify workspace was not persisted
+repeat insertion; explicit commit; close/reopen; verify exactly one persisted copy
+attempt use while L1+ is active; verify typed rejection and unchanged stack
+
 clean service restart
 reopen and verify again
+exercise abrupt termination / shutdown recovery on disposable state
+reopen and verify integrity
+logout and token rejection
 ```
 
-Stop immediately on any manifest, storage identity, persistence or lifecycle anomaly. Only after this route passes may the broader soak continue.
+Stop immediately on any manifest, storage identity, persistence, duplication, transaction-topology or lifecycle anomaly. Only after this route passes may the broader soak continue.
 
 ## Matched browser distribution
 
@@ -107,7 +124,7 @@ referrerpolicy="no-referrer"
 
 ## Build boundary
 
-Build only from a fresh operations branch derived exactly from the post-shutdown release-contract-qualified shelf. The operations branch may add packaging, snapshot, deployment, rollback and evidence files, but no product, test or qualification-code delta.
+Build only from a fresh operations branch derived exactly from the post-baseline-insertion release-contract-qualified shelf. The operations branch may add packaging, snapshot, deployment, rollback and evidence files, but no product, test or qualification-code delta.
 
 Canonical Maven build:
 
@@ -123,7 +140,7 @@ Before packaging:
 ```bash
 test -f kanger-server/target/kanger-server.jar
 unzip -p kanger-server/target/kanger-server.jar org/kanger/build.properties
-git merge-base --is-ancestor ddbf5ab380b4124013f58bbd655a2131ccba536b HEAD
+git merge-base --is-ancestor a70dd388576882aa4cf827a31b3f4724ac339b16 HEAD
 ```
 
 The package workflow must additionally prove the operations-only delta from its exact canonical source head.
@@ -184,9 +201,9 @@ SOURCE.txt
 SHA256SUMS
 ```
 
-`SOURCE.txt` must fix the post-shutdown release-contract-qualified source head, packaging branch/head, product identities, browser inventory, current production anchors and UI publication mode. The bundle and each component must have verified SHA-256 checksums.
+`SOURCE.txt` must fix the post-baseline-insertion release-contract-qualified source head, packaging branch/head, product identities, browser inventory, current production anchors and UI publication mode. The bundle and each component must have verified SHA-256 checksums.
 
-The previous Server 0.18 package sourced from `b0ed1cee...` is superseded as deployment provenance. It may remain historical build evidence but must not be deployed for this soak.
+All earlier Server 0.18 packages are superseded as deployment provenance. They may remain historical build evidence but must not be deployed for this soak.
 
 ## Pre-deployment safety gate
 
@@ -262,6 +279,8 @@ health/readiness before and after
 listener and nginx evidence
 prior and candidate public UI targets
 nested close/reopen persistence evidence
+baseline-insertion commit/rollback/reopen evidence
+clean restart and abrupt-shutdown persistence evidence
 rollback command and prior artifact identity
 ```
 
