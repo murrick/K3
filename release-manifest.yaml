@@ -60,7 +60,9 @@ repository:
     corrected_r3_vps_deployment: "PASS"
     vps_manual_torture_a_i: "PASS"
     vps_soak_closure_branch: "fix/3.5.2.17-vps-soak-closure"
-    vps_soak_closure_qualification: "PENDING"
+    vps_soak_closure_qualified_commit: "4f47994f61f68bf163179b8cd8eacbb1062633dd"
+    vps_soak_closure_pull_request: 84
+    vps_soak_closure_qualification: "PASS"
     acceptance: "NOT_PERFORMED"
     production_cutover: "NOT_PERFORMED"
   previous_release:
@@ -207,10 +209,10 @@ stages:
   - stage: "3.5.2.17"
     kind: "corrected-r3 VPS soak evidence closure"
     branch: "fix/3.5.2.17-vps-soak-closure"
-    commit: null
+    commit: "4f47994f61f68bf163179b8cd8eacbb1062633dd"
     integrated_commit: null
-    pull_request: null
-    qualification: "PENDING"
+    pull_request: 84
+    qualification: "PASS"
     product_delta: false
 
 operations:
