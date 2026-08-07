@@ -27,7 +27,10 @@ repository:
     baseline_insertion_documentation_commit: "d894e6e3d17a3c7bfb6c7a5c110664f838c489bf"
     baseline_insertion_integrated_commit: "a70dd388576882aa4cf827a31b3f4724ac339b16"
     baseline_insertion_pull_request: 81
-    current_product_shelf_commit: "a70dd388576882aa4cf827a31b3f4724ac339b16"
+    post_baseline_release_contract_qualified_commit: "7385c282ca6f97a11c7436c06cc74cb01e4c018b"
+    post_baseline_release_contract_integrated_commit: "307042411124ae181e19aea70b50ca7dff6d72a1"
+    post_baseline_release_contract_pull_request: 82
+    current_product_shelf_commit: "307042411124ae181e19aea70b50ca7dff6d72a1"
     baseline_branch: "develop/3.5.2"
     baseline_commit: "22918a09ce443e87cf0ee7397ff1b9f1b70f09e8"
     implementation_checkpoint: "9e2db22ea78de9c8660dd521b12d05a44a35c283"
@@ -45,7 +48,21 @@ repository:
     baseline_insertion_qualification: "PASS"
     baseline_insertion_manual_torture_qualification: "PASS"
     baseline_insertion_integration: "PASS"
-    post_baseline_insertion_release_contract_qualification: "PASS_REQUIRED_BEFORE_OPERATIONS"
+    post_baseline_insertion_release_contract_qualification: "PASS"
+    corrected_r3_operations_branch: "ops/3.5.2-server-0.18-vps-soak-r3"
+    corrected_r3_operations_head: "e451643776c16992e831c8b7313d60381d1e79c0"
+    corrected_r3_operations_pull_request: 83
+    corrected_r3_artifact_id: 8989921008
+    corrected_r3_artifact_zip_sha256: "dfbcecb92b55e7093cd44c2e67dcafb77270a494198416259f2867583997c4a7"
+    corrected_r3_tarball_sha256: "5df91492365f6f7ff4a473574b4b267c61e005f50ca8c2e01c653250367cf9da"
+    corrected_r3_server_jar_sha256: "9a8fb1a0f1505d74fb15343ed0519782abb33b53097d6c0e46fbad7bad962718"
+    corrected_r3_package_qualification: "PASS"
+    corrected_r3_vps_deployment: "PASS"
+    vps_manual_torture_a_i: "PASS"
+    vps_soak_closure_branch: "fix/3.5.2.17-vps-soak-closure"
+    vps_soak_closure_qualified_commit: "4f47994f61f68bf163179b8cd8eacbb1062633dd"
+    vps_soak_closure_pull_request: 84
+    vps_soak_closure_qualification: "PASS"
     acceptance: "NOT_PERFORMED"
     production_cutover: "NOT_PERFORMED"
   previous_release:
@@ -62,6 +79,7 @@ product:
     candidate_version: "server-0.18"
     previous_failed_candidate_version: "server-0.17"
     production_version: "server-0.14"
+    temporary_vps_soak_version: "server-0.18"
   browser_ui:
     inventory_count: 15
     immutable_javascript_mode_blob: "047395622eb2501dea6fbb9e6be2389e02bf2c77"
@@ -183,14 +201,41 @@ stages:
   - stage: "3.5.2.16"
     kind: "post-baseline-insertion release contract refresh"
     branch: "fix/3.5.2.16-post-baseline-insertion-release-contract"
-    commit: null
+    commit: "7385c282ca6f97a11c7436c06cc74cb01e4c018b"
+    integrated_commit: "307042411124ae181e19aea70b50ca7dff6d72a1"
+    pull_request: 82
+    qualification: "PASS"
+    integration: "PASS"
+  - stage: "3.5.2.17"
+    kind: "corrected-r3 VPS soak evidence closure"
+    branch: "fix/3.5.2.17-vps-soak-closure"
+    commit: "4f47994f61f68bf163179b8cd8eacbb1062633dd"
     integrated_commit: null
-    pull_request: null
-    qualification: "PASS_REQUIRED_BEFORE_OPERATIONS"
+    pull_request: 84
+    qualification: "PASS"
+    product_delta: false
+
+operations:
+  corrected_r3:
+    branch: "ops/3.5.2-server-0.18-vps-soak-r3"
+    head: "e451643776c16992e831c8b7313d60381d1e79c0"
+    pull_request: 83
+    state: "DRAFT_UNMERGED_DO_NOT_MERGE"
+    package_workflow_run: 31168344166
+    package_qualification: "PASS"
+    artifact_id: 8989921008
+    artifact_zip_sha256: "dfbcecb92b55e7093cd44c2e67dcafb77270a494198416259f2867583997c4a7"
+    tarball_sha256: "5df91492365f6f7ff4a473574b4b267c61e005f50ca8c2e01c653250367cf9da"
+    server_jar_sha256: "9a8fb1a0f1505d74fb15343ed0519782abb33b53097d6c0e46fbad7bad962718"
+    vps_deployment: "PASS"
+    torture_a_i: "PASS"
+    superseded_artifact_id: 8987874264
 
 release_boundary:
   merge_authorized: true
+  temporary_vps_soak_active: true
+  release_acceptance_performed: false
   release_branch_created: false
   tag_created: false
   github_release_created: false
-  production_deployed: false
+  permanent_production_cutover: false

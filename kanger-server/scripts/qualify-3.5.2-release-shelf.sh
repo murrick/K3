@@ -18,6 +18,8 @@ POST_SHUTDOWN_RELEASE_CONTRACT="f9419c9428424b958bd938db0f6cf29650acf3f0"
 BASELINE_INSERTION_QUALIFIED="6b4b8e51c8ab4023cb5e81c2b2d9ec9ad9d5cdc3"
 BASELINE_INSERTION_DOCS="d894e6e3d17a3c7bfb6c7a5c110664f838c489bf"
 BASELINE_INSERTION_INTEGRATION="a70dd388576882aa4cf827a31b3f4724ac339b16"
+POST_BASELINE_RELEASE_CONTRACT="307042411124ae181e19aea70b50ca7dff6d72a1"
+VPS_SOAK_CLOSURE_QUALIFIED="4f47994f61f68bf163179b8cd8eacbb1062633dd"
 
 require_pattern() {
   local pattern="$1"
@@ -51,7 +53,9 @@ for commit in \
   "${POST_SHUTDOWN_RELEASE_CONTRACT}" \
   "${BASELINE_INSERTION_QUALIFIED}" \
   "${BASELINE_INSERTION_DOCS}" \
-  "${BASELINE_INSERTION_INTEGRATION}"; do
+  "${BASELINE_INSERTION_INTEGRATION}" \
+  "${POST_BASELINE_RELEASE_CONTRACT}" \
+  "${VPS_SOAK_CLOSURE_QUALIFIED}"; do
   git cat-file -e "${commit}^{commit}"
 done
 
@@ -68,7 +72,9 @@ git merge-base --is-ancestor "${CONSOLE_SHUTDOWN_INTEGRATION}" "${POST_SHUTDOWN_
 git merge-base --is-ancestor "${POST_SHUTDOWN_RELEASE_CONTRACT}" "${BASELINE_INSERTION_QUALIFIED}"
 git merge-base --is-ancestor "${BASELINE_INSERTION_QUALIFIED}" "${BASELINE_INSERTION_DOCS}"
 git merge-base --is-ancestor "${BASELINE_INSERTION_DOCS}" "${BASELINE_INSERTION_INTEGRATION}"
-git merge-base --is-ancestor "${BASELINE_INSERTION_INTEGRATION}" HEAD
+git merge-base --is-ancestor "${BASELINE_INSERTION_INTEGRATION}" "${POST_BASELINE_RELEASE_CONTRACT}"
+git merge-base --is-ancestor "${POST_BASELINE_RELEASE_CONTRACT}" "${VPS_SOAK_CLOSURE_QUALIFIED}"
+git merge-base --is-ancestor "${VPS_SOAK_CLOSURE_QUALIFIED}" HEAD
 
 echo "RELEASE_SHELF_PASS ancestry"
 
@@ -83,10 +89,7 @@ EOF_FILES
 actual_stage_15_files="$(git diff --name-only "${POST_SHUTDOWN_RELEASE_CONTRACT}..${BASELINE_INSERTION_INTEGRATION}" | sort)"
 test "${actual_stage_15_files}" = "${expected_stage_15_files}" || {
   echo "Unexpected 3.5.2.15 file set" >&2
-  echo "Expected:" >&2
-  printf '%s\n' "${expected_stage_15_files}" >&2
-  echo "Actual:" >&2
-  printf '%s\n' "${actual_stage_15_files}" >&2
+  printf 'Expected:\n%s\nActual:\n%s\n' "${expected_stage_15_files}" "${actual_stage_15_files}" >&2
   exit 1
 }
 
@@ -98,7 +101,7 @@ fi
 
 echo "RELEASE_SHELF_PASS baseline-insertion-stage"
 
-expected_release_contract_files="$(cat <<'EOF_FILES'
+expected_stage_16_files="$(cat <<'EOF_FILES'
 3.5.2-closure.md
 REPOSITORY-LIFECYCLE.md
 docs/qualification/3.5.2.16-post-baseline-insertion-release-contract.md
@@ -107,23 +110,42 @@ kanger-server/scripts/qualify-3.5.2-release-shelf.sh
 release-manifest.yaml
 EOF_FILES
 )"
-actual_release_contract_files="$(git diff --name-only "${BASELINE_INSERTION_INTEGRATION}..HEAD" | sort)"
-test "${actual_release_contract_files}" = "${expected_release_contract_files}" || {
+actual_stage_16_files="$(git diff --name-only "${BASELINE_INSERTION_INTEGRATION}..${POST_BASELINE_RELEASE_CONTRACT}" | sort)"
+test "${actual_stage_16_files}" = "${expected_stage_16_files}" || {
   echo "Unexpected 3.5.2.16 release-contract file set" >&2
-  echo "Expected:" >&2
-  printf '%s\n' "${expected_release_contract_files}" >&2
-  echo "Actual:" >&2
-  printf '%s\n' "${actual_release_contract_files}" >&2
+  printf 'Expected:\n%s\nActual:\n%s\n' "${expected_stage_16_files}" "${actual_stage_16_files}" >&2
   exit 1
 }
 
-if git diff --name-only "${BASELINE_INSERTION_INTEGRATION}..HEAD" \
+if git diff --name-only "${BASELINE_INSERTION_INTEGRATION}..${POST_BASELINE_RELEASE_CONTRACT}" \
     | grep -Eq '^(html/|kanger/|kanger-console/src/|kanger-data-dumb/|kanger-qualification/src/|kanger-udf/|kanger-server/src/|kanger-server/test/|kanger-server/pom.xml$)'; then
-  echo "Product or qualification-code delta detected in post-baseline-insertion release-contract stage" >&2
+  echo "Product or qualification-code delta detected in 3.5.2.16 release-contract stage" >&2
   exit 1
 fi
 
 echo "RELEASE_SHELF_PASS post-baseline-insertion-release-contract-only-delta"
+
+expected_stage_17_files="$(cat <<'EOF_FILES'
+3.5.2-closure.md
+docs/qualification/3.5.2.17-vps-soak-closure.md
+kanger-server/scripts/qualify-3.5.2-release-shelf.sh
+release-manifest.yaml
+EOF_FILES
+)"
+actual_stage_17_files="$(git diff --name-only "${POST_BASELINE_RELEASE_CONTRACT}..HEAD" | sort)"
+test "${actual_stage_17_files}" = "${expected_stage_17_files}" || {
+  echo "Unexpected 3.5.2.17 VPS-soak-closure file set" >&2
+  printf 'Expected:\n%s\nActual:\n%s\n' "${expected_stage_17_files}" "${actual_stage_17_files}" >&2
+  exit 1
+}
+
+if git diff --name-only "${POST_BASELINE_RELEASE_CONTRACT}..HEAD" \
+    | grep -Eq '^(html/|kanger/|kanger-console/src/|kanger-data-dumb/|kanger-qualification/src/|kanger-udf/|kanger-server/src/|kanger-server/test/|kanger-server/pom.xml$)'; then
+  echo "Product/test/runtime delta detected in 3.5.2.17 VPS-soak closure" >&2
+  exit 1
+fi
+
+echo "RELEASE_SHELF_PASS vps-soak-closure-only-delta"
 
 require_pattern 'artifact: "3.5.2"' release-manifest.yaml
 require_pattern 'integrated_server_018_commit: "b967846832586858d42a5e21091154c682948d00"' release-manifest.yaml
@@ -132,22 +154,40 @@ require_pattern 'baseline_insertion_qualified_commit: "6b4b8e51c8ab4023cb5e81c2b
 require_pattern 'baseline_insertion_documentation_commit: "d894e6e3d17a3c7bfb6c7a5c110664f838c489bf"' release-manifest.yaml
 require_pattern 'baseline_insertion_integrated_commit: "a70dd388576882aa4cf827a31b3f4724ac339b16"' release-manifest.yaml
 require_pattern 'baseline_insertion_pull_request: 81' release-manifest.yaml
-require_pattern 'current_product_shelf_commit: "a70dd388576882aa4cf827a31b3f4724ac339b16"' release-manifest.yaml
+require_pattern 'post_baseline_release_contract_qualified_commit: "7385c282ca6f97a11c7436c06cc74cb01e4c018b"' release-manifest.yaml
+require_pattern 'post_baseline_release_contract_integrated_commit: "307042411124ae181e19aea70b50ca7dff6d72a1"' release-manifest.yaml
+require_pattern 'post_baseline_release_contract_pull_request: 82' release-manifest.yaml
+require_pattern 'current_product_shelf_commit: "307042411124ae181e19aea70b50ca7dff6d72a1"' release-manifest.yaml
 require_pattern 'candidate_version: "server-0.18"' release-manifest.yaml
 require_pattern 'previous_failed_candidate_version: "server-0.17"' release-manifest.yaml
 require_pattern 'production_version: "server-0.14"' release-manifest.yaml
+require_pattern 'temporary_vps_soak_version: "server-0.18"' release-manifest.yaml
 require_pattern 'post_shutdown_release_contract_qualification: "PASS"' release-manifest.yaml
 require_pattern 'baseline_insertion_qualification: "PASS"' release-manifest.yaml
 require_pattern 'baseline_insertion_manual_torture_qualification: "PASS"' release-manifest.yaml
 require_pattern 'baseline_insertion_integration: "PASS"' release-manifest.yaml
-require_pattern 'post_baseline_insertion_release_contract_qualification: "PASS_REQUIRED_BEFORE_OPERATIONS"' release-manifest.yaml
+require_pattern 'post_baseline_insertion_release_contract_qualification: "PASS"' release-manifest.yaml
+require_pattern 'corrected_r3_operations_head: "e451643776c16992e831c8b7313d60381d1e79c0"' release-manifest.yaml
+require_pattern 'corrected_r3_artifact_id: 8989921008' release-manifest.yaml
+require_pattern 'corrected_r3_package_qualification: "PASS"' release-manifest.yaml
+require_pattern 'corrected_r3_vps_deployment: "PASS"' release-manifest.yaml
+require_pattern 'vps_manual_torture_a_i: "PASS"' release-manifest.yaml
+require_pattern 'vps_soak_closure_branch: "fix/3.5.2.17-vps-soak-closure"' release-manifest.yaml
+require_pattern 'vps_soak_closure_qualified_commit: "4f47994f61f68bf163179b8cd8eacbb1062633dd"' release-manifest.yaml
+require_pattern 'vps_soak_closure_pull_request: 84' release-manifest.yaml
+require_pattern 'vps_soak_closure_qualification: "PASS"' release-manifest.yaml
 require_pattern 'acceptance: "NOT_PERFORMED"' release-manifest.yaml
 require_pattern 'production_cutover: "NOT_PERFORMED"' release-manifest.yaml
+require_pattern 'release_acceptance_performed: false' release-manifest.yaml
+require_pattern 'release_branch_created: false' release-manifest.yaml
+require_pattern 'permanent_production_cutover: false' release-manifest.yaml
 
 require_pattern 'server_version: server-0.18' 3.5.2-closure.md
-require_pattern '3.5.2.15.*Storage baseline insertion' 3.5.2-closure.md
-require_pattern 'a70dd388576882aa4cf827a31b3f4724ac339b16' 3.5.2-closure.md
-require_pattern 'manual torture qualification' 3.5.2-closure.md
+require_pattern '3.5.2.16.*Post-baseline-insertion release contract' 3.5.2-closure.md
+require_pattern '3.5.2.17.*Corrected-r3 VPS soak closure' 3.5.2-closure.md
+require_pattern '307042411124ae181e19aea70b50ca7dff6d72a1' 3.5.2-closure.md
+require_pattern 'manual VPS torture A-I' 3.5.2-closure.md
+require_pattern '3.5.2.17 VPS soak closure:.*PASS' 3.5.2-closure.md
 require_pattern '3.5.2.15' REPOSITORY-LIFECYCLE.md
 require_pattern '3.5.2.16' REPOSITORY-LIFECYCLE.md
 require_pattern 'kanger MUST NOT depend on' REPOSITORY-LIFECYCLE.md
@@ -157,6 +197,9 @@ require_pattern 'baseline insertion' kanger-server/DEPLOYMENT.md
 require_pattern 'fresh disposable database' kanger-server/DEPLOYMENT.md
 require_pattern 'must not be opened, repaired, reindexed or deleted' kanger-server/DEPLOYMENT.md
 require_pattern '3.5.2.15 integrated shelf' docs/qualification/3.5.2.16-post-baseline-insertion-release-contract.md
+require_pattern 'Corrected r3 operations provenance' docs/qualification/3.5.2.17-vps-soak-closure.md
+require_pattern 'manual VPS torture route through A–I' docs/qualification/3.5.2.17-vps-soak-closure.md
+require_pattern 'release acceptance:.*NOT PERFORMED' docs/qualification/3.5.2.17-vps-soak-closure.md
 
 require_pattern '<kanger.server.artifact.version>server-0.18</kanger.server.artifact.version>' kanger-server/pom.xml
 require_fixed 'EXPECTED_SERVER_VERSION="${KANGER_EXPECTED_SERVER_VERSION:-server-0.18}"' kanger-server/scripts/smoke-local.sh
