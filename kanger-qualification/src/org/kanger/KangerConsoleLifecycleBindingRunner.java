@@ -75,6 +75,12 @@ public final class KangerConsoleLifecycleBindingRunner {
                     Scanner.class,
                     ShutdownHook.class);
 
+            Method processQuery = privateMethod(
+                    Console.class,
+                    "processQuery",
+                    String.class,
+                    IMind.class);
+
             Method showDBrief = privateMethod(
                     Console.class,
                     "showDBrief",
@@ -137,14 +143,11 @@ public final class KangerConsoleLifecycleBindingRunner {
              * before storage acquisition or factory rebinding so the complete
              * Mind topology remains usable by ordinary commit/rollback.
              */
-            require(mind.compile("!useguardroot;"),
-                    "use-guard root assertion was rejected");
+            query(processQuery, "!useguardroot;", mind);
             IMind useLevel1 = new Mind(mind);
-            require(useLevel1.compile("!useguardlevel1;"),
-                    "use-guard level-1 assertion was rejected");
+            query(processQuery, "!useguardlevel1;", useLevel1);
             IMind useLevel2 = new Mind(useLevel1);
-            require(useLevel2.compile("!useguardlevel2;"),
-                    "use-guard level-2 assertion was rejected");
+            query(processQuery, "!useguardlevel2;", useLevel2);
 
             String guardedSource = useLevel2.getSourceCode();
             boolean activeUseRejected = false;
@@ -201,12 +204,14 @@ public final class KangerConsoleLifecycleBindingRunner {
              * database is opened: the database becomes the new persistent
              * baseline at level 0 and the previous workspace is recompiled as
              * a level-1 overlay. Rollback must leave the database untouched.
+             *
+             * Use the same processQuery path as an interactive Console command
+             * so persistence expectations match the actual operator surface.
              */
             String insertionStorage =
                     "console.baseline.insertion." + suffix;
 
-            require(mind.compile("!workspacepending;"),
-                    "pending workspace assertion was rejected");
+            query(processQuery, "!workspacepending;", mind);
             mind = use(useDatabase,
                     "use " + insertionStorage,
                     mind);
@@ -239,12 +244,14 @@ public final class KangerConsoleLifecycleBindingRunner {
              * persist the workspace exactly once after explicit commit.
              */
             mind = mind.useStorage(insertionStorage);
-            require(mind.compile("!databasebaseline;"),
-                    "database baseline assertion was rejected");
+            query(processQuery, "!databasebaseline;", mind);
+            mind = process(
+                    processTransaction,
+                    "transaction commit",
+                    mind);
             mind = mind.closeStorage();
 
-            require(mind.compile("!workspacecommit;"),
-                    "committed workspace assertion was rejected");
+            query(processQuery, "!workspacecommit;", mind);
             mind = use(useDatabase,
                     "use " + insertionStorage,
                     mind);
@@ -330,8 +337,7 @@ public final class KangerConsoleLifecycleBindingRunner {
              * Presentation must distinguish root logical state from the
              * chain-shared canonical runtime registries.
              */
-            require(mind.compile("!consolebinding;"),
-                    "qualification assertion was rejected");
+            query(processQuery, "!consolebinding;", mind);
 
             final IMind contentMind = mind;
 
@@ -416,8 +422,7 @@ public final class KangerConsoleLifecycleBindingRunner {
              * Console must not ask for a force-close confirmation.
              */
             IMind child = new Mind(mind);
-            require(child.compile("!consoleactive;"),
-                    "active-transaction assertion was rejected");
+            query(processQuery, "!consoleactive;", child);
 
             boolean activeTransactionRejected = false;
             try {
@@ -457,8 +462,7 @@ public final class KangerConsoleLifecycleBindingRunner {
             String shutdownStorage =
                     "console.shutdown.binding." + suffix;
             mind = mind.useStorage(shutdownStorage);
-            require(mind.compile("!shutdowncommitted;"),
-                    "shutdown committed assertion was rejected");
+            query(processQuery, "!shutdowncommitted;", mind);
 
             ShutdownHook shutdownHook = new ShutdownHook(mind);
             mind = process(
@@ -471,8 +475,7 @@ public final class KangerConsoleLifecycleBindingRunner {
                     "tracked transaction start did not create level 1");
             require(shutdownHook.getMind() == mind,
                     "shutdown hook did not receive active child Mind");
-            require(mind.compile("!shutdowntransient;"),
-                    "shutdown transient assertion was rejected");
+            query(processQuery, "!shutdowntransient;", mind);
 
             shutdownHook.shutdown();
             mind = shutdownHook.getMind();
@@ -581,6 +584,14 @@ public final class KangerConsoleLifecycleBindingRunner {
         } finally {
             scanner.close();
         }
+    }
+
+    private static void query(
+            Method method,
+            String line,
+            IMind mind) throws Exception {
+
+        invoke(method, line, mind);
     }
 
     private static IMind use(
