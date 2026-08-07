@@ -1,0 +1,220 @@
+name: KANGER 3.5.2 Server 0.18 VPS soak package r2
+
+on:
+  push:
+    branches:
+      - "ops/3.5.2-server-0.18-vps-soak-r2"
+    paths:
+      - ".github/workflows/kanger-3.5.2-vps-soak-r2.yml"
+      - "kanger-server/deploy/**"
+      - "kanger-server/VPS-SOAK-3.5.2.md"
+  pull_request:
+    branches:
+      - "develop/3.5.2.9-integration-release-shelf"
+    paths:
+      - ".github/workflows/kanger-3.5.2-vps-soak-r2.yml"
+      - "kanger-server/deploy/**"
+      - "kanger-server/VPS-SOAK-3.5.2.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Build matched Server 0.18 and Browser soak bundle r2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out complete history
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Verify canonical source and operations-only delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          canonical="f9419c9428424b958bd938db0f6cf29650acf3f0"
+          packaging_branch="ops/3.5.2-server-0.18-vps-soak-r2"
+          git merge-base --is-ancestor "${canonical}" HEAD
+
+          expected="$(cat <<'EOF_FILES'
+          .github/workflows/kanger-3.5.2-vps-soak-r2.yml
+          kanger-server/VPS-SOAK-3.5.2.md
+          kanger-server/deploy/deploy-soak.sh
+          kanger-server/deploy/rollback-soak.sh
+          kanger-server/deploy/snapshot-current.sh
+          EOF_FILES
+          )"
+          actual="$(git diff --name-only "${canonical}..HEAD" | sort)"
+          test "${actual}" = "${expected}"
+
+          if echo "${actual}" | grep -Eq \
+              '^(html/|kanger/|kanger-console/src/|kanger-data-dumb/|kanger-qualification/src/|kanger-udf/|kanger-server/src/|kanger-server/test/|kanger-server/pom.xml$)'; then
+            echo "Product, test or qualification-code delta detected in r2 operations branch" >&2
+            exit 1
+          fi
+
+          bash -n kanger-server/deploy/snapshot-current.sh
+          bash -n kanger-server/deploy/deploy-soak.sh
+          bash -n kanger-server/deploy/rollback-soak.sh
+
+          grep -q "${canonical}" kanger-server/deploy/deploy-soak.sh kanger-server/VPS-SOAK-3.5.2.md
+          grep -q "${packaging_branch}" kanger-server/deploy/deploy-soak.sh kanger-server/VPS-SOAK-3.5.2.md
+          grep -q 'packaging_generation=r2' kanger-server/deploy/deploy-soak.sh kanger-server/VPS-SOAK-3.5.2.md
+          grep -q 'server-0.18' kanger-server/deploy/deploy-soak.sh kanger-server/VPS-SOAK-3.5.2.md
+          grep -q '/home/murray/sites/kanger-server-0.14-20260804T181706Z' \
+            kanger-server/deploy/snapshot-current.sh \
+            kanger-server/deploy/deploy-soak.sh
+          grep -q '/var/www/html/kanger' \
+            kanger-server/deploy/snapshot-current.sh \
+            kanger-server/deploy/deploy-soak.sh \
+            kanger-server/deploy/rollback-soak.sh
+          grep -q 'ui_publication_mode=versioned-directory-atomic-symlink' \
+            kanger-server/deploy/snapshot-current.sh \
+            kanger-server/deploy/deploy-soak.sh \
+            kanger-server/deploy/rollback-soak.sh
+          grep -q 'mv -Tf' kanger-server/deploy/deploy-soak.sh kanger-server/deploy/rollback-soak.sh
+          grep -q 'fresh disposable database' kanger-server/VPS-SOAK-3.5.2.md
+          grep -q 'explicit close' kanger-server/VPS-SOAK-3.5.2.md
+
+          echo "SOAK_PACKAGE_R2_PASS operations-only-delta"
+
+      - name: Build and test Server 0.18
+        shell: bash
+        run: |
+          mvn -B -ntp \
+            -f kanger-server/pom.xml \
+            -Dkanger.build.branch.override=develop/3.5.2.9-integration-release-shelf \
+            clean verify
+
+          test -f kanger-server/target/kanger-server.jar
+          unzip -p kanger-server/target/kanger-server.jar org/kanger/build.properties \
+            | grep -q '^server.version=server-0.18$'
+          unzip -p kanger-server/target/kanger-server.jar org/kanger/build.properties \
+            | grep -q '^branch=server-0.18$'
+
+          echo "SOAK_PACKAGE_R2_PASS server-0.18-build"
+
+      - name: Re-run Browser executable authorities
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check html/config.js
+          node --check html/containment.js
+          node --check html/error.js
+          node --check html/gateway.js
+          node --check html/javascript-mode-vendor.js
+          node --check html/javascript-mode.js
+          node --check html/javascript.js
+          node --check html/operation.js
+          node --check html/workspace.js
+
+          node kanger-server/scripts/qualify-gateway-session.js
+          node kanger-server/scripts/qualify-gateway-bootstrap.js
+          node kanger-server/scripts/qualify-trusted-rendering.js
+          node kanger-server/scripts/qualify-operation-snapshot.js
+          node kanger-server/scripts/qualify-workspace-state.js
+          node kanger-server/scripts/qualify-error-containment.js "${GITHUB_WORKSPACE}"
+
+          echo "SOAK_PACKAGE_R2_PASS browser-authorities"
+
+      - name: Assemble and verify immutable Server 0.18 r2 soak bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          canonical="f9419c9428424b958bd938db0f6cf29650acf3f0"
+          short="${canonical:0:12}"
+          package="kanger-3.5.2-server-0.18-vps-soak-r2-${short}"
+          root="${RUNNER_TEMP}/${package}"
+          artifact_dir="${GITHUB_WORKSPACE}/dist"
+
+          mkdir -p "${root}/html" "${root}/deploy" "${root}/docs" "${artifact_dir}"
+          cp kanger-server/target/kanger-server.jar "${root}/kanger-server.jar"
+          cp -a html/. "${root}/html/"
+          cp -a kanger-server/deploy/. "${root}/deploy/"
+          cp kanger-server/DEPLOYMENT.md "${root}/docs/DEPLOYMENT.md"
+          cp kanger-server/VPS-SOAK-3.5.2.md "${root}/docs/VPS-SOAK-3.5.2.md"
+          chmod 0755 \
+            "${root}/deploy/install.sh" \
+            "${root}/deploy/verify-installed.sh" \
+            "${root}/deploy/kanger-admin" \
+            "${root}/deploy/snapshot-current.sh" \
+            "${root}/deploy/deploy-soak.sh" \
+            "${root}/deploy/rollback-soak.sh"
+
+          cat > "${root}/SOURCE.txt" <<EOF_SOURCE
+          schema=3
+          artifact=3.5.2-server-0.18-vps-soak-r2
+          canonical_source_branch=develop/3.5.2.9-integration-release-shelf
+          canonical_source_head=${canonical}
+          packaging_branch=ops/3.5.2-server-0.18-vps-soak-r2
+          packaging_generation=r2
+          packaging_head=${GITHUB_SHA}
+          server_version=server-0.18
+          core_version=3.3
+          api_version=1
+          browser_files=15
+          editable_ui_directory=/home/murray/sites/kanger
+          public_ui_link=/var/www/html/kanger
+          production_ui_target=/home/murray/sites/kanger-server-0.14-20260804T181706Z
+          ui_publication_mode=versioned-directory-atomic-symlink
+          production_before_soak=server-0.14
+          previous_failed_candidate=server-0.17
+          superseded_package_source=b0ed1cee70d6a4bbaf3b7690df766b9eae41f891
+          release_acceptance=NOT_PERFORMED
+          production_release_cutover=NOT_PERFORMED
+          EOF_SOURCE
+
+          (
+            cd "${root}"
+            find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
+            sha256sum -c SHA256SUMS
+          )
+
+          tar -C "${RUNNER_TEMP}" -czf "${artifact_dir}/${package}.tar.gz" "${package}"
+          (
+            cd "${artifact_dir}"
+            sha256sum "${package}.tar.gz" > "${package}.tar.gz.sha256"
+            sha256sum -c "${package}.tar.gz.sha256"
+          )
+          cp "${root}/SOURCE.txt" "${artifact_dir}/${package}.SOURCE.txt"
+          cp "${root}/SHA256SUMS" "${artifact_dir}/${package}.SHA256SUMS"
+
+          verify="${RUNNER_TEMP}/verify"
+          mkdir -p "${verify}"
+          tar -C "${verify}" -xzf "${artifact_dir}/${package}.tar.gz"
+          (
+            cd "${verify}/${package}"
+            sha256sum -c SHA256SUMS
+            grep -q '^canonical_source_head=f9419c9428424b958bd938db0f6cf29650acf3f0$' SOURCE.txt
+            grep -q '^packaging_branch=ops/3.5.2-server-0.18-vps-soak-r2$' SOURCE.txt
+            grep -q '^packaging_generation=r2$' SOURCE.txt
+            grep -q '^packaging_head='"${GITHUB_SHA}"'$' SOURCE.txt
+            grep -q '^server_version=server-0.18$' SOURCE.txt
+            grep -q '^browser_files=15$' SOURCE.txt
+          )
+
+          echo "SOAK_PACKAGE_R2_OK"
+          cat "${artifact_dir}/${package}.tar.gz.sha256"
+          sha256sum "${root}/kanger-server.jar"
+
+      - name: Upload Server 0.18 VPS soak r2 package
+        uses: actions/upload-artifact@v7
+        with:
+          name: kanger-3.5.2-server-0.18-vps-soak-r2
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 90
