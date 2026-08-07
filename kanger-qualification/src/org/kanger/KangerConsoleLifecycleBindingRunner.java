@@ -67,6 +67,14 @@ public final class KangerConsoleLifecycleBindingRunner {
                     IMind.class,
                     Scanner.class);
 
+            Method trackedTransaction = privateMethod(
+                    Console.class,
+                    "processTransaction",
+                    String.class,
+                    IMind.class,
+                    Scanner.class,
+                    ShutdownHook.class);
+
             Method showDBrief = privateMethod(
                     Console.class,
                     "showDBrief",
@@ -272,6 +280,60 @@ public final class KangerConsoleLifecycleBindingRunner {
             require(!mind.isStorageUsed(),
                     "qualification storage did not close cleanly");
 
+            /*
+             * JVM shutdown must retain Console ownership of the active Mind.
+             * An unfinished child transaction is rolled back rather than
+             * committed implicitly, then the root follows the ordinary Core
+             * checkpoint/close path. The resulting storage must reopen with
+             * committed root content only.
+             */
+            String shutdownStorage =
+                    "console.shutdown.binding." + suffix;
+            mind = mind.useStorage(shutdownStorage);
+            require(mind.compile("!shutdowncommitted;"),
+                    "shutdown committed assertion was rejected");
+
+            ShutdownHook shutdownHook = new ShutdownHook(mind);
+            mind = process(
+                    trackedTransaction,
+                    "transaction start",
+                    mind,
+                    shutdownHook);
+
+            require(mind.getTransactionLevel() == 1,
+                    "tracked transaction start did not create level 1");
+            require(shutdownHook.getMind() == mind,
+                    "shutdown hook did not receive active child Mind");
+            require(mind.compile("!shutdowntransient;"),
+                    "shutdown transient assertion was rejected");
+
+            shutdownHook.shutdown();
+            mind = shutdownHook.getMind();
+
+            require(mind != null,
+                    "shutdown discarded the root Mind");
+            require(mind.getTransactionLevel() == 0,
+                    "shutdown did not unwind to transaction level 0");
+            require(!mind.isStorageUsed(),
+                    "shutdown did not close physical storage");
+
+            mind = mind.useStorage(shutdownStorage);
+            String reopenedSource = mind.getSourceCode();
+
+            require(reopenedSource.contains("shutdowncommitted"),
+                    "shutdown lost committed root content");
+            require(!reopenedSource.contains("shutdowntransient"),
+                    "shutdown implicitly committed active child content");
+
+            mind = mind.closeStorage();
+            shutdownHook.setMind(mind);
+            shutdownHook.shutdown();
+
+            require(shutdownHook.getMind() == mind,
+                    "closed-storage shutdown replaced the root Mind");
+            require(!shutdownHook.getMind().isStorageUsed(),
+                    "closed-storage shutdown reopened storage");
+
             System.out.println(
                     "CONSOLE_LIFECYCLE_BINDING_PASS idempotent-root-commit");
             System.out.println(
@@ -282,6 +344,12 @@ public final class KangerConsoleLifecycleBindingRunner {
                     "CONSOLE_LIFECYCLE_BINDING_PASS semantic-presentation");
             System.out.println(
                     "CONSOLE_LIFECYCLE_BINDING_PASS diagnostic-na");
+            System.out.println(
+                    "CONSOLE_LIFECYCLE_BINDING_PASS shutdown-active-rollback");
+            System.out.println(
+                    "CONSOLE_LIFECYCLE_BINDING_PASS shutdown-root-close");
+            System.out.println(
+                    "CONSOLE_LIFECYCLE_BINDING_PASS shutdown-idempotent-closed");
             System.out.println(
                     "CONSOLE_LIFECYCLE_BINDING_OK");
 
@@ -316,6 +384,25 @@ public final class KangerConsoleLifecycleBindingRunner {
                     line,
                     mind,
                     scanner);
+        } finally {
+            scanner.close();
+        }
+    }
+
+    private static IMind process(
+            Method method,
+            String line,
+            IMind mind,
+            ShutdownHook shutdownHook) throws Exception {
+
+        Scanner scanner = new Scanner("");
+        try {
+            return (IMind) invoke(
+                    method,
+                    line,
+                    mind,
+                    scanner,
+                    shutdownHook);
         } finally {
             scanner.close();
         }

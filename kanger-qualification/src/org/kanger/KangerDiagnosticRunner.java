@@ -153,9 +153,6 @@ public final class KangerDiagnosticRunner {
         IUser user = openUser();
         new UDF().init(user);
         new DB().init(user);
-        if (installShutdownHook) {
-            Runtime.getRuntime().addShutdownHook(new ShutdownHook(user));
-        }
 
         IMind mind = new Mind(user);
         mind = mind.useStorage("diagnostics/persistence/" + scenario);
@@ -166,6 +163,9 @@ public final class KangerDiagnosticRunner {
         }
         System.out.println(Diagnostics.snapshot(mind, "written marker " + scenario));
 
+        if (installShutdownHook) {
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook(mind));
+        }
         if (explicitFlush) {
             ((User) user).flush();
         }

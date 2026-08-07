@@ -144,12 +144,17 @@ public class Console {
 //    }
 
     public static void session(IMind mind) throws Exception, ClassNotFoundException, RuntimeErrorException {
+        session(mind, null);
+    }
+
+    static void session(IMind mind, ShutdownHook shutdownHook) throws Exception, ClassNotFoundException, RuntimeErrorException {
         boolean stop = false;
 
 
         String lastQuery = "";
 
         sc = new Scanner(System.in);
+        mind = trackShutdownMind(shutdownHook, mind);
 
 //        try {
 //            Global.getUdf();
@@ -174,6 +179,7 @@ public class Console {
         while (!stop) {
             String line = "";
             try {
+                mind = trackShutdownMind(shutdownHook, mind);
                 line = accept();
 
                 if (line == null) {
@@ -235,31 +241,31 @@ public class Console {
                             showExplanation(mind, LogMode.ALL, line, sc);
                             break;
                         case 'E':   // ERASE
-                            mind = clearWorkspace(mind, sc);
+                            mind = trackShutdownMind(shutdownHook, clearWorkspace(mind, sc));
                             break;
                         case 'G':   // GET
-                            mind = loadSourceFile(mind, loadSource(line, mind, sc));
+                            mind = trackShutdownMind(shutdownHook, loadSourceFile(mind, loadSource(line, mind, sc)));
                             break;
                         case 'P':   // PUT
                             saveSource(line, mind, sc);
                             break;
                         case 'C':   // CLOSE
-                            mind = closeDatabase(mind, sc);
+                            mind = trackShutdownMind(shutdownHook, closeDatabase(mind, sc));
                             break;
                         case 'U':   // USE
-                            mind = useDatabase(line, mind, sc);
+                            mind = trackShutdownMind(shutdownHook, useDatabase(line, mind, sc));
                             break;
                         case 'D':   // DROP
-                            mind = dropDatabase(line, mind, sc);
+                            mind = trackShutdownMind(shutdownHook, dropDatabase(line, mind, sc));
                             break;
                         case 'I':   // INDEX
-                            mind = packDatabase(line, mind, sc);
+                            mind = trackShutdownMind(shutdownHook, packDatabase(line, mind, sc));
                             break;
                         case 'O':   // OPTIONS
                             options(line, mind, sc);
                             break;
                         case 'T':   // TRANSACTION
-                            mind = processTransaction(line, mind, sc);
+                            mind = trackShutdownMind(shutdownHook, processTransaction(line, mind, sc, shutdownHook));
                             break;
                         case Enums.SUC:
                             lastQuery = line;
@@ -333,7 +339,7 @@ public class Console {
 
         }
         try {
-            mind = mind.closeStorage();
+            mind = trackShutdownMind(shutdownHook, mind.closeStorage());
         } catch (Exception e) {
             System.err.println(new Date());
             e.printStackTrace(System.err);
@@ -342,26 +348,37 @@ public class Console {
 
     }
 
+    static IMind trackShutdownMind(ShutdownHook shutdownHook, IMind mind) {
+        if (shutdownHook != null) {
+            shutdownHook.setMind(mind);
+        }
+        return mind;
+    }
+
     private static IMind processTransaction(String line, IMind mind, Scanner sc) throws Exception {
+        return processTransaction(line, mind, sc, null);
+    }
+
+    private static IMind processTransaction(String line, IMind mind, Scanner sc, ShutdownHook shutdownHook) throws Exception {
         for (String s : line.split(" ")) {
             if (!s.trim().isEmpty()) {
                 switch (s.trim().toUpperCase().charAt(0)) {
                     case 'T':
                         break;
                     case 'S':
-                        mind = new Mind(mind);
+                        mind = trackShutdownMind(shutdownHook, new Mind(mind));
                         break;
                     case 'C': {
                         IMind m = mind.getNext();
                         if (m != null) {
                             if (m.commit(mind)) {
                                 System.out.printf("SUCCESS: Transaction committed\n");
-                                mind = m;
+                                mind = trackShutdownMind(shutdownHook, m);
                             } else {
                                 System.out.printf("WARNING: Commit rejected. See xplanation log for details\n");
                             }
                         } else if (mind.isStorageUsed()) {
-                            mind = mind.getUser().checkpoint(mind);
+                            mind = trackShutdownMind(shutdownHook, mind.getUser().checkpoint(mind));
                             System.out.printf("SUCCESS: Storage checkpoint completed\n");
                         }
                     }
@@ -371,7 +388,7 @@ public class Console {
                         if (m != null) {
                             m.release(mind);
                             System.out.printf("SUCCESS: Transaction rolled back\n");
-                            mind = m;
+                            mind = trackShutdownMind(shutdownHook, m);
                         }
                     }
                     break;
@@ -380,7 +397,7 @@ public class Console {
         }
         System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
 //        System.out.printf("Transaction counter %d\n", mind.getTransactionCounter(), mind.getId());
-        return mind;
+        return trackShutdownMind(shutdownHook, mind);
     }
 
 //    private static void processFunction(String line, IMind mind) throws Exception {
@@ -1597,6 +1614,3 @@ public class Console {
         }
     }
 }
-
-//TODO: Переводы строк и начальные пробелы внутри не сохраняются в комментариях
-//TODO: Что-то не так в созранении файла в PUT

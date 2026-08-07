@@ -25,28 +25,72 @@
 
 package org.kanger;
 
-import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.IMind;
 
 import java.util.Date;
 
 /**
- * Created by Dmitry G. Quznetsov on 27.05.20.
+ * JVM shutdown adapter for the interactive Console runtime.
+ *
+ * <p>The hook follows the same ownership contract as ordinary Console
+ * lifecycle operations: it retains the actually active {@link IMind}, rolls
+ * back unfinished child transaction levels to the root, and delegates physical
+ * storage shutdown to {@link IMind#closeStorage()}. It never bypasses the Core
+ * lifecycle with a null Mind or a direct low-level storage close.</p>
  */
 public class ShutdownHook extends Thread {
-    User user = null;
+    private volatile IMind mind;
 
-    public ShutdownHook(IUser user) {
-        this.user = (User) user;
+    public ShutdownHook(IMind mind) {
+        this.mind = mind;
+    }
+
+    /**
+     * Publishes the Console-owned active Mind to the shutdown thread.
+     */
+    public void setMind(IMind mind) {
+        this.mind = mind;
+    }
+
+    /**
+     * Returns the latest Console-owned Mind. Package-visible qualification
+     * uses this to verify that shutdown finishes at the root context.
+     */
+    IMind getMind() {
+        return mind;
+    }
+
+    /**
+     * Performs the deterministic cleanup used by {@link #run()}.
+     *
+     * <p>Unfinished nested transactions are rolled back because JVM shutdown
+     * cannot implicitly commit operator work that was never committed by the
+     * Console session. Once the root is reached, normal Core close performs the
+     * durable root checkpoint and physical storage close.</p>
+     */
+    void shutdown() throws Exception {
+        IMind active = mind;
+        if (active == null) {
+            return;
+        }
+
+        while (active.getNext() != null) {
+            IMind parent = active.getNext();
+            parent.release(active);
+            active = parent;
+            mind = active;
+        }
+
+        if (active.isStorageUsed()) {
+            active = active.closeStorage();
+            mind = active;
+        }
     }
 
     @Override
     public void run() {
-        super.run();
         try {
-            if (user != null && !user.isClosed()) {
-                user.flush();
-                user.close(null);
-            }
+            shutdown();
         } catch (Exception e) {
             System.err.println(new Date());
             e.printStackTrace(System.err);
