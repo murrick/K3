@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export LC_ALL=C
 
 usage() {
   echo "Usage: sudo bash $0 BUNDLE_DIR SNAPSHOT_ARCHIVE OFFHOST_RECEIPT" >&2
