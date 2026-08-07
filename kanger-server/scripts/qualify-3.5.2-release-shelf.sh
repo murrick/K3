@@ -15,6 +15,24 @@ RELEASE_CONTRACT_012="b0ed1cee70d6a4bbaf3b7690df766b9eae41f891"
 CONSOLE_SHUTDOWN_QUALIFIED="df738ca6657fcc1fa15619e1d2b3cccd4e51b397"
 CONSOLE_SHUTDOWN_INTEGRATION="ddbf5ab380b4124013f58bbd655a2131ccba536b"
 
+require_pattern() {
+  local pattern="$1"
+  local file="$2"
+  grep -q -- "${pattern}" "${file}" || {
+    echo "Missing release-contract marker in ${file}: ${pattern}" >&2
+    exit 1
+  }
+}
+
+require_fixed() {
+  local pattern="$1"
+  local file="$2"
+  grep -Fq -- "${pattern}" "${file}" || {
+    echo "Missing fixed release-contract marker in ${file}: ${pattern}" >&2
+    exit 1
+  }
+}
+
 for commit in \
   "${BASE}" \
   "${STAGE_8}" \
@@ -51,9 +69,7 @@ kanger-qualification/src/org/kanger/KangerConsoleLifecycleBindingRunner.java
 kanger-qualification/src/org/kanger/KangerDiagnosticRunner.java
 EOF_FILES
 )"
-actual_stage_13_files="$(
-  git diff --name-only "${RELEASE_CONTRACT_012}..${CONSOLE_SHUTDOWN_INTEGRATION}" | sort
-)"
+actual_stage_13_files="$(git diff --name-only "${RELEASE_CONTRACT_012}..${CONSOLE_SHUTDOWN_INTEGRATION}" | sort)"
 test "${actual_stage_13_files}" = "${expected_stage_13_files}"
 
 if git diff --name-only "${RELEASE_CONTRACT_012}..${CONSOLE_SHUTDOWN_INTEGRATION}" \
@@ -73,9 +89,7 @@ kanger-server/scripts/qualify-3.5.2-release-shelf.sh
 release-manifest.yaml
 EOF_FILES
 )"
-actual_release_contract_files="$(
-  git diff --name-only "${CONSOLE_SHUTDOWN_INTEGRATION}..HEAD" | sort
-)"
+actual_release_contract_files="$(git diff --name-only "${CONSOLE_SHUTDOWN_INTEGRATION}..HEAD" | sort)"
 test "${actual_release_contract_files}" = "${expected_release_contract_files}"
 
 if git diff --name-only "${CONSOLE_SHUTDOWN_INTEGRATION}..HEAD" \
@@ -86,43 +100,34 @@ fi
 
 echo "RELEASE_SHELF_PASS post-shutdown-release-contract-only-delta"
 
-grep -q 'artifact: "3.5.2"' release-manifest.yaml
-grep -q 'integrated_server_018_commit: "b967846832586858d42a5e21091154c682948d00"' \
-  release-manifest.yaml
-grep -q 'release_contract_012_merge_commit: "b0ed1cee70d6a4bbaf3b7690df766b9eae41f891"' \
-  release-manifest.yaml
-grep -q 'console_shutdown_qualified_commit: "df738ca6657fcc1fa15619e1d2b3cccd4e51b397"' \
-  release-manifest.yaml
-grep -q 'console_shutdown_integrated_commit: "ddbf5ab380b4124013f58bbd655a2131ccba536b"' \
-  release-manifest.yaml
-grep -q 'console_shutdown_pull_request: 78' release-manifest.yaml
-grep -q 'candidate_version: "server-0.18"' release-manifest.yaml
-grep -q 'previous_failed_candidate_version: "server-0.17"' release-manifest.yaml
-grep -q 'production_version: "server-0.14"' release-manifest.yaml
-grep -q 'release_contract_012_qualification: "PASS"' release-manifest.yaml
-grep -q 'post_shutdown_release_contract_qualification: "PASS_REQUIRED_BEFORE_OPERATIONS"' \
-  release-manifest.yaml
-grep -q 'acceptance: "NOT_PERFORMED"' release-manifest.yaml
-grep -q 'production_cutover: "NOT_PERFORMED"' release-manifest.yaml
+require_pattern 'artifact: "3.5.2"' release-manifest.yaml
+require_pattern 'integrated_server_018_commit: "b967846832586858d42a5e21091154c682948d00"' release-manifest.yaml
+require_pattern 'release_contract_012_merge_commit: "b0ed1cee70d6a4bbaf3b7690df766b9eae41f891"' release-manifest.yaml
+require_pattern 'console_shutdown_qualified_commit: "df738ca6657fcc1fa15619e1d2b3cccd4e51b397"' release-manifest.yaml
+require_pattern 'console_shutdown_integrated_commit: "ddbf5ab380b4124013f58bbd655a2131ccba536b"' release-manifest.yaml
+require_pattern 'console_shutdown_pull_request: 78' release-manifest.yaml
+require_pattern 'candidate_version: "server-0.18"' release-manifest.yaml
+require_pattern 'previous_failed_candidate_version: "server-0.17"' release-manifest.yaml
+require_pattern 'production_version: "server-0.14"' release-manifest.yaml
+require_pattern 'release_contract_012_qualification: "PASS"' release-manifest.yaml
+require_pattern 'post_shutdown_release_contract_qualification: "PASS_REQUIRED_BEFORE_OPERATIONS"' release-manifest.yaml
+require_pattern 'acceptance: "NOT_PERFORMED"' release-manifest.yaml
+require_pattern 'production_cutover: "NOT_PERFORMED"' release-manifest.yaml
 
-grep -q 'server_version: server-0.18' 3.5.2-closure.md
-grep -q '3.5.2.13.*Console shutdown lifecycle' 3.5.2-closure.md
-grep -q 'ddbf5ab380b4124013f58bbd655a2131ccba536b' 3.5.2-closure.md
-grep -q 'post-shutdown release contract' 3.5.2-closure.md
-grep -q '3.5.2.13' REPOSITORY-LIFECYCLE.md
-grep -q '3.5.2.14' REPOSITORY-LIFECYCLE.md
-grep -q 'Server 0.18 deployment contract' kanger-server/DEPLOYMENT.md
-grep -q 'ddbf5ab380b4124013f58bbd655a2131ccba536b' kanger-server/DEPLOYMENT.md
-grep -q 'fresh disposable database' kanger-server/DEPLOYMENT.md
-grep -q 'must not be opened, repaired, reindexed or deleted' \
-  kanger-server/DEPLOYMENT.md
+require_pattern 'server_version: server-0.18' 3.5.2-closure.md
+require_pattern '3.5.2.13.*Console shutdown lifecycle' 3.5.2-closure.md
+require_pattern 'ddbf5ab380b4124013f58bbd655a2131ccba536b' 3.5.2-closure.md
+require_pattern 'post-shutdown release contract' 3.5.2-closure.md
+require_pattern '3.5.2.13' REPOSITORY-LIFECYCLE.md
+require_pattern '3.5.2.14' REPOSITORY-LIFECYCLE.md
+require_pattern 'Server 0.18 deployment contract' kanger-server/DEPLOYMENT.md
+require_pattern 'ddbf5ab380b4124013f58bbd655a2131ccba536b' kanger-server/DEPLOYMENT.md
+require_pattern 'fresh disposable database' kanger-server/DEPLOYMENT.md
+require_pattern 'must not be opened, repaired, reindexed or deleted' kanger-server/DEPLOYMENT.md
 
-grep -q '<kanger.server.artifact.version>server-0.18</kanger.server.artifact.version>' \
-  kanger-server/pom.xml
-grep -Fq 'EXPECTED_SERVER_VERSION="${KANGER_EXPECTED_SERVER_VERSION:-server-0.18}"' \
-  kanger-server/scripts/smoke-local.sh
-grep -Fq '\"server_version\":\"server-0.18\"' \
-  kanger-server/deploy/verify-installed.sh
+require_pattern '<kanger.server.artifact.version>server-0.18</kanger.server.artifact.version>' kanger-server/pom.xml
+require_fixed 'EXPECTED_SERVER_VERSION="${KANGER_EXPECTED_SERVER_VERSION:-server-0.18}"' kanger-server/scripts/smoke-local.sh
+require_fixed '"server_version":"server-0.18"' kanger-server/deploy/verify-installed.sh
 
 echo "RELEASE_SHELF_PASS identity-and-record"
 
@@ -144,17 +149,14 @@ operation.js
 workspace.js
 EOF_BROWSER
 )"
-actual_browser_files="$(
-  find html -mindepth 1 -maxdepth 1 -type f -printf '%f\n' | sort
-)"
+actual_browser_files="$(find html -mindepth 1 -maxdepth 1 -type f -printf '%f\n' | sort)"
 test "${actual_browser_files}" = "${expected_browser_files}"
-test "$(git hash-object html/javascript-mode-vendor.js)" = \
-  "047395622eb2501dea6fbb9e6be2389e02bf2c77"
-grep -q 'inventory_count: 15' release-manifest.yaml
-grep -q 'sandbox="allow-scripts"' html/index.html
+test "$(git hash-object html/javascript-mode-vendor.js)" = "047395622eb2501dea6fbb9e6be2389e02bf2c77"
+require_pattern 'inventory_count: 15' release-manifest.yaml
+require_pattern 'sandbox="allow-scripts"' html/index.html
 ! grep -q 'allow-same-origin' html/index.html
-grep -q '<script src="containment.js"></script>' html/index.html
-grep -q 'error.js' html/javascript-mode.js
+require_pattern '<script src="containment.js"></script>' html/index.html
+require_pattern 'error.js' html/javascript-mode.js
 
 echo "RELEASE_SHELF_PASS browser-inventory"
 
@@ -186,10 +188,9 @@ echo "RELEASE_SHELF_PASS browser-authorities"
 test -f kanger-server/DEPLOYMENT-0.16.md
 test -f kanger-server/DEPLOYMENT.md
 test -f kanger-server/VERSION-CONTRACT.md
-grep -q 'Publish the qualified 15-file browser artifact' \
-  kanger-server/DEPLOYMENT.md
-grep -q 'sandbox="allow-scripts"' kanger-server/DEPLOYMENT.md
-grep -q 'server-0.18' kanger-server/VERSION-CONTRACT.md
+require_pattern 'Publish the qualified 15-file browser artifact' kanger-server/DEPLOYMENT.md
+require_pattern 'sandbox="allow-scripts"' kanger-server/DEPLOYMENT.md
+require_pattern 'server-0.18' kanger-server/VERSION-CONTRACT.md
 ! grep -q 'allow-same-origin is permitted' kanger-server/DEPLOYMENT.md
 
 echo "RELEASE_SHELF_PASS deployment-contract"
