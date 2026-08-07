@@ -11,6 +11,9 @@ CORRECTED_SHELF="03310482cebdf55b34829f3d59bdd197edb6275b"
 SERVER_018_CODE="a16ec7abb9b2df1aebbaed921088184f0e571c47"
 SERVER_018_DOCS="0213e82023a313641b05ff62d7381da5adc6da09"
 SERVER_018_INTEGRATION="b967846832586858d42a5e21091154c682948d00"
+RELEASE_CONTRACT_012="b0ed1cee70d6a4bbaf3b7690df766b9eae41f891"
+CONSOLE_SHUTDOWN_QUALIFIED="df738ca6657fcc1fa15619e1d2b3cccd4e51b397"
+CONSOLE_SHUTDOWN_INTEGRATION="ddbf5ab380b4124013f58bbd655a2131ccba536b"
 
 for commit in \
   "${BASE}" \
@@ -19,7 +22,10 @@ for commit in \
   "${CORRECTED_SHELF}" \
   "${SERVER_018_CODE}" \
   "${SERVER_018_DOCS}" \
-  "${SERVER_018_INTEGRATION}"; do
+  "${SERVER_018_INTEGRATION}" \
+  "${RELEASE_CONTRACT_012}" \
+  "${CONSOLE_SHUTDOWN_QUALIFIED}" \
+  "${CONSOLE_SHUTDOWN_INTEGRATION}"; do
   git cat-file -e "${commit}^{commit}"
 done
 
@@ -29,54 +35,87 @@ git merge-base --is-ancestor "${LIFECYCLE_CORRECTION}" "${CORRECTED_SHELF}"
 git merge-base --is-ancestor "${CORRECTED_SHELF}" "${SERVER_018_CODE}"
 git merge-base --is-ancestor "${SERVER_018_CODE}" "${SERVER_018_DOCS}"
 git merge-base --is-ancestor "${SERVER_018_DOCS}" "${SERVER_018_INTEGRATION}"
-git merge-base --is-ancestor "${SERVER_018_INTEGRATION}" HEAD
+git merge-base --is-ancestor "${SERVER_018_INTEGRATION}" "${RELEASE_CONTRACT_012}"
+git merge-base --is-ancestor "${RELEASE_CONTRACT_012}" "${CONSOLE_SHUTDOWN_QUALIFIED}"
+git merge-base --is-ancestor "${CONSOLE_SHUTDOWN_QUALIFIED}" "${CONSOLE_SHUTDOWN_INTEGRATION}"
+git merge-base --is-ancestor "${CONSOLE_SHUTDOWN_INTEGRATION}" HEAD
 
 echo "RELEASE_SHELF_PASS ancestry"
 
+expected_stage_13_files="$(cat <<'EOF_FILES'
+docs/qualification/3.5.2.13-console-shutdown-lifecycle.md
+kanger-console/src/org/kanger/Console.java
+kanger-console/src/org/kanger/Kanger.java
+kanger-console/src/org/kanger/ShutdownHook.java
+kanger-qualification/src/org/kanger/KangerConsoleLifecycleBindingRunner.java
+kanger-qualification/src/org/kanger/KangerDiagnosticRunner.java
+EOF_FILES
+)"
+actual_stage_13_files="$(
+  git diff --name-only "${RELEASE_CONTRACT_012}..${CONSOLE_SHUTDOWN_INTEGRATION}" | sort
+)"
+test "${actual_stage_13_files}" = "${expected_stage_13_files}"
+
+if git diff --name-only "${RELEASE_CONTRACT_012}..${CONSOLE_SHUTDOWN_INTEGRATION}" \
+    | grep -Eq '^(html/|kanger/|kanger-data-dumb/|kanger-udf/|kanger-server/src/|kanger-server/test/|kanger-server/pom.xml$)'; then
+  echo "Unexpected Server/Core/Browser product delta in Console shutdown stage" >&2
+  exit 1
+fi
+
+echo "RELEASE_SHELF_PASS console-shutdown-stage"
+
 expected_release_contract_files="$(cat <<'EOF_FILES'
-.github/workflows/kanger-3.5.2-release-shelf.yml
 3.5.2-closure.md
-3.5.2.11-server-0.18.md
 REPOSITORY-LIFECYCLE.md
+docs/qualification/3.5.2.14-post-shutdown-release-contract.md
 kanger-server/DEPLOYMENT.md
 kanger-server/scripts/qualify-3.5.2-release-shelf.sh
 release-manifest.yaml
 EOF_FILES
 )"
 actual_release_contract_files="$(
-  git diff --name-only "${SERVER_018_INTEGRATION}..HEAD" | sort
+  git diff --name-only "${CONSOLE_SHUTDOWN_INTEGRATION}..HEAD" | sort
 )"
 test "${actual_release_contract_files}" = "${expected_release_contract_files}"
 
-if git diff --name-only "${SERVER_018_INTEGRATION}..HEAD" \
-    | grep -Eq '^(html/|kanger/|kanger-data-dumb/|kanger-udf/|kanger-server/src/|kanger-server/test/|kanger-server/pom.xml$)'; then
-  echo "Product or test-code delta detected in release-contract stage" >&2
+if git diff --name-only "${CONSOLE_SHUTDOWN_INTEGRATION}..HEAD" \
+    | grep -Eq '^(html/|kanger/|kanger-console/src/|kanger-data-dumb/|kanger-qualification/src/|kanger-udf/|kanger-server/src/|kanger-server/test/|kanger-server/pom.xml$)'; then
+  echo "Product or qualification-code delta detected in post-shutdown release-contract stage" >&2
   exit 1
 fi
 
-echo "RELEASE_SHELF_PASS release-contract-only-delta"
+echo "RELEASE_SHELF_PASS post-shutdown-release-contract-only-delta"
 
 grep -q 'artifact: "3.5.2"' release-manifest.yaml
 grep -q 'integrated_server_018_commit: "b967846832586858d42a5e21091154c682948d00"' \
   release-manifest.yaml
-grep -q 'candidate_qualified_code_commit: "a16ec7abb9b2df1aebbaed921088184f0e571c47"' \
+grep -q 'release_contract_012_merge_commit: "b0ed1cee70d6a4bbaf3b7690df766b9eae41f891"' \
   release-manifest.yaml
-grep -q 'candidate_pull_request: 75' release-manifest.yaml
+grep -q 'console_shutdown_qualified_commit: "df738ca6657fcc1fa15619e1d2b3cccd4e51b397"' \
+  release-manifest.yaml
+grep -q 'console_shutdown_integrated_commit: "ddbf5ab380b4124013f58bbd655a2131ccba536b"' \
+  release-manifest.yaml
+grep -q 'console_shutdown_pull_request: 78' release-manifest.yaml
 grep -q 'candidate_version: "server-0.18"' release-manifest.yaml
 grep -q 'previous_failed_candidate_version: "server-0.17"' release-manifest.yaml
 grep -q 'production_version: "server-0.14"' release-manifest.yaml
-grep -q 'candidate_qualification: "PASS"' release-manifest.yaml
-grep -q 'candidate_integration: "PASS"' release-manifest.yaml
+grep -q 'release_contract_012_qualification: "PASS"' release-manifest.yaml
+grep -q 'post_shutdown_release_contract_qualification: "PASS_REQUIRED_BEFORE_OPERATIONS"' \
+  release-manifest.yaml
 grep -q 'acceptance: "NOT_PERFORMED"' release-manifest.yaml
 grep -q 'production_cutover: "NOT_PERFORMED"' release-manifest.yaml
 
 grep -q 'server_version: server-0.18' 3.5.2-closure.md
-grep -q 'PR #75:.*merged' 3.5.2-closure.md
-grep -q 'integration commit:.*b967846832586858d42a5e21091154c682948d00' \
-  3.5.2-closure.md
-grep -q 'MERGED / RELEASE CONTRACT QUALIFIED' 3.5.2.11-server-0.18.md
-grep -q 'Server 0.17.*immutable failed-soak evidence' \
-  3.5.2.11-server-0.18.md
+grep -q '3.5.2.13.*Console shutdown lifecycle' 3.5.2-closure.md
+grep -q 'ddbf5ab380b4124013f58bbd655a2131ccba536b' 3.5.2-closure.md
+grep -q 'post-shutdown release contract' 3.5.2-closure.md
+grep -q '3.5.2.13' REPOSITORY-LIFECYCLE.md
+grep -q '3.5.2.14' REPOSITORY-LIFECYCLE.md
+grep -q 'Server 0.18 deployment contract' kanger-server/DEPLOYMENT.md
+grep -q 'ddbf5ab380b4124013f58bbd655a2131ccba536b' kanger-server/DEPLOYMENT.md
+grep -q 'fresh disposable database' kanger-server/DEPLOYMENT.md
+grep -q 'must not be opened, repaired, reindexed or deleted' \
+  kanger-server/DEPLOYMENT.md
 
 grep -q '<kanger.server.artifact.version>server-0.18</kanger.server.artifact.version>' \
   kanger-server/pom.xml
@@ -84,10 +123,6 @@ grep -Fq 'EXPECTED_SERVER_VERSION="${KANGER_EXPECTED_SERVER_VERSION:-server-0.18
   kanger-server/scripts/smoke-local.sh
 grep -Fq '\"server_version\":\"server-0.18\"' \
   kanger-server/deploy/verify-installed.sh
-grep -q 'Server 0.18 deployment contract' kanger-server/DEPLOYMENT.md
-grep -q 'fresh disposable database' kanger-server/DEPLOYMENT.md
-grep -q 'must not be opened, repaired, reindexed or deleted' \
-  kanger-server/DEPLOYMENT.md
 
 echo "RELEASE_SHELF_PASS identity-and-record"
 
