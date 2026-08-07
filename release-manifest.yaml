@@ -1,5 +1,5 @@
 schema_version: 2
-updated: "2026-08-06"
+updated: "2026-08-07"
 
 repository:
   latest_accepted_release:
@@ -16,6 +16,10 @@ repository:
     candidate_documentation_commit: "0213e82023a313641b05ff62d7381da5adc6da09"
     integrated_server_018_commit: "b967846832586858d42a5e21091154c682948d00"
     candidate_pull_request: 75
+    release_contract_012_merge_commit: "b0ed1cee70d6a4bbaf3b7690df766b9eae41f891"
+    console_shutdown_qualified_commit: "df738ca6657fcc1fa15619e1d2b3cccd4e51b397"
+    console_shutdown_integrated_commit: "ddbf5ab380b4124013f58bbd655a2131ccba536b"
+    console_shutdown_pull_request: 78
     baseline_branch: "develop/3.5.2"
     baseline_commit: "22918a09ce443e87cf0ee7397ff1b9f1b70f09e8"
     implementation_checkpoint: "9e2db22ea78de9c8660dd521b12d05a44a35c283"
@@ -26,7 +30,10 @@ repository:
     candidate_qualification: "PASS"
     candidate_documentation: "INTEGRATED"
     candidate_integration: "PASS"
-    release_contract_qualification: "PASS"
+    release_contract_012_qualification: "PASS"
+    console_shutdown_qualification: "PASS"
+    console_shutdown_integration: "PASS"
+    post_shutdown_release_contract_qualification: "PASS_REQUIRED_BEFORE_OPERATIONS"
     acceptance: "NOT_PERFORMED"
     production_cutover: "NOT_PERFORMED"
   previous_release:
@@ -128,6 +135,23 @@ stages:
   - stage: "3.5.2.12"
     kind: "integrated Server 0.18 release contract"
     branch: "fix/3.5.2.12-server-0.18-release-contract"
+    commit: "d0dbfa89ef8bc82eb23113061a73d43166f13609"
+    integrated_commit: "b0ed1cee70d6a4bbaf3b7690df766b9eae41f891"
+    pull_request: 76
+    qualification: "PASS"
+    integration: "PASS"
+  - stage: "3.5.2.13"
+    kind: "Console shutdown lifecycle correction"
+    branch: "fix/3.5.2.13-console-shutdown-lifecycle"
+    commit: "df738ca6657fcc1fa15619e1d2b3cccd4e51b397"
+    integrated_commit: "ddbf5ab380b4124013f58bbd655a2131ccba536b"
+    pull_request: 78
+    qualification: "PASS"
+    integration: "PASS"
+    server_identity_change: false
+  - stage: "3.5.2.14"
+    kind: "post-shutdown release contract refresh"
+    branch: "fix/3.5.2.14-post-shutdown-release-contract"
     commit: null
     pull_request: null
     qualification: "PASS_REQUIRED_BEFORE_OPERATIONS"
