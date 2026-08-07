@@ -19,6 +19,7 @@ BASELINE_INSERTION_QUALIFIED="6b4b8e51c8ab4023cb5e81c2b2d9ec9ad9d5cdc3"
 BASELINE_INSERTION_DOCS="d894e6e3d17a3c7bfb6c7a5c110664f838c489bf"
 BASELINE_INSERTION_INTEGRATION="a70dd388576882aa4cf827a31b3f4724ac339b16"
 POST_BASELINE_RELEASE_CONTRACT="307042411124ae181e19aea70b50ca7dff6d72a1"
+VPS_SOAK_CLOSURE_QUALIFIED="4f47994f61f68bf163179b8cd8eacbb1062633dd"
 
 require_pattern() {
   local pattern="$1"
@@ -53,7 +54,8 @@ for commit in \
   "${BASELINE_INSERTION_QUALIFIED}" \
   "${BASELINE_INSERTION_DOCS}" \
   "${BASELINE_INSERTION_INTEGRATION}" \
-  "${POST_BASELINE_RELEASE_CONTRACT}"; do
+  "${POST_BASELINE_RELEASE_CONTRACT}" \
+  "${VPS_SOAK_CLOSURE_QUALIFIED}"; do
   git cat-file -e "${commit}^{commit}"
 done
 
@@ -71,7 +73,8 @@ git merge-base --is-ancestor "${POST_SHUTDOWN_RELEASE_CONTRACT}" "${BASELINE_INS
 git merge-base --is-ancestor "${BASELINE_INSERTION_QUALIFIED}" "${BASELINE_INSERTION_DOCS}"
 git merge-base --is-ancestor "${BASELINE_INSERTION_DOCS}" "${BASELINE_INSERTION_INTEGRATION}"
 git merge-base --is-ancestor "${BASELINE_INSERTION_INTEGRATION}" "${POST_BASELINE_RELEASE_CONTRACT}"
-git merge-base --is-ancestor "${POST_BASELINE_RELEASE_CONTRACT}" HEAD
+git merge-base --is-ancestor "${POST_BASELINE_RELEASE_CONTRACT}" "${VPS_SOAK_CLOSURE_QUALIFIED}"
+git merge-base --is-ancestor "${VPS_SOAK_CLOSURE_QUALIFIED}" HEAD
 
 echo "RELEASE_SHELF_PASS ancestry"
 
@@ -86,10 +89,7 @@ EOF_FILES
 actual_stage_15_files="$(git diff --name-only "${POST_SHUTDOWN_RELEASE_CONTRACT}..${BASELINE_INSERTION_INTEGRATION}" | sort)"
 test "${actual_stage_15_files}" = "${expected_stage_15_files}" || {
   echo "Unexpected 3.5.2.15 file set" >&2
-  echo "Expected:" >&2
-  printf '%s\n' "${expected_stage_15_files}" >&2
-  echo "Actual:" >&2
-  printf '%s\n' "${actual_stage_15_files}" >&2
+  printf 'Expected:\n%s\nActual:\n%s\n' "${expected_stage_15_files}" "${actual_stage_15_files}" >&2
   exit 1
 }
 
@@ -113,10 +113,7 @@ EOF_FILES
 actual_stage_16_files="$(git diff --name-only "${BASELINE_INSERTION_INTEGRATION}..${POST_BASELINE_RELEASE_CONTRACT}" | sort)"
 test "${actual_stage_16_files}" = "${expected_stage_16_files}" || {
   echo "Unexpected 3.5.2.16 release-contract file set" >&2
-  echo "Expected:" >&2
-  printf '%s\n' "${expected_stage_16_files}" >&2
-  echo "Actual:" >&2
-  printf '%s\n' "${actual_stage_16_files}" >&2
+  printf 'Expected:\n%s\nActual:\n%s\n' "${expected_stage_16_files}" "${actual_stage_16_files}" >&2
   exit 1
 }
 
@@ -138,10 +135,7 @@ EOF_FILES
 actual_stage_17_files="$(git diff --name-only "${POST_BASELINE_RELEASE_CONTRACT}..HEAD" | sort)"
 test "${actual_stage_17_files}" = "${expected_stage_17_files}" || {
   echo "Unexpected 3.5.2.17 VPS-soak-closure file set" >&2
-  echo "Expected:" >&2
-  printf '%s\n' "${expected_stage_17_files}" >&2
-  echo "Actual:" >&2
-  printf '%s\n' "${actual_stage_17_files}" >&2
+  printf 'Expected:\n%s\nActual:\n%s\n' "${expected_stage_17_files}" "${actual_stage_17_files}" >&2
   exit 1
 }
 
@@ -179,7 +173,9 @@ require_pattern 'corrected_r3_package_qualification: "PASS"' release-manifest.ya
 require_pattern 'corrected_r3_vps_deployment: "PASS"' release-manifest.yaml
 require_pattern 'vps_manual_torture_a_i: "PASS"' release-manifest.yaml
 require_pattern 'vps_soak_closure_branch: "fix/3.5.2.17-vps-soak-closure"' release-manifest.yaml
-require_pattern 'vps_soak_closure_qualification: "PENDING"' release-manifest.yaml
+require_pattern 'vps_soak_closure_qualified_commit: "4f47994f61f68bf163179b8cd8eacbb1062633dd"' release-manifest.yaml
+require_pattern 'vps_soak_closure_pull_request: 84' release-manifest.yaml
+require_pattern 'vps_soak_closure_qualification: "PASS"' release-manifest.yaml
 require_pattern 'acceptance: "NOT_PERFORMED"' release-manifest.yaml
 require_pattern 'production_cutover: "NOT_PERFORMED"' release-manifest.yaml
 require_pattern 'release_acceptance_performed: false' release-manifest.yaml
@@ -191,6 +187,7 @@ require_pattern '3.5.2.16.*Post-baseline-insertion release contract' 3.5.2-closu
 require_pattern '3.5.2.17.*Corrected-r3 VPS soak closure' 3.5.2-closure.md
 require_pattern '307042411124ae181e19aea70b50ca7dff6d72a1' 3.5.2-closure.md
 require_pattern 'manual VPS torture A-I' 3.5.2-closure.md
+require_pattern '3.5.2.17 VPS soak closure:.*PASS' 3.5.2-closure.md
 require_pattern '3.5.2.15' REPOSITORY-LIFECYCLE.md
 require_pattern '3.5.2.16' REPOSITORY-LIFECYCLE.md
 require_pattern 'kanger MUST NOT depend on' REPOSITORY-LIFECYCLE.md
