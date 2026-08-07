@@ -7,11 +7,13 @@ on:
     paths:
       - "kanger-server/**"
       - "kanger/**"
+      - "html/**"
       - ".github/workflows/kanger-server.yml"
   pull_request:
     paths:
       - "kanger-server/**"
       - "kanger/**"
+      - "html/**"
       - ".github/workflows/kanger-server.yml"
   workflow_dispatch:
 
@@ -48,6 +50,119 @@ jobs:
             -Dkanger.build.branch.override="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" \
             clean verify
 
+      - name: Verify browser gateway artifact
+        if: matrix.java == '21'
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_files="$(cat <<'EOF_FILES'
+          codemirror.css
+          codemirror.js
+          config.js
+          console.html
+          containment.js
+          error.js
+          favicon.ico
+          gateway.js
+          index.html
+          javascript-mode-vendor.js
+          javascript-mode.js
+          javascript.js
+          jquery-3.6.0.min.js
+          operation.js
+          workspace.js
+          EOF_FILES
+          )"
+          actual_files="$(
+            find html -mindepth 1 -maxdepth 1 -type f -printf '%f\n' | sort
+          )"
+          test "${actual_files}" = "${expected_files}"
+
+          node --check html/config.js
+          node --check html/containment.js
+          node --check html/error.js
+          node --check html/gateway.js
+          node --check html/javascript-mode-vendor.js
+          node --check html/javascript-mode.js
+          node --check html/javascript.js
+          node --check html/operation.js
+          node --check html/workspace.js
+          node --check kanger-server/scripts/qualify-error-containment.js
+
+          test "$(git hash-object html/javascript-mode-vendor.js)" = \
+            "047395622eb2501dea6fbb9e6be2389e02bf2c77"
+
+          grep -q '<script src="config.js"></script>' html/index.html
+          grep -q '<script src="containment.js"></script>' html/index.html
+          grep -q '<script src="gateway.js"></script>' html/index.html
+          grep -q 'id="console-frame"' html/index.html
+          grep -q 'sandbox="allow-scripts"' html/index.html
+          grep -q 'referrerpolicy="no-referrer"' html/index.html
+          ! grep -q 'allow-same-origin' html/index.html
+          ! grep -q 'document.cookie' html/index.html
+          ! grep -q 'tokenMonitor' html/index.html
+
+          grep -q 'KANGER_CONTAINMENT_BOUNDARY' html/containment.js
+          grep -q 'kanger.containment.v1' html/containment.js
+          grep -q '__KANGER_PARENT_SESSION__' html/containment.js
+          grep -q "event.origin !== 'null'" html/containment.js
+          grep -q "connect-src 'none'" html/containment.js
+          grep -q 'containment_context_denied' html/containment.js
+          grep -q "copy.parameters.token = session.token" html/containment.js
+          ! grep -q 'allow-same-origin' html/containment.js
+          ! grep -q 'document.cookie' html/containment.js
+          ! grep -q 'innerHTML' html/containment.js
+          ! grep -q 'eval(' html/containment.js
+          ! grep -q 'new Function' html/containment.js
+
+          grep -q "kanger.applicationSession.v1" html/gateway.js
+          grep -q "KANGER_SESSION_BOOTSTRAP" html/gateway.js
+          grep -q "var PROBE_VALID = 'valid';" html/gateway.js
+          grep -q "var PROBE_INVALID = 'invalid';" html/gateway.js
+          grep -q "var PROBE_UNAVAILABLE = 'unavailable';" html/gateway.js
+          grep -q "event.source !== consoleFrame.contentWindow" html/gateway.js
+          grep -q "session.logout" html/gateway.js
+          grep -q "session.credentials.change" html/gateway.js
+          ! grep -Fq "setCookie('token'" html/gateway.js
+          ! grep -Fq 'setCookie("token"' html/gateway.js
+
+          grep -q 'javascript-mode.js' html/javascript.js
+          grep -q 'KANGER_TRUSTED_RENDERING' html/javascript.js
+          grep -q "HISTORY_PREFIX = '@K2@'" html/javascript.js
+          grep -q 'tokenizeLegacyMarkup' html/javascript.js
+          grep -q 'document.createTextNode' html/javascript.js
+          ! grep -q 'insertAdjacentHTML' html/javascript.js
+          ! grep -q 'outerHTML' html/javascript.js
+          ! grep -q 'onclick=' html/javascript.js
+
+          grep -q 'javascript-mode-vendor.js' html/javascript-mode.js
+          grep -q 'operation.js' html/javascript-mode.js
+          grep -q 'workspace.js' html/javascript-mode.js
+          grep -q 'error.js' html/javascript-mode.js
+          grep -q 'KANGER_OPERATION_PROTOCOL' html/operation.js
+          grep -q 'operation_busy' html/operation.js
+          grep -q 'operation_timeout' html/operation.js
+          grep -q 'client_snapshot_id' html/operation.js
+          ! grep -q 'innerHTML' html/operation.js
+          ! grep -q 'document.cookie' html/operation.js
+
+          grep -q 'KANGER_WORKSPACE_STATE' html/workspace.js
+          grep -q 'canonicalSourceName' html/workspace.js
+          grep -q 'canonicalStorageName' html/workspace.js
+          grep -q 'repository_state' html/workspace.js
+          ! grep -q 'innerHTML' html/workspace.js
+          ! grep -q 'document.cookie' html/workspace.js
+
+          grep -q 'KANGER_ERROR_BOUNDARY' html/error.js
+          grep -q 'session_action' html/error.js
+          grep -q 'operation_outcome' html/error.js
+          grep -q 'transport_unavailable' html/error.js
+          ! grep -q 'innerHTML' html/error.js
+          ! grep -q 'document.cookie' html/error.js
+
+          node kanger-server/scripts/qualify-error-containment.js \
+            "${GITHUB_WORKSPACE}"
+
       - name: Verify distribution shape
         shell: bash
         run: |
@@ -55,10 +170,11 @@ jobs:
           jar tf kanger-server/target/kanger-server.jar | grep -q '^org/kanger/Kanger.class$'
           jar tf kanger-server/target/kanger-server.jar | grep -q '^org/kanger/HttpServer.class$'
           jar tf kanger-server/target/kanger-server.jar | grep -q '^org/kanger/Mind.class$'
+          jar tf kanger-server/target/kanger-server.jar | grep -q '^org/kanger/WorkspaceStateReactor.class$'
           unzip -p kanger-server/target/kanger-server.jar META-INF/MANIFEST.MF \
             | grep -q '^Main-Class: org.kanger.Kanger'
           unzip -p kanger-server/target/kanger-server.jar org/kanger/build.properties \
-            | grep -q '^server.version=server-0.14$'
+            | grep -q '^server.version=server-0.18$'
 
       - name: Verify VPS deployment assets
         shell: bash
@@ -101,6 +217,12 @@ jobs:
             kanger-server/deploy/verify-installed.sh
           grep -q 'assert_loopback_listener 1965 "operator"' \
             kanger-server/deploy/verify-installed.sh
+          grep -q 'Publish the qualified 15-file browser artifact' \
+            kanger-server/DEPLOYMENT.md
+          grep -q 'sandbox="allow-scripts"' \
+            kanger-server/DEPLOYMENT.md
+          ! grep -q 'allow-same-origin is permitted' \
+            kanger-server/DEPLOYMENT.md
 
       - name: Run authenticated loopback and shutdown smoke
         if: matrix.java == '21'
@@ -109,7 +231,7 @@ jobs:
           set -euo pipefail
           runtime="${RUNNER_TEMP}/kanger-server-smoke"
           mkdir -p "${runtime}/home"
-          cat > "${runtime}/home/kanger.conf" <<'EOF'
+          cat > "${runtime}/home/kanger.conf" <<'EOF_CONFIG'
           server.bind.address=127.0.0.1
           server.port=1964
           server.backlog=16
@@ -117,7 +239,7 @@ jobs:
           server.queue.capacity=16
           server.request.max.body.bytes=1048576
           server.watchdog.period=1000
-          EOF
+          EOF_CONFIG
 
           java \
             -Duser.home="${runtime}/home" \
@@ -152,7 +274,7 @@ jobs:
           echo "${health_response}" | grep -q '"version":"3.3"'
           echo "${health_response}" | grep -q '"core_version":"3.3"'
           echo "${health_response}" | grep -q '"api_version":"1"'
-          echo "${health_response}" | grep -q '"server_version":"server-0.14"'
+          echo "${health_response}" | grep -q '"server_version":"server-0.18"'
 
           ready_response="$(curl --fail --silent --show-error \
             --dump-header "${runtime}/ready.headers" \
@@ -162,7 +284,7 @@ jobs:
           echo "${ready_response}" | grep -q '"version":"3.3"'
           echo "${ready_response}" | grep -q '"core_version":"3.3"'
           echo "${ready_response}" | grep -q '"api_version":"1"'
-          echo "${ready_response}" | grep -q '"server_version":"server-0.14"'
+          echo "${ready_response}" | grep -q '"server_version":"server-0.18"'
           echo "${ready_response}" | grep -q '"queue_capacity":16'
           grep -qi '^X-Request-ID: ci-ready-check' "${runtime}/ready.headers"
 

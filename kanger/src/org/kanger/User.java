@@ -25,7 +25,9 @@
 
 package org.kanger;
 
+import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.RuntimeErrorException;
+import org.kanger.exception.StorageLifecycleException;
 import org.kanger.factory.*;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
@@ -54,30 +56,37 @@ import java.util.*;
  * публикуются фабрикам корневого {@code Mind} при выборе хранилища; физические
  * операции выполняет подключённая реализация {@code IData}.</p>
  *
- * <p><strong>Жизненный цикл.</strong> {@code User} обычно живёт дольше
- * отдельного запроса и дочерней транзакции. Выбор, очистка, переиндексация и
- * закрытие хранилища координируются методами этого класса, которым передаётся
- * актуальная цепочка {@link IMind}. Эти операции не определяют активный
- * {@code Mind} по скрытой глобальной ссылке.</p>
+ * <p><strong>Жизненный цикл.</strong> Transaction lifecycle и physical storage
+ * lifecycle являются независимыми state machines. {@link #use(IMind, String)}
+ * не закрывает уже открытый storage и допустим только при отсутствии
+ * незавершённых child-транзакций; вызывающая оболочка может после успешного
+ * открытия вставить новый persistent baseline под прежний level-0 workspace,
+ * повторно канонизировав workspace как новый level-1 overlay.
+ * {@link #checkpoint(IMind)} публикует durable root state, сохраняя storage и
+ * runtime context открытыми; {@link #close(IMind)} не принимает решение за
+ * незавершённую транзакцию и допустим только при transaction quiescence.</p>
  *
  * <p><strong>Persistence.</strong> При открытом хранилище идентификаторы схем
  * выделяются соответствующими {@code IBase}; без открытого хранилища
  * используются локальные счётчики пользователя. {@link #flush()} передаёт
- * накопленные изменения storage-модулю, а закрытие дополнительно сбрасывает
- * factory caches и очищает связанное runtime-состояние переданных
- * {@code Mind}, не уничтожая сам объект {@code User}.</p>
+ * накопленные изменения storage-модулю. Durable checkpoint намеренно
+ * переиспользует уже квалифицированный empty-child root-finalization path,
+ * поэтому сохраняет единый pack/update/flush ordering и не дублирует его в
+ * storage boundary.</p>
  *
  * <p><strong>Инварианты.</strong> Внутренний lifecycle KANGER опирается на
  * явные ссылки {@code IMind}. Поле {@code currentMind} является только
  * управляемым вызывающим кодом compatibility slot: оно не является владельцем
  * хранилища, корнем shutdown-cleanup, публикацией текущей транзакции или
- * авторитетным источником активного runtime-контекста.</p>
+ * авторитетным источником активного runtime-контекста. Rejected lifecycle
+ * operation не меняет active Mind, storage identity или physical generation.
+ * Transaction quiescence означает одновременно level 0 у переданного Mind и
+ * отсутствие незавершённых child reservations у корневого Mind.</p>
  *
  * <p><strong>Обязательства вызывающего кода.</strong> Вызывающая сторона
  * должна хранить и передавать фактически актуальную ссылку {@code IMind},
- * учитывать возвращаемое lifecycle-операциями значение и самостоятельно
- * управлять compatibility slot {@code currentMind}, если он используется
- * внешней интеграцией.</p>
+ * учитывать возвращаемое lifecycle-операциями значение, явно завершать
+ * транзакции и выполнять успешный close перед последующим use.</p>
  *
  * @see Mind
  * @see IUser
@@ -132,16 +141,16 @@ public class User implements IUser {
             reopened = false;
         } else {
             saveName = data.getStorageName();
-            close(mind);
+            mind = close(mind);
         }
-        use(mind, name);
+        mind = use(mind, name);
         if (data != null && !data.isClosed()) {
             data.reindex(reactor, mind);
         }
 
-        close(mind);
+        mind = close(mind);
         if (reopened) {
-            use(mind, saveName);
+            mind = use(mind, saveName);
         }
         return mind;
     }
@@ -190,13 +199,68 @@ public class User implements IUser {
         }
     }
 
-    public IMind close(IMind mind) throws Exception {
-        if (data != null && !data.isClosed()) {
-            for (Map.Entry<String, IBase> e : storage.entrySet()) {
-                e.getValue().clearCache();
-            }
-            data.close();
+    private void requireTransactionQuiescence(
+            IMind mind,
+            String operation) throws StorageLifecycleException {
+
+        int level = mind.getTransactionLevel();
+        Mind root = (Mind) mind.getTop();
+        if (level > 0 || root.hasPendingTransactions()) {
+            String state = level > 0
+                    ? "transaction level " + level + " is active"
+                    : "a child transaction is still active";
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.ACTIVE_TRANSACTION,
+                    "Cannot " + operation + " while " + state
+                            + "; commit or rollback first");
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public IMind checkpoint(IMind mind) throws Exception {
+        if (mind == null) {
+            throw new IllegalStateException(
+                    "Cannot checkpoint storage without an active Mind");
+        }
+        requireTransactionQuiescence(mind, "checkpoint storage");
+        if (isClosed()) {
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.NO_STORAGE_OPEN,
+                    "Cannot checkpoint storage because no database is open");
+        }
+
+        IMind root = mind.getTop();
+        Mind checkpoint = new Mind(root);
+        boolean applied = root.commit(checkpoint);
+        if (!applied) {
+            throw new IllegalStateException("Empty root checkpoint was rejected");
+        }
+        return mind;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public IMind close(IMind mind) throws Exception {
+        if (isClosed()) {
+            return mind;
+        }
+        if (mind == null) {
+            throw new IllegalStateException(
+                    "Cannot close an open database without an active Mind");
+        }
+        requireTransactionQuiescence(mind, "close database");
+
+        checkpoint(mind);
+
+        for (Map.Entry<String, IBase> e : storage.entrySet()) {
+            e.getValue().clearCache();
+        }
+        data.close();
 
         for (IMind m = mind; m != null; m = m.getNext()) {
             ((Mind) m).clearMind();
@@ -229,12 +293,22 @@ public class User implements IUser {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public IMind use(IMind mind, String name) throws Exception {
 
         if (data != null) {
 
             if (!data.isClosed()) {
-                mind = close(mind);
+                throw new StorageLifecycleException(
+                        StorageLifecycleErrorCode.STORAGE_ALREADY_OPEN,
+                        "A database is already open; explicit close is required before use");
+            }
+
+            if (mind != null) {
+                requireTransactionQuiescence(mind, "open database");
             }
 
             if (mind == null) {
@@ -281,20 +355,6 @@ public class User implements IUser {
             ((Mind) mind).getTValues().transaction(null);
             ((Mind) mind).getTVars().transaction(null);
             ((LibraryFactory) mind.getLibrary()).transaction(null);
-
-//            Mind m = new Mind(mind);
-//            m.link(null, true);
-//            Boolean ar = m.analise(null, true);
-//
-//            if (ar) {
-//                m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
-//                mind.release(m);
-//                close();
-//                throw new RuntimeErrorException("Collisions in Program");
-//            } else {
-//                m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
-//                mind.commit(m);
-//            }
 
             return mind;
 

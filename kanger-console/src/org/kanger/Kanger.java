@@ -216,14 +216,14 @@ public class Kanger {
         System.out.println("Path to source files: " + user.getSourceDir());
         System.out.println("Path to databases: " + user.getDatabaseDir());
 
-        Runtime.getRuntime().addShutdownHook(new ShutdownHook(user));
-
         IMind mind = new Mind(user);
+        ShutdownHook shutdownHook = new ShutdownHook(mind);
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
         //TODO: Волшебство
 //        mind.query("?a;");
 //        mind = mind.clearWorkspace();
 
-        Console.session(mind);
+        Console.session(mind, shutdownHook);
     }
 
     private String readLine(String format, Object... args) throws IOException {

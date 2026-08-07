@@ -46,12 +46,12 @@ echo "${health}"
 echo "${ready}"
 echo "${health}" | grep -q '"status":"UP"'
 echo "${ready}" | grep -q '"status":"READY"'
-echo "${health}" | grep -q '"server_version":"server-0.14"'
-echo "${ready}" | grep -q '"server_version":"server-0.14"'
+echo "${health}" | grep -q '"server_version":"server-0.18"'
+echo "${ready}" | grep -q '"server_version":"server-0.18"'
 
 assert_loopback_listener 1964 "application"
 assert_loopback_listener 1965 "operator"
 
 nginx -t
 
-echo "KANGER Server 0.14 service, readiness, application/operator loopback confinement and nginx configuration are valid."
+echo "KANGER Server 0.18 service, readiness, application/operator loopback confinement and nginx configuration are valid."

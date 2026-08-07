@@ -1,14 +1,70 @@
-schema_version: 1
-updated: "2026-08-05"
+schema_version: 2
+updated: "2026-08-07"
 
 repository:
-  latest_release:
+  latest_accepted_release:
     artifact: "3.5.1"
     branch: "release/3.5.1"
     commit: "35166d91d8082ec267d892d4451504bcb9890330"
-  current_develop:
+  release_candidate:
     artifact: "3.5.2"
-    branch: "develop/3.5.2"
+    integration_branch: "develop/3.5.2.9-integration-release-shelf"
+    corrected_shelf_commit: "03310482cebdf55b34829f3d59bdd197edb6275b"
+    candidate_branch: "server/3.5.2.11-server-0.18"
+    candidate_baseline_commit: "03310482cebdf55b34829f3d59bdd197edb6275b"
+    candidate_qualified_code_commit: "a16ec7abb9b2df1aebbaed921088184f0e571c47"
+    candidate_documentation_commit: "0213e82023a313641b05ff62d7381da5adc6da09"
+    integrated_server_018_commit: "b967846832586858d42a5e21091154c682948d00"
+    candidate_pull_request: 75
+    release_contract_012_merge_commit: "b0ed1cee70d6a4bbaf3b7690df766b9eae41f891"
+    console_shutdown_qualified_commit: "df738ca6657fcc1fa15619e1d2b3cccd4e51b397"
+    console_shutdown_integrated_commit: "ddbf5ab380b4124013f58bbd655a2131ccba536b"
+    console_shutdown_pull_request: 78
+    post_shutdown_release_contract_qualified_commit: "628295ead2fcd627c5e0302140278978caaeeff6"
+    post_shutdown_release_contract_integrated_commit: "f9419c9428424b958bd938db0f6cf29650acf3f0"
+    post_shutdown_release_contract_pull_request: 79
+    baseline_insertion_qualified_commit: "6b4b8e51c8ab4023cb5e81c2b2d9ec9ad9d5cdc3"
+    baseline_insertion_documentation_commit: "d894e6e3d17a3c7bfb6c7a5c110664f838c489bf"
+    baseline_insertion_integrated_commit: "a70dd388576882aa4cf827a31b3f4724ac339b16"
+    baseline_insertion_pull_request: 81
+    post_baseline_release_contract_qualified_commit: "7385c282ca6f97a11c7436c06cc74cb01e4c018b"
+    post_baseline_release_contract_integrated_commit: "307042411124ae181e19aea70b50ca7dff6d72a1"
+    post_baseline_release_contract_pull_request: 82
+    current_product_shelf_commit: "307042411124ae181e19aea70b50ca7dff6d72a1"
+    baseline_branch: "develop/3.5.2"
+    baseline_commit: "22918a09ce443e87cf0ee7397ff1b9f1b70f09e8"
+    implementation_checkpoint: "9e2db22ea78de9c8660dd521b12d05a44a35c283"
+    lifecycle_correction_head: "99185db7e1effccd810c9e8479bdceca5d61b31a"
+    lifecycle_correction_pull_request: 74
+    integration_pull_request: 72
+    integration_qualification: "PASS"
+    candidate_qualification: "PASS"
+    candidate_documentation: "INTEGRATED"
+    candidate_integration: "PASS"
+    release_contract_012_qualification: "PASS"
+    console_shutdown_qualification: "PASS"
+    console_shutdown_integration: "PASS"
+    post_shutdown_release_contract_qualification: "PASS"
+    baseline_insertion_qualification: "PASS"
+    baseline_insertion_manual_torture_qualification: "PASS"
+    baseline_insertion_integration: "PASS"
+    post_baseline_insertion_release_contract_qualification: "PASS"
+    corrected_r3_operations_branch: "ops/3.5.2-server-0.18-vps-soak-r3"
+    corrected_r3_operations_head: "e451643776c16992e831c8b7313d60381d1e79c0"
+    corrected_r3_operations_pull_request: 83
+    corrected_r3_artifact_id: 8989921008
+    corrected_r3_artifact_zip_sha256: "dfbcecb92b55e7093cd44c2e67dcafb77270a494198416259f2867583997c4a7"
+    corrected_r3_tarball_sha256: "5df91492365f6f7ff4a473574b4b267c61e005f50ca8c2e01c653250367cf9da"
+    corrected_r3_server_jar_sha256: "9a8fb1a0f1505d74fb15343ed0519782abb33b53097d6c0e46fbad7bad962718"
+    corrected_r3_package_qualification: "PASS"
+    corrected_r3_vps_deployment: "PASS"
+    vps_manual_torture_a_i: "PASS"
+    vps_soak_closure_branch: "fix/3.5.2.17-vps-soak-closure"
+    vps_soak_closure_qualified_commit: "4f47994f61f68bf163179b8cd8eacbb1062633dd"
+    vps_soak_closure_pull_request: 84
+    vps_soak_closure_qualification: "PASS"
+    acceptance: "NOT_PERFORMED"
+    production_cutover: "NOT_PERFORMED"
   previous_release:
     artifact: "3.5.0"
     branch: "release/3.5.0"
@@ -17,21 +73,169 @@ repository:
 product:
   core:
     compatibility_version: "3.3"
-    consolidation_baseline_branch: "develop/3.5.0.7"
-    consolidation_baseline_commit: "10bd30e08a6b45465a4de4369608d995df2dbbb9"
   api:
     version: "1"
   server:
-    version: "server-0.14"
-    accepted_source_commit: "e5f9a1bfa47437636705f0935cb659cffb4d179e"
-    jar_sha256: "e089497d0a8f041a872a3a5a09581f8d94f5962a277794747b7f54e209882a19"
-    configuration_sha256: "3f6b95b4cd567d946e0d6d4c634b0db6f2f3c6aa5d7c594a62f4a715c53209dc"
-    production_acceptance: "PASS"
+    candidate_version: "server-0.18"
+    previous_failed_candidate_version: "server-0.17"
+    production_version: "server-0.14"
+    temporary_vps_soak_version: "server-0.18"
   browser_ui:
-    index_sha256: "747104f9e9a7599679b5329eb098590b190a876ff949f01e232f67a1e1b8baae"
-    config_sha256: "d44e67c862f12065d62259055043922ff573271dd5fac2f373cc454172757715"
-    console_sha256: "24d74b6608d4d49a5464d62dd368354c3f30d5f90b90b6a8717531d8e7719dca"
+    inventory_count: 15
+    immutable_javascript_mode_blob: "047395622eb2501dea6fbb9e6be2389e02bf2c77"
+    files:
+      - "codemirror.css"
+      - "codemirror.js"
+      - "config.js"
+      - "console.html"
+      - "containment.js"
+      - "error.js"
+      - "favicon.ico"
+      - "gateway.js"
+      - "index.html"
+      - "javascript-mode-vendor.js"
+      - "javascript-mode.js"
+      - "javascript.js"
+      - "jquery-3.6.0.min.js"
+      - "operation.js"
+      - "workspace.js"
 
-next_artifact:
-  branch: "audit/3.5.2.1-browser-js"
-  scope: "read-only Browser UI JavaScript and DOM audit before stabilization"
+stages:
+  - stage: "3.5.2.1"
+    kind: "read-only audit"
+    branch: "audit/3.5.2.1-browser-js"
+    commit: "22918a09ce443e87cf0ee7397ff1b9f1b70f09e8"
+    pull_request: null
+  - stage: "3.5.2.2"
+    kind: "destructive operation stop-loss"
+    branch: "fix/3.5.2.2-destructive-stop-loss"
+    commit: "f5c2a76cd757c9e4179d3f90abc02b99f38fdba8"
+    pull_request: 64
+  - stage: "3.5.2.3"
+    kind: "Mind lifecycle closure"
+    branch: "fix/3.5.2.3-mind-lifecycle-closure"
+    commit: "c5fa90d41e6577bb83bef4db403b9bec7c4cfb2e"
+    pull_request: 65
+  - stage: "3.5.2.4"
+    kind: "session authority consolidation"
+    branch: "fix/3.5.2.4-session-authority-consolidation"
+    commit: "f011bf378cc3f29f7a13b422810c92708efe85e5"
+    pull_request: 66
+  - stage: "3.5.2.5"
+    kind: "trusted rendering boundary"
+    branch: "fix/3.5.2.5-trusted-rendering-boundary"
+    commit: "8c62a1c3fcf7fb68f93c9c46fafc429b389f8cea"
+    pull_request: 67
+  - stage: "3.5.2.6"
+    kind: "operation and snapshot protocol"
+    branch: "fix/3.5.2.6-operation-snapshot-protocol"
+    commit: "8fc389f41459b9f996df2dc194c842fba388e5b2"
+    pull_request: 68
+  - stage: "3.5.2.7"
+    kind: "source and storage UX semantics"
+    branch: "fix/3.5.2.7-source-storage-ux-semantics"
+    commit: "42216f0b14099c6069fec28b34b01282608ebeaa"
+    pull_request: 69
+  - stage: "3.5.2.8"
+    kind: "error and containment boundary"
+    branch: "fix/3.5.2.8-error-containment-boundary"
+    commit: "9e2db22ea78de9c8660dd521b12d05a44a35c283"
+    pull_request: 70
+  - stage: "3.5.2.9"
+    kind: "integration and original release-shelf qualification"
+    branch: "develop/3.5.2.9-integration-release-shelf"
+    commit: "7946d3969302aa198fea506f419a885565db118a"
+    pull_request: 72
+    runtime_result: "SERVER_0_17_SOAK_FAILED"
+  - stage: "3.5.2.10"
+    kind: "explicit storage lifecycle correction and shelf integration"
+    branch: "develop/3.5.2.10-explicit-storage-lifecycle"
+    commit: "99185db7e1effccd810c9e8479bdceca5d61b31a"
+    integrated_commit: "03310482cebdf55b34829f3d59bdd197edb6275b"
+    pull_request: 74
+  - stage: "3.5.2.11"
+    kind: "Server 0.18 candidate identity, qualification and integration"
+    branch: "server/3.5.2.11-server-0.18"
+    commit: "a16ec7abb9b2df1aebbaed921088184f0e571c47"
+    documentation_commit: "0213e82023a313641b05ff62d7381da5adc6da09"
+    integrated_commit: "b967846832586858d42a5e21091154c682948d00"
+    pull_request: 75
+    qualification: "PASS"
+    integration: "PASS"
+  - stage: "3.5.2.12"
+    kind: "integrated Server 0.18 release contract"
+    branch: "fix/3.5.2.12-server-0.18-release-contract"
+    commit: "d0dbfa89ef8bc82eb23113061a73d43166f13609"
+    integrated_commit: "b0ed1cee70d6a4bbaf3b7690df766b9eae41f891"
+    pull_request: 76
+    qualification: "PASS"
+    integration: "PASS"
+  - stage: "3.5.2.13"
+    kind: "Console shutdown lifecycle correction"
+    branch: "fix/3.5.2.13-console-shutdown-lifecycle"
+    commit: "df738ca6657fcc1fa15619e1d2b3cccd4e51b397"
+    integrated_commit: "ddbf5ab380b4124013f58bbd655a2131ccba536b"
+    pull_request: 78
+    qualification: "PASS"
+    integration: "PASS"
+    server_identity_change: false
+  - stage: "3.5.2.14"
+    kind: "post-shutdown release contract refresh"
+    branch: "fix/3.5.2.14-post-shutdown-release-contract"
+    commit: "628295ead2fcd627c5e0302140278978caaeeff6"
+    integrated_commit: "f9419c9428424b958bd938db0f6cf29650acf3f0"
+    pull_request: 79
+    qualification: "PASS"
+    integration: "PASS"
+  - stage: "3.5.2.15"
+    kind: "storage baseline insertion and transaction quiescence stabilization"
+    branch: "fix/3.5.2.15-storage-baseline-insertion"
+    commit: "6b4b8e51c8ab4023cb5e81c2b2d9ec9ad9d5cdc3"
+    documentation_commit: "d894e6e3d17a3c7bfb6c7a5c110664f838c489bf"
+    integrated_commit: "a70dd388576882aa4cf827a31b3f4724ac339b16"
+    pull_request: 81
+    qualification: "PASS"
+    manual_torture_qualification: "PASS"
+    integration: "PASS"
+    server_identity_change: false
+  - stage: "3.5.2.16"
+    kind: "post-baseline-insertion release contract refresh"
+    branch: "fix/3.5.2.16-post-baseline-insertion-release-contract"
+    commit: "7385c282ca6f97a11c7436c06cc74cb01e4c018b"
+    integrated_commit: "307042411124ae181e19aea70b50ca7dff6d72a1"
+    pull_request: 82
+    qualification: "PASS"
+    integration: "PASS"
+  - stage: "3.5.2.17"
+    kind: "corrected-r3 VPS soak evidence closure"
+    branch: "fix/3.5.2.17-vps-soak-closure"
+    commit: "4f47994f61f68bf163179b8cd8eacbb1062633dd"
+    integrated_commit: null
+    pull_request: 84
+    qualification: "PASS"
+    product_delta: false
+
+operations:
+  corrected_r3:
+    branch: "ops/3.5.2-server-0.18-vps-soak-r3"
+    head: "e451643776c16992e831c8b7313d60381d1e79c0"
+    pull_request: 83
+    state: "DRAFT_UNMERGED_DO_NOT_MERGE"
+    package_workflow_run: 31168344166
+    package_qualification: "PASS"
+    artifact_id: 8989921008
+    artifact_zip_sha256: "dfbcecb92b55e7093cd44c2e67dcafb77270a494198416259f2867583997c4a7"
+    tarball_sha256: "5df91492365f6f7ff4a473574b4b267c61e005f50ca8c2e01c653250367cf9da"
+    server_jar_sha256: "9a8fb1a0f1505d74fb15343ed0519782abb33b53097d6c0e46fbad7bad962718"
+    vps_deployment: "PASS"
+    torture_a_i: "PASS"
+    superseded_artifact_id: 8987874264
+
+release_boundary:
+  merge_authorized: true
+  temporary_vps_soak_active: true
+  release_acceptance_performed: false
+  release_branch_created: false
+  tag_created: false
+  github_release_created: false
+  permanent_production_cutover: false

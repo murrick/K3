@@ -1,0 +1,44 @@
+name: KANGER browser trusted rendering
+
+on:
+  push:
+    branches:
+      - "server/**"
+    paths:
+      - "html/**"
+      - "kanger-server/scripts/qualify-trusted-rendering.js"
+      - ".github/workflows/kanger-browser-rendering.yml"
+  pull_request:
+    paths:
+      - "html/**"
+      - "kanger-server/scripts/qualify-trusted-rendering.js"
+      - ".github/workflows/kanger-browser-rendering.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    name: Plain text and typed DOM boundary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Validate rendering JavaScript syntax
+        shell: bash
+        run: |
+          node --check html/javascript.js
+          node --check html/javascript-mode.js
+          node --check kanger-server/scripts/qualify-trusted-rendering.js
+
+      - name: Run trusted rendering qualification
+        shell: bash
+        run: |
+          node kanger-server/scripts/qualify-trusted-rendering.js

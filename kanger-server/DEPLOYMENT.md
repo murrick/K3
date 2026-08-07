@@ -1,16 +1,157 @@
-# KANGER Server 0.14 VPS deployment
+# KANGER Server 0.18 deployment contract
 
-This guide deploys the qualified standalone KANGER Server 0.14 JAR on a
-Debian/Ubuntu-style systemd host behind nginx.
+Status: post-baseline-insertion integrated candidate; fresh operations package required.  
+Date: 2026-08-07
 
-## Release topology
+This is the deployment contract for KANGER repository candidate `3.5.2`, Core `3.3`, API `1` and deployable Server identity `server-0.18`.
+
+The complete historical Server 0.16 procedure remains preserved as [`DEPLOYMENT-0.16.md`](DEPLOYMENT-0.16.md). Server 0.17, its operations package and damaged soak database are immutable failed-soak evidence and must not be reused. The damaged database must not be opened, repaired, reindexed or deleted.
+
+## Fixed source identities
+
+```text
+integration branch:                develop/3.5.2.9-integration-release-shelf
+explicit lifecycle shelf:          03310482cebdf55b34829f3d59bdd197edb6275b
+qualified Server 0.18 code:        a16ec7abb9b2df1aebbaed921088184f0e571c47
+integrated Server 0.18:             b967846832586858d42a5e21091154c682948d00
+Server 0.18 release contract:       b0ed1cee70d6a4bbaf3b7690df766b9eae41f891
+Console shutdown integrated shelf:  ddbf5ab380b4124013f58bbd655a2131ccba536b
+post-shutdown contract shelf:       f9419c9428424b958bd938db0f6cf29650acf3f0
+baseline insertion qualified:       6b4b8e51c8ab4023cb5e81c2b2d9ec9ad9d5cdc3
+baseline insertion integrated:      a70dd388576882aa4cf827a31b3f4724ac339b16
+baseline insertion PR:              #81, merged
+```
+
+The final operations source must be the exact post-baseline-insertion **release-contract-qualified** head descended from `a70dd388576882aa4cf827a31b3f4724ac339b16`. Packaging must record that exact head in `SOURCE.txt`; no earlier Server 0.18 package is valid deployment provenance for the current complete candidate.
+
+Every non-empty JSON response must report:
+
+```json
+{
+  "version": "3.3",
+  "core_version": "3.3",
+  "api_version": "1",
+  "server_version": "server-0.18"
+}
+```
+
+The generated resource must report:
+
+```properties
+branch=server-0.18
+server.version=server-0.18
+source.branch=<exact source branch>
+```
+
+## Lifecycle included
+
+The complete candidate includes the integrated explicit-storage, shutdown and storage-baseline lifecycle corrections:
+
+- transaction commit never implicitly closes physical storage;
+- a level-zero checkpoint is durable and leaves storage open;
+- storage `close`, `checkpoint` and `use` require a quiescent root: visible transaction level zero and no pending child reservations;
+- opening a database while an ordinary L1+ stack is active is rejected before storage acquisition or factory rebinding;
+- a non-empty offline L0 workspace can open a database by inserting the persistent DB as L0 and replaying the workspace as provisional L1;
+- that replay intentionally recompiles logical source in the database context so canonical identities and generated consequences are rebuilt;
+- explicit commit publishes the workspace once; rollback leaves the database unchanged;
+- generalized multi-level rebase is deliberately unsupported;
+- interactive Console JVM shutdown retains the active `IMind`, rolls unfinished child transactions back to root and delegates physical shutdown to ordinary `closeStorage()`.
+
+These corrections do not change Server 0.18 product identity, but they change complete-repository release provenance and require a fresh operations package.
+
+## First VPS qualification route
+
+Use a dedicated account and fresh disposable databases. Start at the previous failure and newly corrected lifecycle boundaries:
+
+```text
+login and token rotation
+create/use fresh disposable database
+begin transaction level 1
+begin nested transaction level 2
+commit to level 1
+commit to level 0
+explicit close
+use/reopen the same disposable database
+verify persisted facts and storage identity
+
+close database
+offline workspace assertion
+use same/fresh disposable database
+verify database is L0 and workspace is provisional L1
+rollback; close/reopen; verify workspace was not persisted
+repeat insertion; explicit commit; close/reopen; verify exactly one persisted copy
+attempt use while L1+ is active; verify typed rejection and unchanged stack
+
+clean service restart
+reopen and verify again
+exercise abrupt termination / shutdown recovery on disposable state
+reopen and verify integrity
+logout and token rejection
+```
+
+Stop immediately on any manifest, storage identity, persistence, duplication, transaction-topology or lifecycle anomaly. Only after this route passes may the broader soak continue.
+
+## Matched browser distribution
+
+Publish the qualified 15-file browser artifact together with Server 0.18:
+
+```text
+codemirror.css
+codemirror.js
+config.js
+console.html
+containment.js
+error.js
+favicon.ico
+gateway.js
+index.html
+javascript-mode-vendor.js
+javascript-mode.js
+javascript.js
+jquery-3.6.0.min.js
+operation.js
+workspace.js
+```
+
+The console iframe remains:
+
+```html
+sandbox="allow-scripts"
+referrerpolicy="no-referrer"
+```
+
+`allow-same-origin` is forbidden. The bearer token remains parent-owned and all child API traffic crosses the generation-bound parent broker.
+
+## Build boundary
+
+Build only from a fresh operations branch derived exactly from the post-baseline-insertion release-contract-qualified shelf. The operations branch may add packaging, snapshot, deployment, rollback and evidence files, but no product, test or qualification-code delta.
+
+Canonical Maven build:
+
+```bash
+mvn -B -ntp \
+  -f kanger-server/pom.xml \
+  -Dkanger.build.branch.override=develop/3.5.2.9-integration-release-shelf \
+  clean verify
+```
+
+Before packaging:
+
+```bash
+test -f kanger-server/target/kanger-server.jar
+unzip -p kanger-server/target/kanger-server.jar org/kanger/build.properties
+git merge-base --is-ancestor a70dd388576882aa4cf827a31b3f4724ac339b16 HEAD
+```
+
+The package workflow must additionally prove the operations-only delta from its exact canonical source head.
+
+## Host topology
 
 ```text
 Internet
    |
    +--> https://kanger.org
    |      nginx static UI
-   |      repository html/
    |
    +--> https://api.kanger.org
           nginx reverse proxy
@@ -28,570 +169,119 @@ host operator
         owner-only operator API
 ```
 
-The Java listeners on ports `1964` and `1965` must remain loopback-only.
-nginx proxies only port `1964`. Port `1965` and the owner bearer token are never
-exposed through nginx, the public API or the browser UI.
+Neither Java listener may bind to `0.0.0.0`, `[::]`, a public address or a container bridge. nginx proxies only the application listener on port `1964`.
 
-The qualified release identity is:
-
-```json
-{
-  "version": "3.3",
-  "core_version": "3.3",
-  "api_version": "1",
-  "server_version": "server-0.14"
-}
-```
-
-`version` and `core_version` identify semantic KANGER compatibility.
-`server_version` identifies this deployable server artifact.
-
-## 1. Build the immutable release artifact
-
-Use the qualified three-digit shelf after it has been created:
-
-```bash
-git fetch origin
-git switch develop/server/0.14
-git status --short
-
-mvn -B -ntp \
-  -f kanger-server/pom.xml \
-  -Dkanger.build.branch.override=develop/server/0.14 \
-  clean verify
-```
-
-Do not deploy from a working tree with unexplained local changes. The generated
-`org/kanger/build.properties` must contain:
-
-```properties
-branch=server-0.14
-server.version=server-0.14
-source.branch=develop/server/0.14
-```
-
-The deployable file is:
+Current accepted production anchors before the Server 0.18 soak remain:
 
 ```text
-kanger-server/target/kanger-server.jar
+release:              release/3.5.1
+server:               server-0.14
+JAR SHA-256:          e089497d0a8f041a872a3a5a09581f8d94f5962a277794747b7f54e209882a19
+editable UI:          /home/murray/sites/kanger
+public UI symlink:    /var/www/html/kanger
+public UI target:     /home/murray/sites/kanger-server-0.14-20260804T181706Z
 ```
 
-Run the isolated local process:
+## Required operations package
 
-```bash
-bash kanger-server/scripts/run-local.sh
-```
-
-In another terminal:
-
-```bash
-bash kanger-server/scripts/smoke-local.sh
-bash kanger-server/scripts/smoke-auth-local.sh
-```
-
-Both scripts must complete successfully before copying the distribution.
-
-## 2. Copy the distribution to the VPS
-
-Set the real SSH destination and port:
-
-```bash
-SSH_TARGET=user@vps
-SSH_PORT=22
-```
-
-Prepare a clean temporary directory:
-
-```bash
-ssh -p "${SSH_PORT}" "${SSH_TARGET}" \
-  'rm -rf /tmp/kanger-deploy && mkdir -m 700 /tmp/kanger-deploy'
-```
-
-Copy the JAR and deployment assets:
-
-```bash
-scp -P "${SSH_PORT}" \
-  kanger-server/target/kanger-server.jar \
-  "${SSH_TARGET}:/tmp/kanger-server.jar"
-
-scp -P "${SSH_PORT}" -r \
-  kanger-server/deploy/. \
-  "${SSH_TARGET}:/tmp/kanger-deploy/"
-```
-
-The deployment directory includes:
+The fresh Server 0.18 package must contain at least:
 
 ```text
-install.sh
-verify-installed.sh
-kanger-admin
-kanger.conf.example
-systemd/kanger-server.service
-nginx/kanger-server.conf.template
+kanger-server.jar
+html/                         exact 15-file browser distribution
+deploy/install.sh
+deploy/verify-installed.sh
+deploy/kanger-admin
+deploy/snapshot-current.sh
+deploy/deploy-soak.sh
+deploy/rollback-soak.sh
+docs/DEPLOYMENT.md
+docs/VPS-SOAK-3.5.2.md
+SOURCE.txt
+SHA256SUMS
 ```
 
-## 3. Verify host prerequisites
+`SOURCE.txt` must fix the post-baseline-insertion release-contract-qualified source head, packaging branch/head, product identities, browser inventory, current production anchors and UI publication mode. The bundle and each component must have verified SHA-256 checksums.
 
-KANGER Server is qualified on Java 8 and Java 21. Java 21 is recommended for
-the installed service.
+All earlier Server 0.18 packages are superseded as deployment provenance. They may remain historical build evidence but must not be deployed for this soak.
+
+## Pre-deployment safety gate
+
+Before installing anything:
+
+1. verify Server 0.14 health/readiness, JAR checksum, service state, listeners, nginx and exact public UI target;
+2. create a transactionally quiet host snapshot while KANGER is stopped;
+3. verify removal of `KANGER/kanger.active` before archiving persistent state;
+4. restart and re-verify Server 0.14;
+5. copy the snapshot and checksum off-host over SSH;
+6. create a matching off-host receipt.
+
+Deployment must refuse to proceed without a matching off-host receipt.
+
+## Soak deployment
+
+The guarded soak procedure must:
+
+- verify complete package checksums and exact canonical source head;
+- verify current Server 0.14 and exact JAR checksum;
+- copy the complete currently published UI into a new versioned Server 0.18 candidate directory;
+- overlay only the qualified 15 browser files;
+- preserve unrelated files inherited from the prior public target;
+- install Server 0.18 through the rollback-capable installer;
+- verify `/health`, `/ready`, exact `server-0.18`, loopback confinement and nginx;
+- atomically repoint `/var/www/html/kanger` with `mv -Tf`;
+- verify the containment boundary through the local HTTPS origin;
+- write immutable deployment evidence and print the exact rollback command.
+
+Any failure before final success must restore Server 0.14 and the exact prior public UI target.
+
+## Installed-service verification
 
 ```bash
-java -version
-readlink -f "$(command -v java)"
-test -x /usr/bin/java
-command -v curl systemctl nginx ss runuser
+sudo bash deploy/verify-installed.sh
 ```
 
-On a compatible Debian/Ubuntu host, install missing runtime tools with:
-
-```bash
-sudo apt update
-sudo apt install -y openjdk-21-jre-headless curl nginx iproute2
-```
-
-Do not continue until `/usr/bin/java`, `curl`, `systemctl`, `nginx`, `ss` and
-`runuser` are available.
-
-## 4. Install or update the service
-
-Run the installer:
-
-```bash
-sudo bash /tmp/kanger-deploy/install.sh \
-  /tmp/kanger-server.jar
-```
-
-The installer:
-
-1. creates the system user and group `kanger` when absent;
-2. creates `/opt/kanger-server`, `/var/lib/kanger-server`, and
-   `/etc/kanger-server`;
-3. installs the JAR as `/opt/kanger-server/kanger-server.jar`;
-4. preserves the previous JAR as `kanger-server.jar.previous`;
-5. installs `/usr/local/bin/kanger-admin`;
-6. installs and enables `kanger-server.service`;
-7. creates `/etc/kanger-server/kanger.conf` only on first installation;
-8. links that configuration into the service `user.home`;
-9. waits for application health and readiness;
-10. restores the previous JAR automatically if startup qualification fails.
-
-The state root is:
-
-```text
-/var/lib/kanger-server/KANGER
-```
-
-The owner-only admin token is generated under that root and is consumed by
-`sudo kanger-admin`; it must not be copied into shell history, browser
-configuration or nginx files.
-
-## 5. Configure the release topology
-
-The persistent configuration is:
-
-```text
-/etc/kanger-server/kanger.conf
-```
-
-The minimum private-listener topology is:
-
-```properties
-server.bind.address=127.0.0.1
-server.port=1964
-
-server.admin.enabled=true
-server.admin.bind.address=127.0.0.1
-server.admin.port=1965
-server.admin.token.file=KANGER/admin.token
-```
-
-Never change either bind address to `0.0.0.0`, `[::]`, a public VPS address or a
-container bridge address.
-
-The public API and browser redirect boundaries are:
-
-```properties
-server.url=https://api.kanger.org
-server.confirmation.redirect.url=https://kanger.org/
-```
-
-Allow only the exact browser origins that call the API:
-
-```properties
-server.cors.allowed.origin.1=https://kanger.org
-server.cors.allowed.origin.2=https://www.kanger.org
-server.cors.allow.credentials=false
-```
-
-When `www.kanger.org` redirects before the UI loads, only the canonical origin
-is required. Never use a wildcard origin with credentials.
-
-After configuration changes:
-
-```bash
-sudo systemctl restart kanger-server.service
-sudo systemctl status kanger-server.service --no-pager
-```
-
-## 6. Choose the registration policy
-
-Server 0.14 resolves `server.email.mode` once into the account registration
-policy.
-
-### TRUSTED deployment
-
-```properties
-server.email.mode=disabled
-```
-
-Result:
-
-```text
-public self-registration disabled
-Register absent from the browser gateway
-complete ACTIVE accounts created only through kanger-admin
-ordinary login creates a session
-```
-
-There is no password-only public-registration fallback in TRUSTED mode.
-
-Create an account interactively:
-
-```bash
-sudo kanger-admin create-user
-```
-
-Use explicit standard input only for controlled automation:
-
-```bash
-printf '%s\n' "${NEW_PASSWORD}" \
-  | sudo kanger-admin create-user \
-      --login new-user \
-      --email new-user@example.org \
-      --password-stdin
-```
-
-Delete an account only after reviewing the target and confirming the destructive
-operation:
-
-```bash
-sudo kanger-admin delete-user --login new-user
-```
-
-The complete operator command, exit-code and recovery contract is documented in:
-
-```text
-kanger-server/docs/operations/kanger-admin.md
-```
-
-### EMAIL_VERIFIED deployment
-
-Choose exactly one mail transport:
-
-```properties
-server.email.mode=starttls
-```
-
-or:
-
-```properties
-server.email.mode=smtps
-```
-
-Result:
-
-```text
-public registration creates PendingRegistration only
-e-mail confirmation creates the complete ACTIVE account
-confirmation does not create a session
-ordinary login creates the session
-```
-
-Configure SMTP credentials and timeouts according to:
-
-```text
-kanger-server/MAIL-CONFIGURATION.md
-```
-
-Protect the configuration after adding credentials:
-
-```bash
-sudo chown root:kanger /etc/kanger-server/kanger.conf
-sudo chmod 0640 /etc/kanger-server/kanger.conf
-sudo systemctl restart kanger-server.service
-```
-
-## 7. Verify the installed service
-
-Run the permanent installation verifier:
-
-```bash
-sudo bash /tmp/kanger-deploy/verify-installed.sh
-```
-
-It proves:
+It must prove:
 
 ```text
 systemd service enabled and active
-/health reports server-0.14
-/ready reports server-0.14
-application listener 127.0.0.1:1964
-operator listener 127.0.0.1:1965
+/health reports server-0.18
+/ready reports server-0.18
+application listener confined to 127.0.0.1:1964
+operator listener confined to 127.0.0.1:1965
 neither Java listener publicly bound
 nginx configuration valid
 ```
 
-Manual checks:
+## Normal rollback
 
-```bash
-curl --fail --silent --show-error \
-  http://127.0.0.1:1964/health
-echo
+Normal rollback restores the matched Server 0.14 JAR/UI pair while preserving database state produced during the soak. It must atomically restore the exact prior public UI symlink target and verify Server 0.14 health/readiness.
 
-curl --fail --silent --show-error \
-  http://127.0.0.1:1964/ready
-echo
+The candidate UI directory, deployment record and full pre-soak snapshot remain available as evidence.
 
-sudo ss -H -ltn \
-  '( sport = :1964 or sport = :1965 )'
-```
+## Full disaster recovery
 
-Expected health identity:
+Full snapshot restore is reserved for config or persistent-state corruption that cannot be handled by normal code/UI rollback. It restores config, state, installation, systemd, nginx, editable UI, published UI and symlink state and therefore discards changes after the snapshot.
 
-```json
-{
-  "result": "OK",
-  "status": "UP",
-  "version": "3.3",
-  "core_version": "3.3",
-  "api_version": "1",
-  "server_version": "server-0.14"
-}
-```
+## Evidence boundary
 
-Linux may display an IPv4 loopback listener as
-`[::ffff:127.0.0.1]:<port>`. It must not display `0.0.0.0:<port>` or
-`[::]:<port>`.
-
-## 8. Configure nginx and public HTTPS
-
-Before enabling nginx, confirm that no container or other process owns public
-ports `80` or `443`:
-
-```bash
-sudo ss -ltnp | grep -E ':(80|443)\b' || true
-sudo docker ps --format \
-  'table {{.ID}}\t{{.Names}}\t{{.Ports}}' 2>/dev/null || true
-sudo iptables -t nat -S 2>/dev/null \
-  | grep -- '--dport 443' || true
-```
-
-Do not remove Docker-generated NAT rules manually. Stop, remove or remap the
-container that owns the conflicting publication.
-
-Render the supplied API configuration:
-
-```bash
-sudo sed 's/KANGER_DOMAIN/api.kanger.org/g' \
-  /tmp/kanger-deploy/nginx/kanger-server.conf.template \
-  | sudo tee /etc/nginx/sites-available/kanger-server.conf >/dev/null
-```
-
-The template proxies the public API to `127.0.0.1:1964`, exposes `/health`,
-keeps detailed `/ready` metrics local, forwards `X-Request-ID`, and contains no
-route to port `1965`.
-
-Use one TLS model:
-
-- a Let's Encrypt certificate for `api.kanger.org`; or
-- a Cloudflare Origin CA certificate covering `kanger.org` and `*.kanger.org`
-  with Cloudflare SSL/TLS mode `Full (strict)`.
-
-Install private keys with mode `0600`, validate the certificate/key match, and
-run:
-
-```bash
-sudo ln -sfn \
-  /etc/nginx/sites-available/kanger-server.conf \
-  /etc/nginx/sites-enabled/kanger-server.conf
-
-sudo nginx -t
-sudo systemctl restart nginx
-sudo systemctl status nginx --no-pager
-```
-
-Verify the public route:
-
-```bash
-curl --fail --silent --show-error \
-  https://api.kanger.org/health
-echo
-```
-
-The response must contain:
+The deployment record must capture:
 
 ```text
-"version":"3.3"
-"server_version":"server-0.14"
+canonical source and packaging heads
+JAR SHA-256
+bundle SHA-256
+component SHA256SUMS
+15-file browser inventory and hashes
+pre-deployment Server 0.14 anchors
+snapshot archive and off-host receipt
+health/readiness before and after
+listener and nginx evidence
+prior and candidate public UI targets
+nested close/reopen persistence evidence
+baseline-insertion commit/rollback/reopen evidence
+clean restart and abrupt-shutdown persistence evidence
+rollback command and prior artifact identity
 ```
 
-A public request to `/ready` must be rejected with HTTP `403`. The operator port
-`1965` must not be reachable publicly at all.
-
-## 9. Deploy the browser UI
-
-Serve the repository `html/` directory from `kanger.org` and optionally
-`www.kanger.org`.
-
-Set the explicit browser API endpoint in `html/config.js`:
-
-```javascript
-window.KANGER_API_HOST = "https://api.kanger.org";
-```
-
-The browser gateway obtains the public auth capability snapshot from `/version`:
-
-```text
-TRUSTED        -> Register hidden
-EMAIL_VERIFIED -> Register available, confirmation followed by ordinary login
-```
-
-Do not add an admin endpoint or owner token to browser configuration. Account
-provisioning in TRUSTED mode remains a host operation through `sudo
-kanger-admin`.
-
-## 10. Firewall boundary
-
-Allow only:
-
-```text
-80/tcp
-443/tcp
-<SSH_PORT>/tcp
-```
-
-Do not allow ports `1964` or `1965` in UFW, provider firewalls, security groups
-or container publications.
-
-## 11. Update and rollback
-
-Build and qualify a new JAR, copy it to the VPS, and run the same installer:
-
-```bash
-sudo bash /tmp/kanger-deploy/install.sh \
-  /tmp/kanger-server.jar
-```
-
-Configuration and durable account state are retained. The previous JAR is saved
-before restart and restored automatically if application health/readiness fails.
-
-Manual rollback:
-
-```bash
-sudo systemctl stop kanger-server.service
-sudo cp \
-  /opt/kanger-server/kanger-server.jar.previous \
-  /opt/kanger-server/kanger-server.jar
-sudo chown root:kanger /opt/kanger-server/kanger-server.jar
-sudo chmod 0640 /opt/kanger-server/kanger-server.jar
-sudo systemctl start kanger-server.service
-sudo bash /tmp/kanger-deploy/verify-installed.sh
-```
-
-Rollback changes code, not account data. Review migration compatibility before
-rolling back across an account-storage format boundary.
-
-## 12. Backup and restore
-
-Durable server state consists of:
-
-```text
-/etc/kanger-server/kanger.conf
-/var/lib/kanger-server/
-```
-
-Back up TLS material separately when nginx stores it outside those roots, for
-example:
-
-```text
-/etc/nginx/ssl/kanger.org/
-```
-
-Create a transactionally quiet filesystem backup:
-
-```bash
-stamp="$(date -u +%Y%m%dT%H%M%SZ)"
-sudo systemctl stop kanger-server.service
-sudo tar -C / -czf "/root/kanger-server-${stamp}.tar.gz" \
-  etc/kanger-server \
-  var/lib/kanger-server
-sudo systemctl start kanger-server.service
-sudo bash /tmp/kanger-deploy/verify-installed.sh
-```
-
-Copy the archive off the VPS. A backup stored only on the same host is not a
-disaster-recovery backup.
-
-Restore:
-
-```bash
-sudo systemctl stop kanger-server.service
-sudo tar -C / -xzf /root/kanger-server-<timestamp>.tar.gz
-sudo chown -R root:kanger /etc/kanger-server
-sudo chmod 0750 /etc/kanger-server
-sudo chmod 0640 /etc/kanger-server/kanger.conf
-sudo chown -R kanger:kanger /var/lib/kanger-server
-sudo ln -sfn \
-  /etc/kanger-server/kanger.conf \
-  /var/lib/kanger-server/kanger.conf
-sudo chown -h root:kanger /var/lib/kanger-server/kanger.conf
-sudo systemctl start kanger-server.service
-sudo bash /tmp/kanger-deploy/verify-installed.sh
-```
-
-Never store an unencrypted private key or the owner admin token in the Git
-repository.
-
-## 13. Logs and diagnosis
-
-Service state and logs:
-
-```bash
-sudo systemctl status kanger-server.service --no-pager
-sudo journalctl -u kanger-server.service -n 200 --no-pager
-sudo journalctl -u kanger-server.service -f
-```
-
-nginx validation and logs:
-
-```bash
-sudo nginx -t
-sudo systemctl status nginx --no-pager
-sudo tail -n 200 /var/log/nginx/error.log
-sudo tail -n 200 /var/log/nginx/access.log
-```
-
-Listener and routing diagnosis:
-
-```bash
-sudo ss -ltnp | grep -E ':(80|443|1964|1965)\b'
-sudo docker ps --format \
-  'table {{.ID}}\t{{.Names}}\t{{.Ports}}' 2>/dev/null || true
-sudo iptables -t nat -S 2>/dev/null \
-  | grep -E -- '--dport (443|1964|1965)' || true
-```
-
-Interpretation:
-
-- no inbound SYN reaches the VPS: inspect DNS and provider firewall;
-- traffic is DNATed to a container: remove or remap that publication;
-- nginx receives the request but `/health` fails: inspect the Java service and
-  `http://127.0.0.1:1964/health`;
-- `kanger-admin` cannot connect: verify the service, port `1965`, owner token
-  permissions and `/var/lib/kanger-server` ownership;
-- public clients can reach `1964` or `1965` directly: close the firewall or
-  binding immediately; nginx is the only public application boundary.
-
-Transport logs contain request id, method, sanitized path, status, duration and
-bounded-executor counters. Request bodies, query strings, passwords, session
-tokens and owner tokens must not be logged.
+Integration and package qualification do not create `release/3.5.2`, a tag or a GitHub Release. Production acceptance remains a separate decision after VPS soak evidence is reviewed.
