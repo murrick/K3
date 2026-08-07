@@ -20,6 +20,14 @@ repository:
     console_shutdown_qualified_commit: "df738ca6657fcc1fa15619e1d2b3cccd4e51b397"
     console_shutdown_integrated_commit: "ddbf5ab380b4124013f58bbd655a2131ccba536b"
     console_shutdown_pull_request: 78
+    post_shutdown_release_contract_qualified_commit: "628295ead2fcd627c5e0302140278978caaeeff6"
+    post_shutdown_release_contract_integrated_commit: "f9419c9428424b958bd938db0f6cf29650acf3f0"
+    post_shutdown_release_contract_pull_request: 79
+    baseline_insertion_qualified_commit: "6b4b8e51c8ab4023cb5e81c2b2d9ec9ad9d5cdc3"
+    baseline_insertion_documentation_commit: "d894e6e3d17a3c7bfb6c7a5c110664f838c489bf"
+    baseline_insertion_integrated_commit: "a70dd388576882aa4cf827a31b3f4724ac339b16"
+    baseline_insertion_pull_request: 81
+    current_product_shelf_commit: "a70dd388576882aa4cf827a31b3f4724ac339b16"
     baseline_branch: "develop/3.5.2"
     baseline_commit: "22918a09ce443e87cf0ee7397ff1b9f1b70f09e8"
     implementation_checkpoint: "9e2db22ea78de9c8660dd521b12d05a44a35c283"
@@ -33,7 +41,11 @@ repository:
     release_contract_012_qualification: "PASS"
     console_shutdown_qualification: "PASS"
     console_shutdown_integration: "PASS"
-    post_shutdown_release_contract_qualification: "PASS_REQUIRED_BEFORE_OPERATIONS"
+    post_shutdown_release_contract_qualification: "PASS"
+    baseline_insertion_qualification: "PASS"
+    baseline_insertion_manual_torture_qualification: "PASS"
+    baseline_insertion_integration: "PASS"
+    post_baseline_insertion_release_contract_qualification: "PASS_REQUIRED_BEFORE_OPERATIONS"
     acceptance: "NOT_PERFORMED"
     production_cutover: "NOT_PERFORMED"
   previous_release:
@@ -152,7 +164,27 @@ stages:
   - stage: "3.5.2.14"
     kind: "post-shutdown release contract refresh"
     branch: "fix/3.5.2.14-post-shutdown-release-contract"
+    commit: "628295ead2fcd627c5e0302140278978caaeeff6"
+    integrated_commit: "f9419c9428424b958bd938db0f6cf29650acf3f0"
+    pull_request: 79
+    qualification: "PASS"
+    integration: "PASS"
+  - stage: "3.5.2.15"
+    kind: "storage baseline insertion and transaction quiescence stabilization"
+    branch: "fix/3.5.2.15-storage-baseline-insertion"
+    commit: "6b4b8e51c8ab4023cb5e81c2b2d9ec9ad9d5cdc3"
+    documentation_commit: "d894e6e3d17a3c7bfb6c7a5c110664f838c489bf"
+    integrated_commit: "a70dd388576882aa4cf827a31b3f4724ac339b16"
+    pull_request: 81
+    qualification: "PASS"
+    manual_torture_qualification: "PASS"
+    integration: "PASS"
+    server_identity_change: false
+  - stage: "3.5.2.16"
+    kind: "post-baseline-insertion release contract refresh"
+    branch: "fix/3.5.2.16-post-baseline-insertion-release-contract"
     commit: null
+    integrated_commit: null
     pull_request: null
     qualification: "PASS_REQUIRED_BEFORE_OPERATIONS"
 
