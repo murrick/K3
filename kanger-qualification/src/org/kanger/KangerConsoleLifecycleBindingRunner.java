@@ -138,6 +138,35 @@ public final class KangerConsoleLifecycleBindingRunner {
                     "root no-storage commit reported a false checkpoint");
 
             /*
+             * A root pointer is not transaction-quiescent merely because its
+             * visible level is zero. A live child reservation must also block
+             * physical storage acquisition before any factory rebinding.
+             */
+            IMind hiddenUseChild = new Mind(mind);
+            boolean hiddenUseRejected = false;
+            try {
+                mind.useStorage("console_hidden_use_" + suffix);
+            } catch (StorageLifecycleException expected) {
+                hiddenUseRejected = true;
+                require("ACTIVE_TRANSACTION".equals(
+                                expected.getCode()),
+                        "wrong hidden-use code: "
+                                + expected.getCode());
+                require("TRANSACTION_RESOLUTION_REQUIRED".equals(
+                                expected.getRequiredAction()),
+                        "wrong hidden-use required action: "
+                                + expected.getRequiredAction());
+            }
+
+            require(hiddenUseRejected,
+                    "root use ignored a live child reservation");
+            require(mind.getTransactionLevel() == 0,
+                    "hidden-use rejection changed the root level");
+            require(!mind.isStorageUsed(),
+                    "hidden-use rejection acquired storage");
+            mind.release(hiddenUseChild);
+
+            /*
              * Opening physical storage underneath an already layered
              * transaction stack is forbidden. The rejection must happen
              * before storage acquisition or factory rebinding so the complete
@@ -334,6 +363,44 @@ public final class KangerConsoleLifecycleBindingRunner {
                     "root checkpoint changed transaction level");
 
             /*
+             * A caller may still hold the root reference while a child exists.
+             * That hidden reservation must block checkpoint and close even
+             * though root.getTransactionLevel() is zero.
+             */
+            IMind hiddenStorageChild = new Mind(mind);
+            boolean hiddenCheckpointRejected = false;
+            try {
+                mind.getUser().checkpoint(mind);
+            } catch (StorageLifecycleException expected) {
+                hiddenCheckpointRejected = true;
+                require("ACTIVE_TRANSACTION".equals(
+                                expected.getCode()),
+                        "wrong hidden-checkpoint code: "
+                                + expected.getCode());
+            }
+
+            boolean hiddenCloseRejected = false;
+            try {
+                mind.closeStorage();
+            } catch (StorageLifecycleException expected) {
+                hiddenCloseRejected = true;
+                require("ACTIVE_TRANSACTION".equals(
+                                expected.getCode()),
+                        "wrong hidden-close code: "
+                                + expected.getCode());
+            }
+
+            require(hiddenCheckpointRejected,
+                    "root checkpoint ignored a live child reservation");
+            require(hiddenCloseRejected,
+                    "root close ignored a live child reservation");
+            require(mind.isStorageUsed(),
+                    "hidden-reservation rejection closed storage");
+            require(openedStorage.equals(mind.getStorageName()),
+                    "hidden-reservation rejection changed storage identity");
+            mind.release(hiddenStorageChild);
+
+            /*
              * Presentation must distinguish root logical state from the
              * chain-shared canonical runtime registries.
              */
@@ -507,6 +574,8 @@ public final class KangerConsoleLifecycleBindingRunner {
             System.out.println(
                     "CONSOLE_LIFECYCLE_BINDING_PASS idempotent-root-commit");
             System.out.println(
+                    "CONSOLE_LIFECYCLE_BINDING_PASS hidden-reservation-use");
+            System.out.println(
                     "CONSOLE_LIFECYCLE_BINDING_PASS active-use-rejected");
             System.out.println(
                     "CONSOLE_LIFECYCLE_BINDING_PASS baseline-insertion-rollback");
@@ -516,6 +585,8 @@ public final class KangerConsoleLifecycleBindingRunner {
                     "CONSOLE_LIFECYCLE_BINDING_PASS baseline-insertion-reopen");
             System.out.println(
                     "CONSOLE_LIFECYCLE_BINDING_PASS retained-checkpoint");
+            System.out.println(
+                    "CONSOLE_LIFECYCLE_BINDING_PASS hidden-reservation-storage");
             System.out.println(
                     "CONSOLE_LIFECYCLE_BINDING_PASS typed-active-close");
             System.out.println(
