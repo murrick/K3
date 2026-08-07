@@ -58,10 +58,13 @@ import java.util.*;
  *
  * <p><strong>Жизненный цикл.</strong> Transaction lifecycle и physical storage
  * lifecycle являются независимыми state machines. {@link #use(IMind, String)}
- * не закрывает уже открытый storage; {@link #checkpoint(IMind)} публикует
- * durable root state, сохраняя storage и runtime context открытыми;
- * {@link #close(IMind)} не принимает решение за незавершённую транзакцию и
- * допустим только на level 0.</p>
+ * не закрывает уже открытый storage и допустим только при отсутствии
+ * незавершённых child-транзакций; вызывающая оболочка может после успешного
+ * открытия вставить новый persistent baseline под прежний level-0 workspace,
+ * повторно канонизировав workspace как новый level-1 overlay.
+ * {@link #checkpoint(IMind)} публикует durable root state, сохраняя storage и
+ * runtime context открытыми; {@link #close(IMind)} не принимает решение за
+ * незавершённую транзакцию и допустим только при transaction quiescence.</p>
  *
  * <p><strong>Persistence.</strong> При открытом хранилище идентификаторы схем
  * выделяются соответствующими {@code IBase}; без открытого хранилища
@@ -76,7 +79,9 @@ import java.util.*;
  * управляемым вызывающим кодом compatibility slot: оно не является владельцем
  * хранилища, корнем shutdown-cleanup, публикацией текущей транзакции или
  * авторитетным источником активного runtime-контекста. Rejected lifecycle
- * operation не меняет active Mind, storage identity или physical generation.</p>
+ * operation не меняет active Mind, storage identity или physical generation.
+ * Transaction quiescence означает одновременно level 0 у переданного Mind и
+ * отсутствие незавершённых child reservations у корневого Mind.</p>
  *
  * <p><strong>Обязательства вызывающего кода.</strong> Вызывающая сторона
  * должна хранить и передавать фактически актуальную ссылку {@code IMind},
@@ -194,6 +199,23 @@ public class User implements IUser {
         }
     }
 
+    private void requireTransactionQuiescence(
+            IMind mind,
+            String operation) throws StorageLifecycleException {
+
+        int level = mind.getTransactionLevel();
+        Mind root = (Mind) mind.getTop();
+        if (level > 0 || root.hasPendingTransactions()) {
+            String state = level > 0
+                    ? "transaction level " + level + " is active"
+                    : "a child transaction is still active";
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.ACTIVE_TRANSACTION,
+                    "Cannot " + operation + " while " + state
+                            + "; commit or rollback first");
+        }
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -203,13 +225,7 @@ public class User implements IUser {
             throw new IllegalStateException(
                     "Cannot checkpoint storage without an active Mind");
         }
-        if (mind.getTransactionLevel() > 0) {
-            throw new StorageLifecycleException(
-                    StorageLifecycleErrorCode.ACTIVE_TRANSACTION,
-                    "Cannot checkpoint storage while transaction level "
-                            + mind.getTransactionLevel()
-                            + " is active; commit or rollback first");
-        }
+        requireTransactionQuiescence(mind, "checkpoint storage");
         if (isClosed()) {
             throw new StorageLifecycleException(
                     StorageLifecycleErrorCode.NO_STORAGE_OPEN,
@@ -237,13 +253,7 @@ public class User implements IUser {
             throw new IllegalStateException(
                     "Cannot close an open database without an active Mind");
         }
-        if (mind.getTransactionLevel() > 0) {
-            throw new StorageLifecycleException(
-                    StorageLifecycleErrorCode.ACTIVE_TRANSACTION,
-                    "Cannot close database while transaction level "
-                            + mind.getTransactionLevel()
-                            + " is active; commit or rollback first");
-        }
+        requireTransactionQuiescence(mind, "close database");
 
         checkpoint(mind);
 
@@ -297,6 +307,10 @@ public class User implements IUser {
                         "A database is already open; explicit close is required before use");
             }
 
+            if (mind != null) {
+                requireTransactionQuiescence(mind, "open database");
+            }
+
             if (mind == null) {
                 mind = new Mind(this);
             }
@@ -341,20 +355,6 @@ public class User implements IUser {
             ((Mind) mind).getTValues().transaction(null);
             ((Mind) mind).getTVars().transaction(null);
             ((LibraryFactory) mind.getLibrary()).transaction(null);
-
-//            Mind m = new Mind(mind);
-//            m.link(null, true);
-//            Boolean ar = m.analise(null, true);
-//
-//            if (ar) {
-//                m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
-//                mind.release(m);
-//                close();
-//                throw new RuntimeErrorException("Collisions in Program");
-//            } else {
-//                m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
-//                mind.commit(m);
-//            }
 
             return mind;
 
