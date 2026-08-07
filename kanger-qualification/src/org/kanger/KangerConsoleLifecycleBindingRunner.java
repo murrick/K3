@@ -80,6 +80,13 @@ public final class KangerConsoleLifecycleBindingRunner {
                     "showDBrief",
                     IMind.class);
 
+            Method useDatabase = privateMethod(
+                    Console.class,
+                    "useDatabase",
+                    String.class,
+                    IMind.class,
+                    Scanner.class);
+
             Method closeDatabase = privateMethod(
                     Console.class,
                     "closeDatabase",
@@ -123,6 +130,166 @@ public final class KangerConsoleLifecycleBindingRunner {
             require(!noStorageCommit.output.contains(
                             "Storage checkpoint completed"),
                     "root no-storage commit reported a false checkpoint");
+
+            /*
+             * Opening physical storage underneath an already layered
+             * transaction stack is forbidden. The rejection must happen
+             * before storage acquisition or factory rebinding so the complete
+             * Mind topology remains usable by ordinary commit/rollback.
+             */
+            require(mind.compile("!useguardroot;"),
+                    "use-guard root assertion was rejected");
+            IMind useLevel1 = new Mind(mind);
+            require(useLevel1.compile("!useguardlevel1;"),
+                    "use-guard level-1 assertion was rejected");
+            IMind useLevel2 = new Mind(useLevel1);
+            require(useLevel2.compile("!useguardlevel2;"),
+                    "use-guard level-2 assertion was rejected");
+
+            String guardedSource = useLevel2.getSourceCode();
+            boolean activeUseRejected = false;
+            try {
+                use(useDatabase,
+                        "use console.use.guard." + suffix,
+                        useLevel2);
+            } catch (StorageLifecycleException expected) {
+                activeUseRejected = true;
+                require("ACTIVE_TRANSACTION".equals(
+                                expected.getCode()),
+                        "wrong active-use code: "
+                                + expected.getCode());
+                require("TRANSACTION_RESOLUTION_REQUIRED".equals(
+                                expected.getRequiredAction()),
+                        "wrong active-use required action: "
+                                + expected.getRequiredAction());
+            }
+
+            require(activeUseRejected,
+                    "Console use accepted a layered transaction stack");
+            require(useLevel2.getTransactionLevel() == 2,
+                    "failed Console use changed transaction depth");
+            require(!useLevel2.isStorageUsed(),
+                    "failed Console use acquired physical storage");
+            require(guardedSource.equals(useLevel2.getSourceCode()),
+                    "failed Console use changed visible workspace source");
+
+            useLevel1.release(useLevel2);
+            IMind useRoot = useLevel1.getNext();
+            require(useRoot != null,
+                    "use-guard level 1 lost its parent root");
+            require(useRoot.commit(useLevel1),
+                    "post-rejection transaction commit failed");
+            mind = useRoot;
+
+            require(mind.getTransactionLevel() == 0,
+                    "post-rejection transaction resolution did not return to root");
+            require(!mind.isStorageUsed(),
+                    "post-rejection transaction resolution opened storage");
+            require(mind.getSourceCode().contains("useguardroot"),
+                    "post-rejection resolution lost root content");
+            require(mind.getSourceCode().contains("useguardlevel1"),
+                    "post-rejection resolution lost committed child content");
+            require(!mind.getSourceCode().contains("useguardlevel2"),
+                    "post-rejection rollback retained level-2 content");
+
+            mind = mind.clearWorkspace();
+            require(mind.getSourceCode().isEmpty(),
+                    "qualification workspace did not clear after use guard");
+
+            /*
+             * A level-0 offline workspace is intentionally retained when a
+             * database is opened: the database becomes the new persistent
+             * baseline at level 0 and the previous workspace is recompiled as
+             * a level-1 overlay. Rollback must leave the database untouched.
+             */
+            String insertionStorage =
+                    "console.baseline.insertion." + suffix;
+
+            require(mind.compile("!workspacepending;"),
+                    "pending workspace assertion was rejected");
+            mind = use(useDatabase,
+                    "use " + insertionStorage,
+                    mind);
+
+            require(mind.getTransactionLevel() == 1,
+                    "workspace insertion did not create level 1");
+            require(mind.isStorageUsed(),
+                    "workspace insertion did not open storage");
+            require(mind.getSourceCode().contains("workspacepending"),
+                    "workspace insertion lost pending source");
+            require(!mind.getTop().getSourceCode().contains(
+                            "workspacepending"),
+                    "workspace insertion committed pending source into level 0");
+
+            IMind insertionRoot = mind.getNext();
+            require(insertionRoot != null,
+                    "workspace insertion did not retain database root");
+            insertionRoot.release(mind);
+            mind = insertionRoot;
+            mind = mind.closeStorage();
+
+            mind = mind.useStorage(insertionStorage);
+            require(!mind.getSourceCode().contains("workspacepending"),
+                    "rolled-back workspace was persisted");
+            mind = mind.closeStorage();
+
+            /*
+             * The same insertion path must keep pre-existing database content
+             * at level 0, expose both baseline and workspace at level 1, and
+             * persist the workspace exactly once after explicit commit.
+             */
+            mind = mind.useStorage(insertionStorage);
+            require(mind.compile("!databasebaseline;"),
+                    "database baseline assertion was rejected");
+            mind = mind.closeStorage();
+
+            require(mind.compile("!workspacecommit;"),
+                    "committed workspace assertion was rejected");
+            mind = use(useDatabase,
+                    "use " + insertionStorage,
+                    mind);
+
+            require(mind.getTransactionLevel() == 1,
+                    "committed workspace insertion did not create level 1");
+            require(mind.getTop().getSourceCode().contains(
+                            "databasebaseline"),
+                    "database baseline is missing from level 0");
+            require(!mind.getTop().getSourceCode().contains(
+                            "workspacecommit"),
+                    "workspace was published before explicit commit");
+            require(mind.getSourceCode().contains("databasebaseline"),
+                    "level-1 view cannot see database baseline");
+            require(mind.getSourceCode().contains("workspacecommit"),
+                    "level-1 view cannot see imported workspace");
+
+            mind = process(
+                    processTransaction,
+                    "transaction commit",
+                    mind);
+
+            require(mind.getTransactionLevel() == 0,
+                    "workspace commit did not return to database root");
+            require(countOccurrences(
+                            mind.getSourceCode(),
+                            "workspacecommit") == 1,
+                    "workspace commit duplicated the imported assertion");
+
+            mind = mind.closeStorage();
+            mind = mind.useStorage(insertionStorage);
+            String insertionReopened = mind.getSourceCode();
+
+            require(countOccurrences(
+                            insertionReopened,
+                            "databasebaseline") == 1,
+                    "database baseline duplicated across reopen");
+            require(countOccurrences(
+                            insertionReopened,
+                            "workspacecommit") == 1,
+                    "committed workspace duplicated across reopen");
+            require(!insertionReopened.contains("workspacepending"),
+                    "rolled-back workspace appeared after reopen");
+
+            mind = mind.closeStorage();
 
             /*
              * Level-0 commit with storage performs a checkpoint but retains
@@ -337,6 +504,14 @@ public final class KangerConsoleLifecycleBindingRunner {
             System.out.println(
                     "CONSOLE_LIFECYCLE_BINDING_PASS idempotent-root-commit");
             System.out.println(
+                    "CONSOLE_LIFECYCLE_BINDING_PASS active-use-rejected");
+            System.out.println(
+                    "CONSOLE_LIFECYCLE_BINDING_PASS baseline-insertion-rollback");
+            System.out.println(
+                    "CONSOLE_LIFECYCLE_BINDING_PASS baseline-insertion-commit");
+            System.out.println(
+                    "CONSOLE_LIFECYCLE_BINDING_PASS baseline-insertion-reopen");
+            System.out.println(
                     "CONSOLE_LIFECYCLE_BINDING_PASS retained-checkpoint");
             System.out.println(
                     "CONSOLE_LIFECYCLE_BINDING_PASS typed-active-close");
@@ -408,6 +583,23 @@ public final class KangerConsoleLifecycleBindingRunner {
         }
     }
 
+    private static IMind use(
+            Method method,
+            String line,
+            IMind mind) throws Exception {
+
+        Scanner scanner = new Scanner("");
+        try {
+            return (IMind) invoke(
+                    method,
+                    line,
+                    mind,
+                    scanner);
+        } finally {
+            scanner.close();
+        }
+    }
+
     private static IMind close(
             Method method,
             IMind mind) throws Exception {
@@ -420,6 +612,22 @@ public final class KangerConsoleLifecycleBindingRunner {
                     scanner);
         } finally {
             scanner.close();
+        }
+    }
+
+    private static int countOccurrences(
+            String value,
+            String token) {
+
+        int count = 0;
+        int from = 0;
+        while (true) {
+            int found = value.indexOf(token, from);
+            if (found < 0) {
+                return count;
+            }
+            ++count;
+            from = found + token.length();
         }
     }
 
