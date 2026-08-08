@@ -41,6 +41,7 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
     static final String INVOCATION_MARKER = "_kanger_command_invocation";
     static final String SESSION_STATE_FIELD = "session";
     static final String SESSION_CLOSED_STATE = "closed";
+    static final String DIALOGUE_CHOICES_FIELD = "dialogue_choices";
 
     private final IReactor<JSONObject> delegate;
     private final CommandParser parser;
@@ -113,7 +114,39 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
         }
 
         Object response = delegate.run(packet);
+        response = decorateDialogueChoices(invocation, response);
         return decorateSessionState(invocation, response);
+    }
+
+    private Object decorateDialogueChoices(CommandInvocation invocation,
+                                            Object response) {
+        if (invocation == null || !(response instanceof JSONObject)) {
+            return response;
+        }
+        JSONObject result = (JSONObject) response;
+        if (!"OK".equalsIgnoreCase(result.optString("result", ""))) {
+            return response;
+        }
+
+        JSONObject choices = null;
+        if (invocation.getIntent() == CommandIntent.SOURCE_GET
+                && string(invocation, "source").isEmpty()) {
+            choices = new JSONObject()
+                    .put("schema", 1)
+                    .put("label", "Available sources: ")
+                    .put("empty", "No source files available")
+                    .put("compose", "get");
+        } else if (invocation.getIntent() == CommandIntent.STORAGE_STATUS) {
+            choices = new JSONObject()
+                    .put("schema", 1)
+                    .put("label", "Available DBs: ")
+                    .put("empty", "No databases was created")
+                    .put("compose", "storage use");
+        }
+        if (choices != null) {
+            result.put(DIALOGUE_CHOICES_FIELD, choices);
+        }
+        return response;
     }
 
     private Object decorateSessionState(CommandInvocation invocation, Object response) {
@@ -268,7 +301,8 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
     }
 
     private String string(CommandInvocation invocation, String name) {
-        return String.valueOf(invocation.getArgument(name));
+        Object value = invocation.getArgument(name);
+        return value == null ? "" : String.valueOf(value);
     }
 
     private JSONObject validateRawEnvelope(JSONObject parameters) {
