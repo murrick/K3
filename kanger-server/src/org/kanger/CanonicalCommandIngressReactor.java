@@ -39,6 +39,8 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
     static final String LINE_PARAMETER = "line";
     static final String CANONICAL_CONTEXT = "canonical";
     static final String INVOCATION_MARKER = "_kanger_command_invocation";
+    static final String SESSION_STATE_FIELD = "session";
+    static final String SESSION_CLOSED_STATE = "closed";
 
     private final IReactor<JSONObject> delegate;
     private final CommandParser parser;
@@ -109,7 +111,25 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
         if (policyViolation != null) {
             return policyViolation;
         }
-        return delegate.run(packet);
+
+        Object response = delegate.run(packet);
+        return decorateSessionState(invocation, response);
+    }
+
+    private Object decorateSessionState(CommandInvocation invocation, Object response) {
+        if (invocation == null
+                || invocation.getIntent() != CommandIntent.QUIT
+                || !(response instanceof JSONObject)) {
+            return response;
+        }
+        JSONObject result = (JSONObject) response;
+        if (!"OK".equalsIgnoreCase(result.optString("result", ""))) {
+            return response;
+        }
+        result.put(SESSION_STATE_FIELD, new JSONObject()
+                .put("schema", 1)
+                .put("state", SESSION_CLOSED_STATE));
+        return response;
     }
 
     private boolean translateLegacy(CommandInvocation invocation,
