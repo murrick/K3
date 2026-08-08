@@ -14,6 +14,7 @@ const refreshes = [];
 const callbacks = [];
 const window = {
     token: '__KANGER_PARENT_SESSION__',
+    editor: {},
     KANGER_ERROR_BOUNDARY: Object.freeze({version: 1, installed: true}),
     post(packet, callback) {
         calls.push(JSON.parse(JSON.stringify(packet)));
