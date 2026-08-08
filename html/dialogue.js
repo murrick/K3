@@ -15,12 +15,40 @@
     'use strict';
 
     var installed = false;
+    var legacyBootstrapObserved = false;
+    var legacyBootstrapRemaining = 0;
 
     function stringValue(value) {
         return value === null || value === undefined ? '' : String(value);
     }
 
+    function completeLegacyBootstrap(callback) {
+        var result = {result: 'OK', description: ''};
+        if (typeof callback === 'function') {
+            callback(result);
+        }
+        return undefined;
+    }
+
     function dispatch(line, callback) {
+        /*
+         * The historical empty-history welcome chain executes three generic
+         * command calls before CodeMirror creates window.editor: canonical
+         * help followed by two retired list commands. Preserve the first call
+         * and structurally suppress the remaining two. No command text is read
+         * or translated here, so this compatibility bridge cannot become a
+         * second command parser.
+         */
+        if (!window.editor) {
+            if (!legacyBootstrapObserved) {
+                legacyBootstrapObserved = true;
+                legacyBootstrapRemaining = 2;
+            } else if (legacyBootstrapRemaining > 0) {
+                legacyBootstrapRemaining -= 1;
+                return completeLegacyBootstrap(callback);
+            }
+        }
+
         var raw = stringValue(line);
         return window.post({
             context: 'dialogue',
