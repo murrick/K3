@@ -18,6 +18,7 @@ import static org.kanger.command.CommandParseException.Reason.*;
 public final class CommandParserConformanceTest {
 
     private final CommandParser parser = new CommandParser();
+    private final CommandFormatter formatter = new CommandFormatter();
     private int assertions;
 
     public static void main(String[] args) throws Exception {
@@ -40,6 +41,7 @@ public final class CommandParserConformanceTest {
         sourceFamily();
         storageFamily();
         systemFamily();
+        canonicalEcho();
         helpRegistry();
     }
 
@@ -220,6 +222,20 @@ public final class CommandParserConformanceTest {
         reject("quit now", EXTRA_ARGUMENT);
     }
 
+    private void canonicalEcho() throws Exception {
+        expectCanonical("r 17", "rule 17");
+        expectCanonical("r c 17", "rule comment 17");
+        expectCanonical("f s 8", "function source 8");
+        expectCanonical("b p father", "base predicate father");
+        expectCanonical("v o x d, y a", "values order x desc, y asc");
+        expectCanonical("so t 42", "solution tree 42");
+        expectCanonical("w a 0", "when accept 0");
+        expectCanonical("t s", "transaction start");
+        expectCanonical("st u close", "storage use close");
+        expectCanonical("g \"my source.k\"", "get \"my source.k\"");
+        expectCanonical("?father(John,Tom)", "?father(John,Tom)");
+    }
+
     private void helpRegistry() {
         check(CommandRegistry.definitions().size() == CommandIntent.values().length,
                 "every intent has registry metadata");
@@ -259,6 +275,12 @@ public final class CommandParserConformanceTest {
         CommandInvocation parsed = parser.parse(source);
         check(parsed.getIntent() == intent, source + " intent");
         check(value.equals(parsed.getArgument(name)), source + " argument " + name);
+    }
+
+    private void expectCanonical(String source, String expected) throws Exception {
+        String actual = formatter.format(parser.parse(source));
+        check(expected.equals(actual),
+                source + " expected canonical '" + expected + "' but got '" + actual + "'");
     }
 
     private void reject(String source,
