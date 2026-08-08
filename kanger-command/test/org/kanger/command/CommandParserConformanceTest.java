@@ -58,6 +58,7 @@ public final class CommandParserConformanceTest {
         expect("d foo.k", CommandIntent.SOURCE_DELETE);
         expect("e", CommandIntent.ERASE);
         expect("f", CommandIntent.FUNCTIONS);
+        expect("g", CommandIntent.SOURCE_GET);
         expect("g foo.k", CommandIntent.SOURCE_GET);
         expect("h", CommandIntent.HELP);
         expect("p foo.k", CommandIntent.SOURCE_PUT);
@@ -179,6 +180,8 @@ public final class CommandParserConformanceTest {
     }
 
     private void sourceFamily() throws Exception {
+        expectArgument("get", CommandIntent.SOURCE_GET,
+                "source", "");
         expectArgument("get delete", CommandIntent.SOURCE_GET,
                 "source", "delete");
         expectArgument("get 123", CommandIntent.SOURCE_GET,
@@ -191,7 +194,6 @@ public final class CommandParserConformanceTest {
                 "source", "a\"b.k");
         expectArgument("get \"dir\\\\name.k\"", CommandIntent.SOURCE_GET,
                 "source", "dir\\name.k");
-        reject("get", MISSING_ARGUMENT);
         reject("get two names", EXTRA_ARGUMENT);
         reject("get \"unfinished", UNTERMINATED_QUOTE);
     }
@@ -232,6 +234,7 @@ public final class CommandParserConformanceTest {
         expectCanonical("w a 0", "when accept 0");
         expectCanonical("t s", "transaction start");
         expectCanonical("st u close", "storage use close");
+        expectCanonical("g", "get");
         expectCanonical("g \"my source.k\"", "get \"my source.k\"");
         expectCanonical("?father(John,Tom)", "?father(John,Tom)");
     }
