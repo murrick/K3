@@ -5,6 +5,9 @@
  */
 package org.kanger.command;
 
+import org.kanger.command.CommandRegistry.Family;
+import org.kanger.command.CommandRegistry.Keyword;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -12,8 +15,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.kanger.command.CommandParseException.Reason.*;
-import static org.kanger.command.CommandRegistry.Family;
-import static org.kanger.command.CommandRegistry.Keyword;
 
 /**
  * Shared parser for the canonical KANGER command dialogue.
@@ -158,6 +159,9 @@ public final class CommandParser {
             requireRequiredArgument(tokens, 3);
             requireSize(tokens, 3);
             return commandWithLong(CommandIntent.FUNCTION_SOURCE, "id", tokens.get(2).value, raw);
+        }
+        if (CommandRegistry.isExact(tokens.get(1).value, "show")) {
+            throw error(INVALID_GRAMMAR, "function show is not canonical");
         }
         requireSize(tokens, 2);
         return commandWithLong(CommandIntent.FUNCTION_SHOW, "id", tokens.get(1).value, raw);
@@ -555,8 +559,6 @@ public final class CommandParser {
                 ++p;
             }
             if (p < line.length()) {
-                // maxTokens is effectively unlimited for validating calls, but
-                // keep the contract explicit if a bounded validating call is added.
                 throw error(EXTRA_ARGUMENT, "Unexpected trailing input");
             }
         }
