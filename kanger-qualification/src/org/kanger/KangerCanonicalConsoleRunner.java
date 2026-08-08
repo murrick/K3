@@ -21,8 +21,8 @@ import java.io.PrintStream;
  * <p>The runner drives the real {@link CanonicalConsole#session(IMind,
  * ShutdownHook)} method through {@code System.in}. It therefore covers the
  * interactive acceptance loop, shared command parsing, Core bypass,
- * Console-local forms, presentation adapters and transaction state changes in
- * one operator session.</p>
+ * Console-local forms, presentation adapters, hypothesis acceptance and
+ * storage/transaction state changes in one operator session.</p>
  */
 public final class KangerCanonicalConsoleRunner {
 
@@ -42,6 +42,7 @@ public final class KangerCanonicalConsoleRunner {
     public static boolean test() throws Exception {
         String suffix = Long.toString(System.nanoTime());
         String userName = "autotest-canonical-console-" + suffix;
+        String storageName = "canonical_console_" + suffix;
         IUser user = UserFactory.createUser(userName, userName);
         new UDF().init(user);
         new DB().init(user);
@@ -49,10 +50,20 @@ public final class KangerCanonicalConsoleRunner {
 
         String script = ""
                 + "!consoleconvergence;\n"
+                + "!@x consolepremise(x) -> consoletarget(x);\n"
+                + "?consoletarget(item);\n"
+                + "w\n"
+                + "w a 0\n"
+                + "?consoletarget(item);\n"
                 + "r a\n"
                 + "v\n"
                 + "so\n"
-                + "w\n"
+                + "st\n"
+                + "st u " + storageName + "\n"
+                + "t\n"
+                + "t c\n"
+                + "st\n"
+                + "st c\n"
                 + "st\n"
                 + "put \"console test.k\"\n"
                 + "get\n"
@@ -89,14 +100,28 @@ public final class KangerCanonicalConsoleRunner {
 
         require(out.contains("consoleconvergence"),
                 "Core line did not reach canonical Console execution");
+        require(out.contains("Hypothesis list (1)"),
+                "canonical when status did not expose the optimized hypothesis rowset");
+        require(out.contains("000:\t!consolepremise(item);"),
+                "canonical when status did not use zero-based row addressing");
+        require(out.contains("Statement: !consolepremise(item);"),
+                "when accept 0 did not resolve the first optimized hypothesis row");
+        require(out.contains("consoletarget(item)"),
+                "accepted hypothesis did not participate in subsequent Core inference");
+
         require(out.contains("No values found"),
                 "values prefix did not reach canonical Values binding");
-        require(out.contains("No solutions found"),
+        require(out.contains("Solution"),
                 "solution-family prefix did not reach canonical Solutions binding");
-        require(out.contains("No hypothesis found"),
-                "when prefix did not reach canonical hypothesis binding");
         require(out.contains("Current storage: none"),
                 "storage-family prefix did not reach canonical storage status");
+
+        require(out.contains("Current storage: " + storageName),
+                "canonical storage use did not bind the requested storage");
+        require(out.contains("SUCCESS: Transaction committed"),
+                "canonical transaction commit did not commit storage baseline insertion");
+        require(out.contains("Database " + storageName + " closed"),
+                "canonical storage close did not execute");
 
         require(out.contains("Source file console test.k saved."),
                 "quoted source put did not execute");
