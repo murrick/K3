@@ -121,11 +121,13 @@ class PublicAuthUiContractTest {
 
         assertTrue(rendering.contains("document.createTextNode"));
         assertTrue(rendering.contains("document.createElement('strong')"));
-        assertTrue(rendering.contains("span.addEventListener('click'"));
+        assertTrue(rendering.contains("data-kanger-compose"));
+        assertTrue(rendering.contains("dialogue_choices"));
         assertTrue(rendering.contains(
                 "row.textContent = stringValue(entry.record)"));
         assertTrue(rendering.contains(
                 "cell.textContent = stringValue(value)"));
+        assertFalse(rendering.contains("window.command(query);"));
 
         assertFalse(rendering.contains("insertAdjacentHTML"));
         assertFalse(rendering.contains("outerHTML"));
@@ -221,7 +223,8 @@ class PublicAuthUiContractTest {
         assertTrue(dialogue.contains("line: raw"));
         assertTrue(dialogue.contains("window.command = dispatch"));
         assertTrue(dialogue.contains("window.query = dispatch"));
-        assertTrue(dialogue.contains("legacyBootstrapRemaining = 2"));
+        assertFalse(dialogue.contains("legacyBootstrapRemaining"));
+        assertFalse(dialogue.contains("legacyBootstrapObserved"));
         assertFalse(dialogue.contains("split("));
         assertFalse(dialogue.contains("toLowerCase("));
         assertFalse(dialogue.matches("(?s).*switch\\s*\\(.*"));
