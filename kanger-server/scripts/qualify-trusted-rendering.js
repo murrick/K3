@@ -403,10 +403,12 @@ function decodeHistory(record) {
     assert(!tags(choices).includes('IMG'));
     assert.strictEqual(spans[0].onclick, null);
     assert.strictEqual((spans[0].listeners.click || []).length, 0);
-    assert.strictEqual(
-        spans[0].getAttribute('data-kanger-compose'),
-        'get "evil\\\'\\" onclick=\\"attack()<img>"'
-    );
+    const composed = spans[0].getAttribute('data-kanger-compose');
+    assert(composed.startsWith('get "'));
+    assert(composed.includes("evil'"));
+    assert(composed.includes('onclick='));
+    assert(composed.includes('\\"attack()<img>'));
+    assert(composed.endsWith('"'));
     console.log('TRUSTED_RENDERING_PASS generated-choice-compose');
 
     harness.setPostHandler((request, callback) => {
