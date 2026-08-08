@@ -78,6 +78,7 @@
                         </goals>
                         <configuration>
                             <sources>
+                                <source>${project.basedir}/../kanger-command/src</source>
                                 <source>${project.basedir}/../kanger/src</source>
                                 <source>${project.basedir}/../kanger-udf/src</source>
                                 <source>${project.basedir}/../kanger-data-dumb/src</source>
