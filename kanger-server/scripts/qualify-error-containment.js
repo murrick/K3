@@ -238,6 +238,34 @@ async function qualifyContainment() {
         'transport_unavailable');
     assert.strictEqual(childMessages.at(-1).message.payload.data.error.retryable, true);
     console.log('ERROR_CONTAINMENT_PASS transport-taxonomy');
+
+    fetchImpl = async (url, options) => {
+        fetchCalls.push({url, options});
+        return response(JSON.stringify({
+            result: 'OK',
+            session: {schema: 1, state: 'closed'}
+        }));
+    };
+    dispatch({
+        channel: 'kanger.containment.v1',
+        type: 'api.request',
+        generation: 7,
+        payload: {
+            request_id: 8,
+            packet: {context: 'dialogue', parameters: {line: 'q'}}
+        }
+    });
+    await tick();
+    const dialogueSent = JSON.parse(fetchCalls.at(-1).options.body);
+    assert.strictEqual(dialogueSent.context, 'dialogue');
+    assert.strictEqual(dialogueSent.parameters.line, 'q');
+    assert.strictEqual(dialogueSent.parameters.token, secret);
+    assert.strictEqual(childMessages.at(-1).message.type, 'api.response');
+    assert.strictEqual(childMessages.at(-1).message.payload.request_id, 8);
+    assert.strictEqual(sessionStorage.getItem('kanger.applicationSession.v1'), null);
+    await tick();
+    assert.strictEqual(location.reloads, 1);
+    console.log('ERROR_CONTAINMENT_PASS dialogue-session-closure');
 }
 
 async function qualifyErrorBoundary() {
