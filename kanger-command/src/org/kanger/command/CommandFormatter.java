@@ -130,7 +130,7 @@ public final class CommandFormatter {
                 out.append(", ");
             }
             SortKey key = keys.get(i);
-            out.append(argument(key.getField()))
+            out.append(argument(key.getField(), true))
                     .append(' ')
                     .append(key.getDirection() == SortKey.Direction.DESC
                             ? "desc" : "asc");
@@ -147,18 +147,22 @@ public final class CommandFormatter {
     }
 
     private String argument(Object value) {
+        return argument(value, false);
+    }
+
+    private String argument(Object value, boolean commaIsStructural) {
         if (value == null) {
             throw new IllegalArgumentException("argument must not be null");
         }
         String text = String.valueOf(value);
-        if (!requiresQuotes(text)) {
+        if (!requiresQuotes(text, commaIsStructural)) {
             return text;
         }
         return '"' + text.replace("\\", "\\\\").replace("\"", "\\\"") + '"';
     }
 
-    private boolean requiresQuotes(String text) {
-        if (text.isEmpty()) {
+    private boolean requiresQuotes(String text, boolean commaIsStructural) {
+        if (text.isEmpty() || (commaIsStructural && text.indexOf(',') >= 0)) {
             return true;
         }
         for (int i = 0; i < text.length(); ++i) {
