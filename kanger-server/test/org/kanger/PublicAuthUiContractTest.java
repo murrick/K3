@@ -139,11 +139,13 @@ class PublicAuthUiContractTest {
         int workspacePosition = modeLoader.indexOf("workspace.js");
         int errorPosition = modeLoader.indexOf("error.js");
         int dialoguePosition = modeLoader.indexOf("dialogue.js");
+        int presentationPosition = modeLoader.indexOf("presentation.js");
         assertTrue(vendorPosition >= 0);
         assertTrue(operationPosition > vendorPosition);
         assertTrue(workspacePosition > operationPosition);
         assertTrue(errorPosition > workspacePosition);
         assertTrue(dialoguePosition > errorPosition);
+        assertTrue(presentationPosition > dialoguePosition);
         assertTrue(modeVendor.contains(
                 "CodeMirror.defineMode(\"javascript\""));
         assertTrue(modeVendor.contains(
@@ -229,6 +231,46 @@ class PublicAuthUiContractTest {
         assertTrue(containment.contains("result.session.state === 'closed'"));
         assertTrue(containment.contains("clearSession(expected)"));
         assertFalse(containment.contains("allow-same-origin"));
+    }
+
+    @Test
+    void supportedConsoleProjectsSemanticTextWithoutExecutionAuthority()
+            throws Exception {
+        String presentation = read(
+                Paths.get("..", "html", "presentation.js"));
+        String presentationCss = read(
+                Paths.get("..", "html", "presentation.css"));
+
+        assertTrue(presentation.contains("KANGER_PRESENTATION"));
+        assertTrue(presentation.contains("selectionStart"));
+        assertTrue(presentation.contains("selectionEnd"));
+        assertTrue(presentation.contains("data-kanger-compose"));
+        assertTrue(presentation.contains("technical-panel"));
+        assertTrue(presentation.contains("KANGER_OPERATION_PROTOCOL"));
+        assertTrue(presentation.contains("KANGER_WORKSPACE_STATE"));
+        assertTrue(presentation.contains("base predicate "));
+        assertTrue(presentation.contains("base tree "));
+        assertTrue(presentation.contains("function source "));
+        assertTrue(presentation.contains("solution tree "));
+        assertTrue(presentation.contains("when accept "));
+        assertTrue(presentation.contains("storage use "));
+
+        assertFalse(presentation.contains("window.command"));
+        assertFalse(presentation.contains("window.query"));
+        assertFalse(presentation.contains("window.post"));
+        assertFalse(presentation.contains("window.token"));
+        assertFalse(presentation.contains("innerHTML"));
+        assertFalse(presentation.contains("document.cookie"));
+        assertFalse(presentation.contains("eval("));
+        assertFalse(presentation.contains("new Function"));
+
+        assertTrue(presentationCss.contains("kanger-grid"));
+        assertTrue(presentationCss.contains("kanger-semantic"));
+        assertTrue(presentationCss.contains("kanger-center"));
+        assertTrue(presentationCss.contains("kanger-bottom"));
+        assertTrue(presentationCss.contains("technical-panel"));
+        assertTrue(presentationCss.contains("kanger-tech-open"));
+        assertTrue(presentationCss.contains("kanger-semantic-live"));
     }
 
     private static String read(Path path) throws Exception {
