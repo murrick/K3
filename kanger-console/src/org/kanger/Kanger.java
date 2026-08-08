@@ -3,24 +3,23 @@
  *
  * Copyright (c) 2021 Dmitry G. Quznetsov
  *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy
- *  of this software and associated documentation files (the "Software"), to
- *  deal in the Software without restriction, including without limitation the
- *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- *  sell copies of the Software, and to permit persons to whom the Software is
- *  furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  The above copyright notice and this permission notice shall be included in
- *  all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- *  IN THE SOFTWARE.
- *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
  */
 
 package org.kanger;
@@ -39,44 +38,11 @@ import java.lang.reflect.Array;
 import java.util.Date;
 
 /**
- * Created by Dmitry G. Quznetsov on 20.05.15.
+ * Java Console entry point.
  */
 public class Kanger {
 
-
     public static void main(String[] args) throws Exception {
-
-//        User ux = new User();
-//        Mind mx = new Mind(ux);
-//        Compiller c = new Compiller(mx);
-//
-//        String s = "!!(@x 1+x : mid(x-5, 12+2), (x > 0, x - 10 < 7));";
-//        s = "!mid(x-5, -12+2)";
-//        s = "!x,12+2";
-//        s = "!@x x : 1..10 -> zzz(x,4,5)";
-//        s = "!@x x : [4,-8,1+2] -> zzz(\"asdf asdf \\\"asd fasd f\")";
-//        s = "!@x (male(x) || female(x)) && ~(male(x) && female(x));";
-////        s = "!x, -5";
-////        s = "!a -> b";
-////        s = "?$x x : -1..-10 2*x, ~(x <> 15)";
-//
-//        boolean antc = s.startsWith("!");
-//        Leaf t = Parser.parse(s.substring(1));
-//        IRule r = c.compileLine(t, antc, s, false, null);
-////        System.err.println(r);
-//        Console.showTree(mx, r);
-
-//        Token t = null;
-//        do {
-//            t = Parser.nextToken(s, t);
-//            if(t != null) {
-//                System.err.println(t.getToken(s));
-//            } else {
-//                break;
-//            }
-//        } while(t != null);
-
-
         String newlogin = null;
         String login = null;
         String password = null;
@@ -88,43 +54,39 @@ public class Kanger {
         }
 
         String[] params = concatenate(args, envs);
-
         for (int i = 0; i < params.length; ++i) {
-            if ((params[i].equals("--adduser") || params[i].equals("-A")) && params.length > i + 1) {
+            if ((params[i].equals("--adduser") || params[i].equals("-A"))
+                    && params.length > i + 1) {
                 newlogin = params[++i];
-            } else if ((params[i].equals("--user") || params[i].equals("-U")) && params.length > i + 1) {
+            } else if ((params[i].equals("--user") || params[i].equals("-U"))
+                    && params.length > i + 1) {
                 login = params[++i];
-            } else if ((params[i].equals("--password") || params[i].equals("-P")) && params.length > i + 1) {
+            } else if ((params[i].equals("--password") || params[i].equals("-P"))
+                    && params.length > i + 1) {
                 password = params[++i];
             } else if (params[i].equals("--singleuser") || params[i].equals("-S")) {
                 singleUser = true;
             } else if (params[i].equals("--help") || params[i].equals("-H")) {
                 String jarName = new File(Kanger.class.getProtectionDomain()
-                        .getCodeSource()
-                        .getLocation()
-                        .toURI()).getName();
+                        .getCodeSource().getLocation().toURI()).getName();
                 Console.showCopyrigt();
                 System.out.println();
-                System.out.printf("Usage: java -jar %s [options]\n" +
-                                "Options:\n" +
-                                "\t--adduser or -A\t-Create new user. Password required.\n" +
-                                "\t--user or -U\t-Login with selected user login.\n" +
-                                "\t--password or -P\t-Select password.\n" +
-                                "\t--singleuser or -S\t-Local single user mode.\n" +
-                                "\t--help or -H\t-Show this message.\n",
-                        jarName
-                );
+                System.out.printf("Usage: java -jar %s [options]%n"
+                                + "Options:%n"
+                                + "\t--adduser or -A\t-Create new user. Password required.%n"
+                                + "\t--user or -U\t-Login with selected user login.%n"
+                                + "\t--password or -P\t-Select password.%n"
+                                + "\t--singleuser or -S\t-Local single user mode.%n"
+                                + "\t--help or -H\t-Show this message.%n",
+                        jarName);
                 System.exit(0);
             }
         }
 
-//        if (singleUser) {
-            try {
-                UserFactory.createUser("singleuser", "singleuser");
-            } catch (Exception ex) {
-                //
-            }
-//        }
+        try {
+            UserFactory.createUser("singleuser", "singleuser");
+        } catch (Exception ignored) {
+        }
 
         if (newlogin != null) {
             try {
@@ -134,9 +96,9 @@ public class Kanger {
                 UserFactory.createUser(newlogin, password);
                 System.out.println("New user created: " + newlogin);
                 System.exit(0);
-            } catch (Exception e) {
+            } catch (Exception ex) {
                 System.err.println(new Date());
-                e.printStackTrace(System.err);
+                ex.printStackTrace(System.err);
             }
         }
 
@@ -144,71 +106,27 @@ public class Kanger {
             login = "singleuser";
             password = "singleuser";
         }
-//        IData db = null;
-//        Class udf = null;
-
-//        String confName = System.getProperty("user.home") + "K3.conf";
-//        if (new File(confName).exists()) {
-//            try (BufferedReader br = new BufferedReader(new FileReader(confName))) {
-//                String sCurrentLine;
-//                while ((sCurrentLine = br.readLine()) != null) {
-//                    if (sCurrentLine.split("\\=").length == 2) {
-//                        System.setProperty(sCurrentLine.split("\\=")[0], sCurrentLine.split("\\=")[1]);
-//                    }
-//                }
-//            }
-//        }
-
-
-//        try {
-//            udf = UDF.class;
-//            Global.setUdf(udf);
-//        } catch (NoClassDefFoundError ex) {
-//        }
-//        try {
-//            db = new DB();
-//            db.init(user);
-//        } catch (NoClassDefFoundError ex) {
-//        }
-//
-//        Runtime.getRuntime().addShutdownHook(new ShutdownHook(user));
-
-//        List<Object> params = new ArrayList<>();
-//        params.add(1);
-//        params.add(18);
-//        Boolean res = user.getMind().query("?$x x + ? = ?;", params);
-//        if(res) {
-//            for(Map<String,Object> m : user.getMind().getValues()) {
-//                for(Map.Entry<String,Object> e : m.entrySet()) {
-//                    System.out.print(e.getKey() + "=" + e.getValue() + "\t");
-//                }
-//                System.out.println();
-//            }
-//        }
 
         Console.showCopyrigt();
         System.out.println();
 
         if (login == null) {
-            Kanger k = new Kanger();
-            login = k.readLine("login: ");
-            password = new String(k.readPassword("password: "));
+            Kanger kanger = new Kanger();
+            login = kanger.readLine("login: ");
+            password = new String(kanger.readPassword("password: "));
             System.out.println();
         }
 
         IUser user = UserFactory.getUser(login, password);
-
-//        IData db = null;
-//        UDF udf = null;
         try {
             new UDF().init(user);
             System.out.println("UDF module loaded");
-        } catch (NoClassDefFoundError ex) {
+        } catch (NoClassDefFoundError ignored) {
         }
         try {
             new DB().init(user);
             System.out.println("DB module loaded: " + new DB().getDescription());
-        } catch (NoClassDefFoundError ex) {
+        } catch (NoClassDefFoundError ignored) {
         }
 
         System.out.println("Current user: " + login);
@@ -219,11 +137,7 @@ public class Kanger {
         IMind mind = new Mind(user);
         ShutdownHook shutdownHook = new ShutdownHook(mind);
         Runtime.getRuntime().addShutdownHook(shutdownHook);
-        //TODO: Волшебство
-//        mind.query("?a;");
-//        mind = mind.clearWorkspace();
-
-        Console.session(mind, shutdownHook);
+        CanonicalConsole.session(mind, shutdownHook);
     }
 
     private String readLine(String format, Object... args) throws IOException {
@@ -231,27 +145,24 @@ public class Kanger {
             return System.console().readLine(format, args);
         }
         System.out.print(String.format(format, args));
-        BufferedReader reader = new BufferedReader(new InputStreamReader(
-                System.in));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         return reader.readLine();
     }
 
     private static <T> T[] concatenate(T[] a, T[] b) {
         int aLen = a.length;
         int bLen = b.length;
-
         @SuppressWarnings("unchecked")
         T[] c = (T[]) Array.newInstance(a.getClass().getComponentType(), aLen + bLen);
         System.arraycopy(a, 0, c, 0, aLen);
         System.arraycopy(b, 0, c, aLen, bLen);
-
         return c;
     }
 
-    private char[] readPassword(String format, Object... args)
-            throws IOException {
-        if (System.console() != null)
+    private char[] readPassword(String format, Object... args) throws IOException {
+        if (System.console() != null) {
             return System.console().readPassword(format, args);
-        return this.readLine(format, args).toCharArray();
+        }
+        return readLine(format, args).toCharArray();
     }
 }
