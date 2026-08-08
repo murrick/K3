@@ -137,9 +137,13 @@ class PublicAuthUiContractTest {
         int vendorPosition = modeLoader.indexOf("javascript-mode-vendor.js");
         int operationPosition = modeLoader.indexOf("operation.js");
         int workspacePosition = modeLoader.indexOf("workspace.js");
+        int errorPosition = modeLoader.indexOf("error.js");
+        int dialoguePosition = modeLoader.indexOf("dialogue.js");
         assertTrue(vendorPosition >= 0);
         assertTrue(operationPosition > vendorPosition);
         assertTrue(workspacePosition > operationPosition);
+        assertTrue(errorPosition > workspacePosition);
+        assertTrue(dialoguePosition > errorPosition);
         assertTrue(modeVendor.contains(
                 "CodeMirror.defineMode(\"javascript\""));
         assertTrue(modeVendor.contains(
@@ -154,6 +158,8 @@ class PublicAuthUiContractTest {
         assertTrue(operation.contains("KANGER_OPERATION_PROTOCOL"));
         assertTrue(operation.contains("observeTrustedRendering"));
         assertTrue(operation.contains("isMutationPacket"));
+        assertTrue(operation.contains("packet.context === 'dialogue'"));
+        assertTrue(operation.contains("return 'dialogue'"));
         assertTrue(operation.contains("activeMutation"));
         assertTrue(operation.contains("operation_busy"));
         assertTrue(operation.contains("operation_timeout"));
@@ -200,6 +206,29 @@ class PublicAuthUiContractTest {
         assertFalse(workspace.contains("document.cookie"));
         assertFalse(workspace.contains("eval("));
         assertFalse(workspace.contains("new Function"));
+    }
+
+    @Test
+    void supportedConsoleDelegatesRawOperatorLanguageToServerDialogue()
+            throws Exception {
+        String dialogue = read(Paths.get("..", "html", "dialogue.js"));
+        String containment = read(Paths.get("..", "html", "containment.js"));
+
+        assertTrue(dialogue.contains("KANGER_DIALOGUE_TRANSPORT"));
+        assertTrue(dialogue.contains("context: 'dialogue'"));
+        assertTrue(dialogue.contains("line: raw"));
+        assertTrue(dialogue.contains("window.command = dispatch"));
+        assertTrue(dialogue.contains("window.query = dispatch"));
+        assertTrue(dialogue.contains("legacyBootstrapRemaining = 2"));
+        assertFalse(dialogue.contains("split("));
+        assertFalse(dialogue.contains("toLowerCase("));
+        assertFalse(dialogue.matches("(?s).*switch\\s*\\(.*"));
+
+        assertTrue(containment.contains("dialogue: true"));
+        assertTrue(containment.contains("isClosedSessionResult"));
+        assertTrue(containment.contains("result.session.state === 'closed'"));
+        assertTrue(containment.contains("clearSession(expected)"));
+        assertFalse(containment.contains("allow-same-origin"));
     }
 
     private static String read(Path path) throws Exception {
