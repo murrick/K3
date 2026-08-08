@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'kanger/src/**/*.java'
+      - 'kanger-command/src/**/*.java'
       - 'kanger-udf/src/**/*.java'
       - 'kanger-data-dumb/src/**/*.java'
       - 'kanger-console/src/**/*.java'
@@ -46,6 +47,7 @@ jobs:
 
           find \
             kanger/src \
+            kanger-command/src \
             kanger-udf/src \
             kanger-data-dumb/src \
             kanger-console/src \

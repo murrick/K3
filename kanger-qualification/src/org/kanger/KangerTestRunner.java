@@ -62,13 +62,16 @@ public final class KangerTestRunner {
 
             boolean consoleLifecycleSuccess =
                     KangerConsoleLifecycleBindingRunner.test();
+            boolean canonicalConsoleSuccess =
+                    KangerCanonicalConsoleRunner.test();
 
             exitCode = legacySuccess
                     && stabilizationSuccess
                     && c1Success
                     && c4Success
                     && c3Success
-                    && consoleLifecycleSuccess ? 0 : 1;
+                    && consoleLifecycleSuccess
+                    && canonicalConsoleSuccess ? 0 : 1;
         } catch (Throwable error) {
             error.printStackTrace(System.err);
         }
