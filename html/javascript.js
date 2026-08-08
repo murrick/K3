@@ -274,6 +274,23 @@
         } else if (presentation !== null && presentation !== undefined) {
             historyText = stringValue(presentation);
             div.textContent = historyText;
+        } else if (data && data.dialogue_choices
+                && data.dialogue_choices.schema === 1) {
+            var choices = data.dialogue_choices;
+            var list = data.list || [];
+            if (list.length > 0) {
+                var choice = choicePresentation(
+                        stringValue(choices.label),
+                        list,
+                        stringValue(choices.compose));
+                div.appendChild(choice);
+                historyText = stringValue(
+                        choice.__kangerHistoryText || choice.textContent);
+            } else {
+                historyText = stringValue(choices.empty);
+                div.textContent = historyText;
+            }
+            window.showTransactionLevel(data);
         } else if (data) {
             var description = stringValue(data.description);
             appendLegacyDescription(div, description);
@@ -332,6 +349,15 @@
         };
     }
 
+    function quoteCommandArgument(value) {
+        var text = stringValue(value);
+        if (!/[\s"\\]/.test(text)) {
+            return text;
+        }
+        return '"' + text.replace(/\\/g, '\\\\')
+                .replace(/"/g, '\\"') + '"';
+    }
+
     function choicePresentation(label, list, commandName) {
         var fragment = document.createDocumentFragment();
         appendText(fragment, label);
@@ -339,16 +365,13 @@
         for (var i = 0; i < list.length; i++) {
             (function (item) {
                 var span = document.createElement('span');
+                var query = commandName + ' ' + quoteCommandArgument(item);
                 span.style.cursor = 'pointer';
                 span.style.padding = '0 3px';
                 span.textContent = item;
+                span.setAttribute('data-kanger-compose', query);
+                span.title = 'Compose: ' + query;
                 addHover(span);
-                span.addEventListener('click', function () {
-                    var query = commandName + ' ' + item;
-                    window.logRequest(query, function () {
-                        window.command(query);
-                    });
-                });
                 fragment.appendChild(span);
                 appendText(fragment, ' ');
                 history += item + ' ';
