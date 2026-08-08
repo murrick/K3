@@ -71,6 +71,8 @@ jobs:
           javascript.js
           jquery-3.6.0.min.js
           operation.js
+          presentation.css
+          presentation.js
           workspace.js
           EOF_FILES
           )"
@@ -88,8 +90,10 @@ jobs:
           node --check html/javascript-mode.js
           node --check html/javascript.js
           node --check html/operation.js
+          node --check html/presentation.js
           node --check html/workspace.js
           node --check kanger-server/scripts/qualify-browser-dialogue.js
+          node --check kanger-server/scripts/qualify-browser-presentation.js
           node --check kanger-server/scripts/qualify-error-containment.js
 
           test "$(git hash-object html/javascript-mode-vendor.js)" = \
@@ -145,6 +149,7 @@ jobs:
           grep -q 'workspace.js' html/javascript-mode.js
           grep -q 'error.js' html/javascript-mode.js
           grep -q 'dialogue.js' html/javascript-mode.js
+          grep -q 'presentation.js' html/javascript-mode.js
 
           grep -q 'KANGER_OPERATION_PROTOCOL' html/operation.js
           grep -q "packet.context === 'dialogue'" html/operation.js
@@ -175,7 +180,27 @@ jobs:
           ! grep -q 'split(' html/dialogue.js
           ! grep -q 'toLowerCase(' html/dialogue.js
 
+          grep -q 'KANGER_PRESENTATION' html/presentation.js
+          grep -q 'data-kanger-compose' html/presentation.js
+          grep -q 'technical-panel' html/presentation.js
+          grep -q 'base tree ' html/presentation.js
+          grep -q 'function source ' html/presentation.js
+          grep -q 'solution tree ' html/presentation.js
+          grep -q 'when accept ' html/presentation.js
+          ! grep -q 'window.command' html/presentation.js
+          ! grep -q 'window.query' html/presentation.js
+          ! grep -q 'window.post' html/presentation.js
+          ! grep -q 'window.token' html/presentation.js
+          ! grep -q 'innerHTML' html/presentation.js
+          ! grep -q 'document.cookie' html/presentation.js
+
+          grep -q 'kanger-grid' html/presentation.css
+          grep -q 'kanger-tech-open' html/presentation.css
+          grep -q 'kanger-semantic-live' html/presentation.css
+
           node kanger-server/scripts/qualify-browser-dialogue.js \
+            "${GITHUB_WORKSPACE}"
+          node kanger-server/scripts/qualify-browser-presentation.js \
             "${GITHUB_WORKSPACE}"
           node kanger-server/scripts/qualify-error-containment.js \
             "${GITHUB_WORKSPACE}"
