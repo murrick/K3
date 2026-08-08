@@ -466,6 +466,7 @@
             version: true,
             command: true,
             query: true,
+            dialogue: true,
             history: true,
             login: true
         };
@@ -498,6 +499,12 @@
             copy.parameters.token = session.token;
         }
         return {packet: copy};
+    }
+
+    function isClosedSessionResult(result) {
+        return !!result && result.result === 'OK'
+                && result.session && result.session.schema === 1
+                && result.session.state === 'closed';
     }
 
     async function handleApiRequest(data, expected) {
@@ -539,11 +546,18 @@
             if (!sameSession(currentSession(), expected)) {
                 return;
             }
+            var closed = isClosedSessionResult(result);
             postToChild(result && result.result === 'error'
                     ? 'api.error' : 'api.response', {
                 request_id: requestId,
                 data: result
             }, expected);
+            if (closed) {
+                clearSession(expected);
+                setTimeout(function () {
+                    location.reload();
+                }, 0);
+            }
         } finally {
             delete inflight[key];
         }

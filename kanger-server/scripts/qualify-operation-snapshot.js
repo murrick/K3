@@ -193,11 +193,14 @@ async function main() {
     console.log('OPERATION_PROTOCOL_PASS one-mutation-in-flight');
 
     let secondResult = null;
-    window.post({context: 'command', parameters: {token: 'token', erase: ''}},
-            (data) => { secondResult = data; });
-    const secondMutation = transport.unresolved((p) => p.context === 'command'
-            && Object.prototype.hasOwnProperty.call(p.parameters, 'erase'))[0];
+    window.post({
+        context: 'dialogue',
+        parameters: {token: 'token', line: 'erase'}
+    }, (data) => { secondResult = data; });
+    const secondMutation = transport.unresolved((p) => p.context === 'dialogue')[0];
     assert(secondMutation);
+    assert.strictEqual(secondMutation.packet.parameters.line, 'erase');
+    assert.strictEqual(window.status, 'Operation #3: dialogue');
     oldSnapshot.forEach((record, index) => {
         transport.resolve(record, {result: 'OK', value: 'stale-' + index});
     });
@@ -218,6 +221,7 @@ async function main() {
     targetIds.forEach((id, index) => assert.strictEqual(
             elements[id].textContent, 'fresh-' + index));
     assert.strictEqual(window.layoutCommits, 1);
+    console.log('OPERATION_PROTOCOL_PASS dialogue-serialization');
     console.log('OPERATION_PROTOCOL_PASS coherent-snapshot-barrier');
     console.log('OPERATION_PROTOCOL_PASS stale-snapshot-rejection');
 

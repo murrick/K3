@@ -89,6 +89,12 @@
         if (!packet || typeof packet !== 'object') {
             return false;
         }
+        // Raw dialogue is intentionally classified conservatively as one
+        // serialized operation. The Browser must not parse the command line to
+        // decide whether a canonical intent is read-only or mutating.
+        if (packet.context === 'dialogue') {
+            return true;
+        }
         var parameters = requestParameters(packet);
         if (packet.context === 'query') {
             return hasOwn(parameters, 'request')
@@ -110,6 +116,9 @@
     }
 
     function operationName(packet) {
+        if (packet && packet.context === 'dialogue') {
+            return 'dialogue';
+        }
         var parameters = requestParameters(packet);
         var keys = [
             'compile', 'transaction', 'request', 'get', 'put', 'delete',

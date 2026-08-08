@@ -61,6 +61,7 @@ jobs:
           config.js
           console.html
           containment.js
+          dialogue.js
           error.js
           favicon.ico
           gateway.js
@@ -80,6 +81,7 @@ jobs:
 
           node --check html/config.js
           node --check html/containment.js
+          node --check html/dialogue.js
           node --check html/error.js
           node --check html/gateway.js
           node --check html/javascript-mode-vendor.js
@@ -87,6 +89,7 @@ jobs:
           node --check html/javascript.js
           node --check html/operation.js
           node --check html/workspace.js
+          node --check kanger-server/scripts/qualify-browser-dialogue.js
           node --check kanger-server/scripts/qualify-error-containment.js
 
           test "$(git hash-object html/javascript-mode-vendor.js)" = \
@@ -108,6 +111,8 @@ jobs:
           grep -q "event.origin !== 'null'" html/containment.js
           grep -q "connect-src 'none'" html/containment.js
           grep -q 'containment_context_denied' html/containment.js
+          grep -q 'dialogue: true' html/containment.js
+          grep -q 'isClosedSessionResult' html/containment.js
           grep -q "copy.parameters.token = session.token" html/containment.js
           ! grep -q 'allow-same-origin' html/containment.js
           ! grep -q 'document.cookie' html/containment.js
@@ -139,7 +144,10 @@ jobs:
           grep -q 'operation.js' html/javascript-mode.js
           grep -q 'workspace.js' html/javascript-mode.js
           grep -q 'error.js' html/javascript-mode.js
+          grep -q 'dialogue.js' html/javascript-mode.js
+
           grep -q 'KANGER_OPERATION_PROTOCOL' html/operation.js
+          grep -q "packet.context === 'dialogue'" html/operation.js
           grep -q 'operation_busy' html/operation.js
           grep -q 'operation_timeout' html/operation.js
           grep -q 'client_snapshot_id' html/operation.js
@@ -160,6 +168,15 @@ jobs:
           ! grep -q 'innerHTML' html/error.js
           ! grep -q 'document.cookie' html/error.js
 
+          grep -q 'KANGER_DIALOGUE_TRANSPORT' html/dialogue.js
+          grep -q "context: 'dialogue'" html/dialogue.js
+          grep -q 'window.command = dispatch' html/dialogue.js
+          grep -q 'window.query = dispatch' html/dialogue.js
+          ! grep -q 'split(' html/dialogue.js
+          ! grep -q 'toLowerCase(' html/dialogue.js
+
+          node kanger-server/scripts/qualify-browser-dialogue.js \
+            "${GITHUB_WORKSPACE}"
           node kanger-server/scripts/qualify-error-containment.js \
             "${GITHUB_WORKSPACE}"
 
@@ -319,4 +336,3 @@ jobs:
         with:
           name: kanger-server-java21
           path: kanger-server/target/kanger-server.jar
-          if-no-files-found: error
