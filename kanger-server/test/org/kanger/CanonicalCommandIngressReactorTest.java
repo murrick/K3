@@ -100,6 +100,23 @@ class CanonicalCommandIngressReactorTest {
     }
 
     @Test
+    void successfulCanonicalQuitExposesTransportLevelSessionClosure() throws Exception {
+        Capture capture = new Capture();
+        CanonicalCommandIngressReactor reactor = new CanonicalCommandIngressReactor(capture);
+
+        JSONObject response = (JSONObject) reactor.run(dialogue("token-1", "q"));
+
+        assertEquals("command", context(capture.packet.get()));
+        assertTrue(parameters(capture.packet.get()).has("quit"));
+        assertEquals("OK", response.optString("result"));
+        JSONObject session = response.getJSONObject(
+                CanonicalCommandIngressReactor.SESSION_STATE_FIELD);
+        assertEquals(1, session.getInt("schema"));
+        assertEquals(CanonicalCommandIngressReactor.SESSION_CLOSED_STATE,
+                session.getString("state"));
+    }
+
+    @Test
     void parserRejectionDoesNotReachRuntimeDelegate() throws Exception {
         Capture capture = new Capture();
         CanonicalCommandIngressReactor reactor = new CanonicalCommandIngressReactor(capture);
