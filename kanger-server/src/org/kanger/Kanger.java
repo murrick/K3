@@ -94,6 +94,7 @@ public class Kanger {
     public static void start() {
         String cd = getModuleWorkingDir();
         System.setProperty("user.dir", cd);
+        System.out.println("BUILT-IN-WRAPPER: Used working dir " + cd);
         serviceTerminate = false;
 
         try {
