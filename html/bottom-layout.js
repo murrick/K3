@@ -20,6 +20,81 @@
  */
 document.write('<script src="editor-local-file.js"><\/script>');
 
+/*
+ * Legacy account-menu hover compatibility.
+ *
+ * console.html historically hides the menu synchronously on mouseout from the
+ * user-name span and from the menu itself. Because the two nodes are siblings,
+ * and because mouseout bubbles while moving between menu items, the dropdown
+ * can disappear before the pointer reaches an action. Replace only those
+ * inline hover handlers with a short handoff delay. Authentication and account
+ * actions remain owned by the historical handlers already attached to items.
+ */
+(function (window, document) {
+    'use strict';
+
+    var closeTimer = null;
+    var retries = 0;
+    var MAX_RETRIES = 250;
+    var CLOSE_DELAY_MS = 250;
+
+    function cancelClose() {
+        if (closeTimer !== null) {
+            window.clearTimeout(closeTimer);
+            closeTimer = null;
+        }
+    }
+
+    function show(menu) {
+        cancelClose();
+        menu.style.display = 'block';
+    }
+
+    function scheduleClose(menu) {
+        cancelClose();
+        closeTimer = window.setTimeout(function () {
+            menu.style.display = 'none';
+            closeTimer = null;
+        }, CLOSE_DELAY_MS);
+    }
+
+    function install() {
+        var trigger = document.getElementById('user-name');
+        var menu = document.getElementById('user-menu');
+        if (!trigger || !menu) {
+            retries += 1;
+            if (retries <= MAX_RETRIES) {
+                window.setTimeout(install, 10);
+            }
+            return;
+        }
+        if (menu.getAttribute('data-kanger-hover-stable') === '1') {
+            return;
+        }
+        menu.setAttribute('data-kanger-hover-stable', '1');
+
+        trigger.removeAttribute('onmouseover');
+        trigger.removeAttribute('onmouseout');
+        menu.removeAttribute('onmouseover');
+        menu.removeAttribute('onmouseout');
+
+        trigger.addEventListener('mouseenter', function () {
+            show(menu);
+        });
+        trigger.addEventListener('mouseleave', function () {
+            scheduleClose(menu);
+        });
+        menu.addEventListener('mouseenter', function () {
+            show(menu);
+        });
+        menu.addEventListener('mouseleave', function () {
+            scheduleClose(menu);
+        });
+    }
+
+    window.setTimeout(install, 0);
+}(window, document));
+
 (function (window, document) {
     'use strict';
 
