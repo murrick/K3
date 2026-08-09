@@ -208,6 +208,11 @@
 
     function onCompositionClick(event) {
         var target = event.target;
+        var information = ancestorWithAttribute(target, 'data-kanger-info');
+        if (information) {
+            stopSemanticExecution(event);
+            return;
+        }
         var projection = ancestorWithAttribute(target, 'data-kanger-compose');
         if (projection) {
             stopSemanticExecution(event);
@@ -320,6 +325,50 @@
         row.appendChild(action);
     }
 
+    function predicateTooltip(row) {
+        var id = stringValue(row && row.id).substring(2);
+        var name = strongText(row);
+        var lines = ['Predicate ' + id + (name ? ' · ' + name : '')];
+        var details = document.getElementById('PRL' + id);
+        var children = details ? details.childNodes || [] : [];
+        var count = 0;
+        for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            if (stringValue(child.id).indexOf('PS') !== 0) {
+                continue;
+            }
+            var origin = strongText(child);
+            lines.push(stringValue(child.id).substring(2)
+                    + ': ' + (origin || stringValue(child.textContent)));
+            count += 1;
+        }
+        if (!count) {
+            lines.push('No statements');
+        }
+        return lines.join('\n');
+    }
+
+    function addPredicateInfo(row) {
+        if (!row || !row.getAttribute) {
+            return;
+        }
+        addClass(row, 'kanger-semantic-live');
+        var action = row.__kangerPredicateInfo;
+        if (!action) {
+            action = document.createElement('span');
+            action.className = 'kanger-row-action';
+            action.textContent = 'ⓘ';
+            action.setAttribute('data-kanger-info', 'predicate');
+            action.setAttribute('aria-label', 'Predicate details');
+            action.style.cursor = 'help';
+            action.style.padding = '0 2px';
+            action.style.marginLeft = '4px';
+            row.appendChild(action);
+            row.__kangerPredicateInfo = action;
+        }
+        action.title = predicateTooltip(row);
+    }
+
     function decorateSemanticRows() {
         var container = document.getElementById('statements');
         var nodes;
@@ -328,8 +377,7 @@
             nodes = container.querySelectorAll('[id^="PR"]');
             for (i = 0; i < nodes.length; i++) {
                 if (stringValue(nodes[i].id).indexOf('PRL') !== 0) {
-                    addAction(nodes[i], 'view',
-                            'base predicate ' + stringValue(nodes[i].id).substring(2));
+                    addPredicateInfo(nodes[i]);
                 }
             }
             nodes = container.querySelectorAll('[id^="PS"]');
