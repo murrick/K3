@@ -279,12 +279,23 @@ body.kanger-presentation .kanger-tech-row {
     overflow-wrap: anywhere;
 }
 
+/* Every semantic/control surface that accepts a click advertises it explicitly.
+ * Resize handles keep their row/column-resize cursors from their own styles. */
 body.kanger-presentation [data-kanger-compose],
-body.kanger-presentation .kanger-semantic-live {
-    cursor: text !important;
+body.kanger-presentation [data-kanger-info],
+body.kanger-presentation .kanger-semantic-live,
+body.kanger-presentation .kanger-row-action,
+body.kanger-presentation #source-name,
+body.kanger-presentation #db-name,
+body.kanger-presentation #transaction,
+body.kanger-presentation #query-results td:not(:first-child),
+body.kanger-presentation #console-button,
+body.kanger-presentation #console-close {
+    cursor: pointer !important;
 }
 
 body.kanger-presentation [data-kanger-compose]:hover,
+body.kanger-presentation [data-kanger-info]:hover,
 body.kanger-presentation .kanger-semantic-live:hover {
     background: var(--kanger-live) !important;
 }
@@ -296,7 +307,6 @@ body.kanger-presentation .kanger-row-action {
     color: var(--kanger-muted);
     font-size: 11px;
     font-weight: normal;
-    cursor: text;
 }
 
 body.kanger-presentation .kanger-row-action:hover {
@@ -304,20 +314,10 @@ body.kanger-presentation .kanger-row-action:hover {
     background: #dfe7ec;
 }
 
-body.kanger-presentation #source-name,
-body.kanger-presentation #db-name,
-body.kanger-presentation #transaction {
-    cursor: text;
-}
-
 body.kanger-presentation #source-name:hover,
 body.kanger-presentation #db-name:hover,
 body.kanger-presentation #transaction:hover {
     background: #dce2e6;
-}
-
-body.kanger-presentation #query-results td:not(:first-child) {
-    cursor: text;
 }
 
 body.kanger-presentation #query-results td:not(:first-child):hover {
