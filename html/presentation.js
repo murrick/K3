@@ -409,7 +409,7 @@
         if (container && container.querySelectorAll) {
             nodes = container.querySelectorAll('[id^="HYL"]');
             for (i = 0; i < nodes.length; i++) {
-                addAction(nodes[i], 'accept',
+                addAction(nodes[i], '⊕',
                         'when accept ' + stringValue(nodes[i].id).substring(3));
             }
         }
@@ -1054,12 +1054,13 @@
             document.body.appendChild(shell);
         }
         setImportant(shell, 'position', 'fixed');
-        setImportant(shell, 'top', '0');
+        setImportant(shell, 'top', 'var(--kanger-header)');
         setImportant(shell, 'right', '0');
-        setImportant(shell, 'bottom', '0');
+        setImportant(shell, 'bottom', 'var(--kanger-footer)');
         setImportant(shell, 'left', '0');
         setImportant(shell, 'width', '100vw');
-        setImportant(shell, 'height', '100vh');
+        setImportant(shell, 'height',
+                'calc(100vh - var(--kanger-header) - var(--kanger-footer))');
         setImportant(shell, 'min-height', '0');
         setImportant(shell, 'z-index', '10000');
         setImportant(shell, 'background', '#fff');
@@ -1067,7 +1068,7 @@
         setImportant(shell, 'margin', '0');
         setImportant(shell, 'padding', '0');
         setImportant(editor, 'flex', '1 1 auto');
-        setImportant(editor, 'height', 'calc(100vh - 24px)');
+        setImportant(editor, 'height', 'calc(100% - var(--kanger-title))');
         setImportant(editor, 'min-height', '0');
         if (window.editor && typeof window.editor.setSize === 'function') {
             window.editor.setSize('100%', '100%');
