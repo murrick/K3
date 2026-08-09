@@ -18,6 +18,8 @@
  * the parent-owned kanger.layout.v1 broker. It has no command, transport,
  * workspace, session or bearer authority.
  */
+document.write('<script src="editor-local-file.js"><\/script>');
+
 (function (window, document) {
     'use strict';
 
