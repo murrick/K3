@@ -164,6 +164,20 @@ final class MindLifecycleReactor implements IReactor<JSONObject> {
 
         String source = URLDecoder.decode(
                 parameters.getString("request"), "UTF-8");
+
+        /*
+         * Bare '?' is a Core program check, not an unterminated ordinary
+         * informational query. Mind.query("?") owns its own internal child and
+         * commits the regenerated program state when the complete link/analyze
+         * pass succeeds. Running it in this reactor's ordinary request-local
+         * child and then releasing that child would discard exactly the
+         * generated-rule rebuild requested by the operator.
+         */
+        if ("?".equals(source.trim())) {
+            Boolean response = parent.query("?");
+            return queryResponse(parent, response);
+        }
+
         Mind child = childFactory.create(parent);
         boolean finalizationStarted = false;
 
