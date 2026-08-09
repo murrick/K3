@@ -89,7 +89,7 @@
         var originalRefreshScreen = window.refreshScreen;
         var compilePending = false;
         var suppressNextConsoleClose = false;
-        var localFileHandle = null;
+        var restoringAfterCompile = false;
         var localFileName = '';
         var tools = null;
         var status = null;
@@ -153,14 +153,13 @@
             }
         }
 
-        function applyLocalText(text, name, handle) {
+        function applyLocalText(text, name) {
             var instance = editor();
             if (!instance || typeof instance.setValue !== 'function') {
                 setStatus('Editor is not available', true);
                 return;
             }
             localFileName = normalizedFileName(name);
-            localFileHandle = handle || null;
             instance.setValue(stringValue(text));
             if (typeof instance.setCursor === 'function') {
                 instance.setCursor(0, 0);
@@ -169,14 +168,14 @@
             focusEditor();
         }
 
-        function readFileObject(file, handle) {
+        function readFileObject(file) {
             if (!file) {
                 return;
             }
             var name = normalizedFileName(file.name || localFileName);
             if (typeof file.text === 'function') {
                 file.text().then(function (text) {
-                    applyLocalText(text, name, handle);
+                    applyLocalText(text, name);
                 }, function (error) {
                     setStatus('Open failed: ' + stringValue(
                             error && error.message ? error.message : error), true);
@@ -186,7 +185,7 @@
             if (typeof window.FileReader === 'function') {
                 var reader = new window.FileReader();
                 reader.onload = function () {
-                    applyLocalText(reader.result, name, handle);
+                    applyLocalText(reader.result, name);
                 };
                 reader.onerror = function () {
                     setStatus('Open failed', true);
@@ -208,7 +207,7 @@
             fallbackInput.addEventListener('change', function () {
                 var file = fallbackInput.files && fallbackInput.files.length
                         ? fallbackInput.files[0] : null;
-                readFileObject(file, null);
+                readFileObject(file);
             });
             if (document.body) {
                 document.body.appendChild(fallbackInput);
@@ -218,42 +217,11 @@
 
         function openLocalFile() {
             setStatus('', false);
-            if (typeof window.showOpenFilePicker === 'function') {
-                window.showOpenFilePicker({
-                    multiple: false,
-                    types: [{
-                        description: 'KANGER source',
-                        accept: {'text/plain': ['.k']}
-                    }]
-                }).then(function (handles) {
-                    var handle = handles && handles.length ? handles[0] : null;
-                    if (!handle || typeof handle.getFile !== 'function') {
-                        return;
-                    }
-                    handle.getFile().then(function (file) {
-                        readFileObject(file, handle);
-                    });
-                }).catch(function (error) {
-                    if (!error || error.name !== 'AbortError') {
-                        setStatus('Open failed: ' + stringValue(
-                                error && error.message ? error.message : error), true);
-                    }
-                });
-                return;
-            }
             var input = ensureFallbackInput();
             input.value = '';
             if (typeof input.click === 'function') {
                 input.click();
             }
-        }
-
-        function writeHandle(handle, text) {
-            return handle.createWritable().then(function (writable) {
-                return writable.write(text).then(function () {
-                    return writable.close();
-                });
-            });
         }
 
         function fallbackDownload(text, name) {
@@ -289,42 +257,7 @@
         function saveLocalFile() {
             var text = editorText();
             var name = normalizedFileName(localFileName || workspaceFileName());
-            if (localFileHandle
-                    && typeof localFileHandle.createWritable === 'function') {
-                writeHandle(localFileHandle, text).then(function () {
-                    localFileName = normalizedFileName(
-                            localFileHandle.name || name);
-                    setStatus('Saved ' + localFileName, false);
-                }).catch(function (error) {
-                    setStatus('Save failed: ' + stringValue(
-                            error && error.message ? error.message : error), true);
-                });
-                return;
-            }
-            if (typeof window.showSaveFilePicker === 'function') {
-                window.showSaveFilePicker({
-                    suggestedName: name,
-                    types: [{
-                        description: 'KANGER source',
-                        accept: {'text/plain': ['.k']}
-                    }]
-                }).then(function (handle) {
-                    if (!handle) {
-                        return;
-                    }
-                    return writeHandle(handle, text).then(function () {
-                        localFileHandle = handle;
-                        localFileName = normalizedFileName(handle.name || name);
-                        setStatus('Saved ' + localFileName, false);
-                    });
-                }).catch(function (error) {
-                    if (!error || error.name !== 'AbortError') {
-                        setStatus('Save failed: ' + stringValue(
-                                error && error.message ? error.message : error), true);
-                    }
-                });
-                return;
-            }
+            localFileName = name;
             fallbackDownload(text, name);
         }
 
@@ -381,11 +314,14 @@
         }
 
         window.openEditor = function () {
-            localFileHandle = null;
-            localFileName = workspaceFileName();
+            if (!restoringAfterCompile) {
+                localFileName = workspaceFileName();
+            }
             var result = originalOpenEditor.apply(window, arguments);
             showTools(true);
-            setStatus('', false);
+            if (!restoringAfterCompile) {
+                setStatus('', false);
+            }
             focusEditor();
             return result;
         };
@@ -408,29 +344,56 @@
         };
 
         window.refreshScreen = function (data) {
+            var failedCompile = false;
+            var failureMessage = '';
             if (compilePending) {
                 compilePending = false;
                 if (!data || stringValue(data.result).toUpperCase() !== 'OK') {
                     suppressNextConsoleClose = true;
-                    var message = data && (data.description || data.message)
+                    failedCompile = true;
+                    failureMessage = data && (data.description || data.message)
                             ? (data.description || data.message)
                             : 'Compile failed';
-                    setStatus(stringValue(message), true);
+                    setStatus(stringValue(failureMessage), true);
                 } else {
                     suppressNextConsoleClose = false;
                     setStatus('', false);
                 }
             }
-            return originalRefreshScreen.apply(window, arguments);
+            var result = originalRefreshScreen.apply(window, arguments);
+            if (failedCompile) {
+                window.setTimeout(function () {
+                    restoringAfterCompile = true;
+                    try {
+                        /*
+                         * The historical compile callback calls openConsole()
+                         * after refreshScreen(). The editor adapter suppresses
+                         * the historical hide, but the presentation wrapper
+                         * still restores the shell to its non-modal home.
+                         * Re-entering openEditor(null) after that callback
+                         * reasserts only the presentation overlay; the buffer
+                         * is not rewritten because historical openEditor is a
+                         * no-op for null text.
+                         */
+                        window.openEditor(null);
+                    } finally {
+                        restoringAfterCompile = false;
+                    }
+                    setStatus(stringValue(failureMessage), true);
+                    focusEditor();
+                }, 0);
+            }
+            return result;
         };
 
         ensureTools();
         showTools(false);
 
         window.KANGER_EDITOR_FILE_ADAPTER = Object.freeze({
-            version: 1,
+            version: 2,
             installed: true,
-            localOnly: true
+            localOnly: true,
+            sandboxSafe: true
         });
     }
 
