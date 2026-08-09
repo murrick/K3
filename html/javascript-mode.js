@@ -410,3 +410,141 @@
         };
     }
 }(window, document));
+
+/*
+ * Bottom-panel layout persistence lives outside semantic/presentation
+ * authority. The opaque child only reports visual proportions; the parent
+ * stores the validated values in localStorage through layout-persistence.js.
+ */
+(function (window, document) {
+    'use strict';
+
+    var CHANNEL = 'kanger.layout.v1';
+    var PANEL_IDS = [
+        'container-results', 'container-solutions',
+        'container-hypothesis', 'container-logging'
+    ];
+    var installed = false;
+    var retries = 0;
+    var MAX_RETRIES = 200;
+    var weights = {};
+    var originalPlaceElements = null;
+    var originalOpenConsole = null;
+
+    function panel(id) {
+        return document.getElementById(id);
+    }
+
+    function visible(node) {
+        return !!node && node.style.display !== 'none';
+    }
+
+    function applyWeights() {
+        for (var i = 0; i < PANEL_IDS.length; i++) {
+            var node = panel(PANEL_IDS[i]);
+            var weight = Number(weights[PANEL_IDS[i]]);
+            if (visible(node) && isFinite(weight) && weight > 0) {
+                node.style.flex = weight + ' 1 0px';
+                node.style.width = 'auto';
+            }
+        }
+    }
+
+    function captureWeights() {
+        var changed = false;
+        for (var i = 0; i < PANEL_IDS.length; i++) {
+            var node = panel(PANEL_IDS[i]);
+            if (!visible(node) || !node.getBoundingClientRect) {
+                continue;
+            }
+            var width = node.getBoundingClientRect().width;
+            if (isFinite(width) && width > 0) {
+                weights[PANEL_IDS[i]] = width;
+                changed = true;
+            }
+        }
+        if (changed && window.parent) {
+            window.parent.postMessage({
+                channel: CHANNEL,
+                type: 'set',
+                value: weights
+            }, '*');
+        }
+    }
+
+    function requestWeights() {
+        if (window.parent) {
+            window.parent.postMessage({
+                channel: CHANNEL,
+                type: 'get'
+            }, '*');
+        }
+    }
+
+    function wrapLayoutEntrypoints() {
+        if (typeof window.placeElements === 'function' && !originalPlaceElements) {
+            originalPlaceElements = window.placeElements;
+            window.placeElements = function () {
+                var result = originalPlaceElements.apply(window, arguments);
+                window.setTimeout(applyWeights, 0);
+                return result;
+            };
+        }
+        if (typeof window.openConsole === 'function' && !originalOpenConsole) {
+            originalOpenConsole = window.openConsole;
+            window.openConsole = function () {
+                var result = originalOpenConsole.apply(window, arguments);
+                window.setTimeout(applyWeights, 0);
+                return result;
+            };
+        }
+    }
+
+    function install() {
+        if (installed) {
+            return;
+        }
+        if (!document.body
+                || !window.KANGER_PRESENTATION
+                || !window.KANGER_PRESENTATION.installed
+                || !window.KANGER_EDITOR_FILE_ADAPTER
+                || !document.querySelector('.kanger-bottom-splitter')) {
+            retries += 1;
+            if (retries <= MAX_RETRIES) {
+                window.setTimeout(install, 10);
+            }
+            return;
+        }
+        installed = true;
+        wrapLayoutEntrypoints();
+        document.addEventListener('mouseup', function () {
+            window.setTimeout(captureWeights, 0);
+        }, true);
+        window.addEventListener('resize', function () {
+            window.setTimeout(applyWeights, 0);
+        });
+        document.addEventListener('click', function () {
+            window.setTimeout(applyWeights, 0);
+        }, false);
+        requestWeights();
+        window.KANGER_BOTTOM_LAYOUT_PERSISTENCE = Object.freeze({
+            version: 1,
+            installed: true
+        });
+    }
+
+    window.addEventListener('message', function (event) {
+        if (event.source !== window.parent) {
+            return;
+        }
+        var data = event.data;
+        if (!data || data.channel !== CHANNEL || data.type !== 'value'
+                || !data.value || typeof data.value !== 'object') {
+            return;
+        }
+        weights = data.value;
+        window.setTimeout(applyWeights, 0);
+    });
+
+    window.setTimeout(install, 0);
+}(window, document));
