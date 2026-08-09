@@ -24,6 +24,7 @@
     document.write('<script src="error.js"><\/script>');
     document.write('<script src="dialogue.js"><\/script>');
     document.write('<script src="presentation.js"><\/script>');
+    document.write('<script src="bottom-layout.js"><\/script>');
 
     function stringValue(value) {
         return value === null || value === undefined ? '' : String(value);
