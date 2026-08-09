@@ -766,3 +766,416 @@
         window.setTimeout(install, 0);
     }
 }(window, document));
+
+/*
+ * 3.7.0.5 live layout refinements.
+ *
+ * Keeps the qualified presentation authority intact while adding two purely
+ * presentational capabilities: adjustable bottom-panel proportions and a
+ * viewport-modal Source editor. No command, transport or bearer authority is
+ * introduced here.
+ */
+(function (window, document) {
+    'use strict';
+
+    var installed = false;
+    var retries = 0;
+    var MAX_RETRIES = 100;
+    var PANEL_IDS = [
+        'container-results', 'container-solutions',
+        'container-hypothesis', 'container-logging'
+    ];
+    var splitters = [];
+    var bottomWeights = {};
+    var activeSplit = null;
+    var originalPlaceElements = null;
+    var originalOpenConsole = null;
+    var originalOpenEditor = null;
+    var editorOverlayActive = false;
+    var editorHome = null;
+    var editorNext = null;
+    var editorStyle = null;
+
+    function stringValue(value) {
+        return value === null || value === undefined ? '' : String(value);
+    }
+
+    function bottomContainer() {
+        return document.getElementById('container-div');
+    }
+
+    function allPanels() {
+        var panels = [];
+        for (var i = 0; i < PANEL_IDS.length; i++) {
+            var panel = document.getElementById(PANEL_IDS[i]);
+            if (panel) {
+                panels.push(panel);
+            }
+        }
+        return panels;
+    }
+
+    function visiblePanels() {
+        var panels = allPanels();
+        var visible = [];
+        for (var i = 0; i < panels.length; i++) {
+            if (panels[i].style.display !== 'none') {
+                visible.push(panels[i]);
+            }
+        }
+        return visible;
+    }
+
+    function panelWidth(panel) {
+        if (panel && typeof panel.getBoundingClientRect === 'function') {
+            var rect = panel.getBoundingClientRect();
+            if (rect && isFinite(rect.width) && rect.width > 0) {
+                return rect.width;
+            }
+        }
+        var fallback = parseFloat(panel && panel.style
+                ? panel.style.flexGrow : '');
+        return isFinite(fallback) && fallback > 0 ? fallback : 1;
+    }
+
+    function captureBottomWeights(panels) {
+        for (var i = 0; i < panels.length; i++) {
+            bottomWeights[panels[i].id] = panelWidth(panels[i]);
+        }
+    }
+
+    function splitterStyle(splitter) {
+        splitter.style.flex = '0 0 4px';
+        splitter.style.minWidth = '4px';
+        splitter.style.maxWidth = '4px';
+        splitter.style.height = '100%';
+        splitter.style.padding = '0';
+        splitter.style.margin = '0';
+        splitter.style.background = '#b7bdc4';
+        splitter.style.cursor = 'col-resize';
+        splitter.style.userSelect = 'none';
+        splitter.style.touchAction = 'none';
+        splitter.style.overflow = 'hidden';
+    }
+
+    function beginSplit(event, splitter) {
+        var boundary = Number(splitter.__kangerBoundary);
+        var panels = visiblePanels();
+        if (!isFinite(boundary) || boundary < 0
+                || boundary + 1 >= panels.length) {
+            return;
+        }
+        captureBottomWeights(panels);
+        var left = panels[boundary];
+        var right = panels[boundary + 1];
+        var startLeft = panelWidth(left);
+        var startRight = panelWidth(right);
+        if (startLeft <= 0 || startRight <= 0) {
+            return;
+        }
+        activeSplit = {
+            left: left,
+            right: right,
+            startX: Number(event.clientX) || 0,
+            startLeft: startLeft,
+            startRight: startRight,
+            leftWidth: startLeft,
+            rightWidth: startRight
+        };
+        if (event && typeof event.preventDefault === 'function') {
+            event.preventDefault();
+        }
+        if (document.body && document.body.style) {
+            document.body.style.userSelect = 'none';
+            document.body.style.cursor = 'col-resize';
+        }
+    }
+
+    function ensureSplitters() {
+        var bottom = bottomContainer();
+        if (!bottom || splitters.length) {
+            return;
+        }
+        for (var i = 0; i < PANEL_IDS.length - 1; i++) {
+            (function () {
+                var splitter = document.createElement('div');
+                splitter.className = 'kanger-bottom-splitter';
+                splitter.setAttribute('role', 'separator');
+                splitter.setAttribute('aria-orientation', 'vertical');
+                splitter.title = 'Drag to resize panels';
+                splitterStyle(splitter);
+                splitter.addEventListener('mousedown', function (event) {
+                    beginSplit(event, splitter);
+                });
+                bottom.appendChild(splitter);
+                splitters.push(splitter);
+            }());
+        }
+    }
+
+    function applyBottomLayout() {
+        var bottom = bottomContainer();
+        if (!bottom) {
+            return;
+        }
+        ensureSplitters();
+        var panels = visiblePanels();
+        var visibleIds = {};
+        var i;
+        for (i = 0; i < panels.length; i++) {
+            visibleIds[panels[i].id] = true;
+            var weight = Number(bottomWeights[panels[i].id]);
+            if (!isFinite(weight) || weight <= 0) {
+                weight = 1;
+            }
+            panels[i].style.flex = weight + ' 1 0px';
+            panels[i].style.width = 'auto';
+            panels[i].style.height = '100%';
+            panels[i].style.order = String(i * 2);
+        }
+        var all = allPanels();
+        for (i = 0; i < all.length; i++) {
+            if (!visibleIds[all[i].id]) {
+                all[i].style.order = String(PANEL_IDS.length * 2 + i);
+            }
+        }
+        for (i = 0; i < splitters.length; i++) {
+            var splitter = splitters[i];
+            if (i < panels.length - 1) {
+                splitter.__kangerBoundary = i;
+                splitter.style.display = '';
+                splitter.style.order = String(i * 2 + 1);
+                splitterStyle(splitter);
+            } else {
+                splitter.style.display = 'none';
+            }
+        }
+    }
+
+    function onSplitMove(event) {
+        if (!activeSplit) {
+            return;
+        }
+        var delta = (Number(event.clientX) || 0) - activeSplit.startX;
+        var total = activeSplit.startLeft + activeSplit.startRight;
+        var minimum = Math.min(100, Math.max(40, total / 4));
+        var leftWidth = activeSplit.startLeft + delta;
+        leftWidth = Math.max(minimum, Math.min(total - minimum, leftWidth));
+        var rightWidth = total - leftWidth;
+        activeSplit.leftWidth = leftWidth;
+        activeSplit.rightWidth = rightWidth;
+        activeSplit.left.style.flex = '0 0 ' + leftWidth + 'px';
+        activeSplit.right.style.flex = '0 0 ' + rightWidth + 'px';
+        if (event && typeof event.preventDefault === 'function') {
+            event.preventDefault();
+        }
+    }
+
+    function finishSplit() {
+        if (!activeSplit) {
+            return;
+        }
+        bottomWeights[activeSplit.left.id] = activeSplit.leftWidth;
+        bottomWeights[activeSplit.right.id] = activeSplit.rightWidth;
+        activeSplit = null;
+        if (document.body && document.body.style) {
+            document.body.style.userSelect = '';
+            document.body.style.cursor = '';
+        }
+        applyBottomLayout();
+    }
+
+    function styleValue(node, property) {
+        if (!node || !node.style) {
+            return {value: '', priority: ''};
+        }
+        if (typeof node.style.getPropertyValue === 'function') {
+            return {
+                value: node.style.getPropertyValue(property),
+                priority: typeof node.style.getPropertyPriority === 'function'
+                        ? node.style.getPropertyPriority(property) : ''
+            };
+        }
+        return {value: stringValue(node.style[property]), priority: ''};
+    }
+
+    function rememberEditorStyle(node) {
+        var names = [
+            'position', 'top', 'right', 'bottom', 'left',
+            'width', 'height', 'min-height', 'z-index',
+            'background', 'flex', 'margin', 'padding'
+        ];
+        var values = {};
+        for (var i = 0; i < names.length; i++) {
+            values[names[i]] = styleValue(node, names[i]);
+        }
+        return values;
+    }
+
+    function setImportant(node, property, value) {
+        if (node && node.style && typeof node.style.setProperty === 'function') {
+            node.style.setProperty(property, value, 'important');
+        } else if (node && node.style) {
+            node.style[property] = value;
+        }
+    }
+
+    function restoreEditorStyle(node, values) {
+        if (!node || !node.style || !values) {
+            return;
+        }
+        for (var name in values) {
+            if (!Object.prototype.hasOwnProperty.call(values, name)) {
+                continue;
+            }
+            var item = values[name];
+            if (typeof node.style.setProperty === 'function') {
+                node.style.setProperty(name, item.value, item.priority || '');
+            } else {
+                node.style[name] = item.value;
+            }
+        }
+    }
+
+    function activateEditorOverlay() {
+        if (editorOverlayActive) {
+            return;
+        }
+        var shell = document.getElementById('container-console');
+        var editor = document.getElementById('editor');
+        if (!shell || !editor || editor.style.display === 'none') {
+            return;
+        }
+        editorOverlayActive = true;
+        editorHome = shell.parentNode;
+        editorNext = shell.nextSibling;
+        editorStyle = rememberEditorStyle(shell);
+        if (document.body && shell.parentNode !== document.body) {
+            document.body.appendChild(shell);
+        }
+        setImportant(shell, 'position', 'fixed');
+        setImportant(shell, 'top', '0');
+        setImportant(shell, 'right', '0');
+        setImportant(shell, 'bottom', '0');
+        setImportant(shell, 'left', '0');
+        setImportant(shell, 'width', '100vw');
+        setImportant(shell, 'height', '100vh');
+        setImportant(shell, 'min-height', '0');
+        setImportant(shell, 'z-index', '10000');
+        setImportant(shell, 'background', '#fff');
+        setImportant(shell, 'flex', 'none');
+        setImportant(shell, 'margin', '0');
+        setImportant(shell, 'padding', '0');
+        setImportant(editor, 'flex', '1 1 auto');
+        setImportant(editor, 'height', 'calc(100vh - 24px)');
+        setImportant(editor, 'min-height', '0');
+        if (window.editor && typeof window.editor.setSize === 'function') {
+            window.editor.setSize('100%', '100%');
+        }
+        if (window.editor && typeof window.editor.refresh === 'function') {
+            window.editor.refresh();
+        }
+    }
+
+    function deactivateEditorOverlay() {
+        if (!editorOverlayActive) {
+            return;
+        }
+        var shell = document.getElementById('container-console');
+        var editor = document.getElementById('editor');
+        if (shell) {
+            restoreEditorStyle(shell, editorStyle);
+            if (editorHome && shell.parentNode !== editorHome) {
+                if (editorNext && editorNext.parentNode === editorHome
+                        && typeof editorHome.insertBefore === 'function') {
+                    editorHome.insertBefore(shell, editorNext);
+                } else {
+                    editorHome.appendChild(shell);
+                }
+            }
+        }
+        if (editor) {
+            if (typeof editor.style.removeProperty === 'function') {
+                editor.style.removeProperty('flex');
+                editor.style.removeProperty('height');
+                editor.style.removeProperty('min-height');
+            } else {
+                editor.style.flex = '';
+                editor.style.height = '';
+                editor.style.minHeight = '';
+            }
+        }
+        editorOverlayActive = false;
+        editorHome = null;
+        editorNext = null;
+        editorStyle = null;
+        if (window.KANGER_PRESENTATION
+                && typeof window.KANGER_PRESENTATION.refresh === 'function') {
+            window.KANGER_PRESENTATION.refresh();
+        }
+        applyBottomLayout();
+    }
+
+    function wrapLayoutEntrypoints() {
+        if (typeof window.placeElements === 'function' && !originalPlaceElements) {
+            originalPlaceElements = window.placeElements;
+            window.placeElements = function () {
+                var result = originalPlaceElements.apply(window, arguments);
+                applyBottomLayout();
+                return result;
+            };
+        }
+        if (typeof window.openConsole === 'function' && !originalOpenConsole) {
+            originalOpenConsole = window.openConsole;
+            window.openConsole = function () {
+                var result = originalOpenConsole.apply(window, arguments);
+                deactivateEditorOverlay();
+                applyBottomLayout();
+                return result;
+            };
+        }
+        if (typeof window.openEditor === 'function' && !originalOpenEditor) {
+            originalOpenEditor = window.openEditor;
+            window.openEditor = function () {
+                var result = originalOpenEditor.apply(window, arguments);
+                activateEditorOverlay();
+                return result;
+            };
+        }
+    }
+
+    function install() {
+        if (installed) {
+            return;
+        }
+        if (!document.body || !window.KANGER_PRESENTATION
+                || !window.KANGER_PRESENTATION.installed) {
+            retries += 1;
+            if (retries <= MAX_RETRIES) {
+                window.setTimeout(install, 10);
+            }
+            return;
+        }
+        installed = true;
+        ensureSplitters();
+        wrapLayoutEntrypoints();
+        document.addEventListener('mousemove', onSplitMove, true);
+        document.addEventListener('mouseup', finishSplit, true);
+        window.addEventListener('resize', function () {
+            window.setTimeout(applyBottomLayout, 0);
+        });
+        document.addEventListener('click', function (event) {
+            var node = event.target;
+            while (node && node !== document) {
+                if (stringValue(node.className).indexOf('kanger-tech-toggle') >= 0) {
+                    window.setTimeout(applyBottomLayout, 0);
+                    break;
+                }
+                node = node.parentNode;
+            }
+        }, false);
+        applyBottomLayout();
+    }
+
+    window.setTimeout(install, 0);
+}(window, document));
