@@ -56,20 +56,24 @@ jobs:
         run: |
           set -euo pipefail
           expected_files="$(cat <<'EOF_FILES'
+          bottom-layout.js
           codemirror.css
           codemirror.js
           config.js
           console.html
           containment.js
           dialogue.js
+          editor-local-file.js
           error.js
           favicon.ico
+          file-download.js
           gateway.js
           index.html
           javascript-mode-vendor.js
           javascript-mode.js
           javascript.js
           jquery-3.6.0.min.js
+          layout-persistence.js
           operation.js
           presentation.css
           presentation.js
@@ -81,14 +85,18 @@ jobs:
           )"
           test "${actual_files}" = "${expected_files}"
 
+          node --check html/bottom-layout.js
           node --check html/config.js
           node --check html/containment.js
           node --check html/dialogue.js
+          node --check html/editor-local-file.js
           node --check html/error.js
+          node --check html/file-download.js
           node --check html/gateway.js
           node --check html/javascript-mode-vendor.js
           node --check html/javascript-mode.js
           node --check html/javascript.js
+          node --check html/layout-persistence.js
           node --check html/operation.js
           node --check html/presentation.js
           node --check html/workspace.js
@@ -101,6 +109,8 @@ jobs:
 
           grep -q '<script src="config.js"></script>' html/index.html
           grep -q '<script src="containment.js"></script>' html/index.html
+          grep -q '<script src="layout-persistence.js"></script>' html/index.html
+          grep -q '<script src="file-download.js"></script>' html/index.html
           grep -q '<script src="gateway.js"></script>' html/index.html
           grep -q 'id="console-frame"' html/index.html
           grep -q 'sandbox="allow-scripts"' html/index.html
@@ -150,6 +160,15 @@ jobs:
           grep -q 'error.js' html/javascript-mode.js
           grep -q 'dialogue.js' html/javascript-mode.js
           grep -q 'presentation.js' html/javascript-mode.js
+          grep -q 'bottom-layout.js' html/javascript-mode.js
+          grep -q 'editor-local-file.js' html/bottom-layout.js
+
+          grep -q 'KANGER_LOCAL_FILE_DOWNLOAD' html/file-download.js
+          grep -q "event.origin !== 'null'" html/file-download.js
+          ! grep -q 'document.cookie' html/file-download.js
+          ! grep -q 'window.token' html/file-download.js
+          ! grep -q 'eval(' html/file-download.js
+          ! grep -q 'new Function' html/file-download.js
 
           grep -q 'KANGER_OPERATION_PROTOCOL' html/operation.js
           grep -q "packet.context === 'dialogue'" html/operation.js
