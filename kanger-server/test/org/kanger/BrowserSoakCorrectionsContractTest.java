@@ -70,12 +70,15 @@ class BrowserSoakCorrectionsContractTest {
     }
 
     @Test
-    void editorCompileNormalizesOnlyTransportCopyAtEof() throws Exception {
+    void editorCompileTransportPreservesExactSourceBytes() throws Exception {
         String source = html("editor-local-file.js");
 
-        assertTrue(source.contains("function normalizeCompilePacket(packet)"));
-        assertTrue(source.contains("!/[\\r\\n]$/.test(source)"));
-        assertTrue(source.contains("encodeURIComponent(source + '\\n')"));
+        assertFalse(source.contains("normalizeCompilePacket"),
+                "Browser must not rewrite source bytes for compiler EOF handling");
+        assertFalse(source.contains("encodeURIComponent(source + '\\n')"),
+                "Browser must not append a synthetic final EOL");
+        assertTrue(source.contains(
+                "Compiler-only EOF normalization is owned by the Server source boundary"));
         assertTrue(source.contains(
                 "window.KANGER_SOAK_CORRECTIONS = Object.freeze"));
     }
