@@ -65,7 +65,12 @@ public final class KangerCanonicalConsoleRunner {
                 + "st\n"
                 + "st c\n"
                 + "st\n"
+                + "st r " + storageName + "\n"
                 + "put \"console test.k\"\n"
+                + "put \"console test.k\"\n"
+                + "n\n"
+                + "put \"console test.k\"\n"
+                + "y\n"
                 + "get\n"
                 + "delete \"console test.k\"\n"
                 + "y\n"
@@ -75,6 +80,7 @@ public final class KangerCanonicalConsoleRunner {
                 + "t\n"
                 + "t s\n"
                 + "t r\n"
+                + "!!eating(Cat, Mouse);\n"
                 + "s\n"
                 + "quit\n";
 
@@ -122,9 +128,15 @@ public final class KangerCanonicalConsoleRunner {
                 "canonical transaction commit did not commit storage baseline insertion");
         require(out.contains("Database " + storageName + " closed"),
                 "canonical storage close did not execute");
+        require(out.contains("Database reindexed"),
+                "storage reindex did not execute immediately");
+        require(!out.contains("Reindex storage " + storageName + "?"),
+                "storage reindex unexpectedly requested confirmation");
 
         require(out.contains("Source file console test.k saved."),
                 "quoted source put did not execute");
+        require(out.contains("Overwrite source file console test.k? [y/N]?"),
+                "existing source overwrite did not request explicit confirmation");
         require(out.contains("console test.k"),
                 "bare source listing did not expose the saved source name");
         require(out.contains("Source file console test.k deleted."),
@@ -143,7 +155,11 @@ public final class KangerCanonicalConsoleRunner {
                 "minimum-prefix transaction start did not create level 1");
         require(out.contains("SUCCESS: Transaction rolled back"),
                 "minimum-prefix transaction rollback did not execute");
+        require(!out.contains("Rollback transaction"),
+                "transaction rollback unexpectedly requested confirmation");
 
+        require(err.contains("Unexpected '!' after Core statement operator"),
+                "double statement prefix was not rejected by shared parser in Console");
         require(err.contains("AMBIGUOUS_PREFIX"),
                 "ambiguous top-level prefix 's' was not rejected by shared parser");
         require(out.contains("KANGER III Session closed"),
