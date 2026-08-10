@@ -17,10 +17,11 @@
  * boolean confirmation bit, but never decides by itself which command is
  * destructive.
  */
-(function (window, document) {
+(function (window) {
     'use strict';
 
     var installed = false;
+    var document = window.document;
 
     function stringValue(value) {
         return value === null || value === undefined ? '' : String(value);
@@ -282,7 +283,7 @@
         window.command = dispatch;
         window.query = dispatch;
         window.KANGER_DIALOGUE_TRANSPORT = Object.freeze({
-            version: 2,
+            version: 1,
             installed: true,
             dispatch: dispatch
         });
@@ -311,4 +312,4 @@
     }
 
     observeErrorBoundary();
-}(window, document));
+}(window));
