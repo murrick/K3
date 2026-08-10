@@ -394,7 +394,7 @@
         window.command = dispatch;
         window.query = dispatch;
         window.KANGER_DIALOGUE_TRANSPORT = Object.freeze({
-            version: 2,
+            version: 1,
             installed: true,
             dispatch: dispatch
         });
