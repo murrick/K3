@@ -251,7 +251,8 @@ class PublicAuthUiContractTest {
         assertTrue(presentation.contains("technical-panel"));
         assertTrue(presentation.contains("KANGER_OPERATION_PROTOCOL"));
         assertTrue(presentation.contains("KANGER_WORKSPACE_STATE"));
-        assertTrue(presentation.contains("base predicate "));
+        assertTrue(presentation.contains("data-kanger-info"));
+        assertTrue(presentation.contains("Predicate details"));
         assertTrue(presentation.contains("base tree "));
         assertTrue(presentation.contains("function source "));
         assertTrue(presentation.contains("solution tree "));
