@@ -16,11 +16,13 @@ import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -198,6 +200,66 @@ public class WorkspaceStateReactorTest {
                 UserFactory.dropUser(user);
             }
             Files.deleteIfExists(Paths.get(user.getSourceDir()).resolve("alpha.k"));
+        }
+    }
+
+    @Test
+    public void sourceWithoutFinalEolRemainsExactWhileLastStatementCompiles()
+            throws Exception {
+        String identity = "source-eof-" + UUID.randomUUID().toString();
+        IUser user = UserFactory.createUser(identity, identity);
+        String token = null;
+        String sourceName = "eof-exact-" + UUID.randomUUID().toString() + ".k";
+        Path sourcePath = Paths.get(user.getSourceDir()).resolve(sourceName);
+        String exact = "!alpha(one);\n!omega(last);";
+        byte[] exactBytes = exact.getBytes(StandardCharsets.UTF_8);
+        try {
+            new UDF().init(user);
+            new DB().init(user);
+            user.setCurrentMind(new Mind(user));
+            token = UserFactory.addUser(user);
+
+            IReactor<JSONObject> reactor = new WorkspaceStateReactor(
+                    new MindLifecycleReactor(new QueryProcessor()));
+
+            JSONObject compile = invoke(reactor, "query", new JSONObject()
+                    .put("token", token)
+                    .put("compile", URLEncoder.encode(exact, "UTF-8")));
+            assertEquals("OK", compile.getString("result"), compile.toString());
+            JSONObject projected = compile.getJSONObject("workspace")
+                    .getJSONObject("source");
+            assertEquals(exactBytes.length, projected.getInt("bytes_utf8"));
+
+            JSONObject source = invoke(reactor, "query", new JSONObject()
+                    .put("token", token)
+                    .put("source", ""));
+            assertEquals("OK", source.getString("result"), source.toString());
+            assertEquals(exact, source.getString("source"),
+                    "Server source response changed exact editor bytes");
+
+            JSONObject query = invoke(reactor, "query", new JSONObject()
+                    .put("token", token)
+                    .put("request", URLEncoder.encode("?omega(last);", "UTF-8")));
+            assertEquals("OK", query.getString("result"), query.toString());
+            assertEquals("yes", query.getString("response"),
+                    "Last no-EOL statement did not participate in inference");
+
+            JSONObject save = invoke(reactor, "command", new JSONObject()
+                    .put("token", token)
+                    .put("put", sourceName));
+            assertEquals("OK", save.getString("result"), save.toString());
+            assertArrayEquals(exactBytes, Files.readAllBytes(sourcePath),
+                    "Repository save changed exact source bytes");
+            assertEquals(exactBytes.length, save.getJSONObject("workspace")
+                    .getJSONObject("source").getInt("bytes_utf8"));
+            assertEquals("saved", save.getJSONObject("workspace")
+                    .getJSONObject("source").getString("repository_state"));
+        } finally {
+            SourceDocumentState.invalidate(user);
+            if (token != null) {
+                UserFactory.dropUser(user);
+            }
+            Files.deleteIfExists(sourcePath);
         }
     }
 
