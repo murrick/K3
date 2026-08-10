@@ -197,7 +197,7 @@ public final class CommandRegistry {
 
         define(CommandIntent.SOURCE_GET, "get [<source>]", "SOURCE", "List server-side sources when omitted; load and compile one source when named.", args("source", "Optional source logical name."), n++);
         define(CommandIntent.SOURCE_PUT, "put <source>", "SOURCE", "Persist the current source under one logical name.", args("source", "Source logical name."), n++);
-        define(CommandIntent.SOURCE_DELETE, "delete <source>", "SOURCE", "Delete one server-side source.", args("source", "Source logical name."), n++);
+        define(CommandIntent.SOURCE_DELETE, "delete [<source>]", "SOURCE", "List server-side sources when omitted; delete one source when named.", args("source", "Optional source logical name."), n++);
 
         define(CommandIntent.STORAGE_STATUS, "storage", "STORAGE", "Show available storages and the current/open storage.", noArgs(), n++);
         define(CommandIntent.STORAGE_USE, "storage use <name>", "STORAGE", "Open or create one storage.", args("name", "Storage logical name."), n++);
