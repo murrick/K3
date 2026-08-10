@@ -89,7 +89,7 @@ public final class CommandFormatter {
             case SOURCE_PUT:
                 return "put " + argument(invocation.getArgument("source"));
             case SOURCE_DELETE:
-                return "delete " + argument(invocation.getArgument("source"));
+                return optionalArgumentCommand("delete", invocation.getArgument("source"));
 
             case STORAGE_STATUS:
                 return "storage";
