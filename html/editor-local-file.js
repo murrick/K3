@@ -196,11 +196,13 @@
  *
  * This late adapter repairs presentation/projection boundaries exposed by VPS
  * soak without taking command-language or execution authority. It owns:
- *   - editor compile EOF normalization at the transport edge;
  *   - active semantic projection cleanup for deleted statement rows;
  *   - bottom-panel visibility derived from committed projection content;
  *   - presentation decoration convergence;
  *   - the CSS-grid left-column splitter geometry boundary.
+ *
+ * Source compilation deliberately remains byte-transparent in the Browser.
+ * Compiler-only EOF normalization is owned by the Server source boundary.
  */
 (function (window, document) {
     'use strict';
@@ -211,43 +213,10 @@
     var observer = null;
     var scheduled = false;
     var applying = false;
-    var originalPost = null;
     var leftSplitterInstalled = false;
 
     function stringValue(value) {
         return value === null || value === undefined ? '' : String(value);
-    }
-
-    function normalizeCompilePacket(packet) {
-        if (!packet || packet.context !== 'query'
-                || !packet.parameters
-                || typeof packet.parameters !== 'object'
-                || packet.parameters.compile === null
-                || packet.parameters.compile === undefined) {
-            return packet;
-        }
-        var encoded = stringValue(packet.parameters.compile);
-        var source;
-        try {
-            source = decodeURIComponent(encoded);
-        } catch (ignored) {
-            return packet;
-        }
-        if (source && !/[\r\n]$/.test(source)) {
-            packet.parameters.compile = encodeURIComponent(source + '\n');
-        }
-        return packet;
-    }
-
-    function installCompileBoundary() {
-        if (originalPost || typeof window.post !== 'function') {
-            return;
-        }
-        originalPost = window.post;
-        window.post = function (packet, callback) {
-            normalizeCompilePacket(packet);
-            return originalPost(packet, callback);
-        };
     }
 
     function operationCommitted() {
@@ -526,7 +495,6 @@
             return;
         }
         installed = true;
-        installCompileBoundary();
         installLeftSplitter();
         installObserver();
         window.addEventListener('resize', scheduleSync);
@@ -534,7 +502,6 @@
         window.KANGER_SOAK_CORRECTIONS = Object.freeze({
             version: 2,
             installed: true,
-            normalizeCompilePacket: normalizeCompilePacket,
             refresh: scheduleSync
         });
     }
