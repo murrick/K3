@@ -10,8 +10,14 @@ import org.junit.jupiter.api.Test;
 import org.kanger.command.CommandIntent;
 import org.kanger.command.CommandInvocation;
 import org.kanger.interfaces.IReactor;
+import org.kanger.interfaces.IUser;
 
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -97,6 +103,48 @@ class CanonicalCommandIngressReactorTest {
         assertEquals(1, capture.calls.get());
         assertEquals("victim.k", parameters(capture.packet.get())
                 .optString("delete"));
+    }
+
+    @Test
+    void existingLogicalSourcePutRequiresConfirmationWithoutExplicitExtension()
+            throws Exception {
+        String identity = "put-confirm-" + UUID.randomUUID().toString();
+        IUser user = UserFactory.createUser(identity, identity);
+        String token = null;
+        Path source = null;
+        try {
+            token = UserFactory.addUser(user);
+            source = Paths.get(user.getSourceDir()).resolve("victim.k");
+            Files.createDirectories(source.getParent());
+            Files.write(source, "!victim(one);\n".getBytes(StandardCharsets.UTF_8));
+
+            Capture capture = new Capture();
+            CanonicalCommandIngressReactor reactor =
+                    new CanonicalCommandIngressReactor(capture);
+
+            JSONObject first = (JSONObject) reactor.run(
+                    dialogue(token, "put victim"));
+
+            assertEquals("confirmation_required", first.optString("result"));
+            assertEquals(0, capture.calls.get());
+            assertTrue(first.getJSONObject(
+                    CanonicalCommandIngressReactor.CONFIRMATION_FIELD)
+                    .getString("prompt").contains("victim"));
+
+            JSONObject second = (JSONObject) reactor.run(
+                    confirmedDialogue(token, "put victim"));
+            assertEquals("OK", second.optString("result"));
+            assertEquals(1, capture.calls.get());
+            assertEquals("victim", parameters(capture.packet.get())
+                    .optString("put"));
+        } finally {
+            if (source != null) {
+                Files.deleteIfExists(source);
+            }
+            if (token != null) {
+                UserFactory.dropUser(user);
+            }
+        }
     }
 
     @Test
