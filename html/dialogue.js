@@ -143,6 +143,20 @@
         return fragment;
     }
 
+    function composeSyntax(value) {
+        var syntax = stringValue(value);
+        var required = syntax.indexOf(' <');
+        var optional = syntax.indexOf(' [<');
+        var cut = -1;
+        if (required >= 0) {
+            cut = required;
+        }
+        if (optional >= 0 && (cut < 0 || optional < cut)) {
+            cut = optional;
+        }
+        return cut < 0 ? syntax : syntax.substring(0, cut) + ' ';
+    }
+
     function helpPresentation(data) {
         var help = data && data.dialogue_help;
         if (!help || help.schema !== 1 || !Array.isArray(help.sections)) {
@@ -159,11 +173,15 @@
             var commands = Array.isArray(section.commands) ? section.commands : [];
             for (var j = 0; j < commands.length; j++) {
                 var command = commands[j] || {};
+                var syntaxText = stringValue(command.syntax);
+                var composeText = command.compose === null
+                        || command.compose === undefined
+                        ? composeSyntax(syntaxText) : stringValue(command.compose);
                 var row = document.createElement('div');
                 var syntax = document.createElement('span');
-                syntax.textContent = stringValue(command.syntax);
-                syntax.setAttribute('data-kanger-compose', stringValue(command.syntax));
-                syntax.title = 'Compose: ' + stringValue(command.syntax);
+                syntax.textContent = syntaxText;
+                syntax.setAttribute('data-kanger-compose', composeText);
+                syntax.title = 'Compose: ' + composeText;
                 syntax.style.fontWeight = 'bold';
                 row.appendChild(syntax);
                 appendText(row, ' — ' + stringValue(command.summary));
@@ -220,6 +238,94 @@
                 && data.confirmation && data.confirmation.schema === 1);
     }
 
+    function requestConfirmation(prompt, callback) {
+        var previous = document.getElementById('kanger-confirmation-overlay');
+        if (previous && previous.parentNode) {
+            previous.parentNode.removeChild(previous);
+        }
+
+        var overlay = document.createElement('div');
+        overlay.id = 'kanger-confirmation-overlay';
+        overlay.setAttribute('role', 'presentation');
+        overlay.style.position = 'fixed';
+        overlay.style.left = '0';
+        overlay.style.top = '0';
+        overlay.style.right = '0';
+        overlay.style.bottom = '0';
+        overlay.style.zIndex = '2147483647';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.background = 'rgba(20, 25, 30, 0.32)';
+
+        var dialog = document.createElement('div');
+        dialog.setAttribute('role', 'dialog');
+        dialog.setAttribute('aria-modal', 'true');
+        dialog.setAttribute('aria-label', 'Confirm operation');
+        dialog.style.boxSizing = 'border-box';
+        dialog.style.minWidth = '280px';
+        dialog.style.maxWidth = '520px';
+        dialog.style.padding = '16px';
+        dialog.style.border = '1px solid #9da6ae';
+        dialog.style.background = '#fff';
+        dialog.style.boxShadow = '0 8px 28px rgba(0,0,0,.28)';
+        dialog.style.fontFamily = 'helvetica, sans-serif';
+        dialog.style.color = '#20262d';
+
+        var message = document.createElement('div');
+        message.textContent = stringValue(prompt || 'Confirm operation?');
+        message.style.marginBottom = '14px';
+        message.style.whiteSpace = 'pre-wrap';
+        dialog.appendChild(message);
+
+        var actions = document.createElement('div');
+        actions.style.display = 'flex';
+        actions.style.justifyContent = 'flex-end';
+        actions.style.gap = '8px';
+
+        var cancel = document.createElement('button');
+        cancel.type = 'button';
+        cancel.textContent = 'Cancel';
+        var confirm = document.createElement('button');
+        confirm.type = 'button';
+        confirm.textContent = 'Confirm';
+        confirm.style.fontWeight = 'bold';
+        actions.appendChild(cancel);
+        actions.appendChild(confirm);
+        dialog.appendChild(actions);
+        overlay.appendChild(dialog);
+
+        var finished = false;
+        function finish(accepted) {
+            if (finished) {
+                return;
+            }
+            finished = true;
+            document.removeEventListener('keydown', onKeyDown, true);
+            if (overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+            callback(accepted === true);
+        }
+
+        function onKeyDown(event) {
+            if (event.key === 'Escape' || event.keyCode === 27) {
+                event.preventDefault();
+                finish(false);
+            }
+        }
+
+        cancel.onclick = function () {
+            finish(false);
+        };
+        confirm.onclick = function () {
+            finish(true);
+        };
+        document.addEventListener('keydown', onKeyDown, true);
+        document.body.appendChild(overlay);
+        confirm.focus();
+    }
+
     function dispatch(line, callback, confirmed) {
         var raw = stringValue(line);
         var parameters = {
@@ -236,22 +342,24 @@
             if (confirmationRequired(data)) {
                 var prompt = stringValue(data.confirmation.prompt
                         || data.description || 'Confirm operation?');
-                if (window.confirm(prompt)) {
-                    window.setTimeout(function () {
-                        dispatch(raw, callback, true);
-                    }, 0);
-                } else {
-                    var cancelled = {
-                        result: 'OK',
-                        description: 'Cancelled'
-                    };
-                    if (typeof window.logResponse === 'function') {
-                        window.logResponse(cancelled, 'Cancelled');
+                requestConfirmation(prompt, function (accepted) {
+                    if (accepted) {
+                        window.setTimeout(function () {
+                            dispatch(raw, callback, true);
+                        }, 0);
+                    } else {
+                        var cancelled = {
+                            result: 'OK',
+                            description: 'Cancelled'
+                        };
+                        if (typeof window.logResponse === 'function') {
+                            window.logResponse(cancelled, 'Cancelled');
+                        }
+                        if (typeof callback === 'function') {
+                            callback(cancelled);
+                        }
                     }
-                    if (typeof callback === 'function') {
-                        callback(cancelled);
-                    }
-                }
+                });
                 return;
             }
 
@@ -260,6 +368,9 @@
                 window.refreshScreen(data, presentation);
             } else if (typeof window.logResponse === 'function') {
                 window.logResponse(data, presentation);
+            }
+            if (typeof window.showTransactionLevel === 'function') {
+                window.showTransactionLevel(data);
             }
             if (typeof callback === 'function') {
                 callback(data);

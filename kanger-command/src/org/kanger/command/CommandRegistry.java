@@ -126,7 +126,7 @@ public final class CommandRegistry {
         family(Family.HELP, "help");
         family(Family.PUT, "put");
         family(Family.QUIT, "quit");
-        family(Family.RULE, "rule");
+        family(Family.RULE, "rule", "rules");
         family(Family.SOLUTION, "solution", "solutions");
         family(Family.STORAGE, "storage");
         family(Family.TRANSACTION, "transaction");
@@ -258,12 +258,14 @@ public final class CommandRegistry {
     }
 
     public static boolean isExactPluralFamilyWord(Family family, String token) {
-        return (family == Family.FUNCTION && isExact(token, "functions"))
+        return (family == Family.RULE && isExact(token, "rules"))
+                || (family == Family.FUNCTION && isExact(token, "functions"))
                 || (family == Family.SOLUTION && isExact(token, "solutions"));
     }
 
     public static boolean isExactSingularFamilyWord(Family family, String token) {
-        return (family == Family.FUNCTION && isExact(token, "function"))
+        return (family == Family.RULE && isExact(token, "rule"))
+                || (family == Family.FUNCTION && isExact(token, "function"))
                 || (family == Family.SOLUTION && isExact(token, "solution"));
     }
 

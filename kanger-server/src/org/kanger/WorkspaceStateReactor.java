@@ -296,7 +296,7 @@ public final class WorkspaceStateReactor implements IReactor<JSONObject> {
     private static JSONObject sourceProjection(IMind mind, IUser user)
             throws Exception {
         String logicalName = nullToEmpty(mind.getSourceFileName());
-        String source = nullToEmpty(mind.getSourceCode());
+        String source = nullToEmpty(SourceDocumentState.current(user, mind));
         byte[] currentBytes = source.getBytes(StandardCharsets.UTF_8);
         Path path = logicalName.isEmpty() ? null : sourcePath(user, logicalName);
         boolean persisted = path != null && Files.isRegularFile(path);

@@ -95,8 +95,15 @@ public final class CommandParser {
 
     private CommandInvocation parseRule(String raw, List<Token> tokens)
             throws CommandParseException {
+        String head = tokens.get(0).value;
         if (tokens.size() == 1) {
+            if (CommandRegistry.isExactPluralFamilyWord(Family.RULE, head)) {
+                return CommandInvocation.command(CommandIntent.RULE_ALL, raw);
+            }
             return CommandInvocation.command(CommandIntent.RULE_STATUS, raw);
+        }
+        if (CommandRegistry.isExactPluralFamilyWord(Family.RULE, head)) {
+            throw error(INVALID_GRAMMAR, "rules is the collection form");
         }
 
         String selector = tokens.get(1).value;

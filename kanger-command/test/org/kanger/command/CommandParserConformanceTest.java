@@ -76,6 +76,7 @@ public final class CommandParserConformanceTest {
     }
 
     private void ruleFamily() throws Exception {
+        expect("rules", CommandIntent.RULE_ALL);
         expectLong("rule 17", CommandIntent.RULE_SHOW, "id", 17L);
         expect("r a", CommandIntent.RULE_ALL);
         expect("r p", CommandIntent.RULE_PRODUCED);
@@ -95,6 +96,7 @@ public final class CommandParserConformanceTest {
         check("".equals(clear.getArgument("text")),
                 "rule comment explicit empty");
 
+        reject("rules 17", INVALID_GRAMMAR);
         reject("rule show 17", INVALID_GRAMMAR);
         reject("rule tree", MISSING_ARGUMENT);
         reject("rule all 17", EXTRA_ARGUMENT);
@@ -232,6 +234,7 @@ public final class CommandParserConformanceTest {
     }
 
     private void canonicalEcho() throws Exception {
+        expectCanonical("rules", "rule all");
         expectCanonical("r 17", "rule 17");
         expectCanonical("r c 17", "rule comment 17");
         expectCanonical("f s 8", "function source 8");
