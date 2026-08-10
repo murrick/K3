@@ -266,10 +266,31 @@
         return !!node && !!node.firstChild;
     }
 
-    function setVisible(id, visible) {
+    function visible(id) {
         var node = document.getElementById(id);
-        if (node) {
-            node.style.display = visible ? '' : 'none';
+        return !!node && node.style.display !== 'none';
+    }
+
+    function expectedVisible(id) {
+        if (id === 'container-results') {
+            return hasContent('query-results');
+        }
+        if (id === 'container-solutions') {
+            return hasContent('query-solutions');
+        }
+        if (id === 'container-hypothesis') {
+            return hasContent('query-hypothesis');
+        }
+        if (id === 'container-logging') {
+            return true;
+        }
+        return visible(id);
+    }
+
+    function setVisible(id, isVisible) {
+        var node = document.getElementById(id);
+        if (node && visible(id) !== isVisible) {
+            node.style.display = isVisible ? '' : 'none';
         }
     }
 
@@ -353,9 +374,9 @@
         applying = true;
         try {
             pruneDeletedStatements();
-            setVisible('container-results', hasContent('query-results'));
-            setVisible('container-solutions', hasContent('query-solutions'));
-            setVisible('container-hypothesis', hasContent('query-hypothesis'));
+            setVisible('container-results', expectedVisible('container-results'));
+            setVisible('container-solutions', expectedVisible('container-solutions'));
+            setVisible('container-hypothesis', expectedVisible('container-hypothesis'));
             setVisible('container-logging', true);
             decorateSolutionTree();
             if (window.KANGER_BOTTOM_LAYOUT_AUTHORITY
@@ -382,11 +403,28 @@
         }
     }
 
+    function projectionMutation(mutations) {
+        for (var i = 0; i < mutations.length; i++) {
+            var mutation = mutations[i];
+            if (mutation.type === 'childList') {
+                scheduleSync();
+                return;
+            }
+            if (mutation.type === 'attributes'
+                    && mutation.target && mutation.target.id
+                    && visible(mutation.target.id)
+                        !== expectedVisible(mutation.target.id)) {
+                scheduleSync();
+                return;
+            }
+        }
+    }
+
     function installObserver() {
         if (!window.MutationObserver || observer) {
             return;
         }
-        observer = new window.MutationObserver(scheduleSync);
+        observer = new window.MutationObserver(projectionMutation);
         var contents = [
             'statements', 'query-results', 'query-solutions',
             'query-hypothesis', 'query-log'
