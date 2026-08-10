@@ -19,6 +19,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Converts one raw operator-dialogue line into the qualified legacy Server
@@ -179,7 +180,11 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
         }
         try {
             IUser user = UserFactory.getUser(token);
-            return new File(user.getSourceDir() + name).isFile();
+            String canonical = name.trim();
+            if (!canonical.toLowerCase(Locale.ROOT).endsWith(".k")) {
+                canonical += ".k";
+            }
+            return new File(user.getSourceDir(), canonical).isFile();
         } catch (Exception unavailable) {
             // Authentication/filesystem errors remain owned by the normal
             // qualified execution path; this UX guard must not replace them.
