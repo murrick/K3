@@ -1,0 +1,249 @@
+name: KANGER 3.7.0.7 VPS development soak package
+
+on:
+  push:
+    branches:
+      - "ops/3.7.0.7-vps-soak"
+  pull_request:
+    branches:
+      - "ui/3.7.0.7-soak-corrections"
+    paths:
+      - ".github/workflows/kanger-3.7.0.7-vps-soak.yml"
+      - "kanger-server/VPS-DEPLOY-3.7.0.7.md"
+      - "kanger-server/deploy/snapshot-current.sh"
+      - "kanger-server/deploy/deploy-soak.sh"
+      - "kanger-server/deploy/rollback-soak.sh"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Build matched 3.7.0.7 Server and Browser development soak bundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact operations branch
+        uses: actions/checkout@v5
+        with:
+          ref: ops/3.7.0.7-vps-soak
+          fetch-depth: 0
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Verify exact source provenance and operations-only delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          canonical="5c0cd3662cbadbd63e78ebbc6a23131f1b9682b7"
+          branch="ops/3.7.0.7-vps-soak"
+          head="$(git rev-parse "origin/${branch}")"
+          test "$(git rev-parse HEAD)" = "${head}"
+          git merge-base --is-ancestor "${canonical}" "${head}"
+
+          expected="$(cat <<'EOF_FILES'
+          .github/workflows/kanger-3.7.0.7-vps-soak.yml
+          kanger-server/VPS-DEPLOY-3.7.0.7.md
+          kanger-server/deploy/deploy-soak.sh
+          kanger-server/deploy/rollback-soak.sh
+          kanger-server/deploy/snapshot-current.sh
+          EOF_FILES
+          )"
+          actual="$(git diff --name-only "${canonical}..${head}" | sort)"
+          test "${actual}" = "${expected}"
+
+          bash -n kanger-server/deploy/snapshot-current.sh
+          bash -n kanger-server/deploy/deploy-soak.sh
+          bash -n kanger-server/deploy/rollback-soak.sh
+
+          grep -q "${canonical}" kanger-server/deploy/deploy-soak.sh
+          grep -q "${branch}" kanger-server/deploy/deploy-soak.sh
+          grep -q 'afb72c6569e3496be972cd56ce974998132cf49586948669c8b4e2b8c634d0fe' \
+            kanger-server/deploy/snapshot-current.sh \
+            kanger-server/deploy/deploy-soak.sh
+          grep -q '/home/murray/sites/kanger-3.7.0.6-vps-soak-20260810T163710Z' \
+            kanger-server/deploy/snapshot-current.sh \
+            kanger-server/deploy/deploy-soak.sh
+          grep -q '9a8fb1a0f1505d74fb15343ed0519782abb33b53097d6c0e46fbad7bad962718' \
+            kanger-server/deploy/deploy-soak.sh
+          grep -q 'candidate_jar_sha256' \
+            kanger-server/deploy/deploy-soak.sh \
+            kanger-server/deploy/rollback-soak.sh
+
+          echo "DEV_SOAK_PACKAGE_PASS exact-branch-provenance ${head}"
+          echo "DEV_SOAK_PACKAGE_PASS operations-only-delta"
+
+      - name: Build and test Server 0.18 from 3.7.0.7 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mvn -B -ntp \
+            -f kanger-server/pom.xml \
+            -Dkanger.build.branch.override=ui/3.7.0.7-soak-corrections \
+            clean verify
+          test -f kanger-server/target/kanger-server.jar
+          unzip -p kanger-server/target/kanger-server.jar org/kanger/build.properties \
+            | grep -q '^server.version=server-0.18$'
+          echo "DEV_SOAK_PACKAGE_PASS server-build"
+
+      - name: Re-run 22-file Browser qualification surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="$(cat <<'EOF_FILES'
+          bottom-layout.js
+          codemirror.css
+          codemirror.js
+          config.js
+          console.html
+          containment.js
+          dialogue.js
+          editor-local-file.js
+          error.js
+          favicon.ico
+          file-download.js
+          gateway.js
+          index.html
+          javascript-mode-vendor.js
+          javascript-mode.js
+          javascript.js
+          jquery-3.6.0.min.js
+          layout-persistence.js
+          operation.js
+          presentation.css
+          presentation.js
+          workspace.js
+          EOF_FILES
+          )"
+          actual="$(find html -mindepth 1 -maxdepth 1 -type f -printf '%f\n' | sort)"
+          test "${actual}" = "${expected}"
+
+          for file in \
+            bottom-layout.js config.js containment.js dialogue.js \
+            editor-local-file.js error.js file-download.js gateway.js \
+            javascript-mode-vendor.js javascript-mode.js javascript.js \
+            layout-persistence.js operation.js presentation.js workspace.js; do
+            node --check "html/${file}"
+          done
+
+          test "$(git hash-object html/javascript-mode-vendor.js)" = \
+            "047395622eb2501dea6fbb9e6be2389e02bf2c77"
+          grep -q 'sandbox="allow-scripts"' html/index.html
+          ! grep -q 'allow-same-origin' html/index.html
+
+          node kanger-server/scripts/qualify-gateway-session.js
+          node kanger-server/scripts/qualify-gateway-bootstrap.js
+          node kanger-server/scripts/qualify-trusted-rendering.js
+          node kanger-server/scripts/qualify-operation-snapshot.js
+          node kanger-server/scripts/qualify-workspace-state.js
+          node kanger-server/scripts/qualify-error-containment.js "${GITHUB_WORKSPACE}"
+          node kanger-server/scripts/qualify-browser-dialogue.js "${GITHUB_WORKSPACE}"
+          node kanger-server/scripts/qualify-browser-presentation.js "${GITHUB_WORKSPACE}"
+
+          echo "DEV_SOAK_PACKAGE_PASS browser-authorities"
+
+      - name: Assemble and verify immutable development soak bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          canonical="5c0cd3662cbadbd63e78ebbc6a23131f1b9682b7"
+          branch="ops/3.7.0.7-vps-soak"
+          head="$(git rev-parse "origin/${branch}")"
+          short="${canonical:0:12}"
+          package="kanger-3.7.0.7-vps-soak-${short}"
+          root="${RUNNER_TEMP}/${package}"
+          dist="${GITHUB_WORKSPACE}/dist"
+
+          test "$(git rev-parse HEAD)" = "${head}"
+          mkdir -p "${root}/html" "${root}/deploy" "${root}/docs" "${dist}"
+          cp kanger-server/target/kanger-server.jar "${root}/kanger-server.jar"
+          cp -a html/. "${root}/html/"
+          cp -a kanger-server/deploy/. "${root}/deploy/"
+          cp kanger-server/VPS-DEPLOY-3.7.0.7.md "${root}/docs/"
+          cp kanger-server/VPS-SOAK-3.7.0.7.md "${root}/docs/"
+          cp docs/ui/3.7.0.7-soak-corrections-checkpoint.md "${root}/docs/"
+          chmod 0755 \
+            "${root}/deploy/install.sh" \
+            "${root}/deploy/verify-installed.sh" \
+            "${root}/deploy/kanger-admin" \
+            "${root}/deploy/snapshot-current.sh" \
+            "${root}/deploy/deploy-soak.sh" \
+            "${root}/deploy/rollback-soak.sh"
+
+          cat > "${root}/SOURCE.txt" <<EOF_SOURCE
+          schema=5
+          artifact=3.7.0.7-vps-soak
+          canonical_source_branch=ui/3.7.0.7-soak-corrections
+          canonical_source_head=${canonical}
+          ci_qualified_code_head=d43b701f8b722597fc44f08fb1056bbb862b9f6b
+          packaging_branch=${branch}
+          packaging_generation=dev1
+          packaging_head=${head}
+          server_version=server-0.18
+          core_version=3.3
+          api_version=1
+          browser_files=22
+          public_ui_link=/var/www/html/kanger
+          prior_development_soak=3.7.0.6
+          prior_development_soak_ui_target=/home/murray/sites/kanger-3.7.0.6-vps-soak-20260810T163710Z
+          prior_development_soak_jar_sha256=afb72c6569e3496be972cd56ce974998132cf49586948669c8b4e2b8c634d0fe
+          accepted_production_release=release/3.5.2
+          accepted_production_release_head=9c8b7dd2c9ef347cea6af6a6faef9cfa48030306
+          accepted_production_ui_target=/home/murray/sites/kanger-server-0.18-soak-r3-20260807T100726Z
+          accepted_production_jar_sha256=9a8fb1a0f1505d74fb15343ed0519782abb33b53097d6c0e46fbad7bad962718
+          ui_publication_mode=versioned-directory-atomic-symlink
+          deployment_class=development-soak
+          release_acceptance=NOT_PERFORMED
+          production_release_cutover=NOT_PERFORMED
+          EOF_SOURCE
+
+          (
+            cd "${root}"
+            find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
+            sha256sum -c SHA256SUMS
+          )
+
+          tar -C "${RUNNER_TEMP}" -czf "${dist}/${package}.tar.gz" "${package}"
+          (
+            cd "${dist}"
+            sha256sum "${package}.tar.gz" > "${package}.tar.gz.sha256"
+            sha256sum -c "${package}.tar.gz.sha256"
+          )
+          cp "${root}/SOURCE.txt" "${dist}/${package}.SOURCE.txt"
+          cp "${root}/SHA256SUMS" "${dist}/${package}.SHA256SUMS"
+
+          verify="${RUNNER_TEMP}/verify"
+          mkdir -p "${verify}"
+          tar -C "${verify}" -xzf "${dist}/${package}.tar.gz"
+          (
+            cd "${verify}/${package}"
+            sha256sum -c SHA256SUMS
+            grep -q '^canonical_source_head=5c0cd3662cbadbd63e78ebbc6a23131f1b9682b7$' SOURCE.txt
+            grep -q '^packaging_head='"${head}"'$' SOURCE.txt
+            grep -q '^browser_files=22$' SOURCE.txt
+            grep -q '^prior_development_soak=3.7.0.6$' SOURCE.txt
+            grep -q '^release_acceptance=NOT_PERFORMED$' SOURCE.txt
+          )
+
+          echo "DEV_SOAK_PACKAGE_OK"
+          echo "packaging_head=${head}"
+          cat "${dist}/${package}.tar.gz.sha256"
+          sha256sum "${root}/kanger-server.jar"
+
+      - name: Upload development soak package
+        uses: actions/upload-artifact@v7
+        with:
+          name: kanger-3.7.0.7-vps-soak-dev1
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 90
