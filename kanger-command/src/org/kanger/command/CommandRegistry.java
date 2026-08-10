@@ -195,7 +195,7 @@ public final class CommandRegistry {
         define(CommandIntent.TX_COMMIT, "transaction commit", "TRANSACTION", "Commit the current transaction or qualified root checkpoint.", noArgs(), n++);
         define(CommandIntent.TX_ROLLBACK, "transaction rollback", "TRANSACTION", "Rollback the current child transaction.", noArgs(), n++);
 
-        define(CommandIntent.SOURCE_GET, "get <source>", "SOURCE", "Load and compile one server-side source.", args("source", "Source logical name."), n++);
+        define(CommandIntent.SOURCE_GET, "get [<source>]", "SOURCE", "List server-side sources when omitted; load and compile one source when named.", args("source", "Optional source logical name."), n++);
         define(CommandIntent.SOURCE_PUT, "put <source>", "SOURCE", "Persist the current source under one logical name.", args("source", "Source logical name."), n++);
         define(CommandIntent.SOURCE_DELETE, "delete <source>", "SOURCE", "Delete one server-side source.", args("source", "Source logical name."), n++);
 

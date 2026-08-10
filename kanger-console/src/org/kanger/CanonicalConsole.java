@@ -276,7 +276,8 @@ public final class CanonicalConsole {
     }
 
     private static void processCore(String line, IMind mind) throws Exception {
-        if (line.trim().charAt(0) == Enums.FOO) {
+        String trimmed = line.trim();
+        if (trimmed.charAt(0) == Enums.FOO) {
             mind.compile(line);
             if (!lastComments.isEmpty() && mind.getAcceptedRule() != null) {
                 mind.getAcceptedRule().setComment(lastComments);
@@ -286,6 +287,28 @@ public final class CanonicalConsole {
                 ILogEntry log = mind.getCurrentLogRecord(LogMode.ANALYZER);
                 if (log != null) {
                     System.out.println(log.getRecord());
+                }
+            }
+            return;
+        }
+
+        /*
+         * Bare '?' is a Core program check, not an unterminated query line.
+         * Mind.query("?") owns its own transactional queryCheck() and commits
+         * the regenerated program state on success. Running it inside the
+         * ordinary query overlay and releasing that overlay would discard the
+         * generated-rule rebuild that this operator explicitly requests.
+         */
+        if ("?".equals(trimmed)) {
+            Boolean response = mind.query("?");
+            if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+                ILogEntry log = mind.getCurrentLogRecord(LogMode.ANALYZER);
+                if (log != null) {
+                    System.out.println(log.getRecord());
+                }
+                if (response != null) {
+                    Console.showLog(mind, LogMode.SOLVES, null, null);
+                    Console.showLog(mind, LogMode.VALUES, null, null);
                 }
             }
             return;

@@ -83,9 +83,12 @@ public class Kanger {
             }
         }
 
-        try {
-            UserFactory.createUser("singleuser", "singleuser");
-        } catch (Exception ignored) {
+        if (singleUser) {
+            try {
+                UserFactory.createUser("singleuser", "singleuser");
+            } catch (AuthenticationErrorException ignored) {
+                // Existing local single-user credential is expected.
+            }
         }
 
         if (newlogin != null) {

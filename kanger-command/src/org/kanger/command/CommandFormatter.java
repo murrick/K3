@@ -85,7 +85,7 @@ public final class CommandFormatter {
                 return "transaction rollback";
 
             case SOURCE_GET:
-                return "get " + argument(invocation.getArgument("source"));
+                return optionalArgumentCommand("get", invocation.getArgument("source"));
             case SOURCE_PUT:
                 return "put " + argument(invocation.getArgument("source"));
             case SOURCE_DELETE:
@@ -136,6 +136,13 @@ public final class CommandFormatter {
                             ? "desc" : "asc");
         }
         return out.toString();
+    }
+
+    private String optionalArgumentCommand(String command, Object value) {
+        if (value == null || String.valueOf(value).isEmpty()) {
+            return command;
+        }
+        return command + " " + argument(value);
     }
 
     private String number(CommandInvocation invocation, String name) {

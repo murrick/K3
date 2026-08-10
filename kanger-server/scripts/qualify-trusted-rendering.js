@@ -18,6 +18,7 @@ class Node {
         this.parentNode = null;
         this.style = {};
         this.listeners = {};
+        this.attributes = Object.create(null);
         this.id = '';
         this.value = '';
         this.selectionStart = 0;
@@ -61,6 +62,16 @@ class Node {
             this.listeners[type] = [];
         }
         this.listeners[type].push(callback);
+    }
+
+    setAttribute(name, value) {
+        this.attributes[String(name)] = String(value);
+    }
+
+    getAttribute(name) {
+        const key = String(name);
+        return Object.prototype.hasOwnProperty.call(this.attributes, key)
+            ? this.attributes[key] : null;
     }
 
     dispatch(type) {
@@ -391,8 +402,14 @@ function decodeHistory(record) {
     );
     assert(!tags(choices).includes('IMG'));
     assert.strictEqual(spans[0].onclick, null);
-    assert((spans[0].listeners.click || []).length === 1);
-    console.log('TRUSTED_RENDERING_PASS generated-choice-handlers');
+    assert.strictEqual((spans[0].listeners.click || []).length, 0);
+    const composed = spans[0].getAttribute('data-kanger-compose');
+    assert(composed.startsWith('get "'));
+    assert(composed.includes("evil'"));
+    assert(composed.includes('onclick='));
+    assert(composed.includes('\\"attack()<img>'));
+    assert(composed.endsWith('"'));
+    console.log('TRUSTED_RENDERING_PASS generated-choice-compose');
 
     harness.setPostHandler((request, callback) => {
         if (request.context === 'query'

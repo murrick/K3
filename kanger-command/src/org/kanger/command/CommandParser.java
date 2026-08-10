@@ -69,7 +69,8 @@ public final class CommandParser {
             case TRANSACTION:
                 return parseTransaction(line, tokens);
             case GET:
-                return parseSingleArgument(line, tokens, CommandIntent.SOURCE_GET, "source");
+                return parseOptionalSingleArgument(
+                        line, tokens, CommandIntent.SOURCE_GET, "source");
             case PUT:
                 return parseSingleArgument(line, tokens, CommandIntent.SOURCE_PUT, "source");
             case DELETE:
@@ -356,6 +357,18 @@ public final class CommandParser {
             default:
                 throw error(INVALID_GRAMMAR, "Invalid storage action");
         }
+    }
+
+    private CommandInvocation parseOptionalSingleArgument(String raw,
+                                                          List<Token> tokens,
+                                                          CommandIntent intent,
+                                                          String argumentName)
+            throws CommandParseException {
+        requireSize(tokens, tokens.size() == 1 ? 1 : 2);
+        return CommandInvocation.command(
+                intent,
+                args(argumentName, tokens.size() == 1 ? "" : tokens.get(1).value),
+                raw);
     }
 
     private CommandInvocation parseSingleArgument(String raw,

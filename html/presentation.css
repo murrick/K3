@@ -1,0 +1,337 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2021 Dmitry G. Quznetsov
+ *
+ * KANGER 3.7.0.5 Browser presentation layer.
+ *
+ * This stylesheet deliberately changes presentation only. Command semantics,
+ * transport, operation sequencing, workspace projection and containment remain
+ * owned by their qualified capability layers.
+ */
+
+:root {
+    --kanger-header: 32px;
+    --kanger-footer: 28px;
+    --kanger-left: 240px;
+    --kanger-tech-open: 264px;
+    --kanger-tech-closed: 32px;
+    --kanger-title: 24px;
+    --kanger-border: #c9ced4;
+    --kanger-ink: #20262d;
+    --kanger-muted: #6f7780;
+    --kanger-panel: #f7f8f9;
+    --kanger-title-bg: #303840;
+    --kanger-title-fg: #f5f7f8;
+    --kanger-live: #eef3f6;
+}
+
+body.kanger-presentation {
+    color: var(--kanger-ink);
+    background: #fff;
+}
+
+body.kanger-presentation #super > .kanger-header {
+    box-sizing: border-box !important;
+    height: var(--kanger-header) !important;
+    padding: 6px 8px !important;
+    background: #e7eaed !important;
+    border-bottom: 1px solid var(--kanger-border);
+    white-space: nowrap;
+}
+
+body.kanger-presentation #super > .kanger-footer {
+    box-sizing: border-box !important;
+    height: var(--kanger-footer) !important;
+    padding: 6px 8px !important;
+    background: #eef0f2 !important;
+    border-top: 1px solid var(--kanger-border);
+    color: var(--kanger-muted);
+}
+
+body.kanger-presentation #container.kanger-grid {
+    box-sizing: border-box !important;
+    display: grid !important;
+    grid-template-columns: var(--kanger-left) 2px minmax(0, 1fr) var(--kanger-tech-closed);
+    position: fixed !important;
+    top: var(--kanger-header) !important;
+    bottom: var(--kanger-footer) !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: hidden;
+    background: #fff;
+}
+
+body.kanger-presentation #container.kanger-grid.kanger-tech-open {
+    grid-template-columns: var(--kanger-left) 2px minmax(0, 1fr) var(--kanger-tech-open);
+}
+
+body.kanger-presentation #container-left.kanger-semantic {
+    grid-column: 1;
+    float: none !important;
+    width: auto !important;
+    min-width: 0;
+    height: 100% !important;
+    overflow: hidden;
+    border-right: 0;
+    background: var(--kanger-panel);
+}
+
+body.kanger-presentation #container-left-size {
+    grid-column: 2;
+    float: none !important;
+    width: 2px !important;
+    height: 100% !important;
+    background: #b7bdc4 !important;
+}
+
+body.kanger-presentation #container-right.kanger-center {
+    grid-column: 3;
+    position: relative !important;
+    left: auto !important;
+    float: none !important;
+    display: flex !important;
+    flex-direction: column;
+    width: auto !important;
+    min-width: 0;
+    height: 100% !important;
+    overflow: hidden;
+    background: #fff !important;
+}
+
+body.kanger-presentation .kanger-section-title,
+body.kanger-presentation #container-left > div:first-child,
+body.kanger-presentation #title-functions,
+body.kanger-presentation #container-console > div:first-child,
+body.kanger-presentation #container-results > div:first-child,
+body.kanger-presentation #container-solutions > div:first-child,
+body.kanger-presentation #container-hypothesis > div:first-child,
+body.kanger-presentation #container-logging > div:first-child {
+    box-sizing: border-box !important;
+    height: var(--kanger-title) !important;
+    padding: 4px 8px !important;
+    background: var(--kanger-title-bg) !important;
+    color: var(--kanger-title-fg) !important;
+    font-size: 12px;
+    letter-spacing: .035em;
+    text-transform: uppercase;
+}
+
+body.kanger-presentation #statements,
+body.kanger-presentation #functions {
+    box-sizing: border-box;
+    padding: 8px !important;
+    overflow: auto !important;
+}
+
+body.kanger-presentation #container-console {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    min-height: 150px;
+    height: auto !important;
+    overflow: hidden;
+    border-bottom: 0;
+}
+
+body.kanger-presentation #console {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto !important;
+    overflow: hidden;
+}
+
+body.kanger-presentation #query-history {
+    box-sizing: border-box;
+    height: 100% !important;
+    padding: 4px 6px 8px 2px;
+}
+
+body.kanger-presentation #console-input {
+    box-sizing: border-box;
+    flex: 0 0 30px;
+    height: 30px !important;
+    border-top: 1px solid var(--kanger-border);
+    background: #fbfcfc !important;
+}
+
+body.kanger-presentation #query-input {
+    box-sizing: border-box;
+    width: calc(100% - 28px) !important;
+    margin: 4px 4px 0 22px !important;
+    padding: 2px 4px;
+    background: transparent;
+}
+
+body.kanger-presentation #editor {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto !important;
+    padding-left: 0 !important;
+}
+
+body.kanger-presentation #container-div-resize {
+    flex: 0 0 2px;
+    background: #b7bdc4 !important;
+}
+
+body.kanger-presentation #container-div.kanger-bottom {
+    box-sizing: border-box;
+    display: flex !important;
+    flex: 0 0 320px;
+    min-height: 90px;
+    width: 100% !important;
+    overflow: hidden;
+    border: 0 !important;
+    border-top: 1px solid var(--kanger-border) !important;
+}
+
+body.kanger-presentation #container-div.kanger-bottom > div {
+    box-sizing: border-box;
+    flex: 1 1 0;
+    float: none !important;
+    width: auto !important;
+    min-width: 0;
+    height: 100% !important;
+    border: 0 !important;
+    border-right: 1px solid var(--kanger-border) !important;
+    overflow: hidden;
+}
+
+body.kanger-presentation #container-div.kanger-bottom > div:last-child {
+    border-right: 0 !important;
+}
+
+body.kanger-presentation #query-results,
+body.kanger-presentation #query-solutions,
+body.kanger-presentation #query-hypothesis,
+body.kanger-presentation #query-log {
+    box-sizing: border-box;
+    height: calc(100% - var(--kanger-title)) !important;
+    padding: 8px !important;
+    overflow: auto !important;
+}
+
+body.kanger-presentation #technical-panel {
+    grid-column: 4;
+    box-sizing: border-box;
+    min-width: 0;
+    height: 100%;
+    border-left: 1px solid var(--kanger-border);
+    background: #f3f5f6;
+    overflow: hidden;
+}
+
+body.kanger-presentation #technical-panel .kanger-tech-toggle {
+    box-sizing: border-box;
+    height: var(--kanger-title);
+    padding: 4px 7px;
+    background: var(--kanger-title-bg);
+    color: var(--kanger-title-fg);
+    font-size: 12px;
+    letter-spacing: .04em;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+body.kanger-presentation #technical-panel.kanger-collapsed .kanger-tech-toggle {
+    writing-mode: vertical-rl;
+    height: 72px;
+    width: 31px;
+    padding: 8px 7px;
+}
+
+body.kanger-presentation #technical-panel.kanger-collapsed .kanger-tech-body {
+    display: none;
+}
+
+body.kanger-presentation .kanger-tech-body {
+    box-sizing: border-box;
+    height: calc(100% - var(--kanger-title));
+    padding: 10px 10px 18px;
+    overflow: auto;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+body.kanger-presentation .kanger-tech-section {
+    margin-bottom: 14px;
+}
+
+body.kanger-presentation .kanger-tech-heading {
+    margin-bottom: 4px;
+    color: var(--kanger-muted);
+    font-family: helvetica, sans-serif;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+body.kanger-presentation .kanger-tech-row {
+    min-height: 17px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* Every semantic/control surface that accepts a click advertises it explicitly.
+ * Resize handles keep their row/column-resize cursors from their own styles. */
+body.kanger-presentation [data-kanger-compose],
+body.kanger-presentation [data-kanger-info],
+body.kanger-presentation .kanger-semantic-live,
+body.kanger-presentation .kanger-row-action,
+body.kanger-presentation #source-name,
+body.kanger-presentation #db-name,
+body.kanger-presentation #transaction,
+body.kanger-presentation #query-results td:not(:first-child),
+body.kanger-presentation #console-button,
+body.kanger-presentation #console-close {
+    cursor: pointer !important;
+}
+
+body.kanger-presentation [data-kanger-compose]:hover,
+body.kanger-presentation [data-kanger-info]:hover,
+body.kanger-presentation .kanger-semantic-live:hover {
+    background: var(--kanger-live) !important;
+}
+
+body.kanger-presentation .kanger-row-action {
+    float: right;
+    margin-left: 10px;
+    padding: 0 3px;
+    color: var(--kanger-muted);
+    font-size: 11px;
+    font-weight: normal;
+}
+
+body.kanger-presentation .kanger-row-action:hover {
+    color: #18242d;
+    background: #dfe7ec;
+}
+
+body.kanger-presentation #source-name:hover,
+body.kanger-presentation #db-name:hover,
+body.kanger-presentation #transaction:hover {
+    background: #dce2e6;
+}
+
+body.kanger-presentation #query-results td:not(:first-child):hover {
+    outline: 1px solid #cbd4db;
+    outline-offset: -1px;
+}
+
+body.kanger-presentation #user-menu {
+    top: var(--kanger-header) !important;
+}
+
+@media (max-width: 920px) {
+    :root {
+        --kanger-left: 190px;
+        --kanger-tech-open: 220px;
+    }
+}
