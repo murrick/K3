@@ -51,10 +51,12 @@ public final class CommandParserConformanceTest {
         expectCore("+native($x)");
         expectCore("-obsolete($x)");
         expectCore("=x+y");
+        reject("!!eating(Cat, Mouse);", INVALID_GRAMMAR);
     }
 
     private void topLevelPrefixes() throws Exception {
         expect("b", CommandIntent.BASE_STATUS);
+        expect("d", CommandIntent.SOURCE_DELETE);
         expect("d foo.k", CommandIntent.SOURCE_DELETE);
         expect("e", CommandIntent.ERASE);
         expect("f", CommandIntent.FUNCTIONS);
@@ -182,6 +184,10 @@ public final class CommandParserConformanceTest {
     private void sourceFamily() throws Exception {
         expectArgument("get", CommandIntent.SOURCE_GET,
                 "source", "");
+        expectArgument("delete", CommandIntent.SOURCE_DELETE,
+                "source", "");
+        expectArgument("delete foo.k", CommandIntent.SOURCE_DELETE,
+                "source", "foo.k");
         expectArgument("get delete", CommandIntent.SOURCE_GET,
                 "source", "delete");
         expectArgument("get 123", CommandIntent.SOURCE_GET,
@@ -194,6 +200,7 @@ public final class CommandParserConformanceTest {
                 "source", "a\"b.k");
         expectArgument("get \"dir\\\\name.k\"", CommandIntent.SOURCE_GET,
                 "source", "dir\\name.k");
+        reject("delete two names", EXTRA_ARGUMENT);
         reject("get two names", EXTRA_ARGUMENT);
         reject("get \"unfinished", UNTERMINATED_QUOTE);
     }
@@ -235,6 +242,7 @@ public final class CommandParserConformanceTest {
         expectCanonical("t s", "transaction start");
         expectCanonical("st u close", "storage use close");
         expectCanonical("g", "get");
+        expectCanonical("d", "delete");
         expectCanonical("g \"my source.k\"", "get \"my source.k\"");
         expectCanonical("?father(John,Tom)", "?father(John,Tom)");
     }
@@ -246,6 +254,7 @@ public final class CommandParserConformanceTest {
         check(help.contains("rule <id>"), "help contains rule object syntax");
         check(help.contains("values order <field>"), "help contains values syntax");
         check(help.contains("when accept <index>"), "help contains hypothesis addressing");
+        check(help.contains("delete [<source>]"), "help contains safe bare delete syntax");
     }
 
     private void expect(String source, CommandIntent intent) throws Exception {
