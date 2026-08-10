@@ -48,13 +48,18 @@ class BrowserSoakCorrectionsContractTest {
 
         assertTrue(source.contains("pruneDeletedStatements"));
         assertTrue(source.contains(
-                "setVisible('container-results', hasContent('query-results'))"));
+                "setVisible('container-results', expectedVisible('container-results'))"));
         assertTrue(source.contains(
-                "setVisible('container-solutions', hasContent('query-solutions'))"));
+                "setVisible('container-solutions', expectedVisible('container-solutions'))"));
         assertTrue(source.contains(
-                "setVisible('container-hypothesis', hasContent('query-hypothesis'))"));
+                "setVisible('container-hypothesis', expectedVisible('container-hypothesis'))"));
         assertTrue(source.contains("lastCommittedSnapshotId"));
         assertTrue(source.contains("actions[i].textContent = '○ tree'"));
+        assertTrue(source.contains("function projectionMutation(mutations)"));
+        assertTrue(source.contains(
+                "visible(mutation.target.id)\n                        !== expectedVisible(mutation.target.id)"));
+        assertFalse(source.contains("new window.MutationObserver(scheduleSync)"),
+                "Layout-only style mutations must not feed projection refresh indefinitely");
     }
 
     @Test
