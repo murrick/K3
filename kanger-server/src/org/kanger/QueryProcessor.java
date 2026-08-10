@@ -53,6 +53,8 @@ import javax.mail.internet.MimeMessage;
 import java.io.*;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
 
 public class QueryProcessor implements IReactor<JSONObject> {
@@ -283,7 +285,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
         IMind mind = user.getCurrentMind();
         JSONObject result = new JSONObject();
         result.put("result", "OK");
-        result.put("source", mind.getSourceCode());
+        result.put("source", SourceDocumentState.current(user, mind));
         return result;
     }
 
@@ -361,13 +363,15 @@ public class QueryProcessor implements IReactor<JSONObject> {
         IMind mind = user.getCurrentMind();
         JSONObject result = new JSONObject();
 
-        String query = parameters.getString("compile");
-        query = URLDecoder.decode(query, "utf-8");
+        String source = URLDecoder.decode(parameters.getString("compile"), "utf-8");
+        String compilerInput = SourceDocumentState.compilerInput(source);
         mind = mind.clearWorkspace();
-        boolean res = mind.compile(query);
+        boolean res = mind.compile(compilerInput);
         if (res) {
+            SourceDocumentState.publish(user, source);
             result.put("result", "OK");
         } else {
+            SourceDocumentState.invalidate(user);
             result.put("result", "error");
         }
         result.put("description", mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
@@ -398,6 +402,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
         }
         if (!succ) {
             mind.commit(m);
+            SourceDocumentState.invalidate(user);
         } else {
             mind.release(m);
             if(res == null) {
@@ -1058,6 +1063,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
         IMind mind = user.getCurrentMind();
         mind = mind.clearWorkspace();
         user.setCurrentMind(mind);
+        SourceDocumentState.invalidate(user);
         JSONObject result = new JSONObject();
         result.put("result", "OK");
         return result;
@@ -1076,6 +1082,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
         IMind mind = user.getCurrentMind();
         mind.closeStorage();
         user.setCurrentMind(null);
+        SourceDocumentState.invalidate(user);
         UserFactory.dropUser(user);
         JSONObject result = new JSONObject();
         result.put("result", "OK");
@@ -1108,7 +1115,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
     private JSONObject useDatabase(JSONObject parameters, IUser user) throws Exception {
         JSONObject result = new JSONObject();
         IMind mind = user.getCurrentMind();
-        String backup = mind.getSourceCode();
+        String backup = SourceDocumentState.current(user, mind);
 
         if (!parameters.getString("use").isEmpty()) {
             String name = parameters.getString("use").replace(".", Enums.FILE_SEPARATOR);
@@ -1121,7 +1128,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
                 boolean success = true;
                 if (!backup.isEmpty()) {
                     IMind m = new Mind(mind);
-                    if (m.compile(backup)) {
+                    if (m.compile(SourceDocumentState.compilerInput(backup))) {
                         if (!m.isEmptyLevel()) {
                             mind = m;
                             System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
@@ -1130,7 +1137,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
                         }
                     } else {
                         mind = mind.closeStorage();
-                        mind.compile(backup);
+                        mind.compile(SourceDocumentState.compilerInput(backup));
                         mind.clearLog();
                         mind.release(m);
                         result.put("result", "error");
@@ -1166,14 +1173,13 @@ public class QueryProcessor implements IReactor<JSONObject> {
         if (fname != null && !fname.isEmpty()) {
             File f = new File(mind.getUser().getSourceDir() + fname);
             boolean exists = f.exists();
-            try (BufferedWriter bw = new BufferedWriter(new FileWriter(f))) {
-                bw.write(mind.getSourceCode());
-                mind.setSourceFileName(fname);
-                result.put("result", "OK");
-                result.put("description", "Source file " + fname + " saved.");
-                if (!exists) {
-                    Watchdog.log(user, "New source file created: " + fname);
-                }
+            String source = SourceDocumentState.current(user, mind);
+            Files.write(f.toPath(), source.getBytes(StandardCharsets.UTF_8));
+            mind.setSourceFileName(fname);
+            result.put("result", "OK");
+            result.put("description", "Source file " + fname + " saved.");
+            if (!exists) {
+                Watchdog.log(user, "New source file created: " + fname);
             }
         } else {
             result.put("result", "error");
@@ -1189,22 +1195,18 @@ public class QueryProcessor implements IReactor<JSONObject> {
             File f = new File(user.getSourceDir() + parameters.getString("get"));
             if (f.exists()) {
                 if (f.length() > 0) {
-
-                    final int length = (int) f.length();
-                    char[] cbuf = new char[length];
-                    InputStreamReader isr = new InputStreamReader(new FileInputStream(f), "UTF-8");
-                    final int read = isr.read(cbuf);
-                    StringBuffer buf = new StringBuffer(new String(cbuf).replace("\r\n", "\r"));
-                    isr.close();
+                    String source = new String(
+                            Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8);
 
                     if (mind.isStorageUsed()) {
                         mind = new Mind(mind);
                     }
 
                     mind.setSourceFileName(f.getName());
-                    Boolean res = mind.compile(buf.toString());
+                    Boolean res = mind.compile(SourceDocumentState.compilerInput(source));
                     String description = mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord();
                     if (res) {
+                        SourceDocumentState.publish(user, source);
                         description += "<br>" + String.format("File %s loaded", f.getName());
                     }
                     if (mind.isStorageUsed() && mind.isEmptyLevel()) {
@@ -1250,4 +1252,3 @@ public class QueryProcessor implements IReactor<JSONObject> {
     }
 
 }
-
