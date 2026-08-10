@@ -12,7 +12,9 @@ import org.kanger.command.CommandInvocation;
 import org.kanger.command.CommandParseException;
 import org.kanger.command.CommandParser;
 import org.kanger.interfaces.IReactor;
+import org.kanger.interfaces.IUser;
 
+import java.io.File;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -37,11 +39,14 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
 
     static final String DIALOGUE_CONTEXT = "dialogue";
     static final String LINE_PARAMETER = "line";
+    static final String CONFIRMED_PARAMETER = "confirmed";
     static final String CANONICAL_CONTEXT = "canonical";
     static final String INVOCATION_MARKER = "_kanger_command_invocation";
+    static final String CANONICAL_INTENT_FIELD = "canonical_intent";
     static final String SESSION_STATE_FIELD = "session";
     static final String SESSION_CLOSED_STATE = "closed";
     static final String DIALOGUE_CHOICES_FIELD = "dialogue_choices";
+    static final String CONFIRMATION_FIELD = "confirmation";
 
     private final IReactor<JSONObject> delegate;
     private final CommandParser parser;
@@ -91,6 +96,7 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
         }
 
         String token = envelope.parameters.optString("token", "");
+        boolean confirmed = envelope.parameters.optBoolean(CONFIRMED_PARAMETER, false);
         clearParameters(envelope.parameters);
         if (!token.isEmpty()) {
             envelope.parameters.put("token", token);
@@ -113,9 +119,101 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
             return policyViolation;
         }
 
+        if (!confirmed && requiresConfirmation(invocation, token)) {
+            return confirmation(invocation);
+        }
+
         Object response = delegate.run(packet);
+        response = normalizeCanonicalResponse(invocation, response);
         response = decorateDialogueChoices(invocation, response);
-        return decorateSessionState(invocation, response);
+        response = decorateSessionState(invocation, response);
+        return decorateCanonicalIntent(invocation, response);
+    }
+
+    private Object normalizeCanonicalResponse(CommandInvocation invocation,
+                                              Object response) {
+        if (invocation == null || !(response instanceof JSONObject)) {
+            return response;
+        }
+        JSONObject result = (JSONObject) response;
+        if (invocation.getIntent() == CommandIntent.TX_STATUS
+                && !result.has("result")) {
+            result.put("result", "OK");
+        }
+        return response;
+    }
+
+    private Object decorateCanonicalIntent(CommandInvocation invocation,
+                                           Object response) {
+        if (invocation == null || invocation.isCoreLanguage()
+                || !(response instanceof JSONObject)) {
+            return response;
+        }
+        ((JSONObject) response).put(
+                CANONICAL_INTENT_FIELD, invocation.getIntent().name());
+        return response;
+    }
+
+    private boolean requiresConfirmation(CommandInvocation invocation,
+                                         String token) {
+        if (invocation == null || invocation.isCoreLanguage()) {
+            return false;
+        }
+        switch (invocation.getIntent()) {
+            case ERASE:
+            case STORAGE_DROP:
+                return true;
+            case SOURCE_DELETE:
+                return !string(invocation, "source").isEmpty();
+            case SOURCE_PUT:
+                return sourceExists(token, string(invocation, "source"));
+            default:
+                // Transaction rollback and reindex are intentionally immediate.
+                return false;
+        }
+    }
+
+    private boolean sourceExists(String token, String name) {
+        if (token == null || token.isEmpty() || name == null || name.isEmpty()) {
+            return false;
+        }
+        try {
+            IUser user = UserFactory.getUser(token);
+            return new File(user.getSourceDir() + name).isFile();
+        } catch (Exception unavailable) {
+            // Authentication/filesystem errors remain owned by the normal
+            // qualified execution path; this UX guard must not replace them.
+            return false;
+        }
+    }
+
+    private JSONObject confirmation(CommandInvocation invocation) {
+        String prompt;
+        switch (invocation.getIntent()) {
+            case ERASE:
+                prompt = "Erase current workspace?";
+                break;
+            case SOURCE_DELETE:
+                prompt = "Delete source " + string(invocation, "source") + "?";
+                break;
+            case SOURCE_PUT:
+                prompt = "Overwrite source " + string(invocation, "source") + "?";
+                break;
+            case STORAGE_DROP:
+                prompt = "Drop storage " + string(invocation, "name") + "?";
+                break;
+            default:
+                prompt = "Confirm operation?";
+                break;
+        }
+        return new JSONObject()
+                .put("result", "confirmation_required")
+                .put("code", "confirmation_required")
+                .put("description", prompt)
+                .put(CANONICAL_INTENT_FIELD, invocation.getIntent().name())
+                .put(CONFIRMATION_FIELD, new JSONObject()
+                        .put("schema", 1)
+                        .put("prompt", prompt));
     }
 
     private Object decorateDialogueChoices(CommandInvocation invocation,
@@ -136,6 +234,13 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
                     .put("label", "Available sources: ")
                     .put("empty", "No source files available")
                     .put("compose", "get");
+        } else if (invocation.getIntent() == CommandIntent.SOURCE_DELETE
+                && string(invocation, "source").isEmpty()) {
+            choices = new JSONObject()
+                    .put("schema", 1)
+                    .put("label", "Select source to delete: ")
+                    .put("empty", "No source files available")
+                    .put("compose", "delete");
         } else if (invocation.getIntent() == CommandIntent.STORAGE_STATUS) {
             choices = new JSONObject()
                     .put("schema", 1)
@@ -243,7 +348,12 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
                 command(envelope, "put", string(invocation, "source"));
                 return true;
             case SOURCE_DELETE:
-                command(envelope, "delete", string(invocation, "source"));
+                if (string(invocation, "source").isEmpty()) {
+                    // Bare delete is a read-only discovery/list operation.
+                    command(envelope, "get", "");
+                } else {
+                    command(envelope, "delete", string(invocation, "source"));
+                }
                 return true;
 
             case STORAGE_STATUS:
@@ -309,10 +419,18 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
         Iterator<String> names = parameters.keys();
         while (names.hasNext()) {
             String name = names.next();
-            if (!"token".equals(name) && !LINE_PARAMETER.equals(name)) {
+            if (!"token".equals(name)
+                    && !LINE_PARAMETER.equals(name)
+                    && !CONFIRMED_PARAMETER.equals(name)) {
                 return error("dialogue_envelope_invalid", null,
                         "Unexpected dialogue parameter " + name);
             }
+        }
+        if (parameters.has(CONFIRMED_PARAMETER)
+                && !parameters.isNull(CONFIRMED_PARAMETER)
+                && !(parameters.opt(CONFIRMED_PARAMETER) instanceof Boolean)) {
+            return error("dialogue_envelope_invalid", null,
+                    "Dialogue confirmed parameter must be boolean");
         }
         return null;
     }
