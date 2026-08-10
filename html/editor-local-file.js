@@ -192,14 +192,15 @@
 }(window, document));
 
 /*
- * 3.7.0.6 development-soak corrections.
+ * 3.7.0.6+ development-soak corrections.
  *
- * This late adapter repairs presentation/projection boundaries exposed by the
- * VPS soak without taking command-language or execution authority. It owns:
+ * This late adapter repairs presentation/projection boundaries exposed by VPS
+ * soak without taking command-language or execution authority. It owns:
  *   - editor compile EOF normalization at the transport edge;
  *   - active semantic projection cleanup for deleted statement rows;
  *   - bottom-panel visibility derived from committed projection content;
- *   - small presentation decoration convergence.
+ *   - presentation decoration convergence;
+ *   - the CSS-grid left-column splitter geometry boundary.
  */
 (function (window, document) {
     'use strict';
@@ -211,6 +212,7 @@
     var scheduled = false;
     var applying = false;
     var originalPost = null;
+    var leftSplitterInstalled = false;
 
     function stringValue(value) {
         return value === null || value === undefined ? '' : String(value);
@@ -361,9 +363,76 @@
         var actions = solutions.querySelectorAll('.kanger-row-action');
         for (var i = 0; i < actions.length; i++) {
             if (stringValue(actions[i].textContent).trim() === 'tree') {
-                actions[i].textContent = '○ tree';
+                actions[i].textContent = '○';
+                actions[i].title = 'tree';
+                actions[i].setAttribute('aria-label', 'tree');
             }
         }
+    }
+
+    function leftWidthBounds() {
+        var container = contentNode('container');
+        var total = container && container.clientWidth
+                ? container.clientWidth : document.documentElement.clientWidth;
+        var minimum = 120;
+        var maximum = Math.max(minimum, total - 190);
+        return {minimum: minimum, maximum: maximum};
+    }
+
+    function setLeftWidth(value, persist) {
+        var numeric = Number(value);
+        if (!isFinite(numeric)) {
+            return;
+        }
+        var bounds = leftWidthBounds();
+        numeric = Math.max(bounds.minimum, Math.min(bounds.maximum, numeric));
+        document.documentElement.style.setProperty('--kanger-left', numeric + 'px');
+        if (persist && typeof window.setCookie === 'function') {
+            window.setCookie('sx', numeric + 'px');
+        }
+    }
+
+    function restoreLeftWidth() {
+        if (typeof window.getCookie !== 'function') {
+            return;
+        }
+        var saved = parseFloat(stringValue(window.getCookie('sx')));
+        if (isFinite(saved)) {
+            setLeftWidth(saved, false);
+        }
+    }
+
+    function installLeftSplitter() {
+        if (leftSplitterInstalled) {
+            return;
+        }
+        var handle = contentNode('container-left-size');
+        if (!handle || !handle.addEventListener) {
+            return;
+        }
+        leftSplitterInstalled = true;
+        restoreLeftWidth();
+        handle.addEventListener('mousedown', function (event) {
+            if (event.button !== undefined && event.button !== 0) {
+                return;
+            }
+            event.preventDefault();
+            event.stopImmediatePropagation();
+
+            function move(next) {
+                next.preventDefault();
+                setLeftWidth(next.clientX, true);
+            }
+
+            function finish() {
+                document.removeEventListener('mousemove', move, true);
+                document.removeEventListener('mouseup', finish, true);
+            }
+
+            document.addEventListener('mousemove', move, true);
+            document.addEventListener('mouseup', finish, true);
+            setLeftWidth(event.clientX, true);
+        }, true);
     }
 
     function syncProjection() {
@@ -458,11 +527,12 @@
         }
         installed = true;
         installCompileBoundary();
+        installLeftSplitter();
         installObserver();
         window.addEventListener('resize', scheduleSync);
         scheduleSync();
         window.KANGER_SOAK_CORRECTIONS = Object.freeze({
-            version: 1,
+            version: 2,
             installed: true,
             normalizeCompilePacket: normalizeCompilePacket,
             refresh: scheduleSync
