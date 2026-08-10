@@ -131,6 +131,14 @@ actual_browser_files="$(find "${BUNDLE_DIR}/html" -mindepth 1 -maxdepth 1 -type 
   exit 1
 }
 
+# Verify the Browser presentation loader chain before any live mutation.
+grep -q 'sandbox="allow-scripts"' "${BUNDLE_DIR}/html/index.html"
+! grep -q 'allow-same-origin' "${BUNDLE_DIR}/html/index.html"
+grep -q 'src="javascript.js"' "${BUNDLE_DIR}/html/console.html"
+grep -q 'javascript-mode.js' "${BUNDLE_DIR}/html/javascript.js"
+grep -q 'presentation.js' "${BUNDLE_DIR}/html/javascript-mode.js"
+grep -q 'presentation.css' "${BUNDLE_DIR}/html/presentation.js"
+
 health_before="$(curl --fail --silent --show-error --max-time 5 "${HEALTH_URL}")"
 ready_before="$(curl --fail --silent --show-error --max-time 5 "${READY_URL}")"
 echo "${health_before}" | grep -q "\"server_version\":\"${EXPECTED_CURRENT_SERVER}\""
@@ -218,12 +226,25 @@ nginx -t
 systemctl reload nginx
 
 [[ "$(readlink -f "${PUBLIC_UI_LINK}")" = "${CANDIDATE_UI}" ]]
-origin_index="$(curl --fail --silent --show-error --insecure --max-time 10 --resolve kanger.org:443:127.0.0.1 https://kanger.org/)"
-printf '%s\n' "${origin_index}" > "${RECORD_DIR}/origin-index.html"
-echo "${origin_index}" | grep -q 'containment.js'
-echo "${origin_index}" | grep -q 'presentation.css'
-echo "${origin_index}" | grep -q 'sandbox="allow-scripts"'
-! echo "${origin_index}" | grep -q 'allow-same-origin'
+
+# Verify that nginx serves the exact candidate Browser bytes and that the
+# presentation authority remains reachable through its real loader chain.
+for file in index.html console.html javascript.js javascript-mode.js presentation.js presentation.css; do
+  curl --fail --silent --show-error --insecure --max-time 10 \
+    --resolve kanger.org:443:127.0.0.1 \
+    "https://kanger.org/${file}" \
+    -o "${RECORD_DIR}/origin-${file}"
+  [[ "$(sha256sum "${RECORD_DIR}/origin-${file}" | awk '{print $1}')" = \
+      "$(sha256sum "${BUNDLE_DIR}/html/${file}" | awk '{print $1}')" ]]
+done
+
+grep -q 'containment.js' "${RECORD_DIR}/origin-index.html"
+grep -q 'sandbox="allow-scripts"' "${RECORD_DIR}/origin-index.html"
+! grep -q 'allow-same-origin' "${RECORD_DIR}/origin-index.html"
+grep -q 'src="javascript.js"' "${RECORD_DIR}/origin-console.html"
+grep -q 'javascript-mode.js' "${RECORD_DIR}/origin-javascript.js"
+grep -q 'presentation.js' "${RECORD_DIR}/origin-javascript-mode.js"
+grep -q 'presentation.css' "${RECORD_DIR}/origin-presentation.js"
 
 health_after="$(curl --fail --silent --show-error --max-time 5 "${HEALTH_URL}")"
 ready_after="$(curl --fail --silent --show-error --max-time 5 "${READY_URL}")"
