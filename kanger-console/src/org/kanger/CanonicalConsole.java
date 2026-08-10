@@ -238,7 +238,7 @@ public final class CanonicalConsole {
                         sourceFile(mind, String.valueOf(invocation.getArgument("source"))));
                 return same(track(shutdownHook, mind));
             case SOURCE_PUT:
-                saveSource(mind, String.valueOf(invocation.getArgument("source")));
+                saveSource(mind, String.valueOf(invocation.getArgument("source")), scanner);
                 return same(mind);
             case SOURCE_DELETE:
                 deleteSource(mind, String.valueOf(invocation.getArgument("source")), scanner);
@@ -258,7 +258,7 @@ public final class CanonicalConsole {
                 mind = dropStorage(mind, String.valueOf(invocation.getArgument("name")), scanner);
                 return same(track(shutdownHook, mind));
             case STORAGE_REINDEX:
-                mind = reindexStorage(mind, String.valueOf(invocation.getArgument("name")), scanner);
+                mind = reindexStorage(mind, String.valueOf(invocation.getArgument("name")));
                 return same(track(shutdownHook, mind));
 
             case ERASE:
@@ -577,8 +577,11 @@ public final class CanonicalConsole {
         return file;
     }
 
-    private static void saveSource(IMind mind, String name) throws Exception {
+    private static void saveSource(IMind mind, String name, Scanner scanner) throws Exception {
         File file = sourceFile(mind, name);
+        if (file.exists() && !confirm(scanner, "Overwrite source file " + name + "?")) {
+            return;
+        }
         try (BufferedWriter writer = new BufferedWriter(
                 new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) {
             writer.write(mind.getSourceCode());
@@ -727,11 +730,8 @@ public final class CanonicalConsole {
         return result;
     }
 
-    private static IMind reindexStorage(IMind mind, String logicalName, Scanner scanner) throws Exception {
+    private static IMind reindexStorage(IMind mind, String logicalName) throws Exception {
         final String name = storageName(logicalName);
-        if (!confirm(scanner, "Reindex storage " + logicalName + "?")) {
-            return mind;
-        }
         IMind result = mind.reindexStorage(name, new IReactor<String>() {
             @Override
             public Object run(String item) {

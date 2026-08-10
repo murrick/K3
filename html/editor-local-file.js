@@ -190,3 +190,284 @@
 
     window.setTimeout(install, 0);
 }(window, document));
+
+/*
+ * 3.7.0.6 development-soak corrections.
+ *
+ * This late adapter repairs presentation/projection boundaries exposed by the
+ * VPS soak without taking command-language or execution authority. It owns:
+ *   - editor compile EOF normalization at the transport edge;
+ *   - active semantic projection cleanup for deleted statement rows;
+ *   - bottom-panel visibility derived from committed projection content;
+ *   - small presentation decoration convergence.
+ */
+(function (window, document) {
+    'use strict';
+
+    var installed = false;
+    var retries = 0;
+    var MAX_RETRIES = 300;
+    var observer = null;
+    var scheduled = false;
+    var applying = false;
+    var originalPost = null;
+
+    function stringValue(value) {
+        return value === null || value === undefined ? '' : String(value);
+    }
+
+    function normalizeCompilePacket(packet) {
+        if (!packet || packet.context !== 'query'
+                || !packet.parameters
+                || typeof packet.parameters !== 'object'
+                || packet.parameters.compile === null
+                || packet.parameters.compile === undefined) {
+            return packet;
+        }
+        var encoded = stringValue(packet.parameters.compile);
+        var source;
+        try {
+            source = decodeURIComponent(encoded);
+        } catch (ignored) {
+            return packet;
+        }
+        if (source && !/[\r\n]$/.test(source)) {
+            packet.parameters.compile = encodeURIComponent(source + '\n');
+        }
+        return packet;
+    }
+
+    function installCompileBoundary() {
+        if (originalPost || typeof window.post !== 'function') {
+            return;
+        }
+        originalPost = window.post;
+        window.post = function (packet, callback) {
+            normalizeCompilePacket(packet);
+            return originalPost(packet, callback);
+        };
+    }
+
+    function operationCommitted() {
+        var protocol = window.KANGER_OPERATION_PROTOCOL;
+        if (!protocol || typeof protocol.snapshot !== 'function') {
+            return false;
+        }
+        var snapshot = protocol.snapshot();
+        return !!snapshot && Number(snapshot.lastCommittedSnapshotId) > 0;
+    }
+
+    function contentNode(id) {
+        return document.getElementById(id);
+    }
+
+    function hasContent(id) {
+        var node = contentNode(id);
+        return !!node && !!node.firstChild;
+    }
+
+    function visible(id) {
+        var node = document.getElementById(id);
+        return !!node && node.style.display !== 'none';
+    }
+
+    function expectedVisible(id) {
+        if (id === 'container-results') {
+            return hasContent('query-results');
+        }
+        if (id === 'container-solutions') {
+            return hasContent('query-solutions');
+        }
+        if (id === 'container-hypothesis') {
+            return hasContent('query-hypothesis');
+        }
+        if (id === 'container-logging') {
+            return true;
+        }
+        return visible(id);
+    }
+
+    function setVisible(id, isVisible) {
+        var node = document.getElementById(id);
+        if (node && visible(id) !== isVisible) {
+            node.style.display = isVisible ? '' : 'none';
+        }
+    }
+
+    function deletedColor(node) {
+        var value = stringValue(node && node.style ? node.style.color : '')
+                .replace(/\s+/g, '').toLowerCase();
+        return value === '#777' || value === '#777777'
+                || value === 'rgb(119,119,119)';
+    }
+
+    function updatePredicateCount(row, count) {
+        if (!row || !row.childNodes) {
+            return;
+        }
+        for (var i = row.childNodes.length - 1; i >= 0; i--) {
+            var child = row.childNodes[i];
+            if (child && child.nodeType === 3) {
+                var value = stringValue(child.nodeValue || child.textContent);
+                if (/\s\d+\s*$/.test(value)) {
+                    var next = value.replace(/\s\d+\s*$/, ' ' + count);
+                    if (child.nodeValue !== undefined) {
+                        child.nodeValue = next;
+                    } else {
+                        child.textContent = next;
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
+    function pruneDeletedStatements() {
+        var statements = contentNode('statements');
+        if (!statements || !statements.querySelectorAll) {
+            return;
+        }
+        var rows = statements.querySelectorAll('[id^="PS"]');
+        for (var i = rows.length - 1; i >= 0; i--) {
+            if (deletedColor(rows[i]) && rows[i].parentNode) {
+                rows[i].parentNode.removeChild(rows[i]);
+            }
+        }
+        var groups = statements.querySelectorAll('[id^="PRL"]');
+        for (i = groups.length - 1; i >= 0; i--) {
+            var group = groups[i];
+            var active = group.querySelectorAll
+                    ? group.querySelectorAll('[id^="PS"]').length : 0;
+            var predicateId = stringValue(group.id).substring(3);
+            var predicate = document.getElementById('PR' + predicateId);
+            if (!active) {
+                if (predicate && predicate.parentNode) {
+                    predicate.parentNode.removeChild(predicate);
+                }
+                if (group.parentNode) {
+                    group.parentNode.removeChild(group);
+                }
+            } else {
+                updatePredicateCount(predicate, active);
+            }
+        }
+    }
+
+    function decorateSolutionTree() {
+        var solutions = contentNode('query-solutions');
+        if (!solutions || !solutions.querySelectorAll) {
+            return;
+        }
+        var actions = solutions.querySelectorAll('.kanger-row-action');
+        for (var i = 0; i < actions.length; i++) {
+            if (stringValue(actions[i].textContent).trim() === 'tree') {
+                actions[i].textContent = '○ tree';
+            }
+        }
+    }
+
+    function syncProjection() {
+        scheduled = false;
+        if (applying || !operationCommitted()) {
+            return;
+        }
+        applying = true;
+        try {
+            pruneDeletedStatements();
+            setVisible('container-results', expectedVisible('container-results'));
+            setVisible('container-solutions', expectedVisible('container-solutions'));
+            setVisible('container-hypothesis', expectedVisible('container-hypothesis'));
+            setVisible('container-logging', true);
+            decorateSolutionTree();
+            if (window.KANGER_BOTTOM_LAYOUT_AUTHORITY
+                    && typeof window.KANGER_BOTTOM_LAYOUT_AUTHORITY.refresh === 'function') {
+                window.KANGER_BOTTOM_LAYOUT_AUTHORITY.refresh();
+            }
+        } finally {
+            applying = false;
+        }
+    }
+
+    function scheduleSync() {
+        if (scheduled) {
+            return;
+        }
+        scheduled = true;
+        window.setTimeout(syncProjection, 0);
+    }
+
+    function observe(id, options) {
+        var node = contentNode(id);
+        if (node && observer) {
+            observer.observe(node, options);
+        }
+    }
+
+    function projectionMutation(mutations) {
+        for (var i = 0; i < mutations.length; i++) {
+            var mutation = mutations[i];
+            if (mutation.type === 'childList') {
+                scheduleSync();
+                return;
+            }
+            if (mutation.type === 'attributes'
+                    && mutation.target && mutation.target.id
+                    && visible(mutation.target.id)
+                        !== expectedVisible(mutation.target.id)) {
+                scheduleSync();
+                return;
+            }
+        }
+    }
+
+    function installObserver() {
+        if (!window.MutationObserver || observer) {
+            return;
+        }
+        observer = new window.MutationObserver(projectionMutation);
+        var contents = [
+            'statements', 'query-results', 'query-solutions',
+            'query-hypothesis', 'query-log'
+        ];
+        for (var i = 0; i < contents.length; i++) {
+            observe(contents[i], {childList: true, subtree: true});
+        }
+        var panels = [
+            'container-results', 'container-solutions',
+            'container-hypothesis', 'container-logging'
+        ];
+        for (i = 0; i < panels.length; i++) {
+            observe(panels[i], {attributes: true, attributeFilter: ['style']});
+        }
+    }
+
+    function install() {
+        if (installed) {
+            return;
+        }
+        if (!document.body
+                || !window.KANGER_OPERATION_PROTOCOL
+                || !window.KANGER_WORKSPACE_STATE
+                || !window.KANGER_DIALOGUE_TRANSPORT
+                || !window.KANGER_PRESENTATION) {
+            retries += 1;
+            if (retries <= MAX_RETRIES) {
+                window.setTimeout(install, 10);
+            }
+            return;
+        }
+        installed = true;
+        installCompileBoundary();
+        installObserver();
+        window.addEventListener('resize', scheduleSync);
+        scheduleSync();
+        window.KANGER_SOAK_CORRECTIONS = Object.freeze({
+            version: 1,
+            installed: true,
+            normalizeCompilePacket: normalizeCompilePacket,
+            refresh: scheduleSync
+        });
+    }
+
+    window.setTimeout(install, 0);
+}(window, document));

@@ -5,9 +5,11 @@
  */
 package org.kanger;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.kanger.command.CommandHelpRenderer;
 import org.kanger.command.CommandInvocation;
+import org.kanger.command.CommandRegistry;
 import org.kanger.command.SortKey;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
@@ -89,7 +91,9 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
         JSONObject result;
         switch (invocation.getIntent()) {
             case HELP:
-                result = ok().put("description", helpRenderer.render());
+                result = ok()
+                        .put("description", helpRenderer.render())
+                        .put("dialogue_help", structuredHelp());
                 break;
             case RULE_COMMENT_GET:
                 result = ruleComment(mind, invocation, false);
@@ -124,6 +128,25 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                 break;
         }
         return decorate(result, user.getCurrentMind());
+    }
+
+    private JSONObject structuredHelp() {
+        JSONArray sections = new JSONArray();
+        for (Map.Entry<String, List<CommandRegistry.Definition>> entry
+                : helpRenderer.sections().entrySet()) {
+            JSONArray commands = new JSONArray();
+            for (CommandRegistry.Definition definition : entry.getValue()) {
+                commands.put(new JSONObject()
+                        .put("syntax", definition.getSyntax())
+                        .put("summary", definition.getSummary()));
+            }
+            sections.put(new JSONObject()
+                    .put("name", entry.getKey())
+                    .put("commands", commands));
+        }
+        return new JSONObject()
+                .put("schema", 1)
+                .put("sections", sections);
     }
 
     private JSONObject ruleComment(IMind mind,

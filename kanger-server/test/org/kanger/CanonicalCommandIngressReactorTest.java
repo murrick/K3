@@ -30,6 +30,8 @@ class CanonicalCommandIngressReactorTest {
         JSONObject response = (JSONObject) reactor.run(dialogue("token-1", "r 17"));
 
         assertEquals("OK", response.optString("result"));
+        assertEquals("RULE_SHOW", response.optString(
+                CanonicalCommandIngressReactor.CANONICAL_INTENT_FIELD));
         assertEquals(1, capture.calls.get());
         assertEquals("query", context(capture.packet.get()));
         JSONObject parameters = parameters(capture.packet.get());
@@ -58,6 +60,65 @@ class CanonicalCommandIngressReactorTest {
     }
 
     @Test
+    void bareDeleteIsReadOnlySourceDiscovery() throws Exception {
+        Capture capture = new Capture();
+        CanonicalCommandIngressReactor reactor = new CanonicalCommandIngressReactor(capture);
+
+        JSONObject response = (JSONObject) reactor.run(dialogue("token-1", "delete"));
+
+        assertEquals(1, capture.calls.get());
+        assertEquals("command", context(capture.packet.get()));
+        JSONObject parameters = parameters(capture.packet.get());
+        assertTrue(parameters.has("get"));
+        assertFalse(parameters.has("delete"));
+        assertEquals("SOURCE_DELETE", response.optString(
+                CanonicalCommandIngressReactor.CANONICAL_INTENT_FIELD));
+        JSONObject choices = response.getJSONObject(
+                CanonicalCommandIngressReactor.DIALOGUE_CHOICES_FIELD);
+        assertEquals("delete", choices.getString("compose"));
+    }
+
+    @Test
+    void namedDeleteRequiresExplicitConfirmationBeforeRuntime() throws Exception {
+        Capture capture = new Capture();
+        CanonicalCommandIngressReactor reactor = new CanonicalCommandIngressReactor(capture);
+
+        JSONObject first = (JSONObject) reactor.run(
+                dialogue("token-1", "delete victim.k"));
+        assertEquals("confirmation_required", first.optString("result"));
+        assertEquals(0, capture.calls.get());
+        assertTrue(first.getJSONObject(
+                CanonicalCommandIngressReactor.CONFIRMATION_FIELD)
+                .getString("prompt").contains("victim.k"));
+
+        JSONObject second = (JSONObject) reactor.run(
+                confirmedDialogue("token-1", "delete victim.k"));
+        assertEquals("OK", second.optString("result"));
+        assertEquals(1, capture.calls.get());
+        assertEquals("victim.k", parameters(capture.packet.get())
+                .optString("delete"));
+    }
+
+    @Test
+    void eraseRequiresConfirmationButRollbackDoesNot() throws Exception {
+        Capture capture = new Capture();
+        CanonicalCommandIngressReactor reactor = new CanonicalCommandIngressReactor(capture);
+
+        JSONObject erase = (JSONObject) reactor.run(dialogue("token-1", "erase"));
+        assertEquals("confirmation_required", erase.optString("result"));
+        assertEquals(0, capture.calls.get());
+
+        JSONObject rollback = (JSONObject) reactor.run(
+                dialogue("token-1", "transaction rollback"));
+        assertEquals("OK", rollback.optString("result"));
+        assertEquals(1, capture.calls.get());
+        assertEquals("rollback", parameters(capture.packet.get())
+                .optString("transaction"));
+        assertEquals("TX_ROLLBACK", rollback.optString(
+                CanonicalCommandIngressReactor.CANONICAL_INTENT_FIELD));
+    }
+
+    @Test
     void storageKeywordLookingNameRemainsData() throws Exception {
         Capture capture = new Capture();
         CanonicalCommandIngressReactor reactor = new CanonicalCommandIngressReactor(capture);
@@ -82,6 +143,20 @@ class CanonicalCommandIngressReactorTest {
         assertEquals("?father(John,Tom)", URLDecoder.decode(encoded, "UTF-8"));
         assertTrue(CanonicalCommandIngressReactor.invocation(
                 capture.packet.get()).isCoreLanguage());
+    }
+
+    @Test
+    void doubleStatementPrefixIsRejectedBeforeCoreBypass() throws Exception {
+        Capture capture = new Capture();
+        CanonicalCommandIngressReactor reactor = new CanonicalCommandIngressReactor(capture);
+
+        JSONObject response = (JSONObject) reactor.run(
+                dialogue("token-1", "!!eating(Cat, Mouse);"));
+
+        assertEquals("error", response.optString("result"));
+        assertEquals("command_parse_error", response.optString("code"));
+        assertEquals("INVALID_GRAMMAR", response.optString("reason"));
+        assertEquals(0, capture.calls.get());
     }
 
     @Test
@@ -143,12 +218,32 @@ class CanonicalCommandIngressReactorTest {
         assertEquals(0, capture.calls.get());
     }
 
+    @Test
+    void rawDialogueConfirmationBitMustBeBoolean() throws Exception {
+        Capture capture = new Capture();
+        CanonicalCommandIngressReactor reactor = new CanonicalCommandIngressReactor(capture);
+        JSONObject packet = dialogue("token-1", "erase");
+        parameters(packet).put("confirmed", "yes");
+
+        JSONObject response = (JSONObject) reactor.run(packet);
+
+        assertEquals("error", response.optString("result"));
+        assertEquals("dialogue_envelope_invalid", response.optString("code"));
+        assertEquals(0, capture.calls.get());
+    }
+
     private static JSONObject dialogue(String token, String line) {
         return new JSONObject().put("body", new JSONObject()
                 .put("context", "dialogue")
                 .put("parameters", new JSONObject()
                         .put("token", token)
                         .put("line", line)));
+    }
+
+    private static JSONObject confirmedDialogue(String token, String line) {
+        JSONObject packet = dialogue(token, line);
+        parameters(packet).put("confirmed", true);
+        return packet;
     }
 
     private static String context(JSONObject packet) {

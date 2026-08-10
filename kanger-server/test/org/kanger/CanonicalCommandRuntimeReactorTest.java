@@ -36,7 +36,24 @@ class CanonicalCommandRuntimeReactorTest {
             assertEquals("OK", response.optString("result"), response.toString());
             assertTrue(response.optString("description").contains("rule <id>"));
             assertTrue(response.optString("description").contains("values order <field>"));
+            JSONObject structured = response.getJSONObject("dialogue_help");
+            assertEquals(1, structured.getInt("schema"));
+            JSONArray sections = structured.getJSONArray("sections");
+            assertTrue(sections.length() > 0);
+            boolean foundDeleteListForm = false;
+            for (int i = 0; i < sections.length(); i++) {
+                JSONArray commands = sections.getJSONObject(i).getJSONArray("commands");
+                for (int j = 0; j < commands.length(); j++) {
+                    if ("delete [<source>]".equals(
+                            commands.getJSONObject(j).optString("syntax"))) {
+                        foundDeleteListForm = true;
+                    }
+                }
+            }
+            assertTrue(foundDeleteListForm, response.toString());
             assertTrue(response.has("workspace"), response.toString());
+            assertEquals("HELP", response.optString(
+                    CanonicalCommandIngressReactor.CANONICAL_INTENT_FIELD));
             assertEquals(0, escaped.get(), "HELP escaped into legacy runtime");
         } finally {
             fixture.close();

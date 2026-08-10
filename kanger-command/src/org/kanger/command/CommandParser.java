@@ -32,6 +32,10 @@ public final class CommandParser {
 
         String line = input.trim();
         char first = line.charAt(0);
+        if (first == '!' && line.length() > 1 && line.charAt(1) == '!') {
+            throw error(INVALID_GRAMMAR,
+                    "Unexpected '!' after Core statement operator");
+        }
         if ("!?+-=".indexOf(first) >= 0) {
             return CommandInvocation.coreLanguage(line);
         }
@@ -74,7 +78,8 @@ public final class CommandParser {
             case PUT:
                 return parseSingleArgument(line, tokens, CommandIntent.SOURCE_PUT, "source");
             case DELETE:
-                return parseSingleArgument(line, tokens, CommandIntent.SOURCE_DELETE, "source");
+                return parseOptionalSingleArgument(
+                        line, tokens, CommandIntent.SOURCE_DELETE, "source");
             case STORAGE:
                 return parseStorage(line, tokens);
             case ERASE:
