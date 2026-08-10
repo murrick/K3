@@ -16,10 +16,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Regression contract for Browser defects discovered during the 3.7.0.5 VPS
- * development soak. Runtime semantic correctness is covered by the command and
- * Server tests; this class pins the Browser integration boundaries that must
- * remain present in the deployable HTML artifact.
+ * Regression contract for Browser defects discovered during the 3.7.0.5 and
+ * 3.7.0.6 VPS development soaks. Runtime semantic correctness is covered by
+ * command and Server tests; this class pins Browser integration boundaries
+ * that must remain present in the deployable HTML artifact.
  */
 class BrowserSoakCorrectionsContractTest {
 
@@ -30,12 +30,17 @@ class BrowserSoakCorrectionsContractTest {
         assertTrue(source.contains("canonical_intent"));
         assertTrue(source.contains("dialogue_help"));
         assertTrue(source.contains("data-kanger-compose"));
+        assertTrue(source.contains("function composeSyntax(value)"));
+        assertTrue(source.contains("command.compose"));
         assertTrue(source.contains("confirmation_required"));
+        assertTrue(source.contains("function requestConfirmation(prompt, callback)"));
         assertTrue(source.contains("parameters.confirmed = true"));
-        assertTrue(source.contains("window.confirm(prompt)"));
+        assertTrue(source.contains("window.showTransactionLevel(data)"));
         assertTrue(source.contains("window.command = dispatch"));
         assertTrue(source.contains("window.query = dispatch"));
 
+        assertFalse(source.contains("window.confirm(prompt)"),
+                "Opaque Browser sandbox must not depend on native modal authority");
         assertFalse(source.contains(".split("),
                 "Browser dialogue must not regain a command parser");
         assertFalse(source.contains(".toLowerCase("),
@@ -54,7 +59,9 @@ class BrowserSoakCorrectionsContractTest {
         assertTrue(source.contains(
                 "setVisible('container-hypothesis', expectedVisible('container-hypothesis'))"));
         assertTrue(source.contains("lastCommittedSnapshotId"));
-        assertTrue(source.contains("actions[i].textContent = '○ tree'"));
+        assertTrue(source.contains("actions[i].textContent = '○'"));
+        assertTrue(source.contains("actions[i].title = 'tree'"));
+        assertFalse(source.contains("actions[i].textContent = '○ tree'"));
         assertTrue(source.contains("function projectionMutation(mutations)"));
         assertTrue(source.contains(
                 "visible(mutation.target.id)\n                        !== expectedVisible(mutation.target.id)"));
@@ -74,7 +81,8 @@ class BrowserSoakCorrectionsContractTest {
     }
 
     @Test
-    void narrowSemanticRowsAndPromptUseStableFlexGeometry() throws Exception {
+    void narrowSemanticRowsPromptAndLeftSplitterUseStableGeometry() throws Exception {
+        String source = html("editor-local-file.js");
         String css = html("presentation.css");
 
         assertTrue(css.contains(".kanger-semantic-live"));
@@ -84,6 +92,11 @@ class BrowserSoakCorrectionsContractTest {
         assertTrue(css.contains("#console-input > span:first-child"));
         assertTrue(css.contains("position: static !important"));
         assertTrue(css.contains("align-items: center"));
+
+        assertTrue(source.contains("function installLeftSplitter()"));
+        assertTrue(source.contains("style.setProperty('--kanger-left'"));
+        assertTrue(source.contains("event.stopImmediatePropagation()"));
+        assertTrue(source.contains("setLeftWidth(next.clientX, true)"));
     }
 
     @Test
