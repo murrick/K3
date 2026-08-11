@@ -68,6 +68,18 @@ class Soak3708ConvergenceContractTest {
     }
 
     @Test
+    void obsoleteResendConfirmationActionIsHiddenForAllBrowserModes()
+            throws Exception {
+        String css = html("presentation.css");
+
+        assertTrue(css.contains("#user-menu > [onclick=\"resendConfirmation()\"]"));
+        assertTrue(css.contains("display: none !important"));
+        assertFalse(css.contains("registration_policy")
+                        && css.contains("resendConfirmation()"),
+                "Menu removal must not be conditional on authentication mode");
+    }
+
+    @Test
     void leftSplitterDropsLegacyListenersAndUsesOnlyGridCustomProperty()
             throws Exception {
         String source = html("bottom-layout.js");
