@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - "ops/3.7.0.8-vps-soak-dev2"
+  pull_request:
+    branches:
+      - "ui/3.7.0.8-soak-corrections"
+    paths:
+      - ".github/workflows/kanger-3.7.0.8-vps-soak-dev2.yml"
   workflow_dispatch:
 
 permissions:
