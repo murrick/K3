@@ -614,9 +614,23 @@ document.write('<script src="editor-local-file.js"><\/script>');
         }
         var bounds = leftWidthBounds();
         numeric = Math.max(bounds.minimum, Math.min(bounds.maximum, numeric));
-        document.documentElement.style.setProperty('--kanger-left', numeric + 'px');
+        var width = numeric + 'px';
+        document.documentElement.style.setProperty('--kanger-left', width);
+
+        /*
+         * presentation.css forces #container-left to width:auto!important, so
+         * this inline value is geometrically inert. Keep it only as a
+         * compatibility mirror: the older presentation pass still reads the
+         * legacy inline width before writing --kanger-left. Mirroring the one
+         * authoritative value prevents that late reader from manufacturing
+         * its historical 240px fallback after refresh.
+         */
+        var left = document.getElementById('container-left');
+        if (left && left.style) {
+            left.style.width = width;
+        }
         if (persist && typeof window.setCookie === 'function') {
-            window.setCookie('sx', numeric + 'px');
+            window.setCookie('sx', width);
         }
     }
 
@@ -628,8 +642,12 @@ document.write('<script src="editor-local-file.js"><\/script>');
         try {
             var left = document.getElementById('container-left');
             var right = document.getElementById('container-right');
-            if (left && left.style && left.style.width) {
-                left.style.removeProperty('width');
+            if (left && left.style) {
+                var authoritative = document.documentElement.style
+                        .getPropertyValue('--kanger-left');
+                if (authoritative && left.style.width !== authoritative) {
+                    left.style.width = authoritative;
+                }
             }
             if (right && right.style) {
                 if (right.style.width) {
@@ -666,6 +684,18 @@ document.write('<script src="editor-local-file.js"><\/script>');
             });
         }
         sanitizeLegacyGeometry();
+    }
+
+    function stabilizeDialogueTitle() {
+        var title = document.querySelector(
+                '#container-console > div:first-child');
+        if (!title || !title.style) {
+            return;
+        }
+        /* #container-console is a flex column; unlike the other title bars its
+         * first row can otherwise shrink below the shared title height. */
+        title.style.flex = '0 0 var(--kanger-title)';
+        title.style.minHeight = 'var(--kanger-title)';
     }
 
     function replaceLeftSplitter() {
@@ -751,6 +781,7 @@ document.write('<script src="editor-local-file.js"><\/script>');
         ensureClearInput();
         replaceLeftSplitter();
         observeLegacyGeometry();
+        stabilizeDialogueTitle();
 
         window.KANGER_BROWSER_SOAK_CONVERGENCE = Object.freeze({
             version: 1,
