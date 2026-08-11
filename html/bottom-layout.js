@@ -19,6 +19,7 @@
  * workspace, session or bearer authority.
  */
 document.write('<script src="editor-local-file.js"><\/script>');
+document.write('<script src="browser-soak-convergence.js"><\/script>');
 
 /*
  * Legacy account-menu hover compatibility.
