@@ -78,7 +78,15 @@ the Editor source sequence.**
 4. Verify the input becomes empty, focus remains in the command input, and no
    command/history entry is executed or created.
 
-## E — Left splitter geometry
+## E — User menu cleanup
+
+1. Open the authenticated user menu.
+2. Verify `Personal data`, `Change login & password`, and `Quit` remain present.
+3. Verify `Resend confirmation e-mail` is absent.
+4. Repeat after a hard refresh and verify it remains absent. The removal is
+   unconditional and must not depend on authentication/registration mode.
+
+## F — Left splitter geometry
 
 1. Drag the left semantic-panel splitter slowly toward the narrow side.
 2. Verify the divider follows the pointer continuously with no threshold snap,
@@ -87,7 +95,7 @@ the Editor source sequence.**
 4. Reload/hard-refresh once and verify the persisted `sx` position is restored
    through `--kanger-left` without a second visible geometry correction.
 
-## F — Source transition invalidates a reusable local Editor view
+## G — Source transition invalidates a reusable local Editor view
 
 1. With one source visible in Editor, return to Console.
 2. Load a different disposable source using canonical `get <source>`.
@@ -95,7 +103,7 @@ the Editor source sequence.**
 4. Verify the newly loaded Server source is shown; the previous local Editor
    document must not be revived after an authoritative workspace/source change.
 
-## G — Critical prior-boundary regression smoke
+## H — Critical prior-boundary regression smoke
 
 Recheck only the safety-sensitive behavior that must not regress:
 
@@ -108,7 +116,7 @@ Recheck only the safety-sensitive behavior that must not regress:
 
 Use disposable names only. Do not drop or delete non-soak data.
 
-## H — Minimal Core smoke
+## I — Minimal Core smoke
 
 Editor source:
 
@@ -127,7 +135,7 @@ Expected: TRUE and `x=cat`.
 This explicit split corrects the 3.7.0.7 protocol wording defect that had placed
 an informational query inside an Editor source sequence.
 
-## I — Final operations evidence
+## J — Final operations evidence
 
 Capture independently after the Browser checks:
 
@@ -138,5 +146,5 @@ Capture independently after the Browser checks:
 - active public UI symlink target;
 - deployment record status and exact artifact/source identities.
 
-Acceptance requires all sections A-I to be divergence-free. Any reproducible
+Acceptance requires all sections A-J to be divergence-free. Any reproducible
 source-byte mutation or splitter snap remains a release blocker.
