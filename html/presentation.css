@@ -329,6 +329,13 @@ body.kanger-presentation #user-menu {
     top: var(--kanger-header) !important;
 }
 
+/* Confirmation e-mail resend no longer has a valid UI meaning in either
+ * supported authentication mode. Keep the legacy endpoint outside the scope of
+ * this Browser-only correction, but remove its menu action unconditionally. */
+body.kanger-presentation #user-menu > [onclick="resendConfirmation()"] {
+    display: none !important;
+}
+
 /* 3.7.0.6 soak corrections: controls must remain a stable right-hand column
  * instead of floating into semantic text when a panel becomes narrow. */
 body.kanger-presentation .kanger-semantic-live {
