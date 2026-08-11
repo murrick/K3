@@ -80,18 +80,35 @@ class Soak3708ConvergenceContractTest {
     }
 
     @Test
-    void leftSplitterDropsLegacyListenersAndUsesOnlyGridCustomProperty()
+    void leftSplitterDropsLegacyListenersAndKeepsOneGridAuthority()
             throws Exception {
         String source = html("bottom-layout.js");
+        String css = html("presentation.css");
 
         assertTrue(source.contains("var handle = oldHandle.cloneNode(true)"));
         assertTrue(source.contains("handle.removeAttribute('onmousedown')"));
         assertTrue(source.contains("window.sizeX = null"));
         assertTrue(source.contains("style.setProperty('--kanger-left'"));
-        assertTrue(source.contains("left.style.removeProperty('width')"));
+        assertTrue(source.contains("left.style.width = width"));
+        assertTrue(source.contains("getPropertyValue('--kanger-left')"));
+        assertFalse(source.contains("left.style.removeProperty('width')"));
         assertTrue(source.contains("right.style.removeProperty('width')"));
         assertTrue(source.contains("right.style.removeProperty('left')"));
         assertTrue(source.contains("next.stopImmediatePropagation()"));
+        assertTrue(css.contains("#container-left.kanger-semantic"));
+        assertTrue(css.contains("width: auto !important"),
+                "The legacy inline width mirror must remain geometrically inert");
+    }
+
+    @Test
+    void dialogueTitleCannotShrinkBelowSharedTitleHeight() throws Exception {
+        String source = html("bottom-layout.js");
+
+        assertTrue(source.contains("#container-console > div:first-child"));
+        assertTrue(source.contains(
+                "title.style.flex = '0 0 var(--kanger-title)'"));
+        assertTrue(source.contains(
+                "title.style.minHeight = 'var(--kanger-title)'"));
     }
 
     @Test
