@@ -44,7 +44,7 @@ class Soak3708ConvergenceContractTest {
     @Test
     void browserPreservesExactEditorViewAndReturnsHistoryToLatestActivity()
             throws Exception {
-        String source = html("browser-soak-convergence.js");
+        String source = html("bottom-layout.js");
 
         assertTrue(source.contains("localSourceText = editorText()"));
         assertTrue(source.contains("window.showSourceEditor = function ()"));
@@ -58,7 +58,7 @@ class Soak3708ConvergenceContractTest {
     @Test
     void commandInputClearControlIsOneCircularLocalPresentationAction()
             throws Exception {
-        String source = html("browser-soak-convergence.js");
+        String source = html("bottom-layout.js");
 
         assertTrue(source.contains("button.id = 'kanger-query-clear'"));
         assertTrue(source.contains("button.textContent = '×'"));
@@ -70,7 +70,7 @@ class Soak3708ConvergenceContractTest {
     @Test
     void leftSplitterDropsLegacyListenersAndUsesOnlyGridCustomProperty()
             throws Exception {
-        String source = html("browser-soak-convergence.js");
+        String source = html("bottom-layout.js");
 
         assertTrue(source.contains("var handle = oldHandle.cloneNode(true)"));
         assertTrue(source.contains("handle.removeAttribute('onmousedown')"));
@@ -83,11 +83,12 @@ class Soak3708ConvergenceContractTest {
     }
 
     @Test
-    void convergenceLayerIsInCanonicalBrowserLoadChain() throws Exception {
+    void convergenceLayerRemainsInsideQualifiedBrowserInventory() throws Exception {
         String bottom = html("bottom-layout.js");
-        assertTrue(bottom.contains("browser-soak-convergence.js"));
-        assertTrue(bottom.indexOf("editor-local-file.js")
-                < bottom.indexOf("browser-soak-convergence.js"));
+        assertTrue(bottom.contains("3.7.0.8 residual Browser-soak convergence"));
+        assertTrue(bottom.contains("editor-local-file.js"));
+        assertFalse(bottom.contains("browser-soak-convergence.js"),
+                "Residual correction must not silently widen Browser inventory");
     }
 
     private String html(String name) throws Exception {
