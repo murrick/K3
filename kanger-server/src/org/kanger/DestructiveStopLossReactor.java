@@ -172,16 +172,15 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
         }
 
         IMind mind = user.getCurrentMind();
-        String previousSource = SourceDocumentState.current(user, mind);
+        String previousSource = mind.getSourceCode();
         try {
             mind = mind.clearWorkspace();
             user.setCurrentMind(mind);
-            if (!mind.compile(SourceDocumentState.compilerInput(source))) {
+            if (!mind.compile(source)) {
                 restoreWorkspace(user, previousSource);
                 return error("compile_apply_failed",
                         mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
             }
-            SourceDocumentState.publish(user, source);
             return ok(mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
         } catch (Exception applyFailure) {
             try {
@@ -197,7 +196,7 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
         IUser probeUser = new User();
         new UDF().init(probeUser);
         IMind probeMind = new Mind(probeUser);
-        boolean accepted = probeMind.compile(SourceDocumentState.compilerInput(source));
+        boolean accepted = probeMind.compile(source);
         return new CompileProbe(accepted,
                 probeMind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
     }
@@ -209,11 +208,9 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
         }
         mind = mind.clearWorkspace();
         user.setCurrentMind(mind);
-        if (source != null && !source.isEmpty()
-                && !mind.compile(SourceDocumentState.compilerInput(source))) {
+        if (source != null && !source.isEmpty() && !mind.compile(source)) {
             throw new IllegalStateException("Previous workspace could not be restored");
         }
-        SourceDocumentState.publish(user, source);
     }
 
     private JSONObject saveSource(JSONObject parameters, IUser user) throws Exception {
@@ -238,8 +235,7 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 target.getFileName().toString() + ".", ".tmp");
         boolean published = false;
         try {
-            byte[] data = SourceDocumentState.current(user, mind)
-                    .getBytes(StandardCharsets.UTF_8);
+            byte[] data = mind.getSourceCode().getBytes(StandardCharsets.UTF_8);
             try (FileChannel channel = FileChannel.open(temporary,
                     StandardOpenOption.WRITE,
                     StandardOpenOption.TRUNCATE_EXISTING)) {
@@ -281,7 +277,6 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
 
         String text = new String(Files.readAllBytes(source), StandardCharsets.UTF_8);
         IMind parent = user.getCurrentMind();
-        String previousSourceName = parent.getSourceFileName();
         IMind mind = parent;
         boolean childCreated = false;
         try {
@@ -290,23 +285,11 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 childCreated = true;
             }
             mind.setSourceFileName(source.getFileName().toString());
-            boolean accepted = mind.compile(SourceDocumentState.compilerInput(text));
+            boolean accepted = mind.compile(text);
             String description = mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord();
-
-            if (!accepted) {
-                if (childCreated) {
-                    parent.release(mind);
-                    childCreated = false;
-                }
-                parent.setSourceFileName(previousSourceName);
-                ((Mind) parent).setQueryResult(false);
-                user.setCurrentMind(parent);
-                return sourceRecoveryError("source_compile_rejected", description,
-                        source.getFileName().toString(), text);
+            if (accepted) {
+                description += "<br>File " + source.getFileName() + " loaded";
             }
-
-            SourceDocumentState.publish(user, text);
-            description += "<br>File " + source.getFileName() + " loaded";
             if (childCreated && mind.isEmptyLevel()) {
                 parent.release(mind);
                 mind = parent;
@@ -316,9 +299,11 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 description += "<br>Transaction level "
                         + mind.getTransactionLevel() + " (" + mind.getId() + ")";
             }
-            ((Mind) mind).setQueryResult(true);
+            ((Mind) mind).setQueryResult(accepted);
             user.setCurrentMind(mind);
-            return ok(description);
+            return accepted
+                    ? ok(description)
+                    : error("source_compile_rejected", description);
         } catch (Exception failure) {
             if (childCreated) {
                 try {
@@ -326,11 +311,9 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 } catch (Exception releaseFailure) {
                     failure.addSuppressed(releaseFailure);
                 }
+                user.setCurrentMind(parent);
             }
-            parent.setSourceFileName(previousSourceName);
-            user.setCurrentMind(parent);
-            return sourceRecoveryError("source_load_failed", failure.toString(),
-                    source.getFileName().toString(), text);
+            throw failure;
         }
     }
 
@@ -564,16 +547,6 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 .put("result", "error")
                 .put("code", code)
                 .put("description", description == null ? "" : description);
-    }
-
-    private JSONObject sourceRecoveryError(String code,
-                                           String description,
-                                           String logicalName,
-                                           String text) {
-        return error(code, description).put("source_recovery", new JSONObject()
-                .put("schema", 1)
-                .put("logical_name", logicalName)
-                .put("text", text == null ? "" : text));
     }
 
     private Path sourcePath(IUser user, String fileName) {

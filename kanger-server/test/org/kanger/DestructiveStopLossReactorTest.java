@@ -55,6 +55,12 @@ public class DestructiveStopLossReactorTest {
 
             rejectedCompilePreservesGeneration(
                     reactor, user, token, storageName);
+            transactionBlocksDestructiveCommand(reactor, user, token);
+            utf8SourceRoundTripIsTruthful(reactor, user, token);
+            failedStorageSwitchPreservesCurrentGeneration(
+                    reactor, user, token, storageName);
+            nestedStorageReindexAndDropUseCanonicalIdentity(
+                    reactor, user, token);
         } finally {
             UserFactory.dropUser(user);
         }
@@ -77,6 +83,128 @@ public class DestructiveStopLossReactorTest {
                 "Rejected Compile changed the logical workspace");
         assertEquals(generationBefore, hashGeneration(user, storageName),
                 "Rejected Compile changed the persistent generation");
+    }
+
+    private void transactionBlocksDestructiveCommand(
+            DestructiveStopLossReactor reactor,
+            IUser user,
+            String token) throws Exception {
+        IMind parent = user.getCurrentMind();
+        IMind child = new Mind(parent);
+        user.setCurrentMind(child);
+        String sourceBefore = child.getSourceCode();
+
+        JSONObject response = invoke(reactor, "command", new JSONObject()
+                .put("token", token)
+                .put("erase", ""));
+
+        assertEquals("error", response.optString("result"));
+        assertEquals("transaction_open", response.optString("code"));
+        assertSame(child, user.getCurrentMind(),
+                "Blocked erase replaced the active transaction");
+        assertEquals(sourceBefore, child.getSourceCode(),
+                "Blocked erase changed the transaction workspace");
+
+        parent.release(child);
+        user.setCurrentMind(parent);
+    }
+
+    private void utf8SourceRoundTripIsTruthful(
+            DestructiveStopLossReactor reactor,
+            IUser user,
+            String token) throws Exception {
+        IMind mind = user.getCurrentMind();
+        assertTrue(mind.compile("// Привет, KANGER\n!b;"),
+                "UTF-8 qualification source was rejected");
+
+        String fileName = "utf8-stop-loss.k";
+        JSONObject save = invoke(reactor, "command", new JSONObject()
+                .put("token", token)
+                .put("put", fileName));
+        assertEquals("OK", save.optString("result"), save.toString());
+
+        Path source = Paths.get(user.getSourceDir()).resolve(fileName);
+        String persisted = new String(Files.readAllBytes(source),
+                StandardCharsets.UTF_8);
+        assertTrue(persisted.contains("Привет, KANGER"),
+                "UTF-8 source was not persisted as UTF-8");
+
+        JSONObject delete = invoke(reactor, "command", new JSONObject()
+                .put("token", token)
+                .put("delete", fileName));
+        assertEquals("OK", delete.optString("result"), delete.toString());
+        assertFalse(Files.exists(source),
+                "Source delete returned success but file remains");
+
+        JSONObject secondDelete = invoke(reactor, "command", new JSONObject()
+                .put("token", token)
+                .put("delete", fileName));
+        assertEquals("error", secondDelete.optString("result"),
+                "Deleting absent source returned success");
+    }
+
+    private void failedStorageSwitchPreservesCurrentGeneration(
+            DestructiveStopLossReactor reactor,
+            IUser user,
+            String token,
+            String currentStorage) throws Exception {
+        IMind mind = user.getCurrentMind();
+        String sourceBefore = mind.getSourceCode();
+        Map<String, String> generationBefore = hashGeneration(user, currentStorage);
+
+        String corruptName = "corrupt-switch-target";
+        Path corruptBase = Paths.get(user.getDatabaseDir()).resolve(corruptName);
+        Files.createDirectories(corruptBase.getParent());
+        Files.write(Paths.get(corruptBase.toString() + ".store"),
+                new byte[]{0x00, 0x01, 0x02, 0x03});
+        try {
+            JSONObject response = invoke(reactor, "command", new JSONObject()
+                    .put("token", token)
+                    .put("use", corruptName));
+
+            assertEquals("error", response.optString("result"), response.toString());
+            assertEquals(currentStorage, user.getCurrentMind().getStorageName(),
+                    "Failed use changed the selected database");
+            assertEquals(sourceBefore, user.getCurrentMind().getSourceCode(),
+                    "Failed use changed the logical workspace");
+            assertEquals(generationBefore, hashGeneration(user, currentStorage),
+                    "Failed use changed the current persistent generation");
+        } finally {
+            deleteGeneration(user, corruptName);
+        }
+    }
+
+    private void nestedStorageReindexAndDropUseCanonicalIdentity(
+            DestructiveStopLossReactor reactor,
+            IUser user,
+            String token) throws Exception {
+        IMind mind = user.getCurrentMind();
+        mind = mind.closeStorage();
+        user.setCurrentMind(mind);
+
+        String storageName = "nested" + Enums.FILE_SEPARATOR + "one";
+        mind = mind.useStorage(storageName);
+        user.setCurrentMind(mind);
+        assertTrue(mind.compile("!nested;"),
+                "Nested storage source was rejected");
+        assertFalse(hashGeneration(user, storageName).isEmpty(),
+                "Nested storage generation was not created");
+
+        JSONObject reindex = invoke(reactor, "command", new JSONObject()
+                .put("token", token)
+                .put("reindex", "nested.one"));
+        assertEquals("OK", reindex.optString("result"), reindex.toString());
+        assertEquals(storageName, user.getCurrentMind().getStorageName(),
+                "Nested reindex did not reopen the canonical storage");
+        assertTrue(user.getCurrentMind().getSourceCode().contains("nested"),
+                "Nested reindex lost the logical source");
+
+        JSONObject drop = invoke(reactor, "command", new JSONObject()
+                .put("token", token)
+                .put("drop", "nested.one"));
+        assertEquals("OK", drop.optString("result"), drop.toString());
+        assertTrue(hashGeneration(user, storageName).isEmpty(),
+                "Nested storage drop left generation files");
     }
 
     private JSONObject invoke(
@@ -103,6 +231,26 @@ public class DestructiveStopLossReactorTest {
             }
         }
         return result;
+    }
+
+    private void deleteGeneration(IUser user, String storageName) throws Exception {
+        Path base = Paths.get(user.getDatabaseDir()).resolve(storageName);
+        for (String suffix : GENERATION_SUFFIXES) {
+            Files.deleteIfExists(Paths.get(base.toString() + suffix));
+        }
+        Path directory = base.getParent();
+        if (directory != null && Files.isDirectory(directory)) {
+            String prefix = base.getFileName().toString() + ".wal.";
+            try (java.nio.file.DirectoryStream<Path> stream =
+                         Files.newDirectoryStream(directory)) {
+                for (Path entry : stream) {
+                    if (Files.isRegularFile(entry)
+                            && entry.getFileName().toString().startsWith(prefix)) {
+                        Files.deleteIfExists(entry);
+                    }
+                }
+            }
+        }
     }
 
     private String sha256(byte[] value) throws Exception {
