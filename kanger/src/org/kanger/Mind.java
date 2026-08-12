@@ -726,49 +726,66 @@ public class Mind implements IMind {
 
         Token t = null;
         Mind m = new Mind(this);
-        m.setQueryPass(QueryPass.ACCEPT);
-        int previousPos = 0;
-        Queue<ITerm> externals = convertExternals(ext);
+        boolean finalizationStarted = false;
+        try {
+            m.setQueryPass(QueryPass.ACCEPT);
+            int previousPos = 0;
+            Queue<ITerm> externals = convertExternals(ext);
 
-        while ((t = Tools.extractLine(src, t)) != null) {
-            String comment = src.substring(previousPos, t.getPos()).trim();
-            if (previousPos == 0) {
-                String[] cc = Parser.extractComments(comment);
-                if (cc.length > 1 && !cc[0].isEmpty()) {
-                    m.getComments().add(CommentFactory.HEADER_ID, cc[0].trim());
-                    comment = comment.substring(cc[0].length()).trim();
+            while ((t = Tools.extractLine(src, t)) != null) {
+                String comment = src.substring(previousPos, t.getPos()).trim();
+                if (previousPos == 0) {
+                    String[] cc = Parser.extractComments(comment);
+                    if (cc.length > 1 && !cc[0].isEmpty()) {
+                        m.getComments().add(CommentFactory.HEADER_ID, cc[0].trim());
+                        comment = comment.substring(cc[0].length()).trim();
+                    }
+                }
+                previousPos = t.getPos() + t.getLen();
+
+                Object r = m.compileLine(t.getToken(src), false, externals);
+                if (!comment.isEmpty() && r instanceof Rule) {
+                    m.getComments().add(((Rule) r).getId(), comment);
                 }
             }
-            previousPos = t.getPos() + t.getLen();
 
-            Object r = m.compileLine(t.getToken(src), false, externals);
-            if (!comment.isEmpty() && r instanceof Rule) {
-                m.getComments().add(((Rule) r).getId(), comment);
+            if (t != null && src.length() > t.getPos() + t.getLen()) {
+                String comment = src.substring(t.getPos() + t.getLen()).trim();
+                if (!comment.isEmpty()) {
+                    m.getComments().add(CommentFactory.FOOTER_ID, comment);
+                }
             }
-        }
 
-        if (t != null && src.length() > t.getPos() + t.getLen()) {
-            String comment = src.substring(t.getPos() + t.getLen()).trim();
-            if (!comment.isEmpty()) {
-                m.getComments().add(CommentFactory.FOOTER_ID, comment);
-            }
-        }
+            m.link(null, logging);
+            Boolean ar = m.analyze(null, logging);
 
-        m.link(null, logging);
-        Boolean ar = m.analyze(null, logging);
-
-        if (ar) {
-            if (logging) {
-                m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
+            if (ar) {
+                if (logging) {
+                    m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
+                }
+                finalizationStarted = true;
+                release(m);
+                return false;
+            } else {
+                if (logging) {
+                    m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
+                }
+                finalizationStarted = true;
+                commit(m);
+                return true;
             }
-            release(m);
-            return false;
-        } else {
-            if (logging) {
-                m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
+        } catch (Throwable failure) {
+            if (!finalizationStarted) {
+                try {
+                    release(m);
+                } catch (Throwable cleanupFailure) {
+                    if (cleanupFailure != failure) {
+                        failure.addSuppressed(cleanupFailure);
+                    }
+                }
             }
-            commit(m);
-            return true;
+            rethrow(failure);
+            throw new AssertionError("unreachable");
         }
     }
 
@@ -796,24 +813,43 @@ public class Mind implements IMind {
         }
         if (suc != null) {
             Mind x = new Mind(this);
+            boolean finalizationStarted = false;
+            try {
+                Leaf p = Parser.parse(line.substring(1));
 
-            Leaf p = Parser.parse(line.substring(1));
-
-            r = x.compiler.compileLine(p, suc, orig, query, externals);
-            x.setCompliedLine(compliedLine);
-            if (r instanceof Rule && ((Rule) r).isSecond()) {
-                release(x);
-                log.add(LogMode.ANALYZER, "WARNING: Rule is duplicated: " + r);
-                r = null;
-            } else if (r instanceof Rule) {
-                commit(x);
-                log.add(LogMode.ANALYZER, "Compiled: " + ((Rule) r).getOrigin());
-                log.add(LogMode.ANALYZER, (Rule) r);
-                for (IRule rx : rules) {
-                    if (rx.getId() > ((Rule) r).getId() /*&& rx.isGenerated()*/) {
-                        log.add(LogMode.ANALYZER, "Extracted: " + rx.getOrigin());
+                r = x.compiler.compileLine(p, suc, orig, query, externals);
+                x.setCompliedLine(compliedLine);
+                if (r instanceof Rule && ((Rule) r).isSecond()) {
+                    finalizationStarted = true;
+                    release(x);
+                    log.add(LogMode.ANALYZER, "WARNING: Rule is duplicated: " + r);
+                    r = null;
+                } else if (r instanceof Rule) {
+                    finalizationStarted = true;
+                    commit(x);
+                    log.add(LogMode.ANALYZER, "Compiled: " + ((Rule) r).getOrigin());
+                    log.add(LogMode.ANALYZER, (Rule) r);
+                    for (IRule rx : rules) {
+                        if (rx.getId() > ((Rule) r).getId() /*&& rx.isGenerated()*/) {
+                            log.add(LogMode.ANALYZER, "Extracted: " + rx.getOrigin());
+                        }
+                    }
+                } else {
+                    finalizationStarted = true;
+                    release(x);
+                }
+            } catch (Throwable failure) {
+                if (!finalizationStarted) {
+                    try {
+                        release(x);
+                    } catch (Throwable cleanupFailure) {
+                        if (cleanupFailure != failure) {
+                            failure.addSuppressed(cleanupFailure);
+                        }
                     }
                 }
+                rethrow(failure);
+                throw new AssertionError("unreachable");
             }
         }
         return r;
