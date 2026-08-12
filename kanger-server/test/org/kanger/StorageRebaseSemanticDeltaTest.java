@@ -19,7 +19,6 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -76,7 +75,7 @@ class StorageRebaseSemanticDeltaTest {
 
             root = open(fixture, root, "comment-b");
             Rule bRule = findPrimaryRule((Mind) root, "!comment_fact;");
-            root.getComments().add(bRule.getId(), "base-b-comment");
+            ((Mind) root).getComments().add(bRule.getId(), "base-b-comment");
             fixture.user.checkpoint(root);
             root = root.closeStorage();
             fixture.user.setCurrentMind(root);
