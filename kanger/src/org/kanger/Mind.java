@@ -32,6 +32,7 @@ import org.kanger.compiler.Parser;
 import org.kanger.compiler.Token;
 import org.kanger.enums.*;
 import org.kanger.factory.*;
+import org.kanger.exception.TransactionSettlementException;
 import org.kanger.interfaces.*;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgumentsList;
@@ -291,9 +292,16 @@ public class Mind implements IMind {
                             rethrow(rollbackFailure);
                         }
 
-                        finishTransactionLocked();
+                        boolean rootQuiescent = finishTransactionReservationLocked();
                         reservationFinished = true;
-                        copyCommitResult(child);
+                        try {
+                            finalizeTransactionRootLocked(rootQuiescent);
+                            copyCommitResult(child);
+                        } catch (Throwable finalizationFailure) {
+                            throw new TransactionSettlementException(
+                                    TransactionSettlementException.Outcome.REJECTED,
+                                    finalizationFailure);
+                        }
                         return false;
                     }
 
@@ -301,9 +309,16 @@ public class Mind implements IMind {
                     factoriesCompleted = true;
                 }
 
-                finishTransactionLocked();
+                boolean rootQuiescent = finishTransactionReservationLocked();
                 reservationFinished = true;
-                copyCommitResult(child);
+                try {
+                    finalizeTransactionRootLocked(rootQuiescent);
+                    copyCommitResult(child);
+                } catch (Throwable finalizationFailure) {
+                    throw new TransactionSettlementException(
+                            TransactionSettlementException.Outcome.COMMITTED,
+                            finalizationFailure);
+                }
                 return true;
             } catch (Throwable failure) {
                 Throwable propagated = failure;
@@ -1858,15 +1873,34 @@ public class Mind implements IMind {
         return user.getStoragesList();
     }
 
-    private void finishTransactionLocked() throws Exception {
+    /**
+     * Consumes exactly one child reservation and returns whether the current
+     * Mind has reached root quiescence. This is the irreversible settlement
+     * boundary: callers must mark the reservation finished immediately after
+     * this method returns, before pack/update/flush is attempted.
+     */
+    private boolean finishTransactionReservationLocked() {
         if (transactionCounter <= 0) {
             throw new IllegalStateException("Transaction counter underflow for Mind " + id);
         }
         --transactionCounter;
-        if (next == null && transactionCounter == 0) {
+        return next == null && transactionCounter == 0;
+    }
+
+    /**
+     * Runs root-only post-settlement work. Failure here cannot reopen or retry
+     * the child transaction because its reservation has already been consumed.
+     */
+    private void finalizeTransactionRootLocked(boolean rootQuiescent) throws Exception {
+        if (rootQuiescent) {
             pack();
             update();
         }
+    }
+
+    private void finishTransactionLocked() throws Exception {
+        boolean rootQuiescent = finishTransactionReservationLocked();
+        finalizeTransactionRootLocked(rootQuiescent);
     }
 
     private void abortTransactionStart() throws Exception {

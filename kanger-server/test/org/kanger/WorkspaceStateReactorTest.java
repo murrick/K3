@@ -108,33 +108,16 @@ public class WorkspaceStateReactorTest {
             assertStorage(nested, "nested.one",
                     "nested" + Enums.FILE_SEPARATOR + "one");
 
-            // OPEN -> use is no longer a storage switch. The active workspace
-            // must remain projected unchanged until an explicit close.
-            JSONObject rejectedOther = invoke(reactor, "command", new JSONObject()
-                    .put("token", token)
-                    .put("use", "other"));
-            assertEquals("error", rejectedOther.getString("result"),
-                    rejectedOther.toString());
-            assertEquals("STORAGE_ALREADY_OPEN",
-                    rejectedOther.getString("code"));
-            assertEquals("EXPLICIT_CLOSE_REQUIRED",
-                    rejectedOther.getString("required_action"));
-            assertStorage(rejectedOther, "nested.one",
-                    "nested" + Enums.FILE_SEPARATOR + "one");
-
-            JSONObject closeNested = invoke(reactor, "command", new JSONObject()
-                    .put("token", token)
-                    .put("close", ""));
-            assertEquals("OK", closeNested.getString("result"),
-                    closeNested.toString());
-            assertFalse(closeNested.getJSONObject("workspace")
-                    .getJSONObject("storage").getBoolean("active"));
-
+            // OPEN A -> use B is now an atomic Core semantic rebase. With
+            // no explicit overlays in this fixture, workspace projection should
+            // simply move from nested.one U0 to other U0 in one response.
             JSONObject other = invoke(reactor, "command", new JSONObject()
                     .put("token", token)
                     .put("use", "other"));
             assertEquals("OK", other.getString("result"), other.toString());
             assertStorage(other, "other", "other");
+            assertEquals(0, other.getJSONObject("workspace")
+                    .getJSONObject("transaction").getInt("level"));
 
             JSONObject dropNonActive = invoke(reactor, "command", new JSONObject()
                     .put("token", token)
@@ -157,17 +140,17 @@ public class WorkspaceStateReactorTest {
             corruptStore = Paths.get(corruptBase.toString() + ".store");
             Files.write(corruptStore, new byte[]{0x00, 0x01, 0x02});
 
-            // Rejection precedes target open and validation; even a deliberately
-            // corrupt target cannot replace or damage the active projection.
+            // The server may probe a target before Core mutation. A corrupt
+            // target therefore fails as a switch, while the active generation
+            // and projected workspace remain the original "other" state.
             JSONObject rejectedCorrupt = invoke(reactor, "command", new JSONObject()
                     .put("token", token)
                     .put("use", "corrupt-target"));
             assertEquals("error", rejectedCorrupt.getString("result"),
                     rejectedCorrupt.toString());
-            assertEquals("STORAGE_ALREADY_OPEN",
+            assertEquals("storage_switch_failed",
                     rejectedCorrupt.getString("code"));
-            assertEquals("EXPLICIT_CLOSE_REQUIRED",
-                    rejectedCorrupt.getString("required_action"));
+            assertFalse(rejectedCorrupt.has("required_action"));
             assertStorage(rejectedCorrupt, "other", "other");
 
             JSONObject close = invoke(reactor, "command", new JSONObject()
