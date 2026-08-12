@@ -298,71 +298,181 @@ public class User implements IUser {
      */
     @Override
     public IMind use(IMind mind, String name) throws Exception {
-
-        if (data != null) {
-
-            if (!data.isClosed()) {
-                throw new StorageLifecycleException(
-                        StorageLifecycleErrorCode.STORAGE_ALREADY_OPEN,
-                        "A database is already open; explicit close is required before use");
-            }
-
-            if (mind != null) {
-                requireTransactionQuiescence(mind, "open database");
-            }
-
-            if (mind == null) {
-                mind = new Mind(this);
-            }
-
-            Map<String, IBase> acquiredStorage = new HashMap<>();
-            try {
-                data.use(name);
-
-                acquiredStorage.put(DictionaryFactory.SCHEMA, data.getBase(DictionaryFactory.SCHEMA));
-                acquiredStorage.put(DomainFactory.SCHEMA, data.getBase(DomainFactory.SCHEMA));
-                acquiredStorage.put(FunctionFactory.SCHEMA, data.getBase(FunctionFactory.SCHEMA));
-                acquiredStorage.put(PredicateFactory.SCHEMA, data.getBase(PredicateFactory.SCHEMA));
-                acquiredStorage.put(RuleFactory.SCHEMA, data.getBase(RuleFactory.SCHEMA));
-                acquiredStorage.put(TVariableFactory.SCHEMA, data.getBase(TVariableFactory.SCHEMA));
-                acquiredStorage.put(LibraryFactory.SCHEMA, data.getBase(LibraryFactory.SCHEMA));
-
-                acquiredStorage.put(TValueFactory.SCHEMA, data.getBase(TValueFactory.SCHEMA));
-                acquiredStorage.put(FValueFactory.SCHEMA, data.getBase(FValueFactory.SCHEMA));
-
-                acquiredStorage.put(CommentFactory.SCHEMA, data.getBase(CommentFactory.SCHEMA));
-            } catch (Exception error) {
-                try {
-                    if (!data.isClosed()) {
-                        data.close();
-                    }
-                } catch (Exception closeError) {
-                    error.addSuppressed(closeError);
-                }
-                throw error;
-            }
-
-            storage.clear();
-            storage.putAll(acquiredStorage);
-
-            ((DictionaryFactory) mind.getTerms()).transaction(null);
-            ((Mind) mind).getDomains().transaction(null);
-            ((Mind) mind).getFunctions().transaction(null);
-            ((Mind) mind).getFValues().transaction(null);
-            ((PredicateFactory) mind.getPredicates()).transaction(null);
-            ((RuleFactory) mind.getRules()).transaction(null);
-            ((Mind) mind).getComments().transaction(null);
-            ((Mind) mind).getTValues().transaction(null);
-            ((Mind) mind).getTVars().transaction(null);
-            ((LibraryFactory) mind.getLibrary()).transaction(null);
-
-            return mind;
-
-        } else {
+        if (data == null) {
             throw new RuntimeErrorException("DB module doesn't loaded");
+        }
+
+        if (mind == null) {
+            mind = new Mind(this);
+        }
+
+        if (data.isClosed()) {
+            requireTransactionQuiescence(mind, "open database");
+            return openClosedStorage((Mind) mind, name);
+        }
+
+        String activeName = data.getStorageName();
+        if (Objects.equals(activeName, name)) {
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_ALREADY_OPEN,
+                    "Database " + activeName + " is already open");
+        }
+
+        return rebaseOpenStorage((Mind) mind, name, activeName);
+    }
+
+    private Mind rebaseOpenStorage(Mind top,
+                                   String targetName,
+                                   String originalName) throws Exception {
+        requireExplicitStackOwnership(top);
+        UserTransactionStackSnapshot snapshot =
+                UserTransactionStackSnapshot.capture(top);
+
+        String originalSourceFileName = sourceFileName;
+        boolean ownsCurrentSlot = currentMind == top;
+        Mind root = (Mind) top.getTop();
+        boolean mutationStarted = false;
+
+        try {
+            mutationStarted = true;
+            root = UserTransactionStackSnapshot.rollbackToRoot(top);
+            if (ownsCurrentSlot) {
+                currentMind = root;
+            }
+
+            root = (Mind) close(root);
+            root = openClosedStorage(root, targetName);
+            Mind rebasedTop = snapshot.replay(root);
+
+            sourceFileName = originalSourceFileName;
+            if (ownsCurrentSlot) {
+                currentMind = rebasedTop;
+            }
+            return rebasedTop;
+        } catch (Throwable failure) {
+            Throwable propagated = failure;
+            if (mutationStarted) {
+                try {
+                    Mind restoredRoot = restoreOriginalStorage(
+                            root, originalName, originalSourceFileName);
+                    Mind restoredTop = snapshot.replay(restoredRoot);
+                    sourceFileName = originalSourceFileName;
+                    if (ownsCurrentSlot) {
+                        currentMind = restoredTop;
+                    }
+                } catch (Throwable restoreFailure) {
+                    if (restoreFailure != failure) {
+                        propagated.addSuppressed(restoreFailure);
+                    }
+                    if (ownsCurrentSlot) {
+                        currentMind = root;
+                    }
+                }
+            }
+            rethrow(propagated);
+            throw new AssertionError("unreachable");
         }
     }
 
+    private Mind restoreOriginalStorage(Mind root,
+                                        String originalName,
+                                        String originalSourceFileName) throws Exception {
+        if (!data.isClosed()
+                && !Objects.equals(data.getStorageName(), originalName)) {
+            root = (Mind) close(root);
+        }
+
+        if (data.isClosed()) {
+            root = openClosedStorage(root, originalName);
+        } else if (!Objects.equals(data.getStorageName(), originalName)) {
+            throw new IllegalStateException(
+                    "Cannot restore storage " + originalName
+                            + "; active storage is " + data.getStorageName());
+        }
+
+        sourceFileName = originalSourceFileName;
+        return root;
+    }
+
+    private void requireExplicitStackOwnership(Mind top) {
+        Mind current = top;
+        if (current.hasPendingTransactions()) {
+            throw new IllegalStateException(
+                    "Cannot rebase storage while the current user level owns an unfinished technical transaction");
+        }
+
+        while (current.getNext() != null) {
+            Mind parent = (Mind) current.getNext();
+            if (!parent.hasPendingTransactions()) {
+                throw new IllegalStateException(
+                        "Explicit transaction chain is missing its child reservation");
+            }
+            current = parent;
+        }
+    }
+
+    private Mind openClosedStorage(Mind mind, String name) throws Exception {
+        if (!data.isClosed()) {
+            throw new IllegalStateException(
+                    "Cannot open storage " + name + " while "
+                            + data.getStorageName() + " is still active");
+        }
+        if (mind.getNext() != null || mind.getTransactionLevel() != 0) {
+            throw new IllegalStateException(
+                    "Physical storage can only be attached to a root Mind");
+        }
+
+        Map<String, IBase> acquiredStorage = new HashMap<>();
+        try {
+            data.use(name);
+
+            acquiredStorage.put(DictionaryFactory.SCHEMA, data.getBase(DictionaryFactory.SCHEMA));
+            acquiredStorage.put(DomainFactory.SCHEMA, data.getBase(DomainFactory.SCHEMA));
+            acquiredStorage.put(FunctionFactory.SCHEMA, data.getBase(FunctionFactory.SCHEMA));
+            acquiredStorage.put(PredicateFactory.SCHEMA, data.getBase(PredicateFactory.SCHEMA));
+            acquiredStorage.put(RuleFactory.SCHEMA, data.getBase(RuleFactory.SCHEMA));
+            acquiredStorage.put(TVariableFactory.SCHEMA, data.getBase(TVariableFactory.SCHEMA));
+            acquiredStorage.put(LibraryFactory.SCHEMA, data.getBase(LibraryFactory.SCHEMA));
+            acquiredStorage.put(TValueFactory.SCHEMA, data.getBase(TValueFactory.SCHEMA));
+            acquiredStorage.put(FValueFactory.SCHEMA, data.getBase(FValueFactory.SCHEMA));
+            acquiredStorage.put(CommentFactory.SCHEMA, data.getBase(CommentFactory.SCHEMA));
+        } catch (Exception error) {
+            try {
+                if (!data.isClosed()) {
+                    data.close();
+                }
+            } catch (Exception closeError) {
+                error.addSuppressed(closeError);
+            }
+            throw error;
+        }
+
+        storage.clear();
+        storage.putAll(acquiredStorage);
+
+        ((DictionaryFactory) mind.getTerms()).transaction(null);
+        mind.getDomains().transaction(null);
+        mind.getFunctions().transaction(null);
+        mind.getFValues().transaction(null);
+        ((PredicateFactory) mind.getPredicates()).transaction(null);
+        ((RuleFactory) mind.getRules()).transaction(null);
+        mind.getComments().transaction(null);
+        mind.getTValues().transaction(null);
+        mind.getTVars().transaction(null);
+        ((LibraryFactory) mind.getLibrary()).transaction(null);
+
+        return mind;
+    }
+
+    private static void rethrow(Throwable failure) throws Exception {
+        if (failure instanceof Exception) {
+            throw (Exception) failure;
+        }
+        if (failure instanceof Error) {
+            throw (Error) failure;
+        }
+        throw new RuntimeException(failure);
+    }
 
     public IData getData() throws RuntimeErrorException {
         if (data != null) {
