@@ -29,6 +29,7 @@ import org.kanger.compiler.Token;
 import org.kanger.enums.LogMode;
 import org.kanger.enums.Tools;
 import org.kanger.exception.StorageLifecycleException;
+import org.kanger.exception.TransactionSettlementException;
 import org.kanger.interfaces.ILogEntry;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
@@ -114,6 +115,23 @@ final class MindLifecycleReactor implements IReactor<JSONObject> {
             if (rejected.getRequiredAction() != null) {
                 result.put("required_action", rejected.getRequiredAction());
             }
+            if (user != null && user.getCurrentMind() != null) {
+                return decorate(result, user);
+            }
+            return result;
+        } catch (TransactionSettlementException settled) {
+            /*
+             * The user-visible child is already finished here. Report the
+             * finalization failure, but also expose the irreversible semantic
+             * outcome so clients do not retry an already-consumed transaction.
+             */
+            JSONObject result = error(
+                    "transaction_settlement_finalization_failed",
+                    settled.toString())
+                    .put("settlement", settled.getOutcome().name())
+                    .put("semantic_applied", settled.isSemanticApplied())
+                    .put("reservation_consumed", settled.isReservationConsumed())
+                    .put("required_action", "VERIFY_CURRENT_STATE");
             if (user != null && user.getCurrentMind() != null) {
                 return decorate(result, user);
             }

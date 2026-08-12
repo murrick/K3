@@ -340,21 +340,48 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
     }
 
     private JSONObject useStorage(JSONObject parameters, IUser user) throws Exception {
-        JSONObject blocked = requireRootTransaction(user, "use");
-        if (blocked != null) {
-            return blocked;
-        }
-
         String displayName = parameters.optString("use", "");
         String storageName = canonicalStorageName(displayName);
         IMind mind = user.getCurrentMind();
         String previousStorage = mind.isStorageUsed() ? mind.getStorageName() : null;
-        String previousSource = mind.getSourceCode();
 
         if (previousStorage != null && previousStorage.equals(storageName)) {
             return storageInfo(mind);
         }
 
+        /*
+         * An open-generation A->B switch belongs entirely to Core. This
+         * stop-loss boundary may probe B before mutation, but it must not
+         * replay getSourceCode() or perform an independent restore afterward:
+         * User.use transports every explicit U-level as semantic delta and
+         * compensates back to A if target replay fails after mutation starts.
+         */
+        if (previousStorage != null) {
+            try {
+                probeStorage(user, storageName);
+                IMind rebased = mind.useStorage(storageName);
+                user.setCurrentMind(rebased);
+                if (!rebased.isStorageUsed()) {
+                    throw new IOException("Error opening database " + displayName);
+                }
+                return storageInfo(rebased);
+            } catch (Exception switchFailure) {
+                return error("storage_switch_failed", switchFailure.toString());
+            }
+        }
+
+        /*
+         * Historical no-storage workspace attachment remains a separate
+         * compatibility case: a transient level-0 source has to become an
+         * overlay above the newly attached persistent base. Unlike A->B, there
+         * is no pre-existing persistent U0 for Core to rebase.
+         */
+        JSONObject blocked = requireRootTransaction(user, "use");
+        if (blocked != null) {
+            return blocked;
+        }
+
+        String previousSource = mind.getSourceCode();
         probeStorage(user, storageName);
         try {
             mind = mind.useStorage(storageName);
@@ -396,7 +423,7 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
             return storageInfo(mind);
         } catch (Exception switchFailure) {
             try {
-                restoreStorage(user, previousStorage, previousSource);
+                restoreStorage(user, null, previousSource);
             } catch (Exception restoreFailure) {
                 switchFailure.addSuppressed(restoreFailure);
             }
