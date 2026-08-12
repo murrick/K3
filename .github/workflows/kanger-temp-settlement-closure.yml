@@ -24,7 +24,7 @@ jobs:
           cache: maven
 
       - name: Apply guarded settlement edits
-        run: python3 .github/scripts/kanger-temp-settlement-closure.py
+        run: python3 .github/scripts/kanger-temp-settlement-closure-v2.py
 
       - name: Validate diff
         run: |
