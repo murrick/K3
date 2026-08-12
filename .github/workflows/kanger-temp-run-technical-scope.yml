@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   apply:
-    if: "github.event.head_commit.message == 'ci: fix technical scope wrapper syntax'"
+    if: "github.event.head_commit.message == 'ci: harden scope applicator extraction'"
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
@@ -35,10 +35,19 @@ jobs:
           end = source.index(end_marker, start)
           body = []
           for line in source[start:end]:
-              if not line.startswith('          '):
+              if line == '':
+                  body.append('')
+              elif line.startswith('          '):
+                  body.append(line[10:])
+              else:
                   raise SystemExit('unexpected applicator indentation: ' + repr(line))
-              body.append(line[10:])
-          Path('/tmp/apply-technical-scope.py').write_text('\n'.join(body) + '\n', encoding='utf-8')
+          script = '\n'.join(body) + '\n'
+          old_guard = "guards=(('Mind x = new Mind(this);', 1), ('finalizationStarted', 4), ('release(x);', 3), ('commit(x);', 1)))"
+          new_guard = "guards=(('Mind x = new Mind(this);', 1), ('finalizationStarted', 5), ('release(x);', 3), ('commit(x);', 1)))"
+          if script.count(old_guard) != 1:
+              raise SystemExit('compileLine guard patch target mismatch')
+          script = script.replace(old_guard, new_guard, 1)
+          Path('/tmp/apply-technical-scope.py').write_text(script, encoding='utf-8')
           PY
           python3 /tmp/apply-technical-scope.py
 
