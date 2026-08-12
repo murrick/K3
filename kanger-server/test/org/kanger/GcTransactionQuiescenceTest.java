@@ -100,6 +100,41 @@ class GcTransactionQuiescenceTest {
         }
     }
 
+    @Test
+    void malformedInsertRestoresRootTransactionQuiescence() throws Exception {
+        assertMalformedQueryBalanced("+", "insert");
+    }
+
+    @Test
+    void malformedAcceptRestoresRootTransactionQuiescence() throws Exception {
+        assertMalformedQueryBalanced("!", "accept");
+    }
+
+    @Test
+    void malformedDeleteRestoresRootTransactionQuiescence() throws Exception {
+        assertMalformedQueryBalanced("-", "delete");
+    }
+
+    @Test
+    void malformedCheckRestoresRootTransactionQuiescence() throws Exception {
+        assertMalformedQueryBalanced("?", "check");
+    }
+
+    private void assertMalformedQueryBalanced(String prefix, String purpose) throws Exception {
+        Fixture fixture = fixture("query-" + purpose);
+        try {
+            assertEquals(0, counter(fixture.root));
+
+            assertThrows(ParseErrorException.class,
+                    () -> fixture.root.query(prefix + "\"unterminated"));
+
+            assertEquals(0, counter(fixture.root),
+                    "Malformed " + purpose + " query leaked its operation-local technical child");
+        } finally {
+            fixture.close();
+        }
+    }
+
     private Fixture fixture(String purpose) throws Exception {
         String identity = "gc-quiescence-" + purpose + "-" + UUID.randomUUID();
         IUser user = UserFactory.createUser(identity, identity);
