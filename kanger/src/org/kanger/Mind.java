@@ -725,9 +725,8 @@ public class Mind implements IMind {
         getHypothesis().clear();
 
         Token t = null;
-        Mind m = new Mind(this);
-        boolean finalizationStarted = false;
-        try {
+        try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
+            Mind m = tx.mind();
             m.setQueryPass(QueryPass.ACCEPT);
             int previousPos = 0;
             Queue<ITerm> externals = convertExternals(ext);
@@ -763,29 +762,15 @@ public class Mind implements IMind {
                 if (logging) {
                     m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
                 }
-                finalizationStarted = true;
-                release(m);
+                tx.rollback();
                 return false;
             } else {
                 if (logging) {
                     m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
                 }
-                finalizationStarted = true;
-                commit(m);
+                tx.commit();
                 return true;
             }
-        } catch (Throwable failure) {
-            if (!finalizationStarted) {
-                try {
-                    release(m);
-                } catch (Throwable cleanupFailure) {
-                    if (cleanupFailure != failure) {
-                        failure.addSuppressed(cleanupFailure);
-                    }
-                }
-            }
-            rethrow(failure);
-            throw new AssertionError("unreachable");
         }
     }
 
@@ -812,21 +797,18 @@ public class Mind implements IMind {
                 break;
         }
         if (suc != null) {
-            Mind x = new Mind(this);
-            boolean finalizationStarted = false;
-            try {
+            try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
+                Mind x = tx.mind();
                 Leaf p = Parser.parse(line.substring(1));
 
                 r = x.compiler.compileLine(p, suc, orig, query, externals);
                 x.setCompliedLine(compliedLine);
                 if (r instanceof Rule && ((Rule) r).isSecond()) {
-                    finalizationStarted = true;
-                    release(x);
+                    tx.rollback();
                     log.add(LogMode.ANALYZER, "WARNING: Rule is duplicated: " + r);
                     r = null;
                 } else if (r instanceof Rule) {
-                    finalizationStarted = true;
-                    commit(x);
+                    tx.commit();
                     log.add(LogMode.ANALYZER, "Compiled: " + ((Rule) r).getOrigin());
                     log.add(LogMode.ANALYZER, (Rule) r);
                     for (IRule rx : rules) {
@@ -835,21 +817,8 @@ public class Mind implements IMind {
                         }
                     }
                 } else {
-                    finalizationStarted = true;
-                    release(x);
+                    tx.rollback();
                 }
-            } catch (Throwable failure) {
-                if (!finalizationStarted) {
-                    try {
-                        release(x);
-                    } catch (Throwable cleanupFailure) {
-                        if (cleanupFailure != failure) {
-                            failure.addSuppressed(cleanupFailure);
-                        }
-                    }
-                }
-                rethrow(failure);
-                throw new AssertionError("unreachable");
             }
         }
         return r;
@@ -1139,117 +1108,121 @@ public class Mind implements IMind {
 
     public Boolean queryInsert(String line, Object[] ext, boolean logging) throws Exception {
         Boolean res = null;
-        Mind m = new Mind(this);
-        m.setQueryPass(QueryPass.INSERT);
-        if (logging) {
-            m.getLog().add(LogMode.ANALYZER, "============= INSERT ======================");
-        }
-
-        line = invert(line);
-        line = invert(line);
-
-        setCompliedLine(line);
-        Rule r = (Rule) m.compileLine(line, true, convertExternals(ext));
-        if (r != null && !r.isSecond()) {
-
-            m.link(r, logging);
-            boolean ar = m.analyze(r, logging);
-            if (ar) {
-                if (logging) {
-                    m.getLog().add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
-                }
-                release(m);
-                res = null;
-            } else {
-
-                List<IRule> productions = m.getProductions(r);
-                if (!productions.isEmpty()) {
-                    if (logging) {
-                        m.getLog().add(LogMode.ANALYZER, "SUCCESS: Solves to append (" + productions.size() + "):");
-                    }
-                    for (IRule pr : productions) {
-                        ((Rule) pr).setQuery(false);
-                        ((Rule) pr).setGenerated(false);
-                        ((Rule) pr).primitivize();
-                        if (logging) {
-                            m.getLog().add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", pr.getId(), pr.toString()));
-                        }
-                    }
-                } else if (logging) {
-                    m.getLog().add(LogMode.ANALYZER, String.format("WARNING: No candidates to append"));
-                }
-
-                r.setDeleted(true, m);
-                commit(m);
-                setChanged(true);
-                res = true;
+        try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
+            Mind m = tx.mind();
+            m.setQueryPass(QueryPass.INSERT);
+            if (logging) {
+                m.getLog().add(LogMode.ANALYZER, "============= INSERT ======================");
             }
-        } else {
-            if (logging && r != null && r.isSecond()) {
-                m.getLog().add(LogMode.ANALYZER, "Rule already exists: " + r);
-            }
-            release(m);
-        }
 
-        hypothesis.clear();
-        tempHypothesis.clear();
-        return res;
-    }
+            line = invert(line);
+            line = invert(line);
 
-    public Boolean queryAccept(String line, Object[] ext, boolean logging) throws Exception {
-        Boolean res = null;
-        Mind m = new Mind(this);
-        m.setQueryPass(QueryPass.ACCEPT);
-        if (logging) {
-            m.getLog().add(LogMode.ANALYZER, "============= ACCEPTING ===================");
-        }
+            setCompliedLine(line);
+            Rule r = (Rule) m.compileLine(line, true, convertExternals(ext));
+            if (r != null && !r.isSecond()) {
 
-        setCompliedLine(line);
-        Rule r = (Rule) m.compileLine(line, false, convertExternals(ext));
-        if (r != null && !r.isSecond()) {
-            boolean ar = m.analyze(r, logging);
-            if (ar) {
-                if (logging) {
-                    m.getLog().add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
-                }
-                release(m);
-                res = null;
-            } else {
                 m.link(r, logging);
-                ar = m.analyze(r, logging);
+                boolean ar = m.analyze(r, logging);
                 if (ar) {
                     if (logging) {
                         m.getLog().add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
                     }
-                    release(m);
+                    tx.rollback();
                     res = null;
                 } else {
-                    if (logging) {
-                        m.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d:\t%s", r.getId(), r.toString()));
-                        List<IRule> productions = m.getProductions(r);
-                        if (!productions.isEmpty()) {
-                            for (IRule pr : productions) {
+
+                    List<IRule> productions = m.getProductions(r);
+                    if (!productions.isEmpty()) {
+                        if (logging) {
+                            m.getLog().add(LogMode.ANALYZER, "SUCCESS: Solves to append (" + productions.size() + "):");
+                        }
+                        for (IRule pr : productions) {
+                            ((Rule) pr).setQuery(false);
+                            ((Rule) pr).setGenerated(false);
+                            ((Rule) pr).primitivize();
+                            if (logging) {
                                 m.getLog().add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", pr.getId(), pr.toString()));
                             }
                         }
-                        m.getLog().add(LogMode.ANALYZER, "SUCCESS: New rule accepted");
+                    } else if (logging) {
+                        m.getLog().add(LogMode.ANALYZER, String.format("WARNING: No candidates to append"));
                     }
-                    commit(m);
+
+                    r.setDeleted(true, m);
+                    tx.commit();
                     setChanged(true);
-                    acceptedRule = r;
                     res = true;
                 }
+            } else {
+                if (logging && r != null && r.isSecond()) {
+                    m.getLog().add(LogMode.ANALYZER, "Rule already exists: " + r);
+                }
+                tx.rollback();
             }
-        } else {
-            if (logging && r != null) {
-                m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
-            }
-            release(m);
-        }
 
-        hypothesis.clear();
-        tempHypothesis.clear();
-        return res;
+            hypothesis.clear();
+            tempHypothesis.clear();
+            return res;
+        }
+    }
+
+    public Boolean queryAccept(String line, Object[] ext, boolean logging) throws Exception {
+        Boolean res = null;
+        try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
+            Mind m = tx.mind();
+            m.setQueryPass(QueryPass.ACCEPT);
+            if (logging) {
+                m.getLog().add(LogMode.ANALYZER, "============= ACCEPTING ===================");
+            }
+
+            setCompliedLine(line);
+            Rule r = (Rule) m.compileLine(line, false, convertExternals(ext));
+            if (r != null && !r.isSecond()) {
+                boolean ar = m.analyze(r, logging);
+                if (ar) {
+                    if (logging) {
+                        m.getLog().add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
+                    }
+                    tx.rollback();
+                    res = null;
+                } else {
+                    m.link(r, logging);
+                    ar = m.analyze(r, logging);
+                    if (ar) {
+                        if (logging) {
+                            m.getLog().add(LogMode.ANALYZER, "ERROR: Conflict in new rule");
+                        }
+                        tx.rollback();
+                        res = null;
+                    } else {
+                        if (logging) {
+                            m.getLog().add(LogMode.SOLVES, String.format("\tSolution %03d:\t%s", r.getId(), r.toString()));
+                            List<IRule> productions = m.getProductions(r);
+                            if (!productions.isEmpty()) {
+                                for (IRule pr : productions) {
+                                    m.getLog().add(LogMode.SOLVES, String.format("\tProduced %03d:\t%s", pr.getId(), pr.toString()));
+                                }
+                            }
+                            m.getLog().add(LogMode.ANALYZER, "SUCCESS: New rule accepted");
+                        }
+                        tx.commit();
+                        setChanged(true);
+                        acceptedRule = r;
+                        res = true;
+                    }
+                }
+            } else {
+                if (logging && r != null) {
+                    m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
+                }
+                tx.rollback();
+            }
+
+            hypothesis.clear();
+            tempHypothesis.clear();
+            return res;
+        }
     }
 
     public Boolean queryDelete(String line, Object[] ext, boolean logging) throws Exception {
@@ -1262,38 +1235,39 @@ public class Mind implements IMind {
 
         Operation op = getLibrary().find(line.substring(1).replaceAll(";", ""));
         if (op != null) {
-
-            Mind m = new Mind(this);
-            op.setDeleted(true, m);
-            m.getLog().add(LogMode.ANALYZER, "SUCCESS: Deleted function " + line.substring(1));
-            commit(m);
-            res = true;
-
+            try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
+                Mind m = tx.mind();
+                op.setDeleted(true, m);
+                m.getLog().add(LogMode.ANALYZER, "SUCCESS: Deleted function " + line.substring(1));
+                tx.commit();
+                res = true;
+            }
         } else {
-
-            Mind x = new Mind(this);
-            Set<IRule> set = new HashSet<>();
-            line = invert(line);
-            setCompliedLine(line);
-            Rule r = (Rule) x.compileLine(line, true, convertExternals(ext));
-            if (r != null && !r.isSecond()) {
-                x.link(r, logging);
-                boolean ar = x.analyze(r, logging);
-                if (ar && x.getSolutions().size() > 0) {
-                    for (IRule rx : x.getSolutions()) {
-                        set.add(rx);
+            try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
+                Mind x = tx.mind();
+                Set<IRule> set = new HashSet<>();
+                line = invert(line);
+                setCompliedLine(line);
+                Rule r = (Rule) x.compileLine(line, true, convertExternals(ext));
+                if (r != null && !r.isSecond()) {
+                    x.link(r, logging);
+                    boolean ar = x.analyze(r, logging);
+                    if (ar && x.getSolutions().size() > 0) {
+                        for (IRule rx : x.getSolutions()) {
+                            set.add(rx);
+                        }
                     }
                 }
-            }
-            if (set.isEmpty() && logging) {
-                x.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
-            }
-            release(x);
-            if (!set.isEmpty()) {
-                removeResult(set, logging);
-                res = true;
-                hypothesis.clear();
-                tempHypothesis.clear();
+                if (set.isEmpty() && logging) {
+                    x.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
+                }
+                tx.rollback();
+                if (!set.isEmpty()) {
+                    removeResult(set, logging);
+                    res = true;
+                    hypothesis.clear();
+                    tempHypothesis.clear();
+                }
             }
         }
         return res;
@@ -1302,68 +1276,60 @@ public class Mind implements IMind {
     public Boolean queryCheck(boolean logging) throws Exception {
         Boolean res = null;
 
-        Mind m = new Mind(this);
-        m.setQueryPass(QueryPass.CHECK);
-        boolean found = false;
-        for (IRule rx : m.getRules()) {
-            if (/*!rx.isDeleted(m) && */rx.isGenerated()) {
-                if (logging) {
-                    m.getLog().add(LogMode.STORAGE, "Delete produced rule: " + String.format("%03d: %s", rx.getId(), rx));
+        try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
+            Mind m = tx.mind();
+            m.setQueryPass(QueryPass.CHECK);
+            boolean found = false;
+            for (IRule rx : m.getRules()) {
+                if (/*!rx.isDeleted(m) && */rx.isGenerated()) {
+                    if (logging) {
+                        m.getLog().add(LogMode.STORAGE, "Delete produced rule: " + String.format("%03d: %s", rx.getId(), rx));
+                    }
+                    ((Rule) rx).setDeleted(true, m);
+                    found = true;
                 }
-                ((Rule) rx).setDeleted(true, m);
-                found = true;
             }
-        }
-        if (found) {
-            if (logging) {
-                m.getLog().add(LogMode.STORAGE, "-------------------------------------------");
+            if (found) {
+                if (logging) {
+                    m.getLog().add(LogMode.STORAGE, "-------------------------------------------");
+                }
             }
-        }
 
-        m.link(null, logging);
-        Boolean ar = m.analyze(null, logging);
+            m.link(null, logging);
+            Boolean ar = m.analyze(null, logging);
 
-        if (ar) {
-            if (logging) {
-                m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
+            if (ar) {
+                if (logging) {
+                    m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
+                }
+                tx.rollback();
+                res = false;
+            } else {
+                if (logging) {
+                    m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
+                }
+                tx.commit();
+                res = true;
             }
-            release(m);
-            res = false;
-        } else {
-            if (logging) {
-                m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
-            }
-            commit(m);
-            res = true;
+            hypothesis.clear();
+            tempHypothesis.clear();
+            return res;
         }
-        hypothesis.clear();
-        tempHypothesis.clear();
-        return res;
     }
 
     public Boolean queryCheckFalse(String line, Object[] ext, boolean logging) throws Exception {
         Boolean res = null;
-        Mind m = new Mind(this);
-        m.setQueryPass(QueryPass.CHECKFALSE);
-        if (logging) {
-            m.getLog().add(LogMode.ANALYZER, "============= FALSE CHECKING ==============");
-        }
+        try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
+            Mind m = tx.mind();
+            m.setQueryPass(QueryPass.CHECKFALSE);
+            if (logging) {
+                m.getLog().add(LogMode.ANALYZER, "============= FALSE CHECKING ==============");
+            }
 
-        Rule r = (Rule) m.compileLine(invert(line), true, convertExternals(ext));
-        setCompliedLine(line);
-        if (r != null && !r.isSecond()) {
-            boolean ar = m.analyze(r, logging);
-            if (ar) {
-                if (logging) {
-                    m.getLog().add(LogMode.ANALYZER, "Result: FALSE");
-                    logResult(m);
-                }
-                res = false;
-                hypothesis.clear();
-                tempHypothesis.clear();
-            } else {
-                m.link(r, logging);
-                ar = m.analyze(r, logging);
+            Rule r = (Rule) m.compileLine(invert(line), true, convertExternals(ext));
+            setCompliedLine(line);
+            if (r != null && !r.isSecond()) {
+                boolean ar = m.analyze(r, logging);
                 if (ar) {
                     if (logging) {
                         m.getLog().add(LogMode.ANALYZER, "Result: FALSE");
@@ -1373,70 +1339,72 @@ public class Mind implements IMind {
                     hypothesis.clear();
                     tempHypothesis.clear();
                 } else {
-                    hypothesis.commit(m.getHypothesis());
-                    tempHypothesis.commit(m.getTempHypothesis());
+                    m.link(r, logging);
+                    ar = m.analyze(r, logging);
+                    if (ar) {
+                        if (logging) {
+                            m.getLog().add(LogMode.ANALYZER, "Result: FALSE");
+                            logResult(m);
+                        }
+                        res = false;
+                        hypothesis.clear();
+                        tempHypothesis.clear();
+                    } else {
+                        hypothesis.commit(m.getHypothesis());
+                        tempHypothesis.commit(m.getTempHypothesis());
 
-                    if (!hypothesis.isEmpty()) {
-                        Set<IHypothesis> toDelete = new HashSet<>();
-                        for (IHypothesis h : hypothesis) {
-                            for (ITerm t : ((ArgumentsList) h.getArguments()).getCVariables(this)) {
-                                if (((Term) t).getRule(this).isQuery()) {
-                                    toDelete.add(h);
+                        if (!hypothesis.isEmpty()) {
+                            Set<IHypothesis> toDelete = new HashSet<>();
+                            for (IHypothesis h : hypothesis) {
+                                for (ITerm t : ((ArgumentsList) h.getArguments()).getCVariables(this)) {
+                                    if (((Term) t).getRule(this).isQuery()) {
+                                        toDelete.add(h);
+                                    }
                                 }
                             }
+                            hypothesis.removeAll(toDelete);
                         }
-                        hypothesis.removeAll(toDelete);
-                    }
-                    if (!tempHypothesis.isEmpty()) {
-                        Set<IHypothesis> toDelete = new HashSet<>();
-                        for (IHypothesis h : tempHypothesis) {
-                            for (ITerm t : ((ArgumentsList) h.getArguments()).getCVariables(this)) {
-                                if (((Term) t).getRule(this).isQuery()) {
-                                    toDelete.add(h);
+                        if (!tempHypothesis.isEmpty()) {
+                            Set<IHypothesis> toDelete = new HashSet<>();
+                            for (IHypothesis h : tempHypothesis) {
+                                for (ITerm t : ((ArgumentsList) h.getArguments()).getCVariables(this)) {
+                                    if (((Term) t).getRule(this).isQuery()) {
+                                        toDelete.add(h);
+                                    }
                                 }
                             }
+                            tempHypothesis.removeAll(toDelete);
                         }
-                        tempHypothesis.removeAll(toDelete);
                     }
                 }
-            }
-        } else if (r != null && r.isSecond()) {
-            if (logging) {
-                m.getLog().add(LogMode.ANALYZER, "Rule already defined: " + r);
-                m.getLog().add(LogMode.ANALYZER, "Result: TRUE");
-                logResult(m);
-            }
-            res = true;
-            hypothesis.clear();
-            tempHypothesis.clear();
-        }
-        release(m);
-        return res;
-    }
-
-    public Boolean queryCheckTrue(String line, Object[] ext, boolean logging) throws Exception {
-        Boolean res = null;
-        Mind m = new Mind(this);
-        m.setQueryPass(QueryPass.CHECKTRUE);
-        if (logging) {
-            m.getLog().add(LogMode.ANALYZER, "============= TRUE CHECKING ===============");
-        }
-
-        Rule r = (Rule) m.compileLine(line, true, convertExternals(ext));
-        setCompliedLine(line);
-        if (r != null && !r.isSecond()) {
-            boolean ar = m.analyze(r, logging);
-            if (ar) {
+            } else if (r != null && r.isSecond()) {
                 if (logging) {
+                    m.getLog().add(LogMode.ANALYZER, "Rule already defined: " + r);
                     m.getLog().add(LogMode.ANALYZER, "Result: TRUE");
                     logResult(m);
                 }
                 res = true;
                 hypothesis.clear();
                 tempHypothesis.clear();
-            } else {
-                m.link(r, logging);
-                ar = m.analyze(r, logging);
+            }
+            tx.rollback();
+            return res;
+        }
+    }
+
+    public Boolean queryCheckTrue(String line, Object[] ext, boolean logging) throws Exception {
+        Boolean res = null;
+        try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
+            Mind m = tx.mind();
+            m.setQueryPass(QueryPass.CHECKTRUE);
+            if (logging) {
+                m.getLog().add(LogMode.ANALYZER, "============= TRUE CHECKING ===============");
+            }
+
+            Rule r = (Rule) m.compileLine(line, true, convertExternals(ext));
+            setCompliedLine(line);
+            if (r != null && !r.isSecond()) {
+                boolean ar = m.analyze(r, logging);
                 if (ar) {
                     if (logging) {
                         m.getLog().add(LogMode.ANALYZER, "Result: TRUE");
@@ -1446,43 +1414,54 @@ public class Mind implements IMind {
                     hypothesis.clear();
                     tempHypothesis.clear();
                 } else {
-                    hypothesis.commit(m.getHypothesis());
-                    if (hypothesis.isEmpty()) {
-
-                        if (!m.getTempHypothesis().isEmpty()) {
-                            for (IHypothesis tmp : m.getTempHypothesis()) {
-                                IRule rx = getRules().find((Hypothesis) tmp);
-                                if (hypothesis.find(tmp) == null && (rx == null || rx.isDeleted(this))) {
-                                    hypothesis.add(tmp);
-                                    if (logging) {
-                                        log.add(LogMode.ANALYZER, "Hypothesis moved: " + ((Hypothesis) tmp).toString(this));
+                    m.link(r, logging);
+                    ar = m.analyze(r, logging);
+                    if (ar) {
+                        if (logging) {
+                            m.getLog().add(LogMode.ANALYZER, "Result: TRUE");
+                            logResult(m);
+                        }
+                        res = true;
+                        hypothesis.clear();
+                        tempHypothesis.clear();
+                    } else {
+                        hypothesis.commit(m.getHypothesis());
+                        if (hypothesis.isEmpty()) {
+                            if (!m.getTempHypothesis().isEmpty()) {
+                                for (IHypothesis tmp : m.getTempHypothesis()) {
+                                    IRule rx = getRules().find((Hypothesis) tmp);
+                                    if (hypothesis.find(tmp) == null && (rx == null || rx.isDeleted(this))) {
+                                        hypothesis.add(tmp);
+                                        if (logging) {
+                                            log.add(LogMode.ANALYZER, "Hypothesis moved: " + ((Hypothesis) tmp).toString(this));
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    if (logging) {
-                        if (!hypothesis.isEmpty()) {
-                            m.getLog().add(LogMode.ANALYZER, String.format("Result: WHO KNOWS? Hypothesis found"));
-                        } else {
-                            m.getLog().add(LogMode.ANALYZER, "Result: WHO KNOWS? No Hypothesis.");
+                        if (logging) {
+                            if (!hypothesis.isEmpty()) {
+                                m.getLog().add(LogMode.ANALYZER, String.format("Result: WHO KNOWS? Hypothesis found"));
+                            } else {
+                                m.getLog().add(LogMode.ANALYZER, "Result: WHO KNOWS? No Hypothesis.");
+                            }
                         }
                     }
                 }
+            } else if (r != null && r.isSecond()) {
+                if (logging) {
+                    m.getLog().add(LogMode.ANALYZER, "Rule already defined: " + r);
+                    m.getLog().add(LogMode.ANALYZER, "Result: FALSE");
+                    logResult(m);
+                }
+                res = false;
+                hypothesis.clear();
+                tempHypothesis.clear();
             }
-        } else if (r != null && r.isSecond()) {
-            if (logging) {
-                m.getLog().add(LogMode.ANALYZER, "Rule already defined: " + r);
-                m.getLog().add(LogMode.ANALYZER, "Result: FALSE");
-                logResult(m);
-            }
-            res = false;
-            hypothesis.clear();
-            tempHypothesis.clear();
+            tx.rollback();
+            return res;
         }
-        release(m);
-        return res;
     }
 
     public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
@@ -1515,24 +1494,25 @@ public class Mind implements IMind {
                 break;
 
             case Enums.FOO:
-                Mind m = new Mind(this);
-                IOperation o = Parser.implement(line, m, null);
-                if (o != null) {
-                    IOperation x = m.getLibrary().add(o);
-                    if (x.getId() == o.getId()) {
-                        m.getLog().add(LogMode.ANALYZER, "Function updated: " + x.toString());
+                try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
+                    Mind m = tx.mind();
+                    IOperation o = Parser.implement(line, m, null);
+                    if (o != null) {
+                        IOperation x = m.getLibrary().add(o);
+                        if (x.getId() == o.getId()) {
+                            m.getLog().add(LogMode.ANALYZER, "Function updated: " + x.toString());
+                        } else {
+                            m.getLog().add(LogMode.ANALYZER, "New function implemented: " + x.toString());
+                        }
+                        tx.commit();
+                        res = true;
                     } else {
-                        m.getLog().add(LogMode.ANALYZER, "New function implemented: " + x.toString());
+                        m.getLog().add(LogMode.ANALYZER, "Implementation error: " + line);
+                        tx.rollback();
+                        res = false;
                     }
-                    commit(m);
-                    res = true;
-                } else {
-                    m.getLog().add(LogMode.ANALYZER, "Implementation error: " + line);
-                    release(m);
-                    res = false;
                 }
                 break;
-
             case Enums.SUC:
                 hypothesis.clear();
                 tempHypothesis.clear();
@@ -1558,46 +1538,48 @@ public class Mind implements IMind {
     }
 
     private void removeResult(Set<IRule> set, boolean logging) throws Exception {
-        Mind m = new Mind(this);
+        try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
+            Mind m = tx.mind();
 
-        for (IRule r : set) {
-            ((Rule) r).setDeleted(true, m);
-        }
-        for (IRule r : m.getRules()) {
-            if (r.isGenerated() && !r.isDeleted(m)) {
-                set.add(r);
+            for (IRule r : set) {
                 ((Rule) r).setDeleted(true, m);
             }
-        }
-
-        m.link(null, logging);
-        Boolean ar = m.analyze(null, logging);
-
-        Set<IRule> success = new HashSet<>();
-        for (IRule r : set) {
-            if (r.isDeleted(m)) {
-                success.add(r);
-            }
-        }
-
-        if (ar) {
-            if (logging) {
-                m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
-            }
-            release(m);
-        } else if (success.isEmpty()) {
-            if (logging) {
-                m.getLog().add(LogMode.ANALYZER, "WARNING: No rules have been deleted");
-            }
-            release(m);
-        } else {
-            if (logging) {
-                m.getLog().add(LogMode.ANALYZER, "SUCCESS: Deleted " + success.size() + " rules");
-                for (IRule r : success) {
-                    m.getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", r.getId(), r.toString()));
+            for (IRule r : m.getRules()) {
+                if (r.isGenerated() && !r.isDeleted(m)) {
+                    set.add(r);
+                    ((Rule) r).setDeleted(true, m);
                 }
             }
-            commit(m);
+
+            m.link(null, logging);
+            Boolean ar = m.analyze(null, logging);
+
+            Set<IRule> success = new HashSet<>();
+            for (IRule r : set) {
+                if (r.isDeleted(m)) {
+                    success.add(r);
+                }
+            }
+
+            if (ar) {
+                if (logging) {
+                    m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
+                }
+                tx.rollback();
+            } else if (success.isEmpty()) {
+                if (logging) {
+                    m.getLog().add(LogMode.ANALYZER, "WARNING: No rules have been deleted");
+                }
+                tx.rollback();
+            } else {
+                if (logging) {
+                    m.getLog().add(LogMode.ANALYZER, "SUCCESS: Deleted " + success.size() + " rules");
+                    for (IRule r : success) {
+                        m.getLog().add(LogMode.SOLVES, String.format("\tDeleted %03d: %s", r.getId(), r.toString()));
+                    }
+                }
+                tx.commit();
+            }
         }
     }
 
