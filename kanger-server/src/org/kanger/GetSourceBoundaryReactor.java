@@ -25,6 +25,12 @@ import java.nio.file.Files;
  * remains an error, does not publish the rejected document as accepted source,
  * and returns that exact document separately for repair in the browser editor.</p>
  *
+ * <p>A load is one operation-local technical transaction over the current
+ * user-visible Mind. Successful compilation commits the semantic delta into
+ * that same user level; rejection or failure rolls it back. The technical
+ * child is never published through {@link IUser#setCurrentMind(IMind)} and
+ * therefore cannot change the explicit transaction depth.</p>
+ *
  * <p>This reactor deliberately owns only non-empty {@code command/get}
  * requests. Source listing and every other command remain with the existing
  * reactor chain.</p>
@@ -70,9 +76,7 @@ public final class GetSourceBoundaryReactor implements IReactor<JSONObject> {
     }
 
     private JSONObject load(JSONObject parameters, IUser user) throws Exception {
-        IMind mind = user.getCurrentMind();
-        IMind parent = mind;
-        boolean outerChild = false;
+        Mind parent = (Mind) user.getCurrentMind();
         String fileName = parameters.getString("get");
         File file = new File(user.getSourceDir() + fileName);
 
@@ -85,56 +89,46 @@ public final class GetSourceBoundaryReactor implements IReactor<JSONObject> {
 
         String exactSource = new String(
                 Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-        String previousName = mind.getSourceFileName();
+        String previousName = parent.getSourceFileName();
 
-        try {
-            if (mind.isStorageUsed()) {
-                mind = new Mind(mind);
-                outerChild = true;
-            }
-
-            mind.setSourceFileName(file.getName());
-            Boolean accepted = mind.compile(
+        try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(parent)) {
+            Mind work = tx.mind();
+            Boolean compiled = work.compile(
                     SourceDocumentState.compilerInput(exactSource));
-            String description = mind.getCurrentLogRecord(LogMode.ANALYZER)
+            String description = work.getCurrentLogRecord(LogMode.ANALYZER)
                     .getRecord();
 
-            if (Boolean.TRUE.equals(accepted)) {
-                SourceDocumentState.publish(user, exactSource);
-                description += "<br>File " + file.getName() + " loaded";
-            } else {
-                mind.setSourceFileName(previousName);
+            if (!Boolean.TRUE.equals(compiled)) {
+                tx.rollback();
+                parent.setSourceFileName(previousName);
+                parent.setQueryResult(false);
+                user.setCurrentMind(parent);
+                return recoveryError("source_compile_rejected", description,
+                        file.getName(), exactSource);
             }
 
-            if (mind.isStorageUsed() && mind.isEmptyLevel()) {
-                IMind next = mind.getNext();
-                next.release(mind);
-                mind = next;
-                outerChild = false;
+            boolean committed = tx.commit();
+            if (!committed) {
+                parent.setSourceFileName(previousName);
+                parent.setQueryResult(false);
+                user.setCurrentMind(parent);
+                return recoveryError("source_compile_rejected", description,
+                        file.getName(), exactSource);
             }
 
-            if (mind.getTransactionLevel() > 0) {
+            parent.setSourceFileName(file.getName());
+            SourceDocumentState.publish(user, exactSource);
+            description += "<br>File " + file.getName() + " loaded";
+            if (parent.getTransactionLevel() > 0) {
                 description += "<br>Transaction level "
-                        + mind.getTransactionLevel() + " (" + mind.getId() + ")";
+                        + parent.getTransactionLevel() + " (" + parent.getId() + ")";
             }
-            ((Mind) mind).setQueryResult(accepted);
-            user.setCurrentMind(mind);
-
-            if (Boolean.TRUE.equals(accepted)) {
-                return ok(description);
-            }
-            mind.setSourceFileName(previousName);
-            return recoveryError("source_compile_rejected", description,
-                    file.getName(), exactSource);
+            parent.setQueryResult(true);
+            user.setCurrentMind(parent);
+            return ok(description);
         } catch (Exception failure) {
-            if (outerChild) {
-                try {
-                    parent.release(mind);
-                } catch (Exception releaseFailure) {
-                    failure.addSuppressed(releaseFailure);
-                }
-            }
             parent.setSourceFileName(previousName);
+            parent.setQueryResult(false);
             user.setCurrentMind(parent);
             return recoveryError("source_load_failed", failure.toString(),
                     file.getName(), exactSource);
