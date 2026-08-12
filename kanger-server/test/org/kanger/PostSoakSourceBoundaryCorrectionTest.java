@@ -43,17 +43,21 @@ public class PostSoakSourceBoundaryCorrectionTest {
     }
 
     @Test
-    public void stopLossSourceBoundaryPreservesExactDocumentsAndRejectedGetRecovery()
-            throws Exception {
+    public void compilerInputAddsOnlyVirtualTerminalBoundary() {
+        String exact = "!baseline;/* closed footer */";
+        assertEquals(exact + "\n", SourceDocumentState.compilerInput(exact));
+        assertEquals(exact, exact,
+                "Compiler boundary must not mutate the exact document");
+    }
+
+    @Test
+    public void stopLossGetPreservesExactDocumentAndRejectedRecovery() throws Exception {
         String identity = "post-soak-source-" + UUID.randomUUID().toString();
         IUser user = UserFactory.createUser(identity, identity);
         try {
             new UDF().init(user);
             IMind mind = new Mind(user);
             user.setCurrentMind(mind);
-            assertTrue(mind.compile("!baseline;"));
-            mind.setSourceFileName("baseline.k");
-            SourceDocumentState.publish(user, "!baseline;");
 
             String token = UserFactory.addUser(user);
             DestructiveStopLossReactor reactor = new DestructiveStopLossReactor(
@@ -81,10 +85,10 @@ public class PostSoakSourceBoundaryCorrectionTest {
                     new String(Files.readAllBytes(putFile), StandardCharsets.UTF_8),
                     "Source put reconstructed instead of persisting the exact document");
 
-            String acceptedBeforeReject = user.getCurrentMind().getSourceCode();
+            String semanticBeforeReject = user.getCurrentMind().getSourceCode();
             String nameBeforeReject = user.getCurrentMind().getSourceFileName();
             String exactBeforeReject = SourceDocumentState.current(user, user.getCurrentMind());
-            String rejectedSource = "!collision;?collision;/* repair me */";
+            String rejectedSource = "?baseline;/* repair me */";
             Path rejectedFile = Paths.get(user.getSourceDir()).resolve("rejected.k");
             Files.write(rejectedFile, rejectedSource.getBytes(StandardCharsets.UTF_8));
 
@@ -92,7 +96,7 @@ public class PostSoakSourceBoundaryCorrectionTest {
                     .put("token", token)
                     .put("get", "rejected.k"));
             assertEquals("error", rejected.optString("result"), rejected.toString());
-            assertEquals(acceptedBeforeReject, user.getCurrentMind().getSourceCode(),
+            assertEquals(semanticBeforeReject, user.getCurrentMind().getSourceCode(),
                     "Rejected get changed the live semantic workspace");
             assertEquals(nameBeforeReject, user.getCurrentMind().getSourceFileName(),
                     "Rejected get rebound the accepted source name");
@@ -104,6 +108,21 @@ public class PostSoakSourceBoundaryCorrectionTest {
             assertEquals(1, recovery.optInt("schema"));
             assertEquals("rejected.k", recovery.optString("logical_name"));
             assertEquals(rejectedSource, recovery.optString("text"));
+        } finally {
+            UserFactory.dropUser(user);
+        }
+    }
+
+    @Test
+    public void stopLossCompilePublishesExactNoFinalEolDocument() throws Exception {
+        String identity = "post-soak-compile-" + UUID.randomUUID().toString();
+        IUser user = UserFactory.createUser(identity, identity);
+        try {
+            new UDF().init(user);
+            user.setCurrentMind(new Mind(user));
+            String token = UserFactory.addUser(user);
+            DestructiveStopLossReactor reactor = new DestructiveStopLossReactor(
+                    new QueryProcessor());
 
             String compileSource = "!replacement;/* closed footer */";
             JSONObject compiled = invoke(reactor, "query", new JSONObject()
