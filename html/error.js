@@ -112,6 +112,30 @@
                 + normalized.code + '] ' + stringValue(normalized.description);
     }
 
+    function sourceRecovery(data) {
+        if (!data || data.result === 'OK') {
+            return null;
+        }
+        var recovery = data.source_recovery;
+        if (!recovery || recovery.schema !== 1
+                || recovery.text === null || recovery.text === undefined) {
+            return null;
+        }
+        return recovery;
+    }
+
+    function exposeSourceRecovery(data) {
+        var recovery = sourceRecovery(data);
+        if (!recovery) {
+            return;
+        }
+        window.setTimeout(function () {
+            if (typeof window.openEditor === 'function') {
+                window.openEditor(stringValue(recovery.text));
+            }
+        }, 0);
+    }
+
     function installPostBoundary() {
         originalPost = window.post;
         window.post = function (packet, callback) {
@@ -121,6 +145,7 @@
                     if (typeof callback === 'function') {
                         callback(normalized);
                     }
+                    exposeSourceRecovery(normalized);
                 });
             } catch (error) {
                 var failure = local('transport', 'transport_exception',

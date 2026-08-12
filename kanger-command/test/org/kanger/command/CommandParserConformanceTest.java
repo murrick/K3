@@ -251,10 +251,20 @@ public final class CommandParserConformanceTest {
     }
 
     private void helpRegistry() {
-        check(CommandRegistry.definitions().size() == CommandIntent.values().length,
-                "every intent has registry metadata");
+        boolean[] documented = new boolean[CommandIntent.values().length];
+        for (CommandRegistry.Definition definition : CommandRegistry.definitions()) {
+            documented[definition.getIntent().ordinal()] = true;
+        }
+        for (CommandIntent intent : CommandIntent.values()) {
+            check(documented[intent.ordinal()],
+                    "missing registry metadata for " + intent);
+        }
+        check(CommandRegistry.definitions().size() >= CommandIntent.values().length,
+                "registry may contain additional documented syntax aliases");
+
         String help = new CommandHelpRenderer().render();
         check(help.contains("rule <id>"), "help contains rule object syntax");
+        check(help.contains("\n  rules\n"), "help contains plural rules alias");
         check(help.contains("values order <field>"), "help contains values syntax");
         check(help.contains("when accept <index>"), "help contains hypothesis addressing");
         check(help.contains("delete [<source>]"), "help contains safe bare delete syntax");

@@ -82,9 +82,10 @@ public class Kanger {
                                                 new WorkspaceStateReactor(
                                                         new CanonicalCommandRuntimeReactor(
                                                                 new ExplicitStorageLifecycleReactor(
-                                                                        new DestructiveStopLossReactor(
-                                                                                new MindLifecycleReactor(
-                                                                                        new QueryProcessor()))))))))));
+                                                                        new GetSourceBoundaryReactor(
+                                                                                new DestructiveStopLossReactor(
+                                                                                        new MindLifecycleReactor(
+                                                                                                new QueryProcessor())))))))))));
             } finally {
                 shutdownServer();
                 System.out.println("FORCE REBOOT Server");

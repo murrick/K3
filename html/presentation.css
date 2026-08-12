@@ -117,6 +117,9 @@ body.kanger-presentation #container-logging > div:first-child {
     font-size: 12px;
     letter-spacing: .035em;
     text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 body.kanger-presentation #statements,
@@ -327,6 +330,13 @@ body.kanger-presentation #query-results td:not(:first-child):hover {
 
 body.kanger-presentation #user-menu {
     top: var(--kanger-header) !important;
+}
+
+/* Confirmation e-mail resend no longer has a valid UI meaning in either
+ * supported authentication mode. Keep the legacy endpoint outside the scope of
+ * this Browser-only correction, but remove its menu action unconditionally. */
+body.kanger-presentation #user-menu > [onclick="resendConfirmation()"] {
+    display: none !important;
 }
 
 /* 3.7.0.6 soak corrections: controls must remain a stable right-hand column
