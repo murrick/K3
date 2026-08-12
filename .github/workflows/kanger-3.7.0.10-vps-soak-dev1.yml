@@ -159,6 +159,9 @@ jobs:
               -e 's/99ba358d177a1e947cfd8de1fef86da57609e86aa95e3a84d2d128e69ec49f93/9b16d0615cefc3e63efaf90ef1577fd19d61832446d8622c7ba72005da5b6ab9/g' \
               -e 's|/home/murray/sites/kanger-3.7.0.7-vps-soak-20260811T051011Z|/home/murray/sites/kanger-3.7.0.8-vps-soak-20260812T103642Z|g' \
               -e 's/3\.7\.0\.7/3.7.0.8-dev3/g' \
+              -e 's/NAME="kanger-vps-before-3\.7\.0\.8-/NAME="kanger-vps-before-3.7.0.10-/g' \
+              -e 's/purpose=pre-3\.7\.0\.8-development-soak/purpose=pre-3.7.0.10-development-soak/g' \
+              -e 's/The full pre-3\.7\.0\.8 state\/config snapshot/The full pre-3.7.0.10 state\/config snapshot/g' \
               "${path}"
           done
 
@@ -247,7 +250,11 @@ jobs:
           grep -Fq "KANGER_EXPECTED_CURRENT_JAR_SHA256:-${PRIOR_JAR}" "${ROOT}/deploy/snapshot-current.sh"
           grep -Fq "KANGER_EXPECTED_PUBLIC_UI_TARGET:-${PRIOR_UI}" "${ROOT}/deploy/snapshot-current.sh"
           grep -Fq 'prior_development_soak=3.7.0.8-dev3' "${ROOT}/deploy/snapshot-current.sh"
+          grep -Fq 'NAME="kanger-vps-before-3.7.0.10-${STAMP}"' "${ROOT}/deploy/snapshot-current.sh"
+          grep -Fq 'purpose=pre-3.7.0.10-development-soak rollback and disaster recovery' "${ROOT}/deploy/snapshot-current.sh"
+          ! grep -Fq 'NAME="kanger-vps-before-3.7.0.8-' "${ROOT}/deploy/snapshot-current.sh"
           grep -Fq 'restored_state=prior-development-soak-3.7.0.8-dev3' "${ROOT}/deploy/rollback-soak.sh"
+          grep -Fq 'The full pre-3.7.0.10 state/config snapshot remains available' "${ROOT}/deploy/rollback-soak.sh"
 
           expected="$(cat <<'EOF_FILES'
           bottom-layout.js
