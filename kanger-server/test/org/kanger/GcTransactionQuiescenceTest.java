@@ -7,10 +7,12 @@ package org.kanger;
 
 import org.junit.jupiter.api.Test;
 import org.kanger.exception.ParseErrorException;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.IUser;
 import org.kanger.udf.UDF;
 
 import java.lang.reflect.Field;
+import java.util.LinkedList;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -58,6 +60,23 @@ class GcTransactionQuiescenceTest {
 
             assertEquals(0, counter(fixture.root),
                     "Malformed compile leaked a technical child reservation");
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
+    void malformedCompileLineRestoresOwningMindTransactionQuiescence() throws Exception {
+        Fixture fixture = fixture("parse-line-counter");
+        try {
+            assertEquals(0, counter(fixture.root));
+
+            assertThrows(ParseErrorException.class,
+                    () -> fixture.root.compileLine(
+                            "!\"unterminated", false, new LinkedList<ITerm>()));
+
+            assertEquals(0, counter(fixture.root),
+                    "Malformed compileLine leaked its direct technical child reservation");
         } finally {
             fixture.close();
         }
