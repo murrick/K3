@@ -1,0 +1,313 @@
+name: TEMP KANGER GC lifecycle correction
+
+on:
+  push:
+    branches:
+      - audit/3.7.0.9-gc-lifecycle
+
+permissions:
+  contents: write
+
+jobs:
+  apply-exact-core-fix:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Apply exact exception-safe technical Mind settlement
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('kanger/src/org/kanger/Mind.java')
+          text = path.read_text(encoding='utf-8')
+
+          old_compile = '''    public boolean compile(String src, Object[] ext, boolean logging) throws Exception {
+              this.logging = logging;
+
+              getQueryValues().clear();
+              getLog().clear();
+              getSolutions().clear();
+              getValues().clear();
+              getHypothesis().clear();
+
+              Token t = null;
+              Mind m = new Mind(this);
+              m.setQueryPass(QueryPass.ACCEPT);
+              int previousPos = 0;
+              Queue<ITerm> externals = convertExternals(ext);
+
+              while ((t = Tools.extractLine(src, t)) != null) {
+                  String comment = src.substring(previousPos, t.getPos()).trim();
+                  if (previousPos == 0) {
+                      String[] cc = Parser.extractComments(comment);
+                      if (cc.length > 1 && !cc[0].isEmpty()) {
+                          m.getComments().add(CommentFactory.HEADER_ID, cc[0].trim());
+                          comment = comment.substring(cc[0].length()).trim();
+                      }
+                  }
+                  previousPos = t.getPos() + t.getLen();
+
+                  Object r = m.compileLine(t.getToken(src), false, externals);
+                  if (!comment.isEmpty() && r instanceof Rule) {
+                      m.getComments().add(((Rule) r).getId(), comment);
+                  }
+              }
+
+              if (t != null && src.length() > t.getPos() + t.getLen()) {
+                  String comment = src.substring(t.getPos() + t.getLen()).trim();
+                  if (!comment.isEmpty()) {
+                      m.getComments().add(CommentFactory.FOOTER_ID, comment);
+                  }
+              }
+
+              m.link(null, logging);
+              Boolean ar = m.analyze(null, logging);
+
+              if (ar) {
+                  if (logging) {
+                      m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
+                  }
+                  release(m);
+                  return false;
+              } else {
+                  if (logging) {
+                      m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
+                  }
+                  commit(m);
+                  return true;
+              }
+          }
+          '''
+
+          new_compile = '''    public boolean compile(String src, Object[] ext, boolean logging) throws Exception {
+              this.logging = logging;
+
+              getQueryValues().clear();
+              getLog().clear();
+              getSolutions().clear();
+              getValues().clear();
+              getHypothesis().clear();
+
+              Token t = null;
+              Mind m = new Mind(this);
+              boolean finalizationStarted = false;
+              try {
+                  m.setQueryPass(QueryPass.ACCEPT);
+                  int previousPos = 0;
+                  Queue<ITerm> externals = convertExternals(ext);
+
+                  while ((t = Tools.extractLine(src, t)) != null) {
+                      String comment = src.substring(previousPos, t.getPos()).trim();
+                      if (previousPos == 0) {
+                          String[] cc = Parser.extractComments(comment);
+                          if (cc.length > 1 && !cc[0].isEmpty()) {
+                              m.getComments().add(CommentFactory.HEADER_ID, cc[0].trim());
+                              comment = comment.substring(cc[0].length()).trim();
+                          }
+                      }
+                      previousPos = t.getPos() + t.getLen();
+
+                      Object r = m.compileLine(t.getToken(src), false, externals);
+                      if (!comment.isEmpty() && r instanceof Rule) {
+                          m.getComments().add(((Rule) r).getId(), comment);
+                      }
+                  }
+
+                  if (t != null && src.length() > t.getPos() + t.getLen()) {
+                      String comment = src.substring(t.getPos() + t.getLen()).trim();
+                      if (!comment.isEmpty()) {
+                          m.getComments().add(CommentFactory.FOOTER_ID, comment);
+                      }
+                  }
+
+                  m.link(null, logging);
+                  Boolean ar = m.analyze(null, logging);
+
+                  if (ar) {
+                      if (logging) {
+                          m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
+                      }
+                      finalizationStarted = true;
+                      release(m);
+                      return false;
+                  } else {
+                      if (logging) {
+                          m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
+                      }
+                      finalizationStarted = true;
+                      commit(m);
+                      return true;
+                  }
+              } catch (Throwable failure) {
+                  if (!finalizationStarted) {
+                      try {
+                          release(m);
+                      } catch (Throwable cleanupFailure) {
+                          if (cleanupFailure != failure) {
+                              failure.addSuppressed(cleanupFailure);
+                          }
+                      }
+                  }
+                  rethrow(failure);
+                  throw new AssertionError("unreachable");
+              }
+          }
+          '''
+
+          old_compile_line = '''    public Object compileLine(String line, boolean query, Queue<ITerm> externals) throws Exception {
+              String orig = line.trim();
+              compliedLine = orig;
+              Object r = null;
+              Boolean suc = null;
+
+              switch (line.charAt(0)) {
+                  case Enums.FOO:
+                      r = Parser.implement(line.substring(1), this, null);
+                      if (r != null) {
+                          library.add((Operation) r);
+                      }
+                      break;
+                  case Enums.INS:
+                  case Enums.ANT:
+                      suc = true;
+                      break;
+                  case Enums.DEL:
+                  case Enums.SUC:
+                      suc = false;
+                      break;
+              }
+              if (suc != null) {
+                  Mind x = new Mind(this);
+
+                  Leaf p = Parser.parse(line.substring(1));
+
+                  r = x.compiler.compileLine(p, suc, orig, query, externals);
+                  x.setCompliedLine(compliedLine);
+                  if (r instanceof Rule && ((Rule) r).isSecond()) {
+                      release(x);
+                      log.add(LogMode.ANALYZER, "WARNING: Rule is duplicated: " + r);
+                      r = null;
+                  } else if (r instanceof Rule) {
+                      commit(x);
+                      log.add(LogMode.ANALYZER, "Compiled: " + ((Rule) r).getOrigin());
+                      log.add(LogMode.ANALYZER, (Rule) r);
+                      for (IRule rx : rules) {
+                          if (rx.getId() > ((Rule) r).getId() /*&& rx.isGenerated()*/) {
+                              log.add(LogMode.ANALYZER, "Extracted: " + rx.getOrigin());
+                          }
+                      }
+                  }
+              }
+              return r;
+          }
+          '''
+
+          new_compile_line = '''    public Object compileLine(String line, boolean query, Queue<ITerm> externals) throws Exception {
+              String orig = line.trim();
+              compliedLine = orig;
+              Object r = null;
+              Boolean suc = null;
+
+              switch (line.charAt(0)) {
+                  case Enums.FOO:
+                      r = Parser.implement(line.substring(1), this, null);
+                      if (r != null) {
+                          library.add((Operation) r);
+                      }
+                      break;
+                  case Enums.INS:
+                  case Enums.ANT:
+                      suc = true;
+                      break;
+                  case Enums.DEL:
+                  case Enums.SUC:
+                      suc = false;
+                      break;
+              }
+              if (suc != null) {
+                  Mind x = new Mind(this);
+                  boolean finalizationStarted = false;
+                  try {
+                      Leaf p = Parser.parse(line.substring(1));
+
+                      r = x.compiler.compileLine(p, suc, orig, query, externals);
+                      x.setCompliedLine(compliedLine);
+                      if (r instanceof Rule && ((Rule) r).isSecond()) {
+                          finalizationStarted = true;
+                          release(x);
+                          log.add(LogMode.ANALYZER, "WARNING: Rule is duplicated: " + r);
+                          r = null;
+                      } else if (r instanceof Rule) {
+                          finalizationStarted = true;
+                          commit(x);
+                          log.add(LogMode.ANALYZER, "Compiled: " + ((Rule) r).getOrigin());
+                          log.add(LogMode.ANALYZER, (Rule) r);
+                          for (IRule rx : rules) {
+                              if (rx.getId() > ((Rule) r).getId() /*&& rx.isGenerated()*/) {
+                                  log.add(LogMode.ANALYZER, "Extracted: " + rx.getOrigin());
+                              }
+                          }
+                      } else {
+                          finalizationStarted = true;
+                          release(x);
+                      }
+                  } catch (Throwable failure) {
+                      if (!finalizationStarted) {
+                          try {
+                              release(x);
+                          } catch (Throwable cleanupFailure) {
+                              if (cleanupFailure != failure) {
+                                  failure.addSuppressed(cleanupFailure);
+                              }
+                          }
+                      }
+                      rethrow(failure);
+                      throw new AssertionError("unreachable");
+                  }
+              }
+              return r;
+          }
+          '''
+
+          for old, new, label in [
+              (old_compile, new_compile, 'compile'),
+              (old_compile_line, new_compile_line, 'compileLine'),
+          ]:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one source match, found {count}')
+              text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Validate exact diff
+        shell: bash
+        run: |
+          git diff --check
+          git diff -- kanger/src/org/kanger/Mind.java
+
+      - name: Run focused GC lifecycle gate on Java 21
+        shell: bash
+        run: |
+          mvn -B -ntp -f kanger-server/pom.xml \
+            -Dtest=GcTransactionQuiescenceTest test
+
+      - name: Commit qualified core correction
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add kanger/src/org/kanger/Mind.java
+          git commit -m "fix core technical Mind settlement on compile failures"
+          git push origin HEAD:audit/3.7.0.9-gc-lifecycle
