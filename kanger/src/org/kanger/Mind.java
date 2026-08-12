@@ -1887,10 +1887,14 @@ public class Mind implements IMind {
      * still open, so {@link #getTransactionLevel()} alone is not sufficient to
      * prove storage-lifecycle quiescence.
      */
-    boolean hasPendingTransactions() {
+    int pendingTransactionCount() {
         synchronized (locker) {
-            return transactionCounter > 0;
+            return transactionCounter;
         }
+    }
+
+    boolean hasPendingTransactions() {
+        return pendingTransactionCount() > 0;
     }
 
     @Override

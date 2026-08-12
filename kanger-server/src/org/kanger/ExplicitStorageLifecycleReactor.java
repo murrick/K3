@@ -18,8 +18,9 @@ import org.kanger.interfaces.IUser;
  *
  * <p>The Core owns every lifecycle precondition. This adapter intercepts only
  * operations whose ordering must be protected before the historical command
- * processor touches a target generation: repeated {@code use}, root
- * {@code commit} as durable checkpoint, and explicit {@code close}. It
+ * processor touches lifecycle state: root {@code commit} as durable
+ * checkpoint and explicit {@code close}. Storage {@code use} is delegated to
+ * Core because Core owns semantic U-stack rebase and compensating restore. It
  * translates {@link StorageLifecycleException} into stable JSON fields without
  * duplicating the lifecycle implementation.</p>
  */
@@ -59,13 +60,13 @@ final class ExplicitStorageLifecycleReactor implements IReactor<JSONObject> {
         IMind active = user.getCurrentMind();
         try {
             if (use) {
-                if (!active.isStorageUsed()) {
-                    return delegate.run(packet);
-                }
-                throw new StorageLifecycleException(
-                        StorageLifecycleErrorCode.STORAGE_ALREADY_OPEN,
-                        "Database " + active.getStorageName()
-                                + " is already open; explicit close is required before use");
+                /*
+                 * Core User.use owns same-generation rejection and semantic
+                 * A->B rebase. Pre-rejecting an already-open generation here
+                 * would bypass U-stack snapshot/replay and its compensating
+                 * restore path, so the protocol adapter only delegates.
+                 */
+                return delegate.run(packet);
             }
 
             if (close) {

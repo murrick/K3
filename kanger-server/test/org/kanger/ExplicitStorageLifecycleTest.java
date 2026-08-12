@@ -191,53 +191,47 @@ class ExplicitStorageLifecycleTest {
     }
 
     @Test
-    void useWhileOpenRejectsBeforeTargetOpenOrValidation() throws Exception {
-        Fixture fixture = fixture("use-reject");
-        Path corruptStore = null;
+    void crossStorageUseDelegatesToCoreAndPreservesNestedExplicitLevels()
+            throws Exception {
+        Fixture fixture = fixture("cross-storage-rebase");
         try {
-            use(fixture, "use.reject.current");
-            IMind active = fixture.user.getCurrentMind();
-            String source = active.getSourceCode();
-            int level = active.getTransactionLevel();
-            Map<String, String> currentBefore = hashGeneration(
-                    fixture.user, active.getStorageName());
+            use(fixture, "server.rebase.a");
+            mutate(fixture, "a_base");
+            close(fixture);
 
-            String corruptName = "use" + Enums.FILE_SEPARATOR + "reject-target";
-            Path corruptBase = Paths.get(fixture.user.getDatabaseDir())
-                    .resolve(corruptName);
-            Files.createDirectories(corruptBase.getParent());
-            corruptStore = Paths.get(corruptBase.toString() + ".store");
-            byte[] sentinel = new byte[]{0x41, 0x42, 0x43, 0x44};
-            Files.write(corruptStore, sentinel);
-            String corruptBefore = sha256(sentinel);
+            use(fixture, "server.rebase.b");
+            mutate(fixture, "b_base");
+            close(fixture);
 
-            JSONObject same = use(fixture, "use.reject.current");
-            assertEquals("error", same.optString("result"), same.toString());
-            assertEquals("STORAGE_ALREADY_OPEN", same.optString("code"));
-            assertEquals("EXPLICIT_CLOSE_REQUIRED",
-                    same.optString("required_action"));
+            use(fixture, "server.rebase.a");
+            assertEquals(1, transaction(fixture, "create")
+                    .optInt("transaction", -1));
+            mutate(fixture, "u1_fact");
+            assertEquals(2, transaction(fixture, "create")
+                    .optInt("transaction", -1));
+            mutate(fixture, "u2_fact");
 
-            JSONObject other = use(fixture, "use.reject-target");
-            assertEquals("error", other.optString("result"), other.toString());
-            assertEquals("STORAGE_ALREADY_OPEN", other.optString("code"));
-            assertEquals("EXPLICIT_CLOSE_REQUIRED",
-                    other.optString("required_action"));
+            JSONObject switched = use(fixture, "server.rebase.b");
+            assertEquals("OK", switched.optString("result"), switched.toString());
+            assertEquals(2, switched.optInt("transaction", -1),
+                    "server boundary collapsed the explicit U-stack");
+            assertEquals("yes", ask(fixture, "b_base").optString("response"));
+            assertEquals("yes", ask(fixture, "u1_fact").optString("response"));
+            assertEquals("yes", ask(fixture, "u2_fact").optString("response"));
+            assertNotEquals("yes", ask(fixture, "a_base").optString("response"));
 
-            assertSame(active, fixture.user.getCurrentMind());
-            assertEquals(level, active.getTransactionLevel());
-            assertEquals(source, active.getSourceCode());
-            assertEquals(currentBefore,
-                    hashGeneration(fixture.user, active.getStorageName()));
-            assertEquals(corruptBefore,
-                    sha256(Files.readAllBytes(corruptStore)));
-            assertFalse(Files.exists(Paths.get(corruptBase + ".integrity")),
-                    "Rejected use validated the target generation");
-            assertFalse(Files.exists(Paths.get(corruptBase + ".index")),
-                    "Rejected use opened the target generation");
+            JSONObject rollbackTwo = transaction(fixture, "rollback");
+            assertEquals("OK", rollbackTwo.optString("result"), rollbackTwo.toString());
+            assertEquals(1, rollbackTwo.optInt("transaction", -1));
+            assertEquals("yes", ask(fixture, "u1_fact").optString("response"));
+            assertNotEquals("yes", ask(fixture, "u2_fact").optString("response"));
+
+            JSONObject rollbackOne = transaction(fixture, "rollback");
+            assertEquals("OK", rollbackOne.optString("result"), rollbackOne.toString());
+            assertEquals(0, rollbackOne.optInt("transaction", -1));
+            assertEquals("yes", ask(fixture, "b_base").optString("response"));
+            assertNotEquals("yes", ask(fixture, "u1_fact").optString("response"));
         } finally {
-            if (corruptStore != null) {
-                Files.deleteIfExists(corruptStore);
-            }
             fixture.close();
         }
     }

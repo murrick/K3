@@ -396,18 +396,27 @@ public class User implements IUser {
 
     private void requireExplicitStackOwnership(Mind top) {
         Mind current = top;
-        if (current.hasPendingTransactions()) {
+        int reservations = current.pendingTransactionCount();
+        if (reservations != 0) {
             throw new IllegalStateException(
-                    "Cannot rebase storage while the current user level owns an unfinished technical transaction");
+                    "Cannot rebase storage: published U" + top.getTransactionLevel()
+                            + " owns " + reservations
+                            + " hidden child reservation(s); expected exactly zero");
         }
 
+        int level = top.getTransactionLevel();
         while (current.getNext() != null) {
             Mind parent = (Mind) current.getNext();
-            if (!parent.hasPendingTransactions()) {
+            reservations = parent.pendingTransactionCount();
+            if (reservations != 1) {
                 throw new IllegalStateException(
-                        "Explicit transaction chain is missing its child reservation");
+                        "Cannot rebase storage: U" + (level - 1)
+                                + " owns " + reservations
+                                + " child reservation(s); expected exactly one for U"
+                                + level);
             }
             current = parent;
+            --level;
         }
     }
 
