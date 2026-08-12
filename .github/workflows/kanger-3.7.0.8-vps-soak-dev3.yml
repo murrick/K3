@@ -243,11 +243,11 @@ jobs:
 
           grep -Fq "EXPECTED_SOURCE_HEAD=\"${CANONICAL}\"" "${ROOT}/deploy/deploy-soak.sh"
           grep -Fq "EXPECTED_PACKAGING_BRANCH=\"${PACKAGING_BRANCH}\"" "${ROOT}/deploy/deploy-soak.sh"
-          grep -Fq "EXPECTED_CURRENT_JAR_SHA256:-${PRIOR_JAR}" "${ROOT}/deploy/deploy-soak.sh"
-          grep -Fq "EXPECTED_CURRENT_UI_TARGET:-${PRIOR_UI}" "${ROOT}/deploy/deploy-soak.sh"
+          grep -Fq "KANGER_EXPECTED_CURRENT_JAR_SHA256:-${PRIOR_JAR}" "${ROOT}/deploy/deploy-soak.sh"
+          grep -Fq "KANGER_EXPECTED_CURRENT_UI_TARGET:-${PRIOR_UI}" "${ROOT}/deploy/deploy-soak.sh"
           grep -Fq "packaging_generation=dev3" "${ROOT}/deploy/deploy-soak.sh"
-          grep -Fq "EXPECTED_JAR_SHA256:-${PRIOR_JAR}" "${ROOT}/deploy/snapshot-current.sh"
-          grep -Fq "EXPECTED_PUBLIC_UI_TARGET:-${PRIOR_UI}" "${ROOT}/deploy/snapshot-current.sh"
+          grep -Fq "KANGER_EXPECTED_CURRENT_JAR_SHA256:-${PRIOR_JAR}" "${ROOT}/deploy/snapshot-current.sh"
+          grep -Fq "KANGER_EXPECTED_PUBLIC_UI_TARGET:-${PRIOR_UI}" "${ROOT}/deploy/snapshot-current.sh"
 
           expected="$(cat <<'EOF_FILES'
           bottom-layout.js
