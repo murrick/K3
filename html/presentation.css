@@ -117,6 +117,9 @@ body.kanger-presentation #container-logging > div:first-child {
     font-size: 12px;
     letter-spacing: .035em;
     text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 body.kanger-presentation #statements,
