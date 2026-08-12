@@ -5,12 +5,17 @@
  */
 package org.kanger;
 
+import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -110,6 +115,69 @@ class CommandBoundaryTransactionModelTest {
         } finally {
             fixture.close();
         }
+    }
+
+    @Test
+    void successfulGetCommitsIntoCurrentUserLevelWithoutCreatingAnotherLevel()
+            throws Exception {
+        Fixture fixture = fixture("get-boundary");
+        try {
+            IMind root = createStorage(fixture, "get-base", "base_fact");
+            root = open(fixture, root, "get-base");
+
+            Mind u1 = new Mind(root);
+            fixture.user.setCurrentMind(u1);
+            assertTrue(Boolean.TRUE.equals(u1.query("!u1_before_get;")));
+            assertEquals(1, u1.getTransactionLevel());
+
+            String token = UserFactory.addUser(fixture.user);
+            String source = "!get_fact;";
+            Path file = Paths.get(fixture.user.getSourceDir()).resolve("tx-get.k");
+            Files.createDirectories(file.getParent());
+            Files.write(file, source.getBytes(StandardCharsets.UTF_8));
+
+            GetSourceBoundaryReactor reactor = new GetSourceBoundaryReactor(
+                    new QueryProcessor());
+            JSONObject response = invokeGet(reactor, token, "tx-get.k");
+
+            assertEquals("OK", response.optString("result"), response.toString());
+            assertEquals(1, response.optInt("transaction", -1),
+                    "get exposed its operation-local child as a user transaction");
+
+            IMind current = fixture.user.getCurrentMind();
+            assertEquals(1, current.getTransactionLevel(),
+                    "get changed explicit user transaction depth");
+            assertTrue(Boolean.TRUE.equals(current.query("?base_fact;")));
+            assertTrue(Boolean.TRUE.equals(current.query("?u1_before_get;")));
+            assertTrue(Boolean.TRUE.equals(current.query("?get_fact;")));
+
+            Mind currentU1 = (Mind) current;
+            Mind currentRoot = (Mind) currentU1.getNext();
+            currentRoot.release(currentU1);
+            fixture.user.setCurrentMind(currentRoot);
+
+            assertEquals(0, currentRoot.getTransactionLevel());
+            assertTrue(Boolean.TRUE.equals(currentRoot.query("?base_fact;")));
+            assertFalse(Boolean.TRUE.equals(currentRoot.query("?u1_before_get;")));
+            assertFalse(Boolean.TRUE.equals(currentRoot.query("?get_fact;")),
+                    "get delta escaped the explicit U1 boundary");
+        } finally {
+            fixture.close();
+        }
+    }
+
+    private JSONObject invokeGet(GetSourceBoundaryReactor reactor,
+                                 String token,
+                                 String fileName) throws Exception {
+        JSONObject packet = new JSONObject().put("body", new JSONObject()
+                .put("context", "command")
+                .put("parameters", new JSONObject()
+                        .put("token", token)
+                        .put("get", fileName)));
+        Object response = reactor.run(packet);
+        assertTrue(response instanceof JSONObject,
+                "get response is not JSON: " + response);
+        return (JSONObject) response;
     }
 
     private IMind createStorage(Fixture fixture, String name, String fact) throws Exception {
