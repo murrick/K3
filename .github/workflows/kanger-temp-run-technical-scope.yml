@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   apply:
-    if: github.event.head_commit.message == 'ci: run technical transaction refactor applicator'
+    if: "github.event.head_commit.message == 'ci: fix technical scope wrapper syntax'"
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
