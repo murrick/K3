@@ -120,6 +120,11 @@ class GcTransactionQuiescenceTest {
         assertMalformedQueryBalanced("?", "check");
     }
 
+    @Test
+    void malformedFunctionRestoresRootTransactionQuiescence() throws Exception {
+        assertMalformedQueryBalanced("=", "function");
+    }
+
     private void assertMalformedQueryBalanced(String prefix, String purpose) throws Exception {
         Fixture fixture = fixture("query-" + purpose);
         try {
