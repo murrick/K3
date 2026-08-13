@@ -8,9 +8,9 @@ package org.kanger;
 import org.kanger.enums.Enums;
 import org.kanger.factory.CommentFactory;
 import org.kanger.interfaces.IMind;
-import org.kanger.interfaces.IOperation;
 import org.kanger.interfaces.IRule;
 import org.kanger.units.Comment;
+import org.kanger.units.Operation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,19 +35,20 @@ public final class CurrentLevelSourceMaterializer {
 
         appendComment(out, context, CommentFactory.HEADER_ID, false, ownerId);
 
-        List<IOperation> operations = new ArrayList<IOperation>();
-        for (IOperation operation : context.getLibrary()) {
+        List<Operation> operations = new ArrayList<Operation>();
+        for (Object candidate : context.getLibrary()) {
+            Operation operation = (Operation) candidate;
             if (operation.getMindId() == ownerId && !operation.isDeleted(context)) {
                 operations.add(operation);
             }
         }
-        Collections.sort(operations, new Comparator<IOperation>() {
+        Collections.sort(operations, new Comparator<Operation>() {
             @Override
-            public int compare(IOperation left, IOperation right) {
+            public int compare(Operation left, Operation right) {
                 return left.asString().compareTo(right.asString());
             }
         });
-        for (IOperation operation : operations) {
+        for (Operation operation : operations) {
             appendBlock(out, operation.asString(), true);
         }
 
