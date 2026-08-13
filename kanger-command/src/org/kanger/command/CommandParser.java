@@ -128,7 +128,9 @@ public final class CommandParser {
                 requireSize(tokens, 2);
                 return CommandInvocation.command(CommandIntent.RULE_PRODUCED, raw);
             case LEVEL:
-                requireRequiredArgument(tokens, 3);
+                if (tokens.size() == 2) {
+                    return CommandInvocation.command(CommandIntent.RULE_LEVEL, raw);
+                }
                 requireSize(tokens, 3);
                 return commandWithLong(CommandIntent.RULE_LEVEL, "level", tokens.get(2).value, raw);
             case TREE:

@@ -167,7 +167,7 @@ public final class CommandRegistry {
         define(CommandIntent.RULE_ALL, "rule all", "RULE", "Show rules and produced statements.", noArgs(), n++);
         define(CommandIntent.RULE_ALL, "rules", "RULE", "Show rules and produced statements (collection alias).", noArgs(), n++);
         define(CommandIntent.RULE_PRODUCED, "rule produced", "RULE", "Show produced/generated rules.", noArgs(), n++);
-        define(CommandIntent.RULE_LEVEL, "rule level <n>", "RULE", "Show rules for one transaction level.", args("n", "Transaction level."), n++);
+        define(CommandIntent.RULE_LEVEL, "rule level [<n>]", "RULE", "Show rules grouped by published user transaction level, or one level when n is supplied.", args("n", "Optional transaction level."), n++);
         define(CommandIntent.RULE_TREE, "rule tree <id>", "RULE", "Show the compiled structural tree of one rule.", args("id", "Rule runtime identifier."), n++);
         define(CommandIntent.RULE_COMMENT_GET, "rule comment <id>", "RULE", "Show a rule comment.", args("id", "Rule runtime identifier."), n++);
         define(CommandIntent.RULE_COMMENT_SET, "rule comment <id> <text...>", "RULE", "Set or clear a rule comment.", args("id", "Rule runtime identifier.", "text", "Free comment text; explicit empty text clears it."), n++);

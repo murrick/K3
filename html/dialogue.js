@@ -73,6 +73,34 @@
         return fragment;
     }
 
+    function ruleLevelsPresentation(data) {
+        var fragment = document.createDocumentFragment();
+        var levels = data && data.schema === 1 && Array.isArray(data.levels)
+                ? data.levels : [];
+        if (!levels.length) {
+            appendLine(fragment, 'No published user transaction levels');
+            fragment.__kangerHistoryText = fragment.textContent;
+            return fragment;
+        }
+        for (var i = 0; i < levels.length; i++) {
+            var level = levels[i] || {};
+            appendLine(fragment, 'U' + stringValue(level.level) + ':');
+            var list = Array.isArray(level.list) ? level.list : [];
+            if (!list.length) {
+                appendLine(fragment, '    No rules');
+                continue;
+            }
+            for (var j = 0; j < list.length; j++) {
+                var item = list[j];
+                var prefix = item && item.id !== null && item.id !== undefined
+                        ? stringValue(item.id) + ': ' : stringValue(j) + ': ';
+                appendLine(fragment, '    ' + prefix + itemIdentity(item, ''));
+            }
+        }
+        fragment.__kangerHistoryText = fragment.textContent;
+        return fragment;
+    }
+
     function basePresentation(data) {
         var fragment = document.createDocumentFragment();
         var list = data && Array.isArray(data.list) ? data.list : [];
@@ -199,6 +227,10 @@
         var intent = stringValue(data.canonical_intent);
         if (intent === 'HELP') {
             return helpPresentation(data);
+        }
+        if (intent === 'RULE_LEVEL' && data.schema === 1
+                && Array.isArray(data.levels)) {
+            return ruleLevelsPresentation(data);
         }
         if (intent === 'RULE_STATUS' || intent === 'RULE_SHOW'
                 || intent === 'RULE_ALL' || intent === 'RULE_PRODUCED'

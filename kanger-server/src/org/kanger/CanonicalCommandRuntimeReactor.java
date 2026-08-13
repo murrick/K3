@@ -95,6 +95,9 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                         .put("description", helpRenderer.render())
                         .put("dialogue_help", structuredHelp());
                 break;
+            case RULE_LEVEL:
+                result = ruleLevels(packet, mind);
+                break;
             case RULE_COMMENT_GET:
                 result = ruleComment(mind, invocation, false);
                 break;
@@ -147,6 +150,51 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
         return new JSONObject()
                 .put("schema", 1)
                 .put("sections", sections);
+    }
+
+    private JSONObject ruleLevels(JSONObject packet, IMind mind) throws Exception {
+        JSONObject sourceParameters = SessionSerializingReactor.parameters(packet);
+        String token = sourceParameters.optString("token", "");
+        JSONArray levels = new JSONArray();
+        int total = 0;
+
+        for (long level = 0; level <= mind.getTransactionLevel(); ++level) {
+            JSONObject parameters = new JSONObject()
+                    .put("token", token)
+                    .put("rules", "")
+                    .put("level", level);
+            JSONObject query = new JSONObject().put("body", new JSONObject()
+                    .put("context", "query")
+                    .put("parameters", parameters));
+
+            Object raw = delegate.run(query);
+            if (!(raw instanceof JSONObject)) {
+                return error("rule_level_projection_invalid",
+                        "Qualified rule level projection did not return JSON");
+            }
+            JSONObject projected = (JSONObject) raw;
+            if (!"OK".equalsIgnoreCase(projected.optString("result", ""))) {
+                return projected;
+            }
+
+            JSONArray list = projected.optJSONArray("list");
+            if (list == null) {
+                list = new JSONArray();
+            }
+            int size = projected.has("size")
+                    ? projected.optInt("size", list.length()) : list.length();
+            total += size;
+            levels.put(new JSONObject()
+                    .put("level", level)
+                    .put("size", size)
+                    .put("list", list));
+        }
+
+        return ok()
+                .put("schema", 1)
+                .put("levels", levels)
+                .put("size", total)
+                .put("empty", total == 0);
     }
 
     private JSONObject ruleComment(IMind mind,
@@ -387,8 +435,10 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
 
     private JSONObject decorate(JSONObject result, IMind mind) {
         if (result != null && mind != null) {
-            result.put("transaction", mind.getTransactionLevel())
-                    .put("empty", mind.isEmptyLevel());
+            result.put("transaction", mind.getTransactionLevel());
+            if (!result.has("empty")) {
+                result.put("empty", mind.isEmptyLevel());
+            }
         }
         return result;
     }
