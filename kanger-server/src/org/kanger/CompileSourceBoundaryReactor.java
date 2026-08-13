@@ -13,12 +13,13 @@ import org.kanger.interfaces.IUser;
 import java.net.URLDecoder;
 
 /**
- * Owns Editor source replacement for nested explicit user transaction levels.
+ * Owns Editor source replacement for every explicit user transaction level.
  *
- * <p>U0 deliberately remains on the qualified legacy stop-loss path until root
- * replacement is closed separately. For U_n above root, source replacement is
- * delegated to {@link NestedCurrentLevelSourceReplacement}; rejected input
- * leaves the published Mind unchanged.</p>
+ * <p>U0 is replaced atomically through an operation-local technical child of
+ * the same root Mind. Nested U_n levels are rebuilt as temporary siblings over
+ * U_{n-1}, preserving transaction-control delta that has no standalone source
+ * representation. Rejected input leaves the published explicit level
+ * unchanged in both cases.</p>
  */
 final class CompileSourceBoundaryReactor implements IReactor<JSONObject> {
 
@@ -48,19 +49,27 @@ final class CompileSourceBoundaryReactor implements IReactor<JSONObject> {
         if (user.getCurrentMind() == null) {
             user.setCurrentMind(new Mind(user));
         }
-        if (user.getCurrentMind().getTransactionLevel() <= 0) {
-            return delegate.run(packet);
-        }
 
         String exactSource = URLDecoder.decode(
                 parameters.getString("compile"), "UTF-8");
-        NestedCurrentLevelSourceReplacement.Outcome outcome =
-                NestedCurrentLevelSourceReplacement.replace(user, exactSource);
+        boolean accepted;
+        String description;
+        if (user.getCurrentMind().getTransactionLevel() == 0) {
+            RootCurrentLevelSourceReplacement.Outcome outcome =
+                    RootCurrentLevelSourceReplacement.replace(user, exactSource);
+            accepted = outcome.isAccepted();
+            description = outcome.getDescription();
+        } else {
+            NestedCurrentLevelSourceReplacement.Outcome outcome =
+                    NestedCurrentLevelSourceReplacement.replace(user, exactSource);
+            accepted = outcome.isAccepted();
+            description = outcome.getDescription();
+        }
 
         IMind current = user.getCurrentMind();
-        JSONObject result = outcome.isAccepted()
-                ? ok(outcome.getDescription())
-                : error("compile_rejected", outcome.getDescription());
+        JSONObject result = accepted
+                ? ok(description)
+                : error("compile_rejected", description);
         result.put("transaction", current.getTransactionLevel());
         result.put("empty", current.isEmptyLevel());
         return result;
