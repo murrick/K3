@@ -17,13 +17,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 /**
- * Exact-document boundary for an explicit browser {@code get <source>}.
+ * Atomic import boundary for an explicit browser {@code get <source>}.
  *
- * <p>The stored document is read byte-for-byte as UTF-8 and kept unchanged for
- * editor/persistence purposes. Only the compiler view receives the virtual
- * terminal line boundary required by the historical parser. A rejected load
- * remains an error, does not publish the rejected document as accepted source,
- * and returns that exact document separately for repair in the browser editor.</p>
+ * <p>The stored document is temporary operation input. It is read byte-for-byte
+ * as UTF-8, while only the compiler view receives the virtual terminal line
+ * boundary required by the historical parser. Accepted input is committed as
+ * semantic delta into the current explicit user level and is not retained as
+ * current-file/current-document identity. Rejected input is returned separately
+ * as exact {@code source_recovery} text for Browser repair.</p>
  *
  * <p>A load is one operation-local technical transaction over the current
  * user-visible Mind. Successful compilation commits the semantic delta into
@@ -89,7 +90,6 @@ public final class GetSourceBoundaryReactor implements IReactor<JSONObject> {
 
         String exactSource = new String(
                 Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-        String previousName = parent.getSourceFileName();
 
         try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(parent)) {
             Mind work = tx.mind();
@@ -100,7 +100,6 @@ public final class GetSourceBoundaryReactor implements IReactor<JSONObject> {
 
             if (!Boolean.TRUE.equals(compiled)) {
                 tx.rollback();
-                parent.setSourceFileName(previousName);
                 parent.setQueryResult(false);
                 user.setCurrentMind(parent);
                 return recoveryError("source_compile_rejected", description,
@@ -109,15 +108,12 @@ public final class GetSourceBoundaryReactor implements IReactor<JSONObject> {
 
             boolean committed = tx.commit();
             if (!committed) {
-                parent.setSourceFileName(previousName);
                 parent.setQueryResult(false);
                 user.setCurrentMind(parent);
                 return recoveryError("source_compile_rejected", description,
                         file.getName(), exactSource);
             }
 
-            parent.setSourceFileName(file.getName());
-            SourceDocumentState.publish(user, exactSource);
             description += "<br>File " + file.getName() + " loaded";
             if (parent.getTransactionLevel() > 0) {
                 description += "<br>Transaction level "
@@ -127,7 +123,6 @@ public final class GetSourceBoundaryReactor implements IReactor<JSONObject> {
             user.setCurrentMind(parent);
             return ok(description);
         } catch (Exception failure) {
-            parent.setSourceFileName(previousName);
             parent.setQueryResult(false);
             user.setCurrentMind(parent);
             return recoveryError("source_load_failed", failure.toString(),
