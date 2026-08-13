@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Qualification gates for the 3.7.0.8 post-soak small corrections. */
+/** Qualification gates for post-soak source/presentation corrections. */
 public class PostSoakPresentationSourceCorrectionTest {
 
     @Test
@@ -42,7 +42,7 @@ public class PostSoakPresentationSourceCorrectionTest {
     }
 
     @Test
-    public void explicitGetUsesVirtualEolAndReturnsRejectedExactSourceForRepair()
+    public void explicitGetUsesVirtualEolWithoutBecomingCurrentDocument()
             throws Exception {
         String identity = "post-soak-get-" + UUID.randomUUID().toString();
         IUser user = UserFactory.createUser(identity, identity);
@@ -51,7 +51,6 @@ public class PostSoakPresentationSourceCorrectionTest {
             IMind mind = new Mind(user);
             user.setCurrentMind(mind);
             assertTrue(mind.compile("!baseline;"));
-            mind.setSourceFileName("baseline.k");
 
             String token = UserFactory.addUser(user);
             GetSourceBoundaryReactor reactor = new GetSourceBoundaryReactor(
@@ -62,32 +61,28 @@ public class PostSoakPresentationSourceCorrectionTest {
             Files.createDirectories(acceptedFile.getParent());
             Files.write(acceptedFile, acceptedSource.getBytes(StandardCharsets.UTF_8));
 
-            JSONObject accepted = invoke(reactor, token, "accepted-eof.k");
+            JSONObject accepted = invokeGet(reactor, token, "accepted-eof.k");
             assertEquals("OK", accepted.optString("result"), accepted.toString());
-            assertEquals(acceptedSource,
-                    SourceDocumentState.current(user, user.getCurrentMind()),
-                    "Accepted no-final-EOL document was not retained exactly");
-            assertEquals("accepted-eof.k", user.getCurrentMind().getSourceFileName());
 
-            String semanticBeforeReject = user.getCurrentMind().getSourceCode();
-            String exactBeforeReject = SourceDocumentState.current(
-                    user, user.getCurrentMind());
-            String nameBeforeReject = user.getCurrentMind().getSourceFileName();
+            JSONObject projected = invokeSource(reactor, token);
+            assertEquals("OK", projected.optString("result"), projected.toString());
+            String semanticAfterAccept = projected.getString("source");
+            assertTrue(semanticAfterAccept.contains("!baseline;"),
+                    "Accepted get replaced rather than imported into current U_n");
+            assertTrue(semanticAfterAccept.contains("!loaded;"),
+                    "Accepted no-final-EOL source did not enter semantic context");
 
             String rejectedSource = "?baseline;/* repair me */";
             Path rejectedFile = Paths.get(user.getSourceDir()).resolve("rejected.k");
             Files.write(rejectedFile, rejectedSource.getBytes(StandardCharsets.UTF_8));
 
-            JSONObject rejected = invoke(reactor, token, "rejected.k");
+            JSONObject rejected = invokeGet(reactor, token, "rejected.k");
             assertEquals("error", rejected.optString("result"), rejected.toString());
             assertEquals("source_compile_rejected", rejected.optString("code"));
-            assertEquals(semanticBeforeReject, user.getCurrentMind().getSourceCode(),
+
+            JSONObject afterReject = invokeSource(reactor, token);
+            assertEquals(semanticAfterAccept, afterReject.getString("source"),
                     "Rejected get changed the live semantic context");
-            assertEquals(exactBeforeReject,
-                    SourceDocumentState.current(user, user.getCurrentMind()),
-                    "Rejected get replaced the accepted exact document");
-            assertEquals(nameBeforeReject, user.getCurrentMind().getSourceFileName(),
-                    "Rejected get rebound the accepted source name");
 
             JSONObject recovery = rejected.optJSONObject("source_recovery");
             assertNotNull(recovery, "Rejected get did not expose repair source");
@@ -99,14 +94,27 @@ public class PostSoakPresentationSourceCorrectionTest {
         }
     }
 
+    private JSONObject invokeGet(GetSourceBoundaryReactor reactor,
+                                 String token,
+                                 String fileName) throws Exception {
+        return invoke(reactor, "command", new JSONObject()
+                .put("token", token)
+                .put("get", fileName));
+    }
+
+    private JSONObject invokeSource(GetSourceBoundaryReactor reactor,
+                                    String token) throws Exception {
+        return invoke(reactor, "query", new JSONObject()
+                .put("token", token)
+                .put("source", ""));
+    }
+
     private JSONObject invoke(GetSourceBoundaryReactor reactor,
-                              String token,
-                              String fileName) throws Exception {
+                              String context,
+                              JSONObject parameters) throws Exception {
         JSONObject packet = new JSONObject().put("body", new JSONObject()
-                .put("context", "command")
-                .put("parameters", new JSONObject()
-                        .put("token", token)
-                        .put("get", fileName)));
+                .put("context", context)
+                .put("parameters", parameters));
         Object response = reactor.run(packet);
         assertTrue(response instanceof JSONObject,
                 "API response is not a JSONObject: " + response);
