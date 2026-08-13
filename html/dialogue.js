@@ -84,10 +84,10 @@
         }
         for (var i = 0; i < levels.length; i++) {
             var level = levels[i] || {};
-            appendLine(fragment, 'U' + stringValue(level.level) + ':');
+            appendLine(fragment, 'Transaction level ' + stringValue(level.level));
             var list = Array.isArray(level.list) ? level.list : [];
             if (!list.length) {
-                appendLine(fragment, '    No rules');
+                appendLine(fragment, '    <empty>');
                 continue;
             }
             for (var j = 0; j < list.length; j++) {
