@@ -158,7 +158,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
         JSONArray levels = new JSONArray();
         int total = 0;
 
-        for (long level = 0; level <= mind.getTransactionLevel(); ++level) {
+        for (long level = mind.getTransactionLevel(); level >= 0; --level) {
             JSONObject parameters = new JSONObject()
                     .put("token", token)
                     .put("rules", "")
