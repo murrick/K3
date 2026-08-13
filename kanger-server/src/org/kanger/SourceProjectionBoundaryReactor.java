@@ -28,7 +28,7 @@ final class SourceProjectionBoundaryReactor implements IReactor<JSONObject> {
         if (delegate == null) {
             throw new IllegalArgumentException("Delegate reactor is required");
         }
-        this.delegate = delegate;
+        this.delegate = new CompileSourceBoundaryReactor(delegate);
     }
 
     @Override
