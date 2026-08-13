@@ -47,7 +47,6 @@ public enum CommandIntent {
 
     SOURCE_GET,
     SOURCE_PUT,
-    SOURCE_PUT_ALL,
     SOURCE_DELETE,
 
     STORAGE_STATUS,
