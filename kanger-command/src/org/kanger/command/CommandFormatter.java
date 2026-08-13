@@ -33,7 +33,9 @@ public final class CommandFormatter {
             case RULE_PRODUCED:
                 return "rule produced";
             case RULE_LEVEL:
-                return "rule level " + number(invocation, "level");
+                return invocation.getArgument("level") == null
+                        ? "rule level"
+                        : "rule level " + number(invocation, "level");
             case RULE_TREE:
                 return "rule tree " + number(invocation, "id");
             case RULE_COMMENT_GET:

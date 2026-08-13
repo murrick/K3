@@ -80,6 +80,13 @@ public final class CommandParserConformanceTest {
         expectLong("rule 17", CommandIntent.RULE_SHOW, "id", 17L);
         expect("r a", CommandIntent.RULE_ALL);
         expect("r p", CommandIntent.RULE_PRODUCED);
+
+        CommandInvocation aggregate = parser.parse("r l");
+        check(aggregate.getIntent() == CommandIntent.RULE_LEVEL,
+                "bare rule level aggregate intent");
+        check(!aggregate.getArguments().containsKey("level"),
+                "bare rule level must not synthesize transaction level");
+
         expectLong("r l 2", CommandIntent.RULE_LEVEL, "level", 2L);
         expectLong("r t 17", CommandIntent.RULE_TREE, "id", 17L);
         expectLong("r c 17", CommandIntent.RULE_COMMENT_GET, "id", 17L);
@@ -236,6 +243,8 @@ public final class CommandParserConformanceTest {
     private void canonicalEcho() throws Exception {
         expectCanonical("rules", "rule all");
         expectCanonical("r 17", "rule 17");
+        expectCanonical("r l", "rule level");
+        expectCanonical("r l 2", "rule level 2");
         expectCanonical("r c 17", "rule comment 17");
         expectCanonical("f s 8", "function source 8");
         expectCanonical("b p father", "base predicate father");
@@ -265,6 +274,7 @@ public final class CommandParserConformanceTest {
         String help = new CommandHelpRenderer().render();
         check(help.contains("rule <id>"), "help contains rule object syntax");
         check(help.contains("\n  rules\n"), "help contains plural rules alias");
+        check(help.contains("rule level [<n>]"), "help contains optional rule level syntax");
         check(help.contains("values order <field>"), "help contains values syntax");
         check(help.contains("when accept <index>"), "help contains hypothesis addressing");
         check(help.contains("delete [<source>]"), "help contains safe bare delete syntax");
