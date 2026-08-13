@@ -11,6 +11,7 @@ import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IRule;
 import org.kanger.units.Comment;
 import org.kanger.units.Operation;
+import org.kanger.units.Rule;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,15 +53,16 @@ public final class CurrentLevelSourceMaterializer {
             appendBlock(out, operation.asString(), true);
         }
 
-        SortedMap<Long, IRule> rules = new TreeMap<Long, IRule>();
-        for (IRule rule : context.getRules()) {
+        SortedMap<Long, Rule> rules = new TreeMap<Long, Rule>();
+        for (IRule candidate : context.getRules()) {
+            Rule rule = (Rule) candidate;
             if (rule.getMindId() == ownerId
                     && !rule.isGenerated()
                     && !rule.isDeleted(context)) {
                 rules.put(rule.getId(), rule);
             }
         }
-        for (IRule rule : rules.values()) {
+        for (Rule rule : rules.values()) {
             appendComment(out, context, rule.getId(), true, ownerId);
             appendBlock(out, rule.getOrigin(), true);
         }
