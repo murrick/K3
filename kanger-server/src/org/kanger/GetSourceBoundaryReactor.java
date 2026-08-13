@@ -31,9 +31,9 @@ import java.nio.file.Files;
  * child is never published through {@link IUser#setCurrentMind(IMind)} and
  * therefore cannot change the explicit transaction depth.</p>
  *
- * <p>This reactor deliberately owns only non-empty {@code command/get}
- * requests. Source listing and every other command remain with the existing
- * reactor chain.</p>
+ * <p>This reactor owns only non-empty {@code command/get} requests directly.
+ * Other operations first pass through the semantic source projection/export
+ * boundary and then continue through the legacy compatibility chain.</p>
  */
 public final class GetSourceBoundaryReactor implements IReactor<JSONObject> {
 
@@ -43,7 +43,7 @@ public final class GetSourceBoundaryReactor implements IReactor<JSONObject> {
         if (delegate == null) {
             throw new IllegalArgumentException("Delegate reactor is required");
         }
-        this.delegate = delegate;
+        this.delegate = new SourceProjectionBoundaryReactor(delegate);
     }
 
     @Override
