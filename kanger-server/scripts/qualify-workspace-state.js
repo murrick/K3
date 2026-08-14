@@ -49,17 +49,9 @@ class FakeText extends FakeNode {
     set textContent(value) { this.data = String(value); }
 }
 
-function workspace(sourceState, storageName) {
+function workspace(storageName) {
     return {
-        schema: 1,
-        source: {
-            logical_name: sourceState === 'unbound' ? null : 'alpha.k',
-            has_text: sourceState !== 'unbound',
-            bytes_utf8: 17,
-            repository_state: sourceState,
-            persisted: sourceState === 'saved' || sourceState === 'modified',
-            dirty: sourceState !== 'saved'
-        },
+        schema: 2,
         storage: storageName ? {
             active: true,
             logical_name: storageName,
@@ -90,17 +82,20 @@ function main() {
     database.id = 'db-name';
     header.appendChild(database);
     elements['db-name'] = database;
+    const writes = [];
 
     const document = {
         createElement(tagName) { return new FakeNode(1, String(tagName).toUpperCase()); },
         createTextNode(value) { return new FakeText(String(value)); },
-        getElementById(id) { return elements[id] || findById(header, id); }
+        getElementById(id) { return elements[id] || findById(header, id); },
+        write(value) { writes.push(String(value)); }
     };
 
     let generation = 0;
     let response = null;
     let packetSeen = null;
     let loggedPresentation = null;
+    let recovered = null;
     const window = {
         window: null,
         document,
@@ -118,6 +113,9 @@ function main() {
         logResponse(data, presentation, callback) {
             loggedPresentation = presentation;
             if (callback) callback(data);
+        },
+        KANGER_EDITOR_STATE: {
+            recover(value) { recovered = value; }
         }
     };
     window.window = window;
@@ -125,26 +123,32 @@ function main() {
     const context = {window, document, Object, Array, Number, String, Error, isFinite, console};
     vm.runInNewContext(fs.readFileSync('html/workspace.js', 'utf8'), context,
             {filename: 'workspace.js'});
+    assert(writes.some((value) => value.includes('editor-state.js')),
+            'editor-state authority was not loaded');
     window.KANGER_OPERATION_PROTOCOL = Object.freeze({
         version: 1,
         snapshot() { return {generation}; }
     });
     assert(window.KANGER_WORKSPACE_STATE);
-    elements['source-name'] = document.getElementById('source-name');
-    assert(elements['source-name'], 'source state target was not installed');
+    assert.strictEqual(window.KANGER_WORKSPACE_STATE.version, 2);
+    assert.strictEqual(document.getElementById('source-name'), null,
+            'source topbar target was reintroduced');
 
     response = {result: 'OK', client_generation: 0,
-        workspace: workspace('saved', 'alpha')};
+        workspace: workspace('alpha')};
     window.post({context: 'command', parameters: {put: 'alpha'}}, function () {
         database.textContent = 'unused';
     });
     assert.strictEqual(packetSeen.parameters.put, 'alpha.k');
     assert.strictEqual(database.textContent, 'DB: alpha');
-    assert.strictEqual(elements['source-name'].textContent, 'Source: alpha.k');
-    console.log('WORKSPACE_STATE_PASS source-lifecycle');
+    assert.strictEqual(window.KANGER_WORKSPACE_STATE.snapshot().workspace.schema, 2);
+    assert.strictEqual(Object.prototype.hasOwnProperty.call(
+            window.KANGER_WORKSPACE_STATE.snapshot().workspace, 'source'), false);
+    console.log('WORKSPACE_STATE_PASS source-transport-normalization');
+    console.log('WORKSPACE_STATE_PASS source-free-schema');
 
     response = {result: 'OK', client_generation: 1,
-        workspace: workspace('saved', 'nested.one')};
+        workspace: workspace('nested.one')};
     generation = 1;
     window.post({context: 'command', parameters: {use: 'nested/one'}}, function () {
         database.textContent = 'legacy-value';
@@ -154,40 +158,38 @@ function main() {
     assert(database.title.includes('canonical=nested/one'));
     console.log('WORKSPACE_STATE_PASS canonical-storage');
 
-    response = {result: 'OK', client_generation: 2,
-        workspace: workspace('saved', 'nested.one')};
-    generation = 2;
-    window.post({context: 'command', parameters: {drop: 'other'}}, function () {
-        database.textContent = 'unused';
-    });
-    assert.strictEqual(database.textContent, 'DB: nested.one');
-    console.log('WORKSPACE_STATE_PASS nonactive-drop');
-
     response = {result: 'error', code: 'storage_switch_failed',
-        description: 'corrupt generation', client_generation: 3,
-        workspace: workspace('modified', 'nested.one')};
-    generation = 3;
+        description: 'corrupt generation', client_generation: 2,
+        workspace: workspace('nested.one')};
+    generation = 2;
     window.post({context: 'command', parameters: {use: 'corrupt'}}, function () {
         database.textContent = 'unused';
     });
     assert.strictEqual(database.textContent, 'DB: nested.one');
-    assert.strictEqual(elements['source-name'].textContent, 'Source: alpha.k *');
     window.logResponse(response);
     assert.strictEqual(loggedPresentation,
             '[storage_switch_failed] corrupt generation');
     console.log('WORKSPACE_STATE_PASS failed-switch-preservation');
     console.log('WORKSPACE_STATE_PASS typed-errors');
 
+    const recovery = {schema: 1, logical_name: 'rejected.k', text: '!exact;'};
+    response = {result: 'error', code: 'source_compile_rejected',
+        description: 'collision', source_recovery: recovery,
+        client_generation: 3, workspace: workspace('nested.one')};
+    generation = 3;
+    window.post({context: 'command', parameters: {get: 'rejected'}}, function () {});
+    assert.strictEqual(packetSeen.parameters.get, 'rejected.k');
+    assert.deepStrictEqual(recovered, recovery);
+    console.log('WORKSPACE_STATE_PASS source-recovery-routing');
+
     response = {result: 'OK', client_generation: 4,
-        workspace: workspace('missing', null)};
+        workspace: workspace(null)};
     generation = 4;
-    window.post({context: 'command', parameters: {delete: 'alpha'}}, function () {});
-    assert.strictEqual(elements['source-name'].textContent,
-            'Source: alpha.k (missing)');
+    window.post({context: 'command', parameters: {close: ''}}, function () {});
     assert.strictEqual(database.textContent, 'DB: unused');
 
     response = {result: 'OK', client_generation: 3,
-        workspace: workspace('saved', 'stale')};
+        workspace: workspace('stale')};
     window.post({context: 'command', parameters: {used: ''}}, function () {});
     assert.strictEqual(database.textContent, 'DB: unused',
             'stale projection replaced current workspace state');
@@ -197,8 +199,9 @@ function main() {
 }
 
 function findById(node, id) {
+    if (!node) return null;
     if (node.id === id) return node;
-    for (const child of node.childNodes) {
+    for (const child of node.childNodes || []) {
         const found = findById(child, id);
         if (found) return found;
     }

@@ -4,16 +4,27 @@ on:
   push:
     branches:
       - "server/**"
+      - "ui/**"
     paths:
       - "html/workspace.js"
+      - "html/editor-state.js"
       - "html/javascript-mode.js"
+      - "html/editor-local-file.js"
+      - "html/bottom-layout.js"
+      - "html/console.html"
       - "kanger-server/scripts/qualify-workspace-state.js"
+      - "kanger-server/scripts/qualify-editor-state.js"
       - ".github/workflows/kanger-browser-workspace.yml"
   pull_request:
     paths:
       - "html/workspace.js"
+      - "html/editor-state.js"
       - "html/javascript-mode.js"
+      - "html/editor-local-file.js"
+      - "html/bottom-layout.js"
+      - "html/console.html"
       - "kanger-server/scripts/qualify-workspace-state.js"
+      - "kanger-server/scripts/qualify-editor-state.js"
       - ".github/workflows/kanger-browser-workspace.yml"
   workflow_dispatch:
 
@@ -22,7 +33,7 @@ permissions:
 
 jobs:
   qualify:
-    name: Canonical source and storage projection
+    name: Runtime workspace and Editor staging
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
@@ -33,21 +44,38 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Validate workspace authority artifact
+      - name: Validate workspace and Editor authorities
         shell: bash
         run: |
           node --check html/workspace.js
+          node --check html/editor-state.js
           node --check kanger-server/scripts/qualify-workspace-state.js
+          node --check kanger-server/scripts/qualify-editor-state.js
           grep -q 'workspace.js' html/javascript-mode.js
           grep -q 'KANGER_WORKSPACE_STATE' html/workspace.js
           grep -q 'canonicalSourceName' html/workspace.js
           grep -q 'canonicalStorageName' html/workspace.js
+          grep -q 'editor-state.js' html/workspace.js
+          grep -q 'KANGER_EDITOR_STATE' html/editor-state.js
+          grep -q "'CONTEXT'" html/editor-state.js
+          grep -q "'EDITED'" html/editor-state.js
+          grep -q "'RECOVERY'" html/editor-state.js
+          grep -q 'source_recovery' kanger-server/scripts/qualify-workspace-state.js
           grep -q 'storage_switch_failed' kanger-server/scripts/qualify-workspace-state.js
+          ! grep -q 'workspace\.source' html/workspace.js
+          ! grep -q 'repository_state' html/workspace.js
           ! grep -q 'innerHTML' html/workspace.js
           ! grep -q 'document.cookie' html/workspace.js
           ! grep -q 'eval(' html/workspace.js
+          ! grep -q 'document.cookie' html/editor-state.js
+          ! grep -q 'eval(' html/editor-state.js
 
-      - name: Run source and storage UX qualification
+      - name: Run runtime workspace qualification
         shell: bash
         run: |
           node kanger-server/scripts/qualify-workspace-state.js
+
+      - name: Run Editor staging qualification
+        shell: bash
+        run: |
+          node kanger-server/scripts/qualify-editor-state.js

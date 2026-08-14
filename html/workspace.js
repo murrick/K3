@@ -3,12 +3,11 @@
  *
  * Copyright (c) 2021 Dmitry G. Quznetsov
  *
- * Supported KANGER source/storage UX authority.
+ * Supported KANGER runtime workspace authority.
  *
- * This adapter consumes the canonical server workspace projection after the
- * operation protocol has sequenced the response. Legacy callbacks may still
- * render historical guesses; the projection is intentionally applied after
- * those callbacks and therefore remains authoritative.
+ * The server workspace projection contains runtime authorities only: storage
+ * and transaction state. Source files are external semantic transport objects;
+ * explicit source names are canonicalized here only at the transport boundary.
  */
 (function (window, document) {
     'use strict';
@@ -67,47 +66,6 @@
         return packet;
     }
 
-    function ensureSourceTarget() {
-        var existing = document.getElementById('source-name');
-        if (existing) {
-            return existing;
-        }
-        var database = document.getElementById('db-name');
-        if (!database || !database.parentNode) {
-            return null;
-        }
-        var source = document.createElement('span');
-        source.id = 'source-name';
-        source.style.padding = '0 8px';
-        source.style.borderRight = '1px solid #777';
-        source.style.float = 'right';
-        database.parentNode.insertBefore(source, database);
-        return source;
-    }
-
-    function renderSource(source) {
-        var target = ensureSourceTarget();
-        if (!target || !source) {
-            return;
-        }
-        var name = stringValue(source.logical_name);
-        var repositoryState = stringValue(source.repository_state);
-        if (!name) {
-            target.textContent = source.has_text
-                    ? 'Source: unsaved' : 'Source: workspace';
-        } else if (repositoryState === 'modified') {
-            target.textContent = 'Source: ' + name + ' *';
-        } else if (repositoryState === 'missing') {
-            target.textContent = 'Source: ' + name + ' (missing)';
-        } else {
-            target.textContent = 'Source: ' + name;
-        }
-        target.style.color = source.dirty ? '#822' : '#000';
-        target.style.fontWeight = source.dirty ? 'bold' : '';
-        target.title = 'repository=' + repositoryState
-                + '; utf8-bytes=' + stringValue(source.bytes_utf8);
-    }
-
     function renderStorage(storage) {
         var target = document.getElementById('db-name');
         if (!target || !storage) {
@@ -151,9 +109,18 @@
         }
         state.generation = responseGeneration;
         state.workspace = data.workspace;
-        renderSource(data.workspace.source);
         renderStorage(data.workspace.storage);
         return true;
+    }
+
+    function routeSourceRecovery(data) {
+        if (!data || !data.source_recovery) {
+            return;
+        }
+        var authority = window.KANGER_EDITOR_STATE;
+        if (authority && typeof authority.recover === 'function') {
+            authority.recover(data.source_recovery);
+        }
     }
 
     function installPostBoundary() {
@@ -167,6 +134,7 @@
                     }
                 } finally {
                     applyProjection(data, requestGeneration);
+                    routeSourceRecovery(data);
                 }
             });
         };
@@ -204,9 +172,8 @@
         original.logResponse = window.logResponse;
         installPostBoundary();
         installTypedErrors();
-        ensureSourceTarget();
         window.KANGER_WORKSPACE_STATE = Object.freeze({
-            version: 1,
+            version: 2,
             snapshot: snapshot,
             canonicalSourceName: canonicalSourceName,
             canonicalStorageName: canonicalStorageName
@@ -237,3 +204,10 @@
 
     observeOperationProtocol();
 }(window, document));
+
+/*
+ * Loaded here so the authority is available to observe operation responses,
+ * but it deliberately installs late, after the historical Editor/soak wrappers
+ * have finished. This keeps one final owner of local Editor staging state.
+ */
+document.write('<script src="editor-state.js"><\\/script>');
