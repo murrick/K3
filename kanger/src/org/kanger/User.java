@@ -58,10 +58,10 @@ import java.util.*;
  *
  * <p><strong>Жизненный цикл.</strong> Transaction lifecycle и physical storage
  * lifecycle являются независимыми state machines. {@link #use(IMind, String)}
- * не закрывает уже открытый storage и допустим только при отсутствии
- * незавершённых child-транзакций; вызывающая оболочка может после успешного
- * открытия вставить новый persistent baseline под прежний level-0 workspace,
- * повторно канонизировав workspace как новый level-1 overlay.
+ * атомарно ребейзит явный U-стек при смене storage и при первом подключении
+ * storage под offline workspace. Непустой offline U0 сохраняется как новый U1;
+ * пустой U0 заменяется persistent baseline без искусственного сдвига глубины.
+ * Любой отказ replay восстанавливает исходный storage/offline state и U-стек.
  * {@link #checkpoint(IMind)} публикует durable root state, сохраняя storage и
  * runtime context открытыми; {@link #close(IMind)} не принимает решение за
  * незавершённую транзакцию и допустим только при transaction quiescence.</p>
@@ -306,8 +306,12 @@ public class User implements IUser {
         }
 
         if (data.isClosed()) {
-            requireTransactionQuiescence(mind, "open database");
-            return openClosedStorage((Mind) mind, name);
+            Mind top = (Mind) mind;
+            if (top.getTransactionLevel() == 0 && top.isEmptyLevel()) {
+                requireTransactionQuiescence(top, "open database");
+                return openClosedStorage(top, name);
+            }
+            return rebaseClosedStorage(top, name);
         }
 
         String activeName = data.getStorageName();
@@ -318,6 +322,62 @@ public class User implements IUser {
         }
 
         return rebaseOpenStorage((Mind) mind, name, activeName);
+    }
+
+    private Mind rebaseClosedStorage(Mind top,
+                                     String targetName) throws Exception {
+        requireExplicitStackOwnership(top);
+        UserTransactionStackSnapshot snapshot =
+                UserTransactionStackSnapshot.captureOffline(top);
+
+        boolean ownsCurrentSlot = currentMind == top;
+        Mind root = (Mind) top.getTop();
+        boolean rootReplaced = false;
+        boolean mutationStarted = false;
+
+        try {
+            mutationStarted = true;
+            root = UserTransactionStackSnapshot.rollbackToRoot(top);
+            if (ownsCurrentSlot) {
+                currentMind = root;
+            }
+
+            root = openClosedStorage(root, targetName);
+            rootReplaced = true;
+            Mind rebasedTop = snapshot.replayOverBaseline(root);
+
+            if (ownsCurrentSlot) {
+                currentMind = rebasedTop;
+            }
+            return rebasedTop;
+        } catch (Throwable failure) {
+            Throwable propagated = failure;
+            if (mutationStarted) {
+                try {
+                    Mind restoredTop;
+                    if (rootReplaced) {
+                        if (!data.isClosed()) {
+                            root = (Mind) close(root);
+                        }
+                        restoredTop = snapshot.restoreOffline(root);
+                    } else {
+                        restoredTop = snapshot.replay(root);
+                    }
+                    if (ownsCurrentSlot) {
+                        currentMind = restoredTop;
+                    }
+                } catch (Throwable restoreFailure) {
+                    if (restoreFailure != failure) {
+                        propagated.addSuppressed(restoreFailure);
+                    }
+                    if (ownsCurrentSlot) {
+                        currentMind = root;
+                    }
+                }
+            }
+            rethrow(propagated);
+            throw new AssertionError("unreachable");
+        }
     }
 
     private Mind rebaseOpenStorage(Mind top,

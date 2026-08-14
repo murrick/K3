@@ -1298,7 +1298,6 @@ public class Console {
                 for (IMind m = mind; m != null; m = m.getNext()) {
                     levels.add(m);
                 }
-                Collections.reverse(levels);
                 for (IMind m : levels) {
                     showRulesForLevel(mind, m, tree);
                 }

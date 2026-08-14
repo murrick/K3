@@ -32,9 +32,11 @@ import java.util.Set;
  */
 final class UserTransactionStackSnapshot {
 
+    private final LevelDelta rootLevel;
     private final List<LevelDelta> levels;
 
-    private UserTransactionStackSnapshot(List<LevelDelta> levels) {
+    private UserTransactionStackSnapshot(LevelDelta rootLevel, List<LevelDelta> levels) {
+        this.rootLevel = rootLevel;
         this.levels = Collections.unmodifiableList(levels);
     }
 
@@ -53,7 +55,26 @@ final class UserTransactionStackSnapshot {
         for (int i = 1; i < lineage.size(); ++i) {
             deltas.add(LevelDelta.capture(lineage.get(i - 1), lineage.get(i)));
         }
-        return new UserTransactionStackSnapshot(deltas);
+        return new UserTransactionStackSnapshot(null, deltas);
+    }
+
+    static UserTransactionStackSnapshot captureOffline(Mind top) throws Exception {
+        if (top == null) {
+            throw new IllegalArgumentException("Transaction stack requires a current Mind");
+        }
+
+        List<Mind> lineage = new ArrayList<>();
+        for (Mind current = top; current != null; current = (Mind) current.getNext()) {
+            lineage.add(current);
+        }
+        Collections.reverse(lineage);
+
+        LevelDelta root = LevelDelta.captureRoot(lineage.get(0));
+        List<LevelDelta> deltas = new ArrayList<>();
+        for (int i = 1; i < lineage.size(); ++i) {
+            deltas.add(LevelDelta.capture(lineage.get(i - 1), lineage.get(i)));
+        }
+        return new UserTransactionStackSnapshot(root, deltas);
     }
 
     int depth() {
@@ -61,6 +82,35 @@ final class UserTransactionStackSnapshot {
     }
 
     Mind replay(Mind root) throws Exception {
+        return replayLevels(root);
+    }
+
+    Mind replayOverBaseline(Mind root) throws Exception {
+        Mind current = root;
+        if (rootLevel != null && !rootLevel.isEmpty()) {
+            Mind workspace = new Mind(current);
+            boolean applied = false;
+            try {
+                rootLevel.apply(current, workspace);
+                applied = true;
+            } finally {
+                if (!applied) {
+                    current.release(workspace);
+                }
+            }
+            current = workspace;
+        }
+        return replayLevels(current);
+    }
+
+    Mind restoreOffline(Mind root) throws Exception {
+        if (rootLevel != null && !rootLevel.isEmpty()) {
+            rootLevel.apply(root, root);
+        }
+        return replayLevels(root);
+    }
+
+    private Mind replayLevels(Mind root) throws Exception {
         Mind current = root;
         try {
             for (LevelDelta delta : levels) {
@@ -142,6 +192,37 @@ final class UserTransactionStackSnapshot {
             this.footerChanged = footerChanged;
         }
 
+        static LevelDelta captureRoot(Mind root) throws Exception {
+            Map<String, Rule> rules = activePrimaryRules(root);
+            List<String> additions = new ArrayList<>(rules.keySet());
+
+            Map<String, String> upserts = new LinkedHashMap<>();
+            for (Map.Entry<String, Operation> entry : activeUdf(root).entrySet()) {
+                upserts.put(entry.getKey(), entry.getValue().asString());
+            }
+
+            Map<String, String> comments = new LinkedHashMap<>();
+            for (Map.Entry<String, Rule> entry : rules.entrySet()) {
+                String comment = commentText(root, entry.getValue().getId());
+                if (!comment.isEmpty()) {
+                    comments.put(entry.getKey(), comment);
+                }
+            }
+
+            String header = commentText(root, CommentFactory.HEADER_ID);
+            String footer = commentText(root, CommentFactory.FOOTER_ID);
+            return new LevelDelta(
+                    additions,
+                    new ArrayList<String>(),
+                    upserts,
+                    new LinkedHashSet<String>(),
+                    comments,
+                    header,
+                    !header.isEmpty(),
+                    footer,
+                    !footer.isEmpty());
+        }
+
         static LevelDelta capture(Mind parent, Mind child) throws Exception {
             Map<String, Rule> parentRules = activePrimaryRules(parent);
             Map<String, Rule> childRules = activePrimaryRules(child);
@@ -206,6 +287,16 @@ final class UserTransactionStackSnapshot {
                     !childHeader.equals(parentHeader),
                     childFooter,
                     !childFooter.equals(parentFooter));
+        }
+
+        boolean isEmpty() {
+            return ruleAdditions.isEmpty()
+                    && ruleDeletions.isEmpty()
+                    && udfUpserts.isEmpty()
+                    && udfDeletions.isEmpty()
+                    && ruleCommentOverrides.isEmpty()
+                    && !headerChanged
+                    && !footerChanged;
         }
 
         void apply(Mind parent, Mind child) throws Exception {

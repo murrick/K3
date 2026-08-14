@@ -167,10 +167,10 @@ public final class KangerConsoleLifecycleBindingRunner {
             mind.release(hiddenUseChild);
 
             /*
-             * Opening physical storage underneath an already layered
-             * transaction stack is forbidden. The rejection must happen
-             * before storage acquisition or factory rebinding so the complete
-             * Mind topology remains usable by ordinary commit/rollback.
+             * Opening physical storage underneath an already layered offline
+             * transaction stack is a semantic rebase, not a lifecycle error.
+             * A non-empty offline U0 becomes U1 above the persistent baseline,
+             * so this U0/U1/U2 fixture becomes storage-U0/U1/U2/U3.
              */
             query(processQuery, "!useguardroot;", mind);
             IMind useLevel1 = new Mind(mind);
@@ -179,54 +179,43 @@ public final class KangerConsoleLifecycleBindingRunner {
             query(processQuery, "!useguardlevel2;", useLevel2);
 
             String guardedSource = useLevel2.getSourceCode();
-            boolean activeUseRejected = false;
-            try {
-                use(useDatabase,
-                        "use console.use.guard." + suffix,
-                        useLevel2);
-            } catch (StorageLifecycleException expected) {
-                activeUseRejected = true;
-                require("ACTIVE_TRANSACTION".equals(
-                                expected.getCode()),
-                        "wrong active-use code: "
-                                + expected.getCode());
-                require("TRANSACTION_RESOLUTION_REQUIRED".equals(
-                                expected.getRequiredAction()),
-                        "wrong active-use required action: "
-                                + expected.getRequiredAction());
-            }
+            IMind rebasedUse = use(useDatabase,
+                    "use console.use.guard." + suffix,
+                    useLevel2);
 
-            require(activeUseRejected,
-                    "Console use accepted a layered transaction stack");
-            require(useLevel2.getTransactionLevel() == 2,
-                    "failed Console use changed transaction depth");
-            require(!useLevel2.isStorageUsed(),
-                    "failed Console use acquired physical storage");
-            require(guardedSource.equals(useLevel2.getSourceCode()),
-                    "failed Console use changed visible workspace source");
+            require(rebasedUse.isStorageUsed(),
+                    "Console use did not open storage under layered offline stack");
+            require(rebasedUse.getTransactionLevel() == 3,
+                    "non-empty offline U0 was not retained as an overlay");
+            require(guardedSource.equals(rebasedUse.getSourceCode()),
+                    "Console layered storage rebase changed visible workspace source");
+            require(rebasedUse.getSourceCode().contains("useguardroot"),
+                    "Console layered storage rebase lost offline U0 content");
+            require(rebasedUse.getSourceCode().contains("useguardlevel1"),
+                    "Console layered storage rebase lost U1 content");
+            require(rebasedUse.getSourceCode().contains("useguardlevel2"),
+                    "Console layered storage rebase lost U2 content");
 
-            useLevel1.release(useLevel2);
-            IMind useRoot = useLevel1.getNext();
-            require(useRoot != null,
-                    "use-guard level 1 lost its parent root");
-            require(useRoot.commit(useLevel1),
-                    "post-rejection transaction commit failed");
-            mind = useRoot;
+            IMind rebasedLevel2 = rebasedUse.getNext();
+            require(rebasedLevel2 != null,
+                    "rebased U3 lost U2 parent");
+            rebasedLevel2.release(rebasedUse);
+            IMind rebasedLevel1 = rebasedLevel2.getNext();
+            require(rebasedLevel1 != null,
+                    "rebased U2 lost U1 parent");
+            rebasedLevel1.release(rebasedLevel2);
+            IMind rebasedRoot = rebasedLevel1.getNext();
+            require(rebasedRoot != null,
+                    "rebased U1 lost persistent root");
+            rebasedRoot.release(rebasedLevel1);
+            mind = rebasedRoot.closeStorage();
 
             require(mind.getTransactionLevel() == 0,
-                    "post-rejection transaction resolution did not return to root");
+                    "post-rebase rollback did not return to offline root");
             require(!mind.isStorageUsed(),
-                    "post-rejection transaction resolution opened storage");
-            require(mind.getSourceCode().contains("useguardroot"),
-                    "post-rejection resolution lost root content");
-            require(mind.getSourceCode().contains("useguardlevel1"),
-                    "post-rejection resolution lost committed child content");
-            require(!mind.getSourceCode().contains("useguardlevel2"),
-                    "post-rejection rollback retained level-2 content");
-
-            mind = mind.clearWorkspace();
+                    "post-rebase cleanup retained physical storage");
             require(mind.getSourceCode().isEmpty(),
-                    "qualification workspace did not clear after use guard");
+                    "post-rebase rollback retained offline overlay content");
 
             /*
              * A level-0 offline workspace is intentionally retained when a

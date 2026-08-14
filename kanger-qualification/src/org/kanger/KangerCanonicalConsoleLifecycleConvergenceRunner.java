@@ -44,6 +44,7 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
             String userName = "autotest-canonical-console-lifecycle-" + suffix;
             String storageA = "console_lifecycle_a_" + suffix;
             String storageB = "console_lifecycle_b_" + suffix;
+            String storageCollision = "console_lifecycle_collision_" + suffix;
 
             IUser user = UserFactory.createUser(userName, userName);
             new UDF().init(user);
@@ -187,6 +188,66 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
             root = insertedRoot;
             root = root.closeStorage();
 
+            /* Closed storage must be inserted under the whole explicit stack. */
+            Mind offlineU1 = new Mind(root);
+            require(Boolean.TRUE.equals(offlineU1.query("!offlineu1;")),
+                    "offline U1 fixture did not compile");
+            Mind offlineU2 = new Mind(offlineU1);
+            require(Boolean.TRUE.equals(offlineU2.query("!offlineu2;")),
+                    "offline U2 fixture did not compile");
+            user.setCurrentMind(offlineU2);
+            IMind offlineRebased = (IMind) invoke(useStorage, offlineU2, storageA);
+            require(offlineRebased.getTransactionLevel() == 2,
+                    "empty offline U0 incorrectly shifted explicit stack depth");
+            require(storageA.equals(offlineRebased.getStorageName()),
+                    "offline stack insertion opened the wrong storage");
+            String offlineRebasedSource = offlineRebased.getSourceCode();
+            require(offlineRebasedSource.contains("abase")
+                            && offlineRebasedSource.contains("offlineu1")
+                            && offlineRebasedSource.contains("offlineu2"),
+                    "offline stack insertion lost baseline or explicit delta");
+            IMind offlineParent = offlineRebased.getNext();
+            offlineParent.release(offlineRebased);
+            IMind offlineRoot = offlineParent.getNext();
+            offlineRoot.release(offlineParent);
+            root = offlineRoot.closeStorage();
+
+            /* Rejected replay must restore the exact offline stack and keep storage closed. */
+            root = root.useStorage(storageCollision);
+            require(Boolean.TRUE.equals(root.query(
+                    "!@x (collisionleft(x) || collisionright(x)) && "
+                            + "~(collisionleft(x) && collisionright(x));")),
+                    "collision exclusivity fixture did not compile");
+            require(Boolean.TRUE.equals(root.query("!collisionleft(One);")),
+                    "collision baseline fixture did not compile");
+            user.checkpoint(root);
+            root = root.closeStorage();
+
+            Mind collisionU1 = new Mind(root);
+            require(Boolean.TRUE.equals(collisionU1.query("!collisionright(One);")),
+                    "offline collision fixture did not compile before storage insertion");
+            user.setCurrentMind(collisionU1);
+            boolean collisionRejected = false;
+            try {
+                invoke(useStorage, collisionU1, storageCollision);
+            } catch (Exception expected) {
+                collisionRejected = true;
+            }
+            require(collisionRejected,
+                    "colliding offline stack unexpectedly attached storage");
+            IMind restoredOffline = user.getCurrentMind();
+            require(restoredOffline != null && !restoredOffline.isStorageUsed(),
+                    "rejected storage insertion did not restore offline state");
+            require(restoredOffline.getTransactionLevel() == 1,
+                    "rejected storage insertion changed explicit transaction depth");
+            require(restoredOffline.getSourceCode().contains("collisionright(One)"),
+                    "rejected storage insertion lost offline semantic delta");
+            IMind restoredRoot = restoredOffline.getNext();
+            require(restoredRoot != null,
+                    "rejected storage insertion lost offline root");
+            restoredRoot.release(restoredOffline);
+            root = restoredRoot;
+
             /* rule level is semantic stack observability, never Rule.mindId provenance. */
             IUser ruleUser = UserFactory.createUser(userName + "-rule-level", userName + "-rule-level");
             new UDF().init(ruleUser);
@@ -228,8 +289,8 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
             int level0Pos = allLevels.indexOf("transaction level 0");
             int level1Pos = allLevels.indexOf("transaction level 1");
             int level2Pos = allLevels.indexOf("transaction level 2");
-            require(level0Pos >= 0 && level1Pos > level0Pos && level2Pos > level1Pos,
-                    "rule level did not enumerate the stack root-to-current");
+            require(level2Pos >= 0 && level1Pos > level2Pos && level0Pos > level1Pos,
+                    "rule level did not enumerate the stack current-to-root");
             require(allLevels.contains("rulelevelroot")
                             && allLevels.contains("rulelevelone")
                             && allLevels.contains("ruleleveltwo"),
@@ -244,7 +305,9 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
             System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS source-get-current-level");
             System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS same-storage-idempotent");
             System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS offline-baseline-insertion");
-            System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS rule-level-semantic-stack");
+            System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS offline-stack-storage-insertion");
+            System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS offline-stack-collision-restore");
+            System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS rule-level-semantic-stack-top-down");
             System.out.println("CANONICAL_CONSOLE_LIFECYCLE_OK");
             return true;
         } catch (Throwable failure) {

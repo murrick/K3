@@ -25,6 +25,7 @@ import org.kanger.interfaces.IPredicate;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
+import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.stores.HypothesisStore;
 import org.kanger.units.Rule;
@@ -141,6 +142,11 @@ public final class CanonicalConsole {
             } catch (Exception ex) {
                 System.err.println(new Date());
                 ex.printStackTrace(System.err);
+            } finally {
+                IMind recovered = mind.getUser().getCurrentMind();
+                if (recovered != null && recovered != mind) {
+                    mind = track(shutdownHook, recovered);
+                }
             }
         }
 
@@ -679,85 +685,10 @@ public final class CanonicalConsole {
 
     private static IMind useStorage(IMind mind, String logicalName) throws Exception {
         String name = storageName(logicalName);
-
-        if (mind.isStorageUsed()) {
-            if (name.equals(mind.getStorageName())) {
-                return mind;
-            }
-            return mind.useStorage(name);
-        }
-
-        String backup = SourceContextMaterializer.materializeCurrentLevel(mind);
-        mind = mind.useStorage(name);
-        if (!mind.isStorageUsed()) {
-            System.out.println("No database used");
+        if (mind.isStorageUsed() && name.equals(mind.getStorageName())) {
             return mind;
         }
-        if (backup.isEmpty()) {
-            return mind;
-        }
-
-        IMind imported = new Mind(mind);
-        boolean reservationOpen = true;
-        try {
-            if (imported.compile(backup)) {
-                if (!imported.isEmptyLevel()) {
-                    mind = imported;
-                    reservationOpen = false;
-                } else {
-                    mind.release(imported);
-                    reservationOpen = false;
-                }
-                return mind;
-            }
-
-            List<ILogEntry> importLog = new ArrayList<ILogEntry>();
-            for (ILogEntry entry : imported.getLog()) {
-                importLog.add(entry);
-            }
-            mind.release(imported);
-            reservationOpen = false;
-            mind = mind.closeStorage();
-
-            if (!mind.compile(backup)) {
-                throw new IllegalStateException(
-                        "Cannot restore offline workspace after rejected storage insertion");
-            }
-            mind.clearLog();
-            org.kanger.stores.LogStore restored = (org.kanger.stores.LogStore) mind.getLog();
-            for (ILogEntry entry : importLog) {
-                restored.add(entry.getType(), entry.getRecord());
-            }
-            System.out.println("Use xplain for analysis");
-            System.out.println("No database used");
-            return mind;
-        } catch (Exception failure) {
-            if (reservationOpen) {
-                try {
-                    mind.release(imported);
-                } catch (Exception rollbackFailure) {
-                    failure.addSuppressed(rollbackFailure);
-                }
-            }
-            if (mind.isStorageUsed()) {
-                try {
-                    mind = mind.closeStorage();
-                } catch (Exception closeFailure) {
-                    failure.addSuppressed(closeFailure);
-                }
-            }
-            if (!backup.isEmpty() && !mind.isStorageUsed()) {
-                try {
-                    if (!mind.compile(backup)) {
-                        failure.addSuppressed(new IllegalStateException(
-                                "Cannot restore offline workspace after storage insertion failure"));
-                    }
-                } catch (Exception restoreFailure) {
-                    failure.addSuppressed(restoreFailure);
-                }
-            }
-            throw failure;
-        }
+        return mind.useStorage(name);
     }
 
     private static IMind closeStorage(IMind mind) throws Exception {
@@ -906,6 +837,9 @@ public final class CanonicalConsole {
     }
 
     private static IMind track(ShutdownHook hook, IMind mind) {
+        if (mind != null) {
+            mind.getUser().setCurrentMind(mind);
+        }
         if (hook != null) {
             hook.setMind(mind);
         }
