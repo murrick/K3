@@ -10,7 +10,9 @@ import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
@@ -185,18 +187,84 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
             root = insertedRoot;
             root = root.closeStorage();
 
+            /* rule level is semantic stack observability, never Rule.mindId provenance. */
+            IUser ruleUser = UserFactory.createUser(userName + "-rule-level", userName + "-rule-level");
+            new UDF().init(ruleUser);
+            new DB().init(ruleUser);
+            IMind ruleRoot = new Mind(ruleUser);
+
+            Mind rootBuilder = new Mind(ruleRoot);
+            require(Boolean.TRUE.equals(rootBuilder.query("!rulelevelroot;")),
+                    "rule-level root fixture did not compile");
+            require(ruleRoot.commit(rootBuilder),
+                    "rule-level root fixture did not commit");
+
+            Mind ruleU1 = new Mind(ruleRoot);
+            require(Boolean.TRUE.equals(ruleU1.query("!rulelevelone;")),
+                    "rule-level U1 fixture did not compile");
+            Mind ruleU2 = new Mind(ruleU1);
+            require(Boolean.TRUE.equals(ruleU2.query("!ruleleveltwo;")),
+                    "rule-level U2 fixture did not compile");
+
+            String level0 = captureRuleListing(ruleU2, "rule level 0");
+            require(level0.contains("transaction level 0") && level0.contains("rulelevelroot"),
+                    "rule level 0 lost committed root semantics");
+            require(!level0.contains("rulelevelone") && !level0.contains("ruleleveltwo"),
+                    "rule level 0 leaked child semantics");
+
+            String level1 = captureRuleListing(ruleU2, "rule level 1");
+            require(level1.contains("transaction level 1") && level1.contains("rulelevelone"),
+                    "rule level 1 did not show its semantic delta");
+            require(!level1.contains("rulelevelroot") && !level1.contains("ruleleveltwo"),
+                    "rule level 1 mixed parent or child semantics");
+
+            String level2 = captureRuleListing(ruleU2, "rule level 2");
+            require(level2.contains("transaction level 2") && level2.contains("ruleleveltwo"),
+                    "rule level 2 did not show its semantic delta");
+            require(!level2.contains("rulelevelroot") && !level2.contains("rulelevelone"),
+                    "rule level 2 mixed parent semantics");
+
+            String allLevels = captureRuleListing(ruleU2, "rule level");
+            int level0Pos = allLevels.indexOf("transaction level 0");
+            int level1Pos = allLevels.indexOf("transaction level 1");
+            int level2Pos = allLevels.indexOf("transaction level 2");
+            require(level0Pos >= 0 && level1Pos > level0Pos && level2Pos > level1Pos,
+                    "rule level did not enumerate the stack root-to-current");
+            require(allLevels.contains("rulelevelroot")
+                            && allLevels.contains("rulelevelone")
+                            && allLevels.contains("ruleleveltwo"),
+                    "rule level aggregate lost one or more semantic deltas");
+
+            ruleU1.release(ruleU2);
+            ruleRoot.release(ruleU1);
+
             System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS erase-settlement");
             System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS core-exception-settlement");
             System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS storage-stack-rebase");
             System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS source-get-current-level");
             System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS same-storage-idempotent");
             System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS offline-baseline-insertion");
+            System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS rule-level-semantic-stack");
             System.out.println("CANONICAL_CONSOLE_LIFECYCLE_OK");
             return true;
         } catch (Throwable failure) {
             failure.printStackTrace(System.err);
             return false;
         }
+    }
+
+    private static String captureRuleListing(IMind mind, String command) throws Exception {
+        PrintStream previous = System.out;
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        PrintStream capture = new PrintStream(buffer, true, StandardCharsets.UTF_8.name());
+        try {
+            System.setOut(capture);
+            Console.showRules(mind, command);
+        } finally {
+            System.setOut(previous);
+            capture.close();
+        }
+        return buffer.toString(StandardCharsets.UTF_8.name());
     }
 
     private static Method privateMethod(

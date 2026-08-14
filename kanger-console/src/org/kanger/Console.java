@@ -1254,10 +1254,10 @@ public class Console {
 
     public static void showRules(IMind mind, String line) throws Exception {
         long id = -1;
-        IMind m = mind;
         boolean tree = false;
         int prods = 1;
         boolean level = false;
+        Long requestedLevel = null;
         for (String s : line.split(" ")) {
             if (!s.trim().isEmpty()) {
                 switch (s.trim().toUpperCase().charAt(0)) {
@@ -1277,18 +1277,11 @@ public class Console {
                         break;
                     default:
                         try {
+                            long value = Long.parseLong(s);
                             if (level) {
-                                long lv = Long.parseLong(s);
-                                if (lv < 0 || lv > mind.getTransactionLevel()) {
-                                    throw new CommandErrorException("Invalid transaction level " + lv);
-                                }
-                                for (m = mind; m != null; m = m.getNext()) {
-                                    if (m.getTransactionLevel() == lv) {
-                                        break;
-                                    }
-                                }
+                                requestedLevel = value;
                             } else {
-                                id = Long.parseLong(s);
+                                id = value;
                             }
                         } catch (Exception ex) {
                             throw new CommandErrorException();
@@ -1296,66 +1289,122 @@ public class Console {
                 }
             }
         }
-        boolean found = false;
+
         if (level) {
-            System.out.printf(" --- Rules for transaction level %d (%d)\n", m.getTransactionLevel(), m.getId());
-        }
-        for (IRule r : mind.getRules()) {
-            if (!r.isDeleted(m)
-                    && (r.getId() == id || (id == -1 && (
-                    (!level && prods == 1 && !r.isGenerated())
-                            || (!level && prods == 2 && r.isGenerated())
-                            || (!level && prods == 0)
-                            || (level && ((Rule) r).getMindId() == m.getId()))))) {
-                found = true;
-                System.out.printf("%sRule %03d%s: %s\n",
-                        (tree ? " --- " : "") + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", ((Rule) r).getMindId()) : ""),
-                        r.getId(),
-                        (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted(mind))
-                                ? " " +
-                                (r.isGenerated() ? "G" : "") +
-                                (r.isStored() ? "B" : "") +
-                                (r.isQuery() ? "Q" : "") +
-                                (r.isDeleted(mind) ? "D" : "")
-                                : "",
-                        r.getOrigin());
-                if (tree || r.getOrigin().isEmpty()) {
-                    int save = mind.getDebugLevel();
-                    mind.setDebugLevel(save & ~Enums.DEBUG_OPTION_STATUS);
-                    showTree(mind, r);
-                    mind.setDebugLevel(save);
-                    System.out.printf("\n");
+            if (requestedLevel != null) {
+                showRulesForLevel(mind, transactionLevelMind(mind, requestedLevel), tree);
+            } else {
+                List<IMind> levels = new ArrayList<>();
+                for (IMind m = mind; m != null; m = m.getNext()) {
+                    levels.add(m);
                 }
+                Collections.reverse(levels);
+                for (IMind m : levels) {
+                    showRulesForLevel(mind, m, tree);
+                }
+            }
+            return;
+        }
+
+        boolean found = false;
+        for (IRule r : mind.getRules()) {
+            if (!r.isDeleted(mind)
+                    && (r.getId() == id || (id == -1 && (
+                    (prods == 1 && !r.isGenerated())
+                            || (prods == 2 && r.isGenerated())
+                            || prods == 0)))) {
+                found = true;
+                showRule(mind, mind, r, tree);
                 if (id != -1) {
                     break;
                 }
             }
         }
-        if (level && ((Mind) m).getDeleted().containsKey(UnitType.RULE) && !((Mind) m).getDeleted().get(UnitType.RULE).isEmpty()) {
+        if (!found) {
+            System.out.printf("No rules selected\n");
+        }
+    }
+
+    private static IMind transactionLevelMind(IMind mind, long level) throws Exception {
+        if (level < 0 || level > mind.getTransactionLevel()) {
+            throw new CommandErrorException("Invalid transaction level " + level);
+        }
+        for (IMind m = mind; m != null; m = m.getNext()) {
+            if (m.getTransactionLevel() == level) {
+                return m;
+            }
+        }
+        throw new CommandErrorException("Invalid transaction level " + level);
+    }
+
+    private static boolean ruleVisibleAt(IMind mind, long id) throws Exception {
+        if (mind == null) {
+            return false;
+        }
+        IRule rule = mind.getRules().get(id);
+        return rule != null && !rule.isDeleted(mind);
+    }
+
+    private static boolean ruleIntroducedAt(IRule rule, IMind level) throws Exception {
+        if (!ruleVisibleAt(level, rule.getId())) {
+            return false;
+        }
+        IMind parent = level.getNext();
+        return parent == null || !ruleVisibleAt(parent, rule.getId());
+    }
+
+    private static void showRulesForLevel(IMind activeMind, IMind level, boolean tree) throws Exception {
+        System.out.printf(" --- Rules for transaction level %d (%d)\n",
+                level.getTransactionLevel(), level.getId());
+        boolean found = false;
+        for (IRule r : level.getRules()) {
+            if (ruleIntroducedAt(r, level)) {
+                found = true;
+                showRule(activeMind, level, r, tree);
+            }
+        }
+
+        Map<UnitType, Set<Long>> deleted = ((Mind) level).getDeleted();
+        if (deleted.containsKey(UnitType.RULE) && !deleted.get(UnitType.RULE).isEmpty()) {
             if (found) {
                 System.out.printf("\n");
             }
-            System.out.printf(" --- Deleted rules for level %d (%d)\n", m.getTransactionLevel(), m.getId());
-            for (long rid : ((Mind) m).getDeleted().get(UnitType.RULE)) {
-                IRule r = m.getRules().get(rid);
+            System.out.printf(" --- Deleted rules for level %d (%d)\n",
+                    level.getTransactionLevel(), level.getId());
+            for (long rid : deleted.get(UnitType.RULE)) {
+                IRule r = level.getRules().get(rid);
                 if (r != null) {
                     found = true;
-                    System.out.printf("%sRule %03d%s: %s\n",
-                            (tree ? " --- " : "") + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 ? String.format("%03d ", ((Rule) r).getMindId()) : ""),
-                            r.getId(),
-                            (mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0 && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted(mind))
-                                    ? " " +
-                                    (r.isGenerated() ? "G" : "") +
-                                    (r.isStored() ? "B" : "") +
-                                    (r.isQuery() ? "Q" : "") +
-                                    (r.isDeleted(mind) ? "D" : "")
-                                    : "",
-                            r.getOrigin());
+                    showRule(activeMind, level, r, tree);
                 }
             }
         }
         if (!found) {
             System.out.printf("No rules selected\n");
+        }
+    }
+
+    private static void showRule(IMind activeMind, IMind stateMind, IRule r, boolean tree) throws Exception {
+        System.out.printf("%sRule %03d%s: %s\n",
+                (tree ? " --- " : "")
+                        + ((activeMind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0
+                        ? String.format("%03d ", ((Rule) r).getMindId()) : ""),
+                r.getId(),
+                (activeMind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0
+                        && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted(stateMind))
+                        ? " "
+                        + (r.isGenerated() ? "G" : "")
+                        + (r.isStored() ? "B" : "")
+                        + (r.isQuery() ? "Q" : "")
+                        + (r.isDeleted(stateMind) ? "D" : "")
+                        : "",
+                r.getOrigin());
+        if (tree || r.getOrigin().isEmpty()) {
+            int save = activeMind.getDebugLevel();
+            activeMind.setDebugLevel(save & ~Enums.DEBUG_OPTION_STATUS);
+            showTree(activeMind, r);
+            activeMind.setDebugLevel(save);
+            System.out.printf("\n");
         }
     }
 
