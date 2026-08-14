@@ -37,14 +37,13 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
     }
 
     public static boolean test() {
-        IUser user = null;
         try {
             String suffix = Long.toString(System.nanoTime());
             String userName = "autotest-canonical-console-lifecycle-" + suffix;
             String storageA = "console_lifecycle_a_" + suffix;
             String storageB = "console_lifecycle_b_" + suffix;
 
-            user = UserFactory.createUser(userName, userName);
+            IUser user = UserFactory.createUser(userName, userName);
             new UDF().init(user);
             new DB().init(user);
             Files.createDirectories(new File(user.getSourceDir()).toPath());
@@ -197,14 +196,6 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
         } catch (Throwable failure) {
             failure.printStackTrace(System.err);
             return false;
-        } finally {
-            if (user != null) {
-                try {
-                    UserFactory.dropUser(user);
-                } catch (Throwable cleanupFailure) {
-                    cleanupFailure.printStackTrace(System.err);
-                }
-            }
         }
     }
 
