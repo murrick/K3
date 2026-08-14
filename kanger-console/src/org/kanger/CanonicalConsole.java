@@ -33,6 +33,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -234,8 +235,8 @@ public final class CanonicalConsole {
                 return same(mind);
 
             case SOURCE_GET:
-                mind = Console.loadSourceFile(mind,
-                        sourceFile(mind, String.valueOf(invocation.getArgument("source"))));
+                mind = loadSource(mind,
+                        String.valueOf(invocation.getArgument("source")));
                 return same(track(shutdownHook, mind));
             case SOURCE_PUT:
                 saveSource(mind, String.valueOf(invocation.getArgument("source")), scanner);
@@ -318,25 +319,43 @@ public final class CanonicalConsole {
         ((HypothesisStore) mind.getHypothesis()).clear();
         Token token = null;
         Mind overlay = new Mind(mind);
+        boolean settlementStarted = false;
         boolean query = false;
         Boolean response = null;
-        while ((token = Tools.extractLine(line, token)) != null) {
-            String operator = token.getToken(line);
-            if (operator.charAt(0) == '?') {
-                query = true;
+        try {
+            while ((token = Tools.extractLine(line, token)) != null) {
+                String operator = token.getToken(line);
+                if (operator.charAt(0) == '?') {
+                    query = true;
+                }
+                response = overlay.query(operator);
+                if (!lastComments.isEmpty() && overlay.getAcceptedRule() != null) {
+                    overlay.getAcceptedRule().setComment(lastComments);
+                    lastComments = "";
+                }
             }
-            response = overlay.query(operator);
-            if (!lastComments.isEmpty() && overlay.getAcceptedRule() != null) {
-                overlay.getAcceptedRule().setComment(lastComments);
-                lastComments = "";
+            if (!query) {
+                settlementStarted = true;
+                mind.commit(overlay);
+            } else {
+                List<IHypothesis> hypotheses = new ArrayList<IHypothesis>();
+                if (response == null) {
+                    for (IHypothesis hypothesis : overlay.getHypothesis()) {
+                        hypotheses.add(hypothesis);
+                    }
+                }
+                settlementStarted = true;
+                mind.release(overlay);
+                if (response == null) {
+                    ((HypothesisStore) mind.getHypothesis()).clear();
+                    for (IHypothesis hypothesis : hypotheses) {
+                        ((HypothesisStore) mind.getHypothesis()).add(hypothesis);
+                    }
+                }
             }
-        }
-        if (!query) {
-            mind.commit(overlay);
-        } else {
-            mind.release(overlay);
-            if (response == null) {
-                ((HypothesisStore) mind.getHypothesis()).commit(overlay.getHypothesis());
+        } finally {
+            if (!settlementStarted) {
+                mind.release(overlay);
             }
         }
         if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
@@ -577,6 +596,33 @@ public final class CanonicalConsole {
         return file;
     }
 
+    private static IMind loadSource(IMind mind, String name) throws Exception {
+        File file = sourceFile(mind, name);
+        if (!file.isFile()) {
+            System.out.println("WARNING: File " + name + " not found");
+            return mind;
+        }
+        if (file.length() == 0L) {
+            System.out.println("WARNING: File " + name + " is empty");
+            return mind;
+        }
+
+        String text = new String(Files.readAllBytes(file.toPath()), "UTF-8");
+        boolean accepted = mind.compile(text);
+        if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+            ILogEntry log = mind.getCurrentLogRecord(LogMode.ANALYZER);
+            if (log != null) {
+                System.out.println(log.getRecord());
+            }
+        }
+        if (accepted) {
+            System.out.println("File " + file.getName() + " loaded");
+        } else {
+            System.out.println("Use xplain for analysis");
+        }
+        return mind;
+    }
+
     private static void saveSource(IMind mind, String name, Scanner scanner) throws Exception {
         File file = sourceFile(mind, name);
         if (file.exists() && !confirm(scanner, "Overwrite source file " + name + "?")) {
@@ -632,8 +678,16 @@ public final class CanonicalConsole {
     }
 
     private static IMind useStorage(IMind mind, String logicalName) throws Exception {
-        String backup = SourceContextMaterializer.materializeCurrentLevel(mind);
         String name = storageName(logicalName);
+
+        if (mind.isStorageUsed()) {
+            if (name.equals(mind.getStorageName())) {
+                return mind;
+            }
+            return mind.useStorage(name);
+        }
+
+        String backup = SourceContextMaterializer.materializeCurrentLevel(mind);
         mind = mind.useStorage(name);
         if (!mind.isStorageUsed()) {
             System.out.println("No database used");
@@ -649,6 +703,7 @@ public final class CanonicalConsole {
             if (imported.compile(backup)) {
                 if (!imported.isEmptyLevel()) {
                     mind = imported;
+                    reservationOpen = false;
                 } else {
                     mind.release(imported);
                     reservationOpen = false;
@@ -740,10 +795,15 @@ public final class CanonicalConsole {
     }
 
     private static IMind erase(IMind mind, Scanner scanner) throws Exception {
-        if (confirm(scanner, "Erase workspace?")) {
-            return mind.clearWorkspace();
+        if (!confirm(scanner, "Erase workspace?")) {
+            return mind;
         }
-        return mind;
+        while (mind.getNext() != null) {
+            IMind parent = mind.getNext();
+            parent.release(mind);
+            mind = parent;
+        }
+        return mind.clearWorkspace();
     }
 
     private static boolean confirmQuit(IMind mind, Scanner scanner) {
