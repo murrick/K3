@@ -584,9 +584,8 @@ public final class CanonicalConsole {
         }
         try (BufferedWriter writer = new BufferedWriter(
                 new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) {
-            writer.write(mind.getSourceCode());
+            writer.write(SourceContextMaterializer.materializeCurrentLevel(mind));
         }
-        mind.setSourceFileName(name);
         System.out.println("Source file " + name + " saved.");
     }
 
@@ -601,9 +600,6 @@ public final class CanonicalConsole {
         }
         if (!file.delete()) {
             throw new CommandErrorException("Cannot delete source file " + name);
-        }
-        if (name.equals(mind.getSourceFileName())) {
-            mind.setSourceFileName("");
         }
         System.out.println("Source file " + name + " deleted.");
     }
@@ -636,7 +632,7 @@ public final class CanonicalConsole {
     }
 
     private static IMind useStorage(IMind mind, String logicalName) throws Exception {
-        String backup = mind.getSourceCode();
+        String backup = SourceContextMaterializer.materializeCurrentLevel(mind);
         String name = storageName(logicalName);
         mind = mind.useStorage(name);
         if (!mind.isStorageUsed()) {

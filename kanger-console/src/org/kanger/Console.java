@@ -521,19 +521,14 @@ public class Console {
     private static void saveSource(String line, IMind mind, Scanner sc) throws Exception {
         String fname = null;
         if (line.split(" ").length == 1) {
-            System.out.println(mind.getSourceCode());
+            System.out.println(SourceContextMaterializer.materializeCurrentLevel(mind));
             System.out.printf("Save source code to file? [Y/n]? ");
             String s = sc.nextLine().toUpperCase();
             if (s.isEmpty() || s.charAt(0) == 'Y') {
-                fname = mind.getSourceFileName();
-                System.out.print("Enter file name. Space for cancel (" + mind.getSourceFileName() + "): ");
+                System.out.print("Enter file name. Space for cancel: ");
                 s = sc.nextLine();
-                if (!s.isEmpty()) {
-                    if (s.trim().isEmpty()) {
-                        fname = null;
-                    } else {
-                        fname = s;
-                    }
+                if (!s.trim().isEmpty()) {
+                    fname = s.trim();
                 }
             }
         } else {
@@ -572,8 +567,7 @@ public class Console {
         if (fname != null && !fname.isEmpty()) {
             File f = new File(mind.getUser().getSourceDir() + fname);
             try (BufferedWriter bw = new BufferedWriter(new FileWriter(f))) {
-                bw.write(mind.getSourceCode());
-                mind.setSourceFileName(fname);
+                bw.write(SourceContextMaterializer.materializeCurrentLevel(mind));
                 System.out.println("Source file " + fname + " saved.");
             }
         }
@@ -690,7 +684,7 @@ public class Console {
     }
 
     private static IMind useDatabase(String line, IMind mind, Scanner sc) throws Exception {
-        String backup = mind.getSourceCode();
+        String backup = SourceContextMaterializer.materializeCurrentLevel(mind);
         if (line.split(" ").length == 2) {
             String name = line.split("\\ ")[1].replace(".", Enums.FILE_SEPARATOR);
             return insertStorageBaseline(name, mind, backup);
@@ -1427,7 +1421,7 @@ public class Console {
                     ++n;
                 }
             }
-            System.out.printf("\nEnter file name %s%s: ", list.isEmpty() ? "" : "or file number", mind.getSourceFileName().isEmpty() ? "" : " (" + mind.getSourceFileName() + ")");
+            System.out.printf("\nEnter file name %s: ", list.isEmpty() ? "" : "or file number");
             String fn = sc.nextLine();
             try {
                 int ps = Integer.parseInt(fn);
@@ -1459,7 +1453,6 @@ public class Console {
                     if (mind.isStorageUsed()) {
                         mind = new Mind(mind);
                     }
-                    mind.setSourceFileName(f.getName());
                     res = mind.compile(buf.toString());
                     if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                         System.out.println(mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());

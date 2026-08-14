@@ -5,9 +5,9 @@
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
- *  deal in the Software without restriction, including without limitation the
- *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- *  sell copies of the Software, and to permit persons to whom the Software is
+ *  deal in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
  *
  *  The above copyright notice and this permission notice shall be included in
@@ -101,7 +101,6 @@ public class User implements IUser {
     private Map<String, IBase> storage = new HashMap<>();
     private Map<String, Long> counters = new HashMap<>();
     private long lastId = 0L;
-    private String sourceFileName = "mind.k";
     private IMind currentMind = null;
 
 
@@ -328,7 +327,6 @@ public class User implements IUser {
         UserTransactionStackSnapshot snapshot =
                 UserTransactionStackSnapshot.capture(top);
 
-        String originalSourceFileName = sourceFileName;
         boolean ownsCurrentSlot = currentMind == top;
         Mind root = (Mind) top.getTop();
         boolean mutationStarted = false;
@@ -344,7 +342,6 @@ public class User implements IUser {
             root = openClosedStorage(root, targetName);
             Mind rebasedTop = snapshot.replay(root);
 
-            sourceFileName = originalSourceFileName;
             if (ownsCurrentSlot) {
                 currentMind = rebasedTop;
             }
@@ -353,10 +350,8 @@ public class User implements IUser {
             Throwable propagated = failure;
             if (mutationStarted) {
                 try {
-                    Mind restoredRoot = restoreOriginalStorage(
-                            root, originalName, originalSourceFileName);
+                    Mind restoredRoot = restoreOriginalStorage(root, originalName);
                     Mind restoredTop = snapshot.replay(restoredRoot);
-                    sourceFileName = originalSourceFileName;
                     if (ownsCurrentSlot) {
                         currentMind = restoredTop;
                     }
@@ -375,8 +370,7 @@ public class User implements IUser {
     }
 
     private Mind restoreOriginalStorage(Mind root,
-                                        String originalName,
-                                        String originalSourceFileName) throws Exception {
+                                        String originalName) throws Exception {
         if (!data.isClosed()
                 && !Objects.equals(data.getStorageName(), originalName)) {
             root = (Mind) close(root);
@@ -390,7 +384,6 @@ public class User implements IUser {
                             + "; active storage is " + data.getStorageName());
         }
 
-        sourceFileName = originalSourceFileName;
         return root;
     }
 
@@ -611,14 +604,6 @@ public class User implements IUser {
 
     public void setUdf(Class udf) {
         this.udf = udf;
-    }
-
-    public String getSourceFileName() {
-        return sourceFileName;
-    }
-
-    public void setSourceFileName(String sourceFileName) {
-        this.sourceFileName = sourceFileName;
     }
 
     @Override

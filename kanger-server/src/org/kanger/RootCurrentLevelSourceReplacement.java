@@ -38,8 +38,7 @@ final class RootCurrentLevelSourceReplacement {
 
             Boolean compiled = exactSource != null && exactSource.isEmpty()
                     ? Boolean.TRUE
-                    : work.compile(SourceDocumentState.compilerInput(
-                            exactSource == null ? "" : exactSource));
+                    : work.compile(exactSource == null ? "" : exactSource);
             String description = analyzerDescription(work);
             if (!Boolean.TRUE.equals(compiled)) {
                 tx.rollback();

@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class SourceProjectionBoundaryReactorTest {
 
     @Test
-    public void sourceViewAndPutUseCurrentLevelWithoutFileIdentityRebind()
+    public void sourceViewAndPutUseCurrentLevelSemanticProjection()
             throws Exception {
         String identity = "source-projection-" + UUID.randomUUID().toString();
         IUser user = UserFactory.createUser(identity, identity);
@@ -57,7 +57,6 @@ public class SourceProjectionBoundaryReactorTest {
             assertTrue(source.getString("source").contains("!child;"));
             assertFalse(source.getString("source").contains("!root;"));
 
-            String identityBefore = child.getSourceFileName();
             JSONObject put = invoke(reactor, "command", new JSONObject()
                     .put("token", token)
                     .put("put", fileName));
@@ -65,8 +64,6 @@ public class SourceProjectionBoundaryReactorTest {
             String stored = new String(Files.readAllBytes(target), StandardCharsets.UTF_8);
             assertTrue(stored.contains("!child;"));
             assertFalse(stored.contains("!root;"));
-            assertEquals(identityBefore, child.getSourceFileName(),
-                    "Transport export rebound obsolete current-file identity");
         } finally {
             if (token != null) {
                 UserFactory.dropUser(user);

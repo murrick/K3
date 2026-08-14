@@ -32,24 +32,22 @@ import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Projects one canonical source/storage/workspace state into every authenticated
- * response after the underlying operation has completed.
+ * Projects canonical runtime workspace state into every authenticated response
+ * after the underlying operation has completed.
  *
- * <p>The legacy browser historically inferred state from command names and
- * optimistic response text. This boundary makes the server-side runtime state
- * explicit, including failed operations that preserve the previous workspace.</p>
+ * <p>The projection deliberately contains only runtime authorities: active
+ * storage and explicit transaction state. Source files are external semantic
+ * transport objects and therefore have no current/active workspace identity.</p>
  */
 public final class WorkspaceStateReactor implements IReactor<JSONObject> {
 
@@ -204,7 +202,7 @@ public final class WorkspaceStateReactor implements IReactor<JSONObject> {
         }
         if (request.parameters.has("get")
                 && request.parameters.optString("get", "").isEmpty()) {
-            normalizeSourceList(result, user);
+            normalizeSourceList(result);
         }
         if (request.parameters.has("use")
                 && request.parameters.optString("use", "").isEmpty()) {
@@ -212,7 +210,7 @@ public final class WorkspaceStateReactor implements IReactor<JSONObject> {
         }
     }
 
-    private void normalizeSourceList(JSONObject result, IUser user) throws Exception {
+    private void normalizeSourceList(JSONObject result) throws Exception {
         JSONArray legacy = result.optJSONArray("list");
         Set<String> names = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
         if (legacy != null) {
@@ -225,21 +223,12 @@ public final class WorkspaceStateReactor implements IReactor<JSONObject> {
         }
 
         JSONArray list = new JSONArray();
-        JSONArray sources = new JSONArray();
-        String activeName = nullToEmpty(user.getCurrentMind().getSourceFileName());
-        JSONObject current = sourceProjection(user.getCurrentMind(), user);
         for (String name : names) {
             list.put(name);
-            boolean active = name.equalsIgnoreCase(activeName);
-            sources.put(new JSONObject()
-                    .put("logical_name", name)
-                    .put("active", active)
-                    .put("repository_state", active
-                            ? current.getString("repository_state") : "saved"));
         }
         result.put("list", list);
         result.put("size", list.length());
-        result.put("sources", sources);
+        result.remove("sources");
     }
 
     private void normalizeStorageList(JSONObject result, IUser user) throws Exception {
@@ -284,45 +273,12 @@ public final class WorkspaceStateReactor implements IReactor<JSONObject> {
     static JSONObject project(IUser user) throws Exception {
         IMind mind = user.getCurrentMind();
         JSONObject workspace = new JSONObject();
-        workspace.put("schema", 1);
-        workspace.put("source", sourceProjection(mind, user));
+        workspace.put("schema", 2);
         workspace.put("storage", storageProjection(mind, user));
         workspace.put("transaction", new JSONObject()
                 .put("level", mind.getTransactionLevel())
                 .put("empty", mind.isEmptyLevel()));
         return workspace;
-    }
-
-    private static JSONObject sourceProjection(IMind mind, IUser user)
-            throws Exception {
-        String logicalName = nullToEmpty(mind.getSourceFileName());
-        String source = nullToEmpty(SourceDocumentState.current(user, mind));
-        byte[] currentBytes = source.getBytes(StandardCharsets.UTF_8);
-        Path path = logicalName.isEmpty() ? null : sourcePath(user, logicalName);
-        boolean persisted = path != null && Files.isRegularFile(path);
-        String repositoryState;
-        boolean dirty;
-        if (logicalName.isEmpty()) {
-            repositoryState = "unbound";
-            dirty = !source.isEmpty();
-        } else if (!persisted) {
-            repositoryState = "missing";
-            dirty = true;
-        } else {
-            byte[] stored = Files.readAllBytes(path);
-            boolean equal = Arrays.equals(stored, currentBytes);
-            repositoryState = equal ? "saved" : "modified";
-            dirty = !equal;
-        }
-
-        return new JSONObject()
-                .put("logical_name", logicalName.isEmpty()
-                        ? JSONObject.NULL : logicalName)
-                .put("has_text", !source.isEmpty())
-                .put("bytes_utf8", currentBytes.length)
-                .put("repository_state", repositoryState)
-                .put("persisted", persisted)
-                .put("dirty", dirty);
     }
 
     private static JSONObject storageProjection(IMind mind, IUser user)
@@ -377,12 +333,6 @@ public final class WorkspaceStateReactor implements IReactor<JSONObject> {
                 .put("present", false)
                 .put("artifacts", new JSONArray())
                 .put("wal_segments", 0);
-    }
-
-    private static Path sourcePath(IUser user, String fileName) {
-        Path base = Paths.get(user.getSourceDir()).toAbsolutePath().normalize();
-        Path resolved = base.resolve(fileName).normalize();
-        return resolved.startsWith(base) ? resolved : null;
     }
 
     private static Path storagePath(IUser user, String canonical) {

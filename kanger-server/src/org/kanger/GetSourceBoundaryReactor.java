@@ -20,11 +20,11 @@ import java.nio.file.Files;
  * Atomic import boundary for an explicit browser {@code get <source>}.
  *
  * <p>The stored document is temporary operation input. It is read byte-for-byte
- * as UTF-8, while only the compiler view receives the virtual terminal line
- * boundary required by the historical parser. Accepted input is committed as
- * semantic delta into the current explicit user level and is not retained as
- * current-file/current-document identity. Rejected input is returned separately
- * as exact {@code source_recovery} text for Browser repair.</p>
+ * as UTF-8, while the compiler owns any virtual terminal line boundary required
+ * by the historical parser. Accepted input is committed as semantic delta into
+ * the current explicit user level and is not retained as current-file/current-
+ * document identity. Rejected input is returned separately as exact
+ * {@code source_recovery} text for Browser repair.</p>
  *
  * <p>A load is one operation-local technical transaction over the current
  * user-visible Mind. Successful compilation commits the semantic delta into
@@ -93,8 +93,7 @@ public final class GetSourceBoundaryReactor implements IReactor<JSONObject> {
 
         try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(parent)) {
             Mind work = tx.mind();
-            Boolean compiled = work.compile(
-                    SourceDocumentState.compilerInput(exactSource));
+            Boolean compiled = work.compile(exactSource);
             String description = work.getCurrentLogRecord(LogMode.ANALYZER)
                     .getRecord();
 

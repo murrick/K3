@@ -22,16 +22,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Qualification gates for the canonical workspace projection. */
+/** Qualification gates for the canonical runtime workspace projection. */
 public class WorkspaceStateReactorTest {
 
     @Test
-    public void sourceAndStorageProjectionRemainTruthfulAcrossOperations()
+    public void workspaceV2PreservesRuntimeAndSourceTransportTruth()
             throws Exception {
         String identity = "workspace-state-" + UUID.randomUUID().toString();
         IUser user = UserFactory.createUser(identity, identity);
@@ -51,35 +50,31 @@ public class WorkspaceStateReactorTest {
             JSONObject initial = invoke(reactor, "command", new JSONObject()
                     .put("token", token)
                     .put("ping", ""));
-            JSONObject initialSource = initial.getJSONObject("workspace")
-                    .getJSONObject("source");
-            assertEquals("missing",
-                    initialSource.getString("repository_state"));
-            assertFalse(initialSource.isNull("logical_name"));
-            assertFalse(initialSource.getBoolean("has_text"));
-            assertTrue(initialSource.getBoolean("dirty"));
-            String defaultSourceName = initialSource.getString("logical_name");
+            assertWorkspaceV2(initial);
             assertFalse(initial.getJSONObject("workspace")
                     .getJSONObject("storage").getBoolean("active"));
+            assertEquals(0, initial.getJSONObject("workspace")
+                    .getJSONObject("transaction").getInt("level"));
 
             JSONObject compile = invoke(reactor, "query", new JSONObject()
                     .put("token", token)
                     .put("compile", URLEncoder.encode("!alpha;", "UTF-8")));
             assertEquals("OK", compile.getString("result"), compile.toString());
-            assertSource(compile, "missing", defaultSourceName, true);
+            assertWorkspaceV2(compile);
 
             JSONObject save = invoke(reactor, "command", new JSONObject()
                     .put("token", token)
                     .put("put", "alpha"));
             assertEquals("OK", save.getString("result"), save.toString());
-            assertSource(save, "saved", "alpha.k", false);
-            assertEquals("alpha.k", user.getCurrentMind().getSourceFileName());
+            assertWorkspaceV2(save);
+            Path alpha = Paths.get(user.getSourceDir()).resolve("alpha.k");
+            assertTrue(Files.isRegularFile(alpha));
 
             JSONObject modified = invoke(reactor, "query", new JSONObject()
                     .put("token", token)
                     .put("request", URLEncoder.encode("!beta;", "UTF-8")));
             assertEquals("OK", modified.getString("result"), modified.toString());
-            assertSource(modified, "modified", "alpha.k", true);
+            assertWorkspaceV2(modified);
             assertEquals(0, modified.getJSONObject("workspace")
                     .getJSONObject("transaction").getInt("level"));
 
@@ -87,34 +82,35 @@ public class WorkspaceStateReactorTest {
                     .put("token", token)
                     .put("get", ""));
             assertEquals("alpha.k", sources.getJSONArray("list").getString(0));
-            assertTrue(sources.getJSONArray("sources")
-                    .getJSONObject(0).getBoolean("active"));
+            assertFalse(sources.has("sources"),
+                    "Source list reintroduced active/current-file metadata");
+            assertWorkspaceV2(sources);
 
             JSONObject delete = invoke(reactor, "command", new JSONObject()
                     .put("token", token)
                     .put("delete", "alpha"));
             assertEquals("OK", delete.getString("result"), delete.toString());
-            assertSource(delete, "missing", "alpha.k", true);
+            assertFalse(Files.exists(alpha));
+            assertWorkspaceV2(delete);
 
-            // Source and storage UX are independent concerns. Start storage
-            // qualification from a clean root so source rules do not become
-            // an intentional transaction overlay on storage attachment.
+            // Source transport and storage are independent concerns. Start
+            // storage qualification from a clean root so source rules do not
+            // become an intentional transaction overlay on storage attachment.
             user.setCurrentMind(new Mind(user));
 
             JSONObject nested = invoke(reactor, "command", new JSONObject()
                     .put("token", token)
                     .put("use", "nested/one"));
             assertEquals("OK", nested.getString("result"), nested.toString());
+            assertWorkspaceV2(nested);
             assertStorage(nested, "nested.one",
                     "nested" + Enums.FILE_SEPARATOR + "one");
 
-            // OPEN A -> use B is now an atomic Core semantic rebase. With
-            // no explicit overlays in this fixture, workspace projection should
-            // simply move from nested.one U0 to other U0 in one response.
             JSONObject other = invoke(reactor, "command", new JSONObject()
                     .put("token", token)
                     .put("use", "other"));
             assertEquals("OK", other.getString("result"), other.toString());
+            assertWorkspaceV2(other);
             assertStorage(other, "other", "other");
             assertEquals(0, other.getJSONObject("workspace")
                     .getJSONObject("transaction").getInt("level"));
@@ -124,11 +120,13 @@ public class WorkspaceStateReactorTest {
                     .put("drop", "nested.one"));
             assertEquals("OK", dropNonActive.getString("result"),
                     dropNonActive.toString());
+            assertWorkspaceV2(dropNonActive);
             assertStorage(dropNonActive, "other", "other");
 
             JSONObject storageList = invoke(reactor, "command", new JSONObject()
                     .put("token", token)
                     .put("use", ""));
+            assertWorkspaceV2(storageList);
             JSONArray list = storageList.getJSONArray("list");
             assertTrue(contains(list, "other"));
             JSONArray structured = storageList.getJSONArray("storages");
@@ -140,9 +138,6 @@ public class WorkspaceStateReactorTest {
             corruptStore = Paths.get(corruptBase.toString() + ".store");
             Files.write(corruptStore, new byte[]{0x00, 0x01, 0x02});
 
-            // The server may probe a target before Core mutation. A corrupt
-            // target therefore fails as a switch, while the active generation
-            // and projected workspace remain the original "other" state.
             JSONObject rejectedCorrupt = invoke(reactor, "command", new JSONObject()
                     .put("token", token)
                     .put("use", "corrupt-target"));
@@ -151,12 +146,14 @@ public class WorkspaceStateReactorTest {
             assertEquals("storage_switch_failed",
                     rejectedCorrupt.getString("code"));
             assertFalse(rejectedCorrupt.has("required_action"));
+            assertWorkspaceV2(rejectedCorrupt);
             assertStorage(rejectedCorrupt, "other", "other");
 
             JSONObject close = invoke(reactor, "command", new JSONObject()
                     .put("token", token)
                     .put("close", ""));
             assertEquals("OK", close.getString("result"), close.toString());
+            assertWorkspaceV2(close);
             assertFalse(close.getJSONObject("workspace")
                     .getJSONObject("storage").getBoolean("active"));
 
@@ -165,6 +162,7 @@ public class WorkspaceStateReactorTest {
                     .put("used", ""));
             assertEquals("error", used.getString("result"));
             assertEquals("storage_not_used", used.getString("code"));
+            assertWorkspaceV2(used);
             assertFalse(used.getJSONObject("workspace")
                     .getJSONObject("storage").getBoolean("active"));
         } finally {
@@ -187,15 +185,14 @@ public class WorkspaceStateReactorTest {
     }
 
     @Test
-    public void sourceWithoutFinalEolRemainsExactWhileLastStatementCompiles()
+    public void sourceWithoutFinalEolCompilesAndExportsSemanticProjection()
             throws Exception {
         String identity = "source-eof-" + UUID.randomUUID().toString();
         IUser user = UserFactory.createUser(identity, identity);
         String token = null;
-        String sourceName = "eof-exact-" + UUID.randomUUID().toString() + ".k";
+        String sourceName = "eof-semantic-" + UUID.randomUUID().toString() + ".k";
         Path sourcePath = Paths.get(user.getSourceDir()).resolve(sourceName);
         String exact = "!alpha(one);\n!omega(last);";
-        byte[] exactBytes = exact.getBytes(StandardCharsets.UTF_8);
         try {
             new UDF().init(user);
             new DB().init(user);
@@ -209,16 +206,16 @@ public class WorkspaceStateReactorTest {
                     .put("token", token)
                     .put("compile", URLEncoder.encode(exact, "UTF-8")));
             assertEquals("OK", compile.getString("result"), compile.toString());
-            JSONObject projected = compile.getJSONObject("workspace")
-                    .getJSONObject("source");
-            assertEquals(exactBytes.length, projected.getInt("bytes_utf8"));
+            assertWorkspaceV2(compile);
 
             JSONObject source = invoke(reactor, "query", new JSONObject()
                     .put("token", token)
                     .put("source", ""));
             assertEquals("OK", source.getString("result"), source.toString());
-            assertEquals(exact, source.getString("source"),
-                    "Server source response changed exact editor bytes");
+            String semantic = source.getString("source");
+            assertTrue(semantic.contains("!alpha(one);"));
+            assertTrue(semantic.contains("!omega(last);"));
+            assertWorkspaceV2(source);
 
             JSONObject query = invoke(reactor, "query", new JSONObject()
                     .put("token", token)
@@ -226,19 +223,18 @@ public class WorkspaceStateReactorTest {
             assertEquals("OK", query.getString("result"), query.toString());
             assertEquals("yes", query.getString("response"),
                     "Last no-EOL statement did not participate in inference");
+            assertWorkspaceV2(query);
 
             JSONObject save = invoke(reactor, "command", new JSONObject()
                     .put("token", token)
                     .put("put", sourceName));
             assertEquals("OK", save.getString("result"), save.toString());
-            assertArrayEquals(exactBytes, Files.readAllBytes(sourcePath),
-                    "Repository save changed exact source bytes");
-            assertEquals(exactBytes.length, save.getJSONObject("workspace")
-                    .getJSONObject("source").getInt("bytes_utf8"));
-            assertEquals("saved", save.getJSONObject("workspace")
-                    .getJSONObject("source").getString("repository_state"));
+            String persisted = new String(Files.readAllBytes(sourcePath),
+                    StandardCharsets.UTF_8);
+            assertTrue(persisted.contains("!alpha(one);"));
+            assertTrue(persisted.contains("!omega(last);"));
+            assertWorkspaceV2(save);
         } finally {
-            SourceDocumentState.invalidate(user);
             if (token != null) {
                 UserFactory.dropUser(user);
             }
@@ -246,19 +242,11 @@ public class WorkspaceStateReactorTest {
         }
     }
 
-    private void assertSource(JSONObject response,
-                              String state,
-                              String name,
-                              boolean dirty) {
-        JSONObject source = response.getJSONObject("workspace")
-                .getJSONObject("source");
-        assertEquals(state, source.getString("repository_state"));
-        if (name == null) {
-            assertTrue(source.isNull("logical_name"));
-        } else {
-            assertEquals(name, source.getString("logical_name"));
-        }
-        assertEquals(dirty, source.getBoolean("dirty"));
+    private void assertWorkspaceV2(JSONObject response) {
+        JSONObject workspace = response.getJSONObject("workspace");
+        assertEquals(2, workspace.getInt("schema"));
+        assertFalse(workspace.has("source"),
+                "Workspace v2 reintroduced current-file source authority");
     }
 
     private void assertStorage(JSONObject response,

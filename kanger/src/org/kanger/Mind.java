@@ -730,7 +730,17 @@ public class Mind implements IMind {
         return compile(src, ext, true);
     }
 
+    private static String compilerInput(String source) {
+        String input = source == null ? "" : source;
+        if (input.isEmpty()) {
+            return input;
+        }
+        char last = input.charAt(input.length() - 1);
+        return last == '\r' || last == '\n' ? input : input + '\n';
+    }
+
     public boolean compile(String src, Object[] ext, boolean logging) throws Exception {
+        src = compilerInput(src);
         this.logging = logging;
 
         getQueryValues().clear();
@@ -837,15 +847,6 @@ public class Mind implements IMind {
             }
         }
         return r;
-    }
-
-    @Override
-    public String getSourceFileName() {
-        return user.getSourceFileName();
-    }
-
-    public void setSourceFileName(String name) {
-        user.setSourceFileName(name);
     }
 
     @Override

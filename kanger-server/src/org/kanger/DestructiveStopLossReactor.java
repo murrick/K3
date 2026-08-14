@@ -172,7 +172,7 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
         }
 
         IMind mind = user.getCurrentMind();
-        String previousSource = mind.getSourceCode();
+        String previousSource = SourceContextMaterializer.materializeCurrentLevel(mind);
         try {
             mind = mind.clearWorkspace();
             user.setCurrentMind(mind);
@@ -216,9 +216,6 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
     private JSONObject saveSource(JSONObject parameters, IUser user) throws Exception {
         IMind mind = user.getCurrentMind();
         String fileName = parameters.optString("put", "");
-        if (fileName.isEmpty()) {
-            fileName = mind.getSourceFileName();
-        }
         if (fileName == null || fileName.isEmpty()) {
             return error("source_name_required", "You have to select name for file.");
         }
@@ -235,7 +232,8 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 target.getFileName().toString() + ".", ".tmp");
         boolean published = false;
         try {
-            byte[] data = mind.getSourceCode().getBytes(StandardCharsets.UTF_8);
+            byte[] data = SourceContextMaterializer.materializeCurrentLevel(mind)
+                    .getBytes(StandardCharsets.UTF_8);
             try (FileChannel channel = FileChannel.open(temporary,
                     StandardOpenOption.WRITE,
                     StandardOpenOption.TRUNCATE_EXISTING)) {
@@ -253,7 +251,6 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
             }
             published = true;
-            mind.setSourceFileName(fileName);
             if (!existed) {
                 Watchdog.log(user, "New source file created: " + fileName);
             }
@@ -284,7 +281,6 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 mind = new Mind(mind);
                 childCreated = true;
             }
-            mind.setSourceFileName(source.getFileName().toString());
             boolean accepted = mind.compile(text);
             String description = mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord();
             if (accepted) {
@@ -318,11 +314,7 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
     }
 
     private JSONObject deleteSource(JSONObject parameters, IUser user) throws Exception {
-        IMind mind = user.getCurrentMind();
         String fileName = parameters.optString("delete", "");
-        if (fileName.isEmpty()) {
-            fileName = mind.getSourceFileName();
-        }
         if (fileName == null || fileName.isEmpty()) {
             return error("source_name_required", "You have to select name for file");
         }
@@ -352,7 +344,7 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
         /*
          * An open-generation A->B switch belongs entirely to Core. This
          * stop-loss boundary may probe B before mutation, but it must not
-         * replay getSourceCode() or perform an independent restore afterward:
+         * replay source text or perform an independent restore afterward:
          * User.use transports every explicit U-level as semantic delta and
          * compensates back to A if target replay fails after mutation starts.
          */
@@ -372,16 +364,16 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
 
         /*
          * Historical no-storage workspace attachment remains a separate
-         * compatibility case: a transient level-0 source has to become an
-         * overlay above the newly attached persistent base. Unlike A->B, there
-         * is no pre-existing persistent U0 for Core to rebase.
+         * compatibility case: a transient level-0 semantic projection has to
+         * become an overlay above the newly attached persistent base. Unlike
+         * A->B, there is no pre-existing persistent U0 for Core to rebase.
          */
         JSONObject blocked = requireRootTransaction(user, "use");
         if (blocked != null) {
             return blocked;
         }
 
-        String previousSource = mind.getSourceCode();
+        String previousSource = SourceContextMaterializer.materializeCurrentLevel(mind);
         probeStorage(user, storageName);
         try {
             mind = mind.useStorage(storageName);
@@ -477,7 +469,7 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
         }
 
         String previousStorage = mind.isStorageUsed() ? mind.getStorageName() : null;
-        String previousSource = mind.getSourceCode();
+        String previousSource = SourceContextMaterializer.materializeCurrentLevel(mind);
         deleteStorageArtifacts(user, storageName + "-temporary");
         try {
             mind = mind.reindexStorage(storageName);

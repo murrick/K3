@@ -53,8 +53,7 @@ final class NestedCurrentLevelSourceReplacement {
 
             Boolean compiled = exactSource != null && exactSource.isEmpty()
                     ? Boolean.TRUE
-                    : candidate.compile(SourceDocumentState.compilerInput(
-                            exactSource == null ? "" : exactSource));
+                    : candidate.compile(exactSource == null ? "" : exactSource);
             String description = analyzerDescription(candidate);
             if (!Boolean.TRUE.equals(compiled)) {
                 parent.release(candidate);

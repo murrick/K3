@@ -285,7 +285,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
         IMind mind = user.getCurrentMind();
         JSONObject result = new JSONObject();
         result.put("result", "OK");
-        result.put("source", SourceDocumentState.current(user, mind));
+        result.put("source", SourceContextMaterializer.materializeCurrentLevel(mind));
         return result;
     }
 
@@ -364,16 +364,9 @@ public class QueryProcessor implements IReactor<JSONObject> {
         JSONObject result = new JSONObject();
 
         String source = URLDecoder.decode(parameters.getString("compile"), "utf-8");
-        String compilerInput = SourceDocumentState.compilerInput(source);
         mind = mind.clearWorkspace();
-        boolean res = mind.compile(compilerInput);
-        if (res) {
-            SourceDocumentState.publish(user, source);
-            result.put("result", "OK");
-        } else {
-            SourceDocumentState.invalidate(user);
-            result.put("result", "error");
-        }
+        boolean res = mind.compile(source);
+        result.put("result", res ? "OK" : "error");
         result.put("description", mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
         return result;
     }
@@ -402,7 +395,6 @@ public class QueryProcessor implements IReactor<JSONObject> {
         }
         if (!succ) {
             mind.commit(m);
-            SourceDocumentState.invalidate(user);
         } else {
             mind.release(m);
             if(res == null) {
@@ -763,10 +755,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
         IMind mind = user.getCurrentMind();
         JSONObject result = new JSONObject();
 
-        String fname = mind.getSourceFileName();
-        if (!parameters.getString("delete").isEmpty()) {
-            fname = parameters.getString("delete");
-        }
+        String fname = parameters.getString("delete");
         if (fname != null && !fname.isEmpty()) {
             File f = new File(mind.getUser().getSourceDir() + fname);
             if (f.exists()) {
@@ -1063,7 +1052,6 @@ public class QueryProcessor implements IReactor<JSONObject> {
         IMind mind = user.getCurrentMind();
         mind = mind.clearWorkspace();
         user.setCurrentMind(mind);
-        SourceDocumentState.invalidate(user);
         JSONObject result = new JSONObject();
         result.put("result", "OK");
         return result;
@@ -1082,7 +1070,6 @@ public class QueryProcessor implements IReactor<JSONObject> {
         IMind mind = user.getCurrentMind();
         mind.closeStorage();
         user.setCurrentMind(null);
-        SourceDocumentState.invalidate(user);
         UserFactory.dropUser(user);
         JSONObject result = new JSONObject();
         result.put("result", "OK");
@@ -1115,7 +1102,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
     private JSONObject useDatabase(JSONObject parameters, IUser user) throws Exception {
         JSONObject result = new JSONObject();
         IMind mind = user.getCurrentMind();
-        String backup = SourceDocumentState.current(user, mind);
+        String backup = SourceContextMaterializer.materializeCurrentLevel(mind);
 
         if (!parameters.getString("use").isEmpty()) {
             String name = parameters.getString("use").replace(".", Enums.FILE_SEPARATOR);
@@ -1128,7 +1115,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
                 boolean success = true;
                 if (!backup.isEmpty()) {
                     IMind m = new Mind(mind);
-                    if (m.compile(SourceDocumentState.compilerInput(backup))) {
+                    if (m.compile(backup)) {
                         if (!m.isEmptyLevel()) {
                             mind = m;
                             System.out.printf("Transaction level %d (%d)\n", mind.getTransactionLevel(), mind.getId());
@@ -1137,7 +1124,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
                         }
                     } else {
                         mind = mind.closeStorage();
-                        mind.compile(SourceDocumentState.compilerInput(backup));
+                        mind.compile(backup);
                         mind.clearLog();
                         mind.release(m);
                         result.put("result", "error");
@@ -1166,16 +1153,12 @@ public class QueryProcessor implements IReactor<JSONObject> {
         IMind mind = user.getCurrentMind();
         JSONObject result = new JSONObject();
 
-        String fname = mind.getSourceFileName();
-        if (!parameters.getString("put").isEmpty()) {
-            fname = parameters.getString("put");
-        }
+        String fname = parameters.getString("put");
         if (fname != null && !fname.isEmpty()) {
             File f = new File(mind.getUser().getSourceDir() + fname);
             boolean exists = f.exists();
-            String source = SourceDocumentState.current(user, mind);
+            String source = SourceContextMaterializer.materializeCurrentLevel(mind);
             Files.write(f.toPath(), source.getBytes(StandardCharsets.UTF_8));
-            mind.setSourceFileName(fname);
             result.put("result", "OK");
             result.put("description", "Source file " + fname + " saved.");
             if (!exists) {
@@ -1202,11 +1185,9 @@ public class QueryProcessor implements IReactor<JSONObject> {
                         mind = new Mind(mind);
                     }
 
-                    mind.setSourceFileName(f.getName());
-                    Boolean res = mind.compile(SourceDocumentState.compilerInput(source));
+                    Boolean res = mind.compile(source);
                     String description = mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord();
                     if (res) {
-                        SourceDocumentState.publish(user, source);
                         description += "<br>" + String.format("File %s loaded", f.getName());
                     }
                     if (mind.isStorageUsed() && mind.isEmptyLevel()) {
