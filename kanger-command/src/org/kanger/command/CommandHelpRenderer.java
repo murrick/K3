@@ -24,8 +24,19 @@ public final class CommandHelpRenderer {
                 out.append(currentSection).append(':').append('\n');
             }
             out.append("  ")
-                    .append(definition.getSyntax())
-                    .append('\n')
+                    .append(definition.getSyntax());
+            if (!definition.getAliases().isEmpty()) {
+                out.append("  (")
+                        .append(definition.getAliases().size() == 1 ? "alias: " : "aliases: ");
+                for (int i = 0; i < definition.getAliases().size(); ++i) {
+                    if (i > 0) {
+                        out.append(", ");
+                    }
+                    out.append(definition.getAliases().get(i));
+                }
+                out.append(')');
+            }
+            out.append('\n')
                     .append("      ")
                     .append(definition.getSummary())
                     .append('\n');

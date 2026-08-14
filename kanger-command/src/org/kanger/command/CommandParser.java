@@ -40,6 +40,13 @@ public final class CommandParser {
             return CommandInvocation.coreLanguage(line);
         }
 
+        String expanded = CommandRegistry.expandAlias(line);
+        if (!expanded.equals(line)) {
+            CommandInvocation canonical = parse(expanded);
+            return CommandInvocation.command(
+                    canonical.getIntent(), canonical.getArguments(), line);
+        }
+
         List<Token> prefix = tokenize(line, 2, false);
         if (prefix.isEmpty()) {
             throw error(UNKNOWN_KEYWORD, "Empty command");

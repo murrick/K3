@@ -20,8 +20,9 @@ import java.util.Set;
 /**
  * Single metadata authority for the canonical KANGER command language.
  *
- * <p>The registry owns command/family spellings, family-local keyword stems and
- * help metadata. It contains no runtime operation bindings.</p>
+ * <p>The registry owns command/family spellings, family-local keyword stems,
+ * explicit top-level aliases and help metadata. It contains no runtime
+ * operation bindings.</p>
  */
 public final class CommandRegistry {
 
@@ -69,6 +70,7 @@ public final class CommandRegistry {
         private final String helpSection;
         private final String summary;
         private final Map<String, String> argumentDescriptions;
+        private final List<String> aliases;
         private final int displayOrder;
 
         private Definition(CommandIntent intent,
@@ -76,6 +78,7 @@ public final class CommandRegistry {
                            String helpSection,
                            String summary,
                            Map<String, String> argumentDescriptions,
+                           List<String> aliases,
                            int displayOrder) {
             this.intent = intent;
             this.syntax = syntax;
@@ -83,6 +86,8 @@ public final class CommandRegistry {
             this.summary = summary;
             this.argumentDescriptions = Collections.unmodifiableMap(
                     new LinkedHashMap<String, String>(argumentDescriptions));
+            this.aliases = Collections.unmodifiableList(
+                    new ArrayList<String>(aliases));
             this.displayOrder = displayOrder;
         }
 
@@ -104,6 +109,10 @@ public final class CommandRegistry {
 
         public Map<String, String> getArgumentDescriptions() {
             return argumentDescriptions;
+        }
+
+        public List<String> getAliases() {
+            return aliases;
         }
 
         public int getDisplayOrder() {
@@ -162,52 +171,87 @@ public final class CommandRegistry {
         keyword(Family.STORAGE, Keyword.REINDEX, "reindex");
 
         int n = 0;
-        define(CommandIntent.RULE_STATUS, "rule", "RULE", "Show current rule context.", noArgs(), n++);
-        define(CommandIntent.RULE_SHOW, "rule <id>", "RULE", "Show one rule by runtime ID.", args("id", "Rule runtime identifier."), n++);
-        define(CommandIntent.RULE_ALL, "rule all", "RULE", "Show rules and produced statements.", noArgs(), n++);
-        define(CommandIntent.RULE_ALL, "rules", "RULE", "Show rules and produced statements (collection alias).", noArgs(), n++);
-        define(CommandIntent.RULE_PRODUCED, "rule produced", "RULE", "Show produced/generated rules.", noArgs(), n++);
-        define(CommandIntent.RULE_LEVEL, "rule level [<n>]", "RULE", "Show rules grouped by published user transaction level, or one level when n is supplied.", args("n", "Optional transaction level."), n++);
-        define(CommandIntent.RULE_TREE, "rule tree <id>", "RULE", "Show the compiled structural tree of one rule.", args("id", "Rule runtime identifier."), n++);
-        define(CommandIntent.RULE_COMMENT_GET, "rule comment <id>", "RULE", "Show a rule comment.", args("id", "Rule runtime identifier."), n++);
-        define(CommandIntent.RULE_COMMENT_SET, "rule comment <id> <text...>", "RULE", "Set or clear a rule comment.", args("id", "Rule runtime identifier.", "text", "Free comment text; explicit empty text clears it."), n++);
+        define(CommandIntent.RULE_STATUS, "rule", "RULE",
+                "Show current primary rule context. The rule/rules family spellings are synonymous.",
+                noArgs(), n++);
+        define(CommandIntent.RULE_SHOW, "rule <id>", "RULE", "Show one rule by runtime ID.",
+                args("id", "Rule runtime identifier."), n++);
+        define(CommandIntent.RULE_ALL, "rule all", "RULE", "Show rules and produced statements.",
+                noArgs(), n++);
+        define(CommandIntent.RULE_PRODUCED, "rule produced", "RULE", "Show produced/generated rules.",
+                noArgs(), n++);
+        define(CommandIntent.RULE_LEVEL, "rule level [<n>]", "RULE",
+                "Show rules grouped by published user transaction level, or one level when n is supplied.",
+                args("n", "Optional transaction level."), n++);
+        define(CommandIntent.RULE_TREE, "rule tree <id>", "RULE", "Show the compiled structural tree of one rule.",
+                args("id", "Rule runtime identifier."), n++);
+        define(CommandIntent.RULE_COMMENT_GET, "rule comment <id>", "RULE", "Show a rule comment.",
+                args("id", "Rule runtime identifier."), n++);
+        define(CommandIntent.RULE_COMMENT_SET, "rule comment <id> <text...>", "RULE", "Set or clear a rule comment.",
+                args("id", "Rule runtime identifier.", "text", "Free comment text; explicit empty text clears it."), n++);
 
         define(CommandIntent.FUNCTIONS, "functions", "FUNCTION", "Show defined functions.", noArgs(), n++);
-        define(CommandIntent.FUNCTION_SHOW, "function <id>", "FUNCTION", "Show one function by runtime ID.", args("id", "Function runtime identifier."), n++);
-        define(CommandIntent.FUNCTION_SOURCE, "function source <id>", "FUNCTION", "Show source of one function.", args("id", "Function runtime identifier."), n++);
+        define(CommandIntent.FUNCTION_SHOW, "function <id>", "FUNCTION", "Show one function by runtime ID.",
+                args("id", "Function runtime identifier."), n++);
+        define(CommandIntent.FUNCTION_SOURCE, "function source <id>", "FUNCTION", "Show source of one function.",
+                args("id", "Function runtime identifier."), n++);
 
         define(CommandIntent.BASE_STATUS, "base", "BASE", "Show current unambiguous base statements.", noArgs(), n++);
         define(CommandIntent.BASE_PREDICATES, "base predicates", "BASE", "Show predicates known in the semantic context.", noArgs(), n++);
-        define(CommandIntent.BASE_PREDICATE, "base predicate <id|name>", "BASE", "Show base statements for one predicate.", args("id|name", "Predicate runtime ID or name."), n++);
-        define(CommandIntent.BASE_TREE, "base tree <statement-id>", "BASE", "Show provenance of one base statement.", args("statement-id", "Statement runtime identifier."), n++);
+        define(CommandIntent.BASE_PREDICATE, "base predicate <id|name>", "BASE", "Show base statements for one predicate.",
+                args("id|name", "Predicate runtime ID or name."), n++);
+        define(CommandIntent.BASE_TREE, "base tree <statement-id>", "BASE", "Show provenance of one base statement.",
+                args("statement-id", "Statement runtime identifier."), n++);
 
-        define(CommandIntent.VALUES, "values", "VALUES", "Show the current Values rowset using configured default ordering.", noArgs(), n++);
-        define(CommandIntent.VALUES_ORDER, "values order <field> [asc|desc] [, <field> [asc|desc]]...", "VALUES", "Show the current Values rowset with an invocation-local multi-key order.", args("field", "Exported Values field.", "asc|desc", "Direction for the preceding field; omitted means asc."), n++);
+        define(CommandIntent.VALUES, "values", "VALUES", "Show the current Values rowset using configured default ordering.",
+                noArgs(), n++);
+        define(CommandIntent.VALUES_ORDER,
+                "values order <field> [asc|desc] [, <field> [asc|desc]]...",
+                "VALUES", "Show the current Values rowset with an invocation-local multi-key order.",
+                args("field", "Exported Values field.",
+                        "asc|desc", "Direction for the preceding field; omitted means asc."), n++);
 
         define(CommandIntent.SOLUTIONS, "solutions", "SOLUTION", "Show the complete current Solutions set.", noArgs(), n++);
-        define(CommandIntent.SOLUTION_SHOW, "solution <id>", "SOLUTION", "Show one Solution by its actual IRule runtime ID.", args("id", "Solution/IRule runtime identifier."), n++);
-        define(CommandIntent.SOLUTION_TREE, "solution tree <id>", "SOLUTION", "Show provenance of one Solution.", args("id", "Solution/IRule runtime identifier."), n++);
+        define(CommandIntent.SOLUTION_SHOW, "solution <id>", "SOLUTION", "Show one Solution by its actual IRule runtime ID.",
+                args("id", "Solution/IRule runtime identifier."), n++);
+        define(CommandIntent.SOLUTION_TREE, "solution tree <id>", "SOLUTION", "Show provenance of one Solution.",
+                args("id", "Solution/IRule runtime identifier."), n++);
 
         define(CommandIntent.WHEN_STATUS, "when", "WHEN", "Show the current hypothesis rowset.", noArgs(), n++);
-        define(CommandIntent.WHEN_ACCEPT, "when accept <index>", "WHEN", "Accept one hypothesis by zero-based row index.", args("index", "Zero-based index in the current hypothesis rowset."), n++);
+        define(CommandIntent.WHEN_ACCEPT, "when accept <index>", "WHEN", "Accept one hypothesis by zero-based row index.",
+                args("index", "Zero-based index in the current hypothesis rowset."), n++);
 
         define(CommandIntent.TX_STATUS, "transaction", "TRANSACTION", "Show current transaction state.", noArgs(), n++);
         define(CommandIntent.TX_START, "transaction start", "TRANSACTION", "Start a child transaction.", noArgs(), n++);
-        define(CommandIntent.TX_COMMIT, "transaction commit", "TRANSACTION", "Commit the current transaction or qualified root checkpoint.", noArgs(), n++);
-        define(CommandIntent.TX_ROLLBACK, "transaction rollback", "TRANSACTION", "Rollback the current child transaction.", noArgs(), n++);
+        define(CommandIntent.TX_COMMIT, "transaction commit", "TRANSACTION",
+                "Commit the current transaction or qualified root checkpoint.",
+                noArgs(), aliases("commit"), n++);
+        define(CommandIntent.TX_ROLLBACK, "transaction rollback", "TRANSACTION", "Rollback the current child transaction.",
+                noArgs(), n++);
 
-        define(CommandIntent.SOURCE_GET, "get [<source>]", "SOURCE", "List server-side sources when omitted; load and compile one source when named.", args("source", "Optional source logical name."), n++);
-        define(CommandIntent.SOURCE_PUT, "put <source>", "SOURCE", "Persist the current source under one logical name.", args("source", "Source logical name."), n++);
-        define(CommandIntent.SOURCE_DELETE, "delete [<source>]", "SOURCE", "List server-side sources when omitted; delete one source when named.", args("source", "Optional source logical name."), n++);
+        define(CommandIntent.SOURCE_GET, "get [<source>]", "SOURCE",
+                "List server-side sources when omitted; load and compile one source when named.",
+                args("source", "Optional source logical name."), n++);
+        define(CommandIntent.SOURCE_PUT, "put <source>", "SOURCE", "Persist the current source under one logical name.",
+                args("source", "Source logical name."), n++);
+        define(CommandIntent.SOURCE_DELETE, "delete [<source>]", "SOURCE",
+                "List server-side sources when omitted; delete one source when named.",
+                args("source", "Optional source logical name."), n++);
 
-        define(CommandIntent.STORAGE_STATUS, "storage", "STORAGE", "Show available storages and the current/open storage.", noArgs(), n++);
-        define(CommandIntent.STORAGE_USE, "storage use <name>", "STORAGE", "Open or create one storage.", args("name", "Storage logical name."), n++);
+        define(CommandIntent.STORAGE_STATUS, "storage", "STORAGE", "Show available storages and the current/open storage.",
+                noArgs(), n++);
+        define(CommandIntent.STORAGE_USE, "storage use <name>", "STORAGE", "Open or create one storage.",
+                args("name", "Storage logical name."), aliases("use <name>"), n++);
         define(CommandIntent.STORAGE_CLOSE, "storage close", "STORAGE", "Close the current storage.", noArgs(), n++);
-        define(CommandIntent.STORAGE_DROP, "storage drop <name>", "STORAGE", "Drop one explicitly named storage.", args("name", "Storage logical name."), n++);
-        define(CommandIntent.STORAGE_REINDEX, "storage reindex <name>", "STORAGE", "Reindex one explicitly named storage.", args("name", "Storage logical name."), n++);
+        define(CommandIntent.STORAGE_DROP, "storage drop <name>", "STORAGE", "Drop one explicitly named storage.",
+                args("name", "Storage logical name."), n++);
+        define(CommandIntent.STORAGE_REINDEX, "storage reindex <name>", "STORAGE", "Reindex one explicitly named storage.",
+                args("name", "Storage logical name."), n++);
 
-        define(CommandIntent.ERASE, "erase", "SYSTEM / SESSION", "Clear the current workspace using qualified runtime semantics.", noArgs(), n++);
-        define(CommandIntent.HELP, "help", "SYSTEM / SESSION", "Show canonical command help generated from this registry.", noArgs(), n++);
+        define(CommandIntent.ERASE, "erase", "SYSTEM / SESSION", "Clear the current workspace using qualified runtime semantics.",
+                noArgs(), n++);
+        define(CommandIntent.HELP, "help", "SYSTEM / SESSION", "Show canonical command help generated from this registry.",
+                noArgs(), n++);
         define(CommandIntent.QUIT, "quit", "SYSTEM / SESSION", "Terminate the current session.", noArgs(), n++);
     }
 
@@ -225,6 +269,98 @@ public final class CommandRegistry {
             }
         }
         return null;
+    }
+
+    /**
+     * Expands an explicitly registered top-level alias to its canonical command
+     * production while preserving the original argument tail verbatim.
+     *
+     * <p>Aliases and canonical command families share the same minimum-unique-
+     * prefix namespace. Exact spellings win over prefixes; ambiguous heads are
+     * rejected before canonical parsing.</p>
+     */
+    public static String expandAlias(String line) throws CommandParseException {
+        if (line == null) {
+            return null;
+        }
+        String trimmed = line.trim();
+        if (trimmed.isEmpty()) {
+            return trimmed;
+        }
+
+        int end = 0;
+        while (end < trimmed.length() && !Character.isWhitespace(trimmed.charAt(end))) {
+            ++end;
+        }
+        String token = trimmed.substring(0, end).toLowerCase(Locale.ROOT);
+
+        Family exactFamily = null;
+        for (Map.Entry<Family, List<String>> entry : FAMILY_WORDS.entrySet()) {
+            for (String word : entry.getValue()) {
+                if (word.equals(token)) {
+                    exactFamily = entry.getKey();
+                    break;
+                }
+            }
+            if (exactFamily != null) {
+                break;
+            }
+        }
+        AliasMatch exactAlias = null;
+        for (Definition definition : DEFINITIONS) {
+            for (String alias : definition.aliases) {
+                if (aliasHead(alias).equals(token)) {
+                    if (exactAlias != null && exactAlias.definition != definition) {
+                        throw new CommandParseException(
+                                CommandParseException.Reason.AMBIGUOUS_PREFIX,
+                                "Ambiguous command alias " + token);
+                    }
+                    exactAlias = new AliasMatch(definition, alias);
+                }
+            }
+        }
+        if (exactFamily != null || exactAlias != null) {
+            if (exactFamily != null && exactAlias != null) {
+                throw new CommandParseException(
+                        CommandParseException.Reason.AMBIGUOUS_PREFIX,
+                        "Ambiguous command head " + token);
+            }
+            return exactAlias == null ? trimmed : expand(trimmed, end, exactAlias);
+        }
+
+        Set<Family> familyMatches = new LinkedHashSet<Family>();
+        for (Map.Entry<Family, List<String>> entry : FAMILY_WORDS.entrySet()) {
+            for (String word : entry.getValue()) {
+                if (word.startsWith(token)) {
+                    familyMatches.add(entry.getKey());
+                    break;
+                }
+            }
+        }
+
+        List<AliasMatch> aliasMatches = new ArrayList<AliasMatch>();
+        Set<Definition> aliasTargets = new LinkedHashSet<Definition>();
+        for (Definition definition : DEFINITIONS) {
+            for (String alias : definition.aliases) {
+                if (aliasHead(alias).startsWith(token)) {
+                    if (aliasTargets.add(definition)) {
+                        aliasMatches.add(new AliasMatch(definition, alias));
+                    }
+                    break;
+                }
+            }
+        }
+
+        int matches = familyMatches.size() + aliasTargets.size();
+        if (matches > 1) {
+            throw new CommandParseException(
+                    CommandParseException.Reason.AMBIGUOUS_PREFIX,
+                    "Ambiguous command prefix " + token);
+        }
+        if (matches == 1 && familyMatches.isEmpty()) {
+            return expand(trimmed, end, aliasMatches.get(0));
+        }
+        return trimmed;
     }
 
     public static Family resolveFamily(String token) throws CommandParseException {
@@ -259,14 +395,12 @@ public final class CommandRegistry {
     }
 
     public static boolean isExactPluralFamilyWord(Family family, String token) {
-        return (family == Family.RULE && isExact(token, "rules"))
-                || (family == Family.FUNCTION && isExact(token, "functions"))
+        return (family == Family.FUNCTION && isExact(token, "functions"))
                 || (family == Family.SOLUTION && isExact(token, "solutions"));
     }
 
     public static boolean isExactSingularFamilyWord(Family family, String token) {
-        return (family == Family.RULE && isExact(token, "rule"))
-                || (family == Family.FUNCTION && isExact(token, "function"))
+        return (family == Family.FUNCTION && isExact(token, "function"))
                 || (family == Family.SOLUTION && isExact(token, "solution"));
     }
 
@@ -308,7 +442,10 @@ public final class CommandRegistry {
         }
         throw new CommandParseException(
                 CommandParseException.Reason.UNKNOWN_KEYWORD,
-                "Unknown " + (localFamily == null ? "command" : localFamily.name().toLowerCase(Locale.ROOT) + " keyword") + " " + token);
+                "Unknown " + (localFamily == null
+                        ? "command"
+                        : localFamily.name().toLowerCase(Locale.ROOT) + " keyword")
+                        + " " + token);
     }
 
     private static void family(Family family, String... words) {
@@ -338,7 +475,55 @@ public final class CommandRegistry {
                                String summary,
                                Map<String, String> arguments,
                                int order) {
-        DEFINITIONS.add(new Definition(intent, syntax, section, summary, arguments, order));
+        define(intent, syntax, section, summary, arguments,
+                Collections.<String>emptyList(), order);
+    }
+
+    private static void define(CommandIntent intent,
+                               String syntax,
+                               String section,
+                               String summary,
+                               Map<String, String> arguments,
+                               List<String> aliases,
+                               int order) {
+        DEFINITIONS.add(new Definition(intent, syntax, section, summary,
+                arguments, aliases, order));
+    }
+
+    private static List<String> aliases(String... values) {
+        List<String> result = new ArrayList<String>();
+        Collections.addAll(result, values);
+        return result;
+    }
+
+    private static String aliasHead(String syntax) {
+        String trimmed = syntax.trim().toLowerCase(Locale.ROOT);
+        int space = trimmed.indexOf(' ');
+        return space < 0 ? trimmed : trimmed.substring(0, space);
+    }
+
+    private static String canonicalPrefix(String syntax) {
+        int placeholder = syntax.length();
+        int angle = syntax.indexOf('<');
+        int square = syntax.indexOf('[');
+        if (angle >= 0) {
+            placeholder = Math.min(placeholder, angle);
+        }
+        if (square >= 0) {
+            placeholder = Math.min(placeholder, square);
+        }
+        return syntax.substring(0, placeholder).trim();
+    }
+
+    private static String expand(String line, int headEnd, AliasMatch match) {
+        String canonical = canonicalPrefix(match.definition.syntax);
+        int tail = headEnd;
+        while (tail < line.length() && Character.isWhitespace(line.charAt(tail))) {
+            ++tail;
+        }
+        return tail >= line.length()
+                ? canonical
+                : canonical + " " + line.substring(tail);
     }
 
     private static Map<String, String> noArgs() {
@@ -351,5 +536,16 @@ public final class CommandRegistry {
             result.put(pairs[i], pairs[i + 1]);
         }
         return result;
+    }
+
+    private static final class AliasMatch {
+        private final Definition definition;
+        @SuppressWarnings("unused")
+        private final String syntax;
+
+        private AliasMatch(Definition definition, String syntax) {
+            this.definition = definition;
+            this.syntax = syntax;
+        }
     }
 }

@@ -40,6 +40,7 @@ public final class CommandParserConformanceTest {
         transactionFamily();
         sourceFamily();
         storageFamily();
+        aliasVocabulary();
         systemFamily();
         canonicalEcho();
         helpRegistry();
@@ -56,6 +57,7 @@ public final class CommandParserConformanceTest {
 
     private void topLevelPrefixes() throws Exception {
         expect("b", CommandIntent.BASE_STATUS);
+        expect("c", CommandIntent.TX_COMMIT);
         expect("d", CommandIntent.SOURCE_DELETE);
         expect("d foo.k", CommandIntent.SOURCE_DELETE);
         expect("e", CommandIntent.ERASE);
@@ -69,6 +71,7 @@ public final class CommandParserConformanceTest {
         expect("so", CommandIntent.SOLUTIONS);
         expect("st", CommandIntent.STORAGE_STATUS);
         expect("t", CommandIntent.TX_STATUS);
+        expectArgument("u demo", CommandIntent.STORAGE_USE, "name", "demo");
         expect("v", CommandIntent.VALUES);
         expect("w", CommandIntent.WHEN_STATUS);
         reject("s", AMBIGUOUS_PREFIX);
@@ -76,20 +79,28 @@ public final class CommandParserConformanceTest {
     }
 
     private void ruleFamily() throws Exception {
-        expect("rules", CommandIntent.RULE_ALL);
+        expect("rule", CommandIntent.RULE_STATUS);
+        expect("rules", CommandIntent.RULE_STATUS);
         expectLong("rule 17", CommandIntent.RULE_SHOW, "id", 17L);
+        expectLong("rules 17", CommandIntent.RULE_SHOW, "id", 17L);
         expect("r a", CommandIntent.RULE_ALL);
+        expect("rules all", CommandIntent.RULE_ALL);
         expect("r p", CommandIntent.RULE_PRODUCED);
+        expect("rules produced", CommandIntent.RULE_PRODUCED);
 
         CommandInvocation aggregate = parser.parse("r l");
         check(aggregate.getIntent() == CommandIntent.RULE_LEVEL,
                 "bare rule level aggregate intent");
         check(!aggregate.getArguments().containsKey("level"),
                 "bare rule level must not synthesize transaction level");
+        expect("rules level", CommandIntent.RULE_LEVEL);
 
         expectLong("r l 2", CommandIntent.RULE_LEVEL, "level", 2L);
+        expectLong("rules level 2", CommandIntent.RULE_LEVEL, "level", 2L);
         expectLong("r t 17", CommandIntent.RULE_TREE, "id", 17L);
+        expectLong("rules tree 17", CommandIntent.RULE_TREE, "id", 17L);
         expectLong("r c 17", CommandIntent.RULE_COMMENT_GET, "id", 17L);
+        expectLong("rules comment 17", CommandIntent.RULE_COMMENT_GET, "id", 17L);
 
         CommandInvocation set = parser.parse("rule comment 17 Important rule");
         check(set.getIntent() == CommandIntent.RULE_COMMENT_SET,
@@ -99,14 +110,21 @@ public final class CommandParserConformanceTest {
         check("Important rule".equals(set.getArgument("text")),
                 "rule comment free tail");
 
+        CommandInvocation pluralSet = parser.parse("rules comment 17 Important rule");
+        check(pluralSet.getIntent() == CommandIntent.RULE_COMMENT_SET,
+                "rules comment set synonym intent");
+        check("Important rule".equals(pluralSet.getArgument("text")),
+                "rules comment free tail");
+
         CommandInvocation clear = parser.parse("r c 17 \"\"");
         check("".equals(clear.getArgument("text")),
                 "rule comment explicit empty");
 
-        reject("rules 17", INVALID_GRAMMAR);
         reject("rule show 17", INVALID_GRAMMAR);
+        reject("rules show 17", INVALID_GRAMMAR);
         reject("rule tree", MISSING_ARGUMENT);
         reject("rule all 17", EXTRA_ARGUMENT);
+        reject("rules all 17", EXTRA_ARGUMENT);
     }
 
     private void functionFamily() throws Exception {
@@ -232,6 +250,30 @@ public final class CommandParserConformanceTest {
         reject("storage close foo", EXTRA_ARGUMENT);
     }
 
+    private void aliasVocabulary() throws Exception {
+        expect("commit", CommandIntent.TX_COMMIT);
+        expect("co", CommandIntent.TX_COMMIT);
+        expect("c", CommandIntent.TX_COMMIT);
+        reject("commit now", EXTRA_ARGUMENT);
+
+        expectArgument("use demo", CommandIntent.STORAGE_USE,
+                "name", "demo");
+        expectArgument("us demo", CommandIntent.STORAGE_USE,
+                "name", "demo");
+        expectArgument("u demo", CommandIntent.STORAGE_USE,
+                "name", "demo");
+        expectArgument("use \"test base\"", CommandIntent.STORAGE_USE,
+                "name", "test base");
+        reject("use", MISSING_ARGUMENT);
+
+        CommandInvocation commit = parser.parse("c");
+        check("c".equals(commit.getRaw()),
+                "commit alias preserves original raw input");
+        CommandInvocation use = parser.parse("u \"test base\"");
+        check("u \"test base\"".equals(use.getRaw()),
+                "storage-use alias preserves original raw input");
+    }
+
     private void systemFamily() throws Exception {
         expect("erase", CommandIntent.ERASE);
         expect("help", CommandIntent.HELP);
@@ -241,10 +283,12 @@ public final class CommandParserConformanceTest {
     }
 
     private void canonicalEcho() throws Exception {
-        expectCanonical("rules", "rule all");
-        expectCanonical("r 17", "rule 17");
+        expectCanonical("rule", "rule");
+        expectCanonical("rules", "rule");
+        expectCanonical("rules all", "rule all");
+        expectCanonical("rules 17", "rule 17");
         expectCanonical("r l", "rule level");
-        expectCanonical("r l 2", "rule level 2");
+        expectCanonical("rules level 2", "rule level 2");
         expectCanonical("r c 17", "rule comment 17");
         expectCanonical("f s 8", "function source 8");
         expectCanonical("b p father", "base predicate father");
@@ -252,7 +296,9 @@ public final class CommandParserConformanceTest {
         expectCanonical("so t 42", "solution tree 42");
         expectCanonical("w a 0", "when accept 0");
         expectCanonical("t s", "transaction start");
+        expectCanonical("c", "transaction commit");
         expectCanonical("st u close", "storage use close");
+        expectCanonical("u close", "storage use close");
         expectCanonical("g", "get");
         expectCanonical("d", "delete");
         expectCanonical("g \"my source.k\"", "get \"my source.k\"");
@@ -269,15 +315,27 @@ public final class CommandParserConformanceTest {
                     "missing registry metadata for " + intent);
         }
         check(CommandRegistry.definitions().size() >= CommandIntent.values().length,
-                "registry may contain additional documented syntax aliases");
+                "registry may contain additional documented syntax variants");
+
+        CommandRegistry.Definition commit = CommandRegistry.definition(CommandIntent.TX_COMMIT);
+        check(commit != null && commit.getAliases().contains("commit"),
+                "transaction commit alias metadata");
+        CommandRegistry.Definition use = CommandRegistry.definition(CommandIntent.STORAGE_USE);
+        check(use != null && use.getAliases().contains("use <name>"),
+                "storage use alias metadata");
 
         String help = new CommandHelpRenderer().render();
         check(help.contains("rule <id>"), "help contains rule object syntax");
-        check(help.contains("\n  rules\n"), "help contains plural rules alias");
+        check(help.contains("rule/rules family spellings are synonymous"),
+                "help explains rule/rules synonymy");
         check(help.contains("rule level [<n>]"), "help contains optional rule level syntax");
         check(help.contains("values order <field>"), "help contains values syntax");
         check(help.contains("when accept <index>"), "help contains hypothesis addressing");
         check(help.contains("delete [<source>]"), "help contains safe bare delete syntax");
+        check(help.contains("transaction commit  (alias: commit)"),
+                "help contains commit alias");
+        check(help.contains("storage use <name>  (alias: use <name>)"),
+                "help contains storage use alias");
     }
 
     private void expect(String source, CommandIntent intent) throws Exception {
