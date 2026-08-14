@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2021 Dmitry G. Quznetsov
  *
- * KANGER 3.7.0.5 Browser presentation authority.
+ * KANGER Browser presentation authority.
  *
  * The layer owns screen geometry and screen-to-command composition only.
  * It never parses or executes operator language and never handles bearer data.
@@ -278,18 +278,6 @@
             return;
         }
 
-        var sourceTarget = ancestorWithIdPrefix(target, 'source-name');
-        if (sourceTarget) {
-            var sourceState = workspaceSnapshot();
-            var source = sourceState && sourceState.workspace
-                    ? sourceState.workspace.source : null;
-            if (source && source.logical_name) {
-                stopSemanticExecution(event);
-                compose('get ' + quoteArgument(source.logical_name));
-            }
-            return;
-        }
-
         var storageTarget = ancestorWithIdPrefix(target, 'db-name');
         if (storageTarget) {
             var storageState = workspaceSnapshot();
@@ -465,7 +453,7 @@
             'tech-operation', 'tech-snapshot'
         ]);
         createTechSection(body, 'Workspace', [
-            'tech-source', 'tech-storage', 'tech-storage-generation'
+            'tech-storage', 'tech-storage-generation'
         ]);
         createTechSection(body, 'Authority', [
             'tech-rendering', 'tech-containment'
@@ -522,20 +510,6 @@
             setText('tech-generation', 'generation: -');
             setText('tech-operation', 'operation: -');
             setText('tech-snapshot', 'snapshot: -');
-        }
-
-        var source = workspace ? workspace.source : null;
-        var sourceRow = setText('tech-source', source
-                ? 'source: ' + (source.logical_name || 'unsaved')
-                    + (source.dirty ? ' *' : '')
-                : 'source: -');
-        if (sourceRow) {
-            if (source && source.logical_name) {
-                sourceRow.setAttribute('data-kanger-compose',
-                        'get ' + quoteArgument(source.logical_name));
-            } else {
-                sourceRow.removeAttribute('data-kanger-compose');
-            }
         }
 
         var storage = workspace ? workspace.storage : null;
@@ -716,6 +690,7 @@
         return !!(window.KANGER_TRUSTED_RENDERING
                 && window.KANGER_OPERATION_PROTOCOL
                 && window.KANGER_WORKSPACE_STATE
+                && window.KANGER_WORKSPACE_STATE.version === 2
                 && window.KANGER_ERROR_BOUNDARY
                 && window.KANGER_DIALOGUE_TRANSPORT);
     }

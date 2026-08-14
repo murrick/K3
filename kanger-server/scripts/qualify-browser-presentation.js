@@ -97,7 +97,6 @@ const head = node('head', '', documentElement);
 const body = node('body', '', documentElement);
 const superNode = node('div', 'super', body);
 const header = node('div', '', superNode);
-const sourceName = node('span', 'source-name', header);
 const dbName = node('span', 'db-name', header);
 const transaction = node('span', 'transaction', header);
 const container = node('div', 'container', superNode);
@@ -214,15 +213,12 @@ const window = {
         }
     }),
     KANGER_WORKSPACE_STATE: Object.freeze({
-        version: 1,
+        version: 2,
         snapshot() {
             return {
                 generation: 4,
                 workspace: {
-                    source: {
-                        logical_name: 'demo source.k',
-                        dirty: true
-                    },
+                    schema: 2,
                     storage: {
                         active: true,
                         logical_name: 'demo.db',
@@ -230,6 +226,10 @@ const window = {
                             present: true,
                             wal_segments: 2
                         }
+                    },
+                    transaction: {
+                        level: 0,
+                        empty: true
                     }
                 }
             };
@@ -285,12 +285,17 @@ async function main() {
     assert.strictEqual(presentation.version, 1);
     assert(document.getElementById('kanger-presentation-css'));
     assert(document.getElementById('technical-panel'));
+    assert.strictEqual(document.getElementById('tech-source'), null);
+    assert.strictEqual(
+        document.getElementById('tech-storage').textContent,
+        'storage: demo.db'
+    );
     assert(body.classList.contains('kanger-presentation'));
     assert(container.classList.contains('kanger-grid'));
     assert(left.classList.contains('kanger-semantic'));
     assert(center.classList.contains('kanger-center'));
     assert(bottom.classList.contains('kanger-bottom'));
-    console.log('BROWSER_PRESENTATION_PASS geometry');
+    console.log('BROWSER_PRESENTATION_PASS geometry-workspace-v2');
 
     queryInput.value = 'alpha omega';
     queryInput.selectionStart = 6;
@@ -343,11 +348,6 @@ async function main() {
 
     queryInput.value = '';
     queryInput.selectionStart = queryInput.selectionEnd = 0;
-    click(sourceName);
-    assert.strictEqual(queryInput.value, 'get "demo source.k"');
-
-    queryInput.value = '';
-    queryInput.selectionStart = queryInput.selectionEnd = 0;
     click(dbName);
     assert.strictEqual(queryInput.value, 'storage use demo.db');
 
@@ -369,6 +369,9 @@ async function main() {
     assert.deepStrictEqual(window.editor.size, ['100%', '100%']);
     console.log('BROWSER_PRESENTATION_PASS legacy-layout-convergence');
 
+    assert(!source.includes('workspace.source'));
+    assert(!source.includes('tech-source'));
+    assert(!source.includes('source-name'));
     assert(!source.includes('window.command'));
     assert(!source.includes('window.query'));
     assert(!source.includes('window.post'));
@@ -377,6 +380,7 @@ async function main() {
     assert(!source.includes('document.cookie'));
     assert(!source.includes('eval('));
     assert(!source.includes('new Function'));
+    console.log('BROWSER_PRESENTATION_PASS workspace-v2-no-source-authority');
     console.log('BROWSER_PRESENTATION_PASS no-execution-authority');
     console.log('BROWSER_PRESENTATION_OK');
 }
