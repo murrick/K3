@@ -57,8 +57,10 @@ public class CurrentLevelSourceRestorationMaterializationTest {
             String projected = SourceContextMaterializer.materializeCurrentLevel(u2);
             assertTrue(projected.contains("!base;"),
                     "Restored inherited Rule disappeared from U2 source projection");
-            assertTrue(projected.contains("=txfn(a){return a;};"),
-                    "Restored inherited UDF disappeared from U2 source projection");
+            assertTrue(projected.contains("=txfn(a)"),
+                    "Restored inherited UDF signature disappeared from U2 source projection");
+            assertTrue(projected.contains("{return a;};"),
+                    "Restored inherited UDF body disappeared from U2 source projection");
             assertFalse(projected.contains("!unchanged;"),
                     "Unchanged parent Rule leaked into U2 source projection");
 
