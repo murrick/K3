@@ -20,11 +20,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class VersionTest {
 
     @Test
-    void serverArtifactVersionIsIndependentFromCoreVersion() {
-        assertEquals("3.3", Version.CORE_VERSION_S);
-        assertEquals("server-0.18", Version.BRANCH);
-        assertEquals("server-0.18", Version.VERSION_S);
+    void productIdentityIsIndependentFromLegacyCompatibilityAndServerArtifact() {
+        assertEquals("3.7.0", Version.PRODUCT_VERSION_S);
+        assertEquals("3.7.0", Version.CORE_VERSION_S);
+        assertEquals("3.7.0", Version.VERSION_S);
+        assertEquals("3.3", Version.LEGACY_COMPATIBILITY_VERSION_S);
+        assertEquals(0x0303, Version.VERSION_CODE);
         assertEquals("server-0.18", Version.SERVER_VERSION_S);
+        assertNotEquals(Version.CORE_VERSION_S, Version.SERVER_VERSION_S);
         assertFalse(Version.SERVER_VERSION_S.contains("deployment"));
         assertFalse(Version.SERVER_VERSION_S.contains("first-vps-deploy"));
     }
@@ -44,5 +47,7 @@ class VersionTest {
         assertNotNull(sourceBranch);
         assertFalse(sourceBranch.trim().isEmpty());
         assertNotEquals("server-0.18", sourceBranch);
+        assertEquals(sourceBranch.trim(), Version.SOURCE_BRANCH);
+        assertEquals(Version.SOURCE_BRANCH, Version.BRANCH);
     }
 }

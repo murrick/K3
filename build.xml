@@ -25,11 +25,10 @@
 
 <project name="K3" default="init" basedir=".">
     <description>
-        Stamp KANGER build metadata from the current source branch.
+        Generate KANGER build provenance without mutating production sources.
     </description>
 
-    <property name="src" location="./kanger/src"/>
-    <property name="doc" location="./doc"/>
+    <property name="generated.resources" location="./target/generated-resources/kanger"/>
     <property environment="env"/>
 
     <tstamp>
@@ -113,17 +112,9 @@
             </condition>
         </fail>
 
-        <echo message="KANGER build branch: ${build.branch}"/>
-
-        <replaceregexp file="${src}/org/kanger/Version.java"
-                       match="private\s+static\s+final\s+String\s+SOURCE_BRANCH\s+=\s+&quot;.*&quot;;"
-                       replace="private static final String SOURCE_BRANCH = &quot;${build.branch}&quot;;"
-                       byline="true"
-        />
-        <replaceregexp file="${src}/org/kanger/Version.java"
-                       match="private\s+static\s+final\s+String\s+SOURCE_DATE\s+=\s+&quot;.*&quot;;"
-                       replace="private static final String SOURCE_DATE = &quot;${build.time}&quot;;"
-                       byline="true"
-        />
+        <echo message="KANGER build source branch: ${build.branch}"/>
+        <mkdir dir="${generated.resources}/org/kanger"/>
+        <echo file="${generated.resources}/org/kanger/build.properties"
+              message="branch=${build.branch}&#10;source.branch=${build.branch}&#10;date=${build.time}&#10;"/>
     </target>
 </project>

@@ -37,37 +37,50 @@ import java.util.Properties;
  */
 public abstract class Version {
 
-    /* This literal is the compatibility anchor stamped by the legacy Ant build. */
-    private static final String SOURCE_BRANCH = "arch/3.5.0-core-consolidation";
-    private static final String SOURCE_DATE = "2021-12-28_13:28:12";
+    private static final String UNKNOWN_SOURCE_BRANCH = "unknown";
+    private static final String UNBOUND_SERVER_VERSION = "server-unbound";
     private static final Properties BUILD_METADATA = loadBuildMetadata();
 
+    /*
+     * Legacy binary/serialization compatibility fields. These values are not
+     * the public KANGER product release identity.
+     */
     public static final int VERSION = 3;
     public static final int RELEASE = 3;
     public static final String REVISION = "7318";
+    public static final int VERSION_CODE = ((VERSION & 0xFF) << 8) | (RELEASE & 0xFF);
+    public static final String LEGACY_COMPATIBILITY_VERSION_S = VERSION + "." + RELEASE;
+
+    /** Canonical public KANGER product/Core identity. */
+    public static final String PRODUCT_VERSION_S = "3.7.0";
+
+    /** Public Core identity reported by all KANGER front ends. */
+    public static final String CORE_VERSION_S = PRODUCT_VERSION_S;
+
+    /** Established public display alias retained for compatibility. */
+    public static final String VERSION_S = PRODUCT_VERSION_S;
 
     /**
-     * Compatibility build identity used by existing KANGER displays. Server
-     * packaging binds this to the server artifact identity; ordinary builds
-     * retain the source branch identity.
+     * Source provenance only. Server builds prefer source.branch because the
+     * legacy branch property is retained there as server packaging metadata.
      */
-    public static final String BRANCH = buildProperty("branch", SOURCE_BRANCH);
+    public static final String SOURCE_BRANCH = buildProperty(
+            "source.branch",
+            buildProperty("branch", UNKNOWN_SOURCE_BRANCH));
 
-    public static final String DATE = buildProperty("date", SOURCE_DATE);
+    /** Legacy public field retained as a provenance alias. */
+    public static final String BRANCH = SOURCE_BRANCH;
+
+    /** Public identity of a deployable server component, independent of Core. */
+    public static final String SERVER_VERSION_S = buildProperty(
+            "server.version", UNBOUND_SERVER_VERSION);
+
+    /** Build timestamp provenance. Empty when build metadata is unavailable. */
+    public static final String DATE = buildProperty("date", "");
+
     public static final String BUILD_CREDIT = "Stabilized and audited in collaboration with ChatGPT.";
-    public static final int YEAR = getYear(parseDate(DATE));
-    public static final int VERSION_CODE = ((VERSION & 0xFF) << 8) | (RELEASE & 0xFF);
-
-    /** Historical semantic/core version. */
-    public static final String CORE_VERSION_S = VERSION + "." + RELEASE;
-
-    /** Established compatibility display contract: the final segment of BRANCH. */
-    public static final String VERSION_S = branchLeaf(BRANCH);
-
-    /** Public identity of a deployable server artifact. */
-    public static final String SERVER_VERSION_S = VERSION_S;
-
-    public static final String DATE_S = formatDate(parseDate(DATE)) + "\n" + BUILD_CREDIT;
+    public static final int YEAR = buildYear();
+    public static final String DATE_S = buildDateDisplay();
 
     private static Properties loadBuildMetadata() {
         Properties properties = new Properties();
@@ -76,7 +89,7 @@ public abstract class Version {
                 properties.load(input);
             }
         } catch (IOException ex) {
-            // Source constants remain the compatibility fallback.
+            // Public product identity remains available without build metadata.
         }
         return properties;
     }
@@ -89,9 +102,18 @@ public abstract class Version {
         return value.trim();
     }
 
-    private static String branchLeaf(String branch) {
-        int separator = Math.max(branch.lastIndexOf('/'), branch.lastIndexOf('\\'));
-        return separator >= 0 ? branch.substring(separator + 1) : branch;
+    private static String buildDateDisplay() {
+        Date date = parseDate(DATE);
+        String display = date == null ? "unavailable" : formatDate(date);
+        return display + "\n" + BUILD_CREDIT;
+    }
+
+    private static int buildYear() {
+        Date date = parseDate(DATE);
+        if (date == null) {
+            date = new Date();
+        }
+        return getYear(date);
     }
 
     private static String formatDate(Date date) {
@@ -103,14 +125,14 @@ public abstract class Version {
     }
 
     private static Date parseDate(String date) {
-        Date d = null;
-        try {
-            d = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").parse(date);
-        } catch (ParseException ex) {
-            //
+        if (date == null || date.trim().isEmpty()) {
+            return null;
         }
-
-        return d;
+        try {
+            return new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss").parse(date.trim());
+        } catch (ParseException ex) {
+            return null;
+        }
     }
 }
 
