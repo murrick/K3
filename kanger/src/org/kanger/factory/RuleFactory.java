@@ -913,13 +913,17 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public IRule find(IRule rule) throws Exception {
+        IRule self = null;
         for (long id : cache.find(((Rule) rule).getHash())) {
             IRule one = get(id);
             if (((Rule) one).equalsTo(rule)) {
-                return one;
+                if (one.getId() != rule.getId()) {
+                    return one;
+                }
+                self = one;
             }
         }
-        return null;
+        return self;
     }
 
     public IRule find(Hypothesis h) throws Exception {

@@ -142,14 +142,16 @@ public class User implements IUser {
             saveName = data.getStorageName();
             mind = close(mind);
         }
-        mind = use(mind, name);
+        mind = reopened
+                ? openClosedStorage((Mind) mind, name)
+                : use(mind, name);
         if (data != null && !data.isClosed()) {
             data.reindex(reactor, mind);
         }
 
         mind = close(mind);
         if (reopened) {
-            mind = use(mind, saveName);
+            mind = openClosedStorage((Mind) mind, saveName);
         }
         return mind;
     }

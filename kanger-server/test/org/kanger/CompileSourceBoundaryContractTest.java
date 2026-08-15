@@ -45,6 +45,7 @@ public class CompileSourceBoundaryContractTest {
             assertEquals("compile_rejected", rejected.getString("code"));
             assertSame(beforeReject, user.getCurrentMind());
             root.release((Mind) user.getCurrentMind());
+            user.setCurrentMind(root);
         } finally {
             if (token != null) {
                 UserFactory.dropUser(user);
