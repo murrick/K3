@@ -1,0 +1,105 @@
+name: Temporary 3.7.0 VPS dev4 workflow patcher
+
+on:
+  push:
+    branches:
+      - "tmp/3.7.0-vps-soak-dev4-patcher"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact target ops branch
+        uses: actions/checkout@v5
+        with:
+          ref: ops/3.7.0-vps-soak-dev4
+          fetch-depth: 0
+
+      - name: Derive dev4 package workflow from qualified dev3 recipe
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin ops/3.7.0-vps-soak-dev3
+          git show origin/ops/3.7.0-vps-soak-dev3:.github/workflows/kanger-3.7.0-vps-soak-dev3.yml > /tmp/dev3.yml
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          source = Path('/tmp/dev3.yml').read_text(encoding='utf-8')
+          target = Path('.github/workflows/kanger-3.7.0-vps-soak-dev4.yml')
+
+          replacements = [
+              ('KANGER 3.7.0 integrated VPS development soak package dev3',
+               'KANGER 3.7.0 integrated VPS development soak package dev4'),
+              ('ops/3.7.0-vps-soak-dev3', 'ops/3.7.0-vps-soak-dev4'),
+              ('kanger-3.7.0-vps-soak-dev3.yml', 'kanger-3.7.0-vps-soak-dev4.yml'),
+              ('6a33c16455dd1ad9a27a3800baf01bb076035f7f',
+               '2ae321cde38ec8e8f390cc2b7273a5c2f7629fca'),
+              ('DEV3_PACKAGE_PASS', 'DEV4_PACKAGE_PASS'),
+              ('GENERATION="dev3"', 'GENERATION="dev4"'),
+              ('packaging_generation=dev3', 'packaging_generation=dev4'),
+              ('VPS-DEPLOY-3.7.0-DEV3.md', 'VPS-DEPLOY-3.7.0-DEV4.md'),
+              ('# KANGER 3.7.0 — integrated VPS development-soak dev3',
+               '# KANGER 3.7.0 — integrated VPS development-soak dev4'),
+              ('name: kanger-3.7.0-vps-soak-dev3',
+               'name: kanger-3.7.0-vps-soak-dev4'),
+          ]
+
+          text = source
+          for old, new in replacements:
+              if old not in text:
+                  raise SystemExit(f'missing expected dev3 token: {old!r}')
+              text = text.replace(old, new)
+
+          # The live rollback anchor must remain the already deployed 3.7.0.8 DEV3,
+          # not the new package generation.
+          required = [
+              'canonical="2ae321cde38ec8e8f390cc2b7273a5c2f7629fca"',
+              'CANONICAL="2ae321cde38ec8e8f390cc2b7273a5c2f7629fca"',
+              'branch="ops/3.7.0-vps-soak-dev4"',
+              'PACKAGING_BRANCH="ops/3.7.0-vps-soak-dev4"',
+              'GENERATION="dev4"',
+              'prior_development_soak=3.7.0.8-dev3',
+              'PRIOR_PRODUCT="20fcd15856f19c72860b847dfb5fa5085060c724"',
+              'PRIOR_JAR="9b16d0615cefc3e63efaf90ef1577fd19d61832446d8622c7ba72005da5b6ab9"',
+              'PRIOR_UI="/home/murray/sites/kanger-3.7.0.8-vps-soak-20260812T103642Z"',
+              'PRIOR_RECORD="/root/kanger-deployments/3.7.0.8-vps-soak-20260812T103642Z"',
+              'browser_files=23',
+              'public_display_version=3.7.0',
+              'legacy_compatibility_version=3.3',
+              'server_version=server-0.18',
+          ]
+          for token in required:
+              if token not in text:
+                  raise SystemExit(f'dev4 workflow missing required token: {token!r}')
+
+          forbidden = [
+              '6a33c16455dd1ad9a27a3800baf01bb076035f7f',
+              'ops/3.7.0-vps-soak-dev3',
+              'GENERATION="dev3"',
+              'DEV3_PACKAGE_PASS',
+              'name: kanger-3.7.0-vps-soak-dev3',
+          ]
+          for token in forbidden:
+              if token in text:
+                  raise SystemExit(f'dev4 workflow retained stale package token: {token!r}')
+
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_text(text, encoding='utf-8')
+          PY
+
+          git diff --check
+          test "$(git diff --name-only)" = ".github/workflows/kanger-3.7.0-vps-soak-dev4.yml"
+
+      - name: Commit target workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/kanger-3.7.0-vps-soak-dev4.yml
+          git commit -m "ops(vps): derive exact 3.7.0 development soak dev4 package"
+          git push origin HEAD:ops/3.7.0-vps-soak-dev4
