@@ -78,15 +78,13 @@ response = json.loads(sys.argv[1])
 expected_level = int(sys.argv[2])
 phase = sys.argv[3]
 workspace = response.get("workspace")
-if not isinstance(workspace, dict) or workspace.get("schema") != 1:
-    raise SystemExit("%s returned no workspace schema 1: %r" % (phase, response))
-source = workspace.get("source") or {}
+if not isinstance(workspace, dict) or workspace.get("schema") != 2:
+    raise SystemExit("%s returned no workspace schema 2: %r" % (phase, response))
+if "source" in workspace:
+    raise SystemExit("%s reintroduced source authority into workspace v2: %r" %
+                     (phase, workspace))
 storage = workspace.get("storage") or {}
 transaction = workspace.get("transaction") or {}
-if source.get("repository_state") not in {"unbound", "missing", "saved", "modified"}:
-    raise SystemExit("%s returned invalid source state: %r" % (phase, source))
-if not isinstance(source.get("dirty"), bool):
-    raise SystemExit("%s returned no source dirty flag: %r" % (phase, source))
 if storage.get("active") is not False:
     raise SystemExit("%s unexpectedly has active storage: %r" % (phase, storage))
 if transaction.get("level") != expected_level:
