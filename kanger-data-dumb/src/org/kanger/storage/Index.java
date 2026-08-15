@@ -54,6 +54,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
     private NavigableMap<Long, IndexOne> baseIndex = new ConcurrentSkipListMap<>();
     private NavigableMap<Long, IndexOne> emptyIndex = new ConcurrentSkipListMap<>();
     private NavigableMap<Long, IndexOne> currentBlock = new ConcurrentSkipListMap<>();
+    private NavigableMap<Long, IndexOne> dirtyEmptyBlocks = new ConcurrentSkipListMap<>();
 
     private volatile int readCounter = 0;
     private volatile int writeCounter = 0;
@@ -83,6 +84,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         this.baseIndex.clear();
         this.emptyIndex.clear();
         this.currentBlock.clear();
+        this.dirtyEmptyBlocks.clear();
         changed = false;
 
         try {
@@ -131,6 +133,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         baseIndex.clear();
         emptyIndex.clear();
         currentBlock.clear();
+        dirtyEmptyBlocks.clear();
     }
 
     public void flush() throws Exception {
@@ -152,6 +155,7 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                 baseIndex.clear();
                 emptyIndex.clear();
                 currentBlock.clear();
+                dirtyEmptyBlocks.clear();
                 ras.seek(0);
                 ras.setLength(0);
                 ras.writeShort(version);
@@ -268,70 +272,84 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
         }
 
         IndexOne head = currentBlock.isEmpty() ? null : baseIndex.get(currentBlock.firstKey());
-        if (head != null) {
+        if (head != null || !dirtyEmptyBlocks.isEmpty()) {
             synchronized (locker) {
                 try (RandomAccessFile ras = new RandomAccessFile(file, "rw")) {
-
-                    if (head.getOffset() == 0) {
-                        head.setOffset(ras.length());
+                    boolean wrote = false;
+                    for (IndexOne emptyHead : dirtyEmptyBlocks.values()) {
+                        if (emptyHead.getOffset() > 0) {
+                            ras.seek(emptyHead.getOffset());
+                            writeDumb(ras, blockSize);
+                            wrote = true;
+                        }
                     }
+                    dirtyEmptyBlocks.clear();
 
-                    if (head.isDeleted()) {
-                        currentBlock.clear();
-                        ras.seek(head.getOffset());
-                        writeDumb(ras, blockSize);
-                        baseIndex.remove(head.getId());
-                    } else if (currentBlock.size() > blockSize) {
-                        TreeMap<Long, IndexOne> blockOne = new TreeMap<>();
-                        TreeMap<Long, IndexOne> blockTwo = new TreeMap<>();
-                        int current = 0;
-                        for (IndexOne one : currentBlock.values()) {
-                            if (current < currentBlock.size() / 2) {
-                                blockOne.put(one.getId(), one);
-                            } else {
-                                blockTwo.put(one.getId(), one);
-                            }
-                            ++current;
+                    if (head != null) {
+                        if (head.getOffset() == 0) {
+                            head.setOffset(ras.length());
                         }
 
-                        if (!blockOne.isEmpty()) {
-                            ras.seek(head.getOffset());
-                            for (IndexOne io : blockOne.values()) {
-                                io.writeTo(ras);
-                            }
-                            writeDumb(ras, blockSize - blockOne.size());
-                            currentBlock.clear();
-                            currentBlock.putAll(blockOne);
-                        } else {
+                        if (head.isDeleted()) {
                             currentBlock.clear();
                             ras.seek(head.getOffset());
                             writeDumb(ras, blockSize);
                             baseIndex.remove(head.getId());
-                            emptyIndex.put(head.getId(), head);
-                        }
+                        } else if (currentBlock.size() > blockSize) {
+                            TreeMap<Long, IndexOne> blockOne = new TreeMap<>();
+                            TreeMap<Long, IndexOne> blockTwo = new TreeMap<>();
+                            int current = 0;
+                            for (IndexOne one : currentBlock.values()) {
+                                if (current < currentBlock.size() / 2) {
+                                    blockOne.put(one.getId(), one);
+                                } else {
+                                    blockTwo.put(one.getId(), one);
+                                }
+                                ++current;
+                            }
 
-                        if (!blockTwo.isEmpty()) {
+                            if (!blockOne.isEmpty()) {
+                                ras.seek(head.getOffset());
+                                for (IndexOne io : blockOne.values()) {
+                                    io.writeTo(ras);
+                                }
+                                writeDumb(ras, blockSize - blockOne.size());
+                                currentBlock.clear();
+                                currentBlock.putAll(blockOne);
+                            } else {
+                                currentBlock.clear();
+                                ras.seek(head.getOffset());
+                                writeDumb(ras, blockSize);
+                                baseIndex.remove(head.getId());
+                                emptyIndex.put(head.getId(), head);
+                            }
 
-                            ras.seek(ras.length());
-                            for (IndexOne io : blockTwo.values()) {
+                            if (!blockTwo.isEmpty()) {
+
+                                ras.seek(ras.length());
+                                for (IndexOne io : blockTwo.values()) {
+                                    io.writeTo(ras);
+                                }
+                                IndexOne tail = blockTwo.firstEntry().getValue();
+                                baseIndex.put(tail.getId(), tail);
+                                writeDumb(ras, blockSize - blockTwo.size());
+                                if (currentBlock.isEmpty()) {
+                                    currentBlock.putAll(blockTwo);
+                                }
+                            }
+
+                        } else {
+                            ras.seek(head.getOffset());
+                            for (IndexOne io : currentBlock.values()) {
                                 io.writeTo(ras);
                             }
-                            IndexOne tail = blockTwo.firstEntry().getValue();
-                            baseIndex.put(tail.getId(), tail);
-                            writeDumb(ras, blockSize - blockTwo.size());
-                            if (currentBlock.isEmpty()) {
-                                currentBlock.putAll(blockTwo);
-                            }
+                            writeDumb(ras, blockSize - currentBlock.size());
                         }
-
-                    } else {
-                        ras.seek(head.getOffset());
-                        for (IndexOne io : currentBlock.values()) {
-                            io.writeTo(ras);
-                        }
-                        writeDumb(ras, blockSize - currentBlock.size());
+                        wrote = true;
                     }
-                    ++writeCounter;
+                    if (wrote) {
+                        ++writeCounter;
+                    }
                 }
             }
         }
@@ -412,6 +430,9 @@ public class Index implements Closeable, Iterable<Index.IndexOne> {
                     head.setDeleted(true);
                     baseIndex.remove(head.getId());
                     emptyIndex.put(head.getId(), head);
+                    if (head.getOffset() > 0) {
+                        dirtyEmptyBlocks.put(head.getId(), head);
+                    }
                 }
                 changed = true;
             }
