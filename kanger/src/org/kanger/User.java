@@ -124,13 +124,22 @@ public class User implements IUser {
     }
 
     public IMind remove(IMind mind, String name) throws Exception {
-        boolean needClose = false;
-        if (!isClosed() && (name == null || name.isEmpty() || name.equals(data.getStorageName()))) {
+        boolean activeStorage = !isClosed()
+                && (name == null || name.isEmpty()
+                || name.equals(data.getStorageName()));
+        if (activeStorage) {
             name = data.getStorageName();
-            needClose = true;
+            /*
+             * Detach and clear the active logical view before the physical
+             * generation disappears.  The opposite order leaves storage-
+             * backed lazy roots reachable during response decoration and can
+             * only appear healthy because legacy iterators swallow hydration
+             * failures.
+             */
+            mind = close(mind);
         }
         data.remove(name);
-        return needClose ? close(mind) : mind;
+        return mind;
     }
 
     public IMind reindex(IReactor<String> reactor, IMind mind, String name) throws Exception {

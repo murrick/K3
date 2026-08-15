@@ -339,9 +339,11 @@ class ExplicitStorageLifecycleTest {
     }
 
     private JSONObject use(Fixture fixture, String name) throws Exception {
-        return invoke(fixture, "command", new JSONObject()
+        JSONObject response = invoke(fixture, "command", new JSONObject()
                 .put("token", fixture.token)
                 .put("use", name));
+        assertEquals("OK", response.optString("result"), response.toString());
+        return response;
     }
 
     private void close(Fixture fixture) throws Exception {

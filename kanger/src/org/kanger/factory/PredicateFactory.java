@@ -237,8 +237,12 @@ public class PredicateFactory implements IFactory<IPredicate> {
             }
         }
         for (Object o : toDelete) {
-            mind.getLog().add(LogMode.STORAGE, "Unused predicate wiped: " + ((Predicate) o).toString(mind));
-            cache.delete(((IUnit) o).getId());
+            Predicate predicate = (Predicate) o;
+            mind.getLog().add(LogMode.STORAGE,
+                    "Unused predicate wiped: id=" + predicate.getId()
+                    + ", nameId=" + predicate.getNameId()
+                    + ", range=" + predicate.getRange());
+            cache.delete(predicate.getId());
         }
     }
 
