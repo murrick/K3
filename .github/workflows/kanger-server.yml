@@ -336,8 +336,8 @@ jobs:
 
           health_response="$(curl --fail --silent --show-error \
             http://127.0.0.1:1964/health)"
-          echo "${health_response}" | grep -q '"version":"3.3"'
-          echo "${health_response}" | grep -q '"core_version":"3.3"'
+          echo "${health_response}" | grep -q '"version":"3.7.0"'
+          echo "${health_response}" | grep -q '"core_version":"3.7.0"'
           echo "${health_response}" | grep -q '"api_version":"1"'
           echo "${health_response}" | grep -q '"server_version":"server-0.18"'
 
@@ -346,8 +346,8 @@ jobs:
             --header 'X-Request-ID: ci-ready-check' \
             http://127.0.0.1:1964/ready)"
           echo "${ready_response}" | grep -q '"status":"READY"'
-          echo "${ready_response}" | grep -q '"version":"3.3"'
-          echo "${ready_response}" | grep -q '"core_version":"3.3"'
+          echo "${ready_response}" | grep -q '"version":"3.7.0"'
+          echo "${ready_response}" | grep -q '"core_version":"3.7.0"'
           echo "${ready_response}" | grep -q '"api_version":"1"'
           echo "${ready_response}" | grep -q '"server_version":"server-0.18"'
           echo "${ready_response}" | grep -q '"queue_capacity":16'
@@ -357,7 +357,6 @@ jobs:
             bash kanger-server/scripts/smoke-local.sh
           KANGER_BASE_URL=http://127.0.0.1:1964 \
             bash kanger-server/scripts/smoke-auth-local.sh
-
           ! grep -q 'CredentialStore.authenticate' "${runtime}/server.log"
           ! grep -q '^Authentication error$' "${runtime}/server.log"
           grep -q 'http request_id=ci-ready-check method=GET path=/ready status=200' \
