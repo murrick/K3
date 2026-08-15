@@ -28,12 +28,6 @@ jobs:
           git status --short
           git config user.name "KANGER CI Patcher"
           git config user.email "actions@users.noreply.github.com"
-          git add \
-            kanger/src/org/kanger/factory/RuleFactory.java \
-            kanger-server/src/org/kanger/DeclarativeSourceBoundary.java \
-            kanger-server/src/org/kanger/RootCurrentLevelSourceReplacement.java \
-            kanger-server/src/org/kanger/NestedCurrentLevelSourceReplacement.java \
-            kanger-server/test/org/kanger/Soak3708ConvergenceContractTest.java \
-            kanger-server/test/org/kanger/PublicAuthUiContractTest.java
-          git commit -m "fix(server): converge source boundary and hidden contracts"
+          git add -A
+          git commit -m "fix(core): close standalone server lifecycle findings"
           git push origin HEAD:fix/3.7.0.17-server-package-gate-convergence
