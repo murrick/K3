@@ -2,8 +2,6 @@ name: KANGER Server
 
 on:
   push:
-    branches:
-      - "server/**"
     paths:
       - "kanger-server/**"
       - "kanger/**"
@@ -64,6 +62,7 @@ jobs:
           containment.js
           dialogue.js
           editor-local-file.js
+          editor-state.js
           error.js
           favicon.ico
           file-download.js
@@ -90,6 +89,7 @@ jobs:
           node --check html/containment.js
           node --check html/dialogue.js
           node --check html/editor-local-file.js
+          node --check html/editor-state.js
           node --check html/error.js
           node --check html/file-download.js
           node --check html/gateway.js
@@ -102,6 +102,7 @@ jobs:
           node --check html/workspace.js
           node --check kanger-server/scripts/qualify-browser-dialogue.js
           node --check kanger-server/scripts/qualify-browser-presentation.js
+          node --check kanger-server/scripts/qualify-editor-state.js
           node --check kanger-server/scripts/qualify-error-containment.js
 
           test "$(git hash-object html/javascript-mode-vendor.js)" = \
@@ -220,6 +221,8 @@ jobs:
           node kanger-server/scripts/qualify-browser-dialogue.js \
             "${GITHUB_WORKSPACE}"
           node kanger-server/scripts/qualify-browser-presentation.js \
+            "${GITHUB_WORKSPACE}"
+          node kanger-server/scripts/qualify-editor-state.js \
             "${GITHUB_WORKSPACE}"
           node kanger-server/scripts/qualify-error-containment.js \
             "${GITHUB_WORKSPACE}"
