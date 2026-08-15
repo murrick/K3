@@ -187,7 +187,7 @@ class RuleLevelAggregateRuntimeTest {
         return (JSONObject) reactor.run(packet);
     }
 
-    private void logout(String token) {
+    private void logout(String token) throws Exception {
         try {
             UserFactory.logout(token);
         } catch (AuthenticationErrorException alreadyClosed) {
