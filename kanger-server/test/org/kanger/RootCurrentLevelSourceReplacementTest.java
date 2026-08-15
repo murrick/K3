@@ -97,8 +97,10 @@ public class RootCurrentLevelSourceReplacementTest {
             user.setCurrentMind(reopened);
             reopened = reopened.useStorage("root-source-storage");
             user.setCurrentMind(reopened);
-            assertFalse(Boolean.TRUE.equals(reopened.query("?stored_old;")));
-            assertTrue(Boolean.TRUE.equals(reopened.query("?stored_new;")));
+            assertFalse(Boolean.TRUE.equals(reopened.query("?stored_old;")),
+                    "Root replacement resurrected deleted persistent source after reopen");
+            assertTrue(Boolean.TRUE.equals(reopened.query("?stored_new;")),
+                    "Replacement persistent source disappeared after reopen");
         } finally {
             UserFactory.dropUser(user);
         }
