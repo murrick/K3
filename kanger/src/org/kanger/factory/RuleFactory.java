@@ -613,10 +613,10 @@ public class RuleFactory implements IFactory<IRule> {
                 if (primary && isGenerated(existing)) {
                     existing = promotePrimary(existing);
                 }
-                if (existing.isDeleted(mind)) {
-                    ((Rule) existing).setDeleted(false, mind);
-                    action = true;
-                }
+            }
+            if (existing.isDeleted(mind)) {
+                ((Rule) existing).setDeleted(false, mind);
+                action = true;
             }
             return existing;
         } else {

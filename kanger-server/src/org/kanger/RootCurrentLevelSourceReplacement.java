@@ -31,6 +31,10 @@ final class RootCurrentLevelSourceReplacement {
             throw new IllegalArgumentException(
                     "Root source replacement requires explicit transaction level U0");
         }
+        String boundaryRejection = DeclarativeSourceBoundary.rejection(exactSource);
+        if (boundaryRejection != null) {
+            return new Outcome(false, boundaryRejection, root);
+        }
 
         try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(root)) {
             Mind work = tx.mind();

@@ -43,6 +43,10 @@ final class NestedCurrentLevelSourceReplacement {
             throw new IllegalArgumentException(
                     "Nested source replacement requires transaction level above U0");
         }
+        String boundaryRejection = DeclarativeSourceBoundary.rejection(exactSource);
+        if (boundaryRejection != null) {
+            return new Outcome(false, boundaryRejection, current);
+        }
 
         Mind parent = (Mind) current.getNext();
         ControlDelta control = ControlDelta.capture(parent, current);

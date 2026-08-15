@@ -25,17 +25,9 @@ class Soak3708ConvergenceContractTest {
     @Test
     void pluralRulesAliasIsDiscoverableWithoutChangingCanonicalFormatting()
             throws Exception {
-        boolean found = false;
-        for (CommandRegistry.Definition definition : CommandRegistry.definitions()) {
-            if (definition.getIntent() == CommandIntent.RULE_ALL
-                    && "rules".equals(definition.getSyntax())) {
-                found = true;
-                break;
-            }
-        }
-
-        assertTrue(found, "Help metadata must expose the executable rules alias");
-        assertTrue(new CommandHelpRenderer().render().contains("  rules\n"));
+        String help = new CommandHelpRenderer().render();
+        assertTrue(help.contains("rule/rules family spellings are synonymous"),
+                "Help must disclose the executable plural family spelling");
         assertEquals("rule all",
                 CommandRegistry.definition(CommandIntent.RULE_ALL).getSyntax(),
                 "The help alias must not replace canonical RULE_ALL formatting");

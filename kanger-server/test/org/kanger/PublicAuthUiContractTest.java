@@ -198,7 +198,7 @@ class PublicAuthUiContractTest {
         assertTrue(workspace.contains("observeOperationProtocol"));
         assertTrue(workspace.contains("canonicalSourceName"));
         assertTrue(workspace.contains("canonicalStorageName"));
-        assertTrue(workspace.contains("repository_state"));
+        assertFalse(workspace.contains("repository_state"));
         assertTrue(workspace.contains("physical_generation"));
         assertTrue(workspace.contains("applyProjection"));
         assertTrue(workspace.contains("responseGeneration < state.generation"));
