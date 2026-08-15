@@ -6,6 +6,7 @@
 package org.kanger;
 
 import org.junit.jupiter.api.Test;
+import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.IUser;
 import org.kanger.udf.UDF;
 import org.kanger.units.Operation;
@@ -41,6 +42,17 @@ public class CurrentLevelSourceRestorationMaterializationTest {
             Mind u2 = new Mind(u1);
             assertTrue(Boolean.TRUE.equals(u2.query("!base;")));
             assertTrue(Boolean.TRUE.equals(u2.query("=txfn(a){return a;};")));
+
+            IRule restoredBase = null;
+            for (IRule candidate : u2.getRules()) {
+                if ("!base;".equals(candidate.getOrigin())) {
+                    restoredBase = candidate;
+                    break;
+                }
+            }
+            assertNotNull(restoredBase, "Restored canonical Rule disappeared from U2");
+            assertTrue(restoredBase.isRestored(u2),
+                    "Restored canonical Rule lost its U2 restoration marker");
 
             String projected = SourceContextMaterializer.materializeCurrentLevel(u2);
             assertTrue(projected.contains("!base;"),
