@@ -1,0 +1,118 @@
+name: Temporary 3.7.0.19 lifecycle diagnostic patcher
+
+on:
+  push:
+    branches:
+      - "tmp/3.7.0.19-lifecycle-diagnostic-patcher"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: fix/3.7.0.19-storage-lifecycle-diagnostic-closure
+          fetch-depth: 0
+
+      - name: Apply narrow lifecycle and diagnostic fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_exact(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected exactly one match, got {count}')
+              p.write_text(text.replace(old, new), encoding='utf-8')
+
+          replace_exact(
+              'kanger/src/org/kanger/User.java',
+              '''    public IMind remove(IMind mind, String name) throws Exception {
+                  boolean needClose = false;
+                  if (!isClosed() && (name == null || name.isEmpty() || name.equals(data.getStorageName()))) {
+                      name = data.getStorageName();
+                      needClose = true;
+                  }
+                  data.remove(name);
+                  return needClose ? close(mind) : mind;
+              }
+          ''',
+              '''    public IMind remove(IMind mind, String name) throws Exception {
+                  boolean activeStorage = !isClosed()
+                          && (name == null || name.isEmpty()
+                          || name.equals(data.getStorageName()));
+                  if (activeStorage) {
+                      name = data.getStorageName();
+                      /*
+                       * Detach and clear the active logical view before the physical
+                       * generation disappears.  The opposite order leaves storage-
+                       * backed lazy roots reachable during response decoration and can
+                       * only appear healthy because legacy iterators swallow hydration
+                       * failures.
+                       */
+                      mind = close(mind);
+                  }
+                  data.remove(name);
+                  return mind;
+              }
+          ''')
+
+          replace_exact(
+              'kanger/src/org/kanger/factory/PredicateFactory.java',
+              '''        for (Object o : toDelete) {
+                      mind.getLog().add(LogMode.STORAGE, "Unused predicate wiped: " + ((Predicate) o).toString(mind));
+                      cache.delete(((IUnit) o).getId());
+                  }
+          ''',
+              '''        for (Object o : toDelete) {
+                      Predicate predicate = (Predicate) o;
+                      mind.getLog().add(LogMode.STORAGE,
+                              "Unused predicate wiped: id=" + predicate.getId()
+                              + ", nameId=" + predicate.getNameId()
+                              + ", range=" + predicate.getRange());
+                      cache.delete(predicate.getId());
+                  }
+          ''')
+
+          replace_exact(
+              'kanger-server/test/org/kanger/ExplicitStorageLifecycleTest.java',
+              '''    private JSONObject use(Fixture fixture, String name) throws Exception {
+                  return invoke(fixture, "command", new JSONObject()
+                          .put("token", fixture.token)
+                          .put("use", name));
+              }
+          ''',
+              '''    private JSONObject use(Fixture fixture, String name) throws Exception {
+                  JSONObject response = invoke(fixture, "command", new JSONObject()
+                          .put("token", fixture.token)
+                          .put("use", name));
+                  assertEquals("OK", response.optString("result"), response.toString());
+                  return response;
+              }
+          ''')
+          PY
+
+          git diff --check
+          git diff -- kanger/src/org/kanger/User.java \
+            kanger/src/org/kanger/factory/PredicateFactory.java \
+            kanger-server/test/org/kanger/ExplicitStorageLifecycleTest.java
+
+      - name: Commit and push target branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            kanger/src/org/kanger/User.java \
+            kanger/src/org/kanger/factory/PredicateFactory.java \
+            kanger-server/test/org/kanger/ExplicitStorageLifecycleTest.java
+          git commit -m "fix(storage): close active database before drop"
+          git push origin HEAD:fix/3.7.0.19-storage-lifecycle-diagnostic-closure
