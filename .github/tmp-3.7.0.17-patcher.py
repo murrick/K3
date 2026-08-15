@@ -10,185 +10,72 @@ def replace_once(path, old, new):
     p.write_text(text.replace(old, new, 1))
 
 
+# Canonical lookup must prefer an already-existing equivalent Rule over the
+# freshly registered candidate itself, so inherited deleted rules can be
+# restored in a child transaction instead of being shadowed by a duplicate.
 replace_once(
     "kanger/src/org/kanger/factory/RuleFactory.java",
-    '''        if (existing != null) {
-            if (existing.getId() != r.getId()) {
-                ((Rule) r).setDeleted(true, mind);
-                if (primary && isGenerated(existing)) {
-                    existing = promotePrimary(existing);
-                }
-                if (existing.isDeleted(mind)) {
-                    ((Rule) existing).setDeleted(false, mind);
-                    action = true;
-                }
+    '''    public IRule find(IRule rule) throws Exception {
+        for (long id : cache.find(((Rule) rule).getHash())) {
+            IRule one = get(id);
+            if (((Rule) one).equalsTo(rule)) {
+                return one;
             }
-            return existing;
-''',
-    '''        if (existing != null) {
-            if (existing.getId() != r.getId()) {
-                ((Rule) r).setDeleted(true, mind);
-                if (primary && isGenerated(existing)) {
-                    existing = promotePrimary(existing);
-                }
-            }
-            if (existing.isDeleted(mind)) {
-                ((Rule) existing).setDeleted(false, mind);
-                action = true;
-            }
-            return existing;
-''')
-
-Path("kanger-server/src/org/kanger/DeclarativeSourceBoundary.java").write_text('''/*
- * MIT License
- *
- * Copyright (c) 2021 Dmitry G. Quznetsov
- */
-package org.kanger;
-
-/** Enforces the declarative-only contract of Browser Editor source. */
-final class DeclarativeSourceBoundary {
-    private DeclarativeSourceBoundary() {
+        }
+        return null;
     }
-
-    static String rejection(String source) {
-        return containsQueryStatement(source)
-                ? "Editor source cannot contain query statements"
-                : null;
+''',
+    '''    public IRule find(IRule rule) throws Exception {
+        IRule self = null;
+        for (long id : cache.find(((Rule) rule).getHash())) {
+            IRule one = get(id);
+            if (((Rule) one).equalsTo(rule)) {
+                if (one.getId() != rule.getId()) {
+                    return one;
+                }
+                self = one;
+            }
+        }
+        return self;
     }
-
-    private static boolean containsQueryStatement(String source) {
-        if (source == null || source.isEmpty()) {
-            return false;
-        }
-        boolean statementStart = true;
-        boolean lineComment = false;
-        boolean blockComment = false;
-        char quote = 0;
-        boolean escaped = false;
-
-        for (int i = 0; i < source.length(); ++i) {
-            char ch = source.charAt(i);
-            char next = i + 1 < source.length() ? source.charAt(i + 1) : 0;
-
-            if (lineComment) {
-                if (ch == '\\n' || ch == '\\r') {
-                    lineComment = false;
-                }
-                continue;
-            }
-            if (blockComment) {
-                if (ch == '*' && next == '/') {
-                    blockComment = false;
-                    ++i;
-                }
-                continue;
-            }
-            if (quote != 0) {
-                if (escaped) {
-                    escaped = false;
-                } else if (ch == '\\\\') {
-                    escaped = true;
-                } else if (ch == quote) {
-                    quote = 0;
-                }
-                continue;
-            }
-
-            if (ch == '/' && next == '/') {
-                lineComment = true;
-                ++i;
-                continue;
-            }
-            if (ch == '/' && next == '*') {
-                blockComment = true;
-                ++i;
-                continue;
-            }
-            if (ch == '\\'' || ch == '"') {
-                quote = ch;
-                statementStart = false;
-                continue;
-            }
-            if (Character.isWhitespace(ch)) {
-                continue;
-            }
-            if (statementStart && ch == '?') {
-                return true;
-            }
-            if (ch == ';') {
-                statementStart = true;
-            } else {
-                statementStart = false;
-            }
-        }
-        return false;
-    }
-}
 ''')
 
+# Internal reindex already closes/checkpoints the active storage. Reopening that
+# just-cleared root must not enter the user-facing offline-stack classifier,
+# whose semantic iterators still point at the closed physical bases.
 replace_once(
-    "kanger-server/src/org/kanger/RootCurrentLevelSourceReplacement.java",
-    '''        if (root.getTransactionLevel() != 0 || root.getNext() != null) {
-            throw new IllegalArgumentException(
-                    "Root source replacement requires explicit transaction level U0");
+    "kanger/src/org/kanger/User.java",
+    '''        mind = use(mind, name);
+        if (data != null && !data.isClosed()) {
+            data.reindex(reactor, mind);
         }
 
-        try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(root)) {
+        mind = close(mind);
+        if (reopened) {
+            mind = use(mind, saveName);
+        }
 ''',
-    '''        if (root.getTransactionLevel() != 0 || root.getNext() != null) {
-            throw new IllegalArgumentException(
-                    "Root source replacement requires explicit transaction level U0");
-        }
-        String boundaryRejection = DeclarativeSourceBoundary.rejection(exactSource);
-        if (boundaryRejection != null) {
-            return new Outcome(false, boundaryRejection, root);
+    '''        mind = reopened
+                ? openClosedStorage((Mind) mind, name)
+                : use(mind, name);
+        if (data != null && !data.isClosed()) {
+            data.reindex(reactor, mind);
         }
 
-        try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(root)) {
+        mind = close(mind);
+        if (reopened) {
+            mind = openClosedStorage((Mind) mind, saveName);
+        }
 ''')
 
+# Once the test explicitly releases its child, publish the root before session
+# teardown so runtime cleanup does not attempt a second release.
 replace_once(
-    "kanger-server/src/org/kanger/NestedCurrentLevelSourceReplacement.java",
-    '''        if (current.getTransactionLevel() <= 0 || current.getNext() == null) {
-            throw new IllegalArgumentException(
-                    "Nested source replacement requires transaction level above U0");
-        }
-
-        Mind parent = (Mind) current.getNext();
+    "kanger-server/test/org/kanger/CompileSourceBoundaryContractTest.java",
+    '''            assertSame(beforeReject, user.getCurrentMind());
+            root.release((Mind) user.getCurrentMind());
 ''',
-    '''        if (current.getTransactionLevel() <= 0 || current.getNext() == null) {
-            throw new IllegalArgumentException(
-                    "Nested source replacement requires transaction level above U0");
-        }
-        String boundaryRejection = DeclarativeSourceBoundary.rejection(exactSource);
-        if (boundaryRejection != null) {
-            return new Outcome(false, boundaryRejection, current);
-        }
-
-        Mind parent = (Mind) current.getNext();
+    '''            assertSame(beforeReject, user.getCurrentMind());
+            root.release((Mind) user.getCurrentMind());
+            user.setCurrentMind(root);
 ''')
-
-replace_once(
-    "kanger-server/test/org/kanger/Soak3708ConvergenceContractTest.java",
-    '''        boolean found = false;
-        for (CommandRegistry.Definition definition : CommandRegistry.definitions()) {
-            if (definition.getIntent() == CommandIntent.RULE_ALL
-                    && "rules".equals(definition.getSyntax())) {
-                found = true;
-                break;
-            }
-        }
-
-        assertTrue(found, "Help metadata must expose the executable rules alias");
-        assertTrue(new CommandHelpRenderer().render().contains("  rules\\n"));
-''',
-    '''        String help = new CommandHelpRenderer().render();
-        assertTrue(help.contains("rule/rules family spellings are synonymous"),
-                "Help must disclose the executable plural family spelling");
-''')
-
-replace_once(
-    "kanger-server/test/org/kanger/PublicAuthUiContractTest.java",
-    '        assertTrue(workspace.contains("repository_state"));\n',
-    '        assertFalse(workspace.contains("repository_state"));\n')
