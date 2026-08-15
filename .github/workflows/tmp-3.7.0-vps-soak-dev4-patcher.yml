@@ -91,6 +91,7 @@ jobs:
           target.write_text(text, encoding='utf-8')
           PY
 
+          git add -N .github/workflows/kanger-3.7.0-vps-soak-dev4.yml
           git diff --check
           test "$(git diff --name-only)" = ".github/workflows/kanger-3.7.0-vps-soak-dev4.yml"
 
