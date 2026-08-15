@@ -17,6 +17,7 @@ class DeclarativeSourceBoundaryTest {
         assertNotNull(DeclarativeSourceBoundary.rejection("?x;"));
         assertNotNull(DeclarativeSourceBoundary.rejection("!base;\n  ?x;"));
         assertNotNull(DeclarativeSourceBoundary.rejection("/* prefix */ ?x;"));
+        assertNotNull(DeclarativeSourceBoundary.rejection("!base;;\n?x;"));
     }
 
     @Test
