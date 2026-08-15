@@ -357,6 +357,7 @@ jobs:
             bash kanger-server/scripts/smoke-local.sh
           KANGER_BASE_URL=http://127.0.0.1:1964 \
             bash kanger-server/scripts/smoke-auth-local.sh
+
           ! grep -q 'CredentialStore.authenticate' "${runtime}/server.log"
           ! grep -q '^Authentication error$' "${runtime}/server.log"
           grep -q 'http request_id=ci-ready-check method=GET path=/ready status=200' \
