@@ -139,7 +139,7 @@ public class Compiller {
         if (r.getId() == id) {
             ((Rule) r).setQuery(query);
             mind.getRules().expand((Rule) r);
-        } else if (mind.getRules().isPromotedHere(r)) {
+        } else if (mind.getRules().isPromotedHere(r) || r.isRestored(mind)) {
             ((Rule) r).setSecond(false);
         } else {
             ((Rule) r).setSecond(true);
