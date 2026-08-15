@@ -182,7 +182,8 @@ jobs:
           grep -q 'KANGER_WORKSPACE_STATE' html/workspace.js
           grep -q 'canonicalSourceName' html/workspace.js
           grep -q 'canonicalStorageName' html/workspace.js
-          grep -q 'repository_state' html/workspace.js
+          grep -q 'source_recovery' html/workspace.js
+          grep -q 'KANGER_EDITOR_STATE' html/workspace.js
           ! grep -q 'innerHTML' html/workspace.js
           ! grep -q 'document.cookie' html/workspace.js
 
