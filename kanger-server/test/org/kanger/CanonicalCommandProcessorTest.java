@@ -36,7 +36,7 @@ class CanonicalCommandProcessorTest {
             assertEquals(0, status.getMind().getTransactionLevel());
 
             CanonicalCommandProcessor.Result started = processor.execute(
-                    parser.parse("transaction create"), fixture.user);
+                    parser.parse("transaction start"), fixture.user);
             assertTrue(started.isSuccess());
             assertEquals(1, started.getMind().getTransactionLevel());
             assertSame(started.getMind(), fixture.user.getCurrentMind());
@@ -87,7 +87,7 @@ class CanonicalCommandProcessorTest {
             CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
             CommandParser parser = new CommandParser();
             CanonicalCommandProcessor.Result started = processor.execute(
-                    parser.parse("transaction create"), fixture.user);
+                    parser.parse("transaction start"), fixture.user);
             assertTrue(Boolean.TRUE.equals(started.getMind().query("!shared_tx_fact;")));
 
             CanonicalCommandProcessor.Result committed = processor.execute(

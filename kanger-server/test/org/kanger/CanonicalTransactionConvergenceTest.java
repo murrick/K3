@@ -46,7 +46,7 @@ class CanonicalTransactionConvergenceTest {
                             new CanonicalCommandRuntimeReactor(legacy)));
 
             JSONObject started = invoke(reactor, fixture.token,
-                    "transaction create");
+                    "transaction start");
             assertEquals("OK", started.optString("result"), started.toString());
             assertEquals("TX_START", started.optString("canonical_intent"));
             assertEquals(1, started.optInt("transaction", -1));
