@@ -1,0 +1,172 @@
+name: KANGER 3.7.0 integrated VPS development soak package dev7
+
+on:
+  push:
+    branches:
+      - "ops/3.7.0-vps-soak-dev7"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  package:
+    name: Re-seal exact DEV6 payload with SOURCE schema contract
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out exact operations branch
+        uses: actions/checkout@v5
+        with:
+          ref: ops/3.7.0-vps-soak-dev7
+          fetch-depth: 0
+
+      - name: Verify exact ops provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          canonical="2ae321cde38ec8e8f390cc2b7273a5c2f7629fca"
+          branch="ops/3.7.0-vps-soak-dev7"
+          workflow=".github/workflows/kanger-3.7.0-vps-soak-dev7.yml"
+          head="$(git rev-parse "origin/${branch}")"
+          test "$(git rev-parse HEAD)" = "${head}"
+          git merge-base --is-ancestor "${canonical}" "${head}"
+          test "$(git diff --name-only "${canonical}..${head}")" = "${workflow}"
+          echo "DEV7_PACKAGE_PASS canonical-product ${canonical}"
+          echo "DEV7_PACKAGE_PASS ops-head ${head}"
+
+      - name: Download and verify sealed DEV6 input
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          DEV6_ARTIFACT_ID="9265984381"
+          DEV6_ZIP_SHA256="c71632f3d0b1618111850194089796d102eeb163f9975c8bba4fcaca187a0797"
+          DEV6_TAR_SHA256="2fb5a72d4831468fb9463ea284a03ec1169388324f2229d72a5b5cbdc48b0d00"
+          DEV6_JAR_SHA256="b2d424a153ea1b0b9fc20952b6c5d49d4121f3988742593658856ab0a106e1ad"
+          mkdir -p "${RUNNER_TEMP}/dev7-input/zip" "${RUNNER_TEMP}/dev7-work"
+          curl --fail --location --silent --show-error \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${DEV6_ARTIFACT_ID}/zip" \
+            -o "${RUNNER_TEMP}/dev7-input/dev6.zip"
+          echo "${DEV6_ZIP_SHA256}  ${RUNNER_TEMP}/dev7-input/dev6.zip" | sha256sum -c -
+          unzip -q "${RUNNER_TEMP}/dev7-input/dev6.zip" -d "${RUNNER_TEMP}/dev7-input/zip"
+          mapfile -t tarballs < <(find "${RUNNER_TEMP}/dev7-input/zip" -maxdepth 1 -type f -name '*.tar.gz' -print)
+          test "${#tarballs[@]}" -eq 1
+          tarball="${tarballs[0]}"
+          echo "${DEV6_TAR_SHA256}  ${tarball}" | sha256sum -c -
+          tar -xzf "${tarball}" -C "${RUNNER_TEMP}/dev7-work"
+          ROOT="${RUNNER_TEMP}/dev7-work/kanger-3.7.0-vps-soak-2ae321cde38e-dev6"
+          test -d "${ROOT}"
+          (cd "${ROOT}" && sha256sum -c SHA256SUMS)
+          echo "${DEV6_JAR_SHA256}  ${ROOT}/kanger-server.jar" | sha256sum -c -
+          grep -Fxq 'schema=6' "${ROOT}/SOURCE.txt"
+          grep -Fxq 'canonical_source_head=2ae321cde38ec8e8f390cc2b7273a5c2f7629fca' "${ROOT}/SOURCE.txt"
+          grep -Fxq 'packaging_branch=ops/3.7.0-vps-soak-dev6' "${ROOT}/SOURCE.txt"
+          grep -Fxq 'packaging_generation=dev6' "${ROOT}/SOURCE.txt"
+          grep -Fxq 'packaging_head=ac179b5abbbfa72dc056c46ef54af791719b2644' "${ROOT}/SOURCE.txt"
+          grep -Fxq 'prior_development_soak=3.7.0.10' "${ROOT}/SOURCE.txt"
+          grep -Fxq 'prior_development_soak_jar_sha256=b13abfa6a77becca1c3e4b451ac7d72d46ecbb7e652a7edde015c38d6ea38e07' "${ROOT}/SOURCE.txt"
+          grep -Fq "grep -q '^schema=5$' \"\${BUNDLE_DIR}/SOURCE.txt\"" "${ROOT}/deploy/deploy-soak.sh"
+          (cd "${ROOT}" && find kanger-server.jar html -type f -print0 | sort -z | xargs -0 sha256sum > "${RUNNER_TEMP}/dev7-input/product-before.sha256")
+          echo "DEV7_PACKAGE_PASS sealed-dev6-input"
+
+      - name: Correct only SOURCE schema input guard and dev7 metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          OLD_ROOT="${RUNNER_TEMP}/dev7-work/kanger-3.7.0-vps-soak-2ae321cde38e-dev6"
+          NEW_ROOT="${RUNNER_TEMP}/dev7-work/kanger-3.7.0-vps-soak-2ae321cde38e-dev7"
+          PACKAGING_HEAD="$(git rev-parse origin/ops/3.7.0-vps-soak-dev7)"
+          export OLD_ROOT PACKAGING_HEAD
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ['OLD_ROOT'])
+          head = os.environ['PACKAGING_HEAD']
+          paths = [
+              root / 'SOURCE.txt',
+              root / 'deploy' / 'snapshot-current.sh',
+              root / 'deploy' / 'deploy-soak.sh',
+              root / 'deploy' / 'rollback-soak.sh',
+              root / 'docs' / 'VPS-DEPLOY-3.7.0-DEV6.md',
+          ]
+          for path in paths:
+              text = path.read_text(encoding='utf-8')
+              text = text.replace('ops/3.7.0-vps-soak-dev6', 'ops/3.7.0-vps-soak-dev7')
+              text = text.replace('packaging_generation=dev6', 'packaging_generation=dev7')
+              text = text.replace('development-soak dev6', 'development-soak dev7')
+              text = text.replace('generation dev6', 'generation dev7')
+              text = text.replace('DEV6', 'DEV7')
+              text = text.replace('dev6', 'dev7')
+              text = text.replace('ac179b5abbbfa72dc056c46ef54af791719b2644', head)
+              path.write_text(text, encoding='utf-8')
+
+          deploy = root / 'deploy' / 'deploy-soak.sh'
+          text = deploy.read_text(encoding='utf-8')
+          old = "grep -q '^schema=5$' \"${BUNDLE_DIR}/SOURCE.txt\""
+          new = "grep -q '^schema=6$' \"${BUNDLE_DIR}/SOURCE.txt\""
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one stale SOURCE schema guard, got {text.count(old)}')
+          text = text.replace(old, new, 1)
+          deploy.write_text(text, encoding='utf-8')
+
+          old_doc = root / 'docs' / 'VPS-DEPLOY-3.7.0-DEV6.md'
+          new_doc = root / 'docs' / 'VPS-DEPLOY-3.7.0-DEV7.md'
+          old_doc.rename(new_doc)
+          PY
+          mv "${OLD_ROOT}" "${NEW_ROOT}"
+
+          grep -Fxq 'schema=6' "${NEW_ROOT}/SOURCE.txt"
+          grep -Fxq 'packaging_branch=ops/3.7.0-vps-soak-dev7' "${NEW_ROOT}/SOURCE.txt"
+          grep -Fxq 'packaging_generation=dev7' "${NEW_ROOT}/SOURCE.txt"
+          grep -Fxq "packaging_head=${PACKAGING_HEAD}" "${NEW_ROOT}/SOURCE.txt"
+          grep -Fxq 'prior_development_soak=3.7.0.10' "${NEW_ROOT}/SOURCE.txt"
+          grep -Fq "grep -q '^schema=6$' \"\${BUNDLE_DIR}/SOURCE.txt\"" "${NEW_ROOT}/deploy/deploy-soak.sh"
+          ! grep -Fq "grep -q '^schema=5$' \"\${BUNDLE_DIR}/SOURCE.txt\"" "${NEW_ROOT}/deploy/deploy-soak.sh"
+          test "$(grep -R -h '^schema=5$' "${NEW_ROOT}/deploy" | wc -l | tr -d ' ')" = "3"
+          grep -Fq 'NAME="kanger-vps-before-3.7.0-dev7-${STAMP}"' "${NEW_ROOT}/deploy/snapshot-current.sh"
+          ! grep -R -Fq 'kanger-vps-before-3.7.0.8' "${NEW_ROOT}/deploy" "${NEW_ROOT}/SOURCE.txt" "${NEW_ROOT}/docs"
+          bash -n "${NEW_ROOT}/deploy/snapshot-current.sh"
+          bash -n "${NEW_ROOT}/deploy/deploy-soak.sh"
+          bash -n "${NEW_ROOT}/deploy/rollback-soak.sh"
+          (cd "${NEW_ROOT}" && find kanger-server.jar html -type f -print0 | sort -z | xargs -0 sha256sum > "${RUNNER_TEMP}/dev7-input/product-after.sha256")
+          cmp "${RUNNER_TEMP}/dev7-input/product-before.sha256" "${RUNNER_TEMP}/dev7-input/product-after.sha256"
+          echo 'b2d424a153ea1b0b9fc20952b6c5d49d4121f3988742593658856ab0a106e1ad  '"${NEW_ROOT}/kanger-server.jar" | sha256sum -c -
+          echo "DEV7_PACKAGE_PASS product-payload-byte-identical"
+          echo "DEV7_PACKAGE_PASS source-schema-contract"
+
+      - name: Seal and independently verify DEV7 bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="${RUNNER_TEMP}/dev7-work/kanger-3.7.0-vps-soak-2ae321cde38e-dev7"
+          DIST="${GITHUB_WORKSPACE}/dist"
+          PACKAGE="kanger-3.7.0-vps-soak-2ae321cde38e-dev7"
+          INVENTORY="${RUNNER_TEMP}/dev7-tar-contents.txt"
+          mkdir -p "${DIST}"
+          rm -f "${ROOT}/SHA256SUMS"
+          (cd "${ROOT}" && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS && sha256sum -c SHA256SUMS)
+          tar -C "$(dirname "${ROOT}")" -czf "${DIST}/${PACKAGE}.tar.gz" "${PACKAGE}"
+          (cd "${DIST}" && sha256sum "${PACKAGE}.tar.gz" > "${PACKAGE}.tar.gz.sha256")
+          tar -tzf "${DIST}/${PACKAGE}.tar.gz" > "${INVENTORY}"
+          grep -Fxq "${PACKAGE}/SOURCE.txt" "${INVENTORY}"
+          grep -Fxq "${PACKAGE}/deploy/snapshot-current.sh" "${INVENTORY}"
+          grep -Fxq "${PACKAGE}/deploy/deploy-soak.sh" "${INVENTORY}"
+          grep -Fxq "${PACKAGE}/deploy/rollback-soak.sh" "${INVENTORY}"
+          echo "DEV7_PACKAGE_PASS immutable-bundle"
+          cat "${DIST}/${PACKAGE}.tar.gz.sha256"
+          sha256sum "${ROOT}/kanger-server.jar"
+
+      - name: Upload development soak dev7 package
+        uses: actions/upload-artifact@v7
+        with:
+          name: kanger-3.7.0-vps-soak-dev7
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 90
