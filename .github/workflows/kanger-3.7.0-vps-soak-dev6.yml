@@ -181,6 +181,7 @@ jobs:
           ROOT="${RUNNER_TEMP}/dev6-work/kanger-3.7.0-vps-soak-2ae321cde38e-dev6"
           DIST="${GITHUB_WORKSPACE}/dist"
           PACKAGE="kanger-3.7.0-vps-soak-2ae321cde38e-dev6"
+          INVENTORY="${RUNNER_TEMP}/dev6-tar-contents.txt"
           mkdir -p "${DIST}"
 
           rm -f "${ROOT}/SHA256SUMS"
@@ -196,10 +197,11 @@ jobs:
             sha256sum "${PACKAGE}.tar.gz" > "${PACKAGE}.tar.gz.sha256"
           )
 
-          tar -tzf "${DIST}/${PACKAGE}.tar.gz" | grep -Fxq "${PACKAGE}/SOURCE.txt"
-          tar -tzf "${DIST}/${PACKAGE}.tar.gz" | grep -Fxq "${PACKAGE}/deploy/snapshot-current.sh"
-          tar -tzf "${DIST}/${PACKAGE}.tar.gz" | grep -Fxq "${PACKAGE}/deploy/deploy-soak.sh"
-          tar -tzf "${DIST}/${PACKAGE}.tar.gz" | grep -Fxq "${PACKAGE}/deploy/rollback-soak.sh"
+          tar -tzf "${DIST}/${PACKAGE}.tar.gz" > "${INVENTORY}"
+          grep -Fxq "${PACKAGE}/SOURCE.txt" "${INVENTORY}"
+          grep -Fxq "${PACKAGE}/deploy/snapshot-current.sh" "${INVENTORY}"
+          grep -Fxq "${PACKAGE}/deploy/deploy-soak.sh" "${INVENTORY}"
+          grep -Fxq "${PACKAGE}/deploy/rollback-soak.sh" "${INVENTORY}"
 
           echo "DEV6_PACKAGE_PASS immutable-bundle"
           cat "${DIST}/${PACKAGE}.tar.gz.sha256"
