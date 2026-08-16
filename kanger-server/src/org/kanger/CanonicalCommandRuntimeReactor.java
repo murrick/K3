@@ -13,6 +13,7 @@ import org.kanger.command.CommandRegistry;
 import org.kanger.command.SortKey;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
+import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.ICause;
 import org.kanger.interfaces.IHypothesis;
 import org.kanger.interfaces.ILogEntry;
@@ -35,35 +36,43 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Owns canonical intents that cannot be represented faithfully by the legacy
+ * Owns canonical intents that are no longer executed through the legacy
  * QueryProcessor transport.
  *
  * <p>This boundary sits inside {@link WorkspaceStateReactor}, so canonical
  * results receive the same authoritative workspace projection as legacy
- * operations. Existing lifecycle/stop-loss reactors remain below it and stay
- * authoritative for every operation translated by the ingress adapter.</p>
+ * operations. Existing lifecycle/stop-loss reactors remain below it for every
+ * compatibility operation still translated by the ingress adapter.</p>
  *
- * <p>The bindings in this class are intentionally narrow projections over
- * existing Core capabilities. They do not reproduce inference, storage or
- * transaction logic in transport code.</p>
+ * <p>Converged command families delegate semantic state transitions to
+ * {@link CanonicalCommandProcessor}. The remaining bindings in this class are
+ * narrow read/projection adapters over existing Core capabilities.</p>
  */
 final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
 
     private final IReactor<JSONObject> delegate;
     private final CommandHelpRenderer helpRenderer;
+    private final CanonicalCommandProcessor commandProcessor;
 
     CanonicalCommandRuntimeReactor(IReactor<JSONObject> delegate) {
-        this(delegate, new CommandHelpRenderer());
+        this(delegate, new CommandHelpRenderer(), new CanonicalCommandProcessor());
     }
 
     CanonicalCommandRuntimeReactor(IReactor<JSONObject> delegate,
                                    CommandHelpRenderer helpRenderer) {
-        if (delegate == null || helpRenderer == null) {
+        this(delegate, helpRenderer, new CanonicalCommandProcessor());
+    }
+
+    CanonicalCommandRuntimeReactor(IReactor<JSONObject> delegate,
+                                   CommandHelpRenderer helpRenderer,
+                                   CanonicalCommandProcessor commandProcessor) {
+        if (delegate == null || helpRenderer == null || commandProcessor == null) {
             throw new IllegalArgumentException(
-                    "delegate and helpRenderer must not be null");
+                    "delegate, helpRenderer and commandProcessor must not be null");
         }
         this.delegate = delegate;
         this.helpRenderer = helpRenderer;
+        this.commandProcessor = commandProcessor;
     }
 
     @Override
@@ -90,6 +99,12 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
 
         JSONObject result;
         switch (invocation.getIntent()) {
+            case TX_STATUS:
+            case TX_START:
+            case TX_COMMIT:
+            case TX_ROLLBACK:
+                result = executeShared(invocation, user);
+                break;
             case HELP:
                 result = ok()
                         .put("description", helpRenderer.render())
@@ -131,6 +146,31 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                 break;
         }
         return decorate(result, user.getCurrentMind());
+    }
+
+    private JSONObject executeShared(CommandInvocation invocation,
+                                     IUser user) throws Exception {
+        try {
+            CanonicalCommandProcessor.Result outcome =
+                    commandProcessor.execute(invocation, user);
+            if (!outcome.isHandled()) {
+                return error("canonical_intent_not_bound",
+                        "Canonical intent has no shared semantic binding");
+            }
+            JSONObject result = outcome.isSuccess()
+                    ? ok()
+                    : new JSONObject().put("result", "error");
+            if (!outcome.getDescription().isEmpty()) {
+                result.put("description", outcome.getDescription());
+            }
+            return result;
+        } catch (StorageLifecycleException failure) {
+            JSONObject result = error(failure.getCode(), failure.toString());
+            if (failure.getRequiredAction() != null) {
+                result.put("required_action", failure.getRequiredAction());
+            }
+            return result;
+        }
     }
 
     private JSONObject structuredHelp() {

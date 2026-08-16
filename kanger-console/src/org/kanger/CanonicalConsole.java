@@ -48,16 +48,19 @@ import java.util.Scanner;
  * Canonical Java Console session adapter.
  *
  * <p>The shared {@link CommandParser} is the only grammar authority for ordinary
- * commands. This class owns Console presentation, confirmations, local source
- * files and the two explicitly Console-local conveniences: bare source-list
- * forms and {@code xplain}. Core language lines bypass command dispatch and are
- * executed by the existing Mind API.</p>
+ * commands. Converged command families delegate semantic state transitions to
+ * {@link CanonicalCommandProcessor}; this class owns Console presentation,
+ * confirmations, local source files and the two explicitly Console-local
+ * conveniences: bare source-list forms and {@code xplain}. Core language lines
+ * bypass command dispatch and are executed by the existing Mind API.</p>
  */
 public final class CanonicalConsole {
 
     private static final CommandParser PARSER = new CommandParser();
     private static final CommandFormatter FORMATTER = new CommandFormatter();
     private static final CommandHelpRenderer HELP = new CommandHelpRenderer();
+    private static final CanonicalCommandProcessor COMMAND_PROCESSOR =
+            new CanonicalCommandProcessor();
 
     private static String lastComments = "";
 
@@ -225,18 +228,23 @@ public final class CanonicalConsole {
                 return same(mind);
 
             case TX_STATUS:
-                showTransaction(mind);
-                return same(mind);
             case TX_START:
-                mind = new Mind(mind);
-                showTransaction(mind);
-                return same(track(shutdownHook, mind));
             case TX_COMMIT:
-                mind = commitTransaction(mind, shutdownHook);
-                showTransaction(mind);
-                return same(mind);
             case TX_ROLLBACK:
-                mind = rollbackTransaction(mind, shutdownHook);
+                CanonicalCommandProcessor.Result transaction =
+                        COMMAND_PROCESSOR.execute(invocation, mind.getUser());
+                if (!transaction.isHandled()) {
+                    throw new CommandErrorException("Unsupported canonical intent "
+                            + invocation.getIntent());
+                }
+                mind = track(shutdownHook, transaction.getMind());
+                if (invocation.getIntent() == org.kanger.command.CommandIntent.TX_COMMIT
+                        || invocation.getIntent() == org.kanger.command.CommandIntent.TX_ROLLBACK) {
+                    if (!transaction.getDescription().isEmpty()) {
+                        System.out.println((transaction.isSuccess() ? "SUCCESS: " : "WARNING: ")
+                                + transaction.getDescription());
+                    }
+                }
                 showTransaction(mind);
                 return same(mind);
 
@@ -542,34 +550,6 @@ public final class CanonicalConsole {
     private static void showTransaction(IMind mind) {
         System.out.printf("Transaction level %d (%d)%n",
                 mind.getTransactionLevel(), mind.getId());
-    }
-
-    private static IMind commitTransaction(IMind mind, ShutdownHook hook) throws Exception {
-        IMind parent = mind.getNext();
-        if (parent != null) {
-            if (parent.commit(mind)) {
-                System.out.println("SUCCESS: Transaction committed");
-                return track(hook, parent);
-            }
-            System.out.println("WARNING: Commit rejected. Use xplain for details");
-            return mind;
-        }
-        if (mind.isStorageUsed()) {
-            IMind checkpointed = mind.getUser().checkpoint(mind);
-            System.out.println("SUCCESS: Storage checkpoint completed");
-            return track(hook, checkpointed);
-        }
-        return mind;
-    }
-
-    private static IMind rollbackTransaction(IMind mind, ShutdownHook hook) throws Exception {
-        IMind parent = mind.getNext();
-        if (parent != null) {
-            parent.release(mind);
-            System.out.println("SUCCESS: Transaction rolled back");
-            return track(hook, parent);
-        }
-        return mind;
     }
 
     private static void showSourceNames(IMind mind) {

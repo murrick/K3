@@ -148,7 +148,7 @@ class CanonicalCommandIngressReactorTest {
     }
 
     @Test
-    void eraseRequiresConfirmationButRollbackDoesNot() throws Exception {
+    void eraseRequiresConfirmationButRollbackStaysCanonical() throws Exception {
         Capture capture = new Capture();
         CanonicalCommandIngressReactor reactor = new CanonicalCommandIngressReactor(capture);
 
@@ -160,8 +160,12 @@ class CanonicalCommandIngressReactorTest {
                 dialogue("token-1", "transaction rollback"));
         assertEquals("OK", rollback.optString("result"));
         assertEquals(1, capture.calls.get());
-        assertEquals("rollback", parameters(capture.packet.get())
-                .optString("transaction"));
+        assertEquals("canonical", context(capture.packet.get()));
+        assertFalse(parameters(capture.packet.get()).has("transaction"));
+        CommandInvocation invocation = CanonicalCommandIngressReactor.invocation(
+                capture.packet.get());
+        assertNotNull(invocation);
+        assertEquals(CommandIntent.TX_ROLLBACK, invocation.getIntent());
         assertEquals("TX_ROLLBACK", rollback.optString(
                 CanonicalCommandIngressReactor.CANONICAL_INTENT_FIELD));
     }

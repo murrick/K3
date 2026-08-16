@@ -26,9 +26,9 @@ import java.util.Locale;
  * operation surface without moving canonical parsing into Browser JavaScript.
  *
  * <p>The reactor is intentionally a transport adapter. It parses through the
- * shared {@code kanger-command} module, projects already-supported intents onto
- * the existing Server protocol, and leaves non-legacy canonical intents marked
- * for {@link CanonicalCommandRuntimeReactor}. It never executes Core/storage
+ * shared {@code kanger-command} module, projects compatibility intents onto the
+ * existing Server protocol, and leaves converged canonical intents marked for
+ * {@link CanonicalCommandRuntimeReactor}. It never executes Core/storage
  * operations itself.</p>
  *
  * <p>Placement is inside the per-session serialization/mail boundaries and
@@ -215,7 +215,7 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
                 .put("result", "confirmation_required")
                 .put("code", "confirmation_required")
                 .put("description", prompt)
-                .put(CANONICAL_INTENT_FIELD, invocation.getIntent().name())
+                .put(CANICAL_INTENT_FIELD, invocation.getIntent().name())
                 .put(CONFIRMATION_FIELD, new JSONObject()
                         .put("schema", 1)
                         .put("prompt", prompt));
@@ -336,19 +336,6 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
                 query(envelope, "hypothesis", "");
                 return true;
 
-            case TX_STATUS:
-                query(envelope, "transaction", "");
-                return true;
-            case TX_START:
-                query(envelope, "transaction", "create");
-                return true;
-            case TX_COMMIT:
-                query(envelope, "transaction", "commit");
-                return true;
-            case TX_ROLLBACK:
-                query(envelope, "transaction", "rollback");
-                return true;
-
             case SOURCE_GET:
                 command(envelope, "get", string(invocation, "source"));
                 return true;
@@ -387,8 +374,12 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
                 command(envelope, "quit", "");
                 return true;
 
-            // Canonical-runtime bindings deliberately do not fall through into
-            // broader/overloaded legacy paths.
+            // Converged canonical families and canonical-only projections do
+            // not fall back into the legacy query/command protocol.
+            case TX_STATUS:
+            case TX_START:
+            case TX_COMMIT:
+            case TX_ROLLBACK:
             case RULE_COMMENT_GET:
             case RULE_COMMENT_SET:
             case BASE_STATUS:
