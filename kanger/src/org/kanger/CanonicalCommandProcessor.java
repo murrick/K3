@@ -10,6 +10,10 @@ import org.kanger.command.CommandInvocation;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Transport-neutral semantic execution boundary for canonical KANGER commands.
  *
@@ -18,9 +22,9 @@ import org.kanger.interfaces.IUser;
  * without bypassing an already-qualified technical boundary. Until then
  * {@link Result#isHandled()} is false and the caller keeps its existing path.</p>
  *
- * <p>The first converged family is explicit user transactions. The processor
- * owns the U-stack transition itself; Console/Server adapters own only
- * presentation, authentication and transport-specific error projection.</p>
+ * <p>Converged command families own semantic state/query dispatch here;
+ * Console/Server adapters own only presentation, authentication and
+ * transport-specific error projection.</p>
  */
 public final class CanonicalCommandProcessor {
 
@@ -32,7 +36,8 @@ public final class CanonicalCommandProcessor {
         return intent == CommandIntent.TX_STATUS
                 || intent == CommandIntent.TX_START
                 || intent == CommandIntent.TX_COMMIT
-                || intent == CommandIntent.TX_ROLLBACK;
+                || intent == CommandIntent.TX_ROLLBACK
+                || intent == CommandIntent.STORAGE_STATUS;
     }
 
     public Result execute(CommandInvocation invocation, IUser user) throws Exception {
@@ -64,6 +69,13 @@ public final class CanonicalCommandProcessor {
             case TX_ROLLBACK:
                 return rollback(user, mind);
 
+            case STORAGE_STATUS:
+                StorageStatus status = storageStatus(mind);
+                return Result.success(mind,
+                        "Current storage: " + (status.isUsed()
+                                ? status.getCurrent() : "none"),
+                        status);
+
             default:
                 return Result.unhandled(mind);
         }
@@ -94,33 +106,76 @@ public final class CanonicalCommandProcessor {
         return Result.success(parent, "Transaction rolled back");
     }
 
+    private StorageStatus storageStatus(IMind mind) throws Exception {
+        List<String> names = new ArrayList<String>();
+        for (String name : mind.getStoragesList()) {
+            names.add(name);
+        }
+        Collections.sort(names);
+        String current = mind.isStorageUsed() ? mind.getStorageName() : null;
+        return new StorageStatus(names, current);
+    }
+
+    /** Transport-neutral read model for canonical storage status. */
+    public static final class StorageStatus {
+        private final List<String> names;
+        private final String current;
+
+        private StorageStatus(List<String> names, String current) {
+            this.names = Collections.unmodifiableList(
+                    new ArrayList<String>(names));
+            this.current = current;
+        }
+
+        public List<String> getNames() {
+            return names;
+        }
+
+        public String getCurrent() {
+            return current;
+        }
+
+        public boolean isUsed() {
+            return current != null;
+        }
+    }
+
     /** Transport-neutral result of one canonical semantic dispatch. */
     public static final class Result {
         private final boolean handled;
         private final boolean success;
         private final IMind mind;
         private final String description;
+        private final StorageStatus storageStatus;
 
         private Result(boolean handled,
                        boolean success,
                        IMind mind,
-                       String description) {
+                       String description,
+                       StorageStatus storageStatus) {
             this.handled = handled;
             this.success = success;
             this.mind = mind;
             this.description = description == null ? "" : description;
+            this.storageStatus = storageStatus;
         }
 
         private static Result unhandled(IMind mind) {
-            return new Result(false, false, mind, "");
+            return new Result(false, false, mind, "", null);
         }
 
         private static Result success(IMind mind, String description) {
-            return new Result(true, true, mind, description);
+            return new Result(true, true, mind, description, null);
+        }
+
+        private static Result success(IMind mind,
+                                      String description,
+                                      StorageStatus storageStatus) {
+            return new Result(true, true, mind, description, storageStatus);
         }
 
         private static Result rejected(IMind mind, String description) {
-            return new Result(true, false, mind, description);
+            return new Result(true, false, mind, description, null);
         }
 
         public boolean isHandled() {
@@ -137,6 +192,10 @@ public final class CanonicalCommandProcessor {
 
         public String getDescription() {
             return description;
+        }
+
+        public StorageStatus getStorageStatus() {
+            return storageStatus;
         }
     }
 }

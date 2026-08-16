@@ -260,7 +260,14 @@ public final class CanonicalConsole {
                 return same(mind);
 
             case STORAGE_STATUS:
-                showStorage(mind);
+                CanonicalCommandProcessor.Result storage =
+                        COMMAND_PROCESSOR.execute(invocation, mind.getUser());
+                if (!storage.isHandled() || storage.getStorageStatus() == null) {
+                    throw new CommandErrorException("Unsupported canonical intent "
+                            + invocation.getIntent());
+                }
+                mind = track(shutdownHook, storage.getMind());
+                showStorage(storage.getStorageStatus());
                 return same(mind);
             case STORAGE_USE:
                 mind = useStorage(mind, String.valueOf(invocation.getArgument("name")));
@@ -634,6 +641,22 @@ public final class CanonicalConsole {
             throw new CommandErrorException("Cannot delete source file " + name);
         }
         System.out.println("Source file " + name + " deleted.");
+    }
+
+    private static void showStorage(CanonicalCommandProcessor.StorageStatus status) {
+        List<String> names = status.getNames();
+        String current = status.getCurrent();
+        if (names.isEmpty()) {
+            System.out.println("No storages available");
+        } else {
+            System.out.println("Storages available:");
+            for (String name : names) {
+                System.out.printf("\t%s%s%n", name,
+                        current != null && current.equals(name) ? "  [current]" : "");
+            }
+        }
+        System.out.println("Current storage: "
+                + (status.isUsed() ? current : "none"));
     }
 
     private static void showStorage(IMind mind) throws Exception {

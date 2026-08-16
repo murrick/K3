@@ -103,6 +103,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             case TX_START:
             case TX_COMMIT:
             case TX_ROLLBACK:
+            case STORAGE_STATUS:
                 result = executeShared(invocation, user);
                 break;
             case HELP:
@@ -162,6 +163,25 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                     : new JSONObject().put("result", "error");
             if (!outcome.getDescription().isEmpty()) {
                 result.put("description", outcome.getDescription());
+            }
+            CanonicalCommandProcessor.StorageStatus storage =
+                    outcome.getStorageStatus();
+            if (storage != null) {
+                JSONArray names = new JSONArray();
+                for (String name : storage.getNames()) {
+                    names.put(name);
+                }
+                result.put("size", names.length())
+                        .put("list", names)
+                        .put("storage", new JSONObject()
+                                .put("schema", 1)
+                                .put("used", storage.isUsed())
+                                .put("current", storage.isUsed()
+                                        ? storage.getCurrent() : JSONObject.NULL)
+                                .put("names", names));
+                if (storage.isUsed()) {
+                    result.put("name", storage.getCurrent());
+                }
             }
             return result;
         } catch (StorageLifecycleException failure) {

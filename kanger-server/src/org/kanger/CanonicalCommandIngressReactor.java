@@ -351,9 +351,6 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
                 }
                 return true;
 
-            case STORAGE_STATUS:
-                command(envelope, "use", "");
-                return true;
             case STORAGE_USE:
                 command(envelope, "use", string(invocation, "name"));
                 return true;
@@ -380,6 +377,7 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
             case TX_START:
             case TX_COMMIT:
             case TX_ROLLBACK:
+            case STORAGE_STATUS:
             case RULE_COMMENT_GET:
             case RULE_COMMENT_SET:
             case BASE_STATUS:
