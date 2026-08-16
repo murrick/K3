@@ -215,7 +215,7 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
                 .put("result", "confirmation_required")
                 .put("code", "confirmation_required")
                 .put("description", prompt)
-                .put(CANICAL_INTENT_FIELD, invocation.getIntent().name())
+                .put(CANONICAL_INTENT_FIELD, invocation.getIntent().name())
                 .put(CONFIRMATION_FIELD, new JSONObject()
                         .put("schema", 1)
                         .put("prompt", prompt));
