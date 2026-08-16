@@ -410,11 +410,15 @@
         });
     }
 
-    function install() {
-        if (installed) {
+    function reassertOwnership() {
+        if (!installed) {
             return;
         }
-        installed = true;
+        window.command = dispatch;
+        window.query = dispatch;
+    }
+
+    function install() {
         if (!window.KANGER_ERROR_BOUNDARY
                 || !window.KANGER_ERROR_BOUNDARY.installed) {
             throw new Error('KANGER dialogue transport requires the error boundary');
@@ -423,13 +427,41 @@
             throw new Error('KANGER dialogue transport requires Browser transport');
         }
 
-        window.command = dispatch;
-        window.query = dispatch;
-        window.KANGER_DIALOGUE_TRANSPORT = Object.freeze({
-            version: 1,
-            installed: true,
-            dispatch: dispatch
-        });
+        if (!installed) {
+            installed = true;
+            window.KANGER_DIALOGUE_TRANSPORT = Object.freeze({
+                version: 2,
+                installed: true,
+                dispatch: dispatch,
+                reassert: reassertOwnership
+            });
+        }
+        reassertOwnership();
+    }
+
+    /*
+     * dialogue.js is parser-time code while console.html still declares the
+     * historical command/query functions later in the same document. The
+     * canonical boundary therefore reasserts ownership after every ready
+     * callback. In the actual loader nesting this runs after the console ready
+     * callback and immediately before javascript-mode.js captures command() for
+     * its one-shot startup migration adapter. A legacy parser can no longer be
+     * captured merely because a global function declaration overwrote the
+     * earlier canonical assignment.
+     */
+    function wrapReadyOwnership() {
+        if (!window.jQuery || !window.jQuery.fn
+                || typeof window.jQuery.fn.ready !== 'function') {
+            return;
+        }
+        var originalReady = window.jQuery.fn.ready;
+        window.jQuery.fn.ready = function (callback) {
+            return originalReady.call(this, function () {
+                var result = callback.apply(this, arguments);
+                reassertOwnership();
+                return result;
+            });
+        };
     }
 
     function observeErrorBoundary() {
@@ -454,5 +486,6 @@
         });
     }
 
+    wrapReadyOwnership();
     observeErrorBoundary();
 }(window));
