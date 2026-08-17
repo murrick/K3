@@ -443,40 +443,33 @@ public final class KangerConsoleLifecycleBindingRunner {
                     "unsupported flush metric is not reported as N/A");
 
             /*
-             * Console close must delegate directly to Core. A non-empty
-             * active transaction is rejected with the typed lifecycle error;
-             * Console must not ask for a force-close confirmation.
+             * Console close delegates directly to Core. An explicit active
+             * user transaction is rebased over an empty offline U0 without
+             * changing the user-visible boundary; rollback remains explicit.
              */
             IMind child = new Mind(mind);
             query(processQuery, "!consoleactive;", child);
 
-            boolean activeTransactionRejected = false;
-            try {
-                close(closeDatabase, child);
-            } catch (StorageLifecycleException expected) {
-                activeTransactionRejected = true;
-                require("ACTIVE_TRANSACTION".equals(
-                                expected.getCode()),
-                        "wrong active-close code: "
-                                + expected.getCode());
-                require("TRANSACTION_RESOLUTION_REQUIRED".equals(
-                                expected.getRequiredAction()),
-                        "wrong active-close required action: "
-                                + expected.getRequiredAction());
-            }
-
-            require(activeTransactionRejected,
-                    "Console close accepted an active transaction");
+            child = close(closeDatabase, child);
             require(child.getTransactionLevel() == 1,
-                    "failed Console close changed transaction level");
-            require(child.isStorageUsed(),
-                    "failed Console close detached storage");
+                    "Console close changed active transaction level");
+            require(!child.isStorageUsed(),
+                    "Console close retained the physical storage");
+            require(Boolean.TRUE.equals(child.query("?consoleactive;")),
+                    "Console close lost active transaction semantics");
 
-            mind.release(child);
+            child = process(
+                    processTransaction,
+                    "transaction rollback",
+                    child);
+            require(child.getTransactionLevel() == 0,
+                    "Console rollback after close did not return to offline U0");
+            require(!child.isStorageUsed(),
+                    "Console rollback after close reattached storage");
+            require(!Boolean.TRUE.equals(child.query("?consoleactive;")),
+                    "Console rollback after close retained transient semantics");
 
-            mind = mind.closeStorage();
-            require(!mind.isStorageUsed(),
-                    "qualification storage did not close cleanly");
+            mind = child;
 
             /*
              * JVM shutdown must retain Console ownership of the active Mind.
@@ -547,7 +540,7 @@ public final class KangerConsoleLifecycleBindingRunner {
             System.out.println(
                     "CONSOLE_LIFECYCLE_BINDING_PASS hidden-reservation-storage");
             System.out.println(
-                    "CONSOLE_LIFECYCLE_BINDING_PASS typed-active-close");
+                    "CONSOLE_LIFECYCLE_BINDING_PASS active-close-rebase");
             System.out.println(
                     "CONSOLE_LIFECYCLE_BINDING_PASS semantic-presentation");
             System.out.println(
