@@ -6,6 +6,7 @@
 package org.kanger;
 
 import org.junit.jupiter.api.Test;
+import org.kanger.enums.UnitType;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.IUser;
 import org.kanger.udf.UDF;
@@ -53,6 +54,38 @@ class TransactionVisibilityMergeInvariantTest {
                     "Child delete failed to cancel the parent restore marker");
             assertFalse(base.isRestored(u1),
                     "Stale parent restore survived a committed child delete");
+
+            root.release(u1);
+        } finally {
+            UserFactory.dropUser(user);
+        }
+    }
+
+    @Test
+    void deliberateChildDeletedRestoredPairSurvivesCommitAsPair() throws Exception {
+        String identity = "visibility-pair-" + UUID.randomUUID();
+        IUser user = UserFactory.createUser(identity, identity);
+        try {
+            new UDF().init(user);
+            Mind root = new Mind(user);
+            user.setCurrentMind(root);
+            assertTrue(Boolean.TRUE.equals(root.query("!base;")));
+            Rule base = findRule(root, "!base;");
+
+            Mind u1 = new Mind(root);
+            Mind u2 = new Mind(u1);
+            u2.getDeleted().computeIfAbsent(UnitType.RULE, key -> new java.util.HashSet<>())
+                    .add(base.getId());
+            u2.getRestored().computeIfAbsent(UnitType.RULE, key -> new java.util.HashSet<>())
+                    .add(base.getId());
+
+            assertTrue(u1.commit(u2), "paired U2 visibility state -> U1 commit failed");
+            assertTrue(u1.getDeleted().get(UnitType.RULE).contains(base.getId()),
+                    "Committed child deleted marker disappeared from a deliberate pair");
+            assertTrue(u1.getRestored().get(UnitType.RULE).contains(base.getId()),
+                    "Committed child restored marker disappeared from a deliberate pair");
+            assertFalse(base.isDeleted(u1),
+                    "Visibility order no longer lets restored win for an intentional pair");
 
             root.release(u1);
         } finally {

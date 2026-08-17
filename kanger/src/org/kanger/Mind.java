@@ -438,14 +438,46 @@ public class Mind implements IMind {
     }
 
     private void mergeUnitState(Mind child) {
-        for (Map.Entry<UnitType, Set<Long>> entry : child.getDeleted().entrySet()) {
-            deleted.computeIfAbsent(entry.getKey(), key -> new HashSet<>()).addAll(entry.getValue());
-        }
-        for (Map.Entry<UnitType, Set<Long>> entry : child.getRestored().entrySet()) {
-            restored.computeIfAbsent(entry.getKey(), key -> new HashSet<>()).addAll(entry.getValue());
-            Set<Long> deletedIds = deleted.get(entry.getKey());
-            if (deletedIds != null) {
-                deletedIds.removeAll(entry.getValue());
+        Set<UnitType> unitTypes = new HashSet<>();
+        unitTypes.addAll(child.getDeleted().keySet());
+        unitTypes.addAll(child.getRestored().keySet());
+
+        for (UnitType unitType : unitTypes) {
+            Set<Long> childDeleted = child.getDeleted().get(unitType);
+            Set<Long> childRestored = child.getRestored().get(unitType);
+            Set<Long> ids = new HashSet<>();
+            if (childDeleted != null) {
+                ids.addAll(childDeleted);
+            }
+            if (childRestored != null) {
+                ids.addAll(childRestored);
+            }
+
+            for (Long unitId : ids) {
+                boolean deletes = childDeleted != null && childDeleted.contains(unitId);
+                boolean restores = childRestored != null && childRestored.contains(unitId);
+
+                if (deletes) {
+                    deleted.computeIfAbsent(unitType, key -> new HashSet<>()).add(unitId);
+                }
+                if (restores) {
+                    restored.computeIfAbsent(unitType, key -> new HashSet<>()).add(unitId);
+                }
+
+                // A single child marker supersedes the opposite state inherited
+                // from this parent. A deliberate child pair is valid state and
+                // must remain a pair after commit; visibility order resolves it.
+                if (deletes && !restores) {
+                    Set<Long> restoredIds = restored.get(unitType);
+                    if (restoredIds != null) {
+                        restoredIds.remove(unitId);
+                    }
+                } else if (restores && !deletes) {
+                    Set<Long> deletedIds = deleted.get(unitType);
+                    if (deletedIds != null) {
+                        deletedIds.remove(unitId);
+                    }
+                }
             }
         }
     }
