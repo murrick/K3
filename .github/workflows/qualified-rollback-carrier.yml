@@ -32,81 +32,35 @@ jobs:
               text = p.read_text()
               count = text.count(old)
               if count != 1:
-                  raise SystemExit(f"{path}: expected one exact match, got {count}")
+                  raise SystemExit(f"{path}: expected one exact match, got {count}: {old!r}")
               p.write_text(text.replace(old, new, 1))
 
           portable = "kanger/src/org/kanger/PortableMindLayer.java"
-          rewrite(
-              portable,
-              "import org.kanger.interfaces.IRule;\nimport org.kanger.units.Comment;",
-              "import org.kanger.interfaces.IRule;\nimport org.kanger.interfaces.ITerm;\nimport org.kanger.units.Comment;")
-          rewrite(
-              portable,
-              "import java.util.LinkedHashSet;\nimport java.util.List;",
-              "import java.util.LinkedHashSet;\nimport java.util.LinkedList;\nimport java.util.List;")
-          rewrite(
-              portable,
-              '''            Boolean result = child.query(entry.getValue());
-              Rule rule = findRule(child, origin);
-              if (rule == null) {
-                  throw new IllegalStateException("Cannot replay Rule declaration: " + origin);
-              }
-              if (!Boolean.TRUE.equals(result) && rule.isDeleted(child)) {
-                  throw new IllegalStateException("Cannot replay Rule declaration: " + origin);
-              }
-          ''',
-              '''            child.compileLine(entry.getValue(), false, new LinkedList<ITerm>());
-              Rule rule = findRule(child, origin);
-              if (rule == null) {
-                  throw new IllegalStateException("Cannot replay Rule declaration: " + origin);
-              }
-          ''')
+          rewrite(portable,
+                  "import org.kanger.interfaces.IRule;\nimport org.kanger.units.Comment;",
+                  "import org.kanger.interfaces.IRule;\nimport org.kanger.interfaces.ITerm;\nimport org.kanger.units.Comment;")
+          rewrite(portable,
+                  "import java.util.LinkedHashSet;\nimport java.util.List;",
+                  "import java.util.LinkedHashSet;\nimport java.util.LinkedList;\nimport java.util.List;")
+          rewrite(portable,
+                  "            Boolean result = child.query(entry.getValue());",
+                  "            child.compileLine(entry.getValue(), false, new LinkedList<ITerm>());")
+          rewrite(portable,
+                  "            if (!Boolean.TRUE.equals(result) && rule.isDeleted(child)) {\n                throw new IllegalStateException(\"Cannot replay Rule declaration: \" + origin);\n            }\n",
+                  "")
 
           snapshot = "kanger/src/org/kanger/UserTransactionStackSnapshot.java"
-          rewrite(
-              snapshot,
-              '''                rootLevel.apply(root, work);
-                  if (!tx.commit()) {
-          ''',
-              '''                rootLevel.apply(root, work);
-                  if (!Boolean.TRUE.equals(work.queryCheck(false))) {
-                      throw new IllegalStateException(
-                              "Offline U0 conflicts with target storage baseline");
-                  }
-                  if (!tx.commit()) {
-          ''')
-          rewrite(
-              snapshot,
-              '''                current = child;
-              }
-              return current;
-          ''',
-              '''                current = child;
-              }
-              if (!Boolean.TRUE.equals(current.queryCheck(false))) {
-                  throw new IllegalStateException(
-                          "Replayed current context conflicts with storage baseline");
-              }
-              return current;
-          ''')
+          rewrite(snapshot,
+                  "                rootLevel.apply(root, work);\n                if (!tx.commit()) {",
+                  "                rootLevel.apply(root, work);\n                if (!Boolean.TRUE.equals(work.queryCheck(false))) {\n                    throw new IllegalStateException(\n                            \"Offline U0 conflicts with target storage baseline\");\n                }\n                if (!tx.commit()) {")
+          rewrite(snapshot,
+                  "                current = child;\n            }\n            return current;",
+                  "                current = child;\n            }\n            if (!Boolean.TRUE.equals(current.queryCheck(false))) {\n                throw new IllegalStateException(\n                        \"Replayed current context conflicts with storage baseline\");\n            }\n            return current;")
 
           processor = "kanger/src/org/kanger/CanonicalCommandProcessor.java"
-          rewrite(
-              processor,
-              '''        if (parent == null) {
-                  return Result.rejected(mind, "No transactions was created");
-              }
-              parent.release(mind);
-          ''',
-              '''        if (parent == null) {
-                  return Result.rejected(mind, "No transactions was created");
-              }
-              if (!Boolean.TRUE.equals(((Mind) parent).queryCheck(false))) {
-                  return Result.rejected(mind,
-                          "Transaction rollback rejected: target context conflicts with current storage baseline");
-              }
-              parent.release(mind);
-          ''')
+          rewrite(processor,
+                  "        if (parent == null) {\n            return Result.rejected(mind, \"No transactions was created\");\n        }\n        parent.release(mind);",
+                  "        if (parent == null) {\n            return Result.rejected(mind, \"No transactions was created\");\n        }\n        if (!Boolean.TRUE.equals(((Mind) parent).queryCheck(false))) {\n            return Result.rejected(mind,\n                    \"Transaction rollback rejected: target context conflicts with current storage baseline\");\n        }\n        parent.release(mind);")
           PY
           git diff --check
           test "$(git diff --name-only | wc -l)" -eq 3
