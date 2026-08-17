@@ -1,0 +1,19 @@
+--- a/kanger-server/test/org/kanger/StorageRebasePortableLayerStateTest.java
++++ b/kanger-server/test/org/kanger/StorageRebasePortableLayerStateTest.java
+@@ -251,6 +251,15 @@ class StorageRebasePortableLayerStateTest {
+                     "nonempty offline U0 was shifted into an artificial U1");
+             assertTrue(attached.isStorageUsed());
+             assertTrue(Boolean.TRUE.equals(attached.query("?offline_root_fact;")));
++
++            IMind reopened = attached.closeStorage();
++            fixture.user.setCurrentMind(reopened);
++            reopened = reopened.useStorage("portable-offline-root");
++            fixture.user.setCurrentMind(reopened);
++
++            assertEquals(0, reopened.getTransactionLevel(),
++                    "reopen changed the assimilated U0 transaction depth");
++            assertTrue(Boolean.TRUE.equals(reopened.query("?offline_root_fact;")),
++                    "assimilated offline U0 authorial state did not persist across reopen");
+         } finally {
+             fixture.close();
+         }
