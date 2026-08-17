@@ -1,0 +1,56 @@
+name: KANGER temporary offline U0 persistence qualifier
+
+on:
+  push:
+    branches:
+      - tmp/3.7.0.20-offline-u0-persistence-qualifier
+
+permissions:
+  contents: write
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out patch carrier
+        uses: actions/checkout@v5
+        with:
+          path: carrier
+
+      - name: Check out exact target parent
+        uses: actions/checkout@v5
+        with:
+          ref: 8e0c6722c614a1dfc8244a0dcb13d1acb520364f
+          fetch-depth: 0
+          path: target
+
+      - name: Verify and apply focused test patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C target rev-parse HEAD)" = "8e0c6722c614a1dfc8244a0dcb13d1acb520364f"
+          echo "b1dbf9767f2712c715aca74c5d91c775168611332f5b25e35532d0487d8dfa44  carrier/offline-u0-persistence.patch" | sha256sum -c -
+          cd target
+          git apply --check ../carrier/offline-u0-persistence.patch
+          git apply ../carrier/offline-u0-persistence.patch
+          git diff --check
+          test "$(git diff --name-only)" = "kanger-server/test/org/kanger/StorageRebasePortableLayerStateTest.java"
+
+      - name: Run focused portable rebase test
+        working-directory: target
+        run: >-
+          mvn -B -ntp -f kanger-server/pom.xml
+          -Dtest=StorageRebasePortableLayerStateTest test
+
+      - name: Create ready commit
+        working-directory: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "KANGER qualification bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add kanger-server/test/org/kanger/StorageRebasePortableLayerStateTest.java
+          git diff --cached --check
+          git commit -m "test(storage): qualify offline U0 persistence"
+          git push --force origin HEAD:refs/heads/tmp/3.7.0.20-offline-u0-persistence-ready
+          echo "READY_SHA=$(git rev-parse HEAD)"
