@@ -273,6 +273,9 @@ public class User implements IUser {
     }
 
     private Mind closeQuiescentStorage(Mind mind) throws Exception {
+        if (isClosed()) {
+            return mind;
+        }
         requireTransactionQuiescence(mind, "close database");
 
         checkpoint(mind);
