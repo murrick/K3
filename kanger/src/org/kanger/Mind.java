@@ -123,6 +123,7 @@ public class Mind implements IMind {
     private final Map<ITerm, ITerm> cvarParents = new HashMap<>();
     private final Map<UnitType, Set<Long>> deleted = new HashMap<>();
     private final Map<UnitType, Set<Long>> restored = new HashMap<>();
+    private PortableMindLayer portableRebaseResidue = PortableMindLayer.empty();
     private final Map<Long, Set<IRule>> usedRules = new HashMap<>();
     private final Map<Domain, Set<ArgumentsList>> usedDomains = new HashMap<>();
     private final Map<Domain, Set<ArgumentsList>> excludedDomains = new HashMap<>();
@@ -266,8 +267,11 @@ public class Mind implements IMind {
             boolean factoriesCompleted = sequencedBy;
             Map<UnitType, Set<Long>> saveDeleted = copyUnitState(deleted);
             Map<UnitType, Set<Long>> saveRestored = copyUnitState(restored);
+            PortableMindLayer savePortableRebaseResidue = portableRebaseResidue.copy();
+            PortableMindLayer childPortableState = null;
 
             try {
+                childPortableState = PortableMindLayer.capture(child);
                 if (!sequencedBy) {
                     markCompositeCheckpoints(activeCheckpoints);
                 }
@@ -282,12 +286,14 @@ public class Mind implements IMind {
                 library.commit((LibraryFactory) child.getLibrary());
 
                 mergeUnitState(child);
+                PortableMindLayer.mergeCommittedChild(this, childPortableState);
 
                 if (!sequencedBy) {
                     Boolean rejected = analyzer.checkDatabase(list, false);
                     if (rejected != null && rejected) {
                         Throwable rollbackFailure = releaseCompositeCheckpoints(activeCheckpoints, null);
                         restoreUnitState(saveDeleted, saveRestored);
+                        portableRebaseResidue = savePortableRebaseResidue;
                         if (rollbackFailure != null) {
                             rethrow(rollbackFailure);
                         }
@@ -325,6 +331,7 @@ public class Mind implements IMind {
                 if (!factoriesCompleted) {
                     propagated = releaseCompositeCheckpoints(activeCheckpoints, propagated);
                     restoreUnitState(saveDeleted, saveRestored);
+                    portableRebaseResidue = savePortableRebaseResidue;
                 }
                 if (!reservationFinished) {
                     try {
@@ -579,6 +586,7 @@ public class Mind implements IMind {
 
             deleted.clear();
             restored.clear();
+            portableRebaseResidue = PortableMindLayer.empty();
 
             acceptedRule = null;
             queryResult = null;
@@ -612,6 +620,7 @@ public class Mind implements IMind {
 
         deleted.clear();
         restored.clear();
+        portableRebaseResidue = PortableMindLayer.empty();
     }
 
 
@@ -950,6 +959,14 @@ public class Mind implements IMind {
 
     public Map<UnitType, Set<Long>> getRestored() {
         return restored;
+    }
+
+    PortableMindLayer getPortableRebaseResidue() {
+        return portableRebaseResidue;
+    }
+
+    void setPortableRebaseResidue(PortableMindLayer state) {
+        portableRebaseResidue = state == null ? PortableMindLayer.empty() : state;
     }
 
     /**
