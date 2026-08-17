@@ -1,0 +1,84 @@
+name: Rollback diagnostics repair
+
+on:
+  push:
+    branches:
+      - tmp/3.7.0.20-rollback-diagnostics-carrier
+    paths:
+      - .github/workflows/rollback-diagnostics-repair.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-publish-ready:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out exact RED parent
+        uses: actions/checkout@v5
+        with:
+          ref: 3c1dc542f43ac0827d0f15fa0336a5d4a8802871
+          fetch-depth: 0
+          path: target
+
+      - name: Check out carrier source
+        uses: actions/checkout@v5
+        with:
+          ref: tmp/3.7.0.20-rollback-diagnostics-carrier
+          fetch-depth: 1
+          path: carrier
+
+      - name: Reuse implementation with corrected untracked-file gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          source = Path('carrier/.github/workflows/rollback-diagnostics-carrier.yml').read_text().splitlines()
+          start = next(i for i, line in enumerate(source)
+                       if line == '        run: |' and i > 0
+                       and 'Apply structured rollback diagnostics' in source[i - 2]) + 1
+          end = next(i for i in range(start, len(source))
+                     if source[i].startswith('      - name: Run focused rollback diagnostic qualification'))
+          body = []
+          for line in source[start:end]:
+              if line.startswith('          '):
+                  body.append(line[10:])
+              else:
+                  body.append(line)
+          script = '\n'.join(body) + '\n'
+          needle = 'git diff --check\n'
+          if script.count(needle) != 1:
+              raise SystemExit('carrier diff gate anchor mismatch')
+          script = script.replace(
+              needle,
+              'git add -N kanger/src/org/kanger/ContextQualification.java\n' + needle,
+              1)
+          Path('/tmp/rollback-diagnostics-apply.sh').write_text(script)
+          PY
+          cd target
+          bash /tmp/rollback-diagnostics-apply.sh
+
+      - name: Run focused rollback diagnostic qualification
+        working-directory: target
+        run: >-
+          mvn -B -ntp -f kanger-server/pom.xml
+          -Dtest=RollbackRejectionDiagnosticTest,QualifiedRollbackAfterStorageRebaseTest,TransactionSquashConvergenceTest,QualifiedCommitAfterStorageRebaseTest
+          test
+
+      - name: Publish ready diagnostics commit
+        working-directory: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "KANGER qualification bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add kanger/src/org/kanger/ContextQualification.java \
+                  kanger/src/org/kanger/Analyzer.java \
+                  kanger/src/org/kanger/Mind.java \
+                  kanger/src/org/kanger/CanonicalCommandProcessor.java \
+                  kanger-server/src/org/kanger/CanonicalCommandRuntimeReactor.java \
+                  kanger-console/src/org/kanger/CanonicalConsole.java
+          git commit -m "feat(transaction): explain rejected rollback"
+          git push --force origin HEAD:refs/heads/tmp/3.7.0.20-rollback-diagnostics-ready
