@@ -29,13 +29,14 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git -C target rev-parse HEAD)" = "66eac16b4847f38cc5d286395f3d95aa8c70fb69"
-          echo "bac1bd3c852aa810c000e24654409638dc97cf6a7132c8d3c45122f37c93ecd9  carrier/qualification.patch" | sha256sum -c -
+          echo "599d213e2e4745e5a038d83292e8d140a3a24ac466364e2bb10377a8e158caf2  carrier/qualification.patch" | sha256sum -c -
           cd target
           git apply --check ../carrier/qualification.patch
           git apply ../carrier/qualification.patch
           git diff --check
           changed="$(git diff --name-only | sort)"
           expected="$(printf '%s\n' \
+            kanger-qualification/src/org/kanger/KangerCanonicalConsoleLifecycleConvergenceRunner.java \
             kanger-qualification/src/org/kanger/KangerCanonicalConsoleRunner.java \
             kanger-qualification/src/org/kanger/KangerConsoleLifecycleBindingRunner.java | sort)"
           test "$changed" = "$expected"
@@ -52,6 +53,7 @@ jobs:
           git config user.name "KANGER qualification bot"
           git config user.email "actions@users.noreply.github.com"
           git add \
+            kanger-qualification/src/org/kanger/KangerCanonicalConsoleLifecycleConvergenceRunner.java \
             kanger-qualification/src/org/kanger/KangerCanonicalConsoleRunner.java \
             kanger-qualification/src/org/kanger/KangerConsoleLifecycleBindingRunner.java
           git diff --cached --check
