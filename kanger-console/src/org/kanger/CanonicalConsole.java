@@ -260,6 +260,7 @@ public final class CanonicalConsole {
                 return same(mind);
 
             case STORAGE_STATUS:
+            case STORAGE_USE:
                 CanonicalCommandProcessor.Result storage =
                         COMMAND_PROCESSOR.execute(invocation, mind.getUser());
                 if (!storage.isHandled() || storage.getStorageStatus() == null) {
@@ -269,10 +270,6 @@ public final class CanonicalConsole {
                 mind = track(shutdownHook, storage.getMind());
                 showStorage(storage.getStorageStatus());
                 return same(mind);
-            case STORAGE_USE:
-                mind = useStorage(mind, String.valueOf(invocation.getArgument("name")));
-                showStorage(mind);
-                return same(track(shutdownHook, mind));
             case STORAGE_CLOSE:
                 mind = closeStorage(mind);
                 return same(track(shutdownHook, mind));
@@ -684,14 +681,6 @@ public final class CanonicalConsole {
 
     private static String storageName(String name) {
         return name.replace(".", Enums.FILE_SEPARATOR);
-    }
-
-    private static IMind useStorage(IMind mind, String logicalName) throws Exception {
-        String name = storageName(logicalName);
-        if (mind.isStorageUsed() && name.equals(mind.getStorageName())) {
-            return mind;
-        }
-        return mind.useStorage(name);
     }
 
     private static IMind closeStorage(IMind mind) throws Exception {

@@ -7,6 +7,7 @@ package org.kanger;
 
 import org.kanger.command.CommandIntent;
 import org.kanger.command.CommandInvocation;
+import org.kanger.enums.Enums;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 
@@ -37,7 +38,8 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.TX_START
                 || intent == CommandIntent.TX_COMMIT
                 || intent == CommandIntent.TX_ROLLBACK
-                || intent == CommandIntent.STORAGE_STATUS;
+                || intent == CommandIntent.STORAGE_STATUS
+                || intent == CommandIntent.STORAGE_USE;
     }
 
     public Result execute(CommandInvocation invocation, IUser user) throws Exception {
@@ -75,6 +77,16 @@ public final class CanonicalCommandProcessor {
                         "Current storage: " + (status.isUsed()
                                 ? status.getCurrent() : "none"),
                         status);
+
+            case STORAGE_USE:
+                String logicalName = String.valueOf(invocation.getArgument("name"));
+                String storageName = logicalName.replace(".", Enums.FILE_SEPARATOR);
+                mind = mind.useStorage(storageName);
+                user.setCurrentMind(mind);
+                StorageStatus used = storageStatus(mind);
+                return Result.success(mind,
+                        "Current storage: " + used.getCurrent(),
+                        used);
 
             default:
                 return Result.unhandled(mind);

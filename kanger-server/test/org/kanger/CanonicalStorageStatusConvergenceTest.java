@@ -8,7 +8,10 @@ package org.kanger;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.kanger.command.CommandParser;
+import org.kanger.enums.Enums;
+import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.AuthenticationErrorException;
+import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
@@ -26,15 +29,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Qualification of canonical read-only storage-status convergence. */
+/** Qualification of canonical storage status/use convergence. */
 class CanonicalStorageStatusConvergenceTest {
 
     @Test
     void sharedProcessorProjectsAvailableAndCurrentStorageWithoutMutation()
             throws Exception {
-        Fixture fixture = fixture("processor");
+        Fixture fixture = fixture("processor-status");
         try {
             CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
             CommandParser parser = new CommandParser();
@@ -71,9 +75,41 @@ class CanonicalStorageStatusConvergenceTest {
     }
 
     @Test
+    void sharedProcessorOwnsStorageUseNameMappingAndSameStorageRejection()
+            throws Exception {
+        Fixture fixture = fixture("processor-use");
+        try {
+            CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
+            CommandParser parser = new CommandParser();
+            String logical = "canonical.use." + UUID.randomUUID();
+            String physical = logical.replace(".", Enums.FILE_SEPARATOR);
+
+            CanonicalCommandProcessor.Result opened = processor.execute(
+                    parser.parse("storage use " + logical), fixture.user);
+
+            assertTrue(opened.isHandled());
+            assertTrue(opened.isSuccess());
+            assertSame(opened.getMind(), fixture.user.getCurrentMind());
+            assertTrue(opened.getStorageStatus().isUsed());
+            assertEquals(physical, opened.getStorageStatus().getCurrent());
+            assertEquals(physical, opened.getMind().getStorageName());
+
+            StorageLifecycleException duplicate = assertThrows(
+                    StorageLifecycleException.class,
+                    () -> processor.execute(
+                            parser.parse("storage use " + logical), fixture.user));
+            assertEquals(StorageLifecycleErrorCode.STORAGE_ALREADY_OPEN.name(),
+                    duplicate.getCode());
+            assertEquals("EXPLICIT_CLOSE_REQUIRED", duplicate.getRequiredAction());
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
     void browserStorageStatusExecutesCanonicalProcessorAndNeverLegacyUseProtocol()
             throws Exception {
-        Fixture fixture = fixture("browser");
+        Fixture fixture = fixture("browser-status");
         try {
             AtomicInteger escaped = new AtomicInteger();
             IReactor<JSONObject> legacy = new IReactor<JSONObject>() {
@@ -108,11 +144,59 @@ class CanonicalStorageStatusConvergenceTest {
     }
 
     @Test
-    void javaConsoleStorageStatusConsumesSharedReadModel() throws Exception {
+    void browserStorageUseExecutesCanonicalProcessorAndNeverLegacyUseProtocol()
+            throws Exception {
+        Fixture fixture = fixture("browser-use");
+        try {
+            AtomicInteger escaped = new AtomicInteger();
+            IReactor<JSONObject> legacy = new IReactor<JSONObject>() {
+                @Override
+                public Object run(JSONObject packet) {
+                    escaped.incrementAndGet();
+                    throw new AssertionError(
+                            "Canonical storage use escaped into legacy runtime");
+                }
+            };
+            IReactor<JSONObject> reactor = new CanonicalCommandIngressReactor(
+                    new WorkspaceStateReactor(
+                            new CanonicalCommandRuntimeReactor(legacy)));
+            String logical = "browser.use." + UUID.randomUUID();
+            String physical = logical.replace(".", Enums.FILE_SEPARATOR);
+
+            JSONObject response = invoke(
+                    reactor, fixture.token, "storage use " + logical);
+
+            assertEquals("OK", response.optString("result"), response.toString());
+            assertEquals("STORAGE_USE", response.optString("canonical_intent"));
+            assertEquals(0, escaped.get(),
+                    "Canonical storage use touched legacy command use protocol");
+            assertEquals(physical, response.optString("name"));
+            JSONObject status = response.getJSONObject("storage");
+            assertTrue(status.getBoolean("used"));
+            assertEquals(physical, status.getString("current"));
+            assertEquals(physical, fixture.user.getCurrentMind().getStorageName());
+
+            JSONObject duplicate = invoke(
+                    reactor, fixture.token, "storage use " + logical);
+            assertEquals("error", duplicate.optString("result"), duplicate.toString());
+            assertEquals(StorageLifecycleErrorCode.STORAGE_ALREADY_OPEN.name(),
+                    duplicate.optString("code"));
+            assertEquals("EXPLICIT_CLOSE_REQUIRED",
+                    duplicate.optString("required_action"));
+            assertEquals(0, escaped.get(),
+                    "Rejected canonical storage use escaped into legacy runtime");
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
+    void javaConsoleStorageStatusAndUseConsumeSharedProcessor() throws Exception {
         String source = source(
                 "kanger-console/src/org/kanger/CanonicalConsole.java");
 
         assertTrue(source.contains("case STORAGE_STATUS:"));
+        assertTrue(source.contains("case STORAGE_USE:"));
         assertTrue(source.contains(
                 "CanonicalCommandProcessor.Result storage ="));
         assertTrue(source.contains(
@@ -122,6 +206,11 @@ class CanonicalStorageStatusConvergenceTest {
         assertFalse(source.contains(
                 "case STORAGE_STATUS:\n                showStorage(mind);"),
                 "Console retained an independent canonical storage-status query path");
+        assertFalse(source.contains(
+                "mind = useStorage(mind, String.valueOf(invocation.getArgument(\"name\")))"),
+                "Console retained an independent canonical storage-use semantic path");
+        assertFalse(source.contains("private static IMind useStorage("),
+                "Console retained its storage-use semantic helper");
     }
 
     private JSONObject invoke(IReactor<JSONObject> reactor,
