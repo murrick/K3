@@ -1901,7 +1901,7 @@ public class Mind implements IMind {
 
     @Override
     public boolean isStorageExists(String name) throws Exception {
-        return user.getStoragesList().contains(name);
+        return user.getData().exists(name);
     }
 
     @Override

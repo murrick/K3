@@ -183,6 +183,7 @@ class CanonicalStorageReindexConvergenceTest {
             processor.execute(parser.parse("storage close"), fixture.user);
             processor.execute(parser.parse("storage use " + first), fixture.user);
             IMind before = fixture.user.getCurrentMind();
+            AtomicInteger progress = new AtomicInteger();
 
             IllegalStateException failure = assertThrows(
                     IllegalStateException.class,
@@ -193,6 +194,9 @@ class CanonicalStorageReindexConvergenceTest {
                             new IReactor<String>() {
                                 @Override
                                 public Object run(String item) {
+                                    if (progress.incrementAndGet() == 1) {
+                                        return null;
+                                    }
                                     throw new IllegalStateException(
                                             "injected reindex progress failure");
                                 }
@@ -204,6 +208,17 @@ class CanonicalStorageReindexConvergenceTest {
                     fixture.user.getCurrentMind().getStorageName());
             assertTrue(Boolean.TRUE.equals(
                     fixture.user.getCurrentMind().query("?origin_reindex_fact;")));
+
+            CanonicalCommandProcessor.Result retry = executeWithProgress(
+                    processor,
+                    parser.parse("storage reindex " + target),
+                    fixture.user,
+                    null);
+            assertTrue(retry.isSuccess());
+            assertEquals(first.replace(".", org.kanger.enums.Enums.FILE_SEPARATOR),
+                    retry.getMind().getStorageName());
+            assertTrue(Boolean.TRUE.equals(
+                    retry.getMind().query("?origin_reindex_fact;")));
         } finally {
             fixture.close();
         }
@@ -222,6 +237,7 @@ class CanonicalStorageReindexConvergenceTest {
             processor.execute(parser.parse("storage close"), fixture.user);
             assertTrue(Boolean.TRUE.equals(
                     fixture.user.getCurrentMind().query("!offline_reindex_fact;")));
+            IMind before = fixture.user.getCurrentMind();
 
             CanonicalCommandProcessor.Result reindexed = executeWithProgress(
                     processor,
@@ -231,6 +247,7 @@ class CanonicalStorageReindexConvergenceTest {
 
             assertTrue(reindexed.isSuccess());
             assertFalse(reindexed.getMind().isStorageUsed());
+            assertSame(before, reindexed.getMind());
             assertSame(reindexed.getMind(), fixture.user.getCurrentMind());
             assertTrue(Boolean.TRUE.equals(
                     reindexed.getMind().query("?offline_reindex_fact;")));

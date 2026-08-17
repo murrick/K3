@@ -9,6 +9,7 @@ import org.kanger.command.CommandIntent;
 import org.kanger.command.CommandInvocation;
 import org.kanger.enums.Enums;
 import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 
 import java.util.ArrayList;
@@ -42,10 +43,24 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.STORAGE_STATUS
                 || intent == CommandIntent.STORAGE_USE
                 || intent == CommandIntent.STORAGE_CLOSE
-                || intent == CommandIntent.STORAGE_DROP;
+                || intent == CommandIntent.STORAGE_DROP
+                || intent == CommandIntent.STORAGE_REINDEX;
     }
 
     public Result execute(CommandInvocation invocation, IUser user) throws Exception {
+        return execute(invocation, user, null);
+    }
+
+    /**
+     * Executes one canonical command with an optional adapter-owned observer.
+     *
+     * <p>The observer is currently meaningful only for storage reindex, where
+     * the storage implementation reports schema progress. The processor owns
+     * semantic dispatch but never renders or prints those events.</p>
+     */
+    public Result execute(CommandInvocation invocation,
+                          IUser user,
+                          IReactor<String> progress) throws Exception {
         if (!handles(invocation)) {
             return Result.unhandled(user == null ? null : user.getCurrentMind());
         }
@@ -120,6 +135,17 @@ public final class CanonicalCommandProcessor {
                 return Result.success(mind,
                         "Database " + dropLogicalName + " dropped",
                         dropped);
+
+            case STORAGE_REINDEX:
+                String reindexLogicalName = String.valueOf(
+                        invocation.getArgument("name"));
+                String reindexStorageName = reindexLogicalName.replace(
+                        ".", Enums.FILE_SEPARATOR);
+                mind = mind.reindexStorage(reindexStorageName, progress);
+                user.setCurrentMind(mind);
+                return Result.success(mind,
+                        "Database reindexed",
+                        storageStatus(mind));
 
             default:
                 return Result.unhandled(mind);

@@ -143,6 +143,21 @@ public interface IData {
     void remove(String name) throws Exception;
 
     /**
+     * Checks whether a named physical storage generation exists without
+     * acquiring or creating it.
+     *
+     * <p>Implementations with a physical namespace should override this
+     * method when {@link #list()} uses a presentation-oriented name.</p>
+     *
+     * @param name canonical physical storage name
+     * @return {@code true} only when the generation already exists
+     * @throws Exception when the namespace cannot be inspected truthfully
+     */
+    default boolean exists(String name) throws Exception {
+        return list().contains(name);
+    }
+
+    /**
      * Выполняет storage-wide migration/reindex workflow.
      *
      * <p>{@code mind} задаёт контекст гидратации/materialization. Reactor

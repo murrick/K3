@@ -351,10 +351,6 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
                 }
                 return true;
 
-            case STORAGE_REINDEX:
-                command(envelope, "reindex", string(invocation, "name"));
-                return true;
-
             case ERASE:
                 command(envelope, "erase", "");
                 return true;
@@ -372,6 +368,7 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
             case STORAGE_USE:
             case STORAGE_CLOSE:
             case STORAGE_DROP:
+            case STORAGE_REINDEX:
             case RULE_COMMENT_GET:
             case RULE_COMMENT_SET:
             case BASE_STATUS:

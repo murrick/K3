@@ -268,20 +268,35 @@ public final class CanonicalConsole {
             case STORAGE_USE:
             case STORAGE_CLOSE:
             case STORAGE_DROP:
+            case STORAGE_REINDEX:
                 if (invocation.getIntent() == org.kanger.command.CommandIntent.STORAGE_DROP
                         && !confirm(scanner, "Drop storage "
                         + String.valueOf(invocation.getArgument("name")) + "?")) {
                     return same(mind);
                 }
+                IReactor<String> progress = null;
+                if (invocation.getIntent()
+                        == org.kanger.command.CommandIntent.STORAGE_REINDEX) {
+                    progress = new IReactor<String>() {
+                        @Override
+                        public Object run(String item) {
+                            System.out.println("Processing " + item + "...");
+                            return null;
+                        }
+                    };
+                }
                 CanonicalCommandProcessor.Result storage =
-                        COMMAND_PROCESSOR.execute(invocation, mind.getUser());
+                        COMMAND_PROCESSOR.execute(invocation, mind.getUser(),
+                                progress);
                 if (!storage.isHandled() || storage.getStorageStatus() == null) {
                     throw new CommandErrorException("Unsupported canonical intent "
                             + invocation.getIntent());
                 }
                 mind = track(shutdownHook, storage.getMind());
                 if (invocation.getIntent() == org.kanger.command.CommandIntent.STORAGE_CLOSE
-                        || invocation.getIntent() == org.kanger.command.CommandIntent.STORAGE_DROP) {
+                        || invocation.getIntent() == org.kanger.command.CommandIntent.STORAGE_DROP
+                        || invocation.getIntent()
+                        == org.kanger.command.CommandIntent.STORAGE_REINDEX) {
                     if (!storage.getDescription().isEmpty()) {
                         System.out.println(storage.getDescription());
                     }
@@ -289,9 +304,6 @@ public final class CanonicalConsole {
                     showStorage(storage.getStorageStatus());
                 }
                 return same(mind);
-            case STORAGE_REINDEX:
-                mind = reindexStorage(mind, String.valueOf(invocation.getArgument("name")));
-                return same(track(shutdownHook, mind));
 
             case ERASE:
                 mind = erase(mind, scanner);
@@ -709,23 +721,6 @@ public final class CanonicalConsole {
         } else {
             System.out.println("Current storage: none");
         }
-    }
-
-    private static String storageName(String name) {
-        return name.replace(".", Enums.FILE_SEPARATOR);
-    }
-
-    private static IMind reindexStorage(IMind mind, String logicalName) throws Exception {
-        final String name = storageName(logicalName);
-        IMind result = mind.reindexStorage(name, new IReactor<String>() {
-            @Override
-            public Object run(String item) {
-                System.out.println("Processing " + item + "...");
-                return null;
-            }
-        });
-        System.out.println("Database reindexed");
-        return result;
     }
 
     private static IMind erase(IMind mind, Scanner scanner) throws Exception {

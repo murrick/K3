@@ -212,6 +212,14 @@ public class DB implements IData {
         return failure;
     }
 
+    @Override
+    public boolean exists(String name) throws Exception {
+        if (name == null || name.isEmpty()) {
+            return false;
+        }
+        return storageArtifactsExist(user.getDatabaseDir() + name);
+    }
+
     private boolean storageArtifactsExist(String dbPath) throws IOException {
         for (String suffix : REMOVAL_SUFFIXES) {
             if (new File(dbPath + suffix).exists()) {
@@ -281,28 +289,61 @@ public class DB implements IData {
         u.setDatabaseDir(user.getDatabaseDir());
         DB tmpDB = new DB();
         tmpDB.init(u);
-        m.useStorage(tmp + "-temporary");
-
-        for (Map.Entry<String, IBase> e : bases.entrySet()) {
-            if (reactor != null) {
-                reactor.run(e.getKey());
+        String temporaryName = tmp + "-temporary";
+        boolean temporaryOpen = false;
+        boolean sourceClosed = false;
+        try {
+            /*
+             * A failed publication deliberately leaves its temporary
+             * generation available for diagnosis. A new attempt must never
+             * append to that incomplete generation, so retire it immediately
+             * before acquiring a fresh target.
+             */
+            if (tmpDB.exists(temporaryName)) {
+                tmpDB.remove(temporaryName);
             }
-            e.getValue().reindex(tmpDB.getBase(e.getKey()), mind);
+            m = m.useStorage(temporaryName);
+            temporaryOpen = true;
+
+            for (Map.Entry<String, IBase> e : bases.entrySet()) {
+                if (reactor != null) {
+                    reactor.run(e.getKey());
+                }
+                e.getValue().reindex(tmpDB.getBase(e.getKey()), mind);
+            }
+
+            close();
+            sourceClosed = true;
+            m = m.closeStorage();
+            temporaryOpen = false;
+
+            String dbPath = user.getDatabaseDir() + tmp;
+            String temporaryPath = dbPath + "-temporary";
+            replaceGeneration(dbPath, temporaryPath);
+
+            new File(dbPath + ".integrity.delta").delete();
+            deleteRecoveryLogs(dbPath);
+            new File(temporaryPath + ".integrity.delta").delete();
+            deleteRecoveryLogs(temporaryPath);
+
+            use(tmp);
+        } catch (Exception failure) {
+            if (temporaryOpen) {
+                try {
+                    m.closeStorage();
+                } catch (Exception closeFailure) {
+                    failure.addSuppressed(closeFailure);
+                }
+            }
+            if (sourceClosed && isClosed()) {
+                try {
+                    use(tmp);
+                } catch (Exception reopenFailure) {
+                    failure.addSuppressed(reopenFailure);
+                }
+            }
+            throw failure;
         }
-
-        close();
-        m.closeStorage();
-
-        String dbPath = user.getDatabaseDir() + tmp;
-        String temporaryPath = dbPath + "-temporary";
-        replaceGeneration(dbPath, temporaryPath);
-
-        new File(dbPath + ".integrity.delta").delete();
-        deleteRecoveryLogs(dbPath);
-        new File(temporaryPath + ".integrity.delta").delete();
-        deleteRecoveryLogs(temporaryPath);
-
-        use(tmp);
     }
 
     private void replaceGeneration(String dbPath, String temporaryPath)

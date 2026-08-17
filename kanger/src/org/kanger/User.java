@@ -144,26 +144,81 @@ public class User implements IUser {
     }
 
     public IMind reindex(IReactor<String> reactor, IMind mind, String name) throws Exception {
-        boolean reopened = true;
-        String saveName = "";
-        if (isClosed()) {
-            reopened = false;
-        } else {
-            saveName = data.getStorageName();
-            mind = closeQuiescentStorage((Mind) mind);
+        if (mind == null) {
+            throw new IllegalStateException(
+                    "Cannot reindex storage without an active Mind");
         }
-        mind = reopened
-                ? openClosedStorage((Mind) mind, name)
-                : use(mind, name);
-        if (data != null && !data.isClosed()) {
-            data.reindex(reactor, mind);
+        requireTransactionQuiescence(mind, "reindex database");
+
+        if (name == null || name.isEmpty()) {
+            name = isClosed() ? null : data.getStorageName();
+        }
+        if (name == null || data == null || !data.exists(name)) {
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_NOT_FOUND,
+                    "Database " + (name == null ? "" : name) + " was not found");
         }
 
-        mind = closeQuiescentStorage((Mind) mind);
-        if (reopened) {
-            mind = openClosedStorage((Mind) mind, saveName);
+        boolean reopenOriginal = !isClosed();
+        boolean ownsCurrentSlot = currentMind == mind;
+        String originalName = reopenOriginal ? data.getStorageName() : "";
+        Mind original = (Mind) mind;
+        Mind working = (Mind) mind;
+
+        try {
+            if (reopenOriginal) {
+                working = closeQuiescentStorage(working);
+                working = openClosedStorage(working, name);
+            } else {
+                /*
+                 * Reindex must observe the target storage alone. Attaching it
+                 * under the published offline workspace would assimilate U0
+                 * into the generation being rebuilt and would also leave the
+                 * workspace's factories pointing at the generation that the
+                 * DUMB swap replaces. Use a disposable root instead; the
+                 * published offline Mind remains byte-for-byte untouched.
+                 */
+                working = openClosedStorage(new Mind(this), name);
+            }
+            if (data != null && !data.isClosed()) {
+                data.reindex(reactor, working);
+            }
+
+            working = closeQuiescentStorage(working);
+            if (reopenOriginal) {
+                working = openClosedStorage(working, originalName);
+            } else {
+                working = original;
+            }
+            if (ownsCurrentSlot) {
+                currentMind = working;
+            }
+            return working;
+        } catch (Throwable failure) {
+            Throwable propagated = failure;
+            try {
+                if (!isClosed()) {
+                    working = closeQuiescentStorage(working);
+                }
+                if (reopenOriginal) {
+                    working = openClosedStorage(working, originalName);
+                } else {
+                    working = original;
+                }
+                if (ownsCurrentSlot) {
+                    currentMind = working;
+                }
+            } catch (Throwable restoreFailure) {
+                if (restoreFailure != failure) {
+                    propagated.addSuppressed(restoreFailure);
+                }
+                if (ownsCurrentSlot) {
+                    currentMind = reopenOriginal ? working : original;
+                }
+            }
+            rethrow(propagated);
+            throw new AssertionError("unreachable");
         }
-        return mind;
     }
 
     public long lastId(String schema) {
