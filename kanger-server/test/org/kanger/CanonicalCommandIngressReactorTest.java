@@ -33,7 +33,7 @@ class CanonicalCommandIngressReactorTest {
         Capture capture = new Capture();
         CanonicalCommandIngressReactor reactor = new CanonicalCommandIngressReactor(capture);
 
-        JSONObject response = (JSONObject) reactor.run(dialogue("token-1", "r 17"));
+        JSONObject response = (JSONObject) reactor.run(dialogue("token-1", "ru 17"));
 
         assertEquals("OK", response.optString("result"));
         assertEquals("RULE_SHOW", response.optString(
@@ -175,7 +175,7 @@ class CanonicalCommandIngressReactorTest {
         Capture capture = new Capture();
         CanonicalCommandIngressReactor reactor = new CanonicalCommandIngressReactor(capture);
 
-        reactor.run(dialogue("token-1", "st u close"));
+        reactor.run(dialogue("token-1", "sto u close"));
 
         assertEquals("canonical", context(capture.packet.get()));
         JSONObject parameters = parameters(capture.packet.get());

@@ -55,19 +55,19 @@ public final class KangerCanonicalConsoleRunner {
                 + "w\n"
                 + "w a 0\n"
                 + "?consoletarget(item);\n"
-                + "r a\n"
+                + "ru a\n"
                 + "v\n"
                 + "so\n"
-                + "st\n"
-                + "st u " + storageName + "\n"
+                + "sto\n"
+                + "sto u " + storageName + "\n"
                 + "t\n"
                 + "t st\n"
                 + "!consolecommitted;\n"
                 + "t c\n"
                 + "?consolecommitted;\n"
-                + "st\n"
-                + "st c\n"
-                + "st\n"
+                + "sto\n"
+                + "sto c\n"
+                + "sto\n"
                 + "put \"console test.k\"\n"
                 + "put \"console test.k\"\n"
                 + "n\n"
@@ -87,7 +87,7 @@ public final class KangerCanonicalConsoleRunner {
                 // Reindex deliberately runs last: it owns a storage-lifecycle
                 // reconstruction boundary and must not invalidate the stateful
                 // source/transaction assertions that precede it.
-                + "st r " + storageName + "\n"
+                + "sto r " + storageName + "\n"
                 + "quit\n";
 
         InputStream originalIn = System.in;

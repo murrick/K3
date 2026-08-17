@@ -25,6 +25,7 @@ public final class CommandHelpRenderer {
             }
             out.append("  ")
                     .append(definition.getSyntax());
+            appendSpellings(out, definition.getFamilySpellings());
             if (!definition.getAliases().isEmpty()) {
                 out.append("  (")
                         .append(definition.getAliases().size() == 1 ? "alias: " : "aliases: ");
@@ -50,6 +51,23 @@ public final class CommandHelpRenderer {
             }
         }
         return out.toString();
+    }
+
+    private void appendSpellings(StringBuilder out,
+                                 java.util.List<String> spellings) {
+        if (spellings.isEmpty()) {
+            return;
+        }
+        out.append("  (")
+                .append(spellings.size() == 1
+                        ? "family spelling: " : "family spellings: ");
+        for (int i = 0; i < spellings.size(); ++i) {
+            if (i > 0) {
+                out.append(", ");
+            }
+            out.append(spellings.get(i));
+        }
+        out.append(')');
     }
 
     /**

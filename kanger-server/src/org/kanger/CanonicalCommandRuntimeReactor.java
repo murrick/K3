@@ -236,8 +236,18 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                 : helpRenderer.sections().entrySet()) {
             JSONArray commands = new JSONArray();
             for (CommandRegistry.Definition definition : entry.getValue()) {
+                JSONArray familySpellings = new JSONArray();
+                for (String spelling : definition.getFamilySpellings()) {
+                    familySpellings.put(spelling);
+                }
+                JSONArray aliases = new JSONArray();
+                for (String alias : definition.getAliases()) {
+                    aliases.put(alias);
+                }
                 commands.put(new JSONObject()
                         .put("syntax", definition.getSyntax())
+                        .put("family_spellings", familySpellings)
+                        .put("aliases", aliases)
                         .put("summary", definition.getSummary()));
             }
             sections.put(new JSONObject()

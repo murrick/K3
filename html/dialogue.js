@@ -212,6 +212,20 @@
                 syntax.title = 'Compose: ' + composeText;
                 syntax.style.fontWeight = 'bold';
                 row.appendChild(syntax);
+                var familySpellings = Array.isArray(command.family_spellings)
+                        ? command.family_spellings : [];
+                if (familySpellings.length) {
+                    appendText(row, '  (' + (familySpellings.length === 1
+                            ? 'family spelling: ' : 'family spellings: ')
+                            + familySpellings.join(', ') + ')');
+                }
+                var aliases = Array.isArray(command.aliases)
+                        ? command.aliases : [];
+                if (aliases.length) {
+                    appendText(row, '  (' + (aliases.length === 1
+                            ? 'alias: ' : 'aliases: ')
+                            + aliases.join(', ') + ')');
+                }
                 appendText(row, ' — ' + stringValue(command.summary));
                 fragment.appendChild(row);
             }

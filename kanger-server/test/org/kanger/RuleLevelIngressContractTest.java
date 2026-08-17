@@ -25,7 +25,7 @@ class RuleLevelIngressContractTest {
         Capture capture = new Capture();
         CanonicalCommandIngressReactor reactor = new CanonicalCommandIngressReactor(capture);
 
-        JSONObject response = (JSONObject) reactor.run(dialogue("token-1", "r l"));
+        JSONObject response = (JSONObject) reactor.run(dialogue("token-1", "ru l"));
 
         assertEquals("OK", response.optString("result"));
         assertEquals("RULE_LEVEL", response.optString(

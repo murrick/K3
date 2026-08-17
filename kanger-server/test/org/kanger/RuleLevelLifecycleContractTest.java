@@ -48,18 +48,18 @@ class RuleLevelLifecycleContractTest {
             assertEquals(Arrays.asList(2, 1, 0), levels(aggregate));
             assertContains(aggregate, "base_rule", "u1_rule", "u2_rule");
 
-            JSONObject abbreviated = command(fixture, "r l");
+            JSONObject abbreviated = command(fixture, "ru l");
             assertEquals(aggregate.getJSONArray("levels").toString(),
                     abbreviated.getJSONArray("levels").toString(),
-                    "r l diverged from rule level");
+                    "ru l diverged from rule level");
 
             JSONObject point = command(fixture, "rule level 1");
-            JSONObject shortPoint = command(fixture, "r l 1");
+            JSONObject shortPoint = command(fixture, "ru l 1");
             JSONObject legacyPoint = legacyPoint(fixture, 1);
             assertFalse(point.has("levels"), "point rule level acquired aggregate shape");
             assertEquals(point.getJSONArray("list").toString(),
                     shortPoint.getJSONArray("list").toString(),
-                    "r l N diverged from rule level N");
+                    "ru l N diverged from rule level N");
             assertEquals(legacyPoint.getJSONArray("list").toString(),
                     point.getJSONArray("list").toString(),
                     "rule level N diverged from the qualified legacy selector");

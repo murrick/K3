@@ -33,6 +33,7 @@ public final class CommandRegistry {
         FUNCTION,
         GET,
         HELP,
+        PREDICATE,
         PUT,
         QUIT,
         RULE,
@@ -71,6 +72,7 @@ public final class CommandRegistry {
         private final String helpSection;
         private final String summary;
         private final Map<String, String> argumentDescriptions;
+        private final List<String> familySpellings;
         private final List<String> aliases;
         private final int displayOrder;
 
@@ -79,6 +81,7 @@ public final class CommandRegistry {
                            String helpSection,
                            String summary,
                            Map<String, String> argumentDescriptions,
+                           List<String> familySpellings,
                            List<String> aliases,
                            int displayOrder) {
             this.intent = intent;
@@ -87,6 +90,8 @@ public final class CommandRegistry {
             this.summary = summary;
             this.argumentDescriptions = Collections.unmodifiableMap(
                     new LinkedHashMap<String, String>(argumentDescriptions));
+            this.familySpellings = Collections.unmodifiableList(
+                    new ArrayList<String>(familySpellings));
             this.aliases = Collections.unmodifiableList(
                     new ArrayList<String>(aliases));
             this.displayOrder = displayOrder;
@@ -116,6 +121,10 @@ public final class CommandRegistry {
             return aliases;
         }
 
+        public List<String> getFamilySpellings() {
+            return familySpellings;
+        }
+
         public int getDisplayOrder() {
             return displayOrder;
         }
@@ -134,6 +143,7 @@ public final class CommandRegistry {
         family(Family.FUNCTION, "function", "functions");
         family(Family.GET, "get");
         family(Family.HELP, "help");
+        family(Family.PREDICATE, "predicate", "predicates");
         family(Family.PUT, "put");
         family(Family.QUIT, "quit");
         family(Family.RULE, "rule", "rules");
@@ -199,9 +209,16 @@ public final class CommandRegistry {
                 args("id", "Function runtime identifier."), n++);
 
         define(CommandIntent.BASE_STATUS, "base", "BASE", "Show current unambiguous base statements.", noArgs(), n++);
-        define(CommandIntent.BASE_PREDICATES, "base predicates", "BASE", "Show predicates known in the semantic context.", noArgs(), n++);
-        define(CommandIntent.BASE_PREDICATE, "base predicate <id|name>", "BASE", "Show base statements for one predicate.",
-                args("id|name", "Predicate runtime ID or name."), n++);
+        defineWithFamilySpellings(CommandIntent.BASE_PREDICATES,
+                "base predicates", "BASE",
+                "Show predicates known in the semantic context.",
+                noArgs(), familySpellings("predicate", "predicates"), n++);
+        defineWithFamilySpellings(CommandIntent.BASE_PREDICATE,
+                "base predicate <id|name>", "BASE",
+                "Show base statements for one predicate.",
+                args("id|name", "Predicate runtime ID or name."),
+                familySpellings("predicate <id|name>",
+                        "predicates <id|name>"), n++);
         define(CommandIntent.BASE_TREE, "base tree <statement-id>", "BASE", "Show provenance of one base statement.",
                 args("statement-id", "Statement runtime identifier."), n++);
 
@@ -224,15 +241,16 @@ public final class CommandRegistry {
                 args("index", "Zero-based index in the current hypothesis rowset."), n++);
 
         define(CommandIntent.TX_STATUS, "transaction", "TRANSACTION", "Show current transaction state.", noArgs(), n++);
-        define(CommandIntent.TX_START, "transaction start", "TRANSACTION", "Start a child transaction.", noArgs(), n++);
+        define(CommandIntent.TX_START, "transaction start", "TRANSACTION", "Start a child transaction.",
+                noArgs(), aliases("start"), n++);
         define(CommandIntent.TX_COMMIT, "transaction commit", "TRANSACTION",
                 "Commit the current transaction or qualified root checkpoint.",
                 noArgs(), aliases("commit"), n++);
         define(CommandIntent.TX_ROLLBACK, "transaction rollback", "TRANSACTION", "Rollback the current child transaction.",
-                noArgs(), n++);
+                noArgs(), aliases("rollback"), n++);
         define(CommandIntent.TX_SQUASH, "transaction squash", "TRANSACTION",
                 "Collapse all explicit transaction history above U0 into one U1 without changing U0.",
-                noArgs(), n++);
+                noArgs(), aliases("squash"), n++);
 
         define(CommandIntent.SOURCE_GET, "get [<source>]", "SOURCE",
                 "List server-side sources when omitted; load and compile one source when named.",
@@ -244,14 +262,15 @@ public final class CommandRegistry {
                 args("source", "Optional source logical name."), n++);
 
         define(CommandIntent.STORAGE_STATUS, "storage", "STORAGE", "Show available storages and the current/open storage.",
-                noArgs(), n++);
+                noArgs(), aliases("use"), n++);
         define(CommandIntent.STORAGE_USE, "storage use <name>", "STORAGE", "Open or create one storage.",
                 args("name", "Storage logical name."), aliases("use <name>"), n++);
-        define(CommandIntent.STORAGE_CLOSE, "storage close", "STORAGE", "Close the current storage.", noArgs(), n++);
+        define(CommandIntent.STORAGE_CLOSE, "storage close", "STORAGE", "Close the current storage.",
+                noArgs(), aliases("close"), n++);
         define(CommandIntent.STORAGE_DROP, "storage drop <name>", "STORAGE", "Drop one explicitly named storage.",
-                args("name", "Storage logical name."), n++);
+                args("name", "Storage logical name."), aliases("drop <name>"), n++);
         define(CommandIntent.STORAGE_REINDEX, "storage reindex <name>", "STORAGE", "Reindex one explicitly named storage.",
-                args("name", "Storage logical name."), n++);
+                args("name", "Storage logical name."), aliases("reindex <name>"), n++);
 
         define(CommandIntent.ERASE, "erase", "SYSTEM / SESSION", "Clear the current workspace using qualified runtime semantics.",
                 noArgs(), n++);
@@ -299,60 +318,41 @@ public final class CommandRegistry {
         }
         String token = trimmed.substring(0, end).toLowerCase(Locale.ROOT);
 
-        Family exactFamily = null;
-        for (Map.Entry<Family, List<String>> entry : FAMILY_WORDS.entrySet()) {
-            for (String word : entry.getValue()) {
-                if (word.equals(token)) {
-                    exactFamily = entry.getKey();
-                    break;
-                }
-            }
-            if (exactFamily != null) {
-                break;
-            }
+        boolean hasTail = hasTail(trimmed, end);
+        Set<Family> exactFamilies = matchingFamilies(token, true);
+        List<AliasMatch> exactAliases = matchingAliases(token, true);
+        AliasMatch exactAlias = exactAliases.isEmpty()
+                ? null : selectAlias(exactAliases, hasTail, token);
+        int exactMatches = exactFamilies.size() + (exactAlias == null ? 0 : 1);
+        if (exactMatches > 1) {
+            throw new CommandParseException(
+                    CommandParseException.Reason.AMBIGUOUS_PREFIX,
+                    "Ambiguous command head " + token);
         }
-        AliasMatch exactAlias = null;
-        for (Definition definition : DEFINITIONS) {
-            for (String alias : definition.aliases) {
-                if (aliasHead(alias).equals(token)) {
-                    if (exactAlias != null && exactAlias.definition != definition) {
-                        throw new CommandParseException(
-                                CommandParseException.Reason.AMBIGUOUS_PREFIX,
-                                "Ambiguous command alias " + token);
-                    }
-                    exactAlias = new AliasMatch(definition, alias);
-                }
-            }
-        }
-        if (exactFamily != null || exactAlias != null) {
-            if (exactFamily != null && exactAlias != null) {
-                throw new CommandParseException(
-                        CommandParseException.Reason.AMBIGUOUS_PREFIX,
-                        "Ambiguous command head " + token);
-            }
-            return exactAlias == null ? trimmed : expand(trimmed, end, exactAlias);
+        if (exactMatches == 1) {
+            return exactAlias == null
+                    ? trimmed : expand(trimmed, end, exactAlias);
         }
 
-        Set<Family> familyMatches = new LinkedHashSet<Family>();
-        for (Map.Entry<Family, List<String>> entry : FAMILY_WORDS.entrySet()) {
-            for (String word : entry.getValue()) {
-                if (word.startsWith(token)) {
-                    familyMatches.add(entry.getKey());
-                    break;
-                }
+        Set<Family> familyMatches = matchingFamilies(token, false);
+        Map<String, List<AliasMatch>> aliasGroups =
+                new LinkedHashMap<String, List<AliasMatch>>();
+        for (AliasMatch match : matchingAliases(token, false)) {
+            String head = aliasHead(match.syntax);
+            List<AliasMatch> group = aliasGroups.get(head);
+            if (group == null) {
+                group = new ArrayList<AliasMatch>();
+                aliasGroups.put(head, group);
             }
+            group.add(match);
         }
 
-        List<AliasMatch> aliasMatches = new ArrayList<AliasMatch>();
-        Set<Definition> aliasTargets = new LinkedHashSet<Definition>();
-        for (Definition definition : DEFINITIONS) {
-            for (String alias : definition.aliases) {
-                if (aliasHead(alias).startsWith(token)) {
-                    if (aliasTargets.add(definition)) {
-                        aliasMatches.add(new AliasMatch(definition, alias));
-                    }
-                    break;
-                }
+        Map<Definition, AliasMatch> aliasTargets =
+                new LinkedHashMap<Definition, AliasMatch>();
+        for (List<AliasMatch> group : aliasGroups.values()) {
+            AliasMatch selected = selectAlias(group, hasTail, token);
+            if (!aliasTargets.containsKey(selected.definition)) {
+                aliasTargets.put(selected.definition, selected);
             }
         }
 
@@ -363,9 +363,86 @@ public final class CommandRegistry {
                     "Ambiguous command prefix " + token);
         }
         if (matches == 1 && familyMatches.isEmpty()) {
-            return expand(trimmed, end, aliasMatches.get(0));
+            return expand(trimmed, end, aliasTargets.values().iterator().next());
         }
         return trimmed;
+    }
+
+    private static Set<Family> matchingFamilies(String token, boolean exact) {
+        Set<Family> matches = new LinkedHashSet<Family>();
+        for (Map.Entry<Family, List<String>> entry : FAMILY_WORDS.entrySet()) {
+            for (String word : entry.getValue()) {
+                if (exact ? word.equals(token) : word.startsWith(token)) {
+                    matches.add(entry.getKey());
+                    break;
+                }
+            }
+        }
+        return matches;
+    }
+
+    private static List<AliasMatch> matchingAliases(String token,
+                                                     boolean exact) {
+        List<AliasMatch> matches = new ArrayList<AliasMatch>();
+        for (Definition definition : DEFINITIONS) {
+            for (String alias : definition.aliases) {
+                String head = aliasHead(alias);
+                if (exact ? head.equals(token) : head.startsWith(token)) {
+                    matches.add(new AliasMatch(definition, alias));
+                }
+            }
+        }
+        return matches;
+    }
+
+    /**
+     * Resolves several productions sharing one alias head by invocation arity.
+     * A single production is always expanded so its canonical parser can retain
+     * the precise MISSING_ARGUMENT / EXTRA_ARGUMENT diagnostic.
+     */
+    private static AliasMatch selectAlias(List<AliasMatch> matches,
+                                          boolean hasTail,
+                                          String token)
+            throws CommandParseException {
+        Map<Definition, AliasMatch> distinct =
+                new LinkedHashMap<Definition, AliasMatch>();
+        for (AliasMatch match : matches) {
+            if (!distinct.containsKey(match.definition)) {
+                distinct.put(match.definition, match);
+            }
+        }
+        if (distinct.size() == 1) {
+            return distinct.values().iterator().next();
+        }
+
+        Map<Definition, AliasMatch> arityMatches =
+                new LinkedHashMap<Definition, AliasMatch>();
+        for (AliasMatch match : matches) {
+            if (matchesTail(match.syntax, hasTail)
+                    && !arityMatches.containsKey(match.definition)) {
+                arityMatches.put(match.definition, match);
+            }
+        }
+        if (arityMatches.size() == 1) {
+            return arityMatches.values().iterator().next();
+        }
+        throw new CommandParseException(
+                CommandParseException.Reason.AMBIGUOUS_PREFIX,
+                "Ambiguous command alias " + token);
+    }
+
+    private static boolean matchesTail(String syntax, boolean hasTail) {
+        boolean requiredTail = syntax.indexOf('<') >= 0;
+        boolean optionalTail = syntax.indexOf('[') >= 0;
+        return hasTail ? requiredTail || optionalTail : !requiredTail;
+    }
+
+    private static boolean hasTail(String line, int headEnd) {
+        int tail = headEnd;
+        while (tail < line.length() && Character.isWhitespace(line.charAt(tail))) {
+            ++tail;
+        }
+        return tail < line.length();
     }
 
     public static Family resolveFamily(String token) throws CommandParseException {
@@ -481,6 +558,7 @@ public final class CommandRegistry {
                                Map<String, String> arguments,
                                int order) {
         define(intent, syntax, section, summary, arguments,
+                Collections.<String>emptyList(),
                 Collections.<String>emptyList(), order);
     }
 
@@ -491,11 +569,41 @@ public final class CommandRegistry {
                                Map<String, String> arguments,
                                List<String> aliases,
                                int order) {
+        define(intent, syntax, section, summary, arguments,
+                Collections.<String>emptyList(), aliases, order);
+    }
+
+    private static void defineWithFamilySpellings(
+                               CommandIntent intent,
+                               String syntax,
+                               String section,
+                               String summary,
+                               Map<String, String> arguments,
+                               List<String> familySpellings,
+                               int order) {
+        define(intent, syntax, section, summary, arguments,
+                familySpellings, Collections.<String>emptyList(), order);
+    }
+
+    private static void define(CommandIntent intent,
+                               String syntax,
+                               String section,
+                               String summary,
+                               Map<String, String> arguments,
+                               List<String> familySpellings,
+                               List<String> aliases,
+                               int order) {
         DEFINITIONS.add(new Definition(intent, syntax, section, summary,
-                arguments, aliases, order));
+                arguments, familySpellings, aliases, order));
     }
 
     private static List<String> aliases(String... values) {
+        List<String> result = new ArrayList<String>();
+        Collections.addAll(result, values);
+        return result;
+    }
+
+    private static List<String> familySpellings(String... values) {
         List<String> result = new ArrayList<String>();
         Collections.addAll(result, values);
         return result;
@@ -545,7 +653,6 @@ public final class CommandRegistry {
 
     private static final class AliasMatch {
         private final Definition definition;
-        @SuppressWarnings("unused")
         private final String syntax;
 
         private AliasMatch(Definition definition, String syntax) {

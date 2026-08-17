@@ -71,6 +71,8 @@ public final class CommandParser {
                 return parseFunction(line, tokens);
             case BASE:
                 return parseBase(line, tokens);
+            case PREDICATE:
+                return parsePredicateFamily(line, tokens);
             case VALUES:
                 return parseValues(line, tokens);
             case SOLUTION:
@@ -218,6 +220,19 @@ public final class CommandParser {
         Map<String, Object> arguments = new LinkedHashMap<String, Object>();
         arguments.put("predicate", predicateReference(tokens.get(2).value));
         return CommandInvocation.command(CommandIntent.BASE_PREDICATE, arguments, raw);
+    }
+
+    private CommandInvocation parsePredicateFamily(String raw,
+                                                    List<Token> tokens)
+            throws CommandParseException {
+        if (tokens.size() == 1) {
+            return CommandInvocation.command(CommandIntent.BASE_PREDICATES, raw);
+        }
+        requireSize(tokens, 2);
+        Map<String, Object> arguments = new LinkedHashMap<String, Object>();
+        arguments.put("predicate", predicateReference(tokens.get(1).value));
+        return CommandInvocation.command(
+                CommandIntent.BASE_PREDICATE, arguments, raw);
     }
 
     private CommandInvocation parseValues(String raw, List<Token> tokens)
