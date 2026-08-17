@@ -84,6 +84,8 @@ class TransactionVisibilityMergeInvariantTest {
                     "Committed child deleted marker disappeared from a deliberate pair");
             assertTrue(u1.getRestored().get(UnitType.RULE).contains(base.getId()),
                     "Committed child restored marker disappeared from a deliberate pair");
+            assertTrue(base.isRestored(u1),
+                    "Committed child pair lost its explicit restored marker");
             assertFalse(base.isDeleted(u1),
                     "Visibility order no longer lets restored win for an intentional pair");
 
