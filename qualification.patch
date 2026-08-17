@@ -171,3 +171,38 @@
                  + "st\n"
                  + "st c\n"
                  + "st\n"
+--- a/kanger-qualification/src/org/kanger/KangerCanonicalConsoleLifecycleConvergenceRunner.java
++++ b/kanger-qualification/src/org/kanger/KangerCanonicalConsoleLifecycleConvergenceRunner.java
+@@ -197,20 +197,23 @@
+ 
+             root = root.closeStorage();
+ 
+-            /* No-storage U0 insertion remains a deliberate compatibility case. */
++            /* No-storage U0 authorial state is assimilated into persistent U0. */
+             require(Boolean.TRUE.equals(root.query("!offlineworkspace;")),
+                     "offline workspace fixture did not compile");
+             IMind inserted = useStorage(
+                     commandProcessor, commandParser, user, root, storageA);
+-            require(inserted.getTransactionLevel() == 1,
+-                    "offline workspace insertion did not create U1");
++            require(inserted.getTransactionLevel() == 0,
++                    "offline U0 assimilation created an implicit transaction level");
+             require(inserted.getSourceCode().contains("offlineworkspace"),
+-                    "offline workspace disappeared during baseline insertion");
+-            require(!inserted.getTop().getSourceCode().contains("offlineworkspace"),
+-                    "offline workspace was committed into persistent U0");
+-            IMind insertedRoot = inserted.getNext();
+-            insertedRoot.release(inserted);
+-            root = insertedRoot;
++                    "offline workspace disappeared during baseline assimilation");
++            require(inserted.getTop().getSourceCode().contains("offlineworkspace"),
++                    "offline workspace was not assimilated into persistent U0");
++            root = inserted.closeStorage();
++            root = root.useStorage(storageA);
++            require(root.getTransactionLevel() == 0,
++                    "reopened assimilated storage changed transaction depth");
++            require(root.getSourceCode().contains("offlineworkspace"),
++                    "assimilated offline workspace did not persist across reopen");
+             root = root.closeStorage();
+ 
+             /* Closed storage must be inserted under the whole explicit stack. */
