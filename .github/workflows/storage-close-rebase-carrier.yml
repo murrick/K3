@@ -14,4 +14,78 @@ jobs:
   qualify-and-publish-ready:
     runs-on: ubuntu-24.04
     steps:
-      - run: echo "storage close candidate prepared and qualified"
+      - name: Check out aligned close candidate
+        uses: actions/checkout@v5
+        with:
+          ref: 18a4353d7600cc3431cf5cef1bc31d6f78ffaed6
+          fetch-depth: 0
+
+      - name: Align Console active-close qualification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('kanger-qualification/src/org/kanger/KangerConsoleLifecycleBindingRunner.java')
+          text = path.read_text()
+          start_anchor = '''            /*\n             * Console close must delegate directly to Core. A non-empty\n'''
+          end_anchor = '''            require(!mind.isStorageUsed(),\n                    "qualification storage did not close cleanly");\n'''
+          start = text.find(start_anchor)
+          if start < 0:
+              raise SystemExit('Console active-close start anchor missing')
+          end_start = text.find(end_anchor, start)
+          if end_start < 0:
+              raise SystemExit('Console active-close end anchor missing')
+          end = end_start + len(end_anchor)
+          replacement = '''            /*
+             * Console close delegates directly to Core. An explicit active
+             * user transaction is rebased over an empty offline U0 without
+             * changing the user-visible boundary; rollback remains explicit.
+             */
+            IMind child = new Mind(mind);
+            query(processQuery, "!consoleactive;", child);
+
+            child = close(closeDatabase, child);
+            require(child.getTransactionLevel() == 1,
+                    "Console close changed active transaction level");
+            require(!child.isStorageUsed(),
+                    "Console close retained the physical storage");
+            require(Boolean.TRUE.equals(child.query("?consoleactive;")),
+                    "Console close lost active transaction semantics");
+
+            child = process(
+                    processTransaction,
+                    "transaction rollback",
+                    child);
+            require(child.getTransactionLevel() == 0,
+                    "Console rollback after close did not return to offline U0");
+            require(!child.isStorageUsed(),
+                    "Console rollback after close reattached storage");
+            require(!Boolean.TRUE.equals(child.query("?consoleactive;")),
+                    "Console rollback after close retained transient semantics");
+
+            mind = child;
+'''
+          text = text[:start] + replacement + text[end:]
+          old_label = 'CONSOLE_LIFECYCLE_BINDING_PASS typed-active-close'
+          new_label = 'CONSOLE_LIFECYCLE_BINDING_PASS active-close-rebase'
+          if text.count(old_label) != 1:
+              raise SystemExit('Console close PASS label mismatch')
+          text = text.replace(old_label, new_label, 1)
+          path.write_text(text)
+          PY
+          git diff --check
+          test "$(git diff --name-only)" = "kanger-qualification/src/org/kanger/KangerConsoleLifecycleBindingRunner.java"
+
+      - name: Run root qualification corpus
+        run: mvn --batch-mode --no-transfer-progress -DskipTests clean package
+
+      - name: Publish qualification-aligned ready commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "KANGER qualification bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add kanger-qualification/src/org/kanger/KangerConsoleLifecycleBindingRunner.java
+          git commit -m "test(console): align close rebase qualification"
+          git push origin HEAD:refs/heads/tmp/3.7.0.20-storage-close-rebase-ready
