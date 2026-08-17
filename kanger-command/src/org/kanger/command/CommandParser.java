@@ -323,7 +323,7 @@ public final class CommandParser {
         }
         Keyword keyword = CommandRegistry.resolveKeyword(
                 Family.TRANSACTION, tokens.get(1).value,
-                Keyword.START, Keyword.COMMIT, Keyword.ROLLBACK);
+                Keyword.START, Keyword.COMMIT, Keyword.ROLLBACK, Keyword.SQUASH);
         requireSize(tokens, 2);
         switch (keyword) {
             case START:
@@ -332,6 +332,8 @@ public final class CommandParser {
                 return CommandInvocation.command(CommandIntent.TX_COMMIT, raw);
             case ROLLBACK:
                 return CommandInvocation.command(CommandIntent.TX_ROLLBACK, raw);
+            case SQUASH:
+                return CommandInvocation.command(CommandIntent.TX_SQUASH, raw);
             default:
                 throw error(INVALID_GRAMMAR, "Invalid transaction action");
         }

@@ -44,6 +44,7 @@ public enum CommandIntent {
     TX_START,
     TX_COMMIT,
     TX_ROLLBACK,
+    TX_SQUASH,
 
     SOURCE_GET,
     SOURCE_PUT,

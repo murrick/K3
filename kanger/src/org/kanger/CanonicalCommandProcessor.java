@@ -38,6 +38,7 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.TX_START
                 || intent == CommandIntent.TX_COMMIT
                 || intent == CommandIntent.TX_ROLLBACK
+                || intent == CommandIntent.TX_SQUASH
                 || intent == CommandIntent.STORAGE_STATUS
                 || intent == CommandIntent.STORAGE_USE
                 || intent == CommandIntent.STORAGE_CLOSE;
@@ -71,6 +72,14 @@ public final class CanonicalCommandProcessor {
 
             case TX_ROLLBACK:
                 return rollback(user, mind);
+
+            case TX_SQUASH:
+                if (mind.getTransactionLevel() <= 1) {
+                    return Result.success(mind, "Transaction stack already compact");
+                }
+                mind = UserTransactionStackSnapshot.squash((Mind) mind);
+                user.setCurrentMind(mind);
+                return Result.success(mind, "Transaction history squashed");
 
             case STORAGE_STATUS:
                 StorageStatus status = storageStatus(mind);

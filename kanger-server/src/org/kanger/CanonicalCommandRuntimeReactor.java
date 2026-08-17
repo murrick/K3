@@ -103,6 +103,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             case TX_START:
             case TX_COMMIT:
             case TX_ROLLBACK:
+            case TX_SQUASH:
             case STORAGE_STATUS:
             case STORAGE_USE:
             case STORAGE_CLOSE:

@@ -58,6 +58,7 @@ public final class CommandRegistry {
         START,
         COMMIT,
         ROLLBACK,
+        SQUASH,
         USE,
         CLOSE,
         DROP,
@@ -164,6 +165,7 @@ public final class CommandRegistry {
         keyword(Family.TRANSACTION, Keyword.START, "start");
         keyword(Family.TRANSACTION, Keyword.COMMIT, "commit");
         keyword(Family.TRANSACTION, Keyword.ROLLBACK, "rollback");
+        keyword(Family.TRANSACTION, Keyword.SQUASH, "squash");
 
         keyword(Family.STORAGE, Keyword.USE, "use");
         keyword(Family.STORAGE, Keyword.CLOSE, "close");
@@ -227,6 +229,9 @@ public final class CommandRegistry {
                 "Commit the current transaction or qualified root checkpoint.",
                 noArgs(), aliases("commit"), n++);
         define(CommandIntent.TX_ROLLBACK, "transaction rollback", "TRANSACTION", "Rollback the current child transaction.",
+                noArgs(), n++);
+        define(CommandIntent.TX_SQUASH, "transaction squash", "TRANSACTION",
+                "Collapse all explicit transaction history above U0 into one U1 without changing U0.",
                 noArgs(), n++);
 
         define(CommandIntent.SOURCE_GET, "get [<source>]", "SOURCE",

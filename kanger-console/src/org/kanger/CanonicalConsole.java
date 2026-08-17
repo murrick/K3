@@ -231,6 +231,7 @@ public final class CanonicalConsole {
             case TX_START:
             case TX_COMMIT:
             case TX_ROLLBACK:
+            case TX_SQUASH:
                 CanonicalCommandProcessor.Result transaction =
                         COMMAND_PROCESSOR.execute(invocation, mind.getUser());
                 if (!transaction.isHandled()) {
@@ -239,7 +240,8 @@ public final class CanonicalConsole {
                 }
                 mind = track(shutdownHook, transaction.getMind());
                 if (invocation.getIntent() == org.kanger.command.CommandIntent.TX_COMMIT
-                        || invocation.getIntent() == org.kanger.command.CommandIntent.TX_ROLLBACK) {
+                        || invocation.getIntent() == org.kanger.command.CommandIntent.TX_ROLLBACK
+                        || invocation.getIntent() == org.kanger.command.CommandIntent.TX_SQUASH) {
                     if (!transaction.getDescription().isEmpty()) {
                         System.out.println((transaction.isSuccess() ? "SUCCESS: " : "WARNING: ")
                                 + transaction.getDescription());

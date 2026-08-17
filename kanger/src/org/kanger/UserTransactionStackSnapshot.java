@@ -131,6 +131,86 @@ final class UserTransactionStackSnapshot {
         }
     }
 
+    /**
+     * Collapses all explicit user transaction levels above U0 into exactly
+     * one live U1 while leaving the root baseline untouched. The original
+     * stack remains published until a fully replayed and qualified sibling
+     * candidate has been reduced to one level.
+     */
+    static Mind squash(Mind top) throws Exception {
+        if (top == null) {
+            throw new IllegalArgumentException("Transaction squash requires a current Mind");
+        }
+        if (top.getTransactionLevel() <= 1) {
+            return top;
+        }
+
+        requireExplicitSquashTopology(top);
+        Mind root = (Mind) top.getTop();
+        UserTransactionStackSnapshot snapshot = capture(top);
+        Mind candidate = null;
+
+        try {
+            candidate = snapshot.replay(root);
+            while (candidate.getNext() != root) {
+                Mind parent = (Mind) candidate.getNext();
+                if (!parent.commitUserTransaction(candidate)) {
+                    throw new IllegalStateException(
+                            "Transaction squash candidate commit was rejected");
+                }
+                candidate = parent;
+            }
+
+            if (candidate.getTransactionLevel() != 1
+                    || !Boolean.TRUE.equals(candidate.queryCheck(false))) {
+                throw new IllegalStateException(
+                        "Transaction squash candidate is not a valid U1 context");
+            }
+
+            /*
+             * The sibling candidate keeps one root reservation alive while
+             * the old chain is discarded, so no root pack/update/flush can be
+             * triggered by the intermediate releases.
+             */
+            rollbackToRoot(top);
+            return candidate;
+        } catch (Throwable failure) {
+            Throwable propagated = failure;
+            if (candidate != null) {
+                try {
+                    rollbackToRoot(candidate);
+                } catch (Throwable cleanupFailure) {
+                    if (cleanupFailure != failure) {
+                        propagated.addSuppressed(cleanupFailure);
+                    }
+                }
+            }
+            rethrow(propagated);
+            throw new AssertionError("unreachable");
+        }
+    }
+
+    private static void requireExplicitSquashTopology(Mind top) {
+        Mind current = top;
+        if (current.pendingTransactionCount() != 0) {
+            throw new IllegalStateException(
+                    "Cannot squash transaction stack with hidden children at published U"
+                            + top.getTransactionLevel());
+        }
+
+        int level = top.getTransactionLevel();
+        while (current.getNext() != null) {
+            Mind parent = (Mind) current.getNext();
+            if (parent.pendingTransactionCount() != 1) {
+                throw new IllegalStateException(
+                        "Cannot squash transaction stack: U" + (level - 1)
+                                + " does not exclusively own U" + level);
+            }
+            current = parent;
+            --level;
+        }
+    }
+
     static Mind rollbackToRoot(Mind top) throws Exception {
         Mind current = top;
         while (current.getNext() != null) {
