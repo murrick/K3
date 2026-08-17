@@ -7,8 +7,11 @@ on:
     paths:
       - .github/workflows/transaction-squash-carrier.yml
 
+permissions:
+  contents: write
+
 jobs:
-  locate-shorthand:
+  qualify-and-publish-ready:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out squash implementation
@@ -16,11 +19,67 @@ jobs:
         with:
           ref: c87bbe38667435e23bf06e0f194ec3423b10b582
           fetch-depth: 0
-      - name: Locate TransactionShorthandRunner source
+
+      - name: Complete squash formatter and shorthand qualification
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== exact class/string matches ==='
-          grep -R -n --exclude-dir=.git -E 'TransactionShorthandRunner|Undocumented transaction-family error' . || true
-          echo '=== transaction shorthand-like sources ==='
-          grep -R -n --exclude-dir=.git -E 'transaction s|TX_START|AMBIGUOUS_PREFIX' kanger-qualification kanger-command 2>/dev/null | head -n 300 || true
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new, label):
+              text = path.read_text()
+              if text.count(old) != 1:
+                  raise SystemExit(f'{label}: expected one anchor, got {text.count(old)}')
+              path.write_text(text.replace(old, new, 1))
+
+          formatter = Path('kanger-command/src/org/kanger/command/CommandFormatter.java')
+          replace_once(formatter,
+              '''            case TX_ROLLBACK:\n                return "transaction rollback";\n\n            case SOURCE_GET:\n''',
+              '''            case TX_ROLLBACK:\n                return "transaction rollback";\n            case TX_SQUASH:\n                return "transaction squash";\n\n            case SOURCE_GET:\n''',
+              'TX_SQUASH formatter')
+
+          conformance = Path('kanger-command/test/org/kanger/command/CommandParserConformanceTest.java')
+          text = conformance.read_text()
+          old_family = '''        expect("transaction", CommandIntent.TX_STATUS);\n        expect("t s", CommandIntent.TX_START);\n        expect("t c", CommandIntent.TX_COMMIT);\n        expect("t r", CommandIntent.TX_ROLLBACK);\n'''
+          new_family = '''        expect("transaction", CommandIntent.TX_STATUS);\n        expect("t st", CommandIntent.TX_START);\n        expect("t c", CommandIntent.TX_COMMIT);\n        expect("t r", CommandIntent.TX_ROLLBACK);\n        expect("t sq", CommandIntent.TX_SQUASH);\n        reject("t s", AMBIGUOUS_PREFIX);\n'''
+          if text.count(old_family) != 1:
+              raise SystemExit('transaction family conformance anchor mismatch')
+          text = text.replace(old_family, new_family, 1)
+          old_echo = '''        expectCanonical("t s", "transaction start");\n        expectCanonical("c", "transaction commit");\n'''
+          new_echo = '''        expectCanonical("t st", "transaction start");\n        expectCanonical("t sq", "transaction squash");\n        expectCanonical("c", "transaction commit");\n'''
+          if text.count(old_echo) != 1:
+              raise SystemExit('transaction canonical echo anchor mismatch')
+          text = text.replace(old_echo, new_echo, 1)
+          occurrences = [line for line in text.splitlines() if '"t s"' in line]
+          if occurrences != ['        reject("t s", AMBIGUOUS_PREFIX);']:
+              raise SystemExit('unexpected stale conformance t s occurrence(s): ' + repr(occurrences))
+          conformance.write_text(text)
+
+          console_runner = Path('kanger-qualification/src/org/kanger/KangerCanonicalConsoleRunner.java')
+          text = console_runner.read_text()
+          if text.count('+ "t s\\n"') != 2:
+              raise SystemExit('canonical Console expected exactly two old t s starts')
+          text = text.replace('+ "t s\\n"', '+ "t st\\n"')
+          if '+ "t s\\n"' in text:
+              raise SystemExit('stale canonical Console t s remained')
+          console_runner.write_text(text)
+          PY
+          git diff --check
+          expected=$'kanger-command/src/org/kanger/command/CommandFormatter.java\nkanger-command/test/org/kanger/command/CommandParserConformanceTest.java\nkanger-qualification/src/org/kanger/KangerCanonicalConsoleRunner.java'
+          test "$(git diff --name-only | sort)" = "$expected"
+
+      - name: Run complete root qualification corpus
+        run: mvn --batch-mode --no-transfer-progress -DskipTests clean package
+
+      - name: Publish completed ready commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "KANGER qualification bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add kanger-command/src/org/kanger/command/CommandFormatter.java \
+                  kanger-command/test/org/kanger/command/CommandParserConformanceTest.java \
+                  kanger-qualification/src/org/kanger/KangerCanonicalConsoleRunner.java
+          git commit -m "fix(command): complete transaction squash grammar"
+          git push origin HEAD:refs/heads/tmp/3.7.0.20-transaction-squash-ready
