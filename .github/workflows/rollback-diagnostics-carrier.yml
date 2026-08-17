@@ -1,0 +1,201 @@
+name: Rollback diagnostics carrier
+
+on:
+  push:
+    branches:
+      - tmp/3.7.0.20-rollback-diagnostics-carrier
+    paths:
+      - .github/workflows/rollback-diagnostics-carrier.yml
+
+permissions:
+  contents: write
+
+jobs:
+  qualify-and-publish-ready:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out exact RED parent
+        uses: actions/checkout@v5
+        with:
+          ref: 3c1dc542f43ac0827d0f15fa0336a5d4a8802871
+          fetch-depth: 0
+
+      - name: Apply structured rollback diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > kanger/src/org/kanger/ContextQualification.java <<'JAVA'
+          /*
+           * MIT License
+           *
+           * Copyright (c) 2021 Dmitry G. Quznetsov
+           */
+          package org.kanger;
+
+          import java.util.ArrayList;
+          import java.util.Collections;
+          import java.util.List;
+          import java.util.Objects;
+
+          /** Runtime-only semantic qualification result; never persisted or replayed. */
+          final class ContextQualification {
+
+              static final class CollisionWitness {
+                  private final String left;
+                  private final String right;
+
+                  CollisionWitness(String left, String right) {
+                      this.left = left == null ? "" : left;
+                      this.right = right == null ? "" : right;
+                  }
+
+                  String getLeft() {
+                      return left;
+                  }
+
+                  String getRight() {
+                      return right;
+                  }
+
+                  @Override
+                  public boolean equals(Object other) {
+                      if (this == other) {
+                          return true;
+                      }
+                      if (!(other instanceof CollisionWitness)) {
+                          return false;
+                      }
+                      CollisionWitness witness = (CollisionWitness) other;
+                      return left.equals(witness.left) && right.equals(witness.right);
+                  }
+
+                  @Override
+                  public int hashCode() {
+                      return Objects.hash(left, right);
+                  }
+              }
+
+              private final boolean valid;
+              private final List<CollisionWitness> collisions;
+
+              ContextQualification(boolean valid, List<CollisionWitness> collisions) {
+                  this.valid = valid;
+                  this.collisions = Collections.unmodifiableList(
+                          new ArrayList<CollisionWitness>(collisions));
+              }
+
+              boolean isValid() {
+                  return valid;
+              }
+
+              List<CollisionWitness> getCollisions() {
+                  return collisions;
+              }
+          }
+          JAVA
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new, label):
+              text = path.read_text()
+              if text.count(old) != 1:
+                  raise SystemExit(f'{label}: expected one anchor, got {text.count(old)}')
+              path.write_text(text.replace(old, new, 1))
+
+          # Analyzer owns the witness at the exact semantic comparison site.
+          analyzer = Path('kanger/src/org/kanger/Analyzer.java')
+          replace_once(analyzer,
+              '''    private final transient Mind mind;\n    private final LogStore log;\n''',
+              '''    private final transient Mind mind;\n    private final LogStore log;\n    private final List<ContextQualification.CollisionWitness> collisions =\n            new ArrayList<ContextQualification.CollisionWitness>();\n''',
+              'Analyzer collision field')
+          replace_once(analyzer,
+              '''    public boolean analyze(Rule rule, boolean logging) throws Exception {\n        boolean result = false;\n\n        long start = System.currentTimeMillis();\n''',
+              '''    public boolean analyze(Rule rule, boolean logging) throws Exception {\n        boolean result = false;\n        collisions.clear();\n\n        long start = System.currentTimeMillis();\n''',
+              'Analyzer collision reset')
+          replace_once(analyzer,
+              '''                    if (p.getDomain().equalsBase(((Rule) q).getDomain())\n                            && p.getDomain().isAntc() != ((Rule) q).getDomain().isAntc()) {\n''',
+              '''                    if (p.getDomain().equalsBase(((Rule) q).getDomain())\n                            && p.getDomain().isAntc() != ((Rule) q).getDomain().isAntc()) {\n                        recordCollision(p, (Rule) q);\n''',
+              'Analyzer collision capture')
+          insert = '''\n    private void recordCollision(Rule left, Rule right) throws Exception {\n        ContextQualification.CollisionWitness witness =\n                new ContextQualification.CollisionWitness(\n                        diagnosticRule(left), diagnosticRule(right));\n        if (!collisions.contains(witness)) {\n            collisions.add(witness);\n        }\n    }\n\n    private String diagnosticRule(Rule rule) throws Exception {\n        String origin = rule.getOrigin();\n        if (origin != null && !origin.trim().isEmpty()) {\n            return origin.trim();\n        }\n        return rule.getDomain().toString(mind);\n    }\n\n    List<ContextQualification.CollisionWitness> getCollisionWitnesses() {\n        return new ArrayList<ContextQualification.CollisionWitness>(collisions);\n    }\n\n'''
+          text = analyzer.read_text()
+          anchor = '    public boolean checkDatabase(Set<Long> list, boolean logging) throws Exception {\n'
+          if text.count(anchor) != 1:
+              raise SystemExit('Analyzer diagnostic method anchor mismatch')
+          analyzer.write_text(text.replace(anchor, insert + anchor, 1))
+
+          # Mind exposes one immutable qualification result while preserving queryCheck API.
+          mind = Path('kanger/src/org/kanger/Mind.java')
+          text = mind.read_text()
+          start = text.find('    public Boolean queryCheck(boolean logging) throws Exception {\n')
+          end = text.find('    public Boolean queryCheckFalse(', start)
+          if start < 0 or end < 0:
+              raise SystemExit('Mind queryCheck region not found')
+          replacement = '''    ContextQualification qualifyCurrentContext(boolean logging) throws Exception {\n        ContextQualification result;\n\n        try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {\n            Mind m = tx.mind();\n            m.setQueryPass(QueryPass.CHECK);\n            boolean found = false;\n            for (IRule rx : m.getRules()) {\n                if (rx.isGenerated()) {\n                    if (logging) {\n                        m.getLog().add(LogMode.STORAGE,\n                                "Delete produced rule: " + String.format("%03d: %s", rx.getId(), rx));\n                    }\n                    ((Rule) rx).setDeleted(true, m);\n                    found = true;\n                }\n            }\n            if (found && logging) {\n                m.getLog().add(LogMode.STORAGE, "-------------------------------------------");\n            }\n\n            m.link(null, logging);\n            boolean collision = m.analyze(null, logging);\n            List<ContextQualification.CollisionWitness> witnesses =\n                    m.analyzer.getCollisionWitnesses();\n\n            if (collision) {\n                if (logging) {\n                    m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");\n                }\n                tx.rollback();\n                result = new ContextQualification(false, witnesses);\n            } else {\n                if (logging) {\n                    m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");\n                }\n                tx.commit();\n                result = new ContextQualification(true, witnesses);\n            }\n            hypothesis.clear();\n            tempHypothesis.clear();\n        }\n        return result;\n    }\n\n    public Boolean queryCheck(boolean logging) throws Exception {\n        return qualifyCurrentContext(logging).isValid();\n    }\n\n'''
+          mind.write_text(text[:start] + replacement + text[end:])
+
+          # Shared processor owns typed rejection and the three user exits.
+          processor = Path('kanger/src/org/kanger/CanonicalCommandProcessor.java')
+          text = processor.read_text()
+          old_rollback = '''    private Result rollback(IUser user, IMind mind) throws Exception {\n        IMind parent = mind.getNext();\n        if (parent == null) {\n            return Result.rejected(mind, "No transactions was created");\n        }\n        if (!Boolean.TRUE.equals(((Mind) parent).queryCheck(false))) {\n            return Result.rejected(mind,\n                    "Transaction rollback rejected: target context conflicts with current storage baseline");\n        }\n        parent.release(mind);\n        user.setCurrentMind(parent);\n        return Result.success(parent, "Transaction rolled back");\n    }\n'''
+          new_rollback = '''    private Result rollback(IUser user, IMind mind) throws Exception {\n        IMind parent = mind.getNext();\n        if (parent == null) {\n            return Result.rejected(mind, "No transactions was created");\n        }\n\n        ContextQualification qualification =\n                ((Mind) parent).qualifyCurrentContext(false);\n        if (!qualification.isValid()) {\n            List<CollisionWitness> collisions = new ArrayList<CollisionWitness>();\n            for (ContextQualification.CollisionWitness witness\n                    : qualification.getCollisions()) {\n                collisions.add(new CollisionWitness(\n                        witness.getLeft(), witness.getRight()));\n            }\n            String reason = collisions.isEmpty()\n                    ? "TARGET_CONTEXT_INVALID"\n                    : "STORAGE_BASELINE_COLLISION";\n            List<ResolutionAction> actions = new ArrayList<ResolutionAction>();\n            actions.add(new ResolutionAction(\n                    "USE_COMPATIBLE_STORAGE", null,\n                    "Use a storage baseline compatible with the rollback target, then retry rollback."));\n            actions.add(new ResolutionAction(\n                    "TRANSACTION_SQUASH", "transaction squash",\n                    "Keep the current effective context and intentionally discard older rollback history."));\n            actions.add(new ResolutionAction(\n                    "TRANSACTION_COMMIT", "transaction commit",\n                    "Keep the current transaction by merging it into the historical parent level."));\n\n            Rejection rejection = new Rejection(\n                    "ROLLBACK_REBASE_CONFLICT",\n                    reason,\n                    parent.getTransactionLevel(),\n                    parent.isStorageUsed() ? parent.getStorageName() : null,\n                    collisions,\n                    actions);\n            String description =\n                    "Transaction rollback rejected: target context conflicts with current storage baseline";\n            if (!collisions.isEmpty()) {\n                CollisionWitness first = collisions.get(0);\n                description += " (" + first.getLeft() + " <> " + first.getRight() + ")";\n            }\n            return Result.rejected(mind, description, rejection);\n        }\n        parent.release(mind);\n        user.setCurrentMind(parent);\n        return Result.success(parent, "Transaction rolled back");\n    }\n'''
+          if text.count(old_rollback) != 1:
+              raise SystemExit('CanonicalCommandProcessor rollback anchor mismatch')
+          text = text.replace(old_rollback, new_rollback, 1)
+
+          marker = '    /** Transport-neutral result of one canonical semantic dispatch. */\n'
+          pos = text.find(marker)
+          if pos < 0:
+              raise SystemExit('CanonicalCommandProcessor result marker missing')
+          prefix = text[:pos]
+          tail = '''    /** One exact semantic collision witness. */\n    public static final class CollisionWitness {\n        private final String left;\n        private final String right;\n\n        private CollisionWitness(String left, String right) {\n            this.left = left == null ? "" : left;\n            this.right = right == null ? "" : right;\n        }\n\n        public String getLeft() {\n            return left;\n        }\n\n        public String getRight() {\n            return right;\n        }\n    }\n\n    /** User-controlled resolution offered for a semantic rejection. */\n    public static final class ResolutionAction {\n        private final String id;\n        private final String command;\n        private final String description;\n\n        private ResolutionAction(String id, String command, String description) {\n            this.id = id;\n            this.command = command;\n            this.description = description;\n        }\n\n        public String getId() {\n            return id;\n        }\n\n        public String getCommand() {\n            return command;\n        }\n\n        public String getDescription() {\n            return description;\n        }\n    }\n\n    /** Transport-neutral typed semantic rejection. */\n    public static final class Rejection {\n        private final String code;\n        private final String reason;\n        private final int targetLevel;\n        private final String storage;\n        private final List<CollisionWitness> collisions;\n        private final List<ResolutionAction> actions;\n\n        private Rejection(String code,\n                          String reason,\n                          int targetLevel,\n                          String storage,\n                          List<CollisionWitness> collisions,\n                          List<ResolutionAction> actions) {\n            this.code = code;\n            this.reason = reason;\n            this.targetLevel = targetLevel;\n            this.storage = storage;\n            this.collisions = Collections.unmodifiableList(\n                    new ArrayList<CollisionWitness>(collisions));\n            this.actions = Collections.unmodifiableList(\n                    new ArrayList<ResolutionAction>(actions));\n        }\n\n        public String getCode() {\n            return code;\n        }\n\n        public String getReason() {\n            return reason;\n        }\n\n        public int getTargetLevel() {\n            return targetLevel;\n        }\n\n        public String getStorage() {\n            return storage;\n        }\n\n        public List<CollisionWitness> getCollisions() {\n            return collisions;\n        }\n\n        public List<ResolutionAction> getActions() {\n            return actions;\n        }\n    }\n\n    /** Transport-neutral result of one canonical semantic dispatch. */\n    public static final class Result {\n        private final boolean handled;\n        private final boolean success;\n        private final IMind mind;\n        private final String description;\n        private final StorageStatus storageStatus;\n        private final Rejection rejection;\n\n        private Result(boolean handled,\n                       boolean success,\n                       IMind mind,\n                       String description,\n                       StorageStatus storageStatus,\n                       Rejection rejection) {\n            this.handled = handled;\n            this.success = success;\n            this.mind = mind;\n            this.description = description == null ? "" : description;\n            this.storageStatus = storageStatus;\n            this.rejection = rejection;\n        }\n\n        private static Result unhandled(IMind mind) {\n            return new Result(false, false, mind, "", null, null);\n        }\n\n        private static Result success(IMind mind, String description) {\n            return new Result(true, true, mind, description, null, null);\n        }\n\n        private static Result success(IMind mind,\n                                      String description,\n                                      StorageStatus storageStatus) {\n            return new Result(true, true, mind, description, storageStatus, null);\n        }\n\n        private static Result rejected(IMind mind, String description) {\n            return new Result(true, false, mind, description, null, null);\n        }\n\n        private static Result rejected(IMind mind,\n                                       String description,\n                                       Rejection rejection) {\n            return new Result(true, false, mind, description, null, rejection);\n        }\n\n        public boolean isHandled() {\n            return handled;\n        }\n\n        public boolean isSuccess() {\n            return success;\n        }\n\n        public IMind getMind() {\n            return mind;\n        }\n\n        public String getDescription() {\n            return description;\n        }\n\n        public StorageStatus getStorageStatus() {\n            return storageStatus;\n        }\n\n        public Rejection getRejection() {\n            return rejection;\n        }\n    }\n}\n'''
+          processor.write_text(prefix + tail)
+
+          # Browser/server JSON projection uses only shared rejection DTOs.
+          runtime = Path('kanger-server/src/org/kanger/CanonicalCommandRuntimeReactor.java')
+          text = runtime.read_text()
+          anchor = '''            if (!outcome.getDescription().isEmpty()) {\n                result.put("description", outcome.getDescription());\n            }\n            CanonicalCommandProcessor.StorageStatus storage =\n'''
+          replacement = '''            if (!outcome.getDescription().isEmpty()) {\n                result.put("description", outcome.getDescription());\n            }\n            CanonicalCommandProcessor.Rejection rejection = outcome.getRejection();\n            if (rejection != null) {\n                result.put("code", rejection.getCode())\n                        .put("reason", rejection.getReason());\n                JSONObject detail = new JSONObject()\n                        .put("schema", 1)\n                        .put("kind", rejection.getCode())\n                        .put("target_level", rejection.getTargetLevel())\n                        .put("storage", rejection.getStorage() == null\n                                ? JSONObject.NULL : rejection.getStorage());\n                JSONArray collisions = new JSONArray();\n                for (CanonicalCommandProcessor.CollisionWitness witness\n                        : rejection.getCollisions()) {\n                    collisions.put(new JSONObject()\n                            .put("left", witness.getLeft())\n                            .put("right", witness.getRight()));\n                }\n                detail.put("collisions", collisions);\n                JSONArray actions = new JSONArray();\n                for (CanonicalCommandProcessor.ResolutionAction action\n                        : rejection.getActions()) {\n                    JSONObject one = new JSONObject()\n                            .put("id", action.getId())\n                            .put("description", action.getDescription());\n                    if (action.getCommand() != null) {\n                        one.put("command", action.getCommand());\n                    }\n                    actions.put(one);\n                }\n                detail.put("actions", actions);\n                result.put("rejection", detail);\n            }\n            CanonicalCommandProcessor.StorageStatus storage =\n'''
+          if text.count(anchor) != 1:
+              raise SystemExit('CanonicalCommandRuntimeReactor rejection projection anchor mismatch')
+          runtime.write_text(text.replace(anchor, replacement, 1))
+
+          # Console prints the same shared diagnostic object, never Analyzer logs.
+          console = Path('kanger-console/src/org/kanger/CanonicalConsole.java')
+          text = console.read_text()
+          anchor = '''                    if (!transaction.getDescription().isEmpty()) {\n                        System.out.println((transaction.isSuccess() ? "SUCCESS: " : "WARNING: ")\n                                + transaction.getDescription());\n                    }\n                }\n                showTransaction(mind);\n'''
+          replacement = '''                    if (!transaction.getDescription().isEmpty()) {\n                        System.out.println((transaction.isSuccess() ? "SUCCESS: " : "WARNING: ")\n                                + transaction.getDescription());\n                    }\n                    if (!transaction.isSuccess() && transaction.getRejection() != null) {\n                        showRejection(transaction.getRejection());\n                    }\n                }\n                showTransaction(mind);\n'''
+          if text.count(anchor) != 1:
+              raise SystemExit('CanonicalConsole rejection display anchor mismatch')
+          text = text.replace(anchor, replacement, 1)
+          method_anchor = '    private static void processCore(String line, IMind mind) throws Exception {\n'
+          method = '''    private static void showRejection(\n            CanonicalCommandProcessor.Rejection rejection) {\n        System.out.printf("REJECTED: %s [%s]%n",\n                rejection.getCode(), rejection.getReason());\n        for (CanonicalCommandProcessor.CollisionWitness witness\n                : rejection.getCollisions()) {\n            System.out.printf("  collision: %s <> %s%n",\n                    witness.getLeft(), witness.getRight());\n        }\n        System.out.println("  possible actions:");\n        for (CanonicalCommandProcessor.ResolutionAction action\n                : rejection.getActions()) {\n            System.out.printf("  - %s%s: %s%n",\n                    action.getId(),\n                    action.getCommand() == null ? "" : " [" + action.getCommand() + "]",\n                    action.getDescription());\n        }\n    }\n\n'''
+          if text.count(method_anchor) != 1:
+              raise SystemExit('CanonicalConsole method insertion anchor mismatch')
+          console.write_text(text.replace(method_anchor, method + method_anchor, 1))
+          PY
+
+          git diff --check
+          printf '%s\n' "$(git diff --name-only | sort)"
+          test "$(git diff --name-only | wc -l)" -eq 6
+
+      - name: Run focused rollback diagnostic qualification
+        run: >-
+          mvn -B -ntp -f kanger-server/pom.xml
+          -Dtest=RollbackRejectionDiagnosticTest,QualifiedRollbackAfterStorageRebaseTest,TransactionSquashConvergenceTest,QualifiedCommitAfterStorageRebaseTest
+          test
+
+      - name: Publish ready diagnostics commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "KANGER qualification bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add kanger/src/org/kanger/ContextQualification.java \
+                  kanger/src/org/kanger/Analyzer.java \
+                  kanger/src/org/kanger/Mind.java \
+                  kanger/src/org/kanger/CanonicalCommandProcessor.java \
+                  kanger-server/src/org/kanger/CanonicalCommandRuntimeReactor.java \
+                  kanger-console/src/org/kanger/CanonicalConsole.java
+          git commit -m "feat(transaction): explain rejected rollback"
+          git push --force origin HEAD:refs/heads/tmp/3.7.0.20-rollback-diagnostics-ready
