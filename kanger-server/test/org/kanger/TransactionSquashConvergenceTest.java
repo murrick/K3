@@ -6,7 +6,9 @@
 package org.kanger;
 
 import org.junit.jupiter.api.Test;
+import org.kanger.command.CommandFormatter;
 import org.kanger.command.CommandInvocation;
+import org.kanger.command.CommandParseException;
 import org.kanger.command.CommandParser;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IRule;
@@ -21,6 +23,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Qualification for explicit user-owned transaction history squash. */
@@ -28,9 +31,18 @@ class TransactionSquashConvergenceTest {
 
     @Test
     void parserRecognizesCanonicalTransactionSquash() throws Exception {
-        CommandInvocation invocation = new CommandParser().parse("transaction squash");
+        CommandParser parser = new CommandParser();
+        CommandInvocation invocation = parser.parse("transaction squash");
         assertEquals("TX_SQUASH", invocation.getIntent().name());
         assertFalse(invocation.isCoreLanguage());
+        assertEquals("transaction squash", new CommandFormatter().format(invocation));
+        assertEquals("TX_START", parser.parse("transaction st").getIntent().name());
+        assertEquals("TX_SQUASH", parser.parse("transaction sq").getIntent().name());
+
+        CommandParseException ambiguous = assertThrows(
+                CommandParseException.class,
+                () -> parser.parse("transaction s"));
+        assertEquals("AMBIGUOUS_PREFIX", ambiguous.getReason().name());
     }
 
     @Test
