@@ -28,11 +28,25 @@ jobs:
           from pathlib import Path
           path = Path('kanger-command/test/org/kanger/command/CommandParserConformanceTest.java')
           text = path.read_text()
-          old = '''        expect("transaction", CommandIntent.TX_STATUS);\n        expect("t s", CommandIntent.TX_START);\n        expect("t c", CommandIntent.TX_COMMIT);\n        expect("t r", CommandIntent.TX_ROLLBACK);\n'''
-          new = '''        expect("transaction", CommandIntent.TX_STATUS);\n        expect("t st", CommandIntent.TX_START);\n        expect("t c", CommandIntent.TX_COMMIT);\n        expect("t r", CommandIntent.TX_ROLLBACK);\n        expect("t sq", CommandIntent.TX_SQUASH);\n        reject("t s", AMBIGUOUS_PREFIX);\n'''
-          if text.count(old) != 1:
-              raise SystemExit('transaction conformance anchor mismatch')
-          path.write_text(text.replace(old, new, 1))
+
+          old_family = '''        expect("transaction", CommandIntent.TX_STATUS);\n        expect("t s", CommandIntent.TX_START);\n        expect("t c", CommandIntent.TX_COMMIT);\n        expect("t r", CommandIntent.TX_ROLLBACK);\n'''
+          new_family = '''        expect("transaction", CommandIntent.TX_STATUS);\n        expect("t st", CommandIntent.TX_START);\n        expect("t c", CommandIntent.TX_COMMIT);\n        expect("t r", CommandIntent.TX_ROLLBACK);\n        expect("t sq", CommandIntent.TX_SQUASH);\n        reject("t s", AMBIGUOUS_PREFIX);\n'''
+          if text.count(old_family) != 1:
+              raise SystemExit('transaction family conformance anchor mismatch')
+          text = text.replace(old_family, new_family, 1)
+
+          old_echo = '''        expectCanonical("t s", "transaction start");\n        expectCanonical("c", "transaction commit");\n'''
+          new_echo = '''        expectCanonical("t st", "transaction start");\n        expectCanonical("t sq", "transaction squash");\n        expectCanonical("c", "transaction commit");\n'''
+          if text.count(old_echo) != 1:
+              raise SystemExit('transaction canonical echo anchor mismatch')
+          text = text.replace(old_echo, new_echo, 1)
+
+          if '"t s"' in text:
+              occurrences = [line for line in text.splitlines() if '"t s"' in line]
+              if occurrences != ['        reject("t s", AMBIGUOUS_PREFIX);']:
+                  raise SystemExit('unexpected stale t s occurrence(s): ' + repr(occurrences))
+
+          path.write_text(text)
           PY
           git diff --check
           test "$(git diff --name-only)" = "kanger-command/test/org/kanger/command/CommandParserConformanceTest.java"
