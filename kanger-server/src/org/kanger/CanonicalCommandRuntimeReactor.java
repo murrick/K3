@@ -107,6 +107,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             case STORAGE_STATUS:
             case STORAGE_USE:
             case STORAGE_CLOSE:
+            case STORAGE_DROP:
                 result = executeShared(invocation, user);
                 break;
             case HELP:
