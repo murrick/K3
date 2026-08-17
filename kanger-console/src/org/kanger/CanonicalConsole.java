@@ -261,6 +261,7 @@ public final class CanonicalConsole {
 
             case STORAGE_STATUS:
             case STORAGE_USE:
+            case STORAGE_CLOSE:
                 CanonicalCommandProcessor.Result storage =
                         COMMAND_PROCESSOR.execute(invocation, mind.getUser());
                 if (!storage.isHandled() || storage.getStorageStatus() == null) {
@@ -268,11 +269,14 @@ public final class CanonicalConsole {
                             + invocation.getIntent());
                 }
                 mind = track(shutdownHook, storage.getMind());
-                showStorage(storage.getStorageStatus());
+                if (invocation.getIntent() == org.kanger.command.CommandIntent.STORAGE_CLOSE) {
+                    if (!storage.getDescription().isEmpty()) {
+                        System.out.println(storage.getDescription());
+                    }
+                } else {
+                    showStorage(storage.getStorageStatus());
+                }
                 return same(mind);
-            case STORAGE_CLOSE:
-                mind = closeStorage(mind);
-                return same(track(shutdownHook, mind));
             case STORAGE_DROP:
                 mind = dropStorage(mind, String.valueOf(invocation.getArgument("name")), scanner);
                 return same(track(shutdownHook, mind));
@@ -681,17 +685,6 @@ public final class CanonicalConsole {
 
     private static String storageName(String name) {
         return name.replace(".", Enums.FILE_SEPARATOR);
-    }
-
-    private static IMind closeStorage(IMind mind) throws Exception {
-        if (!mind.isStorageUsed()) {
-            System.out.println("No database used");
-            return mind;
-        }
-        String name = mind.getStorageName();
-        IMind closed = mind.closeStorage();
-        System.out.println("Database " + name + " closed");
-        return closed;
     }
 
     private static IMind dropStorage(IMind mind, String logicalName, Scanner scanner) throws Exception {

@@ -39,7 +39,8 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.TX_COMMIT
                 || intent == CommandIntent.TX_ROLLBACK
                 || intent == CommandIntent.STORAGE_STATUS
-                || intent == CommandIntent.STORAGE_USE;
+                || intent == CommandIntent.STORAGE_USE
+                || intent == CommandIntent.STORAGE_CLOSE;
     }
 
     public Result execute(CommandInvocation invocation, IUser user) throws Exception {
@@ -87,6 +88,18 @@ public final class CanonicalCommandProcessor {
                 return Result.success(mind,
                         "Current storage: " + used.getCurrent(),
                         used);
+
+            case STORAGE_CLOSE:
+                boolean wasUsed = mind.isStorageUsed();
+                String previousStorage = wasUsed ? mind.getStorageName() : null;
+                mind = user.close(mind);
+                user.setCurrentMind(mind);
+                StorageStatus closed = storageStatus(mind);
+                return Result.success(mind,
+                        wasUsed
+                                ? "Database " + previousStorage + " closed"
+                                : "No database used",
+                        closed);
 
             default:
                 return Result.unhandled(mind);
