@@ -28,8 +28,8 @@ jobs:
           from pathlib import Path
           path = Path('kanger-qualification/src/org/kanger/KangerConsoleLifecycleBindingRunner.java')
           text = path.read_text()
-          start_anchor = '''            /*\n             * Console close must delegate directly to Core. A non-empty\n'''
-          end_anchor = '''            require(!mind.isStorageUsed(),\n                    "qualification storage did not close cleanly");\n'''
+          start_anchor = "            /*\n             * Console close must delegate directly to Core. A non-empty\n"
+          end_anchor = "            require(!mind.isStorageUsed(),\n                    \"qualification storage did not close cleanly\");\n"
           start = text.find(start_anchor)
           if start < 0:
               raise SystemExit('Console active-close start anchor missing')
@@ -37,35 +37,37 @@ jobs:
           if end_start < 0:
               raise SystemExit('Console active-close end anchor missing')
           end = end_start + len(end_anchor)
-          replacement = '''            /*
-             * Console close delegates directly to Core. An explicit active
-             * user transaction is rebased over an empty offline U0 without
-             * changing the user-visible boundary; rollback remains explicit.
-             */
-            IMind child = new Mind(mind);
-            query(processQuery, "!consoleactive;", child);
-
-            child = close(closeDatabase, child);
-            require(child.getTransactionLevel() == 1,
-                    "Console close changed active transaction level");
-            require(!child.isStorageUsed(),
-                    "Console close retained the physical storage");
-            require(Boolean.TRUE.equals(child.query("?consoleactive;")),
-                    "Console close lost active transaction semantics");
-
-            child = process(
-                    processTransaction,
-                    "transaction rollback",
-                    child);
-            require(child.getTransactionLevel() == 0,
-                    "Console rollback after close did not return to offline U0");
-            require(!child.isStorageUsed(),
-                    "Console rollback after close reattached storage");
-            require(!Boolean.TRUE.equals(child.query("?consoleactive;")),
-                    "Console rollback after close retained transient semantics");
-
-            mind = child;
-'''
+          replacement = "\n".join([
+              "            /*",
+              "             * Console close delegates directly to Core. An explicit active",
+              "             * user transaction is rebased over an empty offline U0 without",
+              "             * changing the user-visible boundary; rollback remains explicit.",
+              "             */",
+              "            IMind child = new Mind(mind);",
+              "            query(processQuery, \"!consoleactive;\", child);",
+              "",
+              "            child = close(closeDatabase, child);",
+              "            require(child.getTransactionLevel() == 1,",
+              "                    \"Console close changed active transaction level\");",
+              "            require(!child.isStorageUsed(),",
+              "                    \"Console close retained the physical storage\");",
+              "            require(Boolean.TRUE.equals(child.query(\"?consoleactive;\")),",
+              "                    \"Console close lost active transaction semantics\");",
+              "",
+              "            child = process(",
+              "                    processTransaction,",
+              "                    \"transaction rollback\",",
+              "                    child);",
+              "            require(child.getTransactionLevel() == 0,",
+              "                    \"Console rollback after close did not return to offline U0\");",
+              "            require(!child.isStorageUsed(),",
+              "                    \"Console rollback after close reattached storage\");",
+              "            require(!Boolean.TRUE.equals(child.query(\"?consoleactive;\")),",
+              "                    \"Console rollback after close retained transient semantics\");",
+              "",
+              "            mind = child;",
+              ""
+          ])
           text = text[:start] + replacement + text[end:]
           old_label = 'CONSOLE_LIFECYCLE_BINDING_PASS typed-active-close'
           new_label = 'CONSOLE_LIFECYCLE_BINDING_PASS active-close-rebase'
