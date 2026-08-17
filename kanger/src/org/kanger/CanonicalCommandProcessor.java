@@ -135,9 +135,44 @@ public final class CanonicalCommandProcessor {
         if (parent == null) {
             return Result.rejected(mind, "No transactions was created");
         }
-        if (!Boolean.TRUE.equals(((Mind) parent).queryCheck(false))) {
-            return Result.rejected(mind,
-                    "Transaction rollback rejected: target context conflicts with current storage baseline");
+
+        ContextQualification qualification =
+                ((Mind) parent).qualifyCurrentContext(false);
+        if (!qualification.isValid()) {
+            List<CollisionWitness> collisions = new ArrayList<CollisionWitness>();
+            for (ContextQualification.CollisionWitness witness
+                    : qualification.getCollisions()) {
+                collisions.add(new CollisionWitness(
+                        witness.getLeft(), witness.getRight()));
+            }
+            String reason = collisions.isEmpty()
+                    ? "TARGET_CONTEXT_INVALID"
+                    : "STORAGE_BASELINE_COLLISION";
+            List<ResolutionAction> actions = new ArrayList<ResolutionAction>();
+            actions.add(new ResolutionAction(
+                    "USE_COMPATIBLE_STORAGE", null,
+                    "Use a storage baseline compatible with the rollback target, then retry rollback."));
+            actions.add(new ResolutionAction(
+                    "TRANSACTION_SQUASH", "transaction squash",
+                    "Keep the current effective context and intentionally discard older rollback history."));
+            actions.add(new ResolutionAction(
+                    "TRANSACTION_COMMIT", "transaction commit",
+                    "Keep the current transaction by merging it into the historical parent level."));
+
+            Rejection rejection = new Rejection(
+                    "ROLLBACK_REBASE_CONFLICT",
+                    reason,
+                    parent.getTransactionLevel(),
+                    parent.isStorageUsed() ? parent.getStorageName() : null,
+                    collisions,
+                    actions);
+            String description =
+                    "Transaction rollback rejected: target context conflicts with current storage baseline";
+            if (!collisions.isEmpty()) {
+                CollisionWitness first = collisions.get(0);
+                description += " (" + first.getLeft() + " <> " + first.getRight() + ")";
+            }
+            return Result.rejected(mind, description, rejection);
         }
         parent.release(mind);
         user.setCurrentMind(parent);
@@ -178,6 +213,100 @@ public final class CanonicalCommandProcessor {
         }
     }
 
+    /** One exact semantic collision witness. */
+    public static final class CollisionWitness {
+        private final String left;
+        private final String right;
+
+        private CollisionWitness(String left, String right) {
+            this.left = left == null ? "" : left;
+            this.right = right == null ? "" : right;
+        }
+
+        public String getLeft() {
+            return left;
+        }
+
+        public String getRight() {
+            return right;
+        }
+    }
+
+    /** User-controlled resolution offered for a semantic rejection. */
+    public static final class ResolutionAction {
+        private final String id;
+        private final String command;
+        private final String description;
+
+        private ResolutionAction(String id, String command, String description) {
+            this.id = id;
+            this.command = command;
+            this.description = description;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public String getCommand() {
+            return command;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+    }
+
+    /** Transport-neutral typed semantic rejection. */
+    public static final class Rejection {
+        private final String code;
+        private final String reason;
+        private final int targetLevel;
+        private final String storage;
+        private final List<CollisionWitness> collisions;
+        private final List<ResolutionAction> actions;
+
+        private Rejection(String code,
+                          String reason,
+                          int targetLevel,
+                          String storage,
+                          List<CollisionWitness> collisions,
+                          List<ResolutionAction> actions) {
+            this.code = code;
+            this.reason = reason;
+            this.targetLevel = targetLevel;
+            this.storage = storage;
+            this.collisions = Collections.unmodifiableList(
+                    new ArrayList<CollisionWitness>(collisions));
+            this.actions = Collections.unmodifiableList(
+                    new ArrayList<ResolutionAction>(actions));
+        }
+
+        public String getCode() {
+            return code;
+        }
+
+        public String getReason() {
+            return reason;
+        }
+
+        public int getTargetLevel() {
+            return targetLevel;
+        }
+
+        public String getStorage() {
+            return storage;
+        }
+
+        public List<CollisionWitness> getCollisions() {
+            return collisions;
+        }
+
+        public List<ResolutionAction> getActions() {
+            return actions;
+        }
+    }
+
     /** Transport-neutral result of one canonical semantic dispatch. */
     public static final class Result {
         private final boolean handled;
@@ -185,35 +314,44 @@ public final class CanonicalCommandProcessor {
         private final IMind mind;
         private final String description;
         private final StorageStatus storageStatus;
+        private final Rejection rejection;
 
         private Result(boolean handled,
                        boolean success,
                        IMind mind,
                        String description,
-                       StorageStatus storageStatus) {
+                       StorageStatus storageStatus,
+                       Rejection rejection) {
             this.handled = handled;
             this.success = success;
             this.mind = mind;
             this.description = description == null ? "" : description;
             this.storageStatus = storageStatus;
+            this.rejection = rejection;
         }
 
         private static Result unhandled(IMind mind) {
-            return new Result(false, false, mind, "", null);
+            return new Result(false, false, mind, "", null, null);
         }
 
         private static Result success(IMind mind, String description) {
-            return new Result(true, true, mind, description, null);
+            return new Result(true, true, mind, description, null, null);
         }
 
         private static Result success(IMind mind,
                                       String description,
                                       StorageStatus storageStatus) {
-            return new Result(true, true, mind, description, storageStatus);
+            return new Result(true, true, mind, description, storageStatus, null);
         }
 
         private static Result rejected(IMind mind, String description) {
-            return new Result(true, false, mind, description, null);
+            return new Result(true, false, mind, description, null, null);
+        }
+
+        private static Result rejected(IMind mind,
+                                       String description,
+                                       Rejection rejection) {
+            return new Result(true, false, mind, description, null, rejection);
         }
 
         public boolean isHandled() {
@@ -234,6 +372,10 @@ public final class CanonicalCommandProcessor {
 
         public StorageStatus getStorageStatus() {
             return storageStatus;
+        }
+
+        public Rejection getRejection() {
+            return rejection;
         }
     }
 }

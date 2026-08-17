@@ -167,6 +167,38 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             if (!outcome.getDescription().isEmpty()) {
                 result.put("description", outcome.getDescription());
             }
+            CanonicalCommandProcessor.Rejection rejection = outcome.getRejection();
+            if (rejection != null) {
+                result.put("code", rejection.getCode())
+                        .put("reason", rejection.getReason());
+                JSONObject detail = new JSONObject()
+                        .put("schema", 1)
+                        .put("kind", rejection.getCode())
+                        .put("target_level", rejection.getTargetLevel())
+                        .put("storage", rejection.getStorage() == null
+                                ? JSONObject.NULL : rejection.getStorage());
+                JSONArray collisions = new JSONArray();
+                for (CanonicalCommandProcessor.CollisionWitness witness
+                        : rejection.getCollisions()) {
+                    collisions.put(new JSONObject()
+                            .put("left", witness.getLeft())
+                            .put("right", witness.getRight()));
+                }
+                detail.put("collisions", collisions);
+                JSONArray actions = new JSONArray();
+                for (CanonicalCommandProcessor.ResolutionAction action
+                        : rejection.getActions()) {
+                    JSONObject one = new JSONObject()
+                            .put("id", action.getId())
+                            .put("description", action.getDescription());
+                    if (action.getCommand() != null) {
+                        one.put("command", action.getCommand());
+                    }
+                    actions.put(one);
+                }
+                detail.put("actions", actions);
+                result.put("rejection", detail);
+            }
             CanonicalCommandProcessor.StorageStatus storage =
                     outcome.getStorageStatus();
             if (storage != null) {

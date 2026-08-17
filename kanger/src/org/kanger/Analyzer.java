@@ -99,6 +99,8 @@ public class Analyzer {
 
     private final transient Mind mind;
     private final LogStore log;
+    private final List<ContextQualification.CollisionWitness> collisions =
+            new ArrayList<ContextQualification.CollisionWitness>();
 
     public Analyzer(Mind mind) {
         this.mind = mind;
@@ -108,6 +110,7 @@ public class Analyzer {
 
     public boolean analyze(Rule rule, boolean logging) throws Exception {
         boolean result = false;
+        collisions.clear();
 
         long start = System.currentTimeMillis();
 
@@ -231,6 +234,7 @@ public class Analyzer {
                     }
                     if (p.getDomain().equalsBase(((Rule) q).getDomain())
                             && p.getDomain().isAntc() != ((Rule) q).getDomain().isAntc()) {
+                        recordCollision(p, (Rule) q);
                         if (p.getDomain().isQuery(mind) && p.getArguments().getCVariables(mind).isEmpty()) {
                             mind.getSolutions().add(q);
                             mind.getValues().add(p.getSolves());
@@ -270,6 +274,28 @@ public class Analyzer {
             }
         }
         return result;
+    }
+
+
+    private void recordCollision(Rule left, Rule right) throws Exception {
+        ContextQualification.CollisionWitness witness =
+                new ContextQualification.CollisionWitness(
+                        diagnosticRule(left), diagnosticRule(right));
+        if (!collisions.contains(witness)) {
+            collisions.add(witness);
+        }
+    }
+
+    private String diagnosticRule(Rule rule) throws Exception {
+        String origin = rule.getOrigin();
+        if (origin != null && !origin.trim().isEmpty()) {
+            return origin.trim();
+        }
+        return rule.getDomain().toString(mind);
+    }
+
+    List<ContextQualification.CollisionWitness> getCollisionWitnesses() {
+        return new ArrayList<ContextQualification.CollisionWitness>(collisions);
     }
 
     public boolean checkDatabase(Set<Long> list, boolean logging) throws Exception {

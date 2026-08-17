@@ -1355,48 +1355,53 @@ public class Mind implements IMind {
         return res;
     }
 
-    public Boolean queryCheck(boolean logging) throws Exception {
-        Boolean res = null;
+    ContextQualification qualifyCurrentContext(boolean logging) throws Exception {
+        ContextQualification result;
 
         try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
             Mind m = tx.mind();
             m.setQueryPass(QueryPass.CHECK);
             boolean found = false;
             for (IRule rx : m.getRules()) {
-                if (/*!rx.isDeleted(m) && */rx.isGenerated()) {
+                if (rx.isGenerated()) {
                     if (logging) {
-                        m.getLog().add(LogMode.STORAGE, "Delete produced rule: " + String.format("%03d: %s", rx.getId(), rx));
+                        m.getLog().add(LogMode.STORAGE,
+                                "Delete produced rule: " + String.format("%03d: %s", rx.getId(), rx));
                     }
                     ((Rule) rx).setDeleted(true, m);
                     found = true;
                 }
             }
-            if (found) {
-                if (logging) {
-                    m.getLog().add(LogMode.STORAGE, "-------------------------------------------");
-                }
+            if (found && logging) {
+                m.getLog().add(LogMode.STORAGE, "-------------------------------------------");
             }
 
             m.link(null, logging);
-            Boolean ar = m.analyze(null, logging);
+            boolean collision = m.analyze(null, logging);
+            List<ContextQualification.CollisionWitness> witnesses =
+                    m.analyzer.getCollisionWitnesses();
 
-            if (ar) {
+            if (collision) {
                 if (logging) {
                     m.getLog().add(LogMode.ANALYZER, "ERROR: Collisions in Program");
                 }
                 tx.rollback();
-                res = false;
+                result = new ContextQualification(false, witnesses);
             } else {
                 if (logging) {
                     m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
                 }
                 tx.commit();
-                res = true;
+                result = new ContextQualification(true, witnesses);
             }
             hypothesis.clear();
             tempHypothesis.clear();
-            return res;
         }
+        return result;
+    }
+
+    public Boolean queryCheck(boolean logging) throws Exception {
+        return qualifyCurrentContext(logging).isValid();
     }
 
     public Boolean queryCheckFalse(String line, Object[] ext, boolean logging) throws Exception {

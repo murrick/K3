@@ -246,6 +246,9 @@ public final class CanonicalConsole {
                         System.out.println((transaction.isSuccess() ? "SUCCESS: " : "WARNING: ")
                                 + transaction.getDescription());
                     }
+                    if (!transaction.isSuccess() && transaction.getRejection() != null) {
+                        showRejection(transaction.getRejection());
+                    }
                 }
                 showTransaction(mind);
                 return same(mind);
@@ -297,6 +300,25 @@ public final class CanonicalConsole {
             default:
                 throw new CommandErrorException("Unsupported canonical intent "
                         + invocation.getIntent());
+        }
+    }
+
+    private static void showRejection(
+            CanonicalCommandProcessor.Rejection rejection) {
+        System.out.printf("REJECTED: %s [%s]%n",
+                rejection.getCode(), rejection.getReason());
+        for (CanonicalCommandProcessor.CollisionWitness witness
+                : rejection.getCollisions()) {
+            System.out.printf("  collision: %s <> %s%n",
+                    witness.getLeft(), witness.getRight());
+        }
+        System.out.println("  possible actions:");
+        for (CanonicalCommandProcessor.ResolutionAction action
+                : rejection.getActions()) {
+            System.out.printf("  - %s%s: %s%n",
+                    action.getId(),
+                    action.getCommand() == null ? "" : " [" + action.getCommand() + "]",
+                    action.getDescription());
         }
     }
 
