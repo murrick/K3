@@ -1,0 +1,132 @@
+name: Transaction squash carrier
+
+on:
+  push:
+    branches:
+      - tmp/3.7.0.20-transaction-squash-carrier
+    paths:
+      - .github/workflows/transaction-squash-carrier.yml
+
+permissions:
+  contents: write
+
+jobs:
+  qualify-and-publish-ready:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out exact RED parent
+        uses: actions/checkout@v5
+        with:
+          ref: 3e6ffb7676ff900ba8553fc547b78049ea8f1f1e
+          fetch-depth: 0
+
+      - name: Apply canonical transaction squash
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new, label):
+              text = path.read_text()
+              if text.count(old) != 1:
+                  raise SystemExit(f'{label}: expected one anchor, got {text.count(old)}')
+              path.write_text(text.replace(old, new, 1))
+
+          # Command intent.
+          path = Path('kanger-command/src/org/kanger/command/CommandIntent.java')
+          replace_once(path,
+              '    TX_COMMIT,\n    TX_ROLLBACK,\n',
+              '    TX_COMMIT,\n    TX_ROLLBACK,\n    TX_SQUASH,\n',
+              'CommandIntent TX_SQUASH')
+
+          # Registry keyword, grammar metadata and help.
+          path = Path('kanger-command/src/org/kanger/command/CommandRegistry.java')
+          replace_once(path,
+              '        COMMIT,\n        ROLLBACK,\n        USE,\n',
+              '        COMMIT,\n        ROLLBACK,\n        SQUASH,\n        USE,\n',
+              'CommandRegistry Keyword.SQUASH')
+          replace_once(path,
+              '        keyword(Family.TRANSACTION, Keyword.COMMIT, "commit");\n        keyword(Family.TRANSACTION, Keyword.ROLLBACK, "rollback");\n',
+              '        keyword(Family.TRANSACTION, Keyword.COMMIT, "commit");\n        keyword(Family.TRANSACTION, Keyword.ROLLBACK, "rollback");\n        keyword(Family.TRANSACTION, Keyword.SQUASH, "squash");\n',
+              'CommandRegistry transaction squash keyword')
+          replace_once(path,
+              '        define(CommandIntent.TX_ROLLBACK, "transaction rollback", "TRANSACTION", "Rollback the current child transaction.",\n                noArgs(), n++);\n',
+              '        define(CommandIntent.TX_ROLLBACK, "transaction rollback", "TRANSACTION", "Rollback the current child transaction.",\n                noArgs(), n++);\n        define(CommandIntent.TX_SQUASH, "transaction squash", "TRANSACTION",\n                "Collapse all explicit transaction history above U0 into one U1 without changing U0.",\n                noArgs(), n++);\n',
+              'CommandRegistry transaction squash definition')
+
+          # Parser production.
+          path = Path('kanger-command/src/org/kanger/command/CommandParser.java')
+          replace_once(path,
+              '                Keyword.START, Keyword.COMMIT, Keyword.ROLLBACK);\n',
+              '                Keyword.START, Keyword.COMMIT, Keyword.ROLLBACK, Keyword.SQUASH);\n',
+              'CommandParser transaction keyword set')
+          replace_once(path,
+              '            case ROLLBACK:\n                return CommandInvocation.command(CommandIntent.TX_ROLLBACK, raw);\n            default:\n',
+              '            case ROLLBACK:\n                return CommandInvocation.command(CommandIntent.TX_ROLLBACK, raw);\n            case SQUASH:\n                return CommandInvocation.command(CommandIntent.TX_SQUASH, raw);\n            default:\n',
+              'CommandParser squash switch')
+
+          # Atomic sibling-candidate squash over the existing root.
+          path = Path('kanger/src/org/kanger/UserTransactionStackSnapshot.java')
+          anchor = '''    static Mind rollbackToRoot(Mind top) throws Exception {\n'''
+          method = '''    /**\n     * Collapses all explicit user transaction levels above U0 into exactly\n     * one live U1 while leaving the root baseline untouched. The original\n     * stack remains published until a fully replayed and qualified sibling\n     * candidate has been reduced to one level.\n     */\n    static Mind squash(Mind top) throws Exception {\n        if (top == null) {\n            throw new IllegalArgumentException("Transaction squash requires a current Mind");\n        }\n        if (top.getTransactionLevel() <= 1) {\n            return top;\n        }\n\n        requireExplicitSquashTopology(top);\n        Mind root = (Mind) top.getTop();\n        UserTransactionStackSnapshot snapshot = capture(top);\n        Mind candidate = null;\n\n        try {\n            candidate = snapshot.replay(root);\n            while (candidate.getNext() != root) {\n                Mind parent = (Mind) candidate.getNext();\n                if (!parent.commitUserTransaction(candidate)) {\n                    throw new IllegalStateException(\n                            "Transaction squash candidate commit was rejected");\n                }\n                candidate = parent;\n            }\n\n            if (candidate.getTransactionLevel() != 1\n                    || !Boolean.TRUE.equals(candidate.queryCheck(false))) {\n                throw new IllegalStateException(\n                        "Transaction squash candidate is not a valid U1 context");\n            }\n\n            /*\n             * The sibling candidate keeps one root reservation alive while\n             * the old chain is discarded, so no root pack/update/flush can be\n             * triggered by the intermediate releases.\n             */\n            rollbackToRoot(top);\n            return candidate;\n        } catch (Throwable failure) {\n            Throwable propagated = failure;\n            if (candidate != null) {\n                try {\n                    rollbackToRoot(candidate);\n                } catch (Throwable cleanupFailure) {\n                    if (cleanupFailure != failure) {\n                        propagated.addSuppressed(cleanupFailure);\n                    }\n                }\n            }\n            rethrow(propagated);\n            throw new AssertionError("unreachable");\n        }\n    }\n\n    private static void requireExplicitSquashTopology(Mind top) {\n        Mind current = top;\n        if (current.pendingTransactionCount() != 0) {\n            throw new IllegalStateException(\n                    "Cannot squash transaction stack with hidden children at published U"\n                            + top.getTransactionLevel());\n        }\n\n        int level = top.getTransactionLevel();\n        while (current.getNext() != null) {\n            Mind parent = (Mind) current.getNext();\n            if (parent.pendingTransactionCount() != 1) {\n                throw new IllegalStateException(\n                        "Cannot squash transaction stack: U" + (level - 1)\n                                + " does not exclusively own U" + level);\n            }\n            current = parent;\n            --level;\n        }\n    }\n\n'''
+          text = path.read_text()
+          if text.count(anchor) != 1:
+              raise SystemExit('UserTransactionStackSnapshot squash insertion anchor mismatch')
+          path.write_text(text.replace(anchor, method + anchor, 1))
+
+          # Shared semantic processor.
+          path = Path('kanger/src/org/kanger/CanonicalCommandProcessor.java')
+          replace_once(path,
+              '                || intent == CommandIntent.TX_COMMIT\n                || intent == CommandIntent.TX_ROLLBACK\n',
+              '                || intent == CommandIntent.TX_COMMIT\n                || intent == CommandIntent.TX_ROLLBACK\n                || intent == CommandIntent.TX_SQUASH\n',
+              'CanonicalCommandProcessor handles squash')
+          replace_once(path,
+              '            case TX_ROLLBACK:\n                return rollback(user, mind);\n\n            case STORAGE_STATUS:\n',
+              '            case TX_ROLLBACK:\n                return rollback(user, mind);\n\n            case TX_SQUASH:\n                if (mind.getTransactionLevel() <= 1) {\n                    return Result.success(mind, "Transaction stack already compact");\n                }\n                mind = UserTransactionStackSnapshot.squash((Mind) mind);\n                user.setCurrentMind(mind);\n                return Result.success(mind, "Transaction history squashed");\n\n            case STORAGE_STATUS:\n',
+              'CanonicalCommandProcessor execute squash')
+
+          # Console presentation remains an adapter over the same processor.
+          path = Path('kanger-console/src/org/kanger/CanonicalConsole.java')
+          replace_once(path,
+              '            case TX_COMMIT:\n            case TX_ROLLBACK:\n                CanonicalCommandProcessor.Result transaction =\n',
+              '            case TX_COMMIT:\n            case TX_ROLLBACK:\n            case TX_SQUASH:\n                CanonicalCommandProcessor.Result transaction =\n',
+              'CanonicalConsole dispatch squash')
+          replace_once(path,
+              '                if (invocation.getIntent() == org.kanger.command.CommandIntent.TX_COMMIT\n                        || invocation.getIntent() == org.kanger.command.CommandIntent.TX_ROLLBACK) {\n',
+              '                if (invocation.getIntent() == org.kanger.command.CommandIntent.TX_COMMIT\n                        || invocation.getIntent() == org.kanger.command.CommandIntent.TX_ROLLBACK\n                        || invocation.getIntent() == org.kanger.command.CommandIntent.TX_SQUASH) {\n',
+              'CanonicalConsole squash description')
+
+          # Browser/server runtime only binds the new intent to the shared processor.
+          path = Path('kanger-server/src/org/kanger/CanonicalCommandRuntimeReactor.java')
+          replace_once(path,
+              '            case TX_COMMIT:\n            case TX_ROLLBACK:\n            case STORAGE_STATUS:\n',
+              '            case TX_COMMIT:\n            case TX_ROLLBACK:\n            case TX_SQUASH:\n            case STORAGE_STATUS:\n',
+              'CanonicalCommandRuntimeReactor squash binding')
+
+          PY
+          git diff --check
+          printf '%s\n' "$(git diff --name-only | sort)"
+          test "$(git diff --name-only | wc -l)" -eq 7
+
+      - name: Run focused squash qualification
+        run: >-
+          mvn -B -ntp -f kanger-server/pom.xml
+          -Dtest=TransactionSquashConvergenceTest,QualifiedRollbackAfterStorageRebaseTest,QualifiedCommitAfterStorageRebaseTest,StorageCloseRebaseTransactionStackTest
+          test
+
+      - name: Publish ready implementation commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "KANGER qualification bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add kanger-command/src/org/kanger/command/CommandIntent.java \
+                  kanger-command/src/org/kanger/command/CommandRegistry.java \
+                  kanger-command/src/org/kanger/command/CommandParser.java \
+                  kanger/src/org/kanger/UserTransactionStackSnapshot.java \
+                  kanger/src/org/kanger/CanonicalCommandProcessor.java \
+                  kanger-console/src/org/kanger/CanonicalConsole.java \
+                  kanger-server/src/org/kanger/CanonicalCommandRuntimeReactor.java
+          git commit -m "feat(transaction): add explicit squash"
+          git push --force origin HEAD:refs/heads/tmp/3.7.0.20-transaction-squash-ready
