@@ -210,6 +210,36 @@ class CanonicalStorageReindexConvergenceTest {
     }
 
     @Test
+    void closedWorkspaceSurvivesReindexWithoutStaleGenerationReferences()
+            throws Exception {
+        Fixture fixture = fixture("offline-workspace");
+        try {
+            CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
+            CommandParser parser = new CommandParser();
+            String logical = "reindex.offline." + UUID.randomUUID();
+
+            processor.execute(parser.parse("storage use " + logical), fixture.user);
+            processor.execute(parser.parse("storage close"), fixture.user);
+            assertTrue(Boolean.TRUE.equals(
+                    fixture.user.getCurrentMind().query("!offline_reindex_fact;")));
+
+            CanonicalCommandProcessor.Result reindexed = executeWithProgress(
+                    processor,
+                    parser.parse("storage reindex " + logical),
+                    fixture.user,
+                    null);
+
+            assertTrue(reindexed.isSuccess());
+            assertFalse(reindexed.getMind().isStorageUsed());
+            assertSame(reindexed.getMind(), fixture.user.getCurrentMind());
+            assertTrue(Boolean.TRUE.equals(
+                    reindexed.getMind().query("?offline_reindex_fact;")));
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
     void adaptersContainNoIndependentCanonicalReindexSemanticPath()
             throws Exception {
         String console = source("kanger-console/src/org/kanger/CanonicalConsole.java");
