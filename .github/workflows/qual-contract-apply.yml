@@ -1,0 +1,60 @@
+name: KANGER temporary qualification contract apply
+
+on:
+  push:
+    branches:
+      - tmp/3.7.0.20-qual-contract-patcher
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out patch carrier
+        uses: actions/checkout@v4
+        with:
+          path: carrier
+
+      - name: Check out exact target parent
+        uses: actions/checkout@v4
+        with:
+          ref: 66eac16b4847f38cc5d286395f3d95aa8c70fb69
+          fetch-depth: 0
+          path: target
+
+      - name: Verify and apply qualification patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C target rev-parse HEAD)" = "66eac16b4847f38cc5d286395f3d95aa8c70fb69"
+          echo "bac1bd3c852aa810c000e24654409638dc97cf6a7132c8d3c45122f37c93ecd9  carrier/qualification.patch" | sha256sum -c -
+          cd target
+          git apply --check ../carrier/qualification.patch
+          git apply ../carrier/qualification.patch
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            kanger-qualification/src/org/kanger/KangerCanonicalConsoleRunner.java \
+            kanger-qualification/src/org/kanger/KangerConsoleLifecycleBindingRunner.java | sort)"
+          test "$changed" = "$expected"
+
+      - name: Run qualification package
+        working-directory: target
+        run: mvn --batch-mode --no-transfer-progress -DskipTests clean package
+
+      - name: Create ready commit
+        working-directory: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "KANGER qualification bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add \
+            kanger-qualification/src/org/kanger/KangerCanonicalConsoleRunner.java \
+            kanger-qualification/src/org/kanger/KangerConsoleLifecycleBindingRunner.java
+          git diff --cached --check
+          git commit -m "test(storage): align qualification with U0 assimilation"
+          git push --force origin HEAD:refs/heads/tmp/3.7.0.20-qual-contract-ready
+          echo "READY_SHA=$(git rev-parse HEAD)"
