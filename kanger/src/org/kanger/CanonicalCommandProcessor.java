@@ -41,7 +41,8 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.TX_SQUASH
                 || intent == CommandIntent.STORAGE_STATUS
                 || intent == CommandIntent.STORAGE_USE
-                || intent == CommandIntent.STORAGE_CLOSE;
+                || intent == CommandIntent.STORAGE_CLOSE
+                || intent == CommandIntent.STORAGE_DROP;
     }
 
     public Result execute(CommandInvocation invocation, IUser user) throws Exception {
@@ -109,6 +110,16 @@ public final class CanonicalCommandProcessor {
                                 ? "Database " + previousStorage + " closed"
                                 : "No database used",
                         closed);
+
+            case STORAGE_DROP:
+                String dropLogicalName = String.valueOf(invocation.getArgument("name"));
+                String dropStorageName = dropLogicalName.replace(".", Enums.FILE_SEPARATOR);
+                mind = mind.removeStorage(dropStorageName);
+                user.setCurrentMind(mind);
+                StorageStatus dropped = storageStatus(mind);
+                return Result.success(mind,
+                        "Database " + dropLogicalName + " dropped",
+                        dropped);
 
             default:
                 return Result.unhandled(mind);
