@@ -177,10 +177,15 @@ class CanonicalCommandIngressReactorTest {
 
         reactor.run(dialogue("token-1", "st u close"));
 
-        assertEquals("command", context(capture.packet.get()));
+        assertEquals("canonical", context(capture.packet.get()));
         JSONObject parameters = parameters(capture.packet.get());
-        assertEquals("close", parameters.optString("use"));
+        assertFalse(parameters.has("use"));
         assertFalse(parameters.has("close"));
+        CommandInvocation invocation = CanonicalCommandIngressReactor.invocation(
+                capture.packet.get());
+        assertNotNull(invocation);
+        assertEquals(CommandIntent.STORAGE_USE, invocation.getIntent());
+        assertEquals("close", invocation.getArgument("name"));
     }
 
     @Test
