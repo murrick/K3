@@ -59,12 +59,13 @@ import java.util.*;
  * <p><strong>Жизненный цикл.</strong> Transaction lifecycle и physical storage
  * lifecycle являются независимыми state machines. {@link #use(IMind, String)}
  * атомарно ребейзит явный U-стек при смене storage и при первом подключении
- * storage под offline workspace. Непустой offline U0 сохраняется как новый U1;
- * пустой U0 заменяется persistent baseline без искусственного сдвига глубины.
- * Любой отказ replay восстанавливает исходный storage/offline state и U-стек.
- * {@link #checkpoint(IMind)} публикует durable root state, сохраняя storage и
- * runtime context открытыми; {@link #close(IMind)} не принимает решение за
- * незавершённую транзакцию и допустим только при transaction quiescence.</p>
+ * storage под offline workspace. Непустой offline U0 ассимилируется в
+ * persistent U0 без искусственного сдвига глубины, а явные U1..Un
+ * реконструируются поверх нового baseline. Любой отказ replay восстанавливает
+ * исходный storage/offline state и U-стек. {@link #checkpoint(IMind)} публикует
+ * durable root state, сохраняя storage и runtime context открытыми;
+ * {@link #close(IMind)} ребейзит persistent U0 в пустой offline U0, сохраняя
+ * явные U1..Un и квалифицируя только итоговый опубликованный top.</p>
  *
  * <p><strong>Persistence.</strong> При открытом хранилище идентификаторы схем
  * выделяются соответствующими {@code IBase}; без открытого хранилища
@@ -136,7 +137,7 @@ public class User implements IUser {
              * only appear healthy because legacy iterators swallow hydration
              * failures.
              */
-            mind = close(mind);
+            mind = closeQuiescentStorage((Mind) mind);
         }
         data.remove(name);
         return mind;
@@ -149,7 +150,7 @@ public class User implements IUser {
             reopened = false;
         } else {
             saveName = data.getStorageName();
-            mind = close(mind);
+            mind = closeQuiescentStorage((Mind) mind);
         }
         mind = reopened
                 ? openClosedStorage((Mind) mind, name)
@@ -158,7 +159,7 @@ public class User implements IUser {
             data.reindex(reactor, mind);
         }
 
-        mind = close(mind);
+        mind = closeQuiescentStorage((Mind) mind);
         if (reopened) {
             mind = openClosedStorage((Mind) mind, saveName);
         }
@@ -263,6 +264,15 @@ public class User implements IUser {
             throw new IllegalStateException(
                     "Cannot close an open database without an active Mind");
         }
+
+        Mind top = (Mind) mind;
+        if (top.getTransactionLevel() == 0) {
+            return closeQuiescentStorage(top);
+        }
+        return rebaseCloseStorage(top);
+    }
+
+    private Mind closeQuiescentStorage(Mind mind) throws Exception {
         requireTransactionQuiescence(mind, "close database");
 
         checkpoint(mind);
@@ -272,12 +282,59 @@ public class User implements IUser {
         }
         data.close();
 
+        IMind root = mind;
         for (IMind m = mind; m != null; m = m.getNext()) {
             ((Mind) m).clearMind();
-            mind = m;
+            root = m;
         }
+        return (Mind) root;
+    }
 
-        return mind;
+    private Mind rebaseCloseStorage(Mind top) throws Exception {
+        requireExplicitStackOwnership(top);
+        UserTransactionStackSnapshot snapshot =
+                UserTransactionStackSnapshot.capture(top);
+
+        boolean ownsCurrentSlot = currentMind == top;
+        String originalName = data.getStorageName();
+        Mind root = (Mind) top.getTop();
+        boolean mutationStarted = false;
+
+        try {
+            mutationStarted = true;
+            root = UserTransactionStackSnapshot.rollbackToRoot(top);
+            if (ownsCurrentSlot) {
+                currentMind = root;
+            }
+
+            root = closeQuiescentStorage(root);
+            Mind offlineTop = snapshot.replay(root);
+
+            if (ownsCurrentSlot) {
+                currentMind = offlineTop;
+            }
+            return offlineTop;
+        } catch (Throwable failure) {
+            Throwable propagated = failure;
+            if (mutationStarted) {
+                try {
+                    Mind restoredRoot = restoreOriginalStorage(root, originalName);
+                    Mind restoredTop = snapshot.replay(restoredRoot);
+                    if (ownsCurrentSlot) {
+                        currentMind = restoredTop;
+                    }
+                } catch (Throwable restoreFailure) {
+                    if (restoreFailure != failure) {
+                        propagated.addSuppressed(restoreFailure);
+                    }
+                    if (ownsCurrentSlot) {
+                        currentMind = root;
+                    }
+                }
+            }
+            rethrow(propagated);
+            throw new AssertionError("unreachable");
+        }
     }
 
 
