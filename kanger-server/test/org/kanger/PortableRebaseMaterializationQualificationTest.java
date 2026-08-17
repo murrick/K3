@@ -36,17 +36,18 @@ class PortableRebaseMaterializationQualificationTest {
         try {
             new UDF().init(user);
             new DB().init(user);
-            Mind root = new Mind(user);
-            user.setCurrentMind(root);
+            IMind current = new Mind(user);
+            user.setCurrentMind(current);
 
-            root = (Mind) createStorage(user, root, "portable-material-a", "shared_fact");
-            createStorage(user, root.closeStorage(), "portable-material-b", "b_only");
-            user.setCurrentMind(root);
-            createStorage(user, root, "portable-material-c", "shared_fact");
-            user.setCurrentMind(root);
+            current = createStorage(user, current,
+                    "portable-material-a", "shared_fact");
+            current = createStorage(user, current,
+                    "portable-material-b", "b_only");
+            current = createStorage(user, current,
+                    "portable-material-c", "shared_fact");
+            current = open(user, current, "portable-material-a");
 
-            root = (Mind) open(user, root, "portable-material-a");
-            Mind u1 = new Mind(root);
+            Mind u1 = new Mind(current);
             user.setCurrentMind(u1);
             assertTrue(Boolean.TRUE.equals(u1.query("-shared_fact;")));
 
