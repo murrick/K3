@@ -48,8 +48,9 @@ class ExplicitStorageLifecycleTest {
             assertEquals(User.class, fixture.user.getClass(),
                     "Server session still depends on a lifecycle subclass");
 
+            String storageName = "core" + Enums.FILE_SEPARATOR + "contract";
             IMind root = fixture.user.getCurrentMind();
-            root = root.useStorage("core" + Enums.FILE_SEPARATOR + "contract");
+            root = root.useStorage(storageName);
             fixture.user.setCurrentMind(root);
             root.query("!core_contract_fact;");
 
@@ -60,28 +61,34 @@ class ExplicitStorageLifecycleTest {
 
             StorageLifecycleException repeatedUse = assertThrows(
                     StorageLifecycleException.class,
-                    () -> fixture.user.getCurrentMind().useStorage(
-                            "core" + Enums.FILE_SEPARATOR + "contract"));
+                    () -> fixture.user.getCurrentMind().useStorage(storageName));
             assertEquals("STORAGE_ALREADY_OPEN", repeatedUse.getCode());
             assertEquals("EXPLICIT_CLOSE_REQUIRED",
                     repeatedUse.getRequiredAction());
-            assertTrue(root.isStorageUsed());
 
             Mind child = new Mind(root);
             fixture.user.setCurrentMind(child);
-            StorageLifecycleException activeClose = assertThrows(
-                    StorageLifecycleException.class, child::closeStorage);
-            assertEquals("ACTIVE_TRANSACTION", activeClose.getCode());
-            assertEquals("TRANSACTION_RESOLUTION_REQUIRED",
-                    activeClose.getRequiredAction());
-            assertSame(child, fixture.user.getCurrentMind());
-            assertTrue(child.isStorageUsed());
+            assertTrue(Boolean.TRUE.equals(
+                    child.query("!core_contract_transient;")));
+            IMind offlineChild = child.closeStorage();
+            fixture.user.setCurrentMind(offlineChild);
+            assertEquals(1, offlineChild.getTransactionLevel());
+            assertFalse(offlineChild.isStorageUsed());
+            assertTrue(Boolean.TRUE.equals(
+                    offlineChild.query("?core_contract_transient;")));
 
-            root.release(child);
-            fixture.user.setCurrentMind(root);
-            IMind closed = root.closeStorage();
-            fixture.user.setCurrentMind(closed);
-            assertFalse(closed.isStorageUsed());
+            JSONObject rollback = transaction(fixture, "rollback");
+            assertEquals("OK", rollback.optString("result"), rollback.toString());
+            assertEquals(0, rollback.optInt("transaction", -1));
+            assertFalse(Boolean.TRUE.equals(fixture.user.getCurrentMind()
+                    .query("?core_contract_transient;")));
+
+            IMind reopened = fixture.user.getCurrentMind().useStorage(storageName);
+            fixture.user.setCurrentMind(reopened);
+            assertTrue(Boolean.TRUE.equals(reopened.query("?core_contract_fact;")));
+            assertFalse(Boolean.TRUE.equals(
+                    reopened.query("?core_contract_transient;")));
+            fixture.user.setCurrentMind(reopened.closeStorage());
         } finally {
             fixture.close();
         }
@@ -237,50 +244,49 @@ class ExplicitStorageLifecycleTest {
     }
 
     @Test
-    void closeRejectsActiveLevelsAndPreservesTransientRules() throws Exception {
-        Fixture fixture = fixture("close-reject");
+    void closePreservesActiveLevelsAndKeepsThemOutOfPersistentRoot()
+            throws Exception {
+        Fixture fixture = fixture("close-rebase");
         try {
-            use(fixture, "close.reject");
-            String storageName = fixture.user.getCurrentMind().getStorageName();
-            Map<String, String> durableBefore = hashGeneration(
-                    fixture.user, storageName);
+            use(fixture, "close.rebase");
+            mutate(fixture, "close_persistent_root");
 
-            transaction(fixture, "create");
+            assertEquals(1, transaction(fixture, "create")
+                    .optInt("transaction", -1));
             mutate(fixture, "transient_level_one");
-            IMind levelOne = fixture.user.getCurrentMind();
-            JSONObject rejectedOne = closeResponse(fixture);
-            assertEquals("error", rejectedOne.optString("result"),
-                    rejectedOne.toString());
-            assertEquals("ACTIVE_TRANSACTION", rejectedOne.optString("code"));
-            assertEquals("TRANSACTION_RESOLUTION_REQUIRED",
-                    rejectedOne.optString("required_action"));
-            assertSame(levelOne, fixture.user.getCurrentMind());
-            assertEquals(1, levelOne.getTransactionLevel());
-            assertTrue(levelOne.isStorageUsed());
+            assertEquals(2, transaction(fixture, "create")
+                    .optInt("transaction", -1));
+            mutate(fixture, "transient_level_two");
+
+            JSONObject closed = closeResponse(fixture);
+            assertEquals("OK", closed.optString("result"), closed.toString());
+            assertEquals(2, closed.optInt("transaction", -1));
+            assertFalse(fixture.user.getCurrentMind().isStorageUsed());
+            assertEquals(2, fixture.user.getCurrentMind().getTransactionLevel());
             assertEquals("yes", ask(fixture, "transient_level_one")
                     .optString("response"));
-            assertEquals(durableBefore, hashGeneration(fixture.user, storageName));
-
-            transaction(fixture, "create");
-            mutate(fixture, "transient_level_two");
-            IMind levelTwo = fixture.user.getCurrentMind();
-            JSONObject rejectedTwo = closeResponse(fixture);
-            assertEquals("error", rejectedTwo.optString("result"),
-                    rejectedTwo.toString());
-            assertEquals("ACTIVE_TRANSACTION", rejectedTwo.optString("code"));
-            assertEquals("TRANSACTION_RESOLUTION_REQUIRED",
-                    rejectedTwo.optString("required_action"));
-            assertSame(levelTwo, fixture.user.getCurrentMind());
-            assertEquals(2, levelTwo.getTransactionLevel());
-            assertTrue(levelTwo.isStorageUsed());
             assertEquals("yes", ask(fixture, "transient_level_two")
                     .optString("response"));
-            assertEquals(durableBefore, hashGeneration(fixture.user, storageName));
 
-            transaction(fixture, "rollback");
-            transaction(fixture, "rollback");
-            close(fixture);
-            use(fixture, "close.reject");
+            JSONObject rollbackTwo = transaction(fixture, "rollback");
+            assertEquals("OK", rollbackTwo.optString("result"),
+                    rollbackTwo.toString());
+            assertEquals(1, rollbackTwo.optInt("transaction", -1));
+            assertEquals("yes", ask(fixture, "transient_level_one")
+                    .optString("response"));
+            assertNotEquals("yes", ask(fixture, "transient_level_two")
+                    .optString("response"));
+
+            JSONObject rollbackOne = transaction(fixture, "rollback");
+            assertEquals("OK", rollbackOne.optString("result"),
+                    rollbackOne.toString());
+            assertEquals(0, rollbackOne.optInt("transaction", -1));
+            assertNotEquals("yes", ask(fixture, "transient_level_one")
+                    .optString("response"));
+
+            use(fixture, "close.rebase");
+            assertEquals("yes", ask(fixture, "close_persistent_root")
+                    .optString("response"));
             assertNotEquals("yes", ask(fixture, "transient_level_one")
                     .optString("response"));
             assertNotEquals("yes", ask(fixture, "transient_level_two")

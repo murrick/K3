@@ -89,65 +89,71 @@ class CanonicalStorageCloseConvergenceTest {
     }
 
     @Test
-    void browserCloseRejectsActiveTransactionWithoutLegacyEscapeOrMutation()
+    void browserClosePreservesActiveTransactionWithoutLegacyEscape()
             throws Exception {
         Fixture fixture = fixture("browser-close-active");
         try {
             CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
             CommandParser parser = new CommandParser();
             processor.execute(parser.parse("storage use close.active"), fixture.user);
-            IMind root = fixture.user.getCurrentMind();
-            Mind child = new Mind(root);
+            Mind child = new Mind(fixture.user.getCurrentMind());
             fixture.user.setCurrentMind(child);
             assertTrue(Boolean.TRUE.equals(child.query("!close_active_transient;")));
 
             AtomicInteger escaped = new AtomicInteger();
-            JSONObject rejected = invoke(
+            JSONObject closed = invoke(
                     canonicalReactor(escaped), fixture.token, "storage close");
 
-            assertEquals("error", rejected.optString("result"), rejected.toString());
-            assertEquals(StorageLifecycleErrorCode.ACTIVE_TRANSACTION.name(),
-                    rejected.optString("code"));
-            assertEquals("TRANSACTION_RESOLUTION_REQUIRED",
-                    rejected.optString("required_action"));
+            assertEquals("OK", closed.optString("result"), closed.toString());
+            assertEquals("STORAGE_CLOSE", closed.optString("canonical_intent"));
             assertEquals(0, escaped.get(),
-                    "Rejected canonical close escaped into legacy close protocol");
-            assertSame(child, fixture.user.getCurrentMind());
-            assertEquals(1, child.getTransactionLevel());
-            assertTrue(child.isStorageUsed());
-            assertTrue(Boolean.TRUE.equals(child.query("?close_active_transient;")));
+                    "Canonical storage close escaped into legacy close protocol");
+            assertFalse(closed.getJSONObject("storage").getBoolean("used"));
+            assertEquals(1, closed.optInt("transaction", -1));
+            IMind offlineChild = fixture.user.getCurrentMind();
+            assertEquals(1, offlineChild.getTransactionLevel());
+            assertFalse(offlineChild.isStorageUsed());
+            assertTrue(Boolean.TRUE.equals(
+                    offlineChild.query("?close_active_transient;")));
 
-            root.release(child);
-            fixture.user.setCurrentMind(root);
+            CanonicalCommandProcessor.Result rolledBack = processor.execute(
+                    parser.parse("transaction rollback"), fixture.user);
+            assertTrue(rolledBack.isSuccess());
+            assertEquals(0, rolledBack.getMind().getTransactionLevel());
+            assertFalse(Boolean.TRUE.equals(
+                    rolledBack.getMind().query("?close_active_transient;")));
         } finally {
             fixture.close();
         }
     }
 
     @Test
-    void sharedProcessorSurfacesSameCoreActiveCloseException() throws Exception {
+    void sharedProcessorPreservesActiveTransactionAcrossClose() throws Exception {
         Fixture fixture = fixture("processor-active-close");
         try {
             CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
             CommandParser parser = new CommandParser();
             processor.execute(parser.parse("storage use processor.active"), fixture.user);
-            IMind root = fixture.user.getCurrentMind();
-            Mind child = new Mind(root);
+            Mind child = new Mind(fixture.user.getCurrentMind());
             fixture.user.setCurrentMind(child);
+            assertTrue(Boolean.TRUE.equals(
+                    child.query("!processor_close_transient;")));
 
-            StorageLifecycleException failure = assertThrows(
-                    StorageLifecycleException.class,
-                    () -> processor.execute(parser.parse("storage close"), fixture.user));
+            CanonicalCommandProcessor.Result closed = processor.execute(
+                    parser.parse("storage close"), fixture.user);
 
-            assertEquals(StorageLifecycleErrorCode.ACTIVE_TRANSACTION.name(),
-                    failure.getCode());
-            assertEquals("TRANSACTION_RESOLUTION_REQUIRED",
-                    failure.getRequiredAction());
-            assertSame(child, fixture.user.getCurrentMind());
-            assertTrue(child.isStorageUsed());
+            assertTrue(closed.isSuccess());
+            assertEquals(1, closed.getMind().getTransactionLevel());
+            assertFalse(closed.getMind().isStorageUsed());
+            assertTrue(Boolean.TRUE.equals(
+                    closed.getMind().query("?processor_close_transient;")));
 
-            root.release(child);
-            fixture.user.setCurrentMind(root);
+            CanonicalCommandProcessor.Result rolledBack = processor.execute(
+                    parser.parse("transaction rollback"), fixture.user);
+            assertTrue(rolledBack.isSuccess());
+            assertEquals(0, rolledBack.getMind().getTransactionLevel());
+            assertFalse(Boolean.TRUE.equals(
+                    rolledBack.getMind().query("?processor_close_transient;")));
         } finally {
             fixture.close();
         }
