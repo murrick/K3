@@ -32,77 +32,24 @@ jobs:
               text = p.read_text()
               count = text.count(old)
               if count != 1:
-                  raise SystemExit(f"{path}: expected one exact match, got {count}")
+                  raise SystemExit(f"{path}: expected one exact match, got {count}: {old!r}")
               p.write_text(text.replace(old, new, 1))
 
           mind = "kanger/src/org/kanger/Mind.java"
           rewrite(
               mind,
-              '''    @Override
-              public boolean commit(IMind m) throws Exception {
-                  synchronized (locker) {
-          ''',
-              '''    @Override
-              public boolean commit(IMind m) throws Exception {
-                  return commit(m, true);
-              }
-
-              /**
-               * Commit boundary for an explicit user-visible transaction.
-               * Semantic rejection restores the parent and leaves the child
-               * reservation live so the user can amend or roll back that level.
-               * The public IMind.commit contract deliberately keeps historical
-               * settle-on-rejection behavior for technical/internal callers.
-               */
-              boolean commitUserTransaction(IMind m) throws Exception {
-                  return commit(m, false);
-              }
-
-              private boolean commit(IMind m, boolean settleRejectedChild) throws Exception {
-                  synchronized (locker) {
-          ''')
+              "    @Override\n    public boolean commit(IMind m) throws Exception {\n        synchronized (locker) {",
+              "    @Override\n    public boolean commit(IMind m) throws Exception {\n        return commit(m, true);\n    }\n\n    /**\n     * Commit boundary for an explicit user-visible transaction.\n     * Semantic rejection restores the parent and leaves the child\n     * reservation live so the user can amend or roll back that level.\n     * The public IMind.commit contract deliberately keeps historical\n     * settle-on-rejection behavior for technical/internal callers.\n     */\n    boolean commitUserTransaction(IMind m) throws Exception {\n        return commit(m, false);\n    }\n\n    private boolean commit(IMind m, boolean settleRejectedChild) throws Exception {\n        synchronized (locker) {")
           rewrite(
               mind,
-              '''                    boolean rootQuiescent = finishTransactionReservationLocked();
-                          reservationFinished = true;
-                          try {
-                              finalizeTransactionRootLocked(rootQuiescent);
-                              copyCommitResult(child);
-                          } catch (Throwable finalizationFailure) {
-                              throw new TransactionSettlementException(
-                                      TransactionSettlementException.Outcome.REJECTED,
-                                      finalizationFailure);
-                          }
-                          return false;
-          ''',
-              '''                    if (settleRejectedChild) {
-                              boolean rootQuiescent = finishTransactionReservationLocked();
-                              reservationFinished = true;
-                              try {
-                                  finalizeTransactionRootLocked(rootQuiescent);
-                                  copyCommitResult(child);
-                              } catch (Throwable finalizationFailure) {
-                                  throw new TransactionSettlementException(
-                                          TransactionSettlementException.Outcome.REJECTED,
-                                          finalizationFailure);
-                              }
-                          }
-                          return false;
-          ''')
+              "                        boolean rootQuiescent = finishTransactionReservationLocked();\n                        reservationFinished = true;\n                        try {\n                            finalizeTransactionRootLocked(rootQuiescent);\n                            copyCommitResult(child);\n                        } catch (Throwable finalizationFailure) {\n                            throw new TransactionSettlementException(\n                                    TransactionSettlementException.Outcome.REJECTED,\n                                    finalizationFailure);\n                        }\n                        return false;",
+              "                        if (settleRejectedChild) {\n                            boolean rootQuiescent = finishTransactionReservationLocked();\n                            reservationFinished = true;\n                            try {\n                                finalizeTransactionRootLocked(rootQuiescent);\n                                copyCommitResult(child);\n                            } catch (Throwable finalizationFailure) {\n                                throw new TransactionSettlementException(\n                                        TransactionSettlementException.Outcome.REJECTED,\n                                        finalizationFailure);\n                            }\n                        }\n                        return false;")
 
           processor = "kanger/src/org/kanger/CanonicalCommandProcessor.java"
           rewrite(
               processor,
-              '''        if (parent != null) {
-                      if (!parent.commit(mind)) {
-                          return Result.rejected(mind, "Transaction commit rejected");
-                      }
-          ''',
-              '''        if (parent != null) {
-                      if (!((Mind) parent).commitUserTransaction(mind)) {
-                          return Result.rejected(mind, "Transaction commit rejected");
-                      }
-          ''')
+              "        if (parent != null) {\n            if (!parent.commit(mind)) {\n                return Result.rejected(mind, \"Transaction commit rejected\");\n            }",
+              "        if (parent != null) {\n            if (!((Mind) parent).commitUserTransaction(mind)) {\n                return Result.rejected(mind, \"Transaction commit rejected\");\n            }")
           PY
           git diff --check
           test "$(git diff --name-only | wc -l)" -eq 2
