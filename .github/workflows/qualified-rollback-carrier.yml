@@ -24,83 +24,92 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat > /tmp/qualified-rollback.patch <<'PATCH'
-          diff --git a/kanger/src/org/kanger/PortableMindLayer.java b/kanger/src/org/kanger/PortableMindLayer.java
-          index 3c082ac..0000000 100644
-          --- a/kanger/src/org/kanger/PortableMindLayer.java
-          +++ b/kanger/src/org/kanger/PortableMindLayer.java
-          @@ -8,6 +8,7 @@ import org.kanger.enums.UnitType;
-           import org.kanger.factory.CommentFactory;
-           import org.kanger.interfaces.IOperation;
-           import org.kanger.interfaces.IRule;
-          +import org.kanger.interfaces.ITerm;
-           import org.kanger.units.Comment;
-           import org.kanger.units.Operation;
-           import org.kanger.units.Rule;
-          @@ -17,6 +18,7 @@ import java.util.Iterator;
-           import java.util.LinkedHashMap;
-           import java.util.LinkedHashSet;
-          +import java.util.LinkedList;
-           import java.util.List;
-           import java.util.Map;
-           import java.util.Set;
-          @@ -326,10 +328,7 @@ final class PortableMindLayer {
-                   for (Map.Entry<String, String> entry : ruleSources.entrySet()) {
-                       String origin = entry.getKey();
-          -            Boolean result = child.query(entry.getValue());
-          +            child.compileLine(entry.getValue(), false, new LinkedList<ITerm>());
-                       Rule rule = findRule(child, origin);
-                       if (rule == null) {
-                           throw new IllegalStateException("Cannot replay Rule declaration: " + origin);
-                       }
-          -            if (!Boolean.TRUE.equals(result) && rule.isDeleted(child)) {
-          -                throw new IllegalStateException("Cannot replay Rule declaration: " + origin);
-          -            }
-                       if (rule.getMindId() != child.getId()) {
-                           residue.ruleSources.put(origin, entry.getValue());
-                       }
-          diff --git a/kanger/src/org/kanger/UserTransactionStackSnapshot.java b/kanger/src/org/kanger/UserTransactionStackSnapshot.java
-          index ca89fc3..0000000 100644
-          --- a/kanger/src/org/kanger/UserTransactionStackSnapshot.java
-          +++ b/kanger/src/org/kanger/UserTransactionStackSnapshot.java
-          @@ -75,4 +75,8 @@ final class UserTransactionStackSnapshot {
-                           Mind work = tx.mind();
-                           rootLevel.apply(root, work);
-          +                if (!Boolean.TRUE.equals(work.queryCheck(false))) {
-          +                    throw new IllegalStateException(
-          +                            "Offline U0 conflicts with target storage baseline");
-          +                }
-                           if (!tx.commit()) {
-                               throw new IllegalStateException(
-          @@ -107,4 +111,8 @@ final class UserTransactionStackSnapshot {
-                           }
-                           current = child;
-                       }
-          +            if (!Boolean.TRUE.equals(current.queryCheck(false))) {
-          +                throw new IllegalStateException(
-          +                        "Replayed current context conflicts with storage baseline");
-          +            }
-                       return current;
-                   } catch (Throwable failure) {
-          diff --git a/kanger/src/org/kanger/CanonicalCommandProcessor.java b/kanger/src/org/kanger/CanonicalCommandProcessor.java
-          index 58b276c..0000000 100644
-          --- a/kanger/src/org/kanger/CanonicalCommandProcessor.java
-          +++ b/kanger/src/org/kanger/CanonicalCommandProcessor.java
-          @@ -124,6 +124,10 @@ public final class CanonicalCommandProcessor {
-                   if (parent == null) {
-                       return Result.rejected(mind, "No transactions was created");
-                   }
-          +        if (!Boolean.TRUE.equals(((Mind) parent).queryCheck(false))) {
-          +            return Result.rejected(mind,
-          +                    "Transaction rollback rejected: target context conflicts with current storage baseline");
-          +        }
-                   parent.release(mind);
-                   user.setCurrentMind(parent);
-                   return Result.success(parent, "Transaction rolled back");
-          PATCH
-          git apply --check /tmp/qualified-rollback.patch
-          git apply /tmp/qualified-rollback.patch
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def rewrite(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one exact match, got {count}")
+              p.write_text(text.replace(old, new, 1))
+
+          portable = "kanger/src/org/kanger/PortableMindLayer.java"
+          rewrite(
+              portable,
+              "import org.kanger.interfaces.IRule;\nimport org.kanger.units.Comment;",
+              "import org.kanger.interfaces.IRule;\nimport org.kanger.interfaces.ITerm;\nimport org.kanger.units.Comment;")
+          rewrite(
+              portable,
+              "import java.util.LinkedHashSet;\nimport java.util.List;",
+              "import java.util.LinkedHashSet;\nimport java.util.LinkedList;\nimport java.util.List;")
+          rewrite(
+              portable,
+              '''            Boolean result = child.query(entry.getValue());
+              Rule rule = findRule(child, origin);
+              if (rule == null) {
+                  throw new IllegalStateException("Cannot replay Rule declaration: " + origin);
+              }
+              if (!Boolean.TRUE.equals(result) && rule.isDeleted(child)) {
+                  throw new IllegalStateException("Cannot replay Rule declaration: " + origin);
+              }
+          ''',
+              '''            child.compileLine(entry.getValue(), false, new LinkedList<ITerm>());
+              Rule rule = findRule(child, origin);
+              if (rule == null) {
+                  throw new IllegalStateException("Cannot replay Rule declaration: " + origin);
+              }
+          ''')
+
+          snapshot = "kanger/src/org/kanger/UserTransactionStackSnapshot.java"
+          rewrite(
+              snapshot,
+              '''                rootLevel.apply(root, work);
+                  if (!tx.commit()) {
+          ''',
+              '''                rootLevel.apply(root, work);
+                  if (!Boolean.TRUE.equals(work.queryCheck(false))) {
+                      throw new IllegalStateException(
+                              "Offline U0 conflicts with target storage baseline");
+                  }
+                  if (!tx.commit()) {
+          ''')
+          rewrite(
+              snapshot,
+              '''                current = child;
+              }
+              return current;
+          ''',
+              '''                current = child;
+              }
+              if (!Boolean.TRUE.equals(current.queryCheck(false))) {
+                  throw new IllegalStateException(
+                          "Replayed current context conflicts with storage baseline");
+              }
+              return current;
+          ''')
+
+          processor = "kanger/src/org/kanger/CanonicalCommandProcessor.java"
+          rewrite(
+              processor,
+              '''        if (parent == null) {
+                  return Result.rejected(mind, "No transactions was created");
+              }
+              parent.release(mind);
+          ''',
+              '''        if (parent == null) {
+                  return Result.rejected(mind, "No transactions was created");
+              }
+              if (!Boolean.TRUE.equals(((Mind) parent).queryCheck(false))) {
+                  return Result.rejected(mind,
+                          "Transaction rollback rejected: target context conflicts with current storage baseline");
+              }
+              parent.release(mind);
+          ''')
+          PY
           git diff --check
+          test "$(git diff --name-only | wc -l)" -eq 3
 
       - name: Run focused qualified rollback characterization
         run: >-
