@@ -7,11 +7,8 @@ on:
     paths:
       - .github/workflows/transaction-squash-carrier.yml
 
-permissions:
-  contents: write
-
 jobs:
-  qualify-and-publish-ready:
+  locate-shorthand:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out squash implementation
@@ -19,55 +16,11 @@ jobs:
         with:
           ref: c87bbe38667435e23bf06e0f194ec3423b10b582
           fetch-depth: 0
-
-      - name: Complete squash formatter and prefix qualification
+      - name: Locate TransactionShorthandRunner source
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-
-          formatter = Path('kanger-command/src/org/kanger/command/CommandFormatter.java')
-          text = formatter.read_text()
-          old = '''            case TX_ROLLBACK:\n                return "transaction rollback";\n\n            case SOURCE_GET:\n'''
-          new = '''            case TX_ROLLBACK:\n                return "transaction rollback";\n            case TX_SQUASH:\n                return "transaction squash";\n\n            case SOURCE_GET:\n'''
-          if text.count(old) != 1:
-              raise SystemExit('TX_SQUASH formatter anchor mismatch')
-          formatter.write_text(text.replace(old, new, 1))
-
-          path = Path('kanger-command/test/org/kanger/command/CommandParserConformanceTest.java')
-          text = path.read_text()
-          old_family = '''        expect("transaction", CommandIntent.TX_STATUS);\n        expect("t s", CommandIntent.TX_START);\n        expect("t c", CommandIntent.TX_COMMIT);\n        expect("t r", CommandIntent.TX_ROLLBACK);\n'''
-          new_family = '''        expect("transaction", CommandIntent.TX_STATUS);\n        expect("t st", CommandIntent.TX_START);\n        expect("t c", CommandIntent.TX_COMMIT);\n        expect("t r", CommandIntent.TX_ROLLBACK);\n        expect("t sq", CommandIntent.TX_SQUASH);\n        reject("t s", AMBIGUOUS_PREFIX);\n'''
-          if text.count(old_family) != 1:
-              raise SystemExit('transaction family conformance anchor mismatch')
-          text = text.replace(old_family, new_family, 1)
-
-          old_echo = '''        expectCanonical("t s", "transaction start");\n        expectCanonical("c", "transaction commit");\n'''
-          new_echo = '''        expectCanonical("t st", "transaction start");\n        expectCanonical("t sq", "transaction squash");\n        expectCanonical("c", "transaction commit");\n'''
-          if text.count(old_echo) != 1:
-              raise SystemExit('transaction canonical echo anchor mismatch')
-          text = text.replace(old_echo, new_echo, 1)
-
-          occurrences = [line for line in text.splitlines() if '"t s"' in line]
-          if occurrences != ['        reject("t s", AMBIGUOUS_PREFIX);']:
-              raise SystemExit('unexpected stale t s occurrence(s): ' + repr(occurrences))
-          path.write_text(text)
-          PY
-          git diff --check
-          expected=$'kanger-command/src/org/kanger/command/CommandFormatter.java\nkanger-command/test/org/kanger/command/CommandParserConformanceTest.java'
-          test "$(git diff --name-only | sort)" = "$expected"
-
-      - name: Run complete root qualification corpus
-        run: mvn --batch-mode --no-transfer-progress -DskipTests clean package
-
-      - name: Publish completed ready commit
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "KANGER qualification bot"
-          git config user.email "actions@users.noreply.github.com"
-          git add kanger-command/src/org/kanger/command/CommandFormatter.java \
-                  kanger-command/test/org/kanger/command/CommandParserConformanceTest.java
-          git commit -m "fix(command): complete transaction squash grammar"
-          git push origin HEAD:refs/heads/tmp/3.7.0.20-transaction-squash-ready
+          echo '=== exact class/string matches ==='
+          grep -R -n --exclude-dir=.git -E 'TransactionShorthandRunner|Undocumented transaction-family error' . || true
+          echo '=== transaction shorthand-like sources ==='
+          grep -R -n --exclude-dir=.git -E 'transaction s|TX_START|AMBIGUOUS_PREFIX' kanger-qualification kanger-command 2>/dev/null | head -n 300 || true
