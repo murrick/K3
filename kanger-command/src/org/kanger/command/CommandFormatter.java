@@ -85,6 +85,8 @@ public final class CommandFormatter {
                 return "transaction commit";
             case TX_ROLLBACK:
                 return "transaction rollback";
+            case TX_SQUASH:
+                return "transaction squash";
 
             case SOURCE_GET:
                 return optionalArgumentCommand("get", invocation.getArgument("source"));

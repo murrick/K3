@@ -201,9 +201,11 @@ public final class CommandParserConformanceTest {
 
     private void transactionFamily() throws Exception {
         expect("transaction", CommandIntent.TX_STATUS);
-        expect("t s", CommandIntent.TX_START);
+        expect("t st", CommandIntent.TX_START);
         expect("t c", CommandIntent.TX_COMMIT);
         expect("t r", CommandIntent.TX_ROLLBACK);
+        expect("t sq", CommandIntent.TX_SQUASH);
+        reject("t s", AMBIGUOUS_PREFIX);
         reject("transaction create", INVALID_GRAMMAR);
         reject("transaction x", UNKNOWN_KEYWORD);
     }
@@ -295,7 +297,8 @@ public final class CommandParserConformanceTest {
         expectCanonical("v o x d, y a", "values order x desc, y asc");
         expectCanonical("so t 42", "solution tree 42");
         expectCanonical("w a 0", "when accept 0");
-        expectCanonical("t s", "transaction start");
+        expectCanonical("t st", "transaction start");
+        expectCanonical("t sq", "transaction squash");
         expectCanonical("c", "transaction commit");
         expectCanonical("st u close", "storage use close");
         expectCanonical("u close", "storage use close");
