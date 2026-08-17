@@ -456,7 +456,6 @@ public final class CanonicalConsole {
             System.out.println("Have not solutions variants");
         } else {
             Console.showCauses(mind, selected.getCauses(), -1);
-            System.out.println();
         }
     }
 
