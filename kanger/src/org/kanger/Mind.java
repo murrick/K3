@@ -259,6 +259,21 @@ public class Mind implements IMind {
 
     @Override
     public boolean commit(IMind m) throws Exception {
+        return commit(m, true);
+    }
+
+    /**
+     * Commit boundary for an explicit user-visible transaction.
+     * Semantic rejection restores the parent and leaves the child
+     * reservation live so the user can amend or roll back that level.
+     * The public IMind.commit contract deliberately keeps historical
+     * settle-on-rejection behavior for technical/internal callers.
+     */
+    boolean commitUserTransaction(IMind m) throws Exception {
+        return commit(m, false);
+    }
+
+    private boolean commit(IMind m, boolean settleRejectedChild) throws Exception {
         synchronized (locker) {
             Mind child = (Mind) m;
             boolean sequencedBy = rules.isSequencedBy((RuleFactory) child.getRules());
@@ -298,15 +313,17 @@ public class Mind implements IMind {
                             rethrow(rollbackFailure);
                         }
 
-                        boolean rootQuiescent = finishTransactionReservationLocked();
-                        reservationFinished = true;
-                        try {
-                            finalizeTransactionRootLocked(rootQuiescent);
-                            copyCommitResult(child);
-                        } catch (Throwable finalizationFailure) {
-                            throw new TransactionSettlementException(
-                                    TransactionSettlementException.Outcome.REJECTED,
-                                    finalizationFailure);
+                        if (settleRejectedChild) {
+                            boolean rootQuiescent = finishTransactionReservationLocked();
+                            reservationFinished = true;
+                            try {
+                                finalizeTransactionRootLocked(rootQuiescent);
+                                copyCommitResult(child);
+                            } catch (Throwable finalizationFailure) {
+                                throw new TransactionSettlementException(
+                                        TransactionSettlementException.Outcome.REJECTED,
+                                        finalizationFailure);
+                            }
                         }
                         return false;
                     }

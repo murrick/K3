@@ -109,7 +109,7 @@ public final class CanonicalCommandProcessor {
     private Result commit(IUser user, IMind mind) throws Exception {
         IMind parent = mind.getNext();
         if (parent != null) {
-            if (!parent.commit(mind)) {
+            if (!((Mind) parent).commitUserTransaction(mind)) {
                 return Result.rejected(mind, "Transaction commit rejected");
             }
             user.setCurrentMind(parent);
