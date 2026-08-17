@@ -86,21 +86,17 @@ final class UserTransactionStackSnapshot {
     }
 
     Mind replayOverBaseline(Mind root) throws Exception {
-        Mind current = root;
         if (rootLevel != null && !rootLevel.isEmpty()) {
-            Mind workspace = new Mind(current);
-            boolean applied = false;
-            try {
-                rootLevel.apply(current, workspace);
-                applied = true;
-            } finally {
-                if (!applied) {
-                    current.release(workspace);
+            try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(root)) {
+                Mind work = tx.mind();
+                rootLevel.apply(root, work);
+                if (!tx.commit()) {
+                    throw new IllegalStateException(
+                            "Offline U0 cannot be assimilated into the target storage baseline");
                 }
             }
-            current = workspace;
         }
-        return replayLevels(current);
+        return replayLevels(root);
     }
 
     Mind restoreOffline(Mind root) throws Exception {
