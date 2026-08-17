@@ -50,6 +50,11 @@ class StorageCloseRebaseTransactionStackTest {
             assertFalse(offlineU1.isStorageUsed());
             assertEquals(1, offlineU1.getTransactionLevel(),
                     "storage close changed explicit U-stack depth");
+            assertEquals(0, offlineU1.pendingTransactionCount(),
+                    "rebased current U1 owns a hidden child reservation");
+            Mind offlineRootBeforeRollback = (Mind) offlineU1.getTop();
+            assertEquals(1, offlineRootBeforeRollback.pendingTransactionCount(),
+                    "rebased offline U0 lost ownership of explicit U1");
             assertTrue(Boolean.TRUE.equals(offlineU1.query("?offline_layer;")),
                     "storage close lost U1 authorial state");
             assertFalse(Boolean.TRUE.equals(offlineU1.query("?persistent_base;")),
