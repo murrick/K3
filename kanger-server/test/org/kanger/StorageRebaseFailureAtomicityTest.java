@@ -17,21 +17,22 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Qualification for compensating storage rebase.
+ * Qualification for storage rebase state that is historical at the published
+ * top but cannot be structurally materialized on an intermediate baseline.
  *
- * <p>The target generation is allowed to open successfully and replay is then
- * forced to fail on a semantic anchor that exists only in the original base.
- * The caller must observe the original generation with the complete explicit
- * U-stack reconstructed; no partially rebased target state may escape.</p>
+ * <p>A lower explicit U-level may therefore remain latent while the current
+ * published level is valid on the replacement storage. The latent authorial
+ * state must survive exactly and rematerialize at the same explicit boundary
+ * when a compatible baseline reappears. No target-baseline artifact may leak
+ * through the round trip.</p>
  */
 class StorageRebaseFailureAtomicityTest {
 
     @Test
-    void replayFailureRestoresOriginalGenerationAndFullExplicitStack()
+    void latentHistoricalCommentOverrideSurvivesIntermediateBaselineAndRematerializes()
             throws Exception {
         Fixture fixture = fixture("comment-anchor");
         try {
@@ -49,33 +50,44 @@ class StorageRebaseFailureAtomicityTest {
             assertTrue(Boolean.TRUE.equals(u2.query("!u2_fact;")));
             assertEquals(2, u2.getTransactionLevel());
 
-            Exception failure = assertThrows(Exception.class,
-                    () -> u2.useStorage("atomic-b"));
-            assertTrue(failure.toString().contains("Cannot replay comment"),
-                    "fixture did not fail during semantic replay: " + failure);
+            IMind onB = u2.useStorage("atomic-b");
+            fixture.user.setCurrentMind(onB);
 
-            IMind restored = fixture.user.getCurrentMind();
-            assertEquals("atomic-a", restored.getStorageName(),
-                    "failed rebase did not restore the original generation");
-            assertEquals(2, restored.getTransactionLevel(),
-                    "failed rebase did not restore both explicit boundaries");
-            assertTrue(Boolean.TRUE.equals(restored.query("?a_anchor;")));
-            assertTrue(Boolean.TRUE.equals(restored.query("?u2_fact;")));
-            assertFalse(Boolean.TRUE.equals(restored.query("?b_anchor;")),
-                    "target U0 leaked after compensating restore");
+            assertEquals("atomic-b", onB.getStorageName());
+            assertEquals(2, onB.getTransactionLevel(),
+                    "rebase changed explicit transaction depth");
+            assertTrue(Boolean.TRUE.equals(onB.query("?b_anchor;")));
+            assertTrue(Boolean.TRUE.equals(onB.query("?u2_fact;")));
+            assertFalse(Boolean.TRUE.equals(onB.query("?a_anchor;")),
+                    "historical A-only anchor was incorrectly materialized on B");
 
-            Rule restoredAnchor = findPrimaryRule((Mind) restored, "!a_anchor;");
-            assertEquals("u1-anchor-comment",
-                    ((Mind) restored).getComments()
-                            .get(restoredAnchor.getId()).getComment(),
-                    "U1 comment delta was not restored");
+            IMind backOnA = onB.useStorage("atomic-a");
+            fixture.user.setCurrentMind(backOnA);
 
-            Mind restoredU2 = (Mind) restored;
+            assertEquals("atomic-a", backOnA.getStorageName());
+            assertEquals(2, backOnA.getTransactionLevel(),
+                    "round-trip rebase changed explicit transaction depth");
+            assertTrue(Boolean.TRUE.equals(backOnA.query("?a_anchor;")));
+            assertTrue(Boolean.TRUE.equals(backOnA.query("?u2_fact;")));
+            assertFalse(Boolean.TRUE.equals(backOnA.query("?b_anchor;")),
+                    "intermediate B/U0 leaked through the round trip");
+
+            Mind restoredU2 = (Mind) backOnA;
             Mind restoredU1 = (Mind) restoredU2.getNext();
+            Rule restoredAnchor = findPrimaryRule(restoredU1, "!a_anchor;");
+            assertEquals("u1-anchor-comment",
+                    restoredU1.getComments().get(restoredAnchor.getId()).getComment(),
+                    "latent U1 comment override did not rematerialize at U1");
+
             restoredU1.release(restoredU2);
             fixture.user.setCurrentMind(restoredU1);
             assertEquals(1, restoredU1.getTransactionLevel());
             assertFalse(Boolean.TRUE.equals(restoredU1.query("?u2_fact;")));
+            assertTrue(Boolean.TRUE.equals(restoredU1.query("?a_anchor;")));
+            Rule afterRollbackAnchor = findPrimaryRule(restoredU1, "!a_anchor;");
+            assertEquals("u1-anchor-comment",
+                    restoredU1.getComments().get(afterRollbackAnchor.getId()).getComment(),
+                    "U1 comment override changed after ordinary rollback of U2");
 
             Mind restoredRoot = (Mind) restoredU1.getNext();
             restoredRoot.release(restoredU1);
