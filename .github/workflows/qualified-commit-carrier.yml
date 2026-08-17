@@ -1,0 +1,134 @@
+name: Qualified commit carrier
+
+on:
+  push:
+    branches:
+      - tmp/3.7.0.20-qualified-commit-carrier
+    paths:
+      - .github/workflows/qualified-commit-carrier.yml
+
+permissions:
+  contents: write
+
+jobs:
+  qualify-and-publish-ready:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact RED parent
+        uses: actions/checkout@v5
+        with:
+          ref: 720b46a878f03803a591d32fedb0df9b8396c712
+          fetch-depth: 0
+
+      - name: Apply explicit-user commit settlement boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def rewrite(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one exact match, got {count}")
+              p.write_text(text.replace(old, new, 1))
+
+          mind = "kanger/src/org/kanger/Mind.java"
+          rewrite(
+              mind,
+              '''    @Override
+              public boolean commit(IMind m) throws Exception {
+                  synchronized (locker) {
+          ''',
+              '''    @Override
+              public boolean commit(IMind m) throws Exception {
+                  return commit(m, true);
+              }
+
+              /**
+               * Commit boundary for an explicit user-visible transaction.
+               * Semantic rejection restores the parent and leaves the child
+               * reservation live so the user can amend or roll back that level.
+               * The public IMind.commit contract deliberately keeps historical
+               * settle-on-rejection behavior for technical/internal callers.
+               */
+              boolean commitUserTransaction(IMind m) throws Exception {
+                  return commit(m, false);
+              }
+
+              private boolean commit(IMind m, boolean settleRejectedChild) throws Exception {
+                  synchronized (locker) {
+          ''')
+          rewrite(
+              mind,
+              '''                    boolean rootQuiescent = finishTransactionReservationLocked();
+                          reservationFinished = true;
+                          try {
+                              finalizeTransactionRootLocked(rootQuiescent);
+                              copyCommitResult(child);
+                          } catch (Throwable finalizationFailure) {
+                              throw new TransactionSettlementException(
+                                      TransactionSettlementException.Outcome.REJECTED,
+                                      finalizationFailure);
+                          }
+                          return false;
+          ''',
+              '''                    if (settleRejectedChild) {
+                              boolean rootQuiescent = finishTransactionReservationLocked();
+                              reservationFinished = true;
+                              try {
+                                  finalizeTransactionRootLocked(rootQuiescent);
+                                  copyCommitResult(child);
+                              } catch (Throwable finalizationFailure) {
+                                  throw new TransactionSettlementException(
+                                          TransactionSettlementException.Outcome.REJECTED,
+                                          finalizationFailure);
+                              }
+                          }
+                          return false;
+          ''')
+
+          processor = "kanger/src/org/kanger/CanonicalCommandProcessor.java"
+          rewrite(
+              processor,
+              '''        if (parent != null) {
+                      if (!parent.commit(mind)) {
+                          return Result.rejected(mind, "Transaction commit rejected");
+                      }
+          ''',
+              '''        if (parent != null) {
+                      if (!((Mind) parent).commitUserTransaction(mind)) {
+                          return Result.rejected(mind, "Transaction commit rejected");
+                      }
+          ''')
+          PY
+          git diff --check
+          test "$(git diff --name-only | wc -l)" -eq 2
+
+      - name: Run focused transaction tests
+        run: >-
+          mvn -B -ntp -f kanger-server/pom.xml
+          -Dtest=QualifiedCommitAfterStorageRebaseTest,TechnicalMindTransactionTest
+          test
+
+      - name: Preserve historical commit exception settlement
+        run: >-
+          mvn -B -ntp
+          -Dexec.mainClass=org.kanger.KangerMindCommitExceptionAtomicitySafetyRunner
+          -Dexec.classpathScope=test
+          test-compile exec:java
+
+      - name: Publish ready commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "KANGER qualification bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add \
+            kanger/src/org/kanger/Mind.java \
+            kanger/src/org/kanger/CanonicalCommandProcessor.java
+          test "$(git diff --cached --name-only | wc -l)" -eq 2
+          git commit -m "fix(transaction): preserve rejected explicit commit"
+          git push origin HEAD:refs/heads/tmp/3.7.0.20-qualified-commit-ready
