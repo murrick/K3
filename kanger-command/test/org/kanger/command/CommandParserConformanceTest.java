@@ -34,6 +34,7 @@ public final class CommandParserConformanceTest {
         ruleFamily();
         functionFamily();
         baseFamily();
+        predicateFamilySpellings();
         valuesFamily();
         solutionFamily();
         whenFamily();
@@ -57,20 +58,38 @@ public final class CommandParserConformanceTest {
 
     private void topLevelPrefixes() throws Exception {
         expect("b", CommandIntent.BASE_STATUS);
-        expect("c", CommandIntent.TX_COMMIT);
-        expect("d", CommandIntent.SOURCE_DELETE);
-        expect("d foo.k", CommandIntent.SOURCE_DELETE);
+        reject("c", AMBIGUOUS_PREFIX);
+        expect("co", CommandIntent.TX_COMMIT);
+        expect("cl", CommandIntent.STORAGE_CLOSE);
+        reject("d", AMBIGUOUS_PREFIX);
+        expect("de", CommandIntent.SOURCE_DELETE);
+        expect("de foo.k", CommandIntent.SOURCE_DELETE);
+        expectArgument("dr demo", CommandIntent.STORAGE_DROP,
+                "name", "demo");
         expect("e", CommandIntent.ERASE);
         expect("f", CommandIntent.FUNCTIONS);
         expect("g", CommandIntent.SOURCE_GET);
         expect("g foo.k", CommandIntent.SOURCE_GET);
         expect("h", CommandIntent.HELP);
-        expect("p foo.k", CommandIntent.SOURCE_PUT);
+        reject("p", AMBIGUOUS_PREFIX);
+        expect("pr", CommandIntent.BASE_PREDICATES);
+        expectArgument("pr father", CommandIntent.BASE_PREDICATE,
+                "predicate", "father");
+        expectArgument("pu foo.k", CommandIntent.SOURCE_PUT,
+                "source", "foo.k");
         expect("q", CommandIntent.QUIT);
-        expect("r", CommandIntent.RULE_STATUS);
+        reject("r", AMBIGUOUS_PREFIX);
+        expect("ru", CommandIntent.RULE_STATUS);
+        expect("ro", CommandIntent.TX_ROLLBACK);
+        expectArgument("re demo", CommandIntent.STORAGE_REINDEX,
+                "name", "demo");
         expect("so", CommandIntent.SOLUTIONS);
-        expect("st", CommandIntent.STORAGE_STATUS);
+        expect("sq", CommandIntent.TX_SQUASH);
+        reject("st", AMBIGUOUS_PREFIX);
+        expect("sta", CommandIntent.TX_START);
+        expect("sto", CommandIntent.STORAGE_STATUS);
         expect("t", CommandIntent.TX_STATUS);
+        expect("u", CommandIntent.STORAGE_STATUS);
         expectArgument("u demo", CommandIntent.STORAGE_USE, "name", "demo");
         expect("v", CommandIntent.VALUES);
         expect("w", CommandIntent.WHEN_STATUS);
@@ -83,23 +102,23 @@ public final class CommandParserConformanceTest {
         expect("rules", CommandIntent.RULE_STATUS);
         expectLong("rule 17", CommandIntent.RULE_SHOW, "id", 17L);
         expectLong("rules 17", CommandIntent.RULE_SHOW, "id", 17L);
-        expect("r a", CommandIntent.RULE_ALL);
+        expect("ru a", CommandIntent.RULE_ALL);
         expect("rules all", CommandIntent.RULE_ALL);
-        expect("r p", CommandIntent.RULE_PRODUCED);
+        expect("ru p", CommandIntent.RULE_PRODUCED);
         expect("rules produced", CommandIntent.RULE_PRODUCED);
 
-        CommandInvocation aggregate = parser.parse("r l");
+        CommandInvocation aggregate = parser.parse("ru l");
         check(aggregate.getIntent() == CommandIntent.RULE_LEVEL,
                 "bare rule level aggregate intent");
         check(!aggregate.getArguments().containsKey("level"),
                 "bare rule level must not synthesize transaction level");
         expect("rules level", CommandIntent.RULE_LEVEL);
 
-        expectLong("r l 2", CommandIntent.RULE_LEVEL, "level", 2L);
+        expectLong("ru l 2", CommandIntent.RULE_LEVEL, "level", 2L);
         expectLong("rules level 2", CommandIntent.RULE_LEVEL, "level", 2L);
-        expectLong("r t 17", CommandIntent.RULE_TREE, "id", 17L);
+        expectLong("ru t 17", CommandIntent.RULE_TREE, "id", 17L);
         expectLong("rules tree 17", CommandIntent.RULE_TREE, "id", 17L);
-        expectLong("r c 17", CommandIntent.RULE_COMMENT_GET, "id", 17L);
+        expectLong("ru c 17", CommandIntent.RULE_COMMENT_GET, "id", 17L);
         expectLong("rules comment 17", CommandIntent.RULE_COMMENT_GET, "id", 17L);
 
         CommandInvocation set = parser.parse("rule comment 17 Important rule");
@@ -116,7 +135,7 @@ public final class CommandParserConformanceTest {
         check("Important rule".equals(pluralSet.getArgument("text")),
                 "rules comment free tail");
 
-        CommandInvocation clear = parser.parse("r c 17 \"\"");
+        CommandInvocation clear = parser.parse("ru c 17 \"\"");
         check("".equals(clear.getArgument("text")),
                 "rule comment explicit empty");
 
@@ -150,6 +169,24 @@ public final class CommandParserConformanceTest {
         reject("base predicate", MISSING_ARGUMENT);
         reject("base predicates father", INVALID_GRAMMAR);
         reject("base tree", MISSING_ARGUMENT);
+        reject("tree 314", UNKNOWN_KEYWORD);
+    }
+
+    private void predicateFamilySpellings() throws Exception {
+        expect("predicate", CommandIntent.BASE_PREDICATES);
+        expect("predicates", CommandIntent.BASE_PREDICATES);
+        expectArgument("predicate father", CommandIntent.BASE_PREDICATE,
+                "predicate", "father");
+        expectArgument("predicates father", CommandIntent.BASE_PREDICATE,
+                "predicate", "father");
+
+        CommandInvocation byId = parser.parse("predicates 12");
+        check(byId.getIntent() == CommandIntent.BASE_PREDICATE,
+                "predicates family spelling by id intent");
+        check(Long.valueOf(12L).equals(byId.getArgument("predicate")),
+                "predicates family spelling by id");
+
+        reject("predicate father extra", EXTRA_ARGUMENT);
     }
 
     @SuppressWarnings("unchecked")
@@ -236,16 +273,16 @@ public final class CommandParserConformanceTest {
 
     private void storageFamily() throws Exception {
         expect("storage", CommandIntent.STORAGE_STATUS);
-        expectArgument("st u demo", CommandIntent.STORAGE_USE,
+        expectArgument("sto u demo", CommandIntent.STORAGE_USE,
                 "name", "demo");
         expectArgument("storage use close", CommandIntent.STORAGE_USE,
                 "name", "close");
         expectArgument("storage use \"test base\"", CommandIntent.STORAGE_USE,
                 "name", "test base");
-        expect("st c", CommandIntent.STORAGE_CLOSE);
-        expectArgument("st d demo", CommandIntent.STORAGE_DROP,
+        expect("sto c", CommandIntent.STORAGE_CLOSE);
+        expectArgument("sto d demo", CommandIntent.STORAGE_DROP,
                 "name", "demo");
-        expectArgument("st r demo", CommandIntent.STORAGE_REINDEX,
+        expectArgument("sto r demo", CommandIntent.STORAGE_REINDEX,
                 "name", "demo");
         reject("storage use", MISSING_ARGUMENT);
         reject("storage demo", INVALID_GRAMMAR);
@@ -253,11 +290,15 @@ public final class CommandParserConformanceTest {
     }
 
     private void aliasVocabulary() throws Exception {
+        expect("start", CommandIntent.TX_START);
         expect("commit", CommandIntent.TX_COMMIT);
         expect("co", CommandIntent.TX_COMMIT);
-        expect("c", CommandIntent.TX_COMMIT);
+        expect("rollback", CommandIntent.TX_ROLLBACK);
+        expect("squash", CommandIntent.TX_SQUASH);
+        reject("c", AMBIGUOUS_PREFIX);
         reject("commit now", EXTRA_ARGUMENT);
 
+        expect("use", CommandIntent.STORAGE_STATUS);
         expectArgument("use demo", CommandIntent.STORAGE_USE,
                 "name", "demo");
         expectArgument("us demo", CommandIntent.STORAGE_USE,
@@ -266,10 +307,16 @@ public final class CommandParserConformanceTest {
                 "name", "demo");
         expectArgument("use \"test base\"", CommandIntent.STORAGE_USE,
                 "name", "test base");
-        reject("use", MISSING_ARGUMENT);
+        expect("close", CommandIntent.STORAGE_CLOSE);
+        expectArgument("drop demo", CommandIntent.STORAGE_DROP,
+                "name", "demo");
+        expectArgument("reindex demo", CommandIntent.STORAGE_REINDEX,
+                "name", "demo");
+        reject("drop", MISSING_ARGUMENT);
+        reject("reindex", MISSING_ARGUMENT);
 
-        CommandInvocation commit = parser.parse("c");
-        check("c".equals(commit.getRaw()),
+        CommandInvocation commit = parser.parse("co");
+        check("co".equals(commit.getRaw()),
                 "commit alias preserves original raw input");
         CommandInvocation use = parser.parse("u \"test base\"");
         check("u \"test base\"".equals(use.getRaw()),
@@ -289,9 +336,9 @@ public final class CommandParserConformanceTest {
         expectCanonical("rules", "rule");
         expectCanonical("rules all", "rule all");
         expectCanonical("rules 17", "rule 17");
-        expectCanonical("r l", "rule level");
+        expectCanonical("ru l", "rule level");
         expectCanonical("rules level 2", "rule level 2");
-        expectCanonical("r c 17", "rule comment 17");
+        expectCanonical("ru c 17", "rule comment 17");
         expectCanonical("f s 8", "function source 8");
         expectCanonical("b p father", "base predicate father");
         expectCanonical("v o x d, y a", "values order x desc, y asc");
@@ -299,11 +346,20 @@ public final class CommandParserConformanceTest {
         expectCanonical("w a 0", "when accept 0");
         expectCanonical("t st", "transaction start");
         expectCanonical("t sq", "transaction squash");
-        expectCanonical("c", "transaction commit");
-        expectCanonical("st u close", "storage use close");
+        expectCanonical("sta", "transaction start");
+        expectCanonical("co", "transaction commit");
+        expectCanonical("ro", "transaction rollback");
+        expectCanonical("sq", "transaction squash");
+        expectCanonical("pr", "base predicates");
+        expectCanonical("predicates father", "base predicate father");
+        expectCanonical("sto u close", "storage use close");
+        expectCanonical("u", "storage");
         expectCanonical("u close", "storage use close");
+        expectCanonical("cl", "storage close");
+        expectCanonical("dr demo", "storage drop demo");
+        expectCanonical("re demo", "storage reindex demo");
         expectCanonical("g", "get");
-        expectCanonical("d", "delete");
+        expectCanonical("de", "delete");
         expectCanonical("g \"my source.k\"", "get \"my source.k\"");
         expectCanonical("?father(John,Tom)", "?father(John,Tom)");
     }
@@ -323,9 +379,33 @@ public final class CommandParserConformanceTest {
         CommandRegistry.Definition commit = CommandRegistry.definition(CommandIntent.TX_COMMIT);
         check(commit != null && commit.getAliases().contains("commit"),
                 "transaction commit alias metadata");
+        CommandRegistry.Definition start = CommandRegistry.definition(CommandIntent.TX_START);
+        check(start != null && start.getAliases().contains("start"),
+                "transaction start alias metadata");
+        CommandRegistry.Definition rollback = CommandRegistry.definition(CommandIntent.TX_ROLLBACK);
+        check(rollback != null && rollback.getAliases().contains("rollback"),
+                "transaction rollback alias metadata");
+        CommandRegistry.Definition squash = CommandRegistry.definition(CommandIntent.TX_SQUASH);
+        check(squash != null && squash.getAliases().contains("squash"),
+                "transaction squash alias metadata");
+        CommandRegistry.Definition storage = CommandRegistry.definition(CommandIntent.STORAGE_STATUS);
+        check(storage != null && storage.getAliases().contains("use"),
+                "storage status alias metadata");
         CommandRegistry.Definition use = CommandRegistry.definition(CommandIntent.STORAGE_USE);
         check(use != null && use.getAliases().contains("use <name>"),
                 "storage use alias metadata");
+        CommandRegistry.Definition close = CommandRegistry.definition(CommandIntent.STORAGE_CLOSE);
+        check(close != null && close.getAliases().contains("close"),
+                "storage close alias metadata");
+        CommandRegistry.Definition drop = CommandRegistry.definition(CommandIntent.STORAGE_DROP);
+        check(drop != null && drop.getAliases().contains("drop <name>"),
+                "storage drop alias metadata");
+        CommandRegistry.Definition reindex = CommandRegistry.definition(CommandIntent.STORAGE_REINDEX);
+        check(reindex != null && reindex.getAliases().contains("reindex <name>"),
+                "storage reindex alias metadata");
+        CommandRegistry.Definition predicates = CommandRegistry.definition(CommandIntent.BASE_PREDICATES);
+        check(predicates != null && predicates.getAliases().isEmpty(),
+                "predicate/predicates are family spellings, not aliases");
 
         String help = new CommandHelpRenderer().render();
         check(help.contains("rule <id>"), "help contains rule object syntax");
@@ -335,10 +415,28 @@ public final class CommandParserConformanceTest {
         check(help.contains("values order <field>"), "help contains values syntax");
         check(help.contains("when accept <index>"), "help contains hypothesis addressing");
         check(help.contains("delete [<source>]"), "help contains safe bare delete syntax");
+        check(help.contains("base predicates  (family spellings: predicate, predicates)"),
+                "help exposes predicate/predicates family spellings");
+        check(help.contains("base predicate <id|name>  (family spellings: predicate <id|name>, predicates <id|name>)"),
+                "help exposes predicate/predicates argument spellings");
+        check(help.contains("transaction start  (alias: start)"),
+                "help contains start alias");
         check(help.contains("transaction commit  (alias: commit)"),
                 "help contains commit alias");
+        check(help.contains("transaction rollback  (alias: rollback)"),
+                "help contains rollback alias");
+        check(help.contains("transaction squash  (alias: squash)"),
+                "help contains squash alias");
+        check(help.contains("storage  (alias: use)"),
+                "help contains storage status alias");
         check(help.contains("storage use <name>  (alias: use <name>)"),
                 "help contains storage use alias");
+        check(help.contains("storage close  (alias: close)"),
+                "help contains close alias");
+        check(help.contains("storage drop <name>  (alias: drop <name>)"),
+                "help contains drop alias");
+        check(help.contains("storage reindex <name>  (alias: reindex <name>)"),
+                "help contains reindex alias");
     }
 
     private void expect(String source, CommandIntent intent) throws Exception {

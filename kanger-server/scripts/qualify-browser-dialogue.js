@@ -13,6 +13,40 @@ const calls = [];
 const refreshes = [];
 const callbacks = [];
 let readyCallback = null;
+function domNode(type, value) {
+    return {
+        type,
+        children: [],
+        style: {},
+        attributes: {},
+        _text: value || '',
+        appendChild(child) {
+            this.children.push(child);
+            return child;
+        },
+        setAttribute(name, attributeValue) {
+            this.attributes[name] = String(attributeValue);
+        },
+        get textContent() {
+            return this._text + this.children.map(child => child.textContent).join('');
+        },
+        set textContent(text) {
+            this._text = String(text);
+            this.children = [];
+        }
+    };
+}
+const document = {
+    createDocumentFragment() {
+        return domNode('fragment');
+    },
+    createElement(type) {
+        return domNode(type);
+    },
+    createTextNode(value) {
+        return domNode('text', String(value));
+    }
+};
 const jQuery = {
     fn: {
         ready(callback) {
@@ -24,16 +58,39 @@ const jQuery = {
 const window = {
     token: '__KANGER_PARENT_SESSION__',
     editor: {},
+    document,
     jQuery,
     KANGER_ERROR_BOUNDARY: Object.freeze({version: 1, installed: true}),
     post(packet, callback) {
         calls.push(JSON.parse(JSON.stringify(packet)));
-        const result = {result: 'OK', description: 'accepted'};
+        const result = packet.parameters.line === 'help'
+            ? {
+                result: 'OK',
+                canonical_intent: 'HELP',
+                dialogue_help: {
+                    schema: 1,
+                    sections: [{
+                        name: 'COMMANDS',
+                        commands: [{
+                            syntax: 'base predicates',
+                            family_spellings: ['predicate', 'predicates'],
+                            aliases: [],
+                            summary: 'Show predicates.'
+                        }, {
+                            syntax: 'transaction squash',
+                            family_spellings: [],
+                            aliases: ['squash'],
+                            summary: 'Collapse transaction history.'
+                        }]
+                    }]
+                }
+            }
+            : {result: 'OK', description: 'accepted'};
         if (typeof callback === 'function') callback(result);
         return calls.length;
     },
-    refreshScreen(data) {
-        refreshes.push(data);
+    refreshScreen(data, presentation) {
+        refreshes.push({data, presentation});
     },
     command() {
         throw new Error('historical Browser command parser remained active');
@@ -107,11 +164,21 @@ function invoke(line, throughQuery) {
         'Browser rewrote raw operator dialogue');
 }
 
-invoke('r a', false);
+invoke('ru a', false);
 invoke('?father(John,Tom);', true);
 invoke('s', false);
 invoke('  MiXeD  "a b"  ', false);
 invoke('storage use close', false);
+invoke('help', false);
+
+const help = refreshes[refreshes.length - 1].presentation;
+assert(help, 'Browser did not render structured canonical help');
+assert(help.textContent.includes(
+    'base predicates  (family spellings: predicate, predicates) — Show predicates.'),
+    'Browser help hid predicate/predicates family spellings');
+assert(help.textContent.includes(
+    'transaction squash  (alias: squash) — Collapse transaction history.'),
+    'Browser help hid the squash alias');
 
 assert.strictEqual(refreshes.length, calls.length);
 assert.strictEqual(callbacks.length, calls.length);
@@ -124,4 +191,5 @@ console.log('BROWSER_DIALOGUE_PASS core-command-convergence');
 console.log('BROWSER_DIALOGUE_PASS ready-ownership-reassertion');
 console.log('BROWSER_DIALOGUE_PASS ambiguity-left-to-server');
 console.log('BROWSER_DIALOGUE_PASS lexical-preservation');
+console.log('BROWSER_DIALOGUE_PASS vocabulary-help-metadata');
 console.log('BROWSER_DIALOGUE_OK');

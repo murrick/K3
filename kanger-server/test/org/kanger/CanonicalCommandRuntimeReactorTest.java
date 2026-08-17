@@ -41,16 +41,40 @@ class CanonicalCommandRuntimeReactorTest {
             JSONArray sections = structured.getJSONArray("sections");
             assertTrue(sections.length() > 0);
             boolean foundDeleteListForm = false;
+            boolean foundPredicateFamilySpellings = false;
+            boolean foundSquashAlias = false;
+            boolean foundStorageStatusAlias = false;
             for (int i = 0; i < sections.length(); i++) {
                 JSONArray commands = sections.getJSONObject(i).getJSONArray("commands");
                 for (int j = 0; j < commands.length(); j++) {
-                    if ("delete [<source>]".equals(
-                            commands.getJSONObject(j).optString("syntax"))) {
+                    JSONObject command = commands.getJSONObject(j);
+                    String syntax = command.optString("syntax");
+                    if ("delete [<source>]".equals(syntax)) {
                         foundDeleteListForm = true;
+                    }
+                    if ("base predicates".equals(syntax)) {
+                        JSONArray spellings = command.getJSONArray(
+                                "family_spellings");
+                        foundPredicateFamilySpellings = spellings.length() == 2
+                                && "predicate".equals(spellings.getString(0))
+                                && "predicates".equals(spellings.getString(1));
+                    }
+                    if ("transaction squash".equals(syntax)) {
+                        JSONArray aliases = command.getJSONArray("aliases");
+                        foundSquashAlias = aliases.length() == 1
+                                && "squash".equals(aliases.getString(0));
+                    }
+                    if ("storage".equals(syntax)) {
+                        JSONArray aliases = command.getJSONArray("aliases");
+                        foundStorageStatusAlias = aliases.length() == 1
+                                && "use".equals(aliases.getString(0));
                     }
                 }
             }
             assertTrue(foundDeleteListForm, response.toString());
+            assertTrue(foundPredicateFamilySpellings, response.toString());
+            assertTrue(foundSquashAlias, response.toString());
+            assertTrue(foundStorageStatusAlias, response.toString());
             assertTrue(response.has("workspace"), response.toString());
             assertEquals("HELP", response.optString(
                     CanonicalCommandIngressReactor.CANONICAL_INTENT_FIELD));
