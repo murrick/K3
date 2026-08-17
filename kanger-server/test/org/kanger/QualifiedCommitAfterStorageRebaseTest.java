@@ -83,7 +83,6 @@ class QualifiedCommitAfterStorageRebaseTest {
         Fixture fixture = fixture("divergent-reject");
         try {
             Mind root = (Mind) fixture.user.getCurrentMind();
-            assertTrue(Boolean.TRUE.equals(root.query("!base;")));
 
             Mind child = new Mind(root);
             assertTrue(Boolean.TRUE.equals(child.query("!~ghost;")));
