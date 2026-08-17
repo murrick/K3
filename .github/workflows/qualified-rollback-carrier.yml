@@ -1,0 +1,123 @@
+name: Qualified rollback carrier
+
+on:
+  push:
+    branches:
+      - tmp/3.7.0.20-qualified-rollback-carrier
+    paths:
+      - .github/workflows/qualified-rollback-carrier.yml
+
+permissions:
+  contents: write
+
+jobs:
+  qualify-and-publish-ready:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact RED parent
+        uses: actions/checkout@v5
+        with:
+          ref: 66d7f14ace6f66a44352d74913136b893a0d850e
+          fetch-depth: 0
+
+      - name: Apply minimal implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/qualified-rollback.patch <<'PATCH'
+          diff --git a/kanger/src/org/kanger/PortableMindLayer.java b/kanger/src/org/kanger/PortableMindLayer.java
+          index 3c082ac..0000000 100644
+          --- a/kanger/src/org/kanger/PortableMindLayer.java
+          +++ b/kanger/src/org/kanger/PortableMindLayer.java
+          @@ -8,6 +8,7 @@ import org.kanger.enums.UnitType;
+           import org.kanger.factory.CommentFactory;
+           import org.kanger.interfaces.IOperation;
+           import org.kanger.interfaces.IRule;
+          +import org.kanger.interfaces.ITerm;
+           import org.kanger.units.Comment;
+           import org.kanger.units.Operation;
+           import org.kanger.units.Rule;
+          @@ -17,6 +18,7 @@ import java.util.Iterator;
+           import java.util.LinkedHashMap;
+           import java.util.LinkedHashSet;
+          +import java.util.LinkedList;
+           import java.util.List;
+           import java.util.Map;
+           import java.util.Set;
+          @@ -326,10 +328,7 @@ final class PortableMindLayer {
+                   for (Map.Entry<String, String> entry : ruleSources.entrySet()) {
+                       String origin = entry.getKey();
+          -            Boolean result = child.query(entry.getValue());
+          +            child.compileLine(entry.getValue(), false, new LinkedList<ITerm>());
+                       Rule rule = findRule(child, origin);
+                       if (rule == null) {
+                           throw new IllegalStateException("Cannot replay Rule declaration: " + origin);
+                       }
+          -            if (!Boolean.TRUE.equals(result) && rule.isDeleted(child)) {
+          -                throw new IllegalStateException("Cannot replay Rule declaration: " + origin);
+          -            }
+                       if (rule.getMindId() != child.getId()) {
+                           residue.ruleSources.put(origin, entry.getValue());
+                       }
+          diff --git a/kanger/src/org/kanger/UserTransactionStackSnapshot.java b/kanger/src/org/kanger/UserTransactionStackSnapshot.java
+          index ca89fc3..0000000 100644
+          --- a/kanger/src/org/kanger/UserTransactionStackSnapshot.java
+          +++ b/kanger/src/org/kanger/UserTransactionStackSnapshot.java
+          @@ -75,4 +75,8 @@ final class UserTransactionStackSnapshot {
+                           Mind work = tx.mind();
+                           rootLevel.apply(root, work);
+          +                if (!Boolean.TRUE.equals(work.queryCheck(false))) {
+          +                    throw new IllegalStateException(
+          +                            "Offline U0 conflicts with target storage baseline");
+          +                }
+                           if (!tx.commit()) {
+                               throw new IllegalStateException(
+          @@ -107,4 +111,8 @@ final class UserTransactionStackSnapshot {
+                           }
+                           current = child;
+                       }
+          +            if (!Boolean.TRUE.equals(current.queryCheck(false))) {
+          +                throw new IllegalStateException(
+          +                        "Replayed current context conflicts with storage baseline");
+          +            }
+                       return current;
+                   } catch (Throwable failure) {
+          diff --git a/kanger/src/org/kanger/CanonicalCommandProcessor.java b/kanger/src/org/kanger/CanonicalCommandProcessor.java
+          index 58b276c..0000000 100644
+          --- a/kanger/src/org/kanger/CanonicalCommandProcessor.java
+          +++ b/kanger/src/org/kanger/CanonicalCommandProcessor.java
+          @@ -124,6 +124,10 @@ public final class CanonicalCommandProcessor {
+                   if (parent == null) {
+                       return Result.rejected(mind, "No transactions was created");
+                   }
+          +        if (!Boolean.TRUE.equals(((Mind) parent).queryCheck(false))) {
+          +            return Result.rejected(mind,
+          +                    "Transaction rollback rejected: target context conflicts with current storage baseline");
+          +        }
+                   parent.release(mind);
+                   user.setCurrentMind(parent);
+                   return Result.success(parent, "Transaction rolled back");
+          PATCH
+          git apply --check /tmp/qualified-rollback.patch
+          git apply /tmp/qualified-rollback.patch
+          git diff --check
+
+      - name: Run focused qualified rollback characterization
+        run: >-
+          mvn -B -ntp -f kanger-server/pom.xml
+          -Dtest=QualifiedRollbackAfterStorageRebaseTest
+          test
+
+      - name: Publish ready commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "KANGER qualification bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add \
+            kanger/src/org/kanger/PortableMindLayer.java \
+            kanger/src/org/kanger/UserTransactionStackSnapshot.java \
+            kanger/src/org/kanger/CanonicalCommandProcessor.java
+          test "$(git diff --cached --name-only | wc -l)" -eq 3
+          git commit -m "fix(transaction): qualify rollback after storage rebase"
+          git push origin HEAD:refs/heads/tmp/3.7.0.20-qualified-rollback-ready
