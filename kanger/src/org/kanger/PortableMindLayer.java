@@ -9,6 +9,7 @@ import org.kanger.enums.UnitType;
 import org.kanger.factory.CommentFactory;
 import org.kanger.interfaces.IOperation;
 import org.kanger.interfaces.IRule;
+import org.kanger.interfaces.ITerm;
 import org.kanger.units.Comment;
 import org.kanger.units.Operation;
 import org.kanger.units.Rule;
@@ -18,6 +19,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -325,12 +327,9 @@ final class PortableMindLayer {
 
         for (Map.Entry<String, String> entry : ruleSources.entrySet()) {
             String origin = entry.getKey();
-            Boolean result = child.query(entry.getValue());
+            child.compileLine(entry.getValue(), false, new LinkedList<ITerm>());
             Rule rule = findRule(child, origin);
             if (rule == null) {
-                throw new IllegalStateException("Cannot replay Rule declaration: " + origin);
-            }
-            if (!Boolean.TRUE.equals(result) && rule.isDeleted(child)) {
                 throw new IllegalStateException("Cannot replay Rule declaration: " + origin);
             }
             if (rule.getMindId() != child.getId()) {

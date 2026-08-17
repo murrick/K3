@@ -126,6 +126,10 @@ public final class CanonicalCommandProcessor {
         if (parent == null) {
             return Result.rejected(mind, "No transactions was created");
         }
+        if (!Boolean.TRUE.equals(((Mind) parent).queryCheck(false))) {
+            return Result.rejected(mind,
+                    "Transaction rollback rejected: target context conflicts with current storage baseline");
+        }
         parent.release(mind);
         user.setCurrentMind(parent);
         return Result.success(parent, "Transaction rolled back");

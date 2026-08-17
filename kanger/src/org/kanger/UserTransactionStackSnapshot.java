@@ -75,6 +75,10 @@ final class UserTransactionStackSnapshot {
             try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(root)) {
                 Mind work = tx.mind();
                 rootLevel.apply(root, work);
+                if (!Boolean.TRUE.equals(work.queryCheck(false))) {
+                    throw new IllegalStateException(
+                            "Offline U0 conflicts with target storage baseline");
+                }
                 if (!tx.commit()) {
                     throw new IllegalStateException(
                             "Offline U0 cannot be assimilated into the target storage baseline");
@@ -107,6 +111,10 @@ final class UserTransactionStackSnapshot {
                     }
                 }
                 current = child;
+            }
+            if (!Boolean.TRUE.equals(current.queryCheck(false))) {
+                throw new IllegalStateException(
+                        "Replayed current context conflicts with storage baseline");
             }
             return current;
         } catch (Throwable failure) {
