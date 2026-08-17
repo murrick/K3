@@ -5,9 +5,9 @@
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
- *  deal in the Software without restriction, including without limitation the
- *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- *  sell copies of the Software, and to permit persons to whom the Software is
+ *  deal in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
  *
  *  The above copyright notice and this permission notice shall be included in
@@ -27,7 +27,9 @@ package org.kanger.storage;
 import org.kanger.Mind;
 import org.kanger.User;
 import org.kanger.enums.Enums;
+import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.CommandErrorException;
+import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
@@ -81,8 +83,11 @@ import java.util.UUID;
  *
  * <p><strong>Удаление и перечисление.</strong> {@link #remove(String)} удаляет
  * файлы явно выбранного поколения после закрытия текущего, включая delta и WAL.
- * {@link #list()} выводит поколения по найденным {@code .store}-файлам и не
- * открывает их для проверки содержимого.</p>
+ * Удаление является truthful lifecycle boundary: отсутствующее поколение и
+ * оставшиеся после попытки удаления артефакты возвращаются как стабильные
+ * {@link StorageLifecycleException}, а не как ложный success. {@link #list()}
+ * выводит поколения по найденным {@code .store}-файлам и не открывает их для
+ * проверки содержимого.</p>
  *
  * <p><strong>Concurrency.</strong> Создаваемые базы получают общий статический
  * locker для согласования доступа к совместным index/store-файлам. Сам реестр
@@ -105,6 +110,9 @@ public class DB implements IData {
     private static final Object locker = new Object();
     private static final String[] GENERATION_SUFFIXES = {
             ".index", ".store", ".integrity"
+    };
+    private static final String[] REMOVAL_SUFFIXES = {
+            ".index", ".store", ".integrity", ".integrity.delta"
     };
 
     private String storageName = "";
@@ -157,19 +165,108 @@ public class DB implements IData {
         }
     }
 
+    @Override
     public void remove(String name) throws Exception {
         String tmp;
         if (!isClosed() && (name == null || name.isEmpty() || storageName.equals(name))) {
             tmp = storageName;
             close();
-        } else if (name != null) {
+        } else if (name != null && !name.isEmpty()) {
             tmp = name;
         } else {
             throw new CommandErrorException("DB name expected");
         }
 
         String dbPath = user.getDatabaseDir() + tmp;
-        deleteStorageFiles(dbPath);
+        final boolean existed;
+        try {
+            existed = storageArtifactsExist(dbPath);
+        } catch (IOException probeFailure) {
+            throw incompleteRemoval(tmp, probeFailure);
+        }
+        if (!existed) {
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_NOT_FOUND,
+                    "Database " + tmp + " was not found");
+        }
+
+        try {
+            deleteStorageFiles(dbPath);
+            if (storageArtifactsExist(dbPath)) {
+                throw new IOException(
+                        "Storage artifacts remain after deletion: " + tmp);
+            }
+        } catch (IOException deleteFailure) {
+            throw incompleteRemoval(tmp, deleteFailure);
+        }
+    }
+
+    private StorageLifecycleException incompleteRemoval(
+            String name, Exception cause) {
+        StorageLifecycleException failure = new StorageLifecycleException(
+                StorageLifecycleErrorCode.STORAGE_DELETE_INCOMPLETE,
+                "Database deletion was incomplete " + name);
+        if (cause != null) {
+            failure.addSuppressed(cause);
+        }
+        return failure;
+    }
+
+    private boolean storageArtifactsExist(String dbPath) throws IOException {
+        for (String suffix : REMOVAL_SUFFIXES) {
+            if (new File(dbPath + suffix).exists()) {
+                return true;
+            }
+        }
+        File database = new File(dbPath).getAbsoluteFile();
+        File directory = database.getParentFile();
+        if (directory == null || !directory.exists()) {
+            return false;
+        }
+        File[] files = directory.listFiles();
+        if (files == null) {
+            throw new IOException(
+                    "Cannot inspect database directory " + directory.getPath());
+        }
+        String prefix = database.getName() + ".wal.";
+        for (File file : files) {
+            if (file.isFile() && file.getName().startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void deleteStorageFiles(String dbPath) throws IOException {
+        for (String suffix : REMOVAL_SUFFIXES) {
+            deleteFileIfExists(new File(dbPath + suffix));
+        }
+        deleteRecoveryLogsStrict(dbPath);
+    }
+
+    private void deleteFileIfExists(File file) throws IOException {
+        if (file.exists() && !file.delete()) {
+            throw new IOException("Cannot delete storage artifact " + file.getPath());
+        }
+    }
+
+    private void deleteRecoveryLogsStrict(String dbPath) throws IOException {
+        File database = new File(dbPath).getAbsoluteFile();
+        File directory = database.getParentFile();
+        if (directory == null || !directory.exists()) {
+            return;
+        }
+        File[] logs = directory.listFiles();
+        if (logs == null) {
+            throw new IOException(
+                    "Cannot inspect database directory " + directory.getPath());
+        }
+        String prefix = database.getName() + ".wal.";
+        for (File log : logs) {
+            if (log.isFile() && log.getName().startsWith(prefix)) {
+                deleteFileIfExists(log);
+            }
+        }
     }
 
     @Override
@@ -287,14 +384,6 @@ public class DB implements IData {
             this.temporary = temporary;
             this.backup = backup;
         }
-    }
-
-    private void deleteStorageFiles(String dbPath) {
-        new File(dbPath + ".index").delete();
-        new File(dbPath + ".store").delete();
-        new File(dbPath + ".integrity").delete();
-        new File(dbPath + ".integrity.delta").delete();
-        deleteRecoveryLogs(dbPath);
     }
 
     private void deleteRecoveryLogs(String dbPath) {

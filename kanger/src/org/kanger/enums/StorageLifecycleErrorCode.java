@@ -17,7 +17,9 @@ public enum StorageLifecycleErrorCode {
 
     STORAGE_ALREADY_OPEN("EXPLICIT_CLOSE_REQUIRED"),
     ACTIVE_TRANSACTION("TRANSACTION_RESOLUTION_REQUIRED"),
-    NO_STORAGE_OPEN(null);
+    NO_STORAGE_OPEN(null),
+    STORAGE_NOT_FOUND(null),
+    STORAGE_DELETE_INCOMPLETE("VERIFY_CURRENT_STATE");
 
     private final String requiredAction;
 
