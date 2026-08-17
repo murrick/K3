@@ -117,6 +117,43 @@ class CanonicalStorageDropConvergenceTest {
     }
 
     @Test
+    void browserActiveTransactionDropExposesTypedCoreErrorAndPreservesState()
+            throws Exception {
+        Fixture fixture = fixture("browser-active-transaction-drop");
+        try {
+            CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
+            CommandParser parser = new CommandParser();
+            String logical = "active.drop." + UUID.randomUUID();
+            processor.execute(parser.parse("storage use " + logical), fixture.user);
+
+            IMind child = new Mind(fixture.user.getCurrentMind());
+            fixture.user.setCurrentMind(child);
+            assertTrue(Boolean.TRUE.equals(child.query("!active_drop_transient;")));
+
+            AtomicInteger escaped = new AtomicInteger();
+            JSONObject response = invoke(
+                    canonicalReactor(escaped), fixture.token,
+                    "storage drop " + logical, true);
+
+            assertEquals("error", response.optString("result"), response.toString());
+            assertEquals("ACTIVE_TRANSACTION", response.optString("code"));
+            assertEquals("TRANSACTION_RESOLUTION_REQUIRED",
+                    response.optString("required_action"));
+            assertEquals(0, escaped.get(),
+                    "Rejected canonical drop escaped into legacy drop protocol");
+            assertSame(child, fixture.user.getCurrentMind());
+            assertEquals(1, child.getTransactionLevel());
+            assertTrue(child.isStorageUsed());
+            assertTrue(Boolean.TRUE.equals(child.query("?active_drop_transient;")));
+
+            processor.execute(parser.parse("transaction rollback"), fixture.user);
+            processor.execute(parser.parse("storage drop " + logical), fixture.user);
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
     void adaptersContainNoIndependentCanonicalDropSemanticPath() throws Exception {
         String console = source("kanger-console/src/org/kanger/CanonicalConsole.java");
         String ingress = source(
