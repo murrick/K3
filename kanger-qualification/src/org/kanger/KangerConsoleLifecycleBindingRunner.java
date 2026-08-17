@@ -169,8 +169,8 @@ public final class KangerConsoleLifecycleBindingRunner {
             /*
              * Opening physical storage underneath an already layered offline
              * transaction stack is a semantic rebase, not a lifecycle error.
-             * A non-empty offline U0 becomes U1 above the persistent baseline,
-             * so this U0/U1/U2 fixture becomes storage-U0/U1/U2/U3.
+             * Offline U0 is assimilated into the persistent baseline while
+             * explicit U1/U2 boundaries remain user-owned and unchanged.
              */
             query(processQuery, "!useguardroot;", mind);
             IMind useLevel1 = new Mind(mind);
@@ -185,8 +185,8 @@ public final class KangerConsoleLifecycleBindingRunner {
 
             require(rebasedUse.isStorageUsed(),
                     "Console use did not open storage under layered offline stack");
-            require(rebasedUse.getTransactionLevel() == 3,
-                    "non-empty offline U0 was not retained as an overlay");
+            require(rebasedUse.getTransactionLevel() == 2,
+                    "offline U0 assimilation changed explicit transaction depth");
             require(guardedSource.equals(rebasedUse.getSourceCode()),
                     "Console layered storage rebase changed visible workspace source");
             require(rebasedUse.getSourceCode().contains("useguardroot"),
@@ -196,14 +196,10 @@ public final class KangerConsoleLifecycleBindingRunner {
             require(rebasedUse.getSourceCode().contains("useguardlevel2"),
                     "Console layered storage rebase lost U2 content");
 
-            IMind rebasedLevel2 = rebasedUse.getNext();
-            require(rebasedLevel2 != null,
-                    "rebased U3 lost U2 parent");
-            rebasedLevel2.release(rebasedUse);
-            IMind rebasedLevel1 = rebasedLevel2.getNext();
+            IMind rebasedLevel1 = rebasedUse.getNext();
             require(rebasedLevel1 != null,
                     "rebased U2 lost U1 parent");
-            rebasedLevel1.release(rebasedLevel2);
+            rebasedLevel1.release(rebasedUse);
             IMind rebasedRoot = rebasedLevel1.getNext();
             require(rebasedRoot != null,
                     "rebased U1 lost persistent root");
@@ -218,13 +214,9 @@ public final class KangerConsoleLifecycleBindingRunner {
                     "post-rebase rollback retained offline overlay content");
 
             /*
-             * A level-0 offline workspace is intentionally retained when a
-             * database is opened: the database becomes the new persistent
-             * baseline at level 0 and the previous workspace is recompiled as
-             * a level-1 overlay. Rollback must leave the database untouched.
-             *
-             * Use the same processQuery path as an interactive Console command
-             * so persistence expectations match the actual operator surface.
+             * A level-0 offline workspace is assimilated directly into a newly
+             * opened database U0. No implicit user-visible transaction level is
+             * created, and the assimilated authorial state persists normally.
              */
             String insertionStorage =
                     "console_baseline_insertion_" + suffix;
@@ -234,63 +226,43 @@ public final class KangerConsoleLifecycleBindingRunner {
                     "use " + insertionStorage,
                     mind);
 
-            require(mind.getTransactionLevel() == 1,
-                    "workspace insertion did not create level 1");
+            require(mind.getTransactionLevel() == 0,
+                    "offline U0 assimilation created a user-visible level");
             require(mind.isStorageUsed(),
-                    "workspace insertion did not open storage");
+                    "offline U0 assimilation did not open storage");
             require(mind.getSourceCode().contains("workspacepending"),
-                    "workspace insertion lost pending source");
-            require(!mind.getTop().getSourceCode().contains(
+                    "offline U0 assimilation lost pending source");
+            require(mind.getTop().getSourceCode().contains(
                             "workspacepending"),
-                    "workspace insertion committed pending source into level 0");
+                    "offline U0 content was not assimilated into database U0");
 
-            IMind insertionRoot = mind.getNext();
-            require(insertionRoot != null,
-                    "workspace insertion did not retain database root");
-            insertionRoot.release(mind);
-            mind = insertionRoot;
             mind = mind.closeStorage();
-
             mind = mind.useStorage(insertionStorage);
-            require(!mind.getSourceCode().contains("workspacepending"),
-                    "rolled-back workspace was persisted");
-            mind = mind.closeStorage();
+            require(mind.getSourceCode().contains("workspacepending"),
+                    "assimilated offline U0 content did not persist");
 
             /*
-             * The same insertion path must keep pre-existing database content
-             * at level 0, expose both baseline and workspace at level 1, and
-             * persist the workspace exactly once after explicit commit.
+             * Explicit user transaction boundaries remain ordinary after the
+             * assimilation: U1 content is invisible to U0 until explicit commit
+             * and persists exactly once after that commit.
              */
-            mind = mind.useStorage(insertionStorage);
-            query(processQuery, "!databasebaseline;", mind);
-            mind = process(
+            IMind insertionLevel1 = process(
                     processTransaction,
-                    "transaction commit",
+                    "transaction start",
                     mind);
-            mind = mind.closeStorage();
+            query(processQuery, "!workspacecommit;", insertionLevel1);
 
-            query(processQuery, "!workspacecommit;", mind);
-            mind = use(useDatabase,
-                    "use " + insertionStorage,
-                    mind);
-
-            require(mind.getTransactionLevel() == 1,
-                    "committed workspace insertion did not create level 1");
-            require(mind.getTop().getSourceCode().contains(
-                            "databasebaseline"),
-                    "database baseline is missing from level 0");
-            require(!mind.getTop().getSourceCode().contains(
-                            "workspacecommit"),
-                    "workspace was published before explicit commit");
-            require(mind.getSourceCode().contains("databasebaseline"),
-                    "level-1 view cannot see database baseline");
-            require(mind.getSourceCode().contains("workspacecommit"),
-                    "level-1 view cannot see imported workspace");
+            require(insertionLevel1.getTransactionLevel() == 1,
+                    "explicit workspace transaction did not create U1");
+            require(!mind.getSourceCode().contains("workspacecommit"),
+                    "explicit U1 content leaked into U0 before commit");
+            require(insertionLevel1.getSourceCode().contains("workspacecommit"),
+                    "explicit U1 cannot see its workspace content");
 
             mind = process(
                     processTransaction,
                     "transaction commit",
-                    mind);
+                    insertionLevel1);
 
             require(mind.getTransactionLevel() == 0,
                     "workspace commit did not return to database root");
@@ -305,14 +277,12 @@ public final class KangerConsoleLifecycleBindingRunner {
 
             require(countOccurrences(
                             insertionReopened,
-                            "databasebaseline") == 1,
-                    "database baseline duplicated across reopen");
+                            "workspacepending") == 1,
+                    "assimilated offline U0 duplicated across reopen");
             require(countOccurrences(
                             insertionReopened,
                             "workspacecommit") == 1,
                     "committed workspace duplicated across reopen");
-            require(!insertionReopened.contains("workspacepending"),
-                    "rolled-back workspace appeared after reopen");
 
             mind = mind.closeStorage();
 
