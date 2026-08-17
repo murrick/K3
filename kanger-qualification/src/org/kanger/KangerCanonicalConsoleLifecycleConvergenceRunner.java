@@ -5,6 +5,9 @@
  */
 package org.kanger;
 
+import org.kanger.command.CommandParser;
+import org.kanger.enums.StorageLifecycleErrorCode;
+import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
@@ -22,6 +25,11 @@ import java.util.Scanner;
 /**
  * Focused qualification for the canonical Console after the storage/source
  * architecture moved to semantic Mind authority.
+ *
+ * <p>Canonical storage-use semantics are exercised through the same shared
+ * {@link CanonicalCommandProcessor} used by interactive adapters. Reflection is
+ * retained only for Console-local presentation/source/Core helpers that have
+ * not yet converged into the shared command boundary.</p>
  */
 public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
 
@@ -51,16 +59,19 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
             new DB().init(user);
             Files.createDirectories(new File(user.getSourceDir()).toPath());
 
+            CanonicalCommandProcessor commandProcessor =
+                    new CanonicalCommandProcessor();
+            CommandParser commandParser = new CommandParser();
+
             Method erase = privateMethod(
                     CanonicalConsole.class, "erase", IMind.class, Scanner.class);
-            Method useStorage = privateMethod(
-                    CanonicalConsole.class, "useStorage", IMind.class, String.class);
             Method loadSource = privateMethod(
                     CanonicalConsole.class, "loadSource", IMind.class, String.class);
             Method processCore = privateMethod(
                     CanonicalConsole.class, "processCore", String.class, IMind.class);
 
             IMind root = new Mind(user);
+            user.setCurrentMind(root);
 
             /* erase must settle an explicit child instead of orphaning its reservation. */
             Mind eraseChild = new Mind(root);
@@ -76,7 +87,7 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
                     "erase did not return the published root");
             require(root.isEmptyLevel(),
                     "erase did not clear the root workspace");
-            root = (IMind) invoke(useStorage, root, storageA);
+            root = useStorage(commandProcessor, commandParser, user, root, storageA);
             require(root.isStorageUsed(),
                     "storage use after erase was blocked by an orphan reservation");
             require(storageA.equals(root.getStorageName()),
@@ -92,7 +103,7 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
             }
             require(failed,
                     "malformed Core fixture unexpectedly succeeded");
-            root = (IMind) invoke(useStorage, root, storageA);
+            root = useStorage(commandProcessor, commandParser, user, root, storageA);
             require(root.isStorageUsed(),
                     "storage use after Core failure saw a leaked child reservation");
             root = root.closeStorage();
@@ -118,11 +129,12 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
             require(Boolean.TRUE.equals(u2.query("!consoleu2;")),
                     "U2 fixture did not compile");
 
-            IMind rebased = (IMind) invoke(useStorage, u2, storageB);
+            IMind rebased = useStorage(
+                    commandProcessor, commandParser, user, u2, storageB);
             require(rebased.getTransactionLevel() == 2,
-                    "Console A->B use changed explicit transaction depth");
+                    "canonical A->B use changed explicit transaction depth");
             require(storageB.equals(rebased.getStorageName()),
-                    "Console A->B use did not switch storage identity");
+                    "canonical A->B use did not switch storage identity");
             String rebasedSource = rebased.getSourceCode();
             require(rebasedSource.contains("bbase"),
                     "target storage baseline is missing after rebase");
@@ -166,17 +178,30 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
             root.release(loaded);
             Files.deleteIfExists(sourceFile.toPath());
 
-            /* same-generation use is presentation-idempotent, not a second rebase. */
-            IMind same = (IMind) invoke(useStorage, root, storageB);
-            require(same == root,
-                    "same-storage Console use unexpectedly replaced the Mind");
+            /* same-generation use follows the shared Core lifecycle contract. */
+            boolean sameRejected = false;
+            try {
+                useStorage(commandProcessor, commandParser, user, root, storageB);
+            } catch (StorageLifecycleException expected) {
+                sameRejected = true;
+                require(StorageLifecycleErrorCode.STORAGE_ALREADY_OPEN.name()
+                                .equals(expected.getCode()),
+                        "same-storage rejection used the wrong lifecycle code");
+                require("EXPLICIT_CLOSE_REQUIRED".equals(expected.getRequiredAction()),
+                        "same-storage rejection lost required action");
+            }
+            require(sameRejected,
+                    "same-storage canonical use unexpectedly succeeded");
+            require(user.getCurrentMind() == root,
+                    "same-storage rejection replaced the published Mind");
 
             root = root.closeStorage();
 
             /* No-storage U0 insertion remains a deliberate compatibility case. */
             require(Boolean.TRUE.equals(root.query("!offlineworkspace;")),
                     "offline workspace fixture did not compile");
-            IMind inserted = (IMind) invoke(useStorage, root, storageA);
+            IMind inserted = useStorage(
+                    commandProcessor, commandParser, user, root, storageA);
             require(inserted.getTransactionLevel() == 1,
                     "offline workspace insertion did not create U1");
             require(inserted.getSourceCode().contains("offlineworkspace"),
@@ -196,7 +221,8 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
             require(Boolean.TRUE.equals(offlineU2.query("!offlineu2;")),
                     "offline U2 fixture did not compile");
             user.setCurrentMind(offlineU2);
-            IMind offlineRebased = (IMind) invoke(useStorage, offlineU2, storageA);
+            IMind offlineRebased = useStorage(
+                    commandProcessor, commandParser, user, offlineU2, storageA);
             require(offlineRebased.getTransactionLevel() == 2,
                     "empty offline U0 incorrectly shifted explicit stack depth");
             require(storageA.equals(offlineRebased.getStorageName()),
@@ -229,7 +255,8 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
             user.setCurrentMind(collisionU1);
             boolean collisionRejected = false;
             try {
-                invoke(useStorage, collisionU1, storageCollision);
+                useStorage(commandProcessor, commandParser, user,
+                        collisionU1, storageCollision);
             } catch (Exception expected) {
                 collisionRejected = true;
             }
@@ -303,7 +330,7 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
             System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS core-exception-settlement");
             System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS storage-stack-rebase");
             System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS source-get-current-level");
-            System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS same-storage-idempotent");
+            System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS same-storage-rejected");
             System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS offline-baseline-insertion");
             System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS offline-stack-storage-insertion");
             System.out.println("CANONICAL_CONSOLE_LIFECYCLE_PASS offline-stack-collision-restore");
@@ -314,6 +341,23 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
             failure.printStackTrace(System.err);
             return false;
         }
+    }
+
+    private static IMind useStorage(CanonicalCommandProcessor processor,
+                                    CommandParser parser,
+                                    IUser user,
+                                    IMind mind,
+                                    String logicalName) throws Exception {
+        user.setCurrentMind(mind);
+        CanonicalCommandProcessor.Result result = processor.execute(
+                parser.parse("storage use " + logicalName), user);
+        require(result.isHandled(),
+                "shared processor did not handle storage use");
+        require(result.isSuccess(),
+                "shared processor rejected storage use without an exception");
+        require(result.getMind() != null,
+                "shared processor returned no Mind for storage use");
+        return result.getMind();
     }
 
     private static String captureRuleListing(IMind mind, String command) throws Exception {
