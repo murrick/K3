@@ -212,7 +212,14 @@ if "rule <id>" not in description or "values order <field>" not in description:
 '
 
 printf '%s\n' "[12/13] Mixing canonical and legacy transaction ingress"
-first_transaction="$(post "{\"context\":\"dialogue\",\"parameters\":{\"token\":\"${second_token}\",\"line\":\"t s\"}}")"
+ambiguous_transaction="$(post "{\"context\":\"dialogue\",\"parameters\":{\"token\":\"${second_token}\",\"line\":\"t s\"}}")"
+require_result "${ambiguous_transaction}" "error" "ambiguous transaction prefix"
+require_code "${ambiguous_transaction}" "command_parse_error" "ambiguous transaction prefix"
+[[ "$(json_field "${ambiguous_transaction}" reason)" = "AMBIGUOUS_PREFIX" ]] || {
+  echo "transaction s did not report AMBIGUOUS_PREFIX: ${ambiguous_transaction}" >&2
+  exit 1
+}
+first_transaction="$(post "{\"context\":\"dialogue\",\"parameters\":{\"token\":\"${second_token}\",\"line\":\"t st\"}}")"
 require_result "${first_transaction}" "OK" "canonical transaction start"
 require_workspace "${first_transaction}" 1 "canonical transaction start"
 second_transaction="$(post "{\"context\":\"query\",\"parameters\":{\"token\":\"${second_token}\",\"transaction\":\"create\"}}")"
