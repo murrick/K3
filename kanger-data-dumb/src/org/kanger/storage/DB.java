@@ -108,11 +108,12 @@ import java.util.UUID;
 public class DB implements IData {
 
     private static final Object locker = new Object();
+    private static final String STORE_SUFFIX = ".store";
     private static final String[] GENERATION_SUFFIXES = {
-            ".index", ".store", ".integrity"
+            ".index", STORE_SUFFIX, ".integrity"
     };
     private static final String[] REMOVAL_SUFFIXES = {
-            ".index", ".store", ".integrity", ".integrity.delta"
+            ".index", STORE_SUFFIX, ".integrity", ".integrity.delta"
     };
 
     private String storageName = "";
@@ -491,8 +492,10 @@ public class DB implements IData {
         if (dir != null) {
             for (File f : dir) {
                 if (!f.isDirectory()) {
-                    if (f.getName().contains(".store")) {
-                        list.add(prefix + f.getName().replaceAll(".store", ""));
+                    String fileName = f.getName();
+                    if (fileName.endsWith(STORE_SUFFIX)) {
+                        list.add(prefix + fileName.substring(
+                                0, fileName.length() - STORE_SUFFIX.length()));
                     }
                 } else {
                     recurseList(path + Enums.FILE_SEPARATOR + f.getName(),
