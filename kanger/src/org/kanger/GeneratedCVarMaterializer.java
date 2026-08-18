@@ -5,6 +5,7 @@
  */
 package org.kanger;
 
+import org.kanger.enums.QueryPass;
 import org.kanger.factory.RuleFactory;
 import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IRule;
@@ -24,11 +25,16 @@ import java.util.Map;
  *
  * <p>A {@code *N} C-variable is a rule-scoped child used only while matching
  * and saturating the current Mind. It must never become the durable witness of
- * a generated stored Rule. When a complete produced Domain is materialized,
- * each C-variable identity is alpha-rebound to a fresh {@code %N} root owned by
- * that generated Rule. Repeated occurrences of the same source C-variable in
- * one Domain share the same new root, while different materialized Rules own
- * independent witnesses.</p>
+ * a generated stored Rule. At the ACCEPT materialization boundary, a transient
+ * child that survives into a complete produced Domain is alpha-rebound to a
+ * fresh {@code %N} root owned by that generated Rule. Durable root C-variables
+ * already present in the Domain are preserved. Repeated occurrences of the
+ * same transient child in one Domain share the same new root, while different
+ * materialized Rules own independent witnesses.</p>
+ *
+ * <p>CHECK/HYPOTHESIS passes deliberately use rule-scoped children as runtime
+ * projections while proving or disproving a query. Rebinding those children
+ * would change query semantics, so this helper must not durableize them.</p>
  *
  * <p>Because runtime C-variable ids are deliberately fresh, exact Term-based
  * lookup cannot recognize a repeated abstract consequence. The companion
@@ -65,7 +71,9 @@ public final class GeneratedCVarMaterializer {
                                                         Domain sourceDomain,
                                                         Mind mind,
                                                         Rule owner) throws Exception {
-        if (sourceDomain.isQuery(mind) || !containsCVariable(sourceDomain, mind)) {
+        if (mind.getQueryPass() != QueryPass.ACCEPT
+                || sourceDomain.isQuery(mind)
+                || !containsCVariable(sourceDomain, mind)) {
             return source;
         }
 
@@ -77,13 +85,16 @@ public final class GeneratedCVarMaterializer {
             ITerm value = argument.getValue(mind);
             if (value != null && value.isCVariable()) {
                 abstractive = true;
-                ITerm replacement = replacements.get(value.getId());
-                if (replacement == null) {
-                    Term original = (Term) value;
-                    replacement = mind.getTerms().createCVar(
-                            owner, original.getName(mind), null);
-                    ((Term) replacement).setDomini(original.isDomini());
-                    replacements.put(value.getId(), replacement);
+                ITerm replacement = value;
+                Term original = (Term) value;
+                if (original.getParent(mind) != null) {
+                    replacement = replacements.get(value.getId());
+                    if (replacement == null) {
+                        replacement = mind.getTerms().createCVar(
+                                owner, original.getName(mind), null);
+                        ((Term) replacement).setDomini(original.isDomini());
+                        replacements.put(value.getId(), replacement);
+                    }
                 }
                 result.add(new Argument(replacement));
             } else {
