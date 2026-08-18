@@ -28,6 +28,7 @@ package org.kanger.primitives;
 import org.kanger.Mind;
 import org.kanger.QueryDemandTrace;
 import org.kanger.QueryTaint;
+import org.kanger.QueryTaintCarrier;
 import org.kanger.SemanticEffectTelemetry;
 import org.kanger.enums.UnitType;
 import org.kanger.factory.RuleFactory;
@@ -60,6 +61,7 @@ public class Cause implements ICause {
         SemanticEffectTelemetry.recordCause(this);
         QueryDemandTrace.recordCause(dst, src, mind);
         QueryTaint.recordUnification(dst, src, mind);
+        QueryTaintCarrier.recordCause(dst, src, mind);
     }
 
     public ByteBuffer pack() {
