@@ -100,13 +100,11 @@ class PublicAuthUiContractTest {
     @Test
     void supportedConsoleInstallsTrustedRenderingBeforeHistoricalReady()
             throws Exception {
+        String console = read(Paths.get("..", "html", "console.html"));
         String rendering = read(Paths.get("..", "html", "javascript.js"));
-        String modeLoader = read(
-                Paths.get("..", "html", "javascript-mode.js"));
         String modeVendor = read(
                 Paths.get("..", "html", "javascript-mode-vendor.js"));
 
-        assertTrue(rendering.contains("javascript-mode.js"));
         assertTrue(rendering.contains("wrapJQueryReady"));
         assertTrue(rendering.contains("KANGER_TRUSTED_RENDERING"));
         assertTrue(rendering.contains(
@@ -136,13 +134,19 @@ class PublicAuthUiContractTest {
         assertFalse(rendering.contains("row.innerHTML"));
         assertFalse(rendering.contains("cell.innerHTML"));
 
-        int vendorPosition = modeLoader.indexOf("javascript-mode-vendor.js");
-        int operationPosition = modeLoader.indexOf("operation.js");
-        int workspacePosition = modeLoader.indexOf("workspace.js");
-        int errorPosition = modeLoader.indexOf("error.js");
-        int dialoguePosition = modeLoader.indexOf("dialogue.js");
-        int presentationPosition = modeLoader.indexOf("presentation.js");
-        assertTrue(vendorPosition >= 0);
+        int renderingPosition = console.indexOf("src=\"javascript.js\"");
+        int adaptersPosition = console.indexOf("src=\"javascript-mode.js\"");
+        int vendorPosition = console.indexOf(
+                "src=\"javascript-mode-vendor.js\"");
+        int operationPosition = console.indexOf("src=\"operation.js\"");
+        int workspacePosition = console.indexOf("src=\"workspace.js\"");
+        int errorPosition = console.indexOf("src=\"error.js\"");
+        int dialoguePosition = console.indexOf("src=\"dialogue.js\"");
+        int presentationPosition = console.indexOf(
+                "src=\"presentation.js\"");
+        assertTrue(renderingPosition >= 0);
+        assertTrue(adaptersPosition > renderingPosition);
+        assertTrue(vendorPosition > adaptersPosition);
         assertTrue(operationPosition > vendorPosition);
         assertTrue(workspacePosition > operationPosition);
         assertTrue(errorPosition > workspacePosition);

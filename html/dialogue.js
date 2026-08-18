@@ -505,11 +505,11 @@
      * dialogue.js is parser-time code while console.html still declares the
      * historical command/query functions later in the same document. The
      * canonical boundary therefore reasserts ownership after every ready
-     * callback. In the actual loader nesting this runs after the console ready
-     * callback and immediately before javascript-mode.js captures command() for
-     * its one-shot startup migration adapter. A legacy parser can no longer be
-     * captured merely because a global function declaration overwrote the
-     * earlier canonical assignment.
+     * callback. In the static ready-wrapper topology this runs after the
+     * console ready callback and immediately before javascript-mode.js captures
+     * command() for its one-shot startup migration adapter. A legacy parser can
+     * no longer be captured merely because a global function declaration
+     * overwrote the earlier canonical assignment.
      */
     function wrapReadyOwnership() {
         if (!window.jQuery || !window.jQuery.fn

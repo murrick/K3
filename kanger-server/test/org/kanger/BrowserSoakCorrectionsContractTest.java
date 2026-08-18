@@ -104,8 +104,14 @@ class BrowserSoakCorrectionsContractTest {
 
     @Test
     void correctionAdapterRemainsInCanonicalBrowserLoadChain() throws Exception {
-        String bottom = html("bottom-layout.js");
-        assertTrue(bottom.contains("editor-local-file.js"));
+        String console = html("console.html");
+        int bottom = console.indexOf("<script src=\"bottom-layout.js\"></script>");
+        int correction = console.indexOf(
+                "<script src=\"editor-local-file.js\"></script>");
+
+        assertTrue(bottom >= 0, "Browser page must load the bottom layout");
+        assertTrue(correction > bottom,
+                "Browser page must load the correction adapter after the bottom layout");
     }
 
     private String html(String name) throws Exception {

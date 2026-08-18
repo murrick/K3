@@ -4,6 +4,8 @@ const assert = require('assert');
 const fs = require('fs');
 const vm = require('vm');
 
+const page = fs.readFileSync('html/console.html', 'utf8');
+
 class FakeNode {
     constructor(type, tagName) {
         this.nodeType = type;
@@ -123,8 +125,14 @@ function main() {
     const context = {window, document, Object, Array, Number, String, Error, isFinite, console};
     vm.runInNewContext(fs.readFileSync('html/workspace.js', 'utf8'), context,
             {filename: 'workspace.js'});
-    assert(writes.some((value) => value.includes('editor-state.js')),
-            'editor-state authority was not loaded');
+    const workspaceIndex = page.indexOf(
+            '<script src="workspace.js"></script>');
+    const editorStateIndex = page.indexOf(
+            '<script src="editor-state.js"></script>');
+    assert(workspaceIndex >= 0 && editorStateIndex > workspaceIndex,
+            'console.html must load editor-state after workspace');
+    assert.deepStrictEqual(writes, [],
+            'workspace must not mutate parser-time script topology');
     window.KANGER_OPERATION_PROTOCOL = Object.freeze({
         version: 1,
         snapshot() { return {generation}; }

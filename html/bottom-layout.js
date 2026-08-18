@@ -17,8 +17,9 @@
  * visible splitter boundaries, and persists/restores proportional weights via
  * the parent-owned kanger.layout.v1 broker. It has no command, transport,
  * workspace, session or bearer authority.
+ *
+ * editor-local-file.js follows this authority explicitly in console.html.
  */
-document.write('<script src="editor-local-file.js"><\/script>');
 
 /*
  * Legacy account-menu hover compatibility.

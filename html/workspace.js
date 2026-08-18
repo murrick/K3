@@ -205,9 +205,4 @@
     observeOperationProtocol();
 }(window, document));
 
-/*
- * Loaded here so the authority is available to observe operation responses,
- * but it deliberately installs late, after the historical Editor/soak wrappers
- * have finished. This keeps one final owner of local Editor staging state.
- */
-document.write('<script src="editor-state.js"><\\/script>');
+/* editor-state.js follows this authority explicitly in console.html. */

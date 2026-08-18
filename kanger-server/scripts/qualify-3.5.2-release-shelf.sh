@@ -232,7 +232,7 @@ require_pattern 'inventory_count: 15' release-manifest.yaml
 require_pattern 'sandbox="allow-scripts"' html/index.html
 ! grep -q 'allow-same-origin' html/index.html
 require_pattern '<script src="containment.js"></script>' html/index.html
-require_pattern 'error.js' html/javascript-mode.js
+require_fixed '<script src="error.js"></script>' html/console.html
 
 echo "RELEASE_SHELF_PASS browser-inventory"
 

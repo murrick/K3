@@ -65,7 +65,7 @@ class BrowserContainmentContractTest {
     void supportedConsoleKeepsBearerInParentOpaqueSandbox() throws Exception {
         String index = read(Paths.get("..", "html", "index.html"));
         String containment = read(Paths.get("..", "html", "containment.js"));
-        String loader = read(Paths.get("..", "html", "javascript-mode.js"));
+        String console = read(Paths.get("..", "html", "console.html"));
         String error = read(Paths.get("..", "html", "error.js"));
 
         int containmentPosition = index.indexOf("containment.js");
@@ -94,9 +94,9 @@ class BrowserContainmentContractTest {
         assertFalse(containment.contains("eval("));
         assertFalse(containment.contains("new Function"));
 
-        int operationPosition = loader.indexOf("operation.js");
-        int workspacePosition = loader.indexOf("workspace.js");
-        int errorPosition = loader.indexOf("error.js");
+        int operationPosition = console.indexOf("src=\"operation.js\"");
+        int workspacePosition = console.indexOf("src=\"workspace.js\"");
+        int errorPosition = console.indexOf("src=\"error.js\"");
         assertTrue(operationPosition >= 0);
         assertTrue(workspacePosition > operationPosition);
         assertTrue(errorPosition > workspacePosition);

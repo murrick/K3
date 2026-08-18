@@ -1,27 +1,15 @@
 /*
- * KANGER parser-time console loader.
- *
- * The historical console expects the CodeMirror JavaScript mode at this
- * position. Preserve that ordering explicitly, then install the supported
- * trusted-rendering boundary before the legacy inline script registers its
- * jQuery.ready callback.
- */
-(function (document) {
-    'use strict';
-    document.write('<script src="javascript-mode.js"><\/script>');
-}(document));
-
-/*
  * MIT License
  *
  * Copyright (c) 2021 Dmitry G. Quznetsov
  *
  * Supported KANGER console rendering boundary.
  *
- * This adapter is loaded before the historical console registers its
- * jQuery.ready callback. It replaces string-built DOM presentation with
- * text nodes, explicit DOM builders and a deliberately narrow legacy
- * description renderer.
+ * console.html declares the complete capability chain explicitly. This
+ * adapter installs before that chain and before the historical console
+ * registers its jQuery.ready callback. It replaces string-built DOM
+ * presentation with text nodes, explicit DOM builders and a deliberately
+ * narrow legacy description renderer.
  */
 (function (window, document) {
     'use strict';

@@ -5,6 +5,7 @@ on:
     branches:
       - "server/**"
     paths:
+      - "html/console.html"
       - "html/operation.js"
       - "html/javascript-mode.js"
       - "html/javascript-mode-vendor.js"
@@ -12,6 +13,7 @@ on:
       - ".github/workflows/kanger-browser-operation.yml"
   pull_request:
     paths:
+      - "html/console.html"
       - "html/operation.js"
       - "html/javascript-mode.js"
       - "html/javascript-mode-vendor.js"
@@ -45,8 +47,9 @@ jobs:
 
           test "$(git hash-object html/javascript-mode-vendor.js)" = \
             "047395622eb2501dea6fbb9e6be2389e02bf2c77"
-          grep -q 'javascript-mode-vendor.js' html/javascript-mode.js
-          grep -q 'operation.js' html/javascript-mode.js
+          grep -Fq '<script src="javascript-mode-vendor.js"></script>' html/console.html
+          grep -Fq '<script src="operation.js"></script>' html/console.html
+          ! grep -Fq 'document.write(' html/javascript-mode.js
           grep -q 'KANGER_OPERATION_PROTOCOL' html/operation.js
           grep -q 'operation_busy' html/operation.js
           grep -q 'operation_timeout' html/operation.js

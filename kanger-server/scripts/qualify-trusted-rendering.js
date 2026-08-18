@@ -8,6 +8,7 @@ const fs = require('fs');
 const vm = require('vm');
 
 const source = fs.readFileSync('html/javascript.js', 'utf8');
+const page = fs.readFileSync('html/console.html', 'utf8');
 
 class Node {
     constructor(nodeType, tagName, text) {
@@ -326,10 +327,14 @@ function decodeHistory(record) {
     const harness = createHarness();
     const {window, elements} = harness;
 
-    assert.deepStrictEqual(
-        harness.writes,
-        ['<script src="javascript-mode.js"></script>']
-    );
+    const renderingIndex = page.indexOf(
+        '<script src="javascript.js"></script>');
+    const modeIndex = page.indexOf(
+        '<script src="javascript-mode.js"></script>');
+    assert(renderingIndex >= 0 && modeIndex > renderingIndex,
+        'console.html must load mode after trusted rendering');
+    assert.deepStrictEqual(harness.writes, [],
+        'trusted rendering must not mutate parser-time script topology');
     assert.strictEqual(window.KANGER_TRUSTED_RENDERING.version, 1);
     assert.strictEqual(window.KANGER_TRUSTED_RENDERING.installed, true);
     assert(Object.isFrozen(window.KANGER_TRUSTED_RENDERING));

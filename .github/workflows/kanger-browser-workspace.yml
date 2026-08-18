@@ -58,11 +58,11 @@ jobs:
           node --check kanger-server/scripts/qualify-workspace-state.js
           node --check kanger-server/scripts/qualify-editor-state.js
           node --check kanger-server/scripts/qualify-browser-presentation.js
-          grep -q 'workspace.js' html/javascript-mode.js
+          grep -Fq '<script src="workspace.js"></script>' html/console.html
           grep -q 'KANGER_WORKSPACE_STATE' html/workspace.js
           grep -q 'canonicalSourceName' html/workspace.js
           grep -q 'canonicalStorageName' html/workspace.js
-          grep -q 'editor-state.js' html/workspace.js
+          grep -Fq '<script src="editor-state.js"></script>' html/console.html
           grep -q 'KANGER_EDITOR_STATE' html/editor-state.js
           grep -q "'CONTEXT'" html/editor-state.js
           grep -q "'EDITED'" html/editor-state.js
@@ -76,6 +76,7 @@ jobs:
           ! grep -q 'tech-source' html/presentation.js
           ! grep -q 'source-name' html/presentation.js
           ! grep -q 'innerHTML' html/workspace.js
+          ! grep -Fq 'document.write(' html/workspace.js
           ! grep -q 'document.cookie' html/workspace.js
           ! grep -q 'eval(' html/workspace.js
           ! grep -q 'document.cookie' html/editor-state.js

@@ -147,7 +147,8 @@ jobs:
           ! grep -Fq "setCookie('token'" html/gateway.js
           ! grep -Fq 'setCookie("token"' html/gateway.js
 
-          grep -q 'javascript-mode.js' html/javascript.js
+          grep -Fq '<script src="javascript.js"></script>' html/console.html
+          grep -Fq '<script src="javascript-mode.js"></script>' html/console.html
           grep -q 'KANGER_TRUSTED_RENDERING' html/javascript.js
           grep -q "HISTORY_PREFIX = '@K2@'" html/javascript.js
           grep -q 'tokenizeLegacyMarkup' html/javascript.js
@@ -156,14 +157,19 @@ jobs:
           ! grep -q 'outerHTML' html/javascript.js
           ! grep -q 'onclick=' html/javascript.js
 
-          grep -q 'javascript-mode-vendor.js' html/javascript-mode.js
-          grep -q 'operation.js' html/javascript-mode.js
-          grep -q 'workspace.js' html/javascript-mode.js
-          grep -q 'error.js' html/javascript-mode.js
-          grep -q 'dialogue.js' html/javascript-mode.js
-          grep -q 'presentation.js' html/javascript-mode.js
-          grep -q 'bottom-layout.js' html/javascript-mode.js
-          grep -q 'editor-local-file.js' html/bottom-layout.js
+          grep -Fq '<script src="javascript-mode-vendor.js"></script>' html/console.html
+          grep -Fq '<script src="operation.js"></script>' html/console.html
+          grep -Fq '<script src="workspace.js"></script>' html/console.html
+          grep -Fq '<script src="editor-state.js"></script>' html/console.html
+          grep -Fq '<script src="error.js"></script>' html/console.html
+          grep -Fq '<script src="dialogue.js"></script>' html/console.html
+          grep -Fq '<script src="presentation.js"></script>' html/console.html
+          grep -Fq '<script src="bottom-layout.js"></script>' html/console.html
+          grep -Fq '<script src="editor-local-file.js"></script>' html/console.html
+          ! grep -Fq 'document.write(' html/javascript.js
+          ! grep -Fq 'document.write(' html/javascript-mode.js
+          ! grep -Fq 'document.write(' html/workspace.js
+          ! grep -Fq 'document.write(' html/bottom-layout.js
 
           grep -q 'KANGER_LOCAL_FILE_DOWNLOAD' html/file-download.js
           grep -q "event.origin !== 'null'" html/file-download.js

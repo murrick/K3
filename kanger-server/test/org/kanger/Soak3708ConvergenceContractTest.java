@@ -106,8 +106,17 @@ class Soak3708ConvergenceContractTest {
     @Test
     void convergenceLayerRemainsInsideQualifiedBrowserInventory() throws Exception {
         String bottom = html("bottom-layout.js");
+        String console = html("console.html");
+        int bottomIndex = console.indexOf(
+                "<script src=\"bottom-layout.js\"></script>");
+        int correctionIndex = console.indexOf(
+                "<script src=\"editor-local-file.js\"></script>");
+
         assertTrue(bottom.contains("3.7.0.8 residual Browser-soak convergence"));
-        assertTrue(bottom.contains("editor-local-file.js"));
+        assertTrue(bottomIndex >= 0,
+                "Browser page must load the residual convergence layer");
+        assertTrue(correctionIndex > bottomIndex,
+                "Browser page must load the correction adapter after convergence");
         assertFalse(bottom.contains("browser-soak-convergence.js"),
                 "Residual correction must not silently widen Browser inventory");
     }

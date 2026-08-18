@@ -3,6 +3,7 @@ name: KANGER browser error and containment boundary
 on:
   push:
     paths:
+      - "html/console.html"
       - "html/containment.js"
       - "html/error.js"
       - "html/index.html"
@@ -11,6 +12,7 @@ on:
       - ".github/workflows/kanger-browser-containment.yml"
   pull_request:
     paths:
+      - "html/console.html"
       - "html/containment.js"
       - "html/error.js"
       - "html/index.html"
@@ -47,7 +49,8 @@ jobs:
           grep -q 'referrerpolicy="no-referrer"' html/index.html
           ! grep -q 'allow-same-origin' html/index.html
           grep -q 'containment.js' html/index.html
-          grep -q 'error.js' html/javascript-mode.js
+          grep -Fq '<script src="error.js"></script>' html/console.html
+          ! grep -Fq 'document.write(' html/javascript-mode.js
           grep -q "connect-src 'none'" html/containment.js
           grep -q '__KANGER_PARENT_SESSION__' html/containment.js
           grep -q 'KANGER_ERROR_BOUNDARY' html/error.js

@@ -1,9 +1,10 @@
 /*
- * KANGER parser-time browser capability loader.
+ * KANGER browser capability adapters.
  *
- * Keep the historical script name and ordering while separating the immutable
- * CodeMirror mode from the KANGER operation, workspace, error, canonical
- * dialogue and presentation authorities.
+ * console.html declares the immutable CodeMirror mode and the KANGER
+ * operation, workspace, error, canonical dialogue and presentation
+ * authorities in one deterministic static order. This historical script name
+ * now owns only adapters that must observe those authorities before they load.
  *
  * The historical console still emits one legacy startup sequence
  * (help -> use -> get). A one-shot migration adapter installed after the
@@ -17,14 +18,6 @@
  */
 (function (window, document) {
     'use strict';
-
-    document.write('<script src="javascript-mode-vendor.js"><\/script>');
-    document.write('<script src="operation.js"><\/script>');
-    document.write('<script src="workspace.js"><\/script>');
-    document.write('<script src="error.js"><\/script>');
-    document.write('<script src="dialogue.js"><\/script>');
-    document.write('<script src="presentation.js"><\/script>');
-    document.write('<script src="bottom-layout.js"><\/script>');
 
     function stringValue(value) {
         return value === null || value === undefined ? '' : String(value);

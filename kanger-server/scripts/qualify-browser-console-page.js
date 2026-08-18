@@ -8,8 +8,6 @@ const vm = require('vm');
 
 const root = process.argv[2] || path.resolve(__dirname, '..', '..');
 const page = fs.readFileSync(path.join(root, 'html', 'console.html'), 'utf8');
-const dialogue = fs.readFileSync(path.join(root, 'html', 'dialogue.js'), 'utf8');
-const mode = fs.readFileSync(path.join(root, 'html', 'javascript-mode.js'), 'utf8');
 
 const staticScripts = Array.from(page.matchAll(
     /<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*><\/script>/gi))
@@ -147,10 +145,12 @@ jQuery.post = function (url, encoded, callback) {
 };
 
 let timerId = 0;
-function immediate(callback) {
-    callback();
-    return ++timerId;
+function immediate(callback, delay) {
+    const id = ++timerId;
+    if (!delay) callback();
+    return id;
 }
+function interval() { return ++timerId; }
 
 const window = {
     window: null,
@@ -163,14 +163,17 @@ const window = {
     event: null,
     setTimeout: immediate,
     clearTimeout() {},
+    setInterval: interval,
+    clearInterval() {},
     addEventListener() {},
     alert() {},
+    btoa(value) { return Buffer.from(String(value), 'binary').toString('base64'); },
+    atob(value) { return Buffer.from(String(value), 'base64').toString('binary'); },
     CodeMirror: {fromTextArea() { return {}; }},
     post(packet, callback) {
         requests.push(packet);
         if (typeof callback === 'function') callback({result: 'OK'});
-    },
-    KANGER_ERROR_BOUNDARY: Object.freeze({version: 1, installed: true})
+    }
 };
 window.window = window;
 
@@ -191,12 +194,23 @@ Object.assign(window, {
     encodeURIComponent,
     decodeURIComponent,
     setTimeout: immediate,
-    clearTimeout() {}
+    clearTimeout() {},
+    setInterval: interval,
+    clearInterval() {}
 });
 
 const context = vm.createContext(window);
-vm.runInContext(dialogue, context, {filename: 'dialogue.js'});
-vm.runInContext(mode, context, {filename: 'javascript-mode.js'});
+[
+    'javascript.js',
+    'javascript-mode.js',
+    'operation.js',
+    'workspace.js',
+    'error.js',
+    'dialogue.js'
+].forEach(file => {
+    const source = fs.readFileSync(path.join(root, 'html', file), 'utf8');
+    vm.runInContext(source, context, {filename: file});
+});
 
 const inlineScripts = Array.from(page.matchAll(
     /<script([^>]*)>([\s\S]*?)<\/script>/gi))
@@ -205,6 +219,8 @@ const inlineScripts = Array.from(page.matchAll(
 assert.strictEqual(inlineScripts.length, 1,
     'console.html inline script topology changed');
 vm.runInContext(inlineScripts[0], context, {filename: 'console.html:inline'});
+const legacyCommand = window.command;
+const legacyQuery = window.query;
 
 /* Keep this test focused on command ownership; editor adaptation is qualified
  * independently and is intentionally disabled before the real ready chain. */
@@ -213,10 +229,22 @@ assert.strictEqual(readyCallbacks.length, 1,
     'real console ready callback did not pass through ownership wrappers');
 readyCallbacks[0].call(document);
 
+assert(window.KANGER_TRUSTED_RENDERING,
+    'real ready chain did not install trusted rendering');
+assert(window.KANGER_OPERATION_PROTOCOL,
+    'real ready chain did not install the operation protocol');
+assert(window.KANGER_WORKSPACE_STATE,
+    'real ready chain did not install the workspace authority');
+assert(window.KANGER_ERROR_BOUNDARY,
+    'real ready chain did not install the error boundary');
+assert(window.KANGER_DIALOGUE_TRANSPORT,
+    'real ready chain did not install canonical dialogue');
 assert(window.KANGER_STARTUP_ADAPTER,
     'real startup adapter did not observe the historical command function');
-assert.strictEqual(window.command, window.KANGER_DIALOGUE_TRANSPORT.dispatch,
+assert.notStrictEqual(window.command, legacyCommand,
     'full ready chain left the legacy Browser command parser executable');
+assert.notStrictEqual(window.query, legacyQuery,
+    'full ready chain left the legacy Browser Core entry point executable');
 assert.strictEqual(window.query, window.KANGER_DIALOGUE_TRANSPORT.dispatch,
     'full ready chain left a separate Browser Core entry point executable');
 
@@ -226,6 +254,19 @@ window.refreshScreen = function () {};
 window.showTransactionLevel = function () {};
 window.logResponse = function () {};
 
+const directBefore = dialoguePackets.length;
+let directResponse = null;
+window.command('direct-probe', function (data) { directResponse = data; });
+assert.strictEqual(dialoguePackets.length, directBefore + 1,
+    'qualified command boundary did not delegate raw dialogue; requests='
+    + JSON.stringify(requests) + '; command=' + String(window.command)
+    + '; canonical=' + String(window.KANGER_DIALOGUE_TRANSPORT.dispatch)
+    + '; response=' + JSON.stringify(directResponse)
+    + '; operation='
+    + JSON.stringify(window.KANGER_OPERATION_PROTOCOL.snapshot()));
+assert.strictEqual(dialoguePackets[dialoguePackets.length - 1].parameters.line,
+    'direct-probe', 'qualified command boundary rewrote operator dialogue');
+
 function enter(line) {
     const input = element('query-input');
     input.value = line;
@@ -234,7 +275,8 @@ function enter(line) {
     assert.strictEqual(window.check_enter(), false,
         'Enter was not consumed by the real page handler');
     assert.strictEqual(dialoguePackets.length, before + 1,
-        'real page did not emit exactly one dialogue packet for ' + line);
+        'real page did not emit exactly one dialogue packet for ' + line
+        + '; requests=' + JSON.stringify(requests));
     const packet = dialoguePackets[dialoguePackets.length - 1];
     assert.deepStrictEqual(Object.keys(packet).sort(), ['context', 'parameters']);
     assert.strictEqual(packet.context, 'dialogue');
