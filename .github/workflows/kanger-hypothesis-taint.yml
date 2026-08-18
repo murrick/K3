@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - 'arch/3.7.0.20-command-processor-convergence'
+  pull_request:
+    branches:
+      - 'arch/3.7.0.20-command-processor-convergence'
   workflow_dispatch:
 
 permissions:
