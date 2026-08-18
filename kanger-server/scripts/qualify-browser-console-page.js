@@ -11,6 +11,37 @@ const page = fs.readFileSync(path.join(root, 'html', 'console.html'), 'utf8');
 const dialogue = fs.readFileSync(path.join(root, 'html', 'dialogue.js'), 'utf8');
 const mode = fs.readFileSync(path.join(root, 'html', 'javascript-mode.js'), 'utf8');
 
+const staticScripts = Array.from(page.matchAll(
+    /<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*><\/script>/gi))
+    .map(match => match[1]);
+const expectedStaticScripts = [
+    'jquery-3.6.0.min.js',
+    'codemirror.js',
+    'javascript.js',
+    'javascript-mode.js',
+    'javascript-mode-vendor.js',
+    'operation.js',
+    'workspace.js',
+    'editor-state.js',
+    'error.js',
+    'dialogue.js',
+    'presentation.js',
+    'bottom-layout.js',
+    'editor-local-file.js'
+];
+assert.deepStrictEqual(staticScripts, expectedStaticScripts,
+    'console.html must declare the complete opaque-sandbox script topology');
+[
+    'javascript.js',
+    'javascript-mode.js',
+    'workspace.js',
+    'bottom-layout.js'
+].forEach(file => {
+    const source = fs.readFileSync(path.join(root, 'html', file), 'utf8');
+    assert(!source.includes('document.write('),
+        file + ' must not mutate parser-time script topology');
+});
+
 class Node {
     constructor(type, value) {
         this.type = type || 'div';

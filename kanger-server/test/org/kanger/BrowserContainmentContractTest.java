@@ -18,6 +18,50 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class BrowserContainmentContractTest {
 
     @Test
+    void supportedConsoleDeclaresDeterministicOpaqueSandboxScriptTopology()
+            throws Exception {
+        String console = read(Paths.get("..", "html", "console.html"));
+        String rendering = read(Paths.get("..", "html", "javascript.js"));
+        String mode = read(Paths.get("..", "html", "javascript-mode.js"));
+        String workspace = read(Paths.get("..", "html", "workspace.js"));
+        String bottomLayout = read(
+                Paths.get("..", "html", "bottom-layout.js"));
+
+        String[] scripts = {
+                "jquery-3.6.0.min.js",
+                "codemirror.js",
+                "javascript.js",
+                "javascript-mode.js",
+                "javascript-mode-vendor.js",
+                "operation.js",
+                "workspace.js",
+                "editor-state.js",
+                "error.js",
+                "dialogue.js",
+                "presentation.js",
+                "bottom-layout.js",
+                "editor-local-file.js"
+        };
+        int previous = -1;
+        for (String script : scripts) {
+            String token = "src=\"" + script + "\"";
+            int position = console.indexOf(token);
+            assertTrue(position > previous,
+                    script + " is missing or out of canonical order");
+            assertTrue(position == console.lastIndexOf(token),
+                    script + " must be declared exactly once");
+            previous = position;
+        }
+        assertTrue(console.indexOf("<script>", previous) > previous,
+                "historical inline console must load after all authorities");
+
+        assertFalse(rendering.contains("document.write("));
+        assertFalse(mode.contains("document.write("));
+        assertFalse(workspace.contains("document.write("));
+        assertFalse(bottomLayout.contains("document.write("));
+    }
+
+    @Test
     void supportedConsoleKeepsBearerInParentOpaqueSandbox() throws Exception {
         String index = read(Paths.get("..", "html", "index.html"));
         String containment = read(Paths.get("..", "html", "containment.js"));
