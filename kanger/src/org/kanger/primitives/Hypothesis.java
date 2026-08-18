@@ -61,15 +61,15 @@ public class Hypothesis implements IHypothesis {
         antc = !r.isAntc();
         predicate = r.getPredicate();
         arguments.addAll(((ArgumentsList) r.getArguments()).convertBase(mind));
-        if (r instanceof Domain && mind instanceof Mind) {
-            QueryTaint.recordHypothesis((Domain) r, (Mind) mind, this);
-        }
     }
 
     public Hypothesis(Solve s, Mind mind) throws Exception {
         antc = !s.isAntc();
         predicate = s.getPredicate(mind);
         arguments.addAll(s.getArguments().convertBase(mind));
+        if (s instanceof Domain) {
+            QueryTaint.recordHypothesis((Domain) s, mind, this);
+        }
     }
 
     @Override
