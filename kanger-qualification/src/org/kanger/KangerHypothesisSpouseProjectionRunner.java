@@ -81,7 +81,7 @@ public final class KangerHypothesisSpouseProjectionRunner {
             List<IHypothesis> legacy = copy(mind.getHypothesis());
             List<IHypothesis> solved = solve.selectCandidates(mind, legacy);
             List<IHypothesis> solvedAlt = QueryTaintSolveAlternatives.expand(
-                    mind, legacy, solved);
+                    mind, QUERY, legacy, solved);
             Map<String, Boolean> exactAll = exact(mind, QUERY, legacy);
 
             print("LEGACY", mind, legacy);
