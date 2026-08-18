@@ -23,13 +23,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Shadow qualification for forward query-taint hypothesis relevance.
+ * Shadow qualification for hypothesis relevance prefilters.
  *
- * <p>EXACT remains the semantic oracle. TRACE and TAINT are independent
- * conservative prefilters and neither changes production WHEN behavior. The
- * acceptance invariant for each prefilter is
- * {@code exactRelevant subsetOf candidates}; false positives are permitted,
- * false negatives are not.</p>
+ * <p>EXACT remains semantic authority. TRACE, the original occurrence TAINT,
+ * and the concrete substitution CARRIER are independent conservative filters;
+ * none changes production WHEN behavior. Every filter must preserve
+ * {@code exactRelevant subsetOf candidates}.</p>
  */
 public final class KangerHypothesisTaintRunner {
 
@@ -91,12 +90,15 @@ public final class KangerHypothesisTaintRunner {
 
         QueryDemandTrace.begin();
         QueryTaint.begin();
+        QueryTaintCarrier.begin();
         Boolean result;
         QueryDemandTrace.Snapshot trace;
         QueryTaint.Snapshot taint;
+        QueryTaintCarrier.Snapshot carrier;
         try {
             result = mind.query(query, null, false);
         } finally {
+            carrier = QueryTaintCarrier.end();
             taint = QueryTaint.end();
             trace = QueryDemandTrace.end();
         }
@@ -109,6 +111,7 @@ public final class KangerHypothesisTaintRunner {
         List<IHypothesis> legacy = copy(mind.getHypothesis());
         List<IHypothesis> traced = trace.selectCandidates(mind, legacy);
         List<IHypothesis> tainted = taint.selectCandidates(mind, legacy);
+        List<IHypothesis> carried = carrier.selectCandidates(mind, legacy);
 
         long exactAllStart = System.nanoTime();
         Map<String, Boolean> exactAll = exact(mind, query, legacy);
@@ -122,25 +125,19 @@ public final class KangerHypothesisTaintRunner {
         Map<String, Boolean> exactTaint = exact(mind, query, tainted);
         long exactTaintNanos = System.nanoTime() - exactTaintStart;
 
+        long exactCarrierStart = System.nanoTime();
+        Map<String, Boolean> exactCarrier = exact(mind, query, carried);
+        long exactCarrierNanos = System.nanoTime() - exactCarrierStart;
+
         if (exactAll.size() != expectedExact) {
             throw new AssertionError("Unexpected EXACT cardinality for " + query
                     + ": expected " + expectedExact + ", got " + exactAll.size()
                     + " -> " + exactAll);
         }
 
-        Set<String> traceMissed = new LinkedHashSet<>(exactAll.keySet());
-        traceMissed.removeAll(exactTrace.keySet());
-        if (!traceMissed.isEmpty()) {
-            throw new AssertionError("TRACE false negatives for " + query
-                    + ": " + traceMissed);
-        }
-
-        Set<String> taintMissed = new LinkedHashSet<>(exactAll.keySet());
-        taintMissed.removeAll(exactTaint.keySet());
-        if (!taintMissed.isEmpty()) {
-            throw new AssertionError("TAINT false negatives for " + query
-                    + ": " + taintMissed);
-        }
+        assertNoMisses("TRACE", query, exactAll, exactTrace);
+        assertNoMisses("TAINT", query, exactAll, exactTaint);
+        assertNoMisses("CARRIER", query, exactAll, exactCarrier);
 
         if (requireReduction && traced.size() >= legacy.size()) {
             throw new AssertionError("TRACE did not reduce legacy list for "
@@ -150,16 +147,36 @@ public final class KangerHypothesisTaintRunner {
             throw new AssertionError("TAINT did not reduce legacy list for "
                     + query + ": " + legacy.size());
         }
+        if (requireReduction && carried.size() >= legacy.size()) {
+            throw new AssertionError("CARRIER did not reduce legacy list for "
+                    + query + ": " + legacy.size());
+        }
 
-        System.out.printf("HYPOTHESIS_TAINT_PASS %s legacy=%d trace=%d taint=%d exact=%d traceRoots=%d traceEdges=%d taintRoots=%d taintUnifications=%d taintGround=%d taintObserved=%d taintMarked=%d taintErrors=%d exactAllMs=%.3f exactTraceMs=%.3f exactTaintMs=%.3f%n",
-                query, legacy.size(), traced.size(), tainted.size(), exactAll.size(),
+        System.out.printf("HYPOTHESIS_TAINT_PASS %s legacy=%d trace=%d taint=%d carrier=%d exact=%d traceRoots=%d traceEdges=%d taintRoots=%d taintUnifications=%d taintGround=%d taintObserved=%d taintMarked=%d taintErrors=%d carrierRoots=%d carrierCauses=%d carrierGroundBridges=%d carrierBindings=%d carrierGround=%d carrierObserved=%d carrierMarked=%d carrierErrors=%d exactAllMs=%.3f exactTraceMs=%.3f exactTaintMs=%.3f exactCarrierMs=%.3f%n",
+                query, legacy.size(), traced.size(), tainted.size(), carried.size(), exactAll.size(),
                 trace.getQueryRootCount(), trace.getRecordedEdgeCount(),
                 taint.getQueryRootCount(), taint.getRelevantUnificationCount(),
                 taint.getGroundBridgeCount(), taint.getObservedHypothesisCount(),
                 taint.getTaintedHypothesisCount(), taint.getInstrumentationErrorCount(),
+                carrier.getQueryRootCount(), carrier.getRelevantCauseCount(),
+                carrier.getGroundBridgeCount(), carrier.getRelevantBindingCount(),
+                carrier.getRelevantGroundCount(), carrier.getObservedHypothesisCount(),
+                carrier.getTaintedHypothesisCount(), carrier.getInstrumentationErrorCount(),
                 exactAllNanos / 1_000_000.0,
                 exactTraceNanos / 1_000_000.0,
-                exactTaintNanos / 1_000_000.0);
+                exactTaintNanos / 1_000_000.0,
+                exactCarrierNanos / 1_000_000.0);
+    }
+
+    private static void assertNoMisses(String label, String query,
+                                       Map<String, Boolean> exactAll,
+                                       Map<String, Boolean> exactFiltered) {
+        Set<String> missed = new LinkedHashSet<>(exactAll.keySet());
+        missed.removeAll(exactFiltered.keySet());
+        if (!missed.isEmpty()) {
+            throw new AssertionError(label + " false negatives for " + query
+                    + ": " + missed);
+        }
     }
 
     private static Mind prepared(IUser user) throws Exception {
