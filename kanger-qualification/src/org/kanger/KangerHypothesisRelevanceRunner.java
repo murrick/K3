@@ -69,9 +69,12 @@ public final class KangerHypothesisRelevanceRunner {
             new UDF().init(user);
             new DB().init(user);
 
-            verify(user, "?$y son(John,y);", true);
-            verify(user, "?male(Tom);", false);
-            verify(user, "?$x male(x) && age(x,12);", false);
+            verify(user, "?$y son(John,y);", 0, true);
+            verify(user, "?male(Tom);", 10, false);
+            verify(user, "?female(Tom);", 10, false);
+            verify(user, "?spouse(Mary,John);", 1, false);
+            verify(user, "?spouse(John,Tom);", 0, true);
+            verify(user, "?$x male(x) && age(x,12);", 6, false);
             System.out.println("HYPOTHESIS_RELEVANCE_OK");
             exitCode = 0;
         } catch (Throwable error) {
@@ -83,6 +86,7 @@ public final class KangerHypothesisRelevanceRunner {
     }
 
     private static void verify(IUser user, String query,
+                               int expectedExact,
                                boolean requireReduction) throws Exception {
         Mind mind = prepared(user);
 
@@ -110,6 +114,12 @@ public final class KangerHypothesisRelevanceRunner {
         long exactTraceStart = System.nanoTime();
         Map<String, Boolean> exactTrace = exact(mind, query, traced);
         long exactTraceNanos = System.nanoTime() - exactTraceStart;
+
+        if (exactAll.size() != expectedExact) {
+            throw new AssertionError("Unexpected EXACT cardinality for " + query
+                    + ": expected " + expectedExact + ", got " + exactAll.size()
+                    + " -> " + exactAll);
+        }
 
         Set<String> missed = new LinkedHashSet<>(exactAll.keySet());
         missed.removeAll(exactTrace.keySet());
