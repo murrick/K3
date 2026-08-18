@@ -101,6 +101,7 @@ jobs:
           node --check html/presentation.js
           node --check html/workspace.js
           node --check kanger-server/scripts/qualify-browser-dialogue.js
+          node --check kanger-server/scripts/qualify-browser-console-page.js
           node --check kanger-server/scripts/qualify-browser-presentation.js
           node --check kanger-server/scripts/qualify-editor-state.js
           node --check kanger-server/scripts/qualify-error-containment.js
@@ -220,6 +221,8 @@ jobs:
           grep -q 'kanger-semantic-live' html/presentation.css
 
           node kanger-server/scripts/qualify-browser-dialogue.js \
+            "${GITHUB_WORKSPACE}"
+          node kanger-server/scripts/qualify-browser-console-page.js \
             "${GITHUB_WORKSPACE}"
           node kanger-server/scripts/qualify-browser-presentation.js \
             "${GITHUB_WORKSPACE}"

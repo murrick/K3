@@ -85,6 +85,18 @@
                             </sources>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>add-shared-command-test-sources</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/../kanger-command/test</source>
+                            </sources>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 

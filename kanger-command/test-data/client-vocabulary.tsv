@@ -1,0 +1,35 @@
+# KANGER canonical client vocabulary v1
+# outcome<TAB>raw line<TAB>intent-or-reason<TAB>canonical<TAB>argument<TAB>value<TAB>browser-result<TAB>console-safe
+ACCEPT	co	TX_COMMIT	transaction commit	-	-	OK	yes
+ACCEPT	cl	STORAGE_CLOSE	storage close	-	-	OK	yes
+ACCEPT	ru	RULE_STATUS	rule	-	-	OK	yes
+ACCEPT	ro	TX_ROLLBACK	transaction rollback	-	-	OK	yes
+ACCEPT	re missing	STORAGE_REINDEX	storage reindex missing	name	missing	OK	yes
+ACCEPT	sta	TX_START	transaction start	-	-	OK	yes
+ACCEPT	sto	STORAGE_STATUS	storage	-	-	OK	yes
+ACCEPT	sq	TX_SQUASH	transaction squash	-	-	OK	yes
+ACCEPT	pr	BASE_PREDICATES	base predicates	-	-	OK	yes
+ACCEPT	predicate	BASE_PREDICATES	base predicates	-	-	OK	yes
+ACCEPT	predicates father	BASE_PREDICATE	base predicate father	predicate	father	OK	yes
+ACCEPT	g test.k	SOURCE_GET	get test.k	source	test.k	OK	yes
+ACCEPT	u	STORAGE_STATUS	storage	-	-	OK	yes
+ACCEPT	u demo	STORAGE_USE	storage use demo	name	demo	OK	yes
+ACCEPT	dr missing	STORAGE_DROP	storage drop missing	name	missing	confirmation_required	yes
+ACCEPT	transaction sq	TX_SQUASH	transaction squash	-	-	OK	yes
+ACCEPT	storage use close	STORAGE_USE	storage use close	name	close	OK	yes
+ACCEPT	rules	RULE_STATUS	rule	-	-	OK	yes
+ACCEPT	rule level	RULE_LEVEL	rule level	-	-	OK	yes
+REJECT	c	AMBIGUOUS_PREFIX	-	-	-	error	yes
+REJECT	d	AMBIGUOUS_PREFIX	-	-	-	error	yes
+REJECT	p	AMBIGUOUS_PREFIX	-	-	-	error	yes
+REJECT	r	AMBIGUOUS_PREFIX	-	-	-	error	yes
+REJECT	s	AMBIGUOUS_PREFIX	-	-	-	error	yes
+REJECT	st	AMBIGUOUS_PREFIX	-	-	-	error	yes
+REJECT	transaction s	AMBIGUOUS_PREFIX	-	-	-	error	yes
+REJECT	tree 1	UNKNOWN_KEYWORD	-	-	-	error	yes
+REJECT	drop	MISSING_ARGUMENT	-	-	-	error	yes
+REJECT	reindex	MISSING_ARGUMENT	-	-	-	error	yes
+REJECT	storage use	MISSING_ARGUMENT	-	-	-	error	yes
+REJECT	commit now	EXTRA_ARGUMENT	-	-	-	error	yes
+REJECT	get "unfinished	UNTERMINATED_QUOTE	-	-	-	error	yes
+REJECT	!!eating(Cat, Mouse);	INVALID_GRAMMAR	-	-	-	error	yes

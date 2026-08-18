@@ -5,6 +5,8 @@
  */
 package org.kanger;
 
+import org.kanger.command.ClientVocabularyCorpus;
+import org.kanger.command.CommandParseException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
@@ -172,8 +174,77 @@ public final class KangerCanonicalConsoleRunner {
         require(out.contains("KANGER III Session closed"),
                 "canonical Console did not close the session cleanly");
 
+        qualifySharedClientVocabulary();
         System.out.println("Canonical Console interactive conformance passed");
         return true;
+    }
+
+    private static void qualifySharedClientVocabulary() throws Exception {
+        String identity = "autotest-client-vocabulary-"
+                + Long.toString(System.nanoTime());
+        IUser user = UserFactory.createUser(identity, identity);
+        new UDF().init(user);
+        new DB().init(user);
+        for (ClientVocabularyCorpus.Case one : ClientVocabularyCorpus.load()) {
+            if (!one.isConsoleSafe()) {
+                continue;
+            }
+            IMind mind = new Mind(user);
+            user.setCurrentMind(mind);
+            String script = one.getLine() + "\n"
+                    + ("confirmation_required".equals(one.getBrowserResult())
+                            ? "n\n" : "")
+                    + "quit\n";
+            CapturedSession captured = runSession(mind, script);
+
+            if (one.isAccepted()) {
+                for (CommandParseException.Reason reason
+                        : CommandParseException.Reason.values()) {
+                    require(!captured.stderr.contains(
+                                    "ERROR: " + reason.name() + ":"),
+                            one + " was rejected by Console as " + reason
+                                    + "\n" + captured.stderr);
+                }
+            } else {
+                require(captured.stderr.contains(
+                                "ERROR: " + one.getResult() + ":"),
+                        one + " did not expose the shared parse reason"
+                                + "\n" + captured.stderr);
+            }
+            require(captured.stdout.contains("KANGER III Session closed"),
+                    one + " did not return control to the Console loop");
+        }
+    }
+
+    private static CapturedSession runSession(IMind mind, String script)
+            throws Exception {
+        InputStream originalIn = System.in;
+        PrintStream originalOut = System.out;
+        PrintStream originalErr = System.err;
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+        try {
+            System.setIn(new ByteArrayInputStream(script.getBytes("UTF-8")));
+            System.setOut(new PrintStream(stdout, true, "UTF-8"));
+            System.setErr(new PrintStream(stderr, true, "UTF-8"));
+            CanonicalConsole.session(mind, null);
+        } finally {
+            System.setIn(originalIn);
+            System.setOut(originalOut);
+            System.setErr(originalErr);
+        }
+        return new CapturedSession(
+                stdout.toString("UTF-8"), stderr.toString("UTF-8"));
+    }
+
+    private static final class CapturedSession {
+        private final String stdout;
+        private final String stderr;
+
+        private CapturedSession(String stdout, String stderr) {
+            this.stdout = stdout;
+            this.stderr = stderr;
+        }
     }
 
     private static void require(boolean condition, String message) {

@@ -8,6 +8,20 @@ const path = require('path');
 
 const root = process.argv[2] || path.resolve(__dirname, '..', '..');
 const source = fs.readFileSync(path.join(root, 'html', 'dialogue.js'), 'utf8');
+const corpus = fs.readFileSync(path.join(root,
+    'kanger-command', 'test-data', 'client-vocabulary.tsv'), 'utf8')
+    .split(/\r?\n/)
+    .filter(line => line && !line.startsWith('#'))
+    .map(line => {
+        const fields = line.split('\t');
+        assert.strictEqual(fields.length, 8,
+            'invalid shared client vocabulary row: ' + line);
+        return {
+            accepted: fields[0] === 'ACCEPT',
+            line: fields[1],
+            result: fields[2]
+        };
+    });
 
 const calls = [];
 const refreshes = [];
@@ -26,6 +40,10 @@ function domNode(type, value) {
         },
         setAttribute(name, attributeValue) {
             this.attributes[name] = String(attributeValue);
+        },
+        getAttribute(name) {
+            return Object.prototype.hasOwnProperty.call(this.attributes, name)
+                ? this.attributes[name] : null;
         },
         get textContent() {
             return this._text + this.children.map(child => child.textContent).join('');
@@ -55,6 +73,83 @@ const jQuery = {
         }
     }
 };
+function responseFor(line) {
+    if (line === 'help') {
+        return {
+            result: 'OK',
+            canonical_intent: 'HELP',
+            dialogue_help: {
+                schema: 1,
+                sections: [{
+                    name: 'COMMANDS',
+                    commands: [{
+                        syntax: 'base predicates',
+                        family_spellings: ['predicate', 'predicates'],
+                        aliases: [],
+                        summary: 'Show predicates.'
+                    }, {
+                        syntax: 'transaction squash',
+                        family_spellings: [],
+                        aliases: ['squash'],
+                        summary: 'Collapse transaction history.'
+                    }]
+                }]
+            }
+        };
+    }
+    if (line === 'squash') {
+        return {
+            result: 'OK',
+            canonical_intent: 'TX_SQUASH',
+            transaction: 1,
+            empty: false,
+            description: 'Transaction history squashed'
+        };
+    }
+    if (line === 'transaction rollback') {
+        return {
+            result: 'error',
+            code: 'ROLLBACK_REBASE_CONFLICT',
+            reason: 'STORAGE_BASELINE_COLLISION',
+            canonical_intent: 'TX_ROLLBACK',
+            transaction: 2,
+            empty: false,
+            description: 'Rollback U2 -> U1 rejected.',
+            rejection: {
+                schema: 1,
+                kind: 'ROLLBACK_REBASE_CONFLICT',
+                target_level: 1,
+                storage: 'storage-b',
+                collisions: [{left: '!ghost;', right: '!~ghost;'}],
+                actions: [{
+                    id: 'USE_COMPATIBLE_STORAGE',
+                    description: 'Return to a compatible storage baseline.'
+                }, {
+                    id: 'TRANSACTION_SQUASH',
+                    command: 'transaction squash',
+                    description: 'Keep current state and discard rollback history.'
+                }, {
+                    id: 'TRANSACTION_COMMIT',
+                    command: 'transaction commit',
+                    description: 'Merge current changes into the lower level.'
+                }]
+            }
+        };
+    }
+    const expected = corpus.find(one => one.line === line);
+    if (expected && !expected.accepted) {
+        return {
+            result: 'error',
+            code: 'command_parse_error',
+            reason: expected.result,
+            description: 'rejected'
+        };
+    }
+    return expected
+        ? {result: 'OK', canonical_intent: expected.result,
+            description: 'accepted'}
+        : {result: 'OK', description: 'accepted'};
+}
 const window = {
     token: '__KANGER_PARENT_SESSION__',
     editor: {},
@@ -63,29 +158,7 @@ const window = {
     KANGER_ERROR_BOUNDARY: Object.freeze({version: 1, installed: true}),
     post(packet, callback) {
         calls.push(JSON.parse(JSON.stringify(packet)));
-        const result = packet.parameters.line === 'help'
-            ? {
-                result: 'OK',
-                canonical_intent: 'HELP',
-                dialogue_help: {
-                    schema: 1,
-                    sections: [{
-                        name: 'COMMANDS',
-                        commands: [{
-                            syntax: 'base predicates',
-                            family_spellings: ['predicate', 'predicates'],
-                            aliases: [],
-                            summary: 'Show predicates.'
-                        }, {
-                            syntax: 'transaction squash',
-                            family_spellings: [],
-                            aliases: ['squash'],
-                            summary: 'Collapse transaction history.'
-                        }]
-                    }]
-                }
-            }
-            : {result: 'OK', description: 'accepted'};
+        const result = responseFor(packet.parameters.line);
         if (typeof callback === 'function') callback(result);
         return calls.length;
     },
@@ -162,6 +235,7 @@ function invoke(line, throughQuery) {
     assert.strictEqual(packet.parameters.token, '__KANGER_PARENT_SESSION__');
     assert.strictEqual(packet.parameters.line, line,
         'Browser rewrote raw operator dialogue');
+    return refreshes[refreshes.length - 1];
 }
 
 invoke('ru a', false);
@@ -170,8 +244,11 @@ invoke('s', false);
 invoke('  MiXeD  "a b"  ', false);
 invoke('storage use close', false);
 invoke('help', false);
+corpus.forEach(one => invoke(one.line, false));
+const squash = invoke('squash', false).presentation;
+const rollback = invoke('transaction rollback', false).presentation;
 
-const help = refreshes[refreshes.length - 1].presentation;
+const help = refreshes.find(one => one.data.canonical_intent === 'HELP').presentation;
 assert(help, 'Browser did not render structured canonical help');
 assert(help.textContent.includes(
     'base predicates  (family spellings: predicate, predicates) — Show predicates.'),
@@ -179,6 +256,35 @@ assert(help.textContent.includes(
 assert(help.textContent.includes(
     'transaction squash  (alias: squash) — Collapse transaction history.'),
     'Browser help hid the squash alias');
+
+assert(squash, 'Browser did not select transaction presentation for TX_SQUASH');
+assert(squash.textContent.includes('Transaction history squashed'),
+    'Browser hid the successful squash result');
+assert(squash.textContent.includes('Transaction level 1'),
+    'Browser hid the post-squash transaction level');
+
+assert(rollback, 'Browser did not render rejected rollback diagnostics');
+assert(rollback.textContent.includes('ROLLBACK_REBASE_CONFLICT'),
+    'Browser hid rollback rejection kind');
+assert(rollback.textContent.includes('STORAGE_BASELINE_COLLISION'),
+    'Browser hid rollback rejection reason');
+assert(rollback.textContent.includes('!ghost; <> !~ghost;'),
+    'Browser hid exact rollback collision witness');
+assert(rollback.textContent.includes('USE_COMPATIBLE_STORAGE'),
+    'Browser hid compatible-storage resolution');
+assert(rollback.textContent.includes('TRANSACTION_SQUASH'),
+    'Browser hid squash resolution');
+assert(rollback.textContent.includes('TRANSACTION_COMMIT'),
+    'Browser hid commit resolution');
+function composeCommands(node, result) {
+    const command = node.getAttribute && node.getAttribute('data-kanger-compose');
+    if (command) result.push(command);
+    (node.children || []).forEach(child => composeCommands(child, result));
+    return result;
+}
+assert.deepStrictEqual(composeCommands(rollback, []),
+    ['transaction squash', 'transaction commit'],
+    'Browser rejection actions are not composable canonical commands');
 
 assert.strictEqual(refreshes.length, calls.length);
 assert.strictEqual(callbacks.length, calls.length);
@@ -192,4 +298,7 @@ console.log('BROWSER_DIALOGUE_PASS ready-ownership-reassertion');
 console.log('BROWSER_DIALOGUE_PASS ambiguity-left-to-server');
 console.log('BROWSER_DIALOGUE_PASS lexical-preservation');
 console.log('BROWSER_DIALOGUE_PASS vocabulary-help-metadata');
+console.log('BROWSER_DIALOGUE_PASS shared-client-vocabulary');
+console.log('BROWSER_DIALOGUE_PASS squash-result-presentation');
+console.log('BROWSER_DIALOGUE_PASS rollback-resolution-presentation');
 console.log('BROWSER_DIALOGUE_OK');

@@ -45,6 +45,32 @@ public final class CommandParserConformanceTest {
         systemFamily();
         canonicalEcho();
         helpRegistry();
+        sharedClientVocabulary();
+    }
+
+    private void sharedClientVocabulary() throws Exception {
+        for (ClientVocabularyCorpus.Case one : ClientVocabularyCorpus.load()) {
+            if (one.isAccepted()) {
+                CommandInvocation invocation = parser.parse(one.getLine());
+                check(one.getResult().equals(invocation.getIntent().name()),
+                        one + " intent " + invocation.getIntent());
+                check(one.getCanonical().equals(formatter.format(invocation)),
+                        one + " canonical echo " + formatter.format(invocation));
+                if (one.getArgumentName() != null) {
+                    check(one.getArgumentValue().equals(String.valueOf(
+                                    invocation.getArgument(one.getArgumentName()))),
+                            one + " argument " + one.getArgumentName());
+                }
+                continue;
+            }
+            try {
+                parser.parse(one.getLine());
+                check(false, one + " unexpectedly accepted");
+            } catch (CommandParseException rejected) {
+                check(one.getResult().equals(rejected.getReason().name()),
+                        one + " reason " + rejected.getReason());
+            }
+        }
     }
 
     private void coreBoundary() throws Exception {
