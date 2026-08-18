@@ -161,11 +161,58 @@
 
     function transactionPresentation(data) {
         var fragment = document.createDocumentFragment();
+        if (data && data.description) {
+            appendLine(fragment, data.description);
+        }
         var level = data && data.transaction !== null
                 && data.transaction !== undefined ? data.transaction : '-';
         appendLine(fragment, 'Transaction level ' + stringValue(level));
         if (data && data.empty === true) {
             appendLine(fragment, 'Current level is empty');
+        }
+        var rejection = data && data.rejection;
+        if (rejection && rejection.schema === 1) {
+            var kind = stringValue(rejection.kind || data.code);
+            var reason = stringValue(data.reason);
+            appendLine(fragment, 'Rejected: ' + kind
+                    + (reason ? ' [' + reason + ']' : ''));
+            if (rejection.target_level !== null
+                    && rejection.target_level !== undefined) {
+                appendLine(fragment, 'Target transaction level U'
+                        + stringValue(rejection.target_level));
+            }
+            if (rejection.storage !== null
+                    && rejection.storage !== undefined
+                    && stringValue(rejection.storage)) {
+                appendLine(fragment, 'Storage: '
+                        + stringValue(rejection.storage));
+            }
+            var collisions = Array.isArray(rejection.collisions)
+                    ? rejection.collisions : [];
+            for (var i = 0; i < collisions.length; i++) {
+                var collision = collisions[i] || {};
+                appendLine(fragment, 'Collision: '
+                        + stringValue(collision.left) + ' <> '
+                        + stringValue(collision.right));
+            }
+            var actions = Array.isArray(rejection.actions)
+                    ? rejection.actions : [];
+            if (actions.length) {
+                appendLine(fragment, 'Possible actions:');
+            }
+            for (var j = 0; j < actions.length; j++) {
+                var action = actions[j] || {};
+                var command = stringValue(action.command);
+                var row = appendLine(fragment, '- '
+                        + stringValue(action.id)
+                        + (command ? ' [' + command + ']' : '')
+                        + ': ' + stringValue(action.description));
+                if (command) {
+                    row.setAttribute('data-kanger-compose', command);
+                    row.title = 'Compose: ' + command;
+                    row.style.cursor = 'pointer';
+                }
+            }
         }
         fragment.__kangerHistoryText = fragment.textContent;
         return fragment;
@@ -273,7 +320,8 @@
             return whenPresentation(data);
         }
         if (intent === 'TX_STATUS' || intent === 'TX_START'
-                || intent === 'TX_COMMIT' || intent === 'TX_ROLLBACK') {
+                || intent === 'TX_COMMIT' || intent === 'TX_ROLLBACK'
+                || intent === 'TX_SQUASH') {
             return transactionPresentation(data);
         }
         return null;
