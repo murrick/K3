@@ -25,6 +25,7 @@
 
 package org.kanger.factory;
 
+import org.kanger.GeneratedCVarMaterializer;
 import org.kanger.Mind;
 import org.kanger.SemanticEffectTelemetry;
 import org.kanger.User;
@@ -824,6 +825,9 @@ public class RuleFactory implements IFactory<IRule> {
 
     public synchronized IRule add(Domain domain) throws Exception {
         IRule rule = find(domain);
+        if (rule == null) {
+            rule = GeneratedCVarMaterializer.findAlphaEquivalent(this, domain, mind);
+        }
         if (rule != null) {
             if (mind.getQueryPass() == QueryPass.INSERT && isGenerated(rule)) {
                 rule = promotePrimary(rule);
@@ -846,6 +850,9 @@ public class RuleFactory implements IFactory<IRule> {
             }
             Rule r = new Rule(mind);
             register(r);
+            if (!domain.isQuery(mind)) {
+                list = GeneratedCVarMaterializer.rebindForGeneratedRule(list, domain, mind, r);
+            }
 
             Domain d = mind.getDomains().add(domain.getPredicate(), domain.isAntc(), list, r);
             r.getTree().get(0).add(d);
