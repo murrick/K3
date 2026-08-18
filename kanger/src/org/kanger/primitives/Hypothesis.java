@@ -41,6 +41,7 @@ import org.kanger.interfaces.IPredicate;
 import org.kanger.interfaces.IRule;
 import org.kanger.units.Domain;
 import org.kanger.units.Predicate;
+import org.kanger.units.Rule;
 
 import java.util.*;
 
@@ -61,8 +62,8 @@ public class Hypothesis implements IHypothesis {
         antc = !r.isAntc();
         predicate = r.getPredicate();
         arguments.addAll(((ArgumentsList) r.getArguments()).convertBase(mind));
-        if (r instanceof Domain && mind instanceof Mind) {
-            QueryTaint.recordHypothesis((Domain) r, (Mind) mind, this);
+        if (r instanceof Rule && mind instanceof Mind) {
+            QueryTaint.recordHypothesis(((Rule) r).getDomain(), (Mind) mind, this);
         }
     }
 
