@@ -9,35 +9,41 @@ import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IHypothesis;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
-import org.kanger.units.TSolve;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
- * Second opt-in shadow experiment for forward query relevance.
+ * Opt-in shadow experiment that carries query relevance on the concrete
+ * substitution observed at an actual Cause boundary.
  *
- * <p>Unlike {@link QueryTaint}, this implementation never treats an unresolved
- * Domain argument as a wildcard that can taint later substitutions. Variable
- * relevance is carried by the concrete deferred substitution and, after it is
- * materialized, by the identity of the resulting query-local {@link TSolve}.
- * Fully resolved ground propagation is keyed structurally by predicate,
- * polarity and exact term ids.</p>
+ * <p>Unlike {@link QueryTaint}, unresolved Domain positions are never wildcard
+ * matches. A variable-bearing branch is represented by its Rule/branch identity
+ * plus the concrete {@code TVariable id -> TValue id} bindings that exist at the
+ * unification boundary. A later binding is relevant only when it extends one of
+ * those exact partial substitutions. Fully resolved propagation uses an exact
+ * predicate/polarity/term tuple.</p>
  *
- * <p>The carrier is diagnostic only. Production inference never reads the
- * selected hypothesis set and normal TSolve equality/persistence is unchanged.
- * The qualification invariant remains
- * {@code exactRelevant subsetOf carrierCandidates}.</p>
+ * <p>This is diagnostic state only. Production inference never reads the
+ * selected hypothesis set. If Cause-level observation proves insufficient, the
+ * next experiment can move the same bit into DeferredSolveCandidate/TSolve
+ * without changing the semantic oracle.</p>
+ *
+ * <p>The qualification invariant remains
+ * {@code exactRelevant subsetOf carrierCandidates}; false positives are
+ * acceptable and false negatives are forbidden.</p>
  */
 public final class QueryTaintCarrier {
 
@@ -58,7 +64,7 @@ public final class QueryTaintCarrier {
         Session session = CURRENT.get();
         CURRENT.remove();
         if (session == null) {
-            return new Snapshot(Collections.<Long>emptySet(),
+            return new Snapshot(Collections.<BranchId>emptySet(),
                     Collections.<HypothesisKey>emptySet(),
                     Collections.<HypothesisKey>emptySet(),
                     0, 0, 0, 0, 0);
@@ -66,102 +72,34 @@ public final class QueryTaintCarrier {
         return new Snapshot(session.queryRoots,
                 session.observedHypotheses,
                 session.taintedHypotheses,
-                session.relevantUnifications,
-                session.solveObservations,
-                session.relevantSolveAdds,
-                session.relevantTerminalBranches,
+                session.relevantCauses,
+                session.groundBridges,
+                session.relevantBindings.size(),
+                session.relevantGround.size(),
                 session.instrumentationErrors);
     }
 
-    /**
-     * Linker lifecycle hook. TSolve tuples are query-local to one link() run,
-     * therefore carrier identities and operation ids must not leak into the
-     * next run. Exact ground semantic keys may survive because generated facts
-     * can be consumed by a subsequent link() within the same query session.
-     */
-    public static void beginLink() {
-        Session session = CURRENT.get();
-        if (session == null) {
-            return;
-        }
-        session.relevantSolves.clear();
-        session.relevantOperations.clear();
-    }
-
-    /** Records whether one concrete unification operation is query-derived. */
-    public static void recordUnification(long operationId,
-                                         Domain left,
-                                         Domain right,
-                                         Mind mind) {
+    /** Internal no-op-unless-enabled hook from the actual Cause boundary. */
+    public static void recordCause(Domain left, Domain right, Mind mind) {
         Session session = CURRENT.get();
         if (session == null || left == null || right == null || mind == null) {
             return;
         }
         try {
+            bootstrapGroundMatches(session, mind);
             boolean relevant = branchRelevant(session, left, mind)
                     || branchRelevant(session, right, mind);
             if (relevant) {
-                if (session.relevantOperations.add(operationId)) {
-                    ++session.relevantUnifications;
-                }
-                markBranchGround(session, left, mind);
-                markBranchGround(session, right, mind);
+                ++session.relevantCauses;
+                markBranch(session, left, mind);
+                markBranch(session, right, mind);
             }
         } catch (Exception ignored) {
             ++session.instrumentationErrors;
         }
     }
 
-    public static boolean isOperationRelevant(long operationId) {
-        Session session = CURRENT.get();
-        return session != null && session.relevantOperations.contains(operationId);
-    }
-
-    /**
-     * Transfers candidate relevance to the exact TSolve object returned by
-     * Mind.addTSolve(). Duplicate tuples therefore naturally OR relevance on
-     * the canonical query-local tuple identity without changing TSolve itself.
-     */
-    public static void recordSolve(TSolve solve, boolean relevant) {
-        Session session = CURRENT.get();
-        if (session == null || solve == null) {
-            return;
-        }
-        ++session.solveObservations;
-        if (relevant && session.relevantSolves.add(solve)) {
-            ++session.relevantSolveAdds;
-        }
-    }
-
-    /** Concrete terminal-branch closure for the current rotation only. */
-    public static void recordTerminalBranch(List<Domain> tree, Mind mind) {
-        Session session = CURRENT.get();
-        if (session == null || tree == null || mind == null) {
-            return;
-        }
-        try {
-            boolean relevant = false;
-            for (Domain domain : tree) {
-                if (domainRelevant(session, domain, mind)) {
-                    relevant = true;
-                    break;
-                }
-            }
-            if (relevant) {
-                ++session.relevantTerminalBranches;
-                for (Domain domain : tree) {
-                    GroundKey key = GroundKey.of(domain, mind);
-                    if (key != null) {
-                        session.relevantGround.add(key);
-                    }
-                }
-            }
-        } catch (Exception ignored) {
-            ++session.instrumentationErrors;
-        }
-    }
-
-    /** Hypothesis-construction hook; selection remains shadow-only. */
+    /** Internal no-op-unless-enabled hook from hypothesis construction. */
     public static void recordHypothesis(Domain source, Mind mind,
                                         Hypothesis hypothesis) {
         Session session = CURRENT.get();
@@ -169,10 +107,11 @@ public final class QueryTaintCarrier {
             return;
         }
         try {
+            bootstrapGroundMatches(session, mind);
             HypothesisKey key = HypothesisKey.of(hypothesis, mind);
             session.observedHypotheses.add(key);
             if (branchRelevant(session, source, mind)) {
-                markBranchGround(session, source, mind);
+                markBranch(session, source, mind);
                 session.taintedHypotheses.add(key);
             }
         } catch (Exception ignored) {
@@ -180,80 +119,108 @@ public final class QueryTaintCarrier {
         }
     }
 
-    /** Used by system-predicate TSolve publication at the same rotation. */
-    public static boolean isBranchRelevant(List<Domain> tree, Mind mind) {
-        Session session = CURRENT.get();
-        if (session == null || tree == null || mind == null) {
-            return false;
+    private static boolean branchRelevant(Session session, Domain domain,
+                                          Mind mind) throws Exception {
+        BranchRef branch = branchOf(domain);
+        if (branch == null) {
+            if (isQuery(domain, mind)) {
+                return true;
+            }
+            GroundKey ground = GroundKey.of(domain, domain.getArguments(), mind);
+            return ground != null && session.relevantGround.contains(ground);
         }
-        try {
-            for (Domain domain : tree) {
-                if (domainRelevant(session, domain, mind)) {
+
+        for (Domain candidate : branch.domains) {
+            if (isQuery(candidate, mind)) {
+                session.queryRoots.add(branch.id);
+                return true;
+            }
+            GroundKey ground = GroundKey.of(candidate, candidate.getArguments(), mind);
+            if (ground != null && session.relevantGround.contains(ground)) {
+                return true;
+            }
+        }
+
+        BindingKey current = BindingKey.of(branch, mind);
+        if (current != null) {
+            for (BindingKey relevant : session.relevantBindings) {
+                if (current.extendsBinding(relevant)) {
                     return true;
                 }
             }
-        } catch (Exception ignored) {
-            ++session.instrumentationErrors;
         }
         return false;
     }
 
-    private static boolean branchRelevant(Session session, Domain domain,
-                                          Mind mind) throws Exception {
-        List<Domain> branch = branchOf(domain);
-        if (branch.isEmpty()) {
-            return domainRelevant(session, domain, mind);
+    private static void markBranch(Session session, Domain domain,
+                                   Mind mind) throws Exception {
+        BranchRef branch = branchOf(domain);
+        if (branch == null) {
+            GroundKey ground = GroundKey.of(domain, domain.getArguments(), mind);
+            if (ground != null) {
+                session.relevantGround.add(ground);
+            }
+            return;
         }
-        for (Domain candidate : branch) {
-            if (domainRelevant(session, candidate, mind)) {
-                return true;
+
+        BindingKey binding = BindingKey.of(branch, mind);
+        if (binding != null) {
+            session.relevantBindings.add(binding);
+        }
+        for (Domain candidate : branch.domains) {
+            GroundKey ground = GroundKey.of(candidate, candidate.getArguments(), mind);
+            if (ground != null) {
+                session.relevantGround.add(ground);
+            }
+            if (isQuery(candidate, mind)) {
+                session.queryRoots.add(branch.id);
             }
         }
-        return false;
-    }
-
-    private static boolean domainRelevant(Session session, Domain domain,
-                                          Mind mind) throws Exception {
-        if (isQuery(domain, mind)) {
-            session.queryRoots.add(domain.getId());
-            return true;
-        }
-        GroundKey ground = GroundKey.of(domain, mind);
-        if (ground != null && session.relevantGround.contains(ground)) {
-            return true;
-        }
-        return hasCompatibleRelevantSolve(session, domain, mind);
     }
 
     /**
-     * A relevant tuple may taint a Domain only when that tuple belongs to the
-     * Domain's Rule and every value carried for that Rule equals the current
-     * concrete rotation binding. No unresolved/wildcard compatibility exists.
+     * Ground matches can be successful without creating a Cause. Recover only
+     * exact opposite-polarity matches already recorded by Mind.usedDomains.
      */
-    private static boolean hasCompatibleRelevantSolve(Session session,
-                                                       Domain domain,
-                                                       Mind mind) throws Exception {
-        long ruleId = domain.getRuleId();
-        for (TSolve solve : session.relevantSolves) {
-            boolean touchesRule = false;
-            boolean compatible = true;
-            for (TValue value : solve.getSolve()) {
-                TVariable variable = value.getTVar(mind);
-                IRule owner = variable.getRule(mind);
-                if (owner != null && owner.getId() == ruleId) {
-                    touchesRule = true;
-                    TValue current = variable.getCurrent();
-                    if (current == null || current.getId() != value.getId()) {
-                        compatible = false;
-                        break;
+    private static void bootstrapGroundMatches(Session session, Mind mind) throws Exception {
+        Map<Domain, Set<ArgumentsList>> used = mind.getUsedDomains();
+        if (used.isEmpty()) {
+            return;
+        }
+
+        for (Map.Entry<Domain, Set<ArgumentsList>> queryEntry : used.entrySet()) {
+            Domain queryDomain = queryEntry.getKey();
+            if (!isQuery(queryDomain, mind)) {
+                continue;
+            }
+            BranchRef queryBranch = branchOf(queryDomain);
+            if (queryBranch != null) {
+                session.queryRoots.add(queryBranch.id);
+            }
+            for (ArgumentsList queryArguments : queryEntry.getValue()) {
+                GroundKey queryGround = GroundKey.of(queryDomain, queryArguments, mind);
+                if (queryGround != null) {
+                    session.relevantGround.add(queryGround);
+                }
+                for (Map.Entry<Domain, Set<ArgumentsList>> otherEntry : used.entrySet()) {
+                    Domain other = otherEntry.getKey();
+                    if (other == queryDomain
+                            || other.getPredicateId() != queryDomain.getPredicateId()
+                            || other.isAntc() == queryDomain.isAntc()) {
+                        continue;
+                    }
+                    for (ArgumentsList otherArguments : otherEntry.getValue()) {
+                        if (queryArguments.equalsBase(mind, otherArguments)) {
+                            GroundKey otherGround = GroundKey.of(other, otherArguments, mind);
+                            if (otherGround != null
+                                    && session.relevantGround.add(otherGround)) {
+                                ++session.groundBridges;
+                            }
+                        }
                     }
                 }
             }
-            if (touchesRule && compatible) {
-                return true;
-            }
         }
-        return false;
     }
 
     private static boolean isQuery(Domain domain, Mind mind) throws Exception {
@@ -261,66 +228,50 @@ public final class QueryTaintCarrier {
         return (rule != null && rule.isQuery()) || domain.isQuery(mind);
     }
 
-    private static List<Domain> branchOf(Domain domain) throws Exception {
+    private static BranchRef branchOf(Domain domain) throws Exception {
         IRule owner = domain.getRule();
         if (!(owner instanceof Rule)) {
-            return Collections.emptyList();
+            return null;
         }
-        for (List<Domain> branch : ((Rule) owner).getTree()) {
+        List<List<Domain>> tree = ((Rule) owner).getTree();
+        for (int i = 0; i < tree.size(); ++i) {
+            List<Domain> branch = tree.get(i);
             for (Domain candidate : branch) {
                 if (candidate == domain || candidate.getId() == domain.getId()) {
-                    return branch;
+                    return new BranchRef(new BranchId(owner.getId(), i), branch);
                 }
             }
         }
-        return Collections.emptyList();
-    }
-
-    private static void markBranchGround(Session session, Domain domain,
-                                         Mind mind) throws Exception {
-        List<Domain> branch = branchOf(domain);
-        if (branch.isEmpty()) {
-            GroundKey key = GroundKey.of(domain, mind);
-            if (key != null) {
-                session.relevantGround.add(key);
-            }
-            return;
-        }
-        for (Domain candidate : branch) {
-            GroundKey key = GroundKey.of(candidate, mind);
-            if (key != null) {
-                session.relevantGround.add(key);
-            }
-        }
+        return null;
     }
 
     public static final class Snapshot {
-        private final Set<Long> queryRoots;
+        private final Set<BranchId> queryRoots;
         private final Set<HypothesisKey> observedHypotheses;
         private final Set<HypothesisKey> taintedHypotheses;
-        private final int relevantUnifications;
-        private final int solveObservations;
-        private final int relevantSolveAdds;
-        private final int relevantTerminalBranches;
+        private final int relevantCauses;
+        private final int groundBridges;
+        private final int relevantBindings;
+        private final int relevantGround;
         private final int instrumentationErrors;
 
-        private Snapshot(Set<Long> queryRoots,
+        private Snapshot(Set<BranchId> queryRoots,
                          Set<HypothesisKey> observedHypotheses,
                          Set<HypothesisKey> taintedHypotheses,
-                         int relevantUnifications,
-                         int solveObservations,
-                         int relevantSolveAdds,
-                         int relevantTerminalBranches,
+                         int relevantCauses,
+                         int groundBridges,
+                         int relevantBindings,
+                         int relevantGround,
                          int instrumentationErrors) {
             this.queryRoots = Collections.unmodifiableSet(new LinkedHashSet<>(queryRoots));
             this.observedHypotheses = Collections.unmodifiableSet(
                     new LinkedHashSet<>(observedHypotheses));
             this.taintedHypotheses = Collections.unmodifiableSet(
                     new LinkedHashSet<>(taintedHypotheses));
-            this.relevantUnifications = relevantUnifications;
-            this.solveObservations = solveObservations;
-            this.relevantSolveAdds = relevantSolveAdds;
-            this.relevantTerminalBranches = relevantTerminalBranches;
+            this.relevantCauses = relevantCauses;
+            this.groundBridges = groundBridges;
+            this.relevantBindings = relevantBindings;
+            this.relevantGround = relevantGround;
             this.instrumentationErrors = instrumentationErrors;
         }
 
@@ -328,20 +279,20 @@ public final class QueryTaintCarrier {
             return queryRoots.size();
         }
 
-        public int getRelevantUnificationCount() {
-            return relevantUnifications;
+        public int getRelevantCauseCount() {
+            return relevantCauses;
         }
 
-        public int getSolveObservationCount() {
-            return solveObservations;
+        public int getGroundBridgeCount() {
+            return groundBridges;
         }
 
-        public int getRelevantSolveAddCount() {
-            return relevantSolveAdds;
+        public int getRelevantBindingCount() {
+            return relevantBindings;
         }
 
-        public int getRelevantTerminalBranchCount() {
-            return relevantTerminalBranches;
+        public int getRelevantGroundCount() {
+            return relevantGround;
         }
 
         public int getObservedHypothesisCount() {
@@ -384,21 +335,132 @@ public final class QueryTaintCarrier {
     }
 
     private static final class Session {
-        private final Set<Long> queryRoots = new LinkedHashSet<>();
-        private final Set<TSolve> relevantSolves = Collections.newSetFromMap(
-                new IdentityHashMap<TSolve, Boolean>());
-        private final Set<Long> relevantOperations = new LinkedHashSet<>();
+        private final Set<BranchId> queryRoots = new LinkedHashSet<>();
+        private final Set<BindingKey> relevantBindings = new LinkedHashSet<>();
         private final Set<GroundKey> relevantGround = new LinkedHashSet<>();
         private final Set<HypothesisKey> observedHypotheses = new LinkedHashSet<>();
         private final Set<HypothesisKey> taintedHypotheses = new LinkedHashSet<>();
-        private int relevantUnifications;
-        private int solveObservations;
-        private int relevantSolveAdds;
-        private int relevantTerminalBranches;
+        private int relevantCauses;
+        private int groundBridges;
         private int instrumentationErrors;
     }
 
-    /** Exact fully-resolved semantic occurrence; no wildcard positions. */
+    private static final class BranchRef {
+        private final BranchId id;
+        private final List<Domain> domains;
+
+        private BranchRef(BranchId id, List<Domain> domains) {
+            this.id = id;
+            this.domains = domains;
+        }
+    }
+
+    private static final class BranchId {
+        private final long ruleId;
+        private final int branchIndex;
+
+        private BranchId(long ruleId, int branchIndex) {
+            this.ruleId = ruleId;
+            this.branchIndex = branchIndex;
+        }
+
+        @Override
+        public boolean equals(Object value) {
+            if (this == value) {
+                return true;
+            }
+            if (!(value instanceof BranchId)) {
+                return false;
+            }
+            BranchId other = (BranchId) value;
+            return ruleId == other.ruleId && branchIndex == other.branchIndex;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Long.valueOf(ruleId).hashCode();
+            return 31 * result + branchIndex;
+        }
+    }
+
+    /**
+     * Exact partial substitution for one logical Rule branch. Compatibility is
+     * one-way: the current binding may extend a relevant binding but may never
+     * disagree with a value already carried by it.
+     */
+    private static final class BindingKey {
+        private final BranchId branch;
+        private final List<Long> variableIds;
+        private final List<Long> valueIds;
+
+        private BindingKey(BranchId branch,
+                           List<Long> variableIds,
+                           List<Long> valueIds) {
+            this.branch = branch;
+            this.variableIds = Collections.unmodifiableList(new ArrayList<>(variableIds));
+            this.valueIds = Collections.unmodifiableList(new ArrayList<>(valueIds));
+        }
+
+        private static BindingKey of(BranchRef branch, Mind mind) throws Exception {
+            Set<TVariable> variables = new TreeSet<>();
+            for (Domain domain : branch.domains) {
+                variables.addAll(domain.getArguments().getTVariables(mind));
+            }
+
+            List<Long> variableIds = new ArrayList<>();
+            List<Long> valueIds = new ArrayList<>();
+            for (TVariable variable : variables) {
+                TValue current = variable.getCurrent();
+                if (current != null) {
+                    variableIds.add(variable.getId());
+                    valueIds.add(current.getId());
+                }
+            }
+            if (variableIds.isEmpty()) {
+                return null;
+            }
+            return new BindingKey(branch.id, variableIds, valueIds);
+        }
+
+        private boolean extendsBinding(BindingKey relevant) {
+            if (!branch.equals(relevant.branch)) {
+                return false;
+            }
+            for (int i = 0; i < relevant.variableIds.size(); ++i) {
+                Long variableId = relevant.variableIds.get(i);
+                int currentIndex = variableIds.indexOf(variableId);
+                if (currentIndex < 0
+                        || !valueIds.get(currentIndex).equals(relevant.valueIds.get(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public boolean equals(Object value) {
+            if (this == value) {
+                return true;
+            }
+            if (!(value instanceof BindingKey)) {
+                return false;
+            }
+            BindingKey other = (BindingKey) value;
+            return branch.equals(other.branch)
+                    && variableIds.equals(other.variableIds)
+                    && valueIds.equals(other.valueIds);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = branch.hashCode();
+            result = 31 * result + variableIds.hashCode();
+            result = 31 * result + valueIds.hashCode();
+            return result;
+        }
+    }
+
+    /** Exact fully resolved semantic occurrence; no wildcard positions. */
     private static final class GroundKey {
         private final long predicateId;
         private final boolean antc;
@@ -410,9 +472,10 @@ public final class QueryTaintCarrier {
             this.values = Collections.unmodifiableList(new ArrayList<>(values));
         }
 
-        private static GroundKey of(Domain domain, Mind mind) throws Exception {
+        private static GroundKey of(Domain domain, ArgumentsList arguments,
+                                    Mind mind) throws Exception {
             List<Long> values = new ArrayList<>();
-            for (IArgument argument : domain.getArguments()) {
+            for (IArgument argument : arguments) {
                 if (argument.isEmpty(mind)) {
                     return null;
                 }
