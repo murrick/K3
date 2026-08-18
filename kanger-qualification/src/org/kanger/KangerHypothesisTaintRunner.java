@@ -25,8 +25,8 @@ import java.util.Set;
 /**
  * Shadow qualification for hypothesis relevance prefilters.
  *
- * <p>EXACT remains semantic authority. TRACE, the original occurrence TAINT,
- * and the concrete substitution CARRIER are independent conservative filters;
+ * <p>EXACT remains semantic authority. TRACE, occurrence TAINT, Cause-level
+ * CARRIER and the deferred SOLVE carrier are independent conservative filters;
  * none changes production WHEN behavior. Every filter must preserve
  * {@code exactRelevant subsetOf candidates}.</p>
  */
@@ -91,13 +91,16 @@ public final class KangerHypothesisTaintRunner {
         QueryDemandTrace.begin();
         QueryTaint.begin();
         QueryTaintCarrier.begin();
+        QueryTaintSolve.begin();
         Boolean result;
         QueryDemandTrace.Snapshot trace;
         QueryTaint.Snapshot taint;
         QueryTaintCarrier.Snapshot carrier;
+        QueryTaintSolve.Snapshot solve;
         try {
             result = mind.query(query, null, false);
         } finally {
+            solve = QueryTaintSolve.end();
             carrier = QueryTaintCarrier.end();
             taint = QueryTaint.end();
             trace = QueryDemandTrace.end();
@@ -112,6 +115,7 @@ public final class KangerHypothesisTaintRunner {
         List<IHypothesis> traced = trace.selectCandidates(mind, legacy);
         List<IHypothesis> tainted = taint.selectCandidates(mind, legacy);
         List<IHypothesis> carried = carrier.selectCandidates(mind, legacy);
+        List<IHypothesis> solved = solve.selectCandidates(mind, legacy);
 
         long exactAllStart = System.nanoTime();
         Map<String, Boolean> exactAll = exact(mind, query, legacy);
@@ -129,6 +133,10 @@ public final class KangerHypothesisTaintRunner {
         Map<String, Boolean> exactCarrier = exact(mind, query, carried);
         long exactCarrierNanos = System.nanoTime() - exactCarrierStart;
 
+        long exactSolveStart = System.nanoTime();
+        Map<String, Boolean> exactSolve = exact(mind, query, solved);
+        long exactSolveNanos = System.nanoTime() - exactSolveStart;
+
         if (exactAll.size() != expectedExact) {
             throw new AssertionError("Unexpected EXACT cardinality for " + query
                     + ": expected " + expectedExact + ", got " + exactAll.size()
@@ -138,6 +146,7 @@ public final class KangerHypothesisTaintRunner {
         assertNoMisses("TRACE", query, exactAll, exactTrace);
         assertNoMisses("TAINT", query, exactAll, exactTaint);
         assertNoMisses("CARRIER", query, exactAll, exactCarrier);
+        assertNoMisses("SOLVE", query, exactAll, exactSolve);
 
         if (requireReduction && traced.size() >= legacy.size()) {
             throw new AssertionError("TRACE did not reduce legacy list for "
@@ -148,9 +157,10 @@ public final class KangerHypothesisTaintRunner {
                     + query + ": " + legacy.size());
         }
 
-        System.out.printf("HYPOTHESIS_TAINT_PASS %s legacy=%d trace=%d taint=%d carrier=%d carrierReduced=%s exact=%d traceRoots=%d traceEdges=%d taintRoots=%d taintUnifications=%d taintGround=%d taintObserved=%d taintMarked=%d taintErrors=%d carrierRoots=%d carrierCauses=%d carrierGroundBridges=%d carrierBindings=%d carrierGround=%d carrierObserved=%d carrierMarked=%d carrierErrors=%d exactAllMs=%.3f exactTraceMs=%.3f exactTaintMs=%.3f exactCarrierMs=%.3f%n",
-                query, legacy.size(), traced.size(), tainted.size(), carried.size(),
-                Boolean.toString(carried.size() < legacy.size()), exactAll.size(),
+        System.out.printf("HYPOTHESIS_TAINT_PASS %s legacy=%d trace=%d taint=%d carrier=%d solve=%d carrierReduced=%s solveReduced=%s exact=%d traceRoots=%d traceEdges=%d taintRoots=%d taintUnifications=%d taintGround=%d taintObserved=%d taintMarked=%d taintErrors=%d carrierRoots=%d carrierCauses=%d carrierGroundBridges=%d carrierBindings=%d carrierGround=%d carrierObserved=%d carrierMarked=%d carrierErrors=%d solveRoots=%d solveOperations=%d solveContributions=%d solveTuples=%d solveRules=%d solveGroundBridges=%d solveGround=%d solveObserved=%d solveMarked=%d solveErrors=%d exactAllMs=%.3f exactTraceMs=%.3f exactTaintMs=%.3f exactCarrierMs=%.3f exactSolveMs=%.3f%n",
+                query, legacy.size(), traced.size(), tainted.size(), carried.size(), solved.size(),
+                Boolean.toString(carried.size() < legacy.size()),
+                Boolean.toString(solved.size() < legacy.size()), exactAll.size(),
                 trace.getQueryRootCount(), trace.getRecordedEdgeCount(),
                 taint.getQueryRootCount(), taint.getRelevantUnificationCount(),
                 taint.getGroundBridgeCount(), taint.getObservedHypothesisCount(),
@@ -159,10 +169,16 @@ public final class KangerHypothesisTaintRunner {
                 carrier.getGroundBridgeCount(), carrier.getRelevantBindingCount(),
                 carrier.getRelevantGroundCount(), carrier.getObservedHypothesisCount(),
                 carrier.getTaintedHypothesisCount(), carrier.getInstrumentationErrorCount(),
+                solve.getQueryRootCount(), solve.getRelevantOperationCount(),
+                solve.getDeferredContributionCount(), solve.getRelevantTupleCount(),
+                solve.getRelevantRuleCount(), solve.getGroundBridgeCount(),
+                solve.getRelevantGroundCount(), solve.getObservedHypothesisCount(),
+                solve.getTaintedHypothesisCount(), solve.getInstrumentationErrorCount(),
                 exactAllNanos / 1_000_000.0,
                 exactTraceNanos / 1_000_000.0,
                 exactTaintNanos / 1_000_000.0,
-                exactCarrierNanos / 1_000_000.0);
+                exactCarrierNanos / 1_000_000.0,
+                exactSolveNanos / 1_000_000.0);
     }
 
     private static void assertNoMisses(String label, String query,
