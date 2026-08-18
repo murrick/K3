@@ -61,6 +61,9 @@ public class Hypothesis implements IHypothesis {
         antc = !r.isAntc();
         predicate = r.getPredicate();
         arguments.addAll(((ArgumentsList) r.getArguments()).convertBase(mind));
+        if (r instanceof Domain && mind instanceof Mind) {
+            QueryTaint.recordHypothesis((Domain) r, (Mind) mind, this);
+        }
     }
 
     public Hypothesis(Solve s, Mind mind) throws Exception {
@@ -109,7 +112,7 @@ public class Hypothesis implements IHypothesis {
         try {
             int i, j;
             int cnum[] = new int[getPredicate().getRange()];
-            int cptr[] = new int[getPredicate().getRange()];    
+            int cptr[] = new int[getPredicate().getRange()];
 
             int ccnt = 0;
             line += String.format("%c", antc ? Enums.ANT : Enums.SUC);
