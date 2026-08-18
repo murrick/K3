@@ -26,6 +26,7 @@
 package org.kanger.primitives;
 
 import org.kanger.Mind;
+import org.kanger.QueryDemandTrace;
 import org.kanger.SemanticEffectTelemetry;
 import org.kanger.enums.UnitType;
 import org.kanger.factory.RuleFactory;
@@ -56,6 +57,7 @@ public class Cause implements ICause {
         this.rule = (Rule) dst.getRule();
         this.ruleId = dst.getRuleId();
         SemanticEffectTelemetry.recordCause(this);
+        QueryDemandTrace.recordCause(dst, src, mind);
     }
 
     public ByteBuffer pack() {
