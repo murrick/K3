@@ -45,11 +45,13 @@ public final class KangerCVarRuleScopeSafetyRunner {
 
             verifyRuleScopedChildren(mind);
             verifyGeneratedMaterializationConvergence();
+            verifyQueryProjectionIsolation();
 
             System.out.println("CVAR_RULE_SCOPE_PASS per-rule identity");
             System.out.println("CVAR_RULE_SCOPE_PASS selective unlink");
             System.out.println("CVAR_RULE_SCOPE_PASS generated materialization convergence");
             System.out.println("CVAR_RULE_SCOPE_PASS transient witness exclusion from Values");
+            System.out.println("CVAR_RULE_SCOPE_PASS query projection isolation");
             System.out.println("CVAR_RULE_SCOPE_OK");
             exitCode = 0;
         } catch (Throwable error) {
@@ -144,6 +146,29 @@ public final class KangerCVarRuleScopeSafetyRunner {
             require(current.abstractTermIds.equals(baseline.abstractTermIds),
                     "durable existential witness identities changed at qualification cycle " + cycle);
         }
+    }
+
+    private static void verifyQueryProjectionIsolation() throws Exception {
+        String suffix = Long.toString(System.nanoTime());
+        User user = (User) UserFactory.createUser("cvar-query-projection-" + suffix,
+                "cvar-query-projection-" + suffix);
+        new UDF().init(user);
+        new DB().init(user);
+        Mind mind = (Mind) new Mind(user).clearWorkspace();
+
+        mind.compile("!@x ~a(x,x); !@x @y b(x,y) -> a(x,y);");
+        require(Boolean.FALSE.equals(mind.query("?$x b(x,x);", null, false)),
+                "CHECKFALSE must preserve transient C-variable projections");
+
+        mind = (Mind) mind.clearWorkspace();
+        mind.compile("!@x $y a(y,x); !@x @y a(x,y) -> b(x,y);");
+        require(Boolean.TRUE.equals(mind.query("?$x b(x,A);", null, false)),
+                "CHECKTRUE must preserve transient C-variable projections");
+
+        mind = (Mind) mind.clearWorkspace();
+        mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x)); !a(nnn);");
+        require(Boolean.FALSE.equals(mind.query("?$x a(x) && b(x);", null, false)),
+                "existential XOR query must remain false");
     }
 
     private static IRule rule(final long id) {
