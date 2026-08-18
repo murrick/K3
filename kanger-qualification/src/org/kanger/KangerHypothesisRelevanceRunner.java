@@ -79,8 +79,6 @@ public final class KangerHypothesisRelevanceRunner {
             exitCode = 0;
         } catch (Throwable error) {
             error.printStackTrace(System.err);
-        } finally {
-            UserFactory.shutdown();
         }
         System.exit(exitCode);
     }
