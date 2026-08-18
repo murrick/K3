@@ -81,6 +81,7 @@ public final class LinkerStatistics {
         for (int i = 0; i < operationEffectMasks.length; ++i) {
             operationEffectMasks[i] = 0L;
         }
+        QueryTaintSolve.beginLink();
     }
 
     LinkerStatistics snapshot() {
@@ -98,6 +99,7 @@ public final class LinkerStatistics {
                                       boolean query,
                                       boolean generated) {
         long operationId = ++unificationAttempts;
+        QueryTaintSolve.beginOperation(operationId);
         if (firstPass) {
             if (generated) {
                 ++firstPassGeneratedUnifications;
