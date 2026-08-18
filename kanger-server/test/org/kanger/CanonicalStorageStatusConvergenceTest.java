@@ -75,6 +75,31 @@ class CanonicalStorageStatusConvergenceTest {
     }
 
     @Test
+    void sharedProcessorPreservesStorageNameContainingStoreSuffixText()
+            throws Exception {
+        Fixture fixture = fixture("processor-name-suffix");
+        try {
+            CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
+            CommandParser parser = new CommandParser();
+            String logical = "manual_store";
+
+            CanonicalCommandProcessor.Result opened = processor.execute(
+                    parser.parse("storage use " + logical), fixture.user);
+            assertEquals(logical, opened.getStorageStatus().getCurrent());
+            assertEquals(1, opened.getStorageStatus().getNames().size());
+            assertEquals(logical, opened.getStorageStatus().getNames().get(0));
+
+            CanonicalCommandProcessor.Result closed = processor.execute(
+                    parser.parse("storage close"), fixture.user);
+            assertFalse(closed.getStorageStatus().isUsed());
+            assertEquals(1, closed.getStorageStatus().getNames().size());
+            assertEquals(logical, closed.getStorageStatus().getNames().get(0));
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
     void sharedProcessorOwnsStorageUseNameMappingAndSameStorageRejection()
             throws Exception {
         Fixture fixture = fixture("processor-use");
