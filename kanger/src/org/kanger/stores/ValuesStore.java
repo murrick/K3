@@ -76,9 +76,18 @@ public class ValuesStore implements IFactory<Map<String, ITerm>> {
         if (!raw.isEmpty()) {
             ComparableArgumentsList row = new ComparableArgumentsList();
             for (IUnit one : raw) {
+                TValue value = (TValue) one;
+                try {
+                    ITerm term = value.getValue(mind);
+                    if (term != null && term.isCVariable()) {
+                        continue;
+                    }
+                } catch (Exception e) {
+                    throw new IllegalStateException("Cannot resolve query value", e);
+                }
                 row.add(new Argument(one));
             }
-            if (!getRoot().contains(row)) {
+            if (!row.isEmpty() && !getRoot().contains(row)) {
                 getRoot().add(row);
             }
         }
