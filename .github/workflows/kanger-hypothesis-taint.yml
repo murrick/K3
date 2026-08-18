@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - 'arch/3.7.0.20-command-processor-convergence'
+  pull_request:
+    branches:
+      - 'arch/3.7.0.20-command-processor-convergence'
   workflow_dispatch:
 
 permissions:
@@ -33,5 +36,5 @@ jobs:
       - name: Compile production and qualification sources
         run: mvn --batch-mode --no-transfer-progress -DskipTests test-compile
 
-      - name: EXACT versus TRACE versus TAINT corpus
-        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerHypothesisTaintRunner -Dexec.classpathScope=test exec:java
+      - name: Inspect query-seeded spouse projection closure
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerHypothesisSpouseProjectionRunner -Dexec.classpathScope=test exec:java
