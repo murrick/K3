@@ -28,6 +28,7 @@ import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.stores.HypothesisStore;
+import org.kanger.test.KangerTest;
 import org.kanger.units.Rule;
 
 import java.io.BufferedWriter;
@@ -113,6 +114,11 @@ public final class CanonicalConsole {
 
                 if (isXplain(trimmed)) {
                     processXplain(trimmed, mind, scanner);
+                    continue;
+                }
+
+                if (isHiddenTestCommand(trimmed)) {
+                    processHiddenTest(trimmed, mind);
                     continue;
                 }
 
@@ -768,6 +774,19 @@ public final class CanonicalConsole {
     private static boolean isXplain(String line) {
         String first = line.split("\\s+", 2)[0].toLowerCase();
         return first.length() > 0 && "xplain".startsWith(first);
+    }
+
+    private static boolean isHiddenTestCommand(String line) {
+        String[] parts = line.trim().split("\\s+");
+        return (parts.length == 2 || parts.length == 3)
+                && "options".equalsIgnoreCase(parts[0])
+                && "test".equalsIgnoreCase(parts[1]);
+    }
+
+    private static void processHiddenTest(String line, IMind mind) throws Exception {
+        String[] parts = line.trim().split("\\s+");
+        String prefix = parts.length == 3 ? parts[2] : "";
+        KangerTest.test((Mind) mind, "set_" + prefix);
     }
 
     private static void processXplain(String line, IMind mind, Scanner scanner) throws Exception {
