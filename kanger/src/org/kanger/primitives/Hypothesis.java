@@ -32,12 +32,14 @@ package org.kanger.primitives;
 
 
 import org.kanger.Mind;
+import org.kanger.QueryTaint;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.interfaces.IHypothesis;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IPredicate;
 import org.kanger.interfaces.IRule;
+import org.kanger.units.Domain;
 import org.kanger.units.Predicate;
 
 import java.util.*;
@@ -59,6 +61,9 @@ public class Hypothesis implements IHypothesis {
         antc = !r.isAntc();
         predicate = r.getPredicate();
         arguments.addAll(((ArgumentsList) r.getArguments()).convertBase(mind));
+        if (r instanceof Domain && mind instanceof Mind) {
+            QueryTaint.recordHypothesis((Domain) r, (Mind) mind, this);
+        }
     }
 
     public Hypothesis(Solve s, Mind mind) throws Exception {

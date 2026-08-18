@@ -1,0 +1,37 @@
+name: KANGER Hypothesis Taint
+
+on:
+  push:
+    branches:
+      - 'arch/3.7.0.20-command-processor-convergence'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kanger-hypothesis-taint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualification:
+    name: Forward query-taint shadow qualification
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: maven
+
+      - name: Compile production and qualification sources
+        run: mvn --batch-mode --no-transfer-progress -DskipTests test-compile
+
+      - name: EXACT versus TRACE versus TAINT corpus
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerHypothesisTaintRunner -Dexec.classpathScope=test exec:java
