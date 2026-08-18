@@ -34,6 +34,7 @@ package org.kanger.primitives;
 import org.kanger.Mind;
 import org.kanger.QueryTaint;
 import org.kanger.QueryTaintCarrier;
+import org.kanger.QueryTaintSolve;
 import org.kanger.enums.Enums;
 import org.kanger.enums.UnitType;
 import org.kanger.interfaces.IHypothesis;
@@ -67,6 +68,7 @@ public class Hypothesis implements IHypothesis {
             Domain source = ((Rule) r).getDomain();
             QueryTaint.recordHypothesis(source, (Mind) mind, this);
             QueryTaintCarrier.recordHypothesis(source, (Mind) mind, this);
+            QueryTaintSolve.recordHypothesis(source, (Mind) mind, this);
         }
     }
 
@@ -77,6 +79,7 @@ public class Hypothesis implements IHypothesis {
         if (s instanceof Domain) {
             QueryTaint.recordHypothesis((Domain) s, mind, this);
             QueryTaintCarrier.recordHypothesis((Domain) s, mind, this);
+            QueryTaintSolve.recordHypothesis((Domain) s, mind, this);
         }
     }
 
