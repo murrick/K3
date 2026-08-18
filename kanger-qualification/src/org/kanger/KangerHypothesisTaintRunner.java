@@ -75,6 +75,18 @@ public final class KangerHypothesisTaintRunner {
             verify(user, "?spouse(Mary,John);", 1, false);
             verify(user, "?spouse(John,Tom);", 0, true);
             verify(user, "?$x male(x) && age(x,12);", 6, false);
+
+            discover(user, "?son(Tom,John);");
+            discover(user, "?daughter(Tom,John);");
+            discover(user, "?$x son(x,John);");
+            discover(user, "?$x daughter(x,John);");
+            discover(user, "?$x spouse(x,John);");
+            discover(user, "?$x spouse(John,x);");
+            discover(user, "?divorced(John,Tom);");
+            discover(user, "?$x male(x) && parent(John,x);");
+            discover(user, "?$x female(x) && parent(John,x);");
+            discover(user, "?$x sibling(x,Tom);");
+
             System.out.println("HYPOTHESIS_TAINT_OK");
             exitCode = 0;
         } catch (Throwable error) {
@@ -178,6 +190,62 @@ public final class KangerHypothesisTaintRunner {
                 exactTraceNanos / 1_000_000.0,
                 exactTaintNanos / 1_000_000.0,
                 exactCarrierNanos / 1_000_000.0,
+                exactSolveNanos / 1_000_000.0);
+    }
+
+    /**
+     * Adversarial oracle discovery. Known TRUE/FALSE queries are reported and
+     * skipped; WHO-KNOWS queries still receive the hard SOLVE no-false-negative
+     * check before their cardinality is promoted into the fixed corpus.
+     */
+    private static void discover(IUser user, String query) throws Exception {
+        Mind mind = prepared(user);
+
+        QueryDemandTrace.begin();
+        QueryTaintSolve.begin();
+        Boolean result;
+        QueryDemandTrace.Snapshot trace;
+        QueryTaintSolve.Snapshot solve;
+        try {
+            result = mind.query(query, null, false);
+        } finally {
+            solve = QueryTaintSolve.end();
+            trace = QueryDemandTrace.end();
+        }
+
+        if (result != null) {
+            System.out.printf("HYPOTHESIS_SOLVE_DISCOVERY_KNOWN %s result=%s traceRoots=%d traceEdges=%d solveRoots=%d solveOperations=%d solveTuples=%d solveErrors=%d%n",
+                    query, result.toString(), trace.getQueryRootCount(),
+                    trace.getRecordedEdgeCount(), solve.getQueryRootCount(),
+                    solve.getRelevantOperationCount(), solve.getRelevantTupleCount(),
+                    solve.getInstrumentationErrorCount());
+            return;
+        }
+
+        mind.optimizeHypothesis();
+        List<IHypothesis> legacy = copy(mind.getHypothesis());
+        List<IHypothesis> traced = trace.selectCandidates(mind, legacy);
+        List<IHypothesis> solved = solve.selectCandidates(mind, legacy);
+
+        long exactAllStart = System.nanoTime();
+        Map<String, Boolean> exactAll = exact(mind, query, legacy);
+        long exactAllNanos = System.nanoTime() - exactAllStart;
+
+        long exactSolveStart = System.nanoTime();
+        Map<String, Boolean> exactSolve = exact(mind, query, solved);
+        long exactSolveNanos = System.nanoTime() - exactSolveStart;
+
+        assertNoMisses("SOLVE-DISCOVERY", query, exactAll, exactSolve);
+
+        System.out.printf("HYPOTHESIS_SOLVE_DISCOVERY %s legacy=%d trace=%d solve=%d solveReduced=%s exact=%d solveRoots=%d solveOperations=%d solveContributions=%d solveTuples=%d solveRules=%d solveGroundBridges=%d solveGround=%d solveObserved=%d solveMarked=%d solveErrors=%d exactAllMs=%.3f exactSolveMs=%.3f%n",
+                query, legacy.size(), traced.size(), solved.size(),
+                Boolean.toString(solved.size() < legacy.size()), exactAll.size(),
+                solve.getQueryRootCount(), solve.getRelevantOperationCount(),
+                solve.getDeferredContributionCount(), solve.getRelevantTupleCount(),
+                solve.getRelevantRuleCount(), solve.getGroundBridgeCount(),
+                solve.getRelevantGroundCount(), solve.getObservedHypothesisCount(),
+                solve.getTaintedHypothesisCount(), solve.getInstrumentationErrorCount(),
+                exactAllNanos / 1_000_000.0,
                 exactSolveNanos / 1_000_000.0);
     }
 
