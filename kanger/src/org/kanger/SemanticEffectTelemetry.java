@@ -144,6 +144,7 @@ public final class SemanticEffectTelemetry {
      */
     public static void recordDeferredContribution(Collection<TValue> values,
                                                   long operationId) {
+        QueryTaintSolve.recordDeferredContribution(values, operationId);
         Session session = CURRENT.get();
         List<Long> key = solveKey(values);
         if (session == null || key.isEmpty()) {
@@ -197,6 +198,7 @@ public final class SemanticEffectTelemetry {
      * call this method.
      */
     public static void recordGeneratedRule(Object rule) {
+        QueryTaintSolve.recordGeneratedRule(rule);
         Session session = CURRENT.get();
         if (session != null && rule != null) {
             session.generatedRules.add(rule);
