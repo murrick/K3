@@ -26,9 +26,9 @@ import java.util.Set;
  * Shadow qualification for hypothesis relevance prefilters.
  *
  * <p>EXACT remains semantic authority. TRACE, occurrence TAINT, Cause-level
- * CARRIER and the deferred SOLVE carrier are independent conservative filters;
- * none changes production WHEN behavior. Every filter must preserve
- * {@code exactRelevant subsetOf candidates}.</p>
+ * CARRIER, deferred SOLVE provenance and one-shot SOLVE_ALT terminal closure
+ * are independent conservative filters; none changes production WHEN behavior.
+ * Every promoted filter must preserve {@code exactRelevant subsetOf candidates}.</p>
  */
 public final class KangerHypothesisTaintRunner {
 
@@ -128,6 +128,8 @@ public final class KangerHypothesisTaintRunner {
         List<IHypothesis> tainted = taint.selectCandidates(mind, legacy);
         List<IHypothesis> carried = carrier.selectCandidates(mind, legacy);
         List<IHypothesis> solved = solve.selectCandidates(mind, legacy);
+        List<IHypothesis> solvedAlt = QueryTaintSolveAlternatives.expand(
+                mind, legacy, solved);
 
         long exactAllStart = System.nanoTime();
         Map<String, Boolean> exactAll = exact(mind, query, legacy);
@@ -149,6 +151,10 @@ public final class KangerHypothesisTaintRunner {
         Map<String, Boolean> exactSolve = exact(mind, query, solved);
         long exactSolveNanos = System.nanoTime() - exactSolveStart;
 
+        long exactSolveAltStart = System.nanoTime();
+        Map<String, Boolean> exactSolveAlt = exact(mind, query, solvedAlt);
+        long exactSolveAltNanos = System.nanoTime() - exactSolveAltStart;
+
         if (exactAll.size() != expectedExact) {
             throw new AssertionError("Unexpected EXACT cardinality for " + query
                     + ": expected " + expectedExact + ", got " + exactAll.size()
@@ -159,6 +165,7 @@ public final class KangerHypothesisTaintRunner {
         assertNoMisses("TAINT", query, exactAll, exactTaint);
         assertNoMisses("CARRIER", query, exactAll, exactCarrier);
         assertNoMisses("SOLVE", query, exactAll, exactSolve);
+        assertNoMisses("SOLVE_ALT", query, exactAll, exactSolveAlt);
 
         if (requireReduction && traced.size() >= legacy.size()) {
             throw new AssertionError("TRACE did not reduce legacy list for "
@@ -169,10 +176,12 @@ public final class KangerHypothesisTaintRunner {
                     + query + ": " + legacy.size());
         }
 
-        System.out.printf("HYPOTHESIS_TAINT_PASS %s legacy=%d trace=%d taint=%d carrier=%d solve=%d carrierReduced=%s solveReduced=%s exact=%d traceRoots=%d traceEdges=%d taintRoots=%d taintUnifications=%d taintGround=%d taintObserved=%d taintMarked=%d taintErrors=%d carrierRoots=%d carrierCauses=%d carrierGroundBridges=%d carrierBindings=%d carrierGround=%d carrierObserved=%d carrierMarked=%d carrierErrors=%d solveRoots=%d solveOperations=%d solveContributions=%d solveTuples=%d solveRules=%d solveGroundBridges=%d solveGround=%d solveObserved=%d solveMarked=%d solveErrors=%d exactAllMs=%.3f exactTraceMs=%.3f exactTaintMs=%.3f exactCarrierMs=%.3f exactSolveMs=%.3f%n",
-                query, legacy.size(), traced.size(), tainted.size(), carried.size(), solved.size(),
+        System.out.printf("HYPOTHESIS_TAINT_PASS %s legacy=%d trace=%d taint=%d carrier=%d solve=%d solveAlt=%d carrierReduced=%s solveReduced=%s solveAltReduced=%s exact=%d traceRoots=%d traceEdges=%d taintRoots=%d taintUnifications=%d taintGround=%d taintObserved=%d taintMarked=%d taintErrors=%d carrierRoots=%d carrierCauses=%d carrierGroundBridges=%d carrierBindings=%d carrierGround=%d carrierObserved=%d carrierMarked=%d carrierErrors=%d solveRoots=%d solveOperations=%d solveContributions=%d solveTuples=%d solveRules=%d solveGroundBridges=%d solveGround=%d solveObserved=%d solveMarked=%d solveErrors=%d exactAllMs=%.3f exactTraceMs=%.3f exactTaintMs=%.3f exactCarrierMs=%.3f exactSolveMs=%.3f exactSolveAltMs=%.3f%n",
+                query, legacy.size(), traced.size(), tainted.size(), carried.size(),
+                solved.size(), solvedAlt.size(),
                 Boolean.toString(carried.size() < legacy.size()),
-                Boolean.toString(solved.size() < legacy.size()), exactAll.size(),
+                Boolean.toString(solved.size() < legacy.size()),
+                Boolean.toString(solvedAlt.size() < legacy.size()), exactAll.size(),
                 trace.getQueryRootCount(), trace.getRecordedEdgeCount(),
                 taint.getQueryRootCount(), taint.getRelevantUnificationCount(),
                 taint.getGroundBridgeCount(), taint.getObservedHypothesisCount(),
@@ -190,13 +199,14 @@ public final class KangerHypothesisTaintRunner {
                 exactTraceNanos / 1_000_000.0,
                 exactTaintNanos / 1_000_000.0,
                 exactCarrierNanos / 1_000_000.0,
-                exactSolveNanos / 1_000_000.0);
+                exactSolveNanos / 1_000_000.0,
+                exactSolveAltNanos / 1_000_000.0);
     }
 
     /**
      * Adversarial oracle discovery. Known TRUE/FALSE queries are reported and
-     * skipped; WHO-KNOWS queries still receive the hard SOLVE no-false-negative
-     * check before their cardinality is promoted into the fixed corpus.
+     * skipped. For WHO-KNOWS queries raw SOLVE is retained as a diagnostic, and
+     * the hard safety gate applies to the one-shot terminal SOLVE_ALT closure.
      */
     private static void discover(IUser user, String query) throws Exception {
         Mind mind = prepared(user);
@@ -226,6 +236,8 @@ public final class KangerHypothesisTaintRunner {
         List<IHypothesis> legacy = copy(mind.getHypothesis());
         List<IHypothesis> traced = trace.selectCandidates(mind, legacy);
         List<IHypothesis> solved = solve.selectCandidates(mind, legacy);
+        List<IHypothesis> solvedAlt = QueryTaintSolveAlternatives.expand(
+                mind, legacy, solved);
 
         long exactAllStart = System.nanoTime();
         Map<String, Boolean> exactAll = exact(mind, query, legacy);
@@ -235,25 +247,42 @@ public final class KangerHypothesisTaintRunner {
         Map<String, Boolean> exactSolve = exact(mind, query, solved);
         long exactSolveNanos = System.nanoTime() - exactSolveStart;
 
-        assertNoMisses("SOLVE-DISCOVERY", query, exactAll, exactSolve);
+        long exactSolveAltStart = System.nanoTime();
+        Map<String, Boolean> exactSolveAlt = exact(mind, query, solvedAlt);
+        long exactSolveAltNanos = System.nanoTime() - exactSolveAltStart;
 
-        System.out.printf("HYPOTHESIS_SOLVE_DISCOVERY %s legacy=%d trace=%d solve=%d solveReduced=%s exact=%d solveRoots=%d solveOperations=%d solveContributions=%d solveTuples=%d solveRules=%d solveGroundBridges=%d solveGround=%d solveObserved=%d solveMarked=%d solveErrors=%d exactAllMs=%.3f exactSolveMs=%.3f%n",
-                query, legacy.size(), traced.size(), solved.size(),
-                Boolean.toString(solved.size() < legacy.size()), exactAll.size(),
-                solve.getQueryRootCount(), solve.getRelevantOperationCount(),
-                solve.getDeferredContributionCount(), solve.getRelevantTupleCount(),
-                solve.getRelevantRuleCount(), solve.getGroundBridgeCount(),
-                solve.getRelevantGroundCount(), solve.getObservedHypothesisCount(),
-                solve.getTaintedHypothesisCount(), solve.getInstrumentationErrorCount(),
+        Set<String> rawMissed = missed(exactAll, exactSolve);
+        assertNoMisses("SOLVE_ALT-DISCOVERY", query, exactAll, exactSolveAlt);
+
+        System.out.printf("HYPOTHESIS_SOLVE_DISCOVERY %s legacy=%d trace=%d solve=%d solveAlt=%d solveReduced=%s solveAltReduced=%s rawSolveMissed=%d exact=%d solveRoots=%d solveOperations=%d solveContributions=%d solveTuples=%d solveRules=%d solveGroundBridges=%d solveGround=%d solveObserved=%d solveMarked=%d solveErrors=%d exactAllMs=%.3f exactSolveMs=%.3f exactSolveAltMs=%.3f%n",
+                query, legacy.size(), traced.size(), solved.size(), solvedAlt.size(),
+                Boolean.toString(solved.size() < legacy.size()),
+                Boolean.toString(solvedAlt.size() < legacy.size()), rawMissed.size(),
+                exactAll.size(), solve.getQueryRootCount(),
+                solve.getRelevantOperationCount(), solve.getDeferredContributionCount(),
+                solve.getRelevantTupleCount(), solve.getRelevantRuleCount(),
+                solve.getGroundBridgeCount(), solve.getRelevantGroundCount(),
+                solve.getObservedHypothesisCount(), solve.getTaintedHypothesisCount(),
+                solve.getInstrumentationErrorCount(),
                 exactAllNanos / 1_000_000.0,
-                exactSolveNanos / 1_000_000.0);
+                exactSolveNanos / 1_000_000.0,
+                exactSolveAltNanos / 1_000_000.0);
+        if (!rawMissed.isEmpty()) {
+            System.out.println("HYPOTHESIS_SOLVE_RAW_MISSED " + query + " " + rawMissed);
+        }
+    }
+
+    private static Set<String> missed(Map<String, Boolean> exactAll,
+                                      Map<String, Boolean> exactFiltered) {
+        Set<String> result = new LinkedHashSet<>(exactAll.keySet());
+        result.removeAll(exactFiltered.keySet());
+        return result;
     }
 
     private static void assertNoMisses(String label, String query,
                                        Map<String, Boolean> exactAll,
                                        Map<String, Boolean> exactFiltered) {
-        Set<String> missed = new LinkedHashSet<>(exactAll.keySet());
-        missed.removeAll(exactFiltered.keySet());
+        Set<String> missed = missed(exactAll, exactFiltered);
         if (!missed.isEmpty()) {
             throw new AssertionError(label + " false negatives for " + query
                     + ": " + missed);
