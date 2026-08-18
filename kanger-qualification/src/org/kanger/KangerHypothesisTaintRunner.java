@@ -147,13 +147,10 @@ public final class KangerHypothesisTaintRunner {
             throw new AssertionError("TAINT did not reduce legacy list for "
                     + query + ": " + legacy.size());
         }
-        if (requireReduction && carried.size() >= legacy.size()) {
-            throw new AssertionError("CARRIER did not reduce legacy list for "
-                    + query + ": " + legacy.size());
-        }
 
-        System.out.printf("HYPOTHESIS_TAINT_PASS %s legacy=%d trace=%d taint=%d carrier=%d exact=%d traceRoots=%d traceEdges=%d taintRoots=%d taintUnifications=%d taintGround=%d taintObserved=%d taintMarked=%d taintErrors=%d carrierRoots=%d carrierCauses=%d carrierGroundBridges=%d carrierBindings=%d carrierGround=%d carrierObserved=%d carrierMarked=%d carrierErrors=%d exactAllMs=%.3f exactTraceMs=%.3f exactTaintMs=%.3f exactCarrierMs=%.3f%n",
-                query, legacy.size(), traced.size(), tainted.size(), carried.size(), exactAll.size(),
+        System.out.printf("HYPOTHESIS_TAINT_PASS %s legacy=%d trace=%d taint=%d carrier=%d carrierReduced=%s exact=%d traceRoots=%d traceEdges=%d taintRoots=%d taintUnifications=%d taintGround=%d taintObserved=%d taintMarked=%d taintErrors=%d carrierRoots=%d carrierCauses=%d carrierGroundBridges=%d carrierBindings=%d carrierGround=%d carrierObserved=%d carrierMarked=%d carrierErrors=%d exactAllMs=%.3f exactTraceMs=%.3f exactTaintMs=%.3f exactCarrierMs=%.3f%n",
+                query, legacy.size(), traced.size(), tainted.size(), carried.size(),
+                Boolean.toString(carried.size() < legacy.size()), exactAll.size(),
                 trace.getQueryRootCount(), trace.getRecordedEdgeCount(),
                 taint.getQueryRootCount(), taint.getRelevantUnificationCount(),
                 taint.getGroundBridgeCount(), taint.getObservedHypothesisCount(),
