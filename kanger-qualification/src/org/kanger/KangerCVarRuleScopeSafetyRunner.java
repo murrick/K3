@@ -20,6 +20,7 @@ import java.lang.reflect.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -48,6 +49,7 @@ public final class KangerCVarRuleScopeSafetyRunner {
             System.out.println("CVAR_RULE_SCOPE_PASS per-rule identity");
             System.out.println("CVAR_RULE_SCOPE_PASS selective unlink");
             System.out.println("CVAR_RULE_SCOPE_PASS generated materialization convergence");
+            System.out.println("CVAR_RULE_SCOPE_PASS transient witness exclusion from Values");
             System.out.println("CVAR_RULE_SCOPE_OK");
             exitCode = 0;
         } catch (Throwable error) {
@@ -121,6 +123,15 @@ public final class KangerCVarRuleScopeSafetyRunner {
                 "fixture must materialize at least two abstract generated statements");
         require(baseline.abstractTermIds.size() == baseline.abstractRuleIds.size(),
                 "independent generated statements must own distinct existential witnesses");
+
+        require(Boolean.TRUE.equals(mind.query("?$x parent(x,Sarah);", null, false)),
+                "parent query must be true");
+        List<ITerm> parentValues = mind.getValues().getValues("x");
+        require(parentValues.size() == 1,
+                "transient existential witness must not be exported as an additional Value");
+        require(!parentValues.get(0).isCVariable()
+                        && "Mary".equals(String.valueOf(parentValues.get(0).getValue())),
+                "only the concrete parent Mary must be exported from the fixture");
 
         for (int cycle = 1; cycle <= 4; ++cycle) {
             require(Boolean.TRUE.equals(mind.query("?", null, false)),
