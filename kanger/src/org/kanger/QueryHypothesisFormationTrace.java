@@ -112,17 +112,22 @@ public final class QueryHypothesisFormationTrace {
                 candidate.isQuery(mind),
                 hasQueryVariable(candidate, mind),
                 lineage.cvars,
-                lineage.queryRoots,
-                lineage.cvars > 0 && lineage.cvars == lineage.queryRoots,
+                lineage.queryOwnedRoots,
+                lineage.queryLinkedRoots,
+                lineage.cvars > 0 && lineage.cvars == lineage.queryOwnedRoots,
+                lineage.cvars > 0 && lineage.cvars == lineage.queryLinkedRoots,
                 candidate.toString(mind),
                 hypothesis.toString(mind),
                 branchState,
                 solve));
     }
 
-    private static CVarLineage cvarLineage(Domain domain, Mind mind) throws Exception {
+    private static CVarLineage cvarLineage(Domain domain, Mind mind)
+            throws Exception {
         int cvars = 0;
-        int queryRoots = 0;
+        int queryOwnedRoots = 0;
+        int queryLinkedRoots = 0;
+
         for (IArgument argument : domain.getArguments()) {
             if (argument.isEmpty(mind)) {
                 continue;
@@ -131,31 +136,65 @@ public final class QueryHypothesisFormationTrace {
             if (value == null || !value.isCVariable()) {
                 continue;
             }
+
             ++cvars;
             Term root = (Term) value;
             ITerm parent;
-            while ((parent = root.getParent(mind)) != null && parent.isCVariable()) {
+            while ((parent = root.getParent(mind)) != null
+                    && parent.isCVariable()) {
                 root = (Term) parent;
             }
+
             IRule rootOwner = root.getRule(mind);
-            if (rootOwner != null && rootOwner.isQuery()) {
-                ++queryRoots;
+            boolean queryOwned = rootOwner != null && rootOwner.isQuery();
+            if (queryOwned) {
+                ++queryOwnedRoots;
+                ++queryLinkedRoots;
+            } else if (hasVisibleQueryProjection(root, mind)) {
+                ++queryLinkedRoots;
             }
         }
-        return new CVarLineage(cvars, queryRoots);
+        return new CVarLineage(cvars, queryOwnedRoots, queryLinkedRoots);
+    }
+
+    /**
+     * A native/root C-variable may still participate in the current query when
+     * Linker projected it into the binding scope of a visible query Rule. The
+     * canonical parent -> child-by-target-Rule map preserves that relation even
+     * though the root itself remains owned by the native Rule.
+     */
+    private static boolean hasVisibleQueryProjection(Term root, Mind mind)
+            throws Exception {
+        for (IRule candidate : mind.getRules()) {
+            if (candidate == null
+                    || !candidate.isQuery()
+                    || candidate.isDeleted(mind)) {
+                continue;
+            }
+            ITerm child = mind.getCVarChild(root, candidate.getId());
+            if (child != null && child.isCVariable()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static final class CVarLineage {
         private final int cvars;
-        private final int queryRoots;
+        private final int queryOwnedRoots;
+        private final int queryLinkedRoots;
 
-        private CVarLineage(int cvars, int queryRoots) {
+        private CVarLineage(int cvars,
+                            int queryOwnedRoots,
+                            int queryLinkedRoots) {
             this.cvars = cvars;
-            this.queryRoots = queryRoots;
+            this.queryOwnedRoots = queryOwnedRoots;
+            this.queryLinkedRoots = queryLinkedRoots;
         }
     }
 
-    private static String domainState(Domain domain, Mind mind) throws Exception {
+    private static String domainState(Domain domain, Mind mind)
+            throws Exception {
         return domain.toString(mind)
                 + "{complete=" + domain.isComplete()
                 + ",stored=" + domain.isStored(mind)
@@ -204,7 +243,9 @@ public final class QueryHypothesisFormationTrace {
         private final boolean candidateQueryVariable;
         private final int candidateCVars;
         private final int candidateQueryRoots;
+        private final int candidateQueryLinkedRoots;
         private final boolean candidateAllQueryRoots;
+        private final boolean candidateAllQueryLinkedRoots;
         private final String candidate;
         private final String hypothesis;
         private final List<String> branchState;
@@ -223,7 +264,9 @@ public final class QueryHypothesisFormationTrace {
                       boolean candidateQueryVariable,
                       int candidateCVars,
                       int candidateQueryRoots,
+                      int candidateQueryLinkedRoots,
                       boolean candidateAllQueryRoots,
+                      boolean candidateAllQueryLinkedRoots,
                       String candidate,
                       String hypothesis,
                       List<String> branchState,
@@ -241,10 +284,13 @@ public final class QueryHypothesisFormationTrace {
             this.candidateQueryVariable = candidateQueryVariable;
             this.candidateCVars = candidateCVars;
             this.candidateQueryRoots = candidateQueryRoots;
+            this.candidateQueryLinkedRoots = candidateQueryLinkedRoots;
             this.candidateAllQueryRoots = candidateAllQueryRoots;
+            this.candidateAllQueryLinkedRoots = candidateAllQueryLinkedRoots;
             this.candidate = candidate;
             this.hypothesis = hypothesis;
-            this.branchState = Collections.unmodifiableList(new ArrayList<String>(branchState));
+            this.branchState = Collections.unmodifiableList(
+                    new ArrayList<String>(branchState));
             this.solve = Collections.unmodifiableList(new ArrayList<String>(solve));
         }
 
@@ -261,7 +307,15 @@ public final class QueryHypothesisFormationTrace {
         public boolean hasCandidateQueryVariable() { return candidateQueryVariable; }
         public int getCandidateCVars() { return candidateCVars; }
         public int getCandidateQueryRoots() { return candidateQueryRoots; }
-        public boolean hasCandidateAllQueryRoots() { return candidateAllQueryRoots; }
+        public int getCandidateQueryLinkedRoots() {
+            return candidateQueryLinkedRoots;
+        }
+        public boolean hasCandidateAllQueryRoots() {
+            return candidateAllQueryRoots;
+        }
+        public boolean hasCandidateAllQueryLinkedRoots() {
+            return candidateAllQueryLinkedRoots;
+        }
         public String getCandidate() { return candidate; }
         public String getHypothesis() { return hypothesis; }
         public List<String> getBranchState() { return branchState; }
