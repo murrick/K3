@@ -6,6 +6,7 @@
 package org.kanger;
 
 import org.kanger.enums.Enums;
+import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.ITerm;
 
 import java.util.Map;
@@ -21,10 +22,11 @@ import java.util.WeakHashMap;
  * boundary at which external parameters are already canonical KANGER terms, so
  * it records the TRUE-pass query here before those values are consumed.</p>
  *
- * <p>Entries are weakly keyed by Mind and replaced for every query compile.
- * A FALSE-pass/insertion compile clears an older entry; the following TRUE-pass
- * then installs the original {@code ?} query. This prevents a stale query from
- * being reused when no TRUE-pass follows.</p>
+ * <p>Compilation occurs in nested technical Mind transactions below the Mind
+ * on which the user issued the query. Therefore every observation is published
+ * to the active Mind lineage. A FALSE-pass compile clears stale replay data;
+ * the following TRUE-pass installs the original {@code ?} query on every
+ * ancestor that can later own the resulting hypothesis store.</p>
  */
 public final class QueryReplayContext {
 
@@ -44,7 +46,7 @@ public final class QueryReplayContext {
         }
         if (source == null || source.isEmpty()
                 || source.charAt(0) != Enums.SUC) {
-            SNAPSHOTS.remove(mind);
+            publish(mind, null);
             return;
         }
 
@@ -58,7 +60,18 @@ public final class QueryReplayContext {
                 values[index++] = term.getValue();
             }
         }
-        SNAPSHOTS.put(mind, new Snapshot(source, values));
+        publish(mind, new Snapshot(source, values));
+    }
+
+    private static void publish(Mind mind, Snapshot snapshot) {
+        for (IMind level = mind; level != null; level = level.getNext()) {
+            Mind current = (Mind) level;
+            if (snapshot == null) {
+                SNAPSHOTS.remove(current);
+            } else {
+                SNAPSHOTS.put(current, snapshot.copy());
+            }
+        }
     }
 
     public static synchronized Snapshot snapshot(Mind mind) {
