@@ -33,7 +33,6 @@ import org.kanger.interfaces.IList;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.units.Predicate;
-import org.kanger.units.Rule;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -208,22 +207,18 @@ public class HypothesisStore implements IFactory<IHypothesis> {
             for (IHypothesis h : list) {
                 Mind m = new Mind(mind);
                 try {
-                    Rule r = (Rule) m.compileLine(
-                            ((Hypothesis) h).toString(m), false, null);
-                    if (r == null) {
+                    String assertion = ((Hypothesis) h).toAssertionString(m);
+                    Boolean accepted = m.query(assertion, null, false);
+                    if (!Boolean.TRUE.equals(accepted)) {
                         continue;
                     }
-                    m.link(r, false);
-                    Boolean collision = m.analyze(null, false);
-                    if (!collision) {
-                        if (replay == null) {
+                    if (replay == null) {
+                        success.add(h);
+                    } else {
+                        Boolean answer = m.query(
+                                replay.getSource(), replay.getExternals(), false);
+                        if (Boolean.TRUE.equals(answer)) {
                             success.add(h);
-                        } else {
-                            Boolean answer = m.query(
-                                    replay.getSource(), replay.getExternals(), false);
-                            if (answer != null) {
-                                success.add(h);
-                            }
                         }
                     }
                 } finally {
