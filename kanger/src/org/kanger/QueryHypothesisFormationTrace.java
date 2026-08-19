@@ -17,7 +17,9 @@ import org.kanger.units.Term;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -114,8 +116,10 @@ public final class QueryHypothesisFormationTrace {
                 lineage.cvars,
                 lineage.queryOwnedRoots,
                 lineage.queryLinkedRoots,
+                lineage.queryReachableRoots,
                 lineage.cvars > 0 && lineage.cvars == lineage.queryOwnedRoots,
                 lineage.cvars > 0 && lineage.cvars == lineage.queryLinkedRoots,
+                lineage.cvars > 0 && lineage.cvars == lineage.queryReachableRoots,
                 candidate.toString(mind),
                 hypothesis.toString(mind),
                 branchState,
@@ -127,6 +131,7 @@ public final class QueryHypothesisFormationTrace {
         int cvars = 0;
         int queryOwnedRoots = 0;
         int queryLinkedRoots = 0;
+        int queryReachableRoots = 0;
 
         for (IArgument argument : domain.getArguments()) {
             if (argument.isEmpty(mind)) {
@@ -147,23 +152,26 @@ public final class QueryHypothesisFormationTrace {
 
             IRule rootOwner = root.getRule(mind);
             boolean queryOwned = rootOwner != null && rootOwner.isQuery();
+            boolean queryLinked = queryOwned || hasDirectVisibleQueryProjection(root, mind);
+            boolean queryReachable = queryLinked
+                    || hasReachableVisibleQueryProjection(root, mind,
+                    new HashSet<Long>());
+
             if (queryOwned) {
                 ++queryOwnedRoots;
-                ++queryLinkedRoots;
-            } else if (hasVisibleQueryProjection(root, mind)) {
+            }
+            if (queryLinked) {
                 ++queryLinkedRoots;
             }
+            if (queryReachable) {
+                ++queryReachableRoots;
+            }
         }
-        return new CVarLineage(cvars, queryOwnedRoots, queryLinkedRoots);
+        return new CVarLineage(cvars, queryOwnedRoots,
+                queryLinkedRoots, queryReachableRoots);
     }
 
-    /**
-     * A native/root C-variable may still participate in the current query when
-     * Linker projected it into the binding scope of a visible query Rule. The
-     * canonical parent -> child-by-target-Rule map preserves that relation even
-     * though the root itself remains owned by the native Rule.
-     */
-    private static boolean hasVisibleQueryProjection(Term root, Mind mind)
+    private static boolean hasDirectVisibleQueryProjection(Term root, Mind mind)
             throws Exception {
         for (IRule candidate : mind.getRules()) {
             if (candidate == null
@@ -179,17 +187,51 @@ public final class QueryHypothesisFormationTrace {
         return false;
     }
 
+    /**
+     * Follow the existing rule-scoped C-variable projection graph until a
+     * visible query-owned projection is reached. No inference state is changed.
+     */
+    private static boolean hasReachableVisibleQueryProjection(Term current,
+                                                               Mind mind,
+                                                               Set<Long> visited)
+            throws Exception {
+        if (!visited.add(current.getId())) {
+            return false;
+        }
+
+        IRule owner = current.getRule(mind);
+        if (owner != null && owner.isQuery() && !owner.isDeleted(mind)) {
+            return true;
+        }
+
+        for (IRule target : mind.getRules()) {
+            if (target == null || target.isDeleted(mind)) {
+                continue;
+            }
+            ITerm child = mind.getCVarChild(current, target.getId());
+            if (child != null && child.isCVariable()
+                    && hasReachableVisibleQueryProjection(
+                    (Term) child, mind, visited)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static final class CVarLineage {
         private final int cvars;
         private final int queryOwnedRoots;
         private final int queryLinkedRoots;
+        private final int queryReachableRoots;
 
         private CVarLineage(int cvars,
                             int queryOwnedRoots,
-                            int queryLinkedRoots) {
+                            int queryLinkedRoots,
+                            int queryReachableRoots) {
             this.cvars = cvars;
             this.queryOwnedRoots = queryOwnedRoots;
             this.queryLinkedRoots = queryLinkedRoots;
+            this.queryReachableRoots = queryReachableRoots;
         }
     }
 
@@ -244,8 +286,10 @@ public final class QueryHypothesisFormationTrace {
         private final int candidateCVars;
         private final int candidateQueryRoots;
         private final int candidateQueryLinkedRoots;
+        private final int candidateQueryReachableRoots;
         private final boolean candidateAllQueryRoots;
         private final boolean candidateAllQueryLinkedRoots;
+        private final boolean candidateAllQueryReachableRoots;
         private final String candidate;
         private final String hypothesis;
         private final List<String> branchState;
@@ -265,8 +309,10 @@ public final class QueryHypothesisFormationTrace {
                       int candidateCVars,
                       int candidateQueryRoots,
                       int candidateQueryLinkedRoots,
+                      int candidateQueryReachableRoots,
                       boolean candidateAllQueryRoots,
                       boolean candidateAllQueryLinkedRoots,
+                      boolean candidateAllQueryReachableRoots,
                       String candidate,
                       String hypothesis,
                       List<String> branchState,
@@ -285,8 +331,10 @@ public final class QueryHypothesisFormationTrace {
             this.candidateCVars = candidateCVars;
             this.candidateQueryRoots = candidateQueryRoots;
             this.candidateQueryLinkedRoots = candidateQueryLinkedRoots;
+            this.candidateQueryReachableRoots = candidateQueryReachableRoots;
             this.candidateAllQueryRoots = candidateAllQueryRoots;
             this.candidateAllQueryLinkedRoots = candidateAllQueryLinkedRoots;
+            this.candidateAllQueryReachableRoots = candidateAllQueryReachableRoots;
             this.candidate = candidate;
             this.hypothesis = hypothesis;
             this.branchState = Collections.unmodifiableList(
@@ -310,11 +358,17 @@ public final class QueryHypothesisFormationTrace {
         public int getCandidateQueryLinkedRoots() {
             return candidateQueryLinkedRoots;
         }
+        public int getCandidateQueryReachableRoots() {
+            return candidateQueryReachableRoots;
+        }
         public boolean hasCandidateAllQueryRoots() {
             return candidateAllQueryRoots;
         }
         public boolean hasCandidateAllQueryLinkedRoots() {
             return candidateAllQueryLinkedRoots;
+        }
+        public boolean hasCandidateAllQueryReachableRoots() {
+            return candidateAllQueryReachableRoots;
         }
         public String getCandidate() { return candidate; }
         public String getHypothesis() { return hypothesis; }
