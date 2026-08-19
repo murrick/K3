@@ -5,22 +5,22 @@
  */
 package org.kanger;
 
-import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IRule;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.units.Domain;
+import org.kanger.units.Rule;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Diagnostic-only capture of residual hypothesis formation at the exact
- * terminal-branch instance where Linker creates a temporary hypothesis.
+ * Domain instance passed to the historical temporary-hypothesis constructor.
  *
  * <p>The recorder is inert unless {@link #begin()} is active on the current
  * thread. It does not participate in inference, candidate selection, store
@@ -46,56 +46,90 @@ public final class QueryHypothesisFormationTrace {
                 : new ArrayList<Event>(events));
     }
 
-    static void recordResidual(Mind mind,
-                               List<Domain> branch,
-                               Set<Domain> candidates,
-                               List<TValue> solve,
-                               Domain candidate,
-                               Hypothesis hypothesis) throws Exception {
+    public static void recordResidual(Domain candidate,
+                                      Mind mind,
+                                      Hypothesis hypothesis) throws Exception {
         List<Event> active = ACTIVE.get();
         if (active == null) {
             return;
         }
 
-        IRule source = candidate.getRule();
-        List<String> branchText = new ArrayList<String>();
+        IRule owner = candidate.getRule();
+        Rule rule = owner instanceof Rule ? (Rule) owner : null;
+        int branchIndex = -1;
+        List<Domain> branch = Collections.emptyList();
+        if (rule != null) {
+            int index = 0;
+            for (List<Domain> current : rule.getTree()) {
+                for (Domain domain : current) {
+                    if (domain == candidate) {
+                        branchIndex = index;
+                        branch = current;
+                        break;
+                    }
+                }
+                if (branchIndex >= 0) {
+                    break;
+                }
+                ++index;
+            }
+        }
+
+        List<String> branchState = new ArrayList<String>();
         boolean branchQueryDomain = false;
         boolean branchQueryVariable = false;
         for (Domain domain : branch) {
-            branchText.add(domain.toString(mind));
+            branchState.add(domainState(domain, mind));
             branchQueryDomain |= domain.isQuery(mind);
             branchQueryVariable |= hasQueryVariable(domain, mind);
         }
 
-        List<String> candidateText = new ArrayList<String>();
-        for (Domain domain : candidates) {
-            candidateText.add(domain.toString(mind));
+        List<String> solve = new ArrayList<String>();
+        if (rule != null) {
+            SortedSet<TVariable> variables = new TreeSet<TVariable>();
+            for (List<Domain> current : rule.getTree()) {
+                for (Domain domain : current) {
+                    variables.addAll(domain.getArguments().getTVariables(mind));
+                }
+            }
+            for (TVariable variable : variables) {
+                if (!variable.isEmpty()) {
+                    TValue value = variable.getCurrent();
+                    solve.add(variable.getId() + "="
+                            + (value == null ? "null" : value.toString(mind)));
+                }
+            }
         }
-        Collections.sort(candidateText);
-
-        List<String> solveText = new ArrayList<String>();
-        for (TValue value : solve) {
-            solveText.add(value.toString(mind));
-        }
-        Collections.sort(solveText);
 
         active.add(new Event(
                 mind.getQueryPass().name(),
                 mind.getId(),
-                source == null ? -1L : source.getId(),
-                source != null && source.isQuery(),
-                source != null && source.isGenerated(),
+                owner == null ? -1L : owner.getId(),
+                owner != null && owner.isQuery(),
+                owner != null && owner.isGenerated(),
+                branchIndex,
                 branch.size(),
-                candidates.size(),
                 branchQueryDomain,
                 branchQueryVariable,
                 candidate.isQuery(mind),
                 hasQueryVariable(candidate, mind),
                 candidate.toString(mind),
                 hypothesis.toString(mind),
-                branchText,
-                candidateText,
-                solveText));
+                branchState,
+                solve));
+    }
+
+    private static String domainState(Domain domain, Mind mind) throws Exception {
+        return domain.toString(mind)
+                + "{complete=" + domain.isComplete()
+                + ",stored=" + domain.isStored(mind)
+                + ",calculated=" + domain.isCalculated(mind)
+                + ",excluded=" + domain.isExcluded(mind)
+                + ",used=" + domain.isUsed(mind)
+                + ",query=" + domain.isQuery(mind)
+                + ",queryVar=" + hasQueryVariable(domain, mind)
+                + ",system=" + domain.isSystem(mind)
+                + "}";
     }
 
     private static boolean hasQueryVariable(Domain domain, Mind mind)
@@ -103,15 +137,6 @@ public final class QueryHypothesisFormationTrace {
         for (TVariable variable : domain.getArguments().getTVariables(mind)) {
             if (variable.isQuery(mind)) {
                 return true;
-            }
-        }
-        for (IArgument argument : domain.getArguments()) {
-            if (!argument.isEmpty(mind)
-                    && argument.getValue(mind) != null
-                    && argument.getValue(mind).isCVariable()) {
-                // Query C-variable ancestry is not equivalent to TVariable
-                // ownership; keep this recorder conservative and let the
-                // concrete branch/solve snapshot expose the value itself.
             }
         }
         return false;
@@ -135,16 +160,15 @@ public final class QueryHypothesisFormationTrace {
         private final long ruleId;
         private final boolean ruleQuery;
         private final boolean ruleGenerated;
+        private final int branchIndex;
         private final int branchSize;
-        private final int candidateCount;
         private final boolean branchQueryDomain;
         private final boolean branchQueryVariable;
         private final boolean candidateQueryDomain;
         private final boolean candidateQueryVariable;
         private final String candidate;
         private final String hypothesis;
-        private final List<String> branch;
-        private final List<String> candidates;
+        private final List<String> branchState;
         private final List<String> solve;
 
         private Event(String pass,
@@ -152,32 +176,31 @@ public final class QueryHypothesisFormationTrace {
                       long ruleId,
                       boolean ruleQuery,
                       boolean ruleGenerated,
+                      int branchIndex,
                       int branchSize,
-                      int candidateCount,
                       boolean branchQueryDomain,
                       boolean branchQueryVariable,
                       boolean candidateQueryDomain,
                       boolean candidateQueryVariable,
                       String candidate,
                       String hypothesis,
-                      List<String> branch,
-                      List<String> candidates,
+                      List<String> branchState,
                       List<String> solve) {
             this.pass = pass;
             this.mindId = mindId;
             this.ruleId = ruleId;
             this.ruleQuery = ruleQuery;
             this.ruleGenerated = ruleGenerated;
+            this.branchIndex = branchIndex;
             this.branchSize = branchSize;
-            this.candidateCount = candidateCount;
             this.branchQueryDomain = branchQueryDomain;
             this.branchQueryVariable = branchQueryVariable;
             this.candidateQueryDomain = candidateQueryDomain;
             this.candidateQueryVariable = candidateQueryVariable;
             this.candidate = candidate;
             this.hypothesis = hypothesis;
-            this.branch = Collections.unmodifiableList(new ArrayList<String>(branch));
-            this.candidates = Collections.unmodifiableList(new ArrayList<String>(candidates));
+            this.branchState = Collections.unmodifiableList(
+                    new ArrayList<String>(branchState));
             this.solve = Collections.unmodifiableList(new ArrayList<String>(solve));
         }
 
@@ -186,16 +209,15 @@ public final class QueryHypothesisFormationTrace {
         public long getRuleId() { return ruleId; }
         public boolean isRuleQuery() { return ruleQuery; }
         public boolean isRuleGenerated() { return ruleGenerated; }
+        public int getBranchIndex() { return branchIndex; }
         public int getBranchSize() { return branchSize; }
-        public int getCandidateCount() { return candidateCount; }
         public boolean hasBranchQueryDomain() { return branchQueryDomain; }
         public boolean hasBranchQueryVariable() { return branchQueryVariable; }
         public boolean hasCandidateQueryDomain() { return candidateQueryDomain; }
         public boolean hasCandidateQueryVariable() { return candidateQueryVariable; }
         public String getCandidate() { return candidate; }
         public String getHypothesis() { return hypothesis; }
-        public List<String> getBranch() { return branch; }
-        public List<String> getCandidates() { return candidates; }
+        public List<String> getBranchState() { return branchState; }
         public List<String> getSolve() { return solve; }
     }
 }
