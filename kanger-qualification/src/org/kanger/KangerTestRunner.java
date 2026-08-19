@@ -62,6 +62,8 @@ public final class KangerTestRunner {
 
             boolean completedHypothesisSuccess =
                     KangerCompletedHypothesisContractRunner.test();
+            boolean completedHypothesisConsoleSuccess =
+                    KangerCompletedHypothesisConsoleProbeRunner.test();
             boolean consoleLifecycleSuccess =
                     KangerConsoleLifecycleBindingRunner.test();
             boolean canonicalConsoleSuccess =
@@ -75,6 +77,7 @@ public final class KangerTestRunner {
                     && c4Success
                     && c3Success
                     && completedHypothesisSuccess
+                    && completedHypothesisConsoleSuccess
                     && consoleLifecycleSuccess
                     && canonicalConsoleSuccess
                     && canonicalConsoleLifecycleSuccess ? 0 : 1;
