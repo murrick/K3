@@ -5,7 +5,9 @@
  */
 package org.kanger;
 
+import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IHypothesis;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.storage.DB;
@@ -136,18 +138,18 @@ public final class KangerHypothesisAbstractiveDemandRunner {
             if (!exactAll.containsKey(text)) {
                 continue;
             }
-            System.out.printf("ABSTRACTIVE_DEMAND_EXACT_H query=%s answer=%s oldOptimize=%s rawTrace=%s rawSolve=%s rawSolveAlt=%s rawTraceSolve=%s optTrace=%s optSolve=%s optSolveAlt=%s optTraceSolve=%s h=%s%n",
+            System.out.printf("ABSTRACTIVE_DEMAND_EXACT_H query=%s answer=%s oldOptimize=%s rawTrace=%s rawSolve=%s rawSolveAlt=%s rawAltTraceAbs=%s optTrace=%s optSolve=%s optSolveAlt=%s optAltTraceAbs=%s h=%s%n",
                     query,
                     exactAll.get(text).toString(),
                     Boolean.toString(optimizedText.contains(text)),
                     Boolean.toString(rawSelection.trace.text.contains(text)),
                     Boolean.toString(rawSelection.solve.text.contains(text)),
                     Boolean.toString(rawSelection.solveAlt.text.contains(text)),
-                    Boolean.toString(rawSelection.traceSolve.text.contains(text)),
+                    Boolean.toString(rawSelection.solveAltTraceAbstract.text.contains(text)),
                     Boolean.toString(optimizedSelection.trace.text.contains(text)),
                     Boolean.toString(optimizedSelection.solve.text.contains(text)),
                     Boolean.toString(optimizedSelection.solveAlt.text.contains(text)),
-                    Boolean.toString(optimizedSelection.traceSolve.text.contains(text)),
+                    Boolean.toString(optimizedSelection.solveAltTraceAbstract.text.contains(text)),
                     text);
         }
     }
@@ -165,13 +167,17 @@ public final class KangerHypothesisAbstractiveDemandRunner {
                 mind, query, source, solve);
         List<IHypothesis> traceSolve = union(mind, trace, solve);
         List<IHypothesis> traceSolveAlt = union(mind, trace, solveAlt);
+        List<IHypothesis> traceAbstract = abstractiveOnly(mind, trace);
+        List<IHypothesis> solveAltTraceAbstract = union(
+                mind, solveAlt, traceAbstract);
 
         return new Selection(
                 audit(mind, exactAll, trace),
                 audit(mind, exactAll, solve),
                 audit(mind, exactAll, solveAlt),
                 audit(mind, exactAll, traceSolve),
-                audit(mind, exactAll, traceSolveAlt));
+                audit(mind, exactAll, traceSolveAlt),
+                audit(mind, exactAll, solveAltTraceAbstract));
     }
 
     private static void printSelection(String stage,
@@ -183,7 +189,7 @@ public final class KangerHypothesisAbstractiveDemandRunner {
                                        QueryTaintSolve.Snapshot solveSnapshot,
                                        long exactAllNanos,
                                        long optimizeNanos) {
-        System.out.printf("ABSTRACTIVE_DEMAND_SUMMARY stage=%s query=%s source=%d exact=%d trace=%d traceFound=%d traceFP=%d traceFN=%d solve=%d solveFound=%d solveFP=%d solveFN=%d solveAlt=%d solveAltFound=%d solveAltFP=%d solveAltFN=%d traceSolve=%d traceSolveFound=%d traceSolveFP=%d traceSolveFN=%d traceSolveAlt=%d traceSolveAltFound=%d traceSolveAltFP=%d traceSolveAltFN=%d roots=%d edges=%d operations=%d tuples=%d exactAllMs=%.3f optimizeMs=%.3f%n",
+        System.out.printf("ABSTRACTIVE_DEMAND_SUMMARY stage=%s query=%s source=%d exact=%d trace=%d traceFound=%d traceFP=%d traceFN=%d solve=%d solveFound=%d solveFP=%d solveFN=%d solveAlt=%d solveAltFound=%d solveAltFP=%d solveAltFN=%d traceSolve=%d traceSolveFound=%d traceSolveFP=%d traceSolveFN=%d traceSolveAlt=%d traceSolveAltFound=%d traceSolveAltFP=%d traceSolveAltFN=%d altTraceAbs=%d altTraceAbsFound=%d altTraceAbsFP=%d altTraceAbsFN=%d roots=%d edges=%d operations=%d tuples=%d exactAllMs=%.3f optimizeMs=%.3f%n",
                 stage,
                 query,
                 sourceCount,
@@ -199,6 +205,10 @@ public final class KangerHypothesisAbstractiveDemandRunner {
                 s.traceSolveAlt.size, s.traceSolveAlt.found,
                 s.traceSolveAlt.falsePositives,
                 s.traceSolveAlt.missed.size(),
+                s.solveAltTraceAbstract.size,
+                s.solveAltTraceAbstract.found,
+                s.solveAltTraceAbstract.falsePositives,
+                s.solveAltTraceAbstract.missed.size(),
                 traceSnapshot.getQueryRootCount(),
                 traceSnapshot.getRecordedEdgeCount(),
                 solveSnapshot.getRelevantOperationCount(),
@@ -211,6 +221,8 @@ public final class KangerHypothesisAbstractiveDemandRunner {
         printMisses(stage, query, "SOLVE_ALT", s.solveAlt);
         printMisses(stage, query, "TRACE_SOLVE", s.traceSolve);
         printMisses(stage, query, "TRACE_SOLVE_ALT", s.traceSolveAlt);
+        printMisses(stage, query, "SOLVE_ALT_TRACE_ABSTRACT",
+                s.solveAltTraceAbstract);
     }
 
     private static CandidateAudit audit(Mind mind,
@@ -237,6 +249,32 @@ public final class KangerHypothesisAbstractiveDemandRunner {
             System.out.printf("ABSTRACTIVE_DEMAND_MISSED stage=%s query=%s selector=%s missed=%s%n",
                     stage, query, label, audit.missed.toString());
         }
+    }
+
+    private static List<IHypothesis> abstractiveOnly(Mind mind,
+                                                     Collection<IHypothesis> source)
+            throws Exception {
+        List<IHypothesis> result = new ArrayList<IHypothesis>();
+        for (IHypothesis hypothesis : source) {
+            if (isAbstractive(hypothesis, mind)) {
+                result.add(hypothesis);
+            }
+        }
+        return result;
+    }
+
+    private static boolean isAbstractive(IHypothesis hypothesis, Mind mind)
+            throws Exception {
+        for (IArgument argument : hypothesis.getArguments()) {
+            if (argument.isEmpty(mind)) {
+                continue;
+            }
+            ITerm value = argument.getValue(mind);
+            if (value != null && value.isCVariable()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static List<IHypothesis> union(Mind mind,
@@ -321,17 +359,20 @@ public final class KangerHypothesisAbstractiveDemandRunner {
         private final CandidateAudit solveAlt;
         private final CandidateAudit traceSolve;
         private final CandidateAudit traceSolveAlt;
+        private final CandidateAudit solveAltTraceAbstract;
 
         private Selection(CandidateAudit trace,
                           CandidateAudit solve,
                           CandidateAudit solveAlt,
                           CandidateAudit traceSolve,
-                          CandidateAudit traceSolveAlt) {
+                          CandidateAudit traceSolveAlt,
+                          CandidateAudit solveAltTraceAbstract) {
             this.trace = trace;
             this.solve = solve;
             this.solveAlt = solveAlt;
             this.traceSolve = traceSolve;
             this.traceSolveAlt = traceSolveAlt;
+            this.solveAltTraceAbstract = solveAltTraceAbstract;
         }
     }
 
