@@ -43,6 +43,22 @@ public final class KangerHypothesisFormationForensicRunner {
     private KangerHypothesisFormationForensicRunner() {
     }
 
+    private static final class AnalyzeEpisode {
+        private final String pass;
+        private final int ordinal;
+        private final Set<String> unresolved = new LinkedHashSet<>();
+        private final Set<String> analyzerHypotheses = new LinkedHashSet<>();
+
+        private AnalyzeEpisode(String pass, int ordinal) {
+            this.pass = pass;
+            this.ordinal = ordinal;
+        }
+
+        private String id() {
+            return pass + "#" + ordinal;
+        }
+    }
+
     public static void main(String[] args) {
         int exitCode = 1;
         try {
@@ -88,7 +104,8 @@ public final class KangerHypothesisFormationForensicRunner {
 
         List<ILogEntry> executionLog = copyLog(mind);
         List<IHypothesis> raw = copy(mind.getHypothesis());
-        Map<String, Set<String>> origins = parseOrigins(executionLog);
+        List<AnalyzeEpisode> episodes = parseEpisodes(executionLog);
+        Map<String, Set<String>> origins = parseOrigins(executionLog, episodes);
 
         System.out.println("FORENSIC_BEGIN " + query);
         printInterestingLog(executionLog);
@@ -121,6 +138,8 @@ public final class KangerHypothesisFormationForensicRunner {
                 solve.getRelevantOperationCount(), solve.getRelevantTupleCount(),
                 solve.getObservedHypothesisCount(), solve.getTaintedHypothesisCount(),
                 solve.getInstrumentationErrorCount());
+
+        printEpisodes(query, episodes, rawText, exactRaw);
 
         for (String hypothesis : rows) {
             Set<String> source = origins.get(hypothesis);
@@ -162,8 +181,53 @@ public final class KangerHypothesisFormationForensicRunner {
         return result;
     }
 
-    private static Map<String, Set<String>> parseOrigins(List<ILogEntry> log) {
+    private static List<AnalyzeEpisode> parseEpisodes(List<ILogEntry> log) {
+        List<AnalyzeEpisode> result = new ArrayList<>();
+        Map<String, Integer> ordinals = new LinkedHashMap<>();
+        String pass = "UNKNOWN";
+        AnalyzeEpisode current = null;
+
+        for (ILogEntry entry : log) {
+            String record = entry.getRecord().trim();
+            if (record.contains("FALSE CHECKING")) {
+                pass = "FALSE";
+                current = null;
+                continue;
+            }
+            if (record.contains("TRUE CHECKING")) {
+                pass = "TRUE";
+                current = null;
+                continue;
+            }
+            if (record.contains("============= ANALYZER")) {
+                int ordinal = ordinals.containsKey(pass) ? ordinals.get(pass) + 1 : 1;
+                ordinals.put(pass, ordinal);
+                current = new AnalyzeEpisode(pass, ordinal);
+                result.add(current);
+                continue;
+            }
+            if (current == null) {
+                continue;
+            }
+            if (record.startsWith("Unresolved:")) {
+                current.unresolved.add(afterColon(record));
+            } else if (record.startsWith("Hypothesis assumed:")) {
+                current.analyzerHypotheses.add(afterColon(record));
+            }
+        }
+        return result;
+    }
+
+    private static Map<String, Set<String>> parseOrigins(List<ILogEntry> log,
+                                                          List<AnalyzeEpisode> episodes) {
         Map<String, Set<String>> result = new LinkedHashMap<>();
+
+        for (AnalyzeEpisode episode : episodes) {
+            for (String hypothesis : episode.analyzerHypotheses) {
+                addOrigin(result, hypothesis, "ANALYZER_GLOBAL@" + episode.id());
+            }
+        }
+
         String pass = "UNKNOWN";
         for (ILogEntry entry : log) {
             String record = entry.getRecord().trim();
@@ -173,8 +237,6 @@ public final class KangerHypothesisFormationForensicRunner {
                 pass = "TRUE";
             } else if (record.startsWith("Hypothesis alternate assumed:")) {
                 addOrigin(result, afterColon(record), "LINKER_RESIDUAL@" + pass);
-            } else if (record.startsWith("Hypothesis assumed:")) {
-                addOrigin(result, afterColon(record), "ANALYZER_GLOBAL@" + pass);
             } else if (record.startsWith("Hypothesis moved:")) {
                 addOrigin(result, afterColon(record), "FINAL_MOVE@" + pass);
             }
@@ -198,19 +260,58 @@ public final class KangerHypothesisFormationForensicRunner {
         return index < 0 ? record.trim() : record.substring(index + 1).trim();
     }
 
+    private static void printEpisodes(String query,
+                                      List<AnalyzeEpisode> episodes,
+                                      Set<String> rawText,
+                                      Map<String, Boolean> exactRaw) {
+        for (AnalyzeEpisode episode : episodes) {
+            int rawFinal = 0;
+            int exactRelevant = 0;
+            for (String hypothesis : episode.analyzerHypotheses) {
+                if (rawText.contains(hypothesis)) {
+                    ++rawFinal;
+                }
+                if (exactRaw.containsKey(hypothesis)) {
+                    ++exactRelevant;
+                }
+            }
+
+            System.out.printf("FORENSIC_EPISODE query=%s pass=%s analyze=%d unresolved=%d analyzerBorn=%d rawFinal=%d exactRelevant=%d%n",
+                    query, episode.pass, episode.ordinal, episode.unresolved.size(),
+                    episode.analyzerHypotheses.size(), rawFinal, exactRelevant);
+
+            for (String unresolved : episode.unresolved) {
+                System.out.printf("FORENSIC_ORPHAN query=%s episode=%s obligation=%s%n",
+                        query, episode.id(), unresolved);
+            }
+            for (String hypothesis : episode.analyzerHypotheses) {
+                Boolean exact = exactRaw.get(hypothesis);
+                System.out.printf("FORENSIC_EPISODE_H query=%s episode=%s rawFinal=%s exact=%s h=%s%n",
+                        query, episode.id(), Boolean.toString(rawText.contains(hypothesis)),
+                        exact == null ? "WHO_KNOWS_OR_REJECTED" : exact.toString(),
+                        hypothesis);
+            }
+        }
+    }
+
     private static void printInterestingLog(List<ILogEntry> log) {
         String pass = "UNKNOWN";
+        int analyze = 0;
         int index = 0;
         for (ILogEntry entry : log) {
             String record = entry.getRecord().trim();
             if (record.contains("FALSE CHECKING")) {
                 pass = "FALSE";
+                analyze = 0;
             } else if (record.contains("TRUE CHECKING")) {
                 pass = "TRUE";
+                analyze = 0;
+            } else if (record.contains("============= ANALYZER")) {
+                ++analyze;
             }
             if (interesting(record)) {
-                System.out.printf("FORENSIC_LOG %04d pass=%s type=%s %s%n",
-                        index, pass, entry.getType(), record);
+                System.out.printf("FORENSIC_LOG %04d pass=%s analyze=%d type=%s %s%n",
+                        index, pass, analyze, entry.getType(), record);
             }
             ++index;
         }
@@ -219,6 +320,7 @@ public final class KangerHypothesisFormationForensicRunner {
     private static boolean interesting(String record) {
         return record.contains("FALSE CHECKING")
                 || record.contains("TRUE CHECKING")
+                || record.contains("============= ANALYZER")
                 || record.startsWith("Unresolved:")
                 || record.startsWith("From right:")
                 || record.startsWith("Acceptor:")
