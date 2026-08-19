@@ -117,7 +117,7 @@ public final class KangerHypothesisAbstractiveForensicRunner {
             boolean exact = relevant.containsKey(source);
             List<QueryHypothesisFormationTrace.Event> events =
                     eventsByHypothesis.get(source);
-            boolean sourceQueryLineage = hasQueryOwnedSourceLineage(events);
+            boolean sourceQueryLineage = hasQueryLinkedSourceLineage(events);
             boolean allowed = !abstractive || sourceQueryLineage;
 
             if (abstractive) {
@@ -149,22 +149,29 @@ public final class KangerHypothesisAbstractiveForensicRunner {
 
             int eventCount = events == null ? 0 : events.size();
             int maxCVars = 0;
-            int maxQueryRoots = 0;
+            int maxOwnedRoots = 0;
+            int maxLinkedRoots = 0;
+            boolean directQueryOwned = false;
             if (events != null) {
                 for (QueryHypothesisFormationTrace.Event event : events) {
                     maxCVars = Math.max(maxCVars, event.getCandidateCVars());
-                    maxQueryRoots = Math.max(maxQueryRoots,
+                    maxOwnedRoots = Math.max(maxOwnedRoots,
                             event.getCandidateQueryRoots());
+                    maxLinkedRoots = Math.max(maxLinkedRoots,
+                            event.getCandidateQueryLinkedRoots());
+                    directQueryOwned |= event.hasCandidateAllQueryRoots();
                 }
             }
 
-            System.out.printf("ABSTRACTIVE_SOURCE_H query=%s abstract=%s sourceEvents=%d sourceQueryLineage=%s maxSourceCVars=%d maxSourceQueryRoots=%d allowed=%s exact=%s answer=%s h=%s%n",
+            System.out.printf("ABSTRACTIVE_SOURCE_H query=%s abstract=%s sourceEvents=%d directQueryOwned=%s sourceQueryLineage=%s maxSourceCVars=%d maxSourceOwnedRoots=%d maxSourceLinkedRoots=%d allowed=%s exact=%s answer=%s h=%s%n",
                     query,
                     Boolean.toString(abstractive),
                     eventCount,
+                    Boolean.toString(directQueryOwned),
                     Boolean.toString(sourceQueryLineage),
                     maxCVars,
-                    maxQueryRoots,
+                    maxOwnedRoots,
+                    maxLinkedRoots,
                     Boolean.toString(allowed),
                     Boolean.toString(exact),
                     exact ? relevant.get(source).toString()
@@ -193,14 +200,16 @@ public final class KangerHypothesisAbstractiveForensicRunner {
             }
             boolean rawFinal = containsText(raw, mind, event.getHypothesis());
             boolean exact = relevant.containsKey(event.getHypothesis());
-            System.out.printf("ABSTRACTIVE_SOURCE_EVENT query=%s pass=%s rule=%d branch=%d sourceCVars=%d sourceQueryRoots=%d allSourceQueryRoots=%s rawFinal=%s exact=%s candidate=%s h=%s%n",
+            System.out.printf("ABSTRACTIVE_SOURCE_EVENT query=%s pass=%s rule=%d branch=%d sourceCVars=%d sourceOwnedRoots=%d sourceLinkedRoots=%d allSourceOwnedRoots=%s allSourceLinkedRoots=%s rawFinal=%s exact=%s candidate=%s h=%s%n",
                     query,
                     event.getPass(),
                     event.getRuleId(),
                     event.getBranchIndex(),
                     event.getCandidateCVars(),
                     event.getCandidateQueryRoots(),
+                    event.getCandidateQueryLinkedRoots(),
                     Boolean.toString(event.hasCandidateAllQueryRoots()),
+                    Boolean.toString(event.hasCandidateAllQueryLinkedRoots()),
                     Boolean.toString(rawFinal),
                     Boolean.toString(exact),
                     event.getCandidate(),
@@ -213,14 +222,14 @@ public final class KangerHypothesisAbstractiveForensicRunner {
         }
     }
 
-    private static boolean hasQueryOwnedSourceLineage(
+    private static boolean hasQueryLinkedSourceLineage(
             List<QueryHypothesisFormationTrace.Event> events) {
         if (events == null) {
             return false;
         }
         for (QueryHypothesisFormationTrace.Event event : events) {
             if (event.getCandidateCVars() > 0
-                    && event.hasCandidateAllQueryRoots()) {
+                    && event.hasCandidateAllQueryLinkedRoots()) {
                 return true;
             }
         }
