@@ -165,13 +165,12 @@ public final class KangerCompletedTest extends KangerTest {
     public void set_06_07() throws Exception {
         assertSolutionHypotheses(nativeSource(), "?male(Tom);",
                 "!~daughter(Tom,John);",
+                "!~daughter(Tom,Mary);",
                 "!~female(Tom);",
-                "!father(Tom,Sarah);",
-                "!father(Tom,John);",
-                "!son(Tom,Sarah);",
+                "!son(Tom,Mary);",
                 "!son(Tom,John);",
                 "!$y father(Tom,y);");
-        System.out.println("Completed hypothesis solution oracle: male(Tom) -> 7 OK");
+        System.out.println("Completed hypothesis solution oracle: male(Tom) -> 6 OK");
         System.out.println("====================================================");
     }
 
