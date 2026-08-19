@@ -5,22 +5,21 @@
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
- *  deal in the Software without restriction, including without limitation the
- *  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- *  sell copies of the Software, and to permit persons to whom the Software is
+ *  deal in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
  *
- *  The above copyright notice and this permission notice shall be included in
- *  all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- *  IN THE SOFTWARE.
- *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 /*
@@ -115,6 +114,24 @@ public class Hypothesis implements IHypothesis {
     }
 
     public String toString(IMind mind) {
+        return render(mind, false);
+    }
+
+    /**
+     * Materializes this hypothesis as a statement that can be accepted into
+     * the current KANGER context.
+     *
+     * <p>An antecedent hypothesis is already an assertion. A succedent
+     * hypothesis represents the negation of that proposition; assertion form
+     * therefore moves it to the antecedent and negates the predicate. Any
+     * existential C-variable quantifiers must become universal under that
+     * negation: {@code ?$x p(x)} becomes {@code !@x ~p(x)}.</p>
+     */
+    public String toAssertionString(IMind mind) {
+        return render(mind, true);
+    }
+
+    private String render(IMind mind, boolean assertion) {
         String line = "";
 
         try {
@@ -123,8 +140,11 @@ public class Hypothesis implements IHypothesis {
             int cptr[] = new int[getPredicate().getRange()];
 
             int ccnt = 0;
-            line += String.format("%c", antc ? Enums.ANT : Enums.SUC);
-            String tmp = getPredicate().getName(mind) + "(";
+            line += String.format("%c",
+                    assertion ? Enums.ANT : (antc ? Enums.ANT : Enums.SUC));
+            char cQuantifier = assertion && !antc ? Enums.AQN : Enums.PQN;
+            String tmp = (assertion && !antc ? String.format("%c", Enums.NOT) : "")
+                    + getPredicate().getName(mind) + "(";
             for (i = 0; i < getPredicate().getRange(); ++i) {
                 if (!getArguments().get(i).isEmpty(null) && getArguments().get(i).getValue(null).isCVariable()) {
                     String qnt = "";
@@ -137,7 +157,7 @@ public class Hypothesis implements IHypothesis {
                     if (j == ccnt) {
                         cnum[ccnt] = id;
                         id = cptr[ccnt++] = i;
-                        qnt = String.format("%c%s", Enums.PQN, cVarName(id));
+                        qnt = String.format("%c%s", cQuantifier, cVarName(id));
                         line += qnt + " ";
                     } else {
                         id = cptr[j];
