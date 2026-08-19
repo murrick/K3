@@ -60,6 +60,8 @@ public final class KangerTestRunner {
             IMind c3Mind = new Mind(c3User);
             boolean c3Success = KangerC3BindingTest.test(c3Mind, prefix);
 
+            boolean completedHypothesisSuccess =
+                    KangerCompletedHypothesisContractRunner.test();
             boolean consoleLifecycleSuccess =
                     KangerConsoleLifecycleBindingRunner.test();
             boolean canonicalConsoleSuccess =
@@ -72,6 +74,7 @@ public final class KangerTestRunner {
                     && c1Success
                     && c4Success
                     && c3Success
+                    && completedHypothesisSuccess
                     && consoleLifecycleSuccess
                     && canonicalConsoleSuccess
                     && canonicalConsoleLifecycleSuccess ? 0 : 1;
