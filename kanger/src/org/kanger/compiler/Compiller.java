@@ -26,6 +26,7 @@
 package org.kanger.compiler;
 
 import org.kanger.Mind;
+import org.kanger.QueryReplayContext;
 import org.kanger.enums.FunctionBinding;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.interfaces.IRule;
@@ -127,6 +128,8 @@ public class Compiller {
     }
 
     public IRule compileLine(Leaf root, boolean antc, String orig, boolean query, Queue<ITerm> externals) throws Exception {
+
+        QueryReplayContext.observeCompilation(mind, orig, query, externals);
 
         IRule r = new Rule(mind);
         mind.getRules().register(r);
