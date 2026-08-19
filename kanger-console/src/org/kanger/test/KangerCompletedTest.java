@@ -13,24 +13,35 @@ import org.kanger.interfaces.IMind;
 import org.kanger.primitives.Hypothesis;
 
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.LinkedHashSet;
 
 /**
  * Completed-hypothesis regression overlay for the historical KangerTest corpus.
  *
  * <p>The historical source remains untouched as an archaeological baseline.
- * Exactly two old tests have legitimate completed-semantics deltas. Their
- * overrides run every original assertion first and accept only the historical
- * final size failure before asserting the new abstract repairs. Any other old
- * failure is propagated unchanged.</p>
+ * This overlay owns only the intentional completed-WHEN semantic migrations:
+ * public hypotheses are executable assertions, and an optimized hypothesis is
+ * retained only when accepting it makes the original query TRUE. Historical
+ * counter-hypotheses that merely made a query determinate FALSE remain visible
+ * only in the old source, not in the completed oracle.</p>
  */
 public final class KangerCompletedTest extends KangerTest {
+
+    private static final String CHAIN_SOURCE =
+            "!(@x a(x) -> b(x)), (@y b(y) -> c(y)), (@z c(z) -> d(z)); "
+                    + "!@x a(x) -> ~n(x); "
+                    + "!a(nnn); "
+                    + "!b(ooo); "
+                    + "!d(v);";
 
     public KangerCompletedTest(IMind mind) {
         super(mind);
@@ -129,23 +140,38 @@ public final class KangerCompletedTest extends KangerTest {
     }
 
     @Override
-    public void set_06_07() throws Exception {
-        expectHistoricalSizeFailure("Expected 12 hypothesis",
-                new CheckedCall() {
-                    @Override
-                    public void run() throws Exception {
-                        KangerCompletedTest.super.set_06_07();
-                    }
-                });
+    public void set_01_03() throws Exception {
+        assertSolutionHypotheses(CHAIN_SOURCE, "?a(xx);");
+    }
 
-        require(mind.getHypothesis().size() == 14,
-                "Expected 14 hypothesis");
-        Set<String> hypotheses = sources();
-        require(hypotheses.contains("!$y mother(Tom,y);"),
-                "Expected abstract hypothesis: !$y mother(Tom,y);");
-        require(hypotheses.contains("!$y father(Tom,y);"),
-                "Expected abstract hypothesis: !$y father(Tom,y);");
-        System.out.println("Completed hypothesis migration: 12 -> 14 OK");
+    @Override
+    public void set_01_04() throws Exception {
+        assertSolutionHypotheses(CHAIN_SOURCE, "?b(xx);",
+                "!a(xx);");
+    }
+
+    @Override
+    public void set_01_05() throws Exception {
+        assertSolutionHypotheses(CHAIN_SOURCE, "?c(xx);",
+                "!a(xx);", "!b(xx);");
+    }
+
+    @Override
+    public void set_01_07() throws Exception {
+        assertSolutionHypotheses(CHAIN_SOURCE, "?n(xx);");
+    }
+
+    @Override
+    public void set_06_07() throws Exception {
+        assertSolutionHypotheses(nativeSource(), "?male(Tom);",
+                "!~daughter(Tom,John);",
+                "!~female(Tom);",
+                "!father(Tom,Sarah);",
+                "!father(Tom,John);",
+                "!son(Tom,Sarah);",
+                "!son(Tom,John);",
+                "!$y father(Tom,y);");
+        System.out.println("Completed hypothesis solution oracle: male(Tom) -> 7 OK");
         System.out.println("====================================================");
     }
 
@@ -170,10 +196,7 @@ public final class KangerCompletedTest extends KangerTest {
 
     public void set_06_0F() throws Exception {
         mind = mind.clearWorkspace();
-        String source = new String(
-                java.nio.file.Files.readAllBytes(java.nio.file.Paths.get("natives.k")),
-                java.nio.charset.StandardCharsets.UTF_8);
-        require(mind.compile(source), "natives.k compilation rejected");
+        require(mind.compile(nativeSource()), "natives.k compilation rejected");
 
         Boolean result = mind.query("?$x son(John,x);");
         System.out.println("Query: " + mind.getQueryString());
@@ -181,6 +204,8 @@ public final class KangerCompletedTest extends KangerTest {
         require(result == null, "Expected WHO KNOWS for ?$x son(John,x);");
 
         int rawSize = mind.getHypothesis().size();
+        require(rawSize == 18,
+                "Expected 18 visible RAW hypotheses for ?$x son(John,x); got " + rawSize);
         long optimizeStart = System.nanoTime();
         mind.optimizeHypothesis();
         double optimizeSeconds = (System.nanoTime() - optimizeStart) / 1_000_000_000.0;
@@ -194,10 +219,54 @@ public final class KangerCompletedTest extends KangerTest {
         }
         System.out.printf("Hypothesis optimize timing: %.3f sec%n", optimizeSeconds);
 
-        require(mind.getHypothesis().size() == 6,
-                "Expected 6 completed hypotheses for ?$x son(John,x);");
-        System.out.println("Completed hypothesis showcase: son(John,x) -> 6 OK");
+        require(mind.getHypothesis().isEmpty(),
+                "Expected no single assertion hypothesis to solve ?$x son(John,x);");
+        System.out.println("Completed hypothesis solution oracle: son(John,x) -> 0 OK");
         System.out.println("====================================================");
+    }
+
+    private void assertSolutionHypotheses(String source,
+                                          String query,
+                                          String... expected) throws Exception {
+        mind = mind.clearWorkspace();
+        require(mind.compile(source), "Hypothesis fixture compilation rejected");
+        Boolean result = mind.query(query);
+        System.out.println("Query: " + mind.getQueryString());
+        System.out.println("Result: " + mind.getQueryResult());
+        require(result == null, "Expected WHO KNOWS for " + query);
+
+        mind.optimizeHypothesis();
+        Set<String> actual = sources();
+        Set<String> wanted = new LinkedHashSet<>();
+        for (String item : expected) {
+            wanted.add(item);
+        }
+        System.out.println("Hypothesis solutions (" + actual.size() + "): " + actual);
+        require(actual.equals(wanted),
+                "Hypothesis solution mismatch for " + query
+                        + ": expected=" + wanted + " actual=" + actual);
+        verifySolutions(query);
+    }
+
+    private void verifySolutions(String query) throws Exception {
+        for (IHypothesis hypothesis : mind.getHypothesis()) {
+            String assertion = ((Hypothesis) hypothesis).toAssertionString((Mind) mind);
+            Mind child = new Mind(mind);
+            try {
+                require(Boolean.TRUE.equals(child.query(assertion, null, false)),
+                        "Hypothesis assertion rejected: " + assertion);
+                require(Boolean.TRUE.equals(child.query(query, null, false)),
+                        "Hypothesis assertion does not solve query " + query
+                                + ": " + assertion);
+            } finally {
+                ((Mind) mind).release(child);
+            }
+        }
+    }
+
+    private String nativeSource() throws Exception {
+        return new String(Files.readAllBytes(Paths.get("natives.k")),
+                StandardCharsets.UTF_8);
     }
 
     private void expectHistoricalSizeFailure(String expected,
