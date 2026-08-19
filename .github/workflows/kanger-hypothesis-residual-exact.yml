@@ -1,0 +1,49 @@
+name: KANGER Hypothesis Residual EXACT
+
+on:
+  push:
+    branches:
+      - 'tmp/3.7.0.20-hypothesis-formation-forensic-pr'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kanger-hypothesis-residual-exact-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  residual-exact:
+    name: Residual hypothesis EXACT audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: maven
+
+      - name: Compile production and qualification sources
+        run: mvn --batch-mode --no-transfer-progress -DskipTests test-compile
+
+      - name: EXACT audit every unique residual repair
+        shell: bash
+        run: |
+          set -o pipefail
+          mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerHypothesisResidualExactRunner -Dexec.classpathScope=test exec:java | tee hypothesis-residual-exact.log
+
+      - name: Upload residual EXACT audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hypothesis-residual-exact
+          path: hypothesis-residual-exact.log
+          if-no-files-found: warn
+          retention-days: 1
