@@ -34,22 +34,25 @@ public final class KangerHypothesisAbstractiveForensicRunner {
     public static void main(String[] args) {
         int exitCode = 1;
         try {
-            Path home = Files.createTempDirectory("kanger-abstractive-forensic-");
-            System.setProperty("user.home", home.toAbsolutePath().toString());
-
-            User user = (User) UserFactory.createUser("abstractive-forensic", "abstractive-forensic");
-            new UDF().init(user);
-            new DB().init(user);
-
-            inspect(user, BAD);
-            inspect(user, GOOD);
-
-            System.out.println("HYPOTHESIS_ABSTRACTIVE_FORENSIC_OK");
+            run();
             exitCode = 0;
         } catch (Throwable error) {
             error.printStackTrace(System.err);
         }
         System.exit(exitCode);
+    }
+
+    public static void run() throws Exception {
+        Path home = Files.createTempDirectory("kanger-abstractive-forensic-");
+        System.setProperty("user.home", home.toAbsolutePath().toString());
+
+        User user = (User) UserFactory.createUser("abstractive-forensic", "abstractive-forensic");
+        new UDF().init(user);
+        new DB().init(user);
+
+        inspect(user, BAD);
+        inspect(user, GOOD);
+        System.out.println("HYPOTHESIS_ABSTRACTIVE_FORENSIC_OK");
     }
 
     private static void inspect(IUser user, String query) throws Exception {
