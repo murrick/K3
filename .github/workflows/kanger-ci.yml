@@ -47,6 +47,21 @@ jobs:
           if-no-files-found: warn
           retention-days: 1
 
+      - name: Residual hypothesis EXACT audit
+        shell: bash
+        run: |
+          set -o pipefail
+          mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerHypothesisResidualExactRunner -Dexec.classpathScope=test exec:java | tee hypothesis-residual-exact.log
+
+      - name: Upload residual hypothesis EXACT audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hypothesis-residual-exact
+          path: hypothesis-residual-exact.log
+          if-no-files-found: warn
+          retention-days: 1
+
       - name: Index empty-boundary invariant
         run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.storage.IndexEmptyBoundarySafetyRunner -Dexec.classpathScope=test exec:java
 
