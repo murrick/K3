@@ -35,3 +35,6 @@ jobs:
 
       - name: EXACT versus TRACE versus TAINT corpus
         run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerHypothesisTaintRunner -Dexec.classpathScope=test exec:java
+
+      - name: Hypothesis formation forensic trace
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerHypothesisFormationForensicRunner -Dexec.classpathScope=test exec:java
