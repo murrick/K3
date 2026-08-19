@@ -154,7 +154,7 @@ public class Hypothesis implements IHypothesis {
             int ccnt = 0;
             line += String.format("%c",
                     assertion ? Enums.ANT : (antc ? Enums.ANT : Enums.SUC));
-            char cQuantifier = assertion && !antc ? Enums.AQN : Enums.PQN;
+            int cQuantifier = assertion && !antc ? Enums.AQN : Enums.PQN;
             String tmp = (assertion && !antc ? String.format("%c", Enums.NOT) : "")
                     + getPredicate().getName(mind) + "(";
             for (i = 0; i < getPredicate().getRange(); ++i) {
