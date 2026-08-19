@@ -7,14 +7,12 @@ package org.kanger;
 
 import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IHypothesis;
-import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 import org.kanger.units.Rule;
-import org.kanger.units.Term;
 
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
@@ -50,7 +48,8 @@ public final class KangerHypothesisAbstractiveForensicRunner {
         Path home = Files.createTempDirectory("kanger-abstractive-forensic-");
         System.setProperty("user.home", home.toAbsolutePath().toString());
 
-        User user = (User) UserFactory.createUser("abstractive-forensic", "abstractive-forensic");
+        User user = (User) UserFactory.createUser(
+                "abstractive-forensic", "abstractive-forensic");
         new UDF().init(user);
         new DB().init(user);
 
@@ -63,17 +62,34 @@ public final class KangerHypothesisAbstractiveForensicRunner {
         Mind mind = prepared(user);
         enableAbstractiveHypothesis(mind);
 
-        Boolean known = mind.query(query, null, false);
+        QueryHypothesisFormationTrace.begin();
+        QueryHypothesisFormationTrace.Snapshot formation;
+        Boolean known;
+        try {
+            known = mind.query(query, null, false);
+        } finally {
+            formation = QueryHypothesisFormationTrace.end();
+        }
         if (known != null) {
-            throw new AssertionError("Expected WHO KNOWS for " + query + ", got " + known);
+            throw new AssertionError("Expected WHO KNOWS for " + query
+                    + ", got " + known);
         }
 
         List<Hypothesis> raw = new ArrayList<Hypothesis>();
-        Map<String, Hypothesis> byText = new LinkedHashMap<String, Hypothesis>();
         for (IHypothesis hypothesis : mind.getHypothesis()) {
-            Hypothesis h = (Hypothesis) hypothesis;
-            raw.add(h);
-            byText.put(h.toString(mind), h);
+            raw.add((Hypothesis) hypothesis);
+        }
+
+        Map<String, List<QueryHypothesisFormationTrace.Event>> eventsByHypothesis =
+                new LinkedHashMap<String, List<QueryHypothesisFormationTrace.Event>>();
+        for (QueryHypothesisFormationTrace.Event event : formation.getEvents()) {
+            List<QueryHypothesisFormationTrace.Event> events =
+                    eventsByHypothesis.get(event.getHypothesis());
+            if (events == null) {
+                events = new ArrayList<QueryHypothesisFormationTrace.Event>();
+                eventsByHypothesis.put(event.getHypothesis(), events);
+            }
+            events.add(event);
         }
 
         Map<String, Boolean> relevant = new LinkedHashMap<String, Boolean>();
@@ -87,49 +103,109 @@ public final class KangerHypothesisAbstractiveForensicRunner {
 
         int abstractCount = 0;
         int abstractRelevant = 0;
-        int lineageAllowed = 0;
-        int lineageRelevant = 0;
-        int lineageFalsePositive = 0;
-        int lineageFalseNegative = 0;
+        int policyAllowed = 0;
+        int policyRelevant = 0;
+        int policyFalsePositive = 0;
+        int policyFalseNegative = 0;
+        int abstractAllowed = 0;
+        int abstractAllowedRelevant = 0;
+        int abstractNoSource = 0;
 
         for (Hypothesis hypothesis : raw) {
             String source = hypothesis.toString(mind);
-            Lineage lineage = lineage(hypothesis, mind);
+            boolean abstractive = isAbstractive(hypothesis, mind);
             boolean exact = relevant.containsKey(source);
-            boolean allowed = lineage.cvars == 0 || lineage.allQueryRoot;
+            List<QueryHypothesisFormationTrace.Event> events =
+                    eventsByHypothesis.get(source);
+            boolean sourceQueryLineage = hasQueryOwnedSourceLineage(events);
+            boolean allowed = !abstractive || sourceQueryLineage;
 
-            if (lineage.cvars > 0) {
+            if (abstractive) {
                 ++abstractCount;
                 if (exact) {
                     ++abstractRelevant;
                 }
-            }
-            if (allowed) {
-                ++lineageAllowed;
-                if (exact) {
-                    ++lineageRelevant;
-                } else {
-                    ++lineageFalsePositive;
+                if (events == null || events.isEmpty()) {
+                    ++abstractNoSource;
                 }
-            } else if (exact) {
-                ++lineageFalseNegative;
+                if (allowed) {
+                    ++abstractAllowed;
+                    if (exact) {
+                        ++abstractAllowedRelevant;
+                    }
+                }
             }
 
-            System.out.printf("ABSTRACTIVE_LINEAGE_H query=%s abstract=%s cvars=%d queryRoots=%d allQueryRoot=%s allowed=%s exact=%s answer=%s h=%s%n",
+            if (allowed) {
+                ++policyAllowed;
+                if (exact) {
+                    ++policyRelevant;
+                } else {
+                    ++policyFalsePositive;
+                }
+            } else if (exact) {
+                ++policyFalseNegative;
+            }
+
+            int eventCount = events == null ? 0 : events.size();
+            int maxCVars = 0;
+            int maxQueryRoots = 0;
+            if (events != null) {
+                for (QueryHypothesisFormationTrace.Event event : events) {
+                    maxCVars = Math.max(maxCVars, event.getCandidateCVars());
+                    maxQueryRoots = Math.max(maxQueryRoots,
+                            event.getCandidateQueryRoots());
+                }
+            }
+
+            System.out.printf("ABSTRACTIVE_SOURCE_H query=%s abstract=%s sourceEvents=%d sourceQueryLineage=%s maxSourceCVars=%d maxSourceQueryRoots=%d allowed=%s exact=%s answer=%s h=%s%n",
                     query,
-                    Boolean.toString(lineage.cvars > 0),
-                    lineage.cvars,
-                    lineage.queryRoots,
-                    Boolean.toString(lineage.allQueryRoot),
+                    Boolean.toString(abstractive),
+                    eventCount,
+                    Boolean.toString(sourceQueryLineage),
+                    maxCVars,
+                    maxQueryRoots,
                     Boolean.toString(allowed),
                     Boolean.toString(exact),
-                    exact ? relevant.get(source).toString() : "WHO_KNOWS_OR_REJECTED",
+                    exact ? relevant.get(source).toString()
+                            : "WHO_KNOWS_OR_REJECTED",
                     source);
         }
 
-        System.out.printf("ABSTRACTIVE_SUMMARY query=%s raw=%d abstract=%d exactRelevant=%d abstractRelevant=%d lineageAllowed=%d lineageRelevant=%d lineageFalsePositive=%d lineageFalseNegative=%d%n",
-                query, raw.size(), abstractCount, relevant.size(), abstractRelevant,
-                lineageAllowed, lineageRelevant, lineageFalsePositive, lineageFalseNegative);
+        System.out.printf("ABSTRACTIVE_SOURCE_SUMMARY query=%s raw=%d abstract=%d exactRelevant=%d abstractRelevant=%d policyAllowed=%d policyRelevant=%d policyFalsePositive=%d policyFalseNegative=%d abstractAllowed=%d abstractAllowedRelevant=%d abstractNoSource=%d residualEvents=%d%n",
+                query,
+                raw.size(),
+                abstractCount,
+                relevant.size(),
+                abstractRelevant,
+                policyAllowed,
+                policyRelevant,
+                policyFalsePositive,
+                policyFalseNegative,
+                abstractAllowed,
+                abstractAllowedRelevant,
+                abstractNoSource,
+                formation.getEvents().size());
+
+        for (QueryHypothesisFormationTrace.Event event : formation.getEvents()) {
+            if (event.getCandidateCVars() == 0) {
+                continue;
+            }
+            boolean rawFinal = containsText(raw, mind, event.getHypothesis());
+            boolean exact = relevant.containsKey(event.getHypothesis());
+            System.out.printf("ABSTRACTIVE_SOURCE_EVENT query=%s pass=%s rule=%d branch=%d sourceCVars=%d sourceQueryRoots=%d allSourceQueryRoots=%s rawFinal=%s exact=%s candidate=%s h=%s%n",
+                    query,
+                    event.getPass(),
+                    event.getRuleId(),
+                    event.getBranchIndex(),
+                    event.getCandidateCVars(),
+                    event.getCandidateQueryRoots(),
+                    Boolean.toString(event.hasCandidateAllQueryRoots()),
+                    Boolean.toString(rawFinal),
+                    Boolean.toString(exact),
+                    event.getCandidate(),
+                    event.getHypothesis());
+        }
 
         for (Map.Entry<String, Boolean> entry : relevant.entrySet()) {
             System.out.printf("ABSTRACTIVE_EXACT_H query=%s answer=%s h=%s%n",
@@ -137,49 +213,43 @@ public final class KangerHypothesisAbstractiveForensicRunner {
         }
     }
 
-    private static Lineage lineage(Hypothesis hypothesis, Mind mind) throws Exception {
-        int cvars = 0;
-        int queryRoots = 0;
-        boolean allQueryRoot = true;
+    private static boolean hasQueryOwnedSourceLineage(
+            List<QueryHypothesisFormationTrace.Event> events) {
+        if (events == null) {
+            return false;
+        }
+        for (QueryHypothesisFormationTrace.Event event : events) {
+            if (event.getCandidateCVars() > 0
+                    && event.hasCandidateAllQueryRoots()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
+    private static boolean isAbstractive(Hypothesis hypothesis, Mind mind)
+            throws Exception {
         for (IArgument argument : hypothesis.getArguments()) {
             if (argument.isEmpty(mind)) {
                 continue;
             }
             ITerm value = argument.getValue(mind);
-            if (value == null || !value.isCVariable()) {
-                continue;
-            }
-
-            ++cvars;
-            Term root = (Term) value;
-            ITerm parent;
-            while ((parent = root.getParent(mind)) != null && parent.isCVariable()) {
-                root = (Term) parent;
-            }
-
-            IRule owner = root.getRule(mind);
-            boolean queryRoot = owner != null && owner.isQuery();
-            if (queryRoot) {
-                ++queryRoots;
-            } else {
-                allQueryRoot = false;
+            if (value != null && value.isCVariable()) {
+                return true;
             }
         }
-
-        return new Lineage(cvars, queryRoots, cvars > 0 && allQueryRoot);
+        return false;
     }
 
-    private static final class Lineage {
-        private final int cvars;
-        private final int queryRoots;
-        private final boolean allQueryRoot;
-
-        private Lineage(int cvars, int queryRoots, boolean allQueryRoot) {
-            this.cvars = cvars;
-            this.queryRoots = queryRoots;
-            this.allQueryRoot = allQueryRoot;
+    private static boolean containsText(List<Hypothesis> hypotheses,
+                                        Mind mind,
+                                        String text) {
+        for (Hypothesis hypothesis : hypotheses) {
+            if (text.equals(hypothesis.toString(mind))) {
+                return true;
+            }
         }
+        return false;
     }
 
     private static void enableAbstractiveHypothesis(Mind mind) throws Exception {
@@ -188,7 +258,8 @@ public final class KangerHypothesisAbstractiveForensicRunner {
         field.setBoolean(mind, true);
     }
 
-    private static Boolean exact(Mind base, String query, String source) throws Exception {
+    private static Boolean exact(Mind base, String query, String source)
+            throws Exception {
         Mind child = new Mind(base);
         try {
             Rule rule = (Rule) child.compileLine(source, false, null);
@@ -208,7 +279,8 @@ public final class KangerHypothesisAbstractiveForensicRunner {
 
     private static Mind prepared(IUser user) throws Exception {
         Mind mind = (Mind) new Mind(user).clearWorkspace();
-        String source = new String(Files.readAllBytes(Paths.get("natives.k")),
+        String source = new String(
+                Files.readAllBytes(Paths.get("natives.k")),
                 StandardCharsets.UTF_8);
         if (!mind.compile(source)) {
             throw new AssertionError("natives.k compilation rejected");
