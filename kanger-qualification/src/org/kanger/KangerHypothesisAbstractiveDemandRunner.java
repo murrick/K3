@@ -26,13 +26,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Diagnostic-only comparison of query-demand selection over the historical
- * abstractive RAW hypothesis formation path.
- *
- * <p>Abstractive hypotheses are enabled only in this qualification Mind.
- * TRACE, SOLVE and SOLVE_ALT remain shadow selectors. EXACT is the semantic
- * authority and no selector feeds back into inference or production query
- * behavior.</p>
+ * Diagnostic-only comparison of demand selection over historical abstractive
+ * RAW hypotheses, before and after the historical consistency optimizer.
+ * EXACT remains semantic authority and no selector feeds back into inference.
  */
 public final class KangerHypothesisAbstractiveDemandRunner {
 
@@ -91,13 +87,6 @@ public final class KangerHypothesisAbstractiveDemandRunner {
         }
 
         List<IHypothesis> raw = copy(mind.getHypothesis());
-        List<IHypothesis> trace = traceSnapshot.selectCandidates(mind, raw);
-        List<IHypothesis> solve = solveSnapshot.selectCandidates(mind, raw);
-        List<IHypothesis> solveAlt = QueryTaintSolveAlternatives.expand(
-                mind, query, raw, solve);
-        List<IHypothesis> traceSolve = union(mind, trace, solve);
-        List<IHypothesis> traceSolveAlt = union(mind, trace, solveAlt);
-
         long exactAllStart = System.nanoTime();
         Map<String, Boolean> exactAll = exact(mind, query, raw);
         long exactAllNanos = System.nanoTime() - exactAllStart;
@@ -108,79 +97,153 @@ public final class KangerHypothesisAbstractiveDemandRunner {
                     + exactAll.size() + " -> " + exactAll);
         }
 
-        Audit traceAudit = audit(mind, query, exactAll, trace);
-        Audit solveAudit = audit(mind, query, exactAll, solve);
-        Audit solveAltAudit = audit(mind, query, exactAll, solveAlt);
-        Audit traceSolveAudit = audit(mind, query, exactAll, traceSolve);
-        Audit traceSolveAltAudit = audit(mind, query, exactAll, traceSolveAlt);
+        Selection rawSelection = selections(
+                mind, query, raw, traceSnapshot, solveSnapshot, exactAll);
+        printSelection("RAW", query, raw.size(), exactAll,
+                rawSelection, traceSnapshot, solveSnapshot,
+                exactAllNanos, -1L);
 
-        System.out.printf("ABSTRACTIVE_DEMAND_SUMMARY query=%s raw=%d exact=%d trace=%d traceFound=%d traceFP=%d traceFN=%d solve=%d solveFound=%d solveFP=%d solveFN=%d solveAlt=%d solveAltFound=%d solveAltFP=%d solveAltFN=%d traceSolve=%d traceSolveFound=%d traceSolveFP=%d traceSolveFN=%d traceSolveAlt=%d traceSolveAltFound=%d traceSolveAltFP=%d traceSolveAltFN=%d roots=%d edges=%d operations=%d tuples=%d exactAllMs=%.3f%n",
+        long optimizeStart = System.nanoTime();
+        mind.optimizeHypothesis();
+        long optimizeNanos = System.nanoTime() - optimizeStart;
+        List<IHypothesis> optimized = copy(mind.getHypothesis());
+
+        Set<String> optimizedText = textSet(mind, optimized);
+        Set<String> optimizeMissed = new LinkedHashSet<String>(exactAll.keySet());
+        optimizeMissed.removeAll(optimizedText);
+
+        Selection optimizedSelection = selections(
+                mind, query, optimized, traceSnapshot, solveSnapshot, exactAll);
+        printSelection("OPT", query, optimized.size(), exactAll,
+                optimizedSelection, traceSnapshot, solveSnapshot,
+                exactAllNanos, optimizeNanos);
+
+        System.out.printf("ABSTRACTIVE_OPTIMIZE_SUMMARY query=%s raw=%d optimized=%d reduced=%d exact=%d optimizeFN=%d optimizeMs=%.3f%n",
                 query,
                 raw.size(),
+                optimized.size(),
+                raw.size() - optimized.size(),
                 exactAll.size(),
-                trace.size(), traceAudit.found, traceAudit.falsePositives,
-                traceAudit.missed.size(),
-                solve.size(), solveAudit.found, solveAudit.falsePositives,
-                solveAudit.missed.size(),
-                solveAlt.size(), solveAltAudit.found, solveAltAudit.falsePositives,
-                solveAltAudit.missed.size(),
-                traceSolve.size(), traceSolveAudit.found,
-                traceSolveAudit.falsePositives, traceSolveAudit.missed.size(),
-                traceSolveAlt.size(), traceSolveAltAudit.found,
-                traceSolveAltAudit.falsePositives,
-                traceSolveAltAudit.missed.size(),
-                traceSnapshot.getQueryRootCount(),
-                traceSnapshot.getRecordedEdgeCount(),
-                solveSnapshot.getRelevantOperationCount(),
-                solveSnapshot.getRelevantTupleCount(),
-                exactAllNanos / 1_000_000.0);
+                optimizeMissed.size(),
+                optimizeNanos / 1_000_000.0);
+        if (!optimizeMissed.isEmpty()) {
+            System.out.printf("ABSTRACTIVE_OPTIMIZE_MISSED query=%s missed=%s%n",
+                    query, optimizeMissed.toString());
+        }
 
-        printMisses(query, "TRACE", traceAudit);
-        printMisses(query, "SOLVE", solveAudit);
-        printMisses(query, "SOLVE_ALT", solveAltAudit);
-        printMisses(query, "TRACE_SOLVE", traceSolveAudit);
-        printMisses(query, "TRACE_SOLVE_ALT", traceSolveAltAudit);
-
-        Set<String> exactText = exactAll.keySet();
         for (IHypothesis hypothesis : raw) {
             String text = ((Hypothesis) hypothesis).toString(mind);
-            if (!exactText.contains(text)) {
+            if (!exactAll.containsKey(text)) {
                 continue;
             }
-            System.out.printf("ABSTRACTIVE_DEMAND_EXACT_H query=%s answer=%s trace=%s solve=%s solveAlt=%s traceSolveAlt=%s h=%s%n",
+            System.out.printf("ABSTRACTIVE_DEMAND_EXACT_H query=%s answer=%s oldOptimize=%s rawTrace=%s rawSolve=%s rawSolveAlt=%s rawTraceSolve=%s optTrace=%s optSolve=%s optSolveAlt=%s optTraceSolve=%s h=%s%n",
                     query,
                     exactAll.get(text).toString(),
-                    Boolean.toString(contains(mind, trace, text)),
-                    Boolean.toString(contains(mind, solve, text)),
-                    Boolean.toString(contains(mind, solveAlt, text)),
-                    Boolean.toString(contains(mind, traceSolveAlt, text)),
+                    Boolean.toString(optimizedText.contains(text)),
+                    Boolean.toString(rawSelection.trace.text.contains(text)),
+                    Boolean.toString(rawSelection.solve.text.contains(text)),
+                    Boolean.toString(rawSelection.solveAlt.text.contains(text)),
+                    Boolean.toString(rawSelection.traceSolve.text.contains(text)),
+                    Boolean.toString(optimizedSelection.trace.text.contains(text)),
+                    Boolean.toString(optimizedSelection.solve.text.contains(text)),
+                    Boolean.toString(optimizedSelection.solveAlt.text.contains(text)),
+                    Boolean.toString(optimizedSelection.traceSolve.text.contains(text)),
                     text);
         }
     }
 
-    private static Audit audit(Mind mind,
-                               String query,
-                               Map<String, Boolean> exactAll,
-                               Collection<IHypothesis> candidates)
+    private static Selection selections(Mind mind,
+                                        String query,
+                                        List<IHypothesis> source,
+                                        QueryDemandTrace.Snapshot traceSnapshot,
+                                        QueryTaintSolve.Snapshot solveSnapshot,
+                                        Map<String, Boolean> exactAll)
             throws Exception {
-        Map<String, Boolean> exactSelected = exact(mind, query, candidates);
-        Set<String> missed = new LinkedHashSet<String>(exactAll.keySet());
-        missed.removeAll(exactSelected.keySet());
-        return new Audit(exactSelected.size(),
-                candidates.size() - exactSelected.size(), missed);
+        List<IHypothesis> trace = traceSnapshot.selectCandidates(mind, source);
+        List<IHypothesis> solve = solveSnapshot.selectCandidates(mind, source);
+        List<IHypothesis> solveAlt = QueryTaintSolveAlternatives.expand(
+                mind, query, source, solve);
+        List<IHypothesis> traceSolve = union(mind, trace, solve);
+        List<IHypothesis> traceSolveAlt = union(mind, trace, solveAlt);
+
+        return new Selection(
+                audit(mind, exactAll, trace),
+                audit(mind, exactAll, solve),
+                audit(mind, exactAll, solveAlt),
+                audit(mind, exactAll, traceSolve),
+                audit(mind, exactAll, traceSolveAlt));
     }
 
-    private static void printMisses(String query, String label, Audit audit) {
+    private static void printSelection(String stage,
+                                       String query,
+                                       int sourceCount,
+                                       Map<String, Boolean> exactAll,
+                                       Selection s,
+                                       QueryDemandTrace.Snapshot traceSnapshot,
+                                       QueryTaintSolve.Snapshot solveSnapshot,
+                                       long exactAllNanos,
+                                       long optimizeNanos) {
+        System.out.printf("ABSTRACTIVE_DEMAND_SUMMARY stage=%s query=%s source=%d exact=%d trace=%d traceFound=%d traceFP=%d traceFN=%d solve=%d solveFound=%d solveFP=%d solveFN=%d solveAlt=%d solveAltFound=%d solveAltFP=%d solveAltFN=%d traceSolve=%d traceSolveFound=%d traceSolveFP=%d traceSolveFN=%d traceSolveAlt=%d traceSolveAltFound=%d traceSolveAltFP=%d traceSolveAltFN=%d roots=%d edges=%d operations=%d tuples=%d exactAllMs=%.3f optimizeMs=%.3f%n",
+                stage,
+                query,
+                sourceCount,
+                exactAll.size(),
+                s.trace.size, s.trace.found, s.trace.falsePositives,
+                s.trace.missed.size(),
+                s.solve.size, s.solve.found, s.solve.falsePositives,
+                s.solve.missed.size(),
+                s.solveAlt.size, s.solveAlt.found, s.solveAlt.falsePositives,
+                s.solveAlt.missed.size(),
+                s.traceSolve.size, s.traceSolve.found,
+                s.traceSolve.falsePositives, s.traceSolve.missed.size(),
+                s.traceSolveAlt.size, s.traceSolveAlt.found,
+                s.traceSolveAlt.falsePositives,
+                s.traceSolveAlt.missed.size(),
+                traceSnapshot.getQueryRootCount(),
+                traceSnapshot.getRecordedEdgeCount(),
+                solveSnapshot.getRelevantOperationCount(),
+                solveSnapshot.getRelevantTupleCount(),
+                exactAllNanos / 1_000_000.0,
+                optimizeNanos < 0 ? -1.0 : optimizeNanos / 1_000_000.0);
+
+        printMisses(stage, query, "TRACE", s.trace);
+        printMisses(stage, query, "SOLVE", s.solve);
+        printMisses(stage, query, "SOLVE_ALT", s.solveAlt);
+        printMisses(stage, query, "TRACE_SOLVE", s.traceSolve);
+        printMisses(stage, query, "TRACE_SOLVE_ALT", s.traceSolveAlt);
+    }
+
+    private static CandidateAudit audit(Mind mind,
+                                        Map<String, Boolean> exactAll,
+                                        Collection<IHypothesis> candidates) {
+        Set<String> selected = textSet(mind, candidates);
+        int found = 0;
+        for (String exact : exactAll.keySet()) {
+            if (selected.contains(exact)) {
+                ++found;
+            }
+        }
+        Set<String> missed = new LinkedHashSet<String>(exactAll.keySet());
+        missed.removeAll(selected);
+        return new CandidateAudit(selected.size(), found,
+                selected.size() - found, missed, selected);
+    }
+
+    private static void printMisses(String stage,
+                                    String query,
+                                    String label,
+                                    CandidateAudit audit) {
         if (!audit.missed.isEmpty()) {
-            System.out.printf("ABSTRACTIVE_DEMAND_MISSED query=%s selector=%s missed=%s%n",
-                    query, label, audit.missed.toString());
+            System.out.printf("ABSTRACTIVE_DEMAND_MISSED stage=%s query=%s selector=%s missed=%s%n",
+                    stage, query, label, audit.missed.toString());
         }
     }
 
     private static List<IHypothesis> union(Mind mind,
-                                            Collection<IHypothesis> left,
-                                            Collection<IHypothesis> right) {
-        Map<String, IHypothesis> result = new LinkedHashMap<String, IHypothesis>();
+                                           Collection<IHypothesis> left,
+                                           Collection<IHypothesis> right) {
+        Map<String, IHypothesis> result =
+                new LinkedHashMap<String, IHypothesis>();
         for (IHypothesis hypothesis : left) {
             result.put(((Hypothesis) hypothesis).toString(mind), hypothesis);
         }
@@ -190,21 +253,19 @@ public final class KangerHypothesisAbstractiveDemandRunner {
         return new ArrayList<IHypothesis>(result.values());
     }
 
-    private static boolean contains(Mind mind,
-                                    Collection<IHypothesis> candidates,
-                                    String text) {
-        for (IHypothesis hypothesis : candidates) {
-            if (text.equals(((Hypothesis) hypothesis).toString(mind))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private static List<IHypothesis> copy(Iterable<IHypothesis> source) {
         List<IHypothesis> result = new ArrayList<IHypothesis>();
         for (IHypothesis hypothesis : source) {
             result.add(hypothesis);
+        }
+        return result;
+    }
+
+    private static Set<String> textSet(Mind mind,
+                                       Collection<IHypothesis> source) {
+        Set<String> result = new LinkedHashSet<String>();
+        for (IHypothesis hypothesis : source) {
+            result.add(((Hypothesis) hypothesis).toString(mind));
         }
         return result;
     }
@@ -254,15 +315,43 @@ public final class KangerHypothesisAbstractiveDemandRunner {
         return mind;
     }
 
-    private static final class Audit {
+    private static final class Selection {
+        private final CandidateAudit trace;
+        private final CandidateAudit solve;
+        private final CandidateAudit solveAlt;
+        private final CandidateAudit traceSolve;
+        private final CandidateAudit traceSolveAlt;
+
+        private Selection(CandidateAudit trace,
+                          CandidateAudit solve,
+                          CandidateAudit solveAlt,
+                          CandidateAudit traceSolve,
+                          CandidateAudit traceSolveAlt) {
+            this.trace = trace;
+            this.solve = solve;
+            this.solveAlt = solveAlt;
+            this.traceSolve = traceSolve;
+            this.traceSolveAlt = traceSolveAlt;
+        }
+    }
+
+    private static final class CandidateAudit {
+        private final int size;
         private final int found;
         private final int falsePositives;
         private final Set<String> missed;
+        private final Set<String> text;
 
-        private Audit(int found, int falsePositives, Set<String> missed) {
+        private CandidateAudit(int size,
+                               int found,
+                               int falsePositives,
+                               Set<String> missed,
+                               Set<String> text) {
+            this.size = size;
             this.found = found;
             this.falsePositives = falsePositives;
             this.missed = missed;
+            this.text = text;
         }
     }
 }
