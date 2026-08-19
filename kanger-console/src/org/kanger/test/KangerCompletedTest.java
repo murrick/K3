@@ -59,6 +59,11 @@ public final class KangerCompletedTest extends KangerTest {
                     list.put(method.getName(), 0.0);
                 }
             }
+            for (Method method : KangerCompletedTest.class.getDeclaredMethods()) {
+                if (method.getName().startsWith(prefix)) {
+                    list.put(method.getName(), 0.0);
+                }
+            }
 
             System.out.println("Done.");
             System.out.println("----------------------------------------------------");
@@ -163,6 +168,38 @@ public final class KangerCompletedTest extends KangerTest {
         System.out.println("====================================================");
     }
 
+    public void set_06_0F() throws Exception {
+        mind = mind.clearWorkspace();
+        String source = new String(
+                java.nio.file.Files.readAllBytes(java.nio.file.Paths.get("natives.k")),
+                java.nio.charset.StandardCharsets.UTF_8);
+        require(mind.compile(source), "natives.k compilation rejected");
+
+        Boolean result = mind.query("?$x son(John,x);");
+        System.out.println("Query: " + mind.getQueryString());
+        System.out.println("Result: " + mind.getQueryResult());
+        require(result == null, "Expected WHO KNOWS for ?$x son(John,x);");
+
+        int rawSize = mind.getHypothesis().size();
+        long optimizeStart = System.nanoTime();
+        mind.optimizeHypothesis();
+        double optimizeSeconds = (System.nanoTime() - optimizeStart) / 1_000_000_000.0;
+
+        System.out.println("Hypothesis RAW (" + rawSize + ") -> optimized ("
+                + mind.getHypothesis().size() + "):");
+        int i = 0;
+        for (IHypothesis hypothesis : mind.getHypothesis()) {
+            System.out.printf("\t%3d:\t%s%n", ++i,
+                    ((Hypothesis) hypothesis).toString((Mind) mind));
+        }
+        System.out.printf("Hypothesis optimize timing: %.3f sec%n", optimizeSeconds);
+
+        require(mind.getHypothesis().size() == 6,
+                "Expected 6 completed hypotheses for ?$x son(John,x);");
+        System.out.println("Completed hypothesis showcase: son(John,x) -> 6 OK");
+        System.out.println("====================================================");
+    }
+
     private void expectHistoricalSizeFailure(String expected,
                                              CheckedCall call) throws Exception {
         try {
@@ -171,7 +208,7 @@ public final class KangerCompletedTest extends KangerTest {
                     "FAIL: Historical hypothesis expectation unexpectedly passed: "
                             + expected);
         } catch (RuntimeErrorException error) {
-            if (!("FAIL: " + expected).equals(error.getMessage())) {
+            if (!("Runtime error: FAIL: " + expected).equals(error.toString())) {
                 throw error;
             }
         }
