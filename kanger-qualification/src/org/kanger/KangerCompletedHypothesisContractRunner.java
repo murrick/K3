@@ -17,12 +17,12 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * Production-shaped qualification for completed hypothesis optimization.
+ * Production-shaped qualification for completed hypothesis solution semantics.
  *
- * <p>This runner freezes the two historical hypothesis-list contracts whose
- * expected rowsets legitimately change when abstractive formation is restored,
- * probes the canonical Console premise/target shape, and verifies that
- * parameterized query replay preserves and replaces external values.</p>
+ * <p>WHEN exposes assertion-ready candidate solutions. An optimized hypothesis
+ * must be admissible as a KANGER assertion and, once accepted into the current
+ * knowledge base, must make the original query TRUE. Counter-hypotheses that
+ * merely make the original query determinate FALSE are not WHEN solutions.</p>
  */
 public final class KangerCompletedHypothesisContractRunner {
 
@@ -66,21 +66,15 @@ public final class KangerCompletedHypothesisContractRunner {
         Mind mind = historicalMind(user);
         Set<String> actual = optimized(mind, "?male(Tom);", null);
         Set<String> expected = set(
-                "?son(Tom,John);",
-                "!mother(Tom,Sarah);",
-                "!mother(Tom,John);",
-                "!daughter(Tom,Sarah);",
-                "!daughter(Tom,John);",
-                "!female(Tom);",
-                "?daughter(Tom,John);",
-                "?female(Tom);",
+                "!~daughter(Tom,John);",
+                "!~female(Tom);",
                 "!father(Tom,Sarah);",
                 "!father(Tom,John);",
                 "!son(Tom,Sarah);",
                 "!son(Tom,John);",
-                "!$y mother(Tom,y);",
                 "!$y father(Tom,y);");
         requireEqual("historical male(Tom)", expected, actual);
+        verifySolutions(mind, "?male(Tom);");
         System.out.println("COMPLETED_CONTRACT historical-male count="
                 + actual.size());
     }
@@ -90,15 +84,16 @@ public final class KangerCompletedHypothesisContractRunner {
         Set<String> actual = optimized(
                 mind, "?$x male(x) && age(x,12);", null);
         Set<String> expected = set(
-                "?daughter(Tom,John);",
+                "!~daughter(Tom,John);",
                 "!male(Tom);",
-                "?female(Tom);",
+                "!~female(Tom);",
                 "!father(Tom,Sarah);",
                 "!father(Tom,John);",
                 "!son(Tom,Sarah);",
                 "!son(Tom,John);",
                 "!$y father(Tom,y);");
         requireEqual("historical conjunction", expected, actual);
+        verifySolutions(mind, "?$x male(x) && age(x,12);");
         System.out.println("COMPLETED_CONTRACT historical-conjunction count="
                 + actual.size());
     }
@@ -112,6 +107,7 @@ public final class KangerCompletedHypothesisContractRunner {
                 mind, "?consoletarget(item);", null);
         require(actual.contains("!consolepremise(item);"),
                 "console probe lost concrete premise hypothesis: " + actual);
+        verifySolutions(mind, "?consoletarget(item);");
         System.out.println("COMPLETED_CONTRACT console count=" + actual.size()
                 + " hypotheses=" + actual);
     }
@@ -172,6 +168,21 @@ public final class KangerCompletedHypothesisContractRunner {
             values.add(((Hypothesis) hypothesis).toString(mind));
         }
         return values;
+    }
+
+    private static void verifySolutions(Mind mind, String query) throws Exception {
+        for (IHypothesis hypothesis : mind.getHypothesis()) {
+            String assertion = ((Hypothesis) hypothesis).toAssertionString(mind);
+            Mind child = new Mind(mind);
+            try {
+                require(Boolean.TRUE.equals(child.query(assertion, null, false)),
+                        "hypothesis assertion rejected: " + assertion);
+                require(Boolean.TRUE.equals(child.query(query, null, false)),
+                        "hypothesis assertion does not solve " + query + ": " + assertion);
+            } finally {
+                mind.release(child);
+            }
+        }
     }
 
     private static Set<String> set(String... values) {
