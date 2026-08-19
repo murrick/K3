@@ -5,12 +5,16 @@
  */
 package org.kanger;
 
+import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IHypothesis;
+import org.kanger.interfaces.IRule;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 import org.kanger.units.Rule;
+import org.kanger.units.Term;
 
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
@@ -64,13 +68,17 @@ public final class KangerHypothesisAbstractiveForensicRunner {
             throw new AssertionError("Expected WHO KNOWS for " + query + ", got " + known);
         }
 
-        List<String> raw = new ArrayList<String>();
+        List<Hypothesis> raw = new ArrayList<Hypothesis>();
+        Map<String, Hypothesis> byText = new LinkedHashMap<String, Hypothesis>();
         for (IHypothesis hypothesis : mind.getHypothesis()) {
-            raw.add(((Hypothesis) hypothesis).toString(mind));
+            Hypothesis h = (Hypothesis) hypothesis;
+            raw.add(h);
+            byText.put(h.toString(mind), h);
         }
 
         Map<String, Boolean> relevant = new LinkedHashMap<String, Boolean>();
-        for (String source : raw) {
+        for (Hypothesis hypothesis : raw) {
+            String source = hypothesis.toString(mind);
             Boolean answer = exact(mind, query, source);
             if (answer != null) {
                 relevant.put(source, answer);
@@ -79,30 +87,98 @@ public final class KangerHypothesisAbstractiveForensicRunner {
 
         int abstractCount = 0;
         int abstractRelevant = 0;
-        for (String source : raw) {
-            if (source.indexOf('$') >= 0 || source.indexOf('?') > 0) {
+        int lineageAllowed = 0;
+        int lineageRelevant = 0;
+        int lineageFalsePositive = 0;
+        int lineageFalseNegative = 0;
+
+        for (Hypothesis hypothesis : raw) {
+            String source = hypothesis.toString(mind);
+            Lineage lineage = lineage(hypothesis, mind);
+            boolean exact = relevant.containsKey(source);
+            boolean allowed = lineage.cvars == 0 || lineage.allQueryRoot;
+
+            if (lineage.cvars > 0) {
                 ++abstractCount;
-                if (relevant.containsKey(source)) {
+                if (exact) {
                     ++abstractRelevant;
                 }
             }
+            if (allowed) {
+                ++lineageAllowed;
+                if (exact) {
+                    ++lineageRelevant;
+                } else {
+                    ++lineageFalsePositive;
+                }
+            } else if (exact) {
+                ++lineageFalseNegative;
+            }
+
+            System.out.printf("ABSTRACTIVE_LINEAGE_H query=%s abstract=%s cvars=%d queryRoots=%d allQueryRoot=%s allowed=%s exact=%s answer=%s h=%s%n",
+                    query,
+                    Boolean.toString(lineage.cvars > 0),
+                    lineage.cvars,
+                    lineage.queryRoots,
+                    Boolean.toString(lineage.allQueryRoot),
+                    Boolean.toString(allowed),
+                    Boolean.toString(exact),
+                    exact ? relevant.get(source).toString() : "WHO_KNOWS_OR_REJECTED",
+                    source);
         }
 
-        System.out.printf("ABSTRACTIVE_SUMMARY query=%s raw=%d abstract=%d exactRelevant=%d abstractRelevant=%d%n",
-                query, raw.size(), abstractCount, relevant.size(), abstractRelevant);
+        System.out.printf("ABSTRACTIVE_SUMMARY query=%s raw=%d abstract=%d exactRelevant=%d abstractRelevant=%d lineageAllowed=%d lineageRelevant=%d lineageFalsePositive=%d lineageFalseNegative=%d%n",
+                query, raw.size(), abstractCount, relevant.size(), abstractRelevant,
+                lineageAllowed, lineageRelevant, lineageFalsePositive, lineageFalseNegative);
 
         for (Map.Entry<String, Boolean> entry : relevant.entrySet()) {
             System.out.printf("ABSTRACTIVE_EXACT_H query=%s answer=%s h=%s%n",
                     query, entry.getValue().toString(), entry.getKey());
         }
+    }
 
-        for (String source : raw) {
-            if (source.indexOf('$') >= 0 || source.indexOf('?') > 0) {
-                System.out.printf("ABSTRACTIVE_RAW_H query=%s exact=%s h=%s%n",
-                        query,
-                        relevant.containsKey(source) ? relevant.get(source).toString() : "WHO_KNOWS_OR_REJECTED",
-                        source);
+    private static Lineage lineage(Hypothesis hypothesis, Mind mind) throws Exception {
+        int cvars = 0;
+        int queryRoots = 0;
+        boolean allQueryRoot = true;
+
+        for (IArgument argument : hypothesis.getArguments()) {
+            if (argument.isEmpty(mind)) {
+                continue;
             }
+            ITerm value = argument.getValue(mind);
+            if (value == null || !value.isCVariable()) {
+                continue;
+            }
+
+            ++cvars;
+            Term root = (Term) value;
+            ITerm parent;
+            while ((parent = root.getParent(mind)) != null && parent.isCVariable()) {
+                root = (Term) parent;
+            }
+
+            IRule owner = root.getRule(mind);
+            boolean queryRoot = owner != null && owner.isQuery();
+            if (queryRoot) {
+                ++queryRoots;
+            } else {
+                allQueryRoot = false;
+            }
+        }
+
+        return new Lineage(cvars, queryRoots, cvars > 0 && allQueryRoot);
+    }
+
+    private static final class Lineage {
+        private final int cvars;
+        private final int queryRoots;
+        private final boolean allQueryRoot;
+
+        private Lineage(int cvars, int queryRoots, boolean allQueryRoot) {
+            this.cvars = cvars;
+            this.queryRoots = queryRoots;
+            this.allQueryRoot = allQueryRoot;
         }
     }
 
