@@ -5,12 +5,15 @@
  */
 package org.kanger;
 
+import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IRule;
+import org.kanger.interfaces.ITerm;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
+import org.kanger.units.Term;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,14 +21,7 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-/**
- * Diagnostic-only capture of residual hypothesis formation at the exact
- * Domain instance passed to the historical temporary-hypothesis constructor.
- *
- * <p>The recorder is inert unless {@link #begin()} is active on the current
- * thread. It does not participate in inference, candidate selection, store
- * admission or query result construction.</p>
- */
+/** Diagnostic-only capture of residual hypothesis formation. */
 public final class QueryHypothesisFormationTrace {
 
     private static final ThreadLocal<List<Event>> ACTIVE =
@@ -101,6 +97,8 @@ public final class QueryHypothesisFormationTrace {
             }
         }
 
+        CVarLineage lineage = cvarLineage(candidate, mind);
+
         active.add(new Event(
                 mind.getQueryPass().name(),
                 mind.getId(),
@@ -113,10 +111,48 @@ public final class QueryHypothesisFormationTrace {
                 branchQueryVariable,
                 candidate.isQuery(mind),
                 hasQueryVariable(candidate, mind),
+                lineage.cvars,
+                lineage.queryRoots,
+                lineage.cvars > 0 && lineage.cvars == lineage.queryRoots,
                 candidate.toString(mind),
                 hypothesis.toString(mind),
                 branchState,
                 solve));
+    }
+
+    private static CVarLineage cvarLineage(Domain domain, Mind mind) throws Exception {
+        int cvars = 0;
+        int queryRoots = 0;
+        for (IArgument argument : domain.getArguments()) {
+            if (argument.isEmpty(mind)) {
+                continue;
+            }
+            ITerm value = argument.getValue(mind);
+            if (value == null || !value.isCVariable()) {
+                continue;
+            }
+            ++cvars;
+            Term root = (Term) value;
+            ITerm parent;
+            while ((parent = root.getParent(mind)) != null && parent.isCVariable()) {
+                root = (Term) parent;
+            }
+            IRule rootOwner = root.getRule(mind);
+            if (rootOwner != null && rootOwner.isQuery()) {
+                ++queryRoots;
+            }
+        }
+        return new CVarLineage(cvars, queryRoots);
+    }
+
+    private static final class CVarLineage {
+        private final int cvars;
+        private final int queryRoots;
+
+        private CVarLineage(int cvars, int queryRoots) {
+            this.cvars = cvars;
+            this.queryRoots = queryRoots;
+        }
     }
 
     private static String domainState(Domain domain, Mind mind) throws Exception {
@@ -166,6 +202,9 @@ public final class QueryHypothesisFormationTrace {
         private final boolean branchQueryVariable;
         private final boolean candidateQueryDomain;
         private final boolean candidateQueryVariable;
+        private final int candidateCVars;
+        private final int candidateQueryRoots;
+        private final boolean candidateAllQueryRoots;
         private final String candidate;
         private final String hypothesis;
         private final List<String> branchState;
@@ -182,6 +221,9 @@ public final class QueryHypothesisFormationTrace {
                       boolean branchQueryVariable,
                       boolean candidateQueryDomain,
                       boolean candidateQueryVariable,
+                      int candidateCVars,
+                      int candidateQueryRoots,
+                      boolean candidateAllQueryRoots,
                       String candidate,
                       String hypothesis,
                       List<String> branchState,
@@ -197,10 +239,12 @@ public final class QueryHypothesisFormationTrace {
             this.branchQueryVariable = branchQueryVariable;
             this.candidateQueryDomain = candidateQueryDomain;
             this.candidateQueryVariable = candidateQueryVariable;
+            this.candidateCVars = candidateCVars;
+            this.candidateQueryRoots = candidateQueryRoots;
+            this.candidateAllQueryRoots = candidateAllQueryRoots;
             this.candidate = candidate;
             this.hypothesis = hypothesis;
-            this.branchState = Collections.unmodifiableList(
-                    new ArrayList<String>(branchState));
+            this.branchState = Collections.unmodifiableList(new ArrayList<String>(branchState));
             this.solve = Collections.unmodifiableList(new ArrayList<String>(solve));
         }
 
@@ -215,6 +259,9 @@ public final class QueryHypothesisFormationTrace {
         public boolean hasBranchQueryVariable() { return branchQueryVariable; }
         public boolean hasCandidateQueryDomain() { return candidateQueryDomain; }
         public boolean hasCandidateQueryVariable() { return candidateQueryVariable; }
+        public int getCandidateCVars() { return candidateCVars; }
+        public int getCandidateQueryRoots() { return candidateQueryRoots; }
+        public boolean hasCandidateAllQueryRoots() { return candidateAllQueryRoots; }
         public String getCandidate() { return candidate; }
         public String getHypothesis() { return hypothesis; }
         public List<String> getBranchState() { return branchState; }
