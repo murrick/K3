@@ -29,11 +29,11 @@ import java.util.Set;
  * Diagnostic-only archaeology of the historical hypothesis formation path.
  *
  * <p>This runner deliberately changes no production selection semantics. It
- * observes the existing human-readable execution log, where Linker and Analyzer
- * already expose distinct hypothesis birth messages, and correlates those birth
- * events with the final raw store, historical optimizeHypothesis(), EXACT, TRACE
- * and deferred SOLVE. The first corpus is intentionally limited to one known
- * pathological query and one known-good historical query.</p>
+ * observes the existing execution log and a passive residual-formation trace,
+ * then correlates hypothesis birth with final raw admission, historical
+ * optimizeHypothesis(), EXACT, TRACE and deferred SOLVE. The corpus is
+ * intentionally limited to one known pathological query and one known-good
+ * historical query.</p>
  */
 public final class KangerHypothesisFormationForensicRunner {
 
@@ -87,12 +87,15 @@ public final class KangerHypothesisFormationForensicRunner {
 
         QueryDemandTrace.begin();
         QueryTaintSolve.begin();
+        QueryHypothesisFormationTrace.begin();
         Boolean known;
         QueryDemandTrace.Snapshot trace;
         QueryTaintSolve.Snapshot solve;
+        QueryHypothesisFormationTrace.Snapshot formation;
         try {
             known = mind.query(query, null, true);
         } finally {
+            formation = QueryHypothesisFormationTrace.end();
             solve = QueryTaintSolve.end();
             trace = QueryDemandTrace.end();
         }
@@ -131,15 +134,16 @@ public final class KangerHypothesisFormationForensicRunner {
         rows.addAll(origins.keySet());
         rows.addAll(rawText);
 
-        System.out.printf("FORENSIC_SUMMARY query=%s raw=%d optimized=%d exactRaw=%d exactOptimized=%d trace=%d solve=%d roots=%d edges=%d operations=%d tuples=%d observed=%d marked=%d errors=%d%n",
+        System.out.printf("FORENSIC_SUMMARY query=%s raw=%d optimized=%d exactRaw=%d exactOptimized=%d trace=%d solve=%d roots=%d edges=%d operations=%d tuples=%d observed=%d marked=%d errors=%d residualEvents=%d%n",
                 query, raw.size(), optimized.size(), exactRaw.size(),
                 exactOptimized.size(), traceCandidates.size(), solveCandidates.size(),
                 trace.getQueryRootCount(), trace.getRecordedEdgeCount(),
                 solve.getRelevantOperationCount(), solve.getRelevantTupleCount(),
                 solve.getObservedHypothesisCount(), solve.getTaintedHypothesisCount(),
-                solve.getInstrumentationErrorCount());
+                solve.getInstrumentationErrorCount(), formation.getEvents().size());
 
         printEpisodes(query, episodes, rawText, exactRaw);
+        printResiduals(query, formation, rawText, exactRaw);
 
         for (String hypothesis : rows) {
             Set<String> source = origins.get(hypothesis);
@@ -161,6 +165,69 @@ public final class KangerHypothesisFormationForensicRunner {
         }
 
         System.out.println("FORENSIC_END " + query);
+    }
+
+    private static void printResiduals(String query,
+                                       QueryHypothesisFormationTrace.Snapshot formation,
+                                       Set<String> rawText,
+                                       Map<String, Boolean> exactRaw) {
+        Set<String> unique = new LinkedHashSet<>();
+        Set<String> finalUnique = new LinkedHashSet<>();
+        int queryDomainEvents = 0;
+        int queryVariableEvents = 0;
+        int generatedRuleEvents = 0;
+        int queryRuleEvents = 0;
+
+        for (QueryHypothesisFormationTrace.Event event : formation.getEvents()) {
+            String hypothesis = event.getHypothesis();
+            unique.add(hypothesis);
+            if (rawText.contains(hypothesis)) {
+                finalUnique.add(hypothesis);
+            }
+            if (event.hasBranchQueryDomain()) {
+                ++queryDomainEvents;
+            }
+            if (event.hasBranchQueryVariable()) {
+                ++queryVariableEvents;
+            }
+            if (event.isRuleGenerated()) {
+                ++generatedRuleEvents;
+            }
+            if (event.isRuleQuery()) {
+                ++queryRuleEvents;
+            }
+
+            Boolean exact = exactRaw.get(hypothesis);
+            System.out.printf("FORENSIC_RESIDUAL query=%s pass=%s mind=%d rule=%d branch=%d branchSize=%d ruleQuery=%s ruleGenerated=%s branchQueryDomain=%s branchQueryVar=%s candidateQueryDomain=%s candidateQueryVar=%s rawFinal=%s exact=%s candidate=%s h=%s solve=%s branchState=%s%n",
+                    query,
+                    event.getPass(),
+                    event.getMindId(),
+                    event.getRuleId(),
+                    event.getBranchIndex(),
+                    event.getBranchSize(),
+                    Boolean.toString(event.isRuleQuery()),
+                    Boolean.toString(event.isRuleGenerated()),
+                    Boolean.toString(event.hasBranchQueryDomain()),
+                    Boolean.toString(event.hasBranchQueryVariable()),
+                    Boolean.toString(event.hasCandidateQueryDomain()),
+                    Boolean.toString(event.hasCandidateQueryVariable()),
+                    Boolean.toString(rawText.contains(hypothesis)),
+                    exact == null ? "WHO_KNOWS_OR_REJECTED" : exact.toString(),
+                    event.getCandidate(),
+                    hypothesis,
+                    event.getSolve().toString(),
+                    event.getBranchState().toString());
+        }
+
+        System.out.printf("FORENSIC_RESIDUAL_SUMMARY query=%s events=%d unique=%d finalUnique=%d queryDomainEvents=%d queryVariableEvents=%d queryRuleEvents=%d generatedRuleEvents=%d%n",
+                query,
+                formation.getEvents().size(),
+                unique.size(),
+                finalUnique.size(),
+                queryDomainEvents,
+                queryVariableEvents,
+                queryRuleEvents,
+                generatedRuleEvents);
     }
 
     private static Mind prepared(IUser user) throws Exception {
@@ -238,7 +305,10 @@ public final class KangerHypothesisFormationForensicRunner {
             } else if (record.startsWith("Hypothesis alternate assumed:")) {
                 addOrigin(result, afterColon(record), "LINKER_RESIDUAL@" + pass);
             } else if (record.startsWith("Hypothesis moved:")) {
-                addOrigin(result, afterColon(record), "FINAL_MOVE@" + pass);
+                // Hypothesis moved is written to the parent log before the
+                // child TRUE-pass log is committed, so temporal pass parsing
+                // cannot reliably label this event. Keep the origin neutral.
+                addOrigin(result, afterColon(record), "FINAL_MOVE");
             }
         }
         return result;
