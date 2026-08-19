@@ -117,8 +117,8 @@ public final class KangerHypothesisAbstractiveForensicRunner {
             boolean exact = relevant.containsKey(source);
             List<QueryHypothesisFormationTrace.Event> events =
                     eventsByHypothesis.get(source);
-            boolean sourceQueryLineage = hasQueryLinkedSourceLineage(events);
-            boolean allowed = !abstractive || sourceQueryLineage;
+            boolean sourceQueryReachable = hasQueryReachableSourceLineage(events);
+            boolean allowed = !abstractive || sourceQueryReachable;
 
             if (abstractive) {
                 ++abstractCount;
@@ -151,7 +151,9 @@ public final class KangerHypothesisAbstractiveForensicRunner {
             int maxCVars = 0;
             int maxOwnedRoots = 0;
             int maxLinkedRoots = 0;
+            int maxReachableRoots = 0;
             boolean directQueryOwned = false;
+            boolean directQueryLinked = false;
             if (events != null) {
                 for (QueryHypothesisFormationTrace.Event event : events) {
                     maxCVars = Math.max(maxCVars, event.getCandidateCVars());
@@ -159,19 +161,24 @@ public final class KangerHypothesisAbstractiveForensicRunner {
                             event.getCandidateQueryRoots());
                     maxLinkedRoots = Math.max(maxLinkedRoots,
                             event.getCandidateQueryLinkedRoots());
+                    maxReachableRoots = Math.max(maxReachableRoots,
+                            event.getCandidateQueryReachableRoots());
                     directQueryOwned |= event.hasCandidateAllQueryRoots();
+                    directQueryLinked |= event.hasCandidateAllQueryLinkedRoots();
                 }
             }
 
-            System.out.printf("ABSTRACTIVE_SOURCE_H query=%s abstract=%s sourceEvents=%d directQueryOwned=%s sourceQueryLineage=%s maxSourceCVars=%d maxSourceOwnedRoots=%d maxSourceLinkedRoots=%d allowed=%s exact=%s answer=%s h=%s%n",
+            System.out.printf("ABSTRACTIVE_SOURCE_H query=%s abstract=%s sourceEvents=%d directQueryOwned=%s directQueryLinked=%s sourceQueryReachable=%s maxSourceCVars=%d maxSourceOwnedRoots=%d maxSourceLinkedRoots=%d maxSourceReachableRoots=%d allowed=%s exact=%s answer=%s h=%s%n",
                     query,
                     Boolean.toString(abstractive),
                     eventCount,
                     Boolean.toString(directQueryOwned),
-                    Boolean.toString(sourceQueryLineage),
+                    Boolean.toString(directQueryLinked),
+                    Boolean.toString(sourceQueryReachable),
                     maxCVars,
                     maxOwnedRoots,
                     maxLinkedRoots,
+                    maxReachableRoots,
                     Boolean.toString(allowed),
                     Boolean.toString(exact),
                     exact ? relevant.get(source).toString()
@@ -200,7 +207,7 @@ public final class KangerHypothesisAbstractiveForensicRunner {
             }
             boolean rawFinal = containsText(raw, mind, event.getHypothesis());
             boolean exact = relevant.containsKey(event.getHypothesis());
-            System.out.printf("ABSTRACTIVE_SOURCE_EVENT query=%s pass=%s rule=%d branch=%d sourceCVars=%d sourceOwnedRoots=%d sourceLinkedRoots=%d allSourceOwnedRoots=%s allSourceLinkedRoots=%s rawFinal=%s exact=%s candidate=%s h=%s%n",
+            System.out.printf("ABSTRACTIVE_SOURCE_EVENT query=%s pass=%s rule=%d branch=%d sourceCVars=%d sourceOwnedRoots=%d sourceLinkedRoots=%d sourceReachableRoots=%d allSourceOwnedRoots=%s allSourceLinkedRoots=%s allSourceReachableRoots=%s rawFinal=%s exact=%s candidate=%s h=%s%n",
                     query,
                     event.getPass(),
                     event.getRuleId(),
@@ -208,8 +215,10 @@ public final class KangerHypothesisAbstractiveForensicRunner {
                     event.getCandidateCVars(),
                     event.getCandidateQueryRoots(),
                     event.getCandidateQueryLinkedRoots(),
+                    event.getCandidateQueryReachableRoots(),
                     Boolean.toString(event.hasCandidateAllQueryRoots()),
                     Boolean.toString(event.hasCandidateAllQueryLinkedRoots()),
+                    Boolean.toString(event.hasCandidateAllQueryReachableRoots()),
                     Boolean.toString(rawFinal),
                     Boolean.toString(exact),
                     event.getCandidate(),
@@ -222,14 +231,14 @@ public final class KangerHypothesisAbstractiveForensicRunner {
         }
     }
 
-    private static boolean hasQueryLinkedSourceLineage(
+    private static boolean hasQueryReachableSourceLineage(
             List<QueryHypothesisFormationTrace.Event> events) {
         if (events == null) {
             return false;
         }
         for (QueryHypothesisFormationTrace.Event event : events) {
             if (event.getCandidateCVars() > 0
-                    && event.hasCandidateAllQueryLinkedRoots()) {
+                    && event.hasCandidateAllQueryReachableRoots()) {
                 return true;
             }
         }
