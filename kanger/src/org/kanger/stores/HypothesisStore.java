@@ -38,7 +38,9 @@ import org.kanger.units.Rule;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Dmitry G. Quznetsov on 28.05.15.
@@ -193,7 +195,7 @@ public class HypothesisStore implements IFactory<IHypothesis> {
                     Boolean answer = expanded.query(
                             replay.getSource(), replay.getExternals(), false);
                     if (answer == null) {
-                        commit(expanded.getHypothesis());
+                        mergeExpanded(expanded);
                     }
                 } finally {
                     mind.release(expanded);
@@ -231,6 +233,26 @@ public class HypothesisStore implements IFactory<IHypothesis> {
             root.clear();
             root.addAll(success);
             optimized = true;
+        }
+    }
+
+    /**
+     * Merge the isolated abstractive RAW store without admitting a semantic
+     * duplicate already settled into this store by another path (notably the
+     * Console overlay -> root handoff). Cross-Mind predicate/argument IDs are
+     * intentionally not used as the dedupe key here: the hypothesis source is
+     * the stable representation that is subsequently compiled for EXACT replay.
+     */
+    private void mergeExpanded(Mind expanded) throws Exception {
+        Set<String> admitted = new LinkedHashSet<>();
+        for (IHypothesis h : root) {
+            admitted.add(((Hypothesis) h).toString(mind));
+        }
+        for (IHypothesis h : expanded.getHypothesis()) {
+            String source = ((Hypothesis) h).toString(expanded);
+            if (admitted.add(source)) {
+                add(h);
+            }
         }
     }
 
