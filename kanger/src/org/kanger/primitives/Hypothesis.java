@@ -32,6 +32,7 @@ package org.kanger.primitives;
 
 
 import org.kanger.Mind;
+import org.kanger.QueryHypothesisFormationTrace;
 import org.kanger.QueryTaint;
 import org.kanger.QueryTaintCarrier;
 import org.kanger.QueryTaintSolve;
@@ -77,9 +78,11 @@ public class Hypothesis implements IHypothesis {
         predicate = s.getPredicate(mind);
         arguments.addAll(s.getArguments().convertBase(mind));
         if (s instanceof Domain) {
-            QueryTaint.recordHypothesis((Domain) s, mind, this);
-            QueryTaintCarrier.recordHypothesis((Domain) s, mind, this);
-            QueryTaintSolve.recordHypothesis((Domain) s, mind, this);
+            Domain source = (Domain) s;
+            QueryTaint.recordHypothesis(source, mind, this);
+            QueryTaintCarrier.recordHypothesis(source, mind, this);
+            QueryTaintSolve.recordHypothesis(source, mind, this);
+            QueryHypothesisFormationTrace.recordResidual(source, mind, this);
         }
     }
 
