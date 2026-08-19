@@ -45,6 +45,7 @@ public final class KangerHypothesisResidualExactRunner {
             System.out.println("HYPOTHESIS_RESIDUAL_EXACT_OK");
 
             KangerHypothesisAbstractiveForensicRunner.run();
+            KangerHypothesisAbstractiveDemandRunner.run();
             exitCode = 0;
         } catch (Throwable error) {
             error.printStackTrace(System.err);
