@@ -11,8 +11,8 @@ import org.kanger.storage.DB;
 import org.kanger.test.KangerC1PromotionTest;
 import org.kanger.test.KangerC3BindingTest;
 import org.kanger.test.KangerC4IntervalTest;
+import org.kanger.test.KangerCompletedTest;
 import org.kanger.test.KangerStabilizationTest;
-import org.kanger.test.KangerTest;
 import org.kanger.udf.UDF;
 
 import java.nio.file.Files;
@@ -42,7 +42,7 @@ public final class KangerTestRunner {
 
             IUser legacyUser = createUser("autotest");
             IMind legacyMind = new Mind(legacyUser);
-            boolean legacySuccess = KangerTest.test(legacyMind, prefix);
+            boolean legacySuccess = KangerCompletedTest.test(legacyMind, prefix);
 
             IUser stabilizationUser = createUser("autotest-stabilization");
             IMind stabilizationMind = new Mind(stabilizationUser);
