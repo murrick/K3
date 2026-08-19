@@ -26,6 +26,7 @@
 package org.kanger.stores;
 
 import org.kanger.Mind;
+import org.kanger.QueryReplayContext;
 import org.kanger.interfaces.IFactory;
 import org.kanger.interfaces.IHypothesis;
 import org.kanger.interfaces.IList;
@@ -180,17 +181,51 @@ public class HypothesisStore implements IFactory<IHypothesis> {
 
     public void optimize() throws Exception {
         if (root != null && !root.isEmpty() && !optimized) {
+            QueryReplayContext.Snapshot replay = QueryReplayContext.snapshot(mind);
+
+            // Historical RAW formation also supported abstractive candidates.
+            // Reconstruct that broader candidate universe only when a replayable
+            // query exists; ordinary hypothesis-store uses retain legacy behavior.
+            if (replay != null) {
+                Mind expanded = new Mind(mind);
+                try {
+                    expanded.includeAbstractiveHypothesis(true);
+                    Boolean answer = expanded.query(
+                            replay.getSource(), replay.getExternals(), false);
+                    if (answer == null) {
+                        commit(expanded.getHypothesis());
+                    }
+                } finally {
+                    mind.release(expanded);
+                }
+            }
+
             List<IHypothesis> list = new ArrayList<>();
             List<IHypothesis> success = new ArrayList<>();
             list.addAll(root);
             for (IHypothesis h : list) {
                 Mind m = new Mind(mind);
-                Rule r = (Rule) m.compileLine(((Hypothesis) h).toString(m), false, null);
-                m.link(r, false);
-                Boolean ar = m.analyze(null, false);
-                mind.release(m);
-                if (!ar) {
-                    success.add(h);
+                try {
+                    Rule r = (Rule) m.compileLine(
+                            ((Hypothesis) h).toString(m), false, null);
+                    if (r == null) {
+                        continue;
+                    }
+                    m.link(r, false);
+                    Boolean collision = m.analyze(null, false);
+                    if (!collision) {
+                        if (replay == null) {
+                            success.add(h);
+                        } else {
+                            Boolean answer = m.query(
+                                    replay.getSource(), replay.getExternals(), false);
+                            if (answer != null) {
+                                success.add(h);
+                            }
+                        }
+                    }
+                } finally {
+                    mind.release(m);
                 }
             }
             root.clear();
