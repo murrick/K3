@@ -113,7 +113,19 @@ public class Hypothesis implements IHypothesis {
         this.query = query;
     }
 
+    /**
+     * Public hypothesis rendering is assertion-ready because WHEN hypotheses
+     * are user-selectable candidate statements, not executable queries.
+     */
     public String toString(IMind mind) {
+        return render(mind, true);
+    }
+
+    /**
+     * Returns the historical internal polarity rendering used to describe the
+     * hypothesis object itself without materializing it as an assertion.
+     */
+    public String toInternalString(IMind mind) {
         return render(mind, false);
     }
 
