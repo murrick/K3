@@ -11,6 +11,7 @@ import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
+import org.kanger.units.Rule;
 
 import java.util.UUID;
 
@@ -49,6 +50,24 @@ class HypothesisAssertionSemanticsTest {
             "!age(Sarah, 4);";
 
     @Test
+    void succedentCVariableHypothesisRendersAsUniversalNegativeAssertion()
+            throws Exception {
+        Fixture fixture = fixture("render");
+        try {
+            Mind mind = new Mind(fixture.user);
+            fixture.user.setCurrentMind(mind);
+            Rule source = (Rule) mind.compileLine("!$y son(John,y);", false, null);
+            Hypothesis hypothesis = new Hypothesis(source, mind);
+
+            assertEquals("?$y son(John,y);", hypothesis.toInternalString(mind));
+            assertEquals("!@y ~son(John,y);", hypothesis.toAssertionString(mind));
+            assertEquals("!@y ~son(John,y);", hypothesis.toString(mind));
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
     void optimizedHypothesesAreAssertionsThatMakeTheOriginalQueryTrue()
             throws Exception {
         Fixture fixture = fixture("true-only");
@@ -62,7 +81,7 @@ class HypothesisAssertionSemanticsTest {
             assertEquals(6, mind.getHypothesis().size(),
                     "counter-hypotheses that make the query FALSE remain visible");
             for (IHypothesis candidate : mind.getHypothesis()) {
-                String assertion = assertionSource((Hypothesis) candidate, mind);
+                String assertion = ((Hypothesis) candidate).toAssertionString(mind);
                 Mind child = new Mind(mind);
                 try {
                     assertTrue(Boolean.TRUE.equals(child.query(assertion, null, false)),
@@ -92,32 +111,6 @@ class HypothesisAssertionSemanticsTest {
         } finally {
             fixture.close();
         }
-    }
-
-    private static String assertionSource(Hypothesis hypothesis, Mind mind) {
-        String source = hypothesis.toString(mind);
-        if (source.startsWith("!")) {
-            return source;
-        }
-        if (!source.startsWith("?")) {
-            throw new AssertionError("Unexpected hypothesis source: " + source);
-        }
-
-        String body = source.substring(1);
-        StringBuilder statement = new StringBuilder("!");
-        int offset = 0;
-        while (offset < body.length() && body.charAt(offset) == '$') {
-            int separator = body.indexOf(' ', offset);
-            if (separator < 0) {
-                throw new AssertionError("Malformed quantified hypothesis: " + source);
-            }
-            statement.append('@')
-                    .append(body.substring(offset + 1, separator))
-                    .append(' ');
-            offset = separator + 1;
-        }
-        statement.append('~').append(body.substring(offset));
-        return statement.toString();
     }
 
     private static Mind prepared(Fixture fixture) throws Exception {
