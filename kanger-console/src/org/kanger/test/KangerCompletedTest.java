@@ -24,11 +24,9 @@ import java.util.LinkedHashSet;
 /**
  * Completed-hypothesis regression overlay for the historical KangerTest corpus.
  *
- * <p>The historical source remains untouched as an archaeological baseline.
- * Exactly two old tests have legitimate completed-semantics deltas. Their
- * overrides run every original assertion first and accept only the historical
- * final size failure before asserting the new abstract repairs. Any other old
- * failure is propagated unchanged.</p>
+ * <p>The accepted completed-semantics cardinalities now live in the historical
+ * corpus itself. The two overrides retain only the additional abstract-repair
+ * assertions that distinguish the completed optimizer contract.</p>
  */
 public final class KangerCompletedTest extends KangerTest {
 
@@ -130,13 +128,7 @@ public final class KangerCompletedTest extends KangerTest {
 
     @Override
     public void set_06_07() throws Exception {
-        expectHistoricalSizeFailure("Expected 12 hypothesis",
-                new CheckedCall() {
-                    @Override
-                    public void run() throws Exception {
-                        KangerCompletedTest.super.set_06_07();
-                    }
-                });
+        super.set_06_07();
 
         require(mind.getHypothesis().size() == 14,
                 "Expected 14 hypothesis");
@@ -145,26 +137,20 @@ public final class KangerCompletedTest extends KangerTest {
                 "Expected abstract hypothesis: !$y mother(Tom,y);");
         require(hypotheses.contains("!$y father(Tom,y);"),
                 "Expected abstract hypothesis: !$y father(Tom,y);");
-        System.out.println("Completed hypothesis migration: 12 -> 14 OK");
+        System.out.println("Completed hypothesis cardinality 14 OK");
         System.out.println("====================================================");
     }
 
     @Override
     public void set_06_0A() throws Exception {
-        expectHistoricalSizeFailure("Expected 7 hypothesis",
-                new CheckedCall() {
-                    @Override
-                    public void run() throws Exception {
-                        KangerCompletedTest.super.set_06_0A();
-                    }
-                });
+        super.set_06_0A();
 
         require(mind.getHypothesis().size() == 8,
                 "Expected 8 hypothesis");
         Set<String> hypotheses = sources();
         require(hypotheses.contains("!$y father(Tom,y);"),
                 "Expected abstract hypothesis: !$y father(Tom,y);");
-        System.out.println("Completed hypothesis migration: 7 -> 8 OK");
+        System.out.println("Completed hypothesis cardinality 8 OK");
         System.out.println("====================================================");
     }
 
@@ -200,20 +186,6 @@ public final class KangerCompletedTest extends KangerTest {
         System.out.println("====================================================");
     }
 
-    private void expectHistoricalSizeFailure(String expected,
-                                             CheckedCall call) throws Exception {
-        try {
-            call.run();
-            throw new RuntimeErrorException(
-                    "FAIL: Historical hypothesis expectation unexpectedly passed: "
-                            + expected);
-        } catch (RuntimeErrorException error) {
-            if (!("Runtime error: FAIL: " + expected).equals(error.toString())) {
-                throw error;
-            }
-        }
-    }
-
     private Set<String> sources() throws Exception {
         Set<String> result = new LinkedHashSet<>();
         for (IHypothesis hypothesis : mind.getHypothesis()) {
@@ -227,9 +199,5 @@ public final class KangerCompletedTest extends KangerTest {
         if (!condition) {
             throw new RuntimeErrorException("FAIL: " + message);
         }
-    }
-
-    private interface CheckedCall {
-        void run() throws Exception;
     }
 }
