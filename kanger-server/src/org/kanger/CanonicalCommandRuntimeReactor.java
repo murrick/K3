@@ -487,7 +487,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
 
         IHypothesis selected = mind.getHypothesis().get(index);
         JSONObject projection = new JSONObject(((Hypothesis) selected).createMap(mind));
-        String source = ((Hypothesis) selected).toString(mind);
+        String source = ((Hypothesis) selected).toAssertionString(mind);
         String statement = String.format("%s;",
                 source.replaceAll(String.format("%c", Enums.EOLN), ""));
 
