@@ -201,6 +201,11 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                 detail.put("actions", actions);
                 result.put("rejection", detail);
             }
+            CanonicalCommandProcessor.TransactionStatus transaction =
+                    outcome.getTransactionStatus();
+            if (transaction != null) {
+                result.put("transaction_status", transactionStatus(transaction));
+            }
             CanonicalCommandProcessor.StorageStatus storage =
                     outcome.getStorageStatus();
             if (storage != null) {
@@ -228,6 +233,35 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             }
             return result;
         }
+    }
+
+    private JSONObject transactionStatus(
+            CanonicalCommandProcessor.TransactionStatus status) {
+        JSONArray levels = new JSONArray();
+        for (CanonicalCommandProcessor.TransactionLevelStatus level
+                : status.getLevels()) {
+            JSONArray collisions = new JSONArray();
+            for (CanonicalCommandProcessor.CollisionWitness witness
+                    : level.getCollisions()) {
+                collisions.put(new JSONObject()
+                        .put("left", witness.getLeft())
+                        .put("right", witness.getRight()));
+            }
+            levels.put(new JSONObject()
+                    .put("level", level.getLevel())
+                    .put("id", level.getId())
+                    .put("current", level.isCurrent())
+                    .put("compatibility", level.getCompatibility())
+                    .put("storage", level.getStorage() == null
+                            ? JSONObject.NULL : level.getStorage())
+                    .put("collisions", collisions));
+        }
+        return new JSONObject()
+                .put("schema", 1)
+                .put("current_level", status.getCurrentLevel())
+                .put("storage", status.getStorage() == null
+                        ? JSONObject.NULL : status.getStorage())
+                .put("levels", levels);
     }
 
     private JSONObject structuredHelp() {
