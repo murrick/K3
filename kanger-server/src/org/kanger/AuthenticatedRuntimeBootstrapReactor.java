@@ -30,7 +30,7 @@ final class AuthenticatedRuntimeBootstrapReactor implements IReactor<JSONObject>
         if (delegate == null) {
             throw new IllegalArgumentException("delegate must not be null");
         }
-        this.delegate = delegate;
+        this.delegate = new SourceTransportBoundaryReactor(delegate);
     }
 
     @Override
