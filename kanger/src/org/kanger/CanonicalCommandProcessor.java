@@ -82,8 +82,7 @@ public final class CanonicalCommandProcessor {
                 mind = new Mind(mind);
                 TransactionCompatibilityRegistry.markValid((Mind) mind);
                 user.setCurrentMind(mind);
-                return Result.successTransaction(mind, "New transaction created",
-                        transactionStatus(mind));
+                return Result.success(mind, "New transaction created");
 
             case TX_COMMIT:
                 return commit(user, mind);
@@ -93,13 +92,11 @@ public final class CanonicalCommandProcessor {
 
             case TX_SQUASH:
                 if (mind.getTransactionLevel() <= 1) {
-                    return Result.successTransaction(mind, "Transaction stack already compact",
-                            transactionStatus(mind));
+                    return Result.success(mind, "Transaction stack already compact");
                 }
                 mind = UserTransactionStackSnapshot.squash((Mind) mind);
                 user.setCurrentMind(mind);
-                return Result.successTransaction(mind, "Transaction history squashed",
-                        transactionStatus(mind));
+                return Result.success(mind, "Transaction history squashed");
 
             case STORAGE_STATUS:
                 StorageStatus status = storageStatus(mind);
@@ -160,27 +157,23 @@ public final class CanonicalCommandProcessor {
         IMind parent = mind.getNext();
         if (parent != null) {
             if (!((Mind) parent).commitUserTransaction(mind)) {
-                return Result.rejectedTransaction(mind, "Transaction commit rejected",
-                        null, transactionStatus(mind));
+                return Result.rejected(mind, "Transaction commit rejected");
             }
             TransactionCompatibilityRegistry.markValid((Mind) parent);
             user.setCurrentMind(parent);
-            return Result.successTransaction(parent, "Transaction committed",
-                    transactionStatus(parent));
+            return Result.success(parent, "Transaction committed");
         }
 
         IMind checkpointed = user.checkpoint(mind);
         TransactionCompatibilityRegistry.markValid((Mind) checkpointed);
         user.setCurrentMind(checkpointed);
-        return Result.successTransaction(checkpointed, "Storage checkpoint completed",
-                transactionStatus(checkpointed));
+        return Result.success(checkpointed, "Storage checkpoint completed");
     }
 
     private Result rollback(IUser user, IMind mind) throws Exception {
         IMind parent = mind.getNext();
         if (parent == null) {
-            return Result.rejectedTransaction(mind, "No transactions was created",
-                    null, transactionStatus(mind));
+            return Result.rejected(mind, "No transactions was created");
         }
 
         ContextQualification qualification =
@@ -221,14 +214,12 @@ public final class CanonicalCommandProcessor {
                 CollisionWitness first = collisions.get(0);
                 description += " (" + first.getLeft() + " <> " + first.getRight() + ")";
             }
-            return Result.rejectedTransaction(mind, description, rejection,
-                    transactionStatus(mind));
+            return Result.rejectedTransaction(mind, description, rejection, null);
         }
         TransactionCompatibilityRegistry.markValid((Mind) parent);
         parent.release(mind);
         user.setCurrentMind(parent);
-        return Result.successTransaction(parent, "Transaction rolled back",
-                transactionStatus(parent));
+        return Result.success(parent, "Transaction rolled back");
     }
 
     private TransactionStatus transactionStatus(IMind mind) throws Exception {
@@ -289,7 +280,14 @@ public final class CanonicalCommandProcessor {
         }
     }
 
-    /** Read-only compatibility state of the complete explicit U-stack. */
+    /**
+     * Read-only rollback-target compatibility of the complete explicit U-stack
+     * against the current persistent U0/storage baseline.
+     *
+     * <p>This does not claim that an effective visible higher-level context is
+     * invalid. A historical level may be incompatible only if it were made
+     * current by rollback while the present U0 baseline remained attached.</p>
+     */
     public static final class TransactionStatus {
         private final int currentLevel;
         private final String storage;
@@ -317,7 +315,7 @@ public final class CanonicalCommandProcessor {
         }
     }
 
-    /** Read-only compatibility state of one explicit U-level. */
+    /** Read-only rollback-target compatibility of one explicit U-level. */
     public static final class TransactionLevelStatus {
         private final int level;
         private final long id;
