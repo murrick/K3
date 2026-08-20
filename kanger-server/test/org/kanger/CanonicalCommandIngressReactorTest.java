@@ -129,13 +129,13 @@ class CanonicalCommandIngressReactorTest {
             assertEquals(0, capture.calls.get());
             assertTrue(first.getJSONObject(
                     CanonicalCommandIngressReactor.CONFIRMATION_FIELD)
-                    .getString("prompt").contains("victim"));
+                    .getString("prompt").contains("victim.k"));
 
             JSONObject second = (JSONObject) reactor.run(
                     confirmedDialogue(token, "put victim"));
             assertEquals("OK", second.optString("result"));
             assertEquals(1, capture.calls.get());
-            assertEquals("victim", parameters(capture.packet.get())
+            assertEquals("victim.k", parameters(capture.packet.get())
                     .optString("put"));
         } finally {
             if (source != null) {
