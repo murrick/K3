@@ -11,11 +11,18 @@ import org.junit.jupiter.api.Test;
 import org.kanger.command.CommandInvocation;
 import org.kanger.command.CommandParser;
 import org.kanger.interfaces.IReactor;
+import org.kanger.interfaces.IUser;
+import org.kanger.udf.UDF;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Characterizes the canonical .k source-name transport contract. */
@@ -49,6 +56,50 @@ class SourceNameCanonicalizationTest {
 
         assertEquals("OK", response.getString("result"));
         assertEquals("foo.k", parameters(seen.get()).getString("put"));
+    }
+
+    @Test
+    void physicalGetPutDeleteUseTheSameCanonicalFile() throws Exception {
+        String identity = "source-k-suffix-" + UUID.randomUUID().toString();
+        IUser user = UserFactory.createUser(identity, identity);
+        String token = null;
+        String logical = "roundtrip-" + UUID.randomUUID().toString();
+        Path canonical = Paths.get(user.getSourceDir()).resolve(logical + ".k");
+        Path unsuffixed = Paths.get(user.getSourceDir()).resolve(logical);
+        try {
+            new UDF().init(user);
+            user.setCurrentMind(new Mind(user));
+            token = UserFactory.addUser(user);
+
+            SourceTransportBoundaryReactor reactor = new SourceTransportBoundaryReactor(
+                    new DestructiveStopLossReactor(new IReactor<JSONObject>() {
+                        @Override
+                        public Object run(JSONObject packet) {
+                            throw new AssertionError("Source operation escaped stop-loss boundary");
+                        }
+                    }));
+
+            JSONObject put = (JSONObject) reactor.run(packet("command",
+                    new JSONObject().put("token", token).put("put", logical)));
+            assertEquals("OK", put.getString("result"), put.toString());
+            assertTrue(Files.isRegularFile(canonical));
+            assertFalse(Files.exists(unsuffixed));
+
+            JSONObject get = (JSONObject) reactor.run(packet("command",
+                    new JSONObject().put("token", token).put("get", logical)));
+            assertEquals("source_empty", get.getString("code"), get.toString());
+
+            JSONObject delete = (JSONObject) reactor.run(packet("command",
+                    new JSONObject().put("token", token).put("delete", logical)));
+            assertEquals("OK", delete.getString("result"), delete.toString());
+            assertFalse(Files.exists(canonical));
+        } finally {
+            Files.deleteIfExists(unsuffixed);
+            Files.deleteIfExists(canonical);
+            if (token != null) {
+                UserFactory.dropUser(user);
+            }
+        }
     }
 
     @Test
