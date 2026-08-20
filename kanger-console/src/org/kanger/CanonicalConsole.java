@@ -576,7 +576,7 @@ public final class CanonicalConsole {
         System.out.printf("%nHypothesis list (%d):%n", mind.getHypothesis().size());
         for (int i = 0; i < mind.getHypothesis().size(); ++i) {
             System.out.printf("\t%03d:\t%s%n", i,
-                    ((Hypothesis) mind.getHypothesis().get(i)).toString(mind));
+                    ((Hypothesis) mind.getHypothesis().get(i)).toAssertionString(mind));
         }
     }
 
@@ -586,7 +586,7 @@ public final class CanonicalConsole {
             throw new CommandErrorException("Hypothesis index out of range " + index);
         }
         IHypothesis selected = mind.getHypothesis().get(index);
-        String source = ((Hypothesis) selected).toString(mind);
+        String source = ((Hypothesis) selected).toAssertionString(mind);
         String statement = String.format("%s;",
                 source.replaceAll(String.format("%c", Enums.EOLN), ""));
         System.out.println("Statement: " + statement);
