@@ -56,6 +56,24 @@ class HypothesisAssertionRenderingTest {
         }
     }
 
+    @Test
+    void antecedentHypothesisRemainsUnchangedInAssertionForm()
+            throws Exception {
+        Fixture fixture = fixture("antecedent");
+        try {
+            Mind mind = new Mind(fixture.user);
+            fixture.user.setCurrentMind(mind);
+            Rule source = (Rule) mind.compileLine("!$y son(John,y);", false, null);
+            Hypothesis hypothesis = new Hypothesis(source, mind);
+            hypothesis.setAntc(true);
+
+            assertEquals("!$y son(John,y);", hypothesis.toString(mind));
+            assertEquals("!$y son(John,y);", hypothesis.toAssertionString(mind));
+        } finally {
+            fixture.close();
+        }
+    }
+
     private static Fixture fixture(String purpose) throws Exception {
         String identity = "hypothesis-rendering-" + purpose + "-" + UUID.randomUUID();
         IUser user = UserFactory.createUser(identity, identity);
