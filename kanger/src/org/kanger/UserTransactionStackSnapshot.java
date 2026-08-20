@@ -8,6 +8,7 @@ package org.kanger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Storage-independent snapshot of the explicit user transaction stack.
@@ -21,11 +22,18 @@ final class UserTransactionStackSnapshot {
 
     private final PortableMindLayer rootLevel;
     private final List<PortableMindLayer> levels;
+    private final String sourceStorage;
+    private final List<TransactionCompatibilityRegistry.Record> compatibilityLevels;
 
-    private UserTransactionStackSnapshot(PortableMindLayer rootLevel,
-                                         List<PortableMindLayer> levels) {
+    private UserTransactionStackSnapshot(
+            PortableMindLayer rootLevel,
+            List<PortableMindLayer> levels,
+            String sourceStorage,
+            List<TransactionCompatibilityRegistry.Record> compatibilityLevels) {
         this.rootLevel = rootLevel;
         this.levels = Collections.unmodifiableList(levels);
+        this.sourceStorage = sourceStorage;
+        this.compatibilityLevels = Collections.unmodifiableList(compatibilityLevels);
     }
 
     static UserTransactionStackSnapshot capture(Mind top) throws Exception {
@@ -34,10 +42,13 @@ final class UserTransactionStackSnapshot {
         }
         List<Mind> lineage = lineage(top);
         List<PortableMindLayer> states = new ArrayList<>();
+        List<TransactionCompatibilityRegistry.Record> compatibility = new ArrayList<>();
         for (int i = 1; i < lineage.size(); ++i) {
             states.add(PortableMindLayer.capture(lineage.get(i)));
+            compatibility.add(TransactionCompatibilityRegistry.capture(lineage.get(i)));
         }
-        return new UserTransactionStackSnapshot(null, states);
+        return new UserTransactionStackSnapshot(
+                null, states, TransactionCompatibilityRegistry.storage(top), compatibility);
     }
 
     static UserTransactionStackSnapshot captureOffline(Mind top) throws Exception {
@@ -47,13 +58,16 @@ final class UserTransactionStackSnapshot {
         List<Mind> lineage = lineage(top);
         PortableMindLayer root = PortableMindLayer.captureRoot(lineage.get(0));
         List<PortableMindLayer> states = new ArrayList<>();
+        List<TransactionCompatibilityRegistry.Record> compatibility = new ArrayList<>();
         for (int i = 1; i < lineage.size(); ++i) {
             states.add(PortableMindLayer.capture(lineage.get(i)));
+            compatibility.add(TransactionCompatibilityRegistry.capture(lineage.get(i)));
         }
-        return new UserTransactionStackSnapshot(root, states);
+        return new UserTransactionStackSnapshot(
+                root, states, TransactionCompatibilityRegistry.storage(top), compatibility);
     }
 
-    private static List<Mind> lineage(Mind top) {
+    static List<Mind> lineage(Mind top) {
         List<Mind> lineage = new ArrayList<>();
         for (Mind current = top; current != null; current = (Mind) current.getNext()) {
             lineage.add(current);
@@ -116,6 +130,7 @@ final class UserTransactionStackSnapshot {
                 throw new IllegalStateException(
                         "Replayed current context conflicts with storage baseline");
             }
+            restoreCompatibility(root, current);
             return current;
         } catch (Throwable failure) {
             Throwable propagated = failure;
@@ -129,6 +144,23 @@ final class UserTransactionStackSnapshot {
             rethrow(propagated);
             throw new AssertionError("unreachable");
         }
+    }
+
+    private void restoreCompatibility(Mind root, Mind top) throws Exception {
+        String targetStorage = TransactionCompatibilityRegistry.storage(root);
+        if (!Objects.equals(sourceStorage, targetStorage)) {
+            TransactionCompatibilityRegistry.markRebasedStack(top);
+            return;
+        }
+
+        List<Mind> replayed = lineage(top);
+        TransactionCompatibilityRegistry.markValid(replayed.get(0));
+        for (int i = 1; i < replayed.size(); ++i) {
+            TransactionCompatibilityRegistry.Record saved = i - 1 < compatibilityLevels.size()
+                    ? compatibilityLevels.get(i - 1) : null;
+            TransactionCompatibilityRegistry.restore(replayed.get(i), saved);
+        }
+        TransactionCompatibilityRegistry.markValid(top);
     }
 
     /**
@@ -173,6 +205,7 @@ final class UserTransactionStackSnapshot {
              * triggered by the intermediate releases.
              */
             rollbackToRoot(top);
+            TransactionCompatibilityRegistry.markValid(candidate);
             return candidate;
         } catch (Throwable failure) {
             Throwable propagated = failure;
