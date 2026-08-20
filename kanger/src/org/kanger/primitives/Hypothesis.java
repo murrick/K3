@@ -115,6 +115,24 @@ public class Hypothesis implements IHypothesis {
     }
 
     public String toString(IMind mind) {
+        return render(mind, false);
+    }
+
+    /**
+     * Materializes this hypothesis as a KANGER assertion without changing the
+     * hypothesis object's historical/internal polarity representation.
+     *
+     * <p>An antecedent hypothesis is already assertion-ready. A succedent
+     * hypothesis represents the negation of its proposition; assertion form
+     * therefore moves it to the antecedent and negates the predicate. Under
+     * that negation existential C-variable quantifiers become universal:
+     * {@code ?$x p(x)} becomes {@code !@x ~p(x)}.</p>
+     */
+    public String toAssertionString(IMind mind) {
+        return render(mind, true);
+    }
+
+    private String render(IMind mind, boolean assertion) {
         String line = "";
 
         try {
@@ -123,8 +141,11 @@ public class Hypothesis implements IHypothesis {
             int cptr[] = new int[getPredicate().getRange()];
 
             int ccnt = 0;
-            line += String.format("%c", antc ? Enums.ANT : Enums.SUC);
-            String tmp = getPredicate().getName(mind) + "(";
+            line += String.format("%c",
+                    assertion ? Enums.ANT : (antc ? Enums.ANT : Enums.SUC));
+            int cQuantifier = assertion && !antc ? Enums.AQN : Enums.PQN;
+            String tmp = (assertion && !antc ? String.format("%c", Enums.NOT) : "")
+                    + getPredicate().getName(mind) + "(";
             for (i = 0; i < getPredicate().getRange(); ++i) {
                 if (!getArguments().get(i).isEmpty(null) && getArguments().get(i).getValue(null).isCVariable()) {
                     String qnt = "";
@@ -137,7 +158,7 @@ public class Hypothesis implements IHypothesis {
                     if (j == ccnt) {
                         cnum[ccnt] = id;
                         id = cptr[ccnt++] = i;
-                        qnt = String.format("%c%s", Enums.PQN, cVarName(id));
+                        qnt = String.format("%c%s", cQuantifier, cVarName(id));
                         line += qnt + " ";
                     } else {
                         id = cptr[j];
