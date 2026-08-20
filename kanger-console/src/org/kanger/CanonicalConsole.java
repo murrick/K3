@@ -11,6 +11,7 @@ import org.kanger.command.CommandInvocation;
 import org.kanger.command.CommandParseException;
 import org.kanger.command.CommandParser;
 import org.kanger.command.SortKey;
+import org.kanger.command.SourceNamePolicy;
 import org.kanger.compiler.Token;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
@@ -632,7 +633,8 @@ public final class CanonicalConsole {
         List<String> names = new ArrayList<String>();
         if (files != null) {
             for (File file : files) {
-                if (!file.isDirectory() && file.getName().contains(".k")) {
+                if (!file.isDirectory()
+                        && SourceNamePolicy.isCanonicalSourceFileName(file.getName())) {
                     names.add(file.getName());
                 }
             }
