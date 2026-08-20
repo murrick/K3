@@ -256,7 +256,7 @@ public final class CanonicalConsole {
                         showRejection(transaction.getRejection());
                     }
                 }
-                showTransaction(mind);
+                showTransaction(transaction.getTransactionStatus(), mind);
                 return same(mind);
 
             case SOURCE_GET:
@@ -601,9 +601,30 @@ public final class CanonicalConsole {
         }
     }
 
-    private static void showTransaction(IMind mind) {
-        System.out.printf("Transaction level %d (%d)%n",
-                mind.getTransactionLevel(), mind.getId());
+    private static void showTransaction(
+            CanonicalCommandProcessor.TransactionStatus status,
+            IMind mind) {
+        if (status == null) {
+            System.out.printf("Transaction level %d (%d)%n",
+                    mind.getTransactionLevel(), mind.getId());
+            return;
+        }
+        System.out.printf("Transaction stack: U%d current, storage %s%n",
+                status.getCurrentLevel(),
+                status.getStorage() == null ? "none" : status.getStorage());
+        for (CanonicalCommandProcessor.TransactionLevelStatus level
+                : status.getLevels()) {
+            System.out.printf("  U%d  %-12s  id=%d%s%n",
+                    level.getLevel(),
+                    level.getCompatibility(),
+                    level.getId(),
+                    level.isCurrent() ? "  [current]" : "");
+            for (CanonicalCommandProcessor.CollisionWitness witness
+                    : level.getCollisions()) {
+                System.out.printf("      collision: %s <> %s%n",
+                        witness.getLeft(), witness.getRight());
+            }
+        }
     }
 
     private static void showSourceNames(IMind mind) {
