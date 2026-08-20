@@ -47,7 +47,8 @@ public final class CommandInvocation {
         }
         Map<String, Object> args = arguments == null
                 ? Collections.<String, Object>emptyMap() : arguments;
-        return new CommandInvocation(Kind.COMMAND, intent, args, raw);
+        return new CommandInvocation(
+                Kind.COMMAND, intent, normalizeArguments(intent, args), raw);
     }
 
     public static CommandInvocation command(CommandIntent intent, String raw) {
@@ -84,5 +85,25 @@ public final class CommandInvocation {
 
     public String getRaw() {
         return raw;
+    }
+
+    private static Map<String, Object> normalizeArguments(
+            CommandIntent intent, Map<String, Object> arguments) {
+        Map<String, Object> normalized =
+                new LinkedHashMap<String, Object>(arguments);
+        if (isSourceIntent(intent)) {
+            Object source = normalized.get("source");
+            if (source instanceof String && !((String) source).trim().isEmpty()) {
+                normalized.put("source",
+                        SourceNamePolicy.canonicalize((String) source));
+            }
+        }
+        return normalized;
+    }
+
+    private static boolean isSourceIntent(CommandIntent intent) {
+        return intent == CommandIntent.SOURCE_GET
+                || intent == CommandIntent.SOURCE_PUT
+                || intent == CommandIntent.SOURCE_DELETE;
     }
 }
