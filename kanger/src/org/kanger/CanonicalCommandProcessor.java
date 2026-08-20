@@ -76,12 +76,14 @@ public final class CanonicalCommandProcessor {
 
         switch (invocation.getIntent()) {
             case TX_STATUS:
-                return Result.success(mind, "");
+                return Result.successTransaction(mind, "", transactionStatus(mind));
 
             case TX_START:
                 mind = new Mind(mind);
+                TransactionCompatibilityRegistry.markValid((Mind) mind);
                 user.setCurrentMind(mind);
-                return Result.success(mind, "New transaction created");
+                return Result.successTransaction(mind, "New transaction created",
+                        transactionStatus(mind));
 
             case TX_COMMIT:
                 return commit(user, mind);
@@ -91,11 +93,13 @@ public final class CanonicalCommandProcessor {
 
             case TX_SQUASH:
                 if (mind.getTransactionLevel() <= 1) {
-                    return Result.success(mind, "Transaction stack already compact");
+                    return Result.successTransaction(mind, "Transaction stack already compact",
+                            transactionStatus(mind));
                 }
                 mind = UserTransactionStackSnapshot.squash((Mind) mind);
                 user.setCurrentMind(mind);
-                return Result.success(mind, "Transaction history squashed");
+                return Result.successTransaction(mind, "Transaction history squashed",
+                        transactionStatus(mind));
 
             case STORAGE_STATUS:
                 StorageStatus status = storageStatus(mind);
@@ -156,26 +160,34 @@ public final class CanonicalCommandProcessor {
         IMind parent = mind.getNext();
         if (parent != null) {
             if (!((Mind) parent).commitUserTransaction(mind)) {
-                return Result.rejected(mind, "Transaction commit rejected");
+                return Result.rejectedTransaction(mind, "Transaction commit rejected",
+                        null, transactionStatus(mind));
             }
+            TransactionCompatibilityRegistry.markValid((Mind) parent);
             user.setCurrentMind(parent);
-            return Result.success(parent, "Transaction committed");
+            return Result.successTransaction(parent, "Transaction committed",
+                    transactionStatus(parent));
         }
 
         IMind checkpointed = user.checkpoint(mind);
+        TransactionCompatibilityRegistry.markValid((Mind) checkpointed);
         user.setCurrentMind(checkpointed);
-        return Result.success(checkpointed, "Storage checkpoint completed");
+        return Result.successTransaction(checkpointed, "Storage checkpoint completed",
+                transactionStatus(checkpointed));
     }
 
     private Result rollback(IUser user, IMind mind) throws Exception {
         IMind parent = mind.getNext();
         if (parent == null) {
-            return Result.rejected(mind, "No transactions was created");
+            return Result.rejectedTransaction(mind, "No transactions was created",
+                    null, transactionStatus(mind));
         }
 
         ContextQualification qualification =
                 ((Mind) parent).qualifyCurrentContext(false);
         if (!qualification.isValid()) {
+            TransactionCompatibilityRegistry.markIncompatible(
+                    (Mind) parent, qualification);
             List<CollisionWitness> collisions = new ArrayList<CollisionWitness>();
             for (ContextQualification.CollisionWitness witness
                     : qualification.getCollisions()) {
@@ -209,11 +221,38 @@ public final class CanonicalCommandProcessor {
                 CollisionWitness first = collisions.get(0);
                 description += " (" + first.getLeft() + " <> " + first.getRight() + ")";
             }
-            return Result.rejected(mind, description, rejection);
+            return Result.rejectedTransaction(mind, description, rejection,
+                    transactionStatus(mind));
         }
+        TransactionCompatibilityRegistry.markValid((Mind) parent);
         parent.release(mind);
         user.setCurrentMind(parent);
-        return Result.success(parent, "Transaction rolled back");
+        return Result.successTransaction(parent, "Transaction rolled back",
+                transactionStatus(parent));
+    }
+
+    private TransactionStatus transactionStatus(IMind mind) throws Exception {
+        List<Mind> lineage = UserTransactionStackSnapshot.lineage((Mind) mind);
+        List<TransactionLevelStatus> levels = new ArrayList<TransactionLevelStatus>();
+        for (Mind level : lineage) {
+            TransactionCompatibilityRegistry.Record record =
+                    TransactionCompatibilityRegistry.status(level);
+            List<CollisionWitness> collisions = new ArrayList<CollisionWitness>();
+            for (TransactionCompatibilityRegistry.Witness witness : record.getCollisions()) {
+                collisions.add(new CollisionWitness(witness.getLeft(), witness.getRight()));
+            }
+            levels.add(new TransactionLevelStatus(
+                    level.getTransactionLevel(),
+                    level.getId(),
+                    level == mind,
+                    record.getCompatibility().name(),
+                    record.getStorage(),
+                    collisions));
+        }
+        return new TransactionStatus(
+                mind.getTransactionLevel(),
+                mind.isStorageUsed() ? mind.getStorageName() : null,
+                levels);
     }
 
     private StorageStatus storageStatus(IMind mind) throws Exception {
@@ -247,6 +286,83 @@ public final class CanonicalCommandProcessor {
 
         public boolean isUsed() {
             return current != null;
+        }
+    }
+
+    /** Read-only compatibility state of the complete explicit U-stack. */
+    public static final class TransactionStatus {
+        private final int currentLevel;
+        private final String storage;
+        private final List<TransactionLevelStatus> levels;
+
+        private TransactionStatus(int currentLevel,
+                                  String storage,
+                                  List<TransactionLevelStatus> levels) {
+            this.currentLevel = currentLevel;
+            this.storage = storage;
+            this.levels = Collections.unmodifiableList(
+                    new ArrayList<TransactionLevelStatus>(levels));
+        }
+
+        public int getCurrentLevel() {
+            return currentLevel;
+        }
+
+        public String getStorage() {
+            return storage;
+        }
+
+        public List<TransactionLevelStatus> getLevels() {
+            return levels;
+        }
+    }
+
+    /** Read-only compatibility state of one explicit U-level. */
+    public static final class TransactionLevelStatus {
+        private final int level;
+        private final long id;
+        private final boolean current;
+        private final String compatibility;
+        private final String storage;
+        private final List<CollisionWitness> collisions;
+
+        private TransactionLevelStatus(int level,
+                                       long id,
+                                       boolean current,
+                                       String compatibility,
+                                       String storage,
+                                       List<CollisionWitness> collisions) {
+            this.level = level;
+            this.id = id;
+            this.current = current;
+            this.compatibility = compatibility;
+            this.storage = storage;
+            this.collisions = Collections.unmodifiableList(
+                    new ArrayList<CollisionWitness>(collisions));
+        }
+
+        public int getLevel() {
+            return level;
+        }
+
+        public long getId() {
+            return id;
+        }
+
+        public boolean isCurrent() {
+            return current;
+        }
+
+        public String getCompatibility() {
+            return compatibility;
+        }
+
+        public String getStorage() {
+            return storage;
+        }
+
+        public List<CollisionWitness> getCollisions() {
+            return collisions;
         }
     }
 
@@ -352,43 +468,55 @@ public final class CanonicalCommandProcessor {
         private final String description;
         private final StorageStatus storageStatus;
         private final Rejection rejection;
+        private final TransactionStatus transactionStatus;
 
         private Result(boolean handled,
                        boolean success,
                        IMind mind,
                        String description,
                        StorageStatus storageStatus,
-                       Rejection rejection) {
+                       Rejection rejection,
+                       TransactionStatus transactionStatus) {
             this.handled = handled;
             this.success = success;
             this.mind = mind;
             this.description = description == null ? "" : description;
             this.storageStatus = storageStatus;
             this.rejection = rejection;
+            this.transactionStatus = transactionStatus;
         }
 
         private static Result unhandled(IMind mind) {
-            return new Result(false, false, mind, "", null, null);
+            return new Result(false, false, mind, "", null, null, null);
         }
 
         private static Result success(IMind mind, String description) {
-            return new Result(true, true, mind, description, null, null);
+            return new Result(true, true, mind, description, null, null, null);
         }
 
         private static Result success(IMind mind,
                                       String description,
                                       StorageStatus storageStatus) {
-            return new Result(true, true, mind, description, storageStatus, null);
+            return new Result(true, true, mind, description, storageStatus, null, null);
+        }
+
+        private static Result successTransaction(IMind mind,
+                                                 String description,
+                                                 TransactionStatus transactionStatus) {
+            return new Result(true, true, mind, description, null, null,
+                    transactionStatus);
         }
 
         private static Result rejected(IMind mind, String description) {
-            return new Result(true, false, mind, description, null, null);
+            return new Result(true, false, mind, description, null, null, null);
         }
 
-        private static Result rejected(IMind mind,
-                                       String description,
-                                       Rejection rejection) {
-            return new Result(true, false, mind, description, null, rejection);
+        private static Result rejectedTransaction(IMind mind,
+                                                  String description,
+                                                  Rejection rejection,
+                                                  TransactionStatus transactionStatus) {
+            return new Result(true, false, mind, description, null, rejection,
+                    transactionStatus);
         }
 
         public boolean isHandled() {
@@ -413,6 +541,10 @@ public final class CanonicalCommandProcessor {
 
         public Rejection getRejection() {
             return rejection;
+        }
+
+        public TransactionStatus getTransactionStatus() {
+            return transactionStatus;
         }
     }
 }
