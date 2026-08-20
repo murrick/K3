@@ -34,6 +34,7 @@ class HypothesisAssertionRenderingTest {
 
             assertEquals("?$y son(John,y);", hypothesis.toString(mind));
             assertEquals("!@y ~son(John,y);", hypothesis.toAssertionString(mind));
+            assertEquals("!@y ~son(John,y);", hypothesis.createMap(mind).get("origin"));
         } finally {
             fixture.close();
         }
@@ -51,6 +52,7 @@ class HypothesisAssertionRenderingTest {
 
             assertEquals("?female(Tom);", hypothesis.toString(mind));
             assertEquals("!~female(Tom);", hypothesis.toAssertionString(mind));
+            assertEquals("!~female(Tom);", hypothesis.createMap(mind).get("origin"));
         } finally {
             fixture.close();
         }
@@ -69,6 +71,7 @@ class HypothesisAssertionRenderingTest {
 
             assertEquals("!$y son(John,y);", hypothesis.toString(mind));
             assertEquals("!$y son(John,y);", hypothesis.toAssertionString(mind));
+            assertEquals("!$y son(John,y);", hypothesis.createMap(mind).get("origin"));
         } finally {
             fixture.close();
         }
