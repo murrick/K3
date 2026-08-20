@@ -280,10 +280,16 @@ public final class CommandParserConformanceTest {
                 "source", "");
         expectArgument("delete foo.k", CommandIntent.SOURCE_DELETE,
                 "source", "foo.k");
+        expectArgument("get foo", CommandIntent.SOURCE_GET,
+                "source", "foo.k");
+        expectArgument("get foo.K", CommandIntent.SOURCE_GET,
+                "source", "foo.k");
+        expectArgument("put foo.txt", CommandIntent.SOURCE_PUT,
+                "source", "foo.txt.k");
         expectArgument("get delete", CommandIntent.SOURCE_GET,
-                "source", "delete");
+                "source", "delete.k");
         expectArgument("get 123", CommandIntent.SOURCE_GET,
-                "source", "123");
+                "source", "123.k");
         expectArgument("get \"my source.k\"", CommandIntent.SOURCE_GET,
                 "source", "my source.k");
         expectArgument("put \"My Source.k\"", CommandIntent.SOURCE_PUT,
@@ -386,6 +392,7 @@ public final class CommandParserConformanceTest {
         expectCanonical("re demo", "storage reindex demo");
         expectCanonical("g", "get");
         expectCanonical("de", "delete");
+        expectCanonical("g foo", "get foo.k");
         expectCanonical("g \"my source.k\"", "get \"my source.k\"");
         expectCanonical("?father(John,Tom)", "?father(John,Tom)");
     }
