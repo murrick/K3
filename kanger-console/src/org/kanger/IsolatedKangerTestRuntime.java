@@ -7,7 +7,7 @@ package org.kanger;
 
 import org.kanger.interfaces.IMind;
 import org.kanger.storage.DB;
-import org.kanger.test.KangerVisualTestRunner;
+import org.kanger.test.KangerVisualTestHarness;
 import org.kanger.udf.UDF;
 
 import java.io.File;
@@ -55,7 +55,7 @@ final class IsolatedKangerTestRuntime {
 
             System.out.println("Visual test runtime: isolated "
                     + (database ? "database" : "offline"));
-            return KangerVisualTestRunner.test(mind, "set_" + prefix);
+            return KangerVisualTestHarness.test(mind, "set_" + prefix);
         } catch (Throwable error) {
             failure = error;
             throw error;
