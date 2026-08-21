@@ -34,7 +34,6 @@ import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.*;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.stores.HypothesisStore;
-import org.kanger.stores.ValuesStore;
 import org.kanger.test.KangerTest;
 import org.kanger.units.Rule;
 
@@ -422,8 +421,6 @@ public class Console {
         System.out.println("Values of vars and funcs showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) == 0 ? "NO" : "YES"));
         System.out.println("Status of statements and rules showed in logs: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) == 0 ? "NO" : "YES"));
         System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "NO" : "YES"));
-        System.out.println("Order for sorting values: " +
-                (mind.getOrder().isEmpty() ? "natural" : (mind.getOrder() + " " + (mind.isAscending() ? "ASCEND" : "DESCEND"))));
     }
 
     private static void options(String line, IMind mind, Scanner sc) throws Exception {
@@ -489,20 +486,6 @@ public class Console {
                                 : mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RTLOGS);
                     }
                     System.out.println("Log showing runtime: " + ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0 ? "NO" : "YES"));
-                    break;
-                case 'O':
-                    if (line.split(" ").length > 2) {
-                        String order = line.split(" ")[2];
-                        boolean ascend = true;
-                        if (line.split(" ").length > 3) {
-                            ascend = line.split(" ")[3].trim().toUpperCase().charAt(0) != 'D';
-                        }
-                        ((ValuesStore) mind.getValues()).clear();
-                        mind.setOrder("-".equals(order) ? "" : order);
-                        mind.setAscending(ascend);
-                    }
-                    System.out.println("Order for sorting values: " +
-                            (mind.getOrder().isEmpty() ? "natural" : (mind.getOrder() + " " + (mind.isAscending() ? "ASCEND" : "DESCEND"))));
                     break;
                 case 'X':
                     System.out.println(Diagnostics.snapshot(mind, "console"));
@@ -982,9 +965,6 @@ public class Console {
                 "Available options:\n\n"
                         + "   options help                     - Get this message\n"
                         + "\n"
-                        + "   options order <var> [asc|desc] - Set sort order for results to column\n"
-                        + "                                    with name using ASCEND or DESCEND order\n"
-                        + "   options order -                - Set sort order to natural order\n"
                         + "   options debug [yes|no]         - Show debug information in logs\n"
                         + "   options values [yes|no]        - Values of vars and funcs showed in logs\n"
                         + "   options status [yes|no]        - Status of statements and rules showed in logs\n"
