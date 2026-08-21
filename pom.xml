@@ -141,6 +141,23 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>embed-console-terminal-dependency</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <unzip src="${project.basedir}/lib/jline-3.13.0.jar"
+                                       dest="${project.build.outputDirectory}">
+                                    <patternset>
+                                        <exclude name="META-INF/MANIFEST.MF"/>
+                                    </patternset>
+                                </unzip>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>stage-qualification-launchers</id>
                         <phase>verify</phase>
                         <goals>
