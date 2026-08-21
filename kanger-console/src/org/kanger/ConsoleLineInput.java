@@ -56,9 +56,7 @@ final class ConsoleLineInput implements AutoCloseable {
     static ConsoleLineInput open(IUser user) throws Exception {
         int historySize = historySize(user);
         Path historyFile = Paths.get(user.getUserDir(), HISTORY_FILE_NAME);
-        Terminal terminal = TerminalBuilder.builder()
-                .system(true)
-                .build();
+        Terminal terminal = openTerminal();
         DefaultHistory history = new DefaultHistory();
         LineReader reader = LineReaderBuilder.builder()
                 .terminal(terminal)
@@ -70,6 +68,19 @@ final class ConsoleLineInput implements AutoCloseable {
                 .variable(LineReader.HISTORY_FILE_SIZE, historySize)
                 .build();
         return new ConsoleLineInput(terminal, reader, history);
+    }
+
+    private static Terminal openTerminal() throws IOException {
+        if (System.console() != null) {
+            return TerminalBuilder.builder()
+                    .system(true)
+                    .build();
+        }
+        return TerminalBuilder.builder()
+                .system(false)
+                .streams(System.in, System.out)
+                .type("dumb")
+                .build();
     }
 
     String readCommand() throws IOException {
