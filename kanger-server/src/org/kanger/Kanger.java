@@ -75,17 +75,18 @@ public class Kanger {
 
                 Watchdog.log("HTTP Server starting...");
                 httpServer = new HttpServer();
-                httpServer.start(new SessionSerializingReactor(
-                        new MailBoundaryReactor(
-                                new AuthenticatedRuntimeBootstrapReactor(
-                                        new CanonicalCommandIngressReactor(
-                                                new WorkspaceStateReactor(
-                                                        new CanonicalCommandRuntimeReactor(
-                                                                new ExplicitStorageLifecycleReactor(
-                                                                        new GetSourceBoundaryReactor(
-                                                                                new DestructiveStopLossReactor(
-                                                                                        new MindLifecycleReactor(
-                                                                                                new QueryProcessor())))))))))));
+                httpServer.start(new CanonicalErrorBoundaryReactor(
+                        new SessionSerializingReactor(
+                                new MailBoundaryReactor(
+                                        new AuthenticatedRuntimeBootstrapReactor(
+                                                new CanonicalCommandIngressReactor(
+                                                        new WorkspaceStateReactor(
+                                                                new CanonicalCommandRuntimeReactor(
+                                                                        new ExplicitStorageLifecycleReactor(
+                                                                                new GetSourceBoundaryReactor(
+                                                                                        new DestructiveStopLossReactor(
+                                                                                                new MindLifecycleReactor(
+                                                                                                        new QueryProcessor()))))))))))));
             } finally {
                 shutdownServer();
                 System.out.println("FORCE REBOOT Server");
