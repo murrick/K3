@@ -33,20 +33,32 @@ import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.units.TValue;
-import org.kanger.units.TVariable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
- * Created by Dmitry G. Quznetsov on 28.05.15.
+ * Query-local Values membership store.
+ *
+ * <p>Membership is insertion ordered and independent from presentation
+ * ordering. Historical mutable order settings remain temporarily exposed for
+ * API compatibility, but they must never change row identity or storage.</p>
  */
 public class ValuesStore implements IFactory<Map<String, ITerm>> {
 
-    private Set<ComparableArgumentsList> root = new LinkedHashSet<>();
+    private final Set<ArgumentsList> root = new LinkedHashSet<>();
 
     private final Mind mind;
-    private String order = "";              // Порядок сортировки - имя переменной
-    private boolean ascending = true;       // Вперед/назад
+    private String order = "";
+    private boolean ascending = true;
 
     public ValuesStore(Mind mind) {
         this.mind = mind;
@@ -55,26 +67,17 @@ public class ValuesStore implements IFactory<Map<String, ITerm>> {
     public void commit(ValuesStore base) {
         clear();
         if (!base.isEmpty()) {
-            getRoot().addAll(base.root);
+            root.addAll(base.root);
         }
     }
 
-    public Set<ComparableArgumentsList> getRoot() {
-        if (order.isEmpty() && root instanceof SortedSet) {
-            Set<ComparableArgumentsList> tmp = new LinkedHashSet<>();
-            tmp.addAll(root);
-            root = tmp;
-        } else if (!order.isEmpty() && !(root instanceof SortedSet)) {
-            Set<ComparableArgumentsList> tmp = new TreeSet<>();
-            tmp.addAll(root);
-            root = tmp;
-        }
+    public Set<ArgumentsList> getRoot() {
         return root;
     }
 
     public void add(Collection<TValue> raw) {
         if (!raw.isEmpty()) {
-            ComparableArgumentsList row = new ComparableArgumentsList();
+            ArgumentsList row = new ArgumentsList();
             for (IUnit one : raw) {
                 TValue value = (TValue) one;
                 try {
@@ -87,15 +90,15 @@ public class ValuesStore implements IFactory<Map<String, ITerm>> {
                 }
                 row.add(new Argument(one));
             }
-            if (!row.isEmpty() && !getRoot().contains(row)) {
-                getRoot().add(row);
+            if (!row.isEmpty() && !root.contains(row)) {
+                root.add(row);
             }
         }
     }
 
     public List<ITerm> getValues(String name) throws Exception {
         List<ITerm> list = new ArrayList<>();
-        for (ArgumentsList row : getRoot()) {
+        for (ArgumentsList row : root) {
             for (IArgument t : row) {
                 if (name == null || name.equals(((TValue) t.getObject(mind)).getTVar(mind).getName(mind).getValue())) {
                     list.add(((TValue) t.getObject(mind)).getValue(mind));
@@ -149,47 +152,9 @@ public class ValuesStore implements IFactory<Map<String, ITerm>> {
         return new ValuesIterator();
     }
 
-    public class ComparableArgumentsList extends ArgumentsList implements Comparable<ArgumentsList> {
-
-        @Override
-        public int compareTo(ArgumentsList arguments) {
-            try {
-                ITerm t1 = null;
-                ITerm t2 = null;
-                for (IArgument a : this) {
-                    if (order.equals(((TValue) a.getObject(mind)).getTVar(mind).getName(mind))) {
-                        t1 = ((TValue) a.getObject(mind)).getValue(mind);
-                    }
-                }
-                for (IArgument a : arguments) {
-                    if (order.equals(((TValue) a.getObject(mind)).getTVar(mind).getName(mind))) {
-                        t2 = ((TValue) a.getObject(mind)).getValue(mind);
-                    }
-                }
-                if (t1 != null && t2 != null) {
-                    if (ascending) {
-                        return t1.compareTo(t2);
-                    } else {
-                        return t2.compareTo(t1);
-                    }
-                } else if (t1 != null) {
-                    return ascending ? 1 : -1;
-                } else if (t2 != null) {
-                    return ascending ? -1 : 1;
-                } else {
-                    return ((TValue) get(0).getObject(mind)).getValue(mind).compareTo(((TValue) arguments.get(0).getObject(mind)).getValue(mind));
-                }
-            } catch (Exception e) {
-                System.err.println(new Date());
-                e.printStackTrace(System.err);
-                return 0;
-            }
-        }
-    }
-
     public class ValuesIterator implements Iterator<Map<String, ITerm>> {
 
-        Iterator<ComparableArgumentsList> iterator = getRoot().iterator();
+        private final Iterator<ArgumentsList> iterator = root.iterator();
 
         @Override
         public boolean hasNext() {
@@ -201,7 +166,8 @@ public class ValuesStore implements IFactory<Map<String, ITerm>> {
             SortedMap<String, ITerm> row = new TreeMap<>();
             for (IArgument v : iterator.next()) {
                 try {
-                    row.put(((TValue) v.getObject(mind)).getTVar(mind).getName(mind).toString(), ((TValue) v.getObject(mind)).getValue(mind));
+                    row.put(((TValue) v.getObject(mind)).getTVar(mind).getName(mind).toString(),
+                            ((TValue) v.getObject(mind)).getValue(mind));
                 } catch (Exception e) {
                     System.err.println(new Date());
                     e.printStackTrace(System.err);
@@ -212,7 +178,6 @@ public class ValuesStore implements IFactory<Map<String, ITerm>> {
 
         @Override
         public void remove() {
-
         }
     }
 }
