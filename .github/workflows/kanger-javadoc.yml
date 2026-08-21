@@ -63,6 +63,7 @@ jobs:
             -docencoding UTF-8 \
             -charset UTF-8 \
             -Xdoclint:none \
+            -classpath lib/jline-3.13.0.jar \
             -d build/javadoc \
             @build/javadoc-sources.txt
 
