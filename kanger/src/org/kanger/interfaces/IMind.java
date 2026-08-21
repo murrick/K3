@@ -25,9 +25,15 @@
 
 package org.kanger.interfaces;
 
+import org.kanger.ValuesOrder;
 import org.kanger.enums.LogMode;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -175,7 +181,6 @@ public interface IMind {
      */
     boolean compile(String source, Object[] ext) throws Exception;
 
-
     /**
      * Применить все изменения ранее созданной транзакции. Пример:
      * <pre>
@@ -270,6 +275,63 @@ public interface IMind {
      * @return хранилище результатов.
      */
     IFactory<Map<String, ITerm>> getValues();
+
+    /**
+     * Получить invocation-local snapshot Values, упорядоченный по переданным
+     * ключам. Сортировка стабильна, multi-key и не изменяет membership либо
+     * порядок хранения {@link #getValues()}.
+     *
+     * @param order ключи сортировки в порядке приоритета
+     * @return новый список строк Values
+     * @throws Exception если сравнение термов не может быть выполнено
+     */
+    default List<Map<String, ITerm>> getValues(final ValuesOrder... order) throws Exception {
+        if (order == null) {
+            throw new IllegalArgumentException("order must not be null");
+        }
+        for (ValuesOrder key : order) {
+            if (key == null) {
+                throw new IllegalArgumentException("order key must not be null");
+            }
+        }
+
+        List<Map<String, ITerm>> rows = new ArrayList<>();
+        for (Map<String, ITerm> row : getValues()) {
+            rows.add(new LinkedHashMap<>(row));
+        }
+
+        if (order.length == 0 || rows.size() < 2) {
+            return rows;
+        }
+
+        Collections.sort(rows, new Comparator<Map<String, ITerm>>() {
+            @Override
+            public int compare(Map<String, ITerm> left, Map<String, ITerm> right) {
+                for (ValuesOrder key : order) {
+                    ITerm l = left.get(key.getField());
+                    ITerm r = right.get(key.getField());
+                    int compared;
+                    if (l == null && r == null) {
+                        compared = 0;
+                    } else if (l == null) {
+                        compared = -1;
+                    } else if (r == null) {
+                        compared = 1;
+                    } else {
+                        compared = l.compareTo(r);
+                    }
+                    if (key.getDirection() == ValuesOrder.Direction.DESC) {
+                        compared = -compared;
+                    }
+                    if (compared != 0) {
+                        return compared;
+                    }
+                }
+                return 0;
+            }
+        });
+        return rows;
+    }
 
     /**
      * Получить хранилище решений. Позволяет получить все решения, появившиеся
