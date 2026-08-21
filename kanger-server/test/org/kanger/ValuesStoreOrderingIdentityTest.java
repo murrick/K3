@@ -30,14 +30,16 @@ class ValuesStoreOrderingIdentityTest {
         Fixture fixture = fixture();
 
         assertEquals(2, fixture.values.size(), "setup must contain two distinct rows");
-        fixture.mind.setOrder("x");
+        List<Map<String, ITerm>> ordered = fixture.mind.getValues(ValuesOrder.asc("x"));
 
+        assertEquals(2, ordered.size(),
+                "presentation ordering must never change Values membership");
         int observed = 0;
         for (Map<String, ITerm> ignored : fixture.mind.getValues()) {
             observed++;
         }
         assertEquals(2, observed,
-                "presentation ordering must never change Values membership");
+                "ordered projection must leave raw Values membership intact");
     }
 
     @Test
