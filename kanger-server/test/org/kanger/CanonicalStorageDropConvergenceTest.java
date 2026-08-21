@@ -178,9 +178,10 @@ class CanonicalStorageDropConvergenceTest {
                         "Canonical storage drop escaped into legacy runtime");
             }
         };
-        return new CanonicalCommandIngressReactor(
-                new WorkspaceStateReactor(
-                        new CanonicalCommandRuntimeReactor(legacy)));
+        return new CanonicalErrorBoundaryReactor(
+                new CanonicalCommandIngressReactor(
+                        new WorkspaceStateReactor(
+                                new CanonicalCommandRuntimeReactor(legacy))));
     }
 
     private JSONObject invoke(IReactor<JSONObject> reactor,

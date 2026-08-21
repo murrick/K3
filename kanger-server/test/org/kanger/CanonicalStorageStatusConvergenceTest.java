@@ -145,9 +145,10 @@ class CanonicalStorageStatusConvergenceTest {
                             "Canonical storage status escaped into legacy runtime");
                 }
             };
-            IReactor<JSONObject> reactor = new CanonicalCommandIngressReactor(
-                    new WorkspaceStateReactor(
-                            new CanonicalCommandRuntimeReactor(legacy)));
+            IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                    new CanonicalCommandIngressReactor(
+                            new WorkspaceStateReactor(
+                                    new CanonicalCommandRuntimeReactor(legacy))));
 
             JSONObject response = invoke(reactor, fixture.token, "storage");
 
@@ -182,9 +183,10 @@ class CanonicalStorageStatusConvergenceTest {
                             "Canonical storage use escaped into legacy runtime");
                 }
             };
-            IReactor<JSONObject> reactor = new CanonicalCommandIngressReactor(
-                    new WorkspaceStateReactor(
-                            new CanonicalCommandRuntimeReactor(legacy)));
+            IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                    new CanonicalCommandIngressReactor(
+                            new WorkspaceStateReactor(
+                                    new CanonicalCommandRuntimeReactor(legacy))));
             String logical = "browser.use." + UUID.randomUUID();
             String physical = logical.replace(".", Enums.FILE_SEPARATOR);
 
