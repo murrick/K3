@@ -42,7 +42,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 /**
  * Canonical Java Console session adapter.
@@ -70,91 +69,100 @@ public final class CanonicalConsole {
     public static void session(IMind mind, ShutdownHook shutdownHook) throws Exception {
         boolean stop = false;
         String lastQuery = "";
-        Scanner scanner = new Scanner(System.in);
+        ConsoleLineInput input = ConsoleLineInput.open(mind.getUser());
         mind = track(shutdownHook, mind);
 
-        while (!stop) {
-            String line = "";
-            try {
-                mind = track(shutdownHook, mind);
-                line = accept(scanner);
-                if (line == null) {
-                    line = "";
-                }
-
-                String trimmed = line.trim();
-                if (trimmed.length() > 1
-                        && (trimmed.startsWith("//") || trimmed.startsWith("/*"))) {
-                    if (!lastComments.isEmpty()) {
-                        lastComments += Enums.LINE_SEPARATOR;
-                    }
-                    lastComments += line;
-                    continue;
-                }
-
-                if ("z".equalsIgnoreCase(trimmed)) {
-                    if (lastQuery.isEmpty()) {
+        try {
+            while (!stop) {
+                String line = "";
+                try {
+                    mind = track(shutdownHook, mind);
+                    line = input.readCommand();
+                    if (line == null) {
                         continue;
                     }
-                    line = lastQuery;
-                    trimmed = line.trim();
-                    System.out.println("\n: " + line);
-                }
 
-                if (trimmed.isEmpty()) {
-                    Console.showCopyrigt();
-                    continue;
-                }
-
-                if (isBareSourceList(trimmed)) {
-                    showSourceNames(mind);
-                    continue;
-                }
-
-                if (isXplain(trimmed)) {
-                    processXplain(trimmed, mind, scanner);
-                    continue;
-                }
-
-                if (isHiddenTestCommand(trimmed)) {
-                    processHiddenTest(trimmed);
-                    continue;
-                }
-
-                CommandInvocation invocation = PARSER.parse(line);
-                if (invocation.isCoreLanguage()) {
-                    if (trimmed.charAt(0) == Enums.SUC) {
-                        lastQuery = line;
+                    String trimmed = line.trim();
+                    if (trimmed.length() > 1
+                            && (trimmed.startsWith("//") || trimmed.startsWith("/*"))) {
+                        if (!lastComments.isEmpty()) {
+                            lastComments += Enums.LINE_SEPARATOR;
+                        }
+                        lastComments += line;
+                        continue;
                     }
-                    processCore(line, mind);
-                    continue;
-                }
 
-                DispatchResult result = dispatch(invocation, mind, scanner, shutdownHook);
-                mind = track(shutdownHook, result.mind);
-                stop = result.stop;
-            } catch (CommandParseException ex) {
-                System.err.printf("ERROR: %s: %s%n", ex.getReason(), ex.getMessage());
-            } catch (ParseErrorException ex) {
-                showParseError(ex, lastQuery);
-            } catch (CommandErrorException ex) {
-                System.err.println(ex.toString());
-            } catch (StorageLifecycleException ex) {
-                String action = ex.getRequiredAction();
-                System.err.printf("ERROR: %s%s: %s%n",
-                        ex.getCode(),
-                        action == null || action.isEmpty() ? "" : " [" + action + "]",
-                        ex.toString());
-            } catch (RuntimeErrorException ex) {
-                System.err.println(ex.toString());
+                    if ("z".equalsIgnoreCase(trimmed)) {
+                        if (lastQuery.isEmpty()) {
+                            continue;
+                        }
+                        line = lastQuery;
+                        trimmed = line.trim();
+                        System.out.println("\n: " + line);
+                    }
+
+                    if (trimmed.isEmpty()) {
+                        Console.showCopyrigt();
+                        continue;
+                    }
+
+                    if (isBareSourceList(trimmed)) {
+                        showSourceNames(mind);
+                        continue;
+                    }
+
+                    if (isXplain(trimmed)) {
+                        processXplain(trimmed, mind, input);
+                        continue;
+                    }
+
+                    if (isHiddenTestCommand(trimmed)) {
+                        processHiddenTest(trimmed);
+                        continue;
+                    }
+
+                    CommandInvocation invocation = PARSER.parse(line);
+                    if (invocation.isCoreLanguage()) {
+                        if (trimmed.charAt(0) == Enums.SUC) {
+                            lastQuery = line;
+                        }
+                        processCore(line, mind);
+                        continue;
+                    }
+
+                    DispatchResult result = dispatch(invocation, mind, input, shutdownHook);
+                    mind = track(shutdownHook, result.mind);
+                    stop = result.stop;
+                } catch (CommandParseException ex) {
+                    System.err.printf("ERROR: %s: %s%n", ex.getReason(), ex.getMessage());
+                } catch (ParseErrorException ex) {
+                    showParseError(ex, lastQuery);
+                } catch (CommandErrorException ex) {
+                    System.err.println(ex.toString());
+                } catch (StorageLifecycleException ex) {
+                    String action = ex.getRequiredAction();
+                    System.err.printf("ERROR: %s%s: %s%n",
+                            ex.getCode(),
+                            action == null || action.isEmpty() ? "" : " [" + action + "]",
+                            ex.toString());
+                } catch (RuntimeErrorException ex) {
+                    System.err.println(ex.toString());
+                } catch (Exception ex) {
+                    System.err.println(new Date());
+                    ex.printStackTrace(System.err);
+                } finally {
+                    IMind recovered = mind.getUser().getCurrentMind();
+                    if (recovered != null && recovered != mind) {
+                        mind = track(shutdownHook, recovered);
+                    }
+                }
+            }
+        } finally {
+            try {
+                input.close();
             } catch (Exception ex) {
                 System.err.println(new Date());
                 ex.printStackTrace(System.err);
-            } finally {
-                IMind recovered = mind.getUser().getCurrentMind();
-                if (recovered != null && recovered != mind) {
-                    mind = track(shutdownHook, recovered);
-                }
             }
         }
 
@@ -169,7 +177,7 @@ public final class CanonicalConsole {
 
     private static DispatchResult dispatch(CommandInvocation invocation,
                                            IMind mind,
-                                           Scanner scanner,
+                                           ConsoleLineInput input,
                                            ShutdownHook shutdownHook) throws Exception {
         String canonical = FORMATTER.format(invocation);
         switch (invocation.getIntent()) {
@@ -263,10 +271,10 @@ public final class CanonicalConsole {
                         String.valueOf(invocation.getArgument("source")));
                 return same(track(shutdownHook, mind));
             case SOURCE_PUT:
-                saveSource(mind, String.valueOf(invocation.getArgument("source")), scanner);
+                saveSource(mind, String.valueOf(invocation.getArgument("source")), input);
                 return same(mind);
             case SOURCE_DELETE:
-                deleteSource(mind, String.valueOf(invocation.getArgument("source")), scanner);
+                deleteSource(mind, String.valueOf(invocation.getArgument("source")), input);
                 return same(mind);
 
             case STORAGE_STATUS:
@@ -275,7 +283,7 @@ public final class CanonicalConsole {
             case STORAGE_DROP:
             case STORAGE_REINDEX:
                 if (invocation.getIntent() == org.kanger.command.CommandIntent.STORAGE_DROP
-                        && !confirm(scanner, "Drop storage "
+                        && !confirm(input, "Drop storage "
                         + String.valueOf(invocation.getArgument("name")) + "?")) {
                     return same(mind);
                 }
@@ -311,13 +319,13 @@ public final class CanonicalConsole {
                 return same(mind);
 
             case ERASE:
-                mind = erase(mind, scanner);
+                mind = erase(mind, input);
                 return same(track(shutdownHook, mind));
             case HELP:
                 showHelp();
                 return same(mind);
             case QUIT:
-                return new DispatchResult(mind, confirmQuit(mind, scanner));
+                return new DispatchResult(mind, confirmQuit(mind, input));
             default:
                 throw new CommandErrorException("Unsupported canonical intent "
                         + invocation.getIntent());
@@ -669,9 +677,9 @@ public final class CanonicalConsole {
         return mind;
     }
 
-    private static void saveSource(IMind mind, String name, Scanner scanner) throws Exception {
+    private static void saveSource(IMind mind, String name, ConsoleLineInput input) throws Exception {
         File file = sourceFile(mind, name);
-        if (file.exists() && !confirm(scanner, "Overwrite source file " + name + "?")) {
+        if (file.exists() && !confirm(input, "Overwrite source file " + name + "?")) {
             return;
         }
         try (BufferedWriter writer = new BufferedWriter(
@@ -681,13 +689,13 @@ public final class CanonicalConsole {
         System.out.println("Source file " + name + " saved.");
     }
 
-    private static void deleteSource(IMind mind, String name, Scanner scanner) throws Exception {
+    private static void deleteSource(IMind mind, String name, ConsoleLineInput input) throws Exception {
         File file = sourceFile(mind, name);
         if (!file.exists()) {
             System.out.println("Source file " + name + " not found");
             return;
         }
-        if (!confirm(scanner, "Delete source file " + name + "?")) {
+        if (!confirm(input, "Delete source file " + name + "?")) {
             return;
         }
         if (!file.delete()) {
@@ -735,8 +743,8 @@ public final class CanonicalConsole {
         }
     }
 
-    private static IMind erase(IMind mind, Scanner scanner) throws Exception {
-        if (!confirm(scanner, "Erase workspace?")) {
+    private static IMind erase(IMind mind, ConsoleLineInput input) throws Exception {
+        if (!confirm(input, "Erase workspace?")) {
             return mind;
         }
         while (mind.getNext() != null) {
@@ -747,16 +755,15 @@ public final class CanonicalConsole {
         return mind.clearWorkspace();
     }
 
-    private static boolean confirmQuit(IMind mind, Scanner scanner) {
+    private static boolean confirmQuit(IMind mind, ConsoleLineInput input) {
         if (mind.isStorageUsed() && mind.getTransactionLevel() > 0 && !mind.isEmptyLevel()) {
-            return confirm(scanner, "Quit with an uncommitted transaction?");
+            return confirm(input, "Quit with an uncommitted transaction?");
         }
         return true;
     }
 
-    private static boolean confirm(Scanner scanner, String prompt) {
-        System.out.print(prompt + " [y/N]? ");
-        String answer = scanner.nextLine().trim();
+    private static boolean confirm(ConsoleLineInput input, String prompt) {
+        String answer = input.readAuxiliary(prompt + " [y/N]? ").trim();
         return !answer.isEmpty() && Character.toUpperCase(answer.charAt(0)) == 'Y';
     }
 
@@ -801,7 +808,7 @@ public final class CanonicalConsole {
         IsolatedKangerTestRuntime.run(prefix, database);
     }
 
-    private static void processXplain(String line, IMind mind, Scanner scanner) throws Exception {
+    private static void processXplain(String line, IMind mind, ConsoleLineInput input) throws Exception {
         String[] parts = line.split("\\s+");
         if (parts.length == 3
                 && "mode".equalsIgnoreCase(parts[1])
@@ -819,46 +826,16 @@ public final class CanonicalConsole {
             throw new CommandErrorException("Invalid xplain syntax");
         }
         if (parts.length == 1) {
-            Console.showExplanation(mind, LogMode.ALL, "xplain", scanner);
-        } else {
-            Console.showExplanation(mind, LogMode.ALL, "xplain " + parts[1], scanner);
+            Console.showExplanation(mind, LogMode.ALL, "xplain", null);
+            return;
         }
-    }
-
-    private static String accept(Scanner scanner) {
-        boolean repeat;
-        String current = "";
-        String line;
-        do {
-            System.out.print(current.isEmpty() ? "\n: " : "  ");
-            line = scanner.nextLine();
-            if (!current.isEmpty()) {
-                current += Enums.LINE_SEPARATOR;
-            }
-            current += line;
-
-            String trimmed = current.trim();
-            String lineStart = trimmed.length() >= 2
-                    && (trimmed.startsWith("//") || trimmed.startsWith("/*"))
-                    ? trimmed.substring(0, 2)
-                    : (trimmed.isEmpty() ? "" : trimmed.substring(0, 1));
-            String lineStop = trimmed.length() >= 2 && trimmed.endsWith("*/")
-                    ? "*/"
-                    : (trimmed.isEmpty() ? "" : trimmed.substring(trimmed.length() - 1));
-
-            if ("/*".equals(lineStart)) {
-                repeat = !"*/".equals(lineStop);
-            } else if ("=".equals(lineStart)) {
-                repeat = !line.trim().isEmpty();
-            } else if (!lineStart.isEmpty()
-                    && !"?".equals(trimmed)
-                    && "!?+-=".contains(lineStart.substring(0, 1))) {
-                repeat = !";".equals(lineStop);
-            } else {
-                repeat = false;
-            }
-        } while (repeat);
-        return current;
+        if (!parts[1].isEmpty() && Character.toUpperCase(parts[1].charAt(0)) == 'W') {
+            String fileName = input.readAuxiliary("Save analyzer log to file: ").trim();
+            Console.showExplanation(mind, LogMode.ALL,
+                    fileName.isEmpty() ? "xplain" : "xplain " + fileName, null);
+            return;
+        }
+        Console.showExplanation(mind, LogMode.ALL, "xplain " + parts[1], null);
     }
 
     private static long number(CommandInvocation invocation, String name) {

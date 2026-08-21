@@ -5,83 +5,52 @@
  */
 package org.kanger;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
-import java.util.Scanner;
-
 /**
- * Characterizes the physical-line aggregation contract of CanonicalConsole.
+ * Qualifies the logical-input boundary used by the interactive Console reader.
  *
- * <p>This runner deliberately reaches the existing private accept(Scanner)
- * boundary as a black box. Console history/editing may replace the terminal
- * reader, but it must not silently change what constitutes one logical KANGER
- * input operation.</p>
+ * <p>Terminal editing/history may change independently, but Enter must keep
+ * the historical KANGER aggregation contract: ordinary commands are complete,
+ * Core operator forms continue to semicolon, block comments continue to their
+ * closing delimiter, and the legacy '=' form terminates on a blank physical
+ * line.</p>
  */
 public final class KangerCanonicalConsoleInputContractRunner {
 
     private KangerCanonicalConsoleInputContractRunner() {
     }
 
-    public static void main(String[] args) throws Exception {
-        Method accept = CanonicalConsole.class.getDeclaredMethod("accept", Scanner.class);
-        accept.setAccessible(true);
+    public static void main(String[] args) {
+        expectComplete("help", "ordinary command is one line");
+        expectComplete("?", "bare program check is one line");
+        expectComplete("?$x p(x);", "terminated query is one line");
+        expectIncomplete("?$x p(x)", "query continues until semicolon");
+        expectComplete("?$x p(x)\n;", "multiline query ends at semicolon");
+        expectIncomplete("!p(a)", "insert continues until semicolon");
+        expectComplete("!p(a)\n;", "multiline insert ends at semicolon");
+        expectIncomplete("+p(a)", "materialization continues until semicolon");
+        expectComplete("+p(a)\n;", "multiline materialization ends at semicolon");
+        expectIncomplete("-p(a)", "delete continues until semicolon");
+        expectComplete("-p(a)\n;", "multiline delete ends at semicolon");
+        expectIncomplete("/* one", "block comment continues");
+        expectComplete("/* one\ntwo */", "block comment closes on delimiter");
+        expectComplete("// one line", "line comment is one line");
+        expectIncomplete("= first", "equals form needs a blank physical line");
+        expectIncomplete("= first\nsecond", "equals form continues on nonblank line");
+        expectComplete("= first\nsecond\n", "equals form ends on blank physical line");
+        expectComplete("", "empty command remains complete");
 
-        assertAccept(accept, "help\n", "help", "ordinary command is one line");
-        assertAccept(accept, "?\n", "?", "bare program check is one line");
-        assertAccept(accept, "?$x p(x);\n", "?$x p(x);",
-                "terminated query is one line");
-
-        String nl = System.lineSeparator();
-        assertAccept(accept, "?$x p(x)\n;\n", "?$x p(x)" + nl + ";",
-                "query continues until semicolon");
-        assertAccept(accept, "!p(a)\n;\n", "!p(a)" + nl + ";",
-                "insert continues until semicolon");
-        assertAccept(accept, "+p(a)\n;\n", "+p(a)" + nl + ";",
-                "materialization continues until semicolon");
-        assertAccept(accept, "-p(a)\n;\n", "-p(a)" + nl + ";",
-                "delete continues until semicolon");
-        assertAccept(accept, "/* one\ntwo */\n", "/* one" + nl + "two */",
-                "block comment continues until closing delimiter");
-        assertAccept(accept, "// one line\n", "// one line",
-                "line comment is one line");
-        assertAccept(accept, "= first\nsecond\n\n",
-                "= first" + nl + "second" + nl,
-                "equals form terminates on a blank physical line");
-
-        System.out.println("PASS: Canonical Console logical-input boundary characterized");
+        System.out.println("PASS: Canonical Console logical-input boundary qualified");
     }
 
-    private static void assertAccept(Method accept,
-                                     String physicalInput,
-                                     String expected,
-                                     String label) throws Exception {
-        Scanner scanner = new Scanner(new ByteArrayInputStream(
-                physicalInput.getBytes(StandardCharsets.UTF_8)), "UTF-8");
-        PrintStream previous = System.out;
-        ByteArrayOutputStream prompts = new ByteArrayOutputStream();
-        try {
-            System.setOut(new PrintStream(prompts, true, "UTF-8"));
-            String actual;
-            try {
-                actual = (String) accept.invoke(null, scanner);
-            } catch (InvocationTargetException ex) {
-                Throwable cause = ex.getCause();
-                if (cause instanceof Exception) {
-                    throw (Exception) cause;
-                }
-                throw ex;
-            }
-            if (!expected.equals(actual)) {
-                throw new AssertionError(label + ": expected <" + printable(expected)
-                        + "> but was <" + printable(actual) + ">");
-            }
-        } finally {
-            System.setOut(previous);
-            scanner.close();
+    private static void expectComplete(String line, String label) {
+        if (!ConsoleLineInput.isComplete(line)) {
+            throw new AssertionError(label + ": expected complete <" + printable(line) + ">");
+        }
+    }
+
+    private static void expectIncomplete(String line, String label) {
+        if (ConsoleLineInput.isComplete(line)) {
+            throw new AssertionError(label + ": expected incomplete <" + printable(line) + ">");
         }
     }
 
