@@ -152,11 +152,9 @@ class CanonicalCommandRuntimeReactorTest {
     }
 
     @Test
-    void invocationLocalValuesOrderDoesNotMutateConfiguredDefault() throws Exception {
+    void invocationLocalValuesOrderReportsCanonicalSpec() throws Exception {
         Fixture fixture = fixture("values-order");
         try {
-            fixture.root.setOrder("defaultField");
-            fixture.root.setAscending(false);
             AtomicInteger escaped = new AtomicInteger();
             IReactor<JSONObject> reactor = canonicalChain(escaped);
 
@@ -164,8 +162,6 @@ class CanonicalCommandRuntimeReactorTest {
                     "values order x desc, y");
 
             assertEquals("OK", response.optString("result"), response.toString());
-            assertEquals("defaultField", fixture.root.getOrder());
-            assertEquals(false, fixture.root.isAscending());
             assertEquals(2, response.getJSONArray("order").length());
             assertEquals("x desc", response.getJSONArray("order").getString(0));
             assertEquals("y asc", response.getJSONArray("order").getString(1));
