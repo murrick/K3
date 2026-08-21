@@ -39,9 +39,7 @@ import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -478,15 +476,11 @@ public final class CanonicalConsole {
         }
     }
 
-    private static void showValues(IMind mind, final List<SortKey> keys) throws Exception {
-        List<Map<String, ITerm>> rows = new ArrayList<Map<String, ITerm>>();
-        for (Map<String, ITerm> row : mind.getValues()) {
-            rows.add(new LinkedHashMap<String, ITerm>(row));
-        }
-        if (keys != null && !keys.isEmpty()) {
+    private static void showValues(IMind mind, List<SortKey> keys) throws Exception {
+        if (keys != null && !keys.isEmpty() && mind.getValues().iterator().hasNext()) {
             for (SortKey key : keys) {
                 boolean found = false;
-                for (Map<String, ITerm> row : rows) {
+                for (Map<String, ITerm> row : mind.getValues()) {
                     if (row.containsKey(key.getField())) {
                         found = true;
                         break;
@@ -496,33 +490,22 @@ public final class CanonicalConsole {
                     throw new CommandErrorException("Values field not found " + key.getField());
                 }
             }
-            Collections.sort(rows, new Comparator<Map<String, ITerm>>() {
-                @Override
-                public int compare(Map<String, ITerm> left, Map<String, ITerm> right) {
-                    for (SortKey key : keys) {
-                        ITerm l = left.get(key.getField());
-                        ITerm r = right.get(key.getField());
-                        int compared;
-                        if (l == null && r == null) {
-                            compared = 0;
-                        } else if (l == null) {
-                            compared = -1;
-                        } else if (r == null) {
-                            compared = 1;
-                        } else {
-                            compared = l.compareTo(r);
-                        }
-                        if (key.getDirection() == SortKey.Direction.DESC) {
-                            compared = -compared;
-                        }
-                        if (compared != 0) {
-                            return compared;
-                        }
-                    }
-                    return 0;
-                }
-            });
         }
+
+        ValuesOrder[] coreOrder;
+        if (keys == null || keys.isEmpty()) {
+            coreOrder = new ValuesOrder[0];
+        } else {
+            coreOrder = new ValuesOrder[keys.size()];
+            for (int i = 0; i < keys.size(); ++i) {
+                SortKey key = keys.get(i);
+                coreOrder[i] = key.getDirection() == SortKey.Direction.DESC
+                        ? ValuesOrder.desc(key.getField())
+                        : ValuesOrder.asc(key.getField());
+            }
+        }
+        List<Map<String, ITerm>> rows = mind.getValues(coreOrder);
+
         if (rows.isEmpty()) {
             System.out.println("No values found");
             return;
