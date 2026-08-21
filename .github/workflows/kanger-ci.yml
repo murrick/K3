@@ -32,6 +32,9 @@ jobs:
       - name: Compile and run regression corpus
         run: mvn --batch-mode --no-transfer-progress test
 
+      - name: Canonical Console logical-input boundary
+        run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.KangerCanonicalConsoleInputContractRunner -Dexec.classpathScope=test exec:java
+
       - name: Index empty-boundary invariant
         run: mvn --batch-mode --no-transfer-progress -Dexec.mainClass=org.kanger.storage.IndexEmptyBoundarySafetyRunner -Dexec.classpathScope=test exec:java
 
