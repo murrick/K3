@@ -8,7 +8,10 @@ package org.kanger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
+import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.AuthenticationErrorException;
+import org.kanger.exception.StorageLifecycleException;
+import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
@@ -171,6 +174,40 @@ class CanonicalCommandRuntimeReactorTest {
         }
     }
 
+    @Test
+    void storageLifecycleFailureEscapesRuntimeToCanonicalBoundary() throws Exception {
+        String identity = "canonical-runtime-storage-failure-" + UUID.randomUUID();
+        IUser user = UserFactory.createUser(identity, identity);
+        new UDF().init(user);
+        new DB().init(user);
+        Mind root = new FailingStorageMind(user);
+        user.setCurrentMind(root);
+        String token = UserFactory.addUser(user);
+        try {
+            AtomicInteger escaped = new AtomicInteger();
+            IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                    canonicalChain(escaped));
+
+            JSONObject response = invoke(reactor, token, "storage use blocked");
+
+            assertEquals("error", response.optString("result"), response.toString());
+            assertEquals("ACTIVE_TRANSACTION", response.optString("code"));
+            assertEquals("TRANSACTION_RESOLUTION_REQUIRED",
+                    response.optString("required_action"));
+            JSONObject diagnostic = response.getJSONObject("error");
+            assertEquals("application", diagnostic.getString("domain"));
+            assertEquals("ACTIVE_TRANSACTION", diagnostic.getString("code"));
+            assertEquals(0, escaped.get(),
+                    "Storage lifecycle failure escaped into legacy runtime");
+        } finally {
+            try {
+                UserFactory.logout(token);
+            } catch (AuthenticationErrorException alreadyClosed) {
+                // Isolated test session may already be closed by a failed request path.
+            }
+        }
+    }
+
     private IReactor<JSONObject> canonicalChain(final AtomicInteger escaped) {
         IReactor<JSONObject> legacy = new IReactor<JSONObject>() {
             @Override
@@ -214,6 +251,19 @@ class CanonicalCommandRuntimeReactorTest {
         rule.setOrigin(mind.getTerms().add(origin));
         mind.getRules().add(rule);
         return rule;
+    }
+
+    private static final class FailingStorageMind extends Mind {
+        private FailingStorageMind(IUser user) throws Exception {
+            super(user);
+        }
+
+        @Override
+        public IMind useStorage(String name) throws Exception {
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.ACTIVE_TRANSACTION,
+                    "Storage switch rejected");
+        }
     }
 
     private static final class Fixture {

@@ -13,7 +13,6 @@ import org.kanger.command.CommandRegistry;
 import org.kanger.command.SortKey;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
-import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.ICause;
 import org.kanger.interfaces.IHypothesis;
 import org.kanger.interfaces.ILogEntry;
@@ -154,83 +153,75 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
 
     private JSONObject executeShared(CommandInvocation invocation,
                                      IUser user) throws Exception {
-        try {
-            CanonicalCommandProcessor.Result outcome =
-                    commandProcessor.execute(invocation, user);
-            if (!outcome.isHandled()) {
-                return error("canonical_intent_not_bound",
-                        "Canonical intent has no shared semantic binding");
-            }
-            JSONObject result = outcome.isSuccess()
-                    ? ok()
-                    : new JSONObject().put("result", "error");
-            if (!outcome.getDescription().isEmpty()) {
-                result.put("description", outcome.getDescription());
-            }
-            CanonicalCommandProcessor.Rejection rejection = outcome.getRejection();
-            if (rejection != null) {
-                result.put("code", rejection.getCode())
-                        .put("reason", rejection.getReason());
-                JSONObject detail = new JSONObject()
-                        .put("schema", 1)
-                        .put("kind", rejection.getCode())
-                        .put("target_level", rejection.getTargetLevel())
-                        .put("storage", rejection.getStorage() == null
-                                ? JSONObject.NULL : rejection.getStorage());
-                JSONArray collisions = new JSONArray();
-                for (CanonicalCommandProcessor.CollisionWitness witness
-                        : rejection.getCollisions()) {
-                    collisions.put(new JSONObject()
-                            .put("left", witness.getLeft())
-                            .put("right", witness.getRight()));
-                }
-                detail.put("collisions", collisions);
-                JSONArray actions = new JSONArray();
-                for (CanonicalCommandProcessor.ResolutionAction action
-                        : rejection.getActions()) {
-                    JSONObject one = new JSONObject()
-                            .put("id", action.getId())
-                            .put("description", action.getDescription());
-                    if (action.getCommand() != null) {
-                        one.put("command", action.getCommand());
-                    }
-                    actions.put(one);
-                }
-                detail.put("actions", actions);
-                result.put("rejection", detail);
-            }
-            CanonicalCommandProcessor.TransactionStatus transaction =
-                    outcome.getTransactionStatus();
-            if (transaction != null) {
-                result.put("transaction_status", transactionStatus(transaction));
-            }
-            CanonicalCommandProcessor.StorageStatus storage =
-                    outcome.getStorageStatus();
-            if (storage != null) {
-                JSONArray names = new JSONArray();
-                for (String name : storage.getNames()) {
-                    names.put(name);
-                }
-                result.put("size", names.length())
-                        .put("list", names)
-                        .put("storage", new JSONObject()
-                                .put("schema", 1)
-                                .put("used", storage.isUsed())
-                                .put("current", storage.isUsed()
-                                        ? storage.getCurrent() : JSONObject.NULL)
-                                .put("names", names));
-                if (storage.isUsed()) {
-                    result.put("name", storage.getCurrent());
-                }
-            }
-            return result;
-        } catch (StorageLifecycleException failure) {
-            JSONObject result = error(failure.getCode(), failure.toString());
-            if (failure.getRequiredAction() != null) {
-                result.put("required_action", failure.getRequiredAction());
-            }
-            return result;
+        CanonicalCommandProcessor.Result outcome =
+                commandProcessor.execute(invocation, user);
+        if (!outcome.isHandled()) {
+            return error("canonical_intent_not_bound",
+                    "Canonical intent has no shared semantic binding");
         }
+        JSONObject result = outcome.isSuccess()
+                ? ok()
+                : new JSONObject().put("result", "error");
+        if (!outcome.getDescription().isEmpty()) {
+            result.put("description", outcome.getDescription());
+        }
+        CanonicalCommandProcessor.Rejection rejection = outcome.getRejection();
+        if (rejection != null) {
+            result.put("code", rejection.getCode())
+                    .put("reason", rejection.getReason());
+            JSONObject detail = new JSONObject()
+                    .put("schema", 1)
+                    .put("kind", rejection.getCode())
+                    .put("target_level", rejection.getTargetLevel())
+                    .put("storage", rejection.getStorage() == null
+                            ? JSONObject.NULL : rejection.getStorage());
+            JSONArray collisions = new JSONArray();
+            for (CanonicalCommandProcessor.CollisionWitness witness
+                    : rejection.getCollisions()) {
+                collisions.put(new JSONObject()
+                        .put("left", witness.getLeft())
+                        .put("right", witness.getRight()));
+            }
+            detail.put("collisions", collisions);
+            JSONArray actions = new JSONArray();
+            for (CanonicalCommandProcessor.ResolutionAction action
+                    : rejection.getActions()) {
+                JSONObject one = new JSONObject()
+                        .put("id", action.getId())
+                        .put("description", action.getDescription());
+                if (action.getCommand() != null) {
+                    one.put("command", action.getCommand());
+                }
+                actions.put(one);
+            }
+            detail.put("actions", actions);
+            result.put("rejection", detail);
+        }
+        CanonicalCommandProcessor.TransactionStatus transaction =
+                outcome.getTransactionStatus();
+        if (transaction != null) {
+            result.put("transaction_status", transactionStatus(transaction));
+        }
+        CanonicalCommandProcessor.StorageStatus storage =
+                outcome.getStorageStatus();
+        if (storage != null) {
+            JSONArray names = new JSONArray();
+            for (String name : storage.getNames()) {
+                names.put(name);
+            }
+            result.put("size", names.length())
+                    .put("list", names)
+                    .put("storage", new JSONObject()
+                            .put("schema", 1)
+                            .put("used", storage.isUsed())
+                            .put("current", storage.isUsed()
+                                    ? storage.getCurrent() : JSONObject.NULL)
+                            .put("names", names));
+            if (storage.isUsed()) {
+                result.put("name", storage.getCurrent());
+            }
+        }
+        return result;
     }
 
     private JSONObject transactionStatus(
