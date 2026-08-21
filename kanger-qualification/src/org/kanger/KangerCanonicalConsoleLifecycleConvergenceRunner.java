@@ -13,14 +13,15 @@ import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Scanner;
 
 /**
  * Focused qualification for the canonical Console after the storage/source
@@ -64,7 +65,7 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
             CommandParser commandParser = new CommandParser();
 
             Method erase = privateMethod(
-                    CanonicalConsole.class, "erase", IMind.class, Scanner.class);
+                    CanonicalConsole.class, "erase", IMind.class, ConsoleLineInput.class);
             Method loadSource = privateMethod(
                     CanonicalConsole.class, "loadSource", IMind.class, String.class);
             Method processCore = privateMethod(
@@ -77,11 +78,21 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
             Mind eraseChild = new Mind(root);
             require(Boolean.TRUE.equals(eraseChild.query("!erasechild;")),
                     "erase fixture did not create child content");
-            Scanner yes = new Scanner("y\n");
+            InputStream previousIn = System.in;
+            ConsoleLineInput yes = null;
             try {
+                System.setIn(new ByteArrayInputStream(
+                        "y\n".getBytes(StandardCharsets.UTF_8)));
+                yes = ConsoleLineInput.open(user);
                 root = (IMind) invoke(erase, eraseChild, yes);
             } finally {
-                yes.close();
+                try {
+                    if (yes != null) {
+                        yes.close();
+                    }
+                } finally {
+                    System.setIn(previousIn);
+                }
             }
             require(root.getTransactionLevel() == 0,
                     "erase did not return the published root");
