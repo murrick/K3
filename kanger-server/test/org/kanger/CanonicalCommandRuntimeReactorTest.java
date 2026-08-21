@@ -208,6 +208,39 @@ class CanonicalCommandRuntimeReactorTest {
         }
     }
 
+    @Test
+    void invalidSessionTokenEscapesRuntimeToCanonicalBoundary() throws Exception {
+        AtomicInteger escaped = new AtomicInteger();
+        IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                canonicalChain(escaped));
+
+        JSONObject response = invoke(
+                reactor, "invalid-" + UUID.randomUUID(), "help");
+
+        assertEquals("error", response.optString("result"), response.toString());
+        assertEquals("authentication_error", response.optString("code"));
+        JSONObject diagnostic = response.getJSONObject("error");
+        assertEquals("session", diagnostic.getString("domain"));
+        assertEquals("verify", diagnostic.getString("session_action"));
+        assertEquals("unknown", diagnostic.getString("operation_outcome"));
+        assertEquals(0, escaped.get(),
+                "Invalid session token escaped into legacy runtime");
+    }
+
+    @Test
+    void missingSessionTokenRetainsControlledAuthenticationRequired() throws Exception {
+        AtomicInteger escaped = new AtomicInteger();
+        IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                canonicalChain(escaped));
+
+        JSONObject response = invoke(reactor, "", "help");
+
+        assertEquals("error", response.optString("result"), response.toString());
+        assertEquals("authentication_required", response.optString("code"));
+        assertEquals(0, escaped.get(),
+                "Missing session token escaped into legacy runtime");
+    }
+
     private IReactor<JSONObject> canonicalChain(final AtomicInteger escaped) {
         IReactor<JSONObject> legacy = new IReactor<JSONObject>() {
             @Override

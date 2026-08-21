@@ -522,17 +522,13 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
         return ((Number) invocation.getArgument(name)).longValue();
     }
 
-    private IUser requireUser(JSONObject packet) {
+    private IUser requireUser(JSONObject packet) throws Exception {
         JSONObject parameters = SessionSerializingReactor.parameters(packet);
         String token = parameters.optString("token", "");
         if (token.isEmpty()) {
             return null;
         }
-        try {
-            return UserFactory.getUser(token);
-        } catch (Exception rejected) {
-            return null;
-        }
+        return UserFactory.getUser(token);
     }
 
     private JSONObject decorate(JSONObject result, IMind mind) {
