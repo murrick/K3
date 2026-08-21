@@ -62,6 +62,7 @@ final class ConsoleLineInput implements AutoCloseable {
                 .terminal(terminal)
                 .parser(new KangerInputParser())
                 .history(history)
+                .option(LineReader.Option.DISABLE_EVENT_EXPANSION, true)
                 .variable(LineReader.SECONDARY_PROMPT_PATTERN, "  ")
                 .variable(LineReader.HISTORY_FILE, historyFile)
                 .variable(LineReader.HISTORY_SIZE, historySize)
