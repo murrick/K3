@@ -49,16 +49,14 @@ import java.util.TreeMap;
  * Query-local Values membership store.
  *
  * <p>Membership is insertion ordered and independent from presentation
- * ordering. Historical mutable order settings remain temporarily exposed for
- * API compatibility, but they must never change row identity or storage.</p>
+ * ordering. Ordered projections are invocation-local and belong to the
+ * public Mind API rather than to this membership store.</p>
  */
 public class ValuesStore implements IFactory<Map<String, ITerm>> {
 
     private final Set<ArgumentsList> root = new LinkedHashSet<>();
 
     private final Mind mind;
-    private String order = "";
-    private boolean ascending = true;
 
     public ValuesStore(Mind mind) {
         this.mind = mind;
@@ -106,22 +104,6 @@ public class ValuesStore implements IFactory<Map<String, ITerm>> {
             }
         }
         return list;
-    }
-
-    public String getOrder() {
-        return order;
-    }
-
-    public void setOrder(String order) {
-        this.order = order;
-    }
-
-    public boolean isAscending() {
-        return ascending;
-    }
-
-    public void setAscending(boolean ascending) {
-        this.ascending = ascending;
     }
 
     public void clear() {

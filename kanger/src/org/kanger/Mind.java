@@ -214,8 +214,6 @@ public class Mind implements IMind {
 
             debugLevel = root.getDebugLevel();
 
-            values.setOrder(root.getOrder());
-            values.setAscending(root.isAscending());
             includeAbstractiveHypothesis = parent.includeAbstractiveHypothesis();
             initialized = true;
         } finally {
@@ -2001,26 +1999,6 @@ public class Mind implements IMind {
 
     boolean hasPendingTransactions() {
         return pendingTransactionCount() > 0;
-    }
-
-    @Override
-    public String getOrder() {
-        return values.getOrder();
-    }
-
-    @Override
-    public void setOrder(String order) {
-        values.setOrder(order);
-    }
-
-    @Override
-    public boolean isAscending() {
-        return values.isAscending();
-    }
-
-    @Override
-    public void setAscending(boolean ascending) {
-        values.setAscending(ascending);
     }
 
     @Override
