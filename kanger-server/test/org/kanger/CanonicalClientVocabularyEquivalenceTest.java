@@ -27,8 +27,8 @@ class CanonicalClientVocabularyEquivalenceTest {
         CommandFormatter formatter = new CommandFormatter();
         for (ClientVocabularyCorpus.Case one : ClientVocabularyCorpus.load()) {
             Capture capture = new Capture();
-            CanonicalCommandIngressReactor reactor =
-                    new CanonicalCommandIngressReactor(capture);
+            IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                    new CanonicalCommandIngressReactor(capture));
             JSONObject packet = dialogue(one.getLine());
 
             Object raw = reactor.run(packet);
@@ -42,6 +42,9 @@ class CanonicalClientVocabularyEquivalenceTest {
                         one + " response " + response);
                 assertEquals(one.getResult(), response.optString("reason"),
                         one + " response " + response);
+                JSONObject diagnostic = response.getJSONObject("error");
+                assertEquals("command_parse_error", diagnostic.optString("code"),
+                        one + " diagnostic " + diagnostic);
                 assertEquals(0, capture.calls.get(),
                         one + " escaped into Browser runtime");
                 continue;
