@@ -21,7 +21,11 @@ import org.jline.terminal.TerminalBuilder;
 import org.kanger.enums.Enums;
 import org.kanger.interfaces.IUser;
 
+import java.io.FilterInputStream;
+import java.io.FilterOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -79,7 +83,8 @@ final class ConsoleLineInput implements AutoCloseable {
         }
         return TerminalBuilder.builder()
                 .system(false)
-                .streams(System.in, System.out)
+                .streams(new NonClosingInputStream(System.in),
+                        new NonClosingOutputStream(System.out))
                 .type("dumb")
                 .build();
     }
@@ -173,6 +178,28 @@ final class ConsoleLineInput implements AutoCloseable {
             return line;
         }
         return line.replace("\n", Enums.LINE_SEPARATOR);
+    }
+
+    private static final class NonClosingInputStream extends FilterInputStream {
+        private NonClosingInputStream(InputStream in) {
+            super(in);
+        }
+
+        @Override
+        public void close() {
+            // The caller owns System.in (or its test replacement).
+        }
+    }
+
+    private static final class NonClosingOutputStream extends FilterOutputStream {
+        private NonClosingOutputStream(OutputStream out) {
+            super(out);
+        }
+
+        @Override
+        public void close() throws IOException {
+            flush();
+        }
     }
 
     private static final class KangerInputParser implements Parser {
