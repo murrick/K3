@@ -712,6 +712,55 @@ public class Mind implements IMind {
     }
 
     @Override
+    public List<Map<String, ITerm>> getValues(final ValuesOrder... order) throws Exception {
+        if (order == null) {
+            throw new IllegalArgumentException("order must not be null");
+        }
+        for (ValuesOrder key : order) {
+            if (key == null) {
+                throw new IllegalArgumentException("order key must not be null");
+            }
+        }
+
+        List<Map<String, ITerm>> rows = new ArrayList<>();
+        for (Map<String, ITerm> row : getValues()) {
+            rows.add(new LinkedHashMap<>(row));
+        }
+
+        if (order.length == 0 || rows.size() < 2) {
+            return rows;
+        }
+
+        Collections.sort(rows, new Comparator<Map<String, ITerm>>() {
+            @Override
+            public int compare(Map<String, ITerm> left, Map<String, ITerm> right) {
+                for (ValuesOrder key : order) {
+                    ITerm l = left.get(key.getField());
+                    ITerm r = right.get(key.getField());
+                    int compared;
+                    if (l == null && r == null) {
+                        compared = 0;
+                    } else if (l == null) {
+                        compared = -1;
+                    } else if (r == null) {
+                        compared = 1;
+                    } else {
+                        compared = l.compareTo(r);
+                    }
+                    if (key.getDirection() == ValuesOrder.Direction.DESC) {
+                        compared = -compared;
+                    }
+                    if (compared != 0) {
+                        return compared;
+                    }
+                }
+                return 0;
+            }
+        });
+        return rows;
+    }
+
+    @Override
     public RuleFactory getRules() {
         return rules;
     }
