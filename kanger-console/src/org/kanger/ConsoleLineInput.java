@@ -5,6 +5,7 @@
  */
 package org.kanger;
 
+import org.jline.reader.CompletingParsedLine;
 import org.jline.reader.EOFError;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.History;
@@ -173,7 +174,7 @@ final class ConsoleLineInput implements AutoCloseable {
         }
     }
 
-    private static final class WholeLine implements ParsedLine {
+    private static final class WholeLine implements CompletingParsedLine {
         private final String line;
         private final int cursor;
 
@@ -210,6 +211,21 @@ final class ConsoleLineInput implements AutoCloseable {
         @Override
         public int cursor() {
             return cursor;
+        }
+
+        @Override
+        public CharSequence escape(CharSequence candidate, boolean complete) {
+            return candidate;
+        }
+
+        @Override
+        public int rawWordCursor() {
+            return cursor;
+        }
+
+        @Override
+        public int rawWordLength() {
+            return line.length();
         }
     }
 }
