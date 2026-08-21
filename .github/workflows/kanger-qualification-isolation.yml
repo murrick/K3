@@ -63,7 +63,7 @@ jobs:
           test -d kanger-qualification/src
           test -f kanger-qualification/src/org/kanger/KangerCanonicalConsoleRunner.java
           count="$(find kanger-qualification/src -type f -name '*Runner.java' | wc -l | tr -d ' ')"
-          test "$count" -eq 49
+          test "$count" -eq 50
           mvn --batch-mode --no-transfer-progress -DskipTests test-compile
           java -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerParserTerminalDelimiterSafetyRunner
