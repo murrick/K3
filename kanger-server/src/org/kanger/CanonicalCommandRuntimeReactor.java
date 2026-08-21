@@ -30,8 +30,6 @@ import org.kanger.units.Rule;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -411,20 +409,16 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
         if (!(rawKeys instanceof List)) {
             return error("values_order_invalid", "Values SortSpec is missing");
         }
-        final List<SortKey> keys = (List<SortKey>) rawKeys;
+        List<SortKey> keys = (List<SortKey>) rawKeys;
         if (keys.isEmpty()) {
             return error("values_order_invalid", "Values SortSpec is empty");
         }
 
-        List<Map<String, ITerm>> rows = new ArrayList<Map<String, ITerm>>();
-        for (Map<String, ITerm> row : mind.getValues()) {
-            rows.add(new LinkedHashMap<String, ITerm>(row));
-        }
-
-        if (!rows.isEmpty()) {
+        boolean hasRows = mind.getValues().iterator().hasNext();
+        if (hasRows) {
             for (SortKey key : keys) {
                 boolean found = false;
-                for (Map<String, ITerm> row : rows) {
+                for (Map<String, ITerm> row : mind.getValues()) {
                     if (row.containsKey(key.getField())) {
                         found = true;
                         break;
@@ -435,24 +429,16 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                             "Values field not found " + key.getField());
                 }
             }
-
-            Collections.sort(rows, new Comparator<Map<String, ITerm>>() {
-                @Override
-                public int compare(Map<String, ITerm> left,
-                                   Map<String, ITerm> right) {
-                    for (SortKey key : keys) {
-                        int compared = compareTerms(
-                                left.get(key.getField()),
-                                right.get(key.getField()),
-                                key.getDirection());
-                        if (compared != 0) {
-                            return compared;
-                        }
-                    }
-                    return 0;
-                }
-            });
         }
+
+        ValuesOrder[] coreOrder = new ValuesOrder[keys.size()];
+        for (int i = 0; i < keys.size(); ++i) {
+            SortKey key = keys.get(i);
+            coreOrder[i] = key.getDirection() == SortKey.Direction.DESC
+                    ? ValuesOrder.desc(key.getField())
+                    : ValuesOrder.asc(key.getField());
+        }
+        List<Map<String, ITerm>> rows = mind.getValues(coreOrder);
 
         List<List<JSONObject>> list = new ArrayList<List<JSONObject>>();
         for (Map<String, ITerm> row : rows) {
@@ -473,22 +459,6 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                 .put("size", list.size())
                 .put("list", list)
                 .put("order", order);
-    }
-
-    private int compareTerms(ITerm left,
-                             ITerm right,
-                             SortKey.Direction direction) {
-        int compared;
-        if (left == null && right == null) {
-            compared = 0;
-        } else if (left == null) {
-            compared = -1;
-        } else if (right == null) {
-            compared = 1;
-        } else {
-            compared = left.compareTo(right);
-        }
-        return direction == SortKey.Direction.DESC ? -compared : compared;
     }
 
     private JSONObject solution(IMind mind, long id, boolean tree) throws Exception {
