@@ -67,30 +67,6 @@ public class ParseErrorException extends Exception implements SourceLocatedFailu
         return reason;
     }
 
-    /**
-     * Transitional Console facade. Presentation code should consume
-     * {@link #getSourceSpan()} directly.
-     */
-    @Deprecated
-    public int getExceptionPosition() {
-        return sourceSpan == null ? -1 : sourceSpan.getOffset();
-    }
-
-    /** Transitional Console facade; use {@link #getMessage()}. */
-    @Deprecated
-    public String getExceptionMessage() {
-        return getMessage();
-    }
-
-    /** Transitional facade retained only while legacy callers are removed. */
-    @Deprecated
-    public String getPureMessage() {
-        if (sourceSpan == null) {
-            return getMessage();
-        }
-        return sourceSpan.getOffset() + "@" + getMessage();
-    }
-
     private static ParseError requireReason(ParseError reason) {
         if (reason == null) {
             throw new IllegalArgumentException("parse error reason is required");
