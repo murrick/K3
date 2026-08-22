@@ -9,6 +9,8 @@ import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.AuthenticationErrorException;
+import org.kanger.exception.ParseErrorException;
+import org.kanger.exception.SourceSpan;
 import org.kanger.exception.StorageLifecycleException;
 import org.kanger.exception.TransactionSettlementException;
 import org.kanger.interfaces.IReactor;
@@ -53,6 +55,30 @@ class CanonicalErrorBoundaryReactorTest {
         assertEquals("session", diagnostic.getString("domain"));
         assertEquals("verify", diagnostic.getString("session_action"));
         assertEquals("unknown", diagnostic.getString("operation_outcome"));
+    }
+
+    @Test
+    void parseFailureCarriesStructuredSourceSpanInsideDiagnostic() throws Exception {
+        CanonicalErrorBoundaryReactor boundary = new CanonicalErrorBoundaryReactor(
+                throwing(new ParseErrorException(17, 3, "Unexpected term")));
+
+        JSONObject response = response(boundary);
+        assertEquals("parse_error", response.getString("code"));
+        assertFalse(response.has("source"));
+
+        JSONObject diagnostic = response.getJSONObject("error");
+        JSONObject source = diagnostic.getJSONObject("source");
+        assertEquals(17, source.getInt("offset"));
+        assertEquals(3, source.getInt("length"));
+    }
+
+    @Test
+    void parseFailureWithoutSourceDoesNotInventPosition() throws Exception {
+        CanonicalErrorBoundaryReactor boundary = new CanonicalErrorBoundaryReactor(
+                throwing(new ParseErrorException((SourceSpan) null, "Term expected")));
+
+        JSONObject response = response(boundary);
+        assertFalse(response.getJSONObject("error").has("source"));
     }
 
     @Test

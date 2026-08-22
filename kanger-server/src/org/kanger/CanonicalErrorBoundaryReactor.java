@@ -14,6 +14,7 @@ import org.kanger.exception.OutOfBufferException;
 import org.kanger.exception.ParametersIncompleteException;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
+import org.kanger.exception.SourceSpan;
 import org.kanger.exception.StorageLifecycleException;
 import org.kanger.exception.TransactionSettlementException;
 import org.kanger.interfaces.IReactor;
@@ -103,6 +104,12 @@ final class CanonicalErrorBoundaryReactor implements IReactor<JSONObject> {
                     "confirmed");
             if (failure.getCode() != null) {
                 result.put("reason", failure.getCode().name());
+            }
+            SourceSpan sourceSpan = failure.getSourceSpan();
+            if (sourceSpan != null) {
+                result.getJSONObject("error").put("source", new JSONObject()
+                        .put("offset", sourceSpan.getOffset())
+                        .put("length", sourceSpan.getLength()));
             }
             return result;
         } catch (CommandErrorException failure) {
