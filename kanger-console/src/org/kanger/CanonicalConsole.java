@@ -136,7 +136,7 @@ public final class CanonicalConsole {
                 } catch (CommandParseException ex) {
                     System.err.printf("ERROR: %s: %s%n", ex.getReason(), ex.getMessage());
                 } catch (ParseErrorException ex) {
-                    showParseError(ex, lastQuery);
+                    ConsoleParseErrorRenderer.show(ex, line);
                 } catch (CommandErrorException ex) {
                     System.err.println(ex.toString());
                 } catch (StorageLifecycleException ex) {
@@ -376,7 +376,13 @@ public final class CanonicalConsole {
          * generated-rule rebuild that this operator explicitly requests.
          */
         if ("?".equals(trimmed)) {
-            Boolean response = mind.query("?");
+            Boolean response;
+            try {
+                response = mind.query("?");
+            } catch (ParseErrorException ex) {
+                ConsoleParseErrorRenderer.show(ex, "?");
+                return;
+            }
             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                 ILogEntry log = mind.getCurrentLogRecord(LogMode.ANALYZER);
                 if (log != null) {
@@ -403,7 +409,12 @@ public final class CanonicalConsole {
                 if (operator.charAt(0) == '?') {
                     query = true;
                 }
-                response = overlay.query(operator);
+                try {
+                    response = overlay.query(operator);
+                } catch (ParseErrorException ex) {
+                    ConsoleParseErrorRenderer.show(ex, operator);
+                    return;
+                }
                 if (!lastComments.isEmpty() && overlay.getAcceptedRule() != null) {
                     overlay.getAcceptedRule().setComment(lastComments);
                     lastComments = "";
@@ -582,7 +593,13 @@ public final class CanonicalConsole {
         String statement = String.format("%s;",
                 source.replaceAll(String.format("%c", Enums.EOLN), ""));
         System.out.println("Statement: " + statement);
-        Boolean response = ((Mind) mind).queryAccept(statement, null, true);
+        Boolean response;
+        try {
+            response = ((Mind) mind).queryAccept(statement, null, true);
+        } catch (ParseErrorException ex) {
+            ConsoleParseErrorRenderer.show(ex, statement);
+            return;
+        }
         if (response != null && (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
             Console.showLog(mind, LogMode.SOLVES, null, null);
             Console.showLog(mind, LogMode.VALUES, null, null);
@@ -662,7 +679,13 @@ public final class CanonicalConsole {
         }
 
         String text = new String(Files.readAllBytes(file.toPath()), "UTF-8");
-        boolean accepted = mind.compile(text);
+        boolean accepted;
+        try {
+            accepted = mind.compile(text);
+        } catch (ParseErrorException ex) {
+            ConsoleParseErrorRenderer.show(ex, text);
+            return mind;
+        }
         if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
             ILogEntry log = mind.getCurrentLogRecord(LogMode.ANALYZER);
             if (log != null) {
@@ -854,33 +877,6 @@ public final class CanonicalConsole {
 
     private static DispatchResult same(IMind mind) {
         return new DispatchResult(mind, false);
-    }
-
-    private static void showParseError(ParseErrorException ex, String lastQuery) {
-        int pos = ex.getExceptionPosition();
-        System.out.println("ERROR: " + ex.getExceptionMessage());
-        if (lastQuery == null || lastQuery.isEmpty()) {
-            return;
-        }
-        StringBuilder marker = new StringBuilder();
-        for (int i = 0; i < lastQuery.trim().length(); ++i) {
-            char c = lastQuery.trim().charAt(i);
-            System.out.print(c);
-            if (i == pos) {
-                marker.append('^');
-            } else if (c == '\n') {
-                if (marker.length() > 0 && marker.charAt(marker.length() - 1) == '^') {
-                    System.out.println(marker.toString());
-                }
-                marker.setLength(0);
-            } else if (i < pos) {
-                marker.append(c == '\t' ? c : ' ');
-            }
-        }
-        System.out.println();
-        if (marker.length() > 0 && marker.charAt(marker.length() - 1) == '^') {
-            System.out.println(marker.toString());
-        }
     }
 
     private static final class DispatchResult {
