@@ -227,7 +227,8 @@
                 || typeof window.refreshScreen !== 'function'
                 || !editorInstance()) {
             sourcePresentationRetries += 1;
-            if (sourcePresentationRetries <= MAX_SOURCE_PRESENTATION_RETRIES) {
+            if (sourcePresentationRetries <= MAX_SOURCE_PRESENTATION_RETRIES
+                    && typeof window.setTimeout === 'function') {
                 window.setTimeout(installSourcePresentation, 10);
             }
             return;
