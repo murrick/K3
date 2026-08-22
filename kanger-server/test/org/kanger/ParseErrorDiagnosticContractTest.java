@@ -13,6 +13,7 @@ import org.kanger.exception.SourceLocatedFailure;
 import org.kanger.exception.SourceSpan;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -31,29 +32,16 @@ class ParseErrorDiagnosticContractTest {
     }
 
     @Test
-    void historicalProducerEncodingIsNormalizedAtConstruction() {
-        @SuppressWarnings("deprecation")
+    void unknownLocationRemainsUnlocalized() {
         ParseErrorException failure =
-                new ParseErrorException("12@Unclosed quotes");
+                new ParseErrorException((SourceSpan) null, "Term expected");
 
-        assertEquals("Unclosed quotes", failure.getMessage());
-        assertEquals(new SourceSpan(12, 0), failure.getSourceSpan());
+        assertEquals("Term expected", failure.getMessage());
+        assertNull(failure.getSourceSpan());
     }
 
     @Test
-    void malformedHistoricalDuplicateVariableEncodingCannotBreakRenderer() {
-        @SuppressWarnings("deprecation")
-        ParseErrorException failure =
-                new ParseErrorException("17Variable x duplicated");
-
-        assertEquals("Variable x duplicated", failure.getMessage());
-        assertEquals(new SourceSpan(17, 0), failure.getSourceSpan());
-        assertEquals(17, failure.getExceptionPosition());
-        assertEquals("Variable x duplicated", failure.getExceptionMessage());
-    }
-
-    @Test
-    void existingParserFailureAlreadyExposesStructuredLocation() {
+    void existingParserFailureExposesStructuredLocation() {
         ParseErrorException failure = assertThrows(
                 ParseErrorException.class,
                 () -> Parser.nextToken("\"unterminated", null));
