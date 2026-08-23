@@ -38,6 +38,6 @@ class QueryProcessorAuthenticationBoundaryTest {
         assertEquals("session", diagnostic.getString("domain"));
         assertEquals("authentication_error", diagnostic.getString("code"));
         assertEquals("verify", diagnostic.getString("session_action"));
-        assertEquals("unknown", diagnostic.getString("session_state"));
+        assertEquals("unknown", diagnostic.getString("operation_outcome"));
     }
 }
