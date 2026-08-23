@@ -69,6 +69,7 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
                     new SessionRegistry.Work<Object>() {
                         @Override
                         public Object run() throws Exception {
+                            UserFactory.getUser(token);
                             return invoke(packet, parameters);
                         }
                     });
