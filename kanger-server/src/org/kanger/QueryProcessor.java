@@ -33,6 +33,7 @@ import org.kanger.enums.LogMode;
 import org.kanger.enums.Tools;
 import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.exception.CommandErrorException;
+import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.*;
 import org.kanger.primitives.Cause;
@@ -211,6 +212,8 @@ public class QueryProcessor implements IReactor<JSONObject> {
                     result.put("result", "error");
                     result.put("description", "User not logged in");
                 }
+            } catch (ParseErrorException failure) {
+                throw failure;
             } catch (Exception e) {
                 result = new JSONObject();
                 result.put("result", "error");
