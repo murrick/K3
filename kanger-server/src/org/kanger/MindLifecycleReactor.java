@@ -136,12 +136,6 @@ final class MindLifecycleReactor implements IReactor<JSONObject> {
                 return decorate(result, user);
             }
             return result;
-        } catch (Exception failure) {
-            JSONObject result = error(operation + "_failed", failure.toString());
-            if (user != null && user.getCurrentMind() != null) {
-                return decorate(result, user);
-            }
-            return result;
         }
     }
 
