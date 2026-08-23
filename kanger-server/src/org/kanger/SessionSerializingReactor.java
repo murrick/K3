@@ -102,7 +102,7 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
                     // verifier check and delegates ordinary failures.
                     return invoke(packet, parameters);
                 }
-                return authenticationRejected(rejected);
+                throw rejected;
             }
         }
 
@@ -144,12 +144,6 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
     static boolean hasAuthenticatedCredential(JSONObject packet) {
         return packet != null
                 && packet.optBoolean(AUTHENTICATED_CREDENTIAL_MARKER, false);
-    }
-
-    static JSONObject authenticationRejected(AuthenticationErrorException rejected) {
-        return new JSONObject()
-                .put("result", "error")
-                .put("description", rejected.toString());
     }
 
     static JSONObject parameters(JSONObject packet) {
