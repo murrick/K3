@@ -31,7 +31,7 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
     }
 
     interface ProfileUpdateGuard {
-        JSONObject violation(JSONObject parameters) throws Exception;
+        PendingRegistrationException violation(JSONObject parameters) throws Exception;
     }
 
     private final RegistrationPolicy policy;
@@ -79,9 +79,10 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
             throw registrationDisabled();
         }
         if (isAuthenticatedProfileUpdate(packet, parameters)) {
-            JSONObject violation = profileUpdateGuard.violation(parameters);
+            PendingRegistrationException violation =
+                    profileUpdateGuard.violation(parameters);
             if (violation != null) {
-                return violation;
+                throw violation;
             }
         }
         if (SessionSerializingReactor.hasAuthenticatedCredential(packet)
@@ -118,15 +119,17 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
                 && !string(parameters, "token").isEmpty();
     }
 
-    static JSONObject accountLoginChangeViolation(String currentLogin,
-                                                  String requestedLogin) {
+    static PendingRegistrationException accountLoginChangeViolation(
+            String currentLogin,
+            String requestedLogin) {
         return normalizeLogin(currentLogin).equals(normalizeLogin(requestedLogin))
                 ? null : accountLoginImmutable();
     }
 
-    static JSONObject verifiedEmailChangeViolation(boolean confirmed,
-                                                   String currentEmail,
-                                                   String requestedEmail) {
+    static PendingRegistrationException verifiedEmailChangeViolation(
+            boolean confirmed,
+            String currentEmail,
+            String requestedEmail) {
         if (!confirmed) {
             return null;
         }
@@ -140,18 +143,16 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
                 "Public registration is disabled by the server registration policy");
     }
 
-    static JSONObject verifiedEmailImmutable() {
-        return new JSONObject()
-                .put("result", "error")
-                .put("code", AccountErrorCode.VERIFIED_EMAIL_IMMUTABLE.code())
-                .put("description", "A verified e-mail address cannot be changed");
+    static PendingRegistrationException verifiedEmailImmutable() {
+        return new PendingRegistrationException(
+                AccountErrorCode.VERIFIED_EMAIL_IMMUTABLE,
+                "A verified e-mail address cannot be changed");
     }
 
-    static JSONObject accountLoginImmutable() {
-        return new JSONObject()
-                .put("result", "error")
-                .put("code", AccountErrorCode.ACCOUNT_LOGIN_IMMUTABLE.code())
-                .put("description", "The account login cannot be changed");
+    static PendingRegistrationException accountLoginImmutable() {
+        return new PendingRegistrationException(
+                AccountErrorCode.ACCOUNT_LOGIN_IMMUTABLE,
+                "The account login cannot be changed");
     }
 
     private static String context(JSONObject packet) {
@@ -218,9 +219,10 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
     private static final class LegacyProfileUpdateGuard
             implements ProfileUpdateGuard {
         @Override
-        public JSONObject violation(JSONObject parameters) throws Exception {
+        public PendingRegistrationException violation(JSONObject parameters)
+                throws Exception {
             IUser user = UserFactory.getUser(string(parameters, "token"));
-            JSONObject loginViolation = accountLoginChangeViolation(
+            PendingRegistrationException loginViolation = accountLoginChangeViolation(
                     user.getProperty("reg.login", ""),
                     string(parameters, "register"));
             if (loginViolation != null) {

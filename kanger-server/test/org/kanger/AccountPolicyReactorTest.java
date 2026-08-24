@@ -130,19 +130,31 @@ class AccountPolicyReactorTest {
     @Test
     void verifiedEmailChangeStopsBeforeLegacyProfileUpdate() throws Exception {
         AtomicBoolean called = new AtomicBoolean();
-        AccountPolicyReactor reactor = new AccountPolicyReactor(
-                RegistrationPolicy.EMAIL_VERIFIED,
-                delegate(called),
-                parameters -> { },
-                parameters -> AccountPolicyReactor.verifiedEmailImmutable());
+        IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                new AccountPolicyReactor(
+                        RegistrationPolicy.EMAIL_VERIFIED,
+                        delegate(called),
+                        parameters -> { },
+                        parameters -> AccountPolicyReactor.verifiedEmailImmutable()));
 
         JSONObject response = (JSONObject) reactor.run(packet(
                 "login", profileUpdate("active-session-token", "new@example.org")));
 
         assertFalse(called.get());
-        assertEquals("error", response.getString("result"));
+        assertEquals("error", response.getString("result"), response.toString());
         assertEquals(AccountErrorCode.VERIFIED_EMAIL_IMMUTABLE.code(),
-                response.getString("code"));
+                response.getString("code"), response.toString());
+        assertEquals("A verified e-mail address cannot be changed",
+                response.getString("description"), response.toString());
+
+        JSONObject diagnostic = response.getJSONObject("error");
+        assertEquals(1, diagnostic.getInt("schema"));
+        assertEquals("account", diagnostic.getString("domain"));
+        assertEquals(AccountErrorCode.VERIFIED_EMAIL_IMMUTABLE.code(),
+                diagnostic.getString("code"));
+        assertFalse(diagnostic.getBoolean("retryable"));
+        assertEquals("retain", diagnostic.getString("session_action"));
+        assertEquals("not_applied", diagnostic.getString("operation_outcome"));
     }
 
     @Test
@@ -163,10 +175,10 @@ class AccountPolicyReactorTest {
 
     @Test
     void verifiedEmailComparisonIsSemanticAndUnverifiedEmailRemainsEditable() {
-        JSONObject changed = AccountPolicyReactor.verifiedEmailChangeViolation(
-                true, "old@example.org", "new@example.org");
-        assertEquals(AccountErrorCode.VERIFIED_EMAIL_IMMUTABLE.code(),
-                changed.getString("code"));
+        PendingRegistrationException changed =
+                AccountPolicyReactor.verifiedEmailChangeViolation(
+                        true, "old@example.org", "new@example.org");
+        assertEquals(AccountErrorCode.VERIFIED_EMAIL_IMMUTABLE, changed.getCode());
 
         assertNull(AccountPolicyReactor.verifiedEmailChangeViolation(
                 true, " Rick@Example.org ", "rick@example.org"));
