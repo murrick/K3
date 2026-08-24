@@ -9,6 +9,7 @@ package org.kanger;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.kanger.account.AccountErrorCode;
+import org.kanger.account.PendingRegistrationException;
 import org.kanger.account.RegistrationPolicy;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IReactor;
@@ -75,7 +76,7 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
         JSONObject parameters = SessionSerializingReactor.parameters(packet);
         if (isNewPublicRegistration(packet, parameters)
                 && !policy.allowsPublicSelfRegistration()) {
-            return registrationDisabled();
+            throw registrationDisabled();
         }
         if (isAuthenticatedProfileUpdate(packet, parameters)) {
             JSONObject violation = profileUpdateGuard.violation(parameters);
@@ -133,12 +134,10 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
                 ? null : verifiedEmailImmutable();
     }
 
-    static JSONObject registrationDisabled() {
-        return new JSONObject()
-                .put("result", "error")
-                .put("code", AccountErrorCode.REGISTRATION_DISABLED.code())
-                .put("description",
-                        "Public registration is disabled by the server registration policy");
+    static PendingRegistrationException registrationDisabled() {
+        return new PendingRegistrationException(
+                AccountErrorCode.REGISTRATION_DISABLED,
+                "Public registration is disabled by the server registration policy");
     }
 
     static JSONObject verifiedEmailImmutable() {

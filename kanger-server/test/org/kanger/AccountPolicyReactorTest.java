@@ -9,6 +9,7 @@ package org.kanger;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.kanger.account.AccountErrorCode;
+import org.kanger.account.PendingRegistrationException;
 import org.kanger.account.RegistrationPolicy;
 import org.kanger.interfaces.IReactor;
 
@@ -17,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AccountPolicyReactorTest {
@@ -27,13 +29,12 @@ class AccountPolicyReactorTest {
         AccountPolicyReactor reactor = new AccountPolicyReactor(
                 RegistrationPolicy.TRUSTED, delegate(called));
 
-        JSONObject response = (JSONObject) reactor.run(packet(
-                "login", registration("")));
+        PendingRegistrationException failure = assertThrows(
+                PendingRegistrationException.class,
+                () -> reactor.run(packet("login", registration(""))));
 
         assertFalse(called.get());
-        assertEquals("error", response.getString("result"));
-        assertEquals(AccountErrorCode.REGISTRATION_DISABLED.code(),
-                response.getString("code"));
+        assertEquals(AccountErrorCode.REGISTRATION_DISABLED, failure.getCode());
     }
 
     @Test
@@ -45,11 +46,41 @@ class AccountPolicyReactorTest {
         AccountPolicyReactor reactor = new AccountPolicyReactor(
                 RegistrationPolicy.TRUSTED, delegate(called));
 
-        JSONObject response = (JSONObject) reactor.run(packet("login", parameters));
+        PendingRegistrationException failure = assertThrows(
+                PendingRegistrationException.class,
+                () -> reactor.run(packet("login", parameters)));
 
         assertFalse(called.get());
+        assertEquals(AccountErrorCode.REGISTRATION_DISABLED, failure.getCode());
+    }
+
+    @Test
+    void trustedRegistrationFailureReachesCanonicalAccountBoundary()
+            throws Exception {
+        AtomicBoolean called = new AtomicBoolean();
+        IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                new SessionSerializingReactor(
+                        RegistrationPolicy.TRUSTED,
+                        delegate(called)));
+
+        JSONObject response = (JSONObject) reactor.run(packet(
+                "login", registration("")));
+
+        assertFalse(called.get());
+        assertEquals("error", response.getString("result"), response.toString());
         assertEquals(AccountErrorCode.REGISTRATION_DISABLED.code(),
-                response.getString("code"));
+                response.getString("code"), response.toString());
+        assertEquals("Public registration is disabled by the server registration policy",
+                response.getString("description"), response.toString());
+
+        JSONObject diagnostic = response.getJSONObject("error");
+        assertEquals(1, diagnostic.getInt("schema"));
+        assertEquals("account", diagnostic.getString("domain"));
+        assertEquals(AccountErrorCode.REGISTRATION_DISABLED.code(),
+                diagnostic.getString("code"));
+        assertFalse(diagnostic.getBoolean("retryable"));
+        assertEquals("retain", diagnostic.getString("session_action"));
+        assertEquals("not_applied", diagnostic.getString("operation_outcome"));
     }
 
     @Test
