@@ -6,6 +6,7 @@
 package org.kanger;
 
 import org.json.JSONObject;
+import org.kanger.account.AccountErrorCode;
 import org.kanger.account.PendingRegistrationException;
 import org.kanger.command.CommandParseException;
 import org.kanger.exception.AuthenticationErrorException;
@@ -91,7 +92,7 @@ final class CanonicalErrorBoundaryReactor implements IReactor<JSONObject> {
                     "account",
                     failure.getCode().code(),
                     description(failure),
-                    false,
+                    failure.getCode() == AccountErrorCode.RESEND_RATE_LIMITED,
                     "retain",
                     "not_applied");
         } catch (CommandParseException failure) {

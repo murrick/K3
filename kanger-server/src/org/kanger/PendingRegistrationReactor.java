@@ -130,7 +130,8 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
         } catch (PendingRegistrationException failure) {
             if (failure.getCode() == AccountErrorCode.AUTHENTICATION_FAILED
                     || failure.getCode() == AccountErrorCode.LOGIN_ALREADY_USED
-                    || failure.getCode() == AccountErrorCode.EMAIL_ALREADY_USED) {
+                    || failure.getCode() == AccountErrorCode.EMAIL_ALREADY_USED
+                    || failure.getCode() == AccountErrorCode.RESEND_RATE_LIMITED) {
                 throw failure;
             }
             return error(failure.getCode(), failure.getMessage());
