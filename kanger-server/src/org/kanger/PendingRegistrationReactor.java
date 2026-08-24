@@ -133,9 +133,9 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
         mail.validateRecipient(email);
         Boolean privacy = privacy(parameters);
         if (!Boolean.TRUE.equals(privacy)) {
-            return new JSONObject()
-                    .put("result", "error")
-                    .put("description", "Privacy consent is required");
+            throw new PendingRegistrationException(
+                    AccountErrorCode.PRIVACY_CONSENT_REQUIRED,
+                    "Privacy consent is required");
         }
 
         PendingRegistrationStore.Created created = registrations.register(
