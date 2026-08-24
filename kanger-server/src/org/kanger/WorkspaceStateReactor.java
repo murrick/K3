@@ -48,9 +48,18 @@ import java.util.TreeSet;
  * <p>The projection deliberately contains only runtime authorities: active
  * storage and explicit transaction state. Source files are external semantic
  * transport objects and therefore have no current/active workspace identity.</p>
+ *
+ * <p>If a delegated operation fails, this reactor captures the authoritative
+ * post-failure workspace while the request still owns its serialized session
+ * and then rethrows the original exception unchanged. The outer canonical
+ * error boundary consumes that private snapshot when it displays a classified
+ * failure. Workspace projection therefore does not become an error display
+ * boundary and cannot race a later request after the session lock is released.</p>
  */
 public final class WorkspaceStateReactor implements IReactor<JSONObject> {
 
+    private static final String FAILURE_WORKSPACE_MARKER =
+            "_kanger_failure_workspace";
     private static final String[] GENERATION_SUFFIXES = {
             ".index", ".store", ".integrity", ".integrity.delta"
     };
@@ -66,11 +75,18 @@ public final class WorkspaceStateReactor implements IReactor<JSONObject> {
 
     @Override
     public Object run(JSONObject packet) throws Exception {
+        clearFailureWorkspace(packet);
         Request request = Request.parse(packet);
         IUser user = resolveUser(request);
         normalizeRequest(request);
 
-        Object response = delegate.run(packet);
+        Object response;
+        try {
+            response = delegate.run(packet);
+        } catch (Exception failure) {
+            captureFailureWorkspace(packet, user, failure);
+            throw failure;
+        }
         if (!(response instanceof JSONObject) || user == null
                 || user.getCurrentMind() == null) {
             return response;
@@ -81,6 +97,36 @@ public final class WorkspaceStateReactor implements IReactor<JSONObject> {
         normalizeLists(request, result, user);
         result.put("workspace", project(user));
         return result;
+    }
+
+    private void captureFailureWorkspace(JSONObject packet,
+                                         IUser user,
+                                         Exception failure) throws Exception {
+        if (packet == null || user == null || user.getCurrentMind() == null) {
+            return;
+        }
+        try {
+            packet.put(FAILURE_WORKSPACE_MARKER, project(user));
+        } catch (Exception projectionFailure) {
+            if (projectionFailure != failure) {
+                projectionFailure.addSuppressed(failure);
+            }
+            throw projectionFailure;
+        }
+    }
+
+    static JSONObject takeFailureWorkspace(JSONObject packet) {
+        if (packet == null) {
+            return null;
+        }
+        Object snapshot = packet.remove(FAILURE_WORKSPACE_MARKER);
+        return snapshot instanceof JSONObject ? (JSONObject) snapshot : null;
+    }
+
+    private static void clearFailureWorkspace(JSONObject packet) {
+        if (packet != null) {
+            packet.remove(FAILURE_WORKSPACE_MARKER);
+        }
     }
 
     private IUser resolveUser(Request request) {

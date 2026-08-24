@@ -48,6 +48,19 @@ class BrowserSoakCorrectionsContractTest {
     }
 
     @Test
+    void workspaceProjectionOwnsTransactionRendering() throws Exception {
+        String source = html("workspace.js");
+
+        assertTrue(source.contains("function renderTransaction(transaction)"));
+        assertTrue(source.contains("renderTransaction(data.workspace.transaction)"));
+        assertTrue(source.contains("document.getElementById('transaction-level')"));
+        assertFalse(source.contains("data.transaction"),
+                "Workspace authority must not depend on legacy top-level transaction state");
+        assertFalse(source.contains("data.empty"),
+                "Workspace authority must not depend on legacy top-level empty state");
+    }
+
+    @Test
     void committedProjectionOwnsPanelVisibilityAndRejectedRowsArePruned() throws Exception {
         String source = html("editor-local-file.js");
 

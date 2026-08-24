@@ -30,6 +30,12 @@ import org.kanger.interfaces.IReactor;
  * into the Server error payload; Browser and Console code must not need to
  * parse Java exception text to recover machine-readable meaning.</p>
  *
+ * <p>For authenticated failures below {@link WorkspaceStateReactor}, the
+ * workspace boundary captures the post-failure runtime state while the session
+ * is still serialized. This outer boundary attaches that snapshot only after
+ * classifying the original exception, preserving both single-point error
+ * presentation and truthful workspace observability.</p>
+ *
  * <p>Unclassified exceptions deliberately escape this boundary. The HTTP
  * transport must keep treating an unknown server failure as HTTP 500 rather
  * than disguising a programming or infrastructure defect as a successful
@@ -64,10 +70,10 @@ final class CanonicalErrorBoundaryReactor implements IReactor<JSONObject> {
             if (action != null && !action.isEmpty()) {
                 result.put("required_action", action);
             }
-            return result;
+            return withFailureWorkspace(packet, result);
         } catch (TransactionSettlementException failure) {
             String outcome = failure.getOutcome().name();
-            return error(
+            JSONObject result = error(
                     "operation",
                     "transaction_settlement_failed",
                     description(failure),
@@ -79,31 +85,32 @@ final class CanonicalErrorBoundaryReactor implements IReactor<JSONObject> {
                             .put("outcome", outcome)
                             .put("semantic_applied", failure.isSemanticApplied())
                             .put("reservation_consumed", failure.isReservationConsumed()));
+            return withFailureWorkspace(packet, result);
         } catch (AuthenticationErrorException failure) {
-            return error(
+            return withFailureWorkspace(packet, error(
                     "session",
                     "authentication_error",
                     description(failure),
                     false,
                     "verify",
-                    "unknown");
+                    "unknown"));
         } catch (PendingRegistrationException failure) {
-            return error(
+            return withFailureWorkspace(packet, error(
                     "account",
                     failure.getCode().code(),
                     description(failure),
                     failure.getCode() == AccountErrorCode.RESEND_RATE_LIMITED,
                     "retain",
-                    "not_applied");
+                    "not_applied"));
         } catch (CommandParseException failure) {
-            return error(
+            return withFailureWorkspace(packet, error(
                     "application",
                     "command_parse_error",
                     description(failure),
                     false,
                     "retain",
                     "confirmed")
-                    .put("reason", failure.getReason().name());
+                    .put("reason", failure.getReason().name()));
         } catch (ParseErrorException failure) {
             JSONObject result = error(
                     "application",
@@ -121,18 +128,32 @@ final class CanonicalErrorBoundaryReactor implements IReactor<JSONObject> {
                         .put("offset", sourceSpan.getOffset())
                         .put("length", sourceSpan.getLength()));
             }
-            return result;
+            return withFailureWorkspace(packet, result);
         } catch (CommandErrorException failure) {
-            return application("command_error", failure);
+            return withFailureWorkspace(packet,
+                    application("command_error", failure));
         } catch (DatabaseErrorException failure) {
-            return application("database_error", failure);
+            return withFailureWorkspace(packet,
+                    application("database_error", failure));
         } catch (OutOfBufferException failure) {
-            return application("out_of_buffer", failure);
+            return withFailureWorkspace(packet,
+                    application("out_of_buffer", failure));
         } catch (ParametersIncompleteException failure) {
-            return application("parameters_incomplete", failure);
+            return withFailureWorkspace(packet,
+                    application("parameters_incomplete", failure));
         } catch (RuntimeErrorException failure) {
-            return application("runtime_error", failure);
+            return withFailureWorkspace(packet,
+                    application("runtime_error", failure));
         }
+    }
+
+    private static JSONObject withFailureWorkspace(JSONObject packet,
+                                                   JSONObject result) {
+        JSONObject workspace = WorkspaceStateReactor.takeFailureWorkspace(packet);
+        if (workspace != null) {
+            result.put("workspace", workspace);
+        }
+        return result;
     }
 
     private static JSONObject application(String code, Exception failure) {
