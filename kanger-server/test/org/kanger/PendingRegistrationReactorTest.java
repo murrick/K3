@@ -147,13 +147,14 @@ class PendingRegistrationReactorTest {
     }
 
     @Test
-    void legacyResendWithoutScopedTokenNeverDelegatesOrQueuesMail()
+    void legacyResendWithoutScopedTokenReachesCanonicalAccountBoundary()
             throws Exception {
         FakeGateway gateway = new FakeGateway();
         FakeMail mail = new FakeMail();
         AtomicBoolean delegated = new AtomicBoolean();
-        PendingRegistrationReactor reactor = new PendingRegistrationReactor(
-                gateway, mail, delegate(delegated));
+        IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                new PendingRegistrationReactor(
+                        gateway, mail, delegate(delegated)));
 
         JSONObject response = (JSONObject) reactor.run(packet(new JSONObject()
                 .put("token", "ordinary-session-token")
@@ -161,10 +162,21 @@ class PendingRegistrationReactorTest {
 
         assertFalse(delegated.get());
         assertFalse(mail.queued);
-        assertEquals("error", response.getString("result"));
+        assertEquals("error", response.getString("result"), response.toString());
         assertEquals(AccountErrorCode.AUTHENTICATION_FAILED.code(),
-                response.getString("code"));
+                response.getString("code"), response.toString());
+        assertEquals("A scoped pending action token is required",
+                response.getString("description"), response.toString());
         assertFalse(response.has("token"));
+
+        JSONObject diagnostic = response.getJSONObject("error");
+        assertEquals(1, diagnostic.getInt("schema"));
+        assertEquals("account", diagnostic.getString("domain"));
+        assertEquals(AccountErrorCode.AUTHENTICATION_FAILED.code(),
+                diagnostic.getString("code"));
+        assertFalse(diagnostic.getBoolean("retryable"));
+        assertEquals("retain", diagnostic.getString("session_action"));
+        assertEquals("not_applied", diagnostic.getString("operation_outcome"));
     }
 
     @Test

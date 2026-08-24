@@ -91,51 +91,41 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
             return confirm(string(parameters, "confirm"));
         }
 
-        try {
-            if (!"login".equalsIgnoreCase(context(packet))) {
-                return delegate.run(packet);
-            }
-            if (isNewRegistration(parameters)) {
-                return register(parameters);
-            }
-            if (has(parameters, "pending_action_token")
-                    && has(parameters, "change_pending_email")) {
-                return changeEmail(parameters);
-            }
-            if (has(parameters, "pending_action_token")
-                    && has(parameters, "cancel_pending")) {
-                return cancel(parameters);
-            }
-            if (has(parameters, "pending_action_token")
-                    && has(parameters, "resend")) {
-                return resend(parameters);
-            }
-            if (isPendingAction(parameters)) {
-                return error(
-                        AccountErrorCode.AUTHENTICATION_FAILED,
-                        "A scoped pending action token is required");
-            }
-            if (isLogin(parameters)
-                    && SessionSerializingReactor.hasAuthenticatedCredential(packet)) {
-                // A successfully authenticated credential is an ACTIVE account.
-                // A stale pending record left by post-publication cleanup must
-                // never shadow ordinary login.
-                return delegate.run(packet);
-            }
-            if (isLogin(parameters)
-                    && registrations.containsLogin(string(parameters, "login"))) {
-                return pendingLogin(parameters);
-            }
+        if (!"login".equalsIgnoreCase(context(packet))) {
             return delegate.run(packet);
-        } catch (PendingRegistrationException failure) {
-            if (failure.getCode() == AccountErrorCode.AUTHENTICATION_FAILED
-                    || failure.getCode() == AccountErrorCode.LOGIN_ALREADY_USED
-                    || failure.getCode() == AccountErrorCode.EMAIL_ALREADY_USED
-                    || failure.getCode() == AccountErrorCode.RESEND_RATE_LIMITED) {
-                throw failure;
-            }
-            return error(failure.getCode(), failure.getMessage());
         }
+        if (isNewRegistration(parameters)) {
+            return register(parameters);
+        }
+        if (has(parameters, "pending_action_token")
+                && has(parameters, "change_pending_email")) {
+            return changeEmail(parameters);
+        }
+        if (has(parameters, "pending_action_token")
+                && has(parameters, "cancel_pending")) {
+            return cancel(parameters);
+        }
+        if (has(parameters, "pending_action_token")
+                && has(parameters, "resend")) {
+            return resend(parameters);
+        }
+        if (isPendingAction(parameters)) {
+            throw new PendingRegistrationException(
+                    AccountErrorCode.AUTHENTICATION_FAILED,
+                    "A scoped pending action token is required");
+        }
+        if (isLogin(parameters)
+                && SessionSerializingReactor.hasAuthenticatedCredential(packet)) {
+            // A successfully authenticated credential is an ACTIVE account.
+            // A stale pending record left by post-publication cleanup must
+            // never shadow ordinary login.
+            return delegate.run(packet);
+        }
+        if (isLogin(parameters)
+                && registrations.containsLogin(string(parameters, "login"))) {
+            return pendingLogin(parameters);
+        }
+        return delegate.run(packet);
     }
 
     private JSONObject register(JSONObject parameters) throws Exception {
