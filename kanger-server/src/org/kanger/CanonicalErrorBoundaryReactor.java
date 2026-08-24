@@ -6,6 +6,7 @@
 package org.kanger;
 
 import org.json.JSONObject;
+import org.kanger.account.PendingRegistrationException;
 import org.kanger.command.CommandParseException;
 import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.exception.CommandErrorException;
@@ -85,6 +86,14 @@ final class CanonicalErrorBoundaryReactor implements IReactor<JSONObject> {
                     false,
                     "verify",
                     "unknown");
+        } catch (PendingRegistrationException failure) {
+            return error(
+                    "account",
+                    failure.getCode().code(),
+                    description(failure),
+                    false,
+                    "retain",
+                    "not_applied");
         } catch (CommandParseException failure) {
             return error(
                     "application",
