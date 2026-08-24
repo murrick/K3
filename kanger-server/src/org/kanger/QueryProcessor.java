@@ -585,6 +585,8 @@ public class QueryProcessor implements IReactor<JSONObject> {
                 result.put("result", "OK");
                 result.put("token", token);
 
+            } catch (AuthenticationErrorException failure) {
+                throw failure;
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());

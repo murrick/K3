@@ -112,4 +112,29 @@ class QueryProcessorAuthenticationBoundaryTest {
         assertEquals("verify", diagnostic.getString("session_action"));
         assertEquals("unknown", diagnostic.getString("operation_outcome"));
     }
+
+    @Test
+    void queryProcessorProfileInfoAuthenticationFailureReachesCanonicalBoundary()
+            throws Exception {
+        String token = "missing-profile-info-" + UUID.randomUUID();
+        IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                new QueryProcessor());
+        JSONObject packet = new JSONObject().put("body", new JSONObject()
+                .put("context", "login")
+                .put("parameters", new JSONObject()
+                        .put("info", true)
+                        .put("token", token)));
+
+        JSONObject response = (JSONObject) reactor.run(packet);
+
+        assertEquals("error", response.getString("result"), response.toString());
+        assertEquals("authentication_error", response.getString("code"),
+                response.toString());
+        JSONObject diagnostic = response.getJSONObject("error");
+        assertEquals(1, diagnostic.getInt("schema"));
+        assertEquals("session", diagnostic.getString("domain"));
+        assertEquals("authentication_error", diagnostic.getString("code"));
+        assertEquals("verify", diagnostic.getString("session_action"));
+        assertEquals("unknown", diagnostic.getString("operation_outcome"));
+    }
 }
