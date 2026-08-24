@@ -33,7 +33,6 @@ import org.kanger.enums.LogMode;
 import org.kanger.enums.Tools;
 import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.exception.CommandErrorException;
-import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.*;
 import org.kanger.primitives.Cause;
@@ -178,42 +177,30 @@ public class QueryProcessor implements IReactor<JSONObject> {
             }
         }
         if (context != null) {
-            try {
-                if ("login".equalsIgnoreCase(context)
-                        || isLegacyRootConfirmation(context, parameters)) {
-                    result = processLogin(parameters);
-                } else if ("version".equalsIgnoreCase(context)) {
-                    result = new JSONObject();
-                    result.put("result", "OK");
-                    result.put("version", Version.VERSION_S);
-                } else if (!parameters.isNull("token")) {
-                    String token = parameters.getString("token");
-                    IUser user = UserFactory.getUser(token);
-                    if (user.getCurrentMind() == null) {
-                        IMind mind = new Mind(user);
-                        user.setCurrentMind(mind);
-                    }
-
-                    if ("command".equalsIgnoreCase(context)) {
-                        result = processCommand(parameters, user);
-                    } else if ("query".equalsIgnoreCase(context)) {
-                        result = processQuery(parameters, user);
-                    } else if ("history".equalsIgnoreCase(context)) {
-                        result = processHistory(parameters, user);
-                    }
-                } else {
-                    throw new AuthenticationErrorException("User not logged in");
-                }
-            } catch (ParseErrorException failure) {
-                throw failure;
-            } catch (AuthenticationErrorException failure) {
-                throw failure;
-            } catch (Exception e) {
+            if ("login".equalsIgnoreCase(context)
+                    || isLegacyRootConfirmation(context, parameters)) {
+                result = processLogin(parameters);
+            } else if ("version".equalsIgnoreCase(context)) {
                 result = new JSONObject();
-                result.put("result", "error");
-                result.put("description", e.toString());
-                System.err.println(new Date());
-                e.printStackTrace(System.err);
+                result.put("result", "OK");
+                result.put("version", Version.VERSION_S);
+            } else if (!parameters.isNull("token")) {
+                String token = parameters.getString("token");
+                IUser user = UserFactory.getUser(token);
+                if (user.getCurrentMind() == null) {
+                    IMind mind = new Mind(user);
+                    user.setCurrentMind(mind);
+                }
+
+                if ("command".equalsIgnoreCase(context)) {
+                    result = processCommand(parameters, user);
+                } else if ("query".equalsIgnoreCase(context)) {
+                    result = processQuery(parameters, user);
+                } else if ("history".equalsIgnoreCase(context)) {
+                    result = processHistory(parameters, user);
+                }
+            } else {
+                throw new AuthenticationErrorException("User not logged in");
             }
         }
         return result;
