@@ -565,6 +565,8 @@ public class QueryProcessor implements IReactor<JSONObject> {
                     result.put("description", "E-mail address not defined");
                 }
 
+            } catch (AuthenticationErrorException failure) {
+                throw failure;
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());
