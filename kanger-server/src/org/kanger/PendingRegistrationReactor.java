@@ -128,6 +128,9 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
             }
             return delegate.run(packet);
         } catch (PendingRegistrationException failure) {
+            if (failure.getCode() == AccountErrorCode.AUTHENTICATION_FAILED) {
+                throw failure;
+            }
             return error(failure.getCode(), failure.getMessage());
         }
     }
