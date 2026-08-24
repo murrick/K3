@@ -485,6 +485,8 @@ public class QueryProcessor implements IReactor<JSONObject> {
                 result.put("token", token);
                 result.put("login", login);
                 Watchdog.log(user, "User login ot password changed (" + parameters.getString("currentlogin") + ")");
+            } catch (AuthenticationErrorException failure) {
+                throw failure;
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());
