@@ -466,7 +466,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
         return result;
     }
 
-    private JSONObject processLogin(JSONObject parameters) throws JSONException {
+    private JSONObject processLogin(JSONObject parameters) throws Exception {
         JSONObject result = new JSONObject();
         if (!parameters.isNull("currentpassword") && !parameters.isNull("currentlogin")) {
             try {
@@ -510,6 +510,8 @@ public class QueryProcessor implements IReactor<JSONObject> {
                 result.put("result", "OK");
                 result.put("token", token);
                 Watchdog.log(user, "User logged in");
+            } catch (AuthenticationErrorException failure) {
+                throw failure;
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());
