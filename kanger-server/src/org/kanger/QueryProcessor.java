@@ -202,9 +202,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
                         result = processHistory(parameters, user);
                     }
                 } else {
-                    result = new JSONObject();
-                    result.put("result", "error");
-                    result.put("description", "User not logged in");
+                    throw new AuthenticationErrorException("User not logged in");
                 }
             } catch (ParseErrorException failure) {
                 throw failure;
