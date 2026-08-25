@@ -28,7 +28,6 @@ import org.json.JSONObject;
 import org.kanger.compiler.Token;
 import org.kanger.enums.LogMode;
 import org.kanger.enums.Tools;
-import org.kanger.exception.StorageLifecycleException;
 import org.kanger.exception.TransactionSettlementException;
 import org.kanger.interfaces.ILogEntry;
 import org.kanger.interfaces.IMind;
@@ -110,15 +109,6 @@ final class MindLifecycleReactor implements IReactor<JSONObject> {
                 return ok("User left system");
             }
             return delegate.run(packet);
-        } catch (StorageLifecycleException rejected) {
-            JSONObject result = error(rejected.getCode(), rejected.toString());
-            if (rejected.getRequiredAction() != null) {
-                result.put("required_action", rejected.getRequiredAction());
-            }
-            if (user != null && user.getCurrentMind() != null) {
-                return decorate(result, user);
-            }
-            return result;
         } catch (TransactionSettlementException settled) {
             /*
              * The user-visible child is already finished here. Report the
