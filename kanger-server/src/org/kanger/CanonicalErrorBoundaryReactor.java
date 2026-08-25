@@ -100,6 +100,16 @@ final class CanonicalErrorBoundaryReactor implements IReactor<JSONObject> {
                             .put("logical_name", failure.getLogicalName())
                             .put("text", failure.getRecoverySource()));
             return withFailureWorkspace(packet, result);
+        } catch (SourceDeleteException failure) {
+            JSONObject result = error(
+                    "operation",
+                    "source_delete_failed",
+                    description(failure),
+                    false,
+                    "retain",
+                    "unknown")
+                    .put("required_action", "VERIFY_CURRENT_STATE");
+            return withFailureWorkspace(packet, result);
         } catch (AuthenticationErrorException failure) {
             return withFailureWorkspace(packet, error(
                     "session",

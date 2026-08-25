@@ -114,6 +114,8 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 }
             }
             return decorate(result, user);
+        } catch (SourceDeleteException failure) {
+            throw failure;
         } catch (Exception error) {
             System.err.println(new Date());
             error.printStackTrace(System.err);
@@ -322,7 +324,11 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
         if (!Files.exists(target)) {
             return error("source_not_found", "Source file not found " + fileName);
         }
-        Files.delete(target);
+        try {
+            Files.delete(target);
+        } catch (IOException failure) {
+            throw new SourceDeleteException(fileName, failure);
+        }
         if (Files.exists(target)) {
             return error("source_delete_incomplete",
                     "Source file could not be deleted " + fileName);
