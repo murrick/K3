@@ -67,6 +67,12 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
     @Override
     public Object run(JSONObject packet) throws Exception {
         Envelope envelope = Envelope.parse(packet);
+        if (envelope != null && "command".equalsIgnoreCase(envelope.context)) {
+            JSONObject policyViolation = ApiInputPolicy.violation(envelope.parameters);
+            if (policyViolation != null) {
+                return policyViolation;
+            }
+        }
         if (envelope == null
                 || !DIALOGUE_CONTEXT.equalsIgnoreCase(envelope.context)
                 || !envelope.parameters.has(LINE_PARAMETER)
