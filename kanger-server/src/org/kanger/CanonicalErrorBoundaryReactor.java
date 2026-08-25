@@ -84,7 +84,8 @@ final class CanonicalErrorBoundaryReactor implements IReactor<JSONObject> {
                             .put("schema", 1)
                             .put("outcome", outcome)
                             .put("semantic_applied", failure.isSemanticApplied())
-                            .put("reservation_consumed", failure.isReservationConsumed()));
+                            .put("reservation_consumed", failure.isReservationConsumed()))
+                    .put("required_action", "VERIFY_CURRENT_STATE");
             return withFailureWorkspace(packet, result);
         } catch (AuthenticationErrorException failure) {
             return withFailureWorkspace(packet, error(
