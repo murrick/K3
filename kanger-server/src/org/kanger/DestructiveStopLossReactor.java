@@ -230,12 +230,15 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
             directory = Paths.get(".").toAbsolutePath().normalize();
             target = directory.resolve(target.getFileName());
         }
-        Files.createDirectories(directory);
-        boolean existed = Files.exists(target);
-        Path temporary = Files.createTempFile(directory,
-                target.getFileName().toString() + ".", ".tmp");
+
+        Path temporary = null;
+        boolean existed = false;
         boolean published = false;
         try {
+            Files.createDirectories(directory);
+            existed = Files.exists(target);
+            temporary = Files.createTempFile(directory,
+                    target.getFileName().toString() + ".", ".tmp");
             byte[] data = SourceContextMaterializer.materializeCurrentLevel(mind)
                     .getBytes(StandardCharsets.UTF_8);
             try (FileChannel channel = FileChannel.open(temporary,
@@ -255,15 +258,26 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
             }
             published = true;
-            if (!existed) {
-                Watchdog.log(user, "New source file created: " + fileName);
-            }
-            return ok("Source file " + fileName + " saved.");
+        } catch (IOException failure) {
+            return error("source_save_failed", "Source save failed");
         } finally {
-            if (!published) {
-                Files.deleteIfExists(temporary);
+            if (!published && temporary != null) {
+                try {
+                    Files.deleteIfExists(temporary);
+                } catch (IOException cleanupFailure) {
+                    Watchdog.warn("Unable to clean temporary source file");
+                }
             }
         }
+
+        if (!existed) {
+            try {
+                Watchdog.log(user, "New source file created: " + fileName);
+            } catch (Exception logFailure) {
+                Watchdog.warn("Unable to record source creation event");
+            }
+        }
+        return ok("Source file " + fileName + " saved.");
     }
 
     private JSONObject loadSource(JSONObject parameters, IUser user) throws Exception {
