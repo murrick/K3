@@ -22,12 +22,13 @@ import org.kanger.exception.TransactionSettlementException;
 import org.kanger.interfaces.IReactor;
 
 /**
- * Converts classified KANGER exceptions into the canonical public error
- * envelope at one Server boundary.
+ * Converts classified KANGER failures into the canonical public error envelope
+ * at one Server boundary.
  *
  * <p>Semantic/runtime code below this boundary is allowed to fail by throwing
- * its qualified exception. This reactor owns protocol-neutral classification
- * into the Server error payload; Browser and Console code must not need to
+ * its qualified exception. Legacy compatibility reactors may instead return a
+ * classified safe error envelope; this boundary owns its final canonical
+ * diagnostic projection as well. Browser and Console code must not need to
  * parse Java exception text to recover machine-readable meaning.</p>
  *
  * <p>For authenticated failures below {@link WorkspaceStateReactor}, the
@@ -57,7 +58,7 @@ final class CanonicalErrorBoundaryReactor implements IReactor<JSONObject> {
     @Override
     public Object run(JSONObject packet) throws Exception {
         try {
-            return delegate.run(packet);
+            return canonicalizeReturnedError(delegate.run(packet));
         } catch (StorageLifecycleException failure) {
             JSONObject result = error(
                     "application",
@@ -199,6 +200,27 @@ final class CanonicalErrorBoundaryReactor implements IReactor<JSONObject> {
         }
     }
 
+    private static Object canonicalizeReturnedError(Object response) {
+        if (!(response instanceof JSONObject)) {
+            return response;
+        }
+        JSONObject result = (JSONObject) response;
+        if (!"error".equalsIgnoreCase(result.optString("result", ""))
+                || result.has("error")) {
+            return result;
+        }
+        if ("storage_switch_failed".equals(result.optString("code", ""))) {
+            result.put("error", diagnostic(
+                    "operation",
+                    "storage_switch_failed",
+                    false,
+                    "retain",
+                    "unknown"));
+            result.put("required_action", "VERIFY_CURRENT_STATE");
+        }
+        return result;
+    }
+
     private static JSONObject withFailureWorkspace(JSONObject packet,
                                                    JSONObject result) {
         JSONObject workspace = WorkspaceStateReactor.takeFailureWorkspace(packet);
@@ -224,18 +246,30 @@ final class CanonicalErrorBoundaryReactor implements IReactor<JSONObject> {
                                     boolean retryable,
                                     String sessionAction,
                                     String operationOutcome) {
-        JSONObject diagnostic = new JSONObject()
+        return new JSONObject()
+                .put("result", "error")
+                .put("code", code)
+                .put("description", description)
+                .put("error", diagnostic(
+                        domain,
+                        code,
+                        retryable,
+                        sessionAction,
+                        operationOutcome));
+    }
+
+    private static JSONObject diagnostic(String domain,
+                                         String code,
+                                         boolean retryable,
+                                         String sessionAction,
+                                         String operationOutcome) {
+        return new JSONObject()
                 .put("schema", ERROR_SCHEMA)
                 .put("domain", domain)
                 .put("code", code)
                 .put("retryable", retryable)
                 .put("session_action", sessionAction)
                 .put("operation_outcome", operationOutcome);
-        return new JSONObject()
-                .put("result", "error")
-                .put("code", code)
-                .put("description", description)
-                .put("error", diagnostic);
     }
 
     private static String description(Throwable failure) {

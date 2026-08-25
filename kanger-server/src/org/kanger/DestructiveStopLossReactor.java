@@ -114,8 +114,10 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 }
             }
             return decorate(result, user);
-        } catch (SourceDeleteException | StorageSwitchException failure) {
+        } catch (SourceDeleteException failure) {
             throw failure;
+        } catch (StorageSwitchException failure) {
+            return error("storage_switch_failed", failure.getMessage());
         } catch (Exception error) {
             System.err.println(new Date());
             error.printStackTrace(System.err);
