@@ -48,14 +48,15 @@ class PendingRegistrationReactorTest {
     }
 
     @Test
-    void mailQueueFailureRetainsPendingAndReturnsStructuredFailure()
+    void mailQueueFailureRetainsPendingAndReachesCanonicalBoundary()
             throws Exception {
         FakeGateway gateway = new FakeGateway();
         FakeMail mail = new FakeMail();
         mail.failQueue = true;
         AtomicBoolean delegated = new AtomicBoolean();
-        PendingRegistrationReactor reactor = new PendingRegistrationReactor(
-                gateway, mail, delegate(delegated));
+        IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                new PendingRegistrationReactor(
+                        gateway, mail, delegate(delegated)));
 
         JSONObject response = (JSONObject) reactor.run(packet(new JSONObject()
                 .put("register", "rick")
@@ -68,8 +69,50 @@ class PendingRegistrationReactorTest {
         assertEquals("error", response.getString("result"));
         assertEquals(AccountErrorCode.MAIL_DELIVERY_UNAVAILABLE.code(),
                 response.getString("code"));
+        assertEquals("Confirmation e-mail could not be queued",
+                response.getString("description"));
         assertEquals("PENDING_CONFIRMATION", response.getString("state"));
+        assertEquals("r***@example.org", response.getString("email_hint"));
         assertFalse(response.has("token"));
+        assertFalse(response.getString("description").contains("synthetic"));
+
+        JSONObject diagnostic = response.getJSONObject("error");
+        assertEquals(1, diagnostic.getInt("schema"));
+        assertEquals("account", diagnostic.getString("domain"));
+        assertEquals(AccountErrorCode.MAIL_DELIVERY_UNAVAILABLE.code(),
+                diagnostic.getString("code"));
+        assertTrue(diagnostic.getBoolean("retryable"));
+        assertEquals("retain", diagnostic.getString("session_action"));
+        assertEquals("confirmed", diagnostic.getString("operation_outcome"));
+    }
+
+    @Test
+    void resendMailQueueFailurePreservesRotatedPendingActionToken()
+            throws Exception {
+        FakeGateway gateway = new FakeGateway();
+        FakeMail mail = new FakeMail();
+        mail.failQueue = true;
+        AtomicBoolean delegated = new AtomicBoolean();
+        IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                new PendingRegistrationReactor(
+                        gateway, mail, delegate(delegated)));
+
+        JSONObject response = (JSONObject) reactor.run(packet(new JSONObject()
+                .put("pending_action_token", "pending-action")
+                .put("resend", true)));
+
+        assertFalse(delegated.get());
+        assertEquals("error", response.getString("result"));
+        assertEquals(AccountErrorCode.MAIL_DELIVERY_UNAVAILABLE.code(),
+                response.getString("code"));
+        assertEquals("PENDING_CONFIRMATION", response.getString("state"));
+        assertEquals("r***@example.org", response.getString("email_hint"));
+        assertEquals("next-action", response.getString("pending_action_token"));
+
+        JSONObject diagnostic = response.getJSONObject("error");
+        assertEquals("account", diagnostic.getString("domain"));
+        assertTrue(diagnostic.getBoolean("retryable"));
+        assertEquals("confirmed", diagnostic.getString("operation_outcome"));
     }
 
     @Test

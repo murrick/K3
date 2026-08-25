@@ -153,8 +153,7 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
                     created.getRegistration().getEmail(),
                     created.getConfirmationToken());
         } catch (Exception unavailable) {
-            return pendingMailUnavailable(
-                    created.getRegistration(), null, unavailable);
+            throw mailUnavailable(created.getRegistration(), null, unavailable);
         }
         return pending(created.getRegistration());
     }
@@ -185,7 +184,7 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
                     rotation.getRegistration().getEmail(),
                     rotation.getConfirmationToken());
         } catch (Exception unavailable) {
-            return pendingMailUnavailable(
+            throw mailUnavailable(
                     rotation.getRegistration(),
                     rotation.getActionToken(),
                     unavailable);
@@ -205,7 +204,7 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
                     rotation.getRegistration().getEmail(),
                     rotation.getConfirmationToken());
         } catch (Exception unavailable) {
-            return pendingMailUnavailable(
+            throw mailUnavailable(
                     rotation.getRegistration(),
                     rotation.getActionToken(),
                     unavailable);
@@ -251,19 +250,15 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
         return response;
     }
 
-    private static JSONObject pendingMailUnavailable(
+    private static ConfirmationMailDeliveryException mailUnavailable(
             PendingRegistration registration,
             String actionToken,
             Exception failure) {
-        JSONObject response = error(
-                AccountErrorCode.MAIL_DELIVERY_UNAVAILABLE,
-                "Confirmation e-mail could not be queued: " + failure.getMessage())
-                .put("state", "PENDING_CONFIRMATION")
-                .put("email_hint", emailHint(registration.getEmail()));
-        if (actionToken != null && !actionToken.isEmpty()) {
-            response.put("pending_action_token", actionToken);
-        }
-        return response;
+        return new ConfirmationMailDeliveryException(
+                "PENDING_CONFIRMATION",
+                emailHint(registration.getEmail()),
+                actionToken,
+                failure);
     }
 
     private static JSONObject error(AccountErrorCode code, String description) {

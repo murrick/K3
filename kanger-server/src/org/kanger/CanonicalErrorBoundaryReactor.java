@@ -108,6 +108,24 @@ final class CanonicalErrorBoundaryReactor implements IReactor<JSONObject> {
                     false,
                     "verify",
                     "unknown"));
+        } catch (ConfirmationMailDeliveryException failure) {
+            JSONObject result = error(
+                    "account",
+                    AccountErrorCode.MAIL_DELIVERY_UNAVAILABLE.code(),
+                    description(failure),
+                    true,
+                    "retain",
+                    "confirmed");
+            if (!failure.getState().isEmpty()) {
+                result.put("state", failure.getState());
+            }
+            if (!failure.getEmailHint().isEmpty()) {
+                result.put("email_hint", failure.getEmailHint());
+            }
+            if (!failure.getPendingActionToken().isEmpty()) {
+                result.put("pending_action_token", failure.getPendingActionToken());
+            }
+            return withFailureWorkspace(packet, result);
         } catch (PendingRegistrationException failure) {
             return withFailureWorkspace(packet, error(
                     "account",
