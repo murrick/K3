@@ -209,10 +209,12 @@ final class CanonicalErrorBoundaryReactor implements IReactor<JSONObject> {
                 || result.has("error")) {
             return result;
         }
-        if ("storage_switch_failed".equals(result.optString("code", ""))) {
+        String code = result.optString("code", "");
+        if ("storage_switch_failed".equals(code)
+                || "storage_reindex_failed".equals(code)) {
             result.put("error", diagnostic(
                     "operation",
-                    "storage_switch_failed",
+                    code,
                     false,
                     "retain",
                     "unknown"));

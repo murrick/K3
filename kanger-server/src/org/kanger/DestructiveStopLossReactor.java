@@ -475,32 +475,19 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
         String requested = parameters.optString("reindex", "");
         String storageName = requested.isEmpty()
                 ? mind.getStorageName() : canonicalStorageName(requested);
-        if (storageName == null || storageName.isEmpty()
-                || !storageArtifactsExist(user, storageName)) {
-            return error("storage_not_found", "Database not found " + requested);
-        }
-
-        String previousStorage = mind.isStorageUsed() ? mind.getStorageName() : null;
-        String previousSource = SourceContextMaterializer.materializeCurrentLevel(mind);
-        deleteStorageArtifacts(user, storageName + "-temporary");
         try {
+            if (storageName == null || storageName.isEmpty()
+                    || !storageArtifactsExist(user, storageName)) {
+                return error("storage_not_found", "Database not found " + requested);
+            }
+
+            deleteStorageArtifacts(user, storageName + "-temporary");
             mind = mind.reindexStorage(storageName);
             user.setCurrentMind(mind);
-            if (previousStorage == null && !previousSource.isEmpty()) {
-                if (!mind.compile(previousSource)) {
-                    throw new IllegalStateException(
-                            "Workspace could not be restored after reindex");
-                }
-            }
             deleteStorageArtifacts(user, storageName + "-temporary");
             return ok("Database " + requested + " indexed");
         } catch (Exception reindexFailure) {
-            try {
-                restoreStorage(user, previousStorage, previousSource);
-            } catch (Exception restoreFailure) {
-                reindexFailure.addSuppressed(restoreFailure);
-            }
-            return error("storage_reindex_failed", reindexFailure.toString());
+            return error("storage_reindex_failed", "Storage reindex failed");
         }
     }
 
