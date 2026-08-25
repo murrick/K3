@@ -60,13 +60,15 @@ final class CanonicalErrorBoundaryReactor implements IReactor<JSONObject> {
         try {
             return canonicalizeReturnedError(delegate.run(packet));
         } catch (StorageLifecycleException failure) {
+            boolean incompleteRemoval = failure.getErrorCode()
+                    == org.kanger.enums.StorageLifecycleErrorCode.STORAGE_DELETE_INCOMPLETE;
             JSONObject result = error(
-                    "application",
+                    incompleteRemoval ? "operation" : "application",
                     failure.getCode(),
                     description(failure),
                     false,
                     "retain",
-                    "confirmed");
+                    incompleteRemoval ? "unknown" : "confirmed");
             String action = failure.getRequiredAction();
             if (action != null && !action.isEmpty()) {
                 result.put("required_action", action);

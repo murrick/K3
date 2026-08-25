@@ -119,6 +119,10 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
         } catch (StorageSwitchException failure) {
             return error("storage_switch_failed", failure.getMessage());
         } catch (Exception error) {
+            if ("drop".equals(operation)
+                    && error instanceof org.kanger.exception.StorageLifecycleException) {
+                throw error;
+            }
             System.err.println(new Date());
             error.printStackTrace(System.err);
             return error("operation_failed", error.toString());
@@ -515,18 +519,30 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
         String requested = parameters.optString("drop", "");
         String storageName = requested.isEmpty()
                 ? mind.getStorageName() : canonicalStorageName(requested);
-        if (storageName == null || storageName.isEmpty()
-                || !storageArtifactsExist(user, storageName)) {
+        if (storageName == null || storageName.isEmpty()) {
             return error("storage_not_found", "Database not found " + requested);
+        }
+        try {
+            if (!storageArtifactsExist(user, storageName)) {
+                return error("storage_not_found", "Database not found " + requested);
+            }
+        } catch (IOException probeFailure) {
+            org.kanger.exception.StorageLifecycleException failure =
+                    new org.kanger.exception.StorageLifecycleException(
+                            org.kanger.enums.StorageLifecycleErrorCode.STORAGE_DELETE_INCOMPLETE,
+                            "Database deletion was incomplete "
+                                    + storageName.replace(Enums.FILE_SEPARATOR, "."));
+            failure.addSuppressed(probeFailure);
+            throw failure;
         }
 
         mind = mind.removeStorage(storageName);
         user.setCurrentMind(mind);
-        if (storageArtifactsExist(user, storageName)) {
-            return error("storage_delete_incomplete",
-                    "Database deletion was incomplete " + requested);
+        try {
+            Watchdog.log(user, "Database " + requested + " deleted");
+        } catch (Exception logFailure) {
+            Watchdog.warn("Unable to record storage deletion event");
         }
-        Watchdog.log(user, "Database " + requested + " deleted");
         return ok("Database " + requested + " dropped");
     }
 
