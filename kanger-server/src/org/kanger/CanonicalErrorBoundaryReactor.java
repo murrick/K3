@@ -110,6 +110,16 @@ final class CanonicalErrorBoundaryReactor implements IReactor<JSONObject> {
                     "unknown")
                     .put("required_action", "VERIFY_CURRENT_STATE");
             return withFailureWorkspace(packet, result);
+        } catch (StorageSwitchException failure) {
+            JSONObject result = error(
+                    "operation",
+                    "storage_switch_failed",
+                    description(failure),
+                    false,
+                    "retain",
+                    "unknown")
+                    .put("required_action", "VERIFY_CURRENT_STATE");
+            return withFailureWorkspace(packet, result);
         } catch (AuthenticationErrorException failure) {
             return withFailureWorkspace(packet, error(
                     "session",

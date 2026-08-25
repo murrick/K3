@@ -114,7 +114,7 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 }
             }
             return decorate(result, user);
-        } catch (SourceDeleteException failure) {
+        } catch (SourceDeleteException | StorageSwitchException failure) {
             throw failure;
         } catch (Exception error) {
             System.err.println(new Date());
@@ -364,7 +364,7 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 }
                 return storageInfo(rebased);
             } catch (Exception switchFailure) {
-                return error("storage_switch_failed", switchFailure.toString());
+                throw new StorageSwitchException(displayName, switchFailure);
             }
         }
 
@@ -380,7 +380,11 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
         }
 
         String previousSource = SourceContextMaterializer.materializeCurrentLevel(mind);
-        probeStorage(user, storageName);
+        try {
+            probeStorage(user, storageName);
+        } catch (Exception probeFailure) {
+            throw new StorageSwitchException(displayName, probeFailure);
+        }
         try {
             mind = mind.useStorage(storageName);
             user.setCurrentMind(mind);
@@ -425,7 +429,7 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
             } catch (Exception restoreFailure) {
                 switchFailure.addSuppressed(restoreFailure);
             }
-            return error("storage_switch_failed", switchFailure.toString());
+            throw new StorageSwitchException(displayName, switchFailure);
         }
     }
 
