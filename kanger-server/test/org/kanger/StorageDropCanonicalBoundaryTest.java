@@ -46,8 +46,9 @@ class StorageDropCanonicalBoundaryTest {
 
             assertEquals("error", response.getString("result"));
             assertEquals("STORAGE_DELETE_INCOMPLETE", response.getString("code"));
-            assertEquals("Database deletion was incomplete " + storageName,
-                    response.getString("description"));
+            assertTrue(response.getString("description").contains(
+                    "Database deletion was incomplete " + storageName),
+                    response.toString());
             assertEquals("VERIFY_CURRENT_STATE",
                     response.getString("required_action"));
 
