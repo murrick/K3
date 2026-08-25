@@ -8,6 +8,8 @@ package org.kanger;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.kanger.account.AccountErrorCode;
+import org.kanger.account.PendingRegistrationException;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 
@@ -101,7 +103,13 @@ final class MailBoundaryReactor implements IReactor<JSONObject> {
         return result;
     }
 
-    private JSONObject resend(JSONObject parameters) {
+    private JSONObject resend(JSONObject parameters) throws Exception {
+        if (!mail.isEnabled()) {
+            throw new PendingRegistrationException(
+                    AccountErrorCode.MAIL_DELIVERY_UNAVAILABLE,
+                    "E-mail confirmation delivery is unavailable");
+        }
+
         try {
             IUser user = UserFactory.getUser(parameters.getString("token"));
             String email = user.getProperty("reg.email", "");
