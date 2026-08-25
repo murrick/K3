@@ -93,6 +93,7 @@ public final class GetSourceBoundaryReactor implements IReactor<JSONObject> {
 
         String exactSource = new String(
                 Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+        boolean semanticApplied = false;
 
         try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(parent)) {
             Mind work = tx.mind();
@@ -115,6 +116,7 @@ public final class GetSourceBoundaryReactor implements IReactor<JSONObject> {
                 return recoveryError("source_compile_rejected", description,
                         file.getName(), exactSource);
             }
+            semanticApplied = true;
 
             description += "<br>File " + file.getName() + " loaded";
             if (parent.getTransactionLevel() > 0) {
@@ -127,10 +129,14 @@ public final class GetSourceBoundaryReactor implements IReactor<JSONObject> {
         } catch (TransactionSettlementException settled) {
             throw settled;
         } catch (Exception failure) {
+            if (semanticApplied) {
+                throw new TransactionSettlementException(
+                        TransactionSettlementException.Outcome.COMMITTED,
+                        failure);
+            }
             parent.setQueryResult(false);
             user.setCurrentMind(parent);
-            return recoveryError("source_load_failed", failure.toString(),
-                    file.getName(), exactSource);
+            throw new SourceImportException(file.getName(), exactSource, failure);
         }
     }
 
