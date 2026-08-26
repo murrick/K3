@@ -499,8 +499,7 @@ public class DB implements IData {
                     }
                 } else {
                     recurseList(path + Enums.FILE_SEPARATOR + f.getName(),
-                            prefix + (prefix.isEmpty() ? "" : ".")
-                                    + f.getName() + ".", list);
+                            prefix + f.getName() + ".", list);
                 }
             }
         }
