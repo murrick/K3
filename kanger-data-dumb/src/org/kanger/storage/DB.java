@@ -200,6 +200,23 @@ public class DB implements IData {
         } catch (IOException deleteFailure) {
             throw incompleteRemoval(tmp, deleteFailure);
         }
+        pruneEmptyStorageParents(dbPath);
+    }
+
+    private void pruneEmptyStorageParents(String dbPath) {
+        File root = new File(user.getDatabaseDir()).getAbsoluteFile();
+        File directory = new File(dbPath).getAbsoluteFile().getParentFile();
+        while (directory != null && !directory.equals(root)) {
+            File[] contents = directory.listFiles();
+            if (contents == null || contents.length != 0) {
+                return;
+            }
+            File parent = directory.getParentFile();
+            if (!directory.delete()) {
+                return;
+            }
+            directory = parent;
+        }
     }
 
     private StorageLifecycleException incompleteRemoval(
