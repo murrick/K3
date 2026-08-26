@@ -56,6 +56,8 @@ public class DestructiveStopLossReactorTest {
             rootCompileReplacementPreservesRootIdentity(reactor, user, token);
             rejectedCompilePreservesGeneration(
                     reactor, user, token, storageName);
+            rootEraseReplacementPreservesRootIdentityAndStorage(
+                    reactor, user, token, storageName);
             transactionBlocksDestructiveCommand(reactor, user, token);
             utf8SourceRoundTripIsTruthful(reactor, user, token);
             failedStorageSwitchPreservesCurrentGeneration(
@@ -109,6 +111,38 @@ public class DestructiveStopLossReactorTest {
                 "Rejected Compile changed the logical workspace");
         assertEquals(generationBefore, hashGeneration(user, storageName),
                 "Rejected Compile changed the persistent generation");
+    }
+
+    private void rootEraseReplacementPreservesRootIdentityAndStorage(
+            DestructiveStopLossReactor reactor,
+            IUser user,
+            String token,
+            String storageName) throws Exception {
+        IMind root = user.getCurrentMind();
+        assertTrue(root.isStorageUsed(),
+                "Root erase qualification requires an attached storage");
+        assertEquals(storageName, root.getStorageName(),
+                "Root erase qualification started with the wrong storage");
+        assertFalse(SourceContextMaterializer.materializeCurrentLevel(root).isEmpty(),
+                "Root erase qualification requires non-empty source");
+
+        JSONObject response = invoke(reactor, "command", new JSONObject()
+                .put("token", token)
+                .put("erase", ""));
+
+        assertEquals("OK", response.optString("result"), response.toString());
+        assertFalse(response.has("description"),
+                "Root erase changed the historical success envelope");
+        assertSame(root, user.getCurrentMind(),
+                "Root erase replaced the published root Mind");
+        assertEquals(0, user.getCurrentMind().getTransactionLevel(),
+                "Root erase left an explicit transaction open");
+        assertTrue(user.getCurrentMind().isStorageUsed(),
+                "Root erase detached the active storage");
+        assertEquals(storageName, user.getCurrentMind().getStorageName(),
+                "Root erase changed the active storage identity");
+        assertEquals("", SourceContextMaterializer.materializeCurrentLevel(root),
+                "Root erase left source-representable state behind");
     }
 
     private void transactionBlocksDestructiveCommand(
