@@ -349,88 +349,29 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
             return storageInfo(mind);
         }
 
-        /*
-         * An open-generation A->B switch belongs entirely to Core. This
-         * stop-loss boundary may probe B before mutation, but it must not
-         * replay source text or perform an independent restore afterward:
-         * User.use transports every explicit U-level as semantic delta and
-         * compensates back to A if target replay fails after mutation starts.
-         */
-        if (previousStorage != null) {
-            try {
-                probeStorage(user, storageName);
-                IMind rebased = mind.useStorage(storageName);
-                user.setCurrentMind(rebased);
-                if (!rebased.isStorageUsed()) {
-                    throw new IOException("Error opening database " + displayName);
-                }
-                return storageInfo(rebased);
-            } catch (Exception switchFailure) {
-                throw new StorageSwitchException(displayName, switchFailure);
+        if (previousStorage == null) {
+            JSONObject blocked = requireRootTransaction(user, "use");
+            if (blocked != null) {
+                return blocked;
             }
         }
 
         /*
-         * Historical no-storage workspace attachment remains a separate
-         * compatibility case: a transient level-0 semantic projection has to
-         * become an overlay above the newly attached persistent base. Unlike
-         * A->B, there is no pre-existing persistent U0 for Core to rebase.
+         * Storage rebase belongs entirely to Core, including first attachment
+         * of a non-empty offline U0. User.use transports explicit levels,
+         * assimilates offline root state into the target persistent U0 without
+         * creating an artificial transaction boundary, and compensates on
+         * replay/acquisition failure after mutation starts.
          */
-        JSONObject blocked = requireRootTransaction(user, "use");
-        if (blocked != null) {
-            return blocked;
-        }
-
-        String previousSource = SourceContextMaterializer.materializeCurrentLevel(mind);
         try {
             probeStorage(user, storageName);
-        } catch (Exception probeFailure) {
-            throw new StorageSwitchException(displayName, probeFailure);
-        }
-        try {
-            mind = mind.useStorage(storageName);
-            user.setCurrentMind(mind);
-            if (!mind.isStorageUsed()) {
+            IMind rebased = mind.useStorage(storageName);
+            user.setCurrentMind(rebased);
+            if (!rebased.isStorageUsed()) {
                 throw new IOException("Error opening database " + displayName);
             }
-
-            if (!previousSource.isEmpty()) {
-                IMind overlay = null;
-                try {
-                    overlay = new Mind(mind);
-                    if (overlay.compile(previousSource)) {
-                        if (!overlay.isEmptyLevel()) {
-                            mind = overlay;
-                            overlay = null;
-                        } else {
-                            mind.release(overlay);
-                            overlay = null;
-                        }
-                    } else {
-                        mind.release(overlay);
-                        overlay = null;
-                        throw new IOException("Current workspace conflicts with database "
-                                + displayName);
-                    }
-                } catch (Exception overlayFailure) {
-                    if (overlay != null) {
-                        try {
-                            mind.release(overlay);
-                        } catch (Exception releaseFailure) {
-                            overlayFailure.addSuppressed(releaseFailure);
-                        }
-                    }
-                    throw overlayFailure;
-                }
-            }
-            user.setCurrentMind(mind);
-            return storageInfo(mind);
+            return storageInfo(rebased);
         } catch (Exception switchFailure) {
-            try {
-                restoreStorage(user, null, previousSource);
-            } catch (Exception restoreFailure) {
-                switchFailure.addSuppressed(restoreFailure);
-            }
             throw new StorageSwitchException(displayName, switchFailure);
         }
     }
