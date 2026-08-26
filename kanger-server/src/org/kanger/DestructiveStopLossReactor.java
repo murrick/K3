@@ -45,7 +45,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.Date;
 
 /**
  * Narrow compatibility wrapper that establishes a stop-loss boundary around
@@ -120,14 +119,6 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
             throw failure;
         } catch (StorageSwitchException failure) {
             return error("storage_switch_failed", failure.getMessage());
-        } catch (Exception error) {
-            if ("drop".equals(operation)
-                    && error instanceof org.kanger.exception.StorageLifecycleException) {
-                throw error;
-            }
-            System.err.println(new Date());
-            error.printStackTrace(System.err);
-            return error("operation_failed", error.toString());
         }
     }
 
