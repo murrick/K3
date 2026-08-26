@@ -179,25 +179,12 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
             return error("compile_rejected", probe.description);
         }
 
-        IMind mind = user.getCurrentMind();
-        String previousSource = SourceContextMaterializer.materializeCurrentLevel(mind);
-        try {
-            mind = mind.clearWorkspace();
-            user.setCurrentMind(mind);
-            if (!mind.compile(source)) {
-                restoreWorkspace(user, previousSource);
-                return error("compile_apply_failed",
-                        mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
-            }
-            return ok(mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
-        } catch (Exception applyFailure) {
-            try {
-                restoreWorkspace(user, previousSource);
-            } catch (Exception restoreFailure) {
-                applyFailure.addSuppressed(restoreFailure);
-            }
-            throw applyFailure;
+        RootCurrentLevelSourceReplacement.Outcome replacement =
+                RootCurrentLevelSourceReplacement.replace(user, source);
+        if (!replacement.isAccepted()) {
+            return error("compile_apply_failed", replacement.getDescription());
         }
+        return ok(replacement.getDescription());
     }
 
     private CompileProbe validateReplacement(String source) throws Exception {
@@ -207,18 +194,6 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
         boolean accepted = probeMind.compile(source);
         return new CompileProbe(accepted,
                 probeMind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
-    }
-
-    private void restoreWorkspace(IUser user, String source) throws Exception {
-        IMind mind = user.getCurrentMind();
-        if (mind == null) {
-            mind = new Mind(user);
-        }
-        mind = mind.clearWorkspace();
-        user.setCurrentMind(mind);
-        if (source != null && !source.isEmpty() && !mind.compile(source)) {
-            throw new IllegalStateException("Previous workspace could not be restored");
-        }
     }
 
     private JSONObject saveSource(JSONObject parameters, IUser user) throws Exception {
@@ -378,7 +353,7 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
             try {
                 probeStorage(user, storageName);
                 IMind rebased = mind.useStorage(storageName);
-                user.setCurrentMind(rebased);
+                user.setCurrentMind(reased);
                 if (!rebased.isStorageUsed()) {
                     throw new IOException("Error opening database " + displayName);
                 }
