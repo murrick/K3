@@ -353,7 +353,7 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
             try {
                 probeStorage(user, storageName);
                 IMind rebased = mind.useStorage(storageName);
-                user.setCurrentMind(reased);
+                user.setCurrentMind(rebased);
                 if (!rebased.isStorageUsed()) {
                     throw new IOException("Error opening database " + displayName);
                 }
