@@ -5,6 +5,7 @@
  */
 package org.kanger;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.kanger.enums.Enums;
@@ -26,6 +27,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Qualification gates for the 3.5.2.2 destructive-operation stop-loss boundary. */
@@ -59,6 +61,7 @@ public class DestructiveStopLossReactorTest {
             rootEraseReplacementPreservesRootIdentityAndStorage(
                     reactor, user, token, storageName);
             transactionBlocksDestructiveCommand(reactor, user, token);
+            unknownFailureEscapesForCanonicalBoundary(reactor, token);
             utf8SourceRoundTripIsTruthful(reactor, user, token);
             failedStorageSwitchPreservesCurrentGeneration(
                     reactor, user, token, storageName);
@@ -178,6 +181,19 @@ public class DestructiveStopLossReactorTest {
 
         parent.release(child);
         user.setCurrentMind(parent);
+    }
+
+    private void unknownFailureEscapesForCanonicalBoundary(
+            DestructiveStopLossReactor reactor,
+            String token) {
+        JSONObject packet = new JSONObject().put("body", new JSONObject()
+                .put("context", "query")
+                .put("parameters", new JSONObject()
+                        .put("token", token)
+                        .put("compile", new JSONObject())));
+
+        assertThrows(JSONException.class, () -> reactor.run(packet),
+                "Unknown stop-loss failure was converted into an application response");
     }
 
     private void utf8SourceRoundTripIsTruthful(
