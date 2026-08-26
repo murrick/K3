@@ -105,6 +105,8 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 result = reindexStorage(request.parameters, user);
             } else if ("use".equals(operation)) {
                 result = useStorage(request.parameters, user);
+            } else if ("erase".equals(operation)) {
+                result = eraseWorkspace(user);
             } else {
                 JSONObject blocked = requireRootTransaction(user, operation);
                 if (blocked != null) {
@@ -185,6 +187,20 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
             return error("compile_apply_failed", replacement.getDescription());
         }
         return ok(replacement.getDescription());
+    }
+
+    private JSONObject eraseWorkspace(IUser user) throws Exception {
+        JSONObject blocked = requireRootTransaction(user, "erase");
+        if (blocked != null) {
+            return blocked;
+        }
+
+        RootCurrentLevelSourceReplacement.Outcome replacement =
+                RootCurrentLevelSourceReplacement.replace(user, "");
+        if (!replacement.isAccepted()) {
+            throw new IllegalStateException("Root erase replacement was rejected");
+        }
+        return new JSONObject().put("result", "OK");
     }
 
     private CompileProbe validateReplacement(String source) throws Exception {
