@@ -53,6 +53,7 @@ public class DestructiveStopLossReactorTest {
             DestructiveStopLossReactor reactor = new DestructiveStopLossReactor(
                     new QueryProcessor());
 
+            rootCompileReplacementPreservesRootIdentity(reactor, user, token);
             rejectedCompilePreservesGeneration(
                     reactor, user, token, storageName);
             transactionBlocksDestructiveCommand(reactor, user, token);
@@ -66,12 +67,34 @@ public class DestructiveStopLossReactorTest {
         }
     }
 
+    private void rootCompileReplacementPreservesRootIdentity(
+            DestructiveStopLossReactor reactor,
+            IUser user,
+            String token) throws Exception {
+        IMind root = user.getCurrentMind();
+        assertEquals(0, root.getTransactionLevel(),
+                "Root compile qualification did not start at U0");
+
+        JSONObject response = invoke(reactor, "query", new JSONObject()
+                .put("token", token)
+                .put("compile", URLEncoder.encode("!atomic;", "UTF-8")));
+
+        assertEquals("OK", response.optString("result"), response.toString());
+        assertSame(root, user.getCurrentMind(),
+                "Accepted root Compile replaced the published root Mind");
+        assertEquals(0, user.getCurrentMind().getTransactionLevel(),
+                "Accepted root Compile left an explicit transaction open");
+        assertTrue(user.getCurrentMind().getSourceCode().contains("atomic"),
+                "Accepted root Compile did not publish the replacement source");
+    }
+
     private void rejectedCompilePreservesGeneration(
             DestructiveStopLossReactor reactor,
             IUser user,
             String token,
             String storageName) throws Exception {
-        String sourceBefore = user.getCurrentMind().getSourceCode();
+        IMind rootBefore = user.getCurrentMind();
+        String sourceBefore = rootBefore.getSourceCode();
         Map<String, String> generationBefore = hashGeneration(user, storageName);
 
         JSONObject response = invoke(reactor, "query", new JSONObject()
@@ -79,6 +102,9 @@ public class DestructiveStopLossReactorTest {
                 .put("compile", URLEncoder.encode("!conflict; ?conflict;", "UTF-8")));
 
         assertEquals("error", response.optString("result"), response.toString());
+        assertEquals("compile_rejected", response.optString("code"), response.toString());
+        assertSame(rootBefore, user.getCurrentMind(),
+                "Rejected Compile replaced the published root Mind");
         assertEquals(sourceBefore, user.getCurrentMind().getSourceCode(),
                 "Rejected Compile changed the logical workspace");
         assertEquals(generationBefore, hashGeneration(user, storageName),
@@ -94,12 +120,23 @@ public class DestructiveStopLossReactorTest {
         user.setCurrentMind(child);
         String sourceBefore = child.getSourceCode();
 
-        JSONObject response = invoke(reactor, "command", new JSONObject()
+        JSONObject compile = invoke(reactor, "query", new JSONObject()
+                .put("token", token)
+                .put("compile", URLEncoder.encode("!nested;", "UTF-8")));
+
+        assertEquals("error", compile.optString("result"));
+        assertEquals("transaction_open", compile.optString("code"));
+        assertSame(child, user.getCurrentMind(),
+                "Blocked Compile replaced the active transaction");
+        assertEquals(sourceBefore, child.getSourceCode(),
+                "Blocked Compile changed the transaction workspace");
+
+        JSONObject erase = invoke(reactor, "command", new JSONObject()
                 .put("token", token)
                 .put("erase", ""));
 
-        assertEquals("error", response.optString("result"));
-        assertEquals("transaction_open", response.optString("code"));
+        assertEquals("error", erase.optString("result"));
+        assertEquals("transaction_open", erase.optString("code"));
         assertSame(child, user.getCurrentMind(),
                 "Blocked erase replaced the active transaction");
         assertEquals(sourceBefore, child.getSourceCode(),
