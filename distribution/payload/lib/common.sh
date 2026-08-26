@@ -40,6 +40,7 @@ validate_bundle_layout() {
   [[ -f "${BUNDLE_ROOT}/server/kanger-server.jar" ]] || fail "Server JAR is missing from distribution"
   [[ -f "${BUNDLE_ROOT}/server/kanger.conf.example" ]] || fail "Server configuration template is missing"
   [[ -f "${BUNDLE_ROOT}/ui/index.html" ]] || fail "Browser UI is missing from distribution"
+  [[ -x "${BUNDLE_ROOT}/bin/kanger-admin" ]] || fail "KANGER admin launcher is missing or not executable"
   [[ -f "${BUNDLE_ROOT}/systemd/kanger.service.template" ]] || fail "systemd service template is missing"
   [[ -f "${BUNDLE_ROOT}/nginx/kanger.conf.template" ]] || fail "nginx template is missing"
 
@@ -74,7 +75,7 @@ java_major_version() {
 
 check_runtime_prerequisites() {
   local command major
-  for command in java nginx systemctl curl install getent groupadd useradd readlink ln mv cp awk grep sed find seq sleep dirname; do
+  for command in java nginx systemctl curl install getent groupadd useradd readlink ln mv cp chown awk grep sed find seq sleep dirname; do
     require_command "${command}"
   done
   major="$(java_major_version)"
@@ -174,11 +175,13 @@ stage_release() {
   rm -rf -- "${stage_dir}"
 
   if ! {
-    install -d -o root -g root -m 0755 "${stage_dir}" "${stage_dir}/ui"
+    install -d -o root -g root -m 0755 "${stage_dir}" "${stage_dir}/ui" "${stage_dir}/bin"
     install -d -o root -g kanger -m 0750 "${stage_dir}/server"
     install -o root -g root -m 0644 "${BUNDLE_ROOT}/RELEASE" "${stage_dir}/RELEASE"
+    install -o root -g root -m 0755 "${BUNDLE_ROOT}/bin/kanger-admin" "${stage_dir}/bin/kanger-admin"
     install -o root -g kanger -m 0640 "${BUNDLE_ROOT}/server/kanger-server.jar" "${stage_dir}/server/kanger-server.jar"
     cp -a "${BUNDLE_ROOT}/ui/." "${stage_dir}/ui/"
+    chown -R root:root "${stage_dir}/ui"
     find "${stage_dir}/ui" -type d -exec chmod 0755 {} +
     find "${stage_dir}/ui" -type f -exec chmod 0644 {} +
     cat > "${stage_dir}/ui/config.js" <<UI_CONFIG
@@ -187,6 +190,7 @@ stage_release() {
     window.KANGER_API_HOST = 'https://${API_DOMAIN}';
 }(window));
 UI_CONFIG
+    chown root:root "${stage_dir}/ui/config.js"
     chmod 0644 "${stage_dir}/ui/config.js"
   }; then
     rm -rf -- "${stage_dir}"

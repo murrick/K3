@@ -8,14 +8,15 @@ source "${BUNDLE_ROOT}/lib/common.sh"
 
 usage() {
   cat <<USAGE
-Usage: sudo ./install.sh --ui-domain DOMAIN [options]
+Usage: sudo ./install.sh DOMAIN [options]
 
+DOMAIN is the Browser UI domain. The API domain defaults to api.<DOMAIN>.
 Required prerequisite software is customer-managed: Java, nginx and systemd.
-KANGER does not install or upgrade those components.
+KANGER does not install or upgrade those components and does not obtain,
+replace or renew TLS certificates.
 
 Options:
-  --ui-domain DOMAIN       Browser UI domain (required)
-  --api-domain DOMAIN      API domain (default: api.<ui-domain>)
+  --api-domain DOMAIN      API domain (default: api.<DOMAIN>)
   --ui-cert PATH           UI TLS certificate chain
   --ui-key PATH            UI TLS private key
   --api-cert PATH          API TLS certificate chain
@@ -23,7 +24,11 @@ Options:
   --nginx-config PATH      nginx config destination
   -h, --help               Show this help
 
-Certificate defaults use /etc/letsencrypt/live/<domain>/fullchain.pem and privkey.pem.
+By default both UI and API use the customer-managed certificate pair:
+  /etc/ssl/kanger/fullchain.pem
+  /etc/ssl/kanger/privkey.pem
+The certificate must cover both configured domain names. Certificate options
+may be used when separate UI/API certificate material is required.
 USAGE
 }
 
@@ -40,9 +45,17 @@ UI_KEY=""
 API_CERT=""
 API_KEY=""
 
+if [[ $# -gt 0 && ( "$1" == "-h" || "$1" == "--help" ) ]]; then
+  usage
+  exit 0
+fi
+[[ $# -gt 0 ]] || { usage >&2; fail "DOMAIN is required"; }
+[[ "$1" != -* ]] || fail "First argument must be the Browser UI DOMAIN"
+UI_DOMAIN="$1"
+shift
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --ui-domain) UI_DOMAIN="$(option_value "$@")"; shift 2 ;;
     --api-domain) API_DOMAIN="$(option_value "$@")"; shift 2 ;;
     --ui-cert) UI_CERT="$(option_value "$@")"; shift 2 ;;
     --ui-key) UI_KEY="$(option_value "$@")"; shift 2 ;;
@@ -59,17 +72,18 @@ validate_bundle_layout
 verify_bundle_checksums
 check_runtime_prerequisites
 
-[[ -n "${UI_DOMAIN}" ]] || fail "--ui-domain is required"
 validate_domain "${UI_DOMAIN}"
 if [[ -z "${API_DOMAIN}" ]]; then
   API_DOMAIN="api.${UI_DOMAIN}"
 fi
 validate_domain "${API_DOMAIN}"
 
-UI_CERT="${UI_CERT:-/etc/letsencrypt/live/${UI_DOMAIN}/fullchain.pem}"
-UI_KEY="${UI_KEY:-/etc/letsencrypt/live/${UI_DOMAIN}/privkey.pem}"
-API_CERT="${API_CERT:-/etc/letsencrypt/live/${API_DOMAIN}/fullchain.pem}"
-API_KEY="${API_KEY:-/etc/letsencrypt/live/${API_DOMAIN}/privkey.pem}"
+DEFAULT_TLS_CERT="/etc/ssl/kanger/fullchain.pem"
+DEFAULT_TLS_KEY="/etc/ssl/kanger/privkey.pem"
+UI_CERT="${UI_CERT:-${DEFAULT_TLS_CERT}}"
+UI_KEY="${UI_KEY:-${DEFAULT_TLS_KEY}}"
+API_CERT="${API_CERT:-${DEFAULT_TLS_CERT}}"
+API_KEY="${API_KEY:-${DEFAULT_TLS_KEY}}"
 validate_path_value "${UI_CERT}"
 validate_path_value "${UI_KEY}"
 validate_path_value "${API_CERT}"
@@ -128,3 +142,4 @@ echo "KANGER ${VERSION} installation complete"
 echo "  UI  : https://${UI_DOMAIN}/"
 echo "  API : https://${API_DOMAIN}/"
 echo "  home: ${KANGER_CURRENT_LINK} -> ${RELEASE_DIR}"
+echo "  admin: sudo ${KANGER_CURRENT_LINK}/bin/kanger-admin create-user"

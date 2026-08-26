@@ -53,6 +53,7 @@ done
 [[ -f "${SERVER_POM}" ]] || fail "KANGER Server POM not found: ${SERVER_POM}"
 [[ -f "${SERVER_CONFIG}" ]] || fail "KANGER Server configuration template not found: ${SERVER_CONFIG}"
 [[ -f "${UI_DIR}/index.html" ]] || fail "Browser UI root not found: ${UI_DIR}"
+[[ -f "${PAYLOAD_DIR}/bin/kanger-admin" ]] || fail "KANGER admin launcher not found in distribution payload"
 
 VERSION="$(tr -d '[:space:]' < "${VERSION_FILE}")"
 [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9._-]+)?$ ]] \
@@ -84,14 +85,14 @@ STAGING_PARENT="$(mktemp -d "${TMPDIR:-/tmp}/kanger-distribution.XXXXXX")"
 trap 'rm -rf -- "${STAGING_PARENT}"' EXIT
 BUNDLE_NAME="kanger-${VERSION}"
 BUNDLE_DIR="${STAGING_PARENT}/${BUNDLE_NAME}"
-mkdir -p "${BUNDLE_DIR}/server" "${BUNDLE_DIR}/ui"
+mkdir -p "${BUNDLE_DIR}/server" "${BUNDLE_DIR}/ui" "${BUNDLE_DIR}/bin"
 
 cp -a "${PAYLOAD_DIR}/." "${BUNDLE_DIR}/"
 cp "${SERVER_JAR}" "${BUNDLE_DIR}/server/kanger-server.jar"
 cp "${SERVER_CONFIG}" "${BUNDLE_DIR}/server/kanger.conf.example"
 cp -a "${UI_DIR}/." "${BUNDLE_DIR}/ui/"
 [[ -z "$(find "${BUNDLE_DIR}" -type l -print -quit)" ]] || fail "Distribution payload must not contain symbolic links"
-chmod 0755 "${BUNDLE_DIR}/install.sh" "${BUNDLE_DIR}/update.sh"
+chmod 0755 "${BUNDLE_DIR}/install.sh" "${BUNDLE_DIR}/update.sh" "${BUNDLE_DIR}/bin/kanger-admin"
 chmod 0644 "${BUNDLE_DIR}/lib/common.sh" \
   "${BUNDLE_DIR}/systemd/kanger.service.template" \
   "${BUNDLE_DIR}/nginx/kanger.conf.template" \

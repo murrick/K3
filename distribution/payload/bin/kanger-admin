@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+umask 077
+
+if [[ "${EUID}" -ne 0 ]]; then
+  printf 'kanger-admin: run as root (for example: sudo %s)\n' "$0" >&2
+  exit 2
+fi
+
+command -v curl >/dev/null 2>&1 || { echo 'kanger-admin: curl not found' >&2; exit 3; }
+command -v java >/dev/null 2>&1 || { echo 'kanger-admin: java not found' >&2; exit 3; }
+
+CACHE_DIR="${HOME:-/root}/.kanger-admin"
+SERVER_HOME="${KANGER_ADMIN_SERVER_HOME:-/var/lib/kanger}"
+JAR="${CACHE_DIR}/kanger-admin.jar"
+URL="http://127.0.0.1:1965/admin/tool"
+
+mkdir -p "${CACHE_DIR}"
+curl -fsS "${URL}" -o "${JAR}.tmp"
+mv "${JAR}.tmp" "${JAR}"
+chmod 600 "${JAR}"
+
+exec java \
+  -Duser.home="${SERVER_HOME}" \
+  -Dsun.jnu.encoding=UTF-8 \
+  -Dfile.encoding=UTF-8 \
+  -jar "${JAR}" "$@"
