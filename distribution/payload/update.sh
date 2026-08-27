@@ -17,8 +17,9 @@ Options:
   --force                  Allow an explicit same-version update
   -h, --help               Show this help
 
-A forced same-version update is staged into a new physical release directory
-(e.g. 3.7.0.force.1) so the active release remains an intact rollback target.
+A forced same-version update archives an existing canonical release under a
+versioned physical snapshot (for example, <version>.force.N) and installs the
+new build at the canonical <version> release directory.
 USAGE
 }
 
@@ -47,17 +48,33 @@ OLD_RELEASE="$(readlink -f "${KANGER_CURRENT_LINK}")"
 OLD_VERSION="$(awk -F= '$1 == "version" {sub(/^[^=]*=/, ""); print; exit}' "${OLD_RELEASE}/RELEASE")"
 [[ -n "${OLD_VERSION}" ]] || fail "Current KANGER release has no version: ${OLD_RELEASE}/RELEASE"
 
+CANONICAL_RELEASE="${KANGER_RELEASES_DIR}/${VERSION}"
+SAME_VERSION=false
+CANONICAL_PREEXISTED=false
+ARCHIVE_RELEASE=""
+CANDIDATE_RELEASE=""
+NEW_RELEASE="${CANONICAL_RELEASE}"
+
 if [[ "${OLD_VERSION}" == "${VERSION}" ]]; then
   [[ "${FORCE_UPDATE}" == true ]] || fail "KANGER ${VERSION} is already active; use --force for an explicit same-version update"
-  force_index=1
-  while :; do
-    NEW_RELEASE="${KANGER_RELEASES_DIR}/${VERSION}.force.${force_index}"
-    [[ -e "${NEW_RELEASE}" ]] || break
-    ((force_index += 1))
-  done
-  log "forcing same-version update ${VERSION}; staging ${NEW_RELEASE}"
+  SAME_VERSION=true
+
+  if [[ -e "${CANONICAL_RELEASE}" ]]; then
+    [[ -d "${CANONICAL_RELEASE}" ]] || fail "Canonical release path is not a directory: ${CANONICAL_RELEASE}"
+    [[ -f "${CANONICAL_RELEASE}/RELEASE" ]] || fail "Canonical release identity is missing: ${CANONICAL_RELEASE}/RELEASE"
+    CANONICAL_PREEXISTED=true
+    force_index=1
+    while :; do
+      ARCHIVE_RELEASE="${KANGER_RELEASES_DIR}/${VERSION}.force.${force_index}"
+      [[ -e "${ARCHIVE_RELEASE}" ]] || break
+      ((force_index += 1))
+    done
+  fi
+
+  CANDIDATE_RELEASE="${KANGER_RELEASES_DIR}/.${VERSION}.candidate.$$"
+  [[ ! -e "${CANDIDATE_RELEASE}" ]] || fail "Candidate release path already exists: ${CANDIDATE_RELEASE}"
+  log "forcing same-version update ${VERSION}; canonical active release will remain ${CANONICAL_RELEASE}"
 else
-  NEW_RELEASE="${KANGER_RELEASES_DIR}/${VERSION}"
   [[ ! -e "${NEW_RELEASE}" ]] || fail "Release directory already exists: ${NEW_RELEASE}"
 fi
 
@@ -66,8 +83,6 @@ NGINX_BACKUP="$(mktemp "${TMPDIR:-/tmp}/kanger-nginx.XXXXXX")"
 cp "${KANGER_UNIT_FILE}" "${UNIT_BACKUP}"
 cp "${KANGER_NGINX_FILE}" "${NGINX_BACKUP}"
 
-stage_release "${NEW_RELEASE}"
-
 rollback_needed=true
 rollback() {
   local status=$?
@@ -75,18 +90,49 @@ rollback() {
   if [[ "${rollback_needed}" == true ]]; then
     set +e
     log "update failed; restoring previous release ${OLD_RELEASE}"
+
+    if [[ "${SAME_VERSION}" == true ]]; then
+      if [[ "${CANONICAL_PREEXISTED}" == true ]]; then
+        if [[ -n "${ARCHIVE_RELEASE}" && -e "${ARCHIVE_RELEASE}" ]]; then
+          rm -rf -- "${CANONICAL_RELEASE}"
+          mv "${ARCHIVE_RELEASE}" "${CANONICAL_RELEASE}"
+        fi
+      else
+        rm -rf -- "${CANONICAL_RELEASE}"
+      fi
+      [[ -z "${CANDIDATE_RELEASE}" ]] || rm -rf -- "${CANDIDATE_RELEASE}" "${CANDIDATE_RELEASE}.new.$$"
+    else
+      rm -rf -- "${NEW_RELEASE}"
+    fi
+
     atomic_current_link "${OLD_RELEASE}"
     install -o root -g root -m 0644 "${UNIT_BACKUP}" "${KANGER_UNIT_FILE}"
     install -o root -g root -m 0644 "${NGINX_BACKUP}" "${KANGER_NGINX_FILE}"
     systemctl daemon-reload >/dev/null 2>&1
     systemctl restart kanger.service >/dev/null 2>&1
     nginx -t >/dev/null 2>&1 && nginx -s reload >/dev/null 2>&1
-    rm -rf -- "${NEW_RELEASE}"
   fi
   rm -f -- "${UNIT_BACKUP}" "${NGINX_BACKUP}"
   exit "${status}"
 }
 trap rollback ERR INT TERM EXIT
+
+if [[ "${SAME_VERSION}" == true ]]; then
+  stage_release "${CANDIDATE_RELEASE}"
+
+  if [[ "${CANONICAL_PREEXISTED}" == true ]]; then
+    mv "${CANONICAL_RELEASE}" "${ARCHIVE_RELEASE}"
+    log "archived previous canonical release as ${ARCHIVE_RELEASE}"
+    if [[ "${OLD_RELEASE}" == "${CANONICAL_RELEASE}" ]]; then
+      atomic_current_link "${ARCHIVE_RELEASE}"
+    fi
+  fi
+
+  mv "${CANDIDATE_RELEASE}" "${CANONICAL_RELEASE}"
+  CANDIDATE_RELEASE=""
+else
+  stage_release "${NEW_RELEASE}"
+fi
 
 install_systemd_unit
 install_nginx_config
@@ -105,5 +151,8 @@ rm -f -- "${UNIT_BACKUP}" "${NGINX_BACKUP}"
 echo
 echo "KANGER update complete"
 echo "  previous: ${OLD_RELEASE}"
+if [[ -n "${ARCHIVE_RELEASE}" ]]; then
+  echo "  archived: ${ARCHIVE_RELEASE}"
+fi
 echo "  current : ${KANGER_CURRENT_LINK} -> ${NEW_RELEASE}"
 echo "  version : ${VERSION}"
