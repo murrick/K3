@@ -68,6 +68,17 @@ function settle(ms = 0) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function isMutationRequest(packet) {
+    return packet.context === 'query'
+            && Object.prototype.hasOwnProperty.call(packet.parameters, 'request');
+}
+
+function isSnapshotRequest(packet) {
+    return packet.context === 'query'
+            && !Object.prototype.hasOwnProperty.call(packet.parameters, 'request')
+            && !Object.prototype.hasOwnProperty.call(packet.parameters, 'compile');
+}
+
 async function main() {
     const targetIds = [
         'statements', 'functions', 'query-results', 'query-solutions',
@@ -177,20 +188,66 @@ async function main() {
     window.post({context: 'query', parameters: {request: '!b'}},
             (data) => { busyResult = data; });
     await settle(2);
-    const firstMutation = transport.unresolved((p) => p.context === 'query'
-            && Object.prototype.hasOwnProperty.call(p.parameters, 'request'))[0];
+    const firstMutation = transport.unresolved(isMutationRequest)[0];
     assert(firstMutation);
-    assert.strictEqual(transport.unresolved((p) => p.context === 'query'
-            && Object.prototype.hasOwnProperty.call(p.parameters, 'request')).length, 1);
+    assert.strictEqual(transport.unresolved(isMutationRequest).length, 1);
     assert.strictEqual(busyResult.code, 'operation_busy');
     assert.strictEqual(busyResult.blocking_operation_id, 1);
     transport.resolve(firstMutation, {result: 'OK', description: 'first'});
     assert.strictEqual(firstResult.client_operation_id, 1);
     await settle(2);
-    const oldSnapshot = transport.unresolved((p) => p.context === 'query'
-            && !Object.prototype.hasOwnProperty.call(p.parameters, 'request'));
+    const oldSnapshot = transport.unresolved(isSnapshotRequest);
     assert.strictEqual(oldSnapshot.length, 6);
+    const firstSettling = window.KANGER_OPERATION_PROTOCOL.snapshot();
+    assert.strictEqual(firstSettling.activeOperationId, 0);
+    assert.strictEqual(firstSettling.settlingOperationId, 1);
+    assert.notStrictEqual(window.status, '',
+            'query status cleared before semantic snapshot committed');
     console.log('OPERATION_PROTOCOL_PASS one-mutation-in-flight');
+
+    let settlingBusy = null;
+    window.post({
+        context: 'dialogue',
+        parameters: {token: 'token', line: 'erase'}
+    }, (data) => { settlingBusy = data; });
+    await settle(2);
+    assert(settlingBusy);
+    assert.strictEqual(settlingBusy.code, 'operation_busy');
+    assert.strictEqual(settlingBusy.blocking_operation_id, 1);
+    assert.strictEqual(transport.unresolved((p) => p.context === 'dialogue').length, 0,
+            'settling mutation allowed a second authoritative request');
+    assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().settlingOperationId, 1);
+    console.log('OPERATION_PROTOCOL_PASS mutation-blocked-during-settlement');
+
+    window.KANGER_OPERATION_PROTOCOL.requestSnapshot();
+    await settle(2);
+    const allSnapshots = transport.unresolved(isSnapshotRequest);
+    const replacementSnapshot = allSnapshots.filter((record) =>
+        oldSnapshot.indexOf(record) < 0);
+    assert.strictEqual(replacementSnapshot.length, 6);
+
+    oldSnapshot.forEach((record, index) => {
+        transport.resolve(record, {result: 'OK', value: 'stale-' + index});
+    });
+    targetIds.forEach((id) => assert.strictEqual(elements[id].textContent,
+            'baseline-' + id));
+
+    for (let i = 0; i < 5; i++) {
+        transport.resolve(replacementSnapshot[i],
+                {result: 'OK', value: 'fresh-' + i});
+    }
+    targetIds.forEach((id) => assert.strictEqual(elements[id].textContent,
+            'baseline-' + id, 'partial snapshot leaked into live DOM'));
+    transport.resolve(replacementSnapshot[5], {result: 'OK', value: 'fresh-5'});
+    targetIds.forEach((id, index) => assert.strictEqual(
+            elements[id].textContent, 'fresh-' + index));
+    assert.strictEqual(window.layoutCommits, 1);
+    assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().settlingOperationId, 0);
+    assert.strictEqual(window.status, '',
+            'query status remained busy after semantic snapshot committed');
+    console.log('OPERATION_PROTOCOL_PASS coherent-snapshot-barrier');
+    console.log('OPERATION_PROTOCOL_PASS stale-snapshot-rejection');
+    console.log('OPERATION_PROTOCOL_PASS settlement-release-after-snapshot');
 
     let secondResult = null;
     window.post({
@@ -200,30 +257,27 @@ async function main() {
     const secondMutation = transport.unresolved((p) => p.context === 'dialogue')[0];
     assert(secondMutation);
     assert.strictEqual(secondMutation.packet.parameters.line, 'erase');
-    assert.strictEqual(window.status, 'Operation #3: dialogue');
-    oldSnapshot.forEach((record, index) => {
-        transport.resolve(record, {result: 'OK', value: 'stale-' + index});
-    });
-    targetIds.forEach((id) => assert.strictEqual(elements[id].textContent,
-            'baseline-' + id));
+    const secondOperationId = window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId;
+    assert(secondOperationId > 1);
+    assert.strictEqual(window.status,
+            'Operation #' + secondOperationId + ': dialogue');
     transport.resolve(secondMutation, {result: 'OK', description: 'second'});
-    assert.strictEqual(secondResult.client_operation_id, 3);
+    assert.strictEqual(secondResult.client_operation_id, secondOperationId);
     await settle(2);
-    const newSnapshot = transport.unresolved((p) => p.context === 'query'
-            && !Object.prototype.hasOwnProperty.call(p.parameters, 'request'));
-    assert.strictEqual(newSnapshot.length, 6);
+    const secondSnapshot = transport.unresolved(isSnapshotRequest);
+    assert.strictEqual(secondSnapshot.length, 6);
     for (let i = 0; i < 5; i++) {
-        transport.resolve(newSnapshot[i], {result: 'OK', value: 'fresh-' + i});
+        transport.resolve(secondSnapshot[i], {result: 'OK', value: 'second-' + i});
     }
-    targetIds.forEach((id) => assert.strictEqual(elements[id].textContent,
-            'baseline-' + id, 'partial snapshot leaked into live DOM'));
-    transport.resolve(newSnapshot[5], {result: 'OK', value: 'fresh-5'});
     targetIds.forEach((id, index) => assert.strictEqual(
-            elements[id].textContent, 'fresh-' + index));
-    assert.strictEqual(window.layoutCommits, 1);
+            elements[id].textContent, 'fresh-' + index,
+            'second partial snapshot leaked into live DOM'));
+    transport.resolve(secondSnapshot[5], {result: 'OK', value: 'second-5'});
+    targetIds.forEach((id, index) => assert.strictEqual(
+            elements[id].textContent, 'second-' + index));
+    assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().settlingOperationId, 0);
+    assert.strictEqual(window.layoutCommits, 2);
     console.log('OPERATION_PROTOCOL_PASS dialogue-serialization');
-    console.log('OPERATION_PROTOCOL_PASS coherent-snapshot-barrier');
-    console.log('OPERATION_PROTOCOL_PASS stale-snapshot-rejection');
 
     let staleReadCalled = false;
     window.post({context: 'command', parameters: {token: 'token', help: ''}},
@@ -234,9 +288,17 @@ async function main() {
             () => {});
     const thirdMutation = transport.unresolved((p) => p.context === 'command'
             && Object.prototype.hasOwnProperty.call(p.parameters, 'delete'))[0];
+    assert(thirdMutation);
     transport.resolve(thirdMutation, {result: 'OK'});
     transport.resolve(staleRead, {result: 'OK', description: 'late read'});
     assert.strictEqual(staleReadCalled, false);
+    await settle(2);
+    const thirdSnapshot = transport.unresolved(isSnapshotRequest);
+    assert.strictEqual(thirdSnapshot.length, 6);
+    thirdSnapshot.forEach((record, index) => {
+        transport.resolve(record, {result: 'OK', value: 'third-' + index});
+    });
+    assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().settlingOperationId, 0);
     console.log('OPERATION_PROTOCOL_PASS stale-read-rejection');
 
     let timeoutResult = null;
@@ -244,22 +306,41 @@ async function main() {
             (data) => { timeoutResult = data; });
     const timedMutation = transport.unresolved((p) => p.context === 'query'
             && Object.prototype.hasOwnProperty.call(p.parameters, 'compile'))[0];
+    assert(timedMutation);
     await settle(35);
     assert(timeoutResult && timeoutResult.code === 'operation_timeout');
     const timeoutOperationId = timeoutResult.client_operation_id;
+    const timeoutSnapshot = transport.unresolved(isSnapshotRequest);
+    assert.strictEqual(timeoutSnapshot.length, 6);
+    assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().settlingOperationId,
+            timeoutOperationId);
     const snapshotBeforeLate =
             window.KANGER_OPERATION_PROTOCOL.snapshot().currentSnapshotId;
+
     transport.resolve(timedMutation, {result: 'OK', description: 'too late'});
     await settle(2);
     assert.strictEqual(timeoutResult.client_operation_id, timeoutOperationId);
     assert(window.KANGER_OPERATION_PROTOCOL.snapshot().currentSnapshotId
             > snapshotBeforeLate,
             'late mutation response did not request authoritative resync');
+    const timeoutSnapshots = transport.unresolved(isSnapshotRequest);
+    const timeoutReplacement = timeoutSnapshots.filter((record) =>
+        timeoutSnapshot.indexOf(record) < 0);
+    assert.strictEqual(timeoutReplacement.length, 6);
+    timeoutSnapshot.forEach((record, index) => {
+        transport.resolve(record, {result: 'OK', value: 'timeout-stale-' + index});
+    });
+    timeoutReplacement.forEach((record, index) => {
+        transport.resolve(record, {result: 'OK', value: 'timeout-fresh-' + index});
+    });
+    assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().settlingOperationId, 0);
+    assert.strictEqual(window.status, '');
     console.log('OPERATION_PROTOCOL_PASS late-operation-rejection');
     console.log('OPERATION_PROTOCOL_PASS late-operation-resync');
 
     const protocol = window.KANGER_OPERATION_PROTOCOL.snapshot();
     assert.strictEqual(protocol.activeOperationId, 0);
+    assert.strictEqual(protocol.settlingOperationId, 0);
     assert(protocol.generation >= 4);
     console.log('OPERATION_PROTOCOL_OK');
 }
