@@ -52,6 +52,7 @@ CANONICAL_RELEASE="${KANGER_RELEASES_DIR}/${VERSION}"
 SAME_VERSION=false
 CANONICAL_PREEXISTED=false
 ARCHIVE_RELEASE=""
+ARCHIVE_READY=false
 CANDIDATE_RELEASE=""
 NEW_RELEASE="${CANONICAL_RELEASE}"
 
@@ -92,20 +93,45 @@ rollback() {
     log "update failed; restoring previous release ${OLD_RELEASE}"
 
     if [[ "${SAME_VERSION}" == true ]]; then
-      if [[ "${CANONICAL_PREEXISTED}" == true ]]; then
-        if [[ -n "${ARCHIVE_RELEASE}" && -e "${ARCHIVE_RELEASE}" ]]; then
+      if [[ "${OLD_RELEASE}" == "${CANONICAL_RELEASE}" ]]; then
+        if [[ "${ARCHIVE_READY}" == true && -d "${ARCHIVE_RELEASE}" ]]; then
+          # Keep current on a complete old snapshot while canonical is rebuilt.
+          atomic_current_link "${ARCHIVE_RELEASE}"
           rm -rf -- "${CANONICAL_RELEASE}"
-          mv "${ARCHIVE_RELEASE}" "${CANONICAL_RELEASE}"
+          if cp -a "${ARCHIVE_RELEASE}" "${CANONICAL_RELEASE}"; then
+            atomic_current_link "${CANONICAL_RELEASE}"
+            rm -rf -- "${ARCHIVE_RELEASE}"
+            ARCHIVE_READY=false
+          fi
+        else
+          atomic_current_link "${OLD_RELEASE}"
         fi
       else
-        rm -rf -- "${CANONICAL_RELEASE}"
+        # A legacy .force.N (or other same-version physical release) can remain
+        # the rollback target while the canonical name is reconstructed.
+        atomic_current_link "${OLD_RELEASE}"
+        if [[ "${CANONICAL_PREEXISTED}" == true && "${ARCHIVE_READY}" == true \
+            && -d "${ARCHIVE_RELEASE}" ]]; then
+          rm -rf -- "${CANONICAL_RELEASE}"
+          if cp -a "${ARCHIVE_RELEASE}" "${CANONICAL_RELEASE}"; then
+            rm -rf -- "${ARCHIVE_RELEASE}"
+            ARCHIVE_READY=false
+          fi
+        elif [[ "${CANONICAL_PREEXISTED}" != true ]]; then
+          rm -rf -- "${CANONICAL_RELEASE}"
+        fi
       fi
       [[ -z "${CANDIDATE_RELEASE}" ]] || rm -rf -- "${CANDIDATE_RELEASE}" "${CANDIDATE_RELEASE}.new.$$"
+      if [[ "${ARCHIVE_READY}" != true && -n "${ARCHIVE_RELEASE}" && -e "${ARCHIVE_RELEASE}" ]]; then
+        rm -rf -- "${ARCHIVE_RELEASE}"
+      fi
     else
+      # Preserve the original atomic rollback invariant: repoint current before
+      # deleting the failed new release.
+      atomic_current_link "${OLD_RELEASE}"
       rm -rf -- "${NEW_RELEASE}"
     fi
 
-    atomic_current_link "${OLD_RELEASE}"
     install -o root -g root -m 0644 "${UNIT_BACKUP}" "${KANGER_UNIT_FILE}"
     install -o root -g root -m 0644 "${NGINX_BACKUP}" "${KANGER_NGINX_FILE}"
     systemctl daemon-reload >/dev/null 2>&1
@@ -121,11 +147,15 @@ if [[ "${SAME_VERSION}" == true ]]; then
   stage_release "${CANDIDATE_RELEASE}"
 
   if [[ "${CANONICAL_PREEXISTED}" == true ]]; then
-    mv "${CANONICAL_RELEASE}" "${ARCHIVE_RELEASE}"
+    # Snapshot first. If canonical is also active, current can then move to the
+    # complete snapshot atomically before the canonical physical name is freed.
+    cp -a "${CANONICAL_RELEASE}" "${ARCHIVE_RELEASE}"
+    ARCHIVE_READY=true
     log "archived previous canonical release as ${ARCHIVE_RELEASE}"
     if [[ "${OLD_RELEASE}" == "${CANONICAL_RELEASE}" ]]; then
       atomic_current_link "${ARCHIVE_RELEASE}"
     fi
+    rm -rf -- "${CANONICAL_RELEASE}"
   fi
 
   mv "${CANDIDATE_RELEASE}" "${CANONICAL_RELEASE}"
