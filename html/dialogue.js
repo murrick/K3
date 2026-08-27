@@ -73,6 +73,71 @@
         return fragment;
     }
 
+    function appendCauseTree(fragment, causes, level) {
+        var list = Array.isArray(causes) ? causes : [];
+        if (level > 50) {
+            appendLine(fragment, new Array(level + 2).join('    ') + '...');
+            return;
+        }
+        var indent = new Array(level + 2).join('    ');
+        for (var i = 0; i < list.length; i++) {
+            var cause = list[i] || {};
+            appendLine(fragment, indent + 'Rule:  '
+                    + itemIdentity(cause.rule, ''));
+            appendLine(fragment, indent + 'Cause: '
+                    + itemIdentity(cause.donor, ''));
+            appendCauseTree(fragment, cause.causes, level + 1);
+        }
+    }
+
+    function appendRuleTree(fragment, tree) {
+        var branches = Array.isArray(tree) ? tree : [];
+        var rows = branches.length && Array.isArray(branches[0])
+                ? branches[0].length : 0;
+        for (var i = 0; i < rows; i++) {
+            var cells = [];
+            for (var j = 0; j < branches.length; j++) {
+                if (Array.isArray(branches[j]) && i < branches[j].length) {
+                    cells.push(stringValue(branches[j][i]));
+                }
+            }
+            appendLine(fragment, cells.join(' '));
+        }
+    }
+
+    function treePresentation(data, kind) {
+        var fragment = document.createDocumentFragment();
+        var list = data && Array.isArray(data.list) ? data.list : [];
+        if (!list.length) {
+            appendLine(fragment, 'No items');
+            fragment.__kangerHistoryText = fragment.textContent;
+            return fragment;
+        }
+        for (var i = 0; i < list.length; i++) {
+            var item = list[i] || {};
+            var id = item.id !== null && item.id !== undefined
+                    ? stringValue(item.id) : stringValue(i);
+            if (kind === 'rule') {
+                appendLine(fragment, 'Rule ' + id + ': '
+                        + itemIdentity(item, ''));
+                appendRuleTree(fragment, item.tree);
+            } else {
+                appendLine(fragment, (kind === 'solution'
+                        ? 'Solution ' : 'Statement ') + id + ': '
+                        + itemIdentity(item, ''));
+                var causes = Array.isArray(item.causes) ? item.causes : [];
+                if (!causes.length && kind === 'base') {
+                    appendLine(fragment, 'Have not solutions variants');
+                } else {
+                    appendCauseTree(fragment, causes,
+                            kind === 'solution' ? 1 : 0);
+                }
+            }
+        }
+        fragment.__kangerHistoryText = fragment.textContent;
+        return fragment;
+    }
+
     function ruleLevelsPresentation(data) {
         var fragment = document.createDocumentFragment();
         var levels = data && data.schema === 1 && Array.isArray(data.levels)
@@ -293,9 +358,12 @@
                 && Array.isArray(data.levels)) {
             return ruleLevelsPresentation(data);
         }
+        if (intent === 'RULE_TREE') {
+            return treePresentation(data, 'rule');
+        }
         if (intent === 'RULE_STATUS' || intent === 'RULE_SHOW'
                 || intent === 'RULE_ALL' || intent === 'RULE_PRODUCED'
-                || intent === 'RULE_LEVEL' || intent === 'RULE_TREE') {
+                || intent === 'RULE_LEVEL') {
             return listPresentation(data, 'Rules');
         }
         if (intent === 'FUNCTIONS' || intent === 'FUNCTION_SHOW'
@@ -305,15 +373,19 @@
         if (intent === 'BASE_STATUS') {
             return basePresentation(data);
         }
-        if (intent === 'BASE_PREDICATES' || intent === 'BASE_PREDICATE'
-                || intent === 'BASE_TREE') {
+        if (intent === 'BASE_TREE') {
+            return treePresentation(data, 'base');
+        }
+        if (intent === 'BASE_PREDICATES' || intent === 'BASE_PREDICATE') {
             return listPresentation(data, 'Base');
         }
         if (intent === 'VALUES' || intent === 'VALUES_ORDER') {
             return valuesPresentation(data);
         }
-        if (intent === 'SOLUTIONS' || intent === 'SOLUTION_SHOW'
-                || intent === 'SOLUTION_TREE') {
+        if (intent === 'SOLUTION_TREE') {
+            return treePresentation(data, 'solution');
+        }
+        if (intent === 'SOLUTIONS' || intent === 'SOLUTION_SHOW') {
             return listPresentation(data, 'Solutions');
         }
         if (intent === 'WHEN_STATUS') {
