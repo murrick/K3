@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "server/**"
+      - "fix/**"
     paths:
       - "html/console.html"
       - "html/operation.js"
