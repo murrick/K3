@@ -70,12 +70,24 @@ class BrowserSoakCorrectionsContractTest {
     }
 
     @Test
+    void semanticMutationStaysBusyUntilCommittedSnapshot() throws Exception {
+        String source = html("operation.js");
+
+        assertTrue(source.contains("settlingMutation: null"));
+        assertTrue(source.contains("state.activeMutation || state.settlingMutation"));
+        assertTrue(source.contains("state.settlingMutation = {"));
+        assertTrue(source.contains("snapshot.generation === state.settlingMutation.generation"));
+        assertTrue(source.contains("state.settlingMutation = null"));
+        assertTrue(source.contains("settlingOperationId"));
+    }
+
+    @Test
     void editorCompileTransportPreservesExactSourceBytes() throws Exception {
         String source = html("editor-local-file.js");
 
         assertFalse(source.contains("normalizeCompilePacket"),
                 "Browser must not rewrite source bytes for compiler EOF handling");
-        assertFalse(source.contains("encodeURIComponent(source + '\\n')"),
+        assertFalse(source.contains("encodeURIComponent(source + '\n')"),
                 "Browser must not append a synthetic final EOL");
         assertTrue(source.contains(
                 "Compiler-only EOF normalization is owned by the Server source boundary"));
