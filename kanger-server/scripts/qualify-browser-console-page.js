@@ -145,10 +145,21 @@ jQuery.post = function (url, encoded, callback) {
 };
 
 let timerId = 0;
+const immediateQueue = [];
+const cancelledTimers = new Set();
 function immediate(callback, delay) {
     const id = ++timerId;
-    if (!delay) callback();
+    if (!delay) immediateQueue.push({id, callback});
     return id;
+}
+function clearTimer(id) {
+    cancelledTimers.add(id);
+}
+function flushImmediate() {
+    while (immediateQueue.length > 0) {
+        const pending = immediateQueue.shift();
+        if (!cancelledTimers.delete(pending.id)) pending.callback();
+    }
 }
 function interval() { return ++timerId; }
 
@@ -162,7 +173,7 @@ const window = {
     editor: {},
     event: null,
     setTimeout: immediate,
-    clearTimeout() {},
+    clearTimeout: clearTimer,
     setInterval: interval,
     clearInterval() {},
     addEventListener() {},
@@ -194,7 +205,7 @@ Object.assign(window, {
     encodeURIComponent,
     decodeURIComponent,
     setTimeout: immediate,
-    clearTimeout() {},
+    clearTimeout: clearTimer,
     setInterval: interval,
     clearInterval() {}
 });
@@ -228,6 +239,7 @@ window.compileSource = null;
 assert.strictEqual(readyCallbacks.length, 1,
     'real console ready callback did not pass through ownership wrappers');
 readyCallbacks[0].call(document);
+flushImmediate();
 
 assert(window.KANGER_TRUSTED_RENDERING,
     'real ready chain did not install trusted rendering');
@@ -266,6 +278,9 @@ assert.strictEqual(dialoguePackets.length, directBefore + 1,
     + JSON.stringify(window.KANGER_OPERATION_PROTOCOL.snapshot()));
 assert.strictEqual(dialoguePackets[dialoguePackets.length - 1].parameters.line,
     'direct-probe', 'qualified command boundary rewrote operator dialogue');
+flushImmediate();
+assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().settlingOperationId, 0,
+    'direct command remained settling after one Browser event-loop turn');
 
 function enter(line) {
     const input = element('query-input');
@@ -282,6 +297,9 @@ function enter(line) {
     assert.strictEqual(packet.context, 'dialogue');
     assert.strictEqual(packet.parameters.line, line,
         'real page rewrote operator dialogue');
+    flushImmediate();
+    assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().settlingOperationId, 0,
+        'real page remained settling after semantic snapshot for ' + line);
 }
 
 enter('squash');
@@ -295,5 +313,6 @@ assert(!dialoguePackets.some(packet => packet.context !== 'dialogue'),
 
 console.log('BROWSER_CONSOLE_PAGE_PASS full-ready-ownership');
 console.log('BROWSER_CONSOLE_PAGE_PASS real-check-enter');
+console.log('BROWSER_CONSOLE_PAGE_PASS event-loop-settlement');
 console.log('BROWSER_CONSOLE_PAGE_PASS squash-and-ambiguity-raw');
 console.log('BROWSER_CONSOLE_PAGE_OK');
