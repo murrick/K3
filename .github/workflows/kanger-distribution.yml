@@ -73,19 +73,24 @@ jobs:
           root="kanger-${version}"
 
           test -f "${archive}"
-          tar -tzf "${archive}" | grep -qx "${root}/RELEASE"
-          tar -tzf "${archive}" | grep -qx "${root}/SHA256SUMS"
-          tar -tzf "${archive}" | grep -qx "${root}/server/kanger-server.jar"
-          tar -tzf "${archive}" | grep -qx "${root}/ui/index.html"
-          tar -tzf "${archive}" | grep -qx "${root}/install.sh"
-          tar -tzf "${archive}" | grep -qx "${root}/update.sh"
-          tar -tzf "${archive}" | grep -qx "${root}/bin/kanger-admin"
+          listing="$(tar -tzf "${archive}")"
+          for member in \
+            "${root}/RELEASE" \
+            "${root}/SHA256SUMS" \
+            "${root}/server/kanger-server.jar" \
+            "${root}/ui/index.html" \
+            "${root}/install.sh" \
+            "${root}/update.sh" \
+            "${root}/bin/kanger-admin"
+          do
+            grep -Fqx -- "${member}" <<<"${listing}"
+          done
 
           release="$(tar -xOzf "${archive}" "${root}/RELEASE")"
           printf '%s\n' "${release}"
-          printf '%s\n' "${release}" | grep -qx 'product=KANGER'
-          printf '%s\n' "${release}" | grep -qx "version=${version}"
-          printf '%s\n' "${release}" | grep -q '^server.version=server-0.18$'
+          grep -Fqx -- 'product=KANGER' <<<"${release}"
+          grep -Fqx -- "version=${version}" <<<"${release}"
+          grep -Fqx -- 'server.version=server-0.18' <<<"${release}"
 
           sha256sum "${archive}"
 
