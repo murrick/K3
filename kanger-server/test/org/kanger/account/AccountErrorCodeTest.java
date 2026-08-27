@@ -24,6 +24,7 @@ class AccountErrorCodeTest {
 
         assertEquals(Arrays.asList(
                 "REGISTRATION_DISABLED",
+                "PRIVACY_CONSENT_REQUIRED",
                 "AUTHENTICATION_FAILED",
                 "EMAIL_CONFIRMATION_REQUIRED",
                 "CONFIRMATION_TOKEN_INVALID",

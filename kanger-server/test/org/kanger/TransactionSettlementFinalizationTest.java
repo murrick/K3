@@ -18,6 +18,7 @@ import java.lang.reflect.Field;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -46,22 +47,42 @@ class TransactionSettlementFinalizationTest {
             assertEquals(1, child.getTransactionLevel());
 
             fixture.db.failFlush = true;
-            MindLifecycleReactor reactor = new MindLifecycleReactor(rejectingDelegate());
+            IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                    new WorkspaceStateReactor(
+                            new MindLifecycleReactor(rejectingDelegate())));
             JSONObject response = transaction(reactor, fixture.token, "commit");
 
             assertEquals("error", response.optString("result"), response.toString());
-            assertEquals("transaction_settlement_finalization_failed",
+            assertEquals("transaction_settlement_failed",
                     response.optString("code"), response.toString());
-            assertEquals("COMMITTED", response.optString("settlement"));
-            assertTrue(response.optBoolean("semantic_applied", false));
-            assertTrue(response.optBoolean("reservation_consumed", false));
             assertEquals("VERIFY_CURRENT_STATE",
                     response.optString("required_action"));
+
+            JSONObject diagnostic = response.getJSONObject("error");
+            assertEquals(1, diagnostic.getInt("schema"));
+            assertEquals("operation", diagnostic.getString("domain"));
+            assertEquals("transaction_settlement_failed",
+                    diagnostic.getString("code"));
+            assertEquals("retain", diagnostic.getString("session_action"));
+            assertEquals("confirmed", diagnostic.getString("operation_outcome"));
+
+            JSONObject settlement = response.getJSONObject("settlement");
+            assertEquals(1, settlement.getInt("schema"));
+            assertEquals("COMMITTED", settlement.getString("outcome"));
+            assertTrue(settlement.getBoolean("semantic_applied"));
+            assertTrue(settlement.getBoolean("reservation_consumed"));
+
+            JSONObject workspace = response.getJSONObject("workspace");
+            assertEquals(2, workspace.getInt("schema"));
+            assertTrue(workspace.getJSONObject("storage").getBoolean("active"));
+            assertEquals(0, workspace.getJSONObject("transaction").getInt("level"));
+            assertFalse(response.has("transaction"));
+            assertFalse(response.has("empty"));
+
             assertSame(root, fixture.user.getCurrentMind(),
                     "server left currentMind on a child whose reservation was consumed");
             assertEquals(0, counter((Mind) root),
                     "post-settlement failure leaked or double-consumed the reservation");
-            assertEquals(0, response.optInt("transaction", -1));
 
             fixture.db.failFlush = false;
             assertTrue(Boolean.TRUE.equals(root.query("?settled_fact;")),
@@ -109,7 +130,7 @@ class TransactionSettlementFinalizationTest {
         }
     }
 
-    private JSONObject transaction(MindLifecycleReactor reactor,
+    private JSONObject transaction(IReactor<JSONObject> reactor,
                                    String token,
                                    String action) throws Exception {
         JSONObject packet = new JSONObject().put("body", new JSONObject()

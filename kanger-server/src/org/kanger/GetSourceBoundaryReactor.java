@@ -8,6 +8,7 @@ package org.kanger;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.kanger.enums.LogMode;
+import org.kanger.exception.TransactionSettlementException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
@@ -28,9 +29,11 @@ import java.nio.file.Files;
  *
  * <p>A load is one operation-local technical transaction over the current
  * user-visible Mind. Successful compilation commits the semantic delta into
- * that same user level; rejection or failure rolls it back. The technical
- * child is never published through {@link IUser#setCurrentMind(IMind)} and
- * therefore cannot change the explicit transaction depth.</p>
+ * that same user level; rejection or a failure before settlement rolls it back.
+ * A post-settlement failure is rethrown so the canonical error boundary can
+ * preserve whether the semantic delta was already committed or rejected. The
+ * technical child is never published through {@link IUser#setCurrentMind(IMind)}
+ * and therefore cannot change the explicit transaction depth.</p>
  *
  * <p>This reactor owns only non-empty {@code command/get} requests directly.
  * Other operations first pass through the semantic source projection/export
@@ -90,6 +93,7 @@ public final class GetSourceBoundaryReactor implements IReactor<JSONObject> {
 
         String exactSource = new String(
                 Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+        boolean semanticApplied = false;
 
         try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(parent)) {
             Mind work = tx.mind();
@@ -112,6 +116,7 @@ public final class GetSourceBoundaryReactor implements IReactor<JSONObject> {
                 return recoveryError("source_compile_rejected", description,
                         file.getName(), exactSource);
             }
+            semanticApplied = true;
 
             description += "<br>File " + file.getName() + " loaded";
             if (parent.getTransactionLevel() > 0) {
@@ -121,11 +126,17 @@ public final class GetSourceBoundaryReactor implements IReactor<JSONObject> {
             parent.setQueryResult(true);
             user.setCurrentMind(parent);
             return ok(description);
+        } catch (TransactionSettlementException settled) {
+            throw settled;
         } catch (Exception failure) {
+            if (semanticApplied) {
+                throw new TransactionSettlementException(
+                        TransactionSettlementException.Outcome.COMMITTED,
+                        failure);
+            }
             parent.setQueryResult(false);
             user.setCurrentMind(parent);
-            return recoveryError("source_load_failed", failure.toString(),
-                    file.getName(), exactSource);
+            throw new SourceImportException(file.getName(), exactSource, failure);
         }
     }
 

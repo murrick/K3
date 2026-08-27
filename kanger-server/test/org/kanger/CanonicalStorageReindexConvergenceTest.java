@@ -306,9 +306,10 @@ class CanonicalStorageReindexConvergenceTest {
                         .put("code", "legacy_reindex_escape");
             }
         };
-        return new CanonicalCommandIngressReactor(
-                new WorkspaceStateReactor(
-                        new CanonicalCommandRuntimeReactor(legacy)));
+        return new CanonicalErrorBoundaryReactor(
+                new CanonicalCommandIngressReactor(
+                        new WorkspaceStateReactor(
+                                new CanonicalCommandRuntimeReactor(legacy))));
     }
 
     private JSONObject invoke(IReactor<JSONObject> reactor,

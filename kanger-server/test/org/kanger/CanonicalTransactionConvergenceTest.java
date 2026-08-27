@@ -41,9 +41,10 @@ class CanonicalTransactionConvergenceTest {
                             "Canonical transaction escaped into legacy runtime");
                 }
             };
-            IReactor<JSONObject> reactor = new CanonicalCommandIngressReactor(
-                    new WorkspaceStateReactor(
-                            new CanonicalCommandRuntimeReactor(legacy)));
+            IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                    new CanonicalCommandIngressReactor(
+                            new WorkspaceStateReactor(
+                                    new CanonicalCommandRuntimeReactor(legacy))));
 
             JSONObject started = invoke(reactor, fixture.token,
                     "transaction start");
@@ -64,7 +65,9 @@ class CanonicalTransactionConvergenceTest {
             assertEquals("error", rootCommit.optString("result"), rootCommit.toString());
             assertEquals("NO_STORAGE_OPEN", rootCommit.optString("code"),
                     rootCommit.toString());
-            assertEquals("TX_COMMIT", rootCommit.optString("canonical_intent"));
+            JSONObject diagnostic = rootCommit.getJSONObject("error");
+            assertEquals("application", diagnostic.getString("domain"));
+            assertEquals("NO_STORAGE_OPEN", diagnostic.getString("code"));
             assertEquals(0, escaped.get(),
                     "Canonical transaction touched legacy query/command protocol");
         } finally {

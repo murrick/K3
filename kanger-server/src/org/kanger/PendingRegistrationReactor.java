@@ -84,51 +84,48 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
     public Object run(JSONObject packet) throws Exception {
         JSONObject parameters = SessionSerializingReactor.parameters(packet);
 
-        try {
-            // The browser confirmation link is a root GET and therefore has no
-            // application context. It must be consumed before context routing,
-            // otherwise it falls through to the historical confirmation path.
-            if (has(parameters, "confirm")) {
-                return confirm(string(parameters, "confirm"));
-            }
-            if (!"login".equalsIgnoreCase(context(packet))) {
-                return delegate.run(packet);
-            }
-            if (isNewRegistration(parameters)) {
-                return register(parameters);
-            }
-            if (has(parameters, "pending_action_token")
-                    && has(parameters, "change_pending_email")) {
-                return changeEmail(parameters);
-            }
-            if (has(parameters, "pending_action_token")
-                    && has(parameters, "cancel_pending")) {
-                return cancel(parameters);
-            }
-            if (has(parameters, "pending_action_token")
-                    && has(parameters, "resend")) {
-                return resend(parameters);
-            }
-            if (isPendingAction(parameters)) {
-                return error(
-                        AccountErrorCode.AUTHENTICATION_FAILED,
-                        "A scoped pending action token is required");
-            }
-            if (isLogin(parameters)
-                    && SessionSerializingReactor.hasAuthenticatedCredential(packet)) {
-                // A successfully authenticated credential is an ACTIVE account.
-                // A stale pending record left by post-publication cleanup must
-                // never shadow ordinary login.
-                return delegate.run(packet);
-            }
-            if (isLogin(parameters)
-                    && registrations.containsLogin(string(parameters, "login"))) {
-                return pendingLogin(parameters);
-            }
-            return delegate.run(packet);
-        } catch (PendingRegistrationException failure) {
-            return error(failure.getCode(), failure.getMessage());
+        // The browser confirmation link is a root GET and therefore has no
+        // application context. It must be consumed before context routing,
+        // otherwise it falls through to the historical confirmation path.
+        if (has(parameters, "confirm")) {
+            return confirm(string(parameters, "confirm"));
         }
+
+        if (!"login".equalsIgnoreCase(context(packet))) {
+            return delegate.run(packet);
+        }
+        if (isNewRegistration(parameters)) {
+            return register(parameters);
+        }
+        if (has(parameters, "pending_action_token")
+                && has(parameters, "change_pending_email")) {
+            return changeEmail(parameters);
+        }
+        if (has(parameters, "pending_action_token")
+                && has(parameters, "cancel_pending")) {
+            return cancel(parameters);
+        }
+        if (has(parameters, "pending_action_token")
+                && has(parameters, "resend")) {
+            return resend(parameters);
+        }
+        if (isPendingAction(parameters)) {
+            throw new PendingRegistrationException(
+                    AccountErrorCode.AUTHENTICATION_FAILED,
+                    "A scoped pending action token is required");
+        }
+        if (isLogin(parameters)
+                && SessionSerializingReactor.hasAuthenticatedCredential(packet)) {
+            // A successfully authenticated credential is an ACTIVE account.
+            // A stale pending record left by post-publication cleanup must
+            // never shadow ordinary login.
+            return delegate.run(packet);
+        }
+        if (isLogin(parameters)
+                && registrations.containsLogin(string(parameters, "login"))) {
+            return pendingLogin(parameters);
+        }
+        return delegate.run(packet);
     }
 
     private JSONObject register(JSONObject parameters) throws Exception {
@@ -136,9 +133,9 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
         mail.validateRecipient(email);
         Boolean privacy = privacy(parameters);
         if (!Boolean.TRUE.equals(privacy)) {
-            return new JSONObject()
-                    .put("result", "error")
-                    .put("description", "Privacy consent is required");
+            throw new PendingRegistrationException(
+                    AccountErrorCode.PRIVACY_CONSENT_REQUIRED,
+                    "Privacy consent is required");
         }
 
         PendingRegistrationStore.Created created = registrations.register(
@@ -156,8 +153,7 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
                     created.getRegistration().getEmail(),
                     created.getConfirmationToken());
         } catch (Exception unavailable) {
-            return pendingMailUnavailable(
-                    created.getRegistration(), null, unavailable);
+            throw mailUnavailable(created.getRegistration(), null, unavailable);
         }
         return pending(created.getRegistration());
     }
@@ -188,7 +184,7 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
                     rotation.getRegistration().getEmail(),
                     rotation.getConfirmationToken());
         } catch (Exception unavailable) {
-            return pendingMailUnavailable(
+            throw mailUnavailable(
                     rotation.getRegistration(),
                     rotation.getActionToken(),
                     unavailable);
@@ -208,7 +204,7 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
                     rotation.getRegistration().getEmail(),
                     rotation.getConfirmationToken());
         } catch (Exception unavailable) {
-            return pendingMailUnavailable(
+            throw mailUnavailable(
                     rotation.getRegistration(),
                     rotation.getActionToken(),
                     unavailable);
@@ -254,19 +250,15 @@ final class PendingRegistrationReactor implements IReactor<JSONObject> {
         return response;
     }
 
-    private static JSONObject pendingMailUnavailable(
+    private static ConfirmationMailDeliveryException mailUnavailable(
             PendingRegistration registration,
             String actionToken,
             Exception failure) {
-        JSONObject response = error(
-                AccountErrorCode.MAIL_DELIVERY_UNAVAILABLE,
-                "Confirmation e-mail could not be queued: " + failure.getMessage())
-                .put("state", "PENDING_CONFIRMATION")
-                .put("email_hint", emailHint(registration.getEmail()));
-        if (actionToken != null && !actionToken.isEmpty()) {
-            response.put("pending_action_token", actionToken);
-        }
-        return response;
+        return new ConfirmationMailDeliveryException(
+                "PENDING_CONFIRMATION",
+                emailHint(registration.getEmail()),
+                actionToken,
+                failure);
     }
 
     private static JSONObject error(AccountErrorCode code, String description) {

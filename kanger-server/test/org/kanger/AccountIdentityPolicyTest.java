@@ -9,7 +9,9 @@ package org.kanger;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.kanger.account.AccountErrorCode;
+import org.kanger.account.PendingRegistrationException;
 import org.kanger.account.RegistrationPolicy;
+import org.kanger.interfaces.IReactor;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -21,11 +23,12 @@ class AccountIdentityPolicyTest {
 
     @Test
     void accountLoginCannotDivergeFromCredentialIdentity() {
-        JSONObject violation = AccountPolicyReactor.accountLoginChangeViolation(
-                "rick", "another-login");
+        PendingRegistrationException violation =
+                AccountPolicyReactor.accountLoginChangeViolation(
+                        "rick", "another-login");
 
-        assertEquals(AccountErrorCode.ACCOUNT_LOGIN_IMMUTABLE.code(),
-                violation.getString("code"));
+        assertEquals(AccountErrorCode.ACCOUNT_LOGIN_IMMUTABLE,
+                violation.getCode());
         assertNull(AccountPolicyReactor.accountLoginChangeViolation(
                 " rick ", "rick"));
     }
@@ -34,14 +37,15 @@ class AccountIdentityPolicyTest {
     void loginIdentityViolationStopsBeforeLegacyProfileMutation()
             throws Exception {
         AtomicBoolean delegated = new AtomicBoolean();
-        AccountPolicyReactor reactor = new AccountPolicyReactor(
-                RegistrationPolicy.EMAIL_VERIFIED,
-                packet -> {
-                    delegated.set(true);
-                    return new JSONObject().put("result", "OK");
-                },
-                parameters -> { },
-                parameters -> AccountPolicyReactor.accountLoginImmutable());
+        IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                new AccountPolicyReactor(
+                        RegistrationPolicy.EMAIL_VERIFIED,
+                        packet -> {
+                            delegated.set(true);
+                            return new JSONObject().put("result", "OK");
+                        },
+                        parameters -> { },
+                        parameters -> AccountPolicyReactor.accountLoginImmutable()));
         JSONObject packet = new JSONObject().put("body", new JSONObject()
                 .put("context", "login")
                 .put("parameters", new JSONObject()
@@ -52,7 +56,19 @@ class AccountIdentityPolicyTest {
         JSONObject response = (JSONObject) reactor.run(packet);
 
         assertFalse(delegated.get());
+        assertEquals("error", response.getString("result"), response.toString());
         assertEquals(AccountErrorCode.ACCOUNT_LOGIN_IMMUTABLE.code(),
-                response.getString("code"));
+                response.getString("code"), response.toString());
+        assertEquals("The account login cannot be changed",
+                response.getString("description"), response.toString());
+
+        JSONObject diagnostic = response.getJSONObject("error");
+        assertEquals(1, diagnostic.getInt("schema"));
+        assertEquals("account", diagnostic.getString("domain"));
+        assertEquals(AccountErrorCode.ACCOUNT_LOGIN_IMMUTABLE.code(),
+                diagnostic.getString("code"));
+        assertFalse(diagnostic.getBoolean("retryable"));
+        assertEquals("retain", diagnostic.getString("session_action"));
+        assertEquals("not_applied", diagnostic.getString("operation_outcome"));
     }
 }

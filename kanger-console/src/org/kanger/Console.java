@@ -267,29 +267,7 @@ public class Console {
                     showCopyrigt();
                 }
             } catch (ParseErrorException ex) {
-                int pos = ex.getExceptionPosition();
-                String msg = ex.getExceptionMessage();
-                System.out.println("ERROR: " + msg);
-                String ps = "";
-                for (int i = 0; i < lastQuery.trim().length(); ++i) {
-                    char c = lastQuery.trim().charAt(i);
-                    System.out.print(c);
-                    if (i == pos) {
-                        ps += '^';
-                    }
-                    if (c == '\n') {
-                        if (ps.endsWith("^")) {
-                            System.out.println(ps);
-                        }
-                        ps = "";
-                    } else if (i < pos) {
-                        ps += c == '\t' ? c : ' ';
-                    }
-                }
-                System.out.println();
-                if (ps.endsWith("^")) {
-                    System.out.println(ps);
-                }
+                ConsoleParseErrorRenderer.show(ex, line);
             } catch (CommandErrorException ex) {
                 System.err.println(ex.toString());
             } catch (StorageLifecycleException ex) {

@@ -9,7 +9,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.kanger.command.CommandIntent;
 import org.kanger.command.CommandInvocation;
-import org.kanger.command.CommandParseException;
 import org.kanger.command.CommandParser;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
@@ -68,6 +67,12 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
     @Override
     public Object run(JSONObject packet) throws Exception {
         Envelope envelope = Envelope.parse(packet);
+        if (envelope != null && "command".equalsIgnoreCase(envelope.context)) {
+            JSONObject policyViolation = ApiInputPolicy.violation(envelope.parameters);
+            if (policyViolation != null) {
+                return policyViolation;
+            }
+        }
         if (envelope == null
                 || !DIALOGUE_CONTEXT.equalsIgnoreCase(envelope.context)
                 || !envelope.parameters.has(LINE_PARAMETER)
@@ -88,13 +93,7 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
                     "Dialogue line must be a string");
         }
 
-        final CommandInvocation invocation;
-        try {
-            invocation = parser.parse(line);
-        } catch (CommandParseException rejected) {
-            return error("command_parse_error", rejected.getReason().name(),
-                    rejected.getMessage());
-        }
+        final CommandInvocation invocation = parser.parse(line);
 
         String token = envelope.parameters.optString("token", "");
         boolean confirmed = envelope.parameters.optBoolean(CONFIRMED_PARAMETER, false);

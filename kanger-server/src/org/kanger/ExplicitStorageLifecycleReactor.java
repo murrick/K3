@@ -7,8 +7,6 @@ package org.kanger;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.kanger.enums.StorageLifecycleErrorCode;
-import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
@@ -20,9 +18,9 @@ import org.kanger.interfaces.IUser;
  * operations whose ordering must be protected before the historical command
  * processor touches lifecycle state: root {@code commit} as durable
  * checkpoint and explicit {@code close}. Storage {@code use} is delegated to
- * Core because Core owns semantic U-stack rebase and compensating restore. It
- * translates {@link StorageLifecycleException} into stable JSON fields without
- * duplicating the lifecycle implementation.</p>
+ * Core because Core owns semantic U-stack rebase and compensating restore.
+ * Typed lifecycle failures propagate unchanged to the canonical Server error
+ * boundary; this adapter owns ordering, not error presentation.</p>
  */
 final class ExplicitStorageLifecycleReactor implements IReactor<JSONObject> {
 
@@ -58,32 +56,28 @@ final class ExplicitStorageLifecycleReactor implements IReactor<JSONObject> {
         }
 
         IMind active = user.getCurrentMind();
-        try {
-            if (use) {
-                /*
-                 * Core User.use owns same-generation rejection and semantic
-                 * A->B rebase. Pre-rejecting an already-open generation here
-                 * would bypass U-stack snapshot/replay and its compensating
-                 * restore path, so the protocol adapter only delegates.
-                 */
-                return delegate.run(packet);
-            }
-
-            if (close) {
-                IMind closed = user.close(active);
-                user.setCurrentMind(closed);
-                return success("Storage closed", closed, closed.getId());
-            }
-
-            if (active.getNext() != null) {
-                return delegate.run(packet);
-            }
-
-            user.checkpoint(active);
-            return success("Storage checkpoint completed", active, active.getId());
-        } catch (StorageLifecycleException rejected) {
-            return lifecycleError(rejected, user.getCurrentMind());
+        if (use) {
+            /*
+             * Core User.use owns same-generation rejection and semantic
+             * A->B rebase. Pre-rejecting an already-open generation here
+             * would bypass U-stack snapshot/replay and its compensating
+             * restore path, so the protocol adapter only delegates.
+             */
+            return delegate.run(packet);
         }
+
+        if (close) {
+            IMind closed = user.close(active);
+            user.setCurrentMind(closed);
+            return success("Storage closed", closed, closed.getId());
+        }
+
+        if (active.getNext() != null) {
+            return delegate.run(packet);
+        }
+
+        user.checkpoint(active);
+        return success("Storage checkpoint completed", active, active.getId());
     }
 
     private JSONObject success(String description, IMind mind, long id) {
@@ -93,22 +87,6 @@ final class ExplicitStorageLifecycleReactor implements IReactor<JSONObject> {
                 .put("id", id)
                 .put("transaction", mind.getTransactionLevel())
                 .put("empty", mind.isEmptyLevel());
-    }
-
-    private JSONObject lifecycleError(StorageLifecycleException failure,
-                                      IMind mind) {
-        JSONObject result = new JSONObject()
-                .put("result", "error")
-                .put("code", failure.getCode())
-                .put("description", failure.toString());
-        if (failure.getRequiredAction() != null) {
-            result.put("required_action", failure.getRequiredAction());
-        }
-        if (mind != null) {
-            result.put("transaction", mind.getTransactionLevel())
-                    .put("empty", mind.isEmptyLevel());
-        }
-        return result;
     }
 
     private boolean isUse(Request request) {

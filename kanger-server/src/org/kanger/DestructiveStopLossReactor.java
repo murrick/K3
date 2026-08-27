@@ -45,7 +45,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.Date;
 
 /**
  * Narrow compatibility wrapper that establishes a stop-loss boundary around
@@ -105,6 +104,8 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 result = reindexStorage(request.parameters, user);
             } else if ("use".equals(operation)) {
                 result = useStorage(request.parameters, user);
+            } else if ("erase".equals(operation)) {
+                result = eraseWorkspace(user);
             } else {
                 JSONObject blocked = requireRootTransaction(user, operation);
                 if (blocked != null) {
@@ -114,10 +115,10 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 }
             }
             return decorate(result, user);
-        } catch (Exception error) {
-            System.err.println(new Date());
-            error.printStackTrace(System.err);
-            return error("operation_failed", error.toString());
+        } catch (SourceDeleteException failure) {
+            throw failure;
+        } catch (StorageSwitchException failure) {
+            return error("storage_switch_failed", failure.getMessage());
         }
     }
 
@@ -171,25 +172,26 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
             return error("compile_rejected", probe.description);
         }
 
-        IMind mind = user.getCurrentMind();
-        String previousSource = SourceContextMaterializer.materializeCurrentLevel(mind);
-        try {
-            mind = mind.clearWorkspace();
-            user.setCurrentMind(mind);
-            if (!mind.compile(source)) {
-                restoreWorkspace(user, previousSource);
-                return error("compile_apply_failed",
-                        mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
-            }
-            return ok(mind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
-        } catch (Exception applyFailure) {
-            try {
-                restoreWorkspace(user, previousSource);
-            } catch (Exception restoreFailure) {
-                applyFailure.addSuppressed(restoreFailure);
-            }
-            throw applyFailure;
+        RootCurrentLevelSourceReplacement.Outcome replacement =
+                RootCurrentLevelSourceReplacement.replace(user, source);
+        if (!replacement.isAccepted()) {
+            return error("compile_apply_failed", replacement.getDescription());
         }
+        return ok(replacement.getDescription());
+    }
+
+    private JSONObject eraseWorkspace(IUser user) throws Exception {
+        JSONObject blocked = requireRootTransaction(user, "erase");
+        if (blocked != null) {
+            return blocked;
+        }
+
+        RootCurrentLevelSourceReplacement.Outcome replacement =
+                RootCurrentLevelSourceReplacement.replace(user, "");
+        if (!replacement.isAccepted()) {
+            throw new IllegalStateException("Root erase replacement was rejected");
+        }
+        return new JSONObject().put("result", "OK");
     }
 
     private CompileProbe validateReplacement(String source) throws Exception {
@@ -199,18 +201,6 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
         boolean accepted = probeMind.compile(source);
         return new CompileProbe(accepted,
                 probeMind.getCurrentLogRecord(LogMode.ANALYZER).getRecord());
-    }
-
-    private void restoreWorkspace(IUser user, String source) throws Exception {
-        IMind mind = user.getCurrentMind();
-        if (mind == null) {
-            mind = new Mind(user);
-        }
-        mind = mind.clearWorkspace();
-        user.setCurrentMind(mind);
-        if (source != null && !source.isEmpty() && !mind.compile(source)) {
-            throw new IllegalStateException("Previous workspace could not be restored");
-        }
     }
 
     private JSONObject saveSource(JSONObject parameters, IUser user) throws Exception {
@@ -226,12 +216,15 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
             directory = Paths.get(".").toAbsolutePath().normalize();
             target = directory.resolve(target.getFileName());
         }
-        Files.createDirectories(directory);
-        boolean existed = Files.exists(target);
-        Path temporary = Files.createTempFile(directory,
-                target.getFileName().toString() + ".", ".tmp");
+
+        Path temporary = null;
+        boolean existed = false;
         boolean published = false;
         try {
+            Files.createDirectories(directory);
+            existed = Files.exists(target);
+            temporary = Files.createTempFile(directory,
+                    target.getFileName().toString() + ".", ".tmp");
             byte[] data = SourceContextMaterializer.materializeCurrentLevel(mind)
                     .getBytes(StandardCharsets.UTF_8);
             try (FileChannel channel = FileChannel.open(temporary,
@@ -251,15 +244,26 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
             }
             published = true;
-            if (!existed) {
-                Watchdog.log(user, "New source file created: " + fileName);
-            }
-            return ok("Source file " + fileName + " saved.");
+        } catch (IOException failure) {
+            return error("source_save_failed", "Source save failed");
         } finally {
-            if (!published) {
-                Files.deleteIfExists(temporary);
+            if (!published && temporary != null) {
+                try {
+                    Files.deleteIfExists(temporary);
+                } catch (IOException cleanupFailure) {
+                    Watchdog.warn("Unable to clean temporary source file");
+                }
             }
         }
+
+        if (!existed) {
+            try {
+                Watchdog.log(user, "New source file created: " + fileName);
+            } catch (Exception logFailure) {
+                Watchdog.warn("Unable to record source creation event");
+            }
+        }
+        return ok("Source file " + fileName + " saved.");
     }
 
     private JSONObject loadSource(JSONObject parameters, IUser user) throws Exception {
@@ -322,7 +326,11 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
         if (!Files.exists(target)) {
             return error("source_not_found", "Source file not found " + fileName);
         }
-        Files.delete(target);
+        try {
+            Files.delete(target);
+        } catch (IOException failure) {
+            throw new SourceDeleteException(fileName, failure);
+        }
         if (Files.exists(target)) {
             return error("source_delete_incomplete",
                     "Source file could not be deleted " + fileName);
@@ -341,85 +349,30 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
             return storageInfo(mind);
         }
 
-        /*
-         * An open-generation A->B switch belongs entirely to Core. This
-         * stop-loss boundary may probe B before mutation, but it must not
-         * replay source text or perform an independent restore afterward:
-         * User.use transports every explicit U-level as semantic delta and
-         * compensates back to A if target replay fails after mutation starts.
-         */
-        if (previousStorage != null) {
-            try {
-                probeStorage(user, storageName);
-                IMind rebased = mind.useStorage(storageName);
-                user.setCurrentMind(rebased);
-                if (!rebased.isStorageUsed()) {
-                    throw new IOException("Error opening database " + displayName);
-                }
-                return storageInfo(rebased);
-            } catch (Exception switchFailure) {
-                return error("storage_switch_failed", switchFailure.toString());
+        if (previousStorage == null) {
+            JSONObject blocked = requireRootTransaction(user, "use");
+            if (blocked != null) {
+                return blocked;
             }
         }
 
         /*
-         * Historical no-storage workspace attachment remains a separate
-         * compatibility case: a transient level-0 semantic projection has to
-         * become an overlay above the newly attached persistent base. Unlike
-         * A->B, there is no pre-existing persistent U0 for Core to rebase.
+         * Storage rebase belongs entirely to Core, including first attachment
+         * of a non-empty offline U0. User.use transports explicit levels,
+         * assimilates offline root state into the target persistent U0 without
+         * creating an artificial transaction boundary, and compensates on
+         * replay/acquisition failure after mutation starts.
          */
-        JSONObject blocked = requireRootTransaction(user, "use");
-        if (blocked != null) {
-            return blocked;
-        }
-
-        String previousSource = SourceContextMaterializer.materializeCurrentLevel(mind);
-        probeStorage(user, storageName);
         try {
-            mind = mind.useStorage(storageName);
-            user.setCurrentMind(mind);
-            if (!mind.isStorageUsed()) {
+            probeStorage(user, storageName);
+            IMind rebased = mind.useStorage(storageName);
+            user.setCurrentMind(rebased);
+            if (!rebased.isStorageUsed()) {
                 throw new IOException("Error opening database " + displayName);
             }
-
-            if (!previousSource.isEmpty()) {
-                IMind overlay = null;
-                try {
-                    overlay = new Mind(mind);
-                    if (overlay.compile(previousSource)) {
-                        if (!overlay.isEmptyLevel()) {
-                            mind = overlay;
-                            overlay = null;
-                        } else {
-                            mind.release(overlay);
-                            overlay = null;
-                        }
-                    } else {
-                        mind.release(overlay);
-                        overlay = null;
-                        throw new IOException("Current workspace conflicts with database "
-                                + displayName);
-                    }
-                } catch (Exception overlayFailure) {
-                    if (overlay != null) {
-                        try {
-                            mind.release(overlay);
-                        } catch (Exception releaseFailure) {
-                            overlayFailure.addSuppressed(releaseFailure);
-                        }
-                    }
-                    throw overlayFailure;
-                }
-            }
-            user.setCurrentMind(mind);
-            return storageInfo(mind);
+            return storageInfo(rebased);
         } catch (Exception switchFailure) {
-            try {
-                restoreStorage(user, null, previousSource);
-            } catch (Exception restoreFailure) {
-                switchFailure.addSuppressed(restoreFailure);
-            }
-            return error("storage_switch_failed", switchFailure.toString());
+            throw new StorageSwitchException(displayName, switchFailure);
         }
     }
 
@@ -463,32 +416,19 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
         String requested = parameters.optString("reindex", "");
         String storageName = requested.isEmpty()
                 ? mind.getStorageName() : canonicalStorageName(requested);
-        if (storageName == null || storageName.isEmpty()
-                || !storageArtifactsExist(user, storageName)) {
-            return error("storage_not_found", "Database not found " + requested);
-        }
-
-        String previousStorage = mind.isStorageUsed() ? mind.getStorageName() : null;
-        String previousSource = SourceContextMaterializer.materializeCurrentLevel(mind);
-        deleteStorageArtifacts(user, storageName + "-temporary");
         try {
+            if (storageName == null || storageName.isEmpty()
+                    || !storageArtifactsExist(user, storageName)) {
+                return error("storage_not_found", "Database not found " + requested);
+            }
+
+            deleteStorageArtifacts(user, storageName + "-temporary");
             mind = mind.reindexStorage(storageName);
             user.setCurrentMind(mind);
-            if (previousStorage == null && !previousSource.isEmpty()) {
-                if (!mind.compile(previousSource)) {
-                    throw new IllegalStateException(
-                            "Workspace could not be restored after reindex");
-                }
-            }
             deleteStorageArtifacts(user, storageName + "-temporary");
             return ok("Database " + requested + " indexed");
         } catch (Exception reindexFailure) {
-            try {
-                restoreStorage(user, previousStorage, previousSource);
-            } catch (Exception restoreFailure) {
-                reindexFailure.addSuppressed(restoreFailure);
-            }
-            return error("storage_reindex_failed", reindexFailure.toString());
+            return error("storage_reindex_failed", "Storage reindex failed");
         }
     }
 
@@ -502,18 +442,30 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
         String requested = parameters.optString("drop", "");
         String storageName = requested.isEmpty()
                 ? mind.getStorageName() : canonicalStorageName(requested);
-        if (storageName == null || storageName.isEmpty()
-                || !storageArtifactsExist(user, storageName)) {
+        if (storageName == null || storageName.isEmpty()) {
             return error("storage_not_found", "Database not found " + requested);
+        }
+        try {
+            if (!storageArtifactsExist(user, storageName)) {
+                return error("storage_not_found", "Database not found " + requested);
+            }
+        } catch (IOException probeFailure) {
+            org.kanger.exception.StorageLifecycleException failure =
+                    new org.kanger.exception.StorageLifecycleException(
+                            org.kanger.enums.StorageLifecycleErrorCode.STORAGE_DELETE_INCOMPLETE,
+                            "Database deletion was incomplete "
+                                    + storageName.replace(Enums.FILE_SEPARATOR, "."));
+            failure.addSuppressed(probeFailure);
+            throw failure;
         }
 
         mind = mind.removeStorage(storageName);
         user.setCurrentMind(mind);
-        if (storageArtifactsExist(user, storageName)) {
-            return error("storage_delete_incomplete",
-                    "Database deletion was incomplete " + requested);
+        try {
+            Watchdog.log(user, "Database " + requested + " deleted");
+        } catch (Exception logFailure) {
+            Watchdog.warn("Unable to record storage deletion event");
         }
-        Watchdog.log(user, "Database " + requested + " deleted");
         return ok("Database " + requested + " dropped");
     }
 

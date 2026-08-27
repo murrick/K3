@@ -193,6 +193,13 @@ public class Parser {
     }
 
     public static Token nextToken(String line, Token current) throws ParseErrorException {
+        return nextToken(line, current, 0);
+    }
+
+    public static Token nextToken(String line, Token current, int sourceOffset) throws ParseErrorException {
+        if (sourceOffset < 0) {
+            throw new IllegalArgumentException("source offset must be non-negative");
+        }
         if (current == null) {
             current = new Token();
         }
@@ -219,7 +226,7 @@ public class Parser {
                 current.setLen(current.getLen() + 2);
             }
             if (current.getPos() + current.getLen() >= line.length()) {
-                throw new ParseErrorException(current.getPos() + "@Unclosed comment");
+                throw new ParseErrorException(sourceOffset + current.getPos(), "Unclosed comment");
             }
         } else if (line.startsWith("//", current.getPos())) {
             while (current.getPos() + current.getLen() < line.length()
@@ -246,7 +253,7 @@ public class Parser {
                     current.setLen(current.getLen() + 1);
                 }
                 if (current.getPos() + current.getLen() >= line.length()) {
-                    throw new ParseErrorException(current.getPos() + "@Unclosed quotes");
+                    throw new ParseErrorException(sourceOffset + current.getPos(), "Unclosed quotes");
                 }
             } while (before == '\\');
             if (current.getPos() + current.getLen() < line.length()) {
@@ -263,7 +270,7 @@ public class Parser {
                     current.setLen(current.getLen() + 1);
                 }
                 if (current.getPos() + current.getLen() >= line.length()) {
-                    throw new ParseErrorException(current.getPos() + "@Unclosed brackets");
+                    throw new ParseErrorException(sourceOffset + current.getPos(), "Unclosed brackets");
                 }
                 --counter;
                 current.setLen(current.getLen() + 1);
@@ -296,16 +303,16 @@ public class Parser {
         }
     }
 
-    private static Leaf parse(String line, Token token) throws ParseErrorException {
+    private static Leaf parse(String line, Token token, int sourceOffset) throws ParseErrorException {
         Leaf current = null;
         Leaf root = null;
-        while ((token = nextToken(line, token)) != null) {
+        while ((token = nextToken(line, token, sourceOffset)) != null) {
 
             if (token.getToken(line).startsWith("//") || token.getToken(line).startsWith("/*")) {
                 continue;
             }
             if (token.getToken(line).startsWith("{")) {
-                throw new ParseErrorException(current.getPos() + "@Unexpected functional block");
+                throw new ParseErrorException(sourceOffset + token.getPos(), "Unexpected functional block");
             }
             if (")".equals(token.getToken(line)) || "]".equals(token.getToken(line)) || ";".equals(token.getToken(line))) {
                 break;
@@ -313,7 +320,7 @@ public class Parser {
 
             Leaf leaf = new Leaf();
             leaf.setValue(token.getToken(line));
-            leaf.setPos(token.getPos());
+            leaf.setPos(sourceOffset + token.getPos());
 
             int range = (current == null || (current.getPriority() > 0 && !"(".equals(current.getValue()))) ? 1 : 2;
             Op op = getOp(line, token.getPos(), range);
@@ -326,30 +333,30 @@ public class Parser {
             }
 
             if ("@".equals(leaf.getValue()) || "$".equals(leaf.getValue())) {
-                if ((token = nextToken(line, token)) == null) {
-                    throw new ParseErrorException(leaf.getPos() + "@No quantifier variable defined");
+                if ((token = nextToken(line, token, sourceOffset)) == null) {
+                    throw new ParseErrorException(leaf.getPos(), "No quantifier variable defined");
                 }
                 Leaf tmp = new Leaf();
                 tmp.setValue(token.getToken(line));
-                tmp.setPos(token.getPos());
+                tmp.setPos(sourceOffset + token.getPos());
                 leaf.setLeft(tmp);
             } else if ("_set".equals(leaf.getValue())) {
                 Leaf tmp = new Leaf();
                 tmp.setValue("(");
-                tmp.setPos(token.getPos());
+                tmp.setPos(sourceOffset + token.getPos());
                 tmp.setPriority(1);
                 tmp.setRange(2);
                 tmp.setLeft(leaf);
                 leaf = tmp;
-                leaf.setRight(parse(line, token));
+                leaf.setRight(parse(line, token, sourceOffset));
                 if (!"]".equals(token.getToken(line))) {
-                    throw new ParseErrorException(leaf.getPos() + "@Expected closing bracket");
+                    throw new ParseErrorException(leaf.getPos(), "Expected closing bracket");
                 }
             } else if ("(".equals(leaf.getValue())) {
                 leaf.setPriority(1);
-                leaf.setRight(parse(line, token));
+                leaf.setRight(parse(line, token, sourceOffset));
                 if (!")".equals(token.getToken(line))) {
-                    throw new ParseErrorException(leaf.getPos() + "@Expected closing bracket");
+                    throw new ParseErrorException(leaf.getPos(), "Expected closing bracket");
                 }
             }
 
@@ -370,7 +377,7 @@ public class Parser {
                     if (current.getRight() == null) {
                         current.setRight(leaf);
                     } else {
-                        throw new ParseErrorException(leaf.getPos() + "@Misplaced quantifier");
+                        throw new ParseErrorException(leaf.getPos(), "Misplaced quantifier");
                     }
                 } else {
                     while (current != null && current.getPriority() < leaf.getPriority()) {
@@ -383,7 +390,7 @@ public class Parser {
 //                    throw new ParseErrorException(leaf.getPos() + "@Syntax error");
                     } else {
                         if (leaf.getLeft() != null) {
-                            throw new ParseErrorException(leaf.getPos() + "@Unexpected operation");
+                            throw new ParseErrorException(leaf.getPos(), "Unexpected operation");
                         } else {
                             leaf.setLeft(current.getRight());
                             current.setRight(leaf);
@@ -401,7 +408,7 @@ public class Parser {
                 if (parentOp != null && parentOp.getPriority() > 0) {
                     Leaf tmp = new Leaf();
                     tmp.setValue(",");
-                    tmp.setPos(token.getPos());
+                    tmp.setPos(sourceOffset + token.getPos());
                     tmp.setPriority(7);
                     tmp.setRange(2);
                     tmp.setLeft(parentOp.getRight());
@@ -410,10 +417,10 @@ public class Parser {
                     parentOp.setRange(parentOp.getRange() + 1);
                     leaf = parentOp;
                     if (getOp(parentOp.getValue(), parentOp.getRange()) == null) {
-                        throw new ParseErrorException(leaf.getPos() + "@Unexpected parameter");
+                        throw new ParseErrorException(leaf.getPos(), "Unexpected parameter");
                     }
                 } else {
-                    throw new ParseErrorException(leaf.getPos() + "@Misplaced term");
+                    throw new ParseErrorException(leaf.getPos(), "Misplaced term");
                 }
             }
             current = leaf;
@@ -473,17 +480,24 @@ public class Parser {
     }
 
     public static Leaf parse(String line) throws ParseErrorException {
-        Leaf tree = parse(line, null);
+        return parse(line, 0);
+    }
+
+    public static Leaf parse(String line, int sourceOffset) throws ParseErrorException {
+        Leaf tree = parse(line, null, sourceOffset);
         return squeeze(tree);
     }
 
     public static Operation implement(String line, Mind mind, Token token) throws Exception {
+        return implement(line, mind, token, 0);
+    }
+
+    public static Operation implement(String line, Mind mind, Token token, int sourceOffset) throws Exception {
         boolean waitParams = false;
         boolean waitScript = false;
-        int pos = 1;
         Operation f = ((User) mind.getUser()).getUdf();
         f.setMind(mind);
-        while ((token = nextToken(line, token)) != null) {
+        while ((token = nextToken(line, token, sourceOffset)) != null) {
             String ln = token.getToken(line);
             if (";".equals(ln)) {
                 break;
@@ -498,7 +512,7 @@ public class Parser {
                 f.getParams().add(ln);
             } else if (waitScript) {
                 if (!ln.startsWith("{")) {
-                    throw new ParseErrorException(pos + "@Functional block expected");
+                    throw new ParseErrorException(sourceOffset + token.getPos(), "Functional block expected");
                 }
                 f.getScripts().add(ln.substring(0, ln.length() - 1).substring(1));
             } else {

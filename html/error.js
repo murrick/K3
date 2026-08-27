@@ -10,6 +10,11 @@
 
     var installed = false;
     var originalPost = null;
+    var sourcePresentationInstalled = false;
+    var sourcePresentationRetries = 0;
+    var MAX_SOURCE_PRESENTATION_RETRIES = 400;
+    var sourcePresentationBase = {};
+    var pendingCompile = null;
 
     function stringValue(value) {
         return value === null || value === undefined ? '' : String(value);
@@ -136,6 +141,141 @@
         }, 0);
     }
 
+    function editorInstance() {
+        return window.editor;
+    }
+
+    function editorText() {
+        var instance = editorInstance();
+        return instance && typeof instance.getValue === 'function'
+                ? stringValue(instance.getValue()) : '';
+    }
+
+    function activeOperationId() {
+        var protocol = window.KANGER_OPERATION_PROTOCOL;
+        if (!protocol || typeof protocol.snapshot !== 'function') {
+            return 0;
+        }
+        var snapshot = protocol.snapshot();
+        var operationId = Number(snapshot && snapshot.activeOperationId);
+        return Number.isInteger(operationId) && operationId > 0
+                ? operationId : 0;
+    }
+
+    function canonicalSourceSpan(data, submittedSource) {
+        if (!data || data.result === 'OK'
+                || !data.error || data.error.schema !== 1) {
+            return null;
+        }
+        var source = data.error.source;
+        if (!source || typeof source !== 'object') {
+            return null;
+        }
+        var offset = Number(source.offset);
+        var length = Number(source.length);
+        if (!Number.isInteger(offset) || !Number.isInteger(length)
+                || offset < 0 || length < 0
+                || length > submittedSource.length
+                || offset > submittedSource.length - length) {
+            return null;
+        }
+        return {offset: offset, length: length};
+    }
+
+    function applySourceDiagnostic(data, submitted) {
+        if (!submitted || editorText() !== submitted.source) {
+            return false;
+        }
+        var span = canonicalSourceSpan(data, submitted.source);
+        if (!span) {
+            return false;
+        }
+        if (typeof window.openEditor === 'function') {
+            window.openEditor(null);
+            if (editorText() !== submitted.source) {
+                return false;
+            }
+        }
+        var instance = editorInstance();
+        if (!instance || typeof instance.posFromIndex !== 'function') {
+            return false;
+        }
+        var start = instance.posFromIndex(span.offset);
+        if (span.length === 0) {
+            if (typeof instance.setCursor !== 'function') {
+                return false;
+            }
+            instance.setCursor(start);
+            return true;
+        }
+        if (typeof instance.setSelection !== 'function') {
+            return false;
+        }
+        var end = instance.posFromIndex(span.offset + span.length);
+        instance.setSelection(start, end);
+        return true;
+    }
+
+    function installSourcePresentation() {
+        if (sourcePresentationInstalled) {
+            return;
+        }
+        if (!window.KANGER_ERROR_BOUNDARY
+                || !window.KANGER_EDITOR_STATE
+                || !window.KANGER_OPERATION_PROTOCOL
+                || typeof window.compileSource !== 'function'
+                || typeof window.refreshScreen !== 'function'
+                || !editorInstance()) {
+            sourcePresentationRetries += 1;
+            if (sourcePresentationRetries <= MAX_SOURCE_PRESENTATION_RETRIES
+                    && typeof window.setTimeout === 'function') {
+                window.setTimeout(installSourcePresentation, 10);
+            }
+            return;
+        }
+
+        sourcePresentationInstalled = true;
+        sourcePresentationBase.compileSource = window.compileSource;
+        sourcePresentationBase.refreshScreen = window.refreshScreen;
+
+        window.compileSource = function () {
+            var activeBefore = activeOperationId();
+            var submittedSource = editorText();
+            var result = sourcePresentationBase.compileSource.apply(
+                    window, arguments);
+            var activeAfter = activeOperationId();
+            if (activeBefore === 0 && activeAfter > 0) {
+                pendingCompile = {
+                    operationId: activeAfter,
+                    source: submittedSource
+                };
+            }
+            return result;
+        };
+
+        window.refreshScreen = function (data) {
+            var result = sourcePresentationBase.refreshScreen.apply(
+                    window, arguments);
+            if (pendingCompile && data
+                    && Number(data.client_operation_id)
+                            === pendingCompile.operationId) {
+                var submitted = pendingCompile;
+                pendingCompile = null;
+                if (stringValue(data.result).toUpperCase() !== 'OK') {
+                    window.setTimeout(function () {
+                        applySourceDiagnostic(data, submitted);
+                    }, 0);
+                }
+            }
+            return result;
+        };
+
+        window.KANGER_ERROR_SOURCE_PRESENTATION = Object.freeze({
+            version: 1,
+            installed: true
+        });
+    }
+
     function installPostBoundary() {
         originalPost = window.post;
         window.post = function (packet, callback) {
@@ -198,6 +338,7 @@
             local: local,
             describe: describe
         });
+        installSourcePresentation();
     }
 
     function observeWorkspace() {
