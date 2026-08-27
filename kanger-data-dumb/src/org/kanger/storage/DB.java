@@ -39,6 +39,7 @@ import org.kanger.interfaces.internal.IData;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,9 +83,11 @@ import java.util.UUID;
  * о crash-atomic многофайловой транзакции при внезапном завершении ОС.</p>
  *
  * <p><strong>Удаление и перечисление.</strong> {@link #remove(String)} удаляет
- * файлы явно выбранного поколения после закрытия текущего, включая delta и WAL.
- * Удаление является truthful lifecycle boundary: отсутствующее поколение и
- * оставшиеся после попытки удаления артефакты возвращаются как стабильные
+ * файлы явно выбранного поколения после закрытия текущего, включая delta и WAL,
+ * затем удаляет только ставшие пустыми namespace-каталоги до корня DB. Сам корень
+ * и любой непустой общий каталог сохраняются. Удаление является truthful
+ * lifecycle boundary: отсутствующее поколение и оставшиеся после попытки
+ * удаления артефакты возвращаются как стабильные
  * {@link StorageLifecycleException}, а не как ложный success. {@link #list()}
  * выводит поколения по найденным {@code .store}-файлам и не открывает их для
  * проверки содержимого.</p>
@@ -197,6 +200,7 @@ public class DB implements IData {
                 throw new IOException(
                         "Storage artifacts remain after deletion: " + tmp);
             }
+            pruneEmptyStorageDirectories(dbPath);
         } catch (IOException deleteFailure) {
             throw incompleteRemoval(tmp, deleteFailure);
         }
@@ -275,6 +279,33 @@ public class DB implements IData {
             if (log.isFile() && log.getName().startsWith(prefix)) {
                 deleteFileIfExists(log);
             }
+        }
+    }
+
+    private void pruneEmptyStorageDirectories(String dbPath) throws IOException {
+        Path databaseRoot = new File(user.getDatabaseDir()).getCanonicalFile().toPath();
+        Path storagePath = new File(dbPath).getCanonicalFile().toPath();
+        if (!storagePath.startsWith(databaseRoot) || storagePath.equals(databaseRoot)) {
+            throw new IOException(
+                    "Storage path escapes database root: " + storagePath);
+        }
+
+        Path current = storagePath.getParent();
+        while (current != null && !current.equals(databaseRoot)) {
+            File directory = current.toFile();
+            File[] contents = directory.listFiles();
+            if (contents == null) {
+                throw new IOException(
+                        "Cannot inspect storage directory " + directory.getPath());
+            }
+            if (contents.length != 0) {
+                return;
+            }
+            if (!directory.delete()) {
+                throw new IOException(
+                        "Cannot delete empty storage directory " + directory.getPath());
+            }
+            current = current.getParent();
         }
     }
 
