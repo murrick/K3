@@ -76,9 +76,17 @@ jobs:
 
           grep -Fq 'CANONICAL_RELEASE="${KANGER_RELEASES_DIR}/${VERSION}"' distribution/payload/update.sh
           grep -Fq 'ARCHIVE_RELEASE="${KANGER_RELEASES_DIR}/${VERSION}.force.${force_index}"' distribution/payload/update.sh
-          grep -Fq 'mv "${CANONICAL_RELEASE}" "${ARCHIVE_RELEASE}"' distribution/payload/update.sh
+          grep -Fq 'cp -a "${CANONICAL_RELEASE}" "${ARCHIVE_RELEASE}"' distribution/payload/update.sh
+          grep -Fq 'atomic_current_link "${ARCHIVE_RELEASE}"' distribution/payload/update.sh
           grep -Fq 'mv "${CANDIDATE_RELEASE}" "${CANONICAL_RELEASE}"' distribution/payload/update.sh
           grep -Fq 'atomic_current_link "${NEW_RELEASE}"' distribution/payload/update.sh
+
+          snapshot_line="$(grep -nF 'cp -a "${CANONICAL_RELEASE}" "${ARCHIVE_RELEASE}"' distribution/payload/update.sh | tail -1 | cut -d: -f1)"
+          bridge_line="$(grep -nF 'atomic_current_link "${ARCHIVE_RELEASE}"' distribution/payload/update.sh | tail -1 | cut -d: -f1)"
+          remove_line="$(grep -nF 'rm -rf -- "${CANONICAL_RELEASE}"' distribution/payload/update.sh | tail -1 | cut -d: -f1)"
+          promote_line="$(grep -nF 'mv "${CANDIDATE_RELEASE}" "${CANONICAL_RELEASE}"' distribution/payload/update.sh | tail -1 | cut -d: -f1)"
+          (( snapshot_line < bridge_line && bridge_line < remove_line && remove_line < promote_line )) \
+            || { echo 'force rotation does not preserve the snapshot/current/canonical ordering invariant' >&2; exit 1; }
 
       - name: Build qualified distribution
         shell: bash
@@ -122,10 +130,119 @@ jobs:
           grep -Fq '<version>.force.N' "${packaged_update}"
           grep -Fq 'forcing same-version update' "${packaged_update}"
           grep -Fq 'CANONICAL_RELEASE="${KANGER_RELEASES_DIR}/${VERSION}"' "${packaged_update}"
-          grep -Fq 'mv "${CANONICAL_RELEASE}" "${ARCHIVE_RELEASE}"' "${packaged_update}"
+          grep -Fq 'cp -a "${CANONICAL_RELEASE}" "${ARCHIVE_RELEASE}"' "${packaged_update}"
+          grep -Fq 'atomic_current_link "${ARCHIVE_RELEASE}"' "${packaged_update}"
           grep -Fq 'mv "${CANDIDATE_RELEASE}" "${CANONICAL_RELEASE}"' "${packaged_update}"
 
           sha256sum "${archive}"
+
+      - name: Qualify packaged same-version force rotation
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(tr -d '[:space:]' < distribution/VERSION)"
+          archive="${GITHUB_WORKSPACE}/target/distributions/kanger-${version}.tar.gz"
+          root="kanger-${version}"
+          server_version="$(tar -xOzf "${archive}" "${root}/RELEASE" | awk -F= '$1 == "server.version" {print $2; exit}')"
+
+          sandbox="$(mktemp -d)"
+          trap 'sudo rm -rf -- "${sandbox}"' EXIT
+          mkdir -p "${sandbox}/bundle" "${sandbox}/runtime/releases/${version}" \
+            "${sandbox}/runtime/etc" "${sandbox}/runtime/state" "${sandbox}/fakebin"
+          tar -xzf "${archive}" -C "${sandbox}/bundle"
+          bundle="${sandbox}/bundle/${root}"
+          runtime="${sandbox}/runtime"
+          canonical="${runtime}/releases/${version}"
+          current="${runtime}/current"
+          unit_file="${runtime}/etc/kanger.service"
+          nginx_file="${runtime}/etc/kanger-nginx.conf"
+          instance_file="${runtime}/etc/instance.conf"
+          cert_file="${runtime}/etc/cert.pem"
+          key_file="${runtime}/etc/key.pem"
+
+          cat >"${canonical}/RELEASE" <<EOF
+          product=KANGER
+          version=${version}
+          server.version=${server_version}
+          server.build.date=qualification-old
+          packaged.at=qualification-old
+          EOF
+          printf 'old-canonical\n' >"${canonical}/OLD_MARKER"
+          ln -s "${canonical}" "${current}"
+          : >"${unit_file}"
+          : >"${nginx_file}"
+          : >"${cert_file}"
+          : >"${key_file}"
+          cat >"${instance_file}" <<EOF
+          KANGER_UI_DOMAIN=ui.example.test
+          KANGER_API_DOMAIN=api.example.test
+          KANGER_UI_CERT=${cert_file}
+          KANGER_UI_KEY=${key_file}
+          KANGER_API_CERT=${cert_file}
+          KANGER_API_KEY=${key_file}
+          KANGER_NGINX_FILE=${nginx_file}
+          EOF
+
+          cat >"${sandbox}/fakebin/systemctl" <<'EOF'
+          #!/usr/bin/env bash
+          exit 0
+          EOF
+          cat >"${sandbox}/fakebin/nginx" <<'EOF'
+          #!/usr/bin/env bash
+          exit 0
+          EOF
+          cat >"${sandbox}/fakebin/curl" <<'EOF'
+          #!/usr/bin/env bash
+          case "${*: -1}" in
+            */health) printf '{"server_version":"%s"}\n' "${KANGER_TEST_SERVER_VERSION}" ;;
+            *) printf '{"ready":true}\n' ;;
+          esac
+          EOF
+          chmod 0755 "${sandbox}/fakebin/systemctl" "${sandbox}/fakebin/nginx" "${sandbox}/fakebin/curl"
+
+          getent group kanger >/dev/null || sudo groupadd --system kanger
+
+          run_update() {
+            sudo env \
+              "PATH=${sandbox}/fakebin:${PATH}" \
+              "KANGER_TEST_SERVER_VERSION=${server_version}" \
+              "KANGER_ROOT=${runtime}" \
+              "KANGER_RELEASES_DIR=${runtime}/releases" \
+              "KANGER_CURRENT_LINK=${current}" \
+              "KANGER_CONFIG_DIR=${runtime}/etc" \
+              "KANGER_STATE_DIR=${runtime}/state" \
+              "KANGER_UNIT_FILE=${unit_file}" \
+              "KANGER_NGINX_FILE=${nginx_file}" \
+              "KANGER_INSTANCE_FILE=${instance_file}" \
+              "KANGER_SERVER_CONFIG=${runtime}/etc/kanger.conf" \
+              bash "${bundle}/update.sh" "$@"
+          }
+
+          before_current="$(readlink -f "${current}")"
+          before_releases="$(find "${runtime}/releases" -mindepth 1 -maxdepth 1 -printf '%f\n' | sort)"
+          if run_update >"${sandbox}/no-force.out" 2>&1; then
+            echo 'same-version update succeeded without --force' >&2
+            exit 1
+          fi
+          grep -Fq "KANGER ${version} is already active; use --force" "${sandbox}/no-force.out"
+          [[ "$(readlink -f "${current}")" == "${before_current}" ]]
+          [[ "$(find "${runtime}/releases" -mindepth 1 -maxdepth 1 -printf '%f\n' | sort)" == "${before_releases}" ]]
+
+          run_update --force
+          [[ "$(readlink -f "${current}")" == "${canonical}" ]]
+          [[ -f "${runtime}/releases/${version}.force.1/OLD_MARKER" ]]
+          [[ ! -e "${canonical}/OLD_MARKER" ]]
+
+          sudo touch "${canonical}/FIRST_FORCE_MARKER"
+          run_update --force
+          [[ "$(readlink -f "${current}")" == "${canonical}" ]]
+          [[ -f "${runtime}/releases/${version}.force.1/OLD_MARKER" ]]
+          [[ -f "${runtime}/releases/${version}.force.2/FIRST_FORCE_MARKER" ]]
+          [[ ! -e "${canonical}/FIRST_FORCE_MARKER" ]]
+
+          printf 'Qualified release layout:\n'
+          find "${runtime}/releases" -mindepth 1 -maxdepth 1 -printf '  %f\n' | sort
+          printf 'Current: %s\n' "$(readlink -f "${current}")"
 
       - name: Upload qualified distribution
         uses: actions/upload-artifact@v4
