@@ -248,6 +248,14 @@ assert.notStrictEqual(window.query, legacyQuery,
 assert.strictEqual(window.query, window.KANGER_DIALOGUE_TRANSPORT.dispatch,
     'full ready chain left a separate Browser Core entry point executable');
 
+/* Operation/snapshot serialization has its own deferred-transport qualification.
+ * From here this harness verifies only canonical command ownership and the raw
+ * dialogue envelope, so do not make its synchronous timer fake authoritative
+ * for semantic snapshot lifecycle. */
+window.post = function (packet, callback) {
+    return jQuery.post(window.apihost, JSON.stringify(packet), callback);
+};
+
 const legacyErrors = [];
 window.logError = message => legacyErrors.push(String(message));
 window.refreshScreen = function () {};
