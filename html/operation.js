@@ -41,6 +41,7 @@
         nextOperationId: 0,
         nextSnapshotId: 0,
         activeMutation: null,
+        settlingMutation: null,
         currentSnapshot: null,
         snapshotCapture: null,
         snapshotRequested: false,
@@ -186,6 +187,16 @@
         }
     }
 
+    function completeSettlingMutation(snapshot) {
+        if (state.settlingMutation
+                && snapshot.generation === state.settlingMutation.generation) {
+            state.settlingMutation = null;
+            if (typeof window.dropQueryStatus === 'function') {
+                window.dropQueryStatus();
+            }
+        }
+    }
+
     function maybeCommitSnapshot(snapshot) {
         if (!snapshot.closed || snapshot.pending !== 0
                 || !snapshotIsCurrent(snapshot)) {
@@ -200,6 +211,7 @@
         if (typeof original.placeElements === 'function') {
             original.placeElements(snapshot.reasonData || undefined);
         }
+        completeSettlingMutation(snapshot);
         if (state.snapshotRequested && !state.activeMutation) {
             scheduleSnapshot(state.pendingSnapshotData);
         }
@@ -312,6 +324,14 @@
         }, 0);
     }
 
+    function beginMutationSettlement(operation) {
+        state.settlingMutation = {
+            id: operation.id,
+            name: operation.name,
+            generation: state.generation
+        };
+    }
+
     function finishMutation(operation, data, callback) {
         if (!state.activeMutation
                 || state.activeMutation.id !== operation.id) {
@@ -325,8 +345,14 @@
             client_operation_id: operation.id,
             client_generation: state.generation
         });
-        if (typeof window.dropQueryStatus === 'function') {
-            window.dropQueryStatus();
+        var confirmationPending = !!(data
+                && data.result === 'confirmation_required');
+        if (confirmationPending) {
+            if (typeof window.dropQueryStatus === 'function') {
+                window.dropQueryStatus();
+            }
+        } else {
+            beginMutationSettlement(operation);
         }
         if (typeof callback === 'function') {
             callback(data);
@@ -341,6 +367,7 @@
         }
         state.activeMutation = null;
         state.generation += 1;
+        beginMutationSettlement(operation);
         var data = localError(
                 'operation_timeout',
                 'Operation #' + operation.id
@@ -348,9 +375,6 @@
                 operation.id,
                 0);
         data.client_generation = state.generation;
-        if (typeof window.dropQueryStatus === 'function') {
-            window.dropQueryStatus();
-        }
         if (typeof callback === 'function') {
             callback(data);
         }
@@ -359,13 +383,14 @@
 
     function mutationPost(packet, callback) {
         var requestedId = ++state.nextOperationId;
-        if (state.activeMutation) {
+        var blockingMutation = state.activeMutation || state.settlingMutation;
+        if (blockingMutation) {
             callSoon(callback, localError(
                     'operation_busy',
-                    'Operation #' + state.activeMutation.id
+                    'Operation #' + blockingMutation.id
                             + ' is still in progress.',
                     requestedId,
-                    state.activeMutation.id));
+                    blockingMutation.id));
             return undefined;
         }
 
@@ -473,6 +498,10 @@
                     ? state.activeMutation.id : 0,
             activeOperationName: state.activeMutation
                     ? state.activeMutation.name : '',
+            settlingOperationId: state.settlingMutation
+                    ? state.settlingMutation.id : 0,
+            settlingOperationName: state.settlingMutation
+                    ? state.settlingMutation.name : '',
             currentSnapshotId: state.currentSnapshot
                     ? state.currentSnapshot.id : 0,
             lastCommittedSnapshotId: state.lastCommittedSnapshotId
