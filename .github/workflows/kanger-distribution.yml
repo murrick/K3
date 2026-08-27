@@ -61,6 +61,11 @@ jobs:
           update_help="$(bash distribution/payload/update.sh --help)"
           grep -Fq 'Usage: sudo ./update.sh [--force]' <<<"${update_help}"
           grep -Fq -- '--force                  Allow an explicit same-version update' <<<"${update_help}"
+          grep -Fq '<version>.force.N' <<<"${update_help}"
+          if grep -Fq '3.7.0.force' <<<"${update_help}"; then
+            echo 'update.sh help contains a release-specific force snapshot example' >&2
+            exit 1
+          fi
 
           if bash distribution/payload/update.sh --definitely-unknown >update-unknown.out 2>&1; then
             echo 'update.sh accepted an unknown option' >&2
@@ -68,6 +73,12 @@ jobs:
           fi
           grep -Fq 'ERROR: Unknown option: --definitely-unknown' update-unknown.out
           rm -f update-unknown.out
+
+          grep -Fq 'CANONICAL_RELEASE="${KANGER_RELEASES_DIR}/${VERSION}"' distribution/payload/update.sh
+          grep -Fq 'ARCHIVE_RELEASE="${KANGER_RELEASES_DIR}/${VERSION}.force.${force_index}"' distribution/payload/update.sh
+          grep -Fq 'mv "${CANONICAL_RELEASE}" "${ARCHIVE_RELEASE}"' distribution/payload/update.sh
+          grep -Fq 'mv "${CANDIDATE_RELEASE}" "${CANONICAL_RELEASE}"' distribution/payload/update.sh
+          grep -Fq 'atomic_current_link "${NEW_RELEASE}"' distribution/payload/update.sh
 
       - name: Build qualified distribution
         shell: bash
@@ -108,7 +119,11 @@ jobs:
           tar -xOzf "${archive}" "${root}/update.sh" >"${packaged_update}"
           bash -n "${packaged_update}"
           grep -Fq 'Usage: sudo ./update.sh [--force]' "${packaged_update}"
+          grep -Fq '<version>.force.N' "${packaged_update}"
           grep -Fq 'forcing same-version update' "${packaged_update}"
+          grep -Fq 'CANONICAL_RELEASE="${KANGER_RELEASES_DIR}/${VERSION}"' "${packaged_update}"
+          grep -Fq 'mv "${CANONICAL_RELEASE}" "${ARCHIVE_RELEASE}"' "${packaged_update}"
+          grep -Fq 'mv "${CANDIDATE_RELEASE}" "${CANONICAL_RELEASE}"' "${packaged_update}"
 
           sha256sum "${archive}"
 
