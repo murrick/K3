@@ -6,6 +6,31 @@ BUNDLE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/common.sh
 source "${BUNDLE_ROOT}/lib/common.sh"
 
+usage() {
+  cat <<USAGE
+Usage: sudo ./update.sh [--force]
+
+Update the existing KANGER installation to the release contained in this
+bundle. By default, updating an already-active product version is rejected.
+
+Options:
+  --force                  Allow an explicit same-version update
+  -h, --help               Show this help
+
+A forced same-version update is staged into a new physical release directory
+(e.g. 3.7.0.force.1) so the active release remains an intact rollback target.
+USAGE
+}
+
+FORCE_UPDATE=false
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --force) FORCE_UPDATE=true; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) fail "Unknown option: $1" ;;
+  esac
+done
+
 require_root
 validate_bundle_layout
 verify_bundle_checksums
@@ -18,9 +43,23 @@ validate_tls_material
 
 OLD_RELEASE="$(readlink -f "${KANGER_CURRENT_LINK}")"
 [[ -d "${OLD_RELEASE}" ]] || fail "Current KANGER release is invalid: ${OLD_RELEASE}"
-NEW_RELEASE="${KANGER_RELEASES_DIR}/${VERSION}"
-[[ "${OLD_RELEASE}" != "${NEW_RELEASE}" ]] || fail "KANGER ${VERSION} is already active"
-[[ ! -e "${NEW_RELEASE}" ]] || fail "Release directory already exists: ${NEW_RELEASE}"
+[[ -f "${OLD_RELEASE}/RELEASE" ]] || fail "Current KANGER release identity is missing: ${OLD_RELEASE}/RELEASE"
+OLD_VERSION="$(awk -F= '$1 == "version" {sub(/^[^=]*=/, ""); print; exit}' "${OLD_RELEASE}/RELEASE")"
+[[ -n "${OLD_VERSION}" ]] || fail "Current KANGER release has no version: ${OLD_RELEASE}/RELEASE"
+
+if [[ "${OLD_VERSION}" == "${VERSION}" ]]; then
+  [[ "${FORCE_UPDATE}" == true ]] || fail "KANGER ${VERSION} is already active; use --force for an explicit same-version update"
+  force_index=1
+  while :; do
+    NEW_RELEASE="${KANGER_RELEASES_DIR}/${VERSION}.force.${force_index}"
+    [[ -e "${NEW_RELEASE}" ]] || break
+    ((force_index += 1))
+  done
+  log "forcing same-version update ${VERSION}; staging ${NEW_RELEASE}"
+else
+  NEW_RELEASE="${KANGER_RELEASES_DIR}/${VERSION}"
+  [[ ! -e "${NEW_RELEASE}" ]] || fail "Release directory already exists: ${NEW_RELEASE}"
+fi
 
 UNIT_BACKUP="$(mktemp "${TMPDIR:-/tmp}/kanger-unit.XXXXXX")"
 NGINX_BACKUP="$(mktemp "${TMPDIR:-/tmp}/kanger-nginx.XXXXXX")"
