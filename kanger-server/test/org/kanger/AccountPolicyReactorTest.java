@@ -9,6 +9,7 @@ package org.kanger;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.kanger.account.AccountErrorCode;
+import org.kanger.account.PendingRegistrationException;
 import org.kanger.account.RegistrationPolicy;
 import org.kanger.interfaces.IReactor;
 
@@ -17,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AccountPolicyReactorTest {
@@ -27,13 +29,12 @@ class AccountPolicyReactorTest {
         AccountPolicyReactor reactor = new AccountPolicyReactor(
                 RegistrationPolicy.TRUSTED, delegate(called));
 
-        JSONObject response = (JSONObject) reactor.run(packet(
-                "login", registration("")));
+        PendingRegistrationException failure = assertThrows(
+                PendingRegistrationException.class,
+                () -> reactor.run(packet("login", registration(""))));
 
         assertFalse(called.get());
-        assertEquals("error", response.getString("result"));
-        assertEquals(AccountErrorCode.REGISTRATION_DISABLED.code(),
-                response.getString("code"));
+        assertEquals(AccountErrorCode.REGISTRATION_DISABLED, failure.getCode());
     }
 
     @Test
@@ -45,11 +46,41 @@ class AccountPolicyReactorTest {
         AccountPolicyReactor reactor = new AccountPolicyReactor(
                 RegistrationPolicy.TRUSTED, delegate(called));
 
-        JSONObject response = (JSONObject) reactor.run(packet("login", parameters));
+        PendingRegistrationException failure = assertThrows(
+                PendingRegistrationException.class,
+                () -> reactor.run(packet("login", parameters)));
 
         assertFalse(called.get());
+        assertEquals(AccountErrorCode.REGISTRATION_DISABLED, failure.getCode());
+    }
+
+    @Test
+    void trustedRegistrationFailureReachesCanonicalAccountBoundary()
+            throws Exception {
+        AtomicBoolean called = new AtomicBoolean();
+        IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                new SessionSerializingReactor(
+                        RegistrationPolicy.TRUSTED,
+                        delegate(called)));
+
+        JSONObject response = (JSONObject) reactor.run(packet(
+                "login", registration("")));
+
+        assertFalse(called.get());
+        assertEquals("error", response.getString("result"), response.toString());
         assertEquals(AccountErrorCode.REGISTRATION_DISABLED.code(),
-                response.getString("code"));
+                response.getString("code"), response.toString());
+        assertEquals("Public registration is disabled by the server registration policy",
+                response.getString("description"), response.toString());
+
+        JSONObject diagnostic = response.getJSONObject("error");
+        assertEquals(1, diagnostic.getInt("schema"));
+        assertEquals("account", diagnostic.getString("domain"));
+        assertEquals(AccountErrorCode.REGISTRATION_DISABLED.code(),
+                diagnostic.getString("code"));
+        assertFalse(diagnostic.getBoolean("retryable"));
+        assertEquals("retain", diagnostic.getString("session_action"));
+        assertEquals("not_applied", diagnostic.getString("operation_outcome"));
     }
 
     @Test
@@ -99,19 +130,31 @@ class AccountPolicyReactorTest {
     @Test
     void verifiedEmailChangeStopsBeforeLegacyProfileUpdate() throws Exception {
         AtomicBoolean called = new AtomicBoolean();
-        AccountPolicyReactor reactor = new AccountPolicyReactor(
-                RegistrationPolicy.EMAIL_VERIFIED,
-                delegate(called),
-                parameters -> { },
-                parameters -> AccountPolicyReactor.verifiedEmailImmutable());
+        IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                new AccountPolicyReactor(
+                        RegistrationPolicy.EMAIL_VERIFIED,
+                        delegate(called),
+                        parameters -> { },
+                        parameters -> AccountPolicyReactor.verifiedEmailImmutable()));
 
         JSONObject response = (JSONObject) reactor.run(packet(
                 "login", profileUpdate("active-session-token", "new@example.org")));
 
         assertFalse(called.get());
-        assertEquals("error", response.getString("result"));
+        assertEquals("error", response.getString("result"), response.toString());
         assertEquals(AccountErrorCode.VERIFIED_EMAIL_IMMUTABLE.code(),
-                response.getString("code"));
+                response.getString("code"), response.toString());
+        assertEquals("A verified e-mail address cannot be changed",
+                response.getString("description"), response.toString());
+
+        JSONObject diagnostic = response.getJSONObject("error");
+        assertEquals(1, diagnostic.getInt("schema"));
+        assertEquals("account", diagnostic.getString("domain"));
+        assertEquals(AccountErrorCode.VERIFIED_EMAIL_IMMUTABLE.code(),
+                diagnostic.getString("code"));
+        assertFalse(diagnostic.getBoolean("retryable"));
+        assertEquals("retain", diagnostic.getString("session_action"));
+        assertEquals("not_applied", diagnostic.getString("operation_outcome"));
     }
 
     @Test
@@ -132,10 +175,10 @@ class AccountPolicyReactorTest {
 
     @Test
     void verifiedEmailComparisonIsSemanticAndUnverifiedEmailRemainsEditable() {
-        JSONObject changed = AccountPolicyReactor.verifiedEmailChangeViolation(
-                true, "old@example.org", "new@example.org");
-        assertEquals(AccountErrorCode.VERIFIED_EMAIL_IMMUTABLE.code(),
-                changed.getString("code"));
+        PendingRegistrationException changed =
+                AccountPolicyReactor.verifiedEmailChangeViolation(
+                        true, "old@example.org", "new@example.org");
+        assertEquals(AccountErrorCode.VERIFIED_EMAIL_IMMUTABLE, changed.getCode());
 
         assertNull(AccountPolicyReactor.verifiedEmailChangeViolation(
                 true, " Rick@Example.org ", "rick@example.org"));

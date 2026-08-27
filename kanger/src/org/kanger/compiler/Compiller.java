@@ -29,6 +29,7 @@ import org.kanger.Mind;
 import org.kanger.QueryReplayContext;
 import org.kanger.enums.FunctionBinding;
 import org.kanger.exception.ParseErrorException;
+import org.kanger.exception.SourceSpan;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
 import org.kanger.primitives.Argument;
@@ -154,7 +155,7 @@ public class Compiller {
         List<List<Domain>> list = new ArrayList<>();
         Domain d;
         if (root == null) {
-            throw new ParseErrorException("0@Term expected");
+            throw new ParseErrorException((SourceSpan) null, "Term expected");
         }
         switch (root.getValue()) {
             case "!":
@@ -232,7 +233,7 @@ public class Compiller {
         String varName = root.getLeft().getValue();
 
         if (replacements.containsKey(varName)) {
-            throw new ParseErrorException(root.getPos() + "Variable " + varName + " duplicated");
+            throw new ParseErrorException(root.getPos(), "Variable " + varName + " duplicated");
         }
 
         Argument p = null;
@@ -292,7 +293,7 @@ public class Compiller {
             parseArgs(arg, root.getRight(), level + 1, replacements, externals);
         } else if (root.getValue().charAt(0) == '?') {
             if (externals.isEmpty()) {
-                throw new ParseErrorException(root.getPos() + "@External parameter value expected");
+                throw new ParseErrorException(root.getPos(), "External parameter value expected");
             } else {
                 arg.add(new Argument(externals.poll()));
             }
@@ -303,7 +304,7 @@ public class Compiller {
             }
             arg.add(t);
         } else {
-            throw new ParseErrorException(root.getPos() + "@Undefined function");
+            throw new ParseErrorException(root.getPos(), "Undefined function");
         }
     }
 }

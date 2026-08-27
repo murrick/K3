@@ -9,6 +9,7 @@ on:
       - "html/index.html"
       - "html/javascript-mode.js"
       - "kanger-server/scripts/qualify-error-containment.js"
+      - "kanger-server/scripts/qualify-error-source-presentation.js"
       - ".github/workflows/kanger-browser-containment.yml"
   pull_request:
     paths:
@@ -18,6 +19,7 @@ on:
       - "html/index.html"
       - "html/javascript-mode.js"
       - "kanger-server/scripts/qualify-error-containment.js"
+      - "kanger-server/scripts/qualify-error-source-presentation.js"
       - ".github/workflows/kanger-browser-containment.yml"
   workflow_dispatch:
 
@@ -44,6 +46,7 @@ jobs:
           node --check html/containment.js
           node --check html/error.js
           node --check kanger-server/scripts/qualify-error-containment.js
+          node --check kanger-server/scripts/qualify-error-source-presentation.js
 
           grep -q 'sandbox="allow-scripts"' html/index.html
           grep -q 'referrerpolicy="no-referrer"' html/index.html
@@ -62,3 +65,7 @@ jobs:
       - name: Run error and containment qualification
         shell: bash
         run: node kanger-server/scripts/qualify-error-containment.js "${GITHUB_WORKSPACE}"
+
+      - name: Run parse source presentation qualification
+        shell: bash
+        run: node kanger-server/scripts/qualify-error-source-presentation.js "${GITHUB_WORKSPACE}"

@@ -177,46 +177,30 @@ public class QueryProcessor implements IReactor<JSONObject> {
             }
         }
         if (context != null) {
-            try {
-                if ("login".equalsIgnoreCase(context)
-                        || isLegacyRootConfirmation(context, parameters)) {
-                    result = processLogin(parameters);
-                } else if ("version".equalsIgnoreCase(context)) {
-                    result = new JSONObject();
-                    result.put("result", "OK");
-                    result.put("version", Version.VERSION_S);
-                } else if (!parameters.isNull("token")) {
-                    try {
-                        String token = parameters.getString("token");
-                        IUser user = UserFactory.getUser(token);
-                        if (user.getCurrentMind() == null) {
-                            IMind mind = new Mind(user);
-                            user.setCurrentMind(mind);
-                        }
-
-                        if ("command".equalsIgnoreCase(context)) {
-                            result = processCommand(parameters, user);
-                        } else if ("query".equalsIgnoreCase(context)) {
-                            result = processQuery(parameters, user);
-                        } else if ("history".equalsIgnoreCase(context)) {
-                            result = processHistory(parameters, user);
-                        }
-                    } catch (AuthenticationErrorException e) {
-                        result = new JSONObject();
-                        result.put("result", "error");
-                        result.put("description", e.toString());
-                    }
-                } else {
-                    result = new JSONObject();
-                    result.put("result", "error");
-                    result.put("description", "User not logged in");
-                }
-            } catch (Exception e) {
+            if ("login".equalsIgnoreCase(context)
+                    || isLegacyRootConfirmation(context, parameters)) {
+                result = processLogin(parameters);
+            } else if ("version".equalsIgnoreCase(context)) {
                 result = new JSONObject();
-                result.put("result", "error");
-                result.put("description", e.toString());
-                System.err.println(new Date());
-                e.printStackTrace(System.err);
+                result.put("result", "OK");
+                result.put("version", Version.VERSION_S);
+            } else if (!parameters.isNull("token")) {
+                String token = parameters.getString("token");
+                IUser user = UserFactory.getUser(token);
+                if (user.getCurrentMind() == null) {
+                    IMind mind = new Mind(user);
+                    user.setCurrentMind(mind);
+                }
+
+                if ("command".equalsIgnoreCase(context)) {
+                    result = processCommand(parameters, user);
+                } else if ("query".equalsIgnoreCase(context)) {
+                    result = processQuery(parameters, user);
+                } else if ("history".equalsIgnoreCase(context)) {
+                    result = processHistory(parameters, user);
+                }
+            } else {
+                throw new AuthenticationErrorException("User not logged in");
             }
         }
         return result;
@@ -469,7 +453,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
         return result;
     }
 
-    private JSONObject processLogin(JSONObject parameters) throws JSONException {
+    private JSONObject processLogin(JSONObject parameters) throws Exception {
         JSONObject result = new JSONObject();
         if (!parameters.isNull("currentpassword") && !parameters.isNull("currentlogin")) {
             try {
@@ -488,6 +472,8 @@ public class QueryProcessor implements IReactor<JSONObject> {
                 result.put("token", token);
                 result.put("login", login);
                 Watchdog.log(user, "User login ot password changed (" + parameters.getString("currentlogin") + ")");
+            } catch (AuthenticationErrorException failure) {
+                throw failure;
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());
@@ -513,6 +499,8 @@ public class QueryProcessor implements IReactor<JSONObject> {
                 result.put("result", "OK");
                 result.put("token", token);
                 Watchdog.log(user, "User logged in");
+            } catch (AuthenticationErrorException failure) {
+                throw failure;
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());
@@ -566,6 +554,8 @@ public class QueryProcessor implements IReactor<JSONObject> {
                     result.put("description", "E-mail address not defined");
                 }
 
+            } catch (AuthenticationErrorException failure) {
+                throw failure;
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());
@@ -586,6 +576,8 @@ public class QueryProcessor implements IReactor<JSONObject> {
                 result.put("result", "OK");
                 result.put("token", token);
 
+            } catch (AuthenticationErrorException failure) {
+                throw failure;
             } catch (Exception e) {
                 result.put("result", "error");
                 result.put("description", e.toString());

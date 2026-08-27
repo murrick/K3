@@ -872,7 +872,7 @@ public class Mind implements IMind {
                 }
                 previousPos = t.getPos() + t.getLen();
 
-                Object r = m.compileLine(t.getToken(src), false, externals);
+                Object r = m.compileLine(t.getToken(src), false, externals, t.getPos());
                 if (!comment.isEmpty() && r instanceof Rule) {
                     m.getComments().add(((Rule) r).getId(), comment);
                 }
@@ -905,6 +905,10 @@ public class Mind implements IMind {
     }
 
     public Object compileLine(String line, boolean query, Queue<ITerm> externals) throws Exception {
+        return compileLine(line, query, externals, 0);
+    }
+
+    private Object compileLine(String line, boolean query, Queue<ITerm> externals, int sourceOffset) throws Exception {
         String orig = line.trim();
         compliedLine = orig;
         Object r = null;
@@ -912,7 +916,7 @@ public class Mind implements IMind {
 
         switch (line.charAt(0)) {
             case Enums.FOO:
-                r = Parser.implement(line.substring(1), this, null);
+                r = Parser.implement(line.substring(1), this, null, sourceOffset + 1);
                 if (r != null) {
                     library.add((Operation) r);
                 }
@@ -929,7 +933,7 @@ public class Mind implements IMind {
         if (suc != null) {
             try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
                 Mind x = tx.mind();
-                Leaf p = Parser.parse(line.substring(1));
+                Leaf p = Parser.parse(line.substring(1), sourceOffset + 1);
 
                 r = x.compiler.compileLine(p, suc, orig, query, externals);
                 x.setCompliedLine(compliedLine);

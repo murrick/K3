@@ -8,6 +8,7 @@ package org.kanger;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.kanger.exception.AuthenticationErrorException;
+import org.kanger.exception.ParseErrorException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
@@ -22,6 +23,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -31,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MindLifecycleReactorTest {
 
     @Test
-    void requestFailureReleasesHiddenChildReservation() throws Exception {
+    void requestFailureReleasesHiddenChildReservationAndEscapes() throws Exception {
         Fixture fixture = fixture("hidden-failure");
         try {
             MindLifecycleReactor reactor = new MindLifecycleReactor(
@@ -43,12 +45,11 @@ class MindLifecycleReactorTest {
                         }
                     });
 
-            JSONObject response = invoke(reactor, "query", new JSONObject()
-                    .put("token", fixture.token)
-                    .put("request", encode("?hidden_failure;")));
+            assertThrows(InjectedQueryFailure.class,
+                    () -> invoke(reactor, "query", new JSONObject()
+                            .put("token", fixture.token)
+                            .put("request", encode("?hidden_failure;"))));
 
-            assertEquals("error", response.optString("result"), response.toString());
-            assertEquals("query_failed", response.optString("code"));
             assertSame(fixture.root, fixture.user.getCurrentMind(),
                     "Failed request displaced the authoritative root");
             assertEquals(0, counter(fixture.root),
@@ -79,6 +80,41 @@ class MindLifecycleReactorTest {
                     "Error path displaced the authoritative root");
             assertEquals(0, counter(fixture.root),
                     "Error path leaked an unreachable child reservation");
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
+    void parseFailureReachesCanonicalBoundaryWithSourceSpan() throws Exception {
+        Fixture fixture = fixture("parse-propagation");
+        try {
+            MindLifecycleReactor lifecycle = new MindLifecycleReactor(
+                    rejectingDelegate(),
+                    new MindLifecycleReactor.ChildFactory() {
+                        @Override
+                        public Mind create(IMind parent) throws Exception {
+                            return new FailingParseQueryMind(parent);
+                        }
+                    });
+            IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(lifecycle);
+
+            JSONObject response = invoke(reactor, "query", new JSONObject()
+                    .put("token", fixture.token)
+                    .put("request", encode("?parse_failure;")));
+
+            assertEquals("error", response.optString("result"), response.toString());
+            assertEquals("parse_error", response.optString("code"));
+            assertFalse(response.has("source"),
+                    "Source location must remain inside the canonical error envelope");
+            JSONObject diagnostic = response.getJSONObject("error");
+            JSONObject source = diagnostic.getJSONObject("source");
+            assertEquals(7, source.getInt("offset"));
+            assertEquals(2, source.getInt("length"));
+            assertSame(fixture.root, fixture.user.getCurrentMind(),
+                    "Parse failure displaced the authoritative root");
+            assertEquals(0, counter(fixture.root),
+                    "Parse failure leaked an unreachable child reservation");
         } finally {
             fixture.close();
         }
@@ -141,7 +177,7 @@ class MindLifecycleReactorTest {
     }
 
     @Test
-    void failedCommitCannotLeaveSlotOnFinishedChild() throws Exception {
+    void failedCommitCannotLeaveSlotOnFinishedChildAndEscapes() throws Exception {
         Fixture fixture = fixture("commit-failure-slot");
         try {
             Mind child = new Mind(fixture.root);
@@ -159,10 +195,9 @@ class MindLifecycleReactorTest {
 
             MindLifecycleReactor reactor = new MindLifecycleReactor(
                     rejectingDelegate());
-            JSONObject response = transaction(reactor, fixture.token, "commit");
+            assertThrows(InjectedCommitFailure.class,
+                    () -> transaction(reactor, fixture.token, "commit"));
 
-            assertEquals("error", response.optString("result"), response.toString());
-            assertEquals("transaction_failed", response.optString("code"));
             assertSame(fixture.root, fixture.user.getCurrentMind(),
                     "Failed commit left currentMind on a finished child");
             assertEquals(0, counter(fixture.root),
@@ -225,7 +260,7 @@ class MindLifecycleReactorTest {
                 .put("transaction", action));
     }
 
-    private JSONObject invoke(MindLifecycleReactor reactor,
+    private JSONObject invoke(IReactor<JSONObject> reactor,
                               String context,
                               JSONObject parameters) throws Exception {
         JSONObject packet = new JSONObject().put("body", new JSONObject()
@@ -319,6 +354,17 @@ class MindLifecycleReactorTest {
         @Override
         public Boolean query(String query) {
             throw new InjectedQueryError();
+        }
+    }
+
+    private static final class FailingParseQueryMind extends Mind {
+        private FailingParseQueryMind(IMind parent) throws Exception {
+            super(parent);
+        }
+
+        @Override
+        public Boolean query(String query) throws Exception {
+            throw new ParseErrorException(7, 2, "Unexpected term");
         }
     }
 

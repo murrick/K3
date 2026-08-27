@@ -28,8 +28,6 @@ import org.json.JSONObject;
 import org.kanger.compiler.Token;
 import org.kanger.enums.LogMode;
 import org.kanger.enums.Tools;
-import org.kanger.exception.StorageLifecycleException;
-import org.kanger.exception.TransactionSettlementException;
 import org.kanger.interfaces.ILogEntry;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
@@ -91,58 +89,23 @@ final class MindLifecycleReactor implements IReactor<JSONObject> {
         }
 
         String token = request.parameters.optString("token", "");
-        IUser user = null;
-        try {
-            user = UserFactory.getUser(token);
-            if (!"quit".equals(operation) && user.getCurrentMind() == null) {
-                user.setCurrentMind(new Mind(user));
-            }
-
-            if ("query".equals(operation)) {
-                return decorate(executeQuery(request.parameters, user), user);
-            }
-            if ("transaction".equals(operation)) {
-                return decorate(executeTransaction(request.parameters, user), user);
-            }
-            if ("quit".equals(operation)) {
-                UserFactory.logout(token);
-                Watchdog.log(user, "User left system");
-                return ok("User left system");
-            }
-            return delegate.run(packet);
-        } catch (StorageLifecycleException rejected) {
-            JSONObject result = error(rejected.getCode(), rejected.toString());
-            if (rejected.getRequiredAction() != null) {
-                result.put("required_action", rejected.getRequiredAction());
-            }
-            if (user != null && user.getCurrentMind() != null) {
-                return decorate(result, user);
-            }
-            return result;
-        } catch (TransactionSettlementException settled) {
-            /*
-             * The user-visible child is already finished here. Report the
-             * finalization failure, but also expose the irreversible semantic
-             * outcome so clients do not retry an already-consumed transaction.
-             */
-            JSONObject result = error(
-                    "transaction_settlement_finalization_failed",
-                    settled.toString())
-                    .put("settlement", settled.getOutcome().name())
-                    .put("semantic_applied", settled.isSemanticApplied())
-                    .put("reservation_consumed", settled.isReservationConsumed())
-                    .put("required_action", "VERIFY_CURRENT_STATE");
-            if (user != null && user.getCurrentMind() != null) {
-                return decorate(result, user);
-            }
-            return result;
-        } catch (Exception failure) {
-            JSONObject result = error(operation + "_failed", failure.toString());
-            if (user != null && user.getCurrentMind() != null) {
-                return decorate(result, user);
-            }
-            return result;
+        IUser user = UserFactory.getUser(token);
+        if (!"quit".equals(operation) && user.getCurrentMind() == null) {
+            user.setCurrentMind(new Mind(user));
         }
+
+        if ("query".equals(operation)) {
+            return decorate(executeQuery(request.parameters, user), user);
+        }
+        if ("transaction".equals(operation)) {
+            return decorate(executeTransaction(request.parameters, user), user);
+        }
+        if ("quit".equals(operation)) {
+            UserFactory.logout(token);
+            Watchdog.log(user, "User left system");
+            return ok("User left system");
+        }
+        return delegate.run(packet);
     }
 
     private String operation(Request request) {

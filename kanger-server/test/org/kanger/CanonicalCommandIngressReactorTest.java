@@ -205,7 +205,7 @@ class CanonicalCommandIngressReactorTest {
     @Test
     void doubleStatementPrefixIsRejectedBeforeCoreBypass() throws Exception {
         Capture capture = new Capture();
-        CanonicalCommandIngressReactor reactor = new CanonicalCommandIngressReactor(capture);
+        CanonicalErrorBoundaryReactor reactor = boundary(capture);
 
         JSONObject response = (JSONObject) reactor.run(
                 dialogue("token-1", "!!eating(Cat, Mouse);"));
@@ -213,6 +213,9 @@ class CanonicalCommandIngressReactorTest {
         assertEquals("error", response.optString("result"));
         assertEquals("command_parse_error", response.optString("code"));
         assertEquals("INVALID_GRAMMAR", response.optString("reason"));
+        JSONObject diagnostic = response.getJSONObject("error");
+        assertEquals("application", diagnostic.getString("domain"));
+        assertEquals("command_parse_error", diagnostic.getString("code"));
         assertEquals(0, capture.calls.get());
     }
 
@@ -251,13 +254,16 @@ class CanonicalCommandIngressReactorTest {
     @Test
     void parserRejectionDoesNotReachRuntimeDelegate() throws Exception {
         Capture capture = new Capture();
-        CanonicalCommandIngressReactor reactor = new CanonicalCommandIngressReactor(capture);
+        CanonicalErrorBoundaryReactor reactor = boundary(capture);
 
         JSONObject response = (JSONObject) reactor.run(dialogue("token-1", "s"));
 
         assertEquals("error", response.optString("result"));
         assertEquals("command_parse_error", response.optString("code"));
         assertEquals("AMBIGUOUS_PREFIX", response.optString("reason"));
+        JSONObject diagnostic = response.getJSONObject("error");
+        assertEquals("application", diagnostic.getString("domain"));
+        assertEquals("command_parse_error", diagnostic.getString("code"));
         assertEquals(0, capture.calls.get());
     }
 
@@ -287,6 +293,11 @@ class CanonicalCommandIngressReactorTest {
         assertEquals("error", response.optString("result"));
         assertEquals("dialogue_envelope_invalid", response.optString("code"));
         assertEquals(0, capture.calls.get());
+    }
+
+    private static CanonicalErrorBoundaryReactor boundary(Capture capture) {
+        return new CanonicalErrorBoundaryReactor(
+                new CanonicalCommandIngressReactor(capture));
     }
 
     private static JSONObject dialogue(String token, String line) {

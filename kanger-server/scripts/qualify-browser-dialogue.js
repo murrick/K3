@@ -136,6 +136,61 @@ function responseFor(line) {
             }
         };
     }
+    if (line === 'base tree 101') {
+        return {
+            result: 'OK',
+            canonical_intent: 'BASE_TREE',
+            size: 1,
+            list: [{
+                id: 101,
+                origin: '!goal(A);',
+                causes: [{
+                    rule: {id: 101, origin: '!goal(A);'},
+                    donor: {id: 202, origin: '!cause(A);'},
+                    causes: [{
+                        rule: {id: 202, origin: '!cause(A);'},
+                        donor: {id: 303, origin: '!root(A);'},
+                        causes: []
+                    }]
+                }]
+            }]
+        };
+    }
+    if (line === 'solution tree 401') {
+        return {
+            result: 'OK',
+            canonical_intent: 'SOLUTION_TREE',
+            size: 1,
+            list: [{
+                id: 401,
+                origin: '!answer(A);',
+                causes: [{
+                    rule: {id: 401, origin: '!answer(A);'},
+                    donor: {id: 402, origin: '!evidence(A);'},
+                    causes: [{
+                        rule: {id: 402, origin: '!evidence(A);'},
+                        donor: {id: 403, origin: '!fact(A);'},
+                        causes: []
+                    }]
+                }]
+            }]
+        };
+    }
+    if (line === 'rule tree 501') {
+        return {
+            result: 'OK',
+            canonical_intent: 'RULE_TREE',
+            size: 1,
+            list: [{
+                id: 501,
+                origin: '!compiled(A);',
+                tree: [
+                    ['left-0', 'left-1'],
+                    ['right-0', 'right-1']
+                ]
+            }]
+        };
+    }
     const expected = corpus.find(one => one.line === line);
     if (expected && !expected.accepted) {
         return {
@@ -188,12 +243,6 @@ assert.strictEqual(window.command, window.query,
     'command and Core entry points must converge on one raw transport');
 assert.strictEqual(window.command, window.KANGER_DIALOGUE_TRANSPORT.dispatch);
 
-/*
- * Reproduce the real parser-time hazard: dialogue.js may assign the canonical
- * entry points before console.html later declares its historical globals. The
- * ready ownership wrapper must restore the canonical transport before the
- * startup adapter captures window.command.
- */
 const legacyCommand = function () {
     throw new Error('legacy command parser captured by startup adapter');
 };
@@ -247,6 +296,9 @@ invoke('help', false);
 corpus.forEach(one => invoke(one.line, false));
 const squash = invoke('squash', false).presentation;
 const rollback = invoke('transaction rollback', false).presentation;
+const baseTree = invoke('base tree 101', false).presentation;
+const solutionTree = invoke('solution tree 401', false).presentation;
+const ruleTree = invoke('rule tree 501', false).presentation;
 
 const help = refreshes.find(one => one.data.canonical_intent === 'HELP').presentation;
 assert(help, 'Browser did not render structured canonical help');
@@ -276,6 +328,31 @@ assert(rollback.textContent.includes('TRANSACTION_SQUASH'),
     'Browser hid squash resolution');
 assert(rollback.textContent.includes('TRANSACTION_COMMIT'),
     'Browser hid commit resolution');
+
+assert(baseTree, 'Browser did not render BASE_TREE');
+assert(baseTree.textContent.includes('!goal(A);'),
+    'Browser hid BASE_TREE root statement');
+assert(baseTree.textContent.includes('!cause(A);'),
+    'Browser hid BASE_TREE direct cause');
+assert(baseTree.textContent.includes('!root(A);'),
+    'Browser hid BASE_TREE nested cause');
+
+assert(solutionTree, 'Browser did not render SOLUTION_TREE');
+assert(solutionTree.textContent.includes('!answer(A);'),
+    'Browser hid SOLUTION_TREE root solution');
+assert(solutionTree.textContent.includes('!evidence(A);'),
+    'Browser hid SOLUTION_TREE direct cause');
+assert(solutionTree.textContent.includes('!fact(A);'),
+    'Browser hid SOLUTION_TREE nested cause');
+
+assert(ruleTree, 'Browser did not render RULE_TREE');
+assert(ruleTree.textContent.includes('!compiled(A);'),
+    'Browser hid RULE_TREE root rule');
+assert(ruleTree.textContent.includes('left-0 right-0'),
+    'Browser hid RULE_TREE first compiled-domain row');
+assert(ruleTree.textContent.includes('left-1 right-1'),
+    'Browser hid RULE_TREE second compiled-domain row');
+
 function composeCommands(node, result) {
     const command = node.getAttribute && node.getAttribute('data-kanger-compose');
     if (command) result.push(command);
@@ -301,4 +378,7 @@ console.log('BROWSER_DIALOGUE_PASS vocabulary-help-metadata');
 console.log('BROWSER_DIALOGUE_PASS shared-client-vocabulary');
 console.log('BROWSER_DIALOGUE_PASS squash-result-presentation');
 console.log('BROWSER_DIALOGUE_PASS rollback-resolution-presentation');
+console.log('BROWSER_DIALOGUE_PASS base-tree-presentation');
+console.log('BROWSER_DIALOGUE_PASS solution-tree-presentation');
+console.log('BROWSER_DIALOGUE_PASS rule-tree-presentation');
 console.log('BROWSER_DIALOGUE_OK');

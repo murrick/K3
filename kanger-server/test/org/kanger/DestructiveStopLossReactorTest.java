@@ -5,6 +5,7 @@
  */
 package org.kanger;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.kanger.enums.Enums;
@@ -26,6 +27,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Qualification gates for the 3.5.2.2 destructive-operation stop-loss boundary. */
@@ -53,9 +55,13 @@ public class DestructiveStopLossReactorTest {
             DestructiveStopLossReactor reactor = new DestructiveStopLossReactor(
                     new QueryProcessor());
 
+            rootCompileReplacementPreservesRootIdentity(reactor, user, token);
             rejectedCompilePreservesGeneration(
                     reactor, user, token, storageName);
+            rootEraseReplacementPreservesRootIdentityAndStorage(
+                    reactor, user, token, storageName);
             transactionBlocksDestructiveCommand(reactor, user, token);
+            unknownFailureEscapesForCanonicalBoundary(reactor, token);
             utf8SourceRoundTripIsTruthful(reactor, user, token);
             failedStorageSwitchPreservesCurrentGeneration(
                     reactor, user, token, storageName);
@@ -66,12 +72,34 @@ public class DestructiveStopLossReactorTest {
         }
     }
 
+    private void rootCompileReplacementPreservesRootIdentity(
+            DestructiveStopLossReactor reactor,
+            IUser user,
+            String token) throws Exception {
+        IMind root = user.getCurrentMind();
+        assertEquals(0, root.getTransactionLevel(),
+                "Root compile qualification did not start at U0");
+
+        JSONObject response = invoke(reactor, "query", new JSONObject()
+                .put("token", token)
+                .put("compile", URLEncoder.encode("!atomic;", "UTF-8")));
+
+        assertEquals("OK", response.optString("result"), response.toString());
+        assertSame(root, user.getCurrentMind(),
+                "Accepted root Compile replaced the published root Mind");
+        assertEquals(0, user.getCurrentMind().getTransactionLevel(),
+                "Accepted root Compile left an explicit transaction open");
+        assertTrue(user.getCurrentMind().getSourceCode().contains("atomic"),
+                "Accepted root Compile did not publish the replacement source");
+    }
+
     private void rejectedCompilePreservesGeneration(
             DestructiveStopLossReactor reactor,
             IUser user,
             String token,
             String storageName) throws Exception {
-        String sourceBefore = user.getCurrentMind().getSourceCode();
+        IMind rootBefore = user.getCurrentMind();
+        String sourceBefore = rootBefore.getSourceCode();
         Map<String, String> generationBefore = hashGeneration(user, storageName);
 
         JSONObject response = invoke(reactor, "query", new JSONObject()
@@ -79,10 +107,45 @@ public class DestructiveStopLossReactorTest {
                 .put("compile", URLEncoder.encode("!conflict; ?conflict;", "UTF-8")));
 
         assertEquals("error", response.optString("result"), response.toString());
+        assertEquals("compile_rejected", response.optString("code"), response.toString());
+        assertSame(rootBefore, user.getCurrentMind(),
+                "Rejected Compile replaced the published root Mind");
         assertEquals(sourceBefore, user.getCurrentMind().getSourceCode(),
                 "Rejected Compile changed the logical workspace");
         assertEquals(generationBefore, hashGeneration(user, storageName),
                 "Rejected Compile changed the persistent generation");
+    }
+
+    private void rootEraseReplacementPreservesRootIdentityAndStorage(
+            DestructiveStopLossReactor reactor,
+            IUser user,
+            String token,
+            String storageName) throws Exception {
+        IMind root = user.getCurrentMind();
+        assertTrue(root.isStorageUsed(),
+                "Root erase qualification requires an attached storage");
+        assertEquals(storageName, root.getStorageName(),
+                "Root erase qualification started with the wrong storage");
+        assertFalse(SourceContextMaterializer.materializeCurrentLevel(root).isEmpty(),
+                "Root erase qualification requires non-empty source");
+
+        JSONObject response = invoke(reactor, "command", new JSONObject()
+                .put("token", token)
+                .put("erase", ""));
+
+        assertEquals("OK", response.optString("result"), response.toString());
+        assertFalse(response.has("description"),
+                "Root erase changed the historical success envelope");
+        assertSame(root, user.getCurrentMind(),
+                "Root erase replaced the published root Mind");
+        assertEquals(0, user.getCurrentMind().getTransactionLevel(),
+                "Root erase left an explicit transaction open");
+        assertTrue(user.getCurrentMind().isStorageUsed(),
+                "Root erase detached the active storage");
+        assertEquals(storageName, user.getCurrentMind().getStorageName(),
+                "Root erase changed the active storage identity");
+        assertEquals("", SourceContextMaterializer.materializeCurrentLevel(root),
+                "Root erase left source-representable state behind");
     }
 
     private void transactionBlocksDestructiveCommand(
@@ -94,12 +157,23 @@ public class DestructiveStopLossReactorTest {
         user.setCurrentMind(child);
         String sourceBefore = child.getSourceCode();
 
-        JSONObject response = invoke(reactor, "command", new JSONObject()
+        JSONObject compile = invoke(reactor, "query", new JSONObject()
+                .put("token", token)
+                .put("compile", URLEncoder.encode("!nested;", "UTF-8")));
+
+        assertEquals("error", compile.optString("result"));
+        assertEquals("transaction_open", compile.optString("code"));
+        assertSame(child, user.getCurrentMind(),
+                "Blocked Compile replaced the active transaction");
+        assertEquals(sourceBefore, child.getSourceCode(),
+                "Blocked Compile changed the transaction workspace");
+
+        JSONObject erase = invoke(reactor, "command", new JSONObject()
                 .put("token", token)
                 .put("erase", ""));
 
-        assertEquals("error", response.optString("result"));
-        assertEquals("transaction_open", response.optString("code"));
+        assertEquals("error", erase.optString("result"));
+        assertEquals("transaction_open", erase.optString("code"));
         assertSame(child, user.getCurrentMind(),
                 "Blocked erase replaced the active transaction");
         assertEquals(sourceBefore, child.getSourceCode(),
@@ -107,6 +181,19 @@ public class DestructiveStopLossReactorTest {
 
         parent.release(child);
         user.setCurrentMind(parent);
+    }
+
+    private void unknownFailureEscapesForCanonicalBoundary(
+            DestructiveStopLossReactor reactor,
+            String token) {
+        JSONObject packet = new JSONObject().put("body", new JSONObject()
+                .put("context", "query")
+                .put("parameters", new JSONObject()
+                        .put("token", token)
+                        .put("compile", new JSONObject())));
+
+        assertThrows(JSONException.class, () -> reactor.run(packet),
+                "Unknown stop-loss failure was converted into an application response");
     }
 
     private void utf8SourceRoundTripIsTruthful(

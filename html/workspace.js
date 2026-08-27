@@ -87,6 +87,21 @@
         }
     }
 
+    function renderTransaction(transaction) {
+        var target = document.getElementById('transaction-level');
+        if (!target || !transaction) {
+            return;
+        }
+        target.textContent = stringValue(numberValue(transaction.level, 0));
+        if (transaction.empty === true) {
+            target.style.color = '#777';
+            target.style.fontWeight = '';
+        } else {
+            target.style.color = '#282';
+            target.style.fontWeight = 'bold';
+        }
+    }
+
     function currentOperationGeneration() {
         if (!window.KANGER_OPERATION_PROTOCOL
                 || typeof window.KANGER_OPERATION_PROTOCOL.snapshot !== 'function') {
@@ -110,6 +125,7 @@
         state.generation = responseGeneration;
         state.workspace = data.workspace;
         renderStorage(data.workspace.storage);
+        renderTransaction(data.workspace.transaction);
         return true;
     }
 

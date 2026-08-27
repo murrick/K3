@@ -75,6 +75,7 @@ public final class CanonicalConsole {
         try {
             while (!stop) {
                 String line = "";
+                ParseSourceContext parseSource = new ParseSourceContext();
                 try {
                     mind = track(shutdownHook, mind);
                     line = input.readCommand();
@@ -126,17 +127,18 @@ public final class CanonicalConsole {
                         if (trimmed.charAt(0) == Enums.SUC) {
                             lastQuery = line;
                         }
-                        processCore(line, mind);
+                        processCore(line, mind, parseSource);
                         continue;
                     }
 
-                    DispatchResult result = dispatch(invocation, mind, input, shutdownHook);
+                    DispatchResult result = dispatch(
+                            invocation, mind, input, shutdownHook, parseSource);
                     mind = track(shutdownHook, result.mind);
                     stop = result.stop;
                 } catch (CommandParseException ex) {
                     System.err.printf("ERROR: %s: %s%n", ex.getReason(), ex.getMessage());
                 } catch (ParseErrorException ex) {
-                    showParseError(ex, lastQuery);
+                    ConsoleParseErrorRenderer.show(ex, parseSource.sourceOr(line));
                 } catch (CommandErrorException ex) {
                     System.err.println(ex.toString());
                 } catch (StorageLifecycleException ex) {
@@ -179,6 +181,14 @@ public final class CanonicalConsole {
                                            IMind mind,
                                            ConsoleLineInput input,
                                            ShutdownHook shutdownHook) throws Exception {
+        return dispatch(invocation, mind, input, shutdownHook, null);
+    }
+
+    private static DispatchResult dispatch(CommandInvocation invocation,
+                                           IMind mind,
+                                           ConsoleLineInput input,
+                                           ShutdownHook shutdownHook,
+                                           ParseSourceContext parseSource) throws Exception {
         String canonical = FORMATTER.format(invocation);
         switch (invocation.getIntent()) {
             case RULE_STATUS:
@@ -237,7 +247,7 @@ public final class CanonicalConsole {
                 showWhen(mind);
                 return same(mind);
             case WHEN_ACCEPT:
-                acceptWhen(mind, number(invocation, "index"));
+                acceptWhen(mind, number(invocation, "index"), parseSource);
                 return same(mind);
 
             case TX_STATUS:
@@ -268,7 +278,7 @@ public final class CanonicalConsole {
 
             case SOURCE_GET:
                 mind = loadSource(mind,
-                        String.valueOf(invocation.getArgument("source")));
+                        String.valueOf(invocation.getArgument("source")), parseSource);
                 return same(track(shutdownHook, mind));
             case SOURCE_PUT:
                 saveSource(mind, String.valueOf(invocation.getArgument("source")), input);
@@ -352,6 +362,13 @@ public final class CanonicalConsole {
     }
 
     private static void processCore(String line, IMind mind) throws Exception {
+        processCore(line, mind, null);
+    }
+
+    private static void processCore(String line,
+                                    IMind mind,
+                                    ParseSourceContext parseSource) throws Exception {
+        setParseSource(parseSource, line);
         String trimmed = line.trim();
         if (trimmed.charAt(0) == Enums.FOO) {
             mind.compile(line);
@@ -376,6 +393,7 @@ public final class CanonicalConsole {
          * generated-rule rebuild that this operator explicitly requests.
          */
         if ("?".equals(trimmed)) {
+            setParseSource(parseSource, "?");
             Boolean response = mind.query("?");
             if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
                 ILogEntry log = mind.getCurrentLogRecord(LogMode.ANALYZER);
@@ -403,6 +421,7 @@ public final class CanonicalConsole {
                 if (operator.charAt(0) == '?') {
                     query = true;
                 }
+                setParseSource(parseSource, operator);
                 response = overlay.query(operator);
                 if (!lastComments.isEmpty() && overlay.getAcceptedRule() != null) {
                     overlay.getAcceptedRule().setComment(lastComments);
@@ -573,6 +592,12 @@ public final class CanonicalConsole {
     }
 
     private static void acceptWhen(IMind mind, long index) throws Exception {
+        acceptWhen(mind, index, null);
+    }
+
+    private static void acceptWhen(IMind mind,
+                                   long index,
+                                   ParseSourceContext parseSource) throws Exception {
         mind.optimizeHypothesis();
         if (index < 0 || index >= mind.getHypothesis().size()) {
             throw new CommandErrorException("Hypothesis index out of range " + index);
@@ -582,6 +607,7 @@ public final class CanonicalConsole {
         String statement = String.format("%s;",
                 source.replaceAll(String.format("%c", Enums.EOLN), ""));
         System.out.println("Statement: " + statement);
+        setParseSource(parseSource, statement);
         Boolean response = ((Mind) mind).queryAccept(statement, null, true);
         if (response != null && (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
             Console.showLog(mind, LogMode.SOLVES, null, null);
@@ -651,6 +677,12 @@ public final class CanonicalConsole {
     }
 
     private static IMind loadSource(IMind mind, String name) throws Exception {
+        return loadSource(mind, name, null);
+    }
+
+    private static IMind loadSource(IMind mind,
+                                    String name,
+                                    ParseSourceContext parseSource) throws Exception {
         File file = sourceFile(mind, name);
         if (!file.isFile()) {
             System.out.println("WARNING: File " + name + " not found");
@@ -662,6 +694,7 @@ public final class CanonicalConsole {
         }
 
         String text = new String(Files.readAllBytes(file.toPath()), "UTF-8");
+        setParseSource(parseSource, text);
         boolean accepted = mind.compile(text);
         if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
             ILogEntry log = mind.getCurrentLogRecord(LogMode.ANALYZER);
@@ -852,34 +885,21 @@ public final class CanonicalConsole {
         return mind;
     }
 
+    private static void setParseSource(ParseSourceContext context, String source) {
+        if (context != null) {
+            context.source = source;
+        }
+    }
+
     private static DispatchResult same(IMind mind) {
         return new DispatchResult(mind, false);
     }
 
-    private static void showParseError(ParseErrorException ex, String lastQuery) {
-        int pos = ex.getExceptionPosition();
-        System.out.println("ERROR: " + ex.getExceptionMessage());
-        if (lastQuery == null || lastQuery.isEmpty()) {
-            return;
-        }
-        StringBuilder marker = new StringBuilder();
-        for (int i = 0; i < lastQuery.trim().length(); ++i) {
-            char c = lastQuery.trim().charAt(i);
-            System.out.print(c);
-            if (i == pos) {
-                marker.append('^');
-            } else if (c == '\n') {
-                if (marker.length() > 0 && marker.charAt(marker.length() - 1) == '^') {
-                    System.out.println(marker.toString());
-                }
-                marker.setLength(0);
-            } else if (i < pos) {
-                marker.append(c == '\t' ? c : ' ');
-            }
-        }
-        System.out.println();
-        if (marker.length() > 0 && marker.charAt(marker.length() - 1) == '^') {
-            System.out.println(marker.toString());
+    private static final class ParseSourceContext {
+        private String source;
+
+        private String sourceOr(String fallback) {
+            return source == null ? fallback : source;
         }
     }
 

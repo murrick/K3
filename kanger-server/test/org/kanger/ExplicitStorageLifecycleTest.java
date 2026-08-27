@@ -102,7 +102,23 @@ class ExplicitStorageLifecycleTest {
             assertEquals("error", response.optString("result"),
                     response.toString());
             assertEquals("NO_STORAGE_OPEN", response.optString("code"));
-            assertEquals(0, response.optInt("transaction", -1));
+            JSONObject diagnostic = response.getJSONObject("error");
+            assertEquals(1, diagnostic.getInt("schema"));
+            assertEquals("application", diagnostic.getString("domain"));
+            assertEquals("NO_STORAGE_OPEN", diagnostic.getString("code"));
+            assertEquals("retain", diagnostic.getString("session_action"));
+            assertEquals("confirmed", diagnostic.getString("operation_outcome"));
+
+            JSONObject workspace = response.getJSONObject("workspace");
+            assertEquals(2, workspace.getInt("schema"));
+            assertFalse(workspace.getJSONObject("storage").getBoolean("active"));
+            JSONObject transaction = workspace.getJSONObject("transaction");
+            assertEquals(0, transaction.getInt("level"));
+            assertTrue(transaction.getBoolean("empty"));
+            assertFalse(response.has("transaction"),
+                    "Canonical lifecycle failure retained legacy transaction duplication");
+            assertFalse(response.has("empty"),
+                    "Canonical lifecycle failure retained legacy empty duplication");
             assertSame(fixture.user.getCurrentMind(),
                     fixture.user.getCurrentMind().getTop());
         } finally {
@@ -338,9 +354,12 @@ class ExplicitStorageLifecycleTest {
         Mind root = new Mind(user);
         user.setCurrentMind(root);
         String token = UserFactory.addUser(user);
-        IReactor<JSONObject> reactor = new ExplicitStorageLifecycleReactor(
-                new DestructiveStopLossReactor(
-                        new MindLifecycleReactor(new QueryProcessor())));
+        IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(
+                new WorkspaceStateReactor(
+                        new ExplicitStorageLifecycleReactor(
+                                new DestructiveStopLossReactor(
+                                        new MindLifecycleReactor(
+                                                new QueryProcessor())))));
         return new Fixture(user, token, reactor);
     }
 
