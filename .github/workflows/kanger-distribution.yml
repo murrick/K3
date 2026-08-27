@@ -1,0 +1,98 @@
+name: KANGER distribution bundle
+
+on:
+  push:
+    paths:
+      - "distribution/**"
+      - "html/**"
+      - "kanger/**"
+      - "kanger-command/**"
+      - "kanger-console/**"
+      - "kanger-data-*/**"
+      - "kanger-qualification/**"
+      - "kanger-server/**"
+      - "kanger-udf/**"
+      - "**/pom.xml"
+      - ".github/workflows/kanger-distribution.yml"
+  pull_request:
+    paths:
+      - "distribution/**"
+      - "html/**"
+      - "kanger/**"
+      - "kanger-command/**"
+      - "kanger-console/**"
+      - "kanger-data-*/**"
+      - "kanger-qualification/**"
+      - "kanger-server/**"
+      - "kanger-udf/**"
+      - "**/pom.xml"
+      - ".github/workflows/kanger-distribution.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    name: Build and verify product bundle
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Validate distribution scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n distribution/build-distribution.sh
+          bash -n distribution/payload/install.sh
+          bash -n distribution/payload/update.sh
+          bash -n distribution/payload/bin/kanger-admin
+          bash -n distribution/payload/lib/common.sh
+
+      - name: Build qualified distribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash distribution/build-distribution.sh
+
+      - name: Verify distribution archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(tr -d '[:space:]' < distribution/VERSION)"
+          archive="target/distributions/kanger-${version}.tar.gz"
+          root="kanger-${version}"
+
+          test -f "${archive}"
+          tar -tzf "${archive}" | grep -qx "${root}/RELEASE"
+          tar -tzf "${archive}" | grep -qx "${root}/SHA256SUMS"
+          tar -tzf "${archive}" | grep -qx "${root}/server/kanger-server.jar"
+          tar -tzf "${archive}" | grep -qx "${root}/ui/index.html"
+          tar -tzf "${archive}" | grep -qx "${root}/install.sh"
+          tar -tzf "${archive}" | grep -qx "${root}/update.sh"
+          tar -tzf "${archive}" | grep -qx "${root}/bin/kanger-admin"
+
+          release="$(tar -xOzf "${archive}" "${root}/RELEASE")"
+          printf '%s\n' "${release}"
+          printf '%s\n' "${release}" | grep -qx 'product=KANGER'
+          printf '%s\n' "${release}" | grep -qx "version=${version}"
+          printf '%s\n' "${release}" | grep -q '^server.version=server-0.18$'
+
+          sha256sum "${archive}"
+
+      - name: Upload qualified distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: kanger-distribution-${{ github.sha }}
+          path: target/distributions/*.tar.gz
+          if-no-files-found: error
+          retention-days: 14
