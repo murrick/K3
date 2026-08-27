@@ -74,10 +74,14 @@ class StorageDropPhysicalPathPruningTest {
             Path root = databaseRoot(fixture.user);
             Path shared = root.resolve("prune").resolve("shared");
             Path keepStore = Paths.get(shared.resolve("keep").toString() + ".store");
+            Path dropStore = Paths.get(shared.resolve("drop").toString() + ".store");
             assertTrue(Files.isRegularFile(keepStore));
+            assertTrue(Files.isRegularFile(dropStore));
 
             processor.execute(parser.parse("storage drop " + drop), fixture.user);
 
+            assertFalse(Files.exists(dropStore),
+                    "Drop left the selected storage artifact behind");
             assertTrue(Files.isDirectory(shared),
                     "Drop pruned a parent still owned by a sibling storage");
             assertTrue(Files.isRegularFile(keepStore),
