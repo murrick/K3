@@ -68,6 +68,13 @@ function settle(ms = 0) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function snapshotReads(transport) {
+    return transport.unresolved((p) => p.context === 'query'
+            && !Object.prototype.hasOwnProperty.call(p.parameters, 'request')
+            && !Object.prototype.hasOwnProperty.call(p.parameters, 'compile')
+            && !Object.prototype.hasOwnProperty.call(p.parameters, 'transaction'));
+}
+
 async function main() {
     const targetIds = [
         'statements', 'functions', 'query-results', 'query-solutions',
@@ -105,7 +112,16 @@ async function main() {
     window.post = transport.post;
     window.setQueryStatus = function (text) { window.status = text; };
     window.dropQueryStatus = function () { window.status = ''; };
-    window.placeElements = function () { window.layoutCommits = (window.layoutCommits || 0) + 1; };
+    window.placeElements = function (data) {
+        window.post({
+            context: 'query',
+            parameters: {token: window.token, functions: ''}
+        }, function (tmp) {
+            window.layoutCommits = (window.layoutCommits || 0) + 1;
+            window.lastLayoutData = data;
+            window.layoutFunctionCount = tmp && tmp.size;
+        });
+    };
     window.storeHistory = function (text, callback) {
         window.post({context: 'history', parameters: {put: text}}, callback);
     };
@@ -184,13 +200,77 @@ async function main() {
             && Object.prototype.hasOwnProperty.call(p.parameters, 'request')).length, 1);
     assert.strictEqual(busyResult.code, 'operation_busy');
     assert.strictEqual(busyResult.blocking_operation_id, 1);
-    transport.resolve(firstMutation, {result: 'OK', description: 'first'});
+    transport.resolve(firstMutation, {
+        result: 'OK',
+        response: 'unknown',
+        results: 2,
+        solutions: 1,
+        hypothesis: 1,
+        description: 'first'
+    });
     assert.strictEqual(firstResult.client_operation_id, 1);
+    assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 1,
+            'main response released BUSY before snapshot settlement');
+    assert.strictEqual(window.status, 'Operation #1: request');
     await settle(2);
-    const oldSnapshot = transport.unresolved((p) => p.context === 'query'
-            && !Object.prototype.hasOwnProperty.call(p.parameters, 'request'));
-    assert.strictEqual(oldSnapshot.length, 6);
+    const firstSnapshot = snapshotReads(transport).slice();
+    assert.strictEqual(firstSnapshot.length, 6);
+
+    let settlingBusy = null;
+    window.post({
+        context: 'dialogue',
+        parameters: {token: 'token', line: 'erase'}
+    }, (data) => { settlingBusy = data; });
+    await settle(2);
+    assert(settlingBusy && settlingBusy.code === 'operation_busy');
+    assert.strictEqual(settlingBusy.blocking_operation_id, 1);
+    assert.strictEqual(transport.unresolved((p) => p.context === 'dialogue').length, 0);
+
+    for (let i = 0; i < 5; i++) {
+        transport.resolve(firstSnapshot[i], {result: 'OK', value: 'first-' + i});
+    }
+    targetIds.forEach((id) => assert.strictEqual(elements[id].textContent,
+            'baseline-' + id, 'partial snapshot leaked into live DOM'));
+    assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 1);
+
+    transport.resolve(firstSnapshot[5], {result: 'OK', value: 'first-5'});
+    targetIds.forEach((id, index) => assert.strictEqual(
+            elements[id].textContent, 'first-' + index));
+    assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 1,
+            'semantic snapshot released BUSY before layout settlement');
+    assert.strictEqual(window.status, 'Operation #1: request');
+    assert.strictEqual(window.layoutCommits || 0, 0);
+    const firstLayout = snapshotReads(transport).filter(
+            (record) => firstSnapshot.indexOf(record) < 0);
+    assert.strictEqual(firstLayout.length, 1,
+            'expected exactly one async layout read after semantic snapshot');
+
+    let layoutBusy = null;
+    window.post({
+        context: 'dialogue',
+        parameters: {token: 'token', line: 'storage'}
+    }, (data) => { layoutBusy = data; });
+    await settle(2);
+    assert(layoutBusy && layoutBusy.code === 'operation_busy');
+    assert.strictEqual(layoutBusy.blocking_operation_id, 1);
+
+    transport.resolve(firstLayout[0], {result: 'OK', size: 1});
+    assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 0);
+    assert.strictEqual(window.status, '');
+    assert.strictEqual(window.layoutCommits, 1);
+    assert.strictEqual(window.layoutFunctionCount, 1);
+    assert.strictEqual(window.lastLayoutData.results, 0);
+    assert.strictEqual(window.lastLayoutData.solutions, 0);
+    assert.strictEqual(window.lastLayoutData.hypothesis, 1);
+    assert.strictEqual(firstResult.results, 2,
+            'WHO KNOWS presentation mutated canonical response');
+    assert.strictEqual(firstResult.solutions, 1,
+            'WHO KNOWS presentation mutated canonical response');
     console.log('OPERATION_PROTOCOL_PASS one-mutation-in-flight');
+    console.log('OPERATION_PROTOCOL_PASS busy-through-snapshot-settlement');
+    console.log('OPERATION_PROTOCOL_PASS busy-through-layout-settlement');
+    console.log('OPERATION_PROTOCOL_PASS unknown-panel-suppression');
+    console.log('OPERATION_PROTOCOL_PASS coherent-snapshot-barrier');
 
     let secondResult = null;
     window.post({
@@ -200,30 +280,30 @@ async function main() {
     const secondMutation = transport.unresolved((p) => p.context === 'dialogue')[0];
     assert(secondMutation);
     assert.strictEqual(secondMutation.packet.parameters.line, 'erase');
-    assert.strictEqual(window.status, 'Operation #3: dialogue');
-    oldSnapshot.forEach((record, index) => {
-        transport.resolve(record, {result: 'OK', value: 'stale-' + index});
-    });
-    targetIds.forEach((id) => assert.strictEqual(elements[id].textContent,
-            'baseline-' + id));
+    assert.strictEqual(window.status, 'Operation #5: dialogue');
     transport.resolve(secondMutation, {result: 'OK', description: 'second'});
-    assert.strictEqual(secondResult.client_operation_id, 3);
+    assert.strictEqual(secondResult.client_operation_id, 5);
+    assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 5);
     await settle(2);
-    const newSnapshot = transport.unresolved((p) => p.context === 'query'
-            && !Object.prototype.hasOwnProperty.call(p.parameters, 'request'));
-    assert.strictEqual(newSnapshot.length, 6);
+    const secondSnapshot = snapshotReads(transport).slice();
+    assert.strictEqual(secondSnapshot.length, 6);
     for (let i = 0; i < 5; i++) {
-        transport.resolve(newSnapshot[i], {result: 'OK', value: 'fresh-' + i});
+        transport.resolve(secondSnapshot[i], {result: 'OK', value: 'fresh-' + i});
     }
-    targetIds.forEach((id) => assert.strictEqual(elements[id].textContent,
-            'baseline-' + id, 'partial snapshot leaked into live DOM'));
-    transport.resolve(newSnapshot[5], {result: 'OK', value: 'fresh-5'});
+    targetIds.forEach((id, index) => assert.strictEqual(
+            elements[id].textContent, 'first-' + index,
+            'partial second snapshot leaked into live DOM'));
+    transport.resolve(secondSnapshot[5], {result: 'OK', value: 'fresh-5'});
     targetIds.forEach((id, index) => assert.strictEqual(
             elements[id].textContent, 'fresh-' + index));
-    assert.strictEqual(window.layoutCommits, 1);
+    assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 5);
+    const secondLayout = snapshotReads(transport).filter(
+            (record) => secondSnapshot.indexOf(record) < 0);
+    assert.strictEqual(secondLayout.length, 1);
+    transport.resolve(secondLayout[0], {result: 'OK', size: 0});
+    assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 0);
+    assert.strictEqual(window.layoutCommits, 2);
     console.log('OPERATION_PROTOCOL_PASS dialogue-serialization');
-    console.log('OPERATION_PROTOCOL_PASS coherent-snapshot-barrier');
-    console.log('OPERATION_PROTOCOL_PASS stale-snapshot-rejection');
 
     let staleReadCalled = false;
     window.post({context: 'command', parameters: {token: 'token', help: ''}},
@@ -237,6 +317,18 @@ async function main() {
     transport.resolve(thirdMutation, {result: 'OK'});
     transport.resolve(staleRead, {result: 'OK', description: 'late read'});
     assert.strictEqual(staleReadCalled, false);
+    await settle(2);
+    const thirdSnapshot = snapshotReads(transport).slice();
+    assert.strictEqual(thirdSnapshot.length, 6);
+    thirdSnapshot.forEach((record, index) => {
+        transport.resolve(record, {result: 'OK', value: 'third-' + index});
+    });
+    assert(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId > 0);
+    const thirdLayout = snapshotReads(transport).filter(
+            (record) => thirdSnapshot.indexOf(record) < 0);
+    assert.strictEqual(thirdLayout.length, 1);
+    transport.resolve(thirdLayout[0], {result: 'OK', size: 0});
+    assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 0);
     console.log('OPERATION_PROTOCOL_PASS stale-read-rejection');
 
     let timeoutResult = null;

@@ -312,6 +312,20 @@ body.kanger-presentation .kanger-row-action {
     font-weight: normal;
 }
 
+/* Statement provenance uses the same compact affordance as the semantic
+ * solution action instead of spending a text column on the word "tree". */
+body.kanger-presentation #statements
+.kanger-row-action[data-kanger-compose^="base tree "] {
+    font-size: 0;
+}
+
+body.kanger-presentation #statements
+.kanger-row-action[data-kanger-compose^="base tree "]::before {
+    content: '○';
+    font-size: 13px;
+    line-height: 1;
+}
+
 body.kanger-presentation .kanger-row-action:hover {
     color: #18242d;
     background: #dfe7ec;

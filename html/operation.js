@@ -179,6 +179,38 @@
                 && snapshot.generation === state.generation;
     }
 
+    function mutationIsSettling() {
+        return !!(state.activeMutation && state.activeMutation.settling);
+    }
+
+    function snapshotLayoutData(data) {
+        if (!data || typeof data !== 'object'
+                || stringValue(data.response).toLowerCase() !== 'unknown') {
+            return data;
+        }
+        var layoutData = {};
+        Object.keys(data).forEach(function (name) {
+            layoutData[name] = data[name];
+        });
+        // WHO KNOWS may retain internal values/solutions while hypotheses are
+        // being published. They are not operator-visible query results.
+        layoutData.results = 0;
+        layoutData.solutions = 0;
+        return layoutData;
+    }
+
+    function releaseSettledMutation(snapshot) {
+        var operation = state.activeMutation;
+        if (!operation || !operation.settling
+                || snapshot.operationId !== operation.id) {
+            return;
+        }
+        state.activeMutation = null;
+        if (typeof window.dropQueryStatus === 'function') {
+            window.dropQueryStatus();
+        }
+    }
+
     function moveChildren(from, to) {
         clearElement(to);
         while (from.firstChild) {
@@ -191,15 +223,34 @@
                 || !snapshotIsCurrent(snapshot)) {
             return;
         }
-        for (var i = 0; i < SNAPSHOT_TARGET_IDS.length; i++) {
-            var id = SNAPSHOT_TARGET_IDS[i];
-            moveChildren(snapshot.staging[id], originalGetElementById(id));
+        if (!snapshot.domCommitted) {
+            for (var i = 0; i < SNAPSHOT_TARGET_IDS.length; i++) {
+                var id = SNAPSHOT_TARGET_IDS[i];
+                moveChildren(snapshot.staging[id], originalGetElementById(id));
+            }
+            snapshot.domCommitted = true;
+        }
+        if (!snapshot.layoutStarted
+                && typeof original.placeElements === 'function') {
+            snapshot.layoutStarted = true;
+            var previousCapture = state.snapshotCapture;
+            state.snapshotCapture = snapshot;
+            try {
+                // Legacy placeElements performs its own async read. Capture
+                // that read into this snapshot so BUSY survives through the
+                // final panel-visibility/layout callback as well.
+                original.placeElements(
+                        snapshotLayoutData(snapshot.reasonData) || undefined);
+            } finally {
+                state.snapshotCapture = previousCapture;
+            }
+            if (!snapshotIsCurrent(snapshot) || snapshot.pending !== 0) {
+                return;
+            }
         }
         state.lastCommittedSnapshotId = snapshot.id;
         state.currentSnapshot = null;
-        if (typeof original.placeElements === 'function') {
-            original.placeElements(snapshot.reasonData || undefined);
-        }
+        releaseSettledMutation(snapshot);
         if (state.snapshotRequested && !state.activeMutation) {
             scheduleSnapshot(state.pendingSnapshotData);
         }
@@ -252,7 +303,7 @@
     function startSnapshot(reasonData) {
         state.snapshotRequested = false;
         state.pendingSnapshotData = reasonData || state.pendingSnapshotData;
-        if (state.activeMutation) {
+        if (state.activeMutation && !state.activeMutation.settling) {
             state.snapshotRequested = true;
             return;
         }
@@ -261,6 +312,7 @@
         var snapshot = {
             id: ++state.nextSnapshotId,
             generation: state.generation,
+            operationId: mutationIsSettling() ? state.activeMutation.id : 0,
             pending: 0,
             closed: false,
             cancelled: false,
@@ -301,12 +353,14 @@
         if (reasonData) {
             state.pendingSnapshotData = reasonData;
         }
-        if (state.activeMutation || state.snapshotTimer) {
+        if ((state.activeMutation && !state.activeMutation.settling)
+                || state.snapshotTimer) {
             return;
         }
         state.snapshotTimer = setTimeout(function () {
             state.snapshotTimer = null;
-            if (state.snapshotRequested && !state.activeMutation) {
+            if (state.snapshotRequested
+                    && (!state.activeMutation || state.activeMutation.settling)) {
                 startSnapshot(state.pendingSnapshotData);
             }
         }, 0);
@@ -319,19 +373,22 @@
             return;
         }
         clearTimeout(operation.timer);
-        state.activeMutation = null;
         state.generation += 1;
+        operation.settling = true;
+        operation.settledGeneration = state.generation;
         decorate(data, {
             client_operation_id: operation.id,
             client_generation: state.generation
         });
-        if (typeof window.dropQueryStatus === 'function') {
-            window.dropQueryStatus();
+        try {
+            if (typeof callback === 'function') {
+                callback(data);
+            }
+        } finally {
+            // The mutation remains active until all snapshot renderers and the
+            // final async layout callback have settled.
+            scheduleSnapshot(data);
         }
-        if (typeof callback === 'function') {
-            callback(data);
-        }
-        scheduleSnapshot(data);
     }
 
     function timeoutMutation(operation, callback) {
@@ -374,6 +431,7 @@
             id: requestedId,
             name: operationName(packet),
             generation: state.generation,
+            settling: false,
             timer: null
         };
         state.activeMutation = operation;
