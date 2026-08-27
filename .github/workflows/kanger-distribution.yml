@@ -58,6 +58,17 @@ jobs:
           bash -n distribution/payload/bin/kanger-admin
           bash -n distribution/payload/lib/common.sh
 
+          update_help="$(bash distribution/payload/update.sh --help)"
+          grep -Fq 'Usage: sudo ./update.sh [--force]' <<<"${update_help}"
+          grep -Fq -- '--force                  Allow an explicit same-version update' <<<"${update_help}"
+
+          if bash distribution/payload/update.sh --definitely-unknown >update-unknown.out 2>&1; then
+            echo 'update.sh accepted an unknown option' >&2
+            exit 1
+          fi
+          grep -Fq 'ERROR: Unknown option: --definitely-unknown' update-unknown.out
+          rm -f update-unknown.out
+
       - name: Build qualified distribution
         shell: bash
         run: |
@@ -91,6 +102,13 @@ jobs:
           grep -Fqx -- 'product=KANGER' <<<"${release}"
           grep -Fqx -- "version=${version}" <<<"${release}"
           grep -Fqx -- 'server.version=server-0.18' <<<"${release}"
+
+          packaged_update="$(mktemp)"
+          trap 'rm -f -- "${packaged_update}"' EXIT
+          tar -xOzf "${archive}" "${root}/update.sh" >"${packaged_update}"
+          bash -n "${packaged_update}"
+          grep -Fq 'Usage: sudo ./update.sh [--force]' "${packaged_update}"
+          grep -Fq 'forcing same-version update' "${packaged_update}"
 
           sha256sum "${archive}"
 
