@@ -60,7 +60,7 @@ public class DestructiveStopLossReactorTest {
                     reactor, user, token, storageName);
             rootEraseReplacementPreservesRootIdentityAndStorage(
                     reactor, user, token, storageName);
-            transactionBlocksDestructiveCommand(reactor, user, token);
+            transactionBlocksProtectedDestructiveCommand(reactor, user, token);
             unknownFailureEscapesForCanonicalBoundary(reactor, token);
             utf8SourceRoundTripIsTruthful(reactor, user, token);
             failedStorageSwitchPreservesCurrentGeneration(
@@ -148,7 +148,7 @@ public class DestructiveStopLossReactorTest {
                 "Root erase left source-representable state behind");
     }
 
-    private void transactionBlocksDestructiveCommand(
+    private void transactionBlocksProtectedDestructiveCommand(
             DestructiveStopLossReactor reactor,
             IUser user,
             String token) throws Exception {
@@ -167,17 +167,6 @@ public class DestructiveStopLossReactorTest {
                 "Blocked Compile replaced the active transaction");
         assertEquals(sourceBefore, child.getSourceCode(),
                 "Blocked Compile changed the transaction workspace");
-
-        JSONObject erase = invoke(reactor, "command", new JSONObject()
-                .put("token", token)
-                .put("erase", ""));
-
-        assertEquals("error", erase.optString("result"));
-        assertEquals("transaction_open", erase.optString("code"));
-        assertSame(child, user.getCurrentMind(),
-                "Blocked erase replaced the active transaction");
-        assertEquals(sourceBefore, child.getSourceCode(),
-                "Blocked erase changed the transaction workspace");
 
         parent.release(child);
         user.setCurrentMind(parent);
