@@ -225,9 +225,13 @@ async function main() {
     assert.strictEqual(elements['query-hypothesis'].textContent, '',
             'completed query left the previous hypothesis projection published');
     await settle(2);
-    const firstSnapshot = snapshotReads(transport).slice();
-    assert.strictEqual(firstSnapshot.length, 6,
-            'stale main-response layout escaped snapshot ownership');
+
+    const hypothesisPhase = snapshotReads(transport).slice();
+    assert.strictEqual(hypothesisPhase.length, 1,
+            'WHO KNOWS launched snapshot reads before hypothesis settlement');
+    assert(Object.prototype.hasOwnProperty.call(
+            hypothesisPhase[0].packet.parameters, 'hypothesis'),
+            'WHO KNOWS did not start with the authoritative hypothesis read');
 
     let settlingBusy = null;
     window.post({
@@ -239,17 +243,27 @@ async function main() {
     assert.strictEqual(settlingBusy.blocking_operation_id, 1);
     assert.strictEqual(transport.unresolved((p) => p.context === 'dialogue').length, 0);
 
-    for (let i = 0; i < 5; i++) {
-        transport.resolve(firstSnapshot[i], {result: 'OK', value: 'first-' + i});
+    transport.resolve(hypothesisPhase[0], {result: 'OK', value: 'first-4'});
+    const firstSnapshot = snapshotReads(transport).slice();
+    assert.strictEqual(firstSnapshot.length, 5,
+            'snapshot reads did not wait for hypothesis settlement');
+    firstSnapshot.forEach((record) => assert.strictEqual(
+            Object.prototype.hasOwnProperty.call(
+                    record.packet.parameters, 'hypothesis'), false,
+            'hypothesis request was duplicated after settlement'));
+
+    const firstValues = ['first-0', 'first-1', 'first-2', 'first-3', 'first-5'];
+    for (let i = 0; i < 4; i++) {
+        transport.resolve(firstSnapshot[i], {result: 'OK', value: firstValues[i]});
     }
     targetIds.filter((id) => id !== 'query-hypothesis').forEach((id) =>
         assert.strictEqual(elements[id].textContent,
                 'baseline-' + id, 'partial snapshot leaked into live DOM'));
     assert.strictEqual(elements['query-hypothesis'].textContent, '',
-            'stale hypothesis projection reappeared before snapshot commit');
+            'hypothesis phase leaked into live DOM before snapshot commit');
     assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 1);
 
-    transport.resolve(firstSnapshot[5], {result: 'OK', value: 'first-5'});
+    transport.resolve(firstSnapshot[4], {result: 'OK', value: firstValues[4]});
     targetIds.forEach((id, index) => assert.strictEqual(
             elements[id].textContent, 'first-' + index));
     assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 1,
@@ -287,6 +301,7 @@ async function main() {
     assert.strictEqual(firstResult.hypothesis, 0,
             'snapshot panel activation mutated canonical response');
     console.log('OPERATION_PROTOCOL_PASS one-mutation-in-flight');
+    console.log('OPERATION_PROTOCOL_PASS hypothesis-settlement-before-snapshot-reads');
     console.log('OPERATION_PROTOCOL_PASS busy-through-snapshot-settlement');
     console.log('OPERATION_PROTOCOL_PASS busy-through-layout-settlement');
     console.log('OPERATION_PROTOCOL_PASS busy-owner-ignores-legacy-drop');
