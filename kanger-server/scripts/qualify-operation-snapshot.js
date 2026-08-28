@@ -133,6 +133,7 @@ async function main() {
         window.responseLog = (window.responseLog || []).concat([
             presentation || (data && data.description) || ''
         ]);
+        if (data) window.placeElements(data);
         window.storeHistory('R:' + (presentation || ''), callback);
     };
 
@@ -195,7 +196,10 @@ async function main() {
     let firstResult = null;
     let busyResult = null;
     window.post({context: 'query', parameters: {request: '!a'}},
-            (data) => { firstResult = data; });
+            (data) => {
+                firstResult = data;
+                window.refreshScreen(data);
+            });
     window.post({context: 'query', parameters: {request: '!b'}},
             (data) => { busyResult = data; });
     await settle(2);
@@ -220,7 +224,8 @@ async function main() {
     assert.strictEqual(window.status, 'Operation #1: request');
     await settle(2);
     const firstSnapshot = snapshotReads(transport).slice();
-    assert.strictEqual(firstSnapshot.length, 6);
+    assert.strictEqual(firstSnapshot.length, 6,
+            'stale main-response layout escaped snapshot ownership');
 
     let settlingBusy = null;
     window.post({
@@ -280,6 +285,7 @@ async function main() {
     console.log('OPERATION_PROTOCOL_PASS busy-through-snapshot-settlement');
     console.log('OPERATION_PROTOCOL_PASS busy-through-layout-settlement');
     console.log('OPERATION_PROTOCOL_PASS busy-owner-ignores-legacy-drop');
+    console.log('OPERATION_PROTOCOL_PASS stale-layout-suppression');
     console.log('OPERATION_PROTOCOL_PASS hypothesis-panel-from-snapshot');
     console.log('OPERATION_PROTOCOL_PASS unknown-panel-suppression');
     console.log('OPERATION_PROTOCOL_PASS coherent-snapshot-barrier');
