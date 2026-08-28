@@ -125,6 +125,7 @@ body.kanger-presentation #container-logging > div:first-child {
 body.kanger-presentation #statements,
 body.kanger-presentation #functions {
     box-sizing: border-box;
+    width: 100% !important;
     padding: 8px !important;
     overflow: auto !important;
 }
