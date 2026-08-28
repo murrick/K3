@@ -222,6 +222,8 @@ async function main() {
     assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 1,
             'main response released BUSY before snapshot settlement');
     assert.strictEqual(window.status, 'Operation #1: request');
+    assert.strictEqual(elements['query-hypothesis'].textContent, '',
+            'completed query left the previous hypothesis projection published');
     await settle(2);
     const firstSnapshot = snapshotReads(transport).slice();
     assert.strictEqual(firstSnapshot.length, 6,
@@ -240,8 +242,11 @@ async function main() {
     for (let i = 0; i < 5; i++) {
         transport.resolve(firstSnapshot[i], {result: 'OK', value: 'first-' + i});
     }
-    targetIds.forEach((id) => assert.strictEqual(elements[id].textContent,
-            'baseline-' + id, 'partial snapshot leaked into live DOM'));
+    targetIds.filter((id) => id !== 'query-hypothesis').forEach((id) =>
+        assert.strictEqual(elements[id].textContent,
+                'baseline-' + id, 'partial snapshot leaked into live DOM'));
+    assert.strictEqual(elements['query-hypothesis'].textContent, '',
+            'stale hypothesis projection reappeared before snapshot commit');
     assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 1);
 
     transport.resolve(firstSnapshot[5], {result: 'OK', value: 'first-5'});
@@ -286,6 +291,7 @@ async function main() {
     console.log('OPERATION_PROTOCOL_PASS busy-through-layout-settlement');
     console.log('OPERATION_PROTOCOL_PASS busy-owner-ignores-legacy-drop');
     console.log('OPERATION_PROTOCOL_PASS stale-layout-suppression');
+    console.log('OPERATION_PROTOCOL_PASS stale-hypothesis-projection-clear');
     console.log('OPERATION_PROTOCOL_PASS hypothesis-panel-from-snapshot');
     console.log('OPERATION_PROTOCOL_PASS unknown-panel-suppression');
     console.log('OPERATION_PROTOCOL_PASS coherent-snapshot-barrier');
