@@ -10,6 +10,7 @@ on:
       - "html/javascript-mode.js"
       - "html/javascript-mode-vendor.js"
       - "kanger-server/scripts/qualify-operation-snapshot.js"
+      - "kanger-server/scripts/qualify-hypothesis-projection-clear.js"
       - ".github/workflows/kanger-browser-operation.yml"
   pull_request:
     paths:
@@ -18,6 +19,7 @@ on:
       - "html/javascript-mode.js"
       - "html/javascript-mode-vendor.js"
       - "kanger-server/scripts/qualify-operation-snapshot.js"
+      - "kanger-server/scripts/qualify-hypothesis-projection-clear.js"
       - ".github/workflows/kanger-browser-operation.yml"
   workflow_dispatch:
 
@@ -44,6 +46,7 @@ jobs:
           node --check html/javascript-mode-vendor.js
           node --check html/operation.js
           node --check kanger-server/scripts/qualify-operation-snapshot.js
+          node --check kanger-server/scripts/qualify-hypothesis-projection-clear.js
 
           test "$(git hash-object html/javascript-mode-vendor.js)" = \
             "047395622eb2501dea6fbb9e6be2389e02bf2c77"
@@ -59,3 +62,4 @@ jobs:
         shell: bash
         run: |
           node kanger-server/scripts/qualify-operation-snapshot.js
+          node kanger-server/scripts/qualify-hypothesis-projection-clear.js
