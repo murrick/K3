@@ -183,19 +183,29 @@
         return !!(state.activeMutation && state.activeMutation.settling);
     }
 
-    function snapshotLayoutData(data) {
-        if (!data || typeof data !== 'object'
-                || stringValue(data.response).toLowerCase() !== 'unknown') {
+    function snapshotLayoutData(snapshot) {
+        var data = snapshot ? snapshot.reasonData : null;
+        if (!data || typeof data !== 'object') {
             return data;
         }
         var layoutData = {};
         Object.keys(data).forEach(function (name) {
             layoutData[name] = data[name];
         });
-        // WHO KNOWS may retain internal values/solutions while hypotheses are
-        // being published. They are not operator-visible query results.
-        layoutData.results = 0;
-        layoutData.solutions = 0;
+        if (stringValue(data.response).toLowerCase() === 'unknown') {
+            // WHO KNOWS may retain internal values/solutions while hypotheses
+            // are being published. They are not operator-visible query results.
+            layoutData.results = 0;
+            layoutData.solutions = 0;
+        }
+        // Hypothesis visibility belongs to the completed semantic snapshot,
+        // not to the earlier main response. The server may report WHO KNOWS
+        // before hypothesis publication has finished, while showHypothesis()
+        // blocks until the final list is available. At layout time staging has
+        // already been committed, so count the live committed snapshot DOM.
+        var hypothesis = originalGetElementById('query-hypothesis');
+        layoutData.hypothesis = hypothesis && hypothesis.childNodes
+                ? hypothesis.childNodes.length : 0;
         return layoutData;
     }
 
@@ -244,7 +254,7 @@
                 // that read into this snapshot so BUSY survives through the
                 // final panel-visibility/layout callback as well.
                 original.placeElements(
-                        snapshotLayoutData(snapshot.reasonData) || undefined);
+                        snapshotLayoutData(snapshot) || undefined);
             } finally {
                 state.snapshotCapture = previousCapture;
             }

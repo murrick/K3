@@ -211,7 +211,7 @@ async function main() {
         response: 'unknown',
         results: 2,
         solutions: 1,
-        hypothesis: 1,
+        hypothesis: 0,
         description: 'first'
     });
     assert.strictEqual(firstResult.client_operation_id, 1);
@@ -268,15 +268,19 @@ async function main() {
     assert.strictEqual(window.layoutFunctionCount, 1);
     assert.strictEqual(window.lastLayoutData.results, 0);
     assert.strictEqual(window.lastLayoutData.solutions, 0);
-    assert.strictEqual(window.lastLayoutData.hypothesis, 1);
+    assert.strictEqual(window.lastLayoutData.hypothesis, 1,
+            'final hypothesis snapshot did not activate its panel');
     assert.strictEqual(firstResult.results, 2,
             'WHO KNOWS presentation mutated canonical response');
     assert.strictEqual(firstResult.solutions, 1,
             'WHO KNOWS presentation mutated canonical response');
+    assert.strictEqual(firstResult.hypothesis, 0,
+            'snapshot panel activation mutated canonical response');
     console.log('OPERATION_PROTOCOL_PASS one-mutation-in-flight');
     console.log('OPERATION_PROTOCOL_PASS busy-through-snapshot-settlement');
     console.log('OPERATION_PROTOCOL_PASS busy-through-layout-settlement');
     console.log('OPERATION_PROTOCOL_PASS busy-owner-ignores-legacy-drop');
+    console.log('OPERATION_PROTOCOL_PASS hypothesis-panel-from-snapshot');
     console.log('OPERATION_PROTOCOL_PASS unknown-panel-suppression');
     console.log('OPERATION_PROTOCOL_PASS coherent-snapshot-barrier');
 

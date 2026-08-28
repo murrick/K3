@@ -164,19 +164,8 @@
                                                 div.style.color = color;
                                             }
                                         } else {
-                                            logRequest("// KANGER session started at " + new Date(), function(){
-                                                logRequest("help", function(){
-                                                    command("help", function(){
-                                                        logRequest("use", function(){
-                                                            command("use", function(){
-                                                                logRequest("get", function(){
-                                                                    command("get");
-                                                                });
-                                                            });
-                                                        });
-                                                    });
-                                                });
-                                            });
+                                            logRequest("// KANGER session started at " + new Date());
+                                            logRequest('// Use "help" for command syntax');
                                         }
 
                                         showTransactionLevel(data);
@@ -701,7 +690,7 @@
             post({
                 context: "command",
                 parameters: {
-                    token: window.token,
+                    token : window.token,
                     used: ""
                 }
             }, function(data){
