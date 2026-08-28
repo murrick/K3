@@ -270,7 +270,35 @@
         }
     }
 
+    function isHypothesisSnapshotPacket(packet) {
+        var parameters = requestParameters(packet);
+        return !!packet && packet.context === 'query'
+                && hasOwn(parameters, 'hypothesis');
+    }
+
+    function requiresHypothesisSettlement(snapshot) {
+        return !!snapshot && snapshot.reasonData
+                && stringValue(snapshot.reasonData.response).toLowerCase()
+                === 'unknown';
+    }
+
+    function flushDeferredSnapshotPosts(snapshot) {
+        var deferred = snapshot.deferredPosts || [];
+        snapshot.deferredPosts = [];
+        for (var i = 0; i < deferred.length; i++) {
+            snapshotPost(snapshot, deferred[i].packet, deferred[i].callback);
+        }
+    }
+
     function snapshotPost(snapshot, packet, callback) {
+        var hypothesisPacket = isHypothesisSnapshotPacket(packet);
+        if (requiresHypothesisSettlement(snapshot)
+                && !snapshot.hypothesisSettled && !hypothesisPacket) {
+            snapshot.deferredPosts = snapshot.deferredPosts || [];
+            snapshot.deferredPosts.push({packet: packet, callback: callback});
+            return undefined;
+        }
+
         snapshot.pending += 1;
         var completed = false;
         function complete(data) {
@@ -284,6 +312,15 @@
                     client_snapshot_id: snapshot.id
                 });
                 callback(data);
+            }
+            if (hypothesisPacket && requiresHypothesisSettlement(snapshot)
+                    && !snapshot.hypothesisSettled) {
+                // The server hypothesis endpoint synchronously performs
+                // optimizeHypothesis() and only then returns the final list.
+                // Do not launch the remaining snapshot reads until that
+                // authoritative query phase has completed.
+                snapshot.hypothesisSettled = true;
+                flushDeferredSnapshotPosts(snapshot);
             }
             snapshot.pending -= 1;
             maybeCommitSnapshot(snapshot);
