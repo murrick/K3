@@ -104,6 +104,9 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 result = reindexStorage(request.parameters, user);
             } else if ("use".equals(operation)) {
                 result = useStorage(request.parameters, user);
+            } else if ("erase".equals(operation)) {
+                prepareCanonicalErase(user);
+                return delegate.run(packet);
             } else {
                 JSONObject blocked = requireRootTransaction(user, operation);
                 if (blocked != null) {
@@ -149,6 +152,9 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
                 && !request.parameters.optString("use", "").isEmpty()) {
             return "use";
         }
+        if (request.parameters.has("erase") && !request.parameters.isNull("erase")) {
+            return "erase";
+        }
         if (request.parameters.has("close") && !request.parameters.isNull("close")) {
             return "close";
         }
@@ -173,6 +179,14 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
             return error("compile_apply_failed", replacement.getDescription());
         }
         return ok(replacement.getDescription());
+    }
+
+    private void prepareCanonicalErase(IUser user) throws Exception {
+        IMind mind = user.getCurrentMind();
+        if (mind instanceof Mind) {
+            Mind root = UserTransactionStackSnapshot.rollbackToRoot((Mind) mind);
+            user.setCurrentMind(root);
+        }
     }
 
     private CompileProbe validateReplacement(String source) throws Exception {
