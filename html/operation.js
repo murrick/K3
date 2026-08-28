@@ -380,6 +380,17 @@
         }, 0);
     }
 
+    function clearPublishedHypothesis() {
+        if (typeof originalGetElementById !== 'function') {
+            return;
+        }
+        clearElement(originalGetElementById('query-hypothesis'));
+        var container = originalGetElementById('container-hypothesis');
+        if (container && container.style) {
+            container.style.display = 'none';
+        }
+    }
+
     function finishMutation(operation, data, callback) {
         if (!state.activeMutation
                 || state.activeMutation.id !== operation.id) {
@@ -394,6 +405,12 @@
             client_operation_id: operation.id,
             client_generation: state.generation
         });
+        // A completed query invalidates the previous completed-hypothesis
+        // projection immediately. The following semantic snapshot performs the
+        // expensive optimizeHypothesis read and republishes only the new list.
+        if (data && typeof data === 'object' && hasOwn(data, 'response')) {
+            clearPublishedHypothesis();
+        }
         try {
             if (typeof callback === 'function') {
                 callback(data);
