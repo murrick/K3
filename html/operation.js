@@ -515,7 +515,23 @@
             }
         };
         window.logResponse = function (data, presentation, callback) {
-            original.logResponse(data, presentation);
+            // Trusted response rendering calls window.placeElements(data)
+            // synchronously. During an active mutation that main-response
+            // layout is pre-snapshot and can race the final committed layout.
+            // Suppress only that legacy launch; the settled snapshot owns the
+            // authoritative panel visibility and performs its own layout.
+            var suppressLayout = !!state.activeMutation;
+            var savedPlaceElements = window.placeElements;
+            if (suppressLayout) {
+                window.placeElements = function () {};
+            }
+            try {
+                original.logResponse(data, presentation);
+            } finally {
+                if (suppressLayout) {
+                    window.placeElements = savedPlaceElements;
+                }
+            }
             if (typeof callback === 'function') {
                 callback(data);
             }
