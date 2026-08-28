@@ -21,12 +21,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Production-shaped regression for the erase -> workspace projection seam.
+ * Production-shaped regression for erase settlement followed by the Browser's
+ * automatic semantic snapshot reads.
  */
 class EraseWorkspaceProjectionBoundaryTest {
 
     @Test
-    void eraseKeepsOpenStorageProjectableAfterSettlement() throws Exception {
+    void eraseKeepsOpenStorageAndBrowserSnapshotReadable() throws Exception {
         String identity = "erase-workspace-" + UUID.randomUUID();
         IUser user = UserFactory.createUser(identity, identity);
         String token = null;
@@ -69,6 +70,23 @@ class EraseWorkspaceProjectionBoundaryTest {
             assertEquals("", SourceContextMaterializer.materializeCurrentLevel(
                     user.getCurrentMind()),
                     "Erase left source-representable state behind");
+
+            // operation.js immediately asks for these six projections after a
+            // mutation. A failure here is rendered by the Browser immediately
+            // after "erase" and is therefore easily mistaken for erase itself.
+            assertSnapshotRead(reactor, token, new JSONObject()
+                    .put("predicates", "")
+                    .put("statements", true), "statements");
+            assertSnapshotRead(reactor, token, new JSONObject()
+                    .put("functions", ""), "functions");
+            assertSnapshotRead(reactor, token, new JSONObject()
+                    .put("results", ""), "results");
+            assertSnapshotRead(reactor, token, new JSONObject()
+                    .put("solutions", ""), "solutions");
+            assertSnapshotRead(reactor, token, new JSONObject()
+                    .put("hypothesis", ""), "hypothesis");
+            assertSnapshotRead(reactor, token, new JSONObject()
+                    .put("log", ""), "log");
         } finally {
             try {
                 IMind mind = user.getCurrentMind();
@@ -82,6 +100,18 @@ class EraseWorkspaceProjectionBoundaryTest {
                 UserFactory.dropUser(user);
             }
         }
+    }
+
+    private static void assertSnapshotRead(IReactor<JSONObject> reactor,
+                                           String token,
+                                           JSONObject parameters,
+                                           String name) throws Exception {
+        parameters.put("token", token);
+        JSONObject response = invoke(reactor, "query", parameters);
+        assertEquals("OK", response.optString("result"),
+                name + " snapshot read failed: " + response);
+        assertTrue(response.has("workspace"),
+                name + " snapshot read lost workspace projection: " + response);
     }
 
     private static JSONObject invoke(IReactor<JSONObject> reactor,
