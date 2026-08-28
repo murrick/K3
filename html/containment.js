@@ -19,7 +19,8 @@
     var CONTAINMENT_CHANNEL = 'kanger.containment.v1';
     var LAYOUT_PREFIX = 'kanger.console.layout.';
     var SESSION_SENTINEL = '__KANGER_PARENT_SESSION__';
-    var REQUEST_TIMEOUT_MS = 20000;
+    // The Browser broker must outlive the public nginx 120s response budget.
+    var REQUEST_TIMEOUT_MS = 125000;
     var MAX_REQUEST_BYTES = 262144;
     var MAX_INFLIGHT = 32;
     var installed = false;
