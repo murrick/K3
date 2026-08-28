@@ -84,6 +84,8 @@ class ConfirmedEraseDialogueBoundaryTest {
                     .getJSONObject("transaction").getBoolean("empty"));
             assertEquals(0, user.getCurrentMind().getTransactionLevel(),
                     "Confirmed dialogue erase left an explicit transaction active");
+            assertFalse(((Mind) user.getCurrentMind()).hasPendingTransactions(),
+                    "Confirmed dialogue erase left a hidden transaction reservation");
             assertEquals("", SourceContextMaterializer.materializeCurrentLevel(
                     user.getCurrentMind()),
                     "Confirmed dialogue erase left source-representable state behind");
