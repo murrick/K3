@@ -22,12 +22,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Regression for the Browser's raw canonical dialogue confirmation path around
- * erase. Core/stop-loss semantics are deliberately left unchanged.
+ * erase. Confirmed erase follows the Console contract and clears the complete
+ * workspace even when an explicit transaction is active.
  */
 class ConfirmedEraseDialogueBoundaryTest {
 
     @Test
-    void confirmedDialogueEraseSettlesThroughCanonicalIngress() throws Exception {
+    void confirmedDialogueEraseClearsActiveTransactionThroughCanonicalIngress()
+            throws Exception {
         String identity = "erase-dialogue-" + UUID.randomUUID();
         IUser user = UserFactory.createUser(identity, identity);
         String token = null;
@@ -57,6 +59,11 @@ class ConfirmedEraseDialogueBoundaryTest {
                     user.getCurrentMind()).isEmpty(),
                     "Erase dialogue fixture did not publish source into U0");
 
+            JSONObject transaction = query(lower, token, "transaction", "create");
+            assertEquals("OK", transaction.optString("result"), transaction.toString());
+            assertEquals(1, user.getCurrentMind().getTransactionLevel(),
+                    "Erase dialogue fixture did not enter U1");
+
             JSONObject prompt = dialogue(reactor, token, "erase", false);
             assertEquals("confirmation_required", prompt.optString("result"),
                     prompt.toString());
@@ -75,6 +82,8 @@ class ConfirmedEraseDialogueBoundaryTest {
                     .getJSONObject("transaction").getInt("level"));
             assertTrue(erase.getJSONObject("workspace")
                     .getJSONObject("transaction").getBoolean("empty"));
+            assertEquals(0, user.getCurrentMind().getTransactionLevel(),
+                    "Confirmed dialogue erase left an explicit transaction active");
             assertEquals("", SourceContextMaterializer.materializeCurrentLevel(
                     user.getCurrentMind()),
                     "Confirmed dialogue erase left source-representable state behind");
