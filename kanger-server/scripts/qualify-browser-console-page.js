@@ -124,7 +124,9 @@ jQuery.fn = {
     ready(callback) {
         readyCallbacks.push(callback);
         return this;
-    }
+    },
+    width() { return 800; },
+    height() { return 600; }
 };
 
 const requests = [];
@@ -159,7 +161,7 @@ const window = {
     jQuery,
     $: jQuery,
     token: '',
-    editor: {},
+    editor: {setSize() {}},
     event: null,
     setTimeout: immediate,
     clearTimeout() {},
@@ -169,7 +171,7 @@ const window = {
     alert() {},
     btoa(value) { return Buffer.from(String(value), 'binary').toString('base64'); },
     atob(value) { return Buffer.from(String(value), 'base64').toString('binary'); },
-    CodeMirror: {fromTextArea() { return {}; }},
+    CodeMirror: {fromTextArea() { return {setSize() {}}; }},
     post(packet, callback) {
         requests.push(packet);
         if (typeof callback === 'function') callback({result: 'OK'});
@@ -266,6 +268,8 @@ assert.strictEqual(dialoguePackets.length, directBefore + 1,
     + JSON.stringify(window.KANGER_OPERATION_PROTOCOL.snapshot()));
 assert.strictEqual(dialoguePackets[dialoguePackets.length - 1].parameters.line,
     'direct-probe', 'qualified command boundary rewrote operator dialogue');
+assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 0,
+    'real-page fixture did not settle direct probe before next Enter');
 
 function enter(line) {
     const input = element('query-input');
@@ -282,6 +286,8 @@ function enter(line) {
     assert.strictEqual(packet.context, 'dialogue');
     assert.strictEqual(packet.parameters.line, line,
         'real page rewrote operator dialogue');
+    assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 0,
+        'real-page fixture did not settle ' + line + ' before next Enter');
 }
 
 enter('squash');
@@ -295,5 +301,6 @@ assert(!dialoguePackets.some(packet => packet.context !== 'dialogue'),
 
 console.log('BROWSER_CONSOLE_PAGE_PASS full-ready-ownership');
 console.log('BROWSER_CONSOLE_PAGE_PASS real-check-enter');
+console.log('BROWSER_CONSOLE_PAGE_PASS settling-fixture-layout');
 console.log('BROWSER_CONSOLE_PAGE_PASS squash-and-ambiguity-raw');
 console.log('BROWSER_CONSOLE_PAGE_OK');

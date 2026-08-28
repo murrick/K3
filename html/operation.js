@@ -199,6 +199,12 @@
         return layoutData;
     }
 
+    function dropOwnedQueryStatus() {
+        if (typeof original.dropQueryStatus === 'function') {
+            original.dropQueryStatus();
+        }
+    }
+
     function releaseSettledMutation(snapshot) {
         var operation = state.activeMutation;
         if (!operation || !operation.settling
@@ -206,9 +212,7 @@
             return;
         }
         state.activeMutation = null;
-        if (typeof window.dropQueryStatus === 'function') {
-            window.dropQueryStatus();
-        }
+        dropOwnedQueryStatus();
     }
 
     function moveChildren(from, to) {
@@ -405,9 +409,7 @@
                 operation.id,
                 0);
         data.client_generation = state.generation;
-        if (typeof window.dropQueryStatus === 'function') {
-            window.dropQueryStatus();
-        }
+        dropOwnedQueryStatus();
         if (typeof callback === 'function') {
             callback(data);
         }
@@ -510,6 +512,15 @@
         };
     }
 
+    function installStatusBoundary() {
+        window.dropQueryStatus = function () {
+            if (state.activeMutation) {
+                return;
+            }
+            dropOwnedQueryStatus();
+        };
+    }
+
     function installSnapshotBoundary() {
         for (var i = 0; i < SNAPSHOT_RENDERERS.length; i++) {
             (function (name) {
@@ -553,6 +564,7 @@
         original.logRequest = window.logRequest;
         original.logResponse = window.logResponse;
         original.placeElements = window.placeElements;
+        original.dropQueryStatus = window.dropQueryStatus;
         for (var i = 0; i < SNAPSHOT_RENDERERS.length; i++) {
             original[SNAPSHOT_RENDERERS[i]] =
                     window[SNAPSHOT_RENDERERS[i]];
@@ -560,6 +572,7 @@
 
         installPostBoundary();
         installHistorySeparation();
+        installStatusBoundary();
         installSnapshotBoundary();
         window.KANGER_OPERATION_PROTOCOL = Object.freeze({
             version: 1,
