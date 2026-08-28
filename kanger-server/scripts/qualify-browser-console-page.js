@@ -149,7 +149,10 @@ jQuery.post = function (url, encoded, callback) {
 let timerId = 0;
 function immediate(callback, delay) {
     const id = ++timerId;
-    if (!delay) callback();
+    if (!delay) {
+        callback();
+        return 0;
+    }
     return id;
 }
 function interval() { return ++timerId; }
