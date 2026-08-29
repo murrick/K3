@@ -21,6 +21,7 @@
     var base = {};
     var suppressEditorChange = false;
     var compilePending = false;
+    var preserveEditorAfterCompileReject = false;
     var nextSaveRequestId = 1000000;
     var pendingSave = Object.create(null);
     var state = {
@@ -158,6 +159,16 @@
         return result;
     }
 
+    function openConsole() {
+        if (preserveEditorAfterCompileReject) {
+            preserveEditorAfterCompileReject = false;
+            renderState();
+            focusEditor();
+            return;
+        }
+        return base.openConsole.apply(window, arguments);
+    }
+
     function fetchSemanticContext() {
         if (typeof window.logRequest === 'function') {
             window.logRequest('// Source Code', function () {
@@ -204,6 +215,7 @@
 
     function compileSource() {
         compilePending = true;
+        preserveEditorAfterCompileReject = false;
         return base.compileSource.apply(window, arguments);
     }
 
@@ -215,6 +227,7 @@
                 state.mode = 'CONTEXT';
                 state.dirty = false;
                 state.baselineText = editorText();
+                preserveEditorAfterCompileReject = false;
                 setStatus('', false);
                 renderState();
             } else {
@@ -222,6 +235,7 @@
                     state.mode = 'EDITED';
                 }
                 state.dirty = true;
+                preserveEditorAfterCompileReject = true;
                 setStatus(compileDiagnostic(data), true);
                 renderState();
             }
@@ -347,6 +361,7 @@
                 || !window.KANGER_EDITOR_FILE_ADAPTER
                 || !window.KANGER_BROWSER_SOAK_CONVERGENCE
                 || typeof window.openEditor !== 'function'
+                || typeof window.openConsole !== 'function'
                 || typeof window.showSourceEditor !== 'function'
                 || typeof window.showFunctionEditor !== 'function'
                 || typeof window.compileSource !== 'function'
@@ -361,12 +376,14 @@
 
         installed = true;
         base.openEditor = window.openEditor;
+        base.openConsole = window.openConsole;
         base.showSourceEditor = window.showSourceEditor;
         base.showFunctionEditor = window.showFunctionEditor;
         base.compileSource = window.compileSource;
         base.refreshScreen = window.refreshScreen;
 
         window.openEditor = openEditor;
+        window.openConsole = openConsole;
         window.showSourceEditor = showSourceEditor;
         window.showFunctionEditor = showFunctionEditor;
         window.compileSource = compileSource;
