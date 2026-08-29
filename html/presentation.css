@@ -374,7 +374,7 @@ body.kanger-presentation .kanger-row-action {
 /* Keep the historical ':' prompt but let layout, rather than fixed positioning,
  * center it vertically with the editor line. */
 body.kanger-presentation #console-input {
-    display: flex !important;
+    display: flex;
     align-items: center;
     position: relative;
 }
