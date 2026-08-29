@@ -81,7 +81,9 @@ async function main() {
         'query-hypothesis', 'query-log'
     ];
     const elements = {};
-    targetIds.concat(['query-input', 'query-message']).forEach((id) => {
+    targetIds.concat([
+        'query-input', 'query-message', 'container-solutions'
+    ]).forEach((id) => {
         const element = new FakeNode(1, 'DIV');
         element.id = id;
         element.textContent = targetIds.includes(id) ? 'baseline-' + id : '';
@@ -224,6 +226,10 @@ async function main() {
     assert.strictEqual(window.status, 'Operation #1: request');
     assert.strictEqual(elements['query-hypothesis'].textContent, '',
             'completed query left the previous hypothesis projection published');
+    assert.strictEqual(elements['query-solutions'].textContent, '',
+            'WHO KNOWS left the previous Solutions projection published');
+    assert.strictEqual(elements['container-solutions'].style.display, 'none',
+            'WHO KNOWS left the Solutions panel visible before hypothesis settlement');
     await settle(2);
 
     const hypothesisPhase = snapshotReads(transport).slice();
@@ -258,14 +264,16 @@ async function main() {
     }
     targetIds.filter((id) => id !== 'query-hypothesis').forEach((id) =>
         assert.strictEqual(elements[id].textContent,
-                'baseline-' + id, 'partial snapshot leaked into live DOM'));
+                id === 'query-solutions' ? '' : 'baseline-' + id,
+                'partial snapshot leaked into live DOM'));
     assert.strictEqual(elements['query-hypothesis'].textContent, '',
             'hypothesis phase leaked into live DOM before snapshot commit');
     assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 1);
 
     transport.resolve(firstSnapshot[4], {result: 'OK', value: firstValues[4]});
     targetIds.forEach((id, index) => assert.strictEqual(
-            elements[id].textContent, 'first-' + index));
+            elements[id].textContent,
+            id === 'query-solutions' ? '' : 'first-' + index));
     assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 1,
             'semantic snapshot released BUSY before layout settlement');
     assert.strictEqual(window.status, 'Operation #1: request',
@@ -307,6 +315,7 @@ async function main() {
     console.log('OPERATION_PROTOCOL_PASS busy-owner-ignores-legacy-drop');
     console.log('OPERATION_PROTOCOL_PASS stale-layout-suppression');
     console.log('OPERATION_PROTOCOL_PASS stale-hypothesis-projection-clear');
+    console.log('OPERATION_PROTOCOL_PASS who-knows-solutions-projection-clear');
     console.log('OPERATION_PROTOCOL_PASS hypothesis-panel-from-snapshot');
     console.log('OPERATION_PROTOCOL_PASS unknown-panel-suppression');
     console.log('OPERATION_PROTOCOL_PASS coherent-snapshot-barrier');
@@ -330,7 +339,8 @@ async function main() {
         transport.resolve(secondSnapshot[i], {result: 'OK', value: 'fresh-' + i});
     }
     targetIds.forEach((id, index) => assert.strictEqual(
-            elements[id].textContent, 'first-' + index,
+            elements[id].textContent,
+            id === 'query-solutions' ? '' : 'first-' + index,
             'partial second snapshot leaked into live DOM'));
     transport.resolve(secondSnapshot[5], {result: 'OK', value: 'fresh-5'});
     targetIds.forEach((id, index) => assert.strictEqual(

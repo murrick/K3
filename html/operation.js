@@ -60,6 +60,11 @@
         return !!object && Object.prototype.hasOwnProperty.call(object, name);
     }
 
+    function isWhoKnows(data) {
+        return !!data && typeof data === 'object'
+                && stringValue(data.response).toLowerCase() === 'unknown';
+    }
+
     function clearElement(element) {
         if (!element) {
             return;
@@ -192,7 +197,7 @@
         Object.keys(data).forEach(function (name) {
             layoutData[name] = data[name];
         });
-        if (stringValue(data.response).toLowerCase() === 'unknown') {
+        if (isWhoKnows(data)) {
             // WHO KNOWS may retain internal values/solutions while hypotheses
             // are being published. They are not operator-visible query results.
             layoutData.results = 0;
@@ -238,6 +243,13 @@
             return;
         }
         if (!snapshot.domCommitted) {
+            // WHO KNOWS owns no operator-visible Solutions projection. The
+            // server may retain internal solution candidates while hypothesis
+            // optimization settles, but those candidates must not be
+            // republished by the coherent snapshot.
+            if (isWhoKnows(snapshot.reasonData)) {
+                clearElement(snapshot.staging['query-solutions']);
+            }
             for (var i = 0; i < SNAPSHOT_TARGET_IDS.length; i++) {
                 var id = SNAPSHOT_TARGET_IDS[i];
                 moveChildren(snapshot.staging[id], originalGetElementById(id));
@@ -277,9 +289,7 @@
     }
 
     function requiresHypothesisSettlement(snapshot) {
-        return !!snapshot && snapshot.reasonData
-                && stringValue(snapshot.reasonData.response).toLowerCase()
-                === 'unknown';
+        return !!snapshot && isWhoKnows(snapshot.reasonData);
     }
 
     function flushDeferredSnapshotPosts(snapshot) {
@@ -428,6 +438,17 @@
         }
     }
 
+    function clearPublishedSolutions() {
+        if (typeof originalGetElementById !== 'function') {
+            return;
+        }
+        clearElement(originalGetElementById('query-solutions'));
+        var container = originalGetElementById('container-solutions');
+        if (container && container.style) {
+            container.style.display = 'none';
+        }
+    }
+
     function finishMutation(operation, data, callback) {
         if (!state.activeMutation
                 || state.activeMutation.id !== operation.id) {
@@ -443,10 +464,14 @@
             client_generation: state.generation
         });
         // A completed query invalidates the previous completed-hypothesis
-        // projection immediately. The following semantic snapshot performs the
-        // expensive optimizeHypothesis read and republishes only the new list.
+        // projection immediately. WHO KNOWS also owns no operator-visible
+        // Solutions projection, regardless of whether optimization later
+        // produces any hypotheses.
         if (data && typeof data === 'object' && hasOwn(data, 'response')) {
             clearPublishedHypothesis();
+            if (isWhoKnows(data)) {
+                clearPublishedSolutions();
+            }
         }
         try {
             if (typeof callback === 'function') {
