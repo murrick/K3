@@ -80,21 +80,63 @@ public class RootCompileSourceBoundaryTest {
             assertEquals(0, failed.getJSONObject("workspace")
                     .getJSONObject("transaction").getInt("level"));
 
-            CanonicalCommandRuntimeReactor runtime =
-                    new CanonicalCommandRuntimeReactor(new QueryProcessor());
-            JSONObject tree = (JSONObject) runtime.run(canonicalCommand(
-                    token, "base tree " + statementId));
-
-            assertEquals("OK", tree.getString("result"), tree.toString());
-            assertEquals(1, tree.getInt("size"));
-            assertEquals(statementId,
-                    tree.getJSONArray("list").getJSONObject(0).getLong("id"));
-            assertSame(root, user.getCurrentMind());
+            assertBaseTreeStillWorks(root, token, statementId);
         } finally {
             if (token != null) {
                 UserFactory.dropUser(user);
             }
         }
+    }
+
+    @Test
+    public void rejectedRootCompileDoesNotPoisonCanonicalBaseTree()
+            throws Exception {
+        String id = "root-compile-rejection-" + UUID.randomUUID().toString();
+        IUser user = UserFactory.createUser(id, id);
+        String token = null;
+        try {
+            new UDF().init(user);
+            Mind root = new Mind(user);
+            assertTrue(Boolean.TRUE.equals(root.query("!anchor;")));
+            user.setCurrentMind(root);
+            token = UserFactory.addUser(user);
+
+            long statementId = firstStoredRuleId(root);
+            String before = SourceContextMaterializer.materializeCurrentLevel(root);
+
+            IReactor<JSONObject> compile = new CanonicalErrorBoundaryReactor(
+                    new WorkspaceStateReactor(
+                            new CompileSourceBoundaryReactor(new QueryProcessor())));
+            JSONObject failed = invoke(compile, token,
+                    "!collision;!~collision;");
+
+            assertEquals("error", failed.getString("result"), failed.toString());
+            assertSame(root, user.getCurrentMind());
+            assertEquals(before,
+                    SourceContextMaterializer.materializeCurrentLevel(root));
+            assertEquals(0, failed.getJSONObject("workspace")
+                    .getJSONObject("transaction").getInt("level"));
+
+            assertBaseTreeStillWorks(root, token, statementId);
+        } finally {
+            if (token != null) {
+                UserFactory.dropUser(user);
+            }
+        }
+    }
+
+    private void assertBaseTreeStillWorks(Mind root, String token, long statementId)
+            throws Exception {
+        CanonicalCommandRuntimeReactor runtime =
+                new CanonicalCommandRuntimeReactor(new QueryProcessor());
+        JSONObject tree = (JSONObject) runtime.run(canonicalCommand(
+                token, "base tree " + statementId));
+
+        assertEquals("OK", tree.getString("result"), tree.toString());
+        assertEquals(1, tree.getInt("size"));
+        assertEquals(statementId,
+                tree.getJSONArray("list").getJSONObject(0).getLong("id"));
+        assertSame(root, UserFactory.getUser(token).getCurrentMind());
     }
 
     private long firstStoredRuleId(Mind mind) throws Exception {
