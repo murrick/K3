@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="kanger-data-dumb:jar">
-    <output-path>$PROJECT_DIR$/out/artifacts/dist/modules</output-path>
-    <root id="archive" name="kanger-data-dumb.jar">
-      <element id="module-output" name="kanger-data-dumb" />
-    </root>
-  </artifact>
-</component>
