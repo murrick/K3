@@ -21,6 +21,7 @@
     var base = {};
     var suppressEditorChange = false;
     var compilePending = false;
+    var preserveEditorAfterCompileReject = false;
     var nextSaveRequestId = 1000000;
     var pendingSave = Object.create(null);
     var state = {
@@ -78,6 +79,17 @@
         status.title = text;
         status.style.display = text ? '' : 'none';
         status.style.color = error ? '#ffd0d0' : '#d8e2e8';
+    }
+
+    function compileDiagnostic(data) {
+        var boundary = window.KANGER_ERROR_BOUNDARY;
+        if (boundary && typeof boundary.describe === 'function') {
+            return stringValue(boundary.describe(data));
+        }
+        if (!data) {
+            return 'Compile rejected';
+        }
+        return stringValue(data.description || data.code || 'Compile rejected');
     }
 
     function renderState() {
@@ -147,6 +159,16 @@
         return result;
     }
 
+    function openConsole() {
+        if (preserveEditorAfterCompileReject) {
+            preserveEditorAfterCompileReject = false;
+            renderState();
+            focusEditor();
+            return;
+        }
+        return base.openConsole.apply(window, arguments);
+    }
+
     function fetchSemanticContext() {
         if (typeof window.logRequest === 'function') {
             window.logRequest('// Source Code', function () {
@@ -193,6 +215,7 @@
 
     function compileSource() {
         compilePending = true;
+        preserveEditorAfterCompileReject = false;
         return base.compileSource.apply(window, arguments);
     }
 
@@ -204,12 +227,16 @@
                 state.mode = 'CONTEXT';
                 state.dirty = false;
                 state.baselineText = editorText();
+                preserveEditorAfterCompileReject = false;
+                setStatus('', false);
                 renderState();
             } else {
                 if (state.mode !== 'RECOVERY') {
                     state.mode = 'EDITED';
                 }
                 state.dirty = true;
+                preserveEditorAfterCompileReject = true;
+                setStatus(compileDiagnostic(data), true);
                 renderState();
             }
         }
@@ -334,6 +361,7 @@
                 || !window.KANGER_EDITOR_FILE_ADAPTER
                 || !window.KANGER_BROWSER_SOAK_CONVERGENCE
                 || typeof window.openEditor !== 'function'
+                || typeof window.openConsole !== 'function'
                 || typeof window.showSourceEditor !== 'function'
                 || typeof window.showFunctionEditor !== 'function'
                 || typeof window.compileSource !== 'function'
@@ -348,12 +376,14 @@
 
         installed = true;
         base.openEditor = window.openEditor;
+        base.openConsole = window.openConsole;
         base.showSourceEditor = window.showSourceEditor;
         base.showFunctionEditor = window.showFunctionEditor;
         base.compileSource = window.compileSource;
         base.refreshScreen = window.refreshScreen;
 
         window.openEditor = openEditor;
+        window.openConsole = openConsole;
         window.showSourceEditor = showSourceEditor;
         window.showFunctionEditor = showFunctionEditor;
         window.compileSource = compileSource;

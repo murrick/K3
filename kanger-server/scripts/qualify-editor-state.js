@@ -61,6 +61,7 @@ function main() {
     let sourceResponse = {result: 'OK', source: '!fresh;', workspace: {schema: 2}};
     let compileCalls = 0;
     let refreshCalls = 0;
+    let consoleOpenCalls = 0;
     const parentMessages = [];
     const parent = {
         postMessage(message) { parentMessages.push(message); }
@@ -84,6 +85,11 @@ function main() {
             editorContainer.style.display = '';
             if (text !== null && text !== undefined) editor.setValue(text);
             title.textContent = 'Editor';
+        },
+        openConsole() {
+            consoleOpenCalls += 1;
+            editorContainer.style.display = 'none';
+            title.textContent = 'Console';
         },
         showSourceEditor() {
             throw new Error('legacy source navigation must be superseded');
@@ -159,6 +165,8 @@ function main() {
     assert.strictEqual(snap.mode, 'CONTEXT');
     assert.strictEqual(snap.dirty, false);
     assert.strictEqual(title.textContent, 'Editor');
+    assert.strictEqual(consoleOpenCalls, 0,
+            'editor state fixture unexpectedly opened Console');
     console.log('EDITOR_STATE_PASS compile-apply-clears-dirty');
 
     const beforeCleanNavigation = postCount;

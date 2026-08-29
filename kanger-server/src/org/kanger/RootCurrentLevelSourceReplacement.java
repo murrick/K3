@@ -73,12 +73,7 @@ final class RootCurrentLevelSourceReplacement {
             work.getComments().add(rule.getId(), "");
         }
         for (Rule rule : rules) {
-            String origin = rule.getOrigin();
-            if (origin == null || origin.length() < 2) {
-                throw new IllegalStateException(
-                        "Cannot derive source removal for Rule " + rule.getId());
-            }
-            work.query("-" + origin.substring(1));
+            rule.setDeleted(true, work);
             if (!rule.isDeleted(work)) {
                 throw new IllegalStateException(
                         "Cannot hide current root Rule " + rule.getId());
