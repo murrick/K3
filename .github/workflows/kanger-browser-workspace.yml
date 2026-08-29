@@ -18,6 +18,7 @@ on:
       - "kanger-server/scripts/qualify-workspace-state.js"
       - "kanger-server/scripts/qualify-editor-state.js"
       - "kanger-server/scripts/qualify-browser-presentation.js"
+      - "kanger-server/scripts/qualify-compile-editor-lifecycle.js"
       - ".github/workflows/kanger-browser-workspace.yml"
   pull_request:
     paths:
@@ -32,6 +33,7 @@ on:
       - "kanger-server/scripts/qualify-workspace-state.js"
       - "kanger-server/scripts/qualify-editor-state.js"
       - "kanger-server/scripts/qualify-browser-presentation.js"
+      - "kanger-server/scripts/qualify-compile-editor-lifecycle.js"
       - ".github/workflows/kanger-browser-workspace.yml"
   workflow_dispatch:
 
@@ -60,6 +62,7 @@ jobs:
           node --check kanger-server/scripts/qualify-workspace-state.js
           node --check kanger-server/scripts/qualify-editor-state.js
           node --check kanger-server/scripts/qualify-browser-presentation.js
+          node --check kanger-server/scripts/qualify-compile-editor-lifecycle.js
           grep -Fq '<script src="workspace.js"></script>' html/console.html
           grep -q 'KANGER_WORKSPACE_STATE' html/workspace.js
           grep -q 'canonicalSourceName' html/workspace.js
@@ -102,6 +105,7 @@ jobs:
         shell: bash
         run: |
           node kanger-server/scripts/qualify-editor-state.js
+          node kanger-server/scripts/qualify-compile-editor-lifecycle.js
 
       - name: Run Browser presentation qualification
         shell: bash
