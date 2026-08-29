@@ -80,6 +80,7 @@ public class RootCompileSourceBoundaryTest {
             assertEquals(0, failed.getJSONObject("workspace")
                     .getJSONObject("transaction").getInt("level"));
 
+            assertSnapshotReadsStillWork(token);
             assertBaseTreeStillWorks(root, token, statementId);
         } finally {
             if (token != null) {
@@ -117,12 +118,48 @@ public class RootCompileSourceBoundaryTest {
             assertEquals(0, failed.getJSONObject("workspace")
                     .getJSONObject("transaction").getInt("level"));
 
+            assertSnapshotReadsStillWork(token);
             assertBaseTreeStillWorks(root, token, statementId);
         } finally {
             if (token != null) {
                 UserFactory.dropUser(user);
             }
         }
+    }
+
+    private void assertSnapshotReadsStillWork(String token) throws Exception {
+        IReactor<JSONObject> reads = new CanonicalErrorBoundaryReactor(
+                new WorkspaceStateReactor(new QueryProcessor()));
+
+        JSONObject statements = queryRead(reads, token,
+                new JSONObject().put("predicates", "").put("statements", true));
+        assertOkList(statements, "statements");
+        assertOkList(queryRead(reads, token,
+                new JSONObject().put("functions", "")), "functions");
+        assertOkList(queryRead(reads, token,
+                new JSONObject().put("results", "")), "results");
+        assertOkList(queryRead(reads, token,
+                new JSONObject().put("solutions", "")), "solutions");
+        assertOkList(queryRead(reads, token,
+                new JSONObject().put("hypothesis", "")), "hypothesis");
+        assertOkList(queryRead(reads, token,
+                new JSONObject().put("log", "")), "log");
+    }
+
+    private void assertOkList(JSONObject data, String projection) {
+        assertEquals("OK", data.getString("result"),
+                projection + ": " + data.toString());
+        assertTrue(data.has("size"), projection + " missing size: " + data);
+        assertTrue(data.has("list"), projection + " missing list: " + data);
+    }
+
+    private JSONObject queryRead(IReactor<JSONObject> reactor, String token,
+            JSONObject parameters) throws Exception {
+        parameters.put("token", token);
+        JSONObject packet = new JSONObject().put("body", new JSONObject()
+                .put("context", "query")
+                .put("parameters", parameters));
+        return (JSONObject) reactor.run(packet);
     }
 
     private void assertBaseTreeStillWorks(Mind root, String token, long statementId)
