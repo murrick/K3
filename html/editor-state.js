@@ -80,6 +80,17 @@
         status.style.color = error ? '#ffd0d0' : '#d8e2e8';
     }
 
+    function compileDiagnostic(data) {
+        var boundary = window.KANGER_ERROR_BOUNDARY;
+        if (boundary && typeof boundary.describe === 'function') {
+            return stringValue(boundary.describe(data));
+        }
+        if (!data) {
+            return 'Compile rejected';
+        }
+        return stringValue(data.description || data.code || 'Compile rejected');
+    }
+
     function renderState() {
         var title = titleNode();
         if (!title || !editorVisible()) {
@@ -204,12 +215,14 @@
                 state.mode = 'CONTEXT';
                 state.dirty = false;
                 state.baselineText = editorText();
+                setStatus('', false);
                 renderState();
             } else {
                 if (state.mode !== 'RECOVERY') {
                     state.mode = 'EDITED';
                 }
                 state.dirty = true;
+                setStatus(compileDiagnostic(data), true);
                 renderState();
             }
         }
