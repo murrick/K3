@@ -2,7 +2,9 @@ package org.kanger;
 
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
+import org.kanger.command.CommandParser;
 import org.kanger.interfaces.IReactor;
+import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.IUser;
 import org.kanger.udf.UDF;
 
@@ -47,6 +49,70 @@ public class RootCompileSourceBoundaryTest {
                 UserFactory.dropUser(user);
             }
         }
+    }
+
+    @Test
+    public void parseFailedRootCompileDoesNotPoisonCanonicalBaseTree()
+            throws Exception {
+        String id = "root-compile-settlement-" + UUID.randomUUID().toString();
+        IUser user = UserFactory.createUser(id, id);
+        String token = null;
+        try {
+            new UDF().init(user);
+            Mind root = new Mind(user);
+            assertTrue(Boolean.TRUE.equals(root.query("!seed;")));
+            user.setCurrentMind(root);
+            token = UserFactory.addUser(user);
+
+            long statementId = firstStoredRuleId(root);
+            String before = SourceContextMaterializer.materializeCurrentLevel(root);
+
+            IReactor<JSONObject> compile = new CanonicalErrorBoundaryReactor(
+                    new WorkspaceStateReactor(
+                            new CompileSourceBoundaryReactor(new QueryProcessor())));
+            JSONObject failed = invoke(compile, token,
+                    "!broken(\"unterminated);");
+
+            assertEquals("error", failed.getString("result"), failed.toString());
+            assertSame(root, user.getCurrentMind());
+            assertEquals(before,
+                    SourceContextMaterializer.materializeCurrentLevel(root));
+            assertEquals(0, failed.getJSONObject("workspace")
+                    .getJSONObject("transaction").getInt("level"));
+
+            CanonicalCommandRuntimeReactor runtime =
+                    new CanonicalCommandRuntimeReactor(new QueryProcessor());
+            JSONObject tree = (JSONObject) runtime.run(canonicalCommand(
+                    token, "base tree " + statementId));
+
+            assertEquals("OK", tree.getString("result"), tree.toString());
+            assertEquals(1, tree.getInt("size"));
+            assertEquals(statementId,
+                    tree.getJSONArray("list").getJSONObject(0).getLong("id"));
+            assertSame(root, user.getCurrentMind());
+        } finally {
+            if (token != null) {
+                UserFactory.dropUser(user);
+            }
+        }
+    }
+
+    private long firstStoredRuleId(Mind mind) throws Exception {
+        for (IRule rule : mind.getRules()) {
+            if (rule.isStored() && !rule.isDeleted(mind)) {
+                return rule.getId();
+            }
+        }
+        throw new AssertionError("No stored rule available for base tree qualification");
+    }
+
+    private JSONObject canonicalCommand(String token, String command) throws Exception {
+        return new JSONObject()
+                .put("body", new JSONObject()
+                        .put("context", CanonicalCommandIngressReactor.CANONICAL_CONTEXT)
+                        .put("parameters", new JSONObject().put("token", token)))
+                .put(CanonicalCommandIngressReactor.INVOCATION_MARKER,
+                        new CommandParser().parse(command));
     }
 
     private JSONObject invoke(IReactor<JSONObject> reactor, String token, String source)
