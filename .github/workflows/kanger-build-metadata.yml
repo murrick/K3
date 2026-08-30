@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'pom.xml'
+      - 'kanger-core/pom.xml'
+      - 'kanger-console/pom.xml'
       - 'build.xml'
       - 'kanger/src/org/kanger/Version.java'
       - '.github/workflows/kanger-build-metadata.yml'
@@ -36,22 +38,28 @@ jobs:
           expected_product_version='3.7.0'
           test -n "$expected_branch"
 
-          mvn --batch-mode --no-transfer-progress -DskipTests clean package
+          mvn --batch-mode --no-transfer-progress \
+            -pl kanger-console -am \
+            -DskipTests clean package
 
-          jar_file="$(find target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
+          jar_file="$(find kanger-console/target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
           test -n "$jar_file"
 
-          unzip -p "$jar_file" org/kanger/build.properties > target/packaged-build.properties
-          grep -Fxq "branch=${expected_branch}" target/packaged-build.properties
+          unzip -p "$jar_file" org/kanger/build.properties \
+            > kanger-console/target/packaged-build.properties
+          grep -Fxq "branch=${expected_branch}" \
+            kanger-console/target/packaged-build.properties
           grep -Eq '^date=[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}:[0-9]{2}:[0-9]{2}$' \
-            target/packaged-build.properties
+            kanger-console/target/packaged-build.properties
 
-          java -jar "$jar_file" --help > target/maven-banner.txt
-          grep -Fq "KANGER III, Version ${expected_product_version}" target/maven-banner.txt
+          java -jar "$jar_file" --help > kanger-console/target/maven-banner.txt
+          grep -Fq "KANGER III, Version ${expected_product_version}" \
+            kanger-console/target/maven-banner.txt
           grep -Fq 'Stabilized and audited in collaboration with ChatGPT.' \
-            target/maven-banner.txt
+            kanger-console/target/maven-banner.txt
 
-          git diff --exit-code -- pom.xml build.xml kanger/src/org/kanger/Version.java
+          git diff --exit-code -- pom.xml kanger-core/pom.xml kanger-console/pom.xml \
+            build.xml kanger/src/org/kanger/Version.java
           test ! -e .build.number
 
       - name: Verify explicit artifact override
@@ -62,15 +70,19 @@ jobs:
           artifact_branch='develop/3.5.0.6'
           expected_product_version='3.7.0'
           mvn --batch-mode --no-transfer-progress \
+            -pl kanger-console -am \
             -DskipTests \
             -Dkanger.build.branch.override="$artifact_branch" \
             clean package
 
-          jar_file="$(find target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
-          unzip -p "$jar_file" org/kanger/build.properties > target/artifact-build.properties
-          grep -Fxq "branch=${artifact_branch}" target/artifact-build.properties
-          java -jar "$jar_file" --help > target/artifact-banner.txt
-          grep -Fq "KANGER III, Version ${expected_product_version}" target/artifact-banner.txt
+          jar_file="$(find kanger-console/target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
+          unzip -p "$jar_file" org/kanger/build.properties \
+            > kanger-console/target/artifact-build.properties
+          grep -Fxq "branch=${artifact_branch}" \
+            kanger-console/target/artifact-build.properties
+          java -jar "$jar_file" --help > kanger-console/target/artifact-banner.txt
+          grep -Fq "KANGER III, Version ${expected_product_version}" \
+            kanger-console/target/artifact-banner.txt
 
       - name: Install Ant
         shell: bash
@@ -108,4 +120,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mvn --batch-mode --no-transfer-progress -DskipTests compile
+          mvn --batch-mode --no-transfer-progress \
+            -pl kanger-console -am \
+            -DskipTests compile

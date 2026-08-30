@@ -50,13 +50,14 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          mvn -B -V clean verify 2>&1 | tee "kanger-3.4.4-${{ matrix.id }}.log"
+          mvn -B -V -pl kanger-console -am clean verify \
+            2>&1 | tee "kanger-3.4.4-${{ matrix.id }}.log"
 
       - name: Verify production JAR excludes qualification runners
         shell: bash
         run: |
           set -euo pipefail
-          jar_file="$(find target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
+          jar_file="$(find kanger-console/target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
           test -n "$jar_file"
           if jar tf "$jar_file" | grep -E '(^|/)[^/]*Runner\.class$'; then
             echo "Qualification runner leaked into production JAR: $jar_file"
@@ -68,7 +69,7 @@ jobs:
         run: |
           set -o pipefail
           java \
-            -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
+            -cp "kanger-console/target/test-classes:kanger-console/target/classes:kanger-core/target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerMindSafetyRunner \
             2>&1 | tee "mind-safety-${{ matrix.id }}.log"
           grep -F 'MIND_SAFETY_PASS concurrent-children' "mind-safety-${{ matrix.id }}.log"
@@ -82,7 +83,7 @@ jobs:
         run: |
           set -o pipefail
           java \
-            -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
+            -cp "kanger-console/target/test-classes:kanger-console/target/classes:kanger-core/target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerFactorySafetyRunner \
             2>&1 | tee "factory-safety-${{ matrix.id }}.log"
           grep -F 'FACTORY_SAFETY_PASS runtime-ownership' "factory-safety-${{ matrix.id }}.log"
@@ -99,7 +100,7 @@ jobs:
           set -o pipefail
           java \
             -Dkanger.rule.candidate.concurrency.iterations=12 \
-            -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
+            -cp "kanger-console/target/test-classes:kanger-console/target/classes:kanger-core/target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerRuleCandidateConcurrencyRunner \
             2>&1 | tee "rule-candidate-concurrency-${{ matrix.id }}.log"
           grep -F 'RULE_CANDIDATE_CONCURRENCY_OK iterations=12' \
@@ -110,7 +111,7 @@ jobs:
         run: |
           set -o pipefail
           java \
-            -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
+            -cp "kanger-console/target/test-classes:kanger-console/target/classes:kanger-core/target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerRuleRenderingRunner \
             2>&1 | tee "rule-rendering-${{ matrix.id }}.log"
           grep -F 'RULE_RENDERING_PASS memory' "rule-rendering-${{ matrix.id }}.log"
@@ -122,7 +123,7 @@ jobs:
         run: |
           set -o pipefail
           java \
-            -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
+            -cp "kanger-console/target/test-classes:kanger-console/target/classes:kanger-core/target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerDumbIntegrityTestRunner \
             2>&1 | tee "dumb-integrity-${{ matrix.id }}.log"
           grep -F 'INTEGRITY_REGRESSION_OK' "dumb-integrity-${{ matrix.id }}.log"
@@ -131,10 +132,10 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          output="target/dumb-q2-recovery-${{ matrix.id }}"
+          output="kanger-console/target/dumb-q2-recovery-${{ matrix.id }}"
           java \
             -Dkanger.dumb.q2.output="$output" \
-            -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
+            -cp "kanger-console/target/test-classes:kanger-console/target/classes:kanger-core/target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerDumbQ2RecoveryRunner \
             2>&1 | tee "dumb-q2-recovery-${{ matrix.id }}.log"
           test -s "$output/q2-recovery.md"
@@ -146,11 +147,11 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          output="target/dumb-qualification-${{ matrix.id }}"
+          output="kanger-console/target/dumb-qualification-${{ matrix.id }}"
           java \
             -Dkanger.dumb.qualification.strict=true \
             -Dkanger.dumb.qualification.output="$output" \
-            -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
+            -cp "kanger-console/target/test-classes:kanger-console/target/classes:kanger-core/target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerDumbQualificationRunner \
             2>&1 | tee "dumb-qualification-${{ matrix.id }}.log"
 
@@ -178,7 +179,7 @@ jobs:
             dumb-integrity-${{ matrix.id }}.log
             dumb-q2-recovery-${{ matrix.id }}.log
             dumb-qualification-${{ matrix.id }}.log
-            target/dumb-q2-recovery-${{ matrix.id }}/q2-recovery.md
-            target/dumb-qualification-${{ matrix.id }}/dumb-qualification.csv
-            target/dumb-qualification-${{ matrix.id }}/dumb-qualification.md
+            kanger-console/target/dumb-q2-recovery-${{ matrix.id }}/q2-recovery.md
+            kanger-console/target/dumb-qualification-${{ matrix.id }}/dumb-qualification.csv
+            kanger-console/target/dumb-qualification-${{ matrix.id }}/dumb-qualification.md
           if-no-files-found: warn
