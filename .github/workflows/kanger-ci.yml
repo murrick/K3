@@ -32,6 +32,57 @@ jobs:
       - name: Compile and run regression corpus
         run: mvn --batch-mode --no-transfer-progress -pl kanger-console -am install
 
+      - name: Maven module artifact boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          command_jar="$(find kanger-command/target -maxdepth 1 -type f -name 'kanger-command-*.jar' | head -n 1)"
+          core_jar="$(find kanger-core/target -maxdepth 1 -type f -name 'kanger-core-*.jar' | head -n 1)"
+          udf_jar="$(find kanger-udf/target -maxdepth 1 -type f -name 'kanger-udf-*.jar' | head -n 1)"
+          dumb_jar="$(find kanger-data-dumb/target -maxdepth 1 -type f -name 'kanger-data-dumb-*.jar' | head -n 1)"
+
+          for artifact in "$command_jar" "$core_jar" "$udf_jar" "$dumb_jar"; do
+            test -n "$artifact"
+            test -f "$artifact"
+          done
+
+          jar tf "$command_jar" > "$RUNNER_TEMP/kanger-command.entries"
+          jar tf "$core_jar" > "$RUNNER_TEMP/kanger-core.entries"
+          jar tf "$udf_jar" > "$RUNNER_TEMP/kanger-udf.entries"
+          jar tf "$dumb_jar" > "$RUNNER_TEMP/kanger-data-dumb.entries"
+
+          require_entry() {
+            local entries="$1"
+            local entry="$2"
+            if ! grep -Fxq "$entry" "$entries"; then
+              echo "::error::Missing expected module entry: $entry"
+              exit 1
+            fi
+          }
+
+          forbid_entry() {
+            local entries="$1"
+            local entry="$2"
+            if grep -Fxq "$entry" "$entries"; then
+              echo "::error::Forbidden module entry present: $entry"
+              exit 1
+            fi
+          }
+
+          require_entry "$RUNNER_TEMP/kanger-command.entries" 'org/kanger/command/CommandParser.class'
+          forbid_entry "$RUNNER_TEMP/kanger-command.entries" 'org/kanger/CanonicalCommandProcessor.class'
+
+          require_entry "$RUNNER_TEMP/kanger-core.entries" 'org/kanger/CanonicalCommandProcessor.class'
+          require_entry "$RUNNER_TEMP/kanger-core.entries" 'org/kanger/interfaces/IData.class'
+          forbid_entry "$RUNNER_TEMP/kanger-core.entries" 'org/kanger/udf/UDF.class'
+          forbid_entry "$RUNNER_TEMP/kanger-core.entries" 'org/kanger/storage/DB.class'
+
+          require_entry "$RUNNER_TEMP/kanger-udf.entries" 'org/kanger/udf/UDF.class'
+          require_entry "$RUNNER_TEMP/kanger-udf.entries" 'org/mozilla/javascript/resources/Messages.properties'
+
+          require_entry "$RUNNER_TEMP/kanger-data-dumb.entries" 'org/kanger/storage/DB.class'
+
       - name: Canonical Console logical-input boundary
         run: mvn --batch-mode --no-transfer-progress -f kanger-console/pom.xml -Dexec.mainClass=org.kanger.KangerCanonicalConsoleInputContractRunner -Dexec.classpathScope=test exec:java
 
