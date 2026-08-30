@@ -73,7 +73,7 @@ jobs:
           java \
             -Dkanger.diagnostics=true \
             -Dkanger.diagnostics.timeout.ms=5000 \
-            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerDiagnosticRunner \
             2>&1 | tee kanger-3.4.3-db.log
           grep -F 'D2 set_03_01 with storage: PASS' kanger-3.4.3-db.log
@@ -88,13 +88,13 @@ jobs:
           java \
             -Dkanger.perf.storage=false \
             -Dkanger.perf.sizes=100,500,1000 \
-            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerPerformanceRunner \
             2>&1 | tee kanger-3.4.3-memory.log
           java \
             -Dkanger.perf.storage=true \
             -Dkanger.perf.sizes=100,500,1000 \
-            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerPerformanceRunner \
             2>&1 | tee kanger-3.4.3-storage.log
           grep -E '^(mode,|memory,)' kanger-3.4.3-memory.log > kanger-3.4.3-memory.csv

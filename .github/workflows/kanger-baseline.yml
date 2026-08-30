@@ -72,7 +72,7 @@ jobs:
           java \
             -Dkanger.diagnostics=true \
             -Dkanger.diagnostics.timeout.ms=5000 \
-            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerDiagnosticRunner \
             2>&1 | tee kanger-3.4.1-db.log
           grep -F 'D2 set_03_01 with storage: PASS' kanger-3.4.1-db.log
@@ -86,7 +86,7 @@ jobs:
           set -o pipefail
           java \
             -Dkanger.linker.profile.sizes=100,500,1000 \
-            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerLinkerProfileRunner \
             2>&1 | tee kanger-linker-profile-ubuntu-java-21.log
           grep -E '^(size,|[0-9]+,)' \
@@ -103,7 +103,7 @@ jobs:
           set -o pipefail
           java \
             -Dkanger.semantic.profile.sizes=100,500,1000 \
-            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerSemanticProfileRunner \
             2>&1 | tee kanger-semantic-profile-ubuntu-java-21.log
           grep -E '^(size,|[0-9]+,)' \
@@ -136,7 +136,7 @@ jobs:
           set -o pipefail
           java \
             -Dkanger.operation.effects.sizes=100,500,1000 \
-            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerOperationEffectMaskRunner \
             2>&1 | tee kanger-operation-effects-ubuntu-java-21.log
           grep -E '^(size,|[0-9]+,)' \
@@ -156,7 +156,7 @@ jobs:
           set -o pipefail
           java \
             -Dkanger.semantic.yield.sizes=100,500,1000 \
-            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerSemanticYieldRunner \
             2>&1 | tee kanger-semantic-yield-ubuntu-java-21.log
           grep -E '^(size,|[0-9]+,)' \
@@ -209,7 +209,7 @@ jobs:
         run: |
           set -o pipefail
           java \
-            -cp "target/classes:lib/*:kanger-server/lib/*" \
+            -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerGeneratedRuleYieldRunner \
             2>&1 | tee kanger-generated-rule-yield-ubuntu-java-21.log
           grep -E '^(scenario,|one-hop,|two-hop,|deduplicated-target,)' \

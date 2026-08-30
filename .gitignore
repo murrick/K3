@@ -4,4 +4,12 @@ obj/
 target/
 libs/*/*.so
 .DS_Store
+
+# IntelliJ IDEA
 /.idea/
+*.iml
+
+# Eclipse / Java language server
+.classpath
+.project
+.settings/

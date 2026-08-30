@@ -40,8 +40,19 @@ jobs:
             exit 1
           fi
 
-      - name: Package production artifact
-        run: mvn --batch-mode --no-transfer-progress -DskipTests clean package
+      - name: Build through verify with qualification isolated
+        run: mvn --batch-mode --no-transfer-progress -DskipTests clean verify
+
+      - name: Verify production main output is clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          leaked="$(find target/classes -type f -name '*Runner.class' -print)"
+          if [ -n "$leaked" ]; then
+            echo 'Qualification runners leaked into Maven main output:'
+            printf '%s\n' "$leaked"
+            exit 1
+          fi
 
       - name: Verify production JAR is clean
         shell: bash
@@ -64,6 +75,6 @@ jobs:
           test -f kanger-qualification/src/org/kanger/KangerCanonicalConsoleRunner.java
           count="$(find kanger-qualification/src -type f -name '*Runner.java' | wc -l | tr -d ' ')"
           test "$count" -eq 50
-          mvn --batch-mode --no-transfer-progress -DskipTests test-compile
+          test -f target/test-classes/org/kanger/KangerParserTerminalDelimiterSafetyRunner.class
           java -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerParserTerminalDelimiterSafetyRunner

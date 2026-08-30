@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="kanger-udf:jar">
-    <output-path>$PROJECT_DIR$/out/artifacts/dist/modules</output-path>
-    <root id="archive" name="kanger-udf.jar">
-      <element id="module-output" name="kanger-udf" />
-    </root>
-  </artifact>
-</component>
