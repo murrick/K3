@@ -4,21 +4,24 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.kanger</groupId>
+    <parent>
+        <groupId>org.kanger</groupId>
+        <artifactId>kanger3-reactor</artifactId>
+        <version>3.3-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
     <artifactId>kanger-server</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>KANGER Server</name>
     <description>
-        Reproducible standalone build of the KANGER network delivery shell.
-        The KANGER production source roots are consumed without modification.
+        Reproducible standalone KANGER network delivery shell over the shared
+        KANGER semantic core.
     </description>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
         <org.json.version>20201115</org.json.version>
         <javax.mail.version>1.6.2</javax.mail.version>
         <junit.jupiter.version>5.10.3</junit.jupiter.version>
@@ -26,6 +29,11 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.kanger</groupId>
+            <artifactId>kanger-core</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
@@ -51,15 +59,6 @@
 
         <resources>
             <resource>
-                <directory>${project.basedir}/../kanger/resources</directory>
-            </resource>
-            <resource>
-                <directory>${project.basedir}/../kanger-udf/src</directory>
-                <includes>
-                    <include>**/*.properties</include>
-                </includes>
-            </resource>
-            <resource>
                 <directory>${project.build.directory}/generated-resources/kanger</directory>
             </resource>
         </resources>
@@ -70,21 +69,6 @@
                 <artifactId>build-helper-maven-plugin</artifactId>
                 <version>3.6.1</version>
                 <executions>
-                    <execution>
-                        <id>add-kanger-production-sources</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${project.basedir}/../kanger-command/src</source>
-                                <source>${project.basedir}/../kanger/src</source>
-                                <source>${project.basedir}/../kanger-udf/src</source>
-                                <source>${project.basedir}/../kanger-data-dumb/src</source>
-                            </sources>
-                        </configuration>
-                    </execution>
                     <execution>
                         <id>add-shared-command-test-sources</id>
                         <phase>generate-test-sources</phase>

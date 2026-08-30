@@ -4,13 +4,23 @@ on:
   push:
     paths:
       - "kanger-server/**"
+      - "kanger-core/**"
       - "kanger/**"
+      - "kanger-command/**"
+      - "kanger-udf/**"
+      - "kanger-data-dumb/**"
+      - "pom.xml"
       - "html/**"
       - ".github/workflows/kanger-server.yml"
   pull_request:
     paths:
       - "kanger-server/**"
+      - "kanger-core/**"
       - "kanger/**"
+      - "kanger-command/**"
+      - "kanger-udf/**"
+      - "kanger-data-dumb/**"
+      - "pom.xml"
       - "html/**"
       - ".github/workflows/kanger-server.yml"
   workflow_dispatch:
@@ -44,7 +54,7 @@ jobs:
         shell: bash
         run: |
           mvn -B -ntp \
-            -f kanger-server/pom.xml \
+            -pl kanger-server -am \
             -Dkanger.build.branch.override="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" \
             clean verify
 

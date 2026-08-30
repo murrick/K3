@@ -59,16 +59,10 @@ VERSION="$(tr -d '[:space:]' < "${VERSION_FILE}")"
 [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9._-]+)?$ ]] \
   || fail "Invalid distribution version: ${VERSION}"
 
-log "qualifying canonical project build"
+log "qualifying canonical reactor build"
 (
   cd "${REPO_ROOT}"
   mvn -B clean verify
-)
-
-log "building KANGER Server fat JAR"
-(
-  cd "${REPO_ROOT}"
-  mvn -B -f "${SERVER_POM}" clean package
 )
 
 [[ -f "${SERVER_JAR}" ]] || fail "Expected Server artifact not found: ${SERVER_JAR}"

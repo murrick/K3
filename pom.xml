@@ -11,14 +11,15 @@
 
     <name>KANGER III Maven reactor</name>
     <description>
-        Reactor boundary for the shared KANGER semantic core and the Java Console
-        adapter. Production Java sources remain in their historical directories;
-        Maven now expresses the compilation dependency explicitly.
+        Reactor boundary for the shared KANGER semantic core and its Console and
+        Server adapters. Production Java sources remain in their historical
+        directories; Maven expresses the compilation dependencies explicitly.
     </description>
 
     <modules>
         <module>kanger-core</module>
         <module>kanger-console</module>
+        <module>kanger-server</module>
     </modules>
 
     <properties>
