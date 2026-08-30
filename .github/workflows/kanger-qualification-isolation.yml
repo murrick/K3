@@ -41,13 +41,13 @@ jobs:
           fi
 
       - name: Package production artifact
-        run: mvn --batch-mode --no-transfer-progress -DskipTests clean package
+        run: mvn --batch-mode --no-transfer-progress -pl kanger-console -am -DskipTests clean package
 
       - name: Verify production JAR is clean
         shell: bash
         run: |
           set -euo pipefail
-          jar_file="$(find target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
+          jar_file="$(find kanger-console/target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
           test -n "$jar_file"
           leaked="$(jar tf "$jar_file" | grep -E '(^|/)[^/]*Runner\.class$' || true)"
           if [ -n "$leaked" ]; then
@@ -64,6 +64,6 @@ jobs:
           test -f kanger-qualification/src/org/kanger/KangerCanonicalConsoleRunner.java
           count="$(find kanger-qualification/src -type f -name '*Runner.java' | wc -l | tr -d ' ')"
           test "$count" -eq 50
-          mvn --batch-mode --no-transfer-progress -DskipTests test-compile
-          java -cp "target/test-classes:target/classes:lib/*:kanger-server/lib/*" \
+          mvn --batch-mode --no-transfer-progress -pl kanger-console -am -DskipTests test-compile
+          java -cp "kanger-console/target/test-classes:kanger-console/target/classes:kanger-core/target/classes:lib/*:kanger-server/lib/*" \
             org.kanger.KangerParserTerminalDelimiterSafetyRunner
