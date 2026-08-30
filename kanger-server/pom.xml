@@ -31,7 +31,22 @@
     <dependencies>
         <dependency>
             <groupId>org.kanger</groupId>
+            <artifactId>kanger-command</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.kanger</groupId>
             <artifactId>kanger-core</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.kanger</groupId>
+            <artifactId>kanger-udf</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.kanger</groupId>
+            <artifactId>kanger-data-dumb</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>

@@ -11,30 +11,24 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>kanger-core</artifactId>
+    <artifactId>kanger-data-dumb</artifactId>
     <packaging>jar</packaging>
 
-    <name>KANGER shared semantic core</name>
+    <name>KANGER DUMB storage plugin</name>
     <description>
-        Shared production semantic boundary consumed by delivery adapters and
-        runtime plugins. Source files remain in the historical KANGER production root.
+        Optional DUMB storage implementation of KANGER Core data interfaces.
     </description>
 
     <dependencies>
         <dependency>
             <groupId>org.kanger</groupId>
-            <artifactId>kanger-command</artifactId>
+            <artifactId>kanger-core</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
 
     <build>
-        <sourceDirectory>${project.basedir}/../kanger/src</sourceDirectory>
-        <resources>
-            <resource>
-                <directory>${project.basedir}/../kanger/resources</directory>
-            </resource>
-        </resources>
+        <sourceDirectory>${project.basedir}/src</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

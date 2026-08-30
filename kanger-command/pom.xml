@@ -11,30 +11,17 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>kanger-core</artifactId>
+    <artifactId>kanger-command</artifactId>
     <packaging>jar</packaging>
 
-    <name>KANGER shared semantic core</name>
+    <name>KANGER canonical command language</name>
     <description>
-        Shared production semantic boundary consumed by delivery adapters and
-        runtime plugins. Source files remain in the historical KANGER production root.
+        Dependency-free canonical command grammar, vocabulary, parsing and
+        formatting boundary shared by Core and delivery adapters.
     </description>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.kanger</groupId>
-            <artifactId>kanger-command</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-    </dependencies>
-
     <build>
-        <sourceDirectory>${project.basedir}/../kanger/src</sourceDirectory>
-        <resources>
-            <resource>
-                <directory>${project.basedir}/../kanger/resources</directory>
-            </resource>
-        </resources>
+        <sourceDirectory>${project.basedir}/src</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

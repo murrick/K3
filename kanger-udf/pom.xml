@@ -11,28 +11,31 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>kanger-core</artifactId>
+    <artifactId>kanger-udf</artifactId>
     <packaging>jar</packaging>
 
-    <name>KANGER shared semantic core</name>
+    <name>KANGER UDF plugin</name>
     <description>
-        Shared production semantic boundary consumed by delivery adapters and
-        runtime plugins. Source files remain in the historical KANGER production root.
+        Optional classpath UDF capability over KANGER Core, including the
+        bundled JavaScript runtime sources and resources.
     </description>
 
     <dependencies>
         <dependency>
             <groupId>org.kanger</groupId>
-            <artifactId>kanger-command</artifactId>
+            <artifactId>kanger-core</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
 
     <build>
-        <sourceDirectory>${project.basedir}/../kanger/src</sourceDirectory>
+        <sourceDirectory>${project.basedir}/src</sourceDirectory>
         <resources>
             <resource>
-                <directory>${project.basedir}/../kanger/resources</directory>
+                <directory>${project.basedir}/src</directory>
+                <includes>
+                    <include>**/*.properties</include>
+                </includes>
             </resource>
         </resources>
         <plugins>
