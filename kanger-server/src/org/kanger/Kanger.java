@@ -32,7 +32,9 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -102,10 +104,9 @@ public class Kanger {
 
         try {
             do {
-                String options = "-jar " + String.join(" ", Settings.getByPrefix("server.wrapper.option."));
-                String cmd[] = new String[]{"java",
-                        options.trim(),
-                        cd + "/kanger-server.jar"};
+                String[] cmd = wrapperCommand(
+                        System.getProperty("java.class.path"),
+                        Settings.getByPrefix("server.wrapper.option."));
 
                 System.out.println("BUILT-IN-WRAPPER: Executing: " + String.join(" ", cmd));
                 boolean reboot = launch(cmd);
@@ -127,6 +128,26 @@ public class Kanger {
             System.err.println(new Date());
             e.printStackTrace(System.err);
         }
+    }
+
+    static String[] wrapperCommand(String classPath, List<String> options) {
+        if (classPath == null || classPath.trim().isEmpty()) {
+            throw new IllegalStateException("java.class.path is empty");
+        }
+
+        List<String> command = new ArrayList<String>();
+        command.add("java");
+        if (options != null) {
+            for (String option : options) {
+                if (option != null && !option.isEmpty()) {
+                    command.add(option);
+                }
+            }
+        }
+        command.add("-cp");
+        command.add(classPath);
+        command.add(Kanger.class.getName());
+        return command.toArray(new String[command.size()]);
     }
 
     public static void stop() {
