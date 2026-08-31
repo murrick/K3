@@ -9,7 +9,7 @@ const path = require('path');
 const root = process.argv[2] || path.resolve(__dirname, '..', '..');
 const source = fs.readFileSync(path.join(root, 'html', 'dialogue.js'), 'utf8');
 const corpus = fs.readFileSync(path.join(root,
-    'kanger-command', 'test-data', 'client-vocabulary.tsv'), 'utf8')
+    'kanger-qualification', 'test-data', 'client-vocabulary.tsv'), 'utf8')
     .split(/\r?\n/)
     .filter(line => line && !line.startsWith('#'))
     .map(line => {
