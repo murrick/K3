@@ -9,8 +9,10 @@ User=kanger
 Group=kanger
 WorkingDirectory=/opt/kanger/current
 Environment=KANGER_HOME=KANGER
-ExecStartPre=/usr/bin/test -r /opt/kanger/current/server/kanger-server.jar
-ExecStart=__JAVA_BIN__ -Duser.home=/var/lib/kanger -jar /opt/kanger/current/server/kanger-server.jar
+ExecStartPre=/usr/bin/test -r /opt/kanger/current/server/kanger-server-thin.jar
+ExecStartPre=/usr/bin/test -d /opt/kanger/current/server/lib
+ExecStartPre=/usr/bin/test -d /opt/kanger/current/server/modules
+ExecStart=__JAVA_BIN__ -Duser.home=/var/lib/kanger -cp /opt/kanger/current/server/kanger-server-thin.jar:/opt/kanger/current/server/lib/*:/opt/kanger/current/server/modules/* org.kanger.Kanger
 Restart=on-failure
 RestartSec=5s
 TimeoutStopSec=60s

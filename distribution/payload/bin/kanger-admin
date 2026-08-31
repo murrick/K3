@@ -9,10 +9,22 @@ fi
 command -v java >/dev/null 2>&1 || { echo 'kanger-admin: java not found' >&2; exit 3; }
 
 SERVER_HOME="${KANGER_ADMIN_SERVER_HOME:-/var/lib/kanger}"
-SERVER_JAR="${KANGER_ADMIN_SERVER_JAR:-/opt/kanger/current/server/kanger-server.jar}"
+SERVER_ROOT="${KANGER_ADMIN_SERVER_ROOT:-/opt/kanger/current/server}"
+SERVER_THIN_JAR="${SERVER_ROOT}/kanger-server-thin.jar"
+SERVER_LIB="${SERVER_ROOT}/lib"
+SERVER_MODULES="${SERVER_ROOT}/modules"
+SERVER_CLASSPATH="${SERVER_THIN_JAR}:${SERVER_LIB}/*:${SERVER_MODULES}/*"
 
-[[ -r "${SERVER_JAR}" ]] || {
-  printf 'kanger-admin: server JAR not found or unreadable: %s\n' "${SERVER_JAR}" >&2
+[[ -r "${SERVER_THIN_JAR}" ]] || {
+  printf 'kanger-admin: thin server JAR not found or unreadable: %s\n' "${SERVER_THIN_JAR}" >&2
+  exit 3
+}
+[[ -d "${SERVER_LIB}" ]] || {
+  printf 'kanger-admin: server runtime library directory not found: %s\n' "${SERVER_LIB}" >&2
+  exit 3
+}
+[[ -d "${SERVER_MODULES}" ]] || {
+  printf 'kanger-admin: server runtime module directory not found: %s\n' "${SERVER_MODULES}" >&2
   exit 3
 }
 
@@ -20,5 +32,5 @@ exec java \
   -Duser.home="${SERVER_HOME}" \
   -Dsun.jnu.encoding=UTF-8 \
   -Dfile.encoding=UTF-8 \
-  -cp "${SERVER_JAR}" \
+  -cp "${SERVER_CLASSPATH}" \
   org.kanger.admin.KangerAdmin "$@"

@@ -35,14 +35,35 @@ release_property() {
 }
 
 validate_bundle_layout() {
+  local udf_modules storage_modules core_libraries bootstrap_libraries leaked_udf leaked_storage
+
   [[ -f "${BUNDLE_ROOT}/RELEASE" ]] || fail "RELEASE is missing from distribution"
   [[ -f "${BUNDLE_ROOT}/SHA256SUMS" ]] || fail "SHA256SUMS is missing from distribution"
-  [[ -f "${BUNDLE_ROOT}/server/kanger-server.jar" ]] || fail "Server JAR is missing from distribution"
+  [[ -f "${BUNDLE_ROOT}/server/kanger-server.jar" ]] || fail "Compatibility Server JAR is missing from distribution"
+  [[ -f "${BUNDLE_ROOT}/server/kanger-server-thin.jar" ]] || fail "Thin Server JAR is missing from distribution"
+  [[ -d "${BUNDLE_ROOT}/server/lib" ]] || fail "Server runtime library directory is missing from distribution"
+  [[ -d "${BUNDLE_ROOT}/server/modules" ]] || fail "Server runtime module directory is missing from distribution"
   [[ -f "${BUNDLE_ROOT}/server/kanger.conf.example" ]] || fail "Server configuration template is missing"
   [[ -f "${BUNDLE_ROOT}/ui/index.html" ]] || fail "Browser UI is missing from distribution"
   [[ -x "${BUNDLE_ROOT}/bin/kanger-admin" ]] || fail "KANGER admin launcher is missing or not executable"
   [[ -f "${BUNDLE_ROOT}/systemd/kanger.service.template" ]] || fail "systemd service template is missing"
   [[ -f "${BUNDLE_ROOT}/nginx/kanger.conf.template" ]] || fail "nginx template is missing"
+
+  shopt -s nullglob
+  udf_modules=("${BUNDLE_ROOT}"/server/modules/kanger-udf-*.jar)
+  storage_modules=("${BUNDLE_ROOT}"/server/modules/kanger-data-dumb-*.jar)
+  core_libraries=("${BUNDLE_ROOT}"/server/lib/kanger-core-*.jar)
+  bootstrap_libraries=("${BUNDLE_ROOT}"/server/lib/kanger-bootstrap-*.jar)
+  leaked_udf=("${BUNDLE_ROOT}"/server/lib/kanger-udf-*.jar)
+  leaked_storage=("${BUNDLE_ROOT}"/server/lib/kanger-data-dumb-*.jar)
+  shopt -u nullglob
+
+  [[ "${#udf_modules[@]}" -eq 1 ]] || fail "Distribution must contain exactly one UDF runtime module"
+  [[ "${#storage_modules[@]}" -eq 1 ]] || fail "Distribution must contain exactly one DUMB storage runtime module"
+  [[ "${#core_libraries[@]}" -eq 1 ]] || fail "Distribution must contain exactly one Core runtime library"
+  [[ "${#bootstrap_libraries[@]}" -eq 1 ]] || fail "Distribution must contain exactly one bootstrap runtime library"
+  [[ "${#leaked_udf[@]}" -eq 0 ]] || fail "UDF provider leaked into server/lib"
+  [[ "${#leaked_storage[@]}" -eq 0 ]] || fail "DUMB storage provider leaked into server/lib"
 
   PRODUCT="$(release_property product)"
   VERSION="$(release_property version)"
@@ -176,10 +197,23 @@ stage_release() {
 
   if ! {
     install -d -o root -g root -m 0755 "${stage_dir}" "${stage_dir}/ui" "${stage_dir}/bin"
-    install -d -o root -g kanger -m 0750 "${stage_dir}/server"
+    install -d -o root -g kanger -m 0750 \
+      "${stage_dir}/server" \
+      "${stage_dir}/server/lib" \
+      "${stage_dir}/server/modules"
     install -o root -g root -m 0644 "${BUNDLE_ROOT}/RELEASE" "${stage_dir}/RELEASE"
     install -o root -g root -m 0755 "${BUNDLE_ROOT}/bin/kanger-admin" "${stage_dir}/bin/kanger-admin"
-    install -o root -g kanger -m 0640 "${BUNDLE_ROOT}/server/kanger-server.jar" "${stage_dir}/server/kanger-server.jar"
+    install -o root -g kanger -m 0640 \
+      "${BUNDLE_ROOT}/server/kanger-server.jar" \
+      "${stage_dir}/server/kanger-server.jar"
+    install -o root -g kanger -m 0640 \
+      "${BUNDLE_ROOT}/server/kanger-server-thin.jar" \
+      "${stage_dir}/server/kanger-server-thin.jar"
+    cp -a "${BUNDLE_ROOT}/server/lib/." "${stage_dir}/server/lib/"
+    cp -a "${BUNDLE_ROOT}/server/modules/." "${stage_dir}/server/modules/"
+    chown -R root:kanger "${stage_dir}/server/lib" "${stage_dir}/server/modules"
+    find "${stage_dir}/server/lib" "${stage_dir}/server/modules" -type d -exec chmod 0750 {} +
+    find "${stage_dir}/server/lib" "${stage_dir}/server/modules" -type f -exec chmod 0640 {} +
     cp -a "${BUNDLE_ROOT}/ui/." "${stage_dir}/ui/"
     chown -R root:root "${stage_dir}/ui"
     find "${stage_dir}/ui" -type d -exec chmod 0755 {} +
