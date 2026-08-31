@@ -60,14 +60,6 @@
             <version>${javax.mail.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.kanger</groupId>
-            <artifactId>kanger-command</artifactId>
-            <version>${project.parent.version}</version>
-            <type>test-jar</type>
-            <classifier>tests</classifier>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${junit.jupiter.version}</version>
