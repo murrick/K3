@@ -40,6 +40,12 @@ jobs:
             exit 1
           fi
           test ! -e kanger-console/src/org/kanger/test
+          test ! -e kanger-console/src/org/kanger/IsolatedKangerTestRuntime.java
+          if grep -R -n -E 'org\.kanger\.test|IsolatedKangerTestRuntime|options[[:space:]]+test' \
+              kanger-console/src; then
+            echo 'Qualification backdoor remains in Console production sources'
+            exit 1
+          fi
 
       - name: Verify Maven ownership boundaries
         shell: bash
@@ -63,7 +69,7 @@ jobs:
           set -euo pipefail
           jar_file="$(find kanger-console/target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
           test -n "$jar_file"
-          leaked="$(jar tf "$jar_file" | grep -E '(^|/)[^/]*Runner\.class$|^org/kanger/test/' || true)"
+          leaked="$(jar tf "$jar_file" | grep -E '(^|/)[^/]*Runner\.class$|^org/kanger/test/|^org/kanger/IsolatedKangerTestRuntime' || true)"
           if [ -n "$leaked" ]; then
             echo 'Qualification classes leaked into production JAR:'
             printf '%s\n' "$leaked"
@@ -80,6 +86,7 @@ jobs:
           test -f kanger-qualification/src/org/kanger/command/ClientVocabularyCorpus.java
           test -f kanger-qualification/src/org/kanger/command/CommandParserConformanceTest.java
           test -f kanger-qualification/test-data/client-vocabulary.tsv
+          test -f kanger-qualification/src/org/kanger/IsolatedKangerTestRuntime.java
           test -f kanger-qualification/src/org/kanger/test/KangerTest.java
           test -f kanger-qualification/src/org/kanger/test/KangerCompletedTest.java
           test -f kanger-qualification/src/org/kanger/test/KangerStabilizationTest.java
