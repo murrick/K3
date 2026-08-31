@@ -219,44 +219,37 @@ jobs:
               --api-cert "${cert_file}" --api-key "${key_file}" \
               --nginx-config "${nginx_file}"
 
-          [[ "$(readlink -f "${current}")" == "${canonical}" ]]
-          [[ -f "${canonical}/RELEASE" ]]
-          [[ -f "${canonical}/server/kanger-server.jar" ]]
-          [[ -f "${canonical}/server/kanger-server-thin.jar" ]]
-          [[ -x "${canonical}/bin/kanger-admin" ]]
-          [[ -f "${canonical}/ui/config.js" ]]
+          [[ "$(sudo readlink -f "${current}")" == "${canonical}" ]]
+          sudo test -f "${canonical}/RELEASE"
+          sudo test -f "${canonical}/server/kanger-server.jar"
+          sudo test -f "${canonical}/server/kanger-server-thin.jar"
+          sudo test -x "${canonical}/bin/kanger-admin"
+          sudo test -f "${canonical}/ui/config.js"
 
-          shopt -s nullglob
-          udf_modules=("${canonical}"/server/modules/kanger-udf-*.jar)
-          storage_modules=("${canonical}"/server/modules/kanger-data-dumb-*.jar)
-          core_libraries=("${canonical}"/server/lib/kanger-core-*.jar)
-          bootstrap_libraries=("${canonical}"/server/lib/kanger-bootstrap-*.jar)
-          leaked_providers=("${canonical}"/server/lib/kanger-udf-*.jar "${canonical}"/server/lib/kanger-data-dumb-*.jar)
-          shopt -u nullglob
-          [[ "${#udf_modules[@]}" -eq 1 ]]
-          [[ "${#storage_modules[@]}" -eq 1 ]]
-          [[ "${#core_libraries[@]}" -eq 1 ]]
-          [[ "${#bootstrap_libraries[@]}" -eq 1 ]]
-          [[ "${#leaked_providers[@]}" -eq 0 ]]
+          [[ "$(sudo find "${canonical}/server/modules" -maxdepth 1 -type f -name 'kanger-udf-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
+          [[ "$(sudo find "${canonical}/server/modules" -maxdepth 1 -type f -name 'kanger-data-dumb-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
+          [[ "$(sudo find "${canonical}/server/lib" -maxdepth 1 -type f -name 'kanger-core-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
+          [[ "$(sudo find "${canonical}/server/lib" -maxdepth 1 -type f -name 'kanger-bootstrap-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
+          [[ "$(sudo find "${canonical}/server/lib" -maxdepth 1 -type f \( -name 'kanger-udf-*.jar' -o -name 'kanger-data-dumb-*.jar' \) -printf '.\n' | wc -l)" -eq 0 ]]
 
           java_bin="$(readlink -f "$(command -v java)")"
-          grep -Fqx 'WorkingDirectory=/opt/kanger/current' "${unit_file}"
-          grep -Fqx 'ExecStartPre=/usr/bin/test -r /opt/kanger/current/server/kanger-server-thin.jar' "${unit_file}"
-          grep -Fqx "ExecStart=${java_bin} -Duser.home=/var/lib/kanger -cp /opt/kanger/current/server/kanger-server-thin.jar:/opt/kanger/current/server/lib/*:/opt/kanger/current/server/modules/* org.kanger.Kanger" "${unit_file}"
-          if grep -Fq ' -jar ' "${unit_file}"; then
+          sudo grep -Fqx 'WorkingDirectory=/opt/kanger/current' "${unit_file}"
+          sudo grep -Fqx 'ExecStartPre=/usr/bin/test -r /opt/kanger/current/server/kanger-server-thin.jar' "${unit_file}"
+          sudo grep -Fqx "ExecStart=${java_bin} -Duser.home=/var/lib/kanger -cp /opt/kanger/current/server/kanger-server-thin.jar:/opt/kanger/current/server/lib/*:/opt/kanger/current/server/modules/* org.kanger.Kanger" "${unit_file}"
+          if sudo grep -Fq ' -jar ' "${unit_file}"; then
             echo 'installed systemd unit fell back to fat -jar runtime' >&2
             exit 1
           fi
 
-          grep -Fq 'kanger-server-thin.jar' "${canonical}/bin/kanger-admin"
-          grep -Fq 'lib/*' "${canonical}/bin/kanger-admin"
-          grep -Fq 'modules/*' "${canonical}/bin/kanger-admin"
-          grep -Fqx 'KANGER_UI_DOMAIN=ui.example.test' "${instance_file}"
-          grep -Fqx 'KANGER_API_DOMAIN=api.example.test' "${instance_file}"
-          grep -Fq "window.KANGER_API_HOST = 'https://api.example.test';" "${canonical}/ui/config.js"
-          grep -Fqx 'server.cors.allowed.origin.1=https://ui.example.test' "${server_config}"
-          grep -Fqx 'server.url=https://api.example.test' "${server_config}"
-          grep -Fqx 'server.confirmation.redirect.url=https://ui.example.test/' "${server_config}"
+          sudo grep -Fq 'kanger-server-thin.jar' "${canonical}/bin/kanger-admin"
+          sudo grep -Fq 'lib/*' "${canonical}/bin/kanger-admin"
+          sudo grep -Fq 'modules/*' "${canonical}/bin/kanger-admin"
+          sudo grep -Fqx 'KANGER_UI_DOMAIN=ui.example.test' "${instance_file}"
+          sudo grep -Fqx 'KANGER_API_DOMAIN=api.example.test' "${instance_file}"
+          sudo grep -Fq "window.KANGER_API_HOST = 'https://api.example.test';" "${canonical}/ui/config.js"
+          sudo grep -Fqx 'server.cors.allowed.origin.1=https://ui.example.test' "${server_config}"
+          sudo grep -Fqx 'server.url=https://api.example.test' "${server_config}"
+          sudo grep -Fqx 'server.confirmation.redirect.url=https://ui.example.test/' "${server_config}"
           grep -Fqx 'enable kanger.service' "${systemctl_log}"
           grep -Fqx 'restart kanger.service' "${systemctl_log}"
 
@@ -286,30 +279,22 @@ jobs:
 
           assert_thin_release() {
             local release_dir="$1"
-            local udf_modules storage_modules core_libraries bootstrap_libraries leaked_providers
-            [[ -f "${release_dir}/server/kanger-server.jar" ]]
-            [[ -f "${release_dir}/server/kanger-server-thin.jar" ]]
-            [[ -x "${release_dir}/bin/kanger-admin" ]]
-            shopt -s nullglob
-            udf_modules=("${release_dir}"/server/modules/kanger-udf-*.jar)
-            storage_modules=("${release_dir}"/server/modules/kanger-data-dumb-*.jar)
-            core_libraries=("${release_dir}"/server/lib/kanger-core-*.jar)
-            bootstrap_libraries=("${release_dir}"/server/lib/kanger-bootstrap-*.jar)
-            leaked_providers=("${release_dir}"/server/lib/kanger-udf-*.jar "${release_dir}"/server/lib/kanger-data-dumb-*.jar)
-            shopt -u nullglob
-            [[ "${#udf_modules[@]}" -eq 1 ]]
-            [[ "${#storage_modules[@]}" -eq 1 ]]
-            [[ "${#core_libraries[@]}" -eq 1 ]]
-            [[ "${#bootstrap_libraries[@]}" -eq 1 ]]
-            [[ "${#leaked_providers[@]}" -eq 0 ]]
+            sudo test -f "${release_dir}/server/kanger-server.jar"
+            sudo test -f "${release_dir}/server/kanger-server-thin.jar"
+            sudo test -x "${release_dir}/bin/kanger-admin"
+            [[ "$(sudo find "${release_dir}/server/modules" -maxdepth 1 -type f -name 'kanger-udf-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
+            [[ "$(sudo find "${release_dir}/server/modules" -maxdepth 1 -type f -name 'kanger-data-dumb-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
+            [[ "$(sudo find "${release_dir}/server/lib" -maxdepth 1 -type f -name 'kanger-core-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
+            [[ "$(sudo find "${release_dir}/server/lib" -maxdepth 1 -type f -name 'kanger-bootstrap-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
+            [[ "$(sudo find "${release_dir}/server/lib" -maxdepth 1 -type f \( -name 'kanger-udf-*.jar' -o -name 'kanger-data-dumb-*.jar' \) -printf '.\n' | wc -l)" -eq 0 ]]
           }
 
           assert_thin_unit() {
             local java_bin
             java_bin="$(readlink -f "$(command -v java)")"
-            grep -Fqx 'WorkingDirectory=/opt/kanger/current' "${unit_file}"
-            grep -Fqx "ExecStart=${java_bin} -Duser.home=/var/lib/kanger -cp /opt/kanger/current/server/kanger-server-thin.jar:/opt/kanger/current/server/lib/*:/opt/kanger/current/server/modules/* org.kanger.Kanger" "${unit_file}"
-            ! grep -Fq ' -jar ' "${unit_file}"
+            sudo grep -Fqx 'WorkingDirectory=/opt/kanger/current' "${unit_file}"
+            sudo grep -Fqx "ExecStart=${java_bin} -Duser.home=/var/lib/kanger -cp /opt/kanger/current/server/kanger-server-thin.jar:/opt/kanger/current/server/lib/*:/opt/kanger/current/server/modules/* org.kanger.Kanger" "${unit_file}"
+            ! sudo grep -Fq ' -jar ' "${unit_file}"
           }
 
           cat >"${canonical}/RELEASE" <<EOF
@@ -381,24 +366,24 @@ jobs:
           [[ "$(find "${runtime}/releases" -mindepth 1 -maxdepth 1 -printf '%f\n' | sort)" == "${before_releases}" ]]
 
           run_update --force
-          [[ "$(readlink -f "${current}")" == "${canonical}" ]]
-          [[ -f "${runtime}/releases/${version}.force.1/OLD_MARKER" ]]
-          [[ ! -e "${canonical}/OLD_MARKER" ]]
+          [[ "$(sudo readlink -f "${current}")" == "${canonical}" ]]
+          sudo test -f "${runtime}/releases/${version}.force.1/OLD_MARKER"
+          sudo test ! -e "${canonical}/OLD_MARKER"
           assert_thin_release "${canonical}"
           assert_thin_unit
 
           sudo touch "${canonical}/FIRST_FORCE_MARKER"
           run_update --force
-          [[ "$(readlink -f "${current}")" == "${canonical}" ]]
-          [[ -f "${runtime}/releases/${version}.force.1/OLD_MARKER" ]]
-          [[ -f "${runtime}/releases/${version}.force.2/FIRST_FORCE_MARKER" ]]
-          [[ ! -e "${canonical}/FIRST_FORCE_MARKER" ]]
+          [[ "$(sudo readlink -f "${current}")" == "${canonical}" ]]
+          sudo test -f "${runtime}/releases/${version}.force.1/OLD_MARKER"
+          sudo test -f "${runtime}/releases/${version}.force.2/FIRST_FORCE_MARKER"
+          sudo test ! -e "${canonical}/FIRST_FORCE_MARKER"
           assert_thin_release "${canonical}"
           assert_thin_unit
 
           printf 'Qualified release layout:\n'
-          find "${runtime}/releases" -mindepth 1 -maxdepth 1 -printf '  %f\n' | sort
-          printf 'Current: %s\n' "$(readlink -f "${current}")"
+          sudo find "${runtime}/releases" -mindepth 1 -maxdepth 1 -printf '  %f\n' | sort
+          printf 'Current: %s\n' "$(sudo readlink -f "${current}")"
 
       - name: Upload qualified distribution
         uses: actions/upload-artifact@v4
