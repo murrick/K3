@@ -7,8 +7,7 @@
 package org.kanger.account;
 
 import org.kanger.User;
-import org.kanger.storage.DB;
-import org.kanger.udf.UDF;
+import org.kanger.bootstrap.RuntimeBootstrap;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -357,8 +356,7 @@ final class FileAccountWorkspace implements AccountLifecycleService.WorkspaceAut
             user.setSourceDir(directory(sourceDirectory));
             user.setDatabaseDir(directory(databaseDirectory));
 
-            new DB().init(user);
-            new UDF().init(user);
+            RuntimeBootstrap.ensure(user);
 
             user.getData();
             user.getUdf();

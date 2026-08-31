@@ -26,21 +26,48 @@ public final class RuntimeBootstrap {
     }
 
     public static RuntimeBootstrapResult ensure(IUser user) throws Exception {
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        if (loader == null) {
-            loader = RuntimeBootstrap.class.getClassLoader();
-        }
-        return ensure(user, loader);
+        return ensureCapabilities(user, defaultClassLoader(), RuntimeCapability.values());
     }
 
     public static RuntimeBootstrapResult ensure(IUser user,
                                                 ClassLoader loader) throws Exception {
+        return ensureCapabilities(user, loader, RuntimeCapability.values());
+    }
+
+    /**
+     * Discovers and attaches only the requested capabilities, in the requested
+     * order. This keeps narrow probe paths from acquiring unrelated runtime
+     * modules while preserving the full bootstrap contract for normal users.
+     */
+    public static RuntimeBootstrapResult ensureCapabilities(
+            IUser user,
+            RuntimeCapability... capabilities) throws Exception {
+        return ensureCapabilities(user, defaultClassLoader(), capabilities);
+    }
+
+    public static RuntimeBootstrapResult ensureCapabilities(
+            IUser user,
+            ClassLoader loader,
+            RuntimeCapability... capabilities) throws Exception {
         if (!(user instanceof User)) {
             throw new IllegalArgumentException(
                     "Runtime bootstrap requires org.kanger.User");
         }
         if (loader == null) {
             throw new IllegalArgumentException("loader must not be null");
+        }
+        if (capabilities == null) {
+            throw new IllegalArgumentException("capabilities must not be null");
+        }
+
+        List<RuntimeCapability> requested = new ArrayList<RuntimeCapability>();
+        for (RuntimeCapability capability : capabilities) {
+            if (capability == null) {
+                throw new IllegalArgumentException("capability must not be null");
+            }
+            if (!requested.contains(capability)) {
+                requested.add(capability);
+            }
         }
 
         Map<RuntimeCapability, List<RuntimeModule>> discovered =
@@ -61,7 +88,7 @@ public final class RuntimeBootstrap {
         Map<RuntimeCapability, String> loaded =
                 new EnumMap<RuntimeCapability, String>(RuntimeCapability.class);
 
-        for (RuntimeCapability capability : RuntimeCapability.values()) {
+        for (RuntimeCapability capability : requested) {
             if (isAttached(concreteUser, capability)) {
                 continue;
             }
@@ -72,6 +99,11 @@ public final class RuntimeBootstrap {
             }
         }
         return new RuntimeBootstrapResult(loaded);
+    }
+
+    private static ClassLoader defaultClassLoader() {
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        return loader == null ? RuntimeBootstrap.class.getClassLoader() : loader;
     }
 
     private static boolean isAttached(User user,

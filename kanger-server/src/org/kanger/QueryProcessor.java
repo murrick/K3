@@ -27,20 +27,18 @@ package org.kanger;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.kanger.bootstrap.RuntimeBootstrap;
 import org.kanger.compiler.Token;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
 import org.kanger.enums.Tools;
 import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.exception.CommandErrorException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.*;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.primitives.LogEntry;
-import org.kanger.storage.DB;
 import org.kanger.stores.HypothesisStore;
-import org.kanger.udf.UDF;
 import org.kanger.units.Domain;
 import org.kanger.units.Operation;
 import org.kanger.units.Predicate;
@@ -484,16 +482,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
             try {
                 IUser user = UserFactory.getUser(parameters.getString("login"), parameters.getString("password"));
                 if (isEmailConfirmed(user)) {
-                    try {
-                        ((User) user).getData();
-                    } catch (RuntimeErrorException e) {
-                        new DB().init(user);
-                    }
-                    try {
-                        ((User) user).getUdf();
-                    } catch (RuntimeErrorException e) {
-                        new UDF().init(user);
-                    }
+                    RuntimeBootstrap.ensure(user);
                 }
                 String token = UserFactory.addUser(user);
                 result.put("result", "OK");
@@ -626,16 +615,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
                     }
                     if (newUser) {
                         if (isEmailConfirmed(user)) {
-                            try {
-                                ((User) user).getData();
-                            } catch (RuntimeErrorException e) {
-                                new DB().init(user);
-                            }
-                            try {
-                                ((User) user).getUdf();
-                            } catch (RuntimeErrorException e) {
-                                new UDF().init(user);
-                            }
+                            RuntimeBootstrap.ensure(user);
                         }
                         token = UserFactory.addUser(user);
                         Watchdog.log(user, "New user registered");

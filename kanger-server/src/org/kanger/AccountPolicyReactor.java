@@ -11,11 +11,9 @@ import org.json.JSONObject;
 import org.kanger.account.AccountErrorCode;
 import org.kanger.account.PendingRegistrationException;
 import org.kanger.account.RegistrationPolicy;
-import org.kanger.exception.RuntimeErrorException;
+import org.kanger.bootstrap.RuntimeBootstrap;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
-import org.kanger.storage.DB;
-import org.kanger.udf.UDF;
 
 import java.util.Locale;
 
@@ -203,16 +201,7 @@ final class AccountPolicyReactor implements IReactor<JSONObject> {
             IUser user = UserFactory.getUser(
                     string(parameters, "login"),
                     string(parameters, "password"));
-            try {
-                ((User) user).getData();
-            } catch (RuntimeErrorException absent) {
-                new DB().init(user);
-            }
-            try {
-                ((User) user).getUdf();
-            } catch (RuntimeErrorException absent) {
-                new UDF().init(user);
-            }
+            RuntimeBootstrap.ensure(user);
         }
     }
 

@@ -25,13 +25,13 @@ package org.kanger;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.kanger.bootstrap.RuntimeBootstrap;
+import org.kanger.bootstrap.RuntimeCapability;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
-import org.kanger.storage.DB;
-import org.kanger.udf.UDF;
 
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -191,7 +191,7 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
 
     private CompileProbe validateReplacement(String source) throws Exception {
         IUser probeUser = new User();
-        new UDF().init(probeUser);
+        RuntimeBootstrap.ensureCapabilities(probeUser, RuntimeCapability.UDF);
         IMind probeMind = new Mind(probeUser);
         boolean accepted = probeMind.compile(source);
         return new CompileProbe(accepted,
@@ -374,8 +374,10 @@ public final class DestructiveStopLossReactor implements IReactor<JSONObject> {
     private void probeStorage(IUser sourceUser, String storageName) throws Exception {
         IUser probeUser = new User();
         probeUser.setDatabaseDir(sourceUser.getDatabaseDir());
-        new UDF().init(probeUser);
-        new DB().init(probeUser);
+        RuntimeBootstrap.ensureCapabilities(
+                probeUser,
+                RuntimeCapability.UDF,
+                RuntimeCapability.STORAGE);
         IMind probeMind = new Mind(probeUser);
         probeMind = probeMind.useStorage(storageName);
         probeMind.closeStorage();
