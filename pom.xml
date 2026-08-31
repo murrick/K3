@@ -24,6 +24,7 @@
         <module>kanger-data-dumb</module>
         <module>kanger-console</module>
         <module>kanger-server</module>
+        <module>kanger-qualification</module>
     </modules>
 
     <properties>

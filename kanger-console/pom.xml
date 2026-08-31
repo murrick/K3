@@ -16,8 +16,7 @@
 
     <name>KANGER III reproducible baseline</name>
     <description>
-        Standalone Java Console adapter over the shared KANGER semantic core,
-        with qualification runners isolated on the test classpath.
+        Standalone Java Console adapter over the shared KANGER semantic core.
     </description>
 
     <dependencies>
@@ -151,37 +150,6 @@
                             </target>
                         </configuration>
                     </execution>
-                    <execution>
-                        <id>stage-qualification-launchers</id>
-                        <phase>verify</phase>
-                        <goals><goal>run</goal></goals>
-                        <configuration>
-                            <target>
-                                <copy todir="${project.build.outputDirectory}">
-                                    <fileset dir="${project.build.testOutputDirectory}"/>
-                                </copy>
-                            </target>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.5.0</version>
-                <executions>
-                    <execution>
-                        <id>add-kanger-qualification-source</id>
-                        <phase>generate-test-sources</phase>
-                        <goals><goal>add-test-source</goal></goals>
-                        <configuration>
-                            <sources>
-                                <source>${project.basedir}/../kanger-qualification/src</source>
-                                <source>${project.basedir}/../kanger-command/test</source>
-                            </sources>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
 
@@ -195,46 +163,6 @@
                     <target>${maven.compiler.target}</target>
                     <showWarnings>true</showWarnings>
                 </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.1</version>
-                <executions>
-                    <execution>
-                        <id>kanger-command-conformance</id>
-                        <phase>test</phase>
-                        <goals><goal>exec</goal></goals>
-                        <configuration>
-                            <executable>${java.home}/bin/java</executable>
-                            <workingDirectory>${project.parent.basedir}</workingDirectory>
-                            <arguments>
-                                <argument>-cp</argument>
-                                <classpath/>
-                                <argument>org.kanger.command.CommandParserConformanceTest</argument>
-                            </arguments>
-                            <classpathScope>test</classpathScope>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>kanger-regression-corpus</id>
-                        <phase>test</phase>
-                        <goals><goal>exec</goal></goals>
-                        <configuration>
-                            <executable>${java.home}/bin/java</executable>
-                            <workingDirectory>${project.parent.basedir}</workingDirectory>
-                            <arguments>
-                                <argument>-Dkanger.test.home=${project.build.directory}/kanger-test-home</argument>
-                                <argument>-cp</argument>
-                                <classpath/>
-                                <argument>org.kanger.KangerTestRunner</argument>
-                                <argument>set_</argument>
-                            </arguments>
-                            <classpathScope>test</classpathScope>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
 
             <plugin>

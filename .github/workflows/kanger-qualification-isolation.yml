@@ -40,6 +40,15 @@ jobs:
             exit 1
           fi
 
+      - name: Verify Maven ownership boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f kanger-qualification/pom.xml
+          ! grep -Fq '../kanger-qualification/src' kanger-console/pom.xml
+          ! grep -Fq '../kanger-command/test' kanger-console/pom.xml
+          ! grep -Fq '../kanger-command/test' kanger-server/pom.xml
+
       - name: Package production artifact
         run: mvn --batch-mode --no-transfer-progress -pl kanger-console -am -DskipTests clean package
 
@@ -56,7 +65,7 @@ jobs:
             exit 1
           fi
 
-      - name: Verify qualification source remains available
+      - name: Verify qualification module remains executable
         shell: bash
         run: |
           set -euo pipefail
@@ -64,6 +73,7 @@ jobs:
           test -f kanger-qualification/src/org/kanger/KangerCanonicalConsoleRunner.java
           count="$(find kanger-qualification/src -type f -name '*Runner.java' | wc -l | tr -d ' ')"
           test "$count" -eq 50
-          mvn --batch-mode --no-transfer-progress -pl kanger-console -am -DskipTests test-compile
-          java -cp "kanger-console/target/test-classes:kanger-console/target/classes:kanger-core/target/classes:lib/*:kanger-server/lib/*" \
-            org.kanger.KangerParserTerminalDelimiterSafetyRunner
+          mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am -DskipTests test-compile
+          mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml \
+            -Dexec.mainClass=org.kanger.KangerParserTerminalDelimiterSafetyRunner \
+            -Dexec.classpathScope=test exec:java

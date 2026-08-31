@@ -1,5 +1,5 @@
-# KANGER qualification sources
+# KANGER qualification module
 
-This source tree contains executable regression and invariant gates. It is compiled only on the Maven test classpath and is excluded from the production JAR and architectural API surface.
+This Maven module owns executable regression and invariant qualification gates. It depends on the production modules it qualifies; production modules do not depend on it.
 
-Java package names intentionally remain unchanged where a gate verifies package-private lifecycle or storage contracts.
+Java package names intentionally remain unchanged where a gate verifies package-private lifecycle or storage contracts. Command-owned shared test fixtures are consumed through the command module test artifact rather than borrowed source roots.

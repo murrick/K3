@@ -11,18 +11,58 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>kanger-command</artifactId>
+    <artifactId>kanger-qualification</artifactId>
     <packaging>jar</packaging>
 
-    <name>KANGER canonical command language</name>
+    <name>KANGER qualification</name>
     <description>
-        Dependency-free canonical command grammar, vocabulary, parsing and
-        formatting boundary shared by Core and delivery adapters.
+        Executable regression and invariant qualification plane. Production
+        modules do not depend on this module.
     </description>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.kanger</groupId>
+            <artifactId>kanger-command</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.kanger</groupId>
+            <artifactId>kanger-command</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.kanger</groupId>
+            <artifactId>kanger-core</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.kanger</groupId>
+            <artifactId>kanger-udf</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.kanger</groupId>
+            <artifactId>kanger-data-dumb</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.kanger</groupId>
+            <artifactId>kanger3-baseline</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
     <build>
-        <sourceDirectory>${project.basedir}/src</sourceDirectory>
-        <testSourceDirectory>${project.basedir}/test</testSourceDirectory>
+        <testSourceDirectory>${project.basedir}/src</testSourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -37,34 +77,23 @@
             </plugin>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.4.2</version>
-                <executions>
-                    <execution>
-                        <id>attach-command-test-fixture</id>
-                        <phase>process-test-classes</phase>
-                        <goals><goal>test-jar</goal></goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.1</version>
                 <executions>
                     <execution>
-                        <id>kanger-command-conformance</id>
+                        <id>kanger-regression-corpus</id>
                         <phase>test</phase>
                         <goals><goal>exec</goal></goals>
                         <configuration>
                             <executable>${java.home}/bin/java</executable>
                             <workingDirectory>${project.parent.basedir}</workingDirectory>
                             <arguments>
+                                <argument>-Dkanger.test.home=${project.build.directory}/kanger-test-home</argument>
                                 <argument>-cp</argument>
                                 <classpath/>
-                                <argument>org.kanger.command.CommandParserConformanceTest</argument>
+                                <argument>org.kanger.KangerTestRunner</argument>
+                                <argument>set_</argument>
                             </arguments>
                             <classpathScope>test</classpathScope>
                         </configuration>
