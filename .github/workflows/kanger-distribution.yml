@@ -241,9 +241,10 @@ jobs:
             exit 1
           fi
 
-          sudo grep -Fq 'kanger-server-thin.jar' "${canonical}/bin/kanger-admin"
-          sudo grep -Fq 'lib/*' "${canonical}/bin/kanger-admin"
-          sudo grep -Fq 'modules/*' "${canonical}/bin/kanger-admin"
+          sudo grep -Fqx 'SERVER_THIN_JAR="${SERVER_ROOT}/kanger-server-thin.jar"' "${canonical}/bin/kanger-admin"
+          sudo grep -Fqx 'SERVER_LIB="${SERVER_ROOT}/lib"' "${canonical}/bin/kanger-admin"
+          sudo grep -Fqx 'SERVER_MODULES="${SERVER_ROOT}/modules"' "${canonical}/bin/kanger-admin"
+          sudo grep -Fqx 'SERVER_CLASSPATH="${SERVER_THIN_JAR}:${SERVER_LIB}/*:${SERVER_MODULES}/*"' "${canonical}/bin/kanger-admin"
           sudo grep -Fqx 'KANGER_UI_DOMAIN=ui.example.test' "${instance_file}"
           sudo grep -Fqx 'KANGER_API_DOMAIN=api.example.test' "${instance_file}"
           sudo grep -Fq "window.KANGER_API_HOST = 'https://api.example.test';" "${canonical}/ui/config.js"
