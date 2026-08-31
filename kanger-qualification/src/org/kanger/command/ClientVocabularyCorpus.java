@@ -18,7 +18,7 @@ import java.util.List;
 public final class ClientVocabularyCorpus {
 
     private static final String RELATIVE =
-            "kanger-command/test-data/client-vocabulary.tsv";
+            "kanger-qualification/test-data/client-vocabulary.tsv";
 
     private ClientVocabularyCorpus() {
     }

@@ -45,9 +45,13 @@ jobs:
         run: |
           set -euo pipefail
           test -f kanger-qualification/pom.xml
+          test ! -e kanger-command/test
+          test ! -e kanger-command/test-data
           ! grep -Fq '../kanger-qualification/src' kanger-console/pom.xml
           ! grep -Fq '../kanger-command/test' kanger-console/pom.xml
           ! grep -Fq '../kanger-command/test' kanger-server/pom.xml
+          ! grep -Fq '<type>test-jar</type>' kanger-server/pom.xml
+          ! grep -Fq '<type>test-jar</type>' kanger-qualification/pom.xml
 
       - name: Package production artifact
         run: mvn --batch-mode --no-transfer-progress -pl kanger-console -am -DskipTests clean package
@@ -71,6 +75,10 @@ jobs:
           set -euo pipefail
           test -d kanger-qualification/src
           test -f kanger-qualification/src/org/kanger/KangerCanonicalConsoleRunner.java
+          test -f kanger-qualification/src/org/kanger/CanonicalClientVocabularyEquivalenceTest.java
+          test -f kanger-qualification/src/org/kanger/command/ClientVocabularyCorpus.java
+          test -f kanger-qualification/src/org/kanger/command/CommandParserConformanceTest.java
+          test -f kanger-qualification/test-data/client-vocabulary.tsv
           count="$(find kanger-qualification/src -type f -name '*Runner.java' | wc -l | tr -d ' ')"
           test "$count" -eq 50
           mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install
