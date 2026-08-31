@@ -34,7 +34,6 @@ import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.*;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.stores.HypothesisStore;
-import org.kanger.test.KangerTest;
 import org.kanger.units.Rule;
 
 import java.io.*;
@@ -467,13 +466,6 @@ public class Console {
                     break;
                 case 'X':
                     System.out.println(Diagnostics.snapshot(mind, "console"));
-                    break;
-                case 'T':
-                    String prefix = "";
-                    if (line.split(" ").length > 2) {
-                        prefix = line.split(" ")[2];
-                    }
-                    KangerTest.test((Mind) mind, "set_" + prefix);
                     break;
             }
         }
