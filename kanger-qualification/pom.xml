@@ -52,7 +52,7 @@
         </dependency>
         <dependency>
             <groupId>org.kanger</groupId>
-            <artifactId>kanger3-baseline</artifactId>
+            <artifactId>kanger-console</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>

@@ -11,10 +11,10 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>kanger3-baseline</artifactId>
+    <artifactId>kanger-console</artifactId>
     <packaging>jar</packaging>
 
-    <name>KANGER III reproducible baseline</name>
+    <name>KANGER Console</name>
     <description>
         Standalone Java Console adapter over the shared KANGER semantic core.
     </description>
