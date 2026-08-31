@@ -16,7 +16,7 @@
             "name": "Kanger",
             "request": "launch",
             "mainClass": "org.kanger.Kanger",
-            "projectName": "K3",
+            "projectName": "kanger3-baseline",
             "args": "-S"
         }
     ]
