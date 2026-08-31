@@ -104,8 +104,8 @@ public final class KangerTestRunner {
             return Files.createTempDirectory("kanger-test-home-");
         }
 
-        Path path = Paths.get(configuredHome);
-        Files.createDirectories(path);
-        return path;
+        Path base = Paths.get(configuredHome);
+        Files.createDirectories(base);
+        return Files.createTempDirectory(base, "run-");
     }
 }
