@@ -108,6 +108,7 @@ jobs:
             "${root}/RELEASE" \
             "${root}/SHA256SUMS" \
             "${root}/server/kanger-server.jar" \
+            "${root}/server/kanger-server-thin.jar" \
             "${root}/ui/index.html" \
             "${root}/install.sh" \
             "${root}/update.sh" \
@@ -115,6 +116,17 @@ jobs:
           do
             grep -Fqx -- "${member}" <<<"${listing}"
           done
+
+          udf_modules="$(grep -Ec "^${root}/server/modules/kanger-udf-[^/]+[.]jar$" <<<"${listing}" || true)"
+          storage_modules="$(grep -Ec "^${root}/server/modules/kanger-data-dumb-[^/]+[.]jar$" <<<"${listing}" || true)"
+          test "${udf_modules}" -eq 1
+          test "${storage_modules}" -eq 1
+          grep -Eq "^${root}/server/lib/kanger-core-[^/]+[.]jar$" <<<"${listing}"
+          grep -Eq "^${root}/server/lib/kanger-bootstrap-[^/]+[.]jar$" <<<"${listing}"
+          if grep -Eq "^${root}/server/lib/kanger-(udf|data-dumb)-[^/]+[.]jar$" <<<"${listing}"; then
+            echo 'runtime provider leaked into server/lib' >&2
+            exit 1
+          fi
 
           release="$(tar -xOzf "${archive}" "${root}/RELEASE")"
           printf '%s\n' "${release}"
