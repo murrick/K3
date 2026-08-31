@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   isolate-qualification:
-    name: Production surface excludes runners
+    name: Production surface excludes qualification
     runs-on: ubuntu-latest
 
     steps:
@@ -39,6 +39,7 @@ jobs:
             printf '%s\n' "$remaining"
             exit 1
           fi
+          test ! -e kanger-console/src/org/kanger/test
 
       - name: Verify Maven ownership boundaries
         shell: bash
@@ -62,9 +63,9 @@ jobs:
           set -euo pipefail
           jar_file="$(find kanger-console/target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
           test -n "$jar_file"
-          leaked="$(jar tf "$jar_file" | grep -E '(^|/)[^/]*Runner\.class$' || true)"
+          leaked="$(jar tf "$jar_file" | grep -E '(^|/)[^/]*Runner\.class$|^org/kanger/test/' || true)"
           if [ -n "$leaked" ]; then
-            echo 'Qualification runners leaked into production JAR:'
+            echo 'Qualification classes leaked into production JAR:'
             printf '%s\n' "$leaked"
             exit 1
           fi
@@ -79,6 +80,13 @@ jobs:
           test -f kanger-qualification/src/org/kanger/command/ClientVocabularyCorpus.java
           test -f kanger-qualification/src/org/kanger/command/CommandParserConformanceTest.java
           test -f kanger-qualification/test-data/client-vocabulary.tsv
+          test -f kanger-qualification/src/org/kanger/test/KangerTest.java
+          test -f kanger-qualification/src/org/kanger/test/KangerCompletedTest.java
+          test -f kanger-qualification/src/org/kanger/test/KangerStabilizationTest.java
+          test -f kanger-qualification/src/org/kanger/test/KangerC1PromotionTest.java
+          test -f kanger-qualification/src/org/kanger/test/KangerC3BindingTest.java
+          test -f kanger-qualification/src/org/kanger/test/KangerC4IntervalTest.java
+          test -f kanger-qualification/src/org/kanger/test/KangerVisualTestHarness.java
           count="$(find kanger-qualification/src -type f -name '*Runner.java' | wc -l | tr -d ' ')"
           test "$count" -eq 50
           mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install
