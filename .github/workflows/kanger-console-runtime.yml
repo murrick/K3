@@ -1,0 +1,120 @@
+name: KANGER Console Runtime
+
+on:
+  push:
+    paths:
+      - 'pom.xml'
+      - 'kanger-command/**'
+      - 'kanger-core/**'
+      - 'kanger-bootstrap/**'
+      - 'kanger-udf/**'
+      - 'kanger-data-dumb/**'
+      - 'kanger-console/**'
+      - '.github/workflows/kanger-console-runtime.yml'
+  pull_request:
+    paths:
+      - 'pom.xml'
+      - 'kanger-command/**'
+      - 'kanger-core/**'
+      - 'kanger-bootstrap/**'
+      - 'kanger-udf/**'
+      - 'kanger-data-dumb/**'
+      - 'kanger-console/**'
+      - '.github/workflows/kanger-console-runtime.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kanger-console-runtime-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  thin-runtime:
+    name: Thin Console on Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '21']
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+
+      - name: Build thin Console runtime
+        run: mvn --batch-mode --no-transfer-progress -pl kanger-console -am clean verify
+
+      - name: Qualify optional provider combinations
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          target='kanger-console/target'
+          thin="$(find "$target" -maxdepth 1 -type f -name '*-thin.jar' -print -quit)"
+          udf="$(find "$target/runtime/modules" -maxdepth 1 -type f -name 'kanger-udf-*.jar' -print -quit)"
+          storage="$(find "$target/runtime/modules" -maxdepth 1 -type f -name 'kanger-data-dumb-*.jar' -print -quit)"
+
+          test -n "$thin" && test -f "$thin"
+          test -n "$udf" && test -f "$udf"
+          test -n "$storage" && test -f "$storage"
+
+          base_cp="${thin}:${target}/runtime/lib/*"
+
+          run_console() {
+            local scenario="$1"
+            local classpath="$2"
+            local expect_udf="$3"
+            local expect_storage="$4"
+            local home="$RUNNER_TEMP/kanger-console-${scenario}"
+            local log="$RUNNER_TEMP/kanger-console-${scenario}.log"
+
+            rm -rf "$home"
+            mkdir -p "$home"
+
+            printf 'quit\n' | timeout 30s java \
+              -Duser.home="$home" \
+              -cp "$classpath" \
+              org.kanger.Kanger -S \
+              >"$log" 2>&1
+
+            grep -F 'KANGER III Session closed' "$log"
+
+            if [[ "$expect_udf" == true ]]; then
+              grep -F 'UDF module loaded' "$log"
+            elif grep -Fq 'UDF module loaded' "$log"; then
+              echo "::error::UDF module unexpectedly loaded in ${scenario}"
+              cat "$log"
+              exit 1
+            fi
+
+            if [[ "$expect_storage" == true ]]; then
+              grep -F 'DB module loaded:' "$log"
+            elif grep -Fq 'DB module loaded:' "$log"; then
+              echo "::error::Storage module unexpectedly loaded in ${scenario}"
+              cat "$log"
+              exit 1
+            fi
+          }
+
+          run_console both "${base_cp}:${udf}:${storage}" true true
+          run_console udf-only "${base_cp}:${udf}" true false
+          run_console storage-only "${base_cp}:${storage}" false true
+          run_console none "${base_cp}" false false
+
+      - name: Upload Console runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kanger-console-runtime-java-${{ matrix.java }}
+          path: ${{ runner.temp }}/kanger-console-*.log
+          if-no-files-found: ignore
