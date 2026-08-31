@@ -11,12 +11,13 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>kanger-data-dumb</artifactId>
+    <artifactId>kanger-bootstrap</artifactId>
     <packaging>jar</packaging>
 
-    <name>KANGER DUMB storage plugin</name>
+    <name>KANGER runtime bootstrap</name>
     <description>
-        Optional DUMB storage implementation of KANGER Core data interfaces.
+        Runtime composition boundary discovering optional KANGER capabilities
+        without compile-time dependencies on concrete plugin implementations.
     </description>
 
     <dependencies>
@@ -25,20 +26,10 @@
             <artifactId>kanger-core</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.kanger</groupId>
-            <artifactId>kanger-bootstrap</artifactId>
-            <version>${project.version}</version>
-        </dependency>
     </dependencies>
 
     <build>
         <sourceDirectory>${project.basedir}/src</sourceDirectory>
-        <resources>
-            <resource>
-                <directory>${project.basedir}/resources</directory>
-            </resource>
-        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
