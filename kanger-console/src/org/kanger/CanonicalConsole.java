@@ -29,7 +29,6 @@ import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.IUser;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.stores.HypothesisStore;
-import org.kanger.test.KangerTest;
 import org.kanger.units.Rule;
 
 import java.io.BufferedWriter;
@@ -114,11 +113,6 @@ public final class CanonicalConsole {
 
                     if (isXplain(trimmed)) {
                         processXplain(trimmed, mind, input);
-                        continue;
-                    }
-
-                    if (isHiddenTestCommand(trimmed)) {
-                        processHiddenTest(trimmed);
                         continue;
                     }
 
@@ -820,25 +814,6 @@ public final class CanonicalConsole {
     private static boolean isXplain(String line) {
         String first = line.split("\\s+", 2)[0].toLowerCase();
         return first.length() > 0 && "xplain".startsWith(first);
-    }
-
-    private static boolean isHiddenTestCommand(String line) {
-        String[] parts = line.trim().split("\\s+");
-        if (parts.length < 2 || parts.length > 4
-                || !"options".equalsIgnoreCase(parts[0])
-                || !"test".equalsIgnoreCase(parts[1])) {
-            return false;
-        }
-        return parts.length < 4 || "db".equalsIgnoreCase(parts[2]);
-    }
-
-    private static void processHiddenTest(String line) throws Exception {
-        String[] parts = line.trim().split("\\s+");
-        boolean database = parts.length >= 3 && "db".equalsIgnoreCase(parts[2]);
-        String prefix = database
-                ? (parts.length == 4 ? parts[3] : "")
-                : (parts.length == 3 ? parts[2] : "");
-        IsolatedKangerTestRuntime.run(prefix, database);
     }
 
     private static void processXplain(String line, IMind mind, ConsoleLineInput input) throws Exception {
