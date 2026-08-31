@@ -48,11 +48,13 @@
             <groupId>org.kanger</groupId>
             <artifactId>kanger-udf</artifactId>
             <version>${project.parent.version}</version>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.kanger</groupId>
             <artifactId>kanger-data-dumb</artifactId>
             <version>${project.parent.version}</version>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.json</groupId>
@@ -165,6 +167,73 @@
                             </target>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>verify-thin-runtime-layout</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <available file="${project.build.directory}/kanger-server-thin.jar"
+                                           property="kanger.thin.jar.present"/>
+                                <fail unless="kanger.thin.jar.present"
+                                      message="Thin Server artifact was not produced"/>
+
+                                <available file="${project.build.directory}/runtime/lib"
+                                           type="dir"
+                                           property="kanger.runtime.lib.present"/>
+                                <fail unless="kanger.runtime.lib.present"
+                                      message="Server runtime lib directory was not produced"/>
+
+                                <available file="${project.build.directory}/runtime/modules"
+                                           type="dir"
+                                           property="kanger.runtime.modules.present"/>
+                                <fail unless="kanger.runtime.modules.present"
+                                      message="Server runtime modules directory was not produced"/>
+
+                                <resourcecount property="kanger.runtime.udf.count">
+                                    <fileset dir="${project.build.directory}/runtime/modules"
+                                             includes="kanger-udf-*.jar"/>
+                                </resourcecount>
+                                <condition property="kanger.runtime.udf.present">
+                                    <equals arg1="${kanger.runtime.udf.count}" arg2="1"/>
+                                </condition>
+                                <fail unless="kanger.runtime.udf.present"
+                                      message="Expected exactly one UDF runtime module"/>
+
+                                <resourcecount property="kanger.runtime.storage.count">
+                                    <fileset dir="${project.build.directory}/runtime/modules"
+                                             includes="kanger-data-dumb-*.jar"/>
+                                </resourcecount>
+                                <condition property="kanger.runtime.storage.present">
+                                    <equals arg1="${kanger.runtime.storage.count}" arg2="1"/>
+                                </condition>
+                                <fail unless="kanger.runtime.storage.present"
+                                      message="Expected exactly one DUMB storage runtime module"/>
+
+                                <resourcecount property="kanger.runtime.core.count">
+                                    <fileset dir="${project.build.directory}/runtime/lib"
+                                             includes="kanger-core-*.jar"/>
+                                </resourcecount>
+                                <condition property="kanger.runtime.core.present">
+                                    <equals arg1="${kanger.runtime.core.count}" arg2="1"/>
+                                </condition>
+                                <fail unless="kanger.runtime.core.present"
+                                      message="Expected exactly one Core runtime library"/>
+
+                                <resourcecount property="kanger.runtime.bootstrap.count">
+                                    <fileset dir="${project.build.directory}/runtime/lib"
+                                             includes="kanger-bootstrap-*.jar"/>
+                                </resourcecount>
+                                <condition property="kanger.runtime.bootstrap.present">
+                                    <equals arg1="${kanger.runtime.bootstrap.count}" arg2="1"/>
+                                </condition>
+                                <fail unless="kanger.runtime.bootstrap.present"
+                                      message="Expected exactly one bootstrap runtime library"/>
+                            </target>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 
@@ -187,6 +256,57 @@
                 <configuration>
                     <useModulePath>false</useModulePath>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>thin-runtime</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>thin</classifier>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.8.1</version>
+                <executions>
+                    <execution>
+                        <id>stage-runtime-libraries</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeScope>runtime</includeScope>
+                            <excludeArtifactIds>kanger-udf,kanger-data-dumb</excludeArtifactIds>
+                            <outputDirectory>${project.build.directory}/runtime/lib</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>stage-runtime-modules</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeScope>runtime</includeScope>
+                            <includeArtifactIds>kanger-udf,kanger-data-dumb</includeArtifactIds>
+                            <excludeTransitive>true</excludeTransitive>
+                            <outputDirectory>${project.build.directory}/runtime/modules</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
