@@ -82,6 +82,7 @@ jobs:
           count="$(find kanger-qualification/src -type f -name '*Runner.java' | wc -l | tr -d ' ')"
           test "$count" -eq 50
           mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install
+          mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am test
           mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml \
             -Dexec.mainClass=org.kanger.KangerParserTerminalDelimiterSafetyRunner \
             -Dexec.classpathScope=test exec:java
