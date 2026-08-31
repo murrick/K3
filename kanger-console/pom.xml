@@ -32,6 +32,11 @@
         </dependency>
         <dependency>
             <groupId>org.kanger</groupId>
+            <artifactId>kanger-bootstrap</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.kanger</groupId>
             <artifactId>kanger-udf</artifactId>
             <version>${project.version}</version>
             <optional>true</optional>

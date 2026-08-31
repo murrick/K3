@@ -7,20 +7,18 @@ package org.kanger;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.kanger.bootstrap.RuntimeBootstrap;
 import org.kanger.exception.AuthenticationErrorException;
-import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
-import org.kanger.storage.DB;
-import org.kanger.udf.UDF;
 
 /**
  * Initializes runtime modules for an already authenticated ACTIVE account.
  *
- * <p>E-mail verification is activation provenance and must not gate DB/UDF
- * availability after authentication. LOCAL_OPERATOR and EMAIL_CONFIRMATION
- * accounts therefore enter the same runtime module state once a valid session
- * token is presented.</p>
+ * <p>E-mail verification is activation provenance and must not gate runtime
+ * capability availability after authentication. LOCAL_OPERATOR and
+ * EMAIL_CONFIRMATION accounts therefore enter the same runtime module state
+ * once a valid session token is presented.</p>
  */
 final class AuthenticatedRuntimeBootstrapReactor implements IReactor<JSONObject> {
 
@@ -54,18 +52,8 @@ final class AuthenticatedRuntimeBootstrapReactor implements IReactor<JSONObject>
     }
 
     static void ensureRuntimeModules(IUser user) throws Exception {
-        if (user == null) {
-            return;
-        }
-        try {
-            ((User) user).getData();
-        } catch (RuntimeErrorException missing) {
-            new DB().init(user);
-        }
-        try {
-            ((User) user).getUdf();
-        } catch (RuntimeErrorException missing) {
-            new UDF().init(user);
+        if (user != null) {
+            RuntimeBootstrap.ensure(user);
         }
     }
 

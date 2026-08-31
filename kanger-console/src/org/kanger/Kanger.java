@@ -24,11 +24,12 @@
 
 package org.kanger;
 
+import org.kanger.bootstrap.RuntimeBootstrap;
+import org.kanger.bootstrap.RuntimeBootstrapResult;
+import org.kanger.bootstrap.RuntimeCapability;
 import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
-import org.kanger.storage.DB;
-import org.kanger.udf.UDF;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -121,15 +122,13 @@ public class Kanger {
         }
 
         IUser user = UserFactory.getUser(login, password);
-        try {
-            new UDF().init(user);
+        RuntimeBootstrapResult runtime = RuntimeBootstrap.ensure(user);
+        if (runtime.loaded(RuntimeCapability.UDF)) {
             System.out.println("UDF module loaded");
-        } catch (NoClassDefFoundError ignored) {
         }
-        try {
-            new DB().init(user);
-            System.out.println("DB module loaded: " + new DB().getDescription());
-        } catch (NoClassDefFoundError ignored) {
+        if (runtime.loaded(RuntimeCapability.STORAGE)) {
+            System.out.println("DB module loaded: "
+                    + runtime.getDescription(RuntimeCapability.STORAGE));
         }
 
         System.out.println("Current user: " + login);
