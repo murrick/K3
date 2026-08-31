@@ -39,12 +39,14 @@
             <groupId>org.kanger</groupId>
             <artifactId>kanger-udf</artifactId>
             <version>${project.version}</version>
+            <scope>runtime</scope>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.kanger</groupId>
             <artifactId>kanger-data-dumb</artifactId>
             <version>${project.version}</version>
+            <scope>runtime</scope>
             <optional>true</optional>
         </dependency>
         <dependency>
@@ -155,6 +157,86 @@
                             </target>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>verify-thin-runtime-layout</id>
+                        <phase>verify</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <target>
+                                <resourcecount property="kanger.console.thin.count">
+                                    <fileset dir="${project.build.directory}"
+                                             includes="${project.build.finalName}-thin.jar"/>
+                                </resourcecount>
+                                <condition property="kanger.console.thin.present">
+                                    <equals arg1="${kanger.console.thin.count}" arg2="1"/>
+                                </condition>
+                                <fail unless="kanger.console.thin.present"
+                                      message="Expected exactly one thin Console artifact"/>
+
+                                <available file="${project.build.directory}/runtime/lib"
+                                           type="dir"
+                                           property="kanger.console.runtime.lib.present"/>
+                                <fail unless="kanger.console.runtime.lib.present"
+                                      message="Console runtime lib directory was not produced"/>
+
+                                <available file="${project.build.directory}/runtime/modules"
+                                           type="dir"
+                                           property="kanger.console.runtime.modules.present"/>
+                                <fail unless="kanger.console.runtime.modules.present"
+                                      message="Console runtime modules directory was not produced"/>
+
+                                <resourcecount property="kanger.console.runtime.udf.count">
+                                    <fileset dir="${project.build.directory}/runtime/modules"
+                                             includes="kanger-udf-*.jar"/>
+                                </resourcecount>
+                                <condition property="kanger.console.runtime.udf.present">
+                                    <equals arg1="${kanger.console.runtime.udf.count}" arg2="1"/>
+                                </condition>
+                                <fail unless="kanger.console.runtime.udf.present"
+                                      message="Expected exactly one UDF Console runtime module"/>
+
+                                <resourcecount property="kanger.console.runtime.storage.count">
+                                    <fileset dir="${project.build.directory}/runtime/modules"
+                                             includes="kanger-data-dumb-*.jar"/>
+                                </resourcecount>
+                                <condition property="kanger.console.runtime.storage.present">
+                                    <equals arg1="${kanger.console.runtime.storage.count}" arg2="1"/>
+                                </condition>
+                                <fail unless="kanger.console.runtime.storage.present"
+                                      message="Expected exactly one DUMB Console runtime module"/>
+
+                                <resourcecount property="kanger.console.runtime.core.count">
+                                    <fileset dir="${project.build.directory}/runtime/lib"
+                                             includes="kanger-core-*.jar"/>
+                                </resourcecount>
+                                <condition property="kanger.console.runtime.core.present">
+                                    <equals arg1="${kanger.console.runtime.core.count}" arg2="1"/>
+                                </condition>
+                                <fail unless="kanger.console.runtime.core.present"
+                                      message="Expected exactly one Core Console runtime library"/>
+
+                                <resourcecount property="kanger.console.runtime.bootstrap.count">
+                                    <fileset dir="${project.build.directory}/runtime/lib"
+                                             includes="kanger-bootstrap-*.jar"/>
+                                </resourcecount>
+                                <condition property="kanger.console.runtime.bootstrap.present">
+                                    <equals arg1="${kanger.console.runtime.bootstrap.count}" arg2="1"/>
+                                </condition>
+                                <fail unless="kanger.console.runtime.bootstrap.present"
+                                      message="Expected exactly one bootstrap Console runtime library"/>
+
+                                <resourcecount property="kanger.console.runtime.provider.leak.count">
+                                    <fileset dir="${project.build.directory}/runtime/lib"
+                                             includes="kanger-udf-*.jar,kanger-data-dumb-*.jar"/>
+                                </resourcecount>
+                                <condition property="kanger.console.runtime.providers.isolated">
+                                    <equals arg1="${kanger.console.runtime.provider.leak.count}" arg2="0"/>
+                                </condition>
+                                <fail unless="kanger.console.runtime.providers.isolated"
+                                      message="Console runtime provider leaked into runtime/lib"/>
+                            </target>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 
@@ -168,6 +250,56 @@
                     <target>${maven.compiler.target}</target>
                     <showWarnings>true</showWarnings>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>thin-runtime</id>
+                        <phase>package</phase>
+                        <goals><goal>jar</goal></goals>
+                        <configuration>
+                            <classifier>thin</classifier>
+                            <archive>
+                                <manifest>
+                                    <mainClass>org.kanger.Kanger</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.8.1</version>
+                <executions>
+                    <execution>
+                        <id>stage-runtime-libraries</id>
+                        <phase>package</phase>
+                        <goals><goal>copy-dependencies</goal></goals>
+                        <configuration>
+                            <includeScope>runtime</includeScope>
+                            <excludeArtifactIds>kanger-udf,kanger-data-dumb</excludeArtifactIds>
+                            <outputDirectory>${project.build.directory}/runtime/lib</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>stage-runtime-modules</id>
+                        <phase>package</phase>
+                        <goals><goal>copy-dependencies</goal></goals>
+                        <configuration>
+                            <includeScope>runtime</includeScope>
+                            <includeArtifactIds>kanger-udf,kanger-data-dumb</includeArtifactIds>
+                            <excludeTransitive>true</excludeTransitive>
+                            <outputDirectory>${project.build.directory}/runtime/modules</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
