@@ -45,14 +45,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class DumbCorruptedReindexContainmentTest {
 
     private static final String SOURCE = "!@x a(x) -> b(x);";
+    private static final String HEALTHY_FACT = "healthy_recovery";
     private static final String[] CORE_SUFFIXES = {
             ".index", ".store", ".integrity"
     };
 
     @Test
-    void corruptedOfflineReindexPreservesLiveGenerationAndStillAllowsQuit()
+    void corruptedOfflineReindexPreservesGenerationAndSessionCanRecover()
             throws Exception {
         CorruptGeneration generation = createCorruptGeneration();
+        String healthyStorage = "healthy-recovery";
+        createHealthyGeneration(
+                generation.root, generation.databaseDir, healthyStorage);
         Map<String, String> before = hashGeneration(
                 generation.databaseDir, generation.storageName);
 
@@ -77,13 +81,26 @@ class DumbCorruptedReindexContainmentTest {
                     hashGeneration(generation.databaseDir, generation.storageName),
                     "failed reindex mutated the live corrupted generation");
 
+            victim.open(healthyStorage);
+            assertTrue(victim.mind().isStorageUsed(),
+                    "same session could not attach a healthy storage after failed reindex");
+            assertTrue(Boolean.TRUE.equals(
+                            victim.mind().query("?" + HEALTHY_FACT + ";")),
+                    "same session could not hydrate/query healthy storage after failed reindex");
+            victim.user.setCurrentMind(victim.mind().closeStorage());
+            assertTrue(victim.db.isClosed(),
+                    "same-session healthy close retained physical DUMB handles");
+            assertEquals(before,
+                    hashGeneration(generation.databaseDir, generation.storageName),
+                    "same-session recovery mutated the corrupted source generation");
+
             JSONObject response = quit(token);
             assertEquals("OK", response.optString("result"), response.toString());
             assertThrows(AuthenticationErrorException.class,
                     () -> UserFactory.getUser(token),
-                    "quit after failed reindex retained the session token");
+                    "quit after same-session recovery retained the session token");
             assertTrue(victim.db.isClosed(),
-                    "quit after failed reindex retained physical DUMB handles");
+                    "quit after same-session recovery retained physical DUMB handles");
             assertEquals(before,
                     hashGeneration(generation.databaseDir, generation.storageName),
                     "quit cleanup mutated the failed reindex source generation");
@@ -148,6 +165,25 @@ class DumbCorruptedReindexContainmentTest {
         }
 
         return new CorruptGeneration(root, databaseDir, storageName);
+    }
+
+    private void createHealthyGeneration(Path root,
+                                         Path databaseDir,
+                                         String storageName) throws Exception {
+        Runtime creator = newRuntime(root.resolve("healthy-home"), databaseDir);
+        try {
+            creator.open(storageName);
+            creator.mind().query("!" + HEALTHY_FACT + ";");
+            creator.user.setCurrentMind(
+                    creator.user.checkpoint(creator.mind()));
+            creator.user.setCurrentMind(creator.mind().closeStorage());
+            assertTrue(creator.db.isClosed(),
+                    "healthy recovery fixture failed to close cleanly");
+        } finally {
+            if (!creator.db.isClosed()) {
+                creator.db.close();
+            }
+        }
     }
 
     private Runtime newRuntime(Path home, Path databaseDir) throws Exception {
