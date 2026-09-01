@@ -27,8 +27,10 @@ package org.kanger.primitives;
 
 import org.kanger.Mind;
 import org.kanger.enums.ArgumentType;
+import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.enums.UnitType;
 import org.kanger.exception.OutOfBufferException;
+import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.ITerm;
@@ -173,6 +175,13 @@ public class Argument implements IArgument {
     public IUnit getObject(IMind mind) throws Exception {
         if (o == null && id != -1 && type != ArgumentType.EMPTY) {
             load((Mind) mind);
+            if (o == null && mind != null && mind.isStorageUsed()) {
+                throw new StorageLifecycleException(
+                        StorageLifecycleErrorCode.STORAGE_SEMANTIC_CORRUPTION,
+                        "Database " + mind.getStorageName()
+                                + " is semantically inconsistent: missing "
+                                + type.name() + " id=" + id);
+            }
         }
         return o;
     }
