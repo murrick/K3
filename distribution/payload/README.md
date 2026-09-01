@@ -30,7 +30,9 @@ SHA256SUMS
 install.sh
 update.sh
 bin/kanger-admin
-server/kanger-server.jar
+server/kanger-server-thin.jar
+server/lib/
+server/modules/
 server/kanger.conf.example
 ui/
 nginx/kanger.conf.template
@@ -282,7 +284,9 @@ Default paths are:
 | State-side config symlink | `/var/lib/kanger/kanger.conf` |
 | systemd unit | `/etc/systemd/system/kanger.service` |
 | nginx config | `/etc/nginx/conf.d/kanger.conf` |
-| Active Server JAR | `/opt/kanger/current/server/kanger-server.jar` |
+| Active Server thin JAR | `/opt/kanger/current/server/kanger-server-thin.jar` |
+| Server runtime libraries | `/opt/kanger/current/server/lib` |
+| Server runtime modules | `/opt/kanger/current/server/modules` |
 | Browser UI | `/opt/kanger/current/ui` |
 | Admin tool | `/opt/kanger/current/bin/kanger-admin` |
 
@@ -467,11 +471,13 @@ sudo /opt/kanger/current/bin/kanger-admin --help
 The launcher uses:
 
 ```text
-Server home: /var/lib/kanger
-Server JAR:  /opt/kanger/current/server/kanger-server.jar
+Server home:      /var/lib/kanger
+Server thin JAR:  /opt/kanger/current/server/kanger-server-thin.jar
+Runtime libs:     /opt/kanger/current/server/lib/*
+Runtime modules:  /opt/kanger/current/server/modules/*
 ```
 
-It starts `org.kanger.admin.KangerAdmin` from the currently active Server JAR.
+It starts `org.kanger.admin.KangerAdmin` from the currently active Server runtime classpath.
 
 ### 11.1 Security model
 
