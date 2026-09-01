@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -37,14 +38,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class DumbEndpointCorruptionSignalTest {
 
     @Test
-    void danglingPersistentChainMustNotBecomeNullEndpoints() throws Exception {
+    void liveDanglingChainMustNotBecomeNullEndpoints() throws Exception {
         Path root = Files.createTempDirectory("kanger-dumb-endpoint-corrupt-");
         Path databaseDir = root.resolve("database");
         Files.createDirectories(databaseDir);
         String storageName = "dangling-endpoint";
 
         createTwoRuleGeneration(root, databaseDir, storageName);
-        corruptRuleChain(databaseDir, storageName);
 
         User readerUser = new User();
         readerUser.setDatabaseDir(withSeparator(databaseDir));
@@ -52,6 +52,19 @@ class DumbEndpointCorruptionSignalTest {
         reader.init(readerUser);
         try {
             IBase rules = acquireCanonicalBases(reader, storageName);
+            IStep first = rules.getRoot();
+            assertNotNull(first, "fixture rule schema has no root");
+            IStep second = first.getNext();
+            assertNotNull(second,
+                    "fixture did not create a two-node persistent Rule chain");
+            long victimId = second.getId();
+            assertTrue(rules.containsKey(victimId),
+                    "fixture successor is not physically present");
+
+            rules.delete(victimId);
+            reader.flush();
+            assertFalse(rules.containsKey(victimId),
+                    "failed to create live dangling Rule chain fixture");
 
             assertAll(
                     () -> assertThrows(IllegalStateException.class,
@@ -92,32 +105,6 @@ class DumbEndpointCorruptionSignalTest {
             if (!db.isClosed()) {
                 db.close();
             }
-        }
-    }
-
-    private void corruptRuleChain(Path databaseDir,
-                                  String storageName) throws Exception {
-        User corruptorUser = new User();
-        corruptorUser.setDatabaseDir(withSeparator(databaseDir));
-        DB corruptor = new DB();
-        corruptor.init(corruptorUser);
-        try {
-            IBase rules = acquireCanonicalBases(corruptor, storageName);
-            IStep first = rules.getRoot();
-            assertNotNull(first, "fixture rule schema has no root");
-            IStep second = first.getNext();
-            assertNotNull(second,
-                    "fixture did not create a two-node persistent Rule chain");
-            long victimId = second.getId();
-            assertTrue(rules.containsKey(victimId),
-                    "fixture successor is not physically present");
-
-            rules.delete(victimId);
-            corruptor.flush();
-            assertTrue(!rules.containsKey(victimId),
-                    "failed to create dangling Rule chain fixture");
-        } finally {
-            corruptor.close();
         }
     }
 
