@@ -54,7 +54,7 @@ jobs:
         shell: bash
         run: |
           log="kanger-3.4.3-${{ matrix.id }}.log"
-          grep -Eq 'Success:[[:space:]]+101' "$log"
+          grep -Eq 'Success:[[:space:]]+102' "$log"
           grep -Eq 'Fails:[[:space:]]+0' "$log"
           grep -Eq 'Stabilization Success:[[:space:]]+7' "$log"
           grep -Eq 'Stabilization Fails:[[:space:]]+0' "$log"
