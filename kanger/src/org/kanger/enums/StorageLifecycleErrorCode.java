@@ -6,8 +6,8 @@
 package org.kanger.enums;
 
 /**
- * Stable machine-readable reasons for rejected physical-storage lifecycle
- * operations.
+ * Stable machine-readable reasons for rejected storage lifecycle and
+ * qualification operations.
  *
  * <p>The code identifies the violated invariant. {@link #getRequiredAction()}
  * optionally names the explicit caller action required before retrying the
@@ -19,6 +19,7 @@ public enum StorageLifecycleErrorCode {
     ACTIVE_TRANSACTION("TRANSACTION_RESOLUTION_REQUIRED"),
     NO_STORAGE_OPEN(null),
     STORAGE_NOT_FOUND(null),
+    STORAGE_SEMANTIC_CORRUPTION(null),
     STORAGE_DELETE_INCOMPLETE("VERIFY_CURRENT_STATE");
 
     private final String requiredAction;
