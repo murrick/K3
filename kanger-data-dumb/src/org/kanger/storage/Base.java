@@ -35,7 +35,6 @@ import org.kanger.interfaces.internal.IStep;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -659,9 +658,10 @@ public class Base implements IBase, Iterable<IStep> {
             try {
                 return data.getUncached(one.getLong());
             } catch (Exception e) {
-                System.err.println(new Date());
-                e.printStackTrace(System.err);
-                return null;
+                throw new IllegalStateException(
+                        "DUMB storage iterator read failed for " + name
+                                + " base=" + baseCode + " id=" + one.getId(),
+                        e);
             }
         }
     }
