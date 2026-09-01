@@ -5,6 +5,9 @@
  */
 package org.kanger;
 
+import org.kanger.enums.StorageLifecycleErrorCode;
+import org.kanger.exception.StorageLifecycleException;
+import org.kanger.factory.RuleFactory;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
@@ -21,8 +24,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Focused regression gate for exception atomicity while User acquires the
- * schema-specific IBase set for a new storage generation.
+ * Focused regression gate for exception atomicity while User acquires and
+ * qualifies a new storage generation.
  */
 public final class KangerStorageAcquisitionAtomicitySafetyRunner {
 
@@ -71,8 +74,44 @@ public final class KangerStorageAcquisitionAtomicitySafetyRunner {
             mind = (Mind) mind.closeStorage();
             require(!mind.isStorageUsed(), "successful retry did not close cleanly");
 
+            data.enableSemanticFailure();
+            boolean semanticFailureObserved = false;
+            try {
+                mind.useStorage("semantic-bad-generation");
+            } catch (StorageLifecycleException expected) {
+                semanticFailureObserved = expected.getErrorCode()
+                        == StorageLifecycleErrorCode.STORAGE_SEMANTIC_CORRUPTION
+                        && expected.toString().contains("semantically inconsistent");
+            }
+            require(semanticFailureObserved,
+                    "post-publication semantic failure was not classified");
+            require(!mind.isStorageUsed(),
+                    "rejected semantic generation remained active");
+            require(data.closeCalls == 3,
+                    "rejected semantic generation was not closed without checkpoint");
+            require(publishedBaseCount((User) user) == 0,
+                    "rejected semantic generation remained published");
+            assertFactoryConnectionsDetached(mind);
+
+            data.disableSemanticFailure();
+            mind = (Mind) mind.useStorage("semantic-recovery-generation");
+            require(mind.isStorageUsed(),
+                    "session could not open a valid generation after semantic failure");
+            require("semantic-recovery-generation".equals(mind.getStorageName()),
+                    "semantic recovery opened an unexpected generation");
+            require(publishedBaseCount((User) user) == 10,
+                    "semantic recovery did not publish the complete schema set");
+            assertFactoryConnectionsAttached(mind);
+
+            mind = (Mind) mind.closeStorage();
+            require(!mind.isStorageUsed(),
+                    "semantic recovery generation did not close cleanly");
+
             System.out.println("STORAGE_ACQUISITION_ATOMICITY_PASS rollback");
             System.out.println("STORAGE_ACQUISITION_ATOMICITY_PASS retry");
+            System.out.println("STORAGE_ACQUISITION_ATOMICITY_PASS semantic_classification");
+            System.out.println("STORAGE_ACQUISITION_ATOMICITY_PASS semantic_discard");
+            System.out.println("STORAGE_ACQUISITION_ATOMICITY_PASS semantic_retry");
             System.out.println("STORAGE_ACQUISITION_ATOMICITY_OK");
             exitCode = 0;
         } catch (Throwable error) {
@@ -131,6 +170,7 @@ public final class KangerStorageAcquisitionAtomicitySafetyRunner {
         private final Map<String, IBase> bases = new HashMap<>();
         private int failAt;
         private int acquisitionCount;
+        private boolean semanticFailure;
         private boolean open;
         private String storageName = "";
         private int closeCalls;
@@ -142,6 +182,14 @@ public final class KangerStorageAcquisitionAtomicitySafetyRunner {
         private void disableFailure() {
             failAt = Integer.MAX_VALUE;
             acquisitionCount = 0;
+        }
+
+        private void enableSemanticFailure() {
+            semanticFailure = true;
+        }
+
+        private void disableSemanticFailure() {
+            semanticFailure = false;
         }
 
         @Override
@@ -218,6 +266,7 @@ public final class KangerStorageAcquisitionAtomicitySafetyRunner {
 
         private IBase newBase(final String name) {
             final AtomicLong nextId = new AtomicLong();
+            final IStep poison = poisonStep();
             return (IBase) Proxy.newProxyInstance(
                     IBase.class.getClassLoader(),
                     new Class<?>[]{IBase.class},
@@ -227,13 +276,16 @@ public final class KangerStorageAcquisitionAtomicitySafetyRunner {
                             return name;
                         }
                         if ("isEmpty".equals(methodName)) {
-                            return true;
+                            return !(semanticFailure && RuleFactory.SCHEMA.equals(name));
                         }
                         if ("containsKey".equals(methodName)) {
                             return false;
                         }
-                        if ("getRoot".equals(methodName)
-                                || "getTop".equals(methodName)
+                        if ("getRoot".equals(methodName)) {
+                            return semanticFailure && RuleFactory.SCHEMA.equals(name)
+                                    ? poison : null;
+                        }
+                        if ("getTop".equals(methodName)
                                 || "get".equals(methodName)
                                 || "getUdf".equals(methodName)) {
                             return null;
@@ -246,6 +298,38 @@ public final class KangerStorageAcquisitionAtomicitySafetyRunner {
                         }
                         if (method.getReturnType() == long.class) {
                             return 0L;
+                        }
+                        if (method.getReturnType() == boolean.class) {
+                            return false;
+                        }
+                        return null;
+                    });
+        }
+
+        private IStep poisonStep() {
+            return (IStep) Proxy.newProxyInstance(
+                    IStep.class.getClassLoader(),
+                    new Class<?>[]{IStep.class},
+                    (proxy, method, args) -> {
+                        String methodName = method.getName();
+                        if ("getId".equals(methodName)) {
+                            return 0L;
+                        }
+                        if ("getHash".equals(methodName)) {
+                            return 0;
+                        }
+                        if ("getNext".equals(methodName)) {
+                            return null;
+                        }
+                        if ("getData".equals(methodName)) {
+                            throw new NullPointerException(
+                                    "injected semantic hydration failure");
+                        }
+                        if (method.getReturnType() == long.class) {
+                            return 0L;
+                        }
+                        if (method.getReturnType() == int.class) {
+                            return 0;
                         }
                         if (method.getReturnType() == boolean.class) {
                             return false;
