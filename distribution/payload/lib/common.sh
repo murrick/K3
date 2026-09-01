@@ -39,7 +39,7 @@ validate_bundle_layout() {
 
   [[ -f "${BUNDLE_ROOT}/RELEASE" ]] || fail "RELEASE is missing from distribution"
   [[ -f "${BUNDLE_ROOT}/SHA256SUMS" ]] || fail "SHA256SUMS is missing from distribution"
-  [[ -f "${BUNDLE_ROOT}/server/kanger-server.jar" ]] || fail "Compatibility Server JAR is missing from distribution"
+  [[ ! -e "${BUNDLE_ROOT}/server/kanger-server.jar" ]] || fail "Compatibility Server JAR must not be present in distribution"
   [[ -f "${BUNDLE_ROOT}/server/kanger-server-thin.jar" ]] || fail "Thin Server JAR is missing from distribution"
   [[ -d "${BUNDLE_ROOT}/server/lib" ]] || fail "Server runtime library directory is missing from distribution"
   [[ -d "${BUNDLE_ROOT}/server/modules" ]] || fail "Server runtime module directory is missing from distribution"
@@ -203,9 +203,6 @@ stage_release() {
       "${stage_dir}/server/modules"
     install -o root -g root -m 0644 "${BUNDLE_ROOT}/RELEASE" "${stage_dir}/RELEASE"
     install -o root -g root -m 0755 "${BUNDLE_ROOT}/bin/kanger-admin" "${stage_dir}/bin/kanger-admin"
-    install -o root -g kanger -m 0640 \
-      "${BUNDLE_ROOT}/server/kanger-server.jar" \
-      "${stage_dir}/server/kanger-server.jar"
     install -o root -g kanger -m 0640 \
       "${BUNDLE_ROOT}/server/kanger-server-thin.jar" \
       "${stage_dir}/server/kanger-server-thin.jar"

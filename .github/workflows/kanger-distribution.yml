@@ -111,7 +111,6 @@ jobs:
           for member in \
             "${root}/RELEASE" \
             "${root}/SHA256SUMS" \
-            "${root}/server/kanger-server.jar" \
             "${root}/server/kanger-server-thin.jar" \
             "${root}/ui/index.html" \
             "${root}/install.sh" \
@@ -120,6 +119,10 @@ jobs:
           do
             grep -Fqx -- "${member}" <<<"${listing}"
           done
+          if grep -Fqx -- "${root}/server/kanger-server.jar" <<<"${listing}"; then
+            echo 'compatibility fat Server JAR leaked into distribution' >&2
+            exit 1
+          fi
 
           udf_modules="$(grep -Ec "^${root}/server/modules/kanger-udf-[^/]+[.]jar$" <<<"${listing}" || true)"
           storage_modules="$(grep -Ec "^${root}/server/modules/kanger-data-dumb-[^/]+[.]jar$" <<<"${listing}" || true)"
@@ -221,7 +224,7 @@ jobs:
 
           [[ "$(sudo readlink -f "${current}")" == "${canonical}" ]]
           sudo test -f "${canonical}/RELEASE"
-          sudo test -f "${canonical}/server/kanger-server.jar"
+          sudo test ! -e "${canonical}/server/kanger-server.jar"
           sudo test -f "${canonical}/server/kanger-server-thin.jar"
           sudo test -x "${canonical}/bin/kanger-admin"
           sudo test -f "${canonical}/ui/config.js"
@@ -280,7 +283,7 @@ jobs:
 
           assert_thin_release() {
             local release_dir="$1"
-            sudo test -f "${release_dir}/server/kanger-server.jar"
+            sudo test ! -e "${release_dir}/server/kanger-server.jar"
             sudo test -f "${release_dir}/server/kanger-server-thin.jar"
             sudo test -x "${release_dir}/bin/kanger-admin"
             [[ "$(sudo find "${release_dir}/server/modules" -maxdepth 1 -type f -name 'kanger-udf-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
