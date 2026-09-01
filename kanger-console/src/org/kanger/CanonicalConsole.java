@@ -16,6 +16,7 @@ import org.kanger.compiler.Token;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
 import org.kanger.exception.CommandErrorException;
+import org.kanger.exception.DatabaseErrorException;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.exception.StorageLifecycleException;
@@ -134,6 +135,8 @@ public final class CanonicalConsole {
                 } catch (ParseErrorException ex) {
                     ConsoleParseErrorRenderer.show(ex, parseSource.sourceOr(line));
                 } catch (CommandErrorException ex) {
+                    System.err.println(ex.toString());
+                } catch (DatabaseErrorException ex) {
                     System.err.println(ex.toString());
                 } catch (StorageLifecycleException ex) {
                     String action = ex.getRequiredAction();
