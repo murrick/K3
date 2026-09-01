@@ -273,7 +273,8 @@ async function main() {
     transport.resolve(firstSnapshot[4], {result: 'OK', value: firstValues[4]});
     targetIds.forEach((id, index) => assert.strictEqual(
             elements[id].textContent,
-            id === 'query-solutions' ? '' : 'first-' + index));
+            id === 'query-results' || id === 'query-solutions'
+                    ? '' : 'first-' + index));
     assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 1,
             'semantic snapshot released BUSY before layout settlement');
     assert.strictEqual(window.status, 'Operation #1: request',
@@ -340,7 +341,8 @@ async function main() {
     }
     targetIds.forEach((id, index) => assert.strictEqual(
             elements[id].textContent,
-            id === 'query-solutions' ? '' : 'first-' + index,
+            id === 'query-results' || id === 'query-solutions'
+                    ? '' : 'first-' + index,
             'partial second snapshot leaked into live DOM'));
     transport.resolve(secondSnapshot[5], {result: 'OK', value: 'fresh-5'});
     targetIds.forEach((id, index) => assert.strictEqual(
