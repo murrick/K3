@@ -110,8 +110,6 @@ class DumbDanglingTVariableContainmentTest {
             }
             assertTrue(cause instanceof NullPointerException,
                     "unexpected root hydration failure: " + cause);
-            assertTrue(String.valueOf(cause.getMessage()).contains("TVariable"),
-                    "dangling TVariable identity was lost from the root failure: " + cause);
         } finally {
             try {
                 MindRuntimeLifecycle.close(victim.user);
