@@ -156,9 +156,9 @@ EOF_CONFIG
   [[ "${ready}" == true ]] || fail "Staged thin Server did not become healthy"
   printf '%s\n' "${health_response}" | grep -q '"status":"UP"' \
     || fail "Staged thin Server health did not report UP"
-  printf '%s\n' "${health_response}" | grep -q '"version":"3.7.0"' \
+  printf '%s\n' "${health_response}" | grep -Fq "\"version\":\"${VERSION}\"" \
     || fail "Staged thin Server health has unexpected Core version"
-  printf '%s\n' "${health_response}" | grep -q '"server_version":"server-0.18"' \
+  printf '%s\n' "${health_response}" | grep -Fq "\"server_version\":\"${SERVER_VERSION}\"" \
     || fail "Staged thin Server health has unexpected Server version"
   [[ -f "${runtime}/home/KANGER/kanger.active" ]] \
     || fail "Staged thin Server did not create its active marker"
