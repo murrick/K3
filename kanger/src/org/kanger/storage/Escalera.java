@@ -89,10 +89,12 @@ import java.util.*;
  * schema-local in-memory ID counter пользователя.</p>
  *
  * <p><strong>Hydration и ошибки.</strong> Persistent lookup выполняется через
- * schema-specific IBase текущего User generation. Escalera не должна
- * интерпретировать storage/recovery failure как semantic absence. Исторический
- * iterator диагностирует hydration failures и продолжает compatibility path;
- * изменение этой политики требует отдельного public/error-contract аудита.</p>
+ * schema-specific IBase текущего User generation. Escalera не интерпретирует
+ * storage/recovery failure как semantic absence. Поскольку Java Iterator не
+ * допускает checked exception в {@code next()}, iterator fail-fast оборачивает
+ * hydration failure в {@link IllegalStateException}, сохраняя исходную ошибку
+ * как cause; повреждённая persistent запись никогда не превращается в
+ * semantic {@code null}.</p>
  *
  * <p><strong>Владение storage.</strong> Escalera заимствует IBase у User и
  * никогда не выбирает generation, не приобретает полный schema set и не
@@ -563,8 +565,7 @@ public class Escalera implements ICache {
                     root.setData(((User) mind.getUser()).getStorage(schema).get(root.getId()).getData(mind));
                 }
             } catch (Exception e) {
-                System.err.println(new Date());
-                e.printStackTrace(System.err);
+                throw new IllegalStateException(e);
             }
 
             if (fromId >= 0) {
@@ -583,15 +584,14 @@ public class Escalera implements ICache {
 
         @Override
         public Object next() {
-            Object o = null;
             try {
-                o = step.getData(mind);
+                Object value = step.getData(mind);
                 step = step.getNext();
+                return value;
             } catch (Exception e) {
-                System.err.println(new Date());
-                e.printStackTrace(System.err);
+                step = null;
+                throw new IllegalStateException(e);
             }
-            return o;
         }
     }
 }
