@@ -530,8 +530,10 @@
             }
 
             var presentation = presentationFor(data);
+            var screenData = data && data.response === 'unknown'
+                    ? Object.assign({}, data, {results: 0}) : data;
             if (typeof window.refreshScreen === 'function') {
-                window.refreshScreen(data, presentation);
+                window.refreshScreen(screenData, presentation);
             } else if (typeof window.logResponse === 'function') {
                 window.logResponse(data, presentation);
             }
