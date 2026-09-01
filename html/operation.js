@@ -248,6 +248,7 @@
             // optimization settles, but those candidates must not be
             // republished by the coherent snapshot.
             if (isWhoKnows(snapshot.reasonData)) {
+                clearElement(snapshot.staging['query-results']);
                 clearElement(snapshot.staging['query-solutions']);
             }
             for (var i = 0; i < SNAPSHOT_TARGET_IDS.length; i++) {
