@@ -64,6 +64,13 @@ final class MindRuntimeLifecycle {
      * Closes one server runtime best-effort while preserving the first failure.
      * Storage closure is attempted even when transaction rollback failed; the
      * session must not retain an open physical generation after detachment.
+     *
+     * <p>Normal logical close remains checkpoint-first. If that path cannot be
+     * completed, the runtime is already being destroyed, so the remaining
+     * physical storage owner is closed directly without another Mind
+     * checkpoint. This is resource abandonment, not a successful durability
+     * boundary: the original logical failure is still propagated for server
+     * diagnostics.</p>
      */
     static void close(IUser user) throws Exception {
         if (user == null) {
@@ -91,12 +98,37 @@ final class MindRuntimeLifecycle {
                 failure.addSuppressed(closeFailure);
             }
         } finally {
+            if (failure != null) {
+                failure = abandonPhysicalStorage(user, failure);
+            }
             user.setCurrentMind(null);
         }
 
         if (failure != null) {
             throw asException(failure);
         }
+    }
+
+    /**
+     * Releases the physical generation owned by a detached server runtime when
+     * normal Mind-aware close failed. No logical checkpoint is attempted here.
+     */
+    private static Throwable abandonPhysicalStorage(IUser user, Throwable primary) {
+        if (!(user instanceof User)) {
+            return primary;
+        }
+
+        User concrete = (User) user;
+        try {
+            if (!concrete.isClosed()) {
+                concrete.getData().close();
+            }
+        } catch (Throwable abandonFailure) {
+            if (abandonFailure != primary) {
+                primary.addSuppressed(abandonFailure);
+            }
+        }
+        return primary;
     }
 
     private static Exception asException(Throwable failure) {
