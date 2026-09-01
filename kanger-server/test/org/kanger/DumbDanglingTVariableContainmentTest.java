@@ -55,15 +55,12 @@ class DumbDanglingTVariableContainmentTest {
         try {
             victim.open(generation.storageName);
 
-            // Exercise the same lazy Rule traversal that can encounter the
-            // dangling semantic reference. Legacy traversal may return null;
-            // this test is about escape/resource containment, not yet about
-            // the hydration diagnostic itself.
-            Iterator rules = victim.mind().getRules().iterator();
-            if (rules.hasNext()) {
-                rules.next();
-            }
-
+            /*
+             * Do not pre-hydrate the corrupted Rule here. The normal logout
+             * path must encounter the corruption naturally while attempting
+             * its Mind-aware checkpoint/close, then fall back to emergency
+             * physical cleanup of the already detached runtime.
+             */
             JSONObject response = quit(token);
             assertEquals("OK", response.optString("result"), response.toString());
             assertThrows(AuthenticationErrorException.class,
@@ -88,19 +85,33 @@ class DumbDanglingTVariableContainmentTest {
     }
 
     @Test
-    void danglingSemanticReferenceMustNotBecomeNullDuringRuleTraversal()
+    void danglingSemanticReferenceFailsFastDuringRuleTraversal()
             throws Exception {
         CorruptGeneration generation = createCorruptGeneration("hydration");
         Runtime victim = openRuntime(generation, "victim-hydration");
         try {
             victim.open(generation.storageName);
 
-            Iterator rules = victim.mind().getRules().iterator();
-            assertTrue(rules.hasNext(),
-                    "corruption fixture lost the persisted Rule itself");
-            Object hydrated = rules.next();
-            assertNotNull(hydrated,
+            IllegalStateException failure = assertThrows(
+                    IllegalStateException.class,
+                    () -> {
+                        Iterator rules = victim.mind().getRules().iterator();
+                        assertTrue(rules.hasNext(),
+                                "corruption fixture lost the persisted Rule itself");
+                        rules.next();
+                    },
                     "persistent hydration failure was silently converted to semantic null");
+
+            Throwable cause = failure.getCause();
+            assertNotNull(cause,
+                    "iterator fail-fast bridge discarded the hydration cause");
+            while (cause.getCause() != null) {
+                cause = cause.getCause();
+            }
+            assertTrue(cause instanceof NullPointerException,
+                    "unexpected root hydration failure: " + cause);
+            assertTrue(String.valueOf(cause.getMessage()).contains("TVariable"),
+                    "dangling TVariable identity was lost from the root failure: " + cause);
         } finally {
             try {
                 MindRuntimeLifecycle.close(victim.user);
