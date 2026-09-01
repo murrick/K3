@@ -68,7 +68,7 @@ import java.util.*;
  * явные U1..Un и квалифицируя только итоговый опубликованный top.</p>
  *
  * <p><strong>Persistence.</strong> При открытом хранилище идентификаторы схем
- * выделяются соответствующими {@code IBase}; без открытого хранилища
+ * выделяются соответствующими {@link IBase}; без открытого хранилища
  * используются локальные счётчики пользователя. {@link #flush()} передаёт
  * накопленные изменения storage-модулю. Durable checkpoint намеренно
  * переиспользует уже квалифицированный empty-child root-finalization path,
@@ -212,8 +212,26 @@ public class User implements IUser {
                 if (restoreFailure != failure) {
                     propagated.addSuppressed(restoreFailure);
                 }
+                if (!reopenOriginal) {
+                    try {
+                        if (!isClosed()) {
+                            data.close();
+                        }
+                        if (isClosed()) {
+                            storage.clear();
+                            working = original;
+                        }
+                    } catch (Throwable abandonFailure) {
+                        if (abandonFailure != failure
+                                && abandonFailure != restoreFailure) {
+                            propagated.addSuppressed(abandonFailure);
+                        }
+                    }
+                }
                 if (ownsCurrentSlot) {
-                    currentMind = reopenOriginal ? working : original;
+                    currentMind = reopenOriginal || !isClosed()
+                            ? working
+                            : original;
                 }
             }
             rethrow(propagated);
