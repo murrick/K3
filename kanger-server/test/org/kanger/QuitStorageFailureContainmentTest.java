@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.IReactor;
 
 import java.util.UUID;
 
@@ -37,7 +38,9 @@ class QuitStorageFailureContainmentTest {
 
         String token = UserFactory.addUser(user);
         try {
-            JSONObject response = (JSONObject) new QueryProcessor().run(
+            IReactor<JSONObject> reactor = new MindLifecycleReactor(
+                    new QueryProcessor());
+            JSONObject response = (JSONObject) reactor.run(
                     new JSONObject().put("body", new JSONObject()
                             .put("context", "command")
                             .put("parameters", new JSONObject()
