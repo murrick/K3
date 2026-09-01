@@ -90,9 +90,11 @@ import java.util.*;
  *
  * <p><strong>Hydration и ошибки.</strong> Persistent lookup выполняется через
  * schema-specific IBase текущего User generation. Escalera не должна
- * интерпретировать storage/recovery failure как semantic absence. Исторический
- * iterator диагностирует hydration failures и продолжает compatibility path;
- * изменение этой политики требует отдельного public/error-contract аудита.</p>
+ * интерпретировать storage/recovery failure как semantic absence и не должна
+ * самостоятельно отображать такие ошибки. Iterator сохраняет исходный failure
+ * object и передаёт его внешнему lifecycle/application boundary; unchecked
+ * bridge нужен только потому, что контракт {@link Iterator} не объявляет
+ * checked exceptions.</p>
  *
  * <p><strong>Владение storage.</strong> Escalera заимствует IBase у User и
  * никогда не выбирает generation, не приобретает полный schema set и не
@@ -129,6 +131,11 @@ public class Escalera implements ICache {
         private Checkpoint(IStep root) {
             this.root = root;
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <E extends Throwable> RuntimeException propagate(Throwable failure) throws E {
+        throw (E) failure;
     }
 
     /**
@@ -563,8 +570,7 @@ public class Escalera implements ICache {
                     root.setData(((User) mind.getUser()).getStorage(schema).get(root.getId()).getData(mind));
                 }
             } catch (Exception e) {
-                System.err.println(new Date());
-                e.printStackTrace(System.err);
+                throw Escalera.<RuntimeException>propagate(e);
             }
 
             if (fromId >= 0) {
@@ -583,15 +589,13 @@ public class Escalera implements ICache {
 
         @Override
         public Object next() {
-            Object o = null;
             try {
-                o = step.getData(mind);
+                Object o = step.getData(mind);
                 step = step.getNext();
+                return o;
             } catch (Exception e) {
-                System.err.println(new Date());
-                e.printStackTrace(System.err);
+                throw Escalera.<RuntimeException>propagate(e);
             }
-            return o;
         }
     }
 }
