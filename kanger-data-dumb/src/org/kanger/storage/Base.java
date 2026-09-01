@@ -491,9 +491,7 @@ public class Base implements IBase, Iterable<IStep> {
             resolveEndpoints();
             return rootId == null ? null : get(rootId.longValue());
         } catch (Exception e) {
-            System.err.println(new Date());
-            e.printStackTrace(System.err);
-            return null;
+            throw endpointFailure("root", e);
         }
     }
 
@@ -503,10 +501,15 @@ public class Base implements IBase, Iterable<IStep> {
             resolveEndpoints();
             return topId == null ? null : get(topId.longValue());
         } catch (Exception e) {
-            System.err.println(new Date());
-            e.printStackTrace(System.err);
-            return null;
+            throw endpointFailure("top", e);
         }
+    }
+
+    private IllegalStateException endpointFailure(String endpoint, Exception cause) {
+        return new IllegalStateException(
+                "DUMB storage " + endpoint + " endpoint resolution failed for "
+                        + name + " base=" + baseCode,
+                cause);
     }
 
     @Override
