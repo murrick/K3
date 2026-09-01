@@ -128,8 +128,22 @@ public class UserFactory {
         }
     }
 
+    /**
+     * Explicit logout is a session boundary, not a durability operation.
+     * SessionRegistry invalidates the token before running detached runtime
+     * cleanup.  A later Mind/storage close failure therefore must remain a
+     * server-side diagnostic instead of turning an already-completed logout
+     * into a protocol failure and trapping the client on a poisoned session.
+     */
     public static void logout(String token) throws Exception {
-        sessions.closeToken(token);
+        try {
+            sessions.closeToken(token);
+        } catch (org.kanger.exception.AuthenticationErrorException invalidToken) {
+            throw invalidToken;
+        } catch (Exception cleanupFailure) {
+            Watchdog.err("Unable to close detached user runtime after logout: "
+                    + cleanupFailure);
+        }
     }
 
     /**
