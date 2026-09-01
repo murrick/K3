@@ -7,6 +7,7 @@ package org.kanger;
 
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
+import org.kanger.command.CommandParser;
 import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.factory.CommentFactory;
 import org.kanger.factory.DictionaryFactory;
@@ -74,6 +75,56 @@ class DumbDanglingTVariableContainmentTest {
                     victim.db.close();
                 } catch (Exception ignored) {
                     // Preserve the regression failure as the primary result.
+                }
+            }
+            try {
+                UserFactory.logout(token);
+            } catch (AuthenticationErrorException alreadyClosed) {
+                // Expected after successful quit.
+            }
+        }
+    }
+
+    @Test
+    void corruptedNormalCloseRetainsStorageUntilQuitReleasesIt()
+            throws Exception {
+        CorruptGeneration generation = createCorruptGeneration("close-then-quit");
+        Runtime victim = openRuntime(generation, "victim-close-then-quit");
+        String token = UserFactory.addUser(victim.user);
+        try {
+            victim.open(generation.storageName);
+            Mind beforeClose = victim.mind();
+
+            CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
+            Exception failure = assertThrows(
+                    Exception.class,
+                    () -> processor.execute(
+                            new CommandParser().parse("storage close"), victim.user),
+                    "normal storage close silently accepted a corrupted checkpoint");
+            assertNotNull(failure,
+                    "normal close rejection did not preserve a failure");
+            assertFalse(victim.db.isClosed(),
+                    "normal close bypassed its failed checkpoint and physically closed storage");
+            assertTrue(victim.user.getCurrentMind() == beforeClose,
+                    "failed normal close displaced the authoritative Mind");
+            assertTrue(victim.mind().isStorageUsed(),
+                    "failed normal close detached storage from the retained Mind");
+            assertEquals(generation.storageName, victim.mind().getStorageName(),
+                    "failed normal close changed the active storage identity");
+
+            JSONObject response = quit(token);
+            assertEquals("OK", response.optString("result"), response.toString());
+            assertThrows(AuthenticationErrorException.class,
+                    () -> UserFactory.getUser(token),
+                    "quit after failed normal close retained the corrupted session");
+            assertTrue(victim.db.isClosed(),
+                    "quit after failed normal close retained physical DUMB handles");
+        } finally {
+            if (!victim.db.isClosed()) {
+                try {
+                    victim.db.close();
+                } catch (Exception ignored) {
+                    // best effort fixture cleanup
                 }
             }
             try {
