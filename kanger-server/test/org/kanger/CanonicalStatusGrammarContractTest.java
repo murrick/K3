@@ -43,11 +43,11 @@ class CanonicalStatusGrammarContractTest {
 
     @Test
     void selectorPrefixesUseCanonicalFamilyLocalResolution() throws Exception {
-        assertSelection("sta c o", "core", "objects");
-        assertSelection("sta c t", "core", "transaction");
-        assertSelection("sta c l", "core", "levels");
-        assertSelection("sta se", "session", null);
-        assertSelection("sta r", "runtime", null);
+        assertSelection("stat c o", "core", "objects");
+        assertSelection("stat c t", "core", "transaction");
+        assertSelection("stat c l", "core", "levels");
+        assertSelection("stat se", "session", null);
+        assertSelection("stat r", "runtime", null);
     }
 
     @Test
