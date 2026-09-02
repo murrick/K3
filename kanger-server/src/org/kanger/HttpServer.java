@@ -247,6 +247,21 @@ public final class HttpServer {
         return parameters;
     }
 
+    static void rejectSensitiveQueryParameters(JSONObject parameters)
+            throws MalformedRequestException {
+        if (parameters == null) {
+            return;
+        }
+        if (parameters.has("login")
+                || parameters.has("currentlogin")
+                || parameters.has("password")
+                || parameters.has("currentpassword")) {
+            throw new MalformedRequestException(
+                    "Authentication credentials must not be provided in URL query",
+                    null);
+        }
+    }
+
     static boolean isOriginAllowed(String origin, List<String> allowedOrigins) {
         if (origin == null || allowedOrigins == null || allowedOrigins.isEmpty()) {
             return false;
@@ -345,8 +360,10 @@ public final class HttpServer {
 
         URI uri = exchange.getRequestURI();
         JSONObject query = new JSONObject();
+        JSONObject queryParameters = parseQueryParameters(uri.getRawQuery());
+        rejectSensitiveQueryParameters(queryParameters);
         query.put("context", normalizeContext(uri.getRawPath()));
-        query.put("parameters", parseQueryParameters(uri.getRawQuery()));
+        query.put("parameters", queryParameters);
         packet.put("query", query);
 
         if (body.length == 0) {
