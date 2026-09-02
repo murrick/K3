@@ -774,7 +774,12 @@ public final class CanonicalConsole {
     }
 
     private static IMind erase(IMind mind, ConsoleLineInput input) throws Exception {
-        if (!confirm(input, "Erase workspace?")) {
+        String prompt = "Erase workspace?";
+        if (mind.isStorageUsed()) {
+            prompt += "\nWARNING: The contents of the currently open database "
+                    + "will also be erased.";
+        }
+        if (!confirm(input, prompt)) {
             return mind;
         }
         while (mind.getNext() != null) {
