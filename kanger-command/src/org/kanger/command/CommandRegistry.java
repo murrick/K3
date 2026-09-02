@@ -258,7 +258,7 @@ public final class CommandRegistry {
 
         define(CommandIntent.TX_STATUS, "transaction", "TRANSACTION", "Show current transaction state.", noArgs(), n++);
         define(CommandIntent.TX_START, "transaction start", "TRANSACTION", "Start a child transaction.",
-                noArgs(), aliases("start"), n++);
+                noArgs(), aliases("start", "sta"), n++);
         define(CommandIntent.TX_COMMIT, "transaction commit", "TRANSACTION",
                 "Commit the current transaction or qualified root checkpoint.",
                 noArgs(), aliases("commit"), n++);
