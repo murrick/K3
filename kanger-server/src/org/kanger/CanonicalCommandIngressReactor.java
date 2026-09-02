@@ -120,7 +120,7 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
         }
 
         if (!confirmed && requiresConfirmation(invocation, token)) {
-            return confirmation(invocation);
+            return confirmation(invocation, token);
         }
 
         Object response = delegate.run(packet);
@@ -191,11 +191,30 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
         }
     }
 
-    private JSONObject confirmation(CommandInvocation invocation) {
+    private boolean storageIsOpen(String token) {
+        if (token == null || token.isEmpty()) {
+            return false;
+        }
+        try {
+            IUser user = UserFactory.getUser(token);
+            return user.getCurrentMind() != null
+                    && user.getCurrentMind().isStorageUsed();
+        } catch (Exception unavailable) {
+            // Authentication/storage errors remain owned by the normal
+            // qualified execution path; this UX guard must not replace them.
+            return false;
+        }
+    }
+
+    private JSONObject confirmation(CommandInvocation invocation, String token) {
         String prompt;
         switch (invocation.getIntent()) {
             case ERASE:
                 prompt = "Erase current workspace?";
+                if (storageIsOpen(token)) {
+                    prompt += "\nWARNING: The contents of the currently open database "
+                            + "will also be erased.";
+                }
                 break;
             case SOURCE_DELETE:
                 prompt = "Delete source " + string(invocation, "source") + "?";
