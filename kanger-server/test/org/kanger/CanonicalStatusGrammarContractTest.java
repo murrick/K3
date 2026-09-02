@@ -51,6 +51,24 @@ class CanonicalStatusGrammarContractTest {
     }
 
     @Test
+    void statusAndStartRespectMinimumUniqueTopLevelPrefixes() throws Exception {
+        CommandParseException shortPrefix = assertThrows(
+                CommandParseException.class,
+                () -> parser.parse("st"));
+        assertEquals(CommandParseException.Reason.AMBIGUOUS_PREFIX,
+                shortPrefix.getReason());
+
+        CommandParseException threeCharacters = assertThrows(
+                CommandParseException.class,
+                () -> parser.parse("sta"));
+        assertEquals(CommandParseException.Reason.AMBIGUOUS_PREFIX,
+                threeCharacters.getReason());
+
+        assertEquals(CommandIntent.TX_START, parser.parse("star").getIntent());
+        assertEquals(CommandIntent.STATUS, parser.parse("stat").getIntent());
+    }
+
+    @Test
     void invalidSelectorShapesAreRejectedExplicitly() {
         CommandParseException unknownSection = assertThrows(
                 CommandParseException.class,
