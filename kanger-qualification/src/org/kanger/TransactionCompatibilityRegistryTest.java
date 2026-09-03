@@ -10,6 +10,8 @@ import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -68,7 +70,8 @@ final class TransactionCompatibilityRegistryTest {
     }
 
     private static Mind newMind(String name) throws Exception {
-        IUser user = UserFactory.createUser(name, name);
+        String unique = name + "-" + UUID.randomUUID().toString();
+        IUser user = UserFactory.createUser(unique, unique);
         new UDF().init(user);
         new DB().init(user);
         return new Mind(user);
