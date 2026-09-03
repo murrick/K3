@@ -95,6 +95,9 @@ public final class CommandFormatter {
             case SOURCE_DELETE:
                 return optionalArgumentCommand("delete", invocation.getArgument("source"));
 
+            case STATUS:
+                return formatStatus(invocation);
+
             case STORAGE_STATUS:
                 return "storage";
             case STORAGE_USE:
@@ -116,6 +119,19 @@ public final class CommandFormatter {
                 throw new IllegalArgumentException(
                         "No canonical formatter for " + invocation.getIntent());
         }
+    }
+
+    private String formatStatus(CommandInvocation invocation) {
+        Object section = invocation.getArgument("section");
+        if (section == null || String.valueOf(section).isEmpty()) {
+            return "status";
+        }
+        StringBuilder out = new StringBuilder("status ").append(argument(section));
+        Object subsection = invocation.getArgument("subsection");
+        if (subsection != null && !String.valueOf(subsection).isEmpty()) {
+            out.append(' ').append(argument(subsection));
+        }
+        return out.toString();
     }
 
     @SuppressWarnings("unchecked")
