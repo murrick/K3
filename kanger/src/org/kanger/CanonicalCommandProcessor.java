@@ -35,7 +35,8 @@ public final class CanonicalCommandProcessor {
             return false;
         }
         CommandIntent intent = invocation.getIntent();
-        return intent == CommandIntent.TX_STATUS
+        return intent == CommandIntent.STATUS
+                || intent == CommandIntent.TX_STATUS
                 || intent == CommandIntent.TX_START
                 || intent == CommandIntent.TX_COMMIT
                 || intent == CommandIntent.TX_ROLLBACK
@@ -75,6 +76,9 @@ public final class CanonicalCommandProcessor {
         }
 
         switch (invocation.getIntent()) {
+            case STATUS:
+                return canonicalStatus(invocation, user, mind);
+
             case TX_STATUS:
                 return Result.successTransaction(mind, "", transactionStatus(mind));
 
@@ -151,6 +155,18 @@ public final class CanonicalCommandProcessor {
             default:
                 return Result.unhandled(mind);
         }
+    }
+
+    private Result canonicalStatus(CommandInvocation invocation,
+                                   IUser user,
+                                   IMind mind) throws Exception {
+        Object section = invocation.getArgument("section");
+        Object subsection = invocation.getArgument("subsection");
+        CanonicalStatusSnapshot snapshot = CanonicalStatusSnapshot.capture(user, mind);
+        return Result.success(mind, CanonicalStatusRenderer.render(
+                snapshot,
+                section == null ? null : String.valueOf(section),
+                subsection == null ? null : String.valueOf(subsection)));
     }
 
     private Result commit(IUser user, IMind mind) throws Exception {

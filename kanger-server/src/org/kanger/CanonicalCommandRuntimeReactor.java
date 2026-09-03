@@ -96,6 +96,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
 
         JSONObject result;
         switch (invocation.getIntent()) {
+            case STATUS:
             case TX_STATUS:
             case TX_START:
             case TX_COMMIT:
