@@ -23,6 +23,27 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CanonicalCommandProcessorTest {
 
     @Test
+    void canonicalStatusProjectsParsedSelectorWithoutReplacingMind() throws Exception {
+        Fixture fixture = fixture("status");
+        try {
+            CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
+            CommandParser parser = new CommandParser();
+
+            CanonicalCommandProcessor.Result result = processor.execute(
+                    parser.parse("status core objects"), fixture.user);
+
+            assertTrue(result.isHandled());
+            assertTrue(result.isSuccess());
+            assertEquals("count=unavailable", result.getDescription());
+            assertSame(fixture.root, result.getMind());
+            assertSame(fixture.root, fixture.user.getCurrentMind());
+            assertEquals(0, fixture.root.getTransactionLevel());
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
     void explicitTransactionFamilyOwnsOneSharedUserStackTransition() throws Exception {
         Fixture fixture = fixture("stack");
         try {
