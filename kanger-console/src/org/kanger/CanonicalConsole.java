@@ -247,6 +247,19 @@ public final class CanonicalConsole {
                 acceptWhen(mind, number(invocation, "index"), parseSource);
                 return same(mind);
 
+            case STATUS:
+                CanonicalCommandProcessor.Result status =
+                        COMMAND_PROCESSOR.execute(invocation, mind.getUser());
+                if (!status.isHandled()) {
+                    throw new CommandErrorException("Unsupported canonical intent "
+                            + invocation.getIntent());
+                }
+                mind = track(shutdownHook, status.getMind());
+                if (!status.getDescription().isEmpty()) {
+                    System.out.println(status.getDescription());
+                }
+                return same(mind);
+
             case TX_STATUS:
             case TX_START:
             case TX_COMMIT:
