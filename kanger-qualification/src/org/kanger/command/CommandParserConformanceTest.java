@@ -112,7 +112,9 @@ public final class CommandParserConformanceTest {
         expect("so", CommandIntent.SOLUTIONS);
         expect("sq", CommandIntent.TX_SQUASH);
         reject("st", AMBIGUOUS_PREFIX);
-        expect("sta", CommandIntent.TX_START);
+        reject("sta", AMBIGUOUS_PREFIX);
+        expect("star", CommandIntent.TX_START);
+        expect("stat", CommandIntent.STATUS);
         expect("sto", CommandIntent.STORAGE_STATUS);
         expect("t", CommandIntent.TX_STATUS);
         expect("u", CommandIntent.STORAGE_STATUS);
@@ -378,7 +380,8 @@ public final class CommandParserConformanceTest {
         expectCanonical("w a 0", "when accept 0");
         expectCanonical("t st", "transaction start");
         expectCanonical("t sq", "transaction squash");
-        expectCanonical("sta", "transaction start");
+        expectCanonical("star", "transaction start");
+        expectCanonical("stat", "status");
         expectCanonical("co", "transaction commit");
         expectCanonical("ro", "transaction rollback");
         expectCanonical("sq", "transaction squash");
