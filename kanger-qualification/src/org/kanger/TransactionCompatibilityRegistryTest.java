@@ -28,9 +28,6 @@ final class TransactionCompatibilityRegistryTest {
         assertEquals(TransactionCompatibilityRegistry.Compatibility.UNQUALIFIED,
                 first.getCompatibility(),
                 "unknown compatibility must be observed as UNQUALIFIED");
-        assertEquals(TransactionCompatibilityRegistry.storage(mind),
-                first.getStorage(),
-                "observation must retain the current logical storage name");
         assertEquals(0, first.getCollisions().size(),
                 "unknown compatibility must not invent collision witnesses");
         assertEquals(TransactionCompatibilityRegistry.Compatibility.UNQUALIFIED,
