@@ -236,9 +236,9 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                 .put("compatibility", snapshot.getTransactionCompatibility())
                 .put("quiescent", snapshot.isTransactionQuiescent())
                 .put("current_pending_children",
-                        snapshot.getCurrentPendingTransactionCount())
+                        snapshot.getTransactionCurrentPendingChildCount())
                 .put("root_pending_children",
-                        snapshot.getRootPendingTransactionCount());
+                        snapshot.getTransactionRootPendingChildCount());
         JSONObject levels = new JSONObject()
                 .put("current", snapshot.getTransactionLevel())
                 .put("mind", snapshot.getMindId())
