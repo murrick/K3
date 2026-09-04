@@ -126,7 +126,19 @@ class CanonicalCommandProcessorTest {
             assertTrue(closed.isHandled());
             assertTrue(closed.isSuccess());
             assertEquals(
-                    "current=none\nstate=closed\nbackend=DUMB data model",
+                    "current=none"
+                            + "\nstate=closed"
+                            + "\nbackend=DUMB data model"
+                            + "\nbases=0"
+                            + "\nrecords=unavailable"
+                            + "\nphysical.bytes=unavailable"
+                            + "\nwal.pending.bases=unavailable"
+                            + "\ncache.used.bytes=unavailable"
+                            + "\ncache.max.bytes=unavailable"
+                            + "\ncache.entries=unavailable"
+                            + "\ncache.hits=unavailable"
+                            + "\ncache.misses=unavailable"
+                            + "\ncache.evictions=unavailable",
                     closed.getDescription());
             assertSame(fixture.root, closed.getMind());
             assertSame(fixture.root, fixture.user.getCurrentMind());
@@ -142,11 +154,21 @@ class CanonicalCommandProcessorTest {
 
             assertTrue(opened.isHandled());
             assertTrue(opened.isSuccess());
-            assertEquals(
+            String status = opened.getDescription();
+            assertTrue(status.startsWith(
                     "current=" + storageName
                             + "\nstate=open"
-                            + "\nbackend=DUMB data model",
-                    opened.getDescription());
+                            + "\nbackend=DUMB data model"
+                            + "\nbases=10"));
+            assertNonNegativeMetric(status, "records");
+            assertNonNegativeMetric(status, "physical.bytes");
+            assertNonNegativeMetric(status, "wal.pending.bases");
+            assertNonNegativeMetric(status, "cache.used.bytes");
+            assertNonNegativeMetric(status, "cache.max.bytes");
+            assertNonNegativeMetric(status, "cache.entries");
+            assertNonNegativeMetric(status, "cache.hits");
+            assertNonNegativeMetric(status, "cache.misses");
+            assertNonNegativeMetric(status, "cache.evictions");
             assertSame(fixture.root, opened.getMind());
             assertSame(fixture.root, fixture.user.getCurrentMind());
             assertEquals(0, fixture.root.getTransactionLevel());
