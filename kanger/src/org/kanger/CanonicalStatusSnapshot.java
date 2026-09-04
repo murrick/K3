@@ -5,6 +5,9 @@
  */
 package org.kanger;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryUsage;
+
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 
@@ -22,8 +25,15 @@ public final class CanonicalStatusSnapshot {
     private final int transactionLevel;
     private final String transactionCompatibility;
     private final String storage;
+    private final String kangerVersion;
+    private final String sourceBranch;
+    private final String buildDate;
     private final String javaVersion;
     private final String jvmName;
+    private final long uptimeMillis;
+    private final long heapUsedBytes;
+    private final long heapCommittedBytes;
+    private final long heapMaxBytes;
     private final String osName;
     private final String osArch;
 
@@ -32,8 +42,15 @@ public final class CanonicalStatusSnapshot {
                                     int transactionLevel,
                                     String transactionCompatibility,
                                     String storage,
+                                    String kangerVersion,
+                                    String sourceBranch,
+                                    String buildDate,
                                     String javaVersion,
                                     String jvmName,
+                                    long uptimeMillis,
+                                    long heapUsedBytes,
+                                    long heapCommittedBytes,
+                                    long heapMaxBytes,
                                     String osName,
                                     String osArch) {
         this.userId = userId;
@@ -41,8 +58,15 @@ public final class CanonicalStatusSnapshot {
         this.transactionLevel = transactionLevel;
         this.transactionCompatibility = transactionCompatibility;
         this.storage = storage;
+        this.kangerVersion = kangerVersion;
+        this.sourceBranch = sourceBranch;
+        this.buildDate = buildDate;
         this.javaVersion = javaVersion;
         this.jvmName = jvmName;
+        this.uptimeMillis = uptimeMillis;
+        this.heapUsedBytes = heapUsedBytes;
+        this.heapCommittedBytes = heapCommittedBytes;
+        this.heapMaxBytes = heapMaxBytes;
         this.osName = osName;
         this.osArch = osArch;
     }
@@ -60,6 +84,7 @@ public final class CanonicalStatusSnapshot {
         Mind current = (Mind) mind;
         TransactionCompatibilityRegistry.Record compatibility =
                 TransactionCompatibilityRegistry.peek(current);
+        MemoryUsage heap = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
 
         return new CanonicalStatusSnapshot(
                 user.getId(),
@@ -67,8 +92,15 @@ public final class CanonicalStatusSnapshot {
                 current.getTransactionLevel(),
                 compatibility.getCompatibility().name(),
                 current.isStorageUsed() ? current.getStorageName() : null,
+                Version.PRODUCT_VERSION_S,
+                Version.SOURCE_BRANCH,
+                Version.DATE,
                 System.getProperty("java.version"),
                 System.getProperty("java.vm.name"),
+                ManagementFactory.getRuntimeMXBean().getUptime(),
+                heap.getUsed(),
+                heap.getCommitted(),
+                heap.getMax(),
                 System.getProperty("os.name"),
                 System.getProperty("os.arch"));
     }
@@ -102,12 +134,40 @@ public final class CanonicalStatusSnapshot {
         return false;
     }
 
+    public String getKangerVersion() {
+        return kangerVersion;
+    }
+
+    public String getSourceBranch() {
+        return sourceBranch;
+    }
+
+    public String getBuildDate() {
+        return buildDate;
+    }
+
     public String getJavaVersion() {
         return javaVersion;
     }
 
     public String getJvmName() {
         return jvmName;
+    }
+
+    public long getUptimeMillis() {
+        return uptimeMillis;
+    }
+
+    public long getHeapUsedBytes() {
+        return heapUsedBytes;
+    }
+
+    public long getHeapCommittedBytes() {
+        return heapCommittedBytes;
+    }
+
+    public long getHeapMaxBytes() {
+        return heapMaxBytes;
     }
 
     public String getOsName() {

@@ -47,6 +47,7 @@ public final class CanonicalStatusRenderer {
         append(out, "storage.current",
                 snapshot.isStorageUsed() ? snapshot.getStorage() : "none");
         append(out, "session.user", snapshot.getUserId());
+        append(out, "runtime.version", value(snapshot.getKangerVersion()));
         append(out, "runtime.java", value(snapshot.getJavaVersion()));
         return out.toString();
     }
@@ -94,8 +95,15 @@ public final class CanonicalStatusRenderer {
 
     private static String renderRuntime(CanonicalStatusSnapshot snapshot) {
         StringBuilder out = new StringBuilder();
+        append(out, "version", value(snapshot.getKangerVersion()));
+        append(out, "source.branch", value(snapshot.getSourceBranch()));
+        append(out, "build.date", value(snapshot.getBuildDate()));
         append(out, "java", value(snapshot.getJavaVersion()));
         append(out, "jvm", value(snapshot.getJvmName()));
+        append(out, "uptime.ms", metric(snapshot.getUptimeMillis()));
+        append(out, "heap.used.bytes", metric(snapshot.getHeapUsedBytes()));
+        append(out, "heap.committed.bytes", metric(snapshot.getHeapCommittedBytes()));
+        append(out, "heap.max.bytes", metric(snapshot.getHeapMaxBytes()));
         append(out, "os", value(snapshot.getOsName()));
         append(out, "arch", value(snapshot.getOsArch()));
         return out.toString();
@@ -111,6 +119,10 @@ public final class CanonicalStatusRenderer {
 
     private static String value(String value) {
         return value == null || value.isEmpty() ? "unavailable" : value;
+    }
+
+    private static String metric(long value) {
+        return value < 0 ? "unavailable" : Long.toString(value);
     }
 
     private static void append(StringBuilder out, String name, Object value) {
