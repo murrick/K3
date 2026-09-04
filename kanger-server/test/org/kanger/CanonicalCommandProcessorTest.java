@@ -44,6 +44,38 @@ class CanonicalCommandProcessorTest {
     }
 
     @Test
+    void canonicalRuntimeStatusExposesCheapProcessMetrics() throws Exception {
+        Fixture fixture = fixture("runtime-status");
+        try {
+            CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
+            CommandParser parser = new CommandParser();
+
+            CanonicalCommandProcessor.Result result = processor.execute(
+                    parser.parse("status runtime"), fixture.user);
+
+            assertTrue(result.isHandled());
+            assertTrue(result.isSuccess());
+            String status = result.getDescription();
+            assertTrue(status.contains("version=" + Version.PRODUCT_VERSION_S));
+            assertTrue(status.contains("\nsource.branch="));
+            assertTrue(status.contains("\nbuild.date="));
+            assertTrue(status.contains("\njava="));
+            assertTrue(status.contains("\njvm="));
+            assertNonNegativeMetric(status, "uptime.ms");
+            assertNonNegativeMetric(status, "heap.used.bytes");
+            assertNonNegativeMetric(status, "heap.committed.bytes");
+            assertTrue(status.contains("\nheap.max.bytes="));
+            assertTrue(status.contains("\nos="));
+            assertTrue(status.contains("\narch="));
+            assertSame(fixture.root, result.getMind());
+            assertSame(fixture.root, fixture.user.getCurrentMind());
+            assertEquals(0, fixture.root.getTransactionLevel());
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
     void explicitTransactionFamilyOwnsOneSharedUserStackTransition() throws Exception {
         Fixture fixture = fixture("stack");
         try {
@@ -121,6 +153,17 @@ class CanonicalCommandProcessorTest {
         } finally {
             fixture.close();
         }
+    }
+
+    private void assertNonNegativeMetric(String status, String key) {
+        for (String line : status.split("\\n")) {
+            if (line.startsWith(key + "=")) {
+                long value = Long.parseLong(line.substring(key.length() + 1));
+                assertTrue(value >= 0, key + " must be non-negative");
+                return;
+            }
+        }
+        throw new AssertionError("Missing status metric " + key);
     }
 
     private Fixture fixture(String purpose) throws Exception {
