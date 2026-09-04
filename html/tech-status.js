@@ -5,10 +5,11 @@
  *
  * Canonical TECH telemetry adapter.
  *
- * Owns one internal authenticated read of the hardcoded canonical `status`
- * command when the TECH panel is opened. It deliberately bypasses operator
- * dialogue presentation/history and never polls. Canonical parsing and STATUS
- * semantics remain server-owned; this adapter only renders status.schema=1.
+ * Owns one internal parent-brokered authenticated read of the hardcoded
+ * canonical `status` command when the TECH panel is opened. It deliberately
+ * bypasses operator dialogue presentation/history and never polls. Canonical
+ * parsing and STATUS semantics remain server-owned; this adapter only renders
+ * status.schema=1.
  */
 (function (window, document) {
     'use strict';
@@ -239,49 +240,44 @@
         var generation = operationGeneration();
         setText('tech-status-state', 'status: loading...');
         setText('tech-status-source', 'source: canonical status');
-        if (!window.token || !window.jQuery
-                || typeof window.jQuery.post !== 'function') {
+        if (typeof window.post !== 'function') {
             renderFailure('transport unavailable');
             return;
         }
-        var request = window.jQuery.post(
-                window.apihost,
-                JSON.stringify({
-                    context: 'dialogue',
-                    parameters: {
-                        token: window.token,
-                        line: 'status'
-                    }
-                }),
-                function (data) {
-                    if (serial !== requestSerial || !presentationOpen()) {
-                        return;
-                    }
-                    var currentGeneration = operationGeneration();
-                    if (currentGeneration !== generation
-                            && retryOnGenerationChange !== false) {
-                        window.setTimeout(function () {
-                            if (presentationOpen()) {
-                                requestStatus(false);
-                            }
-                        }, 0);
-                        return;
-                    }
-                    if (!data || data.result !== 'OK'
-                            || !data.status || Number(data.status.schema) !== 1) {
-                        renderFailure(data && data.description
-                                ? data.description : 'canonical snapshot unavailable');
-                        return;
-                    }
-                    renderStatus(data.status, currentGeneration);
-                });
-        if (request && typeof request.fail === 'function') {
-            request.fail(function (xhr, state, error) {
+        try {
+            window.post({
+                context: 'dialogue',
+                parameters: {
+                    line: 'status'
+                }
+            }, function (data) {
                 if (serial !== requestSerial || !presentationOpen()) {
                     return;
                 }
-                renderFailure(error || state || 'transport failure');
+                var currentGeneration = operationGeneration();
+                if (currentGeneration !== generation
+                        && retryOnGenerationChange !== false) {
+                    window.setTimeout(function () {
+                        if (presentationOpen()) {
+                            requestStatus(false);
+                        }
+                    }, 0);
+                    return;
+                }
+                if (!data || data.result !== 'OK'
+                        || !data.status || Number(data.status.schema) !== 1) {
+                    renderFailure(data && data.description
+                            ? data.description : 'canonical snapshot unavailable');
+                    return;
+                }
+                renderStatus(data.status, currentGeneration);
             });
+        } catch (error) {
+            if (serial !== requestSerial || !presentationOpen()) {
+                return;
+            }
+            renderFailure(error && error.message
+                    ? error.message : 'transport failure');
         }
     }
 
