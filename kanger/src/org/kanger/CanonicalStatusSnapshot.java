@@ -8,6 +8,7 @@ package org.kanger;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
 
+import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 
@@ -28,6 +29,8 @@ public final class CanonicalStatusSnapshot {
     private final int transactionLevel;
     private final String transactionCompatibility;
     private final String storage;
+    private final boolean storageOpen;
+    private final String storageBackend;
     private final String kangerVersion;
     private final String sourceBranch;
     private final String buildDate;
@@ -48,6 +51,8 @@ public final class CanonicalStatusSnapshot {
                                     int transactionLevel,
                                     String transactionCompatibility,
                                     String storage,
+                                    boolean storageOpen,
+                                    String storageBackend,
                                     String kangerVersion,
                                     String sourceBranch,
                                     String buildDate,
@@ -67,6 +72,8 @@ public final class CanonicalStatusSnapshot {
         this.transactionLevel = transactionLevel;
         this.transactionCompatibility = transactionCompatibility;
         this.storage = storage;
+        this.storageOpen = storageOpen;
+        this.storageBackend = storageBackend;
         this.kangerVersion = kangerVersion;
         this.sourceBranch = sourceBranch;
         this.buildDate = buildDate;
@@ -94,6 +101,7 @@ public final class CanonicalStatusSnapshot {
         TransactionCompatibilityRegistry.Record compatibility =
                 TransactionCompatibilityRegistry.peek(current);
         MemoryUsage heap = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
+        boolean storageOpen = current.isStorageUsed();
 
         return new CanonicalStatusSnapshot(
                 user.getId(),
@@ -103,7 +111,9 @@ public final class CanonicalStatusSnapshot {
                 user.getSourceDir(),
                 current.getTransactionLevel(),
                 compatibility.getCompatibility().name(),
-                current.isStorageUsed() ? current.getStorageName() : null,
+                storageOpen ? current.getStorageName() : null,
+                storageOpen,
+                storageBackend(user),
                 Version.PRODUCT_VERSION_S,
                 Version.SOURCE_BRANCH,
                 Version.DATE,
@@ -115,6 +125,17 @@ public final class CanonicalStatusSnapshot {
                 heap.getMax(),
                 System.getProperty("os.name"),
                 System.getProperty("os.arch"));
+    }
+
+    private static String storageBackend(IUser user) {
+        if (!(user instanceof User)) {
+            return null;
+        }
+        try {
+            return ((User) user).getData().getDescription();
+        } catch (RuntimeErrorException missingStorageModule) {
+            return null;
+        }
     }
 
     public long getUserId() {
@@ -150,7 +171,11 @@ public final class CanonicalStatusSnapshot {
     }
 
     public boolean isStorageUsed() {
-        return storage != null;
+        return storageOpen;
+    }
+
+    public String getStorageBackend() {
+        return storageBackend;
     }
 
     /** Object counts are intentionally unavailable in v1: factory size may materialize indexes. */

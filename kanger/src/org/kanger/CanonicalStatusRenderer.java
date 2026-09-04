@@ -82,8 +82,12 @@ public final class CanonicalStatusRenderer {
     }
 
     private static String renderStorage(CanonicalStatusSnapshot snapshot) {
-        return "current=" + (snapshot.isStorageUsed()
+        StringBuilder out = new StringBuilder();
+        append(out, "current", snapshot.isStorageUsed()
                 ? snapshot.getStorage() : "none");
+        append(out, "state", snapshot.isStorageUsed() ? "open" : "closed");
+        append(out, "backend", value(snapshot.getStorageBackend()));
+        return out.toString();
     }
 
     private static String renderSession(CanonicalStatusSnapshot snapshot) {
