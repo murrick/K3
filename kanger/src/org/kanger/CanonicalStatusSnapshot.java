@@ -25,10 +25,14 @@ import org.kanger.interfaces.internal.StorageTelemetry;
 public final class CanonicalStatusSnapshot {
     private final long userId;
     private final long mindId;
+    private final long rootMindId;
     private final String userDir;
     private final String databaseDir;
     private final String sourceDir;
     private final int transactionLevel;
+    private final int transactionCurrentPendingChildCount;
+    private final int transactionRootPendingChildCount;
+    private final boolean transactionQuiescent;
     private final String transactionCompatibility;
     private final String storage;
     private final boolean storageOpen;
@@ -48,10 +52,14 @@ public final class CanonicalStatusSnapshot {
 
     private CanonicalStatusSnapshot(long userId,
                                     long mindId,
+                                    long rootMindId,
                                     String userDir,
                                     String databaseDir,
                                     String sourceDir,
                                     int transactionLevel,
+                                    int transactionCurrentPendingChildCount,
+                                    int transactionRootPendingChildCount,
+                                    boolean transactionQuiescent,
                                     String transactionCompatibility,
                                     String storage,
                                     boolean storageOpen,
@@ -70,10 +78,14 @@ public final class CanonicalStatusSnapshot {
                                     String osArch) {
         this.userId = userId;
         this.mindId = mindId;
+        this.rootMindId = rootMindId;
         this.userDir = userDir;
         this.databaseDir = databaseDir;
         this.sourceDir = sourceDir;
         this.transactionLevel = transactionLevel;
+        this.transactionCurrentPendingChildCount = transactionCurrentPendingChildCount;
+        this.transactionRootPendingChildCount = transactionRootPendingChildCount;
+        this.transactionQuiescent = transactionQuiescent;
         this.transactionCompatibility = transactionCompatibility;
         this.storage = storage;
         this.storageOpen = storageOpen;
@@ -104,6 +116,12 @@ public final class CanonicalStatusSnapshot {
         }
 
         Mind current = (Mind) mind;
+        int transactionLevel = current.getTransactionLevel();
+        Mind root = (Mind) current.getTop();
+        int currentPendingChildren = current.pendingTransactionCount();
+        int rootPendingChildren = root.pendingTransactionCount();
+        boolean transactionQuiescent = transactionLevel == 0
+                && rootPendingChildren == 0;
         TransactionCompatibilityRegistry.Record compatibility =
                 TransactionCompatibilityRegistry.peek(current);
         MemoryUsage heap = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
@@ -115,10 +133,14 @@ public final class CanonicalStatusSnapshot {
         return new CanonicalStatusSnapshot(
                 user.getId(),
                 current.getId(),
+                root.getId(),
                 user.getUserDir(),
                 user.getDatabaseDir(),
                 user.getSourceDir(),
-                current.getTransactionLevel(),
+                transactionLevel,
+                currentPendingChildren,
+                rootPendingChildren,
+                transactionQuiescent,
                 compatibility.getCompatibility().name(),
                 storageOpen ? current.getStorageName() : null,
                 storageOpen,
@@ -156,6 +178,10 @@ public final class CanonicalStatusSnapshot {
         return mindId;
     }
 
+    public long getRootMindId() {
+        return rootMindId;
+    }
+
     public String getUserDir() {
         return userDir;
     }
@@ -170,6 +196,18 @@ public final class CanonicalStatusSnapshot {
 
     public int getTransactionLevel() {
         return transactionLevel;
+    }
+
+    public int getTransactionCurrentPendingChildCount() {
+        return transactionCurrentPendingChildCount;
+    }
+
+    public int getTransactionRootPendingChildCount() {
+        return transactionRootPendingChildCount;
+    }
+
+    public boolean isTransactionQuiescent() {
+        return transactionQuiescent;
     }
 
     public String getTransactionCompatibility() {
