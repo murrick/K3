@@ -76,6 +76,37 @@ class CanonicalCommandProcessorTest {
     }
 
     @Test
+    void canonicalSessionStatusProjectsLoadedUserContextWithoutMutation() throws Exception {
+        Fixture fixture = fixture("session-status");
+        try {
+            fixture.user.setUserDir("/status/user/");
+            fixture.user.setDatabaseDir("/status/database/");
+            fixture.user.setSourceDir("/status/sources/");
+
+            CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
+            CommandParser parser = new CommandParser();
+
+            CanonicalCommandProcessor.Result result = processor.execute(
+                    parser.parse("status session"), fixture.user);
+
+            assertTrue(result.isHandled());
+            assertTrue(result.isSuccess());
+            assertEquals(
+                    "user=" + fixture.user.getId()
+                            + "\nmind=" + fixture.root.getId()
+                            + "\nuser.dir=/status/user/"
+                            + "\ndatabase.dir=/status/database/"
+                            + "\nsources.dir=/status/sources/",
+                    result.getDescription());
+            assertSame(fixture.root, result.getMind());
+            assertSame(fixture.root, fixture.user.getCurrentMind());
+            assertEquals(0, fixture.root.getTransactionLevel());
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
     void explicitTransactionFamilyOwnsOneSharedUserStackTransition() throws Exception {
         Fixture fixture = fixture("stack");
         try {
