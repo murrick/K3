@@ -22,6 +22,9 @@ import org.kanger.interfaces.IUser;
 public final class CanonicalStatusSnapshot {
     private final long userId;
     private final long mindId;
+    private final String userDir;
+    private final String databaseDir;
+    private final String sourceDir;
     private final int transactionLevel;
     private final String transactionCompatibility;
     private final String storage;
@@ -39,6 +42,9 @@ public final class CanonicalStatusSnapshot {
 
     private CanonicalStatusSnapshot(long userId,
                                     long mindId,
+                                    String userDir,
+                                    String databaseDir,
+                                    String sourceDir,
                                     int transactionLevel,
                                     String transactionCompatibility,
                                     String storage,
@@ -55,6 +61,9 @@ public final class CanonicalStatusSnapshot {
                                     String osArch) {
         this.userId = userId;
         this.mindId = mindId;
+        this.userDir = userDir;
+        this.databaseDir = databaseDir;
+        this.sourceDir = sourceDir;
         this.transactionLevel = transactionLevel;
         this.transactionCompatibility = transactionCompatibility;
         this.storage = storage;
@@ -89,6 +98,9 @@ public final class CanonicalStatusSnapshot {
         return new CanonicalStatusSnapshot(
                 user.getId(),
                 current.getId(),
+                user.getUserDir(),
+                user.getDatabaseDir(),
+                user.getSourceDir(),
                 current.getTransactionLevel(),
                 compatibility.getCompatibility().name(),
                 current.isStorageUsed() ? current.getStorageName() : null,
@@ -111,6 +123,18 @@ public final class CanonicalStatusSnapshot {
 
     public long getMindId() {
         return mindId;
+    }
+
+    public String getUserDir() {
+        return userDir;
+    }
+
+    public String getDatabaseDir() {
+        return databaseDir;
+    }
+
+    public String getSourceDir() {
+        return sourceDir;
     }
 
     public int getTransactionLevel() {

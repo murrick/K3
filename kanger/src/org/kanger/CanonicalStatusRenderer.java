@@ -90,6 +90,9 @@ public final class CanonicalStatusRenderer {
         StringBuilder out = new StringBuilder();
         append(out, "user", snapshot.getUserId());
         append(out, "mind", snapshot.getMindId());
+        append(out, "user.dir", value(snapshot.getUserDir()));
+        append(out, "database.dir", value(snapshot.getDatabaseDir()));
+        append(out, "sources.dir", value(snapshot.getSourceDir()));
         return out.toString();
     }
 
