@@ -16,6 +16,14 @@ assert(!source.includes('window.query('), 'TECH status must not execute Console 
 assert(!source.includes('logRequest('), 'TECH status must not write Console request history');
 assert(!source.includes('logResponse('), 'TECH status must not write Console response history');
 assert(!source.includes('storeHistory('), 'TECH status must not persist Console history');
+assert(!source.includes('window.token'),
+    'TECH status child must not read bearer or containment sentinel');
+assert(!source.includes('window.jQuery.post'),
+    'TECH status must not bypass parent containment with direct XHR');
+assert(!source.includes('window.apihost'),
+    'TECH status must not address the API host directly');
+assert(source.includes('window.post('),
+    'TECH status must use the Browser transport boundary');
 assert(!presentationSource.includes('window.token'),
     'presentation authority must remain bearer-free');
 assert(presentationSource.includes("script.src = 'tech-status.js'"),
@@ -185,8 +193,8 @@ function canonicalResponse() {
 
 const window = {
     document,
-    token: 'bearer-token',
-    apihost: 'http://localhost:1964',
+    token: '__KANGER_PARENT_SESSION__',
+    apihost: '',
     KANGER_PRESENTATION: {
         installed: true,
         snapshot() {
@@ -198,11 +206,13 @@ const window = {
             return {generation};
         }
     },
+    post(packet, callback) {
+        requests.push({packet: JSON.parse(JSON.stringify(packet))});
+        callback(canonicalResponse());
+    },
     jQuery: {
-        post(url, payload, callback) {
-            requests.push({url, packet: JSON.parse(payload)});
-            callback(canonicalResponse());
-            return {fail() { return this; }};
+        post() {
+            throw new Error('Direct child network access is disabled');
         }
     },
     setTimeout(callback) {
@@ -241,14 +251,16 @@ technicalOpen = true;
 toggle.dispatch('click');
 assert.strictEqual(requests.length, 1,
     'opening TECH must perform exactly one canonical STATUS read');
-assert.strictEqual(requests[0].url, 'http://localhost:1964');
 assert.deepStrictEqual(requests[0].packet, {
     context: 'dialogue',
     parameters: {
-        token: 'bearer-token',
         line: 'status'
     }
 });
+assert.strictEqual(
+    Object.prototype.hasOwnProperty.call(requests[0].packet.parameters, 'token'),
+    false,
+    'TECH status child request must not carry bearer data');
 assert.strictEqual(document.getElementById('tech-status-state').textContent,
     'status: current');
 assert.strictEqual(document.getElementById('tech-core-transaction').textContent,
@@ -258,7 +270,7 @@ assert.strictEqual(document.getElementById('tech-canonical-storage').textContent
 assert.strictEqual(document.getElementById('tech-runtime-version').textContent,
     'version: 3.7.0');
 assert.strictEqual(window.KANGER_TECH_STATUS.snapshot().schema, 1);
-console.log('TECH_STATUS_PASS open-single-read-render');
+console.log('TECH_STATUS_PASS open-single-brokered-read-render');
 
 technicalOpen = false;
 toggle.dispatch('click');
@@ -277,4 +289,5 @@ console.log('TECH_STATUS_PASS reopen-single-refresh');
 
 assert(!source.includes('setInterval('));
 console.log('TECH_STATUS_PASS no-polling-history-side-effects');
+console.log('TECH_STATUS_PASS containment-transport-boundary');
 console.log('TECH_STATUS_OK');
