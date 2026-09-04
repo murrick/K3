@@ -44,6 +44,73 @@ class CanonicalCommandProcessorTest {
     }
 
     @Test
+    void canonicalCoreStatusProjectsTransactionLifecycleWithoutSettlement() throws Exception {
+        Fixture fixture = fixture("core-status");
+        try {
+            CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
+            CommandParser parser = new CommandParser();
+
+            CanonicalCommandProcessor.Result quiescent = processor.execute(
+                    parser.parse("status core transaction"), fixture.user);
+            assertEquals(
+                    "level=0"
+                            + "\ncompatibility=UNQUALIFIED"
+                            + "\nquiescent=true"
+                            + "\ncurrent.pending.children=0"
+                            + "\nroot.pending.children=0",
+                    quiescent.getDescription());
+            assertSame(fixture.root, quiescent.getMind());
+
+            Mind hidden = new Mind(fixture.root);
+            try {
+                CanonicalCommandProcessor.Result reserved = processor.execute(
+                        parser.parse("status core transaction"), fixture.user);
+                assertEquals(
+                        "level=0"
+                                + "\ncompatibility=UNQUALIFIED"
+                                + "\nquiescent=false"
+                                + "\ncurrent.pending.children=1"
+                                + "\nroot.pending.children=1",
+                        reserved.getDescription());
+                assertSame(fixture.root, reserved.getMind());
+                assertSame(fixture.root, fixture.user.getCurrentMind());
+            } finally {
+                fixture.root.release(hidden);
+            }
+
+            CanonicalCommandProcessor.Result started = processor.execute(
+                    parser.parse("transaction start"), fixture.user);
+            assertEquals(1, started.getMind().getTransactionLevel());
+
+            CanonicalCommandProcessor.Result active = processor.execute(
+                    parser.parse("status core transaction"), fixture.user);
+            assertEquals(
+                    "level=1"
+                            + "\ncompatibility=VALID"
+                            + "\nquiescent=false"
+                            + "\ncurrent.pending.children=0"
+                            + "\nroot.pending.children=1",
+                    active.getDescription());
+            assertSame(started.getMind(), active.getMind());
+
+            CanonicalCommandProcessor.Result levels = processor.execute(
+                    parser.parse("status core levels"), fixture.user);
+            assertEquals(
+                    "current=1"
+                            + "\nmind=" + started.getMind().getId()
+                            + "\nroot.mind=" + fixture.root.getId(),
+                    levels.getDescription());
+
+            CanonicalCommandProcessor.Result rolledBack = processor.execute(
+                    parser.parse("transaction rollback"), fixture.user);
+            assertTrue(rolledBack.isSuccess());
+            assertSame(fixture.root, rolledBack.getMind());
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
     void canonicalRuntimeStatusExposesCheapProcessMetrics() throws Exception {
         Fixture fixture = fixture("runtime-status");
         try {
