@@ -86,6 +86,7 @@ jobs:
           operation.js
           presentation.css
           presentation.js
+          tech-status.js
           workspace.js
           EOF_FILES
           )"
@@ -109,10 +110,12 @@ jobs:
           node --check html/layout-persistence.js
           node --check html/operation.js
           node --check html/presentation.js
+          node --check html/tech-status.js
           node --check html/workspace.js
           node --check kanger-server/scripts/qualify-browser-dialogue.js
           node --check kanger-server/scripts/qualify-browser-console-page.js
           node --check kanger-server/scripts/qualify-browser-presentation.js
+          node --check kanger-server/scripts/qualify-tech-status.js
           node --check kanger-server/scripts/qualify-editor-state.js
           node --check kanger-server/scripts/qualify-error-containment.js
 
@@ -241,6 +244,8 @@ jobs:
           node kanger-server/scripts/qualify-browser-console-page.js \
             "${GITHUB_WORKSPACE}"
           node kanger-server/scripts/qualify-browser-presentation.js \
+            "${GITHUB_WORKSPACE}"
+          node kanger-server/scripts/qualify-tech-status.js \
             "${GITHUB_WORKSPACE}"
           node kanger-server/scripts/qualify-editor-state.js \
             "${GITHUB_WORKSPACE}"
