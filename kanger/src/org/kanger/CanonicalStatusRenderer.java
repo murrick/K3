@@ -59,6 +59,11 @@ public final class CanonicalStatusRenderer {
             append(out, "transaction.level", snapshot.getTransactionLevel());
             append(out, "transaction.compatibility",
                     snapshot.getTransactionCompatibility());
+            append(out, "transaction.quiescent", snapshot.isTransactionQuiescent());
+            append(out, "transaction.current.pending.children",
+                    snapshot.getTransactionCurrentPendingChildCount());
+            append(out, "transaction.root.pending.children",
+                    snapshot.getTransactionRootPendingChildCount());
             append(out, "objects", "unavailable");
             return out.toString();
         }
@@ -66,12 +71,18 @@ public final class CanonicalStatusRenderer {
             StringBuilder out = new StringBuilder();
             append(out, "level", snapshot.getTransactionLevel());
             append(out, "compatibility", snapshot.getTransactionCompatibility());
+            append(out, "quiescent", snapshot.isTransactionQuiescent());
+            append(out, "current.pending.children",
+                    snapshot.getTransactionCurrentPendingChildCount());
+            append(out, "root.pending.children",
+                    snapshot.getTransactionRootPendingChildCount());
             return out.toString();
         }
         if ("levels".equals(subsection)) {
             StringBuilder out = new StringBuilder();
             append(out, "current", snapshot.getTransactionLevel());
             append(out, "mind", snapshot.getMindId());
+            append(out, "root.mind", snapshot.getRootMindId());
             return out.toString();
         }
         if ("objects".equals(subsection)) {
