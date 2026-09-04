@@ -107,6 +107,55 @@ class CanonicalCommandProcessorTest {
     }
 
     @Test
+    void canonicalStorageStatusProjectsAttachedBackendWithoutNamespaceScan() throws Exception {
+        Fixture fixture = fixture("storage-status");
+        try {
+            new DB() {
+                @Override
+                public java.util.Collection<String> list() {
+                    throw new AssertionError("status must not enumerate storage namespace");
+                }
+            }.init(fixture.user);
+
+            CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
+            CommandParser parser = new CommandParser();
+
+            CanonicalCommandProcessor.Result closed = processor.execute(
+                    parser.parse("status storage"), fixture.user);
+
+            assertTrue(closed.isHandled());
+            assertTrue(closed.isSuccess());
+            assertEquals(
+                    "current=none\nstate=closed\nbackend=DUMB data model",
+                    closed.getDescription());
+            assertSame(fixture.root, closed.getMind());
+            assertSame(fixture.root, fixture.user.getCurrentMind());
+            assertEquals(0, fixture.root.getTransactionLevel());
+
+            new DB().init(fixture.user);
+            String storageName = "canonical-status-storage-" + UUID.randomUUID();
+            fixture.root = (Mind) fixture.root.useStorage(storageName);
+            fixture.user.setCurrentMind(fixture.root);
+
+            CanonicalCommandProcessor.Result opened = processor.execute(
+                    parser.parse("status storage"), fixture.user);
+
+            assertTrue(opened.isHandled());
+            assertTrue(opened.isSuccess());
+            assertEquals(
+                    "current=" + storageName
+                            + "\nstate=open"
+                            + "\nbackend=DUMB data model",
+                    opened.getDescription());
+            assertSame(fixture.root, opened.getMind());
+            assertSame(fixture.root, fixture.user.getCurrentMind());
+            assertEquals(0, fixture.root.getTransactionLevel());
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
     void explicitTransactionFamilyOwnsOneSharedUserStackTransition() throws Exception {
         Fixture fixture = fixture("stack");
         try {
