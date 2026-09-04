@@ -8,6 +8,7 @@ package org.kanger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.kanger.command.CommandHelpRenderer;
+import org.kanger.command.CommandIntent;
 import org.kanger.command.CommandInvocation;
 import org.kanger.command.CommandRegistry;
 import org.kanger.command.SortKey;
@@ -166,6 +167,10 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
         if (!outcome.getDescription().isEmpty()) {
             result.put("description", outcome.getDescription());
         }
+        if (invocation.getIntent() == CommandIntent.STATUS) {
+            result.put("status", statusSnapshot(
+                    CanonicalStatusSnapshot.capture(user, outcome.getMind())));
+        }
         CanonicalCommandProcessor.Rejection rejection = outcome.getRejection();
         if (rejection != null) {
             result.put("code", rejection.getCode())
@@ -223,6 +228,79 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             }
         }
         return result;
+    }
+
+    private JSONObject statusSnapshot(CanonicalStatusSnapshot snapshot) {
+        JSONObject transaction = new JSONObject()
+                .put("level", snapshot.getTransactionLevel())
+                .put("compatibility", snapshot.getTransactionCompatibility())
+                .put("quiescent", snapshot.isTransactionQuiescent())
+                .put("current_pending_children",
+                        snapshot.getCurrentPendingTransactionCount())
+                .put("root_pending_children",
+                        snapshot.getRootPendingTransactionCount());
+        JSONObject levels = new JSONObject()
+                .put("current", snapshot.getTransactionLevel())
+                .put("mind", snapshot.getMindId())
+                .put("root_mind", snapshot.getRootMindId());
+        JSONObject core = new JSONObject()
+                .put("transaction", transaction)
+                .put("levels", levels)
+                .put("objects", new JSONObject().put("count", JSONObject.NULL));
+
+        JSONObject storage = new JSONObject()
+                .put("current", snapshot.isStorageUsed()
+                        ? snapshot.getStorage() : JSONObject.NULL)
+                .put("state", snapshot.isStorageUsed() ? "open" : "closed")
+                .put("backend", nullable(snapshot.getStorageBackend()))
+                .put("bases", metric(snapshot.getStorageBaseCount()))
+                .put("records", metric(snapshot.getStorageRecordCount()))
+                .put("physical_bytes", metric(snapshot.getStoragePhysicalSizeBytes()))
+                .put("wal_pending_bases",
+                        metric(snapshot.getStoragePendingRecoveryBaseCount()))
+                .put("cache_used_bytes", metric(snapshot.getStorageCacheUsedBytes()))
+                .put("cache_max_bytes", metric(snapshot.getStorageCacheMaxBytes()))
+                .put("cache_entries", metric(snapshot.getStorageCachedEntryCount()))
+                .put("cache_hits", metric(snapshot.getStorageCacheHits()))
+                .put("cache_misses", metric(snapshot.getStorageCacheMisses()))
+                .put("cache_evictions", metric(snapshot.getStorageCacheEvictions()));
+
+        JSONObject session = new JSONObject()
+                .put("user", snapshot.getUserId())
+                .put("mind", snapshot.getMindId())
+                .put("user_dir", nullable(snapshot.getUserDir()))
+                .put("database_dir", nullable(snapshot.getDatabaseDir()))
+                .put("sources_dir", nullable(snapshot.getSourceDir()));
+
+        JSONObject runtime = new JSONObject()
+                .put("version", nullable(snapshot.getKangerVersion()))
+                .put("source_branch", nullable(snapshot.getSourceBranch()))
+                .put("build_date", nullable(snapshot.getBuildDate()))
+                .put("java", nullable(snapshot.getJavaVersion()))
+                .put("jvm", nullable(snapshot.getJvmName()))
+                .put("uptime_ms", metric(snapshot.getUptimeMillis()))
+                .put("heap", new JSONObject()
+                        .put("used_bytes", metric(snapshot.getHeapUsedBytes()))
+                        .put("committed_bytes",
+                                metric(snapshot.getHeapCommittedBytes()))
+                        .put("max_bytes", metric(snapshot.getHeapMaxBytes())))
+                .put("os", nullable(snapshot.getOsName()))
+                .put("arch", nullable(snapshot.getOsArch()));
+
+        return new JSONObject()
+                .put("schema", 1)
+                .put("core", core)
+                .put("storage", storage)
+                .put("session", session)
+                .put("runtime", runtime);
+    }
+
+    private Object nullable(String value) {
+        return value == null || value.isEmpty() ? JSONObject.NULL : value;
+    }
+
+    private Object metric(long value) {
+        return value < 0L ? JSONObject.NULL : Long.valueOf(value);
     }
 
     private JSONObject transactionStatus(
@@ -535,7 +613,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
     private JSONObject decorate(JSONObject result, IMind mind) {
         if (result != null && mind != null) {
             result.put("transaction", mind.getTransactionLevel());
-            if (!result.has("empty")) {
+            if (!result.has("empty") && !result.has("status")) {
                 result.put("empty", mind.isEmptyLevel());
             }
         }
