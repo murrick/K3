@@ -144,6 +144,12 @@ final class IntegrityManifest {
         }
     }
 
+    long getRecordCount() {
+        synchronized (locker) {
+            return entries.size();
+        }
+    }
+
     void flush() throws Exception {
         synchronized (locker) {
             if (!file.exists()) {

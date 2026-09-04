@@ -87,6 +87,17 @@ public final class CanonicalStatusRenderer {
                 ? snapshot.getStorage() : "none");
         append(out, "state", snapshot.isStorageUsed() ? "open" : "closed");
         append(out, "backend", value(snapshot.getStorageBackend()));
+        append(out, "bases", metric(snapshot.getStorageBaseCount()));
+        append(out, "records", metric(snapshot.getStorageRecordCount()));
+        append(out, "physical.bytes", metric(snapshot.getStoragePhysicalSizeBytes()));
+        append(out, "wal.pending.bases",
+                metric(snapshot.getStoragePendingRecoveryBaseCount()));
+        append(out, "cache.used.bytes", metric(snapshot.getStorageCacheUsedBytes()));
+        append(out, "cache.max.bytes", metric(snapshot.getStorageCacheMaxBytes()));
+        append(out, "cache.entries", metric(snapshot.getStorageCachedEntryCount()));
+        append(out, "cache.hits", metric(snapshot.getStorageCacheHits()));
+        append(out, "cache.misses", metric(snapshot.getStorageCacheMisses()));
+        append(out, "cache.evictions", metric(snapshot.getStorageCacheEvictions()));
         return out.toString();
     }
 

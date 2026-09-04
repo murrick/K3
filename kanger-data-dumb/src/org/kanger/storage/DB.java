@@ -35,6 +35,7 @@ import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IData;
+import org.kanger.interfaces.internal.StorageTelemetry;
 
 import java.io.File;
 import java.io.IOException;
@@ -495,6 +496,82 @@ public class DB implements IData {
     @Override
     public String getDescription() {
         return "DUMB data model";
+    }
+
+    @Override
+    public StorageTelemetry telemetry() {
+        if (isClosed()) {
+            return StorageTelemetry.of(0L, -1L, -1L, -1L,
+                    -1L, -1L, -1L, -1L, -1L, -1L);
+        }
+
+        long records = 0L;
+        long pendingRecoveryBases = 0L;
+        long cacheUsedBytes = 0L;
+        long cacheMaxBytes = 0L;
+        long cachedEntries = 0L;
+        long cacheHits = 0L;
+        long cacheMisses = 0L;
+        long cacheEvictions = 0L;
+
+        for (IBase base : bases.values()) {
+            if (!(base instanceof Base)) {
+                return StorageTelemetry.unavailable();
+            }
+            Base dumbBase = (Base) base;
+            long recordCount = dumbBase.getRecordCount();
+            if (recordCount < 0L) {
+                return StorageTelemetry.unavailable();
+            }
+            records += recordCount;
+            if (dumbBase.hasPendingRecovery()) {
+                ++pendingRecoveryBases;
+            }
+
+            long used = base.getUsedCacheSize();
+            long maximum = base.getMaxCacheSize();
+            long entries = base.getCachedEntryCount();
+            long hits = base.getCacheHits();
+            long misses = base.getCacheMisses();
+            long evictions = base.getCacheEvictions();
+            if (used < 0L || maximum < 0L || entries < 0L
+                    || hits < 0L || misses < 0L || evictions < 0L) {
+                return StorageTelemetry.unavailable();
+            }
+            cacheUsedBytes += used;
+            cacheMaxBytes += maximum;
+            cachedEntries += entries;
+            cacheHits += hits;
+            cacheMisses += misses;
+            cacheEvictions += evictions;
+        }
+
+        return StorageTelemetry.of(
+                bases.size(),
+                records,
+                physicalGenerationSizeBytes(),
+                pendingRecoveryBases,
+                cacheUsedBytes,
+                cacheMaxBytes,
+                cachedEntries,
+                cacheHits,
+                cacheMisses,
+                cacheEvictions);
+    }
+
+    private long physicalGenerationSizeBytes() {
+        if (user == null || storageName == null || storageName.isEmpty()) {
+            return -1L;
+        }
+        String dbPath = user.getDatabaseDir() + storageName;
+        long total = 0L;
+        for (String suffix : REMOVAL_SUFFIXES) {
+            total += new File(dbPath + suffix).length();
+        }
+        for (int baseCode = 1; baseCode <= bases.size(); ++baseCode) {
+            total += new File(dbPath + ".wal." + baseCode).length();
+        }
+        return total;
     }
 
     @Override

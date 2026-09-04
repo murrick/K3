@@ -11,6 +11,8 @@ import java.lang.management.MemoryUsage;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IData;
+import org.kanger.interfaces.internal.StorageTelemetry;
 
 /**
  * Cheap read-only projection of already existing KANGER runtime state.
@@ -31,6 +33,7 @@ public final class CanonicalStatusSnapshot {
     private final String storage;
     private final boolean storageOpen;
     private final String storageBackend;
+    private final StorageTelemetry storageTelemetry;
     private final String kangerVersion;
     private final String sourceBranch;
     private final String buildDate;
@@ -53,6 +56,7 @@ public final class CanonicalStatusSnapshot {
                                     String storage,
                                     boolean storageOpen,
                                     String storageBackend,
+                                    StorageTelemetry storageTelemetry,
                                     String kangerVersion,
                                     String sourceBranch,
                                     String buildDate,
@@ -74,6 +78,8 @@ public final class CanonicalStatusSnapshot {
         this.storage = storage;
         this.storageOpen = storageOpen;
         this.storageBackend = storageBackend;
+        this.storageTelemetry = storageTelemetry == null
+                ? StorageTelemetry.unavailable() : storageTelemetry;
         this.kangerVersion = kangerVersion;
         this.sourceBranch = sourceBranch;
         this.buildDate = buildDate;
@@ -102,6 +108,9 @@ public final class CanonicalStatusSnapshot {
                 TransactionCompatibilityRegistry.peek(current);
         MemoryUsage heap = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
         boolean storageOpen = current.isStorageUsed();
+        IData data = attachedStorage(user);
+        StorageTelemetry telemetry = data == null
+                ? StorageTelemetry.unavailable() : data.telemetry();
 
         return new CanonicalStatusSnapshot(
                 user.getId(),
@@ -113,7 +122,8 @@ public final class CanonicalStatusSnapshot {
                 compatibility.getCompatibility().name(),
                 storageOpen ? current.getStorageName() : null,
                 storageOpen,
-                storageBackend(user),
+                data == null ? null : data.getDescription(),
+                telemetry,
                 Version.PRODUCT_VERSION_S,
                 Version.SOURCE_BRANCH,
                 Version.DATE,
@@ -127,12 +137,12 @@ public final class CanonicalStatusSnapshot {
                 System.getProperty("os.arch"));
     }
 
-    private static String storageBackend(IUser user) {
+    private static IData attachedStorage(IUser user) {
         if (!(user instanceof User)) {
             return null;
         }
         try {
-            return ((User) user).getData().getDescription();
+            return ((User) user).getData();
         } catch (RuntimeErrorException missingStorageModule) {
             return null;
         }
@@ -176,6 +186,46 @@ public final class CanonicalStatusSnapshot {
 
     public String getStorageBackend() {
         return storageBackend;
+    }
+
+    public long getStorageBaseCount() {
+        return storageTelemetry.getBaseCount();
+    }
+
+    public long getStorageRecordCount() {
+        return storageTelemetry.getRecordCount();
+    }
+
+    public long getStoragePhysicalSizeBytes() {
+        return storageTelemetry.getPhysicalSizeBytes();
+    }
+
+    public long getStoragePendingRecoveryBaseCount() {
+        return storageTelemetry.getPendingRecoveryBaseCount();
+    }
+
+    public long getStorageCacheUsedBytes() {
+        return storageTelemetry.getCacheUsedBytes();
+    }
+
+    public long getStorageCacheMaxBytes() {
+        return storageTelemetry.getCacheMaxBytes();
+    }
+
+    public long getStorageCachedEntryCount() {
+        return storageTelemetry.getCachedEntryCount();
+    }
+
+    public long getStorageCacheHits() {
+        return storageTelemetry.getCacheHits();
+    }
+
+    public long getStorageCacheMisses() {
+        return storageTelemetry.getCacheMisses();
+    }
+
+    public long getStorageCacheEvictions() {
+        return storageTelemetry.getCacheEvictions();
     }
 
     /** Object counts are intentionally unavailable in v1: factory size may materialize indexes. */

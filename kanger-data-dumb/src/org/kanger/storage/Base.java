@@ -446,6 +446,14 @@ public class Base implements IBase, Iterable<IStep> {
         return data == null || data.isClosed();
     }
 
+    long getRecordCount() {
+        return integrity == null ? -1L : integrity.getRecordCount();
+    }
+
+    boolean hasPendingRecovery() {
+        return recovery != null && recovery.hasPending();
+    }
+
     @Override
     public String getName() {
         return name;
