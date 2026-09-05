@@ -82,26 +82,78 @@
         return parts.join(' ');
     }
 
-    function setText(id, text) {
-        var node = document.getElementById(id);
-        if (node) {
-            node.textContent = stringValue(text);
-        }
+    function buildDate(value) {
+        var text = value === null || value === undefined ? '' : String(value);
+        return text ? text.replace('_', ' ') : 'unavailable';
     }
 
-    function createRow(parent, id) {
+    function injectStyles() {
+        if (!document.head || document.getElementById('kanger-tech-status-css')) {
+            return;
+        }
+        var style = document.createElement('style');
+        style.id = 'kanger-tech-status-css';
+        style.textContent = [
+            ':root { --kanger-tech-open: 292px; }',
+            'body.kanger-presentation .kanger-tech-body { font-variant-numeric: tabular-nums; }',
+            'body.kanger-presentation .kanger-tech-section { margin-bottom: 16px; }',
+            'body.kanger-presentation .kanger-tech-heading-line { display: flex; align-items: center; gap: 8px; }',
+            'body.kanger-presentation .kanger-tech-heading-text { flex: 1 1 auto; min-width: 0; }',
+            'body.kanger-presentation .kanger-tech-canonical-boundary { border-top: 1px solid var(--kanger-border); margin-top: 2px; padding-top: 14px; }',
+            'body.kanger-presentation .kanger-tech-metric-row { display: grid; grid-template-columns: 86px minmax(0, 1fr); column-gap: 8px; align-items: baseline; min-height: 18px; white-space: normal; }',
+            'body.kanger-presentation .kanger-tech-label { color: var(--kanger-muted); font-family: helvetica, sans-serif; font-size: 10px; line-height: 1.45; }',
+            'body.kanger-presentation .kanger-tech-value { min-width: 0; color: var(--kanger-ink); overflow-wrap: anywhere; }',
+            'body.kanger-presentation .kanger-tech-secondary .kanger-tech-value { color: var(--kanger-muted); }',
+            'body.kanger-presentation .kanger-tech-path .kanger-tech-value { color: #4d5862; font-size: 11px; }',
+            'body.kanger-presentation .kanger-tech-badge { flex: 0 0 auto; box-sizing: border-box; min-height: 16px; padding: 1px 5px; border: 1px solid #c6ccd1; border-radius: 8px; background: #edf0f2; color: #4b555e; font-family: helvetica, sans-serif; font-size: 9px; font-weight: bold; letter-spacing: .04em; line-height: 12px; white-space: nowrap; }',
+            'body.kanger-presentation .kanger-tech-badge-ok { border-color: #aebdb5; background: #e5ebe8; color: #34463d; }',
+            'body.kanger-presentation .kanger-tech-badge-warn { border-color: #c8b8ae; background: #eee9e5; color: #604b40; }',
+            'body.kanger-presentation .kanger-tech-metric-row[hidden] { display: none !important; }',
+            '@media (max-width: 920px) { :root { --kanger-tech-open: 240px; } body.kanger-presentation .kanger-tech-metric-row { grid-template-columns: 74px minmax(0, 1fr); column-gap: 6px; } }'
+        ].join('\n');
+        document.head.appendChild(style);
+    }
+
+    function createRow(parent, specification) {
         var row = document.createElement('div');
-        row.id = id;
-        row.className = 'kanger-tech-row';
+        row.id = specification.id;
+        row.className = 'kanger-tech-row kanger-tech-metric-row'
+                + (specification.className ? ' ' + specification.className : '');
+
+        var label = document.createElement('span');
+        label.className = 'kanger-tech-label';
+        label.textContent = specification.label;
+        row.appendChild(label);
+
+        var metricNode = document.createElement('span');
+        metricNode.id = specification.id + '-value';
+        metricNode.className = 'kanger-tech-value';
+        row.appendChild(metricNode);
+
         parent.appendChild(row);
     }
 
-    function createSection(parent, title, rows) {
+    function createSection(parent, title, rows, options) {
+        options = options || {};
         var section = document.createElement('div');
-        section.className = 'kanger-tech-section';
+        section.className = 'kanger-tech-section'
+                + (options.boundary ? ' kanger-tech-canonical-boundary' : '');
+
         var heading = document.createElement('div');
-        heading.className = 'kanger-tech-heading';
-        heading.textContent = title;
+        heading.className = 'kanger-tech-heading kanger-tech-heading-line';
+
+        var headingText = document.createElement('span');
+        headingText.className = 'kanger-tech-heading-text';
+        headingText.textContent = title;
+        heading.appendChild(headingText);
+
+        if (options.badgeId) {
+            var badge = document.createElement('span');
+            badge.id = options.badgeId;
+            badge.className = 'kanger-tech-badge';
+            heading.appendChild(badge);
+        }
+
         section.appendChild(heading);
         for (var i = 0; i < rows.length; i++) {
             createRow(section, rows[i]);
@@ -109,8 +161,33 @@
         parent.appendChild(section);
     }
 
+    function setMetric(id, text) {
+        var node = document.getElementById(id + '-value');
+        if (node) {
+            node.textContent = stringValue(text);
+        }
+    }
+
+    function setBadge(id, text, state) {
+        var node = document.getElementById(id);
+        if (!node) {
+            return;
+        }
+        node.textContent = stringValue(text);
+        node.className = 'kanger-tech-badge'
+                + (state ? ' kanger-tech-badge-' + state : '');
+    }
+
+    function setHidden(id, hidden) {
+        var node = document.getElementById(id);
+        if (node) {
+            node.hidden = !!hidden;
+        }
+    }
+
     function ensureSections() {
-        if (document.getElementById('tech-status-state')) {
+        injectStyles();
+        if (document.getElementById('tech-status-generation')) {
             return true;
         }
         var panel = document.getElementById('technical-panel');
@@ -121,27 +198,47 @@
         if (!body) {
             return false;
         }
+
         createSection(body, 'Canonical STATUS', [
-            'tech-status-state', 'tech-status-source'
-        ]);
+            {id: 'tech-status-schema', label: 'Schema'},
+            {id: 'tech-status-generation', label: 'Generation'},
+            {id: 'tech-status-source', label: 'Source', className: 'kanger-tech-secondary'}
+        ], {boundary: true, badgeId: 'tech-status-badge'});
+
         createSection(body, 'Core', [
-            'tech-core-transaction', 'tech-core-levels',
-            'tech-core-pending', 'tech-core-objects'
+            {id: 'tech-core-transaction', label: 'Transaction'},
+            {id: 'tech-core-compatibility', label: 'Compatibility'},
+            {id: 'tech-core-state', label: 'State'},
+            {id: 'tech-core-levels', label: 'Mind'},
+            {id: 'tech-core-pending', label: 'Pending'},
+            {id: 'tech-core-objects', label: 'Objects'}
         ]);
+
         createSection(body, 'Storage', [
-            'tech-canonical-storage', 'tech-storage-backend',
-            'tech-storage-volume', 'tech-storage-wal',
-            'tech-storage-cache', 'tech-storage-cache-io'
-        ]);
+            {id: 'tech-canonical-storage', label: 'Name'},
+            {id: 'tech-storage-backend', label: 'Backend'},
+            {id: 'tech-storage-volume', label: 'Volume'},
+            {id: 'tech-storage-wal', label: 'WAL'},
+            {id: 'tech-storage-cache', label: 'Cache'},
+            {id: 'tech-storage-cache-io', label: 'Cache I/O'}
+        ], {badgeId: 'tech-storage-badge'});
+
         createSection(body, 'Session', [
-            'tech-canonical-session', 'tech-session-user-dir',
-            'tech-session-database-dir', 'tech-session-sources-dir'
+            {id: 'tech-session-user', label: 'User'},
+            {id: 'tech-session-mind', label: 'Mind'},
+            {id: 'tech-session-user-dir', label: 'Home', className: 'kanger-tech-path'},
+            {id: 'tech-session-database-dir', label: 'Database', className: 'kanger-tech-path'},
+            {id: 'tech-session-sources-dir', label: 'Sources', className: 'kanger-tech-path'}
         ]);
+
         createSection(body, 'Runtime', [
-            'tech-runtime-version', 'tech-runtime-build',
-            'tech-runtime-java', 'tech-runtime-jvm',
-            'tech-runtime-uptime', 'tech-runtime-heap', 'tech-runtime-os'
-        ]);
+            {id: 'tech-runtime-build', label: 'Build'},
+            {id: 'tech-runtime-built', label: 'Built'},
+            {id: 'tech-runtime-java', label: 'Java'},
+            {id: 'tech-runtime-system', label: 'System'},
+            {id: 'tech-runtime-uptime', label: 'Uptime'},
+            {id: 'tech-runtime-heap', label: 'Heap'}
+        ], {badgeId: 'tech-runtime-badge'});
         return true;
     }
 
@@ -161,74 +258,83 @@
 
     function renderStatus(status, generation) {
         if (!status || Number(status.schema) !== 1) {
-            setText('tech-status-state', 'status: unavailable');
-            setText('tech-status-source', 'source: invalid canonical snapshot');
+            renderFailure('invalid canonical snapshot');
             return;
         }
         lastStatus = status;
-        setText('tech-status-state', 'status: current');
-        setText('tech-status-source', 'source: status.schema=1; generation=' + generation);
+        setBadge('tech-status-badge', 'CURRENT', 'ok');
+        setMetric('tech-status-schema', status.schema);
+        setMetric('tech-status-generation', generation);
+        setHidden('tech-status-source', true);
 
         var core = status.core || {};
         var transaction = core.transaction || {};
         var levels = core.levels || {};
         var objects = core.objects || {};
-        setText('tech-core-transaction', 'transaction: U'
-                + metric(transaction.level)
-                + '; compatibility=' + value(transaction.compatibility)
-                + '; quiescent=' + metric(transaction.quiescent));
-        setText('tech-core-levels', 'mind: current=' + metric(levels.mind)
-                + '; root=' + metric(levels.root_mind));
-        setText('tech-core-pending', 'pending children: current='
+        var quiescent = transaction.quiescent;
+        setMetric('tech-core-transaction', 'U' + metric(transaction.level));
+        setMetric('tech-core-compatibility', value(transaction.compatibility));
+        setMetric('tech-core-state', quiescent === true ? 'QUIESCENT'
+                : (quiescent === false ? 'ACTIVE' : 'unavailable'));
+        setMetric('tech-core-levels', 'current ' + metric(levels.mind)
+                + ' · root ' + metric(levels.root_mind));
+        setMetric('tech-core-pending', 'current '
                 + metric(transaction.current_pending_children)
-                + '; root=' + metric(transaction.root_pending_children));
-        setText('tech-core-objects', 'objects: ' + metric(objects.count));
+                + ' · root ' + metric(transaction.root_pending_children));
+        setMetric('tech-core-objects', metric(objects.count));
 
         var storage = status.storage || {};
-        setText('tech-canonical-storage', 'storage: '
-                + (storage.current === null || storage.current === undefined
-                        ? 'none' : String(storage.current))
-                + '; state=' + value(storage.state));
-        setText('tech-storage-backend', 'backend: ' + value(storage.backend));
-        setText('tech-storage-volume', 'volume: bases=' + metric(storage.bases)
-                + '; records=' + metric(storage.records)
-                + '; physical=' + bytes(storage.physical_bytes));
-        setText('tech-storage-wal', 'wal pending bases: '
-                + metric(storage.wal_pending_bases));
-        setText('tech-storage-cache', 'cache: used=' + bytes(storage.cache_used_bytes)
-                + '; max=' + bytes(storage.cache_max_bytes)
-                + '; entries=' + metric(storage.cache_entries));
-        setText('tech-storage-cache-io', 'cache io: hits=' + metric(storage.cache_hits)
-                + '; misses=' + metric(storage.cache_misses)
-                + '; evictions=' + metric(storage.cache_evictions));
+        var storageName = storage.current === null || storage.current === undefined
+                ? 'none' : String(storage.current);
+        var storageState = value(storage.state);
+        setBadge('tech-storage-badge', storageState.toUpperCase(),
+                storageState === 'open' ? 'ok' : 'neutral');
+        setMetric('tech-canonical-storage', storageName);
+        setMetric('tech-storage-backend', value(storage.backend));
+        setMetric('tech-storage-volume', metric(storage.bases) + ' bases · '
+                + metric(storage.records) + ' records · '
+                + bytes(storage.physical_bytes));
+        setMetric('tech-storage-wal', metric(storage.wal_pending_bases)
+                + ' pending bases');
+        setMetric('tech-storage-cache', bytes(storage.cache_used_bytes)
+                + ' / ' + bytes(storage.cache_max_bytes)
+                + ' · ' + metric(storage.cache_entries) + ' entries');
+        setMetric('tech-storage-cache-io', metric(storage.cache_hits) + ' hits · '
+                + metric(storage.cache_misses) + ' misses · '
+                + metric(storage.cache_evictions) + ' evictions');
 
         var session = status.session || {};
-        setText('tech-canonical-session', 'user=' + metric(session.user)
-                + '; mind=' + metric(session.mind));
-        setText('tech-session-user-dir', 'user.dir: ' + value(session.user_dir));
-        setText('tech-session-database-dir', 'database.dir: '
-                + value(session.database_dir));
-        setText('tech-session-sources-dir', 'sources.dir: '
-                + value(session.sources_dir));
+        setMetric('tech-session-user', metric(session.user));
+        setMetric('tech-session-mind', metric(session.mind));
+        setMetric('tech-session-user-dir', value(session.user_dir));
+        setMetric('tech-session-database-dir', value(session.database_dir));
+        setMetric('tech-session-sources-dir', value(session.sources_dir));
 
         var runtime = status.runtime || {};
         var heap = runtime.heap || {};
-        setText('tech-runtime-version', 'version: ' + value(runtime.version));
-        setText('tech-runtime-build', 'build: branch=' + value(runtime.source_branch)
-                + '; date=' + value(runtime.build_date));
-        setText('tech-runtime-java', 'java: ' + value(runtime.java));
-        setText('tech-runtime-jvm', 'jvm: ' + value(runtime.jvm));
-        setText('tech-runtime-uptime', 'uptime: ' + uptime(runtime.uptime_ms));
-        setText('tech-runtime-heap', 'heap: used=' + bytes(heap.used_bytes)
-                + '; committed=' + bytes(heap.committed_bytes)
-                + '; max=' + bytes(heap.max_bytes));
-        setText('tech-runtime-os', 'os: ' + value(runtime.os)
-                + '; arch=' + value(runtime.arch));
+        setBadge('tech-runtime-badge', value(runtime.version), 'neutral');
+        setMetric('tech-runtime-build', value(runtime.source_branch));
+        setMetric('tech-runtime-built', buildDate(runtime.build_date));
+        setMetric('tech-runtime-java', value(runtime.java) + ' · ' + value(runtime.jvm));
+        setMetric('tech-runtime-system', value(runtime.os) + ' · ' + value(runtime.arch));
+        setMetric('tech-runtime-uptime', uptime(runtime.uptime_ms));
+        setMetric('tech-runtime-heap', bytes(heap.used_bytes) + ' / '
+                + bytes(heap.committed_bytes) + ' / ' + bytes(heap.max_bytes));
     }
 
     function renderFailure(description) {
-        setText('tech-status-state', 'status: unavailable');
-        setText('tech-status-source', 'source: ' + value(description));
+        setBadge('tech-status-badge', 'UNAVAILABLE', 'warn');
+        setMetric('tech-status-schema', 'unavailable');
+        setMetric('tech-status-generation', operationGeneration());
+        setMetric('tech-status-source', value(description));
+        setHidden('tech-status-source', false);
+    }
+
+    function renderLoading() {
+        setBadge('tech-status-badge', 'LOADING', 'neutral');
+        setMetric('tech-status-schema', '1');
+        setMetric('tech-status-generation', operationGeneration());
+        setHidden('tech-status-source', true);
     }
 
     function requestStatus(retryOnGenerationChange) {
@@ -237,8 +343,7 @@
         }
         var serial = ++requestSerial;
         var generation = operationGeneration();
-        setText('tech-status-state', 'status: loading...');
-        setText('tech-status-source', 'source: canonical status');
+        renderLoading();
         if (typeof window.post !== 'function') {
             renderFailure('transport unavailable');
             return;
