@@ -30,6 +30,10 @@ assert(source.includes("context: 'command'"),
     'TECH telemetry must use the structured read transport shape');
 assert(source.includes("status: ''"),
     'TECH telemetry must request the structured STATUS marker');
+assert(source.includes('kanger-tech-metric-row'),
+    'TECH telemetry must render structured label/value rows');
+assert(source.includes('kanger-tech-canonical-boundary'),
+    'canonical STATUS must remain visually separated from Browser-local TECH');
 assert(!presentationSource.includes('window.token'),
     'presentation authority must remain bearer-free');
 assert(presentationSource.includes("script.src = 'tech-status.js'"),
@@ -44,6 +48,7 @@ class Element {
         this.parentNode = null;
         this.listeners = Object.create(null);
         this.attributes = Object.create(null);
+        this.hidden = false;
         this._textContent = '';
     }
 
@@ -249,6 +254,9 @@ vm.runInNewContext(source, context, {filename: 'html/tech-status.js'});
 assert(window.KANGER_TECH_STATUS);
 assert.strictEqual(window.KANGER_TECH_STATUS.version, 1);
 assert.strictEqual(window.KANGER_TECH_STATUS.installed, true);
+assert(document.getElementById('kanger-tech-status-css'));
+assert(document.getElementById('kanger-tech-status-css').textContent
+    .includes('grid-template-columns: 86px minmax(0, 1fr)'));
 assert.strictEqual(requests.length, 0,
     'closed TECH must not request canonical STATUS');
 console.log('TECH_STATUS_PASS closed-no-read');
@@ -267,16 +275,61 @@ assert.strictEqual(
     Object.prototype.hasOwnProperty.call(requests[0].packet.parameters, 'token'),
     false,
     'TECH status child request must not carry bearer data');
-assert.strictEqual(document.getElementById('tech-status-state').textContent,
-    'status: current');
-assert.strictEqual(document.getElementById('tech-core-transaction').textContent,
-    'transaction: U1; compatibility=VALID; quiescent=false');
-assert.strictEqual(document.getElementById('tech-canonical-storage').textContent,
-    'storage: natives; state=open');
-assert.strictEqual(document.getElementById('tech-runtime-version').textContent,
-    'version: 3.7.0');
+
+assert.strictEqual(document.getElementById('tech-status-badge').textContent,
+    'CURRENT');
+assert(document.getElementById('tech-status-badge').className
+    .includes('kanger-tech-badge-ok'));
+assert.strictEqual(document.getElementById('tech-status-schema-value').textContent,
+    '1');
+assert.strictEqual(document.getElementById('tech-status-generation-value').textContent,
+    '7');
+assert.strictEqual(document.getElementById('tech-status-source').hidden, true);
+
+assert.strictEqual(document.getElementById('tech-core-transaction-value').textContent,
+    'U1');
+assert.strictEqual(document.getElementById('tech-core-compatibility-value').textContent,
+    'VALID');
+assert.strictEqual(document.getElementById('tech-core-state-value').textContent,
+    'ACTIVE');
+assert.strictEqual(document.getElementById('tech-core-levels-value').textContent,
+    'current 4 · root 0');
+assert.strictEqual(document.getElementById('tech-core-pending-value').textContent,
+    'current 0 · root 1');
+assert.strictEqual(document.getElementById('tech-core-objects-value').textContent,
+    'unavailable');
+
+assert.strictEqual(document.getElementById('tech-storage-badge').textContent,
+    'OPEN');
+assert.strictEqual(document.getElementById('tech-canonical-storage-value').textContent,
+    'natives');
+assert.strictEqual(document.getElementById('tech-storage-volume-value').textContent,
+    '12 bases · 345 records · 4.00 KiB');
+assert.strictEqual(document.getElementById('tech-storage-cache-value').textContent,
+    '2.00 KiB / 8.00 KiB · 8 entries');
+
+assert.strictEqual(document.getElementById('tech-session-user-value').textContent,
+    '3');
+assert.strictEqual(document.getElementById('tech-session-mind-value').textContent,
+    '4');
+assert.strictEqual(document.getElementById('tech-session-user-dir-value').textContent,
+    '/user/');
+
+assert.strictEqual(document.getElementById('tech-runtime-badge').textContent,
+    '3.7.0');
+assert.strictEqual(document.getElementById('tech-runtime-build-value').textContent,
+    'fix/3.7.0-semantic-use-recovery');
+assert.strictEqual(document.getElementById('tech-runtime-built-value').textContent,
+    '2026-09-04 17:00:00');
+assert.strictEqual(document.getElementById('tech-runtime-java-value').textContent,
+    '1.8.0_482 · Eclipse OpenJ9 VM');
+assert.strictEqual(document.getElementById('tech-runtime-system-value').textContent,
+    'Mac OS X · x86_64');
+assert.strictEqual(document.getElementById('tech-runtime-uptime-value').textContent,
+    '1m 5s');
 assert.strictEqual(window.KANGER_TECH_STATUS.snapshot().schema, 1);
 console.log('TECH_STATUS_PASS open-single-structured-read-render');
+console.log('TECH_STATUS_PASS structured-visual-hierarchy');
 
 technicalOpen = false;
 toggle.dispatch('click');
@@ -289,8 +342,8 @@ technicalOpen = true;
 toggle.dispatch('click');
 assert.strictEqual(requests.length, 2,
     'reopening TECH must refresh exactly once');
-assert.strictEqual(document.getElementById('tech-status-source').textContent,
-    'source: status.schema=1; generation=8');
+assert.strictEqual(document.getElementById('tech-status-generation-value').textContent,
+    '8');
 console.log('TECH_STATUS_PASS reopen-single-refresh');
 
 assert(!source.includes('setInterval('));
