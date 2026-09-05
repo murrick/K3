@@ -24,6 +24,12 @@ assert(!source.includes('window.apihost'),
     'TECH status must not address the API host directly');
 assert(source.includes('window.post('),
     'TECH status must use the Browser transport boundary');
+assert(!source.includes("context: 'dialogue'"),
+    'TECH telemetry must not enter the serialized raw dialogue operation path');
+assert(source.includes("context: 'command'"),
+    'TECH telemetry must use the structured read transport shape');
+assert(source.includes("status: ''"),
+    'TECH telemetry must request the structured STATUS marker');
 assert(!presentationSource.includes('window.token'),
     'presentation authority must remain bearer-free');
 assert(presentationSource.includes("script.src = 'tech-status.js'"),
@@ -252,9 +258,9 @@ toggle.dispatch('click');
 assert.strictEqual(requests.length, 1,
     'opening TECH must perform exactly one canonical STATUS read');
 assert.deepStrictEqual(requests[0].packet, {
-    context: 'dialogue',
+    context: 'command',
     parameters: {
-        line: 'status'
+        status: ''
     }
 });
 assert.strictEqual(
@@ -270,7 +276,7 @@ assert.strictEqual(document.getElementById('tech-canonical-storage').textContent
 assert.strictEqual(document.getElementById('tech-runtime-version').textContent,
     'version: 3.7.0');
 assert.strictEqual(window.KANGER_TECH_STATUS.snapshot().schema, 1);
-console.log('TECH_STATUS_PASS open-single-brokered-read-render');
+console.log('TECH_STATUS_PASS open-single-structured-read-render');
 
 technicalOpen = false;
 toggle.dispatch('click');
@@ -290,4 +296,5 @@ console.log('TECH_STATUS_PASS reopen-single-refresh');
 assert(!source.includes('setInterval('));
 console.log('TECH_STATUS_PASS no-polling-history-side-effects');
 console.log('TECH_STATUS_PASS containment-transport-boundary');
+console.log('TECH_STATUS_PASS structured-read-boundary');
 console.log('TECH_STATUS_OK');
