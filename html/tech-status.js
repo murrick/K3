@@ -5,11 +5,10 @@
  *
  * Canonical TECH telemetry adapter.
  *
- * Owns one internal parent-brokered authenticated read of the hardcoded
- * canonical `status` command when the TECH panel is opened. It deliberately
- * bypasses operator dialogue presentation/history and never polls. Canonical
- * parsing and STATUS semantics remain server-owned; this adapter only renders
- * status.schema=1.
+ * Owns one internal parent-brokered authenticated read of canonical STATUS
+ * telemetry when the TECH panel is opened. It deliberately bypasses operator
+ * dialogue presentation/history and never polls. Canonical parsing and STATUS
+ * semantics remain server-owned; this adapter only renders status.schema=1.
  */
 (function (window, document) {
     'use strict';
@@ -246,9 +245,9 @@
         }
         try {
             window.post({
-                context: 'dialogue',
+                context: 'command',
                 parameters: {
-                    line: 'status'
+                    status: ''
                 }
             }, function (data) {
                 if (serial !== requestSerial || !presentationOpen()) {
