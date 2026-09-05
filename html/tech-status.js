@@ -94,7 +94,7 @@
         var style = document.createElement('style');
         style.id = 'kanger-tech-status-css';
         style.textContent = [
-            ':root { --kanger-tech-open: 292px; }',
+            ':root { --kanger-tech-open: 25vw; }',
             'body.kanger-presentation .kanger-tech-body { font-variant-numeric: tabular-nums; }',
             'body.kanger-presentation .kanger-tech-section { margin-bottom: 16px; }',
             'body.kanger-presentation .kanger-tech-heading-line { display: flex; align-items: center; gap: 8px; }',
@@ -109,7 +109,7 @@
             'body.kanger-presentation .kanger-tech-badge-ok { border-color: #aebdb5; background: #e5ebe8; color: #34463d; }',
             'body.kanger-presentation .kanger-tech-badge-warn { border-color: #c8b8ae; background: #eee9e5; color: #604b40; }',
             'body.kanger-presentation .kanger-tech-metric-row[hidden] { display: none !important; }',
-            '@media (max-width: 920px) { :root { --kanger-tech-open: 240px; } body.kanger-presentation .kanger-tech-metric-row { grid-template-columns: 74px minmax(0, 1fr); column-gap: 6px; } }'
+            '@media (max-width: 920px) { body.kanger-presentation .kanger-tech-metric-row { grid-template-columns: 74px minmax(0, 1fr); column-gap: 6px; } }'
         ].join('\n');
         document.head.appendChild(style);
     }
