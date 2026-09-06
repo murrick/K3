@@ -85,14 +85,16 @@ jobs:
             grep -Fqx -- "${member}" <<<"${listing}"
           done
 
+          # Do not use grep -q behind tar under pipefail: grep can close the
+          # pipe on its first match and make a healthy tar exit with SIGPIPE.
           tar -xOzf "${archive}" "${root}/README.md" \
-            | grep -Fq 'docs/COMMANDS.md'
+            | grep -F 'docs/COMMANDS.md' >/dev/null
           tar -xOzf "${archive}" "${root}/README.md" \
-            | grep -Fq 'docs/UI_CONSOLE.md'
+            | grep -F 'docs/UI_CONSOLE.md' >/dev/null
           tar -xOzf "${archive}" "${root}/docs/COMMANDS.md" \
-            | grep -Fq 'Canonical `status`'
+            | grep -F 'Canonical `status`' >/dev/null
           tar -xOzf "${archive}" "${root}/docs/UI_CONSOLE.md" \
-            | grep -Fq 'TECH panel'
+            | grep -F 'TECH panel' >/dev/null
 
       - name: Publish qualification archive
         uses: actions/upload-artifact@v5
