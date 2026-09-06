@@ -38,6 +38,7 @@ public final class CommandRegistry {
         QUIT,
         RULE,
         SOLUTION,
+        STATUS,
         STORAGE,
         TRANSACTION,
         VALUES,
@@ -63,7 +64,13 @@ public final class CommandRegistry {
         USE,
         CLOSE,
         DROP,
-        REINDEX
+        REINDEX,
+        CORE,
+        OBJECTS,
+        TRANSACTION,
+        STORAGE,
+        SESSION,
+        RUNTIME
     }
 
     public static final class Definition {
@@ -148,6 +155,7 @@ public final class CommandRegistry {
         family(Family.QUIT, "quit");
         family(Family.RULE, "rule", "rules");
         family(Family.SOLUTION, "solution", "solutions");
+        family(Family.STATUS, "status");
         family(Family.STORAGE, "storage");
         family(Family.TRANSACTION, "transaction");
         family(Family.VALUES, "values");
@@ -181,6 +189,14 @@ public final class CommandRegistry {
         keyword(Family.STORAGE, Keyword.CLOSE, "close");
         keyword(Family.STORAGE, Keyword.DROP, "drop");
         keyword(Family.STORAGE, Keyword.REINDEX, "reindex");
+
+        keyword(Family.STATUS, Keyword.CORE, "core");
+        keyword(Family.STATUS, Keyword.OBJECTS, "objects");
+        keyword(Family.STATUS, Keyword.TRANSACTION, "transaction");
+        keyword(Family.STATUS, Keyword.LEVEL, "levels");
+        keyword(Family.STATUS, Keyword.STORAGE, "storage");
+        keyword(Family.STATUS, Keyword.SESSION, "session");
+        keyword(Family.STATUS, Keyword.RUNTIME, "runtime");
 
         int n = 0;
         define(CommandIntent.RULE_STATUS, "rule", "RULE",
@@ -271,6 +287,13 @@ public final class CommandRegistry {
                 args("name", "Storage logical name."), aliases("drop <name>"), n++);
         define(CommandIntent.STORAGE_REINDEX, "storage reindex <name>", "STORAGE", "Reindex one explicitly named storage.",
                 args("name", "Storage logical name."), aliases("reindex <name>"), n++);
+
+        define(CommandIntent.STATUS,
+                "status [core [objects|transaction|levels]|storage|session|runtime]",
+                "STATUS",
+                "Show canonical read-only product status or one status projection.",
+                args("section", "Optional status section.",
+                        "subsection", "Optional core subsection."), n++);
 
         define(CommandIntent.ERASE, "erase", "SYSTEM / SESSION", "Clear the current workspace using qualified runtime semantics.",
                 noArgs(), n++);

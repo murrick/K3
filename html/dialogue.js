@@ -478,6 +478,11 @@
             if (event.key === 'Escape' || event.keyCode === 27) {
                 event.preventDefault();
                 finish(false);
+                return;
+            }
+            if (event.key === 'Enter' || event.keyCode === 13) {
+                event.preventDefault();
+                finish(true);
             }
         }
 

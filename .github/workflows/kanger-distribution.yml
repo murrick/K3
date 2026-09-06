@@ -66,7 +66,7 @@ jobs:
           grep -Fq 'Usage: sudo ./update.sh [--force]' <<<"${update_help}"
           grep -Fq -- '--force                  Allow an explicit same-version update' <<<"${update_help}"
           grep -Fq '<version>.force.N' <<<"${update_help}"
-          if grep -Fq '3.7.0.force' <<<"${update_help}"; then
+          if grep -Eq '[0-9]+[.][0-9]+[.][0-9]+[.]force' <<<"${update_help}"; then
             echo 'update.sh help contains a release-specific force snapshot example' >&2
             exit 1
           fi
@@ -111,7 +111,6 @@ jobs:
           for member in \
             "${root}/RELEASE" \
             "${root}/SHA256SUMS" \
-            "${root}/server/kanger-server.jar" \
             "${root}/server/kanger-server-thin.jar" \
             "${root}/ui/index.html" \
             "${root}/install.sh" \
@@ -120,6 +119,10 @@ jobs:
           do
             grep -Fqx -- "${member}" <<<"${listing}"
           done
+          if grep -Fqx -- "${root}/server/kanger-server.jar" <<<"${listing}"; then
+            echo 'compatibility fat Server JAR leaked into distribution' >&2
+            exit 1
+          fi
 
           udf_modules="$(grep -Ec "^${root}/server/modules/kanger-udf-[^/]+[.]jar$" <<<"${listing}" || true)"
           storage_modules="$(grep -Ec "^${root}/server/modules/kanger-data-dumb-[^/]+[.]jar$" <<<"${listing}" || true)"
@@ -132,14 +135,20 @@ jobs:
             exit 1
           fi
 
+          packaged_server_jar="$(mktemp)"
+          packaged_update="$(mktemp)"
+          trap 'rm -f -- "${packaged_server_jar}" "${packaged_update}"' EXIT
+          tar -xOzf "${archive}" "${root}/server/kanger-server-thin.jar" >"${packaged_server_jar}"
+          packaged_build_properties="$(unzip -p "${packaged_server_jar}" org/kanger/build.properties)"
+          packaged_server_version="$(awk -F= '$1 == "server.version" {sub(/^[^=]*=/, ""); print; exit}' <<<"${packaged_build_properties}")"
+          test -n "${packaged_server_version}"
+
           release="$(tar -xOzf "${archive}" "${root}/RELEASE")"
           printf '%s\n' "${release}"
           grep -Fqx -- 'product=KANGER' <<<"${release}"
           grep -Fqx -- "version=${version}" <<<"${release}"
-          grep -Fqx -- 'server.version=server-0.18' <<<"${release}"
+          grep -Fqx -- "server.version=${packaged_server_version}" <<<"${release}"
 
-          packaged_update="$(mktemp)"
-          trap 'rm -f -- "${packaged_update}"' EXIT
           tar -xOzf "${archive}" "${root}/update.sh" >"${packaged_update}"
           bash -n "${packaged_update}"
           grep -Fq 'Usage: sudo ./update.sh [--force]' "${packaged_update}"
@@ -221,7 +230,7 @@ jobs:
 
           [[ "$(sudo readlink -f "${current}")" == "${canonical}" ]]
           sudo test -f "${canonical}/RELEASE"
-          sudo test -f "${canonical}/server/kanger-server.jar"
+          sudo test ! -e "${canonical}/server/kanger-server.jar"
           sudo test -f "${canonical}/server/kanger-server-thin.jar"
           sudo test -x "${canonical}/bin/kanger-admin"
           sudo test -f "${canonical}/ui/config.js"
@@ -280,7 +289,7 @@ jobs:
 
           assert_thin_release() {
             local release_dir="$1"
-            sudo test -f "${release_dir}/server/kanger-server.jar"
+            sudo test ! -e "${release_dir}/server/kanger-server.jar"
             sudo test -f "${release_dir}/server/kanger-server-thin.jar"
             sudo test -x "${release_dir}/bin/kanger-admin"
             [[ "$(sudo find "${release_dir}/server/modules" -maxdepth 1 -type f -name 'kanger-udf-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]

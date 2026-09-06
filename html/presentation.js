@@ -1155,3 +1155,34 @@
 
     window.setTimeout(install, 0);
 }(window, document));
+
+/* Load the bearer-aware telemetry companion without moving bearer handling
+ * into the presentation authority itself. The companion remains a separate
+ * capability and owns its own authenticated canonical STATUS read. */
+(function (window, document) {
+    'use strict';
+
+    var retries = 0;
+    var MAX_RETRIES = 100;
+
+    function load() {
+        if (window.KANGER_TECH_STATUS
+                || document.getElementById('kanger-tech-status-script')) {
+            return;
+        }
+        if (!window.KANGER_PRESENTATION || !window.KANGER_PRESENTATION.installed
+                || !document.head) {
+            retries += 1;
+            if (retries <= MAX_RETRIES) {
+                window.setTimeout(load, 10);
+            }
+            return;
+        }
+        var script = document.createElement('script');
+        script.id = 'kanger-tech-status-script';
+        script.src = 'tech-status.js';
+        document.head.appendChild(script);
+    }
+
+    window.setTimeout(load, 0);
+}(window, document));

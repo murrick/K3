@@ -8,7 +8,6 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 VERSION_FILE="${SCRIPT_DIR}/VERSION"
 PAYLOAD_DIR="${SCRIPT_DIR}/payload"
 SERVER_POM="${REPO_ROOT}/kanger-server/pom.xml"
-SERVER_JAR="${REPO_ROOT}/kanger-server/target/kanger-server.jar"
 SERVER_THIN_JAR="${REPO_ROOT}/kanger-server/target/kanger-server-thin.jar"
 SERVER_RUNTIME_LIB="${REPO_ROOT}/kanger-server/target/runtime/lib"
 SERVER_RUNTIME_MODULES="${REPO_ROOT}/kanger-server/target/runtime/modules"
@@ -157,9 +156,9 @@ EOF_CONFIG
   [[ "${ready}" == true ]] || fail "Staged thin Server did not become healthy"
   printf '%s\n' "${health_response}" | grep -q '"status":"UP"' \
     || fail "Staged thin Server health did not report UP"
-  printf '%s\n' "${health_response}" | grep -q '"version":"3.7.0"' \
+  printf '%s\n' "${health_response}" | grep -Fq "\"version\":\"${VERSION}\"" \
     || fail "Staged thin Server health has unexpected Core version"
-  printf '%s\n' "${health_response}" | grep -q '"server_version":"server-0.18"' \
+  printf '%s\n' "${health_response}" | grep -Fq "\"server_version\":\"${SERVER_VERSION}\"" \
     || fail "Staged thin Server health has unexpected Server version"
   [[ -f "${runtime}/home/KANGER/kanger.active" ]] \
     || fail "Staged thin Server did not create its active marker"
@@ -204,7 +203,6 @@ log "qualifying canonical reactor build"
   mvn -B clean verify
 )
 
-[[ -f "${SERVER_JAR}" ]] || fail "Expected compatibility Server artifact not found: ${SERVER_JAR}"
 [[ -f "${SERVER_THIN_JAR}" ]] || fail "Expected thin Server artifact not found: ${SERVER_THIN_JAR}"
 [[ -d "${SERVER_RUNTIME_LIB}" ]] || fail "Expected Server runtime libraries not found: ${SERVER_RUNTIME_LIB}"
 [[ -d "${SERVER_RUNTIME_MODULES}" ]] || fail "Expected Server runtime modules not found: ${SERVER_RUNTIME_MODULES}"
@@ -240,7 +238,6 @@ mkdir -p \
   "${BUNDLE_DIR}/bin"
 
 cp -a "${PAYLOAD_DIR}/." "${BUNDLE_DIR}/"
-cp "${SERVER_JAR}" "${BUNDLE_DIR}/server/kanger-server.jar"
 cp "${SERVER_THIN_JAR}" "${BUNDLE_DIR}/server/kanger-server-thin.jar"
 cp -a "${SERVER_RUNTIME_LIB}/." "${BUNDLE_DIR}/server/lib/"
 cp -a "${SERVER_RUNTIME_MODULES}/." "${BUNDLE_DIR}/server/modules/"

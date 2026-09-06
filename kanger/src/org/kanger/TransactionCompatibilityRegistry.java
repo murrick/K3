@@ -16,9 +16,11 @@ import java.util.WeakHashMap;
  *
  * <p>This metadata is observational. It is never persisted into KANGER storage,
  * never participates in inference and never qualifies a context merely because
- * status was requested. Unknown historical compatibility is therefore reported
- * honestly as {@link Compatibility#UNQUALIFIED} until an existing semantic
- * boundary proves it valid or incompatible.</p>
+ * status was requested. Observational callers must use {@link #peek(Mind)};
+ * unknown historical compatibility is then reported honestly as
+ * {@link Compatibility#UNQUALIFIED} without materializing a registry entry.
+ * {@link #status(Mind)} retains its historical materializing contract for
+ * existing transaction command paths.</p>
  */
 final class TransactionCompatibilityRegistry {
 
@@ -77,6 +79,15 @@ final class TransactionCompatibilityRegistry {
             Collections.synchronizedMap(new WeakHashMap<Mind, Record>());
 
     private TransactionCompatibilityRegistry() {
+    }
+
+    static Record peek(Mind mind) throws Exception {
+        Record existing = RECORDS.get(mind);
+        if (existing != null) {
+            return existing;
+        }
+        return new Record(
+                Compatibility.UNQUALIFIED, storage(mind), Collections.<Witness>emptyList());
     }
 
     static Record status(Mind mind) throws Exception {

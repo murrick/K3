@@ -16,6 +16,7 @@ import org.kanger.compiler.Token;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
 import org.kanger.exception.CommandErrorException;
+import org.kanger.exception.DatabaseErrorException;
 import org.kanger.exception.ParseErrorException;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.exception.StorageLifecycleException;
@@ -135,6 +136,8 @@ public final class CanonicalConsole {
                     ConsoleParseErrorRenderer.show(ex, parseSource.sourceOr(line));
                 } catch (CommandErrorException ex) {
                     System.err.println(ex.toString());
+                } catch (DatabaseErrorException ex) {
+                    System.err.println(ex.toString());
                 } catch (StorageLifecycleException ex) {
                     String action = ex.getRequiredAction();
                     System.err.printf("ERROR: %s%s: %s%n",
@@ -242,6 +245,19 @@ public final class CanonicalConsole {
                 return same(mind);
             case WHEN_ACCEPT:
                 acceptWhen(mind, number(invocation, "index"), parseSource);
+                return same(mind);
+
+            case STATUS:
+                CanonicalCommandProcessor.Result status =
+                        COMMAND_PROCESSOR.execute(invocation, mind.getUser());
+                if (!status.isHandled()) {
+                    throw new CommandErrorException("Unsupported canonical intent "
+                            + invocation.getIntent());
+                }
+                mind = track(shutdownHook, status.getMind());
+                if (!status.getDescription().isEmpty()) {
+                    System.out.println(status.getDescription());
+                }
                 return same(mind);
 
             case TX_STATUS:
@@ -771,7 +787,12 @@ public final class CanonicalConsole {
     }
 
     private static IMind erase(IMind mind, ConsoleLineInput input) throws Exception {
-        if (!confirm(input, "Erase workspace?")) {
+        String prompt = "Erase workspace?";
+        if (mind.isStorageUsed()) {
+            prompt += "\nWARNING: The contents of the currently open database "
+                    + "will also be erased.";
+        }
+        if (!confirm(input, prompt)) {
             return mind;
         }
         while (mind.getNext() != null) {

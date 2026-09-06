@@ -91,6 +91,8 @@ public final class CommandParser {
                         line, tokens, CommandIntent.SOURCE_DELETE, "source");
             case STORAGE:
                 return parseStorage(line, tokens);
+            case STATUS:
+                return parseStatus(line, tokens);
             case ERASE:
                 return parseNoArguments(line, tokens, CommandIntent.ERASE);
             case HELP:
@@ -394,6 +396,55 @@ public final class CommandParser {
                         args("name", tokens.get(2).value), raw);
             default:
                 throw error(INVALID_GRAMMAR, "Invalid storage action");
+        }
+    }
+
+    private CommandInvocation parseStatus(String raw, List<Token> tokens)
+            throws CommandParseException {
+        if (tokens.size() == 1) {
+            return CommandInvocation.command(CommandIntent.STATUS, raw);
+        }
+
+        Keyword section = CommandRegistry.resolveKeyword(
+                Family.STATUS, tokens.get(1).value,
+                Keyword.CORE, Keyword.STORAGE, Keyword.SESSION, Keyword.RUNTIME);
+        Map<String, Object> arguments = new LinkedHashMap<String, Object>();
+        arguments.put("section", statusName(section));
+
+        if (section != Keyword.CORE) {
+            requireSize(tokens, 2);
+            return CommandInvocation.command(CommandIntent.STATUS, arguments, raw);
+        }
+        if (tokens.size() == 2) {
+            return CommandInvocation.command(CommandIntent.STATUS, arguments, raw);
+        }
+
+        Keyword subsection = CommandRegistry.resolveKeyword(
+                Family.STATUS, tokens.get(2).value,
+                Keyword.OBJECTS, Keyword.TRANSACTION, Keyword.LEVEL);
+        requireSize(tokens, 3);
+        arguments.put("subsection", statusName(subsection));
+        return CommandInvocation.command(CommandIntent.STATUS, arguments, raw);
+    }
+
+    private String statusName(Keyword keyword) {
+        switch (keyword) {
+            case CORE:
+                return "core";
+            case OBJECTS:
+                return "objects";
+            case TRANSACTION:
+                return "transaction";
+            case LEVEL:
+                return "levels";
+            case STORAGE:
+                return "storage";
+            case SESSION:
+                return "session";
+            case RUNTIME:
+                return "runtime";
+            default:
+                throw new IllegalArgumentException("Not a status selector " + keyword);
         }
     }
 

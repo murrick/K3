@@ -75,8 +75,11 @@ import java.util.Collection;
  *
  * <p><strong>Наблюдаемость.</strong> {@link #isClosed()} и
  * {@link #getStorageName()} описывают состояние физического generation, а не
- * наличие активного query или child transaction. {@link #list()} перечисляет
- * доступные storage names и не является перечислением схем текущего Mind.</p>
+ * наличие активного query или child transaction. {@link #telemetry()} может
+ * публиковать только уже существующее дешёвое состояние активного generation;
+ * он не должен перечислять namespace, гидратировать semantic objects или
+ * инициировать lifecycle. {@link #list()} перечисляет доступные storage names
+ * и не является перечислением схем текущего Mind.</p>
  *
  * <p><strong>Concurrency, failure и compatibility.</strong> Интерфейс не
  * обещает конкурентное управление одним generation несколькими независимыми
@@ -216,6 +219,19 @@ public interface IData {
      * @return описание плагина, формата или generation semantics
      */
     String getDescription();
+
+    /**
+     * Возвращает дешёвый snapshot уже открытого physical generation.
+     *
+     * <p>Default implementation объявляет метрики недоступными. Реализация не
+     * должна ради telemetry выполнять {@link #list()}, acquisition, hydration,
+     * full database scan, flush или иное изменение storage state.</p>
+     *
+     * @return provider telemetry либо unavailable snapshot
+     */
+    default StorageTelemetry telemetry() {
+        return StorageTelemetry.unavailable();
+    }
 
     /**
      * Перечисляет доступные physical storage generations.

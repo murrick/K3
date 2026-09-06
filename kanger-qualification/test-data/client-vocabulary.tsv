@@ -5,7 +5,8 @@ ACCEPT	cl	STORAGE_CLOSE	storage close	-	-	OK	yes
 ACCEPT	ru	RULE_STATUS	rule	-	-	OK	yes
 ACCEPT	ro	TX_ROLLBACK	transaction rollback	-	-	OK	yes
 ACCEPT	re missing	STORAGE_REINDEX	storage reindex missing	name	missing	OK	yes
-ACCEPT	sta	TX_START	transaction start	-	-	OK	yes
+ACCEPT	star	TX_START	transaction start	-	-	OK	yes
+ACCEPT	stat	STATUS	status	-	-	OK	yes
 ACCEPT	sto	STORAGE_STATUS	storage	-	-	OK	yes
 ACCEPT	sq	TX_SQUASH	transaction squash	-	-	OK	yes
 ACCEPT	pr	BASE_PREDICATES	base predicates	-	-	OK	yes
@@ -25,6 +26,7 @@ REJECT	p	AMBIGUOUS_PREFIX	-	-	-	error	yes
 REJECT	r	AMBIGUOUS_PREFIX	-	-	-	error	yes
 REJECT	s	AMBIGUOUS_PREFIX	-	-	-	error	yes
 REJECT	st	AMBIGUOUS_PREFIX	-	-	-	error	yes
+REJECT	sta	AMBIGUOUS_PREFIX	-	-	-	error	yes
 REJECT	transaction s	AMBIGUOUS_PREFIX	-	-	-	error	yes
 REJECT	tree 1	UNKNOWN_KEYWORD	-	-	-	error	yes
 REJECT	drop	MISSING_ARGUMENT	-	-	-	error	yes

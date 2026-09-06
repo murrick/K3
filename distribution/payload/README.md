@@ -1,36 +1,55 @@
-# KANGER 3.7.0 — Server Installation and Administration Guide
+# KANGER 3.7.0 — Installation, Update and Administration Manual
 
-This document is the customer-facing installation map for the KANGER 3.7.0 distribution tarball.
+This is the customer-facing host/operator manual shipped with the KANGER 3.7.0 distribution.
 
-It describes the installation and update contract shipped with the distribution itself: prerequisites, DNS and TLS preparation, filesystem layout, systemd and nginx integration, persistent configuration, the local `kanger-admin` operator tool, account creation and deletion, and the TRUSTED registration mode.
+It covers first installation, update, system integration, persistent configuration, account-registration topology, user provisioning, persistent user workspaces, health checks, backup boundaries, and operational troubleshooting.
 
-The distribution scripts are the authority for paths and runtime behavior. KANGER does not install or upgrade Java, nginx, systemd, DNS, or TLS certificates for the customer.
+The distribution scripts are authoritative for installation paths and activation behavior. The running Server is authoritative for runtime state.
+
+## Documentation map
+
+The installed distribution contains three customer manuals:
+
+```text
+README.md                 Installation, Update and Administration Manual
+docs/COMMANDS.md          Command Processor Manual
+docs/UI_CONSOLE.md        Browser UI and Server Console Manual
+```
+
+Use this document for host/product lifecycle. Use `docs/COMMANDS.md` for exact Console grammar and command semantics. Use `docs/UI_CONSOLE.md` for Browser workspace navigation and the TECH panel.
+
+These documents are version-local product material. Always consult the manuals shipped with the active release under `/opt/kanger/current`; do not assume a manual from another KANGER version describes the installed build.
 
 ---
 
-## 1. Distribution artifact
+# 1. Distribution artifact
 
-The release archive is named:
+The release archive is:
 
 ```text
 kanger-3.7.0.tar.gz
 ```
 
-It expands into:
+and expands into:
 
 ```text
 kanger-3.7.0/
 ```
 
-The bundle contains, among other files:
+The bundle includes at least:
 
 ```text
 RELEASE
 SHA256SUMS
+README.md
+docs/COMMANDS.md
+docs/UI_CONSOLE.md
 install.sh
 update.sh
 bin/kanger-admin
-server/kanger-server.jar
+server/kanger-server-thin.jar
+server/lib/
+server/modules/
 server/kanger.conf.example
 ui/
 nginx/kanger.conf.template
@@ -38,35 +57,30 @@ systemd/kanger.service.template
 lib/common.sh
 ```
 
-`RELEASE` identifies the product, distribution version, KANGER Server version, Server build date, and packaging time. `SHA256SUMS` covers the files in the extracted bundle. Both `install.sh` and `update.sh` verify the bundle before changing the installed system.
+`RELEASE` records product/distribution/Server build metadata. `SHA256SUMS` covers files in the extracted bundle. Both installer and updater verify the bundle before activation.
 
-Do not remove files from the extracted bundle before running the installer or updater.
+Do not delete or alter bundle members before running `install.sh` or `update.sh`.
 
 ---
 
-## 2. Required platform and privileges
+# 2. Prerequisites and ownership boundary
 
-Installation and update must be run as `root`, normally through `sudo`.
+Installation and update run as root, normally through `sudo`.
 
-The customer must provide these runtime components before installation:
+The customer provides and maintains:
 
 - Java 8 or newer;
 - nginx;
 - systemd;
-- standard Linux account and filesystem utilities used by the installer.
+- DNS;
+- TLS certificates/private keys;
+- operating-system updates and package repositories;
+- firewall/network policy;
+- backup infrastructure.
 
-The installer explicitly checks for:
+The installer checks the required host utilities and refuses to proceed when required runtime components are unavailable.
 
-```text
-java nginx systemctl curl install getent groupadd useradd
-readlink ln mv cp chown awk grep sed find seq sleep dirname
-```
-
-Java is resolved from the active `java` command and its major version must be at least 8. nginx must be installed and executable.
-
-KANGER does **not** select an operating-system package repository, install a JDK/JRE, install nginx, or modify the customer's OS update policy. The distribution therefore does not prescribe Debian/Ubuntu, RHEL, or another package-manager-specific installation command.
-
-Useful preflight checks are:
+Useful preflight commands:
 
 ```bash
 java -version
@@ -74,9 +88,11 @@ nginx -v
 systemctl --version
 ```
 
+KANGER does not install or upgrade Java/nginx/systemd and does not obtain or renew TLS certificates.
+
 ---
 
-## 3. DNS and public names
+# 3. Public names, TLS and network topology
 
 A normal installation uses two HTTPS names:
 
@@ -85,22 +101,13 @@ UI:  kanger.example.com
 API: api.kanger.example.com
 ```
 
-The first positional argument of `install.sh` is the Browser UI domain. Unless explicitly overridden, the API domain is `api.<UI-domain>`.
-
-Example:
+The standard first install is:
 
 ```bash
 sudo ./install.sh kanger.example.com
 ```
 
-is interpreted as:
-
-```text
-UI domain  = kanger.example.com
-API domain = api.kanger.example.com
-```
-
-For browser access, both names must resolve to the host running nginx. DNS provisioning is customer-managed and is not performed by KANGER.
+which defaults the API name to `api.kanger.example.com`.
 
 A custom API name may be supplied explicitly:
 
@@ -109,35 +116,20 @@ sudo ./install.sh kanger.example.com \
   --api-domain api.example.net
 ```
 
-The installer accepts fully qualified domain names and uses them to generate the nginx configuration, Browser UI API endpoint, CORS origin, public Server URL, and confirmation redirect URL.
+Both public names must resolve to the nginx host before normal Browser use.
 
----
+## 3.1 TLS
 
-## 4. TLS certificates
-
-KANGER does not obtain, replace, or renew TLS certificates.
-
-### 4.1 Default certificate locations
-
-By default both the UI and API virtual hosts use the same customer-managed certificate pair:
+Default certificate locations are:
 
 ```text
 /etc/ssl/kanger/fullchain.pem
 /etc/ssl/kanger/privkey.pem
 ```
 
-When the default pair is used, the certificate must be valid for **both** configured public names, for example:
+When one pair is used for UI and API, it must be valid for both names.
 
-```text
-kanger.example.com
-api.kanger.example.com
-```
-
-The installer requires the configured certificate and key files to exist and be readable at installation time. Certificate ownership, renewal automation, CA choice, and detailed key-permission policy remain customer responsibilities.
-
-### 4.2 Separate UI and API certificates
-
-Separate certificate material can be supplied when required:
+Separate material may be supplied:
 
 ```bash
 sudo ./install.sh kanger.example.com \
@@ -147,146 +139,116 @@ sudo ./install.sh kanger.example.com \
   --api-key /etc/ssl/kanger/api-privkey.pem
 ```
 
-All certificate and key arguments must be absolute paths.
+All certificate/key paths must be absolute. Renewal at the same paths is customer-managed; reload nginx after renewal according to the customer's certificate procedure.
 
-### 4.3 Certificate renewal
+## 3.2 Network boundaries
 
-If certificate files are renewed **in place at the same paths**, the stored KANGER installation identity remains valid. Reload nginx using the customer's normal certificate-renewal procedure after replacing the files.
+The generated nginx configuration normally:
 
-The shipped `update.sh` does not provide a domain or certificate-path migration interface. It reloads the domain, certificate paths, and nginx destination recorded by the original installation. A change of those identities should therefore be treated as a separate controlled reconfiguration, not as an ordinary KANGER version update.
-
----
-
-## 5. nginx integration and network boundary
-
-The default generated nginx configuration is installed at:
-
-```text
-/etc/nginx/conf.d/kanger.conf
-```
-
-A different destination can be selected during first installation:
-
-```bash
-sudo ./install.sh kanger.example.com \
-  --nginx-config /absolute/path/included/by/nginx/kanger.conf
-```
-
-The selected destination must be an nginx configuration path that the customer's nginx installation actually includes.
-
-The generated configuration:
-
-- listens publicly on TCP 80 and 443 for the UI and API names;
+- listens publicly on TCP 80/443;
 - redirects HTTP to HTTPS;
-- serves the Browser UI from `/opt/kanger/current/ui`;
+- serves Browser UI from `/opt/kanger/current/ui`;
 - proxies the public API to `127.0.0.1:1964`;
-- restricts the nginx `/ready` endpoint to loopback clients;
-- does **not** proxy the local administrative listener on port 1965.
+- keeps `/ready` restricted to loopback through nginx policy;
+- never proxies the local administrative listener.
 
-The KANGER Server application listener is bound by the shipped configuration to:
-
-```text
-127.0.0.1:1964
-```
-
-The local host-operator listener used by `kanger-admin` is bound to:
+Default Server listeners:
 
 ```text
-127.0.0.1:1965
+application/API: 127.0.0.1:1964
+operator/admin:  127.0.0.1:1965
 ```
 
-Port 1965 is an administrative security boundary. It must remain loopback-only and must not be published through nginx, a public firewall rule, or a reverse proxy.
+Port 1965 is a local host-operator security boundary. Do not expose it through nginx, a public firewall rule, a tunnel intended for customers, or another reverse proxy.
 
-Before every nginx activation or reload, the scripts run:
+The scripts validate nginx with:
 
 ```bash
 nginx -t
 ```
 
+before activation/reload.
+
 ---
 
-## 6. First installation
+# 4. First installation
 
-### 6.1 Prepare the host
+## 4.1 Prepare
 
-Before unpacking the release, ensure that:
+Before installation verify:
 
-1. Java 8+ is installed and available as `java`.
-2. nginx is installed and its configuration is valid.
-3. systemd is the service manager.
-4. the UI and API DNS names are prepared.
-5. the required TLS certificate and private-key files are present.
-6. TCP 80 and 443 can reach nginx as required by the customer's network policy.
+1. Java 8+ is selected by `java`.
+2. nginx/systemd are operational.
+3. UI/API DNS names are ready.
+4. TLS material exists and covers the configured names.
+5. nginx includes the selected generated configuration destination.
+6. external TCP 80/443 policy is intentional.
+7. ports 1964/1965 remain local application/operator boundaries.
 
-### 6.2 Extract the tarball
+## 4.2 Extract and install
 
 ```bash
 tar -xzf kanger-3.7.0.tar.gz
 cd kanger-3.7.0
-```
-
-The installer verifies `SHA256SUMS` itself. The customer may additionally verify the archive SHA-256 supplied with the release before extraction.
-
-### 6.3 Run the installer
-
-For the standard two-name configuration and default TLS paths:
-
-```bash
 sudo ./install.sh kanger.example.com
 ```
 
-For all installation options:
+For complete installer options:
 
 ```bash
 ./install.sh --help
 ```
 
-The installer is intentionally a **first-install** operation. If an existing KANGER installation identity, current release link, systemd unit, or target nginx configuration is already present, it refuses to overwrite it and directs the operator to `update.sh` where appropriate.
+`install.sh` is a first-install operation. It refuses to overwrite an existing KANGER installation identity/current release where `update.sh` is the appropriate path.
 
-### 6.4 What the installer does
+## 4.3 Installation sequence
 
-A successful installation performs these operations in order:
+A successful install:
 
-1. verifies the distribution layout and checksums;
-2. verifies Java, nginx, systemd, and required host utilities;
-3. validates domains, TLS files, and installation paths;
-4. creates the `kanger` system group and service user if absent;
-5. creates persistent KANGER directories;
-6. installs the persistent Server configuration if it does not already exist;
+1. verifies bundle layout/checksums;
+2. verifies prerequisites;
+3. validates domains/TLS/paths;
+4. creates the `kanger` system group/user when absent;
+5. creates persistent product directories;
+6. installs persistent Server configuration when absent;
 7. stages the versioned release under `/opt/kanger/releases`;
 8. installs the systemd unit;
-9. atomically points `/opt/kanger/current` at the release;
-10. renders and validates the nginx configuration;
-11. enables and restarts `kanger.service`;
-12. waits for loopback `/health` and `/ready` checks and verifies the running Server version;
+9. atomically selects `/opt/kanger/current`;
+10. renders/validates nginx configuration;
+11. enables/restarts `kanger.service`;
+12. checks loopback `/health` and `/ready` against the packaged Server version;
 13. reloads nginx;
-14. writes the installation identity used by future updates.
+14. writes installation identity used by later updates.
 
-If first installation fails during activation, the installer removes the release/current link, service unit, nginx file, and installation identity that it created. A pre-existing Server configuration is preserved.
+Activation failure cleans up first-install product/integration material created by that attempt while preserving a pre-existing persistent Server configuration.
 
 ---
 
-## 7. Installed filesystem layout
+# 5. Installed filesystem layout
 
-Default paths are:
+Default layout:
 
 | Purpose | Path |
 | --- | --- |
 | Product root | `/opt/kanger` |
 | Versioned releases | `/opt/kanger/releases` |
-| Active release symlink | `/opt/kanger/current` |
-| Persistent configuration | `/etc/kanger` |
-| Server configuration | `/etc/kanger/kanger.conf` |
-| Installation identity | `/etc/kanger/instance.conf` |
-| Persistent state | `/var/lib/kanger` |
-| State-side config symlink | `/var/lib/kanger/kanger.conf` |
+| Active release | `/opt/kanger/current` |
+| Customer manuals | `/opt/kanger/current/README.md`, `/opt/kanger/current/docs/` |
+| Persistent configuration root | `/etc/kanger` |
+| Main Server configuration | `/etc/kanger/kanger.conf` |
+| Generated installation identity | `/etc/kanger/instance.conf` |
+| Persistent runtime/user state | `/var/lib/kanger` |
+| State-side main-config symlink | `/var/lib/kanger/kanger.conf` |
+| Default user data root | `/var/lib/kanger/KANGER` |
 | systemd unit | `/etc/systemd/system/kanger.service` |
 | nginx config | `/etc/nginx/conf.d/kanger.conf` |
-| Active Server JAR | `/opt/kanger/current/server/kanger-server.jar` |
+| Server thin JAR | `/opt/kanger/current/server/kanger-server-thin.jar` |
+| Runtime libraries | `/opt/kanger/current/server/lib` |
+| Runtime provider modules | `/opt/kanger/current/server/modules` |
 | Browser UI | `/opt/kanger/current/ui` |
-| Admin tool | `/opt/kanger/current/bin/kanger-admin` |
+| Operator CLI | `/opt/kanger/current/bin/kanger-admin` |
 
-The installer creates a system account:
+System account:
 
 ```text
 user:  kanger
@@ -295,71 +257,110 @@ home:  /var/lib/kanger
 shell: /usr/sbin/nologin
 ```
 
-Important installed permissions include:
+Key ownership/permissions normally include:
 
 ```text
-/opt/kanger                 root:root   0755
-/opt/kanger/releases        root:root   0755
-/etc/kanger                 root:kanger 0750
-/etc/kanger/kanger.conf     root:kanger 0640
-/etc/kanger/instance.conf   root:root   0600
+/opt/kanger                 root:root     0755
+/opt/kanger/releases        root:root     0755
+/etc/kanger                 root:kanger   0750
+/etc/kanger/kanger.conf     root:kanger   0640
+/etc/kanger/instance.conf   root:root     0600
 /var/lib/kanger             kanger:kanger 0750
 ```
 
-Release files are immutable product material owned by root; persistent runtime state is kept separately under `/var/lib/kanger`.
+Release files are immutable product material. Customer configuration and runtime/user state remain outside the release directory.
 
 ---
 
-## 8. systemd service
+# 6. systemd service and health
 
-The installer creates and enables:
+The installed service is:
 
 ```text
 kanger.service
 ```
 
-The service runs as the non-login `kanger` account, with:
+It runs as `kanger` with:
 
 ```text
 WorkingDirectory=/opt/kanger/current
 -Duser.home=/var/lib/kanger
 ```
 
-The unit uses the Java executable resolved during installation, restarts on failure, writes stdout/stderr to the systemd journal, and applies systemd hardening including `NoNewPrivileges`, restricted filesystem access, and a write boundary limited to `/var/lib/kanger`.
+The Server runtime classpath uses the thin Server JAR plus `server/lib/*` and `server/modules/*`.
 
-Common service checks:
+Common checks:
 
 ```bash
 sudo systemctl status kanger.service
 sudo journalctl -u kanger.service
+curl --fail http://127.0.0.1:1964/health
+curl --fail http://127.0.0.1:1964/ready
 ```
 
-The installer and updater use these loopback checks during activation:
-
-```bash
-curl http://127.0.0.1:1964/health
-curl http://127.0.0.1:1964/ready
-```
-
-The health response must identify the Server version packaged in the release.
+The activation scripts require the running Server version to match the version packaged in the candidate release.
 
 ---
 
-## 9. Persistent Server configuration
+# 7. Configuration model
 
-The canonical configuration file is:
+KANGER deliberately separates **main Server configuration**, **generated installation identity**, and **per-user configuration**. They have different owners and update semantics.
+
+## 7.1 Main Server configuration
+
+Canonical installed file:
 
 ```text
 /etc/kanger/kanger.conf
 ```
 
-The service state contains a symlink:
+State-side lookup link:
 
 ```text
 /var/lib/kanger/kanger.conf -> /etc/kanger/kanger.conf
 ```
 
-On first installation, KANGER copies the shipped Server configuration template and appends installation-specific values for:
+The service uses `/var/lib/kanger` as `user.home`; the Server therefore resolves this linked main configuration at startup.
+
+`update.sh` preserves `/etc/kanger/kanger.conf`; a release update does not overwrite customer Server settings with the new template.
+
+After changing Server settings, restart:
+
+```bash
+sudo systemctl restart kanger.service
+```
+
+### Main configuration groups
+
+The shipped `server/kanger.conf.example` is the exact-version key reference. The standard 3.7.0 template contains these groups:
+
+**Application listener / request execution**
+
+```properties
+server.bind.address=127.0.0.1
+server.port=1964
+server.backlog=128
+server.maxthreads=32
+server.queue.capacity=128
+server.request.max.body.bytes=1048576
+server.watchdog.period=1000
+```
+
+**Local operator plane**
+
+```properties
+server.admin.enabled=true
+server.admin.bind.address=127.0.0.1
+server.admin.port=1965
+server.admin.request.max.body.bytes=65536
+server.admin.token.file=KANGER/admin.token
+```
+
+`server.admin.token.file` is relative to the Server home unless made absolute by a future supported configuration contract. With the standard installation the token is private runtime state under `/var/lib/kanger`.
+
+**Public Browser/API topology**
+
+The installer adds installation-specific values such as:
 
 ```properties
 server.cors.allowed.origin.1=https://<UI-domain>
@@ -367,56 +368,146 @@ server.url=https://<API-domain>
 server.confirmation.redirect.url=https://<UI-domain>/
 ```
 
-The configuration is persistent. `update.sh` does not replace `/etc/kanger/kanger.conf` with a fresh template.
+Additional exact allowed origins may be configured with numbered `server.cors.allowed.origin.N` entries. `server.cors.allow.credentials` is available in the template and should only be changed with an explicit CORS design requirement.
 
-The generated installation identity is stored separately in:
+**Registration policy / mail transport**
+
+```properties
+server.email.mode=disabled
+server.email.debug=false
+server.email.auth=true
+server.email.connection.timeout.millis=10000
+server.email.read.timeout.millis=10000
+server.email.write.timeout.millis=10000
+server.email.workers=1
+server.email.queue.capacity=64
+```
+
+For `starttls` or `smtps`, configure the corresponding mail endpoint/sender/credentials from the exact shipped template:
+
+```properties
+server.email.host=...
+server.email.port=...
+server.email.from=...
+server.email.login=...
+server.email.password=...
+```
+
+**Pending-registration lifecycle**
+
+```properties
+server.registration.pending.ttl.hours=168
+server.registration.confirmation.ttl.hours=24
+server.registration.action.ttl.minutes=15
+server.registration.resend.cooldown.seconds=60
+server.registration.pending.max.records=10000
+```
+
+Do not copy unknown settings from historical development `K3.conf` files into production `kanger.conf`. The shipped Server template for the active release is the supported main-config reference.
+
+## 7.2 Generated installation identity
+
+File:
 
 ```text
 /etc/kanger/instance.conf
 ```
 
-It records the UI/API domains, TLS certificate/key paths, and nginx configuration destination. `update.sh` reads this file to reproduce the installation topology. It is root-owned and mode `0600` and should be treated as generated installation state rather than an ordinary application settings file.
+This is generated root-owned installation state, not an ordinary application settings file. It records the installation topology needed by `update.sh`, including UI/API domains, TLS material paths, and nginx destination.
 
-After manually changing Server settings in `/etc/kanger/kanger.conf`, restart the service so the new configuration is loaded:
+Treat it as sensitive operational state and do not casually paste it into public support tickets.
 
-```bash
-sudo systemctl restart kanger.service
+Ordinary version updates reuse this identity. Changing domains, certificate paths, or nginx destination is a controlled reconfiguration, not an ordinary `update.sh` version transition.
+
+## 7.3 Per-user configuration
+
+Each KANGER application user has a numeric workspace under the Server user-data root:
+
+```text
+/var/lib/kanger/KANGER/<user-id>/
 ```
+
+Its per-user properties file is:
+
+```text
+/var/lib/kanger/KANGER/<user-id>/kanger.conf
+```
+
+The file belongs to the application-user runtime context; it is not the same file as `/etc/kanger/kanger.conf`.
+
+The Server establishes/loads the user workspace and standard path properties:
+
+```properties
+user.home=/var/lib/kanger
+user.dir=/var/lib/kanger/KANGER/<user-id>/
+sources.dir=/var/lib/kanger/KANGER/<user-id>/SRC/
+database.dir=/var/lib/kanger/KANGER/<user-id>/DB/
+```
+
+When `sources.dir` or `database.dir` is absent, the Server creates the default `SRC/` and `DB/` directories and persists the resulting user properties through the user configuration lifecycle.
+
+A user context may also persist supported user-level runtime properties such as:
+
+```properties
+user.history.size=<non-negative history limit>
+```
+
+Do not treat the per-user file as an alternate Server configuration. `server.*` listener/mail/admin settings belong in `/etc/kanger/kanger.conf`, not in a user's `kanger.conf`.
+
+Do not add historical/development properties merely because they appear in repository samples. For support and automation, only rely on user-level keys exercised by the exact installed runtime or documented by the exact-version product manual.
+
+### Per-user directories
+
+By default:
+
+```text
+<user.dir>/SRC/    server-side source workspace
+<user.dir>/DB/     persistent logical storage workspace
+```
+
+The Browser TECH `Session` section exposes the effective `Home`, `Database`, and `Sources` paths so an operator/developer can verify the active user context without guessing from filesystem layout.
 
 ---
 
-## 10. TRUSTED mode
+# 8. Registration topology: TRUSTED vs EMAIL_VERIFIED
 
-KANGER has two account-registration topologies. They are derived from `server.email.mode`.
+KANGER resolves account-registration policy from `server.email.mode` once at the configuration boundary.
 
-The shipped configuration defaults to:
+## 8.1 TRUSTED
+
+Default:
 
 ```properties
 server.email.mode=disabled
 ```
 
-This resolves to:
+resolves to:
 
 ```text
 RegistrationPolicy.TRUSTED
 ```
 
-### 10.1 Meaning of TRUSTED
-
-In TRUSTED mode:
+Meaning:
 
 - public self-registration is disabled;
-- e-mail confirmation is not required because public registration is not available;
-- complete `ACTIVE` application accounts are provisioned by the host operator through `kanger-admin`;
-- the Browser receives the public authentication capability `registration_policy=TRUSTED` and `public_registration=false` from the Server.
+- complete ACTIVE accounts are provisioned through the local operator plane;
+- e-mail confirmation is not required because public registration is unavailable;
+- users still authenticate normally with KANGER credentials;
+- TRUSTED is an **account-provisioning policy**, not TLS trust and not an authentication bypass.
 
-TRUSTED mode is therefore an **account provisioning policy**, not a TLS trust setting and not a bypass of normal user authentication. Users still authenticate with their KANGER credentials; the difference is who is allowed to create an account.
+The Browser receives public capability data equivalent to:
 
-For a private, controlled installation where the administrator creates the allowed user population, the default `server.email.mode=disabled` is the intended topology.
+```text
+registration_policy=TRUSTED
+public_registration=false
+email_confirmation_required=false
+```
 
-### 10.2 EMAIL_VERIFIED mode
+This is the intended topology for a controlled/private installation where the host operator decides which users exist.
 
-Setting:
+## 8.2 EMAIL_VERIFIED public self-registration
+
+These modes select `RegistrationPolicy.EMAIL_VERIFIED`:
 
 ```properties
 server.email.mode=starttls
@@ -428,86 +519,51 @@ or:
 server.email.mode=smtps
 ```
 
-selects `RegistrationPolicy.EMAIL_VERIFIED`. In that topology public self-registration is enabled and a registration remains pending until successful e-mail confirmation creates the ACTIVE account.
+Historical `ssl` is accepted as an SMTPS-compatible migration alias; `smtps` is canonical.
 
-The historical value:
+Meaning:
 
-```properties
-server.email.mode=ssl
-```
+- public self-registration is available;
+- registration creates transient pending registration state;
+- successful e-mail confirmation is required before an ACTIVE account exists;
+- confirmation does not itself create an authenticated Browser session;
+- pending-registration actions are enabled.
 
-is accepted as an SMTPS-compatible migration alias, but `smtps` is the canonical value.
+This mode requires a complete working SMTP configuration and appropriate public Server/redirect URLs.
 
-EMAIL_VERIFIED operation also requires the corresponding SMTP settings (`server.email.host`, port, sender, login/password as applicable). Consult the shipped `server/kanger.conf.example` before enabling mail transport.
-
-After changing registration/mail mode, restart KANGER:
-
-```bash
-sudo systemctl restart kanger.service
-```
+After changing registration/mail topology, restart the Server.
 
 ---
 
-## 11. Local administration tool: `kanger-admin`
+# 9. Local operator administration — `kanger-admin`
 
-`kanger-admin` is the local host-operator client for KANGER account lifecycle operations. It is **not** a web administration console and it does not grant an application user a special administrator role.
-
-The distribution installs the launcher in the active release:
+The active launcher is:
 
 ```text
 /opt/kanger/current/bin/kanger-admin
 ```
 
-Run it as root:
+Use as root:
 
 ```bash
 sudo /opt/kanger/current/bin/kanger-admin --help
 ```
 
-The launcher uses:
+`kanger-admin` is a local host-operator client. It is not a public web admin console and does not make ordinary KANGER users administrators.
 
-```text
-Server home: /var/lib/kanger
-Server JAR:  /opt/kanger/current/server/kanger-server.jar
-```
+It calls the running Server's loopback admin listener with an owner-only bearer token. It does **not** directly edit credential files, pending registrations, account homes, or deletion journals.
 
-It starts `org.kanger.admin.KangerAdmin` from the currently active Server JAR.
+## 9.1 Create user
 
-### 11.1 Security model
-
-The CLI does not edit credential files, account homes, pending registrations, or deletion journals directly. It calls the running Server's local admin listener over HTTP on loopback using a bearer token.
-
-Default admin settings are:
-
-```properties
-server.admin.enabled=true
-server.admin.bind.address=127.0.0.1
-server.admin.port=1965
-server.admin.request.max.body.bytes=65536
-server.admin.token.file=KANGER/admin.token
-```
-
-With the installed Server home, the default relative token path resolves under `/var/lib/kanger`. The Server creates the token on startup. Ordinary application users never receive this token.
-
-The admin listener must remain loopback-only.
-
-### 11.2 Create a user — simplest form
-
-For an operator-created ACTIVE account, run:
+Normal TRUSTED provisioning:
 
 ```bash
 sudo /opt/kanger/current/bin/kanger-admin create-user
 ```
 
-The tool interactively requests the required login, optional profile fields and privacy consent, and obtains the password through a hidden terminal prompt.
+The interactive form requests required login, optional profile fields/privacy consent, and a hidden password.
 
-A user created through this operator plane becomes `ACTIVE` immediately. An optional e-mail address supplied by the operator is not marked as e-mail-verified.
-
-This is the normal provisioning path in TRUSTED mode.
-
-### 11.3 Create a user with explicit fields
-
-Example:
+Explicit example:
 
 ```bash
 sudo /opt/kanger/current/bin/kanger-admin create-user \
@@ -519,9 +575,7 @@ sudo /opt/kanger/current/bin/kanger-admin create-user \
   --privacy-consent true
 ```
 
-The password is still requested through the hidden prompt.
-
-Supported `create-user` options are:
+Supported explicit fields include:
 
 ```text
 --login VALUE
@@ -533,30 +587,11 @@ Supported `create-user` options are:
 --password-stdin
 ```
 
-`--login` is required; missing optional values may be entered interactively when a terminal is available.
+Plaintext `--password` is deliberately forbidden. Automation must explicitly opt into `--password-stdin` and should obtain the value from the customer's secret-management path rather than command history/logs.
 
-Plaintext `--password` is deliberately forbidden.
+An operator-created account is ACTIVE immediately. Supplying an optional e-mail address through the operator plane does not assert that the address was e-mail-verified.
 
-### 11.4 Non-interactive password input
-
-Automation must explicitly opt into password input on standard input with `--password-stdin`.
-
-For an operator shell, avoid placing a password literal in the command line or shell history. One possible pattern is:
-
-```bash
-read -rsp 'KANGER password: ' KANGER_PASSWORD; echo
-printf '%s\n' "$KANGER_PASSWORD" | \
-  sudo /opt/kanger/current/bin/kanger-admin create-user \
-    --login alice \
-    --email alice@example.org \
-    --privacy-consent true \
-    --password-stdin
-unset KANGER_PASSWORD
-```
-
-For unattended automation, supply standard input from the customer's secret-management mechanism rather than embedding the password in the command line, script, ticket, or log.
-
-### 11.5 Delete a user
+## 9.2 Delete user
 
 By login:
 
@@ -564,217 +599,269 @@ By login:
 sudo /opt/kanger/current/bin/kanger-admin delete-user --login alice
 ```
 
-By numeric user id:
+or numeric id:
 
 ```bash
 sudo /opt/kanger/current/bin/kanger-admin delete-user --user-id 42
 ```
 
-Interactive deletion requires the operator to type:
+Interactive deletion requires typing `DELETE`. Non-interactive deletion requires explicit `--yes`.
+
+Deletion closes runtime/session state, removes authentication/pending state, quarantines the user home, and records deletion progress. Once credentials are removed, recovery is forward-only; deletion is not an authentication “disable/enable” toggle.
+
+## 9.3 Exit codes
 
 ```text
-DELETE
-```
-
-Non-interactive deletion additionally requires explicit acknowledgement:
-
-```bash
-sudo /opt/kanger/current/bin/kanger-admin delete-user \
-  --login alice \
-  --yes
-```
-
-Deletion is a persistent lifecycle operation. It closes sessions/runtime state, removes credentials and stale pending/confirmation state, quarantines the account home, and records deletion progress. After credential removal, recovery is forward-only; it does not automatically republish authentication.
-
-### 11.6 Admin command exit codes
-
-```text
-0  operation completed
-2  invalid or incomplete operator input
+0  completed
+2  invalid/incomplete operator input
 3  admin listener/token/connection failure
-4  account lifecycle conflict or rejection
-5  deletion is incomplete and requires recovery
+4  account lifecycle conflict/rejection
+5  deletion incomplete and recovery required
 ```
 
-The current CLI exposes `create-user` and `delete-user`. It does not expose a public-web admin endpoint.
+Never expose port 1965 as a shortcut for remote administration.
 
 ---
 
-## 12. Updating KANGER
+# 10. First-user and quick-start roadmap
 
-Use the `update.sh` contained in the **new** extracted release bundle.
+After a successful first installation:
 
-Example:
+1. Verify service and loopback health:
+
+   ```bash
+   sudo systemctl status kanger.service
+   curl --fail http://127.0.0.1:1964/health
+   curl --fail http://127.0.0.1:1964/ready
+   sudo nginx -t
+   ```
+
+2. In the default TRUSTED topology, create the first user:
+
+   ```bash
+   sudo /opt/kanger/current/bin/kanger-admin create-user
+   ```
+
+3. Log into the Browser UI at the configured UI HTTPS name.
+
+4. Use `help` for current command syntax.
+
+5. Read:
+
+   ```text
+   docs/COMMANDS.md
+   docs/UI_CONSOLE.md
+   ```
+
+6. For a cheap initial runtime check, use `status` or open TECH.
+
+7. Create/open a logical storage only when the application workflow requires persistence; storage and user transaction lifecycle are separate concepts.
+
+---
+
+# 11. Updating KANGER
+
+Use `update.sh` from the **new extracted release**:
 
 ```bash
-tar -xzf kanger-3.7.0.tar.gz
-cd kanger-3.7.0
+tar -xzf kanger-<new-version>.tar.gz
+cd kanger-<new-version>
 sudo ./update.sh
 ```
 
-For an ordinary version transition, `update.sh`:
+Ordinary update flow:
 
-1. verifies the new bundle and runtime prerequisites;
-2. verifies that an existing KANGER installation and systemd unit exist;
+1. verifies new bundle/prerequisites;
+2. verifies an existing installation;
 3. loads `/etc/kanger/instance.conf`;
-4. revalidates the recorded TLS material;
-5. determines the currently active release and version;
-6. stages the new release under `/opt/kanger/releases/<version>`;
-7. refreshes the systemd and nginx generated files;
+4. revalidates recorded TLS material;
+5. determines active release/version;
+6. stages candidate under `/opt/kanger/releases/<version>`;
+7. refreshes generated systemd/nginx files;
 8. atomically repoints `/opt/kanger/current`;
 9. restarts KANGER;
-10. checks loopback `/health` and `/ready` against the new Server version;
-11. validates and reloads nginx.
+10. verifies `/health` and `/ready` against candidate Server version;
+11. validates/reloads nginx.
 
-Persistent `/etc/kanger/kanger.conf` and `/var/lib/kanger` state are not replaced by the release payload.
+Persistent `/etc/kanger` and `/var/lib/kanger` are not replaced by release payload.
 
-### 12.1 Failed update and automatic rollback
+## 11.1 Activation failure
 
-Before activation, the updater saves temporary copies of the installed systemd unit and nginx configuration. If activation fails, it restores the previous release link and those generated files, reloads systemd, restarts the previous KANGER service, and reloads nginx if its configuration validates.
+The updater preserves the previous release/integration state needed for automatic activation rollback. If candidate activation fails, it restores the previous current release and generated integration files and restarts the previous service.
 
-This activation rollback is **not** a substitute for a customer backup of persistent data. Before a planned upgrade, back up `/etc/kanger` and `/var/lib/kanger` according to the customer's normal backup policy.
+Automatic activation rollback is **not** a backup of customer data.
 
-### 12.2 Same-version replacement
+## 11.2 Same-version replacement
 
-Re-running a bundle whose product version is already active is rejected by default.
+By default, updating to an already-active product version is rejected.
 
-An explicit same-version replacement requires:
+Explicit replacement requires:
 
 ```bash
 sudo ./update.sh --force
 ```
 
-The updater first preserves the existing canonical release under a physical snapshot name such as:
+The updater preserves the previous canonical release under a snapshot name such as:
 
 ```text
 /opt/kanger/releases/3.7.0.force.1
 ```
 
-and then installs the new build at the canonical:
+and atomically rotates current/canonical release paths so a partially rebuilt canonical release is never selected as active.
 
-```text
-/opt/kanger/releases/3.7.0
-```
+Use `--force` for an intentional same-version build replacement, not as the normal update path.
 
-The active `/opt/kanger/current` link is moved atomically so that a partial canonical rebuild is never the active release.
+## 11.3 Manual rollback/downgrade
 
-### 12.3 Manual rollback
-
-The 3.7.0 distribution does not ship a separate `rollback` command. `update.sh` provides automatic rollback when its own activation fails. A deliberate manual downgrade or rollback should be handled as a controlled administrative operation rather than by editing release directories during a live update.
+KANGER 3.7.0 does not ship a separate rollback command. Automatic rollback belongs to failed `update.sh` activation. A deliberate downgrade should be handled as a controlled administrative operation with customer data/backups understood first.
 
 ---
 
-## 13. Operational checks and troubleshooting
+# 12. Backup and persistence boundary
 
-### Service
-
-```bash
-sudo systemctl status kanger.service
-sudo journalctl -u kanger.service
-```
-
-### Server loopback health
-
-```bash
-curl --fail http://127.0.0.1:1964/health
-curl --fail http://127.0.0.1:1964/ready
-```
-
-### nginx configuration
-
-```bash
-sudo nginx -t
-```
-
-### Active release
-
-```bash
-readlink -f /opt/kanger/current
-cat /opt/kanger/current/RELEASE
-```
-
-### Installation identity
-
-```bash
-sudo cat /etc/kanger/instance.conf
-```
-
-Treat `instance.conf` as generated root-only installation state. Do not publish its contents casually in support tickets.
-
-### Admin plane
-
-If `kanger-admin` returns exit code `3`, check that:
-
-- `kanger.service` is running;
-- `server.admin.enabled=true`;
-- the admin listener remains on loopback port 1965;
-- the Server has created its admin token under the service state home;
-- the command is being run through `sudo` from the active release.
-
-Do not expose port 1965 as a troubleshooting shortcut.
-
----
-
-## 14. What an update preserves
-
-The product deliberately separates immutable release material from persistent customer state.
-
-An update preserves the persistent configuration and runtime state roots:
+Before planned upgrades or administrative maintenance, include at least:
 
 ```text
 /etc/kanger
 /var/lib/kanger
 ```
 
-The active product code/UI is selected through:
+in the customer's backup policy.
+
+These contain persistent installation/configuration and application/user state.
+
+Versioned product material lives under:
+
+```text
+/opt/kanger/releases
+```
+
+and active product selection is:
 
 ```text
 /opt/kanger/current -> /opt/kanger/releases/<version>
 ```
 
-Generated system integration files are refreshed from the new distribution:
+Do not use a copy of `/opt/kanger/current` as the only backup of customer data; persistent user/storage state is outside that tree.
+
+Do not remove `/var/lib/kanger` during ordinary release maintenance.
+
+---
+
+# 13. Operational troubleshooting
+
+## Service and logs
+
+```bash
+sudo systemctl status kanger.service
+sudo journalctl -u kanger.service
+```
+
+## Loopback health/readiness
+
+```bash
+curl --fail http://127.0.0.1:1964/health
+curl --fail http://127.0.0.1:1964/ready
+```
+
+## nginx
+
+```bash
+sudo nginx -t
+```
+
+## Active release
+
+```bash
+readlink -f /opt/kanger/current
+cat /opt/kanger/current/RELEASE
+```
+
+## Installation identity
+
+```bash
+sudo cat /etc/kanger/instance.conf
+```
+
+Do not publish root-only installation state casually.
+
+## Admin plane failure
+
+For `kanger-admin` exit code `3`, verify:
+
+- `kanger.service` is running;
+- `server.admin.enabled=true`;
+- admin listener is loopback-only at the configured port;
+- the Server created its admin token under its state home;
+- the command is run through `sudo` from the active release.
+
+## Application/command diagnosis
+
+For logical/Console problems:
+
+1. inspect the command result;
+2. use canonical `status` / relevant focused status section;
+3. open Browser TECH for formatted Browser + Server telemetry;
+4. consult `docs/COMMANDS.md` for field/command semantics;
+5. consult `docs/UI_CONSOLE.md` for Browser operation/snapshot interpretation;
+6. only then escalate to host journal/storage investigation when evidence points there.
+
+`UNQUALIFIED`, `unavailable`, or a closed storage by themselves are not sufficient evidence of corruption.
+
+---
+
+# 14. Update preservation contract
+
+An ordinary update preserves:
+
+```text
+/etc/kanger
+/var/lib/kanger
+```
+
+It replaces/selects versioned product material under:
+
+```text
+/opt/kanger/releases/<version>
+/opt/kanger/current
+```
+
+and refreshes generated system integration from the new product release:
 
 ```text
 /etc/systemd/system/kanger.service
-<configured nginx destination, default /etc/nginx/conf.d/kanger.conf>
+<configured nginx destination>
 ```
 
-Domains and TLS file paths are recovered from:
+The stored installation identity controls domains/TLS/nginx destination reuse.
 
-```text
-/etc/kanger/instance.conf
-```
-
-This separation is the core installation/update invariant: product files are versioned, while customer configuration and application state remain outside the release directory.
+This separation is the central distribution invariant: **versioned product code and manuals move together; persistent customer configuration and data do not live inside the release directory.**
 
 ---
 
-## 15. No automatic uninstall command
+# 15. No automatic uninstall
 
-The 3.7.0 distribution contains `install.sh` and `update.sh`; it does not ship an `uninstall` command.
+KANGER 3.7.0 ships `install.sh` and `update.sh`, not an automatic uninstall command.
 
-Do not remove `/var/lib/kanger` as part of ordinary release maintenance: it is persistent application state. If an installation must be permanently decommissioned, first preserve any required customer data and perform removal as an explicit administrative procedure.
+Permanent decommissioning must be an explicit administrative procedure performed only after preserving any required `/etc/kanger` and `/var/lib/kanger` data.
 
 ---
 
-## 16. First-install checklist
+# 16. Final first-install checklist
 
-Before running `install.sh`, verify:
+Before install:
 
-- Java 8+ is installed and selected by `java`;
-- nginx and systemd are operational;
-- the UI FQDN is known;
-- the API FQDN is known or the default `api.<UI-domain>` is acceptable;
-- DNS is configured for both names;
-- TLS certificate chain and private key exist;
-- the certificate covers the required public name(s);
-- nginx includes the selected generated configuration destination;
-- TCP 80/443 exposure matches customer policy;
-- ports 1964 and 1965 remain host-local application/admin boundaries;
-- the tarball/archive hash has been verified if supplied by the release channel;
-- the install command will be run through `sudo`.
+- Java 8+ available;
+- nginx/systemd healthy;
+- UI/API DNS known;
+- TLS files exist and cover required names;
+- nginx destination is included;
+- TCP 80/443 exposure intentional;
+- 1964/1965 kept host-local as designed;
+- release archive/checksum verified;
+- root/sudo available.
 
-After installation, verify:
+After install:
 
 ```bash
 sudo systemctl status kanger.service
@@ -784,10 +871,4 @@ sudo nginx -t
 sudo /opt/kanger/current/bin/kanger-admin --help
 ```
 
-For a default TRUSTED installation, create the first application user with:
-
-```bash
-sudo /opt/kanger/current/bin/kanger-admin create-user
-```
-
-That completes the normal host-side bootstrap of a KANGER 3.7.0 installation.
+Then provision/login according to the selected registration policy and continue with the exact-version command/UI manuals shipped beside this file.

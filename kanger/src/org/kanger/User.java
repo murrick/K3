@@ -638,18 +638,65 @@ public class User implements IUser {
         storage.clear();
         storage.putAll(acquiredStorage);
 
-        ((DictionaryFactory) mind.getTerms()).transaction(null);
-        mind.getDomains().transaction(null);
-        mind.getFunctions().transaction(null);
-        mind.getFValues().transaction(null);
-        ((PredicateFactory) mind.getPredicates()).transaction(null);
-        ((RuleFactory) mind.getRules()).transaction(null);
-        mind.getComments().transaction(null);
-        mind.getTValues().transaction(null);
-        mind.getTVars().transaction(null);
-        ((LibraryFactory) mind.getLibrary()).transaction(null);
+        try {
+            ((DictionaryFactory) mind.getTerms()).transaction(null);
+            mind.getDomains().transaction(null);
+            mind.getFunctions().transaction(null);
+            mind.getFValues().transaction(null);
+            ((PredicateFactory) mind.getPredicates()).transaction(null);
+            ((RuleFactory) mind.getRules()).transaction(null);
+            mind.getComments().transaction(null);
+            mind.getTValues().transaction(null);
+            mind.getTVars().transaction(null);
+            ((LibraryFactory) mind.getLibrary()).transaction(null);
 
-        return mind;
+            try {
+                if (!Boolean.TRUE.equals(mind.queryCheck(false))) {
+                    throw new StorageLifecycleException(
+                            StorageLifecycleErrorCode.STORAGE_SEMANTIC_CORRUPTION,
+                            "Database " + name
+                                    + " is semantically inconsistent");
+                }
+            } catch (StorageLifecycleException error) {
+                throw error;
+            } catch (NullPointerException error) {
+                StorageLifecycleException corruption = new StorageLifecycleException(
+                        StorageLifecycleErrorCode.STORAGE_SEMANTIC_CORRUPTION,
+                        "Database " + name
+                                + " is semantically inconsistent: semantic object could not be hydrated");
+                corruption.addSuppressed(error);
+                throw corruption;
+            }
+
+            return mind;
+        } catch (Throwable error) {
+            discardRejectedStorage(mind, error);
+            rethrow(error);
+            throw new AssertionError("unreachable");
+        }
+    }
+
+    private void discardRejectedStorage(Mind mind, Throwable failure) {
+        try {
+            if (data != null && !data.isClosed()) {
+                data.close();
+            }
+        } catch (Throwable closeFailure) {
+            if (closeFailure != failure) {
+                failure.addSuppressed(closeFailure);
+            }
+        }
+
+        storage.clear();
+        if (data == null || data.isClosed()) {
+            try {
+                mind.clearMind();
+            } catch (Throwable clearFailure) {
+                if (clearFailure != failure) {
+                    failure.addSuppressed(clearFailure);
+                }
+            }
+        }
     }
 
     private static void rethrow(Throwable failure) throws Exception {

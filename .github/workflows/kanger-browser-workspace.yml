@@ -11,6 +11,7 @@ on:
       - "html/editor-state.js"
       - "html/presentation.js"
       - "html/presentation.css"
+      - "html/tech-status.js"
       - "html/javascript-mode.js"
       - "html/editor-local-file.js"
       - "html/bottom-layout.js"
@@ -18,6 +19,7 @@ on:
       - "kanger-server/scripts/qualify-workspace-state.js"
       - "kanger-server/scripts/qualify-editor-state.js"
       - "kanger-server/scripts/qualify-browser-presentation.js"
+      - "kanger-server/scripts/qualify-tech-status.js"
       - "kanger-server/scripts/qualify-compile-editor-lifecycle.js"
       - ".github/workflows/kanger-browser-workspace.yml"
   pull_request:
@@ -26,6 +28,7 @@ on:
       - "html/editor-state.js"
       - "html/presentation.js"
       - "html/presentation.css"
+      - "html/tech-status.js"
       - "html/javascript-mode.js"
       - "html/editor-local-file.js"
       - "html/bottom-layout.js"
@@ -33,6 +36,7 @@ on:
       - "kanger-server/scripts/qualify-workspace-state.js"
       - "kanger-server/scripts/qualify-editor-state.js"
       - "kanger-server/scripts/qualify-browser-presentation.js"
+      - "kanger-server/scripts/qualify-tech-status.js"
       - "kanger-server/scripts/qualify-compile-editor-lifecycle.js"
       - ".github/workflows/kanger-browser-workspace.yml"
   workflow_dispatch:
@@ -59,9 +63,11 @@ jobs:
           node --check html/workspace.js
           node --check html/editor-state.js
           node --check html/presentation.js
+          node --check html/tech-status.js
           node --check kanger-server/scripts/qualify-workspace-state.js
           node --check kanger-server/scripts/qualify-editor-state.js
           node --check kanger-server/scripts/qualify-browser-presentation.js
+          node --check kanger-server/scripts/qualify-tech-status.js
           node --check kanger-server/scripts/qualify-compile-editor-lifecycle.js
           grep -Fq '<script src="workspace.js"></script>' html/console.html
           grep -q 'KANGER_WORKSPACE_STATE' html/workspace.js
@@ -75,11 +81,13 @@ jobs:
           grep -q 'source_recovery' kanger-server/scripts/qualify-workspace-state.js
           grep -q 'storage_switch_failed' kanger-server/scripts/qualify-workspace-state.js
           grep -q 'KANGER_WORKSPACE_STATE.version === 2' html/presentation.js
+          grep -Fq "script.src = 'tech-status.js'" html/presentation.js
           ! grep -q 'workspace\.source' html/workspace.js
           ! grep -q 'repository_state' html/workspace.js
           ! grep -q 'workspace\.source' html/presentation.js
           ! grep -q 'tech-source' html/presentation.js
           ! grep -q 'source-name' html/presentation.js
+          ! grep -q 'window.token' html/presentation.js
           ! grep -q 'innerHTML' html/workspace.js
           ! grep -Fq 'document.write(' html/workspace.js
           ! grep -q 'document.cookie' html/workspace.js
@@ -111,3 +119,8 @@ jobs:
         shell: bash
         run: |
           node kanger-server/scripts/qualify-browser-presentation.js
+
+      - name: Run canonical TECH status qualification
+        shell: bash
+        run: |
+          node kanger-server/scripts/qualify-tech-status.js

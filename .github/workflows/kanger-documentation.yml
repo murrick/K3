@@ -1,0 +1,104 @@
+name: KANGER customer documentation
+
+on:
+  push:
+    paths:
+      - "distribution/**"
+      - "kanger-command/**"
+      - "kanger/src/org/kanger/CanonicalStatusRenderer.java"
+      - "kanger/src/org/kanger/CanonicalStatusSnapshot.java"
+      - "kanger/src/org/kanger/User.java"
+      - "kanger-server/deploy/kanger.conf.example"
+      - "kanger-server/src/org/kanger/CanonicalCommandIngressReactor.java"
+      - "kanger-server/src/org/kanger/CanonicalCommandRuntimeReactor.java"
+      - "kanger-server/src/org/kanger/PublicAuthCapabilitiesReactor.java"
+      - "kanger-server/src/org/kanger/Settings.java"
+      - "kanger-server/src/org/kanger/UserFactory.java"
+      - "kanger-server/src/org/kanger/account/RegistrationPolicy.java"
+      - "html/**"
+      - "**/pom.xml"
+      - ".github/workflows/kanger-documentation.yml"
+  pull_request:
+    paths:
+      - "distribution/**"
+      - "kanger-command/**"
+      - "kanger/src/org/kanger/CanonicalStatusRenderer.java"
+      - "kanger/src/org/kanger/CanonicalStatusSnapshot.java"
+      - "kanger/src/org/kanger/User.java"
+      - "kanger-server/deploy/kanger.conf.example"
+      - "kanger-server/src/org/kanger/CanonicalCommandIngressReactor.java"
+      - "kanger-server/src/org/kanger/CanonicalCommandRuntimeReactor.java"
+      - "kanger-server/src/org/kanger/PublicAuthCapabilitiesReactor.java"
+      - "kanger-server/src/org/kanger/Settings.java"
+      - "kanger-server/src/org/kanger/UserFactory.java"
+      - "kanger-server/src/org/kanger/account/RegistrationPolicy.java"
+      - "html/**"
+      - "**/pom.xml"
+      - ".github/workflows/kanger-documentation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  customer-documentation:
+    name: Qualify manuals and packaged documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Qualify documented product surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 distribution/qualify-documentation.py
+
+      - name: Build qualified distribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash distribution/build-distribution.sh
+
+      - name: Verify manuals in release archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(tr -d '[:space:]' < distribution/VERSION)"
+          archive="target/distributions/kanger-${version}.tar.gz"
+          root="kanger-${version}"
+          test -f "${archive}"
+          listing="$(tar -tzf "${archive}")"
+          for member in \
+            "${root}/README.md" \
+            "${root}/docs/COMMANDS.md" \
+            "${root}/docs/UI_CONSOLE.md"
+          do
+            grep -Fqx -- "${member}" <<<"${listing}"
+          done
+
+          # Do not use grep -q behind tar under pipefail: grep can close the
+          # pipe on its first match and make a healthy tar exit with SIGPIPE.
+          tar -xOzf "${archive}" "${root}/README.md" \
+            | grep -F 'docs/COMMANDS.md' >/dev/null
+          tar -xOzf "${archive}" "${root}/README.md" \
+            | grep -F 'docs/UI_CONSOLE.md' >/dev/null
+          tar -xOzf "${archive}" "${root}/docs/COMMANDS.md" \
+            | grep -F 'Canonical `status`' >/dev/null
+          tar -xOzf "${archive}" "${root}/docs/UI_CONSOLE.md" \
+            | grep -F 'TECH panel' >/dev/null
+
+      - name: Publish qualification archive
+        uses: actions/upload-artifact@v5
+        with:
+          name: kanger-customer-docs-${{ github.sha }}
+          path: target/distributions/kanger-*.tar.gz
+          if-no-files-found: error

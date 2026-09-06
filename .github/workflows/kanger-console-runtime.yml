@@ -81,12 +81,13 @@ jobs:
             rm -rf "$home"
             mkdir -p "$home"
 
-            printf 'quit\n' | timeout 30s java \
+            printf 'status core objects\nquit\n' | timeout 30s java \
               -Duser.home="$home" \
               -cp "$classpath" \
               org.kanger.Kanger -S \
               >"$log" 2>&1
 
+            grep -F 'count=unavailable' "$log"
             grep -F 'KANGER III Session closed' "$log"
 
             if [[ "$expect_udf" == true ]]; then

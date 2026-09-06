@@ -88,6 +88,27 @@ class CanonicalCommandRuntimeReactorTest {
     }
 
     @Test
+    void canonicalStatusUsesSharedReadOnlyProjection() throws Exception {
+        Fixture fixture = fixture("status");
+        try {
+            AtomicInteger escaped = new AtomicInteger();
+            IReactor<JSONObject> reactor = canonicalChain(escaped);
+
+            JSONObject response = invoke(reactor, fixture.token,
+                    "status core objects");
+
+            assertEquals("OK", response.optString("result"), response.toString());
+            assertEquals("count=unavailable", response.optString("description"));
+            assertEquals("STATUS", response.optString(
+                    CanonicalCommandIngressReactor.CANONICAL_INTENT_FIELD));
+            assertEquals(0, response.optInt("transaction", -1));
+            assertEquals(0, escaped.get(), "STATUS escaped into legacy runtime");
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
     void ruleCommentRoundTripsThroughCanonicalBinding() throws Exception {
         Fixture fixture = fixture("comment");
         try {

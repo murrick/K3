@@ -56,6 +56,7 @@ public enum CommandIntent {
     STORAGE_DROP,
     STORAGE_REINDEX,
 
+    STATUS,
     ERASE,
     HELP,
     QUIT
