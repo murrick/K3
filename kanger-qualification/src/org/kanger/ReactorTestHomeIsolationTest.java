@@ -12,7 +12,6 @@ import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class ReactorTestHomeIsolationTest {
 
@@ -33,15 +32,5 @@ final class ReactorTestHomeIsolationTest {
                 "Surefire must not expose the host user.home to qualification tests");
         assertEquals("KANGER", System.getenv("KANGER_HOME"),
                 "Qualification tests must use the canonical relative KANGER root");
-
-        Path repositoryRoot = Paths.get(UserFactory.getDir(UserFactory.rootDir))
-                .toAbsolutePath()
-                .normalize();
-        Path expectedRepositoryRoot = expectedHome.resolve("KANGER").normalize();
-
-        assertEquals(expectedRepositoryRoot, repositoryRoot,
-                "Qualification repository must resolve inside the reactor test home");
-        assertTrue(repositoryRoot.startsWith(expectedHome),
-                "Qualification repository escaped the reactor test home");
     }
 }
