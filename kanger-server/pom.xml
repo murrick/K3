@@ -255,6 +255,13 @@
                 <version>3.2.5</version>
                 <configuration>
                     <useModulePath>false</useModulePath>
+                    <systemPropertyVariables>
+                        <kanger.test.home>${project.build.directory}/test-home</kanger.test.home>
+                        <user.home>${project.build.directory}/test-home</user.home>
+                    </systemPropertyVariables>
+                    <environmentVariables>
+                        <KANGER_HOME>KANGER</KANGER_HOME>
+                    </environmentVariables>
                 </configuration>
             </plugin>
 
