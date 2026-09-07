@@ -35,4 +35,66 @@
         <maven.compiler.target>8</maven.compiler.target>
         <jline.version>3.13.0</jline.version>
     </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>reset-reactor-test-home</id>
+                        <phase>process-test-classes</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <target>
+                                <delete dir="${project.build.directory}/test-home"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>cleanup-reactor-test-home</id>
+                        <phase>post-integration-test</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <target>
+                                <delete dir="${project.build.directory}/test-home"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>verify-reactor-test-home-cleaned</id>
+                        <phase>verify</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <target>
+                                <available file="${project.build.directory}/test-home"
+                                           type="dir"
+                                           property="kanger.test.home.remaining"/>
+                                <fail if="kanger.test.home.remaining"
+                                      message="Test home survived Maven verification for ${project.artifactId}"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <useModulePath>false</useModulePath>
+                    <systemPropertyVariables>
+                        <kanger.test.home>${project.build.directory}/test-home</kanger.test.home>
+                        <user.home>${project.build.directory}/test-home</user.home>
+                    </systemPropertyVariables>
+                    <environmentVariables>
+                        <KANGER_HOME>KANGER</KANGER_HOME>
+                    </environmentVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
