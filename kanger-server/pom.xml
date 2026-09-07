@@ -168,6 +168,48 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>reset-server-test-home</id>
+                        <phase>process-test-classes</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <delete dir="${project.build.directory}/test-home"
+                                        quiet="true"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>cleanup-server-test-home</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <delete dir="${project.build.directory}/test-home"
+                                        quiet="true"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>verify-server-test-home-cleaned</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <available file="${project.build.directory}/test-home"
+                                           type="dir"
+                                           property="kanger.test.home.remaining"/>
+                                <fail if="kanger.test.home.remaining"
+                                      message="Server test home survived the test phase"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>verify-thin-runtime-layout</id>
                         <phase>verify</phase>
                         <goals>
