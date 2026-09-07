@@ -42,7 +42,7 @@ jobs:
             -pl kanger-console -am \
             -DskipTests clean package
 
-          jar_file="$(find kanger-console/target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
+          jar_file="$(find kanger-console/target -maxdepth 1 -type f -name 'kanger-console-*.jar' ! -name '*-thin.jar' | head -n 1)"
           test -n "$jar_file"
 
           unzip -p "$jar_file" org/kanger/build.properties \
@@ -75,7 +75,7 @@ jobs:
             -Dkanger.build.branch.override="$artifact_branch" \
             clean package
 
-          jar_file="$(find kanger-console/target -maxdepth 1 -type f -name '*.jar' | head -n 1)"
+          jar_file="$(find kanger-console/target -maxdepth 1 -type f -name 'kanger-console-*.jar' ! -name '*-thin.jar' | head -n 1)"
           unzip -p "$jar_file" org/kanger/build.properties \
             > kanger-console/target/artifact-build.properties
           grep -Fxq "branch=${artifact_branch}" \
