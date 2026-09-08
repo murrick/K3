@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage canonical 3.7.x Maven metadata and consumer examples into a Developer bundle."""
+"""Stage canonical 3.7.x Maven metadata, documentation, and consumer examples."""
 
 from pathlib import Path
 import hashlib
@@ -195,6 +195,55 @@ application {{
     )
 
 
+def stage_documentation(bundle: Path, version: str) -> None:
+    source_root = Path(__file__).resolve().parent
+    documents = [
+        (source_root / "README.md", bundle / "README.md"),
+        (source_root / "docs" / "SDK.md", bundle / "docs" / "SDK.md"),
+        (source_root / "docs" / "CONSOLE.md", bundle / "docs" / "CONSOLE.md"),
+        (source_root / "examples" / "README.md", bundle / "examples" / "README.md"),
+    ]
+    for source, destination in documents:
+        if not source.is_file():
+            fail(f"Developer documentation source missing: {source}")
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, destination)
+
+    required_markers = {
+        bundle / "README.md": [
+            "KANGER 3.7.0 Developer Distribution",
+            "docs/SDK.md",
+            "docs/CONSOLE.md",
+        ],
+        bundle / "docs" / "SDK.md": [
+            "IUser user = new User();",
+            "IMind mind = new Mind(user);",
+            "query(String, Object[])",
+            "org.kanger:kanger-sdk:3.7.0",
+        ],
+        bundle / "docs" / "CONSOLE.md": [
+            "transaction start",
+            "storage use <name>",
+            "xplain mode on",
+            "status runtime",
+        ],
+        bundle / "examples" / "README.md": [
+            "BasicQuery.java",
+            "TransactionExample.java",
+            "StorageExample.java",
+        ],
+    }
+    for document, markers in required_markers.items():
+        text = document.read_text(encoding="utf-8")
+        if "3.3-SNAPSHOT" in text:
+            fail(f"Internal reactor version leaked into Developer documentation: {document}")
+        for marker in markers:
+            if marker not in text:
+                fail(f"Developer documentation marker {marker!r} missing from {document}")
+
+    print(f"SDK_DOCUMENTATION_STAGE_PASS version={version} files={len(documents)}")
+
+
 def main() -> None:
     if len(sys.argv) != 3:
         fail("usage: stage-sdk-repository.py <bundle-dir> <version>")
@@ -218,6 +267,7 @@ def main() -> None:
         stage_artifact(bundle, version, *artifact)
     stage_sdk_artifact(bundle, version)
     stage_consumers(bundle, version)
+    stage_documentation(bundle, version)
 
     repository = bundle / "repository"
     forbidden = ("3.3-SNAPSHOT", "kanger-server", "org.jline")

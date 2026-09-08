@@ -47,9 +47,32 @@ VERSION="$(tr -d '[:space:]' < "${BUNDLE_DIR}/VERSION")"
 [[ -d "${BUNDLE_DIR}/lib" ]] || fail "Bundle lib directory is missing"
 [[ -d "${BUNDLE_DIR}/examples" ]] || fail "Bundle examples directory is missing"
 [[ -x "${BUNDLE_DIR}/bin/kanger-console" ]] || fail "Bundle Console launcher is missing or not executable"
+[[ -f "${BUNDLE_DIR}/README.md" ]] || fail "Developer README is missing"
+[[ -f "${BUNDLE_DIR}/docs/SDK.md" ]] || fail "Developer SDK guide is missing"
+[[ -f "${BUNDLE_DIR}/docs/CONSOLE.md" ]] || fail "Developer Console guide is missing"
+[[ -f "${BUNDLE_DIR}/examples/README.md" ]] || fail "Developer examples guide is missing"
 [[ -f "${BUNDLE_DIR}/docs/api/index.html" ]] || fail "SDK JavaDoc index is missing"
 [[ -f "${BUNDLE_DIR}/docs/api/org/kanger/interfaces/IMind.html" ]] || fail "IMind JavaDoc page is missing"
 [[ -f "${BUNDLE_DIR}/docs/api/org/kanger/User.html" ]] || fail "User JavaDoc page is missing"
+
+grep -Fq 'IUser user = new User();' "${BUNDLE_DIR}/docs/SDK.md" \
+  || fail "SDK guide does not document the qualified User entry path"
+grep -Fq 'IMind mind = new Mind(user);' "${BUNDLE_DIR}/docs/SDK.md" \
+  || fail "SDK guide does not document the qualified Mind entry path"
+grep -Fq 'org.kanger:kanger-sdk:3.7.0' "${BUNDLE_DIR}/docs/SDK.md" \
+  || fail "SDK guide does not document the canonical Maven coordinate"
+grep -Fq 'storage use <name>' "${BUNDLE_DIR}/docs/CONSOLE.md" \
+  || fail "Console guide does not contain canonical storage syntax"
+grep -Fq 'xplain mode on' "${BUNDLE_DIR}/docs/CONSOLE.md" \
+  || fail "Console guide does not contain Console-local xplain syntax"
+if grep -R -Fq '3.3-SNAPSHOT' \
+  "${BUNDLE_DIR}/README.md" \
+  "${BUNDLE_DIR}/docs/SDK.md" \
+  "${BUNDLE_DIR}/docs/CONSOLE.md" \
+  "${BUNDLE_DIR}/examples/README.md"; then
+  fail "Internal reactor version leaked into Developer documentation"
+fi
+log "SDK_DOCUMENTATION_QUALIFICATION_PASS version=${VERSION}"
 
 jar_count="$(find "${BUNDLE_DIR}/lib" -maxdepth 1 -type f -name '*.jar' | wc -l | tr -d ' ')"
 [[ "${jar_count}" -eq 7 ]] || fail "Expected exactly seven Developer runtime JARs, found ${jar_count}"
