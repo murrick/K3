@@ -17,7 +17,7 @@ require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "Required command not found: $1"
 }
 
-for command in java javac tar find grep tr mktemp mkdir rm wc; do
+for command in java javac python3 tar find grep tr mktemp mkdir rm wc; do
   require_command "${command}"
 done
 
@@ -65,6 +65,8 @@ grep -Fq 'BinaryDataExample.java' "${BUNDLE_DIR}/docs/SDK.md" \
   || fail "SDK guide does not link the qualified binary-data example"
 grep -Fq 'reindexStorage' "${BUNDLE_DIR}/docs/SDK.md" \
   || fail "SDK guide does not document storage maintenance"
+grep -Fq 'api/org/kanger/interfaces/IMind.html' "${BUNDLE_DIR}/docs/SDK.md" \
+  || fail "SDK guide does not link the IMind JavaDoc reference"
 grep -Fq 'storage use <name>' "${BUNDLE_DIR}/docs/CONSOLE.md" \
   || fail "Console guide does not contain canonical storage syntax"
 grep -Fq 'xplain mode on' "${BUNDLE_DIR}/docs/CONSOLE.md" \
@@ -76,6 +78,29 @@ if grep -R -Fq '3.3-SNAPSHOT' \
   "${BUNDLE_DIR}/examples/README.md"; then
   fail "Internal reactor version leaked into Developer documentation"
 fi
+
+python3 - "${BUNDLE_DIR}/docs/api" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+root = Path(sys.argv[1])
+cyrillic = re.compile(r"[\u0400-\u04FF]")
+checked = 0
+leaks = []
+for path in sorted(root.rglob("*")):
+    if not path.is_file() or path.suffix.lower() not in {".html", ".js", ".css", ".txt"}:
+        continue
+    checked += 1
+    if cyrillic.search(path.read_text(encoding="utf-8", errors="replace")):
+        leaks.append(str(path.relative_to(root)))
+if checked == 0:
+    raise SystemExit("ERROR: unpacked SDK JavaDoc has no text files")
+if leaks:
+    raise SystemExit("ERROR: Cyrillic text leaked into unpacked SDK JavaDoc: " + ", ".join(leaks[:10]))
+print("SDK_JAVADOC_ENGLISH_QUALIFICATION_PASS files=%d" % checked)
+PY
+
 log "SDK_DOCUMENTATION_QUALIFICATION_PASS version=${VERSION}"
 
 jar_count="$(find "${BUNDLE_DIR}/lib" -maxdepth 1 -type f -name '*.jar' | wc -l | tr -d ' ')"

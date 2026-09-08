@@ -20,13 +20,11 @@ The bundled launchers start `org.kanger.Kanger -S`, the local single-user mode. 
 
 The underlying launcher also supports these `org.kanger.Kanger` options when started directly:
 
-```text
---adduser  | -A <login>     create a user; password is required
---user     | -U <login>     select login
---password | -P <password>  select password
---singleuser | -S           local single-user mode
---help     | -H             show launcher help
-```
+- `--adduser | -A <login>` — create a user; password is required;
+- `--user | -U <login>` — select login;
+- `--password | -P <password>` — select password;
+- `--singleuser | -S` — start local single-user mode;
+- `--help | -H` — show launcher help.
 
 `KANGER_OPTIONS` may provide the same options through the environment. Command-line arguments and environment options are combined by the launcher.
 
@@ -56,198 +54,137 @@ Enter KANGER source/query operations directly at the Console prompt. For example
 
 Definitions and queries use the same Core semantics documented in `SDK.md`: query results are logical `true`, `false`, or undetermined; parse/runtime errors are failures rather than partial logical answers.
 
-A bare:
-
-```text
-?
-```
-
-runs the Core program-check operation owned by `Mind`.
-
-`z` repeats the last Core query:
-
-```text
-z
-```
+- `?` — run the Core program-check operation owned by `Mind`;
+- `z` — repeat the last Core query.
 
 ## 4. Canonical command reference
 
 The spellings below are the canonical registry syntax on KANGER 3.7.0. The parser also accepts minimum unique prefixes where unambiguous, but scripts and documentation should prefer full canonical spellings.
 
+The one-line descriptions below follow the same `CommandRegistry` metadata used by runtime `help`.
+
 ### RULE
 
-```text
-rule
-rule <id>
-rule all
-rule produced
-rule level [<n>]
-rule tree <id>
-rule comment <id>
-rule comment <id> <text...>
-```
+- `rule` — show the current primary rule context;
+- `rule <id>` — show one rule by runtime ID;
+- `rule all` — show rules and produced statements;
+- `rule produced` — show produced/generated rules;
+- `rule level [<n>]` — show rules grouped by published user transaction level, or only level `n` when supplied;
+- `rule tree <id>` — show the compiled structural tree of one rule;
+- `rule comment <id>` — show a rule comment;
+- `rule comment <id> <text...>` — set a rule comment; explicit empty text clears it.
 
-`rule` and `rules` are synonymous family spellings. These commands inspect current rules, generated rules, transaction levels, structural trees, and rule comments.
+`rule` and `rules` are synonymous family spellings.
 
 ### FUNCTION
 
-```text
-functions
-function <id>
-function source <id>
-```
-
-Shows defined functions, one function, or its source.
+- `functions` — show defined functions;
+- `function <id>` — show one function by runtime ID;
+- `function source <id>` — show source of one function.
 
 ### BASE
 
-```text
-base
-base predicates
-base predicate <id|name>
-base tree <statement-id>
-```
+- `base` — show current unambiguous base statements;
+- `base predicates` — show predicates known in the semantic context;
+- `base predicate <id|name>` — show base statements for one predicate by runtime ID or name;
+- `base tree <statement-id>` — show provenance of one base statement.
 
-`predicate`/`predicates` family spellings are accepted where registered. `base tree` shows provenance of one base statement.
+`predicate`/`predicates` family spellings are accepted where registered.
 
 ### VALUES
 
-```text
-values
-values order <field> [asc|desc] [, <field> [asc|desc]]...
-```
+- `values` — show the current Values rowset using configured default ordering;
+- `values order <field> [asc|desc] [, <field> [asc|desc]]...` — show the current Values rowset with invocation-local multi-key ordering.
 
-Displays the current Values rowset. Invocation-local ordering does not mutate result membership.
+Ordering changes presentation only; it does not change result membership.
 
 ### SOLUTION
 
-```text
-solutions
-solution <id>
-solution tree <id>
-```
-
-Displays the current solution set, one solution, or its provenance.
+- `solutions` — show the complete current Solutions set;
+- `solution <id>` — show one Solution by its actual `IRule` runtime ID;
+- `solution tree <id>` — show provenance of one Solution.
 
 ### WHEN / hypotheses
 
-```text
-when
-when accept <index>
-```
-
-`when` displays the current hypothesis rowset. `when accept` accepts one row by zero-based index.
+- `when` — show the current hypothesis rowset;
+- `when accept <index>` — accept one hypothesis by zero-based row index.
 
 ### TRANSACTION
 
-```text
-transaction
-transaction start
-transaction commit
-transaction rollback
-transaction squash
-```
+- `transaction` — show current transaction state;
+- `transaction start` — start a child transaction;
+- `transaction commit` — commit the current transaction, or perform the qualified root checkpoint where applicable;
+- `transaction rollback` — roll back the current child transaction;
+- `transaction squash` — collapse all explicit transaction history above U0 into one U1 without changing U0.
 
-Top-level aliases are also registered:
+Registered top-level aliases:
 
-```text
-start
-commit
-rollback
-squash
-```
+- `start` — alias for `transaction start`;
+- `commit` — alias for `transaction commit`;
+- `rollback` — alias for `transaction rollback`;
+- `squash` — alias for `transaction squash`.
 
-`transaction` shows current state. Child transaction settlement follows the same qualified ownership/conflict model as the Core transaction lifecycle.
+Child transaction settlement follows the same qualified ownership/conflict model as the Core transaction lifecycle.
 
 ### SOURCE
 
-```text
-get [<source>]
-put <source>
-delete [<source>]
-```
+- `get [<source>]` — with a name, load and compile one source; when omitted, Console lists available source names;
+- `put <source>` — persist the current source under one logical name;
+- `delete [<source>]` — with a name, delete one source; when omitted, Console lists available source names.
 
-`get <source>` loads/compiles a named source. `put <source>` persists current source under a logical name. `delete <source>` removes a named source.
-
-In Console, bare:
-
-```text
-get
-put
-delete
-```
-
-are local read-only conveniences that list available source names.
+The no-argument list behavior is Console-local convenience around the canonical source operations.
 
 ### STORAGE
 
-```text
-storage
-storage use <name>
-storage close
-storage drop <name>
-storage reindex <name>
-```
+- `storage` — show available storages and the current/open storage;
+- `storage use <name>` — open or create one storage;
+- `storage close` — close the current storage;
+- `storage drop <name>` — drop one explicitly named storage;
+- `storage reindex <name>` — reindex one explicitly named storage.
 
 Registered aliases:
 
-```text
-use
-use <name>
-close
-drop <name>
-reindex <name>
-```
+- `use` — show available/current storage;
+- `use <name>` — alias for `storage use <name>`;
+- `close` — alias for `storage close`;
+- `drop <name>` — alias for `storage drop <name>`;
+- `reindex <name>` — alias for `storage reindex <name>`.
 
-`storage`/bare `use` shows available and current storage. `storage use <name>` opens or creates storage through the canonical user/storage lifecycle. Drop asks for confirmation. Reindex reports progress.
-
-Transaction lifecycle and physical storage lifecycle are distinct; lifecycle preconditions are enforced rather than silently committing/rolling back user transactions.
+Drop asks for confirmation. Reindex reports progress. Transaction lifecycle and physical storage lifecycle are distinct; lifecycle preconditions are enforced rather than silently committing/rolling back user transactions.
 
 ### STATUS
 
-```text
-status
-status core
-status core objects
-status core transaction
-status core levels
-status storage
-status session
-status runtime
-```
+- `status` — show canonical read-only product status;
+- `status core` — show the Core status projection;
+- `status core objects` — show the Core object-count/status projection;
+- `status core transaction` — show Core transaction status;
+- `status core levels` — show Core transaction-level status;
+- `status storage` — show storage status;
+- `status session` — show Console session status;
+- `status runtime` — show runtime/capability status.
 
-The canonical grammar is summarized as:
+Canonical grammar:
 
 ```text
 status [core [objects|transaction|levels]|storage|session|runtime]
 ```
 
-These are read-only product/status projections.
-
 ### SYSTEM / SESSION
 
-```text
-erase
-help
-quit
-```
+- `erase` — clear the current workspace using qualified runtime semantics;
+- `help` — show canonical command help generated from `CommandRegistry`;
+- `quit` — terminate the current session.
 
-`erase` clears the current workspace through qualified runtime semantics. `quit` terminates the session and may request confirmation according to active state.
+`quit` may request confirmation according to active state.
 
 ## 5. Explanation and diagnostic conveniences
 
 `xplain` is Console-local rather than an ordinary `CommandRegistry` family.
 
-```text
-xplain
-xplain <file>
-xplain mode on
-xplain mode off
-```
-
-- `xplain` shows accumulated analyzer/explanation log;
-- `xplain <file>` writes the accumulated explanation to a file according to Console handling;
-- `xplain mode on|off` toggles runtime explanation display mode.
+- `xplain` — show the accumulated analyzer/explanation log;
+- `xplain <file>` — write the accumulated explanation to a file according to Console handling;
+- `xplain mode on` — enable runtime explanation display mode;
+- `xplain mode off` — disable runtime explanation display mode.
 
 The Console may suggest `xplain` after a source load is rejected.
 
@@ -310,4 +247,4 @@ This guide intentionally excludes:
 - production service authentication setup;
 - server installation scripts.
 
-For embedded Java usage read [`SDK.md`](SDK.md). For exact Java types and methods use [`api/index.html`](api/index.html).
+For embedded Java usage read [`SDK.md`](SDK.md). For exact Java types and methods use the generated [`api/index.html`](api/index.html) reference.

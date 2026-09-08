@@ -133,7 +133,7 @@ jar_count="$(find "${BUNDLE_DIR}/lib" -maxdepth 1 -type f -name '*.jar' | wc -l 
 
 CLASSPATH="${BUNDLE_DIR}/lib/*"
 
-log "preparing curated SDK JavaDoc source view"
+log "preparing curated English SDK JavaDoc source view"
 python3 "${SDK_JAVADOC_PREPARE}" \
   "${REPO_ROOT}" \
   "${SDK_API_MANIFEST}" \
@@ -198,7 +198,10 @@ if grep -R -n -E \
   cat "${JAVADOC_LEAKS}" >&2
   fail "Implementation-only Core API leaked into SDK JavaDoc"
 fi
-log "SDK_JAVADOC_PASS curated-surface"
+
+log "verifying generated SDK JavaDoc is English-only"
+python3 "${SDK_JAVADOC_PREPARE}" --verify-output "${API_DIR}"
+log "SDK_JAVADOC_PASS curated-surface english-only"
 
 mkdir -p "${OUTPUT_DIR}"
 rm -rf "${OUTPUT_DIR:?}/${BUNDLE_NAME}" "${OUTPUT_DIR}/${BUNDLE_NAME}.tar.gz"

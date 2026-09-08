@@ -4,6 +4,8 @@ This guide defines the supported developer-facing contract of the KANGER 3.7.0 D
 
 The normative integration path is plain Java/classpath. Maven and Gradle are packaging adapters over the same SDK contract.
 
+For exact signatures and inherited members, use the generated [Developer SDK JavaDoc](api/index.html). The most frequently used references are [`IUser`](api/org/kanger/interfaces/IUser.html), [`IMind`](api/org/kanger/interfaces/IMind.html), [`ITerm`](api/org/kanger/interfaces/ITerm.html), and [`RuntimeBootstrap`](api/org/kanger/bootstrap/RuntimeBootstrap.html).
+
 ## 1. KANGER Core as a Java library
 
 KANGER Core can be embedded directly into a Java application without KANGER Server, REST, UI, browser sessions, or Console account plumbing.
@@ -25,12 +27,12 @@ The supported Developer SDK surface is curated, not inferred from Java `public` 
 
 Primary contracts:
 
-- `org.kanger.interfaces.IUser`
-- `org.kanger.interfaces.IMind`
-- developer-facing interfaces required by supported result and inspection APIs, including `ITerm`, `IRule`, `IPredicate`, `IHypothesis`, `ILogEntry`, and `IFactory`
-- concrete entry/value/configuration types required by those contracts, including `User`, `Mind`, and `ValuesOrder`
-- public enums and exceptions explicitly included in the generated SDK JavaDoc
-- `org.kanger.bootstrap.RuntimeBootstrap`, `RuntimeBootstrapResult`, and `RuntimeCapability` for optional runtime capabilities
+- [`IUser`](api/org/kanger/interfaces/IUser.html) — external user/configuration context and canonical storage lifecycle boundary;
+- [`IMind`](api/org/kanger/interfaces/IMind.html) — active logical context for compile, query, results, transactions, diagnostics, and maintenance;
+- [`ITerm`](api/org/kanger/interfaces/ITerm.html), `IRule`, `IPredicate`, `IHypothesis`, `ILogEntry`, and `IFactory` — developer-facing result and inspection contracts;
+- `User`, `Mind`, and `ValuesOrder` — concrete entry/value/configuration types required by the supported contracts;
+- public enums and exceptions explicitly included in the generated SDK JavaDoc — stable value and diagnostic types used by those contracts;
+- [`RuntimeBootstrap`](api/org/kanger/bootstrap/RuntimeBootstrap.html), [`RuntimeBootstrapResult`](api/org/kanger/bootstrap/RuntimeBootstrapResult.html), and [`RuntimeCapability`](api/org/kanger/bootstrap/RuntimeCapability.html) — optional runtime-capability discovery and attachment.
 
 `org.kanger.interfaces.internal` and implementation packages such as compiler, storage implementation, stores, units, and factories are not part of the supported SDK contract.
 
@@ -70,6 +72,8 @@ IMind mind = new Mind(user);
 Do not use Console `UserFactory` as the normal embedded SDK entry path. It belongs to Console account/session plumbing.
 
 `IUser.getCurrentMind()/setCurrentMind()` is a caller-managed compatibility slot. It is not a transaction-chain resolver and must not be used as lifecycle authority.
+
+See the exact constructor and inherited contracts in [`User`](api/org/kanger/User.html), [`Mind`](api/org/kanger/Mind.html), [`IUser`](api/org/kanger/interfaces/IUser.html), and [`IMind`](api/org/kanger/interfaces/IMind.html).
 
 ### 3.3 First compile and query
 
@@ -112,41 +116,38 @@ Boolean result = mind.query(
 
 Supported forms:
 
-```text
-query(String)
-query(String, Object[])
-compile(String)
-compile(String, Object[])
-```
+- `query(String)` — execute one KANGER operation expressed entirely as source text;
+- `query(String, Object[])` — execute one operation with Java values bound to placeholders in source order;
+- `compile(String)` — atomically compile one source block into the current `Mind`;
+- `compile(String, Object[])` — atomically compile source with Java values bound to placeholders in source order.
 
 Placeholders are consumed from the `Object[]` in source order. A complete executable proof for both parameterized `compile()` and `query()` is [`../examples/ParametersExample.java`](../examples/ParametersExample.java).
 
+Exact overloads: [`IMind`](api/org/kanger/interfaces/IMind.html).
+
 ### 4.2 ITerm and DataType
 
-Values exported by a query are represented as `ITerm`. The public value contract provides:
+Values exported by a query are represented as [`ITerm`](api/org/kanger/interfaces/ITerm.html). Its public value contract includes:
 
-```text
-getType()
-getId()
-getValue()
-isEmpty()
-isCVariable()
-equalsTo(...)
-```
+- `DataType getType()` — return the public KANGER data type of the term;
+- `String getId()` — return the term identifier defined by the public contract;
+- `Object getValue()` — project the term into its Java value representation;
+- `boolean isEmpty(IMind mind)` — test whether the term is empty in the supplied Mind context;
+- `boolean isCVariable()` — report whether the term is a C-variable;
+- `boolean equalsTo(ITerm value)` — compare two terms using KANGER term equality;
+- `boolean isDeleted(IMind mind)` — report whether the term is deleted in the supplied Mind context.
 
-The public `DataType` enum contains:
+The public [`DataType`](api/org/kanger/enums/DataType.html) enum contains:
 
-```text
-VOID
-PERIOD
-TERM
-STRING
-NUMERIC
-DATE
-INTERVAL
-SET
-BLOB
-```
+- `VOID` — no public value;
+- `PERIOD` — period value;
+- `TERM` — KANGER term/reference value;
+- `STRING` — string/scalar token value;
+- `NUMERIC` — numeric value;
+- `DATE` — date/time value;
+- `INTERVAL` — interval value;
+- `SET` — set value;
+- `BLOB` — binary value.
 
 Current external Java mappings relevant to normal SDK use include:
 
@@ -163,10 +164,8 @@ For exact type behavior, treat the generated `ITerm` and `DataType` JavaDoc as t
 
 Query-local exported values are available through:
 
-```text
-getValues()
-getValues(ValuesOrder...)
-```
+- `getValues()` — return the current query Values rows using canonical/default ordering;
+- `getValues(ValuesOrder...)` — return the same Values membership using the requested invocation-local ordering.
 
 A Values row maps exported variable names to `ITerm`.
 
@@ -177,6 +176,10 @@ for (Map<String, ITerm> row : mind.getValues()) {
     Object value = row.get("x").getValue();
 }
 ```
+
+`ValuesOrder.asc(field)` creates an ascending key; `ValuesOrder.desc(field)` creates a descending key. Sorting changes presentation order, not result membership.
+
+Exact references: [`IMind`](api/org/kanger/interfaces/IMind.html) and [`ValuesOrder`](api/org/kanger/ValuesOrder.html).
 
 The executable Values proof is [`../examples/ValuesExample.java`](../examples/ValuesExample.java).
 
@@ -225,17 +228,17 @@ The result of one query invocation is a coherent family of views.
 
 ### 6.1 Solutions
 
-`getSolutions()` exposes the solution rules associated with the current query result. Use the interfaces returned by the curated SDK; do not cast into implementation classes.
+`getSolutions()` — return the solution rules associated with the current query result. Use the interfaces returned by the curated SDK; do not cast into implementation classes.
 
 ### 6.2 Values
 
-`getValues()` exposes exported variable bindings as rows of `Map<String, ITerm>`.
+`getValues()` — expose exported variable bindings as rows of `Map<String, ITerm>`.
 
 The source-level proof is [`../examples/ValuesExample.java`](../examples/ValuesExample.java).
 
 ### 6.3 Ordering Values
 
-`getValues(ValuesOrder...)` creates an invocation-local ordered projection for presentation or application processing:
+`getValues(ValuesOrder...)` — create an invocation-local ordered projection for presentation or application processing:
 
 ```java
 List<Map<String, ITerm>> rows =
@@ -246,13 +249,13 @@ Multiple order keys are supported. `ValuesOrder.asc(...)` and `ValuesOrder.desc(
 
 ### 6.4 Hypotheses
 
-When a result is undetermined, `getHypothesis()` exposes hypotheses generated by the last inference.
+`getHypothesis()` — expose hypotheses generated by the last undetermined inference.
 
 Do not down-cast `IHypothesis` to implementation classes. The public hypothesis contract exposes the predicate, arguments, and antecedent/succedent side required for SDK inspection.
 
 ### 6.5 Hypothesis optimization
 
-`optimizeHypothesis()` removes hypotheses that can already be shown false according to the current contract.
+`optimizeHypothesis()` — remove hypotheses that can already be shown false according to the current contract.
 
 Optimization may be computationally significant; request it when the application actually needs the refined hypothesis set.
 
@@ -271,11 +274,14 @@ Changes made through `child` belong to the child level until the parent settles 
 
 ### 7.1 Child Mind and visibility
 
-The child sees inherited parent state plus its own overlay. New changes belong to the child level. `getNext()` follows the parent direction; `getTop()` resolves the root.
+- `getNext()` — follow the child-to-parent direction one transaction level;
+- `getTop()` — resolve the root Mind of the transaction chain.
+
+The child sees inherited parent state plus its own overlay. New changes belong to the child level.
 
 ### 7.2 Commit
 
-The parent applies its direct child with:
+`commit(child)` — apply a direct child to its parent:
 
 ```java
 boolean committed = root.commit(child);
@@ -285,7 +291,7 @@ Commit performs the supported conflict/deduplication checks and publishes only a
 
 ### 7.3 Release
 
-Discard a direct child with:
+`release(child)` — discard/roll back a direct child:
 
 ```java
 root.release(child);
@@ -296,6 +302,8 @@ root.release(child);
 After terminal commit/release lifecycle processing, the child `Mind` must not be reused by caller code. Continue from the active parent/root object required by the lifecycle contract.
 
 The executable transaction proof is [`../examples/TransactionExample.java`](../examples/TransactionExample.java).
+
+Exact transaction signatures: [`IMind`](api/org/kanger/interfaces/IMind.html).
 
 ### 7.5 Concurrency
 
@@ -313,7 +321,7 @@ Serialize caller workflow where query-local result stores, active-Mind transitio
 
 Transaction lifecycle and physical storage lifecycle are separate contracts.
 
-The canonical Developer SDK storage path in 3.7.0 is `IUser` lifecycle management combined with runtime capability bootstrap.
+The canonical Developer SDK storage path in 3.7.0 is [`IUser`](api/org/kanger/interfaces/IUser.html) lifecycle management combined with runtime capability bootstrap.
 
 ### 8.1 Storage setup
 
@@ -325,6 +333,8 @@ Attach only the storage capability you need:
 RuntimeBootstrap.ensureCapabilities(user, RuntimeCapability.STORAGE);
 ```
 
+`RuntimeBootstrap.ensureCapabilities(...)` — discover and attach only the explicitly requested optional capabilities.
+
 `RuntimeBootstrap` discovers runtime modules through Java `ServiceLoader`. Absence of an optional capability is a supported classpath state. If exactly one provider exists for a requested capability it can be selected automatically; multiple providers require explicit configuration.
 
 Open or create storage:
@@ -333,7 +343,7 @@ Open or create storage:
 mind = user.use(mind, "example");
 ```
 
-`use()` is allowed only while user storage is closed. It does not silently close/replace an already open storage.
+`IUser.use(mind, name)` — open/create named storage and return the active continuation Mind. It is allowed only while user storage is closed and does not silently replace an already open storage.
 
 ### 8.2 Durable checkpoint
 
@@ -341,7 +351,7 @@ mind = user.use(mind, "example");
 mind = user.checkpoint(mind);
 ```
 
-`checkpoint()` durably publishes root state without closing storage. It is a physical-storage operation and requires transaction level 0.
+`IUser.checkpoint(mind)` — durably publish root state without closing storage. It is a physical-storage operation and requires transaction level 0.
 
 ### 8.3 Close
 
@@ -349,22 +359,22 @@ mind = user.checkpoint(mind);
 mind = user.close(mind);
 ```
 
-`close()` performs the qualified root checkpoint/physical close path. Active child transactions are not silently committed or rolled back; lifecycle preconditions are enforced.
+`IUser.close(mind)` — perform the qualified root checkpoint/physical close path and return the continuation Mind. Active child transactions are not silently committed or rolled back; lifecycle preconditions are enforced.
 
 For `use`, `checkpoint`, and `close`, continue with the `IMind` returned by the operation. Lifecycle operations may replace the active object as part of their contract.
 
 The complete qualified persistence sequence, including close and reopen, is [`../examples/StorageExample.java`](../examples/StorageExample.java).
 
+Exact lifecycle signatures: [`IUser`](api/org/kanger/interfaces/IUser.html).
+
 ### 8.4 Maintenance
 
 The canonical open/checkpoint/close path above belongs to `IUser`. `IMind` also retains explicit maintenance operations for workspace/database maintenance:
 
-```text
-clearWorkspace()
-reindexStorage(String)
-reindexStorage(String, IReactor<String>)
-removeStorage(String)
-```
+- `clearWorkspace()` — clear the complete current workspace and return the active continuation Mind;
+- `reindexStorage(String)` — reindex/compact named storage and return the active continuation Mind;
+- `reindexStorage(String, IReactor<String>)` — perform the same maintenance operation while reporting progress through a reactor callback;
+- `removeStorage(String)` — remove named physical storage and return the active continuation Mind.
 
 These are destructive/maintenance operations, not alternate everyday transaction primitives.
 
@@ -377,30 +387,36 @@ Important lifecycle consequences from the current contract:
 
 Do not call these methods while treating child transactions as durable application state.
 
+Exact maintenance signatures: [`IMind`](api/org/kanger/interfaces/IMind.html).
+
 ## 9. Diagnostics and explanation
 
 Developer-facing diagnostics include query results, Solutions, Values, Hypotheses, and inference Log.
 
-`getLog()` exposes inference log entries for the latest operation. `getCurrentLogRecord(LogMode)` exposes the current record for a selected log projection. `clearLog()` clears the accumulated log.
+- `getLog()` — expose inference log entries for the latest operation;
+- `getCurrentLogRecord(LogMode)` — expose the current record for the selected log projection;
+- `clearLog()` — clear accumulated inference-log data.
 
 Treat these as developer-facing explanation/diagnostic data, not as Core implementation state.
 
 Console `xplain` is a Console presentation feature. Java applications should use the Core result/log APIs rather than invoking Console commands.
 
+Exact log signatures: [`IMind`](api/org/kanger/interfaces/IMind.html) and [`LogMode`](api/org/kanger/enums/LogMode.html).
+
 ## 10. Advanced inspection API
 
 The curated `IMind` surface exposes read-oriented factory views:
 
-```text
-getTerms()
-getPredicates()
-getRules()
-getLibrary()
-```
+- `getTerms()` — return visible terms in the current transaction context;
+- `getPredicates()` — return visible predicates in the current transaction context;
+- `getRules()` — return visible rules in the current transaction context;
+- `getLibrary()` — return the visible operation/library view.
 
 Each returns an `IFactory<T>` view in the current transaction visibility.
 
 These are primarily inspection surfaces. Normal knowledge-state mutation remains `query()`, `compile()`, transactions, and qualified lifecycle APIs. Do not use Java-public compiler/linker/materializer/storage implementation classes as an undocumented mutation API.
+
+Exact inspection signatures: [`IMind`](api/org/kanger/interfaces/IMind.html) and [`IFactory`](api/org/kanger/interfaces/IFactory.html).
 
 ## 11. Runtime limits and configuration
 
@@ -410,21 +426,16 @@ Advanced runtime controls exposed by the curated JavaDoc may be used when an emb
 
 `RuntimeBootstrap` is for attaching optional capabilities around a `User`, not for constructing the core `Mind` entry path.
 
-Use:
-
-```text
-RuntimeBootstrap.ensure(user)
-```
-
-to request all known capabilities, or:
-
-```text
-RuntimeBootstrap.ensureCapabilities(user, ...)
-```
-
-to request a narrow capability set.
+- `RuntimeBootstrap.ensure(user)` — discover and attach all known optional runtime capabilities;
+- `RuntimeBootstrap.ensure(user, classLoader)` — do the same using the supplied discovery class loader;
+- `RuntimeBootstrap.ensureCapabilities(user, capabilities...)` — discover and attach only the requested capabilities;
+- `RuntimeBootstrap.ensureCapabilities(user, classLoader, capabilities...)` — request a narrow capability set using the supplied discovery class loader;
+- `RuntimeBootstrapResult.loaded(capability)` — report whether a requested capability was loaded;
+- `RuntimeBootstrapResult.getDescription(capability)` — return its bootstrap/provider description.
 
 The Developer distribution currently includes the UDF and DUMB storage providers. Provider implementation APIs are not part of the Developer SDK contract.
+
+Exact bootstrap reference: [`RuntimeBootstrap`](api/org/kanger/bootstrap/RuntimeBootstrap.html), [`RuntimeBootstrapResult`](api/org/kanger/bootstrap/RuntimeBootstrapResult.html), and [`RuntimeCapability`](api/org/kanger/bootstrap/RuntimeCapability.html).
 
 ## 12. Maven and Gradle
 
@@ -476,7 +487,7 @@ See [`../examples/README.md`](../examples/README.md) for command lines and expec
 
 ## 14. Supported API / compatibility policy
 
-The Developer SDK contract is the curated surface documented here and in `docs/api`, not every public implementation symbol contained in the JARs.
+The Developer SDK contract is the curated surface documented here and in [`api/index.html`](api/index.html), not every public implementation symbol contained in the JARs.
 
 Use these status meanings when discussing SDK surface:
 
