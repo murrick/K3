@@ -6,9 +6,10 @@
 package org.kanger;
 
 import org.junit.jupiter.api.Test;
+import org.kanger.bootstrap.RuntimeBootstrap;
+import org.kanger.bootstrap.RuntimeCapability;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
-import org.kanger.storage.DB;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -50,8 +51,8 @@ public class DeveloperSdkContractTest {
             assertTrue(mind.commit(transaction));
             assertTrue(Boolean.TRUE.equals(mind.query("?sdk_transaction;")));
 
-            // DUMB is a runtime provider. Storage lifecycle authority is IUser.
-            new DB().init(user);
+            // Runtime bootstrap hides the concrete storage implementation.
+            RuntimeBootstrap.ensureCapabilities(user, RuntimeCapability.STORAGE);
             mind = user.use(mind, "sdk-contract");
             assertTrue(mind.isStorageUsed());
             assertTrue(Boolean.TRUE.equals(mind.query("!sdk_persistent;")));

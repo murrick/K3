@@ -1,0 +1,66 @@
+name: KANGER Developer Distribution
+
+on:
+  push:
+    paths:
+      - 'pom.xml'
+      - 'distribution/VERSION'
+      - 'developer-distribution/**'
+      - 'kanger-command/**'
+      - 'kanger-core/**'
+      - 'kanger-bootstrap/**'
+      - 'kanger-udf/**'
+      - 'kanger-data-dumb/**'
+      - 'kanger-console/**'
+      - '.github/workflows/kanger-developer-distribution.yml'
+  pull_request:
+    paths:
+      - 'pom.xml'
+      - 'distribution/VERSION'
+      - 'developer-distribution/**'
+      - 'kanger-command/**'
+      - 'kanger-core/**'
+      - 'kanger-bootstrap/**'
+      - 'kanger-udf/**'
+      - 'kanger-data-dumb/**'
+      - 'kanger-console/**'
+      - '.github/workflows/kanger-developer-distribution.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kanger-developer-distribution-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bundle:
+    name: Developer bundle on Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '21']
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+
+      - name: Build and qualify Developer Distribution
+        run: bash developer-distribution/build-developer-distribution.sh
+
+      - name: Upload Developer Distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: kanger-developer-java-${{ matrix.java }}
+          path: target/developer-distributions/kanger-developer-*.tar.gz
+          if-no-files-found: error
