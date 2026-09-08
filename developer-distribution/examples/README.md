@@ -12,32 +12,50 @@ From the unpacked distribution root on POSIX/macOS/Linux:
 mkdir -p out
 javac -cp "lib/*" -d out \
   examples/BasicQuery.java \
+  examples/ValuesExample.java \
+  examples/ParametersExample.java \
+  examples/HypothesesExample.java \
   examples/TransactionExample.java \
-  examples/StorageExample.java
+  examples/StorageExample.java \
+  examples/BinaryDataExample.java
 
 java -cp "out:lib/*" BasicQuery
+java -cp "out:lib/*" ValuesExample
+java -cp "out:lib/*" ParametersExample
+java -cp "out:lib/*" HypothesesExample
 java -cp "out:lib/*" TransactionExample
 java -cp "out:lib/*" StorageExample
+java -cp "out:lib/*" BinaryDataExample
 ```
 
 On Windows use `;` as the runtime classpath separator:
 
 ```bat
 mkdir out
-javac -cp "lib/*" -d out examples\BasicQuery.java examples\TransactionExample.java examples\StorageExample.java
+javac -cp "lib/*" -d out examples\BasicQuery.java examples\ValuesExample.java examples\ParametersExample.java examples\HypothesesExample.java examples\TransactionExample.java examples\StorageExample.java examples\BinaryDataExample.java
 
 java -cp "out;lib/*" BasicQuery
+java -cp "out;lib/*" ValuesExample
+java -cp "out;lib/*" ParametersExample
+java -cp "out;lib/*" HypothesesExample
 java -cp "out;lib/*" TransactionExample
 java -cp "out;lib/*" StorageExample
+java -cp "out;lib/*" BinaryDataExample
 ```
 
-Successful runs print:
+Successful runs print these markers:
 
 ```text
 BASIC_QUERY_PASS
+VALUES_PASS rows=3
+PARAMETERS_PASS
+HYPOTHESES_PASS count=<n>
 TRANSACTION_PASS
 STORAGE_PASS
+BINARY_DATA_PASS bytes=4
 ```
+
+The exact hypothesis count is an inference result and is not an API compatibility constant; the example verifies the public hypothesis contract rather than freezing an implementation row count.
 
 ## BasicQuery.java
 
@@ -49,6 +67,37 @@ IMind mind = new Mind(user);
 ```
 
 It then loads several facts with `compile(String)` and performs a tri-state query with `query(String)`.
+
+## ValuesExample.java
+
+`ValuesExample.java` demonstrates exported query values through `getValues(ValuesOrder...)`.
+
+It verifies:
+
+- query variables are exposed as `Map<String, ITerm>` rows;
+- Java values are obtained through `ITerm.getValue()`;
+- `ValuesOrder.asc(...)` and `ValuesOrder.desc(...)` change presentation order without changing result membership.
+
+## ParametersExample.java
+
+`ParametersExample.java` demonstrates Java object binding through:
+
+```text
+compile(String, Object[])
+query(String, Object[])
+```
+
+Parameters are substituted in source order. Use this API instead of constructing KANGER statements by concatenating application values into source text.
+
+## HypothesesExample.java
+
+`HypothesesExample.java` demonstrates the logical UNKNOWN path:
+
+1. `query()` returns `null`;
+2. `optimizeHypothesis()` refines the hypothesis set;
+3. the application inspects hypotheses only through `IHypothesis` and related public interfaces.
+
+The example deliberately does not cast to KANGER implementation classes.
 
 ## TransactionExample.java
 
@@ -76,6 +125,18 @@ Do not reuse a child `Mind` after terminal commit/release settlement.
 8. close and remove the temporary files.
 
 The example always continues with the `IMind` returned by storage lifecycle operations.
+
+## BinaryDataExample.java
+
+`BinaryDataExample.java` demonstrates the general Java/KANGER value-mapping path for binary payloads:
+
+1. pass a Java `byte[]` through parameterized `compile()`;
+2. verify the same `byte[]` through parameterized `query()`;
+3. project the value through a query variable;
+4. verify `DataType.BLOB`;
+5. recover the Java `byte[]` through `ITerm.getValue()` and compare its bytes.
+
+No text/base64 conversion is required at the Java API boundary.
 
 ## Maven consumer
 
@@ -109,8 +170,13 @@ gradle run
 
 compiles and runs `StorageExample`. The project does not require an external repository for KANGER artifacts.
 
-## Adding examples
+## Qualification rule
 
-A new example becomes normative Developer documentation only after it is added as source, shipped in the canonical archive, and exercised by distribution qualification. Historical API examples are semantic source material, but their old class names, storage paths, and signatures are not automatically 3.7.0 contract.
+A source example is normative Developer documentation only when it is:
 
-Current qualified families are Basic Query, Transactions, and Storage. Values, parameter binding, hypotheses, and binary-data examples should be added as separate executable qualification increments rather than as untested listings in `SDK.md`.
+1. present as a real source file in this directory;
+2. copied into the canonical archive;
+3. compiled from that archive;
+4. executed from that archive on the supported qualification JDKs.
+
+Historical API examples remain semantic source material, but old class names, storage paths, signatures, or assumptions are not automatically KANGER 3.7.0 contract.

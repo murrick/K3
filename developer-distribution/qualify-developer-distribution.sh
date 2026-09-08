@@ -61,6 +61,10 @@ grep -Fq 'IMind mind = new Mind(user);' "${BUNDLE_DIR}/docs/SDK.md" \
   || fail "SDK guide does not document the qualified Mind entry path"
 grep -Fq 'org.kanger:kanger-sdk:3.7.0' "${BUNDLE_DIR}/docs/SDK.md" \
   || fail "SDK guide does not document the canonical Maven coordinate"
+grep -Fq 'BinaryDataExample.java' "${BUNDLE_DIR}/docs/SDK.md" \
+  || fail "SDK guide does not link the qualified binary-data example"
+grep -Fq 'reindexStorage' "${BUNDLE_DIR}/docs/SDK.md" \
+  || fail "SDK guide does not document storage maintenance"
 grep -Fq 'storage use <name>' "${BUNDLE_DIR}/docs/CONSOLE.md" \
   || fail "Console guide does not contain canonical storage syntax"
 grep -Fq 'xplain mode on' "${BUNDLE_DIR}/docs/CONSOLE.md" \
@@ -80,8 +84,18 @@ jar_count="$(find "${BUNDLE_DIR}/lib" -maxdepth 1 -type f -name '*.jar' | wc -l 
 [[ ! -e "${BUNDLE_DIR}/ui" ]] || fail "UI content leaked into Developer distribution"
 [[ -z "$(find "${BUNDLE_DIR}" -type l -print -quit)" ]] || fail "Developer distribution must not contain symbolic links"
 
-for example in BasicQuery.java TransactionExample.java StorageExample.java; do
-  [[ -f "${BUNDLE_DIR}/examples/${example}" ]] || fail "Shipped example missing: ${example}"
+examples=(
+  BasicQuery
+  ValuesExample
+  ParametersExample
+  HypothesesExample
+  TransactionExample
+  StorageExample
+  BinaryDataExample
+)
+for example in "${examples[@]}"; do
+  [[ -f "${BUNDLE_DIR}/examples/${example}.java" ]] \
+    || fail "Shipped example missing: ${example}.java"
 done
 
 QUALIFICATION="${STAGING_PARENT}/qualification"
@@ -92,10 +106,14 @@ CLASSPATH="${BUNDLE_DIR}/lib/*"
 log "compiling shipped Java examples from canonical artifact"
 javac -cp "${CLASSPATH}" -d "${CLASSES}" \
   "${BUNDLE_DIR}/examples/BasicQuery.java" \
+  "${BUNDLE_DIR}/examples/ValuesExample.java" \
+  "${BUNDLE_DIR}/examples/ParametersExample.java" \
+  "${BUNDLE_DIR}/examples/HypothesesExample.java" \
   "${BUNDLE_DIR}/examples/TransactionExample.java" \
-  "${BUNDLE_DIR}/examples/StorageExample.java"
+  "${BUNDLE_DIR}/examples/StorageExample.java" \
+  "${BUNDLE_DIR}/examples/BinaryDataExample.java"
 
-for example in BasicQuery TransactionExample StorageExample; do
+for example in "${examples[@]}"; do
   home="${QUALIFICATION}/home-${example}"
   mkdir -p "${home}"
   log "running shipped example ${example}"
@@ -113,4 +131,4 @@ printf 'quit\n' | \
 grep -Fq 'KANGER III Session closed' "${QUALIFICATION}/console.log" \
   || { cat "${QUALIFICATION}/console.log" >&2; fail "Shipped Console did not close cleanly"; }
 
-log "DEVELOPER_RUNTIME_QUALIFICATION_PASS version=${VERSION}"
+log "DEVELOPER_RUNTIME_QUALIFICATION_PASS version=${VERSION} examples=${#examples[@]}"

@@ -84,9 +84,20 @@ copy_one "${RUNTIME_LIB}" 'jline-*.jar' 'jline.jar'
 copy_one "${RUNTIME_MODULES}" 'kanger-udf-*.jar' 'kanger-udf.jar'
 copy_one "${RUNTIME_MODULES}" 'kanger-data-dumb-*.jar' 'kanger-data-dumb.jar'
 
-cp "${SCRIPT_DIR}/examples/BasicQuery.java" "${BUNDLE_DIR}/examples/"
-cp "${SCRIPT_DIR}/examples/TransactionExample.java" "${BUNDLE_DIR}/examples/"
-cp "${SCRIPT_DIR}/examples/StorageExample.java" "${BUNDLE_DIR}/examples/"
+examples=(
+  BasicQuery.java
+  ValuesExample.java
+  ParametersExample.java
+  HypothesesExample.java
+  TransactionExample.java
+  StorageExample.java
+  BinaryDataExample.java
+)
+for example in "${examples[@]}"; do
+  [[ -f "${SCRIPT_DIR}/examples/${example}" ]] \
+    || fail "Developer example source missing: ${example}"
+  cp "${SCRIPT_DIR}/examples/${example}" "${BUNDLE_DIR}/examples/"
+done
 printf '%s\n' "${VERSION}" > "${BUNDLE_DIR}/VERSION"
 
 log "staging canonical org.kanger:${VERSION} repository and consumer examples"

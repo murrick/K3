@@ -214,11 +214,17 @@ def stage_documentation(bundle: Path, version: str) -> None:
             "KANGER 3.7.0 Developer Distribution",
             "docs/SDK.md",
             "docs/CONSOLE.md",
+            "BinaryDataExample.java",
         ],
         bundle / "docs" / "SDK.md": [
             "IUser user = new User();",
             "IMind mind = new Mind(user);",
             "query(String, Object[])",
+            "ValuesExample.java",
+            "ParametersExample.java",
+            "HypothesesExample.java",
+            "BinaryDataExample.java",
+            "reindexStorage",
             "org.kanger:kanger-sdk:3.7.0",
         ],
         bundle / "docs" / "CONSOLE.md": [
@@ -229,8 +235,12 @@ def stage_documentation(bundle: Path, version: str) -> None:
         ],
         bundle / "examples" / "README.md": [
             "BasicQuery.java",
+            "ValuesExample.java",
+            "ParametersExample.java",
+            "HypothesesExample.java",
             "TransactionExample.java",
             "StorageExample.java",
+            "BinaryDataExample.java",
         ],
     }
     for document, markers in required_markers.items():

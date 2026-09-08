@@ -84,11 +84,22 @@ A successful run prints:
 BASIC_QUERY_PASS
 ```
 
-`examples/TransactionExample.java` and `examples/StorageExample.java` exercise the transaction and persistence lifecycles. See [`examples/README.md`](examples/README.md).
+The archive also ships executable examples for Values, Java parameter binding, hypotheses, transactions, storage lifecycle, and binary data:
+
+```text
+ValuesExample.java
+ParametersExample.java
+HypothesesExample.java
+TransactionExample.java
+StorageExample.java
+BinaryDataExample.java
+```
+
+See [`examples/README.md`](examples/README.md) for the complete commands and expected PASS markers.
 
 ## SDK documentation
 
-Read [`docs/SDK.md`](docs/SDK.md) before integrating KANGER into an application. It defines the supported entry path, query/compile semantics, result model, transaction ownership rules, storage lifecycle, bootstrap behavior, concurrency contract, and Maven/Gradle adapters.
+Read [`docs/SDK.md`](docs/SDK.md) before integrating KANGER into an application. It defines the supported entry path, Java/KANGER data mapping, query/compile semantics, result model, transaction ownership rules, storage lifecycle and maintenance, bootstrap behavior, concurrency contract, Maven/Gradle adapters, and the executable example suite.
 
 The generated reference is available at [`docs/api/index.html`](docs/api/index.html). JavaDoc is deliberately curated: implementation packages and internal storage/compiler structures are not part of the published Developer SDK contract merely because Java visibility is public.
 
