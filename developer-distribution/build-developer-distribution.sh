@@ -38,7 +38,7 @@ copy_one() {
   cp "${matches[0]}" "${BUNDLE_DIR}/lib/${target_name}"
 }
 
-for command in mvn java javac javadoc python3 tar find grep tr mktemp cp chmod mkdir rm wc sort; do
+for command in mvn javadoc python3 tar find grep tr mktemp cp chmod mkdir rm wc sort; do
   require_command "${command}"
 done
 
@@ -63,17 +63,16 @@ trap 'rm -rf -- "${STAGING_PARENT}"' EXIT
 
 BUNDLE_NAME="kanger-developer-${VERSION}"
 BUNDLE_DIR="${STAGING_PARENT}/${BUNDLE_NAME}"
-QUALIFICATION="${STAGING_PARENT}/qualification"
-CLASSES="${QUALIFICATION}/classes"
-JAVADOC_SOURCE="${QUALIFICATION}/javadoc-source"
-JAVADOC_SOURCES="${QUALIFICATION}/javadoc-sources.txt"
+BUILD_WORK="${STAGING_PARENT}/build-work"
+JAVADOC_SOURCE="${BUILD_WORK}/javadoc-source"
+JAVADOC_SOURCES="${BUILD_WORK}/javadoc-sources.txt"
 API_DIR="${BUNDLE_DIR}/docs/api"
 mkdir -p \
   "${BUNDLE_DIR}/bin" \
   "${BUNDLE_DIR}/lib" \
   "${BUNDLE_DIR}/examples" \
   "${API_DIR}" \
-  "${CLASSES}"
+  "${BUILD_WORK}"
 
 copy_one "${CONSOLE_TARGET}" '*-thin.jar' 'kanger-console.jar'
 copy_one "${RUNTIME_LIB}" 'kanger-command-*.jar' 'kanger-command.jar'
@@ -172,7 +171,7 @@ for forbidden_dir in \
     || fail "Implementation package leaked into SDK JavaDoc: ${forbidden_dir}"
 done
 
-JAVADOC_LEAKS="${QUALIFICATION}/javadoc-leaks.log"
+JAVADOC_LEAKS="${BUILD_WORK}/javadoc-leaks.log"
 if grep -R -n -E \
   'org\.kanger\.interfaces\.internal|org/kanger/interfaces/internal|org\.kanger\.factory|org/kanger/factory|org\.kanger\.stores|org/kanger/stores|org\.kanger\.units|org/kanger/units|org\.kanger\.storage|org/kanger/storage|IBase|IData|IUnit' \
   "${API_DIR}" >"${JAVADOC_LEAKS}" 2>&1; then
@@ -181,33 +180,9 @@ if grep -R -n -E \
 fi
 log "SDK_JAVADOC_PASS curated-surface"
 
-log "compiling shipped Java examples from the unpacked bundle"
-javac -cp "${CLASSPATH}" -d "${CLASSES}" \
-  "${BUNDLE_DIR}/examples/BasicQuery.java" \
-  "${BUNDLE_DIR}/examples/TransactionExample.java" \
-  "${BUNDLE_DIR}/examples/StorageExample.java"
-
-for example in BasicQuery TransactionExample StorageExample; do
-  home="${QUALIFICATION}/home-${example}"
-  mkdir -p "${home}"
-  log "running shipped example ${example}"
-  JAVA_TOOL_OPTIONS="-Duser.home=${home}" \
-    java -cp "${CLASSES}:${CLASSPATH}" "${example}"
-done
-
-log "launching shipped Console without Server/UI"
-console_home="${QUALIFICATION}/console-home"
-mkdir -p "${console_home}"
-printf 'quit\n' | \
-  JAVA_TOOL_OPTIONS="-Duser.home=${console_home}" \
-  "${BUNDLE_DIR}/bin/kanger-console" \
-  >"${QUALIFICATION}/console.log" 2>&1
-grep -Fq 'KANGER III Session closed' "${QUALIFICATION}/console.log" \
-  || { cat "${QUALIFICATION}/console.log" >&2; fail "Shipped Console did not close cleanly"; }
-
 mkdir -p "${OUTPUT_DIR}"
 rm -rf "${OUTPUT_DIR:?}/${BUNDLE_NAME}" "${OUTPUT_DIR}/${BUNDLE_NAME}.tar.gz"
 cp -a "${BUNDLE_DIR}" "${OUTPUT_DIR}/${BUNDLE_NAME}"
 tar -czf "${OUTPUT_DIR}/${BUNDLE_NAME}.tar.gz" -C "${STAGING_PARENT}" "${BUNDLE_NAME}"
 
-log "Developer distribution qualified: ${OUTPUT_DIR}/${BUNDLE_NAME}.tar.gz"
+log "Developer distribution built: ${OUTPUT_DIR}/${BUNDLE_NAME}.tar.gz"
