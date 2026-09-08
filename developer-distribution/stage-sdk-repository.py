@@ -2,6 +2,7 @@
 """Stage canonical 3.7.x Maven metadata and consumer examples into a Developer bundle."""
 
 from pathlib import Path
+import hashlib
 import shutil
 import sys
 import zipfile
@@ -88,6 +89,17 @@ def stage_sdk_artifact(bundle: Path, version: str) -> None:
     )
 
 
+def write_checksums(repository: Path) -> None:
+    for artifact in sorted(list(repository.rglob("*.pom")) + list(repository.rglob("*.jar"))):
+        payload = artifact.read_bytes()
+        (artifact.with_name(artifact.name + ".sha1")).write_text(
+            hashlib.sha1(payload).hexdigest() + "\n", encoding="ascii"
+        )
+        (artifact.with_name(artifact.name + ".sha256")).write_text(
+            hashlib.sha256(payload).hexdigest() + "\n", encoding="ascii"
+        )
+
+
 def stage_consumers(bundle: Path, version: str) -> None:
     source = bundle / "examples" / "StorageExample.java"
     if not source.is_file():
@@ -166,8 +178,10 @@ dependencies {{
     implementation 'org.kanger:kanger-sdk:{version}'
 }}
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+java {{
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}}
 
 tasks.withType(JavaCompile).configureEach {{
     options.encoding = 'UTF-8'
@@ -218,7 +232,15 @@ def main() -> None:
     if pom_count != 6 or jar_count != 6:
         fail(f"Unexpected SDK repository shape: {pom_count} POMs, {jar_count} JARs")
 
-    print(f"SDK_REPOSITORY_STAGE_PASS version={version} poms={pom_count} jars={jar_count}")
+    write_checksums(repository)
+    checksum_count = len(list(repository.rglob("*.sha1"))) + len(list(repository.rglob("*.sha256")))
+    if checksum_count != 24:
+        fail(f"Unexpected SDK checksum count: {checksum_count}")
+
+    print(
+        f"SDK_REPOSITORY_STAGE_PASS version={version} "
+        f"poms={pom_count} jars={jar_count} checksums={checksum_count}"
+    )
 
 
 if __name__ == "__main__":
