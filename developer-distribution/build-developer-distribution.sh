@@ -11,6 +11,7 @@ RUNTIME_LIB="${CONSOLE_TARGET}/runtime/lib"
 RUNTIME_MODULES="${CONSOLE_TARGET}/runtime/modules"
 SDK_API_MANIFEST="${SCRIPT_DIR}/sdk-api-sources.txt"
 SDK_JAVADOC_PREPARE="${SCRIPT_DIR}/prepare-sdk-javadoc.py"
+SDK_REPOSITORY_STAGE="${SCRIPT_DIR}/stage-sdk-repository.py"
 
 fail() {
   printf 'ERROR: %s\n' "$*" >&2
@@ -45,6 +46,7 @@ done
 [[ -f "${VERSION_FILE}" ]] || fail "Distribution VERSION not found: ${VERSION_FILE}"
 [[ -f "${SDK_API_MANIFEST}" ]] || fail "SDK API manifest not found: ${SDK_API_MANIFEST}"
 [[ -f "${SDK_JAVADOC_PREPARE}" ]] || fail "SDK JavaDoc source preparer not found: ${SDK_JAVADOC_PREPARE}"
+[[ -f "${SDK_REPOSITORY_STAGE}" ]] || fail "SDK repository stager not found: ${SDK_REPOSITORY_STAGE}"
 VERSION="$(tr -d '[:space:]' < "${VERSION_FILE}")"
 [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9._-]+)?$ ]] \
   || fail "Invalid KANGER version: ${VERSION}"
@@ -86,6 +88,13 @@ cp "${SCRIPT_DIR}/examples/BasicQuery.java" "${BUNDLE_DIR}/examples/"
 cp "${SCRIPT_DIR}/examples/TransactionExample.java" "${BUNDLE_DIR}/examples/"
 cp "${SCRIPT_DIR}/examples/StorageExample.java" "${BUNDLE_DIR}/examples/"
 printf '%s\n' "${VERSION}" > "${BUNDLE_DIR}/VERSION"
+
+log "staging canonical org.kanger:${VERSION} repository and consumer examples"
+python3 "${SDK_REPOSITORY_STAGE}" "${BUNDLE_DIR}" "${VERSION}"
+[[ -f "${BUNDLE_DIR}/repository/org/kanger/kanger-sdk/${VERSION}/kanger-sdk-${VERSION}.pom" ]] \
+  || fail "Canonical kanger-sdk POM was not staged"
+[[ -f "${BUNDLE_DIR}/repository/org/kanger/kanger-sdk/${VERSION}/kanger-sdk-${VERSION}.jar" ]] \
+  || fail "Canonical kanger-sdk marker JAR was not staged"
 
 cat > "${BUNDLE_DIR}/bin/kanger-console" <<'EOF_LAUNCHER'
 #!/usr/bin/env bash
