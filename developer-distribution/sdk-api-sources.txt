@@ -1,0 +1,28 @@
+# Canonical KANGER 3.7.0 Developer SDK JavaDoc source slice.
+# Repository-relative paths; implementation packages are intentionally absent.
+kanger/src/org/kanger/interfaces/IArgument.java
+kanger/src/org/kanger/interfaces/ICause.java
+kanger/src/org/kanger/interfaces/IFactory.java
+kanger/src/org/kanger/interfaces/IHypothesis.java
+kanger/src/org/kanger/interfaces/IList.java
+kanger/src/org/kanger/interfaces/ILogEntry.java
+kanger/src/org/kanger/interfaces/IMind.java
+kanger/src/org/kanger/interfaces/IOperation.java
+kanger/src/org/kanger/interfaces/IPredicate.java
+kanger/src/org/kanger/interfaces/IReactor.java
+kanger/src/org/kanger/interfaces/IRule.java
+kanger/src/org/kanger/interfaces/ITerm.java
+kanger/src/org/kanger/interfaces/IUser.java
+kanger/src/org/kanger/User.java
+kanger/src/org/kanger/Mind.java
+kanger/src/org/kanger/ValuesOrder.java
+kanger/src/org/kanger/enums/ArgumentType.java
+kanger/src/org/kanger/enums/DataType.java
+kanger/src/org/kanger/enums/LibMode.java
+kanger/src/org/kanger/enums/LogMode.java
+kanger/src/org/kanger/enums/StorageLifecycleErrorCode.java
+kanger/src/org/kanger/exception/RuntimeErrorException.java
+kanger/src/org/kanger/exception/StorageLifecycleException.java
+kanger-bootstrap/src/org/kanger/bootstrap/RuntimeBootstrap.java
+kanger-bootstrap/src/org/kanger/bootstrap/RuntimeBootstrapResult.java
+kanger-bootstrap/src/org/kanger/bootstrap/RuntimeCapability.java

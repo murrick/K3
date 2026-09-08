@@ -1,0 +1,135 @@
+name: KANGER Developer Distribution
+
+on:
+  push:
+    paths:
+      - 'pom.xml'
+      - 'distribution/VERSION'
+      - 'developer-distribution/**'
+      - 'kanger-command/**'
+      - 'kanger-core/**'
+      - 'kanger-bootstrap/**'
+      - 'kanger-udf/**'
+      - 'kanger-data-dumb/**'
+      - 'kanger-console/**'
+      - '.github/workflows/kanger-developer-distribution.yml'
+  pull_request:
+    paths:
+      - 'pom.xml'
+      - 'distribution/VERSION'
+      - 'developer-distribution/**'
+      - 'kanger-command/**'
+      - 'kanger-core/**'
+      - 'kanger-bootstrap/**'
+      - 'kanger-udf/**'
+      - 'kanger-data-dumb/**'
+      - 'kanger-console/**'
+      - '.github/workflows/kanger-developer-distribution.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kanger-developer-distribution-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build canonical Developer bundle on Java 21
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build canonical Developer Distribution
+        run: bash developer-distribution/build-developer-distribution.sh
+
+      - name: Upload canonical Developer Distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: kanger-developer-canonical
+          path: target/developer-distributions/kanger-developer-*.tar.gz
+          if-no-files-found: error
+
+  qualify:
+    name: Qualify canonical bundle on Java ${{ matrix.java }}
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '21']
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+
+      - name: Download canonical Developer Distribution
+        uses: actions/download-artifact@v4
+        with:
+          name: kanger-developer-canonical
+          path: target/developer-distributions
+
+      - name: Qualify exact canonical artifact
+        shell: bash
+        run: |
+          shopt -s nullglob
+          archives=(target/developer-distributions/kanger-developer-*.tar.gz)
+          shopt -u nullglob
+          if [[ "${#archives[@]}" -ne 1 ]]; then
+            echo "Expected exactly one canonical Developer archive, found ${#archives[@]}" >&2
+            exit 1
+          fi
+          bash developer-distribution/qualify-developer-distribution.sh "${archives[0]}"
+
+  consumers:
+    name: Qualify Maven and Gradle consumers on Java 21
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Download canonical Developer Distribution
+        uses: actions/download-artifact@v4
+        with:
+          name: kanger-developer-canonical
+          path: target/developer-distributions
+
+      - name: Qualify Maven and Gradle consumers
+        shell: bash
+        run: |
+          shopt -s nullglob
+          archives=(target/developer-distributions/kanger-developer-*.tar.gz)
+          shopt -u nullglob
+          if [[ "${#archives[@]}" -ne 1 ]]; then
+            echo "Expected exactly one canonical Developer archive, found ${#archives[@]}" >&2
+            exit 1
+          fi
+          bash developer-distribution/qualify-developer-consumers.sh "${archives[0]}"
