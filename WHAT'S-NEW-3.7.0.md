@@ -22,7 +22,7 @@ KANGER III 3.7.0 is a stabilization and architectural-convergence release. Its m
 - Browser session/bootstrap, containment, operation/snapshot protocol and error presentation were hardened.
 - Browser gateway and Console presentation were converged without moving semantic authority into JavaScript.
 - Editor state and local-file behavior were separated from authoritative KANGER context state.
-- The qualified Browser artifact contains 23 explicitly inventoried files.
+- The qualified Browser artifact contains 25 explicitly inventoried files.
 - The local authenticated `kanger-admin` plane exposes a compact Server status snapshot including uptime and active-session count.
 - Operators can publish or clear a maintenance deadline with `kanger-admin maintenance`; the notice is informational and has no lifecycle side effects.
 - Browser clients poll the public read-only maintenance state and show the scheduled time without prescribing user actions.
