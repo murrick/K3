@@ -132,6 +132,11 @@ public class UserFactory {
         sessions.closeToken(token);
     }
 
+    /** Returns the number of currently registered application sessions. */
+    public static int activeSessionCount() {
+        return sessions.size();
+    }
+
     /**
      * Issues a new one-time confirmation token. Any previous token for this
      * user is invalidated.
