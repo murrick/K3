@@ -2,9 +2,9 @@
 
 ## Purpose
 
-`kanger-admin` provisions and safely removes KANGER application accounts from the server host.
+`kanger-admin` is the local host-operator client for the running KANGER Server process. It provides server status, maintenance-notice control, and account provisioning/deletion.
 
-It is not a web administration console and it does not grant application users administrative roles. The command is a local authenticated client of the running KANGER Server process.
+It is not a web administration console and it does not grant application users administrative roles.
 
 For the customer-facing KANGER 3.7.0 installation, update, TLS, TRUSTED-mode, and administration procedure, see the distribution guide:
 
@@ -26,17 +26,20 @@ kanger-admin
     v
 127.0.0.1:1965
     |
-    v
-AccountLifecycleService
+    +-- server status / maintenance notice
     |
-    +-- credential authority
-    +-- session/runtime authority
-    +-- pending/confirmation authority
-    +-- canonical account home
-    +-- deletion journal and quarantine
+    +-- AccountLifecycleService
+         |
+         +-- credential authority
+         +-- session/runtime authority
+         +-- pending/confirmation authority
+         +-- canonical account home
+         +-- deletion journal and quarantine
 ```
 
 The CLI never edits credential files, pending registrations, account homes, or deletion journals directly. The running server remains the only account-lifecycle owner.
+
+Maintenance notices are deliberately informational. Publishing a deadline does not stop the server, drain requests, close sessions, or mutate user state. The host operator remains responsible for the actual shutdown/update.
 
 ## KANGER 3.7.0 distribution path and execution
 
@@ -77,6 +80,55 @@ server.admin.token.file=KANGER/admin.token
 The listener must remain loopback-only. It must not be added to nginx or exposed through a firewall rule, tunnel, or public reverse proxy.
 
 The server creates the bearer-token file atomically on first startup and restricts it to owner read/write permissions where POSIX permissions are available.
+
+## Server status
+
+```bash
+sudo /opt/kanger/current/bin/kanger-admin status
+```
+
+The status snapshot reports:
+
+- server state;
+- KANGER Core version;
+- Server version;
+- JVM process uptime;
+- number of active application sessions;
+- currently published maintenance deadline, if any.
+
+Example shape:
+
+```text
+KANGER Server
+  status: UP
+  core: 3.7.0
+  server: server-0.18
+  uptime: 2h 17m 4s
+  active sessions: 103
+  maintenance: none
+```
+
+The full status endpoint exists only on the loopback authenticated admin listener. It is not exposed to ordinary application users.
+
+## Maintenance notice
+
+Publish a maintenance deadline N minutes from now:
+
+```bash
+sudo /opt/kanger/current/bin/kanger-admin maintenance --minutes 10
+```
+
+Clear the notice:
+
+```bash
+sudo /opt/kanger/current/bin/kanger-admin maintenance --clear
+```
+
+The browser polls the public read-only `/maintenance` application context every 10 seconds. When a notice is active, it displays only the maintenance time. The notice contains no instruction to save, commit, disconnect, or perform any other user action.
+
+The published state contains only an absolute deadline and remaining time. It intentionally contains no account/session details and no operator status fields.
+
+A maintenance notice remains active until it is explicitly cleared or the Server process restarts. Passing the deadline does not itself stop the Server.
 
 ## Create an ACTIVE account
 
@@ -166,7 +218,7 @@ The login and e-mail identity become reusable only after the journal reaches `CO
 0  operation completed
 2  invalid or incomplete operator input
 3  admin listener/token/connection failure
-4  account lifecycle conflict or rejection
+4  server/account operation conflict or rejection
 5  deletion is incomplete and requires recovery
 ```
 
@@ -176,7 +228,8 @@ For exit code `5`, preserve the reported deletion id and inspect the server log 
 
 - the admin listener accepts only loopback binding;
 - bearer authentication occurs before operation dispatch;
-- only POST mutation endpoints exist;
-- the public API has no admin routes;
+- all admin operations use authenticated POST requests on the local listener;
+- full server status and maintenance mutation are not public API routes;
+- the public maintenance polling surface exposes only the notice deadline;
 - the listener is not an application-user privilege plane;
 - the bearer token and account passwords must never be copied into tickets, chat, logs, or shell history.
