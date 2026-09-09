@@ -8,7 +8,9 @@
 
     var API_HOST = String(window.KANGER_API_HOST || '').replace(/\/$/, '');
     var POLL_INTERVAL_MS = 10000;
+    var CONSOLE_CHANNEL = 'kanger.maintenance.v1';
     var banner = null;
+    var lastMaintenance = null;
 
     if (!API_HOST || typeof window.fetch !== 'function') {
         return;
@@ -42,7 +44,25 @@
         return banner;
     }
 
-    function render(maintenance) {
+    function consoleVisible() {
+        var view = document.getElementById('console-view');
+        return !!view && !view.classList.contains('hidden');
+    }
+
+    function postToConsole(maintenance) {
+        var frame = document.getElementById('console-frame');
+        if (!consoleVisible() || !frame || !frame.contentWindow) {
+            return false;
+        }
+        frame.contentWindow.postMessage({
+            channel: CONSOLE_CHANNEL,
+            type: 'notice',
+            maintenance: maintenance || {active: false}
+        }, '*');
+        return true;
+    }
+
+    function renderParent(maintenance) {
         var element = ensureBanner();
         if (!maintenance || !maintenance.active) {
             element.textContent = '';
@@ -58,6 +78,29 @@
                     + new Date(deadline).toLocaleString() + '.';
         }
         element.style.display = 'block';
+    }
+
+    function render(maintenance) {
+        lastMaintenance = maintenance || {active: false};
+        if (postToConsole(lastMaintenance)) {
+            var element = ensureBanner();
+            element.textContent = '';
+            element.style.display = 'none';
+            return;
+        }
+        renderParent(lastMaintenance);
+    }
+
+    function installConsoleReplay() {
+        var frame = document.getElementById('console-frame');
+        if (!frame) {
+            return;
+        }
+        frame.addEventListener('load', function () {
+            if (lastMaintenance) {
+                postToConsole(lastMaintenance);
+            }
+        });
     }
 
     async function poll() {
@@ -78,6 +121,7 @@
         }
     }
 
+    installConsoleReplay();
     poll();
     window.setInterval(poll, POLL_INTERVAL_MS);
 }(window, document));
