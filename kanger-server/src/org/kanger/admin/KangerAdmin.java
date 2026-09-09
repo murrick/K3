@@ -21,12 +21,13 @@ import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Local host-operator CLI for KANGER Server account lifecycle operations.
+ * Local host-operator CLI for KANGER Server operations.
  *
  * <p>The CLI is an authenticated client of the in-process admin listener. It
  * never mutates credential, pending, journal or account-home files directly.</p>
@@ -94,6 +95,12 @@ public final class KangerAdmin {
             }
             if ("delete-user".equals(command)) {
                 return deleteUser(options, terminal, client);
+            }
+            if ("status".equals(command)) {
+                return serverStatus(options, terminal, client);
+            }
+            if ("maintenance".equals(command)) {
+                return maintenance(options, terminal, client);
             }
             terminal.err("kanger-admin: unknown command: " + command);
             return EXIT_INPUT;
@@ -216,11 +223,114 @@ public final class KangerAdmin {
                         + " reached " + response.optString("state", "unknown"));
     }
 
+    private static int serverStatus(Options options,
+                                    Terminal terminal,
+                                    Client client) throws Exception {
+        options.rejectUnknown();
+        JSONObject response = client.post("/status", new JSONObject());
+        if (!isOk(response)) {
+            return emit(response, terminal, "");
+        }
+
+        StringBuilder text = new StringBuilder();
+        text.append("KANGER Server\n");
+        text.append("  status: ").append(response.optString("status", "unknown")).append('\n');
+        text.append("  core: ").append(response.optString("core_version", "unknown")).append('\n');
+        text.append("  server: ").append(response.optString("server_version", "unknown")).append('\n');
+        text.append("  uptime: ").append(formatDuration(response.optLong("uptime_millis", 0L))).append('\n');
+        text.append("  active sessions: ").append(response.optInt("active_sessions", 0)).append('\n');
+        text.append("  maintenance: ").append(formatMaintenance(response.optJSONObject("maintenance")));
+        terminal.out(text.toString());
+        return EXIT_SUCCESS;
+    }
+
+    private static int maintenance(Options options,
+                                   Terminal terminal,
+                                   Client client) throws Exception {
+        options.rejectUnknown("minutes", "clear");
+        boolean clear = options.flag("clear");
+        boolean hasMinutes = options.has("minutes");
+        if (clear == hasMinutes) {
+            throw new InputFailure(
+                    "maintenance requires exactly one --minutes VALUE or --clear");
+        }
+
+        JSONObject request = new JSONObject();
+        String success;
+        if (clear) {
+            request.put("clear", true);
+            success = "Maintenance notice cleared";
+        } else {
+            long minutes;
+            try {
+                minutes = Long.parseLong(options.value("minutes"));
+            } catch (NumberFormatException ex) {
+                throw new InputFailure("minutes must be a positive integer");
+            }
+            if (minutes <= 0L) {
+                throw new InputFailure("minutes must be a positive integer");
+            }
+            long deadline;
+            try {
+                deadline = Math.addExact(
+                        System.currentTimeMillis(),
+                        Math.multiplyExact(minutes, 60_000L));
+            } catch (ArithmeticException ex) {
+                throw new InputFailure("minutes value is too large");
+            }
+            request.put("deadline_epoch_millis", deadline);
+            success = "Maintenance notice scheduled for " + formatInstant(deadline);
+        }
+
+        JSONObject response = client.post("/maintenance", request);
+        return emit(response, terminal, success);
+    }
+
+    private static boolean isOk(JSONObject response) {
+        return response != null
+                && "OK".equalsIgnoreCase(response.optString("result", ""));
+    }
+
+    private static String formatMaintenance(JSONObject maintenance) {
+        if (maintenance == null || !maintenance.optBoolean("active", false)) {
+            return "none";
+        }
+        long deadline = maintenance.optLong("deadline_epoch_millis", 0L);
+        return deadline > 0L ? formatInstant(deadline) : "active";
+    }
+
+    private static String formatInstant(long epochMillis) {
+        try {
+            return Instant.ofEpochMilli(epochMillis).toString();
+        } catch (Exception ex) {
+            return Long.toString(epochMillis);
+        }
+    }
+
+    private static String formatDuration(long millis) {
+        long seconds = Math.max(0L, millis) / 1000L;
+        long days = seconds / 86_400L;
+        long hours = (seconds % 86_400L) / 3_600L;
+        long minutes = (seconds % 3_600L) / 60L;
+        long remainderSeconds = seconds % 60L;
+        StringBuilder result = new StringBuilder();
+        if (days > 0L) {
+            result.append(days).append("d ");
+        }
+        if (hours > 0L || days > 0L) {
+            result.append(hours).append("h ");
+        }
+        if (minutes > 0L || hours > 0L || days > 0L) {
+            result.append(minutes).append("m ");
+        }
+        result.append(remainderSeconds).append('s');
+        return result.toString();
+    }
+
     private static int emit(JSONObject response,
                             Terminal terminal,
                             String successMessage) {
-        if (response != null
-                && "OK".equalsIgnoreCase(response.optString("result", ""))) {
+        if (isOk(response)) {
             terminal.out(successMessage);
             return EXIT_SUCCESS;
         }
@@ -293,11 +403,15 @@ public final class KangerAdmin {
 
     private static String usage() {
         return "Usage:\n"
+                + "  kanger-admin status\n"
+                + "  kanger-admin maintenance --minutes VALUE\n"
+                + "  kanger-admin maintenance --clear\n"
                 + "  kanger-admin create-user [--login VALUE] [--email VALUE] "
                 + "[--name VALUE] [--country VALUE] [--city VALUE] "
                 + "[--privacy-consent true|false] [--password-stdin]\n"
                 + "  kanger-admin delete-user (--login VALUE | --user-id VALUE) [--yes]\n"
-                + "\nPasswords are accepted only through a hidden prompt or --password-stdin.";
+                + "\nMaintenance publishes a deadline only; it does not stop the server.\n"
+                + "Passwords are accepted only through a hidden prompt or --password-stdin.";
     }
 
     private static final class HttpAdminClient implements Client {
@@ -423,7 +537,9 @@ public final class KangerAdmin {
                     throw new InputFailure("invalid option: " + argument);
                 }
                 String key = argument.substring(2);
-                if ("yes".equals(key) || "password-stdin".equals(key)) {
+                if ("yes".equals(key)
+                        || "password-stdin".equals(key)
+                        || "clear".equals(key)) {
                     result.put(key, "true");
                     continue;
                 }
