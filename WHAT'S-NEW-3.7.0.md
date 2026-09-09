@@ -23,6 +23,9 @@ KANGER III 3.7.0 is a stabilization and architectural-convergence release. Its m
 - Browser gateway and Console presentation were converged without moving semantic authority into JavaScript.
 - Editor state and local-file behavior were separated from authoritative KANGER context state.
 - The qualified Browser artifact contains 23 explicitly inventoried files.
+- The local authenticated `kanger-admin` plane exposes a compact Server status snapshot including uptime and active-session count.
+- Operators can publish or clear a maintenance deadline with `kanger-admin maintenance`; the notice is informational and has no lifecycle side effects.
+- Browser clients poll the public read-only maintenance state and show the scheduled time without prescribing user actions.
 
 ## Hypothesis semantics
 
@@ -69,7 +72,7 @@ The compatibility value `3.3` is deliberately not used as the public release lab
 ## Known non-blocking debt
 
 - Completed hypothesis optimization for the largest visible historical set remains comparatively expensive (approximately 10–12 seconds in the accepted characterization). Correctness takes precedence over optimization.
-- Typed canonical diagnostics, friendlier storage-rebase error presentation, read-only runtime/system `status`, and expanded `.k` transport/import-export lifecycle are post-3.7.0 work.
+- Typed canonical diagnostics, friendlier storage-rebase error presentation, and expanded `.k` transport/import-export lifecycle are post-3.7.0 work.
 - Resource quota/governor design is deferred research and is not part of the 3.7.0 architecture contract.
 
 ## Release boundary
