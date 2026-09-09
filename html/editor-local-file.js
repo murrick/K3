@@ -508,3 +508,178 @@
 
     window.setTimeout(install, 0);
 }(window, document));
+
+/*
+ * Server maintenance presentation adapter.
+ *
+ * Polling remains parent-owned. The contained console receives only the
+ * informational maintenance snapshot and renders it directly below the
+ * historical 24px status row. This adapter owns no shutdown/session/command
+ * semantics; it only reserves vertical presentation space while the notice is
+ * active.
+ */
+(function (window, document) {
+    'use strict';
+
+    var CHANNEL = 'kanger.maintenance.v1';
+    var STATUS_HEIGHT_PX = 24;
+    var NOTICE_PADDING_Y_PX = 7;
+    var installed = false;
+    var retries = 0;
+    var MAX_RETRIES = 300;
+    var activeHeight = 0;
+    var banner = null;
+    var bottomObserver = null;
+
+    function ensureBanner() {
+        if (banner) {
+            return banner;
+        }
+        banner = document.createElement('div');
+        banner.id = 'server-maintenance-notice';
+        banner.setAttribute('role', 'status');
+        banner.setAttribute('aria-live', 'polite');
+        banner.style.position = 'fixed';
+        banner.style.top = STATUS_HEIGHT_PX + 'px';
+        banner.style.left = '0';
+        banner.style.right = '0';
+        banner.style.zIndex = '90';
+        banner.style.padding = NOTICE_PADDING_Y_PX + 'px 16px';
+        banner.style.textAlign = 'center';
+        banner.style.fontFamily = 'Helvetica, Arial, sans-serif';
+        banner.style.fontSize = '14px';
+        banner.style.fontWeight = '600';
+        banner.style.lineHeight = '18px';
+        banner.style.background = '#fff3cd';
+        banner.style.color = '#5f4b00';
+        banner.style.borderBottom = '1px solid #e0c96a';
+        banner.style.boxShadow = '0 2px 5px rgba(0,0,0,.12)';
+        banner.style.pointerEvents = 'none';
+        banner.style.display = 'none';
+        document.body.appendChild(banner);
+        return banner;
+    }
+
+    function bottomHeight() {
+        var bottom = document.getElementById('container-div');
+        if (!bottom || typeof bottom.getBoundingClientRect !== 'function') {
+            return 0;
+        }
+        var value = Number(bottom.getBoundingClientRect().height);
+        return isFinite(value) && value > 0 ? value : 0;
+    }
+
+    function applyGeometry() {
+        var container = document.getElementById('container');
+        var right = document.getElementById('container-right');
+        var consolePanel = document.getElementById('container-console');
+        var consoleInput = document.getElementById('console-input');
+        var consoleNode = document.getElementById('console');
+        var editor = document.getElementById('editor');
+
+        if (!container || !right || !consolePanel) {
+            return;
+        }
+
+        var top = STATUS_HEIGHT_PX + activeHeight;
+        container.style.top = top + 'px';
+        right.style.top = top + 'px';
+        container.style.height = 'calc(100% - ' + top + 'px)';
+        right.style.height = 'calc(100% - ' + top + 'px)';
+
+        var available = document.documentElement.clientHeight
+                - STATUS_HEIGHT_PX - 24 - 9 - activeHeight - bottomHeight();
+        if (isFinite(available) && available > 60) {
+            consolePanel.style.height = Math.floor(available) + 'px';
+            if (consoleNode && consoleInput) {
+                consoleNode.style.height = Math.max(20,
+                        consolePanel.clientHeight - 26 - consoleInput.clientHeight) + 'px';
+            }
+            if (editor) {
+                editor.style.height = Math.max(20,
+                        consolePanel.clientHeight - 26) + 'px';
+            }
+            if (window.editor && typeof window.editor.setSize === 'function' && editor) {
+                window.editor.setSize(editor.clientWidth + 'px', editor.clientHeight + 'px');
+            }
+        }
+    }
+
+    function render(maintenance) {
+        var element = ensureBanner();
+        var active = !!(maintenance && maintenance.active);
+        var deadline = Number(maintenance && maintenance.deadline_epoch_millis || 0);
+        var nextHeight = 0;
+
+        if (!active) {
+            element.textContent = '';
+            element.style.display = 'none';
+        } else {
+            if (!Number.isFinite(deadline) || deadline <= 0) {
+                element.textContent = 'Server maintenance is scheduled.';
+            } else {
+                element.textContent = 'Server maintenance is scheduled for '
+                        + new Date(deadline).toLocaleString() + '.';
+            }
+            element.style.display = 'block';
+            nextHeight = Math.ceil(element.getBoundingClientRect().height);
+        }
+
+        if (nextHeight !== activeHeight) {
+            activeHeight = nextHeight;
+        }
+        applyGeometry();
+    }
+
+    function onMessage(event) {
+        if (event.source !== window.parent) {
+            return;
+        }
+        var data = event.data;
+        if (!data || data.channel !== CHANNEL || data.type !== 'notice') {
+            return;
+        }
+        render(data.maintenance || {active: false});
+    }
+
+    function installObserver() {
+        var bottom = document.getElementById('container-div');
+        if (!bottom || !window.MutationObserver || bottomObserver) {
+            return;
+        }
+        bottomObserver = new window.MutationObserver(function () {
+            applyGeometry();
+        });
+        bottomObserver.observe(bottom, {
+            attributes: true,
+            attributeFilter: ['style']
+        });
+    }
+
+    function install() {
+        if (installed) {
+            return;
+        }
+        if (!document.body
+                || !document.getElementById('container')
+                || !document.getElementById('container-right')) {
+            retries += 1;
+            if (retries <= MAX_RETRIES) {
+                window.setTimeout(install, 10);
+            }
+            return;
+        }
+        installed = true;
+        installObserver();
+        window.addEventListener('message', onMessage, true);
+        window.addEventListener('resize', applyGeometry);
+        applyGeometry();
+        window.KANGER_MAINTENANCE_PRESENTATION = Object.freeze({
+            version: 1,
+            installed: true,
+            informationalOnly: true
+        });
+    }
+
+    window.setTimeout(install, 0);
+}(window, document));
