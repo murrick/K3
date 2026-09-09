@@ -44,6 +44,12 @@
         return banner;
     }
 
+    function hideParent() {
+        var element = ensureBanner();
+        element.textContent = '';
+        element.style.display = 'none';
+    }
+
     function consoleVisible() {
         var view = document.getElementById('console-view');
         return !!view && !view.classList.contains('hidden');
@@ -65,8 +71,7 @@
     function renderParent(maintenance) {
         var element = ensureBanner();
         if (!maintenance || !maintenance.active) {
-            element.textContent = '';
-            element.style.display = 'none';
+            hideParent();
             return;
         }
 
@@ -80,12 +85,24 @@
         element.style.display = 'block';
     }
 
+    function handoffToConsole() {
+        if (!consoleVisible()) {
+            return false;
+        }
+        /*
+         * Console visibility is the ownership boundary. Hide the parent copy
+         * before attempting delivery so login -> console transition can never
+         * render two notices. The frame load handler replays the last snapshot
+         * if this message arrives before the child listener is ready.
+         */
+        hideParent();
+        return postToConsole(lastMaintenance || {active: false});
+    }
+
     function render(maintenance) {
         lastMaintenance = maintenance || {active: false};
-        if (postToConsole(lastMaintenance)) {
-            var element = ensureBanner();
-            element.textContent = '';
-            element.style.display = 'none';
+        if (consoleVisible()) {
+            handoffToConsole();
             return;
         }
         renderParent(lastMaintenance);
@@ -93,14 +110,27 @@
 
     function installConsoleReplay() {
         var frame = document.getElementById('console-frame');
-        if (!frame) {
-            return;
+        var view = document.getElementById('console-view');
+        if (frame) {
+            frame.addEventListener('load', function () {
+                if (lastMaintenance && consoleVisible()) {
+                    hideParent();
+                    postToConsole(lastMaintenance);
+                }
+            });
         }
-        frame.addEventListener('load', function () {
-            if (lastMaintenance) {
-                postToConsole(lastMaintenance);
-            }
-        });
+        if (view && typeof window.MutationObserver === 'function') {
+            new window.MutationObserver(function () {
+                if (consoleVisible()) {
+                    handoffToConsole();
+                } else if (lastMaintenance) {
+                    renderParent(lastMaintenance);
+                }
+            }).observe(view, {
+                attributes: true,
+                attributeFilter: ['class']
+            });
+        }
     }
 
     async function poll() {
