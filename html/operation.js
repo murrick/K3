@@ -190,14 +190,12 @@
 
     function snapshotLayoutData(snapshot) {
         var data = snapshot ? snapshot.reasonData : null;
-        if (!data || typeof data !== 'object') {
-            return data;
-        }
+        data = data && typeof data === 'object' ? data : {};
         var layoutData = {};
         Object.keys(data).forEach(function (name) {
             layoutData[name] = data[name];
         });
-        if (isWhoKnows(data)) {
+        if (snapshot.suppressQueryResults) {
             // WHO KNOWS may retain internal values/solutions while hypotheses
             // are being published. They are not operator-visible query results.
             layoutData.results = 0;
@@ -211,6 +209,13 @@
         var hypothesis = originalGetElementById('query-hypothesis');
         layoutData.hypothesis = hypothesis && hypothesis.childNodes
                 ? hypothesis.childNodes.length : 0;
+        ['results', 'solutions'].forEach(function (name) {
+            if (!hasOwn(layoutData, name)) {
+                var target = originalGetElementById('query-' + name);
+                layoutData[name] = target && target.childNodes
+                        ? target.childNodes.length : 0;
+            }
+        });
         return layoutData;
     }
 
@@ -243,11 +248,13 @@
             return;
         }
         if (!snapshot.domCommitted) {
-            // WHO KNOWS owns no operator-visible Solutions projection. The
-            // server may retain internal solution candidates while hypothesis
-            // optimization settles, but those candidates must not be
-            // republished by the coherent snapshot.
-            if (isWhoKnows(snapshot.reasonData)) {
+            // Compile, read-only dialogue and reason-less refreshes need not
+            // carry a query response. The completed hypothesis projection is
+            // also authoritative for panel visibility. Never republish internal
+            // solution candidates alongside that projection.
+            snapshot.suppressQueryResults = isWhoKnows(snapshot.reasonData)
+                    || snapshot.staging['query-hypothesis'].childNodes.length > 0;
+            if (snapshot.suppressQueryResults) {
                 clearElement(snapshot.staging['query-results']);
                 clearElement(snapshot.staging['query-solutions']);
             }
