@@ -10,6 +10,7 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import org.json.JSONObject;
+import org.kanger.ServerOperations;
 import org.kanger.Settings;
 import org.kanger.UserFactory;
 import org.kanger.Watchdog;
@@ -39,8 +40,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Loopback-only authenticated transport for KANGER host-operator operations.
  *
  * <p>This listener is deliberately separate from the public application API.
- * It owns no account files and delegates every mutation to the in-process
- * {@link AccountLifecycleService}.</p>
+ * Account mutations are delegated to {@link AccountLifecycleService}; process
+ * status and maintenance notices are delegated to {@link ServerOperations}.</p>
  */
 public final class AdminServer {
 
@@ -214,7 +215,7 @@ public final class AdminServer {
                 }
                 if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
                     send(exchange, 405, error("METHOD_NOT_ALLOWED",
-                            "Admin mutations require POST"));
+                            "Admin operations require POST"));
                     return;
                 }
 
@@ -224,6 +225,10 @@ public final class AdminServer {
                     send(exchange, 200, createUser(request));
                 } else if ("/delete-user".equals(path)) {
                     send(exchange, 200, deleteUser(request));
+                } else if ("/status".equals(path)) {
+                    send(exchange, 200, ServerOperations.status());
+                } else if ("/maintenance".equals(path)) {
+                    send(exchange, 200, maintenance(request));
                 } else {
                     send(exchange, 404, error("ADMIN_OPERATION_NOT_FOUND",
                             "Unknown admin operation"));
@@ -295,6 +300,21 @@ public final class AdminServer {
                 .put("login", deletion.getLogin())
                 .put("state", deletion.getState().name())
                 .put("quarantine_home", deletion.getQuarantineHome().toString());
+    }
+
+    private JSONObject maintenance(JSONObject request) {
+        boolean clear = request.optBoolean("clear", false);
+        boolean hasDeadline = request.has("deadline_epoch_millis")
+                && !request.isNull("deadline_epoch_millis");
+        if (clear == hasDeadline) {
+            throw new IllegalArgumentException(
+                    "maintenance requires exactly one clear=true or deadline_epoch_millis");
+        }
+        if (clear) {
+            return ServerOperations.clearMaintenance();
+        }
+        return ServerOperations.scheduleMaintenance(
+                request.getLong("deadline_epoch_millis"));
     }
 
     private boolean authorized(Headers headers) {

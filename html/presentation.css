@@ -24,6 +24,7 @@
     --kanger-title-bg: #303840;
     --kanger-title-fg: #f5f7f8;
     --kanger-live: #eef3f6;
+    --kanger-maintenance-row: 33px;
 }
 
 body.kanger-presentation {
@@ -90,6 +91,7 @@ body.kanger-presentation #container-left-size {
 body.kanger-presentation #container-right.kanger-center {
     grid-column: 3;
     position: relative !important;
+    top: 0 !important;
     left: auto !important;
     float: none !important;
     display: flex !important;
@@ -345,6 +347,7 @@ body.kanger-presentation #query-results td:not(:first-child):hover {
 
 body.kanger-presentation #user-menu {
     top: var(--kanger-header) !important;
+    z-index: 200 !important;
 }
 
 /* Confirmation e-mail resend no longer has a valid UI meaning in either
@@ -399,6 +402,30 @@ body.kanger-presentation #query-input {
     height: 20px !important;
     min-height: 20px !important;
     margin: 0 4px 0 0 !important;
+}
+
+/* 3.7.0 maintenance row.
+ *
+ * The legacy maintenance adapter computes historical 24px geometry inline.
+ * Presentation owns the actual 32px header and the grid, so neutralize those
+ * per-column offsets here and move the complete grid as one unit. The banner
+ * is deliberately one fixed row: at narrow widths it truncates rather than
+ * changing application geometry under a running session.
+ */
+body.kanger-presentation #server-maintenance-notice {
+    box-sizing: border-box !important;
+    top: var(--kanger-header) !important;
+    height: var(--kanger-maintenance-row) !important;
+    padding: 7px 16px !important;
+    line-height: 18px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body.kanger-presentation:has(#server-maintenance-notice[style*="display: block"])
+#container.kanger-grid {
+    top: calc(var(--kanger-header) + var(--kanger-maintenance-row)) !important;
 }
 
 @media (max-width: 920px) {
