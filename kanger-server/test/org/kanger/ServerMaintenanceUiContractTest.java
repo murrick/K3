@@ -24,6 +24,7 @@ class ServerMaintenanceUiContractTest {
         assertTrue(maintenance.contains("method: 'GET'"));
         assertTrue(maintenance.contains("Server maintenance is scheduled for"));
         assertTrue(maintenance.contains("deadline_epoch_millis"));
+        assertTrue(maintenance.contains("textContent"));
 
         String lower = maintenance.toLowerCase();
         assertFalse(lower.contains("save your"));
