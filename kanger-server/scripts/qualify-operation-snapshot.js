@@ -160,7 +160,7 @@ async function main() {
                 if (name === 'showHypothesis') {
                     window.dropQueryStatus();
                 }
-                target.appendChild(document.createTextNode(data.value));
+                if (data.value) target.appendChild(document.createTextNode(data.value));
             });
         };
     });
@@ -337,7 +337,7 @@ async function main() {
     const secondSnapshot = snapshotReads(transport).slice();
     assert.strictEqual(secondSnapshot.length, 6);
     for (let i = 0; i < 5; i++) {
-        transport.resolve(secondSnapshot[i], {result: 'OK', value: 'fresh-' + i});
+        transport.resolve(secondSnapshot[i], {result: 'OK', value: i === 4 ? '' : 'fresh-' + i});
     }
     targetIds.forEach((id, index) => assert.strictEqual(
             elements[id].textContent,
@@ -346,7 +346,7 @@ async function main() {
             'partial second snapshot leaked into live DOM'));
     transport.resolve(secondSnapshot[5], {result: 'OK', value: 'fresh-5'});
     targetIds.forEach((id, index) => assert.strictEqual(
-            elements[id].textContent, 'fresh-' + index));
+            elements[id].textContent, index === 4 ? '' : 'fresh-' + index));
     assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 5);
     const secondLayout = snapshotReads(transport).filter(
             (record) => secondSnapshot.indexOf(record) < 0);
@@ -372,7 +372,7 @@ async function main() {
     const thirdSnapshot = snapshotReads(transport).slice();
     assert.strictEqual(thirdSnapshot.length, 6);
     thirdSnapshot.forEach((record, index) => {
-        transport.resolve(record, {result: 'OK', value: 'third-' + index});
+        transport.resolve(record, {result: 'OK', value: index === 4 ? '' : 'third-' + index});
     });
     assert(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId > 0);
     const thirdLayout = snapshotReads(transport).filter(
@@ -381,6 +381,51 @@ async function main() {
     transport.resolve(thirdLayout[0], {result: 'OK', size: 0});
     assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 0);
     console.log('OPERATION_PROTOCOL_PASS stale-read-rejection');
+
+    async function verifyPanelRefresh(packet, reason, hasHypothesis, label) {
+        if (packet) {
+            window.post(packet, () => {});
+            const request = transport.unresolved((p) => p === packet)[0];
+            transport.resolve(request, reason);
+        } else {
+            window.KANGER_OPERATION_PROTOCOL.requestSnapshot(reason);
+        }
+        await settle(2);
+        // UNKNOWN reads hypotheses first; ordinary refreshes read all six.
+        let reads = snapshotReads(transport).slice();
+        if (reads.length === 1 && reads[0].packet.parameters.hypothesis !== undefined) {
+            transport.resolve(reads[0], {result: 'OK', value: hasHypothesis ? 'hypothesis' : ''});
+            reads = snapshotReads(transport).slice();
+        }
+        reads.forEach((record) => transport.resolve(record, {
+            result: 'OK',
+            value: record.packet.parameters.hypothesis !== undefined
+                    ? (hasHypothesis ? 'hypothesis' : '') : 'candidate'
+        }));
+        const suppress = hasHypothesis || reason && reason.response === 'unknown';
+        assert.strictEqual(elements['query-solutions'].textContent,
+                suppress ? '' : 'candidate', label + ': Solutions projection');
+        assert.strictEqual(elements['query-results'].textContent,
+                suppress ? '' : 'candidate', label + ': Values projection');
+        const layout = snapshotReads(transport);
+        assert.strictEqual(layout.length, 1, label + ': layout barrier');
+        transport.resolve(layout[0], {result: 'OK', size: 0});
+        assert.strictEqual(window.lastLayoutData.solutions, suppress ? 0 : 1, label);
+        assert.strictEqual(window.lastLayoutData.hypothesis, hasHypothesis ? 1 : 0, label);
+        assert.strictEqual(window.KANGER_OPERATION_PROTOCOL.snapshot().activeOperationId, 0);
+        console.log('OPERATION_PROTOCOL_PASS ' + label);
+    }
+    await verifyPanelRefresh({context: 'query', parameters: {request: '?male(Tom);'}},
+            {result: 'OK', response: 'unknown', results: 1, solutions: 1}, true, 'unknown-baseline');
+    await verifyPanelRefresh({context: 'dialogue', parameters: {line: 'base tree 125'}},
+            {result: 'OK', results: 1, solutions: 1}, true, 'hypothesis-after-read-only-dialogue');
+    await verifyPanelRefresh({context: 'query', parameters: {compile: 'source'}},
+            {result: 'OK', results: 1, solutions: 1}, true, 'hypothesis-after-editor-compile');
+    await verifyPanelRefresh(null, null, true, 'hypothesis-after-refresh-without-reason');
+    await verifyPanelRefresh({context: 'query', parameters: {request: '?known(Tom);'}},
+            {result: 'OK', response: 'yes', results: 1, solutions: 1}, false, 'definite-results-return');
+    await verifyPanelRefresh({context: 'query', parameters: {request: '?unknown(Tom);'}},
+            {result: 'OK', response: 'unknown', results: 1, solutions: 1}, false, 'unknown-with-no-hypotheses');
 
     let timeoutResult = null;
     window.post({context: 'query', parameters: {compile: 'source'}},
