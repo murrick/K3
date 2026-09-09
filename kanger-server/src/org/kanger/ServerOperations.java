@@ -8,6 +8,8 @@ package org.kanger;
 
 import org.json.JSONObject;
 
+import java.lang.management.ManagementFactory;
+
 /**
  * Process-local operational state exposed through the authenticated admin plane
  * and, in reduced form, through the public maintenance polling endpoint.
@@ -19,7 +21,6 @@ import org.json.JSONObject;
 public final class ServerOperations {
 
     private static final Object MONITOR = new Object();
-    private static final long STARTED_AT_MILLIS = System.currentTimeMillis();
 
     private static long maintenanceDeadlineMillis;
 
@@ -35,7 +36,7 @@ public final class ServerOperations {
                 .put("core_version", Version.CORE_VERSION_S)
                 .put("server_version", Version.SERVER_VERSION_S)
                 .put("uptime_millis", Math.max(0L,
-                        System.currentTimeMillis() - STARTED_AT_MILLIS))
+                        ManagementFactory.getRuntimeMXBean().getUptime()))
                 .put("active_sessions", UserFactory.activeSessionCount())
                 .put("maintenance", maintenance);
     }
