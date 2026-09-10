@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import org.kanger.enums.StorageLifecycleErrorCode;
+import org.kanger.exception.StorageLifecycleException;
 
 /**
  * Storage-independent snapshot of the explicit user transaction stack.
@@ -90,8 +92,10 @@ final class UserTransactionStackSnapshot {
                 Mind work = tx.mind();
                 rootLevel.apply(root, work);
                 if (!Boolean.TRUE.equals(work.queryCheck(false))) {
-                    throw new IllegalStateException(
-                            "Offline U0 conflicts with target storage baseline");
+                    throw new StorageLifecycleException(
+                            StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                            "Storage opening rejected: knowledge at U0 conflicts with the selected database. "
+                            + "Resolve the conflicting knowledge or select a compatible database.");
                 }
                 if (!tx.commit()) {
                     throw new IllegalStateException(
@@ -127,8 +131,10 @@ final class UserTransactionStackSnapshot {
                 current = child;
             }
             if (!Boolean.TRUE.equals(current.queryCheck(false))) {
-                throw new IllegalStateException(
-                        "Replayed current context conflicts with storage baseline");
+                throw new StorageLifecycleException(
+                        StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                        "Storage opening rejected: the current transaction context conflicts with the selected database. "
+                        + "Resolve or roll back the conflicting changes, or select a compatible database.");
             }
             restoreCompatibility(root, current);
             return current;
