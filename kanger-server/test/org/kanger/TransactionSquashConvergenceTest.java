@@ -30,6 +30,34 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TransactionSquashConvergenceTest {
 
     @Test
+    void rejectedStorageSwitchReportsTypedConflictAndRestoresStack() throws Exception {
+        Fixture fixture = fixture("rebase-rejection");
+        try {
+            IMind root = createStorage(fixture, "conflict-a", "!anchor;");
+            createStorage(fixture, "conflict-b", "!~ghost;");
+            root = open(fixture, root, "conflict-a");
+            Mind child = new Mind(root);
+            assertTrue(Boolean.TRUE.equals(child.query("!ghost;")));
+            fixture.user.setCurrentMind(child);
+            org.kanger.exception.StorageLifecycleException error = assertThrows(
+                    org.kanger.exception.StorageLifecycleException.class,
+                    () -> child.useStorage("conflict-b"));
+            assertEquals("STORAGE_CONTEXT_CONFLICT", error.getCode());
+            assertTrue(error.toString().contains("select a compatible database"));
+            IMind restored = fixture.user.getCurrentMind();
+            assertEquals("conflict-a", restored.getStorageName());
+            assertEquals(1, restored.getTransactionLevel());
+            assertTrue(Boolean.TRUE.equals(restored.query("?ghost;")));
+            CanonicalCommandProcessor.Result rollback = new CanonicalCommandProcessor().execute(
+                    new CommandParser().parse("transaction rollback"), fixture.user);
+            assertTrue(rollback.isSuccess());
+            assertEquals(0, rollback.getMind().getTransactionLevel());
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
     void parserRecognizesCanonicalTransactionSquash() throws Exception {
         CommandParser parser = new CommandParser();
         CommandInvocation invocation = parser.parse("transaction squash");
