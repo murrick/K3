@@ -20,6 +20,7 @@ public enum StorageLifecycleErrorCode {
     NO_STORAGE_OPEN(null),
     STORAGE_NOT_FOUND(null),
     STORAGE_SEMANTIC_CORRUPTION(null),
+    STORAGE_CONTEXT_CONFLICT("RESOLVE_CONTEXT_OR_SELECT_COMPATIBLE_STORAGE"),
     STORAGE_DELETE_INCOMPLETE("VERIFY_CURRENT_STATE");
 
     private final String requiredAction;
