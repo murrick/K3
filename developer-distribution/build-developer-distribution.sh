@@ -112,14 +112,14 @@ cat > "${BUNDLE_DIR}/bin/kanger-console" <<'EOF_LAUNCHER'
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-exec java -cp "${ROOT_DIR}/lib/*" org.kanger.Kanger -S "$@"
+exec java -cp "${ROOT_DIR}/lib/*" org.kanger.Kanger "$@"
 EOF_LAUNCHER
 chmod 0755 "${BUNDLE_DIR}/bin/kanger-console"
 
 cat > "${BUNDLE_DIR}/bin/kanger-console.cmd" <<'EOF_CMD'
 @echo off
 set "ROOT_DIR=%~dp0.."
-java -cp "%ROOT_DIR%\lib\*" org.kanger.Kanger -S %*
+java -cp "%ROOT_DIR%\lib\*" org.kanger.Kanger %*
 EOF_CMD
 chmod 0644 "${BUNDLE_DIR}/bin/kanger-console.cmd"
 find "${BUNDLE_DIR}/lib" -type f -name '*.jar' -exec chmod 0644 {} +
