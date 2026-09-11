@@ -14,11 +14,20 @@
     <artifactId>kanger-command</artifactId>
     <packaging>jar</packaging>
 
-    <name>KANGER canonical command language</name>
+    <name>KANGER canonical command feature</name>
     <description>
-        Dependency-free canonical command grammar, vocabulary, parsing and
-        formatting boundary shared by Core and delivery adapters.
+        Optional canonical infrastructure-control feature: command vocabulary,
+        grammar, parsing, formatting and transport-neutral execution over the
+        KANGER Core runtime API.
     </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.kanger</groupId>
+            <artifactId>kanger-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 
     <build>
         <sourceDirectory>${project.basedir}/src</sourceDirectory>

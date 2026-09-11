@@ -16,17 +16,36 @@ Windows:
 bin\kanger-console.cmd
 ```
 
-The bundled launchers start `org.kanger.Kanger -S`, the local single-user mode. The single-user credential is created/reused automatically by the Console entry point.
+With no options, the bundled launchers preserve the normal Console entry path and start an **interactive login**:
 
-The underlying launcher also supports these `org.kanger.Kanger` options when started directly:
+```text
+login:
+password:
+```
+
+The launchers do not select a user or authentication mode themselves; they only set the Developer Distribution classpath and forward caller arguments to `org.kanger.Kanger`.
+
+For the explicit local single-user mode, request it deliberately:
+
+```sh
+bin/kanger-console -S
+```
+
+To select an existing user non-interactively, pass the user and password explicitly, for example:
+
+```sh
+bin/kanger-console -U <login> -P <password>
+```
+
+The launchers support the same `org.kanger.Kanger` options:
 
 - `--adduser | -A <login>` — create a user; password is required;
 - `--user | -U <login>` — select login;
 - `--password | -P <password>` — select password;
-- `--singleuser | -S` — start local single-user mode;
+- `--singleuser | -S` — start local single-user mode; the `singleuser` credential is created/reused automatically;
 - `--help | -H` — show launcher help.
 
-`KANGER_OPTIONS` may provide the same options through the environment. Command-line arguments and environment options are combined by the launcher.
+`KANGER_OPTIONS` may provide the same options through the environment. Command-line arguments and environment options are combined by the Console entry point.
 
 ## 2. Session model
 
@@ -192,7 +211,7 @@ For normal inspection also use `values`, `solutions`, `when`, `rule tree`, `base
 
 ## 6. Short working session
 
-Start the bundled Console, then enter:
+Start the bundled Console, authenticate, then enter:
 
 ```text
 !color(apple, Red);

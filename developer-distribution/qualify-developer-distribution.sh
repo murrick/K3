@@ -47,6 +47,7 @@ VERSION="$(tr -d '[:space:]' < "${BUNDLE_DIR}/VERSION")"
 [[ -d "${BUNDLE_DIR}/lib" ]] || fail "Bundle lib directory is missing"
 [[ -d "${BUNDLE_DIR}/examples" ]] || fail "Bundle examples directory is missing"
 [[ -x "${BUNDLE_DIR}/bin/kanger-console" ]] || fail "Bundle Console launcher is missing or not executable"
+[[ -f "${BUNDLE_DIR}/bin/kanger-console.cmd" ]] || fail "Bundle Windows Console launcher is missing"
 [[ -f "${BUNDLE_DIR}/README.md" ]] || fail "Developer README is missing"
 [[ -f "${BUNDLE_DIR}/docs/SDK.md" ]] || fail "Developer SDK guide is missing"
 [[ -f "${BUNDLE_DIR}/docs/CONSOLE.md" ]] || fail "Developer Console guide is missing"
@@ -54,6 +55,21 @@ VERSION="$(tr -d '[:space:]' < "${BUNDLE_DIR}/VERSION")"
 [[ -f "${BUNDLE_DIR}/docs/api/index.html" ]] || fail "SDK JavaDoc index is missing"
 [[ -f "${BUNDLE_DIR}/docs/api/org/kanger/interfaces/IMind.html" ]] || fail "IMind JavaDoc page is missing"
 [[ -f "${BUNDLE_DIR}/docs/api/org/kanger/User.html" ]] || fail "User JavaDoc page is missing"
+
+# The distribution launcher must preserve the Console entry point's normal
+# authentication policy. In particular it must not inject single-user mode.
+if grep -Eq 'org\.kanger\.Kanger[[:space:]]+-S([[:space:]]|$)' \
+    "${BUNDLE_DIR}/bin/kanger-console"; then
+  fail "POSIX Console launcher forces single-user mode"
+fi
+if grep -Eq 'org\.kanger\.Kanger[[:space:]]+-S([[:space:]]|$)' \
+    "${BUNDLE_DIR}/bin/kanger-console.cmd"; then
+  fail "Windows Console launcher forces single-user mode"
+fi
+grep -Fq 'org.kanger.Kanger "$@"' "${BUNDLE_DIR}/bin/kanger-console" \
+  || fail "POSIX Console launcher does not forward caller arguments"
+grep -Fq 'org.kanger.Kanger %*' "${BUNDLE_DIR}/bin/kanger-console.cmd" \
+  || fail "Windows Console launcher does not forward caller arguments"
 
 grep -Fq 'IUser user = new User();' "${BUNDLE_DIR}/docs/SDK.md" \
   || fail "SDK guide does not document the qualified User entry path"
@@ -71,6 +87,8 @@ grep -Fq 'storage use <name>' "${BUNDLE_DIR}/docs/CONSOLE.md" \
   || fail "Console guide does not contain canonical storage syntax"
 grep -Fq 'xplain mode on' "${BUNDLE_DIR}/docs/CONSOLE.md" \
   || fail "Console guide does not contain Console-local xplain syntax"
+grep -Fq 'interactive login' "${BUNDLE_DIR}/docs/CONSOLE.md" \
+  || fail "Console guide does not document the default interactive login"
 if grep -R -Fq '3.3-SNAPSHOT' \
   "${BUNDLE_DIR}/README.md" \
   "${BUNDLE_DIR}/docs/SDK.md" \
@@ -146,14 +164,34 @@ for example in "${examples[@]}"; do
     java -cp "${CLASSES}:${CLASSPATH}" "${example}"
 done
 
-log "launching shipped Console without Server/UI"
+log "qualifying shipped Console explicit user arguments"
 console_home="${QUALIFICATION}/console-home"
 mkdir -p "${console_home}"
+JAVA_TOOL_OPTIONS="-Duser.home=${console_home}" \
+  "${BUNDLE_DIR}/bin/kanger-console" -A qualification -P qualification \
+  >"${QUALIFICATION}/console-create-user.log" 2>&1
+grep -Fq 'New user created: qualification' \
+  "${QUALIFICATION}/console-create-user.log" \
+  || { cat "${QUALIFICATION}/console-create-user.log" >&2; fail "Shipped Console did not create qualification user"; }
 printf 'quit\n' | \
   JAVA_TOOL_OPTIONS="-Duser.home=${console_home}" \
-  "${BUNDLE_DIR}/bin/kanger-console" \
-  >"${QUALIFICATION}/console.log" 2>&1
-grep -Fq 'KANGER III Session closed' "${QUALIFICATION}/console.log" \
-  || { cat "${QUALIFICATION}/console.log" >&2; fail "Shipped Console did not close cleanly"; }
+  "${BUNDLE_DIR}/bin/kanger-console" -U qualification -P qualification \
+  >"${QUALIFICATION}/console-user.log" 2>&1
+grep -Fq 'Current user: qualification' "${QUALIFICATION}/console-user.log" \
+  || { cat "${QUALIFICATION}/console-user.log" >&2; fail "Shipped Console did not forward explicit user arguments"; }
+grep -Fq 'KANGER III Session closed' "${QUALIFICATION}/console-user.log" \
+  || { cat "${QUALIFICATION}/console-user.log" >&2; fail "Shipped Console explicit-user session did not close cleanly"; }
+
+log "qualifying shipped Console explicit single-user mode"
+single_home="${QUALIFICATION}/single-home"
+mkdir -p "${single_home}"
+printf 'quit\n' | \
+  JAVA_TOOL_OPTIONS="-Duser.home=${single_home}" \
+  "${BUNDLE_DIR}/bin/kanger-console" -S \
+  >"${QUALIFICATION}/console-single.log" 2>&1
+grep -Fq 'Current user: singleuser' "${QUALIFICATION}/console-single.log" \
+  || { cat "${QUALIFICATION}/console-single.log" >&2; fail "Shipped Console explicit single-user mode failed"; }
+grep -Fq 'KANGER III Session closed' "${QUALIFICATION}/console-single.log" \
+  || { cat "${QUALIFICATION}/console-single.log" >&2; fail "Shipped Console single-user session did not close cleanly"; }
 
 log "DEVELOPER_RUNTIME_QUALIFICATION_PASS version=${VERSION} examples=${#examples[@]}"

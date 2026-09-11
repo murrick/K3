@@ -1,14 +1,166 @@
 # KANGER 3.7.0 Developer SDK
 
-This guide defines the supported developer-facing contract of the KANGER 3.7.0 Developer Distribution. It is intentionally narrower than all Java-public classes present in the Core JAR.
+This guide defines the supported developer-facing contract of the KANGER 3.7.0 Developer Distribution. It is intentionally narrower than all Java-public classes present in the shipped JARs.
 
 The normative integration path is plain Java/classpath. Maven and Gradle are packaging adapters over the same SDK contract.
 
-For exact signatures and inherited members, use the generated [Developer SDK JavaDoc](api/index.html). The most frequently used references are [`IUser`](api/org/kanger/interfaces/IUser.html), [`IMind`](api/org/kanger/interfaces/IMind.html), [`ITerm`](api/org/kanger/interfaces/ITerm.html), and [`RuntimeBootstrap`](api/org/kanger/bootstrap/RuntimeBootstrap.html).
+For exact signatures and inherited members of the curated stable SDK surface, use the generated [Developer SDK JavaDoc](api/index.html). The most frequently used references are [`IUser`](api/org/kanger/interfaces/IUser.html), [`IMind`](api/org/kanger/interfaces/IMind.html), [`ITerm`](api/org/kanger/interfaces/ITerm.html), and [`RuntimeBootstrap`](api/org/kanger/bootstrap/RuntimeBootstrap.html).
+
+## Assembly model
+
+KANGER 3.7.0 is deliberately assembled as one self-sufficient inference engine plus optional peer features.
+
+```text
+                         kanger-core
+                      /      |       \
+                     /       |        \
+          kanger-command  storage      UDF
+                     \       |        /
+                      \  kanger-bootstrap
+                       \    optional /
+```
+
+Read the diagram as a dependency rule: optional features depend on Core; Core does not depend on the optional features.
+
+### What each artifact means
+
+- `kanger-core` — the necessary and sufficient KANGER inference engine as a Java library. It owns `User`, `Mind`, compile/query/inference semantics, transactions, result inspection, and the Core lifecycle contracts. It does not require Command, Storage, UDF, Bootstrap, Console, Server, or UI.
+- `kanger-command` — optional canonical infrastructure-control language and transport-neutral command processing over Core. It depends on `kanger-core`; Core does not depend on it.
+- `kanger-data-dumb` — optional DUMB storage provider. It can be attached directly to a `User`; Bootstrap integration is optional.
+- `kanger-udf` — optional UDF provider. It can be attached directly to a `User`; Bootstrap integration is optional.
+- `kanger-bootstrap` — optional discovery/composition helper. It discovers and attaches available capabilities through Java `ServiceLoader`. It does not own Storage or UDF and is not required by Core.
+- `kanger-sdk` — convenience Maven/Gradle coordinate containing Core + Bootstrap + bundled UDF + bundled DUMB storage. It intentionally does **not** depend on `kanger-command`.
+- Console — a delivery adapter above the feature boundary. It explicitly uses the command feature and the runtime capabilities required by the Console experience.
+
+The Developer archive ships all of these JARs so a developer can choose an assembly. Presence in `lib/` does not imply that every JAR is mandatory for Core.
+
+Typical assemblies are:
+
+```text
+Inference only
+    kanger-core
+
+Inference + persistence
+    kanger-core + kanger-data-dumb
+
+Inference + UDF
+    kanger-core + kanger-udf
+
+Recommended runtime composition
+    kanger-core + kanger-bootstrap + selected providers
+
+Custom canonical command/control adapter
+    kanger-command + kanger-core + selected runtime features
+
+Convenience embedded SDK
+    kanger-sdk = core + bootstrap + bundled UDF + bundled DUMB storage
+```
+
+### Core-only startup
+
+The minimum embedded KANGER application is intentionally small:
+
+```java
+IUser user = new User();
+IMind mind = new Mind(user);
+```
+
+Nothing else is required to compile/query in-memory knowledge and use the inference engine.
+
+### Direct provider attachment
+
+An application may attach concrete runtime providers itself and omit Bootstrap completely:
+
+```java
+IUser user = new User();
+
+new org.kanger.storage.DB().init(user);
+new org.kanger.udf.UDF().init(user);
+
+IMind mind = new Mind(user);
+```
+
+This is a valid explicit composition path. It deliberately couples the application to provider implementation classes, so `org.kanger.storage.DB` and `org.kanger.udf.UDF` are not part of the curated Stable SDK surface.
+
+Use this path when the embedding application intentionally owns provider selection and initialization.
+
+### RuntimeBootstrap composition
+
+For normal embedding, the recommended composition path is to let `RuntimeBootstrap` discover and attach available capabilities around an already-created `User`:
+
+```java
+IUser user = new User();
+RuntimeBootstrap.ensure(user);
+IMind mind = new Mind(user);
+```
+
+A narrow capability request is also supported:
+
+```java
+IUser user = new User();
+RuntimeBootstrap.ensureCapabilities(user, RuntimeCapability.STORAGE);
+IMind mind = new Mind(user);
+```
+
+Bootstrap is therefore a convenience/composition feature, not a prerequisite for Core and not a parent layer for Storage or UDF.
+
+### Canonical command/control feature
+
+Applications that need KANGER's canonical infrastructure-control dialogue without adopting the full Console can use the command feature directly.
+
+A minimal transaction-control example is:
+
+```java
+IUser user = new User();
+IMind mind = new Mind(user);
+user.setCurrentMind(mind);
+
+CommandParser parser = new CommandParser();
+CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
+
+CommandInvocation invocation = parser.parse("transaction start");
+
+if (processor.handles(invocation)) {
+    CanonicalCommandProcessor.Result result =
+            processor.execute(invocation, user);
+
+    if (!result.isSuccess()) {
+        throw new IllegalStateException(result.getDescription());
+    }
+
+    mind = result.getMind();
+}
+```
+
+Relevant imports are:
+
+```java
+import org.kanger.CanonicalCommandProcessor;
+import org.kanger.Mind;
+import org.kanger.User;
+import org.kanger.command.CommandInvocation;
+import org.kanger.command.CommandParser;
+import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.IUser;
+```
+
+The parser also recognizes Core-language input. Such input deliberately bypasses command dispatch and remains a Core operation:
+
+```java
+CommandInvocation invocation = parser.parse("?color(apple, Red);");
+
+if (invocation.isCoreLanguage()) {
+    Boolean answer = mind.query(invocation.getRaw());
+}
+```
+
+`CanonicalCommandProcessor` currently owns the converged transport-neutral infrastructure-control families such as status, transaction control, and storage control. `handles(invocation) == false` means the caller must keep or provide the appropriate higher-level handling path. The processor is therefore useful for custom delivery/control adapters, but is not a promise that every Console presentation command is implemented by this one class.
+
+The command feature is public and usable in 3.7.0, but it is intentionally **not part of the curated Stable Developer SDK JavaDoc surface**. Treat direct command-feature integration as feature-level/advanced API for 3.7.0; the full supported interactive command experience remains the standalone Console documented in [`CONSOLE.md`](CONSOLE.md).
 
 ## 1. KANGER Core as a Java library
 
-KANGER Core can be embedded directly into a Java application without KANGER Server, REST, UI, browser sessions, or Console account plumbing.
+KANGER Core can be embedded directly into a Java application without KANGER Server, REST, UI, browser sessions, Console account plumbing, or the canonical command layer.
 
 The canonical standalone entry path is:
 
@@ -36,27 +188,31 @@ Primary contracts:
 
 `org.kanger.interfaces.internal` and implementation packages such as compiler, storage implementation, stores, units, and factories are not part of the supported SDK contract.
 
+The canonical command feature is also outside the curated Stable JavaDoc surface in 3.7.0 even though its integration classes are public and can be used by custom adapters as described above.
+
 The authoritative generated reference for the curated surface is [`api/index.html`](api/index.html).
 
 ## 3. Getting started
 
 ### 3.1 Plain Java / classpath
 
-From the unpacked distribution root on POSIX/macOS/Linux:
+For the minimum Core-only path from the unpacked distribution root on POSIX/macOS/Linux:
 
 ```sh
 mkdir -p out
-javac -cp "lib/*" -d out examples/BasicQuery.java
-java -cp "out:lib/*" BasicQuery
+javac -cp "lib/kanger-core.jar" -d out examples/BasicQuery.java
+java -cp "out:lib/kanger-core.jar" BasicQuery
 ```
 
 On Windows, use `;` as the runtime classpath separator:
 
 ```bat
 mkdir out
-javac -cp "lib/*" -d out examples\BasicQuery.java
-java -cp "out;lib/*" BasicQuery
+javac -cp "lib/kanger-core.jar" -d out examples\BasicQuery.java
+java -cp "out;lib/kanger-core.jar" BasicQuery
 ```
+
+`lib/*` remains a convenient broad classpath when experimenting with all bundled features, but it is not the minimum Core dependency.
 
 No Server, UI, external KANGER repository, or installation step is involved.
 
@@ -71,7 +227,7 @@ IMind mind = new Mind(user);
 
 Do not use Console `UserFactory` as the normal embedded SDK entry path. It belongs to Console account/session plumbing.
 
-`IUser.getCurrentMind()/setCurrentMind()` is a caller-managed compatibility slot. It is not a transaction-chain resolver and must not be used as lifecycle authority.
+`IUser.getCurrentMind()/setCurrentMind()` is a caller-managed compatibility/session slot. It is not a transaction-chain resolver and must not be used as lifecycle authority. The canonical command feature uses this slot to track the active Mind of its command session; plain Core applications do not need it for ordinary `IMind` ownership.
 
 See the exact constructor and inherited contracts in [`User`](api/org/kanger/User.html), [`Mind`](api/org/kanger/Mind.html), [`IUser`](api/org/kanger/interfaces/IUser.html), and [`IMind`](api/org/kanger/interfaces/IMind.html).
 
@@ -321,19 +477,29 @@ Serialize caller workflow where query-local result stores, active-Mind transitio
 
 Transaction lifecycle and physical storage lifecycle are separate contracts.
 
-The canonical Developer SDK storage path in 3.7.0 is [`IUser`](api/org/kanger/interfaces/IUser.html) lifecycle management combined with runtime capability bootstrap.
+Core defines the lifecycle contracts; a concrete storage provider is an optional feature. The bundled DUMB provider may be attached directly or through `RuntimeBootstrap`.
 
 ### 8.1 Storage setup
 
 For file-backed storage, configure the user, source, and database directories before opening storage. Directory strings accepted by the current `IUser` contract end with the platform file separator.
 
-Attach only the storage capability you need:
+Direct provider attachment:
 
 ```java
-RuntimeBootstrap.ensureCapabilities(user, RuntimeCapability.STORAGE);
+IUser user = new User();
+new org.kanger.storage.DB().init(user);
+IMind mind = new Mind(user);
 ```
 
-`RuntimeBootstrap.ensureCapabilities(...)` — discover and attach only the explicitly requested optional capabilities.
+Recommended Bootstrap attachment:
+
+```java
+IUser user = new User();
+RuntimeBootstrap.ensureCapabilities(user, RuntimeCapability.STORAGE);
+IMind mind = new Mind(user);
+```
+
+`RuntimeBootstrap.ensureCapabilities(...)` discovers and attaches only the explicitly requested optional capabilities.
 
 `RuntimeBootstrap` discovers runtime modules through Java `ServiceLoader`. Absence of an optional capability is a supported classpath state. If exactly one provider exists for a requested capability it can be selected automatically; multiple providers require explicit configuration.
 
@@ -399,7 +565,7 @@ Developer-facing diagnostics include query results, Solutions, Values, Hypothese
 
 Treat these as developer-facing explanation/diagnostic data, not as Core implementation state.
 
-Console `xplain` is a Console presentation feature. Java applications should use the Core result/log APIs rather than invoking Console commands.
+Console `xplain` is a Console presentation feature. Java applications should use the Core result/log APIs rather than invoking Console commands unless the application intentionally adopts the optional command/control feature.
 
 Exact log signatures: [`IMind`](api/org/kanger/interfaces/IMind.html) and [`LogMode`](api/org/kanger/enums/LogMode.html).
 
@@ -439,9 +605,11 @@ Exact bootstrap reference: [`RuntimeBootstrap`](api/org/kanger/bootstrap/Runtime
 
 ## 12. Maven and Gradle
 
+The bundled Maven-compatible repository contains the individual KANGER artifacts as well as the convenience `kanger-sdk` coordinate. Choose the narrowest assembly that matches the application.
+
 ### 12.1 Maven
 
-The bundle contains a Maven-compatible repository at `repository/` and a convenience coordinate:
+Convenience runtime SDK:
 
 ```xml
 <dependency>
@@ -451,17 +619,65 @@ The bundle contains a Maven-compatible repository at `repository/` and a conveni
 </dependency>
 ```
 
-A complete consumer project is shipped as `../examples/maven/`. Its repository URL points to the bundle-local `../../repository` directory.
+Core only:
 
-The `kanger-sdk` convenience artifact resolves the canonical 3.7.0 SDK/runtime graph. It does not change the Java API described above.
+```xml
+<dependency>
+    <groupId>org.kanger</groupId>
+    <artifactId>kanger-core</artifactId>
+    <version>3.7.0</version>
+</dependency>
+```
+
+Canonical command/control feature:
+
+```xml
+<dependency>
+    <groupId>org.kanger</groupId>
+    <artifactId>kanger-command</artifactId>
+    <version>3.7.0</version>
+</dependency>
+```
+
+`kanger-command` brings Core because Command is implemented over Core. Core does not bring Command.
+
+Other selectable feature coordinates are:
+
+```text
+org.kanger:kanger-bootstrap:3.7.0
+org.kanger:kanger-data-dumb:3.7.0
+org.kanger:kanger-udf:3.7.0
+```
+
+`kanger-data-dumb` and `kanger-udf` keep Bootstrap integration available, but Bootstrap is optional for consumers. Direct provider attachment therefore does not force `kanger-bootstrap` into the consumer dependency graph.
+
+A complete convenience-SDK consumer project is shipped as `../examples/maven/`. Its repository URL points to the bundle-local `../../repository` directory.
+
+The `kanger-sdk` convenience artifact resolves Core + Bootstrap + bundled UDF + bundled DUMB storage. It intentionally does not resolve `kanger-command`.
 
 ### 12.2 Gradle
 
-The equivalent Gradle dependency is:
+Convenience runtime SDK:
 
 ```groovy
 dependencies {
     implementation 'org.kanger:kanger-sdk:3.7.0'
+}
+```
+
+Core only:
+
+```groovy
+dependencies {
+    implementation 'org.kanger:kanger-core:3.7.0'
+}
+```
+
+Command/control feature:
+
+```groovy
+dependencies {
+    implementation 'org.kanger:kanger-command:3.7.0'
 }
 ```
 
@@ -483,6 +699,8 @@ The Developer distribution ships these qualified source examples:
 
 The canonical distribution qualification compiles and executes these exact source files from the built archive on Java 8 and Java 21. Maven and Gradle consumer qualification execute the storage scenario through `org.kanger:kanger-sdk:3.7.0`.
 
+The consumer qualification also verifies the modular boundary: the normal `kanger-sdk` embedding scenario resolves and runs without resolving `kanger-command` transitively.
+
 See [`../examples/README.md`](../examples/README.md) for command lines and expected PASS markers.
 
 ## 14. Supported API / compatibility policy
@@ -492,8 +710,10 @@ The Developer SDK contract is the curated surface documented here and in [`api/i
 Use these status meanings when discussing SDK surface:
 
 - **Stable** — supported Developer contract for 3.7.0.
-- **Experimental** — intentionally exposed for evaluation; compatibility is not promised as Stable.
+- **Experimental / feature-level** — intentionally usable for evaluation or custom adapters; compatibility is not promised as Stable.
 - **Internal** — implementation detail, outside the SDK contract.
 - **Legacy** — retained for compatibility but not the preferred integration path.
 
 For 3.7.0, prefer interfaces and lifecycle paths documented in this guide. Do not build new integrations against `org.kanger.interfaces.internal` or implementation packages that are absent from the curated JavaDoc.
+
+The canonical command/control classes shown in the Assembly model are feature-level API in 3.7.0: usable, documented here, but not promoted into the curated Stable JavaDoc contract.

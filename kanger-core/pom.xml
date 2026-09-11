@@ -14,19 +14,12 @@
     <artifactId>kanger-core</artifactId>
     <packaging>jar</packaging>
 
-    <name>KANGER shared semantic core</name>
+    <name>KANGER inference core</name>
     <description>
-        Shared production semantic boundary consumed by delivery adapters and
-        runtime plugins. Source files remain in the historical KANGER production root.
+        Necessary and sufficient KANGER inference/runtime library. Optional
+        command, storage, UDF, bootstrap and delivery features depend on Core;
+        Core does not depend on them.
     </description>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.kanger</groupId>
-            <artifactId>kanger-command</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-    </dependencies>
 
     <build>
         <sourceDirectory>${project.basedir}/../kanger/src</sourceDirectory>
