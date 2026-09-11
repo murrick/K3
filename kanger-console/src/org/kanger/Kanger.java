@@ -36,7 +36,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
-import java.util.Date;
 
 /**
  * Java Console entry point.
@@ -44,6 +43,15 @@ import java.util.Date;
 public class Kanger {
 
     public static void main(String[] args) throws Exception {
+        try {
+            run(args);
+        } catch (AuthenticationErrorException ex) {
+            System.err.println(ex.toString());
+            System.exit(1);
+        }
+    }
+
+    private static void run(String[] args) throws Exception {
         String newlogin = null;
         String login = null;
         String password = null;
@@ -93,17 +101,12 @@ public class Kanger {
         }
 
         if (newlogin != null) {
-            try {
-                if (password == null) {
-                    throw new AuthenticationErrorException("Password must be defined");
-                }
-                UserFactory.createUser(newlogin, password);
-                System.out.println("New user created: " + newlogin);
-                System.exit(0);
-            } catch (Exception ex) {
-                System.err.println(new Date());
-                ex.printStackTrace(System.err);
+            if (password == null) {
+                throw new AuthenticationErrorException("Password must be defined");
             }
+            UserFactory.createUser(newlogin, password);
+            System.out.println("New user created: " + newlogin);
+            System.exit(0);
         }
 
         if (singleUser) {
@@ -119,6 +122,13 @@ public class Kanger {
             login = kanger.readLine("login: ");
             password = new String(kanger.readPassword("password: "));
             System.out.println();
+        }
+
+        if (login == null || login.isEmpty()) {
+            throw new AuthenticationErrorException("Login must not be empty");
+        }
+        if (password == null || password.isEmpty()) {
+            throw new AuthenticationErrorException("Password must not be empty");
         }
 
         IUser user = UserFactory.getUser(login, password);

@@ -164,15 +164,69 @@ for example in "${examples[@]}"; do
     java -cp "${CLASSES}:${CLASSPATH}" "${example}"
 done
 
-log "qualifying shipped Console explicit user arguments"
+log "qualifying shipped Console authentication failures"
 console_home="${QUALIFICATION}/console-home"
 mkdir -p "${console_home}"
+
+if JAVA_TOOL_OPTIONS="-Duser.home=${console_home}" \
+    "${BUNDLE_DIR}/bin/kanger-console" -A qualification \
+    >"${QUALIFICATION}/console-missing-add-password.log" 2>&1; then
+  fail "Shipped Console accepted add-user without a password"
+fi
+grep -Fq 'Authentication error: Password must be defined' \
+  "${QUALIFICATION}/console-missing-add-password.log" \
+  || { cat "${QUALIFICATION}/console-missing-add-password.log" >&2; fail "Shipped Console did not report missing add-user password"; }
+if grep -Fq 'login:' "${QUALIFICATION}/console-missing-add-password.log"; then
+  cat "${QUALIFICATION}/console-missing-add-password.log" >&2
+  fail "Shipped Console fell through to interactive login after add-user failure"
+fi
+if grep -Fq 'at org.kanger.' "${QUALIFICATION}/console-missing-add-password.log"; then
+  cat "${QUALIFICATION}/console-missing-add-password.log" >&2
+  fail "Shipped Console exposed a stack trace for expected add-user failure"
+fi
+
+log "qualifying shipped Console explicit user arguments"
 JAVA_TOOL_OPTIONS="-Duser.home=${console_home}" \
   "${BUNDLE_DIR}/bin/kanger-console" -A qualification -P qualification \
   >"${QUALIFICATION}/console-create-user.log" 2>&1
 grep -Fq 'New user created: qualification' \
   "${QUALIFICATION}/console-create-user.log" \
   || { cat "${QUALIFICATION}/console-create-user.log" >&2; fail "Shipped Console did not create qualification user"; }
+
+if JAVA_TOOL_OPTIONS="-Duser.home=${console_home}" \
+    "${BUNDLE_DIR}/bin/kanger-console" -A qualification -P qualification \
+    >"${QUALIFICATION}/console-duplicate-user.log" 2>&1; then
+  fail "Shipped Console accepted duplicate user creation"
+fi
+grep -Fq 'Authentication error: User already exists' \
+  "${QUALIFICATION}/console-duplicate-user.log" \
+  || { cat "${QUALIFICATION}/console-duplicate-user.log" >&2; fail "Shipped Console did not report duplicate user"; }
+if grep -Fq 'login:' "${QUALIFICATION}/console-duplicate-user.log"; then
+  cat "${QUALIFICATION}/console-duplicate-user.log" >&2
+  fail "Shipped Console fell through to interactive login after duplicate-user failure"
+fi
+if grep -Fq 'at org.kanger.' "${QUALIFICATION}/console-duplicate-user.log"; then
+  cat "${QUALIFICATION}/console-duplicate-user.log" >&2
+  fail "Shipped Console exposed a stack trace for expected duplicate-user failure"
+fi
+
+if JAVA_TOOL_OPTIONS="-Duser.home=${console_home}" \
+    "${BUNDLE_DIR}/bin/kanger-console" -U qualification \
+    >"${QUALIFICATION}/console-missing-user-password.log" 2>&1; then
+  fail "Shipped Console accepted explicit user without a password"
+fi
+grep -Fq 'Authentication error: Password must not be empty' \
+  "${QUALIFICATION}/console-missing-user-password.log" \
+  || { cat "${QUALIFICATION}/console-missing-user-password.log" >&2; fail "Shipped Console did not report missing explicit-user password"; }
+if grep -Fq 'login:' "${QUALIFICATION}/console-missing-user-password.log"; then
+  cat "${QUALIFICATION}/console-missing-user-password.log" >&2
+  fail "Shipped Console fell through to interactive login after explicit-user failure"
+fi
+if grep -Fq 'at org.kanger.' "${QUALIFICATION}/console-missing-user-password.log"; then
+  cat "${QUALIFICATION}/console-missing-user-password.log" >&2
+  fail "Shipped Console exposed a stack trace for expected explicit-user failure"
+fi
+
 printf 'quit\n' | \
   JAVA_TOOL_OPTIONS="-Duser.home=${console_home}" \
   "${BUNDLE_DIR}/bin/kanger-console" -U qualification -P qualification \
