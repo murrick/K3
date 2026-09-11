@@ -97,6 +97,58 @@ BinaryDataExample.java
 
 See [`examples/README.md`](examples/README.md) for the complete commands and expected PASS markers.
 
+## Core, runtime modules, and RuntimeBootstrap
+
+KANGER Core does **not** require `RuntimeBootstrap`. The minimal embedded Core entry path remains a plain `User` plus `Mind`, and it is valid to run that Core without storage or UDF capabilities when the application does not need them.
+
+Optional runtime modules enrich an existing `User`; they do not define Core semantics. A developer therefore has two composition paths.
+
+### Direct module attachment
+
+An embedding application may select and initialize concrete runtime providers itself. This gives the application complete control over provider choice, initialization order, class loading, and lifecycle, but deliberately couples the application to provider-specific implementation APIs.
+
+For the providers bundled with the 3.7.0 Developer Distribution, the current low-level form is:
+
+```java
+IUser user = new User();
+
+new org.kanger.storage.DB().init(user);
+new org.kanger.udf.UDF().init(user);
+
+IMind mind = new Mind(user);
+```
+
+This is a valid explicit composition path, but `org.kanger.storage.DB` and `org.kanger.udf.UDF` are implementation classes, not part of the curated stable Developer SDK surface. Use direct attachment when the application intentionally wants to own that provider-specific coupling.
+
+### RuntimeBootstrap: recommended composition path
+
+For normal embedding, `RuntimeBootstrap` is the recommended composition tool. It is shipped separately from Core and enriches an already-created `User` with optional runtime capabilities discovered through Java `ServiceLoader`:
+
+```java
+IUser user = new User();
+RuntimeBootstrap.ensure(user);
+IMind mind = new Mind(user);
+```
+
+Applications that need only selected capabilities can request them explicitly:
+
+```java
+RuntimeBootstrap.ensureCapabilities(user, RuntimeCapability.STORAGE);
+```
+
+`RuntimeBootstrap` provides a single composition point, avoids provider-specific startup code, keeps module discovery and selection consistent with the standard KANGER runtime, supports narrow capability requests, and allows an embedding application to supply its own discovery `ClassLoader` when required. If a requested capability has exactly one available provider it can be selected automatically; when multiple providers are present, selection is made explicitly through the corresponding `User` runtime property.
+
+The architectural rule is intentional:
+
+```text
+Core does not depend on RuntimeBootstrap.
+RuntimeBootstrap is the recommended, but optional, composition layer around Core.
+```
+
+An application may therefore use bare Core, compose providers explicitly, or use `RuntimeBootstrap` as the canonical convenience layer. Choosing not to use `RuntimeBootstrap` does not disable Core; it only makes the embedding application responsible for attaching any optional capabilities it needs.
+
+See [`docs/SDK.md`](docs/SDK.md) for the exact bootstrap methods, capability-specific storage example, configuration rules, and supported API boundary.
+
 ## SDK documentation
 
 Read [`docs/SDK.md`](docs/SDK.md) before integrating KANGER into an application. It defines the supported entry path, Java/KANGER data mapping, query/compile semantics, result model, transaction ownership rules, storage lifecycle and maintenance, bootstrap behavior, concurrency contract, Maven/Gradle adapters, and the executable example suite.
