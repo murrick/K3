@@ -71,9 +71,13 @@ jobs:
           }
 
           require_entry "$RUNNER_TEMP/kanger-command.entries" 'org/kanger/command/CommandParser.class'
-          forbid_entry "$RUNNER_TEMP/kanger-command.entries" 'org/kanger/CanonicalCommandProcessor.class'
+          require_entry "$RUNNER_TEMP/kanger-command.entries" 'org/kanger/CanonicalCommandProcessor.class'
+          require_entry "$RUNNER_TEMP/kanger-command.entries" 'org/kanger/CanonicalStatusSnapshot.class'
+          require_entry "$RUNNER_TEMP/kanger-command.entries" 'org/kanger/CanonicalStatusRenderer.class'
 
-          require_entry "$RUNNER_TEMP/kanger-core.entries" 'org/kanger/CanonicalCommandProcessor.class'
+          forbid_entry "$RUNNER_TEMP/kanger-core.entries" 'org/kanger/CanonicalCommandProcessor.class'
+          forbid_entry "$RUNNER_TEMP/kanger-core.entries" 'org/kanger/CanonicalStatusSnapshot.class'
+          forbid_entry "$RUNNER_TEMP/kanger-core.entries" 'org/kanger/CanonicalStatusRenderer.class'
           require_entry "$RUNNER_TEMP/kanger-core.entries" 'org/kanger/interfaces/internal/IData.class'
           forbid_entry "$RUNNER_TEMP/kanger-core.entries" 'org/kanger/udf/UDF.class'
           forbid_entry "$RUNNER_TEMP/kanger-core.entries" 'org/kanger/storage/DB.class'
