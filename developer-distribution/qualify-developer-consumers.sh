@@ -74,7 +74,10 @@ mvn --batch-mode --no-transfer-progress \
 [[ -f "${MAVEN_PROJECT}/target/classes/StorageExample.class" ]] \
   || fail "Maven consumer did not compile StorageExample"
 
-for artifact in kanger-command kanger-core kanger-bootstrap kanger-udf kanger-data-dumb kanger-sdk; do
+# The aggregate embedding SDK intentionally excludes the infrastructure command
+# feature. Core, Bootstrap and the bundled providers must resolve; Command must
+# remain available in the repository only for consumers that choose it explicitly.
+for artifact in kanger-core kanger-bootstrap kanger-udf kanger-data-dumb kanger-sdk; do
   bundled="${REPOSITORY}/org/kanger/${artifact}/${VERSION}"
   resolved="${MAVEN_REPO}/org/kanger/${artifact}/${VERSION}"
   for extension in pom jar; do
@@ -90,6 +93,11 @@ for artifact in kanger-command kanger-core kanger-bootstrap kanger-udf kanger-da
   done
 done
 
+COMMAND_RESOLVED="${MAVEN_REPO}/org/kanger/kanger-command/${VERSION}"
+[[ ! -e "${COMMAND_RESOLVED}/kanger-command-${VERSION}.pom" \
+   && ! -e "${COMMAND_RESOLVED}/kanger-command-${VERSION}.jar" ]] \
+  || fail "Embedding SDK resolved kanger-command transitively"
+
 maven_cp="${MAVEN_PROJECT}/target/classes"
 while IFS= read -r jar; do
   maven_cp="${maven_cp}:${jar}"
@@ -99,7 +107,7 @@ JAVA_TOOL_OPTIONS="-Duser.home=${QUALIFICATION}/maven-home" \
   java -cp "${maven_cp}" StorageExample >"${MAVEN_OUTPUT}" 2>&1
 grep -Fq 'STORAGE_PASS' "${MAVEN_OUTPUT}" \
   || { cat "${MAVEN_OUTPUT}" >&2; fail "Maven consumer runtime probe failed"; }
-log "MAVEN_CONSUMER_PASS version=${VERSION}"
+log "MAVEN_CONSUMER_PASS version=${VERSION} command=not-resolved"
 
 log "qualifying Gradle consumer with bundled repository as its only dependency source"
 GRADLE_PROJECT="${QUALIFICATION}/gradle"
