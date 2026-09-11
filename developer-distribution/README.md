@@ -94,7 +94,21 @@ Windows:
 bin\kanger-console.cmd
 ```
 
-The bundled launcher starts Console in local single-user mode. Enter:
+With no options, the bundled launcher starts the normal interactive authentication path and prompts for `login` and `password`. The launcher itself does not choose a user or force single-user mode.
+
+For the explicit local single-user mode:
+
+```sh
+bin/kanger-console -S
+```
+
+For an explicitly selected existing user, the same Console options can be passed through the launcher, for example:
+
+```sh
+bin/kanger-console -U <login> -P <password>
+```
+
+After authentication, enter:
 
 ```text
 help
@@ -108,7 +122,7 @@ quit
 
 to close the session.
 
-See [`docs/CONSOLE.md`](docs/CONSOLE.md) for the complete developer-oriented Console guide.
+See [`docs/CONSOLE.md`](docs/CONSOLE.md) for the complete developer-oriented Console guide and launcher options.
 
 ## First Java program: Core-only classpath path
 
