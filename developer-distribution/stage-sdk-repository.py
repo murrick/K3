@@ -19,11 +19,16 @@ def pom(artifact_id: str, version: str, name: str, dependencies) -> str:
     if dependencies:
         rendered = []
         for dependency in dependencies:
+            optional = False
+            if isinstance(dependency, tuple):
+                dependency, optional = dependency
+            optional_xml = "            <optional>true</optional>\n" if optional else ""
             rendered.append(
                 "        <dependency>\n"
                 f"            <groupId>{GROUP_ID}</groupId>\n"
                 f"            <artifactId>{dependency}</artifactId>\n"
                 f"            <version>{version}</version>\n"
+                f"{optional_xml}"
                 "        </dependency>"
             )
         deps = "\n    <dependencies>\n" + "\n".join(rendered) + "\n    </dependencies>\n"
@@ -266,11 +271,11 @@ def main() -> None:
         fail("Version must not be empty")
 
     artifacts = [
-        ("kanger-command", "kanger-command.jar", "KANGER canonical command language", []),
-        ("kanger-core", "kanger-core.jar", "KANGER shared semantic core", ["kanger-command"]),
+        ("kanger-core", "kanger-core.jar", "KANGER inference core", []),
+        ("kanger-command", "kanger-command.jar", "KANGER canonical command feature", ["kanger-core"]),
         ("kanger-bootstrap", "kanger-bootstrap.jar", "KANGER runtime bootstrap", ["kanger-core"]),
-        ("kanger-udf", "kanger-udf.jar", "KANGER UDF plugin", ["kanger-core", "kanger-bootstrap"]),
-        ("kanger-data-dumb", "kanger-data-dumb.jar", "KANGER DUMB storage plugin", ["kanger-core", "kanger-bootstrap"]),
+        ("kanger-udf", "kanger-udf.jar", "KANGER UDF feature", ["kanger-core", ("kanger-bootstrap", True)]),
+        ("kanger-data-dumb", "kanger-data-dumb.jar", "KANGER DUMB storage feature", ["kanger-core", ("kanger-bootstrap", True)]),
     ]
 
     for artifact in artifacts:

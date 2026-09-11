@@ -16,7 +16,9 @@
 
     <name>KANGER DUMB storage plugin</name>
     <description>
-        Optional DUMB storage implementation of KANGER Core data interfaces.
+        Optional DUMB persistence feature over KANGER Core. Bootstrap
+        integration is available when kanger-bootstrap is present but is not
+        required for direct attachment.
     </description>
 
     <dependencies>
@@ -29,6 +31,7 @@
             <groupId>org.kanger</groupId>
             <artifactId>kanger-bootstrap</artifactId>
             <version>${project.version}</version>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 
