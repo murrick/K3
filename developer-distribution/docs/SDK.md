@@ -200,14 +200,6 @@ For the minimum Core-only path from the unpacked distribution root on POSIX/macO
 
 ```sh
 mkdir -p out
-javac -cp "../lib/kanger-core.jar" -d out BasicQuery.java
-java -cp "out:../lib/kanger-core.jar" BasicQuery
-```
-
-When running directly from the distribution root instead of `examples/`, the equivalent is:
-
-```sh
-mkdir -p out
 javac -cp "lib/kanger-core.jar" -d out examples/BasicQuery.java
 java -cp "out:lib/kanger-core.jar" BasicQuery
 ```
