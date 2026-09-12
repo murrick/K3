@@ -33,6 +33,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * Created by Dmitry G. Quznetsov on 07.06.15.
@@ -113,8 +114,13 @@ public abstract class Tools {
     }
 
     public static Date parseDate(String ch) {
+        return parseDate(ch, TimeZone.getDefault());
+    }
+
+    public static Date parseDate(String ch, TimeZone timeZone) {
         SimpleDateFormat f = new SimpleDateFormat();
         f.setLenient(true);
+        f.setTimeZone(timeZone);
         try {
             f.applyPattern("yyyy-MM-dd HH:mm:ss.SSS Z");
             return f.parse(ch);
@@ -143,8 +149,18 @@ public abstract class Tools {
         }
     }
 
+    public static String formatDate(Date date, TimeZone timeZone) {
+        SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z");
+        f.setTimeZone(timeZone);
+        return f.format(date);
+    }
+
     public static Date dateAdd(Date d, String interval, int invertor) {
-        Calendar c = Calendar.getInstance();
+        return dateAdd(d, interval, invertor, TimeZone.getDefault());
+    }
+
+    public static Date dateAdd(Date d, String interval, int invertor, TimeZone timeZone) {
+        Calendar c = Calendar.getInstance(timeZone);
         c.setTimeInMillis(d.getTime());
         String[] s = interval.split(" ");
         for (int i = 0; i < s.length; ++i) {
@@ -164,43 +180,71 @@ public abstract class Tools {
     }
 
     public static int getYear(Date a) {
-        Calendar c = Calendar.getInstance();
+        return getYear(a, TimeZone.getDefault());
+    }
+
+    public static int getYear(Date a, TimeZone timeZone) {
+        Calendar c = Calendar.getInstance(timeZone);
         c.setTimeInMillis(a.getTime());
         return c.get(Calendar.YEAR);
     }
 
     public static int getMonth(Date a) {
-        Calendar c = Calendar.getInstance();
+        return getMonth(a, TimeZone.getDefault());
+    }
+
+    public static int getMonth(Date a, TimeZone timeZone) {
+        Calendar c = Calendar.getInstance(timeZone);
         c.setTimeInMillis(a.getTime());
         return c.get(Calendar.MONTH) + 1;
     }
 
     public static int getDay(Date a) {
-        Calendar c = Calendar.getInstance();
+        return getDay(a, TimeZone.getDefault());
+    }
+
+    public static int getDay(Date a, TimeZone timeZone) {
+        Calendar c = Calendar.getInstance(timeZone);
         c.setTimeInMillis(a.getTime());
         return c.get(Calendar.DAY_OF_MONTH);
     }
 
     public static int getHour(Date a) {
-        Calendar c = Calendar.getInstance();
+        return getHour(a, TimeZone.getDefault());
+    }
+
+    public static int getHour(Date a, TimeZone timeZone) {
+        Calendar c = Calendar.getInstance(timeZone);
         c.setTimeInMillis(a.getTime());
         return c.get(Calendar.HOUR_OF_DAY);
     }
 
     public static int getMinute(Date a) {
-        Calendar c = Calendar.getInstance();
+        return getMinute(a, TimeZone.getDefault());
+    }
+
+    public static int getMinute(Date a, TimeZone timeZone) {
+        Calendar c = Calendar.getInstance(timeZone);
         c.setTimeInMillis(a.getTime());
         return c.get(Calendar.MINUTE);
     }
 
     public static int getSecond(Date a) {
-        Calendar c = Calendar.getInstance();
+        return getSecond(a, TimeZone.getDefault());
+    }
+
+    public static int getSecond(Date a, TimeZone timeZone) {
+        Calendar c = Calendar.getInstance(timeZone);
         c.setTimeInMillis(a.getTime());
         return c.get(Calendar.SECOND);
     }
 
     public static int getMillisecond(Date a) {
-        Calendar c = Calendar.getInstance();
+        return getMillisecond(a, TimeZone.getDefault());
+    }
+
+    public static int getMillisecond(Date a, TimeZone timeZone) {
+        Calendar c = Calendar.getInstance(timeZone);
         c.setTimeInMillis(a.getTime());
         return c.get(Calendar.MILLISECOND);
     }
@@ -218,6 +262,10 @@ public abstract class Tools {
     }
 
     public static String dateDiff(Date a, Date b) {
+        return dateDiff(a, b, TimeZone.getDefault());
+    }
+
+    public static String dateDiff(Date a, Date b, TimeZone timeZone) {
         int months = 0;
         int years = 0;
         int days = 0;
@@ -225,7 +273,7 @@ public abstract class Tools {
         int minutes = 0;
         int seconds = 0;
         int ms = 0;
-        Calendar c = Calendar.getInstance();
+        Calendar c = Calendar.getInstance(timeZone);
         c.setTimeInMillis(a.getTime());
         if (c.before(b)) {
             while (c.before(b)) {
