@@ -29,6 +29,7 @@ public final class CanonicalStatusSnapshot {
     private final String userDir;
     private final String databaseDir;
     private final String sourceDir;
+    private final String timeZone;
     private final int transactionLevel;
     private final int transactionCurrentPendingChildCount;
     private final int transactionRootPendingChildCount;
@@ -56,6 +57,7 @@ public final class CanonicalStatusSnapshot {
                                     String userDir,
                                     String databaseDir,
                                     String sourceDir,
+                                    String timeZone,
                                     int transactionLevel,
                                     int transactionCurrentPendingChildCount,
                                     int transactionRootPendingChildCount,
@@ -82,6 +84,7 @@ public final class CanonicalStatusSnapshot {
         this.userDir = userDir;
         this.databaseDir = databaseDir;
         this.sourceDir = sourceDir;
+        this.timeZone = timeZone;
         this.transactionLevel = transactionLevel;
         this.transactionCurrentPendingChildCount = transactionCurrentPendingChildCount;
         this.transactionRootPendingChildCount = transactionRootPendingChildCount;
@@ -137,6 +140,7 @@ public final class CanonicalStatusSnapshot {
                 user.getUserDir(),
                 user.getDatabaseDir(),
                 user.getSourceDir(),
+                user.getTimeZone(),
                 transactionLevel,
                 currentPendingChildren,
                 rootPendingChildren,
@@ -192,6 +196,10 @@ public final class CanonicalStatusSnapshot {
 
     public String getSourceDir() {
         return sourceDir;
+    }
+
+    public String getTimeZone() {
+        return timeZone;
     }
 
     public int getTransactionLevel() {
