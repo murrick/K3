@@ -53,6 +53,35 @@ public class Term implements IUnit<Term>, ITerm {
 
     private static final long serialVersionUID = 196402070008L;
 
+    /**
+     * Canonical PERIOD identity is independent of wall-clock time and JVM time
+     * zone. Calendar units remain calendar units (years normalize to months),
+     * while week/day/hour/minute/second/millisecond units normalize to an exact
+     * millisecond component.
+     */
+    private static String periodIdentity(String interval) {
+        java.math.BigInteger calendarMonths = java.math.BigInteger.ZERO;
+        java.math.BigInteger fixedMillis = java.math.BigInteger.ZERO;
+        String[] values = interval.split(" ");
+        for (int i = 0; i + 1 < values.length; i += 2) {
+            long parsed = Long.parseLong(values[i]);
+            java.math.BigInteger amount = java.math.BigInteger.valueOf(parsed);
+            Long unit = Enums.INTERVALS.get(values[i + 1].toLowerCase(Locale.ROOT));
+            if (unit == null) {
+                throw new IllegalArgumentException("Unknown period unit: " + values[i + 1]);
+            }
+            if (unit == Enums.INTERVAL_YEAR) {
+                calendarMonths = calendarMonths.add(amount.multiply(java.math.BigInteger.valueOf(12L)));
+            } else if (unit == Enums.INTERVAL_MONTH) {
+                calendarMonths = calendarMonths.add(amount);
+            } else if (unit > 0L) {
+                fixedMillis = fixedMillis.add(
+                        amount.multiply(java.math.BigInteger.valueOf(unit)));
+            }
+        }
+        return calendarMonths.toString() + ":" + fixedMillis.toString();
+    }
+
 
     private long id = -1;                       // Идентификатор
     private long mindId = -1;                   // id транзакции
@@ -430,8 +459,7 @@ public class Term implements IUnit<Term>, ITerm {
                 hash = 3;
                 switch (type) {
                     case PERIOD:
-                        long time = Tools.intervalToTime((String) value);
-                        hash = 47 * hash + (int) (time ^ (time >>> 32));
+                        hash = 47 * hash + periodIdentity((String) value).hashCode();
                         break;
                     case INTERVAL:
                         hash = 47 * hash + ((Term) ((List<ITerm>) value).get(0)).getHash();
@@ -475,7 +503,14 @@ public class Term implements IUnit<Term>, ITerm {
 
     @Override
     public boolean equalsTo(Term to) {
-        if (type == to.getType() && getHash() == to.getHash()) {
+        if (to == null || type != to.getType()) {
+            return false;
+        }
+        if (type == DataType.PERIOD) {
+            return periodIdentity((String) value)
+                    .equals(periodIdentity((String) to.getValue()));
+        }
+        if (getHash() == to.getHash()) {
             switch (type) {
                 case BLOB:
                     return Arrays.equals((byte[]) value, (byte[]) to.getValue());
@@ -503,8 +538,6 @@ public class Term implements IUnit<Term>, ITerm {
                 case INTERVAL:
                     return ((Term) ((List<ITerm>) value).get(0)).equalsTo((Term) ((List<ITerm>) to.getValue()).get(0))
                             && ((Term) ((List<ITerm>) value).get(1)).equalsTo((Term) ((List<ITerm>) to.getValue()).get(1));
-                case PERIOD:
-                    return Tools.intervalToTime((String) value) == Tools.intervalToTime((String) to.getValue());
                 default:
                     return value.equals(to.getValue());
             }
