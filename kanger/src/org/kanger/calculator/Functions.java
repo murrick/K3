@@ -1509,7 +1509,7 @@ public class Functions {
                         ArgumentsList arg = o.getArguments();
                         Object src = arg.get(0).isEmpty(mind) ? null : arg.get(0).getValue(mind).getValue();
                         Double pos = arg.get(1).isEmpty(mind) ? null : (Double) arg.get(1).getValue(mind).getValue();
-                        Object result = arg.get(2).isEmpty(mind) ? null : arg.get(2).getValue(mind).getValue();
+                        Object result = arg.get(2).isEmpty(mind) ? null : (Double) arg.get(2).getValue(mind).getValue();
 
                         if (isDefined(arg.get(0)) && isDefined(arg.get(1)) && arg.get(2).isEmpty(mind)) {
                             if (!o.setParameter(2, mind.getTerms().add(_substring(src, __length(src) - pos.intValue(), 0)))) {
@@ -1846,7 +1846,7 @@ public class Functions {
     }
 
     private TimeZone timeZone() {
-        return TimeZone.getTimeZone(mind.getUser().getTimeZone());
+        return Tools.timeZone(mind.getUser().getTimeZone());
     }
 
     public Map<String, Operation> getSysOps() {
@@ -2600,7 +2600,7 @@ public class Functions {
                 try {
                     res = Long.valueOf((String) a.getValue());
                 } catch (Exception ex) {
-                    TimeZone tz = TimeZone.getTimeZone((String) a.getValue());
+                    TimeZone tz = Tools.timeZone((String) a.getValue());
                     res = tz.getOffset(System.currentTimeMillis());
                 }
             }
@@ -2699,7 +2699,17 @@ public class Functions {
                 res = "\"" + a.getValue().toString() + "\"";
             }
         } else if (a.getType() == DataType.DATE) {
-            res = Tools.formatDate((Date) a.getValue(), timeZone());
+            TimeZone zone;
+            if (param == null) {
+                zone = timeZone();
+            } else if (param.getType() == DataType.STRING) {
+                zone = Tools.timeZone((String) param.getValue());
+            } else if (param.getType() == DataType.NUMERIC) {
+                zone = Tools.timeZone(((Double) param.getValue()).longValue());
+            } else {
+                throw new RuntimeErrorException("DATE timezone must be an IANA zone id or UTC offset in milliseconds");
+            }
+            res = Tools.formatDateString((Date) a.getValue(), zone);
         } else {
             res = a.getValue().toString();
         }
