@@ -27,6 +27,7 @@ package org.kanger.factory;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.enums.DataType;
 import org.kanger.enums.LogMode;
 import org.kanger.enums.UnitType;
 import org.kanger.interfaces.IFactory;
@@ -231,6 +232,19 @@ public class DictionaryFactory implements IFactory<ITerm> {
             IUnit one = get(id);
             if (one.equalsTo(t)) {
                 return (Term) one;
+            }
+        }
+        if (t.getType() == DataType.PERIOD) {
+            /*
+             * Existing databases can contain PERIOD steps indexed by the
+             * historical wall-clock-dependent hash. Preserve their visibility
+             * while new PERIOD terms use deterministic semantic identity.
+             */
+            for (Object candidate : cache) {
+                Term one = (Term) candidate;
+                if (one.getType() == DataType.PERIOD && one.equalsTo(t)) {
+                    return one;
+                }
             }
         }
         return null;
