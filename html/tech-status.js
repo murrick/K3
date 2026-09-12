@@ -226,6 +226,7 @@
         createSection(body, 'Session', [
             {id: 'tech-session-user', label: 'User'},
             {id: 'tech-session-mind', label: 'Mind'},
+            {id: 'tech-session-timezone', label: 'Time zone'},
             {id: 'tech-session-user-dir', label: 'Home', className: 'kanger-tech-path'},
             {id: 'tech-session-database-dir', label: 'Database', className: 'kanger-tech-path'},
             {id: 'tech-session-sources-dir', label: 'Sources', className: 'kanger-tech-path'}
@@ -306,6 +307,7 @@
         var session = status.session || {};
         setMetric('tech-session-user', metric(session.user));
         setMetric('tech-session-mind', metric(session.mind));
+        setMetric('tech-session-timezone', value(session.timezone));
         setMetric('tech-session-user-dir', value(session.user_dir));
         setMetric('tech-session-database-dir', value(session.database_dir));
         setMetric('tech-session-sources-dir', value(session.sources_dir));
