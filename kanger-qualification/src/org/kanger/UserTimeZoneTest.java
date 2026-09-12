@@ -11,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.DateTimeException;
 import java.util.Properties;
 import java.util.TimeZone;
 
@@ -59,7 +60,7 @@ public class UserTimeZoneTest {
     @Test
     void invalidTimeZoneIsRejected() {
         final User user = new User();
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(DateTimeException.class,
                 () -> user.setTimeZone("Not/A_Time_Zone"));
         assertThrows(IllegalArgumentException.class,
                 () -> user.setTimeZone("  "));
