@@ -250,15 +250,23 @@ public abstract class Tools {
     }
 
     public static long intervalToTime(String interval) {
+        return intervalToTime(interval, TimeZone.getDefault());
+    }
+
+    public static long intervalToTime(String interval, TimeZone timeZone) {
         Date d = new Date();
-        Date a = dateAdd(d, interval, 1);
+        Date a = dateAdd(d, interval, 1, timeZone);
         return a.getTime() - d.getTime();
     }
 
     public static String timeToInterval(long time) {
+        return timeToInterval(time, TimeZone.getDefault());
+    }
+
+    public static String timeToInterval(long time, TimeZone timeZone) {
         Date d = new Date();
         Date a = new Date(d.getTime() + time);
-        return dateDiff(d, a);
+        return dateDiff(d, a, timeZone);
     }
 
     public static String dateDiff(Date a, Date b) {
