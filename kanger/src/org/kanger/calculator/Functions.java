@@ -1509,7 +1509,7 @@ public class Functions {
                         ArgumentsList arg = o.getArguments();
                         Object src = arg.get(0).isEmpty(mind) ? null : arg.get(0).getValue(mind).getValue();
                         Double pos = arg.get(1).isEmpty(mind) ? null : (Double) arg.get(1).getValue(mind).getValue();
-                        Object result = arg.get(2).isEmpty(mind) ? null : (Double) arg.get(2).getValue(mind).getValue();
+                        Object result = arg.get(2).isEmpty(mind) ? null : arg.get(2).getValue(mind).getValue();
 
                         if (isDefined(arg.get(0)) && isDefined(arg.get(1)) && arg.get(2).isEmpty(mind)) {
                             if (!o.setParameter(2, mind.getTerms().add(_substring(src, __length(src) - pos.intValue(), 0)))) {
