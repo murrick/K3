@@ -1442,7 +1442,7 @@ public class Functions {
                                 ret = 2;
                             } else {
                                 if (arg.get(1).getType() == ArgumentType.TVARIABLE) {
-                                    TValue v = addTValue(arg.get(1), mind.getTerms().add(_indexOf(src, result)));
+                                    TValue v = addTValue(arg.get(1), mind.getTerms().add(_indexOf(src, result) + __length(result)));
                                     Operation.showLog((IUnit) o, v);
                                 }
                                 if (arg.get(2).getType() == ArgumentType.TVARIABLE) {
@@ -1845,6 +1845,10 @@ public class Functions {
         this.mind = mind;
     }
 
+    private TimeZone timeZone() {
+        return TimeZone.getTimeZone(mind.getUser().getTimeZone());
+    }
+
     public Map<String, Operation> getSysOps() {
         return sysOps;
     }
@@ -2019,13 +2023,13 @@ public class Functions {
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() + (double) b.getValue();
         } else if (a.getType() == DataType.DATE && b.getType() == DataType.PERIOD) {
-            res = Tools.dateAdd((Date) a.getValue(), (String) b.getValue(), 1);
+            res = Tools.dateAdd((Date) a.getValue(), (String) b.getValue(), 1, timeZone());
         } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.DATE) {
-            res = Tools.dateAdd((Date) b.getValue(), (String) a.getValue(), 1);
+            res = Tools.dateAdd((Date) b.getValue(), (String) a.getValue(), 1, timeZone());
         } else if (a.getType() == DataType.DATE && b.getType() == DataType.NUMERIC) {
-            res = Tools.dateAdd((Date) a.getValue(), Tools.timeToInterval(((Double) b.getValue()).longValue()), 1);
+            res = Tools.dateAdd((Date) a.getValue(), Tools.timeToInterval(((Double) b.getValue()).longValue(), timeZone()), 1, timeZone());
         } else if (a.getType() == DataType.NUMERIC && b.getType() == DataType.DATE) {
-            res = Tools.dateAdd((Date) b.getValue(), Tools.timeToInterval(((Double) a.getValue()).longValue()), 1);
+            res = Tools.dateAdd((Date) b.getValue(), Tools.timeToInterval(((Double) a.getValue()).longValue(), timeZone()), 1, timeZone());
         } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.PERIOD) {
             res = Tools.timeToInterval(Tools.intervalToTime((String) a.getValue()) + Tools.intervalToTime((String) b.getValue()));
         } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.NUMERIC) {
@@ -2139,7 +2143,7 @@ public class Functions {
         if (a.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() + 1;
         } else if (a.getType() == DataType.DATE) {
-            res = Tools.dateAdd((Date) a.getValue(), "1 day", 1);
+            res = Tools.dateAdd((Date) a.getValue(), "1 day", 1, timeZone());
         } else if (a.getType() == DataType.PERIOD) {
             res = Tools.timeToInterval(Tools.intervalToTime((String) a.getValue()) + Tools.intervalToTime("1 day"));
         } else if (a.getType() == DataType.STRING && a.getValue().toString().length() == 1) {
@@ -2155,7 +2159,7 @@ public class Functions {
         if (a.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() - 1;
         } else if (a.getType() == DataType.DATE) {
-            res = Tools.dateAdd((Date) a.getValue(), "1 day", -1);
+            res = Tools.dateAdd((Date) a.getValue(), "1 day", -1, timeZone());
         } else if (a.getType() == DataType.PERIOD) {
             res = Tools.timeToInterval(Tools.intervalToTime((String) a.getValue()) - Tools.intervalToTime("1 day"));
         } else if (a.getType() == DataType.STRING && a.getValue().toString().length() == 1) {
@@ -2171,9 +2175,9 @@ public class Functions {
         if (a.getType() == DataType.NUMERIC && b.getType() == DataType.NUMERIC) {
             res = (double) a.getValue() - (double) b.getValue();
         } else if (a.getType() == DataType.DATE && b.getType() == DataType.PERIOD) {
-            res = Tools.dateAdd((Date) a.getValue(), (String) b.getValue(), -1);
+            res = Tools.dateAdd((Date) a.getValue(), (String) b.getValue(), -1, timeZone());
         } else if (a.getType() == DataType.DATE && b.getType() == DataType.NUMERIC) {
-            res = Tools.dateAdd((Date) a.getValue(), Tools.timeToInterval(((Double) b.getValue()).longValue()), -1);
+            res = Tools.dateAdd((Date) a.getValue(), Tools.timeToInterval(((Double) b.getValue()).longValue(), timeZone()), -1, timeZone());
         } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.NUMERIC) {
             res = Tools.timeToInterval(Tools.intervalToTime((String) a.getValue()) - ((Double) b.getValue()).longValue());
         } else if (a.getType() == DataType.NUMERIC && b.getType() == DataType.PERIOD) {
@@ -2181,7 +2185,7 @@ public class Functions {
         } else if (a.getType() == DataType.PERIOD && b.getType() == DataType.PERIOD) {
             res = Tools.timeToInterval(Tools.intervalToTime((String) a.getValue()) - Tools.intervalToTime((String) b.getValue()));
         } else if (a.getType() == DataType.DATE && b.getType() == DataType.DATE) {
-            res = Tools.dateDiff((Date) b.getValue(), (Date) a.getValue());
+            res = Tools.dateDiff((Date) b.getValue(), (Date) a.getValue(), timeZone());
         } else if (a.getType() == DataType.INTERVAL && b.getType() == ((List<Term>) a.getValue()).get(0).getType()) {
             ArgumentsList list = new ArgumentsList();
             for (ITerm n : mind.getCalculator().expand(a, null, false)) {
@@ -2621,25 +2625,25 @@ public class Functions {
             } else {
                 switch (Enums.INTERVALS.get(((String) param.getValue()).toLowerCase()).intValue()) {
                     case (int) Enums.INTERVAL_YEAR:
-                        res = Tools.getYear(((Date) a.getValue()));
+                        res = Tools.getYear(((Date) a.getValue()), timeZone());
                         break;
                     case (int) Enums.INTERVAL_MONTH:
-                        res = Tools.getMonth(((Date) a.getValue()));
+                        res = Tools.getMonth(((Date) a.getValue()), timeZone());
                         break;
                     case (int) Enums.INTERVAL_DAY:
-                        res = Tools.getDay(((Date) a.getValue()));
+                        res = Tools.getDay(((Date) a.getValue()), timeZone());
                         break;
                     case (int) Enums.INTERVAL_HOUR:
-                        res = Tools.getHour(((Date) a.getValue()));
+                        res = Tools.getHour(((Date) a.getValue()), timeZone());
                         break;
                     case (int) Enums.INTERVAL_MINUTE:
-                        res = Tools.getMinute(((Date) a.getValue()));
+                        res = Tools.getMinute(((Date) a.getValue()), timeZone());
                         break;
                     case (int) Enums.INTERVAL_SECOND:
-                        res = Tools.getSecond(((Date) a.getValue()));
+                        res = Tools.getSecond(((Date) a.getValue()), timeZone());
                         break;
                     case (int) Enums.INTERVAL_MILLISECOND:
-                        res = Tools.getMillisecond(((Date) a.getValue()));
+                        res = Tools.getMillisecond(((Date) a.getValue()), timeZone());
                         break;
                     default:
                         res = ((Date) a.getValue()).getTime();
@@ -2694,6 +2698,8 @@ public class Functions {
             } else {
                 res = "\"" + a.getValue().toString() + "\"";
             }
+        } else if (a.getType() == DataType.DATE) {
+            res = Tools.formatDate((Date) a.getValue(), timeZone());
         } else {
             res = a.getValue().toString();
         }
@@ -2768,7 +2774,7 @@ public class Functions {
     }
 
     private ITerm _tz() throws Exception {
-        Object res = TimeZone.getDefault().getID();
+        Object res = mind.getUser().getTimeZone();
         return mind.getTerms().add(res);
     }
 
