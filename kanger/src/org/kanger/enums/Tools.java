@@ -31,8 +31,11 @@ import org.kanger.exception.ParseErrorException;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
+import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 
 /**
@@ -153,6 +156,44 @@ public abstract class Tools {
         SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z");
         f.setTimeZone(timeZone);
         return f.format(date);
+    }
+
+    public static String formatDateString(Date date, TimeZone timeZone) {
+        SimpleDateFormat f = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH);
+        f.setTimeZone(timeZone);
+        return f.format(date);
+    }
+
+    public static TimeZone timeZone(String zoneId) {
+        if (zoneId == null || zoneId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Time zone is required");
+        }
+        return TimeZone.getTimeZone(ZoneId.of(zoneId.trim()));
+    }
+
+    public static TimeZone timeZone(long offsetMillis) {
+        long limit = 18L * 60L * 60L * 1000L;
+        if (offsetMillis < -limit || offsetMillis > limit) {
+            throw new IllegalArgumentException("UTC offset is out of range: " + offsetMillis);
+        }
+        long absolute = Math.abs(offsetMillis);
+        long hours = absolute / (60L * 60L * 1000L);
+        absolute %= 60L * 60L * 1000L;
+        long minutes = absolute / (60L * 1000L);
+        absolute %= 60L * 1000L;
+        long seconds = absolute / 1000L;
+        long millis = absolute % 1000L;
+
+        StringBuilder id = new StringBuilder();
+        id.append("UTC").append(offsetMillis < 0 ? '-' : '+');
+        id.append(String.format(Locale.ROOT, "%02d:%02d", hours, minutes));
+        if (seconds != 0 || millis != 0) {
+            id.append(String.format(Locale.ROOT, ":%02d", seconds));
+            if (millis != 0) {
+                id.append(String.format(Locale.ROOT, ".%03d", millis));
+            }
+        }
+        return new SimpleTimeZone((int) offsetMillis, id.toString());
     }
 
     public static Date dateAdd(Date d, String interval, int invertor) {
