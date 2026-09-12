@@ -5,6 +5,7 @@ BASE_URL="${KANGER_BASE_URL:-http://127.0.0.1:1964}"
 PYTHON="${PYTHON:-python3}"
 STATE_HOME="${KANGER_SMOKE_HOME:-${RUNNER_TEMP:-}/kanger-server-smoke/home}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SMOKE_TIMEZONE="${KANGER_SMOKE_TIMEZONE:-Europe/Brussels}"
 
 command -v curl >/dev/null 2>&1 || {
   echo "curl is required" >&2
@@ -167,7 +168,7 @@ reg.email.confirmed=false
 EOF
 
 printf '%s\n' "[7/13] Logging in with the existing unconfirmed credential"
-login_response="$(post "{\"context\":\"login\",\"parameters\":{\"login\":\"${login}\",\"password\":\"${password}\"}}")"
+login_response="$(post "{\"context\":\"login\",\"parameters\":{\"login\":\"${login}\",\"password\":\"${password}\",\"tz\":\"${SMOKE_TIMEZONE}\"}}")"
 require_result "${login_response}" "OK" "existing-account login"
 first_token="$(json_field "${login_response}" token)"
 [[ -n "${first_token}" ]] || {
@@ -187,7 +188,7 @@ closed_response="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${
 require_result "${closed_response}" "error" "logged-out token rejection"
 
 printf '%s\n' "[10/13] Logging in again and requiring token rotation"
-second_login="$(post "{\"context\":\"login\",\"parameters\":{\"login\":\"${login}\",\"password\":\"${password}\"}}")"
+second_login="$(post "{\"context\":\"login\",\"parameters\":{\"login\":\"${login}\",\"password\":\"${password}\",\"tz\":\"${SMOKE_TIMEZONE}\"}}")"
 require_result "${second_login}" "OK" "second login"
 second_token="$(json_field "${second_login}" token)"
 [[ -n "${second_token}" && "${second_token}" != "${first_token}" ]] || {
