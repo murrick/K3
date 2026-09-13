@@ -34,6 +34,8 @@ assert(source.includes('kanger-tech-metric-row'),
     'TECH telemetry must render structured label/value rows');
 assert(source.includes('kanger-tech-canonical-boundary'),
     'canonical STATUS must remain visually separated from Browser-local TECH');
+assert(source.includes('kanger-timezone-select'),
+    'Browser status bar must expose the active session timezone selector');
 assert(!presentationSource.includes('window.token'),
     'presentation authority must remain bearer-free');
 assert(presentationSource.includes("script.src = 'tech-status.js'"),
@@ -49,12 +51,25 @@ class Element {
         this.listeners = Object.create(null);
         this.attributes = Object.create(null);
         this.hidden = false;
+        this.disabled = false;
+        this.value = '';
+        this.title = '';
         this._textContent = '';
     }
 
     appendChild(child) {
         child.parentNode = this;
         this.childNodes.push(child);
+        return child;
+    }
+
+    insertBefore(child, reference) {
+        const index = this.childNodes.indexOf(reference);
+        if (index < 0) {
+            return this.appendChild(child);
+        }
+        child.parentNode = this;
+        this.childNodes.splice(index, 0, child);
         return child;
     }
 
@@ -101,6 +116,14 @@ class Element {
         this._textContent = value === null || value === undefined
             ? '' : String(value);
     }
+
+    get innerHTML() {
+        return this.textContent;
+    }
+
+    set innerHTML(value) {
+        this.textContent = value;
+    }
 }
 
 function findById(root, id) {
@@ -130,6 +153,12 @@ const document = {
     }
 };
 
+const statusBar = new Element('div');
+const userName = new Element('span');
+userName.id = 'user-name';
+statusBar.appendChild(userName);
+document.body.appendChild(statusBar);
+
 const panel = new Element('aside');
 panel.id = 'technical-panel';
 const toggle = new Element('div');
@@ -142,6 +171,7 @@ document.body.appendChild(panel);
 
 let technicalOpen = false;
 let generation = 7;
+let sessionTimeZone = 'Europe/Brussels';
 const requests = [];
 
 function canonicalResponse() {
@@ -179,6 +209,7 @@ function canonicalResponse() {
             session: {
                 user: 3,
                 mind: 4,
+                timezone: sessionTimeZone,
                 user_dir: '/user/',
                 database_dir: '/db/',
                 sources_dir: '/src/'
@@ -206,6 +237,19 @@ const window = {
     document,
     token: '__KANGER_PARENT_SESSION__',
     apihost: '',
+    Intl: {
+        supportedValuesOf(name) {
+            assert.strictEqual(name, 'timeZone');
+            return ['Asia/Tokyo', 'Europe/Brussels'];
+        },
+        DateTimeFormat() {
+            return {
+                resolvedOptions() {
+                    return {timeZone: 'Europe/Brussels'};
+                }
+            };
+        }
+    },
     KANGER_PRESENTATION: {
         installed: true,
         snapshot() {
@@ -218,8 +262,17 @@ const window = {
         }
     },
     post(packet, callback) {
-        requests.push({packet: JSON.parse(JSON.stringify(packet))});
+        const copy = JSON.parse(JSON.stringify(packet));
+        requests.push({packet: copy});
+        if (copy.parameters && copy.parameters.timezone) {
+            sessionTimeZone = copy.parameters.timezone;
+            callback({result: 'OK', timezone: sessionTimeZone});
+            return;
+        }
         callback(canonicalResponse());
+    },
+    alert(message) {
+        throw new Error('Unexpected alert: ' + message);
     },
     jQuery: {
         post() {
@@ -257,22 +310,45 @@ assert.strictEqual(window.KANGER_TECH_STATUS.installed, true);
 assert(document.getElementById('kanger-tech-status-css'));
 assert(document.getElementById('kanger-tech-status-css').textContent
     .includes('grid-template-columns: 86px minmax(0, 1fr)'));
-assert.strictEqual(requests.length, 0,
-    'closed TECH must not request canonical STATUS');
-console.log('TECH_STATUS_PASS closed-no-read');
+
+const timeZoneSelect = document.getElementById('kanger-timezone-select');
+assert(timeZoneSelect, 'session timezone selector must be present');
+assert.strictEqual(requests.length, 1,
+    'closed TECH performs exactly one initial STATUS read for session timezone');
+assert.deepStrictEqual(requests[0].packet, {
+    context: 'command',
+    parameters: {status: ''}
+});
+assert.strictEqual(timeZoneSelect.value, 'Europe/Brussels');
+assert.strictEqual(timeZoneSelect.disabled, false);
+console.log('TECH_STATUS_PASS initial-session-timezone-read');
+
+/* The selector itself is both the status indicator and live session control. */
+timeZoneSelect.value = 'Asia/Tokyo';
+timeZoneSelect.dispatch('change');
+assert.strictEqual(requests.length, 2,
+    'timezone change must issue exactly one session command');
+assert.deepStrictEqual(requests[1].packet, {
+    context: 'command',
+    parameters: {timezone: 'Asia/Tokyo'}
+});
+assert.strictEqual(sessionTimeZone, 'Asia/Tokyo');
+assert.strictEqual(timeZoneSelect.value, 'Asia/Tokyo');
+assert.strictEqual(timeZoneSelect.disabled, false);
+console.log('TECH_STATUS_PASS live-session-timezone-change');
 
 technicalOpen = true;
 toggle.dispatch('click');
-assert.strictEqual(requests.length, 1,
-    'opening TECH must perform exactly one canonical STATUS read');
-assert.deepStrictEqual(requests[0].packet, {
+assert.strictEqual(requests.length, 3,
+    'opening TECH must perform exactly one additional canonical STATUS read');
+assert.deepStrictEqual(requests[2].packet, {
     context: 'command',
     parameters: {
         status: ''
     }
 });
 assert.strictEqual(
-    Object.prototype.hasOwnProperty.call(requests[0].packet.parameters, 'token'),
+    Object.prototype.hasOwnProperty.call(requests[2].packet.parameters, 'token'),
     false,
     'TECH status child request must not carry bearer data');
 
@@ -312,6 +388,8 @@ assert.strictEqual(document.getElementById('tech-session-user-value').textConten
     '3');
 assert.strictEqual(document.getElementById('tech-session-mind-value').textContent,
     '4');
+assert.strictEqual(document.getElementById('tech-session-timezone-value').textContent,
+    'Asia/Tokyo');
 assert.strictEqual(document.getElementById('tech-session-user-dir-value').textContent,
     '/user/');
 
@@ -333,14 +411,14 @@ console.log('TECH_STATUS_PASS structured-visual-hierarchy');
 
 technicalOpen = false;
 toggle.dispatch('click');
-assert.strictEqual(requests.length, 1,
+assert.strictEqual(requests.length, 3,
     'closing TECH must not request canonical STATUS');
 console.log('TECH_STATUS_PASS close-no-read');
 
 generation = 8;
 technicalOpen = true;
 toggle.dispatch('click');
-assert.strictEqual(requests.length, 2,
+assert.strictEqual(requests.length, 4,
     'reopening TECH must refresh exactly once');
 assert.strictEqual(document.getElementById('tech-status-generation-value').textContent,
     '8');
