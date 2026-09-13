@@ -371,7 +371,7 @@
         timeZoneSelect.id = 'kanger-timezone-select';
         timeZoneSelect.setAttribute('aria-label', 'Session time zone');
         timeZoneSelect.addEventListener('change', changeTimeZone);
-        user.parentNode.insertBefore(timeZoneSelect, user);
+        user.parentNode.insertBefore(timeZoneSelect, user.nextSibling);
         return true;
     }
 
