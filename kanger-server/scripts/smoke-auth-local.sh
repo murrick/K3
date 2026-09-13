@@ -168,7 +168,7 @@ reg.email.confirmed=false
 EOF
 
 printf '%s\n' "[7/13] Logging in with the existing unconfirmed credential"
-login_response="$(post "{\"context\":\"login\",\"parameters\":{\"login\":\"${login}\",\"password\":\"${password}\",\"tz\":\"${SMOKE_TIMEZONE}\"}}")"
+login_response="$(post "{\"context\":\"login\",\"parameters\":{\"login\":\"${login}\",\"password\":\"${password}\",\"timezone\":\"${SMOKE_TIMEZONE}\"}}")"
 require_result "${login_response}" "OK" "existing-account login"
 first_token="$(json_field "${login_response}" token)"
 [[ -n "${first_token}" ]] || {
@@ -188,7 +188,7 @@ closed_response="$(post "{\"context\":\"command\",\"parameters\":{\"token\":\"${
 require_result "${closed_response}" "error" "logged-out token rejection"
 
 printf '%s\n' "[10/13] Logging in again and requiring token rotation"
-second_login="$(post "{\"context\":\"login\",\"parameters\":{\"login\":\"${login}\",\"password\":\"${password}\",\"tz\":\"${SMOKE_TIMEZONE}\"}}")"
+second_login="$(post "{\"context\":\"login\",\"parameters\":{\"login\":\"${login}\",\"password\":\"${password}\",\"timezone\":\"${SMOKE_TIMEZONE}\"}}")"
 require_result "${second_login}" "OK" "second login"
 second_token="$(json_field "${second_login}" token)"
 [[ -n "${second_token}" && "${second_token}" != "${first_token}" ]] || {
