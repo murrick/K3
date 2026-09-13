@@ -480,10 +480,17 @@ public class QueryProcessor implements IReactor<JSONObject> {
             }
         } else if (!parameters.isNull("login") && !parameters.isNull("password")) {
             try {
+                String timeZone = parameters.optString("timezone", "").trim();
+                if (timeZone.isEmpty()) {
+                    throw new IllegalArgumentException("Time zone is required");
+                }
+                java.time.ZoneId.of(timeZone);
+
                 IUser user = UserFactory.getUser(parameters.getString("login"), parameters.getString("password"));
                 if (isEmailConfirmed(user)) {
                     RuntimeBootstrap.ensure(user);
                 }
+                user.setTimeZone(timeZone);
                 String token = UserFactory.addUser(user);
                 result.put("result", "OK");
                 result.put("token", token);

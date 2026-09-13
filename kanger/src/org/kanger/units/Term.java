@@ -39,7 +39,6 @@ import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.storage.ByteBuffer;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -186,6 +185,10 @@ public class Term implements IUnit<Term>, ITerm {
         return this;
     }
 
+    private TimeZone timeZone() {
+        return TimeZone.getTimeZone(mind.getUser().getTimeZone());
+    }
+
     private void construct(Object o) throws Exception {
         value = null;
         if (o instanceof Number) {
@@ -246,7 +249,7 @@ public class Term implements IUnit<Term>, ITerm {
                         } else if (Tools.isPeriod(token)) {
                             type = DataType.PERIOD;
                             value = token;
-                        } else if ((d = Tools.parseDate(token)) != null) {
+                        } else if ((d = Tools.parseDate(token, timeZone())) != null) {
                             type = DataType.DATE;
                             value = d;
                         } else {
@@ -262,7 +265,7 @@ public class Term implements IUnit<Term>, ITerm {
                     } else if (Tools.isPeriod(token)) {
                         type = DataType.PERIOD;
                         value = token;
-                    } else if ((d = Tools.parseDate(token)) != null) {
+                    } else if ((d = Tools.parseDate(token, timeZone())) != null) {
                         type = DataType.DATE;
                         value = d;
                     } else if (Tools.isFloat(token)) {
@@ -412,7 +415,7 @@ public class Term implements IUnit<Term>, ITerm {
                         }
                 }
             } else if (type == DataType.DATE) {
-                return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z").format((Date) value);
+                return Tools.formatDate((Date) value, timeZone());
             } else {
                 return formatValue();
             }

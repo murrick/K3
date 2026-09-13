@@ -103,6 +103,7 @@ public class User implements IUser {
     private Map<String, Long> counters = new HashMap<>();
     private long lastId = 0L;
     private IMind currentMind = null;
+    private volatile String timeZone = java.time.ZoneId.systemDefault().getId();
 
 
     public IBase getStorage(String schema) {
@@ -825,6 +826,19 @@ public class User implements IUser {
     @Override
     public void setId(long id) {
         this.id = id;
+    }
+
+    @Override
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    @Override
+    public void setTimeZone(String timeZone) {
+        if (timeZone == null || timeZone.trim().isEmpty()) {
+            throw new IllegalArgumentException("Time zone is required");
+        }
+        this.timeZone = java.time.ZoneId.of(timeZone.trim()).getId();
     }
 
     public Operation getUdf() throws Exception {

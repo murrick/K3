@@ -33,6 +33,8 @@ The Browser obtains the public registration capability from the Server version r
 
 An authenticated Browser session owns a bearer token at the parent Console boundary. Presentation helpers and the TECH adapter do not independently own or expose that bearer.
 
+At explicit login the Browser supplies its IANA time zone to the Server session. The authenticated header shows the active **Time zone** selector immediately before the login name. Changing it updates the active session time zone without logging out; it does not change the Server/JVM default time zone or persist a new account default. DATE parsing and formatting that rely on the current user context observe this session time zone; an explicitly supplied time zone remains explicit.
+
 `quit` ends the KANGER user session. Closing or refreshing a Browser tab is not the same operation as shutting down the KANGER Server.
 
 ---
@@ -494,6 +496,7 @@ The Session section contains:
 
 - **User** — numeric authenticated user id;
 - **Mind** — current runtime Mind id;
+- **Time zone** — active IANA time zone of the current user session; the header selector changes it live for the session;
 - **Home** — `user.dir`;
 - **Database** — configured `database.dir`;
 - **Sources** — configured `sources.dir`.

@@ -47,6 +47,7 @@ public final class CanonicalStatusRenderer {
         append(out, "storage.current",
                 snapshot.isStorageUsed() ? snapshot.getStorage() : "none");
         append(out, "session.user", snapshot.getUserId());
+        append(out, "session.timezone", value(snapshot.getTimeZone()));
         append(out, "runtime.version", value(snapshot.getKangerVersion()));
         append(out, "runtime.java", value(snapshot.getJavaVersion()));
         return out.toString();
@@ -116,6 +117,7 @@ public final class CanonicalStatusRenderer {
         StringBuilder out = new StringBuilder();
         append(out, "user", snapshot.getUserId());
         append(out, "mind", snapshot.getMindId());
+        append(out, "timezone", value(snapshot.getTimeZone()));
         append(out, "user.dir", value(snapshot.getUserDir()));
         append(out, "database.dir", value(snapshot.getDatabaseDir()));
         append(out, "sources.dir", value(snapshot.getSourceDir()));

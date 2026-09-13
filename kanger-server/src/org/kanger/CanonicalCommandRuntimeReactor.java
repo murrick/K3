@@ -268,6 +268,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
         JSONObject session = new JSONObject()
                 .put("user", snapshot.getUserId())
                 .put("mind", snapshot.getMindId())
+                .put("timezone", nullable(snapshot.getTimeZone()))
                 .put("user_dir", nullable(snapshot.getUserDir()))
                 .put("database_dir", nullable(snapshot.getDatabaseDir()))
                 .put("sources_dir", nullable(snapshot.getSourceDir()));

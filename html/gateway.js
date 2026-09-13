@@ -591,7 +591,8 @@
             await preloadConsoleTemplate();
             var data = await post('login', {
                 login: loginValue,
-                password: password
+                password: password,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
             });
             document.getElementById('password').value = '';
             if (data.result === 'OK' && data.token) {

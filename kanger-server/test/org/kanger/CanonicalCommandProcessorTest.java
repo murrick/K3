@@ -161,6 +161,7 @@ class CanonicalCommandProcessorTest {
             assertEquals(
                     "user=" + fixture.user.getId()
                             + "\nmind=" + fixture.root.getId()
+                            + "\ntimezone=" + fixture.user.getTimeZone()
                             + "\nuser.dir=/status/user/"
                             + "\ndatabase.dir=/status/database/"
                             + "\nsources.dir=/status/sources/",

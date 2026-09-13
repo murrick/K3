@@ -82,6 +82,23 @@ public interface IUser {
     void setId(long id);
 
     /**
+     * Возвращает IANA time-zone id текущего пользовательского runtime-контекста.
+     * Значение не является параметром kanger.conf и не сохраняется вместе с
+     * пользовательской конфигурацией.
+     *
+     * @return IANA time-zone id текущего пользовательского контекста
+     */
+    String getTimeZone();
+
+    /**
+     * Устанавливает IANA time-zone id текущего пользовательского
+     * runtime-контекста. Операция не изменяет persistent user settings.
+     *
+     * @param timeZone IANA time-zone id
+     */
+    void setTimeZone(String timeZone);
+
+    /**
      * Получить параметр пользователя с указанным ключем. КАНГЕР
      * не контролирует параметры пользователя, коллекция параметров
      * в составе объекта служит как простое хранилище предназначенное для

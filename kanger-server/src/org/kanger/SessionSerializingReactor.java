@@ -11,6 +11,7 @@ import org.json.JSONObject;
 import org.kanger.account.RegistrationPolicy;
 import org.kanger.exception.AuthenticationErrorException;
 import org.kanger.interfaces.IReactor;
+import org.kanger.interfaces.IUser;
 
 /**
  * Holds the per-user session lock around the complete legacy application
@@ -69,8 +70,15 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
                     new SessionRegistry.Work<Object>() {
                         @Override
                         public Object run() throws Exception {
-                            UserFactory.getUser(token);
-                            return invoke(packet, parameters);
+                            IUser user = UserFactory.getUser(token);
+                            JSONObject violation = ApiInputPolicy.violation(parameters);
+                            if (violation != null) {
+                                return violation;
+                            }
+                            if (isTimeZoneUpdate(packet, parameters)) {
+                                return updateTimeZone(user, parameters);
+                            }
+                            return delegate.run(packet);
                         }
                     });
         }
@@ -127,6 +135,36 @@ final class SessionSerializingReactor implements IReactor<JSONObject> {
             return violation;
         }
         return delegate.run(packet);
+    }
+
+    private static boolean isTimeZoneUpdate(JSONObject packet,
+                                            JSONObject parameters) {
+        return "command".equalsIgnoreCase(context(packet))
+                && parameters != null
+                && parameters.has("timezone")
+                && !parameters.isNull("timezone");
+    }
+
+    private static JSONObject updateTimeZone(IUser user, JSONObject parameters) {
+        user.setTimeZone(parameters.getString("timezone").trim());
+        return new JSONObject()
+                .put("result", "OK")
+                .put("timezone", user.getTimeZone());
+    }
+
+    private static String context(JSONObject packet) {
+        if (packet == null) {
+            return null;
+        }
+        JSONObject body = packet.optJSONObject("body");
+        if (body != null) {
+            String context = body.optString("context", null);
+            if (context != null) {
+                return context;
+            }
+        }
+        JSONObject query = packet.optJSONObject("query");
+        return query == null ? null : query.optString("context", null);
     }
 
     static void markAuthenticatedCredential(JSONObject packet) {
