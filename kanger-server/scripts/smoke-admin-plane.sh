@@ -5,6 +5,7 @@ BASE_URL="${KANGER_BASE_URL:-http://127.0.0.1:1964}"
 STATE_HOME="${KANGER_SMOKE_HOME:?KANGER_SMOKE_HOME is required}"
 SERVER_JAR="${KANGER_SERVER_JAR:?KANGER_SERVER_JAR is required}"
 PYTHON="${PYTHON:-python3}"
+SMOKE_TIMEZONE="${KANGER_SMOKE_TIMEZONE:-Europe/Brussels}"
 CLI=(java -Duser.home="${STATE_HOME}" -cp "${SERVER_JAR}" org.kanger.admin.KangerAdmin)
 
 fail() {
@@ -70,7 +71,7 @@ grep -q '^reg.agreed=false$' "${profile}" \
 ! grep -q "${password}" "${profile}" || fail "profile contains plaintext password"
 
 printf '%s\n' "[admin 2/6] Authenticating through the ordinary public login path"
-login_response="$(post_public "{\"context\":\"login\",\"parameters\":{\"login\":\"${login}\",\"password\":\"${password}\"}}")"
+login_response="$(post_public "{\"context\":\"login\",\"parameters\":{\"login\":\"${login}\",\"password\":\"${password}\",\"tz\":\"${SMOKE_TIMEZONE}\"}}")"
 [[ "$(json_field "${login_response}" result)" = "OK" ]] \
   || fail "operator-created account could not authenticate"
 session_token="$(json_field "${login_response}" token)"
