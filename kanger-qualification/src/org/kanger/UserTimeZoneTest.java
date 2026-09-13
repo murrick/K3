@@ -6,12 +6,17 @@
 package org.kanger;
 
 import org.junit.jupiter.api.Test;
+import org.kanger.enums.DataType;
+import org.kanger.units.Term;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.DateTimeException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.Properties;
 import java.util.TimeZone;
 
@@ -52,6 +57,33 @@ public class UserTimeZoneTest {
 
             TimeZone.setDefault(TimeZone.getTimeZone("Asia/Vladivostok"));
             assertEquals("Europe/Brussels", user.getTimeZone());
+        } finally {
+            TimeZone.setDefault(original);
+        }
+    }
+
+    @Test
+    void dateParsingAndRenderingUseSessionTimeZoneInsteadOfJvmDefault() throws Exception {
+        TimeZone original = TimeZone.getDefault();
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("Pacific/Fakaofo"));
+            User user = new User();
+            user.setTimeZone("Europe/Brussels");
+            Mind mind = new Mind(user);
+
+            Term date = new Term("2026-01-15 10:00:00.000", mind);
+            long expectedEpoch = ZonedDateTime.of(
+                    2026, 1, 15, 10, 0, 0, 0,
+                    ZoneId.of("Europe/Brussels"))
+                    .toInstant()
+                    .toEpochMilli();
+
+            assertEquals(DataType.DATE, date.getType());
+            assertEquals(expectedEpoch, ((Date) date.getValue()).getTime());
+            assertEquals("2026-01-15 10:00:00.000 +0100", date.toString());
+
+            TimeZone.setDefault(TimeZone.getTimeZone("Asia/Vladivostok"));
+            assertEquals("2026-01-15 10:00:00.000 +0100", date.toString());
         } finally {
             TimeZone.setDefault(original);
         }
