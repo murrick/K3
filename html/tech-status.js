@@ -18,6 +18,8 @@
     var MAX_RETRIES = 100;
     var requestSerial = 0;
     var lastStatus = null;
+    var timeZoneSelect = null;
+    var currentTimeZone = '';
 
     function stringValue(value) {
         return value === null || value === undefined ? '' : String(value);
@@ -109,7 +111,9 @@
             'body.kanger-presentation .kanger-tech-badge-ok { border-color: #aebdb5; background: #e5ebe8; color: #34463d; }',
             'body.kanger-presentation .kanger-tech-badge-warn { border-color: #c8b8ae; background: #eee9e5; color: #604b40; }',
             'body.kanger-presentation .kanger-tech-metric-row[hidden] { display: none !important; }',
-            '@media (max-width: 920px) { body.kanger-presentation .kanger-tech-metric-row { grid-template-columns: 74px minmax(0, 1fr); column-gap: 6px; } }'
+            '#kanger-timezone-select { box-sizing: border-box; float: right; height: 20px; max-width: 230px; margin: 0 8px; padding: 0 4px; border: 1px solid #aaa; border-radius: 2px; background: #eee; color: #333; font: 12px helvetica, sans-serif; }',
+            '#kanger-timezone-select:disabled { color: #777; }',
+            '@media (max-width: 920px) { body.kanger-presentation .kanger-tech-metric-row { grid-template-columns: 74px minmax(0, 1fr); column-gap: 6px; } #kanger-timezone-select { max-width: 170px; } }'
         ].join('\n');
         document.head.appendChild(style);
     }
@@ -257,6 +261,120 @@
         return Number(window.KANGER_OPERATION_PROTOCOL.snapshot().generation) || 0;
     }
 
+    function supportedTimeZones(current) {
+        var zones = [];
+        try {
+            if (window.Intl && typeof window.Intl.supportedValuesOf === 'function') {
+                zones = window.Intl.supportedValuesOf('timeZone').slice();
+            }
+        } catch (ignored) {
+            zones = [];
+        }
+        var browserZone = '';
+        try {
+            browserZone = window.Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+        } catch (ignoredBrowserZone) {
+            browserZone = '';
+        }
+        [current, browserZone, 'UTC'].forEach(function (zone) {
+            if (zone && zones.indexOf(zone) < 0) {
+                zones.push(zone);
+            }
+        });
+        zones.sort();
+        return zones;
+    }
+
+    function setSelectedTimeZone(timeZone) {
+        var zone = stringValue(timeZone);
+        if (!zone || !timeZoneSelect) {
+            return;
+        }
+        currentTimeZone = zone;
+        var zones = supportedTimeZones(zone);
+        timeZoneSelect.innerHTML = '';
+        for (var i = 0; i < zones.length; i++) {
+            var option = document.createElement('option');
+            option.value = zones[i];
+            option.textContent = zones[i];
+            timeZoneSelect.appendChild(option);
+        }
+        timeZoneSelect.value = zone;
+        timeZoneSelect.title = 'Session time zone: ' + zone;
+    }
+
+    function requestInitialTimeZone() {
+        if (typeof window.post !== 'function' || !timeZoneSelect) {
+            return;
+        }
+        timeZoneSelect.disabled = true;
+        window.post({
+            context: 'command',
+            parameters: {status: ''}
+        }, function (data) {
+            var zone = data && data.result === 'OK' && data.status
+                    && data.status.session ? data.status.session.timezone : '';
+            if (!zone) {
+                try {
+                    zone = window.Intl.DateTimeFormat().resolvedOptions().timeZone;
+                } catch (ignored) {
+                    zone = 'UTC';
+                }
+            }
+            setSelectedTimeZone(zone || 'UTC');
+            timeZoneSelect.disabled = false;
+        });
+    }
+
+    function changeTimeZone() {
+        if (!timeZoneSelect || typeof window.post !== 'function') {
+            return;
+        }
+        var requested = stringValue(timeZoneSelect.value);
+        var previous = currentTimeZone;
+        if (!requested || requested === previous) {
+            return;
+        }
+        timeZoneSelect.disabled = true;
+        window.post({
+            context: 'command',
+            parameters: {timezone: requested}
+        }, function (data) {
+            if (data && data.result === 'OK' && data.timezone) {
+                setSelectedTimeZone(data.timezone);
+                if (lastStatus && lastStatus.session) {
+                    lastStatus.session.timezone = data.timezone;
+                }
+                setMetric('tech-session-timezone', data.timezone);
+                timeZoneSelect.disabled = false;
+                if (presentationOpen()) {
+                    requestStatus(false);
+                }
+                return;
+            }
+            setSelectedTimeZone(previous);
+            timeZoneSelect.disabled = false;
+            window.alert(data && data.description
+                    ? data.description : 'Time zone change rejected');
+        });
+    }
+
+    function ensureTimeZoneSelect() {
+        if (timeZoneSelect && timeZoneSelect.parentNode) {
+            return true;
+        }
+        var user = document.getElementById('user-name');
+        if (!user || !user.parentNode) {
+            return false;
+        }
+        timeZoneSelect = document.createElement('select');
+        timeZoneSelect.id = 'kanger-timezone-select';
+        timeZoneSelect.setAttribute('aria-label', 'Session time zone');
+        timeZoneSelect.addEventListener('change', changeTimeZone);
+        user.parentNode.insertBefore(timeZoneSelect, user);
+        return true;
+    }
+
     function renderStatus(status, generation) {
         if (!status || Number(status.schema) !== 1) {
             renderFailure('invalid canonical snapshot');
@@ -308,6 +426,9 @@
         setMetric('tech-session-user', metric(session.user));
         setMetric('tech-session-mind', metric(session.mind));
         setMetric('tech-session-timezone', value(session.timezone));
+        if (session.timezone) {
+            setSelectedTimeZone(session.timezone);
+        }
         setMetric('tech-session-user-dir', value(session.user_dir));
         setMetric('tech-session-database-dir', value(session.database_dir));
         setMetric('tech-session-sources-dir', value(session.sources_dir));
@@ -406,7 +527,7 @@
             return;
         }
         if (!window.KANGER_PRESENTATION || !window.KANGER_PRESENTATION.installed
-                || !ensureSections()) {
+                || !ensureSections() || !ensureTimeZoneSelect()) {
             retries += 1;
             if (retries <= MAX_RETRIES) {
                 window.setTimeout(install, 10);
@@ -441,6 +562,7 @@
                 return lastStatus;
             }
         });
+        requestInitialTimeZone();
         if (presentationOpen()) {
             requestStatus(true);
         }
