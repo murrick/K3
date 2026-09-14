@@ -83,7 +83,12 @@ public final class CanonicalCommandProcessor {
             case TIMEZONE:
                 Object zoneId = invocation.getArgument("zoneId");
                 if (zoneId != null && !String.valueOf(zoneId).isEmpty()) {
-                    user.setTimeZone(String.valueOf(zoneId));
+                    try {
+                        user.setTimeZone(String.valueOf(zoneId));
+                    } catch (java.time.DateTimeException invalid) {
+                        throw new org.kanger.exception.CommandErrorException(
+                                "Invalid time zone " + zoneId);
+                    }
                 }
                 return Result.success(mind, timezoneStatus(user));
 
