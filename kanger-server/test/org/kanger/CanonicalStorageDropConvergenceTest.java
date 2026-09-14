@@ -131,8 +131,21 @@ class CanonicalStorageDropConvergenceTest {
             assertTrue(Boolean.TRUE.equals(child.query("!active_drop_transient;")));
 
             AtomicInteger escaped = new AtomicInteger();
+            IReactor<JSONObject> reactor = canonicalReactor(escaped);
+
+            JSONObject confirmation = invoke(
+                    reactor, fixture.token, "storage drop " + logical, false);
+            assertEquals("confirmation_required",
+                    confirmation.optString("result"), confirmation.toString());
+            assertEquals(0, escaped.get(),
+                    "Unconfirmed active-transaction drop reached runtime");
+            assertSame(child, fixture.user.getCurrentMind());
+            assertEquals(1, child.getTransactionLevel());
+            assertTrue(child.isStorageUsed());
+            assertTrue(Boolean.TRUE.equals(child.query("?active_drop_transient;")));
+
             JSONObject response = invoke(
-                    canonicalReactor(escaped), fixture.token,
+                    reactor, fixture.token,
                     "storage drop " + logical, true);
 
             assertEquals("OK", response.optString("result"), response.toString());
