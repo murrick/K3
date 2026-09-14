@@ -15,7 +15,6 @@ import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 
-import java.time.ZoneId;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -42,7 +41,7 @@ class CanonicalTimeZoneCommandTest {
     }
 
     @Test
-    void showsSessionAndInformationalSystemTimeZone() throws Exception {
+    void showsCurrentSessionTimeZone() throws Exception {
         Fixture fixture = fixture("show");
         try {
             fixture.user.setTimeZone("Europe/Brussels");
@@ -54,9 +53,7 @@ class CanonicalTimeZoneCommandTest {
             assertTrue(result.isHandled());
             assertTrue(result.isSuccess());
             assertSame(fixture.root, result.getMind());
-            assertEquals(
-                    "session.timezone=Europe/Brussels"
-                            + "\nsystem.timezone.default=" + ZoneId.systemDefault().getId(),
+            assertEquals("session.timezone=Europe/Brussels",
                     result.getDescription());
             assertEquals("Europe/Brussels", fixture.user.getTimeZone());
         } finally {
@@ -79,9 +76,7 @@ class CanonicalTimeZoneCommandTest {
             assertSame(fixture.root, result.getMind());
             assertSame(fixture.root, fixture.user.getCurrentMind());
             assertEquals("Asia/Tokyo", fixture.user.getTimeZone());
-            assertEquals(
-                    "session.timezone=Asia/Tokyo"
-                            + "\nsystem.timezone.default=" + ZoneId.systemDefault().getId(),
+            assertEquals("session.timezone=Asia/Tokyo",
                     result.getDescription());
         } finally {
             fixture.close();
