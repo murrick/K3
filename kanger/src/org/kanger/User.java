@@ -125,12 +125,6 @@ public class User implements IUser {
         return mind;
     }
 
-    void preflightRemove(IMind mind, String name) throws StorageLifecycleException {
-        if (isActiveStorage(name)) {
-            requireTransactionQuiescence(mind, "close database");
-        }
-    }
-
     private boolean isActiveStorage(String name) {
         return !isClosed()
                 && (name == null || name.isEmpty()
@@ -138,9 +132,7 @@ public class User implements IUser {
     }
 
     public IMind remove(IMind mind, String name) throws Exception {
-        boolean activeStorage = isActiveStorage(name);
-        if (activeStorage) {
-            preflightRemove(mind, name);
+        if (isActiveStorage(name)) {
             name = data.getStorageName();
             /*
              * Detach and clear the active logical view before the physical
@@ -149,7 +141,7 @@ public class User implements IUser {
              * only appear healthy because legacy iterators swallow hydration
              * failures.
              */
-            mind = closeQuiescentStorage((Mind) mind);
+            mind = close(mind);
         }
         data.remove(name);
         return mind;

@@ -8,8 +8,6 @@ package org.kanger;
 import org.junit.jupiter.api.Test;
 import org.kanger.command.CommandInvocation;
 import org.kanger.command.CommandParser;
-import org.kanger.enums.StorageLifecycleErrorCode;
-import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
@@ -31,19 +29,89 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
- * Regression for destructive Console confirmation ordering.
+ * Regression for destructive Console confirmation and active-storage drop.
  *
- * <p>A drop that is already known to be impossible must fail its runtime
- * preflight before Console asks for destructive consent. Once the transaction
- * is settled, the same command must retain the ordinary confirmation flow.</p>
+ * <p>Dropping the active storage reuses the normal close lifecycle: explicit
+ * U1..Un are rebased onto an offline U0, then the physical storage is removed.
+ * Confirmation remains the only Console-specific step.</p>
  */
 public final class StorageDropConfirmationOrderTest {
 
     @Test
-    public void activeTransactionRejectsDropBeforeConfirmation() throws Exception {
+    public void activeTransactionDropConfirmsThenClosesAndRemoves() throws Exception {
+        Fixture fixture = fixture("confirmed");
+        CommandInvocation drop = new CommandParser().parse(
+                "storage drop " + fixture.storageName);
+        Method dispatch = dispatchMethod();
+
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        Throwable failure = invokeDispatch(
+                dispatch, drop, fixture.child, fixture.user, "y\n", output);
+        if (failure != null) {
+            fail("confirmed active-transaction drop unexpectedly failed", failure);
+        }
+
+        assertTrue(text(output).contains(
+                        "Drop storage " + fixture.storageName + "?"),
+                "destructive drop must request confirmation");
+
+        IMind dropped = fixture.user.getCurrentMind();
+        assertNotNull(dropped,
+                "confirmed drop must publish the rebased Mind");
+        assertEquals(1, dropped.getTransactionLevel(),
+                "drop must preserve the explicit transaction level");
+        assertNotNull(dropped.getNext(),
+                "rebased U1 must retain an offline U0 parent");
+        assertEquals(0, dropped.getNext().getTransactionLevel(),
+                "rebased parent must remain U0");
+        assertFalse(dropped.isStorageUsed(),
+                "confirmed active-storage drop must leave the session offline");
+        assertFalse(hasStorage(dropped, fixture.storageName),
+                "confirmed drop must remove the physical storage");
+    }
+
+    @Test
+    public void cancelledActiveTransactionDropLeavesStateUntouched() throws Exception {
+        Fixture fixture = fixture("cancelled");
+        CommandInvocation drop = new CommandParser().parse(
+                "storage drop " + fixture.storageName);
+        Method dispatch = dispatchMethod();
+
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        Throwable failure = invokeDispatch(
+                dispatch, drop, fixture.child, fixture.user, "n\n", output);
+        if (failure != null) {
+            fail("cancelled drop unexpectedly failed", failure);
+        }
+
+        assertTrue(text(output).contains(
+                        "Drop storage " + fixture.storageName + "?"),
+                "destructive drop must request confirmation before mutation");
+        assertSame(fixture.child, fixture.user.getCurrentMind(),
+                "cancelled drop must not replace the current Mind");
+        assertEquals(1, fixture.child.getTransactionLevel(),
+                "cancelled drop must preserve the active transaction");
+        assertSame(fixture.root, fixture.child.getNext(),
+                "cancelled drop must preserve transaction ancestry");
+        assertTrue(fixture.child.isStorageUsed(),
+                "cancelled drop must keep the current storage open");
+        assertEquals(fixture.storageName, fixture.child.getStorageName(),
+                "cancelled drop must preserve storage identity");
+        assertTrue(hasStorage(fixture.child, fixture.storageName),
+                "cancelled drop must leave the storage intact");
+
+        ByteArrayOutputStream cleanupOutput = new ByteArrayOutputStream();
+        Throwable cleanupFailure = invokeDispatch(
+                dispatch, drop, fixture.child, fixture.user, "y\n", cleanupOutput);
+        if (cleanupFailure != null) {
+            fail("test cleanup drop unexpectedly failed", cleanupFailure);
+        }
+    }
+
+    private static Fixture fixture(String label) throws Exception {
         String suffix = Long.toString(System.nanoTime());
-        String userName = "autotest-storage-drop-preflight-" + suffix;
-        String storageName = "drop_preflight_" + suffix;
+        String userName = "autotest-storage-drop-" + label + "-" + suffix;
+        String storageName = "drop_" + label + "_" + suffix;
 
         IUser user = UserFactory.createUser(userName, userName);
         new UDF().init(user);
@@ -56,9 +124,10 @@ public final class StorageDropConfirmationOrderTest {
 
         Mind child = new Mind(root);
         user.setCurrentMind(child);
+        return new Fixture(user, root, child, storageName);
+    }
 
-        CommandInvocation drop = new CommandParser().parse(
-                "storage drop " + storageName);
+    private static Method dispatchMethod() throws Exception {
         Method dispatch = CanonicalConsole.class.getDeclaredMethod(
                 "dispatch",
                 CommandInvocation.class,
@@ -66,58 +135,7 @@ public final class StorageDropConfirmationOrderTest {
                 ConsoleLineInput.class,
                 ShutdownHook.class);
         dispatch.setAccessible(true);
-
-        ByteArrayOutputStream rejectedOutput = new ByteArrayOutputStream();
-        Throwable rejected = invokeDispatch(
-                dispatch, drop, child, user, "y\n", rejectedOutput);
-
-        assertTrue(rejected instanceof StorageLifecycleException,
-                "active storage drop must fail with the existing lifecycle error");
-        StorageLifecycleException lifecycle = (StorageLifecycleException) rejected;
-        assertEquals(StorageLifecycleErrorCode.ACTIVE_TRANSACTION.name(),
-                lifecycle.getCode());
-        assertEquals("TRANSACTION_RESOLUTION_REQUIRED",
-                lifecycle.getRequiredAction());
-        assertFalse(text(rejectedOutput).contains(
-                        "Drop storage " + storageName + "?"),
-                "impossible drop must not ask for destructive confirmation");
-
-        assertSame(child, user.getCurrentMind(),
-                "rejected preflight must not replace the current Mind");
-        assertEquals(1, child.getTransactionLevel(),
-                "rejected preflight must preserve the active transaction");
-        assertSame(root, child.getNext(),
-                "rejected preflight must preserve transaction ancestry");
-        assertTrue(child.isStorageUsed(),
-                "rejected preflight must keep the current storage open");
-        assertEquals(storageName, child.getStorageName(),
-                "rejected preflight must preserve storage identity");
-        assertTrue(hasStorage(child, storageName),
-                "rejected preflight must leave the storage intact");
-
-        root.release(child);
-        user.setCurrentMind(root);
-
-        ByteArrayOutputStream confirmedOutput = new ByteArrayOutputStream();
-        Throwable confirmed = invokeDispatch(
-                dispatch, drop, root, user, "y\n", confirmedOutput);
-        if (confirmed != null) {
-            fail("quiescent confirmed drop unexpectedly failed", confirmed);
-        }
-
-        String output = text(confirmedOutput);
-        assertTrue(output.contains("Drop storage " + storageName + "?"),
-                "eligible destructive drop must still request confirmation");
-
-        IMind dropped = user.getCurrentMind();
-        assertNotNull(dropped,
-                "confirmed drop must publish the resulting Mind");
-        assertEquals(0, dropped.getTransactionLevel(),
-                "confirmed root drop must remain at U0");
-        assertFalse(dropped.isStorageUsed(),
-                "confirmed active-storage drop must leave storage closed");
-        assertFalse(hasStorage(dropped, storageName),
-                "confirmed drop must remove the storage");
+        return dispatch;
     }
 
     private static Throwable invokeDispatch(Method dispatch,
@@ -165,5 +183,19 @@ public final class StorageDropConfirmationOrderTest {
 
     private static String text(ByteArrayOutputStream output) throws Exception {
         return output.toString(StandardCharsets.UTF_8.name());
+    }
+
+    private static final class Fixture {
+        private final IUser user;
+        private final IMind root;
+        private final Mind child;
+        private final String storageName;
+
+        private Fixture(IUser user, IMind root, Mind child, String storageName) {
+            this.user = user;
+            this.root = root;
+            this.child = child;
+            this.storageName = storageName;
+        }
     }
 }
