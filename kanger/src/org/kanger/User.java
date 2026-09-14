@@ -138,7 +138,7 @@ public class User implements IUser {
              * only appear healthy because legacy iterators swallow hydration
              * failures.
              */
-            mind = closeQuiescentStorage((Mind) mind);
+            mind = close(mind);
         }
         data.remove(name);
         return mind;
