@@ -54,7 +54,7 @@ import java.util.*;
  * приложением или оболочкой. Корневой {@code Mind} получает его явно через
  * конструктор и сохраняет ту же ссылку для дочерних уровней. Открытые базы
  * публикуются фабрикам корневого {@code Mind} при выборе хранилища; физические
- * операции выполняет подключённая реализация {@code IData}.</p>
+ * операции выполняет подключённая реализация {@link IData}.</p>
  *
  * <p><strong>Жизненный цикл.</strong> Transaction lifecycle и physical storage
  * lifecycle являются независимыми state machines. {@link #use(IMind, String)}
@@ -125,11 +125,22 @@ public class User implements IUser {
         return mind;
     }
 
-    public IMind remove(IMind mind, String name) throws Exception {
-        boolean activeStorage = !isClosed()
+    void preflightRemove(IMind mind, String name) throws StorageLifecycleException {
+        if (isActiveStorage(name)) {
+            requireTransactionQuiescence(mind, "close database");
+        }
+    }
+
+    private boolean isActiveStorage(String name) {
+        return !isClosed()
                 && (name == null || name.isEmpty()
                 || name.equals(data.getStorageName()));
+    }
+
+    public IMind remove(IMind mind, String name) throws Exception {
+        boolean activeStorage = isActiveStorage(name);
         if (activeStorage) {
+            preflightRemove(mind, name);
             name = data.getStorageName();
             /*
              * Detach and clear the active logical view before the physical
