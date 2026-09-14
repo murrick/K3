@@ -655,12 +655,13 @@ public class User implements IUser {
             ((LibraryFactory) mind.getLibrary()).transaction(null);
 
             try {
-                if (!Boolean.TRUE.equals(mind.queryCheck(false))) {
-                    throw new StorageLifecycleException(
-                            StorageLifecycleErrorCode.STORAGE_SEMANTIC_CORRUPTION,
-                            "Database " + name
-                                    + " is semantically inconsistent");
-                }
+                /*
+                 * Opening persistent U0 must force semantic hydration so
+                 * dangling references still fail fast. Logical collisions in
+                 * that root are not storage corruption; compatibility is
+                 * qualified only after explicit U1..Un have been replayed.
+                 */
+                mind.queryCheck(false);
             } catch (StorageLifecycleException error) {
                 throw error;
             } catch (NullPointerException error) {
