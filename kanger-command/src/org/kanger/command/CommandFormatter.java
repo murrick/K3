@@ -97,6 +97,8 @@ public final class CommandFormatter {
 
             case STATUS:
                 return formatStatus(invocation);
+            case TIMEZONE:
+                return optionalArgumentCommand("timezone", invocation.getArgument("zoneId"));
 
             case STORAGE_STATUS:
                 return "storage";
