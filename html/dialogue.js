@@ -543,6 +543,10 @@
             if (typeof window.showTransactionLevel === 'function') {
                 window.showTransactionLevel(data);
             }
+            if (window.KANGER_TECH_STATUS
+                    && typeof window.KANGER_TECH_STATUS.refresh === 'function') {
+                window.KANGER_TECH_STATUS.refresh();
+            }
             if (typeof callback === 'function') {
                 callback(data);
             }
