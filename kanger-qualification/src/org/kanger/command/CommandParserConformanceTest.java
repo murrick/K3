@@ -116,7 +116,11 @@ public final class CommandParserConformanceTest {
         expect("star", CommandIntent.TX_START);
         expect("stat", CommandIntent.STATUS);
         expect("sto", CommandIntent.STORAGE_STATUS);
-        expect("t", CommandIntent.TX_STATUS);
+        reject("t", AMBIGUOUS_PREFIX);
+        expect("tr", CommandIntent.TX_STATUS);
+        expect("ti", CommandIntent.TIMEZONE);
+        expectArgument("ti Europe/Brussels", CommandIntent.TIMEZONE,
+                "zoneId", "Europe/Brussels");
         expect("u", CommandIntent.STORAGE_STATUS);
         expectArgument("u demo", CommandIntent.STORAGE_USE, "name", "demo");
         expect("v", CommandIntent.VALUES);
@@ -266,11 +270,12 @@ public final class CommandParserConformanceTest {
 
     private void transactionFamily() throws Exception {
         expect("transaction", CommandIntent.TX_STATUS);
-        expect("t st", CommandIntent.TX_START);
-        expect("t c", CommandIntent.TX_COMMIT);
-        expect("t r", CommandIntent.TX_ROLLBACK);
-        expect("t sq", CommandIntent.TX_SQUASH);
-        reject("t s", AMBIGUOUS_PREFIX);
+        expect("tr st", CommandIntent.TX_START);
+        expect("tr c", CommandIntent.TX_COMMIT);
+        expect("tr r", CommandIntent.TX_ROLLBACK);
+        expect("tr sq", CommandIntent.TX_SQUASH);
+        reject("tr s", AMBIGUOUS_PREFIX);
+        reject("t st", AMBIGUOUS_PREFIX);
         reject("transaction create", INVALID_GRAMMAR);
         reject("transaction x", UNKNOWN_KEYWORD);
     }
@@ -358,6 +363,9 @@ public final class CommandParserConformanceTest {
     }
 
     private void systemFamily() throws Exception {
+        expect("timezone", CommandIntent.TIMEZONE);
+        expectArgument("timezone Asia/Tokyo", CommandIntent.TIMEZONE,
+                "zoneId", "Asia/Tokyo");
         expect("erase", CommandIntent.ERASE);
         expect("help", CommandIntent.HELP);
         expect("quit", CommandIntent.QUIT);
@@ -378,8 +386,10 @@ public final class CommandParserConformanceTest {
         expectCanonical("v o x d, y a", "values order x desc, y asc");
         expectCanonical("so t 42", "solution tree 42");
         expectCanonical("w a 0", "when accept 0");
-        expectCanonical("t st", "transaction start");
-        expectCanonical("t sq", "transaction squash");
+        expectCanonical("tr st", "transaction start");
+        expectCanonical("tr sq", "transaction squash");
+        expectCanonical("ti", "timezone");
+        expectCanonical("ti Europe/Brussels", "timezone Europe/Brussels");
         expectCanonical("star", "transaction start");
         expectCanonical("stat", "status");
         expectCanonical("co", "transaction commit");
