@@ -248,6 +248,7 @@ public final class CanonicalConsole {
                 return same(mind);
 
             case STATUS:
+            case TIMEZONE:
                 CanonicalCommandProcessor.Result status =
                         COMMAND_PROCESSOR.execute(invocation, mind.getUser());
                 if (!status.isHandled()) {

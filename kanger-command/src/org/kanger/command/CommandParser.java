@@ -93,6 +93,9 @@ public final class CommandParser {
                 return parseStorage(line, tokens);
             case STATUS:
                 return parseStatus(line, tokens);
+            case TIMEZONE:
+                return parseOptionalSingleArgument(
+                        line, tokens, CommandIntent.TIMEZONE, "zoneId");
             case ERASE:
                 return parseNoArguments(line, tokens, CommandIntent.ERASE);
             case HELP:
@@ -617,7 +620,6 @@ public final class CommandParser {
             if (p >= line.length()) {
                 break;
             }
-
             int start = p;
             StringBuilder value = new StringBuilder();
             if (line.charAt(p) == '"') {

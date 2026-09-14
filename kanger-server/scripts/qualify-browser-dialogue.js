@@ -26,6 +26,7 @@ const corpus = fs.readFileSync(path.join(root,
 const calls = [];
 const refreshes = [];
 const callbacks = [];
+let statusRefreshes = 0;
 let readyCallback = null;
 function domNode(type, value) {
     return {
@@ -211,6 +212,13 @@ const window = {
     document,
     jQuery,
     KANGER_ERROR_BOUNDARY: Object.freeze({version: 1, installed: true}),
+    KANGER_TECH_STATUS: Object.freeze({
+        version: 1,
+        installed: true,
+        refresh() {
+            statusRefreshes += 1;
+        }
+    }),
     post(packet, callback) {
         calls.push(JSON.parse(JSON.stringify(packet)));
         const result = responseFor(packet.parameters.line);
@@ -365,6 +373,8 @@ assert.deepStrictEqual(composeCommands(rollback, []),
 
 assert.strictEqual(refreshes.length, calls.length);
 assert.strictEqual(callbacks.length, calls.length);
+assert.strictEqual(statusRefreshes, calls.length,
+    'each completed Browser dialogue must refresh canonical STATUS');
 assert(!source.includes('split('), 'dialogue adapter contains local tokenization');
 assert(!/switch\s*\(/.test(source), 'dialogue adapter contains local dispatch switch');
 assert(!source.includes('toLowerCase('), 'dialogue adapter normalizes operator language');
@@ -381,4 +391,5 @@ console.log('BROWSER_DIALOGUE_PASS rollback-resolution-presentation');
 console.log('BROWSER_DIALOGUE_PASS base-tree-presentation');
 console.log('BROWSER_DIALOGUE_PASS solution-tree-presentation');
 console.log('BROWSER_DIALOGUE_PASS rule-tree-presentation');
+console.log('BROWSER_DIALOGUE_PASS post-command-status-refresh');
 console.log('BROWSER_DIALOGUE_OK');

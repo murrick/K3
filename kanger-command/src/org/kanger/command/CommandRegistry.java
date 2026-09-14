@@ -40,6 +40,7 @@ public final class CommandRegistry {
         SOLUTION,
         STATUS,
         STORAGE,
+        TIMEZONE,
         TRANSACTION,
         VALUES,
         WHEN
@@ -157,6 +158,7 @@ public final class CommandRegistry {
         family(Family.SOLUTION, "solution", "solutions");
         family(Family.STATUS, "status");
         family(Family.STORAGE, "storage");
+        family(Family.TIMEZONE, "timezone");
         family(Family.TRANSACTION, "transaction");
         family(Family.VALUES, "values");
         family(Family.WHEN, "when");
@@ -295,6 +297,9 @@ public final class CommandRegistry {
                 args("section", "Optional status section.",
                         "subsection", "Optional core subsection."), n++);
 
+        define(CommandIntent.TIMEZONE, "timezone [<zoneId>]", "SYSTEM / SESSION",
+                "Show or set the time zone of the current session.",
+                args("zoneId", "Optional IANA time-zone id."), n++);
         define(CommandIntent.ERASE, "erase", "SYSTEM / SESSION", "Clear the current workspace using qualified runtime semantics.",
                 noArgs(), n++);
         define(CommandIntent.HELP, "help", "SYSTEM / SESSION", "Show canonical command help generated from this registry.",
