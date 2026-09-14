@@ -159,7 +159,7 @@ public final class CommandRegistry {
         family(Family.STATUS, "status");
         family(Family.STORAGE, "storage");
         family(Family.TIMEZONE, "timezone");
-        family(Family.TRANSACTION, "transaction", "t");
+        family(Family.TRANSACTION, "transaction");
         family(Family.VALUES, "values");
         family(Family.WHEN, "when");
 
@@ -257,6 +257,7 @@ public final class CommandRegistry {
         define(CommandIntent.WHEN_STATUS, "when", "WHEN", "Show the current hypothesis rowset.", noArgs(), n++);
         define(CommandIntent.WHEN_ACCEPT, "when accept <index>", "WHEN", "Accept one hypothesis by zero-based row index.",
                 args("index", "Zero-based index in the current hypothesis rowset."), n++);
+
         define(CommandIntent.TX_STATUS, "transaction", "TRANSACTION", "Show current transaction state.", noArgs(), n++);
         define(CommandIntent.TX_START, "transaction start", "TRANSACTION", "Start a child transaction.",
                 noArgs(), aliases("start"), n++);
