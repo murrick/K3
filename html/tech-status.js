@@ -5,10 +5,11 @@
  *
  * Canonical TECH telemetry adapter.
  *
- * Owns one internal parent-brokered authenticated read of canonical STATUS
- * telemetry when the TECH panel is opened. It deliberately bypasses operator
- * dialogue presentation/history and never polls. Canonical parsing and STATUS
- * semantics remain server-owned; this adapter only renders status.schema=1.
+ * Owns parent-brokered authenticated reads of canonical STATUS for the
+ * status-bar session projection and for TECH telemetry. It deliberately
+ * bypasses operator dialogue presentation/history and never polls. Canonical
+ * parsing and STATUS semantics remain server-owned; this adapter only renders
+ * status.schema=1.
  */
 (function (window, document) {
     'use strict';
@@ -303,25 +304,62 @@
         timeZoneSelect.title = 'Session time zone: ' + zone;
     }
 
-    function requestInitialTimeZone() {
+    function statusTimeZone(data) {
+        return data && data.result === 'OK' && data.status
+                && data.status.session ? stringValue(data.status.session.timezone) : '';
+    }
+
+    function browserTimeZone() {
+        try {
+            return window.Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+        } catch (ignored) {
+            return 'UTC';
+        }
+    }
+
+    function requestSessionStatus(fallbackToBrowser, callback) {
         if (typeof window.post !== 'function' || !timeZoneSelect) {
+            if (typeof callback === 'function') {
+                callback(null);
+            }
+            return;
+        }
+        try {
+            window.post({
+                context: 'command',
+                parameters: {status: ''}
+            }, function (data) {
+                var zone = statusTimeZone(data);
+                if (data && data.result === 'OK' && data.status
+                        && Number(data.status.schema) === 1) {
+                    lastStatus = data.status;
+                }
+                if (!zone && fallbackToBrowser) {
+                    zone = browserTimeZone();
+                }
+                if (zone) {
+                    setSelectedTimeZone(zone);
+                }
+                if (typeof callback === 'function') {
+                    callback(data);
+                }
+            });
+        } catch (error) {
+            if (fallbackToBrowser) {
+                setSelectedTimeZone(browserTimeZone());
+            }
+            if (typeof callback === 'function') {
+                callback(null);
+            }
+        }
+    }
+
+    function requestInitialTimeZone() {
+        if (!timeZoneSelect) {
             return;
         }
         timeZoneSelect.disabled = true;
-        window.post({
-            context: 'command',
-            parameters: {status: ''}
-        }, function (data) {
-            var zone = data && data.result === 'OK' && data.status
-                    && data.status.session ? data.status.session.timezone : '';
-            if (!zone) {
-                try {
-                    zone = window.Intl.DateTimeFormat().resolvedOptions().timeZone;
-                } catch (ignored) {
-                    zone = 'UTC';
-                }
-            }
-            setSelectedTimeZone(zone || 'UTC');
+        requestSessionStatus(true, function () {
             timeZoneSelect.disabled = false;
         });
     }
@@ -556,6 +594,8 @@
             refresh: function () {
                 if (presentationOpen()) {
                     requestStatus(true);
+                } else {
+                    requestSessionStatus(false);
                 }
             },
             snapshot: function () {
