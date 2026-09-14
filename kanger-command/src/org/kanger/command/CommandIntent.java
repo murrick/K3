@@ -57,6 +57,7 @@ public enum CommandIntent {
     STORAGE_REINDEX,
 
     STATUS,
+    TIMEZONE,
     ERASE,
     HELP,
     QUIT
