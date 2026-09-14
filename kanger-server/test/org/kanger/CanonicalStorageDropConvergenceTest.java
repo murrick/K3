@@ -117,7 +117,7 @@ class CanonicalStorageDropConvergenceTest {
     }
 
     @Test
-    void browserActiveTransactionDropExposesTypedCoreErrorAndPreservesState()
+    void browserActiveTransactionDropRebasesThroughCloseAndPreservesTransaction()
             throws Exception {
         Fixture fixture = fixture("browser-active-transaction-drop");
         try {
@@ -135,19 +135,24 @@ class CanonicalStorageDropConvergenceTest {
                     canonicalReactor(escaped), fixture.token,
                     "storage drop " + logical, true);
 
-            assertEquals("error", response.optString("result"), response.toString());
-            assertEquals("ACTIVE_TRANSACTION", response.optString("code"));
-            assertEquals("TRANSACTION_RESOLUTION_REQUIRED",
-                    response.optString("required_action"));
+            assertEquals("OK", response.optString("result"), response.toString());
+            assertEquals("STORAGE_DROP", response.optString("canonical_intent"));
             assertEquals(0, escaped.get(),
-                    "Rejected canonical drop escaped into legacy drop protocol");
-            assertSame(child, fixture.user.getCurrentMind());
-            assertEquals(1, child.getTransactionLevel());
-            assertTrue(child.isStorageUsed());
-            assertTrue(Boolean.TRUE.equals(child.query("?active_drop_transient;")));
+                    "Canonical active-transaction drop escaped into legacy drop protocol");
 
-            processor.execute(parser.parse("transaction rollback"), fixture.user);
-            processor.execute(parser.parse("storage drop " + logical), fixture.user);
+            IMind offline = fixture.user.getCurrentMind();
+            assertEquals(1, offline.getTransactionLevel(),
+                    "Drop must preserve the explicit transaction depth exactly as close does");
+            assertFalse(offline.isStorageUsed(),
+                    "Dropping the current storage must leave the rebased session offline");
+            assertTrue(Boolean.TRUE.equals(offline.query("?active_drop_transient;")),
+                    "Explicit transaction content was lost while rebasing through close");
+            assertFalse(response.getJSONObject("storage").getBoolean("used"));
+            assertEquals(1, response.getInt("transaction"));
+            assertFalse(response.getJSONObject("storage").getJSONArray("names")
+                            .toList().contains(logical.replace(".",
+                                    org.kanger.enums.Enums.FILE_SEPARATOR)),
+                    "Dropped storage is still advertised by Browser canonical status");
         } finally {
             fixture.close();
         }
