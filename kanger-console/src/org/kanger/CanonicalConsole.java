@@ -303,10 +303,14 @@ public final class CanonicalConsole {
             case STORAGE_CLOSE:
             case STORAGE_DROP:
             case STORAGE_REINDEX:
-                if (invocation.getIntent() == org.kanger.command.CommandIntent.STORAGE_DROP
-                        && !confirm(input, "Drop storage "
-                        + String.valueOf(invocation.getArgument("name")) + "?")) {
-                    return same(mind);
+                if (invocation.getIntent() == org.kanger.command.CommandIntent.STORAGE_DROP) {
+                    String dropStorageName = String.valueOf(invocation.getArgument("name"))
+                            .replace(".", Enums.FILE_SEPARATOR);
+                    ((User) mind.getUser()).preflightRemove(mind, dropStorageName);
+                    if (!confirm(input, "Drop storage "
+                            + String.valueOf(invocation.getArgument("name")) + "?")) {
+                        return same(mind);
+                    }
                 }
                 IReactor<String> progress = null;
                 if (invocation.getIntent()
