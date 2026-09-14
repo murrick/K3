@@ -117,7 +117,7 @@ class CanonicalStorageDropConvergenceTest {
     }
 
     @Test
-    void browserActiveTransactionDropExposesTypedCoreErrorAndPreservesState()
+    void browserActiveTransactionDropRebasesOfflineAndPreservesState()
             throws Exception {
         Fixture fixture = fixture("browser-active-transaction-drop");
         try {
@@ -135,19 +135,20 @@ class CanonicalStorageDropConvergenceTest {
                     canonicalReactor(escaped), fixture.token,
                     "storage drop " + logical, true);
 
-            assertEquals("error", response.optString("result"), response.toString());
-            assertEquals("ACTIVE_TRANSACTION", response.optString("code"));
-            assertEquals("TRANSACTION_RESOLUTION_REQUIRED",
-                    response.optString("required_action"));
+            assertEquals("OK", response.optString("result"), response.toString());
+            assertEquals("STORAGE_DROP", response.optString("canonical_intent"));
             assertEquals(0, escaped.get(),
-                    "Rejected canonical drop escaped into legacy drop protocol");
-            assertSame(child, fixture.user.getCurrentMind());
-            assertEquals(1, child.getTransactionLevel());
-            assertTrue(child.isStorageUsed());
-            assertTrue(Boolean.TRUE.equals(child.query("?active_drop_transient;")));
+                    "Canonical drop escaped into legacy drop protocol");
+            assertEquals(1, response.getInt("transaction"));
+            assertFalse(response.getJSONObject("storage").getBoolean("used"));
+            assertFalse(response.getJSONObject("storage").getJSONArray("names")
+                    .toList().contains(logical.replace(".",
+                            org.kanger.enums.Enums.FILE_SEPARATOR)));
 
-            processor.execute(parser.parse("transaction rollback"), fixture.user);
-            processor.execute(parser.parse("storage drop " + logical), fixture.user);
+            IMind rebased = fixture.user.getCurrentMind();
+            assertEquals(1, rebased.getTransactionLevel());
+            assertFalse(rebased.isStorageUsed());
+            assertTrue(Boolean.TRUE.equals(rebased.query("?active_drop_transient;")));
         } finally {
             fixture.close();
         }

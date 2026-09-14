@@ -125,11 +125,14 @@ public class User implements IUser {
         return mind;
     }
 
-    public IMind remove(IMind mind, String name) throws Exception {
-        boolean activeStorage = !isClosed()
+    private boolean isActiveStorage(String name) {
+        return !isClosed()
                 && (name == null || name.isEmpty()
                 || name.equals(data.getStorageName()));
-        if (activeStorage) {
+    }
+
+    public IMind remove(IMind mind, String name) throws Exception {
+        if (isActiveStorage(name)) {
             name = data.getStorageName();
             /*
              * Detach and clear the active logical view before the physical
@@ -138,7 +141,7 @@ public class User implements IUser {
              * only appear healthy because legacy iterators swallow hydration
              * failures.
              */
-            mind = closeQuiescentStorage((Mind) mind);
+            mind = close(mind);
         }
         data.remove(name);
         return mind;
