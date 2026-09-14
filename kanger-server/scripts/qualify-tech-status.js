@@ -424,6 +424,22 @@ assert.strictEqual(document.getElementById('tech-status-generation-value').textC
     '8');
 console.log('TECH_STATUS_PASS reopen-single-refresh');
 
+technicalOpen = false;
+sessionTimeZone = 'Europe/Brussels';
+const beforeClosedRefresh = requests.length;
+window.KANGER_TECH_STATUS.refresh();
+assert.strictEqual(requests.length, beforeClosedRefresh + 1,
+    'closed TECH refresh must reread canonical STATUS for the status bar');
+assert.deepStrictEqual(requests[beforeClosedRefresh].packet, {
+    context: 'command',
+    parameters: {status: ''}
+});
+assert.strictEqual(timeZoneSelect.value, 'Europe/Brussels',
+    'closed TECH refresh did not synchronize the session timezone selector');
+assert.strictEqual(window.KANGER_TECH_STATUS.snapshot().session.timezone,
+    'Europe/Brussels');
+console.log('TECH_STATUS_PASS closed-command-session-refresh');
+
 assert(!source.includes('setInterval('));
 console.log('TECH_STATUS_PASS no-polling-history-side-effects');
 console.log('TECH_STATUS_PASS containment-transport-boundary');
