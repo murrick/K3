@@ -10,11 +10,11 @@ import org.kanger.command.CommandFormatter;
 import org.kanger.command.CommandIntent;
 import org.kanger.command.CommandInvocation;
 import org.kanger.command.CommandParser;
+import org.kanger.exception.CommandErrorException;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 
-import java.time.DateTimeException;
 import java.time.ZoneId;
 import java.util.UUID;
 
@@ -95,7 +95,7 @@ class CanonicalTimeZoneCommandTest {
             fixture.user.setTimeZone("Europe/Brussels");
             CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
 
-            assertThrows(DateTimeException.class,
+            assertThrows(CommandErrorException.class,
                     () -> processor.execute(
                             new CommandParser().parse("timezone Not/A_Time_Zone"),
                             fixture.user));
