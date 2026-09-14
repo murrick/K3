@@ -9,6 +9,9 @@ ACCEPT	star	TX_START	transaction start	-	-	OK	yes
 ACCEPT	stat	STATUS	status	-	-	OK	yes
 ACCEPT	sto	STORAGE_STATUS	storage	-	-	OK	yes
 ACCEPT	sq	TX_SQUASH	transaction squash	-	-	OK	yes
+ACCEPT	tr	TX_STATUS	transaction	-	-	OK	yes
+ACCEPT	ti	TIMEZONE	timezone	-	-	OK	yes
+ACCEPT	ti Europe/Brussels	TIMEZONE	timezone Europe/Brussels	zoneId	Europe/Brussels	OK	yes
 ACCEPT	pr	BASE_PREDICATES	base predicates	-	-	OK	yes
 ACCEPT	predicate	BASE_PREDICATES	base predicates	-	-	OK	yes
 ACCEPT	predicates father	BASE_PREDICATE	base predicate father	predicate	father	OK	yes
@@ -27,6 +30,7 @@ REJECT	r	AMBIGUOUS_PREFIX	-	-	-	error	yes
 REJECT	s	AMBIGUOUS_PREFIX	-	-	-	error	yes
 REJECT	st	AMBIGUOUS_PREFIX	-	-	-	error	yes
 REJECT	sta	AMBIGUOUS_PREFIX	-	-	-	error	yes
+REJECT	t	AMBIGUOUS_PREFIX	-	-	-	error	yes
 REJECT	transaction s	AMBIGUOUS_PREFIX	-	-	-	error	yes
 REJECT	tree 1	UNKNOWN_KEYWORD	-	-	-	error	yes
 REJECT	drop	MISSING_ARGUMENT	-	-	-	error	yes
