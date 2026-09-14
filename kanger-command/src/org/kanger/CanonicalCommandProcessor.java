@@ -36,6 +36,7 @@ public final class CanonicalCommandProcessor {
         }
         CommandIntent intent = invocation.getIntent();
         return intent == CommandIntent.STATUS
+                || intent == CommandIntent.TIMEZONE
                 || intent == CommandIntent.TX_STATUS
                 || intent == CommandIntent.TX_START
                 || intent == CommandIntent.TX_COMMIT
@@ -78,6 +79,13 @@ public final class CanonicalCommandProcessor {
         switch (invocation.getIntent()) {
             case STATUS:
                 return canonicalStatus(invocation, user, mind);
+
+            case TIMEZONE:
+                Object zoneId = invocation.getArgument("zoneId");
+                if (zoneId != null && !String.valueOf(zoneId).isEmpty()) {
+                    user.setTimeZone(String.valueOf(zoneId));
+                }
+                return Result.success(mind, timezoneStatus(user));
 
             case TX_STATUS:
                 return Result.successTransaction(mind, "", transactionStatus(mind));
@@ -167,6 +175,11 @@ public final class CanonicalCommandProcessor {
                 snapshot,
                 section == null ? null : String.valueOf(section),
                 subsection == null ? null : String.valueOf(subsection)));
+    }
+
+    private String timezoneStatus(IUser user) {
+        return "session.timezone=" + user.getTimeZone()
+                + "\nsystem.timezone.default=" + java.time.ZoneId.systemDefault().getId();
     }
 
     private Result commit(IUser user, IMind mind) throws Exception {
