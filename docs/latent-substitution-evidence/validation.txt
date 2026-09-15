@@ -1,0 +1,9 @@
+Local OpenJDK 17 / ECJ Java 8 target. Not canonical Java 8/21 Maven qualification.
+off: Success: 102 | Fails: 0 | Stabilization Success: 7 | Stabilization Fails: 0 | C1 Success: 5 | C1 Fails: 0 | C4 Success: 3 | C4 Fails: 0 | C3 Success: 6 | C3 Fails: 0 | LATENT_CORPUS_PASS
+verify: Success: 102 | Fails: 0 | Stabilization Success: 7 | Stabilization Fails: 0 | C1 Success: 5 | C1 Fails: 0 | C4 Success: 3 | C4 Fails: 0 | C3 Success: 6 | C3 Fails: 0 | LATENT_CORPUS_PASS
+state-off.log SHA256 5c865ca287305acb18605de841e0db83acef84e9878fb5daa61482aa5baa1192
+state-index.log SHA256 5c865ca287305acb18605de841e0db83acef84e9878fb5daa61482aa5baa1192
+state-verify.log SHA256 5c865ca287305acb18605de841e0db83acef84e9878fb5daa61482aa5baa1192
+LINKER_RULE_ORDERING_OK (verify)
+LINKER_CHECKPOINT_BALANCE_OK (verify)
+Reproduction script: LATENT_PROFILE_EQUIVALENCE_PASS; LATENT_EXPERIMENT_PASS

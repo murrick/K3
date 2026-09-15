@@ -535,6 +535,13 @@ public class Linker {
 
         boolean used = false;
         final Map<DomainKey, List<IRule>> domainIndex = buildDomainIndex(ruleList);
+        // Experimental, discardable snapshot. Default remains the reference path.
+        final String latentMode = System.getProperty("kanger.experiment.latent", "off");
+        if (!"off".equals(latentMode) && !"index".equals(latentMode) && !"verify".equals(latentMode)) {
+            throw new IllegalArgumentException("Unknown latent experiment mode: " + latentMode);
+        }
+        final Map<IRule, Map<DomainKey, List<Domain>>> latent = "off".equals(latentMode)
+                ? null : buildLatentDomains(ruleList);
 
         for (IRule r : ruleList) {
 
@@ -563,7 +570,8 @@ public class Linker {
                         statistics.incrementTerminalRotations();
                         boolean result = false;
                         try {
-                            if (linkDomains(t, selectDomainCandidates(t, domainIndex), causes, logging)) {
+                            if (linkDomains(t, selectDomainCandidates(t, domainIndex), causes, logging,
+                                    latent, "verify".equals(latentMode))) {
                                 result = true;
                             }
                             statistics.incrementFunctionEvaluations();
@@ -693,7 +701,47 @@ public class Linker {
         return !found || result;
     }
 
-    private boolean linkDomains(List<Domain> treeSlave, Collection<IRule> ruleList, Map<IRule, Set<Cause>> causes, boolean logging) throws Exception {
+    private Map<IRule, Map<DomainKey, List<Domain>>> buildLatentDomains(Collection<IRule> rules) throws Exception {
+        Map<IRule, Map<DomainKey, List<Domain>>> result = new IdentityHashMap<>();
+        for (IRule rule : rules) {
+            Map<DomainKey, List<Domain>> buckets = new HashMap<>();
+            for (List<Domain> branch : ((Rule) rule).getTree()) {
+                for (Domain domain : branch) {
+                    DomainKey key = new DomainKey(domain.getPredicateId(), domain.isAntc());
+                    List<Domain> bucket = buckets.get(key);
+                    if (bucket == null) { bucket = new ArrayList<>(); buckets.put(key, bucket); }
+                    bucket.add(domain); // Preserve repeated occurrences and traversal order.
+                }
+            }
+            result.put(rule, buckets);
+        }
+        return result;
+    }
+
+    private List<List<Domain>> latentBranches(IRule rule, Domain slave,
+            Map<IRule, Map<DomainKey, List<Domain>>> index, boolean verify) throws Exception {
+        if (index == null) return ((Rule) rule).getTree();
+        List<Domain> selected = index.get(rule).get(new DomainKey(slave.getPredicateId(), !slave.isAntc()));
+        if (selected == null) selected = Collections.emptyList();
+        if (verify) {
+            List<Domain> reference = new ArrayList<>();
+            for (List<Domain> branch : ((Rule) rule).getTree()) {
+                for (Domain master : branch) {
+                    if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
+                        reference.add(master);
+                    }
+                }
+            }
+            if (reference.size() != selected.size()) throw new AssertionError("Latent candidate count mismatch");
+            for (int i = 0; i < reference.size(); i++) {
+                if (reference.get(i) != selected.get(i)) throw new AssertionError("Latent candidate identity/order mismatch");
+            }
+        }
+        return Collections.singletonList(selected);
+    }
+
+    private boolean linkDomains(List<Domain> treeSlave, Collection<IRule> ruleList, Map<IRule, Set<Cause>> causes, boolean logging,
+            Map<IRule, Map<DomainKey, List<Domain>>> latent, boolean verify) throws Exception {
 
         Map<Solve, List<DeferredSolveCandidate>> variants = new HashMap<>();
         boolean result = false;
@@ -702,7 +750,7 @@ public class Linker {
             for (Domain slave : treeSlave) {
                 for (IRule rule : ruleList) {
                     statistics.incrementCandidateRuleVisits();
-                    for (List<Domain> treeMaster : ((Rule) rule).getTree()) {
+                    for (List<Domain> treeMaster : latentBranches(rule, slave, latent, verify)) {
                         for (Domain master : treeMaster) {
                             statistics.incrementDomainPairs();
                             if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
