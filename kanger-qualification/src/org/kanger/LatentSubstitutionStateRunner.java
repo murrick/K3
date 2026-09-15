@@ -57,6 +57,7 @@ public final class LatentSubstitutionStateRunner {
             LinkerStatistics s = mind.getLinkerStatistics();
             for (String pass : s.getPassTrace()) System.out.println("pass-trace=" + pass);
             for (String binding : s.getBindingTrace()) System.out.println("binding-trace=" + binding);
+            for (String tuple : s.getTupleTrace()) System.out.println("tuple-trace=" + tuple);
             long[] passActions = s.getPassActionMasks();
             long completedPasses = 0;
             for (long count : passActions) completedPasses += count;

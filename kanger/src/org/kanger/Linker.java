@@ -434,10 +434,12 @@ public class Linker {
         Rule top = mind.getRules().getTop();
         long topId = top == null ? -1 : top.getId();
         final boolean traceBindings = Boolean.getBoolean("kanger.experiment.traceBindings");
+        final boolean traceTuples = Boolean.getBoolean("kanger.experiment.traceTuples");
 
         do {
-            final Map<TVariable, Set<Long>> bindingsBefore = traceBindings
+            final Map<TVariable, Set<Long>> bindingsBefore = traceBindings || traceTuples
                     ? observeBindings(observeConsumers()) : null;
+            final Map<List<Long>, Set<Long>> tuplesBefore = traceTuples ? observeTuples() : null;
 
             ++passCounter;
             currentPass = passCounter;
@@ -519,6 +521,7 @@ public class Linker {
             rotator(leftList, causes, logging);
             rotator(ruleList, causes, logging);
             if (traceBindings) recordBindingChanges(bindingsBefore);
+            if (traceTuples) recordTupleChanges(tuplesBefore, bindingsBefore);
             statistics.recordPassActions(mind.getRules().isAction(),
                     mind.getTValues().isAction(), mind.getFValues().isAction(),
                     mind.getTempHypothesis().isAction(), mind.getHypothesis().isAction());
@@ -535,6 +538,46 @@ public class Linker {
             log.add(LogMode.TIMING, String.format("* LINKER Dumped passes: %03d", dumpedPasses));
             log.add(LogMode.TIMING, String.format("* LINKER Skipped passes: %03d", skippedPasses));
         }
+    }
+
+    /** Diagnostic canonical tuple keys and current argument consumers. */
+    private Map<List<Long>, Set<Long>> observeTuples() throws Exception {
+        Map<TVariable, Set<Long>> consumers = observeConsumers();
+        Map<List<Long>, Set<Long>> result = new LinkedHashMap<>();
+        for (List<TSolve> solves : mind.getRuleSolves().values()) {
+            for (TSolve solve : solves) {
+                List<Long> ids = new ArrayList<>();
+                Set<Long> rules = new TreeSet<>();
+                for (TValue value : solve.getSolve()) {
+                    ids.add(value.getId());
+                    rules.addAll(consumers.getOrDefault(value.getTVar(mind), Collections.<Long>emptySet()));
+                }
+                Collections.sort(ids);
+                result.put(ids, rules);
+            }
+        }
+        return result;
+    }
+
+    private void recordTupleChanges(Map<List<Long>, Set<Long>> before,
+                                    Map<TVariable, Set<Long>> bindingsBefore) throws Exception {
+        Map<List<Long>, Set<Long>> after = observeTuples();
+        Set<Long> oldValues = new HashSet<>();
+        for (Set<Long> values : bindingsBefore.values()) oldValues.addAll(values);
+        List<String> rows = new ArrayList<>();
+        for (Map.Entry<List<Long>, Set<Long>> tuple : after.entrySet()) {
+            if (!before.containsKey(tuple.getKey())) {
+                rows.add("pass=" + currentPass + ",added=" + tuple.getKey()
+                        + ",all-values-preexisting=" + oldValues.containsAll(tuple.getKey())
+                        + ",consumers=" + tuple.getValue());
+            }
+        }
+        for (Map.Entry<List<Long>, Set<Long>> tuple : before.entrySet()) {
+            if (!after.containsKey(tuple.getKey())) rows.add("pass=" + currentPass
+                    + ",removed=" + tuple.getKey() + ",consumers-before=" + tuple.getValue());
+        }
+        Collections.sort(rows);
+        for (String row : rows) statistics.recordTupleTrace(row);
     }
 
     /** Diagnostic scan of the same argument occurrences used by rotator. */

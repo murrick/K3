@@ -42,6 +42,7 @@ public final class LinkerStatistics {
     private final boolean tracePasses = Boolean.getBoolean("kanger.experiment.tracePasses");
     private final java.util.List<String> passTrace = new java.util.ArrayList<>();
     private final java.util.List<String> bindingTrace = new java.util.ArrayList<>();
+    private final java.util.List<String> tupleTrace = new java.util.ArrayList<>();
     private int incomingActions = -1;
     private long priorRuleVisits, priorUnifications, priorTValues, priorFunctions, priorDatabase;
 
@@ -51,6 +52,7 @@ public final class LinkerStatistics {
     private LinkerStatistics(LinkerStatistics source) {
         passTrace.addAll(source.passTrace);
         bindingTrace.addAll(source.bindingTrace);
+        tupleTrace.addAll(source.tupleTrace);
         System.arraycopy(source.passActionMasks, 0, passActionMasks, 0, passActionMasks.length);
         passes = source.passes;
         ruleVisits = source.ruleVisits;
@@ -75,6 +77,7 @@ public final class LinkerStatistics {
     void reset() {
         passTrace.clear();
         bindingTrace.clear();
+        tupleTrace.clear();
         incomingActions = -1;
         priorRuleVisits = priorUnifications = priorTValues = priorFunctions = priorDatabase = 0L;
         java.util.Arrays.fill(passActionMasks, 0L);
@@ -132,6 +135,8 @@ public final class LinkerStatistics {
     public java.util.List<String> getPassTrace() { return new java.util.ArrayList<>(passTrace); }
     void recordBindingTrace(String row) { bindingTrace.add(row); }
     public java.util.List<String> getBindingTrace() { return new java.util.ArrayList<>(bindingTrace); }
+    void recordTupleTrace(String row) { tupleTrace.add(row); }
+    public java.util.List<String> getTupleTrace() { return new java.util.ArrayList<>(tupleTrace); }
     void incrementRuleVisits() { ++ruleVisits; }
     void incrementBranchVisits() { ++branchVisits; }
     void incrementTerminalRotations() { ++terminalRotations; }
@@ -227,6 +232,7 @@ public final class LinkerStatistics {
         passes += other.passes;
         passTrace.addAll(other.passTrace);
         bindingTrace.addAll(other.bindingTrace);
+        tupleTrace.addAll(other.tupleTrace);
         for (int i = 0; i < passActionMasks.length; ++i) {
             passActionMasks[i] += other.passActionMasks[i];
         }
