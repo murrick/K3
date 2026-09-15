@@ -158,6 +158,9 @@ public class Linker {
     private int skippedPasses = 0;
     private final LinkerStatistics statistics = new LinkerStatistics();
     private int currentPass = 0;
+    // Diagnostic frozen next-pass proposal; never controls execution.
+    private Set<Long> shadowRules;
+    private boolean shadowActivation;
 
     /**
      * Query-local tuple index used only while Linker rotates substitutions.
@@ -435,11 +438,14 @@ public class Linker {
         long topId = top == null ? -1 : top.getId();
         final boolean traceBindings = Boolean.getBoolean("kanger.experiment.traceBindings");
         final boolean traceTuples = Boolean.getBoolean("kanger.experiment.traceTuples");
+        shadowActivation = Boolean.getBoolean("kanger.experiment.shadowActivation");
+        shadowRules = null;
 
         do {
-            final Map<TVariable, Set<Long>> bindingsBefore = traceBindings || traceTuples
+            final Map<TVariable, Set<Long>> bindingsBefore = traceBindings || traceTuples || shadowActivation
                     ? observeBindings(observeConsumers()) : null;
-            final Map<List<Long>, Set<Long>> tuplesBefore = traceTuples ? observeTuples() : null;
+            final Map<List<Long>, Set<Long>> tuplesBefore = traceTuples || shadowActivation ? observeTuples() : null;
+            final Set<Long> rulesBefore = shadowActivation ? visibleRuleIds() : null;
 
             ++passCounter;
             currentPass = passCounter;
@@ -522,6 +528,15 @@ public class Linker {
             rotator(ruleList, causes, logging);
             if (traceBindings) recordBindingChanges(bindingsBefore);
             if (traceTuples) recordTupleChanges(tuplesBefore, bindingsBefore);
+            if (shadowActivation) {
+                int covered = 0;
+                for (IRule candidate : ruleSet)
+                    if (shadowRules == null || shadowRules.contains(candidate.getId())) ++covered;
+                statistics.recordActivationTrace("pass=" + currentPass + ",reference-rules=" + ruleSet.size()
+                        + ",covered=" + covered
+                        + ",proposal=" + (shadowRules == null ? "ALL" : shadowRules.toString()));
+                shadowRules = proposeActivation(bindingsBefore, tuplesBefore, rulesBefore);
+            }
             statistics.recordPassActions(mind.getRules().isAction(),
                     mind.getTValues().isAction(), mind.getFValues().isAction(),
                     mind.getTempHypothesis().isAction(), mind.getHypothesis().isAction());
@@ -538,6 +553,57 @@ public class Linker {
             log.add(LogMode.TIMING, String.format("* LINKER Dumped passes: %03d", dumpedPasses));
             log.add(LogMode.TIMING, String.format("* LINKER Skipped passes: %03d", skippedPasses));
         }
+    }
+
+    /** Diagnostic visible Rule identities, including ground rules. */
+    private Set<Long> visibleRuleIds() throws Exception {
+        Set<Long> ids = new TreeSet<>();
+        for (IRule rule : mind.getRules()) if (!rule.isDeleted(mind)) ids.add(rule.getId());
+        return ids;
+    }
+
+    private Set<Long> proposeActivation(Map<TVariable, Set<Long>> beforeBindings,
+            Map<List<Long>, Set<Long>> beforeTuples, Set<Long> beforeRules) throws Exception {
+        Map<TVariable, Set<Long>> consumers = observeConsumers();
+        Map<TVariable, Set<Long>> bindings = observeBindings(consumers);
+        Set<Long> seed = visibleRuleIds();
+        seed.removeAll(beforeRules);
+        for (Map.Entry<TVariable, Set<Long>> entry : bindings.entrySet()) {
+            if (!entry.getValue().equals(beforeBindings.getOrDefault(entry.getKey(), Collections.<Long>emptySet())))
+                seed.addAll(consumers.get(entry.getKey()));
+        }
+        Map<List<Long>, Set<Long>> tuples = observeTuples();
+        for (Map.Entry<List<Long>, Set<Long>> entry : tuples.entrySet()) {
+            if (!beforeTuples.containsKey(entry.getKey())) seed.addAll(entry.getValue());
+        }
+        for (Map.Entry<List<Long>, Set<Long>> entry : beforeTuples.entrySet()) {
+            if (!tuples.containsKey(entry.getKey())) seed.addAll(entry.getValue());
+        }
+        // Compare one hop with component closure, without changing execution.
+        boolean closure = Boolean.getBoolean("kanger.experiment.shadowClosure");
+        Set<Long> result = new TreeSet<>(seed);
+        int size;
+        do {
+            size = result.size();
+            Set<DomainKey> opposite = new HashSet<>();
+            for (IRule rule : mind.getRules()) {
+                if (rule.isDeleted(mind) || !result.contains(rule.getId())) continue;
+                for (List<Domain> branch : ((Rule) rule).getTree()) for (Domain d : branch)
+                    opposite.add(new DomainKey(d.getPredicateId(), !d.isAntc()));
+            }
+            for (IRule rule : mind.getRules()) {
+                if (rule.isDeleted(mind)) continue;
+                for (List<Domain> branch : ((Rule) rule).getTree()) for (Domain d : branch)
+                    if (opposite.contains(new DomainKey(d.getPredicateId(), d.isAntc()))) result.add(rule.getId());
+            }
+        } while (closure && result.size() != size);
+        return result;
+    }
+
+    private long observedTupleCount() {
+        long count = 0;
+        for (List<TSolve> solves : mind.getRuleSolves().values()) count += solves.size();
+        return count;
     }
 
     /** Diagnostic canonical tuple keys and current argument consumers. */
@@ -658,6 +724,10 @@ public class Linker {
                 ? null : buildLatentDomains(ruleList);
 
         for (IRule r : ruleList) {
+            final boolean outsideProposal = shadowActivation && shadowRules != null && !shadowRules.contains(r.getId());
+            final long tuplesAtEntry = outsideProposal ? observedTupleCount() : 0;
+            final long attemptsAtEntry = outsideProposal ? statistics.getUnificationAttempts() : 0;
+            final long valuesAtEntry = outsideProposal ? statistics.getNewTValues() : 0;
 
             statistics.incrementRuleVisits();
             mind.getProducedDomains().clear();
@@ -708,6 +778,14 @@ public class Linker {
             }
 
             updateDatabase(logging);
+            if (outsideProposal) {
+                long tuplesAdded = observedTupleCount() - tuplesAtEntry;
+                long attempts = statistics.getUnificationAttempts() - attemptsAtEntry;
+                long values = statistics.getNewTValues() - valuesAtEntry;
+                if (attempts != 0 || tuplesAdded != 0 || values != 0)
+                    statistics.recordActivationTrace("outside:pass=" + currentPass + ",rule=" + r.getId()
+                            + ",unifications=" + attempts + ",tvalue-events=" + values + ",tuple-delta=" + tuplesAdded);
+            }
             if (!wasUsed && ((Rule) r).isUsed(mind)) {
                 used = true;
             }

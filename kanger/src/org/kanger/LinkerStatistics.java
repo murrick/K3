@@ -43,6 +43,7 @@ public final class LinkerStatistics {
     private final java.util.List<String> passTrace = new java.util.ArrayList<>();
     private final java.util.List<String> bindingTrace = new java.util.ArrayList<>();
     private final java.util.List<String> tupleTrace = new java.util.ArrayList<>();
+    private final java.util.List<String> activationTrace = new java.util.ArrayList<>();
     private int incomingActions = -1;
     private long priorRuleVisits, priorUnifications, priorTValues, priorFunctions, priorDatabase;
 
@@ -53,6 +54,7 @@ public final class LinkerStatistics {
         passTrace.addAll(source.passTrace);
         bindingTrace.addAll(source.bindingTrace);
         tupleTrace.addAll(source.tupleTrace);
+        activationTrace.addAll(source.activationTrace);
         System.arraycopy(source.passActionMasks, 0, passActionMasks, 0, passActionMasks.length);
         passes = source.passes;
         ruleVisits = source.ruleVisits;
@@ -78,6 +80,7 @@ public final class LinkerStatistics {
         passTrace.clear();
         bindingTrace.clear();
         tupleTrace.clear();
+        activationTrace.clear();
         incomingActions = -1;
         priorRuleVisits = priorUnifications = priorTValues = priorFunctions = priorDatabase = 0L;
         java.util.Arrays.fill(passActionMasks, 0L);
@@ -137,6 +140,8 @@ public final class LinkerStatistics {
     public java.util.List<String> getBindingTrace() { return new java.util.ArrayList<>(bindingTrace); }
     void recordTupleTrace(String row) { tupleTrace.add(row); }
     public java.util.List<String> getTupleTrace() { return new java.util.ArrayList<>(tupleTrace); }
+    void recordActivationTrace(String row) { activationTrace.add(row); }
+    public java.util.List<String> getActivationTrace() { return new java.util.ArrayList<>(activationTrace); }
     void incrementRuleVisits() { ++ruleVisits; }
     void incrementBranchVisits() { ++branchVisits; }
     void incrementTerminalRotations() { ++terminalRotations; }
@@ -233,6 +238,7 @@ public final class LinkerStatistics {
         passTrace.addAll(other.passTrace);
         bindingTrace.addAll(other.bindingTrace);
         tupleTrace.addAll(other.tupleTrace);
+        activationTrace.addAll(other.activationTrace);
         for (int i = 0; i < passActionMasks.length; ++i) {
             passActionMasks[i] += other.passActionMasks[i];
         }
