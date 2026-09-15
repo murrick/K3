@@ -36,11 +36,15 @@ public final class LinkerStatistics {
     private long laterPassGeneratedUnifications;
 
     private final long[] operationEffectMasks = new long[OPERATION_EFFECT_MASK_COUNT];
+    // End-of-pass action flags: Rule=1, TValue=2, FValue=4,
+    // TempHypothesis=8, Hypothesis=16. Zero records a quiescent pass.
+    private final long[] passActionMasks = new long[32];
 
     public LinkerStatistics() {
     }
 
     private LinkerStatistics(LinkerStatistics source) {
+        System.arraycopy(source.passActionMasks, 0, passActionMasks, 0, passActionMasks.length);
         passes = source.passes;
         ruleVisits = source.ruleVisits;
         branchVisits = source.branchVisits;
@@ -62,6 +66,7 @@ public final class LinkerStatistics {
     }
 
     void reset() {
+        java.util.Arrays.fill(passActionMasks, 0L);
         passes = 0L;
         ruleVisits = 0L;
         branchVisits = 0L;
@@ -89,6 +94,15 @@ public final class LinkerStatistics {
     }
 
     void incrementPasses() { ++passes; }
+    void recordPassActions(boolean rules, boolean tvalues, boolean fvalues,
+                           boolean temporaryHypotheses, boolean hypotheses) {
+        int mask = (rules ? 1 : 0) | (tvalues ? 2 : 0) | (fvalues ? 4 : 0)
+                | (temporaryHypotheses ? 8 : 0) | (hypotheses ? 16 : 0);
+        ++passActionMasks[mask];
+    }
+
+    /** Copy of the action histogram; aborted passes need not have an entry. */
+    public long[] getPassActionMasks() { return passActionMasks.clone(); }
     void incrementRuleVisits() { ++ruleVisits; }
     void incrementBranchVisits() { ++branchVisits; }
     void incrementTerminalRotations() { ++terminalRotations; }
@@ -182,6 +196,9 @@ public final class LinkerStatistics {
             return;
         }
         passes += other.passes;
+        for (int i = 0; i < passActionMasks.length; ++i) {
+            passActionMasks[i] += other.passActionMasks[i];
+        }
         ruleVisits += other.ruleVisits;
         branchVisits += other.branchVisits;
         terminalRotations += other.terminalRotations;

@@ -55,6 +55,12 @@ public final class LatentSubstitutionStateRunner {
                 rows.add(r.isGenerated() + ":" + ((Rule) r).toString(mind));
             print("rules", rows);
             LinkerStatistics s = mind.getLinkerStatistics();
+            long[] passActions = s.getPassActionMasks();
+            long completedPasses = 0;
+            for (long count : passActions) completedPasses += count;
+            if (completedPasses > s.getPasses()) throw new AssertionError("More completed than started passes");
+            System.out.println("pass-actions=" + Arrays.toString(passActions)
+                    + "; started=" + s.getPasses());
             System.err.println(name + "\t" + query + "\t" + s.getDomainPairs()
                     + "\t" + s.getUnificationAttempts() + "\t" + (System.nanoTime() - started));
             System.out.println("effects=" + s.getUnificationAttempts() + "," + s.getNewTValues()

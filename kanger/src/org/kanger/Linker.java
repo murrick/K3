@@ -515,7 +515,9 @@ public class Linker {
 
             rotator(leftList, causes, logging);
             rotator(ruleList, causes, logging);
-
+            statistics.recordPassActions(mind.getRules().isAction(),
+                    mind.getTValues().isAction(), mind.getFValues().isAction(),
+                    mind.getTempHypothesis().isAction(), mind.getHypothesis().isAction());
 
         } while (mind.getRules().isAction()
                 || mind.getTValues().isAction()
