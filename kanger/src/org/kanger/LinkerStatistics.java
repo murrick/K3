@@ -39,11 +39,16 @@ public final class LinkerStatistics {
     // End-of-pass action flags: Rule=1, TValue=2, FValue=4,
     // TempHypothesis=8, Hypothesis=16. Zero records a quiescent pass.
     private final long[] passActionMasks = new long[32];
+    private final boolean tracePasses = Boolean.getBoolean("kanger.experiment.tracePasses");
+    private final java.util.List<String> passTrace = new java.util.ArrayList<>();
+    private int incomingActions = -1;
+    private long priorRuleVisits, priorUnifications, priorTValues, priorFunctions, priorDatabase;
 
     public LinkerStatistics() {
     }
 
     private LinkerStatistics(LinkerStatistics source) {
+        passTrace.addAll(source.passTrace);
         System.arraycopy(source.passActionMasks, 0, passActionMasks, 0, passActionMasks.length);
         passes = source.passes;
         ruleVisits = source.ruleVisits;
@@ -66,6 +71,9 @@ public final class LinkerStatistics {
     }
 
     void reset() {
+        passTrace.clear();
+        incomingActions = -1;
+        priorRuleVisits = priorUnifications = priorTValues = priorFunctions = priorDatabase = 0L;
         java.util.Arrays.fill(passActionMasks, 0L);
         passes = 0L;
         ruleVisits = 0L;
@@ -99,10 +107,26 @@ public final class LinkerStatistics {
         int mask = (rules ? 1 : 0) | (tvalues ? 2 : 0) | (fvalues ? 4 : 0)
                 | (temporaryHypotheses ? 8 : 0) | (hypotheses ? 16 : 0);
         ++passActionMasks[mask];
+        if (tracePasses) {
+            passTrace.add("pass=" + passes + ",in=" + incomingActions + ",out=" + mask
+                    + ",rules=" + (ruleVisits - priorRuleVisits)
+                    + ",unifications=" + (unificationAttempts - priorUnifications)
+                    + ",tvalues=" + (newTValues - priorTValues)
+                    + ",functions=" + (functionEvaluations - priorFunctions)
+                    + ",database=" + (databaseEvaluations - priorDatabase));
+            priorRuleVisits = ruleVisits;
+            priorUnifications = unificationAttempts;
+            priorTValues = newTValues;
+            priorFunctions = functionEvaluations;
+            priorDatabase = databaseEvaluations;
+            incomingActions = mask;
+        }
     }
 
     /** Copy of the action histogram; aborted passes need not have an entry. */
     public long[] getPassActionMasks() { return passActionMasks.clone(); }
+    /** Completed-pass trace, enabled at statistics construction; -1 starts a link invocation. */
+    public java.util.List<String> getPassTrace() { return new java.util.ArrayList<>(passTrace); }
     void incrementRuleVisits() { ++ruleVisits; }
     void incrementBranchVisits() { ++branchVisits; }
     void incrementTerminalRotations() { ++terminalRotations; }
@@ -196,6 +220,7 @@ public final class LinkerStatistics {
             return;
         }
         passes += other.passes;
+        passTrace.addAll(other.passTrace);
         for (int i = 0; i < passActionMasks.length; ++i) {
             passActionMasks[i] += other.passActionMasks[i];
         }

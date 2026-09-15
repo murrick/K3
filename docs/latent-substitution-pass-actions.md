@@ -67,3 +67,47 @@ The next safe experiment is an observational dependency trace relating changed
 bindings/hypotheses to affected Rule/Domain IDs, with ordering and transaction
 context preserved. Do not skip a direction or a pass based on this histogram.
 No scheduler behavior has changed in this checkpoint.
+
+## Follow-up: work after a non-Rule continuation
+
+Enable `-Dkanger.experiment.tracePasses=true` before constructing statistics to
+record per-completed-pass counter deltas. Incoming mask -1 identifies the first
+pass of a link invocation; subsequent incoming masks are the preceding pass's
+outgoing flags. Traces preserve invocation order when statistics are aggregated.
+They are diagnostic observations, not a work queue.
+
+| Query | Incoming mask | Outgoing mask | Rule visits | Unifications | New-TValue counter |
+|---|---:|---:|---:|---:|---:|
+| chain `?path(A,C);` | 2 | 0 | 18 | 14 | 0 |
+| natives `?$x male(x);` | 8 | 11 | 232 | 555 | 34 |
+| natives `?male(Tom);` | 8 | 11 | 236 | 555 | 34 |
+| natives `?male(Tom);` | 2 | 0 | 264 | 612 | 28 |
+
+In both native queries the pass following a TempHypothesis-only continuation
+produces Rule and TValue actions again. Dropping this continuation would skip
+observed later activity. This does **not** prove that the hypothesis insertion
+caused that activity: delayed work can depend on other state accumulated during
+the preceding traversal. A final-result counterfactual has not been run.
+
+The New-TValue counter is operational and can include work subsequently rolled
+back; it is not a count of surviving new bindings. In particular, 28 such events
+coexist with a zero outgoing action mask in the last native row. Any future
+activation journal must respect checkpoint commit/release, not blindly enqueue
+every attempted mutation.
+
+The direct binding dependency in current code is
+TValueFactory.forEach(TVariable) -> Linker.rotateVariables -> all branches of the
+visited Rule. Rotator gathers variables across the entire Rule, not just the
+current Domain. isValidFor additionally consults cross-variable TSolve tuples.
+Consequently, a domain-pair adjacency edge alone does not describe the complete
+activation dependency, and even a variable-to-owner-Rule map needs qualification
+against actual argument occurrences and tuple constraints.
+
+TempHypothesis use inside Linker is duplicate detection when collecting alternate
+hypotheses. Mind subsequently transfers eligible temporary hypotheses into the
+query result. This differs from the direct variable-enumeration dependency and
+must not be presented as an established hypothesis-to-Rule activation edge.
+
+Off and factory-verify traces and logical projections match byte for byte. After
+removing trace lines, output also matches the prior histogram checkpoint. Raw
+traces are in `latent-substitution-evidence/pass-trace/`. No pass is skipped.

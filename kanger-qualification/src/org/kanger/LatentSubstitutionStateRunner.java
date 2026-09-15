@@ -55,6 +55,7 @@ public final class LatentSubstitutionStateRunner {
                 rows.add(r.isGenerated() + ":" + ((Rule) r).toString(mind));
             print("rules", rows);
             LinkerStatistics s = mind.getLinkerStatistics();
+            for (String pass : s.getPassTrace()) System.out.println("pass-trace=" + pass);
             long[] passActions = s.getPassActionMasks();
             long completedPasses = 0;
             for (long count : passActions) completedPasses += count;
