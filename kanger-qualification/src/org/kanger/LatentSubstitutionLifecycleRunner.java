@@ -7,6 +7,7 @@ import org.kanger.units.Rule;
 import org.kanger.storage.DB;
 import org.kanger.udf.UDF;
 import java.nio.file.Files;
+import java.lang.reflect.Field;
 import java.util.*;
 
 /** Qualifies existing factory signature topology against visible canonical rules.
@@ -72,9 +73,13 @@ public final class LatentSubstitutionLifecycleRunner {
 
     private static void check(Mind mind, String label) throws Exception {
         Map<String, Set<Long>> expected = new TreeMap<>();
+        List<IRule> rules = new ArrayList<>();
+        List<Domain> domains = new ArrayList<>();
         for (IRule r : mind.getRules()) {
             if (r.isDeleted(mind)) continue;
+            rules.add(r);
             for (List<Domain> branch : ((Rule) r).getTree()) for (Domain d : branch) {
+                domains.add(d);
                 String key = d.getPredicateId() + ":" + d.isAntc();
                 if (!expected.containsKey(key)) expected.put(key, new TreeSet<Long>());
                 expected.get(key).add(r.getId());
@@ -91,7 +96,39 @@ public final class LatentSubstitutionLifecycleRunner {
             for (IRule r : mind.getRules().findByDomain(predicate, antc)) actual.add(r.getId());
             require(actual.equals(want), label + " topology mismatch " + key);
         }
+        if (System.getProperty("kanger.experiment.latent", "off").startsWith("factory")) {
+            long before = builds(mind);
+            for (int repeat = 0; repeat < 2; repeat++) {
+                for (Domain source : domains) for (IRule rule : rules) {
+                    List<Domain> want = new ArrayList<>();
+                    for (List<Domain> branch : ((Rule) rule).getTree()) for (Domain d : branch) {
+                        if (d.getPredicateId() == source.getPredicateId() && d.isAntc() != source.isAntc()) want.add(d);
+                    }
+                    List<Domain> actual = mind.getRules().getLatentDomainCandidates(rule, source);
+                    require(want.size() == actual.size(), label + " occurrence count");
+                    for (int i = 0; i < want.size(); i++) require(want.get(i) == actual.get(i), label + " occurrence identity/order");
+                }
+            }
+            require(builds(mind) == before, label + " lookup rebuilt topology");
+        }
         System.out.println("LIFECYCLE " + label + " signatures=" + expected.size());
+    }
+
+    private static long builds(Mind mind) throws Exception {
+        long total = 0;
+        Object factory = mind.getRules();
+        Field index = factory.getClass().getDeclaredField("candidateIndex");
+        Field parent = factory.getClass().getDeclaredField("parentIndex");
+        index.setAccessible(true);
+        parent.setAccessible(true);
+        while (factory != null) {
+            Object candidate = index.get(factory);
+            Field builds = candidate.getClass().getDeclaredField("occurrenceBuilds");
+            builds.setAccessible(true);
+            total += builds.getLong(candidate);
+            factory = parent.get(factory);
+        }
+        return total;
     }
 
     private static void require(boolean condition, String message) {

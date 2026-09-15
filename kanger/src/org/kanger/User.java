@@ -661,6 +661,7 @@ public class User implements IUser {
                  * that root are not storage corruption; compatibility is
                  * qualified only after explicit U1..Un have been replayed.
                  */
+                mind.getRules().prepareLatentIndex();
                 mind.queryCheck(false);
             } catch (StorageLifecycleException error) {
                 throw error;

@@ -1,0 +1,11 @@
+size,operation,millis,rows,passes,rule_visits,branch_visits,terminal_rotations,candidate_rule_visits,domain_pairs,unification_attempts,new_tvalues,database_evaluations,function_evaluations,first_pass_durable_unifications,first_pass_query_unifications,first_pass_generated_unifications,later_pass_durable_unifications,later_pass_query_unifications,later_pass_generated_unifications
+30,insert-sequential,119.905,0,30,60,60,60,0,0,0,0,60,60,0,0,0,0,0,0
+30,query-exact,4.034,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+30,query-two-constants,10.873,1,2,10,10,10,8,8,8,1,10,10,2,2,0,2,2,0
+30,query-one-constant,6.508,1,2,10,10,10,8,8,8,2,10,10,2,2,0,2,2,0
+30,query-all-variables,70.651,30,2,184,184,271,240,240,240,61,271,271,60,60,0,60,60,0
+100,insert-sequential,185.075,0,100,200,200,200,0,0,0,0,200,200,0,0,0,0,0,0
+100,query-exact,1.948,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+100,query-two-constants,5.274,1,2,10,10,10,8,8,8,1,10,10,2,2,0,2,2,0
+100,query-one-constant,4.809,1,2,10,10,10,8,8,8,2,10,10,2,2,0,2,2,0
+100,query-all-variables,190.509,100,2,604,604,901,800,800,800,201,901,901,200,200,0,200,200,0

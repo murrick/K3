@@ -1,0 +1,13 @@
+empty	?p(1);	0	0	54294200
+single-collision	?p(1);	0	0	3473686
+single-collision	!~p(1);	0	0	2690273
+single-collision	?p(1);	0	0	3031695
+single-collision	?p(2);	0	0	5041978
+chain-symmetry	?$x $y path(x,y);	71	71	21974620
+chain-symmetry	?path(B,A);	0	0	3918893
+chain-symmetry	?path(A,C);	42	42	16477321
+functions	?$x q(x);	37	37	8243253
+functions	?q(3);	0	0	2105878
+many	?$x q(x);	110	110	16734644
+many	?q(4);	10	10	4701978
+natives	?$x male(x);	3251	3251	277395410

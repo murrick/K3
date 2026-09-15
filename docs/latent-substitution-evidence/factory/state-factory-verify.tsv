@@ -1,0 +1,16 @@
+empty	?p(1);	0	0	48759614
+single-collision	?p(1);	0	0	4087016
+single-collision	!~p(1);	0	0	2389982
+single-collision	?p(1);	0	0	3422315
+single-collision	?p(2);	0	0	4604198
+chain-symmetry	?$x $y path(x,y);	71	71	25042251
+chain-symmetry	?path(B,A);	0	0	2904480
+chain-symmetry	?path(A,C);	42	42	36806641
+functions	?$x q(x);	37	37	13603014
+functions	?q(3);	0	0	3398936
+many	?$x q(x);	110	110	19428678
+many	?q(4);	10	10	6549895
+natives	?$x male(x);	3251	3251	405075222
+natives	?male(Tom);	2015	2015	281748276
+natives	?father(John,Tom);	0	0	6346155
+natives	!~father(John,Tom);	0	0	3905296

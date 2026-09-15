@@ -508,6 +508,38 @@ public class RuleFactory implements IFactory<IRule> {
         return result;
     }
 
+    /** Experimental derived topology preparation after all storage factories attach. */
+    public void prepareLatentIndex() throws Exception {
+        if (candidateIndex.hasOccurrenceIndex()) ensureDomainIndex();
+    }
+
+    private long[] findLatentOccurrences(long ruleId, long predicateId, boolean antc) throws Exception {
+        ensureDomainIndex();
+        long[] ids = candidateIndex.findOccurrences(ruleId, predicateId, antc);
+        if (ids != null) return ids;
+        return parentIndex == null ? null : parentIndex.findLatentOccurrences(ruleId, predicateId, antc);
+    }
+
+    /**
+     * Ordered domain occurrences for an already selected visible Rule. The
+     * selector's runtime effects and ordering remain the caller's responsibility.
+     * No Rule/Domain/Mind references are retained by the backing index.
+     */
+    public List<Domain> getLatentDomainCandidates(IRule rule, Domain source) throws Exception {
+        if (!candidateIndex.hasOccurrenceIndex()) {
+            throw new IllegalStateException("Factory latent mode must be selected before creating Mind");
+        }
+        long[] ids = findLatentOccurrences(rule.getId(), source.getPredicateId(), !source.isAntc());
+        if (ids == null) throw new AssertionError("Missing latent Rule " + rule.getId());
+        List<Domain> result = new ArrayList<>(ids.length);
+        for (long id : ids) {
+            Domain domain = mind.getDomains().get(id);
+            if (domain == null) throw new AssertionError("Missing latent Domain " + id);
+            result.add(domain);
+        }
+        return result;
+    }
+
     public boolean hasActiveRuleWithTerm(long termId) throws Exception {
         LinkedHashSet<Long> ids = new LinkedHashSet<>();
         collectTermIds(termId, ids);

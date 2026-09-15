@@ -41,6 +41,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * <p>Все коллекции сохраняют только IDs. Canonical Rule и Domain остаются в
  * Escalera/IBase контуре {@link RuleFactory} и гидратируются после selection.</p>
  *
+ * <p><strong>Experimental occurrence topology.</strong> Startup modes
+ * {@code factory} and {@code factory-verify} additionally retain immutable,
+ * ordered Domain ID rows per Rule and predicate/polarity. Publication and
+ * hydration build these rows; lookups borrow them without rebuilding. Nested
+ * journals retain prior row values, child commit shares immutable rows, and
+ * generation reset discards them. No knowledge objects are retained by rows.
+ * The mode must be chosen before constructing any Mind in the run.</p>
+ *
  * <p><strong>Positional eligibility.</strong> Exact/wildcard positional index
  * строится только для primary, non-query Rule с одним branch и одним Domain.
  * Generated, query и multi-domain Rules сохраняются в fallback signature, чтобы
@@ -286,18 +294,45 @@ final class RuleCandidateIndex {
         private final Map<SignatureKey, LinkedHashSet<Long>> signatures;
         private final Map<SignatureKey, LinkedHashSet<Long>> fallbackSignatures;
         private final Map<PositionKey, LinkedHashSet<Long>> positions;
+        private final Map<Long, OccurrenceRows> occurrences;
 
         private Snapshot(Map<SignatureKey, LinkedHashSet<Long>> signatures,
                          Map<SignatureKey, LinkedHashSet<Long>> fallbackSignatures,
-                         Map<PositionKey, LinkedHashSet<Long>> positions) {
+                         Map<PositionKey, LinkedHashSet<Long>> positions,
+                         Map<Long, OccurrenceRows> occurrences) {
             this.signatures = signatures;
             this.fallbackSignatures = fallbackSignatures;
             this.positions = positions;
+            this.occurrences = occurrences;
+        }
+    }
+
+    /** Immutable ID-only rows; repeated domain occurrences retain their order. */
+    private static final class OccurrenceRows {
+        private final Map<SignatureKey, long[]> rows = new HashMap<>();
+
+        private OccurrenceRows(Rule rule) throws Exception {
+            Map<SignatureKey, List<Long>> building = new HashMap<>();
+            for (List<Domain> branch : rule.getTree()) {
+                for (Domain domain : branch) {
+                    // Arity zero intentionally denotes predicate/polarity only:
+                    // this reproduces Linker's gate without adding restrictions.
+                    SignatureKey key = new SignatureKey(domain.getPredicateId(), domain.isAntc(), 0);
+                    List<Long> ids = building.get(key);
+                    if (ids == null) { ids = new ArrayList<>(); building.put(key, ids); }
+                    ids.add(domain.getId());
+                }
+            }
+            for (Map.Entry<SignatureKey, List<Long>> entry : building.entrySet()) {
+                long[] ids = new long[entry.getValue().size()];
+                for (int i = 0; i < ids.length; i++) ids[i] = entry.getValue().get(i);
+                rows.put(entry.getKey(), ids);
+            }
         }
     }
 
     /**
-     * One guard protects the three correlated indexes and their transaction
+     * One guard protects the correlated indexes and their transaction
      * journals. Candidate reads must observe one coherent version rather than
      * copying a LinkedHashSet while a concurrent child commit mutates it.
      */
@@ -310,6 +345,34 @@ final class RuleCandidateIndex {
     private final IdIndex<PositionKey> positions = new IdIndex<>();
     private final Map<Mind, Map<BatchKey, BatchSummary>> batchSummaries = new WeakHashMap<>();
     private long version = 0L;
+    private final boolean occurrencesEnabled =
+            "factory".equals(System.getProperty("kanger.experiment.latent"))
+            || "factory-verify".equals(System.getProperty("kanger.experiment.latent"));
+    private final Map<Long, OccurrenceRows> occurrences = new HashMap<>();
+    private final Stack<Map<Long, OccurrenceRows>> occurrenceJournals = new Stack<>();
+    private long occurrenceBuilds;
+    private static final long[] NO_OCCURRENCES = new long[0];
+
+    boolean hasOccurrenceIndex() { return occurrencesEnabled; }
+
+    private void replaceOccurrences(long id, OccurrenceRows rows) {
+        if (!occurrenceJournals.isEmpty() && !occurrenceJournals.peek().containsKey(id)) {
+            occurrenceJournals.peek().put(id, occurrences.get(id));
+        }
+        if (rows == null) occurrences.remove(id);
+        else occurrences.put(id, rows);
+    }
+
+    /** Borrowed immutable array; null means this layer does not own the Rule. */
+    long[] findOccurrences(long ruleId, long predicateId, boolean antc) {
+        readLock.lock();
+        try {
+            OccurrenceRows value = occurrences.get(ruleId);
+            if (value == null) return null;
+            long[] ids = value.rows.get(new SignatureKey(predicateId, antc, 0));
+            return ids == null ? NO_OCCURRENCES : ids;
+        } finally { readLock.unlock(); }
+    }
 
     void clear() {
         writeLock.lock();
@@ -317,6 +380,8 @@ final class RuleCandidateIndex {
             signatures.clear();
             fallbackSignatures.clear();
             positions.clear();
+            occurrences.clear();
+            occurrenceJournals.clear();
             batchSummaries.clear();
             ++version;
         } finally {
@@ -330,6 +395,7 @@ final class RuleCandidateIndex {
             signatures.mark();
             fallbackSignatures.mark();
             positions.mark();
+            if (occurrencesEnabled) occurrenceJournals.push(new HashMap<Long, OccurrenceRows>());
         } finally {
             writeLock.unlock();
         }
@@ -341,6 +407,16 @@ final class RuleCandidateIndex {
             signatures.commit();
             fallbackSignatures.commit();
             positions.commit();
+            if (!occurrenceJournals.isEmpty()) {
+                Map<Long, OccurrenceRows> changes = occurrenceJournals.pop();
+                if (!occurrenceJournals.isEmpty()) {
+                    for (Map.Entry<Long, OccurrenceRows> entry : changes.entrySet()) {
+                        if (!occurrenceJournals.peek().containsKey(entry.getKey())) {
+                            occurrenceJournals.peek().put(entry.getKey(), entry.getValue());
+                        }
+                    }
+                }
+            }
         } finally {
             writeLock.unlock();
         }
@@ -352,6 +428,12 @@ final class RuleCandidateIndex {
             signatures.release();
             fallbackSignatures.release();
             positions.release();
+            if (!occurrenceJournals.isEmpty()) {
+                for (Map.Entry<Long, OccurrenceRows> entry : occurrenceJournals.pop().entrySet()) {
+                    if (entry.getValue() == null) occurrences.remove(entry.getKey());
+                    else occurrences.put(entry.getKey(), entry.getValue());
+                }
+            }
             batchSummaries.clear();
             ++version;
         } finally {
@@ -363,7 +445,7 @@ final class RuleCandidateIndex {
         readLock.lock();
         try {
             return new Snapshot(signatures.snapshot(),
-                    fallbackSignatures.snapshot(), positions.snapshot());
+                    fallbackSignatures.snapshot(), positions.snapshot(), new HashMap<>(occurrences));
         } finally {
             readLock.unlock();
         }
@@ -377,6 +459,9 @@ final class RuleCandidateIndex {
             signatures.mergeFrom(childSnapshot.signatures);
             fallbackSignatures.mergeFrom(childSnapshot.fallbackSignatures);
             positions.mergeFrom(childSnapshot.positions);
+            for (Map.Entry<Long, OccurrenceRows> entry : childSnapshot.occurrences.entrySet()) {
+                replaceOccurrences(entry.getKey(), entry.getValue());
+            }
             batchSummaries.clear();
             ++version;
         } finally {
@@ -393,8 +478,14 @@ final class RuleCandidateIndex {
 
     void indexRule(Rule rule) throws Exception {
         if (rule == null) return;
+        // Resolve the tree before acquiring the index lock; rows retain IDs only.
+        OccurrenceRows rows = occurrencesEnabled ? new OccurrenceRows(rule) : null;
         writeLock.lock();
         try {
+            if (rows != null) {
+                replaceOccurrences(rule.getId(), rows);
+                occurrenceBuilds++;
+            }
             batchSummaries.clear();
             ++version;
             boolean positional = positionalEligible(rule);
@@ -423,6 +514,7 @@ final class RuleCandidateIndex {
         if (rule == null) return;
         writeLock.lock();
         try {
+            if (occurrencesEnabled) replaceOccurrences(rule.getId(), null);
             batchSummaries.clear();
             ++version;
             for (List<Domain> branch : rule.getTree()) {
