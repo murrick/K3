@@ -1,0 +1,184 @@
+empty ?p(1); => null
+values=[]
+solutions=[]
+hypotheses=[]
+rules=[]
+pass-trace=pass=1,in=-1,out=0,rules=2,unifications=0,tvalues=0,functions=2,database=2
+pass-actions=[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=1
+effects=0,0,0,0,0,0
+single-collision ?p(1); => true
+values=[]
+solutions=[!p(1.0);]
+hypotheses=[]
+rules=[false:!p(1.0);]
+pass-actions=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=0
+effects=0,0,0,0,0,0
+single-collision !~p(1); => null
+values=[]
+solutions=[]
+hypotheses=[]
+rules=[false:!p(1.0);]
+pass-actions=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=0
+effects=0,0,0,0,0,0
+single-collision ?p(1); => true
+values=[]
+solutions=[!p(1.0);]
+hypotheses=[]
+rules=[false:!p(1.0);]
+pass-actions=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=0
+effects=0,0,0,0,0,0
+single-collision ?p(2); => null
+values=[]
+solutions=[]
+hypotheses=[]
+rules=[false:!p(1.0);]
+pass-trace=pass=1,in=-1,out=0,rules=2,unifications=0,tvalues=0,functions=2,database=2
+pass-actions=[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=1
+effects=0,0,0,0,0,0
+chain-symmetry ?$x $y path(x,y); => true
+values=[{x=A, y=B}, {x=A, y=B}, {x=B, y=A}]
+solutions=[!path(A,B);, !path(B,A);]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x);, false:!@x @y edge(x,y) -> path(x,y);, false:!edge(A,B);, true:!edge(B,A);, true:!path(A,B);, true:!path(B,A);]
+pass-trace=pass=1,in=-1,out=3,rules=8,unifications=13,tvalues=4,functions=15,database=15
+pass-trace=pass=2,in=3,out=1,rules=18,unifications=28,tvalues=0,functions=23,database=23
+pass-trace=pass=3,in=1,out=0,rules=20,unifications=30,tvalues=0,functions=26,database=26
+binding-trace=pass=1,variable=4,owner=7,added=[8, 10],removed=[],consumers=[7],tuple-extra=[]
+binding-trace=pass=1,variable=5,owner=7,added=[9, 11],removed=[],consumers=[7],tuple-extra=[]
+pass-actions=[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=3
+effects=71,4,9,6,3,50
+chain-symmetry ?path(B,A); => true
+values=[]
+solutions=[!path(B,A);]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x);, false:!@x @y edge(x,y) -> path(x,y);, false:!edge(A,B);, true:!edge(B,A);, true:!path(A,B);, true:!path(B,A);]
+pass-actions=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=0
+effects=0,0,0,0,0,0
+chain-symmetry ?path(A,C); => null
+values=[]
+solutions=[]
+hypotheses=[!edge(A,C);, !edge(C,A);]
+rules=[false:!@x @y edge(x,y) -> edge(y,x);, false:!@x @y edge(x,y) -> path(x,y);, false:!edge(A,B);, true:!edge(B,A);, true:!path(A,B);, true:!path(B,A);]
+pass-trace=pass=1,in=-1,out=3,rules=8,unifications=2,tvalues=1,functions=8,database=8
+pass-trace=pass=2,in=3,out=3,rules=16,unifications=12,tvalues=1,functions=22,database=22
+pass-trace=pass=3,in=3,out=2,rules=18,unifications=14,tvalues=1,functions=28,database=28
+pass-trace=pass=4,in=2,out=0,rules=18,unifications=14,tvalues=0,functions=28,database=28
+binding-trace=pass=1,variable=3,owner=2,added=[12],removed=[],consumers=[2],tuple-extra=[]
+binding-trace=pass=2,variable=0,owner=1,added=[13],removed=[],consumers=[1],tuple-extra=[]
+binding-trace=pass=3,variable=1,owner=1,added=[14],removed=[],consumers=[1],tuple-extra=[]
+pass-actions=[1, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=4
+effects=42,3,7,7,2,42
+functions ?$x q(x); => true
+values=[{x=2.0}, {x=3.0}]
+solutions=[!q(2.0);, !q(3.0);]
+hypotheses=[]
+rules=[false:!@x p(x) -> q(x+1);, false:!p(1.0);, false:!p(2.0);, true:!q(2.0);, true:!q(3.0);]
+pass-trace=pass=1,in=-1,out=3,rules=8,unifications=13,tvalues=2,functions=11,database=11
+pass-trace=pass=2,in=3,out=0,rules=16,unifications=24,tvalues=0,functions=20,database=20
+binding-trace=pass=1,variable=1,owner=6,added=[2, 3],removed=[],consumers=[6],tuple-extra=[]
+pass-actions=[1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=2
+effects=37,2,4,4,2,14
+functions ?q(3); => true
+values=[]
+solutions=[!q(3.0);]
+hypotheses=[]
+rules=[false:!@x p(x) -> q(x+1);, false:!p(1.0);, false:!p(2.0);, true:!q(2.0);, true:!q(3.0);]
+pass-actions=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=0
+effects=0,0,0,0,0,0
+many ?$x q(x); => true
+values=[{x=1.0}, {x=2.0}, {x=3.0}]
+solutions=[!q(1.0);, !q(2.0);, !q(3.0);]
+hypotheses=[]
+rules=[false:!@x p(x) -> q(x);, false:!p(1.0);, false:!p(2.0);, false:!p(3.0);, true:!q(1.0);, true:!q(2.0);, true:!q(3.0);]
+pass-trace=pass=1,in=-1,out=3,rules=10,unifications=22,tvalues=3,functions=16,database=16
+pass-trace=pass=2,in=3,out=1,rules=22,unifications=42,tvalues=0,functions=30,database=30
+pass-trace=pass=3,in=1,out=0,rules=28,unifications=46,tvalues=0,functions=36,database=36
+binding-trace=pass=1,variable=1,owner=8,added=[3, 4, 5],removed=[],consumers=[8],tuple-extra=[]
+pass-actions=[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=3
+effects=110,3,9,6,6,60
+many ?q(4); => null
+values=[]
+solutions=[]
+hypotheses=[!p(4.0);]
+rules=[false:!@x p(x) -> q(x);, false:!p(1.0);, false:!p(2.0);, false:!p(3.0);, true:!q(1.0);, true:!q(2.0);, true:!q(3.0);]
+pass-trace=pass=1,in=-1,out=11,rules=10,unifications=2,tvalues=1,functions=16,database=16
+pass-trace=pass=2,in=11,out=0,rules=18,unifications=8,tvalues=0,functions=24,database=24
+binding-trace=pass=1,variable=0,owner=3,added=[6],removed=[],consumers=[3],tuple-extra=[]
+pass-actions=[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=2
+effects=10,1,4,4,1,10
+natives ?$x male(x); => true
+values=[{x=John}]
+solutions=[!male(John);]
+hypotheses=[]
+rules=[false:!@x $y parent(y,x);, false:!@x (male(x) || female(x)) && ~(male(x) && female(x));, false:!@x @y ($z parent(x,z), parent(y,z)), x != y -> spouse(x,y) || divorced(x,y);, false:!@x @y ($z parent(z,x) && parent(z,y)) && x != y -> sibling(x,y);, false:!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));, false:!@x @y daughter(x,y) -> female(x), child(x,y);, false:!@x @y father(x,y) -> male(x), parent(x,y);, false:!@x @y mother(x,y) -> female(x), parent(x,y);, false:!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));, false:!@x @y sibling(x,y) -> sibling(y,x);, false:!@x @y son(x,y) -> male(x), child(x,y);, false:!@x @y ~(parent(x,y), parent(y,x));, false:!@x @y ~(sibling(x,y), parent(x,y));, false:!@x ~parent(x,x);, false:!age(John,37.0);, false:!age(Sarah,4.0);, false:!age(Tom,12.0);, false:!child(Tom,Mary);, false:!daughter(Sarah,John);, false:!father(John,Tom);, false:!mother(Mary,Sarah);, true:!child(Sarah,John);, true:!child(Sarah,Mary);, true:!child(Tom,John);, true:!daughter(Sarah,Mary);, true:!father(John,Sarah);, true:!female(Mary);, true:!female(Sarah);, true:!male(John);, true:!mother(Mary,Tom);, true:!parent(John,Sarah);, true:!parent(John,Tom);, true:!parent(Mary,Sarah);, true:!parent(Mary,Tom);, true:!sibling(Sarah,Tom);, true:!sibling(Tom,Sarah);, true:?child(John,John);, true:?child(John,Mary);, true:?child(John,Sarah);, true:?child(John,Tom);, true:?child(Mary,John);, true:?child(Mary,Mary);, true:?child(Mary,Sarah);, true:?child(Mary,Tom);, true:?child(Sarah,Sarah);, true:?child(Sarah,Tom);, true:?child(Tom,Sarah);, true:?child(Tom,Tom);, true:?daughter(John,John);, true:?daughter(John,Mary);, true:?daughter(John,Sarah);, true:?daughter(John,Tom);, true:?daughter(Mary,John);, true:?daughter(Mary,Mary);, true:?daughter(Mary,Sarah);, true:?daughter(Mary,Tom);, true:?daughter(Sarah,Sarah);, true:?daughter(Sarah,Tom);, true:?daughter(Tom,Sarah);, true:?daughter(Tom,Tom);, true:?father(John,John);, true:?father(John,Mary);, true:?father(Mary,John);, true:?father(Mary,Mary);, true:?father(Mary,Sarah);, true:?father(Mary,Tom);, true:?father(Mary,y);, true:?father(Sarah,John);, true:?father(Sarah,Mary);, true:?father(Sarah,Sarah);, true:?father(Sarah,Tom);, true:?father(Sarah,y);, true:?father(Tom,John);, true:?father(Tom,Mary);, true:?father(Tom,Sarah);, true:?father(Tom,Tom);, true:?female(John);, true:?male(Mary);, true:?male(Sarah);, true:?mother(John,John);, true:?mother(John,Mary);, true:?mother(John,Sarah);, true:?mother(John,Tom);, true:?mother(John,y);, true:?mother(Mary,John);, true:?mother(Mary,Mary);, true:?mother(Sarah,John);, true:?mother(Sarah,Mary);, true:?mother(Sarah,Sarah);, true:?mother(Sarah,Tom);, true:?mother(Tom,John);, true:?mother(Tom,Mary);, true:?mother(Tom,Sarah);, true:?mother(Tom,Tom);, true:?parent(John,John);, true:?parent(John,Mary);, true:?parent(Mary,John);, true:?parent(Mary,Mary);, true:?parent(Sarah,John);, true:?parent(Sarah,Mary);, true:?parent(Sarah,Sarah);, true:?parent(Sarah,Tom);, true:?parent(Tom,John);, true:?parent(Tom,Mary);, true:?parent(Tom,Sarah);, true:?parent(Tom,Tom);, true:?sibling(John,Sarah);, true:?sibling(John,Tom);, true:?sibling(Mary,Sarah);, true:?sibling(Mary,Tom);, true:?sibling(Sarah,John);, true:?sibling(Sarah,Mary);, true:?sibling(Tom,John);, true:?sibling(Tom,Mary);, true:?son(John,John);, true:?son(John,Mary);, true:?son(John,Sarah);, true:?son(John,Tom);, true:?son(Mary,John);, true:?son(Mary,Mary);, true:?son(Mary,Sarah);, true:?son(Mary,Tom);, true:?son(Sarah,John);, true:?son(Sarah,Mary);, true:?son(Sarah,Sarah);, true:?son(Sarah,Tom);, true:?son(Tom,Sarah);, true:?son(Tom,Tom);]
+pass-trace=pass=1,in=-1,out=11,rules=10,unifications=12,tvalues=1,functions=144,database=144
+pass-trace=pass=2,in=11,out=8,rules=92,unifications=228,tvalues=0,functions=594,database=594
+pass-trace=pass=3,in=8,out=11,rules=232,unifications=555,tvalues=34,functions=924,database=924
+pass-trace=pass=4,in=11,out=3,rules=256,unifications=604,tvalues=29,functions=1164,database=1164
+pass-trace=pass=5,in=3,out=1,rules=258,unifications=612,tvalues=28,functions=1166,database=1166
+pass-trace=pass=6,in=1,out=3,rules=260,unifications=618,tvalues=30,functions=1200,database=1200
+pass-trace=pass=7,in=3,out=0,rules=264,unifications=622,tvalues=28,functions=1204,database=1204
+binding-trace=pass=1,variable=27,owner=129,added=[130],removed=[],consumers=[129],tuple-extra=[]
+binding-trace=pass=3,variable=1,owner=1,added=[141],removed=[],consumers=[1],tuple-extra=[]
+binding-trace=pass=3,variable=7,owner=5,added=[142],removed=[],consumers=[5],tuple-extra=[]
+binding-trace=pass=3,variable=8,owner=5,added=[143],removed=[],consumers=[5],tuple-extra=[]
+binding-trace=pass=3,variable=9,owner=6,added=[144],removed=[],consumers=[6],tuple-extra=[]
+binding-trace=pass=3,variable=10,owner=6,added=[145],removed=[],consumers=[6],tuple-extra=[]
+binding-trace=pass=3,variable=11,owner=7,added=[147],removed=[],consumers=[7],tuple-extra=[]
+binding-trace=pass=3,variable=12,owner=7,added=[146],removed=[],consumers=[7],tuple-extra=[]
+binding-trace=pass=3,variable=13,owner=8,added=[140],removed=[],consumers=[8],tuple-extra=[]
+binding-trace=pass=3,variable=14,owner=8,added=[131, 132, 133],removed=[],consumers=[8],tuple-extra=[]
+binding-trace=pass=3,variable=15,owner=9,added=[138],removed=[],consumers=[9],tuple-extra=[]
+binding-trace=pass=3,variable=16,owner=9,added=[139],removed=[],consumers=[9],tuple-extra=[]
+binding-trace=pass=3,variable=19,owner=10,added=[137],removed=[],consumers=[10],tuple-extra=[]
+binding-trace=pass=3,variable=20,owner=11,added=[136],removed=[],consumers=[11],tuple-extra=[]
+binding-trace=pass=3,variable=24,owner=13,added=[134],removed=[],consumers=[13],tuple-extra=[]
+binding-trace=pass=3,variable=25,owner=13,added=[135],removed=[],consumers=[13],tuple-extra=[]
+binding-trace=pass=4,variable=14,owner=8,added=[148],removed=[],consumers=[8],tuple-extra=[]
+binding-trace=pass=6,variable=3,owner=3,added=[150],removed=[],consumers=[3],tuple-extra=[]
+binding-trace=pass=6,variable=5,owner=4,added=[149],removed=[],consumers=[4],tuple-extra=[]
+pass-actions=[1, 1, 0, 2, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=7
+effects=3251,150,229,205,6,4392
+natives ?male(Tom); => null
+values=[]
+solutions=[]
+hypotheses=[!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?female(Tom);, ?son(Tom,John);, ?son(Tom,Mary);]
+rules=[false:!@x $y parent(y,x);, false:!@x (male(x) || female(x)) && ~(male(x) && female(x));, false:!@x @y ($z parent(x,z), parent(y,z)), x != y -> spouse(x,y) || divorced(x,y);, false:!@x @y ($z parent(z,x) && parent(z,y)) && x != y -> sibling(x,y);, false:!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));, false:!@x @y daughter(x,y) -> female(x), child(x,y);, false:!@x @y father(x,y) -> male(x), parent(x,y);, false:!@x @y mother(x,y) -> female(x), parent(x,y);, false:!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));, false:!@x @y sibling(x,y) -> sibling(y,x);, false:!@x @y son(x,y) -> male(x), child(x,y);, false:!@x @y ~(parent(x,y), parent(y,x));, false:!@x @y ~(sibling(x,y), parent(x,y));, false:!@x ~parent(x,x);, false:!age(John,37.0);, false:!age(Sarah,4.0);, false:!age(Tom,12.0);, false:!child(Tom,Mary);, false:!daughter(Sarah,John);, false:!father(John,Tom);, false:!mother(Mary,Sarah);, true:!child(Sarah,John);, true:!child(Sarah,Mary);, true:!child(Tom,John);, true:!daughter(Sarah,Mary);, true:!father(John,Sarah);, true:!female(Mary);, true:!female(Sarah);, true:!male(John);, true:!mother(Mary,Tom);, true:!parent(John,Sarah);, true:!parent(John,Tom);, true:!parent(Mary,Sarah);, true:!parent(Mary,Tom);, true:!sibling(Sarah,Tom);, true:!sibling(Tom,Sarah);, true:?child(John,John);, true:?child(John,Mary);, true:?child(John,Sarah);, true:?child(John,Tom);, true:?child(Mary,John);, true:?child(Mary,Mary);, true:?child(Mary,Sarah);, true:?child(Mary,Tom);, true:?child(Sarah,Sarah);, true:?child(Sarah,Tom);, true:?child(Tom,Sarah);, true:?child(Tom,Tom);, true:?daughter(John,John);, true:?daughter(John,Mary);, true:?daughter(John,Sarah);, true:?daughter(John,Tom);, true:?daughter(Mary,John);, true:?daughter(Mary,Mary);, true:?daughter(Mary,Sarah);, true:?daughter(Mary,Tom);, true:?daughter(Sarah,Sarah);, true:?daughter(Sarah,Tom);, true:?daughter(Tom,Sarah);, true:?daughter(Tom,Tom);, true:?father(John,John);, true:?father(John,Mary);, true:?father(Mary,John);, true:?father(Mary,Mary);, true:?father(Mary,Sarah);, true:?father(Mary,Tom);, true:?father(Mary,y);, true:?father(Sarah,John);, true:?father(Sarah,Mary);, true:?father(Sarah,Sarah);, true:?father(Sarah,Tom);, true:?father(Sarah,y);, true:?father(Tom,John);, true:?father(Tom,Mary);, true:?father(Tom,Sarah);, true:?father(Tom,Tom);, true:?female(John);, true:?male(Mary);, true:?male(Sarah);, true:?mother(John,John);, true:?mother(John,Mary);, true:?mother(John,Sarah);, true:?mother(John,Tom);, true:?mother(John,y);, true:?mother(Mary,John);, true:?mother(Mary,Mary);, true:?mother(Sarah,John);, true:?mother(Sarah,Mary);, true:?mother(Sarah,Sarah);, true:?mother(Sarah,Tom);, true:?mother(Tom,John);, true:?mother(Tom,Mary);, true:?mother(Tom,Sarah);, true:?mother(Tom,Tom);, true:?parent(John,John);, true:?parent(John,Mary);, true:?parent(Mary,John);, true:?parent(Mary,Mary);, true:?parent(Sarah,John);, true:?parent(Sarah,Mary);, true:?parent(Sarah,Sarah);, true:?parent(Sarah,Tom);, true:?parent(Tom,John);, true:?parent(Tom,Mary);, true:?parent(Tom,Sarah);, true:?parent(Tom,Tom);, true:?sibling(John,Sarah);, true:?sibling(John,Tom);, true:?sibling(Mary,Sarah);, true:?sibling(Mary,Tom);, true:?sibling(Sarah,John);, true:?sibling(Sarah,Mary);, true:?sibling(Tom,John);, true:?sibling(Tom,Mary);, true:?son(John,John);, true:?son(John,Mary);, true:?son(John,Sarah);, true:?son(John,Tom);, true:?son(Mary,John);, true:?son(Mary,Mary);, true:?son(Mary,Sarah);, true:?son(Mary,Tom);, true:?son(Sarah,John);, true:?son(Sarah,Mary);, true:?son(Sarah,Sarah);, true:?son(Sarah,Tom);, true:?son(Tom,Sarah);, true:?son(Tom,Tom);]
+pass-trace=pass=1,in=-1,out=11,rules=10,unifications=8,tvalues=1,functions=148,database=148
+pass-trace=pass=2,in=11,out=8,rules=96,unifications=228,tvalues=0,functions=602,database=602
+pass-trace=pass=3,in=8,out=11,rules=236,unifications=555,tvalues=34,functions=932,database=932
+pass-trace=pass=4,in=11,out=2,rules=264,unifications=612,tvalues=29,functions=1176,database=1176
+pass-trace=pass=5,in=2,out=0,rules=264,unifications=612,tvalues=28,functions=1176,database=1176
+binding-trace=pass=1,variable=2,owner=2,added=[170],removed=[],consumers=[2],tuple-extra=[]
+binding-trace=pass=3,variable=1,owner=1,added=[181],removed=[],consumers=[1],tuple-extra=[]
+binding-trace=pass=3,variable=7,owner=5,added=[182],removed=[],consumers=[5],tuple-extra=[]
+binding-trace=pass=3,variable=8,owner=5,added=[183],removed=[],consumers=[5],tuple-extra=[]
+binding-trace=pass=3,variable=9,owner=6,added=[184],removed=[],consumers=[6],tuple-extra=[]
+binding-trace=pass=3,variable=10,owner=6,added=[185],removed=[],consumers=[6],tuple-extra=[]
+binding-trace=pass=3,variable=11,owner=7,added=[187],removed=[],consumers=[7],tuple-extra=[]
+binding-trace=pass=3,variable=12,owner=7,added=[186],removed=[],consumers=[7],tuple-extra=[]
+binding-trace=pass=3,variable=13,owner=8,added=[180],removed=[],consumers=[8],tuple-extra=[]
+binding-trace=pass=3,variable=14,owner=8,added=[171, 172, 173],removed=[],consumers=[8],tuple-extra=[]
+binding-trace=pass=3,variable=15,owner=9,added=[178],removed=[],consumers=[9],tuple-extra=[]
+binding-trace=pass=3,variable=16,owner=9,added=[179],removed=[],consumers=[9],tuple-extra=[]
+binding-trace=pass=3,variable=19,owner=10,added=[177],removed=[],consumers=[10],tuple-extra=[]
+binding-trace=pass=3,variable=20,owner=11,added=[176],removed=[],consumers=[11],tuple-extra=[]
+binding-trace=pass=3,variable=24,owner=13,added=[174],removed=[],consumers=[13],tuple-extra=[]
+binding-trace=pass=3,variable=25,owner=13,added=[175],removed=[],consumers=[13],tuple-extra=[]
+binding-trace=pass=4,variable=14,owner=8,added=[188],removed=[],consumers=[8],tuple-extra=[]
+pass-actions=[1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=5
+effects=2015,92,235,207,12,3796
+natives ?father(John,Tom); => true
+values=[]
+solutions=[!father(John,Tom);]
+hypotheses=[]
+rules=[false:!@x $y parent(y,x);, false:!@x (male(x) || female(x)) && ~(male(x) && female(x));, false:!@x @y ($z parent(x,z), parent(y,z)), x != y -> spouse(x,y) || divorced(x,y);, false:!@x @y ($z parent(z,x) && parent(z,y)) && x != y -> sibling(x,y);, false:!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));, false:!@x @y daughter(x,y) -> female(x), child(x,y);, false:!@x @y father(x,y) -> male(x), parent(x,y);, false:!@x @y mother(x,y) -> female(x), parent(x,y);, false:!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));, false:!@x @y sibling(x,y) -> sibling(y,x);, false:!@x @y son(x,y) -> male(x), child(x,y);, false:!@x @y ~(parent(x,y), parent(y,x));, false:!@x @y ~(sibling(x,y), parent(x,y));, false:!@x ~parent(x,x);, false:!age(John,37.0);, false:!age(Sarah,4.0);, false:!age(Tom,12.0);, false:!child(Tom,Mary);, false:!daughter(Sarah,John);, false:!father(John,Tom);, false:!mother(Mary,Sarah);, true:!child(Sarah,John);, true:!child(Sarah,Mary);, true:!child(Tom,John);, true:!daughter(Sarah,Mary);, true:!father(John,Sarah);, true:!female(Mary);, true:!female(Sarah);, true:!male(John);, true:!mother(Mary,Tom);, true:!parent(John,Sarah);, true:!parent(John,Tom);, true:!parent(Mary,Sarah);, true:!parent(Mary,Tom);, true:!sibling(Sarah,Tom);, true:!sibling(Tom,Sarah);, true:?child(John,John);, true:?child(John,Mary);, true:?child(John,Sarah);, true:?child(John,Tom);, true:?child(Mary,John);, true:?child(Mary,Mary);, true:?child(Mary,Sarah);, true:?child(Mary,Tom);, true:?child(Sarah,Sarah);, true:?child(Sarah,Tom);, true:?child(Tom,Sarah);, true:?child(Tom,Tom);, true:?daughter(John,John);, true:?daughter(John,Mary);, true:?daughter(John,Sarah);, true:?daughter(John,Tom);, true:?daughter(Mary,John);, true:?daughter(Mary,Mary);, true:?daughter(Mary,Sarah);, true:?daughter(Mary,Tom);, true:?daughter(Sarah,Sarah);, true:?daughter(Sarah,Tom);, true:?daughter(Tom,Sarah);, true:?daughter(Tom,Tom);, true:?father(John,John);, true:?father(John,Mary);, true:?father(Mary,John);, true:?father(Mary,Mary);, true:?father(Mary,Sarah);, true:?father(Mary,Tom);, true:?father(Mary,y);, true:?father(Sarah,John);, true:?father(Sarah,Mary);, true:?father(Sarah,Sarah);, true:?father(Sarah,Tom);, true:?father(Sarah,y);, true:?father(Tom,John);, true:?father(Tom,Mary);, true:?father(Tom,Sarah);, true:?father(Tom,Tom);, true:?female(John);, true:?male(Mary);, true:?male(Sarah);, true:?mother(John,John);, true:?mother(John,Mary);, true:?mother(John,Sarah);, true:?mother(John,Tom);, true:?mother(John,y);, true:?mother(Mary,John);, true:?mother(Mary,Mary);, true:?mother(Sarah,John);, true:?mother(Sarah,Mary);, true:?mother(Sarah,Sarah);, true:?mother(Sarah,Tom);, true:?mother(Tom,John);, true:?mother(Tom,Mary);, true:?mother(Tom,Sarah);, true:?mother(Tom,Tom);, true:?parent(John,John);, true:?parent(John,Mary);, true:?parent(Mary,John);, true:?parent(Mary,Mary);, true:?parent(Sarah,John);, true:?parent(Sarah,Mary);, true:?parent(Sarah,Sarah);, true:?parent(Sarah,Tom);, true:?parent(Tom,John);, true:?parent(Tom,Mary);, true:?parent(Tom,Sarah);, true:?parent(Tom,Tom);, true:?sibling(John,Sarah);, true:?sibling(John,Tom);, true:?sibling(Mary,Sarah);, true:?sibling(Mary,Tom);, true:?sibling(Sarah,John);, true:?sibling(Sarah,Mary);, true:?sibling(Tom,John);, true:?sibling(Tom,Mary);, true:?son(John,John);, true:?son(John,Mary);, true:?son(John,Sarah);, true:?son(John,Tom);, true:?son(Mary,John);, true:?son(Mary,Mary);, true:?son(Mary,Sarah);, true:?son(Mary,Tom);, true:?son(Sarah,John);, true:?son(Sarah,Mary);, true:?son(Sarah,Sarah);, true:?son(Sarah,Tom);, true:?son(Tom,Sarah);, true:?son(Tom,Tom);]
+pass-actions=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=0
+effects=0,0,0,0,0,0
+natives !~father(John,Tom); => null
+values=[]
+solutions=[]
+hypotheses=[]
+rules=[false:!@x $y parent(y,x);, false:!@x (male(x) || female(x)) && ~(male(x) && female(x));, false:!@x @y ($z parent(x,z), parent(y,z)), x != y -> spouse(x,y) || divorced(x,y);, false:!@x @y ($z parent(z,x) && parent(z,y)) && x != y -> sibling(x,y);, false:!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));, false:!@x @y daughter(x,y) -> female(x), child(x,y);, false:!@x @y father(x,y) -> male(x), parent(x,y);, false:!@x @y mother(x,y) -> female(x), parent(x,y);, false:!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));, false:!@x @y sibling(x,y) -> sibling(y,x);, false:!@x @y son(x,y) -> male(x), child(x,y);, false:!@x @y ~(parent(x,y), parent(y,x));, false:!@x @y ~(sibling(x,y), parent(x,y));, false:!@x ~parent(x,x);, false:!age(John,37.0);, false:!age(Sarah,4.0);, false:!age(Tom,12.0);, false:!child(Tom,Mary);, false:!daughter(Sarah,John);, false:!father(John,Tom);, false:!mother(Mary,Sarah);, true:!child(Sarah,John);, true:!child(Sarah,Mary);, true:!child(Tom,John);, true:!daughter(Sarah,Mary);, true:!father(John,Sarah);, true:!female(Mary);, true:!female(Sarah);, true:!male(John);, true:!mother(Mary,Tom);, true:!parent(John,Sarah);, true:!parent(John,Tom);, true:!parent(Mary,Sarah);, true:!parent(Mary,Tom);, true:!sibling(Sarah,Tom);, true:!sibling(Tom,Sarah);, true:?child(John,John);, true:?child(John,Mary);, true:?child(John,Sarah);, true:?child(John,Tom);, true:?child(Mary,John);, true:?child(Mary,Mary);, true:?child(Mary,Sarah);, true:?child(Mary,Tom);, true:?child(Sarah,Sarah);, true:?child(Sarah,Tom);, true:?child(Tom,Sarah);, true:?child(Tom,Tom);, true:?daughter(John,John);, true:?daughter(John,Mary);, true:?daughter(John,Sarah);, true:?daughter(John,Tom);, true:?daughter(Mary,John);, true:?daughter(Mary,Mary);, true:?daughter(Mary,Sarah);, true:?daughter(Mary,Tom);, true:?daughter(Sarah,Sarah);, true:?daughter(Sarah,Tom);, true:?daughter(Tom,Sarah);, true:?daughter(Tom,Tom);, true:?father(John,John);, true:?father(John,Mary);, true:?father(Mary,John);, true:?father(Mary,Mary);, true:?father(Mary,Sarah);, true:?father(Mary,Tom);, true:?father(Mary,y);, true:?father(Sarah,John);, true:?father(Sarah,Mary);, true:?father(Sarah,Sarah);, true:?father(Sarah,Tom);, true:?father(Sarah,y);, true:?father(Tom,John);, true:?father(Tom,Mary);, true:?father(Tom,Sarah);, true:?father(Tom,Tom);, true:?female(John);, true:?male(Mary);, true:?male(Sarah);, true:?mother(John,John);, true:?mother(John,Mary);, true:?mother(John,Sarah);, true:?mother(John,Tom);, true:?mother(John,y);, true:?mother(Mary,John);, true:?mother(Mary,Mary);, true:?mother(Sarah,John);, true:?mother(Sarah,Mary);, true:?mother(Sarah,Sarah);, true:?mother(Sarah,Tom);, true:?mother(Tom,John);, true:?mother(Tom,Mary);, true:?mother(Tom,Sarah);, true:?mother(Tom,Tom);, true:?parent(John,John);, true:?parent(John,Mary);, true:?parent(Mary,John);, true:?parent(Mary,Mary);, true:?parent(Sarah,John);, true:?parent(Sarah,Mary);, true:?parent(Sarah,Sarah);, true:?parent(Sarah,Tom);, true:?parent(Tom,John);, true:?parent(Tom,Mary);, true:?parent(Tom,Sarah);, true:?parent(Tom,Tom);, true:?sibling(John,Sarah);, true:?sibling(John,Tom);, true:?sibling(Mary,Sarah);, true:?sibling(Mary,Tom);, true:?sibling(Sarah,John);, true:?sibling(Sarah,Mary);, true:?sibling(Tom,John);, true:?sibling(Tom,Mary);, true:?son(John,John);, true:?son(John,Mary);, true:?son(John,Sarah);, true:?son(John,Tom);, true:?son(Mary,John);, true:?son(Mary,Mary);, true:?son(Mary,Sarah);, true:?son(Mary,Tom);, true:?son(Sarah,John);, true:?son(Sarah,Mary);, true:?son(Sarah,Sarah);, true:?son(Sarah,Tom);, true:?son(Tom,Sarah);, true:?son(Tom,Tom);]
+pass-actions=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=0
+effects=0,0,0,0,0,0

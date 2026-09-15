@@ -433,8 +433,11 @@ public class Linker {
 
         Rule top = mind.getRules().getTop();
         long topId = top == null ? -1 : top.getId();
+        final boolean traceBindings = Boolean.getBoolean("kanger.experiment.traceBindings");
 
         do {
+            final Map<TVariable, Set<Long>> bindingsBefore = traceBindings
+                    ? observeBindings(observeConsumers()) : null;
 
             ++passCounter;
             currentPass = passCounter;
@@ -515,6 +518,7 @@ public class Linker {
 
             rotator(leftList, causes, logging);
             rotator(ruleList, causes, logging);
+            if (traceBindings) recordBindingChanges(bindingsBefore);
             statistics.recordPassActions(mind.getRules().isAction(),
                     mind.getTValues().isAction(), mind.getFValues().isAction(),
                     mind.getTempHypothesis().isAction(), mind.getHypothesis().isAction());
@@ -530,6 +534,70 @@ public class Linker {
             log.add(LogMode.TIMING, String.format("* LINKER Solved passes: %03d", solvedPasses));
             log.add(LogMode.TIMING, String.format("* LINKER Dumped passes: %03d", dumpedPasses));
             log.add(LogMode.TIMING, String.format("* LINKER Skipped passes: %03d", skippedPasses));
+        }
+    }
+
+    /** Diagnostic scan of the same argument occurrences used by rotator. */
+    private Map<TVariable, Set<Long>> observeConsumers() throws Exception {
+        Map<TVariable, Set<Long>> result = new TreeMap<>();
+        for (IRule rule : mind.getRules()) {
+            if (rule.isDeleted(mind)) continue;
+            for (List<Domain> branch : ((Rule) rule).getTree()) {
+                for (Domain domain : branch) {
+                    for (TVariable variable : domain.getArguments().getTVariables(mind)) {
+                        Set<Long> rules = result.get(variable);
+                        if (rules == null) {
+                            rules = new TreeSet<>();
+                            result.put(variable, rules);
+                        }
+                        rules.add(rule.getId());
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    private Map<TVariable, Set<Long>> observeBindings(Map<TVariable, Set<Long>> consumers) throws Exception {
+        Map<TVariable, Set<Long>> result = new TreeMap<>();
+        for (TVariable variable : consumers.keySet()) {
+            final Set<Long> ids = new TreeSet<>();
+            mind.getTValues().forEach(variable, new IReactor() {
+                @Override public Object run(Object value) {
+                    ids.add(((TValue) value).getId());
+                    return true;
+                }
+            });
+            result.put(variable, ids);
+        }
+        return result;
+    }
+
+    private void recordBindingChanges(Map<TVariable, Set<Long>> before) throws Exception {
+        Map<TVariable, Set<Long>> consumers = observeConsumers();
+        Map<TVariable, Set<Long>> after = observeBindings(consumers);
+        Set<TVariable> variables = new TreeSet<>(before.keySet());
+        variables.addAll(after.keySet());
+        for (TVariable variable : variables) {
+            Set<Long> added = new TreeSet<>(after.getOrDefault(variable, Collections.<Long>emptySet()));
+            added.removeAll(before.getOrDefault(variable, Collections.<Long>emptySet()));
+            Set<Long> removed = new TreeSet<>(before.getOrDefault(variable, Collections.<Long>emptySet()));
+            removed.removeAll(after.getOrDefault(variable, Collections.<Long>emptySet()));
+            if (added.isEmpty() && removed.isEmpty()) continue;
+            Set<Long> direct = consumers.getOrDefault(variable, Collections.<Long>emptySet());
+            Set<Long> tupleConsumers = new TreeSet<>();
+            for (Map.Entry<TVariableSet, List<TSolve>> entry : mind.getRuleSolves().entrySet()) {
+                if (!entry.getKey().contains(variable)) continue;
+                for (TSolve solve : entry.getValue()) {
+                    for (TValue value : solve.getSolve()) {
+                        tupleConsumers.addAll(consumers.getOrDefault(value.getTVar(mind), Collections.<Long>emptySet()));
+                    }
+                }
+            }
+            tupleConsumers.removeAll(direct);
+            statistics.recordBindingTrace("pass=" + currentPass + ",variable=" + variable.getId()
+                    + ",owner=" + variable.getRuleId() + ",added=" + added + ",removed=" + removed
+                    + ",consumers=" + direct + ",tuple-extra=" + tupleConsumers);
         }
     }
 
