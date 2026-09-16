@@ -1,0 +1,14 @@
+BENCH_COMPILE symmetric-edges-50-partitions-10 0
+LINK_INVOCATION completed=true pass=ACCEPT stages=[12508332, 124514936, 1336369, 34237408, 42754848, 10542575, 291335676, 1289597, 1098686, 2582297, 241246519, 173428451, 56012127, 34437244] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[9400, 9400, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY symmetric-edges-50-partitions-10 0
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[1873, 5367, 2223, 55573, 1583, 0, 267596, 145645, 11877, 6559, 70705, 66428, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[93064698, 2339745755, 2404649, 185008215, 100167925, 82290885, 3554022835, 4839870, 3575149, 10746611, 3429247752, 2622972474, 675586642, 479183746] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[288164, 288164, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END symmetric-edges-50-partitions-10 0
+BENCH_COMPLETE symmetric-edges-50-partitions-10
+BENCH_COMPILE symmetric-edges-100-partitions-10 0
+LINK_INVOCATION completed=true pass=ACCEPT stages=[3889054, 95578355, 189226, 33144192, 29667816, 3452070, 457865827, 1041010, 1225104, 2529061, 421400069, 133229777, 275418891, 177559042] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[35800, 35800, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY symmetric-edges-100-partitions-10 0
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[681, 1162, 251, 9934, 1242, 0, 243581, 182640, 10675, 5018, 14912, 12339, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[231814904, 8056851098, 2157266, 468665745, 112653889, 204588339, 11692918307, 8000769, 6575709, 15143726, 11540992768, 8764829942, 2333383464, 1793958711] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[1119114, 1119114, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END symmetric-edges-100-partitions-10 0
+BENCH_COMPLETE symmetric-edges-100-partitions-10

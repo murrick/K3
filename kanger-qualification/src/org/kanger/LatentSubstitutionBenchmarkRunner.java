@@ -34,13 +34,23 @@ public final class LatentSubstitutionBenchmarkRunner {
                 ? ",sync_calls,sync_scans,sync_skips,sync_fallbacks,group_visits,new_slots,sum_list_lengths,unchanged_groups,verify_groups,verify_slots,peak_groups,peak_tuples" : "")
                 + (Boolean.getBoolean("kanger.experiment.benchFingerprint") ? ",semantic_sha256" : ""));
         if (Boolean.getBoolean("kanger.experiment.benchScaled")) {
+            int partitions = Integer.getInteger("kanger.experiment.benchPartitions", 1);
+            if (partitions <= 0) throw new IllegalArgumentException("Partitions must be positive");
             for (String sizeText : System.getProperty("kanger.experiment.benchEdgeSizes", "10,30").split(",")) {
                 int size = Integer.parseInt(sizeText.trim());
                 if (size <= 0) throw new IllegalArgumentException("Edge fixture size must be positive");
                 StringBuilder source = new StringBuilder();
-                for (int i = 0; i < size; i++) source.append("!edge(").append(i).append(',').append(i + 1).append(");\n");
-                source.append("!@x @y edge(x,y) -> edge(y,x); !@x @y edge(x,y) -> path(x,y);");
-                bench("symmetric-edges-" + size, source.toString(), "?$x $y path(x,y);");
+                for (int i = 0; i < size; i++) {
+                    String predicate = partitions == 1 ? "edge" : "edge" + (i % partitions);
+                    source.append('!').append(predicate).append('(').append(i).append(',').append(i + 1).append(");\n");
+                }
+                for (int p = 0; p < partitions; p++) {
+                    String predicate = partitions == 1 ? "edge" : "edge" + p;
+                    source.append("!@x @y ").append(predicate).append("(x,y) -> ")
+                            .append(predicate).append("(y,x); !@x @y ").append(predicate).append("(x,y) -> path(x,y);");
+                }
+                bench("symmetric-edges-" + size + (partitions == 1 ? "" : "-partitions-" + partitions),
+                        source.toString(), "?$x $y path(x,y);");
             }
             return;
         }

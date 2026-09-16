@@ -54,4 +54,6 @@ The retained reuse-loop [rebinding cost](latent-substitution-rebinding-cost.md) 
 
 An enlarged [50/100-edge profile](latent-substitution-larger-topology.md) exposes a filtering limit: factory removes only 3.31%/1.72% of last-invocation domain visits, with 52,599/205,199 unifications unchanged. Whole-query profiles point mainly to retained linkDomains work. This homogeneous-signature fixture is not evidence for globally sparse topology. Larger heterogeneous signatures and internal semantic-pair cost are the next useful comparisons.
 
+The [ten-predicate shared-output comparison](latent-substitution-partitioned-topology.md) removes 16.81%/10.17% of visits at 50/100 edges, but retains 89,110/318,210 unifications and heavier overall work. Extra rules converging on path mean predicate partitioning alone does not establish useful sparsity. linkDomains remains the main measured component; its internal phases are the next attribution target.
+
 Nothing here authorizes default enablement, removing the old traversal, or merge/release/tag/deploy.
