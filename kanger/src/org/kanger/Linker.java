@@ -527,6 +527,7 @@ public class Linker {
      */
     public void link(Rule rule, boolean logging) throws Exception {
         occurrenceObservation = Boolean.getBoolean("kanger.experiment.profileOccurrences") ? new long[5] : null;
+        rebindObservation = Boolean.getBoolean("kanger.experiment.profileRebinding") ? new long[3] : null;
         long invocationStart = statistics.stageClock();
         boolean completed = false;
         try {
@@ -534,6 +535,9 @@ public class Linker {
             completed = true;
         } finally {
             statistics.finishStage(6, invocationStart);
+            if (rebindObservation != null)
+                System.err.println("REBIND_OBSERVATION completed=" + completed
+                        + " counts=" + java.util.Arrays.toString(rebindObservation));
             if (occurrenceObservation != null)
                 System.err.println("OCCURRENCE_OBSERVATION pass=" + mind.getQueryPass()
                         + " completed=" + completed + " counts=" + java.util.Arrays.toString(occurrenceObservation));
@@ -1093,6 +1097,8 @@ public class Linker {
 
     // Diagnostic only: calls, requested slots, repeated calls/slots, changed ordered identities.
     private long[] occurrenceObservation;
+    // Diagnostic only: reused lists, rebound occurrences, inclusive loop nanoseconds.
+    private long[] rebindObservation;
 
     private List<List<Domain>> latentBranches(IRule rule, Domain slave,
             Map<IRule, Map<DomainKey, List<Domain>>> index, boolean verify, boolean factory) throws Exception {
@@ -1106,7 +1112,13 @@ public class Linker {
         if (reuse) {
             selected = previous;
             // Preserve eager rebinding, including duplicate occurrences, before pair checkpoints.
+            long rebindStart = rebindObservation == null ? 0 : System.nanoTime();
             for (Domain domain : selected) domain.setMind(mind);
+            if (rebindObservation != null) {
+                rebindObservation[0]++;
+                rebindObservation[1] += selected.size();
+                rebindObservation[2] += System.nanoTime() - rebindStart;
+            }
             if (verify) {
                 List<Domain> reference = mind.getRules().getLatentDomainCandidates(rule, slave);
                 if (reference.size() != selected.size()) throw new AssertionError("Reused occurrence count changed");

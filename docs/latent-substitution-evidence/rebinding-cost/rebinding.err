@@ -1,0 +1,182 @@
+BENCH_COMPILE natives-values -3
+REBIND_OBSERVATION completed=true counts=[1514, 1776, 706882]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[5596, 5596, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY natives-values -3
+REBIND_OBSERVATION completed=true counts=[777, 887, 463995]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[2548, 2548, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[2265, 2557, 621842]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[6652, 6652, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END natives-values -3
+BENCH_COMPILE natives-values -2
+REBIND_OBSERVATION completed=true counts=[1514, 1776, 290509]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[5596, 5596, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY natives-values -2
+REBIND_OBSERVATION completed=true counts=[777, 887, 151280]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[2548, 2548, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[2265, 2557, 441673]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[6652, 6652, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END natives-values -2
+BENCH_COMPILE natives-values -1
+REBIND_OBSERVATION completed=true counts=[1514, 1776, 275228]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[5596, 5596, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY natives-values -1
+REBIND_OBSERVATION completed=true counts=[777, 887, 148854]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[2548, 2548, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[2265, 2557, 512646]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[6652, 6652, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END natives-values -1
+BENCH_COMPILE natives-values 0
+REBIND_OBSERVATION completed=true counts=[1514, 1776, 277508]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[5596, 5596, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY natives-values 0
+REBIND_OBSERVATION completed=true counts=[777, 887, 147554]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[2548, 2548, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[2265, 2557, 442485]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[6652, 6652, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END natives-values 0
+BENCH_COMPILE natives-values 1
+REBIND_OBSERVATION completed=true counts=[1514, 1776, 383184]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[5596, 5596, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY natives-values 1
+REBIND_OBSERVATION completed=true counts=[777, 887, 130511]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[2548, 2548, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[2265, 2557, 392738]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[6652, 6652, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END natives-values 1
+BENCH_COMPILE natives-values 2
+REBIND_OBSERVATION completed=true counts=[1514, 1776, 283725]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[5596, 5596, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY natives-values 2
+REBIND_OBSERVATION completed=true counts=[777, 887, 130677]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[2548, 2548, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[2265, 2557, 665377]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[6652, 6652, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END natives-values 2
+BENCH_COMPILE natives-values 3
+REBIND_OBSERVATION completed=true counts=[1514, 1776, 342749]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[5596, 5596, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY natives-values 3
+REBIND_OBSERVATION completed=true counts=[777, 887, 123341]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[2548, 2548, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[2265, 2557, 377254]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[6652, 6652, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END natives-values 3
+BENCH_COMPILE natives-values 4
+REBIND_OBSERVATION completed=true counts=[1514, 1776, 321272]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[5596, 5596, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY natives-values 4
+REBIND_OBSERVATION completed=true counts=[777, 887, 105105]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[2548, 2548, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[2265, 2557, 317863]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[6652, 6652, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END natives-values 4
+BENCH_COMPILE natives-values 5
+REBIND_OBSERVATION completed=true counts=[1514, 1776, 204480]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[5596, 5596, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY natives-values 5
+REBIND_OBSERVATION completed=true counts=[777, 887, 148791]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[2548, 2548, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[2265, 2557, 364563]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[6652, 6652, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END natives-values 5
+BENCH_COMPILE natives-values 6
+REBIND_OBSERVATION completed=true counts=[1514, 1776, 343724]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[5596, 5596, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY natives-values 6
+REBIND_OBSERVATION completed=true counts=[777, 887, 240354]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[2548, 2548, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[2265, 2557, 376939]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[6652, 6652, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END natives-values 6
+BENCH_COMPLETE natives-values
+BENCH_COMPILE singleton-values -3
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY singleton-values -3
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[396, 396, 45935]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[300, 300, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END singleton-values -3
+BENCH_COMPILE singleton-values -2
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY singleton-values -2
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[396, 396, 50902]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[300, 300, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END singleton-values -2
+BENCH_COMPILE singleton-values -1
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY singleton-values -1
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[396, 396, 97372]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[300, 300, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END singleton-values -1
+BENCH_COMPILE singleton-values 0
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY singleton-values 0
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[396, 396, 36626]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[300, 300, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END singleton-values 0
+BENCH_COMPILE singleton-values 1
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY singleton-values 1
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[396, 396, 34183]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[300, 300, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END singleton-values 1
+BENCH_COMPILE singleton-values 2
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY singleton-values 2
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[396, 396, 51573]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[300, 300, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END singleton-values 2
+BENCH_COMPILE singleton-values 3
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY singleton-values 3
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[396, 396, 58574]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[300, 300, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END singleton-values 3
+BENCH_COMPILE singleton-values 4
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY singleton-values 4
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[396, 396, 51685]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[300, 300, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END singleton-values 4
+BENCH_COMPILE singleton-values 5
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY singleton-values 5
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[396, 396, 52083]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[300, 300, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END singleton-values 5
+BENCH_COMPILE singleton-values 6
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY singleton-values 6
+REBIND_OBSERVATION completed=true counts=[0, 0, 0]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+REBIND_OBSERVATION completed=true counts=[396, 396, 38107]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[300, 300, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END singleton-values 6
+BENCH_COMPLETE singleton-values

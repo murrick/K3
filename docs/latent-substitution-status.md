@@ -50,4 +50,6 @@ Context rebinding now has an [executable counterexample](latent-substitution-dom
 
 The [scoped list-reuse prototype](latent-substitution-occurrence-prototype.md) now preserves eager setMind and passes both actual-skip and reference-verified corpus/lifecycle/transaction checks, plus a targeted split-context test. It is default-off. Three paired JVMs show no repeatable native speedup (median 122.374 → 121.310 ms, two pairs regress); 84 measured fingerprints/counters agree. Avoiding repeated hydration alone has not produced a convincing general gain.
 
+The retained reuse-loop [rebinding cost](latent-substitution-rebinding-cost.md) is small in one diagnostic JVM: native 0.523 ms/query, median sample share 0.445%; facts 0.052 ms, 0.133%. This does not measure all setMind callers, but gives no reason to weaken context semantics or further optimize that loop now. List reuse remains disabled.
+
 Nothing here authorizes default enablement, removing the old traversal, or merge/release/tag/deploy.
