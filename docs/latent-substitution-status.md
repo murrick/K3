@@ -62,4 +62,6 @@ The [substitution subprofile](latent-substitution-value-lookup.md) localizes mos
 
 The [TValue rebuild measurement](latent-substitution-tvalue-rebuilds.md) confirms substantial repeated full-chain indexing: 35,088 rebuilds, 131.5 million walked steps and 8.625 seconds at 100 partitioned edges. All measured releases restore the same root; 35,088 invalidate a coherent ready index. A TValue-only guarded preservation experiment is now justified for investigation, pending mutation audit and independent index-map verification. Release semantics remain unchanged at this checkpoint.
 
+The default-off [guarded TValue index-preservation prototype](latent-substitution-tvalue-preservation.md) passes actual/verified corpus, lifecycle, state and transaction checks. It requires an unchanged mutation counter as well as coherent index and identical root. First unprofiled paired JVMs at 100 partitioned edges improve 11.379 → 3.838 seconds; a separate diagnostic drops rebuilds from 35,088 to 1. This is a first-run result pending reversed-order replication and other workloads, not default-promotion evidence.
+
 Nothing here authorizes default enablement, removing the old traversal, or merge/release/tag/deploy.
