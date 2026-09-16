@@ -55,6 +55,8 @@ public final class LatentSubstitutionStateRunner {
                 rows.add(r.isGenerated() + ":" + ((Rule) r).toString(mind));
             print("rules", rows);
             LinkerStatistics s = mind.getLinkerStatistics();
+            if (Boolean.getBoolean("kanger.experiment.traceSelection"))
+                System.out.println("candidate-selection=" + Arrays.toString(s.getCandidateSelection()));
             if (Boolean.getBoolean("kanger.experiment.tracePairInputs")) {
                 System.out.println("pair-effects=" + Arrays.toString(s.getPairEffects()));
                 System.out.println("pair-new-tuples=" + Arrays.toString(s.getPairNewTuples()));

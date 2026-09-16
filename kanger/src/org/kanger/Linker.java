@@ -342,23 +342,60 @@ public class Linker {
     }
 
     private Collection<IRule> selectDomainCandidates(List<Domain> tree,
-                                                       Map<DomainKey, List<IRule>> index) throws Exception {
+            Map<DomainKey, List<IRule>> index,
+            Map<List<IRule>, Map<Long, Integer>> positions) throws Exception {
+        statistics.recordCandidateSelection(0, 1);
         if (tree.size() != 1) {
+            statistics.recordCandidateSelection(1, 1);
             return Collections.emptyList();
         }
         Domain slave = tree.get(0);
         List<IRule> candidates = index.get(
                 new DomainKey(slave.getPredicateId(), !slave.isAntc()));
         if (candidates == null || candidates.isEmpty()) {
+            statistics.recordCandidateSelection(2, 1);
             return Collections.emptyList();
         }
 
         List<IRule> resolved = mind.getRules().findByResolvedDomain(
                 slave, !slave.isAntc());
+        statistics.recordCandidateSelection(3, resolved.size());
         if (resolved.isEmpty()) {
             return Collections.emptyList();
         }
 
+        if (positions != null && resolved.size() < candidates.size()) {
+            Map<Long, Integer> rank = positions.get(candidates);
+            if (rank == null) {
+                rank = new HashMap<>();
+                for (int i = 0; i < candidates.size(); i++) rank.put(candidates.get(i).getId(), i);
+                positions.put(candidates, rank);
+                statistics.recordCandidateSelection(6, candidates.size());
+            }
+            SortedSet<Integer> retained = new TreeSet<>();
+            for (IRule candidate : resolved) {
+                Integer position = rank.get(candidate.getId());
+                if (position != null) retained.add(position);
+            }
+            statistics.recordCandidateSelection(7, resolved.size());
+            List<IRule> filtered = new ArrayList<>(retained.size());
+            for (int position : retained) filtered.add(candidates.get(position));
+            if ("factory-verify".equals(System.getProperty("kanger.experiment.latent"))) {
+                List<IRule> expected = intersectCandidateReference(candidates, resolved);
+                if (expected.size() != filtered.size()) throw new AssertionError("Candidate intersection count mismatch");
+                for (int i = 0; i < expected.size(); i++)
+                    if (expected.get(i) != filtered.get(i)) throw new AssertionError("Candidate intersection order/identity mismatch");
+            }
+            statistics.recordCandidateSelection(5, filtered.size());
+            return filtered;
+        }
+        statistics.recordCandidateSelection(4, candidates.size());
+        List<IRule> filtered = intersectCandidateReference(candidates, resolved);
+        statistics.recordCandidateSelection(5, filtered.size());
+        return filtered;
+    }
+
+    private List<IRule> intersectCandidateReference(List<IRule> candidates, List<IRule> resolved) {
         Set<Long> allowedIds = new HashSet<>();
         for (IRule candidate : resolved) {
             allowedIds.add(candidate.getId());
@@ -768,6 +805,8 @@ public class Linker {
 
         boolean used = false;
         final Map<DomainKey, List<IRule>> domainIndex = preparedIndex == null ? buildDomainIndex(ruleList) : preparedIndex;
+        final Map<List<IRule>, Map<Long, Integer>> candidatePositions = Boolean.getBoolean("kanger.experiment.indexedIntersection")
+                ? new IdentityHashMap<List<IRule>, Map<Long, Integer>>() : null;
         if (preparedIndex != null) verifyFactoryDomainIndex(ruleList, domainIndex);
         // Experimental, discardable snapshot. Default remains the reference path.
         final String latentMode = System.getProperty("kanger.experiment.latent", "off");
@@ -809,7 +848,7 @@ public class Linker {
                         statistics.incrementTerminalRotations();
                         boolean result = false;
                         try {
-                            if (linkDomains(t, selectDomainCandidates(t, domainIndex), causes, logging,
+                            if (linkDomains(t, selectDomainCandidates(t, domainIndex, candidatePositions), causes, logging,
                                     latent, "verify".equals(latentMode) || "factory-verify".equals(latentMode), factoryLatent)) {
                                 result = true;
                             }
