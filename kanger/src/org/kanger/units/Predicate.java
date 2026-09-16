@@ -191,19 +191,38 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         }
     }
 
-    /** Hashes the structural key {@code (nameId, range)} for candidate lookup. */
+    /**
+     * Resolves the semantic name while keeping {@code nameId} as a local
+     * operational locator only.
+     */
+    private ITerm resolveSemanticName() throws Exception {
+        if (name == null) {
+            if (mind == null) {
+                throw new IllegalStateException("Predicate name cannot be resolved without Mind");
+            }
+            name = mind.getTerms().get(nameId);
+        }
+        if (name == null) {
+            throw new IllegalStateException("Predicate name Term not found: " + nameId);
+        }
+        return name;
+    }
+
+    /** Hashes the context-independent structural key {@code (name, range)}. */
     @Override
-    public int getHash() {
+    public int getHash() throws Exception {
         int hash = 3;
-        hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
+        hash = 47 * hash + ((IUnit<?>) resolveSemanticName()).getHash();
         hash = 47 * hash + range;
         return hash;
     }
 
-    /** Compares canonical definition keys independently of operational IDs. */
+    /** Compares canonical definition keys independently of local name IDs. */
     @Override
-    public boolean equalsTo(Predicate to) {
-        return to.getNameId() == nameId && to.getRange() == range;
+    public boolean equalsTo(Predicate to) throws Exception {
+        return to != null
+                && to.getRange() == range
+                && resolveSemanticName().equalsTo(to.resolveSemanticName());
     }
 
     @Override
