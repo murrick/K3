@@ -56,4 +56,6 @@ An enlarged [50/100-edge profile](latent-substitution-larger-topology.md) expose
 
 The [ten-predicate shared-output comparison](latent-substitution-partitioned-topology.md) removes 16.81%/10.17% of visits at 50/100 edges, but retains 89,110/318,210 unifications and heavier overall work. Extra rules converging on path mean predicate partitioning alone does not establish useful sparsity. linkDomains remains the main measured component; its internal phases are the next attribution target.
 
+Internal [pair-phase attribution](latent-substitution-pair-phases.md) now places most measured compatible-pair time in the substitution loop: 2.389/8.696 seconds at 50/100 partitioned edges. Preparation and guards are much smaller. Next split canonical TValue work from Domain.setUsed history checks; the current measurement does not distinguish them. Fingerprints and the state baseline still match.
+
 Nothing here authorizes default enablement, removing the old traversal, or merge/release/tag/deploy.

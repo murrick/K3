@@ -1,0 +1,74 @@
+BENCH_COMPILE symmetric-edges-50-partitions-10 -1
+PAIR_PHASES completed=true counts=[1000, 3222422, 1569938, 70976171, 36321653, 12992547]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[12574486, 133208383, 1517348, 43812923, 52013978, 10712591, 326245600, 1535922, 1385249, 2694569, 265857149, 192037589, 61168060, 38514368] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[9400, 9400, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY symmetric-edges-50-partitions-10 -1
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 651]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[1472, 34370, 2705, 64105, 1402, 0, 275407, 118025, 8873, 6329, 107861, 103673, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+PAIR_PHASES completed=true counts=[89110, 21137052, 24057740, 2489383708, 136818417, 68632592]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[106211028, 2793484191, 5940266, 212875409, 112076521, 92542002, 4209885021, 5401463, 5059429, 10940613, 4070931872, 3121214622, 787927652, 531019495] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[288164, 288164, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END symmetric-edges-50-partitions-10 -1
+BENCH_COMPILE symmetric-edges-50-partitions-10 0
+PAIR_PHASES completed=true counts=[1000, 815233, 1304227, 23658221, 7154976, 2945650]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[2168822, 37761366, 92929, 14261678, 14707163, 1927881, 176127308, 538998, 659468, 1199738, 158023716, 54496320, 98640894, 72448723] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[9400, 9400, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY symmetric-edges-50-partitions-10 0
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 921]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[410, 4508, 90, 7711, 400, 0, 236230, 185465, 9163, 4067, 14731, 12969, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+PAIR_PHASES completed=true counts=[89110, 19695300, 30755973, 2328524013, 111466381, 55935380]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[78502637, 2584919231, 944479, 154992317, 57671380, 69917866, 3617173113, 4003386, 3331481, 9573453, 3537287183, 2822751777, 588573967, 433193675] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[288164, 288164, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END symmetric-edges-50-partitions-10 0
+BENCH_COMPILE symmetric-edges-50-partitions-10 1
+PAIR_PHASES completed=true counts=[1000, 164926, 317616, 27157692, 6887538, 1154882]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[1896885, 36333678, 92067, 10847183, 13918274, 1679449, 92025885, 751643, 732736, 1237315, 74093606, 49408206, 21438640, 16309923] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[9400, 9400, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY symmetric-edges-50-partitions-10 1
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 90]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[130, 462, 230, 5318, 491, 0, 126097, 86829, 8062, 2583, 7531, 6420, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+PAIR_PHASES completed=true counts=[89110, 9791451, 15357055, 2502418540, 96254860, 48885405]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[76004777, 2701293137, 929852, 169303949, 66878713, 67216150, 3768281195, 3522042, 3228357, 5103855, 3686179123, 2950135214, 605326982, 445794162] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[288164, 288164, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END symmetric-edges-50-partitions-10 1
+BENCH_COMPILE symmetric-edges-50-partitions-10 2
+PAIR_PHASES completed=true counts=[1000, 143912, 228515, 26379604, 5320797, 927056]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[1791739, 33564704, 88083, 8662247, 10868043, 1524926, 83781230, 635850, 566397, 1660004, 69238767, 44320671, 22380309, 17024658] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[9400, 9400, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY symmetric-edges-50-partitions-10 2
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 80]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[210, 471, 90, 4978, 240, 0, 128390, 90684, 3455, 1193, 6800, 6069, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+PAIR_PHASES completed=true counts=[89110, 9106282, 16242196, 2388694599, 92801125, 44554616]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[76644973, 2578531306, 1010854, 150100501, 42661064, 67416832, 3582033066, 5390786, 1274324, 4877407, 3523478536, 2808613980, 582547219, 432349067] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[288164, 288164, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END symmetric-edges-50-partitions-10 2
+BENCH_COMPLETE symmetric-edges-50-partitions-10
+BENCH_COMPILE symmetric-edges-100-partitions-10 -1
+PAIR_PHASES completed=true counts=[2000, 397792, 590165, 112418968, 10059564, 2884778]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[3902366, 127885520, 210763, 20913859, 18457411, 3426395, 280312439, 984877, 626275, 1125790, 258084617, 153355815, 94593722, 71893895] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[35800, 35800, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY symmetric-edges-100-partitions-10 -1
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 240]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[260, 742, 80, 5608, 361, 0, 147819, 112046, 6359, 581, 7451, 6920, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+PAIR_PHASES completed=true counts=[318210, 32577400, 50058169, 9238559984, 364385890, 169768515]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[284302448, 9963857223, 2733407, 550903919, 77386474, 250665488, 13782091907, 7064926, 2626895, 6749639, 13684523735, 10807268299, 2347623501, 1729827686] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[1119114, 1119114, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END symmetric-edges-100-partitions-10 -1
+BENCH_COMPILE symmetric-edges-100-partitions-10 0
+PAIR_PHASES completed=true counts=[2000, 318511, 353286, 83015752, 7301345, 2069054]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[2842132, 94159343, 160611, 14157969, 9749004, 2461923, 196975273, 722970, 261017, 899247, 184535187, 111978495, 65636528, 50250326] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[35800, 35800, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY symmetric-edges-100-partitions-10 0
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 100]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[250, 501, 80, 4517, 141, 0, 149051, 110784, 6781, 360, 6219, 5598, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+PAIR_PHASES completed=true counts=[318210, 32806770, 48122187, 8695693139, 356452568, 136221368]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[265198326, 9375024613, 2997462, 473490933, 63112156, 234177382, 12951624736, 7109135, 2379792, 6538044, 12868567092, 10121969518, 2255450335, 1649632751] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[1119114, 1119114, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END symmetric-edges-100-partitions-10 0
+BENCH_COMPILE symmetric-edges-100-partitions-10 1
+PAIR_PHASES completed=true counts=[2000, 218649, 397271, 76669880, 6635684, 1758871]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[2478672, 86593400, 138609, 13165776, 8810742, 2142554, 184468879, 602990, 302729, 645268, 173421691, 102789305, 64522597, 49869922] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[35800, 35800, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY symmetric-edges-100-partitions-10 1
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 90]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[130, 531, 110, 4657, 400, 0, 177222, 118436, 5188, 371, 5949, 5649, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+PAIR_PHASES completed=true counts=[318210, 33599184, 55159479, 8526316024, 366645707, 149332395]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[257915712, 9240265017, 2317672, 500172997, 61212037, 226887611, 12886785861, 6861686, 2433301, 7197822, 12805346521, 10006018428, 2309069651, 1689362499] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[1119114, 1119114, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END symmetric-edges-100-partitions-10 1
+BENCH_COMPILE symmetric-edges-100-partitions-10 2
+PAIR_PHASES completed=true counts=[2000, 212720, 371551, 77951072, 10382752, 1869885]
+LINK_INVOCATION completed=true pass=ACCEPT stages=[2388428, 91685616, 142249, 14422988, 8410591, 2042484, 192657469, 573588, 311759, 615550, 182115634, 109088992, 66144774, 50872622] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[35800, 35800, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY symmetric-edges-100-partitions-10 2
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 100]
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[111, 380, 80, 3946, 130, 0, 149321, 112857, 5779, 461, 5288, 4758, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+PAIR_PHASES completed=true counts=[318210, 32559614, 50298683, 9370814790, 459731002, 159998837]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[338612078, 10334493773, 5402086, 3891477238, 57804742, 301470313, 26113336772, 6791778, 2114260, 58503289, 25981898770, 14577056119, 9286048965, 5457193119] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[1119114, 1119114, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_END symmetric-edges-100-partitions-10 2
+BENCH_COMPLETE symmetric-edges-100-partitions-10

@@ -528,6 +528,7 @@ public class Linker {
     public void link(Rule rule, boolean logging) throws Exception {
         occurrenceObservation = Boolean.getBoolean("kanger.experiment.profileOccurrences") ? new long[5] : null;
         rebindObservation = Boolean.getBoolean("kanger.experiment.profileRebinding") ? new long[3] : null;
+        pairPhases = Boolean.getBoolean("kanger.experiment.profilePairPhases") ? new long[6] : null;
         long invocationStart = statistics.stageClock();
         boolean completed = false;
         try {
@@ -535,6 +536,8 @@ public class Linker {
             completed = true;
         } finally {
             statistics.finishStage(6, invocationStart);
+            if (pairPhases != null)
+                System.err.println("PAIR_PHASES completed=" + completed + " counts=" + java.util.Arrays.toString(pairPhases));
             if (rebindObservation != null)
                 System.err.println("REBIND_OBSERVATION completed=" + completed
                         + " counts=" + java.util.Arrays.toString(rebindObservation));
@@ -1099,6 +1102,15 @@ public class Linker {
     private long[] occurrenceObservation;
     // Diagnostic only: reused lists, rebound occurrences, inclusive loop nanoseconds.
     private long[] rebindObservation;
+    // Pair count; preparation, guards, substitution, completion, deferred tuple nanoseconds.
+    private long[] pairPhases;
+
+    private long finishPairPhase(int phase, long started) {
+        if (pairPhases == null) return 0;
+        long now = System.nanoTime();
+        pairPhases[phase] += now - started;
+        return now;
+    }
 
     private List<List<Domain>> latentBranches(IRule rule, Domain slave,
             Map<IRule, Map<DomainKey, List<Domain>>> index, boolean verify, boolean factory) throws Exception {
@@ -1226,6 +1238,8 @@ public class Linker {
                         for (Domain master : treeMaster) {
                             statistics.incrementDomainPairs();
                             if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
+                                long phaseStarted = pairPhases == null ? 0 : System.nanoTime();
+                                if (pairPhases != null) pairPhases[0]++;
                                 String masterPlan = argumentPlan ? mind.getRules().getLatentArgumentPlan(master) : null;
                                 String slavePlan = argumentPlan ? mind.getRules().getLatentArgumentPlan(slave) : null;
                                 long operationId = statistics.incrementUnificationAttempts(
@@ -1252,6 +1266,7 @@ public class Linker {
 
                                 boolean blockRight = false;
                                 boolean blockLeft = false;
+                                phaseStarted = finishPairPhase(1, phaseStarted);
 
                                 for (int i = 0; i < master.getRange(); ++i) {
                                     if (plannedVariable(master, masterPlan, i)) {
@@ -1271,6 +1286,7 @@ public class Linker {
                                     }
                                 }
 
+                                phaseStarted = finishPairPhase(2, phaseStarted);
                                 if (success) {
                                     for (int i = 0; i < slave.getRange(); ++i) {
 
@@ -1347,6 +1363,7 @@ public class Linker {
                                     }
                                 }
 
+                                phaseStarted = finishPairPhase(3, phaseStarted);
                                 if (success) {
                                     if (result) {
                                         ++solvedPasses;
@@ -1393,12 +1410,14 @@ public class Linker {
                                             observedEntryCount(mind.getUsedRules()) - rulesUsedAtEntry,
                                             !resultAtEntry && result, result);
                                 }
+                                finishPairPhase(4, phaseStarted);
                             }
                         }
                     }
                 }
             }
 
+            long deferredStarted = pairPhases == null ? 0 : System.nanoTime();
             for (Map.Entry<Solve, List<DeferredSolveCandidate>> variantsList : variants.entrySet()) {
                 for (DeferredSolveCandidate candidate : variantsList.getValue()) {
                     Object[] subst = candidate.substitution;
@@ -1417,6 +1436,7 @@ public class Linker {
                         statistics.observePairNewTuple(candidate.operationId);
                 }
             }
+            finishPairPhase(5, deferredStarted);
 
         }
         return result;

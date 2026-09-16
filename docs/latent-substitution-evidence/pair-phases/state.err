@@ -1,0 +1,35 @@
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 4917]
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 1582]
+empty	?p(1);	0	0	48624778
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 2213]
+single-collision	?p(1);	0	0	3373096
+single-collision	!~p(1);	0	0	1583606
+single-collision	?p(1);	0	0	2663175
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 1553]
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 1543]
+single-collision	?p(2);	0	0	3897104
+PAIR_PHASES completed=true counts=[20, 476056, 157272, 1186838, 1531911, 4269176]
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 2103]
+PAIR_PHASES completed=true counts=[71, 584086, 202942, 2175450, 1853866, 1993158]
+chain-symmetry	?$x $y path(x,y);	71	71	25879648
+chain-symmetry	?path(B,A);	0	0	3313388
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 1683]
+PAIR_PHASES completed=true counts=[42, 250439, 122638, 1018682, 1190082, 1136434]
+chain-symmetry	?path(A,C);	42	42	18548448
+PAIR_PHASES completed=true counts=[8, 36303, 16475, 165444, 503286, 111065]
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 920]
+PAIR_PHASES completed=true counts=[37, 161859, 320387, 179654, 447032, 231011]
+functions	?$x q(x);	37	37	9142674
+functions	?q(3);	0	0	2687061
+PAIR_PHASES completed=true counts=[12, 54460, 18587, 135992, 398208, 174719]
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 932]
+PAIR_PHASES completed=true counts=[110, 275372, 116126, 465352, 908607, 774973]
+many	?$x q(x);	110	110	13032211
+PAIR_PHASES completed=true counts=[0, 0, 0, 0, 0, 610]
+PAIR_PHASES completed=true counts=[10, 32477, 13890, 60161, 231921, 151285]
+many	?q(4);	10	10	4596329
+PAIR_PHASES completed=true counts=[2391, 1676743, 1036258, 38266553, 13772131, 6821481]
+PAIR_PHASES completed=true counts=[1123, 403645, 370036, 24894767, 3940630, 3425116]
+PAIR_PHASES completed=true counts=[3251, 1138712, 1417357, 44667933, 10064785, 8201255]
+natives	?$x male(x);	3251	3251	246216286
+PAIR_PHASES completed=true counts=[1761, 748048, 812363, 14780466, 5259739, 4008948]
