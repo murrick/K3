@@ -161,6 +161,7 @@ public class Linker {
     // Diagnostic frozen next-pass proposal; never controls execution.
     private Set<Long> shadowRules;
     private boolean shadowActivation;
+    private boolean tracePairInputs;
 
     /**
      * Query-local tuple index used only while Linker rotates substitutions.
@@ -440,6 +441,7 @@ public class Linker {
         final boolean traceTuples = Boolean.getBoolean("kanger.experiment.traceTuples");
         shadowActivation = Boolean.getBoolean("kanger.experiment.shadowActivation");
         shadowRules = null;
+        tracePairInputs = Boolean.getBoolean("kanger.experiment.tracePairInputs");
 
         do {
             final Map<TVariable, Set<Long>> bindingsBefore = traceBindings || traceTuples || shadowActivation
@@ -933,6 +935,25 @@ public class Linker {
         return Collections.singletonList(selected);
     }
 
+    /** Argument projection only: not a complete semantic memoization key. */
+    private String observedPairInput(Domain master, Domain slave, boolean carriedResult) throws Exception {
+        StringBuilder key = new StringBuilder().append(carriedResult);
+        for (Domain domain : Arrays.asList(master, slave)) {
+            key.append('|').append(domain.getId());
+            for (int i = 0; i < domain.getRange(); i++) {
+                IArgument argument = domain.get(i);
+                key.append(':').append(argument.getType()).append('=');
+                if (argument.isEmpty(mind)) key.append("empty");
+                else key.append(argument.getValue(mind).getId());
+                if (argument.getType() == ArgumentType.TVARIABLE) {
+                    TValue value = ((TVariable) argument.getObject(mind)).getCurrent();
+                    key.append('@').append(value == null ? "none" : Long.toString(value.getId()));
+                }
+            }
+        }
+        return key.toString();
+    }
+
     private boolean linkDomains(List<Domain> treeSlave, Collection<IRule> ruleList, Map<IRule, Set<Cause>> causes, boolean logging,
             Map<IRule, Map<DomainKey, List<Domain>>> latent, boolean verify, boolean factory) throws Exception {
 
@@ -949,6 +970,8 @@ public class Linker {
                             if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
                                 long operationId = statistics.incrementUnificationAttempts(
                                         currentPass == 1, rule.isQuery(), rule.isGenerated());
+                                if (tracePairInputs) statistics.observePairInput(
+                                        observedPairInput(master, slave, result), currentPass, operationId);
                                 int operationEffects = 0;
                                 TValue[] substMaster = new TValue[master.getRange()];
                                 TValue[] substSlave = new TValue[slave.getRange()];
@@ -1086,6 +1109,7 @@ public class Linker {
                                     mind.getFValues().release();
                                 }
                                 statistics.recordOperationEffectMask(operationEffects);
+                                if (tracePairInputs) statistics.observePairEffects(operationId, operationEffects);
                             }
                         }
                     }
@@ -1104,7 +1128,10 @@ public class Linker {
                     }
                     SemanticEffectTelemetry.recordDeferredContribution(
                             list, candidate.operationId);
+                    long tupleCount = tracePairInputs ? observedTupleCount() : 0;
                     mind.addTSolve(list);
+                    if (tracePairInputs && observedTupleCount() > tupleCount)
+                        statistics.observePairNewTuple(candidate.operationId);
                 }
             }
 

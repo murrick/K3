@@ -44,6 +44,10 @@ public final class LinkerStatistics {
     private final java.util.List<String> bindingTrace = new java.util.ArrayList<>();
     private final java.util.List<String> tupleTrace = new java.util.ArrayList<>();
     private final java.util.List<String> activationTrace = new java.util.ArrayList<>();
+    private final java.util.Map<String, Integer> pairLastPass = new java.util.HashMap<>();
+    private final java.util.Map<Long, Integer> pairOperationClass = new java.util.HashMap<>();
+    private final long[] pairEffects = new long[48];
+    private final long[] pairNewTuples = new long[3];
     private int incomingActions = -1;
     private long priorRuleVisits, priorUnifications, priorTValues, priorFunctions, priorDatabase;
 
@@ -55,6 +59,8 @@ public final class LinkerStatistics {
         bindingTrace.addAll(source.bindingTrace);
         tupleTrace.addAll(source.tupleTrace);
         activationTrace.addAll(source.activationTrace);
+        System.arraycopy(source.pairEffects, 0, pairEffects, 0, pairEffects.length);
+        System.arraycopy(source.pairNewTuples, 0, pairNewTuples, 0, pairNewTuples.length);
         System.arraycopy(source.passActionMasks, 0, passActionMasks, 0, passActionMasks.length);
         passes = source.passes;
         ruleVisits = source.ruleVisits;
@@ -81,6 +87,8 @@ public final class LinkerStatistics {
         bindingTrace.clear();
         tupleTrace.clear();
         activationTrace.clear();
+        pairLastPass.clear(); pairOperationClass.clear();
+        java.util.Arrays.fill(pairEffects, 0L); java.util.Arrays.fill(pairNewTuples, 0L);
         incomingActions = -1;
         priorRuleVisits = priorUnifications = priorTValues = priorFunctions = priorDatabase = 0L;
         java.util.Arrays.fill(passActionMasks, 0L);
@@ -142,6 +150,16 @@ public final class LinkerStatistics {
     public java.util.List<String> getTupleTrace() { return new java.util.ArrayList<>(tupleTrace); }
     void recordActivationTrace(String row) { activationTrace.add(row); }
     public java.util.List<String> getActivationTrace() { return new java.util.ArrayList<>(activationTrace); }
+    void observePairInput(String key, int pass, long operation) {
+        Integer previous = pairLastPass.put(key, pass);
+        pairOperationClass.put(operation, previous == null ? 0 : previous == pass ? 1 : 2);
+    }
+    void observePairEffects(long operation, int effects) {
+        ++pairEffects[pairOperationClass.get(operation) * 16 + effects];
+    }
+    void observePairNewTuple(long operation) { ++pairNewTuples[pairOperationClass.get(operation)]; }
+    public long[] getPairEffects() { return pairEffects.clone(); }
+    public long[] getPairNewTuples() { return pairNewTuples.clone(); }
     void incrementRuleVisits() { ++ruleVisits; }
     void incrementBranchVisits() { ++branchVisits; }
     void incrementTerminalRotations() { ++terminalRotations; }
@@ -239,6 +257,8 @@ public final class LinkerStatistics {
         bindingTrace.addAll(other.bindingTrace);
         tupleTrace.addAll(other.tupleTrace);
         activationTrace.addAll(other.activationTrace);
+        for (int i = 0; i < pairEffects.length; i++) pairEffects[i] += other.pairEffects[i];
+        for (int i = 0; i < pairNewTuples.length; i++) pairNewTuples[i] += other.pairNewTuples[i];
         for (int i = 0; i < passActionMasks.length; ++i) {
             passActionMasks[i] += other.passActionMasks[i];
         }
