@@ -86,7 +86,7 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
         try {
             for (IArgument a : this) {
                 if (!a.isEmpty(mind)) {
-                    hashCode = 31 * hashCode + a.getValue(mind).hashCode();
+                    hashCode = 31 * hashCode + a.getValue(mind).getHash();
                 }
             }
         } catch (Exception e) {
