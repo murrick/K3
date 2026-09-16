@@ -36,6 +36,8 @@ Previous measurements with other experiment flags enabled found native query med
 
 Pair-result memoization by current argument projection was rejected: identical projections can have different binding-history effects. One-hop rule scheduling missed tuple-producing visits; full closure removed the expected savings. Do not enable either as an optimization. Optional membership filtering, argument plans and candidate/intersection optimizations have no established general end-to-end gain.
 
-Next useful measurements are isolated solve-sync OFF/ON query timings with fingerprints, plus retained memory and build cost for the actual factory representation on a broader corpus. Full Maven and canonical Java 8/21 qualification are still outstanding: this environment uses OpenJDK 17 and ECJ with Java 8 source target. The baseline cannot compile `labyrinth.k` here; it remains an explicit exclusion, not a passing fixture.
+Standalone OFF/ON timings are now complete: [measurement report](latent-substitution-solve-standalone-timing.md). Native query median JVM medians improve 117.378 to 96.566 ms (17.7%), while singleton facts regress 5.8% and the two scaled fixtures differ in direction. All 168 measured semantic fingerprints and counters agree within each fixture. This supports an independent native-workload benefit, not general default enablement.
+
+Next useful measurements are retained memory and build cost for the actual factory representation on a broader corpus. Full Maven and canonical Java 8/21 qualification are still outstanding: this environment uses OpenJDK 17 and ECJ with Java 8 source target. The baseline cannot compile `labyrinth.k` here; it remains an explicit exclusion, not a passing fixture.
 
 Nothing here authorizes default enablement, removing the old traversal, or merge/release/tag/deploy.
