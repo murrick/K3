@@ -1,0 +1,39 @@
+SUBSTITUTION_WORK completed=true counts=[0, 0, 0, 0, 0, 0]
+SUBSTITUTION_WORK completed=true counts=[0, 0, 0, 0, 0, 0]
+empty	?p(1);	0	0	50759350
+SUBSTITUTION_WORK completed=true counts=[0, 0, 0, 0, 0, 0]
+single-collision	?p(1);	0	0	3494772
+single-collision	!~p(1);	0	0	1748187
+single-collision	?p(1);	0	0	2783599
+SUBSTITUTION_WORK completed=true counts=[0, 0, 0, 0, 0, 0]
+SUBSTITUTION_WORK completed=true counts=[0, 0, 0, 0, 0, 0]
+single-collision	?p(2);	0	0	3739594
+SUBSTITUTION_WORK completed=true counts=[40, 309446, 8, 97753, 40, 329427]
+SUBSTITUTION_WORK completed=true counts=[0, 0, 0, 0, 0, 0]
+SUBSTITUTION_WORK completed=true counts=[100, 461101, 4, 28112, 100, 523987]
+chain-symmetry	?$x $y path(x,y);	71	71	17745622
+chain-symmetry	?path(B,A);	0	0	2398480
+SUBSTITUTION_WORK completed=true counts=[0, 0, 0, 0, 0, 0]
+SUBSTITUTION_WORK completed=true counts=[84, 387281, 3, 24748, 84, 249880]
+chain-symmetry	?path(A,C);	42	42	15056422
+SUBSTITUTION_WORK completed=true counts=[8, 24957, 2, 14962, 8, 78366]
+SUBSTITUTION_WORK completed=true counts=[0, 0, 0, 0, 0, 0]
+SUBSTITUTION_WORK completed=true counts=[14, 52218, 2, 12678, 14, 44487]
+functions	?$x q(x);	37	37	6834635
+functions	?q(3);	0	0	1888004
+SUBSTITUTION_WORK completed=true counts=[12, 36382, 3, 19808, 12, 31736]
+SUBSTITUTION_WORK completed=true counts=[0, 0, 0, 0, 0, 0]
+SUBSTITUTION_WORK completed=true counts=[60, 234407, 3, 16624, 60, 101800]
+many	?$x q(x);	110	110	11446520
+SUBSTITUTION_WORK completed=true counts=[0, 0, 0, 0, 0, 0]
+SUBSTITUTION_WORK completed=true counts=[10, 19749, 1, 9814, 10, 14033]
+many	?q(4);	10	10	5474848
+SUBSTITUTION_WORK completed=true counts=[3768, 27194614, 250, 830193, 3919, 3317918]
+SUBSTITUTION_WORK completed=true counts=[1786, 16108586, 80, 263334, 1860, 1106146]
+SUBSTITUTION_WORK completed=true counts=[5268, 20814253, 150, 221645, 5408, 2487145]
+natives	?$x male(x);	3251	3251	206996660
+SUBSTITUTION_WORK completed=true counts=[2842, 8789891, 92, 322303, 2926, 1332493]
+SUBSTITUTION_WORK completed=true counts=[3304, 12242775, 92, 147436, 3388, 1381675]
+natives	?male(Tom);	2015	2015	141972288
+natives	?father(John,Tom);	0	0	3669110
+natives	!~father(John,Tom);	0	0	2143002

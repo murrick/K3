@@ -529,6 +529,7 @@ public class Linker {
         occurrenceObservation = Boolean.getBoolean("kanger.experiment.profileOccurrences") ? new long[5] : null;
         rebindObservation = Boolean.getBoolean("kanger.experiment.profileRebinding") ? new long[3] : null;
         pairPhases = Boolean.getBoolean("kanger.experiment.profilePairPhases") ? new long[6] : null;
+        substitutionWork = Boolean.getBoolean("kanger.experiment.profileSubstitutionWork") ? new long[6] : null;
         long invocationStart = statistics.stageClock();
         boolean completed = false;
         try {
@@ -536,6 +537,8 @@ public class Linker {
             completed = true;
         } finally {
             statistics.finishStage(6, invocationStart);
+            if (substitutionWork != null)
+                System.err.println("SUBSTITUTION_WORK completed=" + completed + " counts=" + java.util.Arrays.toString(substitutionWork));
             if (pairPhases != null)
                 System.err.println("PAIR_PHASES completed=" + completed + " counts=" + java.util.Arrays.toString(pairPhases));
             if (rebindObservation != null)
@@ -1104,6 +1107,31 @@ public class Linker {
     private long[] rebindObservation;
     // Pair count; preparation, guards, substitution, completion, deferred tuple nanoseconds.
     private long[] pairPhases;
+    // find calls/ns, add calls/ns, ordered two-domain setUsed batches/ns; substitution only.
+    private long[] substitutionWork;
+
+    private TValue measuredTValue(TVariable variable, Term term, boolean add) throws Exception {
+        long start = substitutionWork == null ? 0 : System.nanoTime();
+        try { return add ? mind.getTValues().add(variable, term) : mind.getTValues().find(variable, term); }
+        finally {
+            if (substitutionWork != null) {
+                int offset = add ? 2 : 0;
+                substitutionWork[offset]++;
+                substitutionWork[offset + 1] += System.nanoTime() - start;
+            }
+        }
+    }
+
+    private void measuredUsed(Domain first, Domain second) {
+        long start = substitutionWork == null ? 0 : System.nanoTime();
+        try { first.setUsed(mind); second.setUsed(mind); }
+        finally {
+            if (substitutionWork != null) {
+                substitutionWork[4]++;
+                substitutionWork[5] += System.nanoTime() - start;
+            }
+        }
+    }
 
     private long finishPairPhase(int phase, long started) {
         if (pairPhases == null) return 0;
@@ -1304,17 +1332,16 @@ public class Linker {
                                                         }
                                                         tm = tn;
                                                     } else {
-                                                        s = mind.getTValues().find(t, tm);
+                                                        s = measuredTValue(t, tm, false);
                                                     }
                                                     if (s == null) {
-                                                        s = mind.getTValues().add(t, tm);
+                                                        s = measuredTValue(t, tm, true);
                                                         statistics.incrementNewTValues();
                                                         operationEffects |= LinkerStatistics.EFFECT_NEW_TVALUE;
                                                         result = true;
                                                     }
                                                     substMaster[i] = s;
-                                                    slave.setUsed(mind);
-                                                    master.setUsed(mind);
+                                                    measuredUsed(slave, master);
                                                     applied = true;
 
                                                 }
@@ -1336,19 +1363,18 @@ public class Linker {
                                                         }
                                                         tm = tn;
                                                     } else {
-                                                        s = mind.getTValues().find(t, tm);
+                                                        s = measuredTValue(t, tm, false);
                                                     }
 
                                                     if (s == null) {
-                                                        s = mind.getTValues().add(t, tm);
+                                                        s = measuredTValue(t, tm, true);
                                                         statistics.incrementNewTValues();
                                                         operationEffects |= LinkerStatistics.EFFECT_NEW_TVALUE;
                                                         result = true;
                                                     }
 
                                                     substSlave[i] = s;
-                                                    master.setUsed(mind);
-                                                    slave.setUsed(mind);
+                                                    measuredUsed(master, slave);
                                                     applied = true;
 
                                                 }

@@ -58,4 +58,6 @@ The [ten-predicate shared-output comparison](latent-substitution-partitioned-top
 
 Internal [pair-phase attribution](latent-substitution-pair-phases.md) now places most measured compatible-pair time in the substitution loop: 2.389/8.696 seconds at 50/100 partitioned edges. Preparation and guards are much smaller. Next split canonical TValue work from Domain.setUsed history checks; the current measurement does not distinguish them. Fingerprints and the state baseline still match.
 
+The [substitution subprofile](latent-substitution-value-lookup.md) localizes most measured work to explicit TValue.find: 1.734/7.064 seconds at 50/100 edges, versus 0.079/0.292 seconds for paired setUsed calls. Escalera.release unconditionally invalidates indexes; subsequent ensureIndex walks the chain. Rebuild attribution is the next hypothesis to measure, not yet a demonstrated cause or a safe optimization.
+
 Nothing here authorizes default enablement, removing the old traversal, or merge/release/tag/deploy.
