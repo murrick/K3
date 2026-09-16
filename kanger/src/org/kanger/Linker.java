@@ -441,7 +441,8 @@ public class Linker {
         final boolean traceTuples = Boolean.getBoolean("kanger.experiment.traceTuples");
         shadowActivation = Boolean.getBoolean("kanger.experiment.shadowActivation");
         shadowRules = null;
-        tracePairInputs = Boolean.getBoolean("kanger.experiment.tracePairInputs");
+        tracePairInputs = Boolean.getBoolean("kanger.experiment.tracePairInputs")
+                || Boolean.getBoolean("kanger.experiment.verifyPairOutputs");
 
         do {
             final Map<TVariable, Set<Long>> bindingsBefore = traceBindings || traceTuples || shadowActivation
@@ -975,6 +976,12 @@ public class Linker {
         return key.toString();
     }
 
+    private String observedSubstitution(TValue[] values) {
+        List<String> ids = new ArrayList<>();
+        for (TValue value : values) ids.add(value == null ? "null" : Long.toString(value.getId()));
+        return ids.toString();
+    }
+
     private boolean linkDomains(List<Domain> treeSlave, Collection<IRule> ruleList, Map<IRule, Set<Cause>> causes, boolean logging,
             Map<IRule, Map<DomainKey, List<Domain>>> latent, boolean verify, boolean factory) throws Exception {
 
@@ -1140,6 +1147,10 @@ public class Linker {
                                 statistics.recordOperationEffectMask(operationEffects);
                                 if (tracePairInputs) statistics.observePairEffects(operationId, operationEffects);
                                 if (tracePairInputs) {
+                                    statistics.observePairOutput(operationId,
+                                            "result=" + result + ",commit=" + pairCommitted + ",success=" + success
+                                            + ",master=" + observedSubstitution(substMaster)
+                                            + ",slave=" + observedSubstitution(substSlave));
                                     Set<Long> bindingsAfter = observedPairBindings(master, slave);
                                     Set<Long> added = new HashSet<>(bindingsAfter);
                                     added.removeAll(bindingsAtEntry);

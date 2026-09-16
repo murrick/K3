@@ -52,6 +52,10 @@ public final class LinkerStatistics {
     private final java.util.Map<Long, String> pairOperationKeys = new java.util.HashMap<>();
     private final java.util.Map<String, Boolean> pairLastResult = new java.util.HashMap<>();
     private final long[] pairResultChanges = new long[3];
+    private final java.util.Map<String, String> pairFirstOutput = new java.util.HashMap<>();
+    private final long[] pairOutputMatches = new long[3];
+    private final long[] pairOutputMismatches = new long[3];
+    private final java.util.List<String> pairOutputWitnesses = new java.util.ArrayList<>();
     private int incomingActions = -1;
     private long priorRuleVisits, priorUnifications, priorTValues, priorFunctions, priorDatabase;
 
@@ -67,6 +71,9 @@ public final class LinkerStatistics {
         System.arraycopy(source.pairNewTuples, 0, pairNewTuples, 0, pairNewTuples.length);
         System.arraycopy(source.pairBoundaries, 0, pairBoundaries, 0, pairBoundaries.length);
         System.arraycopy(source.pairResultChanges, 0, pairResultChanges, 0, pairResultChanges.length);
+        System.arraycopy(source.pairOutputMatches, 0, pairOutputMatches, 0, pairOutputMatches.length);
+        System.arraycopy(source.pairOutputMismatches, 0, pairOutputMismatches, 0, pairOutputMismatches.length);
+        pairOutputWitnesses.addAll(source.pairOutputWitnesses);
         System.arraycopy(source.passActionMasks, 0, passActionMasks, 0, passActionMasks.length);
         passes = source.passes;
         ruleVisits = source.ruleVisits;
@@ -97,6 +104,8 @@ public final class LinkerStatistics {
         java.util.Arrays.fill(pairEffects, 0L); java.util.Arrays.fill(pairNewTuples, 0L);
         java.util.Arrays.fill(pairBoundaries, 0L);
         pairOperationKeys.clear(); pairLastResult.clear(); java.util.Arrays.fill(pairResultChanges, 0L);
+        pairFirstOutput.clear(); pairOutputWitnesses.clear();
+        java.util.Arrays.fill(pairOutputMatches, 0L); java.util.Arrays.fill(pairOutputMismatches, 0L);
         incomingActions = -1;
         priorRuleVisits = priorUnifications = priorTValues = priorFunctions = priorDatabase = 0L;
         java.util.Arrays.fill(passActionMasks, 0L);
@@ -186,6 +195,24 @@ public final class LinkerStatistics {
     }
     public long[] getPairBoundaries() { return pairBoundaries.clone(); }
     public long[] getPairResultChanges() { return pairResultChanges.clone(); }
+    void observePairOutput(long operation, String output) {
+        String key = pairOperationKeys.get(operation);
+        String first = pairFirstOutput.get(key);
+        if (first == null) {
+            pairFirstOutput.put(key, output);
+        } else if (first.equals(output)) {
+            ++pairOutputMatches[pairOperationClass.get(operation)];
+        } else {
+            ++pairOutputMismatches[pairOperationClass.get(operation)];
+            if (pairOutputWitnesses.size() < 8)
+                pairOutputWitnesses.add("input=" + key + "; first=" + first + "; actual=" + output);
+            if (Boolean.getBoolean("kanger.experiment.verifyPairOutputs"))
+                throw new AssertionError("Pair output mismatch: input=" + key + "; first=" + first + "; actual=" + output);
+        }
+    }
+    public long[] getPairOutputMatches() { return pairOutputMatches.clone(); }
+    public long[] getPairOutputMismatches() { return pairOutputMismatches.clone(); }
+    public java.util.List<String> getPairOutputWitnesses() { return new java.util.ArrayList<>(pairOutputWitnesses); }
     void incrementRuleVisits() { ++ruleVisits; }
     void incrementBranchVisits() { ++branchVisits; }
     void incrementTerminalRotations() { ++terminalRotations; }
@@ -287,6 +314,11 @@ public final class LinkerStatistics {
         for (int i = 0; i < pairNewTuples.length; i++) pairNewTuples[i] += other.pairNewTuples[i];
         for (int i = 0; i < pairBoundaries.length; i++) pairBoundaries[i] += other.pairBoundaries[i];
         for (int i = 0; i < pairResultChanges.length; i++) pairResultChanges[i] += other.pairResultChanges[i];
+        for (int i = 0; i < pairOutputMatches.length; i++) {
+            pairOutputMatches[i] += other.pairOutputMatches[i];
+            pairOutputMismatches[i] += other.pairOutputMismatches[i];
+        }
+        pairOutputWitnesses.addAll(other.pairOutputWitnesses);
         for (int i = 0; i < passActionMasks.length; ++i) {
             passActionMasks[i] += other.passActionMasks[i];
         }

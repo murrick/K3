@@ -60,6 +60,9 @@ public final class LatentSubstitutionStateRunner {
                 System.out.println("pair-new-tuples=" + Arrays.toString(s.getPairNewTuples()));
                 System.out.println("pair-boundaries=" + Arrays.toString(s.getPairBoundaries()));
                 System.out.println("pair-result-changes=" + Arrays.toString(s.getPairResultChanges()));
+                System.out.println("pair-output-matches=" + Arrays.toString(s.getPairOutputMatches()));
+                System.out.println("pair-output-mismatches=" + Arrays.toString(s.getPairOutputMismatches()));
+                for (String witness : s.getPairOutputWitnesses()) System.out.println("pair-output-witness=" + witness);
             }
             for (String pass : s.getPassTrace()) System.out.println("pass-trace=" + pass);
             for (String binding : s.getBindingTrace()) System.out.println("binding-trace=" + binding);
