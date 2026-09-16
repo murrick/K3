@@ -213,6 +213,7 @@ public class Linker {
     }
 
     private void clearSolveIndex() {
+        lastSolveVersion = Long.MIN_VALUE;
         solveIndex.clear();
         indexedSolveCounts.clear();
         unarySolveKeys.clear();
@@ -252,8 +253,32 @@ public class Linker {
         }
     }
 
+    private long lastSolveVersion = Long.MIN_VALUE;
+
     private void synchronizeSolveIndex() throws Exception {
-        for (Map.Entry<TVariableSet, List<TSolve>> entry : mind.getRuleSolves().entrySet()) {
+        statistics.recordSolveSync(0);
+        boolean enabled = Boolean.getBoolean("kanger.experiment.versionedSolveSync");
+        boolean exposed = mind.ruleSolvesExposed();
+        long version = mind.ruleSolvesVersion();
+        if (enabled && !exposed && version == lastSolveVersion) {
+            statistics.recordSolveSync(2);
+            if ("factory-verify".equals(System.getProperty("kanger.experiment.latent"))) {
+                Map<TVariableSet, Integer> before = new HashMap<>(indexedSolveCounts);
+                int indexedBefore = indexedSolves.size();
+                synchronizeSolveIndexReference();
+                if (!before.equals(indexedSolveCounts) || indexedBefore != indexedSolves.size())
+                    throw new AssertionError("Solve index changed during proposed unchanged-version skip");
+            }
+            return;
+        }
+        statistics.recordSolveSync(1);
+        if (enabled && exposed) statistics.recordSolveSync(3);
+        synchronizeSolveIndexReference();
+        lastSolveVersion = version;
+    }
+
+    private void synchronizeSolveIndexReference() throws Exception {
+        for (Map.Entry<TVariableSet, List<TSolve>> entry : mind.ruleSolvesInternal().entrySet()) {
             int indexed = indexedSolveCounts.containsKey(entry.getKey())
                     ? indexedSolveCounts.get(entry.getKey()) : 0;
             List<TSolve> solves = entry.getValue();
@@ -502,7 +527,8 @@ public class Linker {
                 System.err.println("LINK_INVOCATION completed=" + completed
                         + " pass=" + mind.getQueryPass()
                         + " stages=" + java.util.Arrays.toString(statistics.getStageNanos())
-                        + " resolved=" + java.util.Arrays.toString(statistics.getResolvedProfile()));
+                        + " resolved=" + java.util.Arrays.toString(statistics.getResolvedProfile())
+                        + " sync=" + java.util.Arrays.toString(statistics.getSolveSync()));
         }
     }
 
@@ -514,7 +540,7 @@ public class Linker {
         mind.getUsedRules().clear();
         mind.getFloodControl().clear();
 
-        mind.getRuleSolves().clear();
+        mind.ruleSolvesInternal().clear(); // clearSolveIndex below resets the sync baseline too.
         clearSolveIndex();
 
         int passCounter = 0;
@@ -712,7 +738,7 @@ public class Linker {
 
     private long observedTupleCount() {
         long count = 0;
-        for (List<TSolve> solves : mind.getRuleSolves().values()) count += solves.size();
+        for (List<TSolve> solves : mind.ruleSolvesInternal().values()) count += solves.size();
         return count;
     }
 
@@ -720,7 +746,7 @@ public class Linker {
     private Map<List<Long>, Set<Long>> observeTuples() throws Exception {
         Map<TVariable, Set<Long>> consumers = observeConsumers();
         Map<List<Long>, Set<Long>> result = new LinkedHashMap<>();
-        for (List<TSolve> solves : mind.getRuleSolves().values()) {
+        for (List<TSolve> solves : mind.ruleSolvesInternal().values()) {
             for (TSolve solve : solves) {
                 List<Long> ids = new ArrayList<>();
                 Set<Long> rules = new TreeSet<>();
@@ -805,7 +831,7 @@ public class Linker {
             if (added.isEmpty() && removed.isEmpty()) continue;
             Set<Long> direct = consumers.getOrDefault(variable, Collections.<Long>emptySet());
             Set<Long> tupleConsumers = new TreeSet<>();
-            for (Map.Entry<TVariableSet, List<TSolve>> entry : mind.getRuleSolves().entrySet()) {
+            for (Map.Entry<TVariableSet, List<TSolve>> entry : mind.ruleSolvesInternal().entrySet()) {
                 if (!entry.getKey().contains(variable)) continue;
                 for (TSolve solve : entry.getValue()) {
                     for (TValue value : solve.getSolve()) {
@@ -993,7 +1019,7 @@ public class Linker {
         boolean found = false;
         boolean result = false;
         if (tail.size() > 1) {
-            for (TVariableSet key : mind.getRuleSolves().keySet()) {
+            for (TVariableSet key : mind.ruleSolvesInternal().keySet()) {
                 if (key.contains(t)) {
                     found = true;
                     boolean success = unarySolveKeys.contains(key);
