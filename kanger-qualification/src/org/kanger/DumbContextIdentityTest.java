@@ -127,10 +127,11 @@ public class DumbContextIdentityTest {
         try {
             Files.write(root.resolve("legacy.store"), new byte[]{1});
             db = newDb(root);
+            final DB selected = db;
 
             StorageLifecycleException failure = assertThrows(
                     StorageLifecycleException.class,
-                    () -> db.use("legacy"));
+                    () -> selected.use("legacy"));
 
             assertEquals(StorageLifecycleErrorCode.STORAGE_FORMAT_INCOMPATIBLE,
                     failure.getErrorCode());
@@ -154,10 +155,11 @@ public class DumbContextIdentityTest {
             byte[] bytes = Files.readAllBytes(sidecar);
             bytes[8] ^= 0x01;
             Files.write(sidecar, bytes);
+            final DB selected = db;
 
             StorageLifecycleException failure = assertThrows(
                     StorageLifecycleException.class,
-                    () -> db.use("damaged"));
+                    () -> selected.use("damaged"));
 
             assertEquals(StorageLifecycleErrorCode.STORAGE_SEMANTIC_CORRUPTION,
                     failure.getErrorCode());
