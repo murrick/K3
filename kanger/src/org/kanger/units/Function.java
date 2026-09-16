@@ -391,7 +391,7 @@ public class Function implements IUnit<Function> {
     public int getHash() {
         try {
             int hash = 3;
-            hash = 47 * hash + getName(mind).getHash();
+            hash = 47 * hash + ((IUnit<?>) getName(mind)).getHash();
             hash = 47 * hash + range;
             hash = 47 * hash + binding.ordinal();
             hash = 47 * hash + arguments.getHash(mind);
@@ -436,7 +436,7 @@ public class Function implements IUnit<Function> {
      */
     public int getHashStruct(IRule r) throws Exception {
         int hash = 3;
-        hash = 47 * hash + getName(mind).getHash();
+        hash = 47 * hash + ((IUnit<?>) getName(mind)).getHash();
         hash = 47 * hash + range;
         hash = 47 * hash + binding.ordinal();
         for (int i = 0; i < range; ++i) {
@@ -450,7 +450,7 @@ public class Function implements IUnit<Function> {
                     if (term.isCVariable()) {
                         hash = 47 * hash + (i + 1) * (((Term) term).getIndex() - ((Rule) r).getVarIndex());
                     } else {
-                        hash = 47 * hash + (i + 1) * term.getHash();
+                        hash = 47 * hash + (i + 1) * ((IUnit<?>) term).getHash();
                     }
                     break;
                 case FUNCTION:
