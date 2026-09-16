@@ -12,7 +12,9 @@ public final class LatentSubstitutionBenchmarkRunner {
         String natives = new String(Files.readAllBytes(Paths.get("natives.k")), StandardCharsets.UTF_8);
         StringBuilder facts = new StringBuilder();
         for (int i = 0; i < 100; i++) facts.append("!value(").append(i).append(");\n");
-        System.out.println("fixture,sample,compile_ns,query_ns,rows,domain_pairs,unifications");
+        System.out.println("fixture,sample,compile_ns,query_ns,rows,domain_pairs,unifications"
+                + (Boolean.getBoolean("kanger.experiment.timeStages")
+                ? ",selection_ns,linking_ns,functions_ns,database_ns,update_ns" : ""));
         bench("natives-values", natives, "?$x male(x);");
         bench("singleton-values", facts.toString(), "?$x value(x);");
     }
@@ -29,8 +31,11 @@ public final class LatentSubstitutionBenchmarkRunner {
             long finished = System.nanoTime();
             if (i >= 0) {
                 LinkerStatistics s = mind.getLinkerStatistics();
+                String stages = "";
+                if (Boolean.getBoolean("kanger.experiment.timeStages"))
+                    for (long nanos : s.getStageNanos()) stages += "," + nanos;
                 System.out.println(label + "," + i + "," + (compiled - start) + "," + (finished - compiled)
-                        + "," + mind.getValues().size() + "," + s.getDomainPairs() + "," + s.getUnificationAttempts());
+                        + "," + mind.getValues().size() + "," + s.getDomainPairs() + "," + s.getUnificationAttempts() + stages);
             }
         }
     }

@@ -55,6 +55,9 @@ public final class LinkerStatistics {
     // calls, multi-domain, empty topology, resolved IDs, bucket slots scanned,
     // retained candidates, indexed slots built, resolved IDs probed.
     private final long[] candidateSelection = new long[8];
+    private final boolean timeStages = Boolean.getBoolean("kanger.experiment.timeStages");
+    // Non-overlapping completed stages: selection, linking, functions, database, update.
+    private final long[] stageNanos = new long[5];
     private final java.util.Map<String, String> pairFirstOutput = new java.util.HashMap<>();
     private final long[] pairOutputMatches = new long[3];
     private final long[] pairOutputMismatches = new long[3];
@@ -75,6 +78,7 @@ public final class LinkerStatistics {
         System.arraycopy(source.pairBoundaries, 0, pairBoundaries, 0, pairBoundaries.length);
         System.arraycopy(source.pairResultChanges, 0, pairResultChanges, 0, pairResultChanges.length);
         System.arraycopy(source.candidateSelection, 0, candidateSelection, 0, candidateSelection.length);
+        System.arraycopy(source.stageNanos, 0, stageNanos, 0, stageNanos.length);
         System.arraycopy(source.pairOutputMatches, 0, pairOutputMatches, 0, pairOutputMatches.length);
         System.arraycopy(source.pairOutputMismatches, 0, pairOutputMismatches, 0, pairOutputMismatches.length);
         pairOutputWitnesses.addAll(source.pairOutputWitnesses);
@@ -109,6 +113,7 @@ public final class LinkerStatistics {
         java.util.Arrays.fill(pairBoundaries, 0L);
         pairOperationKeys.clear(); pairLastResult.clear(); java.util.Arrays.fill(pairResultChanges, 0L);
         java.util.Arrays.fill(candidateSelection, 0L);
+        java.util.Arrays.fill(stageNanos, 0L);
         pairFirstOutput.clear(); pairOutputWitnesses.clear();
         java.util.Arrays.fill(pairOutputMatches, 0L); java.util.Arrays.fill(pairOutputMismatches, 0L);
         incomingActions = -1;
@@ -202,6 +207,12 @@ public final class LinkerStatistics {
     public long[] getPairResultChanges() { return pairResultChanges.clone(); }
     void recordCandidateSelection(int metric, long count) { candidateSelection[metric] += count; }
     public long[] getCandidateSelection() { return candidateSelection.clone(); }
+    long stageClock() { return timeStages ? System.nanoTime() : 0L; }
+    void finishStage(int stage, long start) {
+        if (timeStages) stageNanos[stage] += System.nanoTime() - start;
+    }
+    /** Wall-clock durations; failed stages are omitted. Not CPU time. */
+    public long[] getStageNanos() { return stageNanos.clone(); }
     void observePairOutput(long operation, String output) {
         String key = pairOperationKeys.get(operation);
         String first = pairFirstOutput.get(key);
@@ -322,6 +333,7 @@ public final class LinkerStatistics {
         for (int i = 0; i < pairBoundaries.length; i++) pairBoundaries[i] += other.pairBoundaries[i];
         for (int i = 0; i < pairResultChanges.length; i++) pairResultChanges[i] += other.pairResultChanges[i];
         for (int i = 0; i < candidateSelection.length; i++) candidateSelection[i] += other.candidateSelection[i];
+        for (int i = 0; i < stageNanos.length; i++) stageNanos[i] += other.stageNanos[i];
         for (int i = 0; i < pairOutputMatches.length; i++) {
             pairOutputMatches[i] += other.pairOutputMatches[i];
             pairOutputMismatches[i] += other.pairOutputMismatches[i];

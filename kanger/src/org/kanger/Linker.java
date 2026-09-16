@@ -848,18 +848,27 @@ public class Linker {
                         statistics.incrementTerminalRotations();
                         boolean result = false;
                         try {
-                            if (linkDomains(t, selectDomainCandidates(t, domainIndex, candidatePositions), causes, logging,
+                            long stageStart = statistics.stageClock();
+                            Collection<IRule> candidates = selectDomainCandidates(t, domainIndex, candidatePositions);
+                            statistics.finishStage(0, stageStart);
+                            stageStart = statistics.stageClock();
+                            if (linkDomains(t, candidates, causes, logging,
                                     latent, "verify".equals(latentMode) || "factory-verify".equals(latentMode), factoryLatent)) {
                                 result = true;
                             }
+                            statistics.finishStage(1, stageStart);
                             statistics.incrementFunctionEvaluations();
+                            stageStart = statistics.stageClock();
                             if (calcFunctions(t, causes, logging)) {
                                 result = true;
                             }
+                            statistics.finishStage(2, stageStart);
                             statistics.incrementDatabaseEvaluations();
+                            stageStart = statistics.stageClock();
                             if (linkDatabase(t, causes, tvars, logging)) {
                                 result = true;
                             }
+                            statistics.finishStage(3, stageStart);
                         } catch (Exception e) {
                             System.err.println(new Date());
                             e.printStackTrace(System.err);
@@ -871,7 +880,9 @@ public class Linker {
                 });
             }
 
+            long updateStart = statistics.stageClock();
             updateDatabase(logging);
+            statistics.finishStage(4, updateStart);
             if (outsideProposal) {
                 long tuplesAdded = observedTupleCount() - tuplesAtEntry;
                 long attempts = statistics.getUnificationAttempts() - attemptsAtEntry;
