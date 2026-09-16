@@ -60,4 +60,6 @@ Internal [pair-phase attribution](latent-substitution-pair-phases.md) now places
 
 The [substitution subprofile](latent-substitution-value-lookup.md) localizes most measured work to explicit TValue.find: 1.734/7.064 seconds at 50/100 edges, versus 0.079/0.292 seconds for paired setUsed calls. Escalera.release unconditionally invalidates indexes; subsequent ensureIndex walks the chain. Rebuild attribution is the next hypothesis to measure, not yet a demonstrated cause or a safe optimization.
 
+The [TValue rebuild measurement](latent-substitution-tvalue-rebuilds.md) confirms substantial repeated full-chain indexing: 35,088 rebuilds, 131.5 million walked steps and 8.625 seconds at 100 partitioned edges. All measured releases restore the same root; 35,088 invalidate a coherent ready index. A TValue-only guarded preservation experiment is now justified for investigation, pending mutation audit and independent index-map verification. Release semantics remain unchanged at this checkpoint.
+
 Nothing here authorizes default enablement, removing the old traversal, or merge/release/tag/deploy.

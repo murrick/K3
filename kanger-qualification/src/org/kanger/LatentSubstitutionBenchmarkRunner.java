@@ -69,9 +69,17 @@ public final class LatentSubstitutionBenchmarkRunner {
             long start = System.nanoTime();
             if (!mind.compile(source)) throw new AssertionError("compile " + label);
             long compiled = System.nanoTime();
+            boolean rebuilds = Boolean.getBoolean("kanger.experiment.profileTValueRebuilds");
+            long[] rebuildBefore = rebuilds ? org.kanger.storage.Escalera.experimentalTValueIndexProfile() : null;
+            long queryStarted = rebuilds ? System.nanoTime() : compiled;
             if (trace) System.err.println("BENCH_QUERY " + label + " " + i);
             if (!Boolean.TRUE.equals(mind.query(query, null, false))) throw new AssertionError("query " + label);
             long finished = System.nanoTime();
+            if (rebuilds) {
+                long[] delta = org.kanger.storage.Escalera.experimentalTValueIndexProfile();
+                for (int k = 0; k < delta.length; k++) delta[k] -= rebuildBefore[k];
+                System.err.println("TVALUE_REBUILDS " + label + " " + i + " " + java.util.Arrays.toString(delta));
+            }
             if (trace) System.err.println("BENCH_END " + label + " " + i);
             if (i >= 0) {
                 LinkerStatistics s = mind.getLinkerStatistics();
@@ -85,7 +93,7 @@ public final class LatentSubstitutionBenchmarkRunner {
                     for (long value : s.getSolveSyncWork()) stages += "," + value;
                 }
                 if (Boolean.getBoolean("kanger.experiment.benchFingerprint")) stages += "," + fingerprint(mind);
-                emit(label + "," + i + "," + (compiled - start) + "," + (finished - compiled)
+                emit(label + "," + i + "," + (compiled - start) + "," + (finished - queryStarted)
                         + "," + mind.getValues().size() + "," + s.getDomainPairs() + "," + s.getUnificationAttempts() + stages);
             }
         }

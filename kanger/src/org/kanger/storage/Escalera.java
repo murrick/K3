@@ -149,10 +149,23 @@ public class Escalera implements ICache {
     private final Map<Long, Long> predecessorById = new HashMap<>();
     private boolean indexValid = false;
     private IStep indexedRoot = null;
+    private static final ThreadLocal<long[]> experimentalTValueProfile = new ThreadLocal<>();
+    private final long[] rebuildProfile;
+    private boolean releasedSinceRebuild;
+
+    /** Diagnostic snapshot for the current thread; never used by cache decisions. */
+    public static long[] experimentalTValueIndexProfile() {
+        long[] profile = experimentalTValueProfile.get();
+        return profile == null ? new long[10] : profile.clone();
+    }
 
     public Escalera(Mind mind, String schema, ICache parent) {
         this.mind = mind;
         this.schema = schema;
+        if ("tvalues".equals(schema) && Boolean.getBoolean("kanger.experiment.profileTValueRebuilds")) {
+            if (experimentalTValueProfile.get() == null) experimentalTValueProfile.set(new long[10]);
+            rebuildProfile = experimentalTValueProfile.get();
+        } else rebuildProfile = null;
 
         if (parent == null && mind.isStorageUsed()) {
             synchronized (((User) mind.getUser()).getStorage(schema)) {
@@ -222,9 +235,12 @@ public class Escalera implements ICache {
         if (indexValid && indexedRoot == root) {
             return;
         }
+        long rebuildStarted = rebuildProfile == null ? 0 : System.nanoTime();
+        long walked = 0;
         clearIndex();
         IStep predecessor = null;
         for (IStep step = root; step != null; step = step.getNext()) {
+            if (rebuildProfile != null) walked++;
             indexStep(step);
             if (predecessor != null) {
                 predecessorById.put(step.getId(), predecessor.getId());
@@ -233,6 +249,14 @@ public class Escalera implements ICache {
         }
         indexedRoot = root;
         indexValid = true;
+        if (rebuildProfile != null) {
+            long elapsed = System.nanoTime() - rebuildStarted;
+            rebuildProfile[0]++; rebuildProfile[1] += walked; rebuildProfile[2] += elapsed;
+            if (releasedSinceRebuild) {
+                rebuildProfile[7]++; rebuildProfile[8] += walked; rebuildProfile[9] += elapsed;
+            }
+            releasedSinceRebuild = false;
+        }
     }
 
     private IStep indexedStep(long id) throws Exception {
@@ -455,7 +479,17 @@ public class Escalera implements ICache {
         if (stack.isEmpty()) {
             throw new IllegalStateException("Escalera release without an open checkpoint");
         }
-        root = stack.pop().root;
+        IStep restored = stack.pop().root;
+        if (rebuildProfile != null) {
+            rebuildProfile[3]++;
+            if (root == restored) {
+                rebuildProfile[4]++;
+                if (indexValid && indexedRoot == root) rebuildProfile[5]++;
+            }
+            if (!indexValid) rebuildProfile[6]++;
+            releasedSinceRebuild = true;
+        }
+        root = restored;
         invalidateIndex();
         return root == null ? -1 : root.getId();
     }
