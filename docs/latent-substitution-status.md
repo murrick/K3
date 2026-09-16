@@ -48,4 +48,6 @@ The next direct-access opportunity is now measured: [occurrence materialization 
 
 Context rebinding now has an [executable counterexample](latent-substitution-domain-context.md): Domain may still point to child while its TVariable has switched to root through a separate factory lookup. Identical pointers and a Domain-only context guard are insufficient. Any scoped list-reuse prototype must preserve rebinding and separately qualify canonical lookup/hydration behavior.
 
+The [scoped list-reuse prototype](latent-substitution-occurrence-prototype.md) now preserves eager setMind and passes both actual-skip and reference-verified corpus/lifecycle/transaction checks, plus a targeted split-context test. It is default-off. Three paired JVMs show no repeatable native speedup (median 122.374 → 121.310 ms, two pairs regress); 84 measured fingerprints/counters agree. Avoiding repeated hydration alone has not produced a convincing general gain.
+
 Nothing here authorizes default enablement, removing the old traversal, or merge/release/tag/deploy.

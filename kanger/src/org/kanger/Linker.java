@@ -876,7 +876,8 @@ public class Linker {
         if (!"off".equals(latentMode) && !"index".equals(latentMode) && !"verify".equals(latentMode) && !factoryLatent) {
             throw new IllegalArgumentException("Unknown latent experiment mode: " + latentMode);
         }
-        final Map<IRule, Map<DomainKey, List<Domain>>> latent = factoryLatent && occurrenceObservation != null
+        final Map<IRule, Map<DomainKey, List<Domain>>> latent = factoryLatent
+                && (occurrenceObservation != null || Boolean.getBoolean("kanger.experiment.reuseOccurrenceLists"))
                 ? new IdentityHashMap<IRule, Map<DomainKey, List<Domain>>>()
                 : ("off".equals(latentMode) || factoryLatent ? null : buildLatentDomains(ruleList));
         statistics.finishStage(8, setupStart);
@@ -1090,22 +1091,39 @@ public class Linker {
         return result;
     }
 
-    // Diagnostic only: calls, hydrated slots, repeated calls/slots, changed ordered identities.
+    // Diagnostic only: calls, requested slots, repeated calls/slots, changed ordered identities.
     private long[] occurrenceObservation;
 
     private List<List<Domain>> latentBranches(IRule rule, Domain slave,
             Map<IRule, Map<DomainKey, List<Domain>>> index, boolean verify, boolean factory) throws Exception {
         if (index == null && !factory) return ((Rule) rule).getTree();
-        List<Domain> selected = factory ? mind.getRules().getLatentDomainCandidates(rule, slave)
-                : index.get(rule).get(new DomainKey(slave.getPredicateId(), !slave.isAntc()));
+        DomainKey key = index == null ? null : new DomainKey(slave.getPredicateId(), !slave.isAntc());
+        Map<DomainKey, List<Domain>> seen = factory && index != null ? index.get(rule) : null;
+        List<Domain> previous = seen == null ? null : seen.get(key);
+        boolean reuse = factory && previous != null
+                && Boolean.getBoolean("kanger.experiment.reuseOccurrenceLists");
+        List<Domain> selected;
+        if (reuse) {
+            selected = previous;
+            // Preserve eager rebinding, including duplicate occurrences, before pair checkpoints.
+            for (Domain domain : selected) domain.setMind(mind);
+            if (verify) {
+                List<Domain> reference = mind.getRules().getLatentDomainCandidates(rule, slave);
+                if (reference.size() != selected.size()) throw new AssertionError("Reused occurrence count changed");
+                for (int i = 0; i < reference.size(); i++)
+                    if (reference.get(i) != selected.get(i)) throw new AssertionError("Reused occurrence identity/order changed");
+            }
+        } else {
+            selected = factory ? mind.getRules().getLatentDomainCandidates(rule, slave) : index.get(rule).get(key);
+        }
         if (selected == null) selected = Collections.emptyList();
+        if (factory && index != null) {
+            if (seen == null) { seen = new HashMap<>(); index.put(rule, seen); }
+            seen.put(key, selected);
+        }
         if (factory && occurrenceObservation != null) {
             occurrenceObservation[0]++;
             occurrenceObservation[1] += selected.size();
-            Map<DomainKey, List<Domain>> seen = index.get(rule);
-            if (seen == null) { seen = new HashMap<>(); index.put(rule, seen); }
-            DomainKey key = new DomainKey(slave.getPredicateId(), !slave.isAntc());
-            List<Domain> previous = seen.put(key, selected);
             if (previous != null) {
                 occurrenceObservation[2]++;
                 occurrenceObservation[3] += selected.size();

@@ -1,0 +1,112 @@
+empty ?p(1); => null
+values=[]
+solutions=[]
+hypotheses=[]
+rules=[]
+pass-actions=[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=1
+effects=0,0,0,0,0,0
+single-collision ?p(1); => true
+values=[]
+solutions=[!p(1.0);]
+hypotheses=[]
+rules=[false:!p(1.0);]
+pass-actions=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=0
+effects=0,0,0,0,0,0
+single-collision !~p(1); => null
+values=[]
+solutions=[]
+hypotheses=[]
+rules=[false:!p(1.0);]
+pass-actions=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=0
+effects=0,0,0,0,0,0
+single-collision ?p(1); => true
+values=[]
+solutions=[!p(1.0);]
+hypotheses=[]
+rules=[false:!p(1.0);]
+pass-actions=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=0
+effects=0,0,0,0,0,0
+single-collision ?p(2); => null
+values=[]
+solutions=[]
+hypotheses=[]
+rules=[false:!p(1.0);]
+pass-actions=[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=1
+effects=0,0,0,0,0,0
+chain-symmetry ?$x $y path(x,y); => true
+values=[{x=A, y=B}, {x=A, y=B}, {x=B, y=A}]
+solutions=[!path(A,B);, !path(B,A);]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x);, false:!@x @y edge(x,y) -> path(x,y);, false:!edge(A,B);, true:!edge(B,A);, true:!path(A,B);, true:!path(B,A);]
+pass-actions=[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=3
+effects=71,4,9,6,3,50
+chain-symmetry ?path(B,A); => true
+values=[]
+solutions=[!path(B,A);]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x);, false:!@x @y edge(x,y) -> path(x,y);, false:!edge(A,B);, true:!edge(B,A);, true:!path(A,B);, true:!path(B,A);]
+pass-actions=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=0
+effects=0,0,0,0,0,0
+chain-symmetry ?path(A,C); => null
+values=[]
+solutions=[]
+hypotheses=[!edge(A,C);, !edge(C,A);]
+rules=[false:!@x @y edge(x,y) -> edge(y,x);, false:!@x @y edge(x,y) -> path(x,y);, false:!edge(A,B);, true:!edge(B,A);, true:!path(A,B);, true:!path(B,A);]
+pass-actions=[1, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=4
+effects=42,3,7,7,2,42
+functions ?$x q(x); => true
+values=[{x=2.0}, {x=3.0}]
+solutions=[!q(2.0);, !q(3.0);]
+hypotheses=[]
+rules=[false:!@x p(x) -> q(x+1);, false:!p(1.0);, false:!p(2.0);, true:!q(2.0);, true:!q(3.0);]
+pass-actions=[1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=2
+effects=37,2,4,4,2,14
+functions ?q(3); => true
+values=[]
+solutions=[!q(3.0);]
+hypotheses=[]
+rules=[false:!@x p(x) -> q(x+1);, false:!p(1.0);, false:!p(2.0);, true:!q(2.0);, true:!q(3.0);]
+pass-actions=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=0
+effects=0,0,0,0,0,0
+many ?$x q(x); => true
+values=[{x=1.0}, {x=2.0}, {x=3.0}]
+solutions=[!q(1.0);, !q(2.0);, !q(3.0);]
+hypotheses=[]
+rules=[false:!@x p(x) -> q(x);, false:!p(1.0);, false:!p(2.0);, false:!p(3.0);, true:!q(1.0);, true:!q(2.0);, true:!q(3.0);]
+pass-actions=[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=3
+effects=110,3,9,6,6,60
+many ?q(4); => null
+values=[]
+solutions=[]
+hypotheses=[!p(4.0);]
+rules=[false:!@x p(x) -> q(x);, false:!p(1.0);, false:!p(2.0);, false:!p(3.0);, true:!q(1.0);, true:!q(2.0);, true:!q(3.0);]
+pass-actions=[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=2
+effects=10,1,4,4,1,10
+natives ?$x male(x); => true
+values=[{x=John}]
+solutions=[!male(John);]
+hypotheses=[]
+rules=[false:!@x $y parent(y,x);, false:!@x (male(x) || female(x)) && ~(male(x) && female(x));, false:!@x @y ($z parent(x,z), parent(y,z)), x != y -> spouse(x,y) || divorced(x,y);, false:!@x @y ($z parent(z,x) && parent(z,y)) && x != y -> sibling(x,y);, false:!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));, false:!@x @y daughter(x,y) -> female(x), child(x,y);, false:!@x @y father(x,y) -> male(x), parent(x,y);, false:!@x @y mother(x,y) -> female(x), parent(x,y);, false:!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));, false:!@x @y sibling(x,y) -> sibling(y,x);, false:!@x @y son(x,y) -> male(x), child(x,y);, false:!@x @y ~(parent(x,y), parent(y,x));, false:!@x @y ~(sibling(x,y), parent(x,y));, false:!@x ~parent(x,x);, false:!age(John,37.0);, false:!age(Sarah,4.0);, false:!age(Tom,12.0);, false:!child(Tom,Mary);, false:!daughter(Sarah,John);, false:!father(John,Tom);, false:!mother(Mary,Sarah);, true:!child(Sarah,John);, true:!child(Sarah,Mary);, true:!child(Tom,John);, true:!daughter(Sarah,Mary);, true:!father(John,Sarah);, true:!female(Mary);, true:!female(Sarah);, true:!male(John);, true:!mother(Mary,Tom);, true:!parent(John,Sarah);, true:!parent(John,Tom);, true:!parent(Mary,Sarah);, true:!parent(Mary,Tom);, true:!sibling(Sarah,Tom);, true:!sibling(Tom,Sarah);, true:?child(John,John);, true:?child(John,Mary);, true:?child(John,Sarah);, true:?child(John,Tom);, true:?child(Mary,John);, true:?child(Mary,Mary);, true:?child(Mary,Sarah);, true:?child(Mary,Tom);, true:?child(Sarah,Sarah);, true:?child(Sarah,Tom);, true:?child(Tom,Sarah);, true:?child(Tom,Tom);, true:?daughter(John,John);, true:?daughter(John,Mary);, true:?daughter(John,Sarah);, true:?daughter(John,Tom);, true:?daughter(Mary,John);, true:?daughter(Mary,Mary);, true:?daughter(Mary,Sarah);, true:?daughter(Mary,Tom);, true:?daughter(Sarah,Sarah);, true:?daughter(Sarah,Tom);, true:?daughter(Tom,Sarah);, true:?daughter(Tom,Tom);, true:?father(John,John);, true:?father(John,Mary);, true:?father(Mary,John);, true:?father(Mary,Mary);, true:?father(Mary,Sarah);, true:?father(Mary,Tom);, true:?father(Mary,y);, true:?father(Sarah,John);, true:?father(Sarah,Mary);, true:?father(Sarah,Sarah);, true:?father(Sarah,Tom);, true:?father(Sarah,y);, true:?father(Tom,John);, true:?father(Tom,Mary);, true:?father(Tom,Sarah);, true:?father(Tom,Tom);, true:?female(John);, true:?male(Mary);, true:?male(Sarah);, true:?mother(John,John);, true:?mother(John,Mary);, true:?mother(John,Sarah);, true:?mother(John,Tom);, true:?mother(John,y);, true:?mother(Mary,John);, true:?mother(Mary,Mary);, true:?mother(Sarah,John);, true:?mother(Sarah,Mary);, true:?mother(Sarah,Sarah);, true:?mother(Sarah,Tom);, true:?mother(Tom,John);, true:?mother(Tom,Mary);, true:?mother(Tom,Sarah);, true:?mother(Tom,Tom);, true:?parent(John,John);, true:?parent(John,Mary);, true:?parent(Mary,John);, true:?parent(Mary,Mary);, true:?parent(Sarah,John);, true:?parent(Sarah,Mary);, true:?parent(Sarah,Sarah);, true:?parent(Sarah,Tom);, true:?parent(Tom,John);, true:?parent(Tom,Mary);, true:?parent(Tom,Sarah);, true:?parent(Tom,Tom);, true:?sibling(John,Sarah);, true:?sibling(John,Tom);, true:?sibling(Mary,Sarah);, true:?sibling(Mary,Tom);, true:?sibling(Sarah,John);, true:?sibling(Sarah,Mary);, true:?sibling(Tom,John);, true:?sibling(Tom,Mary);, true:?son(John,John);, true:?son(John,Mary);, true:?son(John,Sarah);, true:?son(John,Tom);, true:?son(Mary,John);, true:?son(Mary,Mary);, true:?son(Mary,Sarah);, true:?son(Mary,Tom);, true:?son(Sarah,John);, true:?son(Sarah,Mary);, true:?son(Sarah,Sarah);, true:?son(Sarah,Tom);, true:?son(Tom,Sarah);, true:?son(Tom,Tom);]
+pass-actions=[1, 1, 0, 2, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=7
+effects=3251,150,229,205,6,4392
+natives ?male(Tom); => null
+values=[]
+solutions=[]
+hypotheses=[!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?female(Tom);, ?son(Tom,John);, ?son(Tom,Mary);]
+rules=[false:!@x $y parent(y,x);, false:!@x (male(x) || female(x)) && ~(male(x) && female(x));, false:!@x @y ($z parent(x,z), parent(y,z)), x != y -> spouse(x,y) || divorced(x,y);, false:!@x @y ($z parent(z,x) && parent(z,y)) && x != y -> sibling(x,y);, false:!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));, false:!@x @y daughter(x,y) -> female(x), child(x,y);, false:!@x @y father(x,y) -> male(x), parent(x,y);, false:!@x @y mother(x,y) -> female(x), parent(x,y);, false:!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));, false:!@x @y sibling(x,y) -> sibling(y,x);, false:!@x @y son(x,y) -> male(x), child(x,y);, false:!@x @y ~(parent(x,y), parent(y,x));, false:!@x @y ~(sibling(x,y), parent(x,y));, false:!@x ~parent(x,x);, false:!age(John,37.0);, false:!age(Sarah,4.0);, false:!age(Tom,12.0);, false:!child(Tom,Mary);, false:!daughter(Sarah,John);, false:!father(John,Tom);, false:!mother(Mary,Sarah);, true:!child(Sarah,John);, true:!child(Sarah,Mary);, true:!child(Tom,John);, true:!daughter(Sarah,Mary);, true:!father(John,Sarah);, true:!female(Mary);, true:!female(Sarah);, true:!male(John);, true:!mother(Mary,Tom);, true:!parent(John,Sarah);, true:!parent(John,Tom);, true:!parent(Mary,Sarah);, true:!parent(Mary,Tom);, true:!sibling(Sarah,Tom);, true:!sibling(Tom,Sarah);, true:?child(John,John);, true:?child(John,Mary);, true:?child(John,Sarah);, true:?child(John,Tom);, true:?child(Mary,John);, true:?child(Mary,Mary);, true:?child(Mary,Sarah);, true:?child(Mary,Tom);, true:?child(Sarah,Sarah);, true:?child(Sarah,Tom);, true:?child(Tom,Sarah);, true:?child(Tom,Tom);, true:?daughter(John,John);, true:?daughter(John,Mary);, true:?daughter(John,Sarah);, true:?daughter(John,Tom);, true:?daughter(Mary,John);, true:?daughter(Mary,Mary);, true:?daughter(Mary,Sarah);, true:?daughter(Mary,Tom);, true:?daughter(Sarah,Sarah);, true:?daughter(Sarah,Tom);, true:?daughter(Tom,Sarah);, true:?daughter(Tom,Tom);, true:?father(John,John);, true:?father(John,Mary);, true:?father(Mary,John);, true:?father(Mary,Mary);, true:?father(Mary,Sarah);, true:?father(Mary,Tom);, true:?father(Mary,y);, true:?father(Sarah,John);, true:?father(Sarah,Mary);, true:?father(Sarah,Sarah);, true:?father(Sarah,Tom);, true:?father(Sarah,y);, true:?father(Tom,John);, true:?father(Tom,Mary);, true:?father(Tom,Sarah);, true:?father(Tom,Tom);, true:?female(John);, true:?male(Mary);, true:?male(Sarah);, true:?mother(John,John);, true:?mother(John,Mary);, true:?mother(John,Sarah);, true:?mother(John,Tom);, true:?mother(John,y);, true:?mother(Mary,John);, true:?mother(Mary,Mary);, true:?mother(Sarah,John);, true:?mother(Sarah,Mary);, true:?mother(Sarah,Sarah);, true:?mother(Sarah,Tom);, true:?mother(Tom,John);, true:?mother(Tom,Mary);, true:?mother(Tom,Sarah);, true:?mother(Tom,Tom);, true:?parent(John,John);, true:?parent(John,Mary);, true:?parent(Mary,John);, true:?parent(Mary,Mary);, true:?parent(Sarah,John);, true:?parent(Sarah,Mary);, true:?parent(Sarah,Sarah);, true:?parent(Sarah,Tom);, true:?parent(Tom,John);, true:?parent(Tom,Mary);, true:?parent(Tom,Sarah);, true:?parent(Tom,Tom);, true:?sibling(John,Sarah);, true:?sibling(John,Tom);, true:?sibling(Mary,Sarah);, true:?sibling(Mary,Tom);, true:?sibling(Sarah,John);, true:?sibling(Sarah,Mary);, true:?sibling(Tom,John);, true:?sibling(Tom,Mary);, true:?son(John,John);, true:?son(John,Mary);, true:?son(John,Sarah);, true:?son(John,Tom);, true:?son(Mary,John);, true:?son(Mary,Mary);, true:?son(Mary,Sarah);, true:?son(Mary,Tom);, true:?son(Sarah,John);, true:?son(Sarah,Mary);, true:?son(Sarah,Sarah);, true:?son(Sarah,Tom);, true:?son(Tom,Sarah);, true:?son(Tom,Tom);]
+pass-actions=[1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=5
+effects=2015,92,235,207,12,3796
+natives ?father(John,Tom); => true
+values=[]
+solutions=[!father(John,Tom);]
+hypotheses=[]
+rules=[false:!@x $y parent(y,x);, false:!@x (male(x) || female(x)) && ~(male(x) && female(x));, false:!@x @y ($z parent(x,z), parent(y,z)), x != y -> spouse(x,y) || divorced(x,y);, false:!@x @y ($z parent(z,x) && parent(z,y)) && x != y -> sibling(x,y);, false:!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));, false:!@x @y daughter(x,y) -> female(x), child(x,y);, false:!@x @y father(x,y) -> male(x), parent(x,y);, false:!@x @y mother(x,y) -> female(x), parent(x,y);, false:!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));, false:!@x @y sibling(x,y) -> sibling(y,x);, false:!@x @y son(x,y) -> male(x), child(x,y);, false:!@x @y ~(parent(x,y), parent(y,x));, false:!@x @y ~(sibling(x,y), parent(x,y));, false:!@x ~parent(x,x);, false:!age(John,37.0);, false:!age(Sarah,4.0);, false:!age(Tom,12.0);, false:!child(Tom,Mary);, false:!daughter(Sarah,John);, false:!father(John,Tom);, false:!mother(Mary,Sarah);, true:!child(Sarah,John);, true:!child(Sarah,Mary);, true:!child(Tom,John);, true:!daughter(Sarah,Mary);, true:!father(John,Sarah);, true:!female(Mary);, true:!female(Sarah);, true:!male(John);, true:!mother(Mary,Tom);, true:!parent(John,Sarah);, true:!parent(John,Tom);, true:!parent(Mary,Sarah);, true:!parent(Mary,Tom);, true:!sibling(Sarah,Tom);, true:!sibling(Tom,Sarah);, true:?child(John,John);, true:?child(John,Mary);, true:?child(John,Sarah);, true:?child(John,Tom);, true:?child(Mary,John);, true:?child(Mary,Mary);, true:?child(Mary,Sarah);, true:?child(Mary,Tom);, true:?child(Sarah,Sarah);, true:?child(Sarah,Tom);, true:?child(Tom,Sarah);, true:?child(Tom,Tom);, true:?daughter(John,John);, true:?daughter(John,Mary);, true:?daughter(John,Sarah);, true:?daughter(John,Tom);, true:?daughter(Mary,John);, true:?daughter(Mary,Mary);, true:?daughter(Mary,Sarah);, true:?daughter(Mary,Tom);, true:?daughter(Sarah,Sarah);, true:?daughter(Sarah,Tom);, true:?daughter(Tom,Sarah);, true:?daughter(Tom,Tom);, true:?father(John,John);, true:?father(John,Mary);, true:?father(Mary,John);, true:?father(Mary,Mary);, true:?father(Mary,Sarah);, true:?father(Mary,Tom);, true:?father(Mary,y);, true:?father(Sarah,John);, true:?father(Sarah,Mary);, true:?father(Sarah,Sarah);, true:?father(Sarah,Tom);, true:?father(Sarah,y);, true:?father(Tom,John);, true:?father(Tom,Mary);, true:?father(Tom,Sarah);, true:?father(Tom,Tom);, true:?female(John);, true:?male(Mary);, true:?male(Sarah);, true:?mother(John,John);, true:?mother(John,Mary);, true:?mother(John,Sarah);, true:?mother(John,Tom);, true:?mother(John,y);, true:?mother(Mary,John);, true:?mother(Mary,Mary);, true:?mother(Sarah,John);, true:?mother(Sarah,Mary);, true:?mother(Sarah,Sarah);, true:?mother(Sarah,Tom);, true:?mother(Tom,John);, true:?mother(Tom,Mary);, true:?mother(Tom,Sarah);, true:?mother(Tom,Tom);, true:?parent(John,John);, true:?parent(John,Mary);, true:?parent(Mary,John);, true:?parent(Mary,Mary);, true:?parent(Sarah,John);, true:?parent(Sarah,Mary);, true:?parent(Sarah,Sarah);, true:?parent(Sarah,Tom);, true:?parent(Tom,John);, true:?parent(Tom,Mary);, true:?parent(Tom,Sarah);, true:?parent(Tom,Tom);, true:?sibling(John,Sarah);, true:?sibling(John,Tom);, true:?sibling(Mary,Sarah);, true:?sibling(Mary,Tom);, true:?sibling(Sarah,John);, true:?sibling(Sarah,Mary);, true:?sibling(Tom,John);, true:?sibling(Tom,Mary);, true:?son(John,John);, true:?son(John,Mary);, true:?son(John,Sarah);, true:?son(John,Tom);, true:?son(Mary,John);, true:?son(Mary,Mary);, true:?son(Mary,Sarah);, true:?son(Mary,Tom);, true:?son(Sarah,John);, true:?son(Sarah,Mary);, true:?son(Sarah,Sarah);, true:?son(Sarah,Tom);, true:?son(Tom,Sarah);, true:?son(Tom,Tom);]
+pass-actions=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=0
+effects=0,0,0,0,0,0
+natives !~father(John,Tom); => null
+values=[]
+solutions=[]
+hypotheses=[]
+rules=[false:!@x $y parent(y,x);, false:!@x (male(x) || female(x)) && ~(male(x) && female(x));, false:!@x @y ($z parent(x,z), parent(y,z)), x != y -> spouse(x,y) || divorced(x,y);, false:!@x @y ($z parent(z,x) && parent(z,y)) && x != y -> sibling(x,y);, false:!@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y));, false:!@x @y daughter(x,y) -> female(x), child(x,y);, false:!@x @y father(x,y) -> male(x), parent(x,y);, false:!@x @y mother(x,y) -> female(x), parent(x,y);, false:!@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y));, false:!@x @y sibling(x,y) -> sibling(y,x);, false:!@x @y son(x,y) -> male(x), child(x,y);, false:!@x @y ~(parent(x,y), parent(y,x));, false:!@x @y ~(sibling(x,y), parent(x,y));, false:!@x ~parent(x,x);, false:!age(John,37.0);, false:!age(Sarah,4.0);, false:!age(Tom,12.0);, false:!child(Tom,Mary);, false:!daughter(Sarah,John);, false:!father(John,Tom);, false:!mother(Mary,Sarah);, true:!child(Sarah,John);, true:!child(Sarah,Mary);, true:!child(Tom,John);, true:!daughter(Sarah,Mary);, true:!father(John,Sarah);, true:!female(Mary);, true:!female(Sarah);, true:!male(John);, true:!mother(Mary,Tom);, true:!parent(John,Sarah);, true:!parent(John,Tom);, true:!parent(Mary,Sarah);, true:!parent(Mary,Tom);, true:!sibling(Sarah,Tom);, true:!sibling(Tom,Sarah);, true:?child(John,John);, true:?child(John,Mary);, true:?child(John,Sarah);, true:?child(John,Tom);, true:?child(Mary,John);, true:?child(Mary,Mary);, true:?child(Mary,Sarah);, true:?child(Mary,Tom);, true:?child(Sarah,Sarah);, true:?child(Sarah,Tom);, true:?child(Tom,Sarah);, true:?child(Tom,Tom);, true:?daughter(John,John);, true:?daughter(John,Mary);, true:?daughter(John,Sarah);, true:?daughter(John,Tom);, true:?daughter(Mary,John);, true:?daughter(Mary,Mary);, true:?daughter(Mary,Sarah);, true:?daughter(Mary,Tom);, true:?daughter(Sarah,Sarah);, true:?daughter(Sarah,Tom);, true:?daughter(Tom,Sarah);, true:?daughter(Tom,Tom);, true:?father(John,John);, true:?father(John,Mary);, true:?father(Mary,John);, true:?father(Mary,Mary);, true:?father(Mary,Sarah);, true:?father(Mary,Tom);, true:?father(Mary,y);, true:?father(Sarah,John);, true:?father(Sarah,Mary);, true:?father(Sarah,Sarah);, true:?father(Sarah,Tom);, true:?father(Sarah,y);, true:?father(Tom,John);, true:?father(Tom,Mary);, true:?father(Tom,Sarah);, true:?father(Tom,Tom);, true:?female(John);, true:?male(Mary);, true:?male(Sarah);, true:?mother(John,John);, true:?mother(John,Mary);, true:?mother(John,Sarah);, true:?mother(John,Tom);, true:?mother(John,y);, true:?mother(Mary,John);, true:?mother(Mary,Mary);, true:?mother(Sarah,John);, true:?mother(Sarah,Mary);, true:?mother(Sarah,Sarah);, true:?mother(Sarah,Tom);, true:?mother(Tom,John);, true:?mother(Tom,Mary);, true:?mother(Tom,Sarah);, true:?mother(Tom,Tom);, true:?parent(John,John);, true:?parent(John,Mary);, true:?parent(Mary,John);, true:?parent(Mary,Mary);, true:?parent(Sarah,John);, true:?parent(Sarah,Mary);, true:?parent(Sarah,Sarah);, true:?parent(Sarah,Tom);, true:?parent(Tom,John);, true:?parent(Tom,Mary);, true:?parent(Tom,Sarah);, true:?parent(Tom,Tom);, true:?sibling(John,Sarah);, true:?sibling(John,Tom);, true:?sibling(Mary,Sarah);, true:?sibling(Mary,Tom);, true:?sibling(Sarah,John);, true:?sibling(Sarah,Mary);, true:?sibling(Tom,John);, true:?sibling(Tom,Mary);, true:?son(John,John);, true:?son(John,Mary);, true:?son(John,Sarah);, true:?son(John,Tom);, true:?son(Mary,John);, true:?son(Mary,Mary);, true:?son(Mary,Sarah);, true:?son(Mary,Tom);, true:?son(Sarah,John);, true:?son(Sarah,Mary);, true:?son(Sarah,Sarah);, true:?son(Sarah,Tom);, true:?son(Tom,Sarah);, true:?son(Tom,Tom);]
+pass-actions=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; started=0
+effects=0,0,0,0,0,0
