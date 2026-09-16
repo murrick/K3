@@ -526,6 +526,7 @@ public class Linker {
      *                   или превышении flood limit
      */
     public void link(Rule rule, boolean logging) throws Exception {
+        occurrenceObservation = Boolean.getBoolean("kanger.experiment.profileOccurrences") ? new long[5] : null;
         long invocationStart = statistics.stageClock();
         boolean completed = false;
         try {
@@ -533,6 +534,9 @@ public class Linker {
             completed = true;
         } finally {
             statistics.finishStage(6, invocationStart);
+            if (occurrenceObservation != null)
+                System.err.println("OCCURRENCE_OBSERVATION pass=" + mind.getQueryPass()
+                        + " completed=" + completed + " counts=" + java.util.Arrays.toString(occurrenceObservation));
             if (Boolean.getBoolean("kanger.experiment.traceInvocations"))
                 System.err.println("LINK_INVOCATION completed=" + completed
                         + " pass=" + mind.getQueryPass()
@@ -872,8 +876,9 @@ public class Linker {
         if (!"off".equals(latentMode) && !"index".equals(latentMode) && !"verify".equals(latentMode) && !factoryLatent) {
             throw new IllegalArgumentException("Unknown latent experiment mode: " + latentMode);
         }
-        final Map<IRule, Map<DomainKey, List<Domain>>> latent = "off".equals(latentMode) || factoryLatent
-                ? null : buildLatentDomains(ruleList);
+        final Map<IRule, Map<DomainKey, List<Domain>>> latent = factoryLatent && occurrenceObservation != null
+                ? new IdentityHashMap<IRule, Map<DomainKey, List<Domain>>>()
+                : ("off".equals(latentMode) || factoryLatent ? null : buildLatentDomains(ruleList));
         statistics.finishStage(8, setupStart);
 
         for (IRule r : ruleList) {
@@ -1085,12 +1090,31 @@ public class Linker {
         return result;
     }
 
+    // Diagnostic only: calls, hydrated slots, repeated calls/slots, changed ordered identities.
+    private long[] occurrenceObservation;
+
     private List<List<Domain>> latentBranches(IRule rule, Domain slave,
             Map<IRule, Map<DomainKey, List<Domain>>> index, boolean verify, boolean factory) throws Exception {
         if (index == null && !factory) return ((Rule) rule).getTree();
         List<Domain> selected = factory ? mind.getRules().getLatentDomainCandidates(rule, slave)
                 : index.get(rule).get(new DomainKey(slave.getPredicateId(), !slave.isAntc()));
         if (selected == null) selected = Collections.emptyList();
+        if (factory && occurrenceObservation != null) {
+            occurrenceObservation[0]++;
+            occurrenceObservation[1] += selected.size();
+            Map<DomainKey, List<Domain>> seen = index.get(rule);
+            if (seen == null) { seen = new HashMap<>(); index.put(rule, seen); }
+            DomainKey key = new DomainKey(slave.getPredicateId(), !slave.isAntc());
+            List<Domain> previous = seen.put(key, selected);
+            if (previous != null) {
+                occurrenceObservation[2]++;
+                occurrenceObservation[3] += selected.size();
+                boolean same = previous.size() == selected.size();
+                if (same) for (int i = 0; i < selected.size(); i++)
+                    if (previous.get(i) != selected.get(i)) { same = false; break; }
+                if (!same) occurrenceObservation[4]++;
+            }
+        }
         if (verify) {
             List<Domain> reference = new ArrayList<>();
             for (List<Domain> branch : ((Rule) rule).getTree()) {

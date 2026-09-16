@@ -1,0 +1,39 @@
+OCCURRENCE_OBSERVATION pass=CHECKFALSE completed=true counts=[0, 0, 0, 0, 0]
+OCCURRENCE_OBSERVATION pass=CHECKTRUE completed=true counts=[0, 0, 0, 0, 0]
+empty	?p(1);	0	0	53772182
+OCCURRENCE_OBSERVATION pass=ACCEPT completed=true counts=[0, 0, 0, 0, 0]
+single-collision	?p(1);	0	0	4188174
+single-collision	!~p(1);	0	0	2341079
+single-collision	?p(1);	0	0	2485041
+OCCURRENCE_OBSERVATION pass=CHECKFALSE completed=true counts=[0, 0, 0, 0, 0]
+OCCURRENCE_OBSERVATION pass=CHECKTRUE completed=true counts=[0, 0, 0, 0, 0]
+single-collision	?p(2);	0	0	3406297
+OCCURRENCE_OBSERVATION pass=ACCEPT completed=true counts=[20, 20, 8, 8, 0]
+OCCURRENCE_OBSERVATION pass=CHECKFALSE completed=true counts=[0, 0, 0, 0, 0]
+OCCURRENCE_OBSERVATION pass=CHECKTRUE completed=true counts=[71, 71, 37, 37, 0]
+chain-symmetry	?$x $y path(x,y);	71	71	18684655
+chain-symmetry	?path(B,A);	0	0	2577650
+OCCURRENCE_OBSERVATION pass=CHECKFALSE completed=true counts=[0, 0, 0, 0, 0]
+OCCURRENCE_OBSERVATION pass=CHECKTRUE completed=true counts=[42, 42, 16, 16, 0]
+chain-symmetry	?path(A,C);	42	42	12598104
+OCCURRENCE_OBSERVATION pass=ACCEPT completed=true counts=[8, 8, 4, 4, 0]
+OCCURRENCE_OBSERVATION pass=CHECKFALSE completed=true counts=[0, 0, 0, 0, 0]
+OCCURRENCE_OBSERVATION pass=CHECKTRUE completed=true counts=[37, 37, 19, 19, 0]
+functions	?$x q(x);	37	37	6212982
+functions	?q(3);	0	0	1869995
+OCCURRENCE_OBSERVATION pass=ACCEPT completed=true counts=[12, 12, 8, 8, 0]
+OCCURRENCE_OBSERVATION pass=CHECKFALSE completed=true counts=[0, 0, 0, 0, 0]
+OCCURRENCE_OBSERVATION pass=CHECKTRUE completed=true counts=[110, 110, 72, 72, 0]
+many	?$x q(x);	110	110	11602305
+OCCURRENCE_OBSERVATION pass=CHECKFALSE completed=true counts=[0, 0, 0, 0, 0]
+OCCURRENCE_OBSERVATION pass=CHECKTRUE completed=true counts=[10, 10, 4, 4, 0]
+many	?q(4);	10	10	4732894
+OCCURRENCE_OBSERVATION pass=ACCEPT completed=true counts=[2009, 2391, 1514, 1776, 0]
+OCCURRENCE_OBSERVATION pass=CHECKFALSE completed=true counts=[979, 1123, 777, 887, 0]
+OCCURRENCE_OBSERVATION pass=CHECKTRUE completed=true counts=[2857, 3251, 2265, 2557, 0]
+natives	?$x male(x);	3251	3251	255197783
+OCCURRENCE_OBSERVATION pass=CHECKFALSE completed=true counts=[1531, 1761, 1221, 1393, 0]
+OCCURRENCE_OBSERVATION pass=CHECKTRUE completed=true counts=[1769, 2015, 1417, 1601, 0]
+natives	?male(Tom);	2015	2015	136969437
+natives	?father(John,Tom);	0	0	3400969
+natives	!~father(John,Tom);	0	0	2255044

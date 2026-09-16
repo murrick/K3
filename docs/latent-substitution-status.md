@@ -44,4 +44,6 @@ Full publication and warm storage-reopen measurements now cover two small chain-
 
 Full Maven and canonical Java 8/21 qualification are still outstanding: this environment uses OpenJDK 17 and ECJ with Java 8 source target. The baseline cannot compile `labyrinth.k` here; it remains an explicit exclusion, not a passing fixture.
 
+The next direct-access opportunity is now measured: [occurrence materialization observation](latent-substitution-occurrence-reuse.md). Within a rotator, 344,680 of 437,729 corpus Domain-resolution slots repeat; no ordered-reference changes were observed. All lookups still execute. Step/Sapato lookup also calls setMind, rebinding Domain/TVariables, so an audit of that effect must precede any actual skipped lookup. Scoped list reuse remains only a candidate.
+
 Nothing here authorizes default enablement, removing the old traversal, or merge/release/tag/deploy.
