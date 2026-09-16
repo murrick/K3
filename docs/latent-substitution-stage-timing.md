@@ -1,5 +1,9 @@
 # Opt-in Linker stage timing
 
+Follow-up: `latent-substitution-invocation-coverage.md` confirms two invocations
+per benchmark query. The numbers below describe only the exported second
+invocation; they must not be treated as total selection cost for the query.
+
 Enable `-Dkanger.experiment.timeStages=true` before constructing Mind.
 LinkerStatistics records five completed, non-overlapping sections of each
 terminal callback / rule visit: candidate selection (including the existing

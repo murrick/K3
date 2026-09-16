@@ -56,8 +56,9 @@ public final class LinkerStatistics {
     // retained candidates, indexed slots built, resolved IDs probed.
     private final long[] candidateSelection = new long[8];
     private final boolean timeStages = Boolean.getBoolean("kanger.experiment.timeStages");
-    // Non-overlapping completed stages: selection, linking, functions, database, update.
-    private final long[] stageNanos = new long[5];
+    // 0..4: selection, linking, functions, database, update (non-overlapping).
+    // 5: resolved lookup, INCLUDED in selection; 6: whole invocation, INCLUSIVE.
+    private final long[] stageNanos = new long[7];
     private final java.util.Map<String, String> pairFirstOutput = new java.util.HashMap<>();
     private final long[] pairOutputMatches = new long[3];
     private final long[] pairOutputMismatches = new long[3];
@@ -211,7 +212,8 @@ public final class LinkerStatistics {
     void finishStage(int stage, long start) {
         if (timeStages) stageNanos[stage] += System.nanoTime() - start;
     }
-    /** Wall-clock durations; failed stages are omitted. Not CPU time. */
+    /** Wall time: completed sections 0..5; inclusive invocation 6 also records failure.
+     * Resolved lookup (5) is already inside selection (0); do not sum all slots. */
     public long[] getStageNanos() { return stageNanos.clone(); }
     void observePairOutput(long operation, String output) {
         String key = pairOperationKeys.get(operation);

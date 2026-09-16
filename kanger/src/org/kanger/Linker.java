@@ -357,8 +357,10 @@ public class Linker {
             return Collections.emptyList();
         }
 
+        long resolveStart = statistics.stageClock();
         List<IRule> resolved = mind.getRules().findByResolvedDomain(
                 slave, !slave.isAntc());
+        statistics.finishStage(5, resolveStart);
         statistics.recordCandidateSelection(3, resolved.size());
         if (resolved.isEmpty()) {
             return Collections.emptyList();
@@ -489,6 +491,21 @@ public class Linker {
      *                   или превышении flood limit
      */
     public void link(Rule rule, boolean logging) throws Exception {
+        long invocationStart = statistics.stageClock();
+        boolean completed = false;
+        try {
+            linkMeasured(rule, logging);
+            completed = true;
+        } finally {
+            statistics.finishStage(6, invocationStart);
+            if (Boolean.getBoolean("kanger.experiment.traceInvocations"))
+                System.err.println("LINK_INVOCATION completed=" + completed
+                        + " pass=" + mind.getQueryPass()
+                        + " stages=" + java.util.Arrays.toString(statistics.getStageNanos()));
+        }
+    }
+
+    private void linkMeasured(Rule rule, boolean logging) throws Exception {
 
         mind.getExcludedDomains().clear();
         mind.getUsedDomains().clear();
