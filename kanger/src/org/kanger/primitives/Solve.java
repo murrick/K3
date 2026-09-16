@@ -241,17 +241,11 @@ public class Solve {
     }
 
     public int getHash(IMind mind) {
-        try {
-            int hash = 3;
-            hash = 47 * hash + (antc ? 1 : 0);
-            hash = 47 * hash + getPredicate((Mind) mind).getHash();
-            hash = 47 * hash + arguments.getHash((Mind) mind);
-            return hash;
-        } catch (Exception e) {
-            System.err.println(new Date());
-            e.printStackTrace(System.err);
-            return 0;
-        }
+        int hash = 3;
+        hash = 47 * hash + (antc ? 1 : 0);
+        hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
+        hash = 47 * hash + arguments.getHash((Mind) mind);
+        return hash;
     }
 
     public Collection<Long> getTerms(Mind mind, boolean total) throws Exception {

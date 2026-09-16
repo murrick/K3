@@ -389,18 +389,12 @@ public class Function implements IUnit<Function> {
     /** Hashes the stored definition shape for factory candidate lookup. */
     @Override
     public int getHash() {
-        try {
-            int hash = 3;
-            hash = 47 * hash + ((IUnit<?>) getName(mind)).getHash();
-            hash = 47 * hash + range;
-            hash = 47 * hash + binding.ordinal();
-            hash = 47 * hash + arguments.getHash(mind);
-            return hash;
-        } catch (Exception e) {
-            System.err.println(new Date());
-            e.printStackTrace(System.err);
-            return 0;
-        }
+        int hash = 3;
+        hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
+        hash = 47 * hash + range;
+        hash = 47 * hash + binding.ordinal();
+        hash = 47 * hash + arguments.hashCode();
+        return hash;
     }
 
     /**
@@ -432,11 +426,11 @@ public class Function implements IUnit<Function> {
     }
 
     /**
-     * Computes a Rule-relative structural hash with normalized variable indexes.
+     * Computes a Rule-relative structural hash with normalized TVariable indexes.
      */
     public int getHashStruct(IRule r) throws Exception {
         int hash = 3;
-        hash = 47 * hash + ((IUnit<?>) getName(mind)).getHash();
+        hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
         hash = 47 * hash + range;
         hash = 47 * hash + binding.ordinal();
         for (int i = 0; i < range; ++i) {
@@ -446,12 +440,8 @@ public class Function implements IUnit<Function> {
                     hash = 47 * hash + (i + 1) * (((TVariable) arguments.get(i).getObject(mind)).getIndex() - ((Rule) r).getVarIndex());
                     break;
                 case TERM:
-                    ITerm term = arguments.get(i).getValue(mind);
-                    if (term.isCVariable()) {
-                        hash = 47 * hash + (i + 1) * (((Term) term).getIndex() - ((Rule) r).getVarIndex());
-                    } else {
-                        hash = 47 * hash + (i + 1) * ((IUnit<?>) term).getHash();
-                    }
+                    long id = arguments.get(i).getValue(mind).getId();
+                    hash = 47 * hash + (i + 1) * (int) (id ^ (id >>> 32));
                     break;
                 case FUNCTION:
                     hash = 47 * hash + (i + 1) * ((Function) arguments.get(i).getObject(mind)).getHashStruct(r);
@@ -465,37 +455,24 @@ public class Function implements IUnit<Function> {
      * Compares two recursive function structures across Rule-local variable spaces.
      */
     public boolean equalsToStruct(Function f, IRule left, IRule rule) throws Exception {
-        Mind rightMind = f.getMind() != null ? f.getMind() : ((Rule) rule).getMind();
-        if (getName(mind).equalsTo(f.getName(rightMind))
-                && range == f.getRange()
-                && binding == f.getBinding()) {
+        if (nameId == f.nameId && range == f.getRange() && binding == f.getBinding()) {
             for (int i = 0; i < range; ++i) {
                 if (arguments.get(i).getType() == f.getArguments().get(i).getType()) {
                     switch (arguments.get(i).getType()) {
                         case TVARIABLE:
                             if ((((TVariable) arguments.get(i).getObject(mind)).getIndex() - ((Rule) left).getVarIndex())
-                                    != (((TVariable) f.getArguments().get(i).getObject(rightMind)).getIndex() - ((Rule) rule).getVarIndex())) {
+                                    != (((TVariable) f.getArguments().get(i).getObject(mind)).getIndex() - ((Rule) rule).getVarIndex())) {
                                 return false;
                             }
                             break;
                         case TERM:
-                            ITerm leftTerm = arguments.get(i).getValue(mind);
-                            ITerm rightTerm = f.getArguments().get(i).getValue(rightMind);
-                            if (leftTerm.isCVariable() != rightTerm.isCVariable()) {
-                                return false;
-                            }
-                            if (leftTerm.isCVariable()) {
-                                if ((((Term) leftTerm).getIndex() - ((Rule) left).getVarIndex())
-                                        != (((Term) rightTerm).getIndex() - ((Rule) rule).getVarIndex())) {
-                                    return false;
-                                }
-                            } else if (!leftTerm.equalsTo(rightTerm)) {
+                            if (arguments.get(i).getValue(mind).getId() != f.getArguments().get(i).getValue(mind).getId()) {
                                 return false;
                             }
                             break;
                         case FUNCTION:
                             if (!((Function) arguments.get(i).getObject(mind))
-                                    .equalsToStruct((Function) f.getArguments().get(i).getObject(rightMind), left, rule)) {
+                                    .equalsToStruct(((Function) f.getArguments().get(i).getObject(mind)), left, rule)) {
                                 return false;
                             }
                             break;

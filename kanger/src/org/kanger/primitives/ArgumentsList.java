@@ -34,7 +34,6 @@ import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IList;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.ITerm;
-import org.kanger.interfaces.internal.IUnit;
 import org.kanger.storage.ByteBuffer;
 import org.kanger.units.*;
 
@@ -87,7 +86,7 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
         try {
             for (IArgument a : this) {
                 if (!a.isEmpty(mind)) {
-                    hashCode = 31 * hashCode + ((IUnit<?>) a.getValue(mind)).getHash();
+                    hashCode = 31 * hashCode + a.getValue(mind).hashCode();
                 }
             }
         } catch (Exception e) {

@@ -127,13 +127,6 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         return this;
     }
 
-    private ITerm resolveName() throws Exception {
-        if (name == null && mind != null) {
-            name = mind.getTerms().get(nameId);
-        }
-        return name;
-    }
-
     /** Resolves and returns the canonical name in the supplied Mind. */
     @Override
     public String getName(IMind mind) throws Exception {
@@ -198,40 +191,19 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         }
     }
 
-    /** Hashes the semantic structural key {@code (name Term, range)}. */
+    /** Hashes the structural key {@code (nameId, range)} for candidate lookup. */
     @Override
     public int getHash() {
-        try {
-            ITerm semanticName = resolveName();
-            if (semanticName == null) {
-                return 0;
-            }
-            int hash = 3;
-            hash = 47 * hash + ((IUnit<?>) semanticName).getHash();
-            hash = 47 * hash + range;
-            return hash;
-        } catch (Exception e) {
-            System.err.println(new Date());
-            e.printStackTrace(System.err);
-            return 0;
-        }
+        int hash = 3;
+        hash = 47 * hash + (int) (nameId ^ (nameId >>> 32));
+        hash = 47 * hash + range;
+        return hash;
     }
 
-    /** Compares semantic definition keys independently of operational IDs. */
+    /** Compares canonical definition keys independently of operational IDs. */
     @Override
     public boolean equalsTo(Predicate to) {
-        if (to == null || to.getRange() != range) {
-            return false;
-        }
-        try {
-            ITerm leftName = resolveName();
-            ITerm rightName = to.resolveName();
-            return leftName != null && rightName != null && leftName.equalsTo(rightName);
-        } catch (Exception e) {
-            System.err.println(new Date());
-            e.printStackTrace(System.err);
-            return false;
-        }
+        return to.getNameId() == nameId && to.getRange() == range;
     }
 
     @Override

@@ -509,21 +509,15 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     @Override
     public int getHash() {
-        return getHashBase(mind);
+        return 47 * getHashBase(mind) + (int) (ruleId ^ (ruleId >>> 32));
     }
 
     public int getHashBase(Mind mind) {
-        try {
-            int hash = 3;
-            hash = 47 * hash + (antc ? 1 : 0);
-            hash = 47 * hash + getPredicate(mind).getHash();
-            hash = 47 * hash + arguments.getHash(mind);
-            return hash;
-        } catch (Exception e) {
-            System.err.println(new Date());
-            e.printStackTrace(System.err);
-            return 0;
-        }
+        int hash = 3;
+        hash = 47 * hash + (antc ? 1 : 0);
+        hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
+        hash = 47 * hash + arguments.getHash(mind);
+        return hash;
     }
 
     @Override
@@ -567,7 +561,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     public int getHashStruct() throws Exception {
         int hash = 3;
         hash = 47 * hash + (antc ? 1 : 0);
-        hash = 47 * hash + getPredicate().getHash();
+        hash = 47 * hash + (int) (predicateId ^ (predicateId >>> 32));
         hash = 47 * hash + range;
         for (int i = 0; i < range; ++i) {
             hash = 47 * hash + (i + 1) * arguments.get(i).getType().ordinal();
@@ -580,7 +574,8 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                     if (a.isCVariable()) {
                         hash = 47 * hash + (i + 1) * getVarOrder(mind, i);
                     } else {
-                        hash = 47 * hash + (i + 1) * ((IUnit<?>) a).getHash();
+                        long id = arguments.get(i).getValue(mind).getId();
+                        hash = 47 * hash + (i + 1) * (int) (id ^ (id >>> 32));
                     }
                     break;
                 case FUNCTION:
@@ -592,37 +587,33 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     }
 
     public boolean equalsToStruct(Domain to) throws Exception {
-        Mind rightMind = to.getMind();
         if (to.isAntc() == antc
                 && to.getRange() == range
-                && getPredicate().equalsTo(to.getPredicate())) {
+                && to.getPredicateId() == predicateId) {
             int i = 0;
             for (; i < range; ++i) {
                 if (arguments.get(i).getType() == to.getArguments().get(i).getType()) {
                     switch (arguments.get(i).getType()) {
                         case TVARIABLE:
-                            if (getVarOrder(mind, i) != to.getVarOrder(rightMind, i)) {
+                            if (getVarOrder(mind, i) != to.getVarOrder(mind, i)) {
                                 return false;
                             }
                             break;
                         case TVALUE:
                         case TERM:
                             ITerm a = arguments.get(i).getValue(mind);
-                            ITerm b = to.getArguments().get(i).getValue(rightMind);
-                            if (a.isCVariable() != b.isCVariable()) {
-                                return false;
-                            }
-                            if (a.isCVariable()) {
-                                if (getVarOrder(mind, i) != to.getVarOrder(rightMind, i)) {
+                            ITerm b = to.getArguments().get(i).getValue(mind);
+                            if (a.isCVariable() && b.isCVariable()) {
+                                if (getVarOrder(mind, i) != to.getVarOrder(mind, i)) {
                                     return false;
                                 }
-                            } else if (!a.equalsTo(b)) {
+                            } else if (a.getId() != b.getId()) {
                                 return false;
                             }
                             break;
                         case FUNCTION:
                             if (!((Function) arguments.get(i).getObject(mind))
-                                    .equalsToStruct((Function) to.getArguments().get(i).getObject(rightMind), getRule(), to.getRule())) {
+                                    .equalsToStruct((Function) to.getArguments().get(i).getObject(mind), getRule(), to.getRule())) {
                                 return false;
                             }
                             break;
@@ -762,3 +753,4 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         this.abstractive = true;
     }
 }
+
