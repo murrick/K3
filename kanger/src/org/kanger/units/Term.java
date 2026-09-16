@@ -182,6 +182,11 @@ public class Term implements IUnit<Term>, ITerm {
             ruleId = packet.getLong();
             domini = packet.getByte() > 0;
         }
+        // SET hashes used to contain context-local Term IDs. Never trust a
+        // persisted SET hash; recompute it from semantic member hashes.
+        if (type == DataType.SET) {
+            hash = 0;
+        }
         return this;
     }
 
@@ -424,6 +429,19 @@ public class Term implements IUnit<Term>, ITerm {
         }
     }
 
+    private List<ITerm> expandedSetMembers() throws Exception {
+        if (mind != null) {
+            return mind.getCalculator().expand(this, null, false);
+        }
+        List<ITerm> members = new ArrayList<>();
+        if (value instanceof Collection) {
+            for (Object member : (Collection) value) {
+                members.add((ITerm) member);
+            }
+        }
+        return members;
+    }
+
     @Override
     public int getHash() {
         if (hash == 0) {
@@ -450,14 +468,14 @@ public class Term implements IUnit<Term>, ITerm {
                     case SET:
                         long sum = 0;
                         try {
-                            for (ITerm t : mind.getCalculator().expand(this, null, false)) {
-                                sum += t.getId();
+                            for (ITerm t : expandedSetMembers()) {
+                                sum += t.getHash();
                             }
                         } catch (Exception e) {
                             System.err.println(new Date());
                             e.printStackTrace(System.err);
                             for (ITerm t : (List<ITerm>) value) {
-                                sum += t.getId();
+                                sum += t.getHash();
                             }
                         }
                         hash = 47 * hash + (int) (sum ^ (sum >>> 32));
@@ -478,41 +496,48 @@ public class Term implements IUnit<Term>, ITerm {
 
     @Override
     public boolean equalsTo(Term to) {
-        if (type == to.getType() && getHash() == to.getHash()) {
-            switch (type) {
-                case BLOB:
-                    return Arrays.equals((byte[]) value, (byte[]) to.getValue());
-                case SET:
-                    try {
-                        List<ITerm> l1 = mind.getCalculator().expand(this, null, false);
-                        List<ITerm> l2 = mind.getCalculator().expand(to, null, false);
-                        if (l1.size() == l2.size()) {
-                            for (ITerm t : l1) {
-                                if (!l2.contains(t)) {
-                                    return false;
-                                }
-                            }
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    } catch (Exception e) {
-                        System.err.println(new Date());
-                        e.printStackTrace(System.err);
+        if (to == null || type != to.getType() || getHash() != to.getHash()) {
+            return false;
+        }
+        switch (type) {
+            case BLOB:
+                return Arrays.equals((byte[]) value, (byte[]) to.getValue());
+            case SET:
+                try {
+                    List<ITerm> left = expandedSetMembers();
+                    List<ITerm> right = to.expandedSetMembers();
+                    if (left.size() != right.size()) {
                         return false;
                     }
-                case TERM:
-                    return ((Term) value).equalsTo((Term) to.getValue());
-                case INTERVAL:
-                    return ((Term) ((List<ITerm>) value).get(0)).equalsTo((Term) ((List<ITerm>) to.getValue()).get(0))
-                            && ((Term) ((List<ITerm>) value).get(1)).equalsTo((Term) ((List<ITerm>) to.getValue()).get(1));
-                case PERIOD:
-                    return Tools.intervalToTime((String) value) == Tools.intervalToTime((String) to.getValue());
-                default:
-                    return value.equals(to.getValue());
-            }
-        } else {
-            return false;
+                    boolean[] matched = new boolean[right.size()];
+                    for (ITerm one : left) {
+                        boolean found = false;
+                        for (int i = 0; i < right.size(); ++i) {
+                            if (!matched[i] && one.equalsTo(right.get(i))) {
+                                matched[i] = true;
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) {
+                            return false;
+                        }
+                    }
+                    return true;
+                } catch (Exception e) {
+                    System.err.println(new Date());
+                    e.printStackTrace(System.err);
+                    return false;
+                }
+            case TERM:
+                return ((Term) value).equalsTo((Term) to.getValue());
+            case INTERVAL:
+                return ((Term) ((List<ITerm>) value).get(0)).equalsTo((Term) ((List<ITerm>) to.getValue()).get(0))
+                        && ((Term) ((List<ITerm>) value).get(1)).equalsTo((Term) ((List<ITerm>) to.getValue()).get(1));
+            case PERIOD:
+                return Tools.intervalToTime((String) value) == Tools.intervalToTime((String) to.getValue());
+            default:
+                return value.equals(to.getValue());
         }
     }
 
