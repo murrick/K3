@@ -1,0 +1,7 @@
+fixture,rules,buckets,domain_slots,reachable_bytes,nonboxed_bytes,objects,rebuild_median_ns
+empty,0,0,0,136,136,3,300
+natives,128,156,167,41616,38544,1112,110597
+dense-10,120,130,130,37576,34696,994,143866
+sparse-10,30,40,40,10168,9448,274,35093
+dense-30,960,990,990,295144,272104,7774,244769
+sparse-30,90,120,120,29944,27784,814,17727

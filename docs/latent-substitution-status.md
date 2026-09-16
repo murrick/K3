@@ -38,6 +38,8 @@ Pair-result memoization by current argument projection was rejected: identical p
 
 Standalone OFF/ON timings are now complete: [measurement report](latent-substitution-solve-standalone-timing.md). Native query median JVM medians improve 117.378 to 96.566 ms (17.7%), while singleton facts regress 5.8% and the two scaled fixtures differ in direction. All 168 measured semantic fingerprints and counters agree within each fixture. This supports an independent native-workload benefit, not general default enablement.
 
-Next useful measurements are retained memory and build cost for the actual factory representation on a broader corpus. Full Maven and canonical Java 8/21 qualification are still outstanding: this environment uses OpenJDK 17 and ECJ with Java 8 source target. The baseline cannot compile `labyrinth.k` here; it remains an explicit exclusion, not a passing fixture.
+Actual factory occurrence graph accounting is now available for six fixtures: [footprint report](latent-substitution-factory-footprint.md). Native reachable size is 41,616 bytes (38,544 without boxed IDs); row reconstruction is about 0.11 ms in two JVMs. These are neither exclusive retained heap nor full compilation/storage-open overhead. Parent/child sharing, incremental publication/open cost and broader corpora remain measurement gaps.
+
+Full Maven and canonical Java 8/21 qualification are still outstanding: this environment uses OpenJDK 17 and ECJ with Java 8 source target. The baseline cannot compile `labyrinth.k` here; it remains an explicit exclusion, not a passing fixture.
 
 Nothing here authorizes default enablement, removing the old traversal, or merge/release/tag/deploy.
