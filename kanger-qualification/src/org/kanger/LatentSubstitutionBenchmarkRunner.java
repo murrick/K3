@@ -14,7 +14,7 @@ public final class LatentSubstitutionBenchmarkRunner {
         for (int i = 0; i < 100; i++) facts.append("!value(").append(i).append(");\n");
         System.out.println("fixture,sample,compile_ns,query_ns,rows,domain_pairs,unifications"
                 + (Boolean.getBoolean("kanger.experiment.timeStages")
-                ? ",selection_ns,linking_ns,functions_ns,database_ns,update_ns,resolved_ns,invocation_ns" : "")
+                ? ",selection_ns,linking_ns,functions_ns,database_ns,update_ns,resolved_ns,invocation_ns,pass_prepare_ns,rotator_setup_ns,rule_setup_ns,rotation_ns,callback_ns,validity_ns,solve_sync_ns" : "")
                 + (Boolean.getBoolean("kanger.experiment.profileResolved")
                 ? ",lookup_calls,layers,empty_signatures,resolution_ns,filter_ns,batch_ns,materialize_ns,selected_ids,batch_hits,batch_misses,ensure_ns,returned_ids" : ""));
         bench("natives-values", natives, "?$x male(x);");

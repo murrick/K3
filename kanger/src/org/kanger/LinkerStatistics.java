@@ -58,7 +58,10 @@ public final class LinkerStatistics {
     private final boolean timeStages = Boolean.getBoolean("kanger.experiment.timeStages");
     // 0..4: selection, linking, functions, database, update (non-overlapping).
     // 5: resolved lookup, INCLUDED in selection; 6: whole invocation, INCLUSIVE.
-    private final long[] stageNanos = new long[7];
+    // 7: pass Rule selection/sorting/groups; 8: rotator setup; 9: Rule setup.
+    // 10: branch rotation INCLUDING callbacks; 11: whole terminal callbacks.
+    // 12: isValidFor within rotation; 13: solve-index sync INCLUDED in 12.
+    private final long[] stageNanos = new long[14];
     private final boolean profileResolved = Boolean.getBoolean("kanger.experiment.profileResolved");
     private final long[] resolvedProfile = new long[12];
     private final java.util.Map<String, String> pairFirstOutput = new java.util.HashMap<>();
@@ -216,8 +219,9 @@ public final class LinkerStatistics {
     void finishStage(int stage, long start) {
         if (timeStages) stageNanos[stage] += System.nanoTime() - start;
     }
-    /** Wall time: completed sections 0..5; inclusive invocation 6 also records failure.
-     * Resolved lookup (5) is already inside selection (0); do not sum all slots. */
+    /** Wall time; invocation 6 also records failure. Nested intervals must not be
+     * summed: 5 inside 0, 0..3 inside 11, 11 and 12 inside 10, 13 inside 12,
+     * all inside 6. */
     public long[] getStageNanos() { return stageNanos.clone(); }
     long[] resolvedProfileSink() { return profileResolved ? resolvedProfile : null; }
     public long[] getResolvedProfile() { return resolvedProfile.clone(); }

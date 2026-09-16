@@ -558,6 +558,7 @@ public class Linker {
             mind.getHypothesis().dropAction();
             mind.getTempHypothesis().dropAction();
 
+            long prepareStart = statistics.stageClock();
             Set<IRule> ruleSet = new HashSet<>();
             if (rule != null) {
 
@@ -632,6 +633,7 @@ public class Linker {
                     descending.put(entry.getKey(), reversed);
                 }
             }
+            statistics.finishStage(7, prepareStart);
             rotator(leftList, causes, logging, descending);
             rotator(ruleList, causes, logging, ascending);
             if (traceBindings) recordBindingChanges(bindingsBefore);
@@ -822,6 +824,7 @@ public class Linker {
                             final Map<DomainKey, List<IRule>> preparedIndex) throws Exception {
 
         boolean used = false;
+        long setupStart = statistics.stageClock();
         final Map<DomainKey, List<IRule>> domainIndex = preparedIndex == null ? buildDomainIndex(ruleList) : preparedIndex;
         final Map<List<IRule>, Map<Long, Integer>> candidatePositions = Boolean.getBoolean("kanger.experiment.indexedIntersection")
                 ? new IdentityHashMap<List<IRule>, Map<Long, Integer>>() : null;
@@ -834,8 +837,10 @@ public class Linker {
         }
         final Map<IRule, Map<DomainKey, List<Domain>>> latent = "off".equals(latentMode) || factoryLatent
                 ? null : buildLatentDomains(ruleList);
+        statistics.finishStage(8, setupStart);
 
         for (IRule r : ruleList) {
+            long ruleStart = statistics.stageClock();
             final boolean outsideProposal = shadowActivation && shadowRules != null && !shadowRules.contains(r.getId());
             final long tuplesAtEntry = outsideProposal ? observedTupleCount() : 0;
             final long attemptsAtEntry = outsideProposal ? statistics.getUnificationAttempts() : 0;
@@ -854,15 +859,18 @@ public class Linker {
             }
 
             boolean wasUsed = ((Rule) r).isUsed(mind);
+            statistics.finishStage(9, ruleStart);
 
             for (List<Domain> tree : ((Rule) r).getTree()) {
 
                 statistics.incrementBranchVisits();
                 final List<Domain> t = tree;
 
+                long rotationStart = statistics.stageClock();
                 rotateVariables(tvars, tvars, new IReactor() {
                     @Override
                     public Object run(Object o) {
+                        long callbackStart = statistics.stageClock();
                         statistics.incrementTerminalRotations();
                         boolean result = false;
                         try {
@@ -893,9 +901,11 @@ public class Linker {
                             result = false;
                         }
 
+                        statistics.finishStage(11, callbackStart);
                         return result;
                     }
                 });
+                statistics.finishStage(10, rotationStart);
             }
 
             long updateStart = statistics.stageClock();
@@ -932,7 +942,10 @@ public class Linker {
                 public Object run(Object o) throws Exception {
                     result[1] = true;
                     t.setCurrent((TValue) o);
-                    if (isValidFor(base.tailSet(t))) {
+                    long validityStart = statistics.stageClock();
+                    boolean valid = isValidFor(base.tailSet(t));
+                    statistics.finishStage(12, validityStart);
+                    if (valid) {
                         if (rotateVariables(tvars.headSet(t), base, runnable)) {
                             result[0] = true;
                         }
@@ -973,7 +986,9 @@ public class Linker {
      *                   быть разрешены в текущем Mind
      */
     private boolean isValidFor(SortedSet<TVariable> tail) throws Exception {
+        long syncStart = statistics.stageClock();
         synchronizeSolveIndex();
+        statistics.finishStage(13, syncStart);
         final TVariable t = tail.first();
         boolean found = false;
         boolean result = false;
