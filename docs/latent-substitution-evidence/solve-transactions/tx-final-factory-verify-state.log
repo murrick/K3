@@ -1,0 +1,140 @@
+root-before ?$x $y path(x,y); => true
+values=[{x=A, y=B}, {x=A, y=B}, {x=B, y=A}]
+solutions=[!path(A,B); 0 GB, !path(B,A); 0 GB]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, true:!edge(B,A); 0 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB]
+pass-actions=[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=3
+effects=71,4,9,6,3,50
+child-before-nested ?$x $y path(x,y); => true
+values=[{x=A, y=A}, {x=A, y=B}, {x=B, y=A}, {x=B, y=C}, {x=C, y=B}]
+solutions=[!path(A,B); 0 GB, !path(B,A); 0 GB, !path(B,C); 9 GB, !path(C,B); 9 GB]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, false:!edge(B,C); 9 B, true:!edge(B,A); 0 GB, true:!edge(C,B); 9 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB, true:!path(B,C); 9 GB, true:!path(C,B); 9 GB]
+pass-actions=[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=3
+effects=179,6,17,12,5,98
+parent-isolated ?edge(B,C); => null
+values=[]
+solutions=[]
+hypotheses=[!edge(C,B);, ?edge(C,B);, ?path(B,C);, ?path(C,B);]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, true:!edge(B,A); 0 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB]
+pass-actions=[1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=3
+effects=20,2,10,10,4,56
+nested-before-rollback ?$x $y path(x,y); => true
+values=[{x=A, y=A}, {x=A, y=B}, {x=B, y=A}, {x=B, y=C}, {x=C, y=B}, {x=C, y=D}, {x=D, y=C}]
+solutions=[!path(A,B); 0 GB, !path(B,A); 0 GB, !path(B,C); 9 GB, !path(C,B); 9 GB, !path(C,D); 20 GB, !path(D,C); 20 GB]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, false:!edge(B,C); 9 B, false:!edge(C,D); 20 B, true:!edge(B,A); 0 GB, true:!edge(C,B); 9 GB, true:!edge(D,C); 20 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB, true:!path(B,C); 9 GB, true:!path(C,B); 9 GB, true:!path(C,D); 20 GB, true:!path(D,C); 20 GB]
+pass-actions=[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=3
+effects=327,8,25,18,7,146
+child-after-nested-rollback ?edge(C,D); => null
+values=[]
+solutions=[]
+hypotheses=[!edge(D,C);, ?edge(D,C);, ?path(C,D);, ?path(D,C);]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, false:!edge(B,C); 9 B, true:!edge(B,A); 0 GB, true:!edge(C,B); 9 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB, true:!path(B,C); 9 GB, true:!path(C,B); 9 GB]
+pass-actions=[1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=3
+effects=30,2,14,14,4,82
+child-repeat-after-rollback ?$x $y path(x,y); => true
+values=[{x=A, y=A}, {x=A, y=B}, {x=B, y=A}, {x=B, y=C}, {x=C, y=B}]
+solutions=[!path(A,B); 0 GB, !path(B,A); 0 GB, !path(B,C); 9 GB, !path(C,B); 9 GB]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, false:!edge(B,C); 9 B, true:!edge(B,A); 0 GB, true:!edge(C,B); 9 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB, true:!path(B,C); 9 GB, true:!path(C,B); 9 GB]
+pass-actions=[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=3
+effects=179,6,17,12,5,98
+nested-before-commit ?$x $y path(x,y); => true
+values=[{x=A, y=A}, {x=A, y=B}, {x=B, y=A}, {x=B, y=C}, {x=C, y=B}, {x=C, y=E}, {x=E, y=C}]
+solutions=[!path(A,B); 0 GB, !path(B,A); 0 GB, !path(B,C); 9 GB, !path(C,B); 9 GB, !path(C,E); 35 GB, !path(E,C); 35 GB]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, false:!edge(B,C); 9 B, false:!edge(C,E); 35 B, true:!edge(B,A); 0 GB, true:!edge(C,B); 9 GB, true:!edge(E,C); 35 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB, true:!path(B,C); 9 GB, true:!path(C,B); 9 GB, true:!path(C,E); 35 GB, true:!path(E,C); 35 GB]
+pass-actions=[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=3
+effects=327,8,25,18,7,146
+child-after-nested-commit ?edge(C,E); => true
+values=[]
+solutions=[!edge(C,E); 9 B]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, false:!edge(B,C); 9 B, false:!edge(C,E); 9 B, true:!edge(B,A); 0 GB, true:!edge(C,B); 9 GB, true:!edge(E,C); 9 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB, true:!path(B,C); 9 GB, true:!path(C,B); 9 GB, true:!path(C,E); 9 GB, true:!path(E,C); 9 GB]
+pass-actions=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=0
+effects=0,0,0,0,0,0
+child-all-after-commit ?$x $y path(x,y); => true
+values=[{x=A, y=A}, {x=A, y=B}, {x=B, y=A}, {x=B, y=C}, {x=C, y=B}, {x=C, y=E}, {x=E, y=C}]
+solutions=[!path(A,B); 0 GB, !path(B,A); 0 GB, !path(B,C); 9 GB, !path(C,B); 9 GB, !path(C,E); 9 GB, !path(E,C); 9 GB]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, false:!edge(B,C); 9 B, false:!edge(C,E); 9 B, true:!edge(B,A); 0 GB, true:!edge(C,B); 9 GB, true:!edge(E,C); 9 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB, true:!path(B,C); 9 GB, true:!path(C,B); 9 GB, true:!path(C,E); 9 GB, true:!path(E,C); 9 GB]
+pass-actions=[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=3
+effects=327,8,25,18,7,146
+root-after-outer-rollback-C ?edge(B,C); => null
+values=[]
+solutions=[]
+hypotheses=[!edge(C,B);, ?edge(C,B);, ?path(B,C);, ?path(C,B);]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, true:!edge(B,A); 0 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB]
+pass-actions=[1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=3
+effects=20,2,10,10,4,56
+root-after-outer-rollback-E ?edge(C,E); => null
+values=[]
+solutions=[]
+hypotheses=[!edge(E,C);, ?edge(E,C);, ?path(C,E);, ?path(E,C);]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, true:!edge(B,A); 0 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB]
+pass-actions=[1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=3
+effects=20,4,10,10,4,56
+root-repeat-after-rollback ?$x $y path(x,y); => true
+values=[{x=A, y=B}, {x=A, y=B}, {x=B, y=A}]
+solutions=[!path(A,B); 0 GB, !path(B,A); 0 GB]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, true:!edge(B,A); 0 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB]
+pass-actions=[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=3
+effects=71,4,9,6,3,50
+child-before-outer-commit ?$x $y path(x,y); => true
+values=[{x=A, y=A}, {x=A, y=B}, {x=B, y=A}, {x=B, y=F}, {x=F, y=B}]
+solutions=[!path(A,B); 0 GB, !path(B,A); 0 GB, !path(B,F); 62 GB, !path(F,B); 62 GB]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, false:!edge(B,F); 62 B, true:!edge(B,A); 0 GB, true:!edge(F,B); 62 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB, true:!path(B,F); 62 GB, true:!path(F,B); 62 GB]
+pass-actions=[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=3
+effects=179,6,17,12,5,98
+root-after-outer-commit ?edge(B,F); => true
+values=[]
+solutions=[!edge(B,F); 0 B]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, false:!edge(B,F); 0 B, true:!edge(B,A); 0 GB, true:!edge(F,B); 0 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB, true:!path(B,F); 0 GB, true:!path(F,B); 0 GB]
+pass-actions=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=0
+effects=0,0,0,0,0,0
+root-all-after-commit ?$x $y path(x,y); => true
+values=[{x=A, y=A}, {x=A, y=B}, {x=B, y=A}, {x=B, y=F}, {x=F, y=B}]
+solutions=[!path(A,B); 0 GB, !path(B,A); 0 GB, !path(B,F); 0 GB, !path(F,B); 0 GB]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, false:!edge(B,F); 0 B, true:!edge(B,A); 0 GB, true:!edge(F,B); 0 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB, true:!path(B,F); 0 GB, true:!path(F,B); 0 GB]
+pass-actions=[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=3
+effects=179,6,17,12,5,98
+rejected-collision !~edge(B,F); => null
+values=[]
+solutions=[]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, false:!edge(B,F); 0 B, true:!edge(B,A); 0 GB, true:!edge(F,B); 0 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB, true:!path(B,F); 0 GB, true:!path(F,B); 0 GB]
+pass-actions=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=0
+effects=0,0,0,0,0,0
+root-after-rejection ?$x $y path(x,y); => true
+values=[{x=A, y=A}, {x=A, y=B}, {x=B, y=A}, {x=B, y=F}, {x=F, y=B}]
+solutions=[!path(A,B); 0 GB, !path(B,A); 0 GB, !path(B,F); 0 GB, !path(F,B); 0 GB]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, false:!edge(B,F); 0 B, true:!edge(B,A); 0 GB, true:!edge(F,B); 0 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB, true:!path(B,F); 0 GB, true:!path(F,B); 0 GB]
+pass-actions=[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=3
+effects=179,6,17,12,5,98
+delete -edge(B,F); => true
+values=[]
+solutions=[!edge(B,F); 0 B]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, true:!edge(B,A); 0 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB]
+pass-actions=[1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=3
+effects=20,0,7,6,0,28
+root-after-delete ?$x $y path(x,y); => true
+values=[{x=A, y=B}, {x=A, y=B}, {x=B, y=A}]
+solutions=[!path(A,B); 0 GB, !path(B,A); 0 GB]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, true:!edge(B,A); 0 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB]
+pass-actions=[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=3
+effects=71,4,9,6,3,50
+root-repeat-after-delete ?$x $y path(x,y); => true
+values=[{x=A, y=B}, {x=A, y=B}, {x=B, y=A}]
+solutions=[!path(A,B); 0 GB, !path(B,A); 0 GB]
+hypotheses=[]
+rules=[false:!@x @y edge(x,y) -> edge(y,x); 0 , false:!@x @y edge(x,y) -> path(x,y); 0 , false:!edge(A,B); 0 B, true:!edge(B,A); 0 GB, true:!path(A,B); 0 GB, true:!path(B,A); 0 GB]
+pass-actions=[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];started=3
+effects=71,4,9,6,3,50
