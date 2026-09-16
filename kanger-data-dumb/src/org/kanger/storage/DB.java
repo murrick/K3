@@ -39,8 +39,11 @@ import org.kanger.interfaces.internal.StorageTelemetry;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -48,6 +51,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.zip.CRC32;
 
 /**
  * Контейнер физического поколения DUMB и конкретная реализация {@link IData}.
@@ -62,33 +66,39 @@ import java.util.UUID;
  * <p><strong>Физическое поколение.</strong> Все логические базы совместно
  * используют файлы {@code .index}, {@code .store} и {@code .integrity};
  * {@code baseCode} отделяет записи одной схемы от записей другой. Отдельные
- * журналы восстановления имеют суффикс {@code .wal.<baseCode>}. Поэтому порядок
- * первого получения баз является частью физической адресации и должен
- * задаваться верхним bootstrap-контрактом, а не случайным обходом карты.</p>
+ * журналы восстановления имеют суффикс {@code .wal.<baseCode>}. Устойчивый
+ * {@code ContextId} хранится отдельно в {@code .context}: он принадлежит
+ * логическому DUMB Context и намеренно не является частью заменяемого набора
+ * physical generation files. Поэтому порядок первого получения баз является
+ * частью физической адресации и должен задаваться верхним bootstrap-контрактом,
+ * а не случайным обходом карты.</p>
  *
  * <p><strong>Владение базами.</strong> Реестр {@code bases} содержит только
  * открытые или не закрывшиеся {@link IBase}. При закрытии каждая база получает
  * независимую попытку; успешно закрытая запись немедленно удаляется, первая
  * ошибка возвращается вызывающему коду, последующие прикрепляются как
- * suppressed. Имя поколения очищается только после опустошения реестра, поэтому
- * неудачно закрывшиеся ресурсы остаются явно доступными для повторной попытки.</p>
+ * suppressed. Имя поколения и loaded ContextId очищаются только после
+ * опустошения реестра, поэтому неудачно закрывшиеся ресурсы остаются явно
+ * доступными для повторной попытки.</p>
  *
  * <p><strong>Переиндексация.</strong> {@link #reindex(IReactor, IMind)} строит
  * полное временное поколение через обычные {@link IBase} и затем публикует его
  * обратимой заменой трёх core-файлов. Сначала live-файлы перемещаются в
  * уникальные backup-пути, затем temporary-файлы устанавливаются на live-пути.
- * При исключении уже установленные файлы возвращаются во временные пути, а
- * backups восстанавливаются; ошибки rollback сохраняются как suppressed.
- * Это exception-atomic операция внутри работающего процесса, но не заявление
- * о crash-atomic многофайловой транзакции при внезапном завершении ОС.</p>
+ * Context sidecar не участвует в swap, поэтому reindex сохраняет identity
+ * исходного логического Context. При исключении уже установленные файлы
+ * возвращаются во временные пути, а backups восстанавливаются; ошибки rollback
+ * сохраняются как suppressed. Это exception-atomic операция внутри работающего
+ * процесса, но не заявление о crash-atomic многофайловой транзакции при
+ * внезапном завершении ОС.</p>
  *
  * <p><strong>Удаление и перечисление.</strong> {@link #remove(String)} удаляет
- * файлы явно выбранного поколения после закрытия текущего, включая delta и WAL.
- * Удаление является truthful lifecycle boundary: отсутствующее поколение и
- * оставшиеся после попытки удаления артефакты возвращаются как стабильные
- * {@link StorageLifecycleException}, а не как ложный success. {@link #list()}
- * выводит поколения по найденным {@code .store}-файлам и не открывает их для
- * проверки содержимого.</p>
+ * файлы явно выбранного поколения после закрытия текущего, включая context
+ * sidecar, delta и WAL. Удаление является truthful lifecycle boundary:
+ * отсутствующее поколение и оставшиеся после попытки удаления артефакты
+ * возвращаются как стабильные {@link StorageLifecycleException}, а не как
+ * ложный success. {@link #list()} выводит поколения по найденным
+ * {@code .store}-файлам и не открывает их для проверки содержимого.</p>
  *
  * <p><strong>Concurrency.</strong> Создаваемые базы получают общий статический
  * locker для согласования доступа к совместным index/store-файлам. Сам реестр
@@ -110,14 +120,20 @@ public class DB implements IData {
 
     private static final Object locker = new Object();
     private static final String STORE_SUFFIX = ".store";
+    private static final String CONTEXT_SUFFIX = ".context";
+    private static final int CONTEXT_MAGIC = 0x4B334354; // K3CT
+    private static final int CONTEXT_VERSION = 1;
+    private static final int CONTEXT_PAYLOAD_SIZE = 24;
+    private static final int CONTEXT_FILE_SIZE = 28;
     private static final String[] GENERATION_SUFFIXES = {
             ".index", STORE_SUFFIX, ".integrity"
     };
     private static final String[] REMOVAL_SUFFIXES = {
-            ".index", STORE_SUFFIX, ".integrity", ".integrity.delta"
+            ".index", STORE_SUFFIX, ".integrity", ".integrity.delta", CONTEXT_SUFFIX
     };
 
     private String storageName = "";
+    private UUID contextId = null;
     private Map<String, IBase> bases = new HashMap<String, IBase>();
     private IUser user = null;
 
@@ -132,7 +148,92 @@ public class DB implements IData {
         if (!isClosed()) {
             close();
         }
+        String dbPath = user.getDatabaseDir() + name;
+        UUID selectedContextId = loadOrCreateContextId(dbPath);
         storageName = name;
+        contextId = selectedContextId;
+    }
+
+    private UUID loadOrCreateContextId(String dbPath) throws Exception {
+        File contextFile = new File(dbPath + CONTEXT_SUFFIX);
+        if (contextFile.exists()) {
+            if (!contextFile.isFile()) {
+                throw contextCorruption(
+                        "DUMB context identity is not a regular file: "
+                                + contextFile.getPath());
+            }
+            return readContextId(contextFile.toPath());
+        }
+
+        if (nonContextStorageArtifactsExist(dbPath)) {
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_FORMAT_INCOMPATIBLE,
+                    "DUMB storage has no persisted ContextId: " + dbPath);
+        }
+
+        UUID created = UUID.randomUUID();
+        writeContextId(contextFile.toPath(), created);
+        return created;
+    }
+
+    private UUID readContextId(Path path) throws Exception {
+        byte[] bytes = Files.readAllBytes(path);
+        if (bytes.length != CONTEXT_FILE_SIZE) {
+            throw contextCorruption(
+                    "Invalid DUMB context identity length " + bytes.length
+                            + " at " + path);
+        }
+
+        CRC32 crc = new CRC32();
+        crc.update(bytes, 0, CONTEXT_PAYLOAD_SIZE);
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+        int magic = buffer.getInt();
+        int version = buffer.getInt();
+        long mostSignificantBits = buffer.getLong();
+        long leastSignificantBits = buffer.getLong();
+        long expectedCrc = buffer.getInt() & 0xffffffffL;
+        if (crc.getValue() != expectedCrc) {
+            throw contextCorruption(
+                    "DUMB context identity checksum mismatch at " + path);
+        }
+        if (magic != CONTEXT_MAGIC || version != CONTEXT_VERSION) {
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_FORMAT_INCOMPATIBLE,
+                    "Unsupported DUMB context identity format at " + path);
+        }
+
+        UUID id = new UUID(mostSignificantBits, leastSignificantBits);
+        if (id.getMostSignificantBits() == 0L
+                && id.getLeastSignificantBits() == 0L) {
+            throw contextCorruption(
+                    "DUMB context identity is zero at " + path);
+        }
+        return id;
+    }
+
+    private void writeContextId(Path path, UUID id) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(CONTEXT_FILE_SIZE);
+        buffer.putInt(CONTEXT_MAGIC);
+        buffer.putInt(CONTEXT_VERSION);
+        buffer.putLong(id.getMostSignificantBits());
+        buffer.putLong(id.getLeastSignificantBits());
+
+        CRC32 crc = new CRC32();
+        crc.update(buffer.array(), 0, CONTEXT_PAYLOAD_SIZE);
+        buffer.putInt((int) crc.getValue());
+
+        Path parent = path.toAbsolutePath().getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+        Files.write(path, buffer.array(),
+                StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+    }
+
+    private StorageLifecycleException contextCorruption(String message) {
+        return new StorageLifecycleException(
+                StorageLifecycleErrorCode.STORAGE_SEMANTIC_CORRUPTION,
+                message);
     }
 
     @Override
@@ -154,6 +255,7 @@ public class DB implements IData {
         }
         if (bases.isEmpty()) {
             storageName = "";
+            contextId = null;
         }
         if (failure != null) {
             throw failure;
@@ -240,8 +342,16 @@ public class DB implements IData {
     }
 
     private boolean storageArtifactsExist(String dbPath) throws IOException {
+        if (new File(dbPath + CONTEXT_SUFFIX).exists()) {
+            return true;
+        }
+        return nonContextStorageArtifactsExist(dbPath);
+    }
+
+    private boolean nonContextStorageArtifactsExist(String dbPath) throws IOException {
         for (String suffix : REMOVAL_SUFFIXES) {
-            if (new File(dbPath + suffix).exists()) {
+            if (!CONTEXT_SUFFIX.equals(suffix)
+                    && new File(dbPath + suffix).exists()) {
                 return true;
             }
         }
@@ -340,6 +450,13 @@ public class DB implements IData {
             String temporaryPath = dbPath + "-temporary";
             replaceGeneration(dbPath, temporaryPath);
 
+            /*
+             * ContextId belongs to the logical Context and is deliberately not
+             * one of GENERATION_SUFFIXES. The temporary Context identity was
+             * needed only to build the replacement generation and must not
+             * replace the canonical live sidecar.
+             */
+            new File(temporaryPath + CONTEXT_SUFFIX).delete();
             new File(dbPath + ".integrity.delta").delete();
             deleteRecoveryLogs(dbPath);
             new File(temporaryPath + ".integrity.delta").delete();
@@ -472,6 +589,11 @@ public class DB implements IData {
     @Override
     public String getStorageName() {
         return storageName;
+    }
+
+    @Override
+    public UUID getContextId() {
+        return contextId;
     }
 
     @Override
