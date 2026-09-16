@@ -46,4 +46,6 @@ Full Maven and canonical Java 8/21 qualification are still outstanding: this env
 
 The next direct-access opportunity is now measured: [occurrence materialization observation](latent-substitution-occurrence-reuse.md). Within a rotator, 344,680 of 437,729 corpus Domain-resolution slots repeat; no ordered-reference changes were observed. All lookups still execute. Step/Sapato lookup also calls setMind, rebinding Domain/TVariables, so an audit of that effect must precede any actual skipped lookup. Scoped list reuse remains only a candidate.
 
+Context rebinding now has an [executable counterexample](latent-substitution-domain-context.md): Domain may still point to child while its TVariable has switched to root through a separate factory lookup. Identical pointers and a Domain-only context guard are insufficient. Any scoped list-reuse prototype must preserve rebinding and separately qualify canonical lookup/hydration behavior.
+
 Nothing here authorizes default enablement, removing the old traversal, or merge/release/tag/deploy.

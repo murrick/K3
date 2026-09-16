@@ -1,0 +1,6 @@
+same-pointer=true; retained-parent-pointer-now-has-child-context=true
+domain-context=child; variable-context=root; domain-only-context-guard-insufficient=true
+reference-lookup-restores-variable-context=true
+explicit-setMind-restores-variable-context=true; stable-owner-unchanged=true
+rollback-followed-by-root-lookup-restores-root-context=true
+DOMAIN_CONTEXT_PASS
