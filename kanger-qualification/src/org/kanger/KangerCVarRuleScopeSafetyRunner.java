@@ -20,6 +20,7 @@ import java.lang.reflect.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -46,12 +47,14 @@ public final class KangerCVarRuleScopeSafetyRunner {
             verifyRuleScopedChildren(mind);
             verifyGeneratedMaterializationConvergence();
             verifyQueryProjectionIsolation();
+            verifyForeignUnnamedWitnessProjection();
 
             System.out.println("CVAR_RULE_SCOPE_PASS per-rule identity");
             System.out.println("CVAR_RULE_SCOPE_PASS selective unlink");
             System.out.println("CVAR_RULE_SCOPE_PASS generated materialization convergence");
             System.out.println("CVAR_RULE_SCOPE_PASS transient witness exclusion from Values");
             System.out.println("CVAR_RULE_SCOPE_PASS query projection isolation");
+            System.out.println("CVAR_RULE_SCOPE_PASS foreign unnamed witness projection");
             System.out.println("CVAR_RULE_SCOPE_OK");
             exitCode = 0;
         } catch (Throwable error) {
@@ -169,6 +172,68 @@ public final class KangerCVarRuleScopeSafetyRunner {
         mind.compile("!@x (a(x) || b(x)) && ~(a(x) && b(x)); !a(nnn);");
         require(Boolean.FALSE.equals(mind.query("?$x a(x) && b(x);", null, false)),
                 "existential XOR query must remain false");
+    }
+
+    /**
+     * SMART-free forensic probe for a future foreign-value projection.
+     *
+     * <p>The target Mind deliberately has no verbal John. A normal KANGER
+     * existential witness is used as the stand-in for a foreign John that has
+     * already been fixed by the initiating context. The existing linker must
+     * be able to reason through that witness without identifying it with the
+     * target context's named Peter.</p>
+     */
+    private static void verifyForeignUnnamedWitnessProjection() throws Exception {
+        String suffix = Long.toString(System.nanoTime());
+        User user = (User) UserFactory.createUser("cvar-foreign-witness-" + suffix,
+                "cvar-foreign-witness-" + suffix);
+        new UDF().init(user);
+        new DB().init(user);
+        Mind mind = (Mind) new Mind(user).clearWorkspace();
+
+        require(mind.getTerms().find("John") == null,
+                "target context must start without a verbal John");
+        require(mind.compile("!r(Peter); !@x p(x) -> q(x);"),
+                "foreign witness fixture must compile");
+
+        Rule projected = (Rule) mind.compileLine(
+                "!$x p(x);", false, new LinkedList<ITerm>());
+        require(projected != null,
+                "existential stand-in must compile as an ordinary KANGER rule");
+
+        Term witness = null;
+        for (List<Domain> branch : projected.getTree()) {
+            for (Domain domain : branch) {
+                for (IArgument argument : domain.getArguments()) {
+                    if (!argument.isEmpty(mind)) {
+                        ITerm value = argument.getValue(mind);
+                        if (value != null && value.isCVariable()) {
+                            witness = (Term) value;
+                        }
+                    }
+                }
+            }
+        }
+
+        require(witness != null,
+                "projected fact must contain an existential witness");
+        require(witness.getRuleId() == projected.getId(),
+                "foreign witness stand-in must belong to the projected fact scope");
+        require(mind.getTerms().find("John") == null,
+                "creating the witness must not verbalize John in the target context");
+
+        require(!Boolean.TRUE.equals(mind.query("?r(?);", new Object[]{witness}, false)),
+                "unnamed foreign witness must not alias the named Peter");
+        require(!Boolean.TRUE.equals(mind.query("?p(Peter);", null, false)),
+                "projected p(witness) must not collapse to p(Peter)");
+
+        require(Boolean.TRUE.equals(mind.query("?q(?);", new Object[]{witness}, false)),
+                "ordinary linker must propagate p(witness) through p(x)->q(x)");
+        require(!Boolean.TRUE.equals(mind.query("?q(Peter);", null, false)),
+                "propagated witness must remain distinct from Peter");
+
+        require(mind.getTerms().find("John") == null,
+                "inference through the witness must not verbalize John");
     }
 
     private static IRule rule(final long id) {
