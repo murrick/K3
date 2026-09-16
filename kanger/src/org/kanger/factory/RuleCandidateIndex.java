@@ -310,11 +310,19 @@ final class RuleCandidateIndex {
     /** Immutable ID-only rows; repeated domain occurrences retain their order. */
     private static final class OccurrenceRows {
         private final Map<SignatureKey, long[]> rows = new HashMap<>();
+        private final Map<Long, String> argumentPlans;
 
         private OccurrenceRows(Rule rule) throws Exception {
+            argumentPlans = Boolean.getBoolean("kanger.experiment.argumentPlan") ? new HashMap<Long, String>() : null;
             Map<SignatureKey, List<Long>> building = new HashMap<>();
             for (List<Domain> branch : rule.getTree()) {
                 for (Domain domain : branch) {
+                    if (argumentPlans != null) {
+                        StringBuilder plan = new StringBuilder();
+                        for (int i = 0; i < domain.getRange(); i++)
+                            plan.append(domain.get(i).getType() == ArgumentType.TVARIABLE ? 'v' : '.');
+                        argumentPlans.put(domain.getId(), plan.toString());
+                    }
                     // Arity zero intentionally denotes predicate/polarity only:
                     // this reproduces Linker's gate without adding restrictions.
                     SignatureKey key = new SignatureKey(domain.getPredicateId(), domain.isAntc(), 0);
@@ -354,6 +362,17 @@ final class RuleCandidateIndex {
     private static final long[] NO_OCCURRENCES = new long[0];
 
     boolean hasOccurrenceIndex() { return occurrencesEnabled; }
+
+    String findArgumentPlan(long ruleId, long domainId) {
+        readLock.lock();
+        try {
+            OccurrenceRows value = occurrences.get(ruleId);
+            if (value == null) return null;
+            if (value.argumentPlans == null || !value.argumentPlans.containsKey(domainId))
+                throw new AssertionError("Missing structural argument plan: " + ruleId + "/" + domainId);
+            return value.argumentPlans.get(domainId);
+        } finally { readLock.unlock(); }
+    }
 
     private void replaceOccurrences(long id, OccurrenceRows rows) {
         if (!occurrenceJournals.isEmpty() && !occurrenceJournals.peek().containsKey(id)) {

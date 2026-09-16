@@ -99,6 +99,15 @@ public final class LatentSubstitutionLifecycleRunner {
         if (System.getProperty("kanger.experiment.latent", "off").startsWith("factory")) {
             long before = builds(mind);
             for (int repeat = 0; repeat < 2; repeat++) {
+                if (Boolean.getBoolean("kanger.experiment.argumentPlan")) {
+                    for (Domain domain : domains) {
+                        String plan = mind.getRules().getLatentArgumentPlan(domain);
+                        require(plan.length() == domain.getRange(), label + " argument plan length");
+                        for (int i = 0; i < plan.length(); i++)
+                            require((plan.charAt(i) == 'v') == (domain.get(i).getType()
+                                    == org.kanger.enums.ArgumentType.TVARIABLE), label + " argument plan position");
+                    }
+                }
                 for (Domain source : domains) for (IRule rule : rules) {
                     List<Domain> want = new ArrayList<>();
                     for (List<Domain> branch : ((Rule) rule).getTree()) for (Domain d : branch) {

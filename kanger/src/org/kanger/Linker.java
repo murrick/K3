@@ -162,6 +162,7 @@ public class Linker {
     private Set<Long> shadowRules;
     private boolean shadowActivation;
     private boolean tracePairInputs;
+    private boolean argumentPlan;
 
     /**
      * Query-local tuple index used only while Linker rotates substitutions.
@@ -441,6 +442,9 @@ public class Linker {
         final boolean traceTuples = Boolean.getBoolean("kanger.experiment.traceTuples");
         shadowActivation = Boolean.getBoolean("kanger.experiment.shadowActivation");
         shadowRules = null;
+        argumentPlan = Boolean.getBoolean("kanger.experiment.argumentPlan");
+        if (argumentPlan && !System.getProperty("kanger.experiment.latent", "off").startsWith("factory"))
+            throw new IllegalArgumentException("argumentPlan requires factory mode selected before Mind construction");
         tracePairInputs = Boolean.getBoolean("kanger.experiment.tracePairInputs")
                 || Boolean.getBoolean("kanger.experiment.verifyPairOutputs");
 
@@ -982,6 +986,10 @@ public class Linker {
         return ids.toString();
     }
 
+    private boolean plannedVariable(Domain domain, String plan, int position) {
+        return plan == null ? domain.get(position).getType() == ArgumentType.TVARIABLE : plan.charAt(position) == 'v';
+    }
+
     private boolean linkDomains(List<Domain> treeSlave, Collection<IRule> ruleList, Map<IRule, Set<Cause>> causes, boolean logging,
             Map<IRule, Map<DomainKey, List<Domain>>> latent, boolean verify, boolean factory) throws Exception {
 
@@ -996,6 +1004,8 @@ public class Linker {
                         for (Domain master : treeMaster) {
                             statistics.incrementDomainPairs();
                             if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
+                                String masterPlan = argumentPlan ? mind.getRules().getLatentArgumentPlan(master) : null;
+                                String slavePlan = argumentPlan ? mind.getRules().getLatentArgumentPlan(slave) : null;
                                 long operationId = statistics.incrementUnificationAttempts(
                                         currentPass == 1, rule.isQuery(), rule.isGenerated());
                                 if (tracePairInputs) statistics.observePairInput(
@@ -1022,7 +1032,7 @@ public class Linker {
                                 boolean blockLeft = false;
 
                                 for (int i = 0; i < master.getRange(); ++i) {
-                                    if (master.get(i).getType() == ArgumentType.TVARIABLE) {
+                                    if (plannedVariable(master, masterPlan, i)) {
                                     } else if (slave.get(i).isEmpty(mind) || master.get(i).isEmpty(mind)) {
                                     } else if (master.get(i).getValue(mind).getId() == slave.get(i).getValue(mind).getId()) {
                                     } else {
@@ -1031,7 +1041,7 @@ public class Linker {
                                 }
 
                                 for (int i = 0; i < slave.getRange(); ++i) {
-                                    if (slave.get(i).getType() == ArgumentType.TVARIABLE) {
+                                    if (plannedVariable(slave, slavePlan, i)) {
                                     } else if (slave.get(i).isEmpty(mind) || master.get(i).isEmpty(mind)) {
                                     } else if (master.get(i).getValue(mind).getId() == slave.get(i).getValue(mind).getId()) {
                                     } else {
@@ -1044,7 +1054,7 @@ public class Linker {
 
                                         // Подстановка снизу вверх
                                         if (!blockRight) {
-                                            if (master.get(i).getType() == ArgumentType.TVARIABLE /*&& master.get(i).isEmpty(mind)*/) {
+                                            if (plannedVariable(master, masterPlan, i) /*&& master.get(i).isEmpty(mind)*/) {
                                                 if (!slave.get(i).isEmpty(mind)) {
                                                     Term tm = (Term) slave.get(i).getValue(mind);
                                                     TVariable t = (TVariable) master.get(i).getObject(mind);
@@ -1075,7 +1085,7 @@ public class Linker {
 
                                         // Подстановка сверху вниз
                                         if (!blockLeft) {
-                                            if (slave.get(i).getType() == ArgumentType.TVARIABLE && slave.get(i).isEmpty(mind)) {
+                                            if (plannedVariable(slave, slavePlan, i) && slave.get(i).isEmpty(mind)) {
                                                 if (!master.get(i).isEmpty(mind)) {
 
                                                     Term tm = (Term) master.get(i).getValue(mind);

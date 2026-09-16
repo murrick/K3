@@ -24,6 +24,7 @@
  */
 
 package org.kanger.factory;
+import org.kanger.enums.ArgumentType;
 
 import org.kanger.GeneratedCVarMaterializer;
 import org.kanger.Mind;
@@ -518,6 +519,21 @@ public class RuleFactory implements IFactory<IRule> {
         long[] ids = candidateIndex.findOccurrences(ruleId, predicateId, antc);
         if (ids != null) return ids;
         return parentIndex == null ? null : parentIndex.findLatentOccurrences(ruleId, predicateId, antc);
+    }
+
+    /** Immutable direct-TVariable position mask; choose the experiment before creating Mind. */
+    public String getLatentArgumentPlan(Domain domain) throws Exception {
+        ensureDomainIndex();
+        String plan = candidateIndex.findArgumentPlan(domain.getRuleId(), domain.getId());
+        if (plan == null && parentIndex != null) return parentIndex.getLatentArgumentPlan(domain);
+        if (plan == null) throw new AssertionError("Missing argument-plan Rule " + domain.getRuleId());
+        if ("factory-verify".equals(System.getProperty("kanger.experiment.latent"))) {
+            if (plan.length() != domain.getRange()) throw new AssertionError("Argument plan length changed");
+            for (int i = 0; i < plan.length(); i++)
+                if ((plan.charAt(i) == 'v') != (domain.get(i).getType() == ArgumentType.TVARIABLE))
+                    throw new AssertionError("Argument plan type changed: " + domain.getId() + "/" + i);
+        }
+        return plan;
     }
 
     /**
