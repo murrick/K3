@@ -34,7 +34,9 @@ public final class LatentSubstitutionBenchmarkRunner {
                 ? ",sync_calls,sync_scans,sync_skips,sync_fallbacks,group_visits,new_slots,sum_list_lengths,unchanged_groups,verify_groups,verify_slots,peak_groups,peak_tuples" : "")
                 + (Boolean.getBoolean("kanger.experiment.benchFingerprint") ? ",semantic_sha256" : ""));
         if (Boolean.getBoolean("kanger.experiment.benchScaled")) {
-            for (int size : new int[]{10, 30}) {
+            for (String sizeText : System.getProperty("kanger.experiment.benchEdgeSizes", "10,30").split(",")) {
+                int size = Integer.parseInt(sizeText.trim());
+                if (size <= 0) throw new IllegalArgumentException("Edge fixture size must be positive");
                 StringBuilder source = new StringBuilder();
                 for (int i = 0; i < size; i++) source.append("!edge(").append(i).append(',').append(i + 1).append(");\n");
                 source.append("!@x @y edge(x,y) -> edge(y,x); !@x @y edge(x,y) -> path(x,y);");

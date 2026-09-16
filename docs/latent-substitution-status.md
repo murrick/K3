@@ -52,4 +52,6 @@ The [scoped list-reuse prototype](latent-substitution-occurrence-prototype.md) n
 
 The retained reuse-loop [rebinding cost](latent-substitution-rebinding-cost.md) is small in one diagnostic JVM: native 0.523 ms/query, median sample share 0.445%; facts 0.052 ms, 0.133%. This does not measure all setMind callers, but gives no reason to weaken context semantics or further optimize that loop now. List reuse remains disabled.
 
+An enlarged [50/100-edge profile](latent-substitution-larger-topology.md) exposes a filtering limit: factory removes only 3.31%/1.72% of last-invocation domain visits, with 52,599/205,199 unifications unchanged. Whole-query profiles point mainly to retained linkDomains work. This homogeneous-signature fixture is not evidence for globally sparse topology. Larger heterogeneous signatures and internal semantic-pair cost are the next useful comparisons.
+
 Nothing here authorizes default enablement, removing the old traversal, or merge/release/tag/deploy.
