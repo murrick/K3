@@ -452,6 +452,28 @@ public class RuleFactory implements IFactory<IRule> {
         return result;
     }
 
+    /** Raw topology snapshot for an already chosen Rule set; deliberately no visibility/value filtering. */
+    public Map<Long, Set<Long>> snapshotDomainRuleIds(boolean antc, Set<Long> activeIds) throws Exception {
+        Map<Long, Set<Long>> result = parentIndex == null ? new HashMap<Long, Set<Long>>()
+                : parentIndex.snapshotDomainRuleIds(antc, activeIds);
+        ensureDomainIndex();
+        synchronized (metadataLock) {
+            for (Map.Entry<DomainKey, LinkedHashSet<Long>> entry : localDomainIndex.entrySet()) {
+                if (entry.getKey().antc != antc) continue;
+                for (long id : entry.getValue()) {
+                    if (!activeIds.contains(id)) continue;
+                    Set<Long> bucket = result.get(entry.getKey().predicateId);
+                    if (bucket == null) {
+                        bucket = new LinkedHashSet<>();
+                        result.put(entry.getKey().predicateId, bucket);
+                    }
+                    bucket.add(id);
+                }
+            }
+        }
+        return result;
+    }
+
     private void collectCandidateIds(Domain source,
                                      boolean candidateAntc,
                                      LinkedHashSet<Long> result) throws Exception {

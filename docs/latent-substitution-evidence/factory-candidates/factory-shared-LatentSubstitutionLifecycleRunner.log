@@ -1,0 +1,14 @@
+LIFECYCLE empty signatures=0
+LIFECYCLE compiled-and-produced signatures=3
+LIFECYCLE query-finished signatures=3
+LIFECYCLE child-produced signatures=5
+LIFECYCLE parent-during-child signatures=3
+LIFECYCLE child-rolled-back signatures=3
+LIFECYCLE child-committed signatures=3
+LIFECYCLE rejected-collision signatures=3
+LIFECYCLE deletion signatures=3
+LIFECYCLE storage-compiled signatures=6
+LIFECYCLE storage-closed signatures=0
+LIFECYCLE storage-reopened signatures=6
+LIFECYCLE replacement-generation signatures=1
+LATENT_LIFECYCLE_PASS

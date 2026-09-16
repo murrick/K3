@@ -372,6 +372,42 @@ public class Linker {
         return filtered;
     }
 
+    private Map<DomainKey, List<IRule>> buildFactoryDomainIndex(Collection<IRule> rules) throws Exception {
+        final Map<Long, Integer> rank = new HashMap<>();
+        Map<Long, IRule> active = new HashMap<>();
+        for (IRule rule : rules) {
+            rank.put(rule.getId(), rank.size());
+            active.put(rule.getId(), rule);
+        }
+        Map<DomainKey, List<IRule>> result = new HashMap<>();
+        for (boolean antc : new boolean[]{false, true}) {
+            for (Map.Entry<Long, Set<Long>> entry : mind.getRules().snapshotDomainRuleIds(antc, active.keySet()).entrySet()) {
+                List<IRule> bucket = new ArrayList<>();
+                for (long id : entry.getValue()) bucket.add(active.get(id));
+                Collections.sort(bucket, new Comparator<IRule>() {
+                    @Override public int compare(IRule a, IRule b) {
+                        return Integer.compare(rank.get(a.getId()), rank.get(b.getId()));
+                    }
+                });
+                result.put(new DomainKey(entry.getKey(), antc), bucket);
+            }
+        }
+        return result;
+    }
+
+    private void verifyFactoryDomainIndex(Collection<IRule> rules, Map<DomainKey, List<IRule>> result) throws Exception {
+        if ("factory-verify".equals(System.getProperty("kanger.experiment.latent"))) {
+            Map<DomainKey, List<IRule>> reference = buildDomainIndex(rules);
+            if (!reference.keySet().equals(result.keySet())) throw new AssertionError("Factory candidate signature mismatch");
+            for (DomainKey key : reference.keySet()) {
+                List<IRule> expected = reference.get(key), actual = result.get(key);
+                if (expected.size() != actual.size()) throw new AssertionError("Factory candidate count mismatch");
+                for (int i = 0; i < expected.size(); i++)
+                    if (expected.get(i) != actual.get(i)) throw new AssertionError("Factory candidate identity/order mismatch");
+            }
+        }
+    }
+
     private void addOppositeNatives(Set<IRule> ruleSet,
                                     IRule source,
                                     Set<DomainKey> expanded,
@@ -531,8 +567,18 @@ public class Linker {
             });
 
 
-            rotator(leftList, causes, logging);
-            rotator(ruleList, causes, logging);
+            Map<DomainKey, List<IRule>> ascending = null, descending = null;
+            if (Boolean.getBoolean("kanger.experiment.factoryCandidates")) {
+                ascending = buildFactoryDomainIndex(ruleList);
+                descending = new HashMap<>();
+                for (Map.Entry<DomainKey, List<IRule>> entry : ascending.entrySet()) {
+                    List<IRule> reversed = new ArrayList<>(entry.getValue());
+                    Collections.reverse(reversed);
+                    descending.put(entry.getKey(), reversed);
+                }
+            }
+            rotator(leftList, causes, logging, descending);
+            rotator(ruleList, causes, logging, ascending);
             if (traceBindings) recordBindingChanges(bindingsBefore);
             if (traceTuples) recordTupleChanges(tuplesBefore, bindingsBefore);
             if (shadowActivation) {
@@ -717,10 +763,12 @@ public class Linker {
         }
     }
 
-    private boolean rotator(final Collection<IRule> ruleList, final Map<IRule, Set<Cause>> causes, final boolean logging) throws Exception {
+    private boolean rotator(final Collection<IRule> ruleList, final Map<IRule, Set<Cause>> causes, final boolean logging,
+                            final Map<DomainKey, List<IRule>> preparedIndex) throws Exception {
 
         boolean used = false;
-        final Map<DomainKey, List<IRule>> domainIndex = buildDomainIndex(ruleList);
+        final Map<DomainKey, List<IRule>> domainIndex = preparedIndex == null ? buildDomainIndex(ruleList) : preparedIndex;
+        if (preparedIndex != null) verifyFactoryDomainIndex(ruleList, domainIndex);
         // Experimental, discardable snapshot. Default remains the reference path.
         final String latentMode = System.getProperty("kanger.experiment.latent", "off");
         final boolean factoryLatent = "factory".equals(latentMode) || "factory-verify".equals(latentMode);
