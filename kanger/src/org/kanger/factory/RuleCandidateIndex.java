@@ -245,6 +245,12 @@ final class RuleCandidateIndex {
             return ids == null ? new LinkedHashSet<Long>() : new LinkedHashSet<>(ids);
         }
 
+        // Borrow only while the owning candidate index lock is held. Never mutate.
+        java.util.Set<Long> viewLocked(K key) {
+            java.util.Set<Long> ids = values.get(key);
+            return ids == null ? java.util.Collections.<Long>emptySet() : ids;
+        }
+
         void clear() {
             values.clear();
             journals.clear();
@@ -681,18 +687,19 @@ final class RuleCandidateIndex {
                 if (profile != null) ++profile[2];
                 return;
             }
-            LinkedHashSet<Long> fallback = fallbackSignatures.get(signature);
-            for (int position = 0; position < resolvedTermIds.length; ++position) {
-                Long termId = resolvedTermIds[position];
-                if (termId == null) continue;
-                LinkedHashSet<Long> compatible = positions.get(
-                        new PositionKey(signature, position, termId));
-                compatible.addAll(positions.get(
-                        new PositionKey(signature, position, WILDCARD_TERM_ID)));
-                compatible.addAll(fallback);
-                selected.retainAll(compatible);
-                if (selected.isEmpty()) return;
+            if (Boolean.getBoolean("kanger.experiment.membershipFilter")) {
+                LinkedHashSet<Long> expected = "factory-verify".equals(
+                        System.getProperty("kanger.experiment.latent")) ? new LinkedHashSet<>(selected) : null;
+                filterResolvedMembership(signature, resolvedTermIds, selected);
+                if (expected != null) {
+                    filterResolvedReference(signature, resolvedTermIds, expected);
+                    if (!new ArrayList<>(selected).equals(new ArrayList<>(expected)))
+                        throw new AssertionError("Resolved membership filter ID/order mismatch");
+                }
+            } else {
+                filterResolvedReference(signature, resolvedTermIds, selected);
             }
+            if (selected.isEmpty()) return;
             observedVersion = version;
             if (batchEligible) {
                 Map<BatchKey, BatchSummary> byKey = batchSummaries.get(activeMind);
@@ -738,6 +745,39 @@ final class RuleCandidateIndex {
         }
         result.addAll(selected);
         if (profile != null) profile[5] += System.nanoTime() - start;
+    }
+
+    /** Both filters require the owning write lock; only the copied selected set changes. */
+    private void filterResolvedMembership(SignatureKey signature, Long[] terms,
+                                           LinkedHashSet<Long> selected) {
+        java.util.Set<Long> fallback = fallbackSignatures.viewLocked(signature);
+        for (int position = 0; position < terms.length; ++position) {
+            Long termId = terms[position];
+            if (termId == null) continue;
+            java.util.Set<Long> exact = positions.viewLocked(new PositionKey(signature, position, termId));
+            java.util.Set<Long> wildcard = positions.viewLocked(
+                    new PositionKey(signature, position, WILDCARD_TERM_ID));
+            java.util.Iterator<Long> iterator = selected.iterator();
+            while (iterator.hasNext()) {
+                Long id = iterator.next();
+                if (!fallback.contains(id) && !exact.contains(id) && !wildcard.contains(id)) iterator.remove();
+            }
+            if (selected.isEmpty()) return;
+        }
+    }
+
+    private void filterResolvedReference(SignatureKey signature, Long[] terms,
+                                          LinkedHashSet<Long> selected) {
+        LinkedHashSet<Long> fallback = fallbackSignatures.get(signature);
+        for (int position = 0; position < terms.length; ++position) {
+            Long termId = terms[position];
+            if (termId == null) continue;
+            LinkedHashSet<Long> compatible = positions.get(new PositionKey(signature, position, termId));
+            compatible.addAll(positions.get(new PositionKey(signature, position, WILDCARD_TERM_ID)));
+            compatible.addAll(fallback);
+            selected.retainAll(compatible);
+            if (selected.isEmpty()) return;
+        }
     }
 
     private Long resolvedTermId(IArgument argument, Mind mind) throws Exception {
