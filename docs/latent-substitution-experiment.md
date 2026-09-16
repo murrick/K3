@@ -1,5 +1,7 @@
 # Latent substitution index: first experiment
 
+Historical first checkpoint. See [current experiment status](latent-substitution-status.md) for subsequent implementation, qualification, and limitations.
+
 Date: 2026-09-15. Base: `develop/3.7.0` at
 `3ad50f1e5253304f6b530de11c078f332ea4db89`.
 Branch: `experiment/latent-substitution-index`. Post-3.7 experiment only.

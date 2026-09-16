@@ -262,7 +262,8 @@ public class Linker {
         long version = mind.ruleSolvesVersion();
         if (enabled && !exposed && version == lastSolveVersion) {
             statistics.recordSolveSync(2);
-            if ("factory-verify".equals(System.getProperty("kanger.experiment.latent"))) {
+            if (Boolean.getBoolean("kanger.experiment.verifySolveSync")
+                    || "factory-verify".equals(System.getProperty("kanger.experiment.latent"))) {
                 Map<TVariableSet, Integer> before = new HashMap<>(indexedSolveCounts);
                 int indexedBefore = indexedSolves.size();
                 synchronizeSolveIndexReference(true);
