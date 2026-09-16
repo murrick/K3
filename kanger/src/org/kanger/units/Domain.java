@@ -580,7 +580,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                     if (a.isCVariable()) {
                         hash = 47 * hash + (i + 1) * getVarOrder(mind, i);
                     } else {
-                        hash = 47 * hash + (i + 1) * a.getHash();
+                        hash = 47 * hash + (i + 1) * ((IUnit<?>) a).getHash();
                     }
                     break;
                 case FUNCTION:
