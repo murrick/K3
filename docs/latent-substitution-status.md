@@ -40,6 +40,8 @@ Standalone OFF/ON timings are now complete: [measurement report](latent-substitu
 
 Actual factory occurrence graph accounting is now available for six fixtures: [footprint report](latent-substitution-factory-footprint.md). Native reachable size is 41,616 bytes (38,544 without boxed IDs); row reconstruction is about 0.11 ms in two JVMs. These are neither exclusive retained heap nor full compilation/storage-open overhead. Parent/child sharing, incremental publication/open cost and broader corpora remain measurement gaps.
 
+Full publication and warm storage-reopen measurements now cover two small chain-rule databases: [operation report](latent-substitution-publication-open.md). All 60 measured samples preserve rule fingerprints and expected query outcomes. Timing is mixed: publication slows on 10 seed facts and improves on 30, while reopen varies. This measures total operation cost, not isolated index overhead; larger/cold databases remain unmeasured.
+
 Full Maven and canonical Java 8/21 qualification are still outstanding: this environment uses OpenJDK 17 and ECJ with Java 8 source target. The baseline cannot compile `labyrinth.k` here; it remains an explicit exclusion, not a passing fixture.
 
 Nothing here authorizes default enablement, removing the old traversal, or merge/release/tag/deploy.
