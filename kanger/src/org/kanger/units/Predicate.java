@@ -207,7 +207,7 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
                 return 0;
             }
             int hash = 3;
-            hash = 47 * hash + semanticName.getHash();
+            hash = 47 * hash + ((IUnit<?>) semanticName).getHash();
             hash = 47 * hash + range;
             return hash;
         } catch (Exception e) {
