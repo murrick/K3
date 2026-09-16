@@ -54,16 +54,6 @@ public interface ITerm extends Comparable<Object> {
     long getId();
 
     /**
-     * Возвращает context-independent candidate hash логического значения.
-     * Operational ID, Mind и transaction provenance не являются частью этого
-     * ключа. Совпадение hash означает только semantic candidate и должно быть
-     * подтверждено {@link #equalsTo(ITerm)}.
-     *
-     * @return hash канонического представления терма
-     */
-    int getHash();
-
-    /**
      * Возвращает неизменяемое логическое значение обычного терма. Для
      * служебного u-свидетеля значение может отсутствовать; вычисляемые значения
      * t-переменных и функций принадлежат соответствующим argument/value узлам,
