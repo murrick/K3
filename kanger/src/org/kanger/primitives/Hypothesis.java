@@ -201,7 +201,7 @@ public class Hypothesis implements IHypothesis {
     public int getHash(Mind mind) {
         int hash = 3;
         hash = 47 * hash + (antc ? 1 : 0);
-        hash = 47 * hash + (int) (predicate.getId() ^ (predicate.getId() >>> 32));
+        hash = 47 * hash + ((Predicate) predicate).getHash();
         hash = 47 * hash + arguments.getHash(mind);
         return hash;
     }
