@@ -53,7 +53,7 @@ class CanonicalTimeZoneCommandTest {
             assertTrue(result.isHandled());
             assertTrue(result.isSuccess());
             assertSame(fixture.root, result.getMind());
-            assertEquals("session.timezone=Europe/Brussels",
+            assertEquals("Session timezone: Europe/Brussels",
                     result.getDescription());
             assertEquals("Europe/Brussels", fixture.user.getTimeZone());
         } finally {
@@ -76,7 +76,7 @@ class CanonicalTimeZoneCommandTest {
             assertSame(fixture.root, result.getMind());
             assertSame(fixture.root, fixture.user.getCurrentMind());
             assertEquals("Asia/Tokyo", fixture.user.getTimeZone());
-            assertEquals("session.timezone=Asia/Tokyo",
+            assertEquals("Session timezone: Asia/Tokyo",
                     result.getDescription());
         } finally {
             fixture.close();

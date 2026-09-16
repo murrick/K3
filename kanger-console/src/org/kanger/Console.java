@@ -926,8 +926,8 @@ public class Console {
 
     public static void showCopyrigt() {
         System.out.printf("KANGER III, Version %s\n"
-                + "Copyright (C) 1986-%d, Dmitry G. Quznetsov, All rights reserved!\n"
-                + "Compiled: %s\n", Version.VERSION_S, Version.YEAR, Version.DATE_S);
+                + "Copyright (C) 1986-%d, Dmitry G. Quznetsov, All rights reserved!\n%s\n"
+                + "Compiled: %s\n", Version.VERSION_S, Version.YEAR, Version.BUILD_CREDIT, Version.DATE_S);
     }
 
     public static void showOptionsHelp() {

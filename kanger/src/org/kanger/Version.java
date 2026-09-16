@@ -104,8 +104,7 @@ public abstract class Version {
 
     private static String buildDateDisplay() {
         Date date = parseDate(DATE);
-        String display = date == null ? "unavailable" : formatDate(date);
-        return display + "\n" + BUILD_CREDIT;
+        return date == null ? "unavailable" : formatDate(date);
     }
 
     private static int buildYear() {

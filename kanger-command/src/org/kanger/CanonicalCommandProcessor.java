@@ -183,7 +183,7 @@ public final class CanonicalCommandProcessor {
     }
 
     private String timezoneStatus(IUser user) {
-        return "session.timezone=" + user.getTimeZone();
+        return "Session timezone: " + user.getTimeZone();
     }
 
     private Result commit(IUser user, IMind mind) throws Exception {
