@@ -30,6 +30,7 @@ import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 
 import java.util.Collection;
+import java.util.UUID;
 
 /**
  * Внутренняя граница storage-плагина, владеющего одним выбранным физическим
@@ -75,11 +76,13 @@ import java.util.Collection;
  *
  * <p><strong>Наблюдаемость.</strong> {@link #isClosed()} и
  * {@link #getStorageName()} описывают состояние физического generation, а не
- * наличие активного query или child transaction. {@link #telemetry()} может
- * публиковать только уже существующее дешёвое состояние активного generation;
- * он не должен перечислять namespace, гидратировать semantic objects или
- * инициировать lifecycle. {@link #list()} перечисляет доступные storage names
- * и не является перечислением схем текущего Mind.</p>
+ * наличие активного query или child transaction. {@link #getContextId()}
+ * возвращает устойчивую semantic identity storage-контекста, если конкретный
+ * provider её поддерживает. {@link #telemetry()} может публиковать только уже
+ * существующее дешёвое состояние активного generation; он не должен перечислять
+ * namespace, гидратировать semantic objects или инициировать lifecycle.
+ * {@link #list()} перечисляет доступные storage names и не является
+ * перечислением схем текущего Mind.</p>
  *
  * <p><strong>Concurrency, failure и compatibility.</strong> Интерфейс не
  * обещает конкурентное управление одним generation несколькими независимыми
@@ -188,6 +191,21 @@ public interface IData {
      *         если generation не открыт
      */
     String getStorageName();
+
+    /**
+     * Возвращает устойчивую semantic identity выбранного storage Context.
+     *
+     * <p>Identity принадлежит логическому Context, а не schema/base и не
+     * конкретному physical generation. Поэтому migration или reindex не должны
+     * менять это значение. Default сохраняет совместимость вспомогательных и
+     * legacy providers, ещё не участвующих в multi-context runtime.</p>
+     *
+     * @return persistent ContextId либо {@code null}, если provider пока не
+     *         публикует context identity
+     */
+    default UUID getContextId() {
+        return null;
+    }
 
     /**
      * Получает или создаёт schema-specific base в текущем generation.
