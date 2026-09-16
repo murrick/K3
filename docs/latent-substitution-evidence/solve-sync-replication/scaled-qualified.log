@@ -1,0 +1,14 @@
+BENCH_COMPILE symmetric-edges-10 0
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[1276, 2, 1274, 0]
+BENCH_QUERY symmetric-edges-10 0
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[1980, 23, 1957, 0]
+BENCH_END symmetric-edges-10 0
+BENCH_COMPLETE symmetric-edges-10
+BENCH_COMPILE symmetric-edges-30 0
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[9796, 2, 9794, 0]
+BENCH_QUERY symmetric-edges-30 0
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[14880, 63, 14817, 0]
+BENCH_END symmetric-edges-30 0
+BENCH_COMPLETE symmetric-edges-30
