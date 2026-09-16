@@ -59,6 +59,8 @@ public final class LinkerStatistics {
     // 0..4: selection, linking, functions, database, update (non-overlapping).
     // 5: resolved lookup, INCLUDED in selection; 6: whole invocation, INCLUSIVE.
     private final long[] stageNanos = new long[7];
+    private final boolean profileResolved = Boolean.getBoolean("kanger.experiment.profileResolved");
+    private final long[] resolvedProfile = new long[12];
     private final java.util.Map<String, String> pairFirstOutput = new java.util.HashMap<>();
     private final long[] pairOutputMatches = new long[3];
     private final long[] pairOutputMismatches = new long[3];
@@ -80,6 +82,7 @@ public final class LinkerStatistics {
         System.arraycopy(source.pairResultChanges, 0, pairResultChanges, 0, pairResultChanges.length);
         System.arraycopy(source.candidateSelection, 0, candidateSelection, 0, candidateSelection.length);
         System.arraycopy(source.stageNanos, 0, stageNanos, 0, stageNanos.length);
+        System.arraycopy(source.resolvedProfile, 0, resolvedProfile, 0, resolvedProfile.length);
         System.arraycopy(source.pairOutputMatches, 0, pairOutputMatches, 0, pairOutputMatches.length);
         System.arraycopy(source.pairOutputMismatches, 0, pairOutputMismatches, 0, pairOutputMismatches.length);
         pairOutputWitnesses.addAll(source.pairOutputWitnesses);
@@ -115,6 +118,7 @@ public final class LinkerStatistics {
         pairOperationKeys.clear(); pairLastResult.clear(); java.util.Arrays.fill(pairResultChanges, 0L);
         java.util.Arrays.fill(candidateSelection, 0L);
         java.util.Arrays.fill(stageNanos, 0L);
+        java.util.Arrays.fill(resolvedProfile, 0L);
         pairFirstOutput.clear(); pairOutputWitnesses.clear();
         java.util.Arrays.fill(pairOutputMatches, 0L); java.util.Arrays.fill(pairOutputMismatches, 0L);
         incomingActions = -1;
@@ -215,6 +219,8 @@ public final class LinkerStatistics {
     /** Wall time: completed sections 0..5; inclusive invocation 6 also records failure.
      * Resolved lookup (5) is already inside selection (0); do not sum all slots. */
     public long[] getStageNanos() { return stageNanos.clone(); }
+    long[] resolvedProfileSink() { return profileResolved ? resolvedProfile : null; }
+    public long[] getResolvedProfile() { return resolvedProfile.clone(); }
     void observePairOutput(long operation, String output) {
         String key = pairOperationKeys.get(operation);
         String first = pairFirstOutput.get(key);
@@ -336,6 +342,7 @@ public final class LinkerStatistics {
         for (int i = 0; i < pairResultChanges.length; i++) pairResultChanges[i] += other.pairResultChanges[i];
         for (int i = 0; i < candidateSelection.length; i++) candidateSelection[i] += other.candidateSelection[i];
         for (int i = 0; i < stageNanos.length; i++) stageNanos[i] += other.stageNanos[i];
+        for (int i = 0; i < resolvedProfile.length; i++) resolvedProfile[i] += other.resolvedProfile[i];
         for (int i = 0; i < pairOutputMatches.length; i++) {
             pairOutputMatches[i] += other.pairOutputMatches[i];
             pairOutputMismatches[i] += other.pairOutputMismatches[i];

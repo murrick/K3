@@ -648,6 +648,12 @@ final class RuleCandidateIndex {
 
     void collectResolvedLocal(Domain source, boolean candidateAntc, Mind mind,
                               LinkedHashSet<Long> result) throws Exception {
+        collectResolvedLocal(source, candidateAntc, mind, result, null);
+    }
+
+    void collectResolvedLocal(Domain source, boolean candidateAntc, Mind mind,
+                              LinkedHashSet<Long> result, long[] profile) throws Exception {
+        long start = profile == null ? 0 : System.nanoTime();
         SignatureKey signature = signature(source, candidateAntc);
         Long[] resolvedTermIds = new Long[source.getRange()];
         for (int position = 0; position < source.getRange(); ++position) {
@@ -667,10 +673,14 @@ final class RuleCandidateIndex {
         BatchSummary summary = null;
         long observedVersion;
 
+        if (profile != null) { profile[3] += System.nanoTime() - start; start = System.nanoTime(); }
         writeLock.lock();
         try {
             selected = signatures.get(signature);
-            if (selected.isEmpty()) return;
+            if (selected.isEmpty()) {
+                if (profile != null) ++profile[2];
+                return;
+            }
             LinkedHashSet<Long> fallback = fallbackSignatures.get(signature);
             for (int position = 0; position < resolvedTermIds.length; ++position) {
                 Long termId = resolvedTermIds[position];
@@ -690,10 +700,13 @@ final class RuleCandidateIndex {
             }
         } finally {
             writeLock.unlock();
+            if (profile != null) profile[4] += System.nanoTime() - start;
         }
 
+        if (profile != null) { profile[7] += selected.size(); start = System.nanoTime(); }
         if (batchEligible) {
             boolean cached = summary != null;
+            if (profile != null) ++profile[cached ? 8 : 9];
             if (summary == null) {
                 summary = computeBatchSummary(
                         source, candidateAntc, activeMind, selected);
@@ -724,6 +737,7 @@ final class RuleCandidateIndex {
             selected.removeAll(summary.batchedIds);
         }
         result.addAll(selected);
+        if (profile != null) profile[5] += System.nanoTime() - start;
     }
 
     private Long resolvedTermId(IArgument argument, Mind mind) throws Exception {

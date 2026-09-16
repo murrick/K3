@@ -359,7 +359,7 @@ public class Linker {
 
         long resolveStart = statistics.stageClock();
         List<IRule> resolved = mind.getRules().findByResolvedDomain(
-                slave, !slave.isAntc());
+                slave, !slave.isAntc(), statistics.resolvedProfileSink());
         statistics.finishStage(5, resolveStart);
         statistics.recordCandidateSelection(3, resolved.size());
         if (resolved.isEmpty()) {
@@ -501,7 +501,8 @@ public class Linker {
             if (Boolean.getBoolean("kanger.experiment.traceInvocations"))
                 System.err.println("LINK_INVOCATION completed=" + completed
                         + " pass=" + mind.getQueryPass()
-                        + " stages=" + java.util.Arrays.toString(statistics.getStageNanos()));
+                        + " stages=" + java.util.Arrays.toString(statistics.getStageNanos())
+                        + " resolved=" + java.util.Arrays.toString(statistics.getResolvedProfile()));
         }
     }
 

@@ -505,12 +505,14 @@ public class RuleFactory implements IFactory<IRule> {
 
     private void collectResolvedCandidateIds(Domain source,
                                              boolean candidateAntc,
-                                             LinkedHashSet<Long> result) throws Exception {
+                                             LinkedHashSet<Long> result, long[] profile) throws Exception {
         if (parentIndex != null) {
-            parentIndex.collectResolvedCandidateIds(source, candidateAntc, result);
+            parentIndex.collectResolvedCandidateIds(source, candidateAntc, result, profile);
         }
+        long start = profile == null ? 0 : System.nanoTime();
         ensureDomainIndex();
-        candidateIndex.collectResolvedLocal(source, candidateAntc, mind, result);
+        if (profile != null) { ++profile[1]; profile[10] += System.nanoTime() - start; }
+        candidateIndex.collectResolvedLocal(source, candidateAntc, mind, result, profile);
     }
 
     /**
@@ -519,8 +521,18 @@ public class RuleFactory implements IFactory<IRule> {
      */
     public List<IRule> findByResolvedDomain(Domain source,
                                             boolean candidateAntc) throws Exception {
+        return findByResolvedDomain(source, candidateAntc, null);
+    }
+
+    /** Experimental observation sink; null preserves the ordinary lookup path.
+     * Slots: calls, layers, empty signatures, resolution/filter/batch/materialize ns,
+     * selected IDs before batching, batch hits/misses, ensure ns, returned IDs. */
+    public List<IRule> findByResolvedDomain(Domain source,
+                                            boolean candidateAntc, long[] profile) throws Exception {
+        if (profile != null) ++profile[0];
         LinkedHashSet<Long> ids = new LinkedHashSet<>();
-        collectResolvedCandidateIds(source, candidateAntc, ids);
+        collectResolvedCandidateIds(source, candidateAntc, ids, profile);
+        long start = profile == null ? 0 : System.nanoTime();
         List<IRule> result = new ArrayList<>();
         for (long id : ids) {
             IRule rule = get(id);
@@ -528,6 +540,7 @@ public class RuleFactory implements IFactory<IRule> {
                 result.add(rule);
             }
         }
+        if (profile != null) { profile[6] += System.nanoTime() - start; profile[11] += result.size(); }
         return result;
     }
 

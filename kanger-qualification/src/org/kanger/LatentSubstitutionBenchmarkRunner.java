@@ -14,7 +14,9 @@ public final class LatentSubstitutionBenchmarkRunner {
         for (int i = 0; i < 100; i++) facts.append("!value(").append(i).append(");\n");
         System.out.println("fixture,sample,compile_ns,query_ns,rows,domain_pairs,unifications"
                 + (Boolean.getBoolean("kanger.experiment.timeStages")
-                ? ",selection_ns,linking_ns,functions_ns,database_ns,update_ns,resolved_ns,invocation_ns" : ""));
+                ? ",selection_ns,linking_ns,functions_ns,database_ns,update_ns,resolved_ns,invocation_ns" : "")
+                + (Boolean.getBoolean("kanger.experiment.profileResolved")
+                ? ",lookup_calls,layers,empty_signatures,resolution_ns,filter_ns,batch_ns,materialize_ns,selected_ids,batch_hits,batch_misses,ensure_ns,returned_ids" : ""));
         bench("natives-values", natives, "?$x male(x);");
         bench("singleton-values", facts.toString(), "?$x value(x);");
     }
@@ -38,6 +40,8 @@ public final class LatentSubstitutionBenchmarkRunner {
                 String stages = "";
                 if (Boolean.getBoolean("kanger.experiment.timeStages"))
                     for (long nanos : s.getStageNanos()) stages += "," + nanos;
+                if (Boolean.getBoolean("kanger.experiment.profileResolved"))
+                    for (long value : s.getResolvedProfile()) stages += "," + value;
                 System.out.println(label + "," + i + "," + (compiled - start) + "," + (finished - compiled)
                         + "," + mind.getValues().size() + "," + s.getDomainPairs() + "," + s.getUnificationAttempts() + stages);
             }
