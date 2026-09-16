@@ -265,7 +265,7 @@ public class Linker {
             if ("factory-verify".equals(System.getProperty("kanger.experiment.latent"))) {
                 Map<TVariableSet, Integer> before = new HashMap<>(indexedSolveCounts);
                 int indexedBefore = indexedSolves.size();
-                synchronizeSolveIndexReference();
+                synchronizeSolveIndexReference(true);
                 if (!before.equals(indexedSolveCounts) || indexedBefore != indexedSolves.size())
                     throw new AssertionError("Solve index changed during proposed unchanged-version skip");
             }
@@ -273,20 +273,29 @@ public class Linker {
         }
         statistics.recordSolveSync(1);
         if (enabled && exposed) statistics.recordSolveSync(3);
-        synchronizeSolveIndexReference();
+        synchronizeSolveIndexReference(false);
         lastSolveVersion = version;
     }
 
-    private void synchronizeSolveIndexReference() throws Exception {
+    private void synchronizeSolveIndexReference(boolean verification) throws Exception {
+        boolean profile = statistics.profileSolveSync();
+        long groups = 0, added = 0, tuples = 0, unchanged = 0;
         for (Map.Entry<TVariableSet, List<TSolve>> entry : mind.ruleSolvesInternal().entrySet()) {
             int indexed = indexedSolveCounts.containsKey(entry.getKey())
                     ? indexedSolveCounts.get(entry.getKey()) : 0;
             List<TSolve> solves = entry.getValue();
+            if (profile) {
+                ++groups;
+                tuples += solves.size();
+                if (indexed == solves.size()) ++unchanged;
+            }
             for (int i = indexed; i < solves.size(); ++i) {
+                if (profile) ++added;
                 indexSolve(solves.get(i));
             }
             indexedSolveCounts.put(entry.getKey(), solves.size());
         }
+        if (profile) statistics.recordSolveSyncWork(verification, groups, added, tuples, unchanged);
     }
 
     private List<TSolve> getSolveCandidates(TVariableSet key,
@@ -528,7 +537,8 @@ public class Linker {
                         + " pass=" + mind.getQueryPass()
                         + " stages=" + java.util.Arrays.toString(statistics.getStageNanos())
                         + " resolved=" + java.util.Arrays.toString(statistics.getResolvedProfile())
-                        + " sync=" + java.util.Arrays.toString(statistics.getSolveSync()));
+                        + " sync=" + java.util.Arrays.toString(statistics.getSolveSync())
+                        + " syncWork=" + java.util.Arrays.toString(statistics.getSolveSyncWork()));
         }
     }
 

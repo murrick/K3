@@ -1,0 +1,14 @@
+BENCH_COMPILE natives-values 0
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[5596, 5596, 0, 0] syncWork=[153358, 175, 793712, 153280, 0, 0, 29, 175]
+BENCH_QUERY natives-values 0
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[2548, 2548, 0, 0] syncWork=[62304, 178, 365734, 62256, 0, 0, 29, 178]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[6652, 6652, 0, 0] syncWork=[181519, 184, 1088439, 181463, 0, 0, 30, 184]
+BENCH_END natives-values 0
+BENCH_COMPLETE natives-values
+BENCH_COMPILE singleton-values 0
+LINK_INVOCATION completed=true pass=ACCEPT stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+BENCH_QUERY singleton-values 0
+LINK_INVOCATION completed=true pass=CHECKFALSE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[0, 0, 0, 0] syncWork=[0, 0, 0, 0, 0, 0, 0, 0]
+LINK_INVOCATION completed=true pass=CHECKTRUE stages=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] resolved=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] sync=[300, 300, 0, 0] syncWork=[300, 100, 30000, 299, 0, 0, 1, 100]
+BENCH_END singleton-values 0
+BENCH_COMPLETE singleton-values

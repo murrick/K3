@@ -1,0 +1,3 @@
+fixture,sample,compile_ns,query_ns,rows,domain_pairs,unifications,sync_calls,sync_scans,sync_skips,sync_fallbacks,group_visits,new_slots,sum_list_lengths,unchanged_groups,verify_groups,verify_slots,peak_groups,peak_tuples,semantic_sha256
+natives-values,0,519253597,386666694,1,3251,3251,6652,18,6634,0,413,184,2346,357,181106,0,30,184,1e32a669397194dffa52431a1d005bf88c0f8e9ef36b6d66cf4bd75abf9f6c3b
+singleton-values,0,57278726,64621912,100,800,800,300,1,299,0,1,100,100,0,299,0,1,100,ce6a9724152e44e292c9442693ac84ed28a7e24718df94f1347f0e58df82af49

@@ -30,6 +30,8 @@ public final class LatentSubstitutionBenchmarkRunner {
                 ? ",selection_ns,linking_ns,functions_ns,database_ns,update_ns,resolved_ns,invocation_ns,pass_prepare_ns,rotator_setup_ns,rule_setup_ns,rotation_ns,callback_ns,validity_ns,solve_sync_ns" : "")
                 + (Boolean.getBoolean("kanger.experiment.profileResolved")
                 ? ",lookup_calls,layers,empty_signatures,resolution_ns,filter_ns,batch_ns,materialize_ns,selected_ids,batch_hits,batch_misses,ensure_ns,returned_ids" : "")
+                + (Boolean.getBoolean("kanger.experiment.profileSolveSync")
+                ? ",sync_calls,sync_scans,sync_skips,sync_fallbacks,group_visits,new_slots,sum_list_lengths,unchanged_groups,verify_groups,verify_slots,peak_groups,peak_tuples" : "")
                 + (Boolean.getBoolean("kanger.experiment.benchFingerprint") ? ",semantic_sha256" : ""));
         if (Boolean.getBoolean("kanger.experiment.benchScaled")) {
             for (int size : new int[]{10, 30}) {
@@ -66,6 +68,10 @@ public final class LatentSubstitutionBenchmarkRunner {
                     for (long nanos : s.getStageNanos()) stages += "," + nanos;
                 if (Boolean.getBoolean("kanger.experiment.profileResolved"))
                     for (long value : s.getResolvedProfile()) stages += "," + value;
+                if (Boolean.getBoolean("kanger.experiment.profileSolveSync")) {
+                    for (long value : s.getSolveSync()) stages += "," + value;
+                    for (long value : s.getSolveSyncWork()) stages += "," + value;
+                }
                 if (Boolean.getBoolean("kanger.experiment.benchFingerprint")) stages += "," + fingerprint(mind);
                 emit(label + "," + i + "," + (compiled - start) + "," + (finished - compiled)
                         + "," + mind.getValues().size() + "," + s.getDomainPairs() + "," + s.getUnificationAttempts() + stages);

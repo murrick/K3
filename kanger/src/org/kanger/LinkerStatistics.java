@@ -66,6 +66,10 @@ public final class LinkerStatistics {
     private final long[] resolvedProfile = new long[12];
     // synchronization requests, normal scans, proposed skips, exposed-map scans.
     private final long[] solveSync = new long[4];
+    private final boolean profileSolveSync = Boolean.getBoolean("kanger.experiment.profileSolveSync");
+    // normal groups/new slots/summed list lengths/unchanged groups; verifier groups/new slots;
+    // peak groups and total tuples seen in a single completed reference scan.
+    private final long[] solveSyncWork = new long[8];
     private final java.util.Map<String, String> pairFirstOutput = new java.util.HashMap<>();
     private final long[] pairOutputMatches = new long[3];
     private final long[] pairOutputMismatches = new long[3];
@@ -89,6 +93,7 @@ public final class LinkerStatistics {
         System.arraycopy(source.stageNanos, 0, stageNanos, 0, stageNanos.length);
         System.arraycopy(source.resolvedProfile, 0, resolvedProfile, 0, resolvedProfile.length);
         System.arraycopy(source.solveSync, 0, solveSync, 0, solveSync.length);
+        System.arraycopy(source.solveSyncWork, 0, solveSyncWork, 0, solveSyncWork.length);
         System.arraycopy(source.pairOutputMatches, 0, pairOutputMatches, 0, pairOutputMatches.length);
         System.arraycopy(source.pairOutputMismatches, 0, pairOutputMismatches, 0, pairOutputMismatches.length);
         pairOutputWitnesses.addAll(source.pairOutputWitnesses);
@@ -126,6 +131,7 @@ public final class LinkerStatistics {
         java.util.Arrays.fill(stageNanos, 0L);
         java.util.Arrays.fill(resolvedProfile, 0L);
         java.util.Arrays.fill(solveSync, 0L);
+        java.util.Arrays.fill(solveSyncWork, 0L);
         pairFirstOutput.clear(); pairOutputWitnesses.clear();
         java.util.Arrays.fill(pairOutputMatches, 0L); java.util.Arrays.fill(pairOutputMismatches, 0L);
         incomingActions = -1;
@@ -231,6 +237,17 @@ public final class LinkerStatistics {
     public long[] getResolvedProfile() { return resolvedProfile.clone(); }
     void recordSolveSync(int metric) { ++solveSync[metric]; }
     public long[] getSolveSync() { return solveSync.clone(); }
+    boolean profileSolveSync() { return profileSolveSync; }
+    void recordSolveSyncWork(boolean verification, long groups, long added, long tuples, long unchanged) {
+        if (verification) { solveSyncWork[4] += groups; solveSyncWork[5] += added; }
+        else {
+            solveSyncWork[0] += groups; solveSyncWork[1] += added;
+            solveSyncWork[2] += tuples; solveSyncWork[3] += unchanged;
+        }
+        solveSyncWork[6] = Math.max(solveSyncWork[6], groups);
+        solveSyncWork[7] = Math.max(solveSyncWork[7], tuples);
+    }
+    public long[] getSolveSyncWork() { return solveSyncWork.clone(); }
     void observePairOutput(long operation, String output) {
         String key = pairOperationKeys.get(operation);
         String first = pairFirstOutput.get(key);
@@ -354,6 +371,8 @@ public final class LinkerStatistics {
         for (int i = 0; i < stageNanos.length; i++) stageNanos[i] += other.stageNanos[i];
         for (int i = 0; i < resolvedProfile.length; i++) resolvedProfile[i] += other.resolvedProfile[i];
         for (int i = 0; i < solveSync.length; i++) solveSync[i] += other.solveSync[i];
+        for (int i = 0; i < 6; i++) solveSyncWork[i] += other.solveSyncWork[i];
+        for (int i = 6; i < 8; i++) solveSyncWork[i] = Math.max(solveSyncWork[i], other.solveSyncWork[i]);
         for (int i = 0; i < pairOutputMatches.length; i++) {
             pairOutputMatches[i] += other.pairOutputMatches[i];
             pairOutputMismatches[i] += other.pairOutputMismatches[i];
