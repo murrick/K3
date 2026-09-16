@@ -48,6 +48,10 @@ public final class LinkerStatistics {
     private final java.util.Map<Long, Integer> pairOperationClass = new java.util.HashMap<>();
     private final long[] pairEffects = new long[48];
     private final long[] pairNewTuples = new long[3];
+    private final long[] pairBoundaries = new long[27];
+    private final java.util.Map<Long, String> pairOperationKeys = new java.util.HashMap<>();
+    private final java.util.Map<String, Boolean> pairLastResult = new java.util.HashMap<>();
+    private final long[] pairResultChanges = new long[3];
     private int incomingActions = -1;
     private long priorRuleVisits, priorUnifications, priorTValues, priorFunctions, priorDatabase;
 
@@ -61,6 +65,8 @@ public final class LinkerStatistics {
         activationTrace.addAll(source.activationTrace);
         System.arraycopy(source.pairEffects, 0, pairEffects, 0, pairEffects.length);
         System.arraycopy(source.pairNewTuples, 0, pairNewTuples, 0, pairNewTuples.length);
+        System.arraycopy(source.pairBoundaries, 0, pairBoundaries, 0, pairBoundaries.length);
+        System.arraycopy(source.pairResultChanges, 0, pairResultChanges, 0, pairResultChanges.length);
         System.arraycopy(source.passActionMasks, 0, passActionMasks, 0, passActionMasks.length);
         passes = source.passes;
         ruleVisits = source.ruleVisits;
@@ -89,6 +95,8 @@ public final class LinkerStatistics {
         activationTrace.clear();
         pairLastPass.clear(); pairOperationClass.clear();
         java.util.Arrays.fill(pairEffects, 0L); java.util.Arrays.fill(pairNewTuples, 0L);
+        java.util.Arrays.fill(pairBoundaries, 0L);
+        pairOperationKeys.clear(); pairLastResult.clear(); java.util.Arrays.fill(pairResultChanges, 0L);
         incomingActions = -1;
         priorRuleVisits = priorUnifications = priorTValues = priorFunctions = priorDatabase = 0L;
         java.util.Arrays.fill(passActionMasks, 0L);
@@ -153,6 +161,7 @@ public final class LinkerStatistics {
     void observePairInput(String key, int pass, long operation) {
         Integer previous = pairLastPass.put(key, pass);
         pairOperationClass.put(operation, previous == null ? 0 : previous == pass ? 1 : 2);
+        pairOperationKeys.put(operation, key);
     }
     void observePairEffects(long operation, int effects) {
         ++pairEffects[pairOperationClass.get(operation) * 16 + effects];
@@ -160,6 +169,23 @@ public final class LinkerStatistics {
     void observePairNewTuple(long operation) { ++pairNewTuples[pairOperationClass.get(operation)]; }
     public long[] getPairEffects() { return pairEffects.clone(); }
     public long[] getPairNewTuples() { return pairNewTuples.clone(); }
+    void observePairBoundary(long operation, boolean committed, long added, long removed,
+                             long used, long excluded, long rulesUsed, boolean resultActivated, boolean resultAfter) {
+        int offset = pairOperationClass.get(operation) * 9;
+        ++pairBoundaries[offset];
+        ++pairBoundaries[offset + (committed ? 1 : 2)];
+        pairBoundaries[offset + 3] += added;
+        pairBoundaries[offset + 4] += removed;
+        pairBoundaries[offset + 5] += used;
+        pairBoundaries[offset + 6] += excluded;
+        pairBoundaries[offset + 7] += rulesUsed;
+        if (resultActivated) ++pairBoundaries[offset + 8];
+        Boolean previousResult = pairLastResult.put(pairOperationKeys.get(operation), resultAfter);
+        if (previousResult != null && previousResult != resultAfter)
+            ++pairResultChanges[pairOperationClass.get(operation)];
+    }
+    public long[] getPairBoundaries() { return pairBoundaries.clone(); }
+    public long[] getPairResultChanges() { return pairResultChanges.clone(); }
     void incrementRuleVisits() { ++ruleVisits; }
     void incrementBranchVisits() { ++branchVisits; }
     void incrementTerminalRotations() { ++terminalRotations; }
@@ -259,6 +285,8 @@ public final class LinkerStatistics {
         activationTrace.addAll(other.activationTrace);
         for (int i = 0; i < pairEffects.length; i++) pairEffects[i] += other.pairEffects[i];
         for (int i = 0; i < pairNewTuples.length; i++) pairNewTuples[i] += other.pairNewTuples[i];
+        for (int i = 0; i < pairBoundaries.length; i++) pairBoundaries[i] += other.pairBoundaries[i];
+        for (int i = 0; i < pairResultChanges.length; i++) pairResultChanges[i] += other.pairResultChanges[i];
         for (int i = 0; i < passActionMasks.length; ++i) {
             passActionMasks[i] += other.passActionMasks[i];
         }

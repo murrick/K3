@@ -58,6 +58,8 @@ public final class LatentSubstitutionStateRunner {
             if (Boolean.getBoolean("kanger.experiment.tracePairInputs")) {
                 System.out.println("pair-effects=" + Arrays.toString(s.getPairEffects()));
                 System.out.println("pair-new-tuples=" + Arrays.toString(s.getPairNewTuples()));
+                System.out.println("pair-boundaries=" + Arrays.toString(s.getPairBoundaries()));
+                System.out.println("pair-result-changes=" + Arrays.toString(s.getPairResultChanges()));
             }
             for (String pass : s.getPassTrace()) System.out.println("pass-trace=" + pass);
             for (String binding : s.getBindingTrace()) System.out.println("binding-trace=" + binding);

@@ -935,6 +935,27 @@ public class Linker {
         return Collections.singletonList(selected);
     }
 
+    /** Values exposed to rotation for variables occurring in this pair. */
+    private Set<Long> observedPairBindings(Domain master, Domain slave) throws Exception {
+        final Set<Long> ids = new HashSet<>();
+        Set<TVariable> variables = new TreeSet<>();
+        variables.addAll(master.getArguments().getTVariables(mind));
+        variables.addAll(slave.getArguments().getTVariables(mind));
+        for (TVariable variable : variables) mind.getTValues().forEach(variable, new IReactor() {
+            @Override public Object run(Object value) {
+                ids.add(((TValue) value).getId());
+                return true;
+            }
+        });
+        return ids;
+    }
+
+    private long observedEntryCount(Map<?, ? extends Collection<?>> map) {
+        long count = 0;
+        for (Collection<?> entries : map.values()) count += entries.size();
+        return count;
+    }
+
     /** Argument projection only: not a complete semantic memoization key. */
     private String observedPairInput(Domain master, Domain slave, boolean carriedResult) throws Exception {
         StringBuilder key = new StringBuilder().append(carriedResult);
@@ -972,6 +993,12 @@ public class Linker {
                                         currentPass == 1, rule.isQuery(), rule.isGenerated());
                                 if (tracePairInputs) statistics.observePairInput(
                                         observedPairInput(master, slave, result), currentPass, operationId);
+                                Set<Long> bindingsAtEntry = tracePairInputs ? observedPairBindings(master, slave) : null;
+                                long usedAtEntry = tracePairInputs ? observedEntryCount(mind.getUsedDomains()) : 0;
+                                long excludedAtEntry = tracePairInputs ? observedEntryCount(mind.getExcludedDomains()) : 0;
+                                long rulesUsedAtEntry = tracePairInputs ? observedEntryCount(mind.getUsedRules()) : 0;
+                                boolean pairCommitted = false;
+                                boolean resultAtEntry = result;
                                 int operationEffects = 0;
                                 TValue[] substMaster = new TValue[master.getRange()];
                                 TValue[] substSlave = new TValue[slave.getRange()];
@@ -1086,6 +1113,7 @@ public class Linker {
                                         ++solvedPasses;
                                         mind.getTValues().commit();
                                         mind.getFValues().commit();
+                                        pairCommitted = true;
                                     } else if (!master.isSubstitutable() && !slave.isSubstitutable()) {
                                         ++solvedPasses;
                                         operationEffects |= LinkerStatistics.EFFECT_USED_ONLY;
@@ -1093,6 +1121,7 @@ public class Linker {
                                         slave.setUsed(mind);
                                         mind.getTValues().commit();
                                         mind.getFValues().commit();
+                                        pairCommitted = true;
                                     } else {
                                         ++dumpedPasses;
                                         mind.getTValues().release();
@@ -1110,6 +1139,17 @@ public class Linker {
                                 }
                                 statistics.recordOperationEffectMask(operationEffects);
                                 if (tracePairInputs) statistics.observePairEffects(operationId, operationEffects);
+                                if (tracePairInputs) {
+                                    Set<Long> bindingsAfter = observedPairBindings(master, slave);
+                                    Set<Long> added = new HashSet<>(bindingsAfter);
+                                    added.removeAll(bindingsAtEntry);
+                                    bindingsAtEntry.removeAll(bindingsAfter);
+                                    statistics.observePairBoundary(operationId, pairCommitted, added.size(), bindingsAtEntry.size(),
+                                            observedEntryCount(mind.getUsedDomains()) - usedAtEntry,
+                                            observedEntryCount(mind.getExcludedDomains()) - excludedAtEntry,
+                                            observedEntryCount(mind.getUsedRules()) - rulesUsedAtEntry,
+                                            !resultAtEntry && result, result);
+                                }
                             }
                         }
                     }
