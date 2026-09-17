@@ -145,7 +145,14 @@ jobs:
         run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.storage.DBCloseFailureIsolationSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: DUMB reindex swap atomicity invariant
-        run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.storage.DBReindexSwapAtomicitySafetyRunner -Dexec.classpathScope=test exec:java
+        shell: bash
+        run: |
+          # This existing fault injector installs a temporary SecurityManager.
+          # Java 21 requires explicit opt-in; scope it to this test JVM only.
+          if [ '${{ matrix.java }}' = '21' ]; then
+            export JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -Djava.security.manager=allow"
+          fi
+          mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.storage.DBReindexSwapAtomicitySafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Escalera empty-root mark invariant
         run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.KangerEscaleraMarkSafetyRunner -Dexec.classpathScope=test exec:java
