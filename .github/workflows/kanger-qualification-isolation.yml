@@ -95,8 +95,11 @@ jobs:
           test -f kanger-qualification/src/org/kanger/test/KangerC3BindingTest.java
           test -f kanger-qualification/src/org/kanger/test/KangerC4IntervalTest.java
           test -f kanger-qualification/src/org/kanger/test/KangerVisualTestHarness.java
-          count="$(find kanger-qualification/src -type f -name '*Runner.java' | wc -l | tr -d ' ')"
-          test "$count" -eq 50
+          # Preserve every original runner while allowing new qualification.
+          test "$(wc -l < kanger-qualification/baseline-runners.txt)" -eq 50
+          while IFS= read -r runner; do
+            test -f "$runner"
+          done < kanger-qualification/baseline-runners.txt
           mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install
           mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am test
           mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml \
