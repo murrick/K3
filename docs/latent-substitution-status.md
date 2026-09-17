@@ -70,4 +70,6 @@ Standalone [preservation qualification](latent-substitution-tvalue-standalone.md
 
 Focused [TValue mutation-boundary qualification](latent-substitution-tvalue-boundaries.md) passes OFF/ON/verified with ten byte-identical state projections. Materialization, interior persistent deletion with unchanged root, batch deletion and factory child-chain transfer exercise preservation and fallback. This is raw-cache protocol evidence; a synthetic full-reopen extension failed already in OFF and is not counted as qualification. A normal-inference focused reopen fixture and canonical build/runtime gates remain outstanding.
 
+The [normal-inference TValue reopen fixture](latent-substitution-tvalue-reopen.md) now passes OFF/ON/verified with byte-identical projections: eight TValue entries survive two close/open cycles, then twelve survive a committed-child close/open. Rollback and rejected-collision query results also agree. Source inspection attributes the earlier synthetic expectation failure to checkpoint packing of values whose terms lack active-rule references. Canonical Maven/Java 8/21 gates remain outstanding; no default promotion is implied.
+
 Nothing here authorizes default enablement, removing the old traversal, or merge/release/tag/deploy.
