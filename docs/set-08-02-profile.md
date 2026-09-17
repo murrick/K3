@@ -98,3 +98,40 @@ Evidence: rotation-on.csv, frontier-{off,on}.csv and frontier-{off,on}.counts.
 The former records existing final-Linker statistics without frontier counters;
 the latter include the explicit per-width diagnostic. This instrumentation
 remains confined to the experimental branch.
+
+## Shadow candidate frontier
+
+Flag `kanger.experiment.shadowRotationFrontier=true` enables an experimental
+prediction before each candidate is assigned. The old loop still hydrates and
+assigns every candidate, and isValidFor remains the decision maker. Any prediction
+disagreement throws AssertionError. No candidate skipping is implemented.
+
+For each solve group containing the inner variable, the predictor chooses an
+already-bound outer variable present in that group and looks up its tuple bucket.
+It checks the other outer bindings, then collects allowed inner TValue IDs.
+Groups are unioned, preserving the oracle's OR semantics. Unary and unconstrained
+groups permit all values. With no outer pivot, it inspects the group's existing
+indexed tuples. This is a runtime-derived frontier, not compile-time topology.
+
+The frontier cache lives only within one rotateVariables invocation. It rebuilds
+when the solve-map version or outer binding IDs change. Public map exposure and
+Mind subclasses force rebuilds for each candidate. Synchronization precedes
+prediction; the regular isValidFor synchronization still executes too. These
+extra operations make shadow timings unsuitable as acceleration evidence.
+
+On set_08_02, one warmup and three samples each report main-thread counters:
+244,035 comparisons, 1,482 frontier builds, 241,077 predicted rejections,
+zero disagreements, and 1,479 tuple inspections. Results remain 493/493.
+All 123 existing corpus cases pass locally, and the 20-operation transaction
+state file is byte-identical to a separate non-shadow run. Java 17 only, both
+TValue preservation and versioned solve synchronization ON. Full Java 8/21
+qualification and adversarial frontier-invalidation tests are still pending.
+
+Next gates before an actual prefilter: explicitly exercise publication during
+rotation, outer-binding mutation, empty/unary/multi-group cases and exposed-map
+fallback. Then preserve the forEach snapshot order and current-binding effects
+while skipping candidates, and compare the complete inference results again.
+The shadow result alone does not establish those skipping semantics or speedup.
+
+Evidence: shadow-frontier.csv, shadow-frontier.counts, shadow-state.txt and
+shadow-qualification.txt. Production develop remains untouched.

@@ -22,11 +22,17 @@ public final class Set0802ProfileRunner {
             Sampler sampler = Boolean.getBoolean("bench.sample") ? new Sampler() : null;
             long before = Linker.experimentalSolveScanProfile()[0];
             long[] rotationsBefore = Linker.experimentalRotationProfile();
+            long[] frontierBefore = Linker.experimentalFrontierProfile();
             if (sampler != null) sampler.start();
             long start = System.nanoTime();
             try { test.set_08_02(); }
             finally { if (sampler != null) sampler.running = false; }
             long elapsed = System.nanoTime() - start;
+            if (i >= 0 && Boolean.getBoolean("kanger.experiment.shadowRotationFrontier")) {
+                long[] frontier = Linker.experimentalFrontierProfile();
+                for (int j = 0; j < frontier.length; ++j) frontier[j] -= frontierBefore[j];
+                System.err.println("MAIN_FRONTIER " + Arrays.toString(frontier));
+            }
             if (i >= 0 && Boolean.getBoolean("kanger.experiment.profileRotations")) {
                 long[] rotations = Linker.experimentalRotationProfile();
                 for (int j = 0; j < rotations.length; ++j) rotations[j] -= rotationsBefore[j];

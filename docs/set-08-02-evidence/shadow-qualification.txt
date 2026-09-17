@@ -1,0 +1,5 @@
+Java 17; TValue ON; versionedSolveSync ON; shadowRotationFrontier ON
+LATENT_CORPUS_PASS (123 cases)
+20-operation transaction states identical to non-shadow reference
+set_08_02: 3 measured samples, zero frontier mismatches, 493 solutions/values each
+No AssertionError or Exception in captured corpus/transaction/set_08_02 logs

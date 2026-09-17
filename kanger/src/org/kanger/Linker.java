@@ -642,6 +642,7 @@ public class Linker {
 
     private boolean rotateVariables(final SortedSet<TVariable> tvars, final SortedSet<TVariable> base, final IReactor runnable) throws Exception {
         final boolean[] result = new boolean[]{false, false};
+        final RotationFrontier[] frontier = new RotationFrontier[1];
         if (tvars.isEmpty()) {
             result[0] = (boolean) runnable.run(tvars);
         } else {
@@ -654,8 +655,34 @@ public class Linker {
                 @Override
                 public Object run(Object o) throws Exception {
                     result[1] = true;
+                    Boolean predicted = null;
+                    if (Boolean.getBoolean("kanger.experiment.shadowRotationFrontier")) {
+                        SortedSet<TVariable> suffix = base.tailSet(t);
+                        synchronizeSolveIndex();
+                        List<Long> bindings = new ArrayList<>();
+                        for (TVariable outer : suffix) {
+                            if (outer.getId() != t.getId())
+                                bindings.add(outer.getCurrent() == null ? null : outer.getCurrent().getId());
+                        }
+                        if (frontier[0] == null || mind.ruleSolvesExposed()
+                                || frontier[0].version != mind.ruleSolvesVersion()
+                                || !frontier[0].bindings.equals(bindings))
+                            frontier[0] = buildRotationFrontier(t, suffix, bindings);
+                        predicted = frontier[0].allowed == null
+                                || frontier[0].allowed.contains(((TValue) o).getId());
+                    }
                     t.setCurrent((TValue) o);
-                    if (isValidFor(base.tailSet(t))) {
+                    boolean accepted = isValidFor(base.tailSet(t));
+                    if (predicted != null) {
+                        long[] counts = frontierCounts();
+                        counts[0]++;
+                        if (!predicted) counts[2]++;
+                        if (predicted != accepted) {
+                            counts[3]++;
+                            throw new AssertionError("Rotation frontier disagrees with isValidFor");
+                        }
+                    }
+                    if (accepted) {
                         if (rotateVariables(tvars.headSet(t), base, runnable)) {
                             result[0] = true;
                         }
@@ -671,6 +698,62 @@ public class Linker {
             }
         }
         return result[0];
+    }
+
+    private static final ThreadLocal<long[]> frontierProfile = new ThreadLocal<>();
+    private static long[] frontierCounts() {
+        long[] counts = frontierProfile.get();
+        if (counts == null) { counts = new long[5]; frontierProfile.set(counts); }
+        return counts;
+    }
+    /** Checks, builds, predicted rejections, mismatches, tuples inspected; current thread only. */
+    public static long[] experimentalFrontierProfile() { return frontierCounts().clone(); }
+
+    private static final class RotationFrontier {
+        final long version;
+        final List<Long> bindings;
+        final Set<Long> allowed; // null means unconstrained
+        RotationFrontier(long version, List<Long> bindings, Set<Long> allowed) {
+            this.version = version; this.bindings = bindings; this.allowed = allowed;
+        }
+    }
+
+    private RotationFrontier buildRotationFrontier(TVariable variable,
+            SortedSet<TVariable> suffix, List<Long> bindings) throws Exception {
+        frontierCounts()[1]++;
+        boolean found = false;
+        Set<Long> allowed = new HashSet<>();
+        if (suffix.size() > 1) {
+            for (TVariableSet key : mind.ruleSolvesInternal().keySet()) {
+                if (!key.contains(variable)) continue;
+                found = true;
+                if (unarySolveKeys.contains(key))
+                    return new RotationFrontier(mind.ruleSolvesVersion(), bindings, null);
+                TVariable pivot = null;
+                for (TVariable outer : suffix)
+                    if (outer.getId() != variable.getId() && key.contains(outer)) { pivot = outer; break; }
+                Collection<TSolve> candidates;
+                if (pivot != null) candidates = getSolveCandidates(key, pivot, pivot.getCurrent());
+                else {
+                    Set<TSolve> unique = Collections.newSetFromMap(new IdentityHashMap<TSolve, Boolean>());
+                    Map<Long, Map<Long, List<TSolve>>> byVariable = solveIndex.get(key);
+                    if (byVariable != null && byVariable.get(variable.getId()) != null)
+                        for (List<TSolve> group : byVariable.get(variable.getId()).values()) unique.addAll(group);
+                    candidates = unique;
+                }
+                for (TSolve solve : candidates) {
+                    frontierCounts()[4]++;
+                    boolean compatible = true;
+                    for (TVariable outer : suffix)
+                        if (outer.getId() != variable.getId() && solve.containsTVar(outer)
+                                && !solve.containsTValue(outer.getCurrent())) { compatible = false; break; }
+                    if (compatible)
+                        for (TValue value : solve.getSolve())
+                            if (value.getTVarId() == variable.getId()) allowed.add(value.getId());
+                }
+            }
+        }
+        return new RotationFrontier(mind.ruleSolvesVersion(), bindings, found ? allowed : null);
     }
 
     /**
