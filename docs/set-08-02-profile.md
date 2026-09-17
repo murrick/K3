@@ -70,9 +70,12 @@ All six measured invocations give exactly:
 
 99.39% of width-two candidates are rejected. 242,556 equals 492 x 493, but
 the counters alone do not establish the per-rule or per-pass distribution.
-The final Linker snapshot is identical across all six runs: 2 passes, 2,964
-rule visits, 4,440 terminal rotations, 4,440 database evaluations, 3,944 domain
-pairs/unifications, and 493 final solutions/values. Reference synchronizations
+Five final Linker snapshots have 2 passes, 2,964 rule visits, 4,440 terminal
+rotations and 4,440 database evaluations. OFF sample 2 has 2,962 rule visits
+and 4,438 rotations/database evaluations. All six have 3,944 domain pairs and
+unifications and 493 final solutions/values. The concurrent scenario therefore
+does not establish identical internal work across modes; the per-width attempt
+and rejection counts do match exactly. Reference synchronizations
 remain 244,035 OFF versus 1 ON. Timings here include diagnostic overhead and are
 not new performance evidence. No worker errors appeared in the captured logs.
 
