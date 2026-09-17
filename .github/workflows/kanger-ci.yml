@@ -102,7 +102,7 @@ jobs:
         run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.storage.IndexOneComparableSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Mind transaction reservation invariant
-        run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.KangerMindTransactionReservationSafetyRunner -Dexec.classpathScope=test exec:java
+        run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.MindTransactionReservationSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: TValue canonical resurrection invariant
         run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.KangerTValueResurrectionSafetyRunner -Dexec.classpathScope=test exec:java
