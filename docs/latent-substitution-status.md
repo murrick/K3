@@ -66,4 +66,6 @@ The default-off [guarded TValue index-preservation prototype](latent-substitutio
 
 Preservation [replication](latent-substitution-tvalue-replication.md) confirms the large gain with reversed JVM order: 11.149 → 3.576 seconds, versus the preceding 11.379 → 3.838. Native also improves in all three fresh JVM pairs (median medians 140.295 → 94.236 ms); facts remain noisy/mixed. All 90 new measured fingerprints/counters agree. Standalone latent-off qualification and canonical build/runtime gates remain next steps.
 
+Standalone [preservation qualification](latent-substitution-tvalue-standalone.md) now passes the corpus/lifecycle/state/transaction checks with latent mode and all other optimizations off, both with actual preservation and independent verification. One standalone large-workload pair gives 13.900 → 3.632 seconds with identical 354,220 domain visits and 318,210 unifications. This is an independent index-maintenance improvement, not evidence of latent-index speedup. Default remains off; storage mutation boundaries and canonical build/runtime gates remain.
+
 Nothing here authorizes default enablement, removing the old traversal, or merge/release/tag/deploy.

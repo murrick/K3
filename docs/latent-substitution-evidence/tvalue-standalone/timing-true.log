@@ -1,0 +1,5 @@
+fixture,sample,compile_ns,query_ns,rows,domain_pairs,unifications,semantic_sha256
+symmetric-edges-100-partitions-10,0,203302840,3632383453,201,354220,318210,95ab83d6b37f1cd06a869b0af45b4322cd6297bac6768bf42675ebc7da1384a0
+symmetric-edges-100-partitions-10,1,150322745,3656267065,201,354220,318210,95ab83d6b37f1cd06a869b0af45b4322cd6297bac6768bf42675ebc7da1384a0
+symmetric-edges-100-partitions-10,2,123099790,3541161766,201,354220,318210,95ab83d6b37f1cd06a869b0af45b4322cd6297bac6768bf42675ebc7da1384a0
+BENCH_COMPLETE symmetric-edges-100-partitions-10
