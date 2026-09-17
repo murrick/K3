@@ -12,9 +12,9 @@ public final class RotationFrontierSafetyRunner {
     public static void main(String[] args) throws Exception {
         System.setProperty("user.home", Files.createTempDirectory("frontier-safety-").toString());
         System.setProperty("kanger.experiment.profileRotations", "true");
-        for (String scenario : Arrays.asList("publish", "outer", "alias", "empty", "unary", "free", "union", "null")) {
+        for (String scenario : Arrays.asList("publish", "outer", "alias", "empty", "unary", "free", "union", "null", "snapshot")) {
             List<Integer> reference = run(scenario, "off");
-            for (String mode : Arrays.asList("shadow", "filter", "verify")) {
+            for (String mode : Arrays.asList("shadow", "filter", "verify", "selected")) {
                 List<Integer> actual = run(scenario, mode);
                 if (!reference.equals(actual)) throw new AssertionError(scenario + ": " + reference + " != " + actual);
             }
@@ -26,6 +26,7 @@ public final class RotationFrontierSafetyRunner {
         System.setProperty("kanger.experiment.shadowRotationFrontier", String.valueOf(mode.equals("shadow") || mode.equals("verify")));
         System.setProperty("kanger.experiment.filterRotationFrontier", String.valueOf(mode.equals("filter") || mode.equals("verify")));
         System.setProperty("kanger.experiment.versionedSolveSync", "true");
+        System.setProperty("kanger.experiment.selectRotationIds", String.valueOf(mode.equals("selected")));
         Mind mind = new Mind(new User());
         Rule rule = new Rule(mind);
         TVariable a = mind.getTVars().createTVar(rule, mind.getTerms().add("a"));
@@ -53,6 +54,10 @@ public final class RotationFrontierSafetyRunner {
                 TValue current = inner.getCurrent();
                 visits.add(current == one ? 1 : current == two ? 2 : 3);
                 if (current == one) {
+                    if (scenario.equals("snapshot")) {
+                        TValue fresh = mind.getTValues().add(inner, mind.getTerms().add(4));
+                        mind.addTSolve(Arrays.asList(fresh, left));
+                    }
                     if (scenario.equals("publish")) mind.addTSolve(Arrays.asList(two, left));
                     if (scenario.equals("outer")) outer.setCurrent(right);
                     if (alias != null) alias.values().iterator().next().add(new TSolve(Arrays.asList(two,left), mind));
@@ -65,7 +70,7 @@ public final class RotationFrontierSafetyRunner {
         long before = Linker.experimentalRotationProfile()[1];
         rotate.invoke(new Linker(mind), new TreeSet<>(Collections.singletonList(inner)), suffix, terminal);
         long checks = Linker.experimentalRotationProfile()[1] - before;
-        if (scenario.equals("empty") && checks != (mode.equals("filter") ? 0 : 3))
+        if (scenario.equals("empty") && checks != ((mode.equals("filter") || mode.equals("selected")) ? 0 : 3))
             throw new AssertionError("Expected actual rejection bypass: " + mode + " " + checks);
         if (scenario.equals("alias") && checks != 3)
             throw new AssertionError("Exposed map must retain oracle checks");

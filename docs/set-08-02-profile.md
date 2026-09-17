@@ -176,3 +176,51 @@ earlier work would be a different experiment requiring preservation of ID-snapsh
 order, final current state and mutation during callbacks.
 
 Evidence: frontier-boundaries.txt, filter/verify-state.txt and filter-bench-*.csv.
+
+## Selected-ID hydration experiment
+
+Default-OFF `kanger.experiment.selectRotationIds=true` uses the same ordered ID
+snapshot, consulting the frontier before TValueFactory.get. Rejected IDs skip
+hydration and callback execution. At normal loop completion, the last existing
+value in the rejected suffix is loaded and restored as current. An accepted
+value clears the pending rejected suffix. A nonempty rejected suffix also counts
+as a nonempty variable domain, preventing the empty-domain recursion fallback.
+The original forEach remains unchanged.
+
+This path is restricted at entry to in-memory Mind without exposed solve maps;
+shadow mode takes precedence and retains the reference traversal. Persistent
+storage continues to use the reference path. Outer bindings and tuple version
+are checked before every ID, allowing terminal callbacks to publish tuples or
+change bindings. IDs newly created inside callbacks are excluded by the original
+snapshot semantics. Source inspection confirms TValueFactory.set only changes
+the current map; hydration may still have cache effects, and the restricted
+experiment is not a general equivalence guarantee for persistent storage.
+
+Nine boundary scenarios across five modes pass (45 runs), including a new
+snapshot-publication case, retained final current binding, actual bypass and
+exposed-map fallback. The existing 123-case corpus passes in selected-ID mode;
+20-operation transaction states match reference byte-for-byte. Local Java 17
+only; null/missing-ID suffix restoration and exceptional callback paths still
+need dedicated adversarial qualification before any integration proposal.
+
+Three warmups, five measured invocations per JVM, OFF/ON/ON/OFF order, other
+accelerators ON and diagnostic sampling OFF:
+
+| Pair | OFF median seconds | ON median seconds |
+| --- | ---: | ---: |
+| OFF then ON | 0.934562982 | 0.938623106 |
+| ON then OFF | 1.040365554 | 0.971635396 |
+
+One pair is 0.4% slower, the other 6.6% faster. These measurements do not support
+a stable acceleration claim. All measured results are 493 solutions/values and
+captured logs contain no worker exceptions. Timings include the historical
+method's output formatting. No default or develop changes.
+
+Although hydration is avoided for rejected IDs, each ID still incurs selection,
+synchronization/version checks, a binding-list construction and pending-suffix
+bookkeeping. Their overhead is a hypothesis to profile, not measured attribution.
+Next: quantify selector cost before changing callback-boundary invalidation or
+attempting traversal of only allowed IDs. The current prototype is retained as
+an experimental comparison point, not proposed for integration.
+
+Evidence: selected-boundaries.txt, selected-state.txt, selected-bench-*.csv.

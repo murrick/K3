@@ -653,25 +653,13 @@ public class Linker {
             if (t.getFloodCounter() > mind.getFloodControlLimit()) {
                 throw new RuntimeErrorException("Flood limit exceeded (" + mind.getFloodControlLimit() + ")");
             }
-            mind.getTValues().forEach(t, new IReactor() {
+            IReactor visit = new IReactor() {
                 @Override
                 public Object run(Object o) throws Exception {
                     result[1] = true;
                     Boolean predicted = null;
                     if (shadowFrontier || filterFrontier) {
-                        SortedSet<TVariable> suffix = base.tailSet(t);
-                        synchronizeSolveIndex();
-                        List<Long> bindings = new ArrayList<>();
-                        for (TVariable outer : suffix) {
-                            if (outer.getId() != t.getId())
-                                bindings.add(outer.getCurrent() == null ? null : outer.getCurrent().getId());
-                        }
-                        if (frontier[0] == null || mind.ruleSolvesExposed()
-                                || frontier[0].version != mind.ruleSolvesVersion()
-                                || !frontier[0].bindings.equals(bindings))
-                            frontier[0] = buildRotationFrontier(t, suffix, bindings);
-                        predicted = frontier[0].allowed == null
-                                || frontier[0].allowed.contains(((TValue) o).getId());
+                        predicted = rotationAllowed(t, base.tailSet(t), frontier, ((TValue) o).getId());
                     }
                     t.setCurrent((TValue) o);
                     // Retain hydration, iteration order and current-binding side effects.
@@ -694,7 +682,17 @@ public class Linker {
                     }
                     return true;
                 }
-            });
+            };
+            if (Boolean.getBoolean("kanger.experiment.selectRotationIds")
+                    && !shadowFrontier && !mind.ruleSolvesExposed() && !mind.isStorageUsed()) {
+                boolean any = mind.getTValues().experimentalForEachSelected(t, visit, new IReactor() {
+                    public Object run(Object id) throws Exception {
+                        return mind.ruleSolvesExposed()
+                                || rotationAllowed(t, base.tailSet(t), frontier, (Long) id);
+                    }
+                });
+                result[1] |= any;
+            } else mind.getTValues().forEach(t, visit);
 
             if (!result[1]) {
                 if (rotateVariables(tvars.headSet(t), base, runnable)) {
@@ -703,6 +701,20 @@ public class Linker {
             }
         }
         return result[0];
+    }
+
+    private boolean rotationAllowed(TVariable t, SortedSet<TVariable> suffix,
+            RotationFrontier[] frontier, long id) throws Exception {
+        synchronizeSolveIndex();
+        List<Long> bindings = new ArrayList<>();
+        for (TVariable outer : suffix)
+            if (outer.getId() != t.getId())
+                bindings.add(outer.getCurrent() == null ? null : outer.getCurrent().getId());
+        if (frontier[0] == null || mind.ruleSolvesExposed()
+                || frontier[0].version != mind.ruleSolvesVersion()
+                || !frontier[0].bindings.equals(bindings))
+            frontier[0] = buildRotationFrontier(t, suffix, bindings);
+        return frontier[0].allowed == null || frontier[0].allowed.contains(id);
     }
 
     private static final ThreadLocal<long[]> frontierProfile = new ThreadLocal<>();

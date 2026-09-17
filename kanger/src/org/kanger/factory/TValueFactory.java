@@ -489,6 +489,30 @@ public class TValueFactory implements IFactory<TValue> {
         }
     }
 
+    /** Experimental in-memory rotation: preserve ID snapshot and final current projection. */
+    public boolean experimentalForEachSelected(TVariable t, IReactor reactor, IReactor selectId) throws Exception {
+        LinkedHashSet<Long> ids = new LinkedHashSet<>();
+        collectIds(t.getId(), ids);
+        List<Long> pending = new ArrayList<>();
+        boolean any = false;
+        for (long id : ids) {
+            if (!(Boolean) selectId.run(id)) { pending.add(id); continue; }
+            TValue value = get(id);
+            if (value != null) {
+                pending.clear();
+                any = true;
+                reactor.run(value);
+            }
+        }
+        // Rejected suffix values have no terminal callback, but the old loop leaves
+        // its last existing TValue current. Null IDs must not erase that projection.
+        for (int i = pending.size() - 1; i >= 0; --i) {
+            TValue value = get(pending.get(i));
+            if (value != null) { t.setCurrent(value); any = true; break; }
+        }
+        return any;
+    }
+
     public void scan(TVariable t, IReactor reactor) throws Exception {
         if (!cache.isEmpty()) {
             IStep root;
