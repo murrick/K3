@@ -1,7 +1,7 @@
 # Latent substitution experiment: current status
 
 2026-09-16. Experimental branch only; all optimization switches remain off by default.
-Live develop rechecked at `3ad50f1e5253304f6b530de11c078f332ea4db89`.
+Live develop rechecked on 2026-09-17 at `74654935b78465ade2043e40b6ff147b43ad8147`; historical experiment base remains `3ad50f1e5253304f6b530de11c078f332ea4db89`. The new commit changes command/console code, a timezone test and Version; studied inference/cache classes are unchanged. No rebase or merge performed.
 
 ## Architectural findings
 
@@ -63,5 +63,7 @@ The [substitution subprofile](latent-substitution-value-lookup.md) localizes mos
 The [TValue rebuild measurement](latent-substitution-tvalue-rebuilds.md) confirms substantial repeated full-chain indexing: 35,088 rebuilds, 131.5 million walked steps and 8.625 seconds at 100 partitioned edges. All measured releases restore the same root; 35,088 invalidate a coherent ready index. A TValue-only guarded preservation experiment is now justified for investigation, pending mutation audit and independent index-map verification. Release semantics remain unchanged at this checkpoint.
 
 The default-off [guarded TValue index-preservation prototype](latent-substitution-tvalue-preservation.md) passes actual/verified corpus, lifecycle, state and transaction checks. It requires an unchanged mutation counter as well as coherent index and identical root. First unprofiled paired JVMs at 100 partitioned edges improve 11.379 → 3.838 seconds; a separate diagnostic drops rebuilds from 35,088 to 1. This is a first-run result pending reversed-order replication and other workloads, not default-promotion evidence.
+
+Preservation [replication](latent-substitution-tvalue-replication.md) confirms the large gain with reversed JVM order: 11.149 → 3.576 seconds, versus the preceding 11.379 → 3.838. Native also improves in all three fresh JVM pairs (median medians 140.295 → 94.236 ms); facts remain noisy/mixed. All 90 new measured fingerprints/counters agree. Standalone latent-off qualification and canonical build/runtime gates remain next steps.
 
 Nothing here authorizes default enablement, removing the old traversal, or merge/release/tag/deploy.
