@@ -68,4 +68,6 @@ Preservation [replication](latent-substitution-tvalue-replication.md) confirms t
 
 Standalone [preservation qualification](latent-substitution-tvalue-standalone.md) now passes the corpus/lifecycle/state/transaction checks with latent mode and all other optimizations off, both with actual preservation and independent verification. One standalone large-workload pair gives 13.900 → 3.632 seconds with identical 354,220 domain visits and 318,210 unifications. This is an independent index-maintenance improvement, not evidence of latent-index speedup. Default remains off; storage mutation boundaries and canonical build/runtime gates remain.
 
+Focused [TValue mutation-boundary qualification](latent-substitution-tvalue-boundaries.md) passes OFF/ON/verified with ten byte-identical state projections. Materialization, interior persistent deletion with unchanged root, batch deletion and factory child-chain transfer exercise preservation and fallback. This is raw-cache protocol evidence; a synthetic full-reopen extension failed already in OFF and is not counted as qualification. A normal-inference focused reopen fixture and canonical build/runtime gates remain outstanding.
+
 Nothing here authorizes default enablement, removing the old traversal, or merge/release/tag/deploy.

@@ -1,0 +1,11 @@
+BOUNDARY memory ids=[2, 1, 0]
+BOUNDARY materialized ids=[2, 1, 0]
+BOUNDARY loaded ids=[2, 1, 0]
+BOUNDARY interior-delete ids=[2, 0]
+BOUNDARY deletion-persisted ids=[2, 0]
+BOUNDARY batch-delete ids=[2]
+BOUNDARY parent-isolated ids=[0]
+BOUNDARY child-overlay ids=[1, 0]
+BOUNDARY factory-transfer ids=[1, 0]
+BOUNDARY raw-root-restored ids=[0]
+TVALUE_INDEX_BOUNDARY_PASS
