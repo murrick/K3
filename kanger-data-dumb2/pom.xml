@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.kanger</groupId>
+        <artifactId>kanger3-reactor</artifactId>
+        <version>3.3-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>kanger-data-dumb2</artifactId>
+    <packaging>jar</packaging>
+
+    <name>KANGER DUMB 2.0 storage plugin</name>
+    <description>
+        DUMB 2.0 semantic storage development module. The stable DUMB backend
+        remains in kanger-data-dumb as the executable reference implementation.
+        DUMB 2.0 evolves independently and is not registered as a runtime
+        storage provider until its Context contract is qualified.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.kanger</groupId>
+            <artifactId>kanger-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <sourceDirectory>${project.basedir}/src</sourceDirectory>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <showWarnings>true</showWarnings>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
