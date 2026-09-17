@@ -32,6 +32,9 @@ jobs:
       - name: Compile and run regression corpus
         run: mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install
 
+      - name: Compile DUMB2 module
+        run: mvn --batch-mode --no-transfer-progress -pl kanger-data-dumb2 -am -DskipTests package
+
       - name: Maven module artifact boundaries
         shell: bash
         run: |
@@ -41,8 +44,9 @@ jobs:
           core_jar="$(find kanger-core/target -maxdepth 1 -type f -name 'kanger-core-*.jar' | head -n 1)"
           udf_jar="$(find kanger-udf/target -maxdepth 1 -type f -name 'kanger-udf-*.jar' | head -n 1)"
           dumb_jar="$(find kanger-data-dumb/target -maxdepth 1 -type f -name 'kanger-data-dumb-*.jar' | head -n 1)"
+          dumb2_jar="$(find kanger-data-dumb2/target -maxdepth 1 -type f -name 'kanger-data-dumb2-*.jar' | head -n 1)"
 
-          for artifact in "$command_jar" "$core_jar" "$udf_jar" "$dumb_jar"; do
+          for artifact in "$command_jar" "$core_jar" "$udf_jar" "$dumb_jar" "$dumb2_jar"; do
             test -n "$artifact"
             test -f "$artifact"
           done
@@ -51,6 +55,7 @@ jobs:
           jar tf "$core_jar" > "$RUNNER_TEMP/kanger-core.entries"
           jar tf "$udf_jar" > "$RUNNER_TEMP/kanger-udf.entries"
           jar tf "$dumb_jar" > "$RUNNER_TEMP/kanger-data-dumb.entries"
+          jar tf "$dumb2_jar" > "$RUNNER_TEMP/kanger-data-dumb2.entries"
 
           require_entry() {
             local entries="$1"
@@ -97,7 +102,7 @@ jobs:
         run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.storage.IndexOneComparableSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Mind transaction reservation invariant
-        run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.MindTransactionReservationSafetyRunner -Dexec.classpathScope=test exec:java
+        run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.KangerMindTransactionReservationSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: TValue canonical resurrection invariant
         run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.KangerTValueResurrectionSafetyRunner -Dexec.classpathScope=test exec:java
