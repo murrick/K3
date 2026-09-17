@@ -1,6 +1,6 @@
-# KANGER 3.7.0 — Command Processor Manual
+# KANGER 3.8.0 — Command Processor Manual
 
-This manual describes the customer-visible KANGER Console command processor shipped with KANGER 3.7.0. It is the reference for command grammar, command-side lifecycle semantics, diagnostics, and the canonical `status` projection.
+This manual describes the customer-visible KANGER Console command processor shipped with KANGER 3.8.0. It is the reference for command grammar, command-side lifecycle semantics, diagnostics, and the canonical `status` projection.
 
 For installation, update, account provisioning, and host configuration, see `../README.md`. For Browser UI navigation and the TECH panel, see `UI_CONSOLE.md`.
 
@@ -83,8 +83,8 @@ Transaction rollback and storage reindex are not routed through this confirmatio
 | Sources | `get [<source>]`, `put <source>`, `delete [<source>]` | List/load/save/delete server-side source files |
 | Storage | `storage`, `storage use|close|drop|reindex ...` | Inspect and manage persistent storage |
 | Status | `status [core [objects|transaction|levels]|storage|session|runtime]` | Cheap canonical product telemetry |
+| Session | `timezone [<zoneId>]`, `help`, `quit` | Inspect or change session timezone, show help, or end the session |
 | Workspace | `erase` | Clear the current workspace through qualified runtime semantics |
-| Help/session | `help`, `quit` | Render canonical help or end the session |
 
 ---
 
@@ -573,7 +573,20 @@ The Browser TECH panel formats some of these raw values for readability (KiB/MiB
 
 ---
 
-## 13. `erase`
+## 13. Session time zone
+
+### `timezone [<zoneId>]`
+
+```text
+timezone
+timezone Europe/Vienna
+```
+
+Without an argument, shows the current session time zone. With an IANA time-zone id, changes the time zone of the current session immediately. The setting belongs to the current User/session runtime context; it does not change the JVM default or server-wide configuration.
+
+---
+
+## 14. `erase`
 
 ```text
 erase
@@ -585,7 +598,7 @@ Clears the current workspace through the qualified runtime semantics after expli
 
 ---
 
-## 14. `help`
+## 15. `help`
 
 ```text
 help
@@ -597,7 +610,7 @@ The built-in help is syntax-oriented; this manual supplies the longer lifecycle 
 
 ---
 
-## 15. `quit`
+## 16. `quit`
 
 ```text
 quit
@@ -607,7 +620,7 @@ Terminates the current authenticated KANGER session through the canonical sessio
 
 ---
 
-## 16. Errors and rejected operations
+## 17. Errors and rejected operations
 
 A rejected command should be interpreted at the boundary that rejected it:
 
@@ -623,7 +636,7 @@ When diagnosing a failure, use `status`, the Browser TECH panel, and the operati
 
 ---
 
-## 17. Automation guidance
+## 18. Automation guidance
 
 For scripts and support procedures:
 
@@ -637,9 +650,9 @@ For scripts and support procedures:
 
 ---
 
-## 18. Related documentation
+## 19. Related documentation
 
 - `../README.md` — installation, update, Server configuration, account provisioning, backup boundary, host troubleshooting.
 - `UI_CONSOLE.md` — Browser UI, workspace panels, operation model, and TECH presentation.
 
-This document defines the KANGER 3.7.0 distribution command surface. If a future release changes command grammar or command lifecycle semantics, the distribution reference for that release must change with it.
+This document defines the KANGER 3.8.0 distribution command surface. If a future release changes command grammar or command lifecycle semantics, the distribution reference for that release must change with it.
