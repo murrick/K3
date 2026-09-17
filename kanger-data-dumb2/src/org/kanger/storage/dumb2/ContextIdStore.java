@@ -71,7 +71,7 @@ final class ContextIdStore {
      * @throws IOException if the sidecar cannot be read
      * @throws StorageLifecycleException when the persisted identity is invalid
      */
-    static UUID read(Path path) throws IOException {
+    static UUID read(Path path) throws IOException, StorageLifecycleException {
         byte[] bytes = Files.readAllBytes(path);
         if (bytes.length != FILE_SIZE) {
             throw corruption("Invalid DUMB2 context identity length " + bytes.length
