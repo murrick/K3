@@ -52,7 +52,7 @@ public abstract class Version {
     public static final String LEGACY_COMPATIBILITY_VERSION_S = VERSION + "." + RELEASE;
 
     /** Canonical public KANGER product/Core identity. */
-    public static final String PRODUCT_VERSION_S = "3.7.0";
+    public static final String PRODUCT_VERSION_S = "3.8.0";
 
     /** Public Core identity reported by all KANGER front ends. */
     public static final String CORE_VERSION_S = PRODUCT_VERSION_S;
