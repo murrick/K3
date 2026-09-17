@@ -11,7 +11,7 @@ public final class Set0802ProfileRunner {
     public static void main(String[] args) throws Exception {
         System.setProperty("user.home", Files.createTempDirectory("set0802-").toString());
         List<String> results = new ArrayList<>();
-        results.add("sample,elapsed_ns,solutions,values,main_thread_reference_scans");
+        results.add("sample,elapsed_ns,solutions,values,main_thread_reference_scans,last_passes,last_rule_visits,last_terminal_rotations,last_database_evaluations,last_domain_pairs,last_unifications");
         int warmups = Integer.getInteger("bench.warmups", 0);
         int samples = Integer.getInteger("bench.samples", 1);
         for (int i = -warmups; i < samples; ++i) {
@@ -21,15 +21,25 @@ public final class Set0802ProfileRunner {
             test.setUp();
             Sampler sampler = Boolean.getBoolean("bench.sample") ? new Sampler() : null;
             long before = Linker.experimentalSolveScanProfile()[0];
+            long[] rotationsBefore = Linker.experimentalRotationProfile();
             if (sampler != null) sampler.start();
             long start = System.nanoTime();
             try { test.set_08_02(); }
             finally { if (sampler != null) sampler.running = false; }
             long elapsed = System.nanoTime() - start;
+            if (i >= 0 && Boolean.getBoolean("kanger.experiment.profileRotations")) {
+                long[] rotations = Linker.experimentalRotationProfile();
+                for (int j = 0; j < rotations.length; ++j) rotations[j] -= rotationsBefore[j];
+                System.err.println("MAIN_ROTATIONS " + Arrays.toString(rotations));
+            }
             if (sampler != null) { sampler.join(); if (i >= 0) sampler.report(); }
+            LinkerStatistics stats = ((Mind) test.mind).getLinkerStatistics();
             if (i >= 0) results.add(i + "," + elapsed + "," + test.mind.getSolutions().size()
                     + "," + test.mind.getValues().size() + ","
-                    + (Linker.experimentalSolveScanProfile()[0] - before));
+                    + (Linker.experimentalSolveScanProfile()[0] - before)
+                    + "," + stats.getPasses() + "," + stats.getRuleVisits()
+                    + "," + stats.getTerminalRotations() + "," + stats.getDatabaseEvaluations()
+                    + "," + stats.getDomainPairs() + "," + stats.getUnificationAttempts());
         }
         Files.write(Paths.get(args[0]), results, StandardCharsets.UTF_8);
     }

@@ -258,6 +258,14 @@ public class Linker {
 
     private long lastSolveVersion = Long.MIN_VALUE;
 
+    private static final ThreadLocal<long[]> rotationProfile = new ThreadLocal<>();
+
+    /** Experimental per-thread attempts/rejections for suffix widths 1, 2, >=3. */
+    public static long[] experimentalRotationProfile() {
+        long[] counts = rotationProfile.get();
+        return counts == null ? new long[6] : counts.clone();
+    }
+
     private void synchronizeSolveIndex() throws Exception {
         long version = mind.ruleSolvesVersion();
         if (Boolean.getBoolean("kanger.experiment.versionedSolveSync")
@@ -728,7 +736,15 @@ public class Linker {
                 }
             }
         }
-        return !found || result;
+        boolean valid = !found || result;
+        if (Boolean.getBoolean("kanger.experiment.profileRotations")) {
+            long[] counts = rotationProfile.get();
+            if (counts == null) { counts = new long[6]; rotationProfile.set(counts); }
+            int width = Math.min(tail.size(), 3) - 1;
+            counts[width]++;
+            if (!valid) counts[width + 3]++;
+        }
+        return valid;
     }
 
     private boolean linkDomains(List<Domain> treeSlave, Collection<IRule> ruleList, Map<IRule, Set<Cause>> causes, boolean logging) throws Exception {

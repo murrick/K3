@@ -53,3 +53,45 @@ for local error checks but are omitted from the commit. Reproduce from repo root
 with org.kanger.test.Set0802ProfileRunner and an output CSV argument; use
 bench.warmups, bench.samples, bench.sample and the existing optimization flags.
 Do not use this measurement to enable either optimization by default.
+
+## Rotation frontier counters
+
+Follow-up diagnostics retain the existing algorithm and count isValidFor returns
+by suffix width. Flag profileRotations is default OFF. Counters are ThreadLocal;
+the runner reports only its main thread, not the four publication workers.
+OFF/ON each ran one warmup and three samples, with TValue preservation ON.
+All six measured invocations give exactly:
+
+| Assigned suffix width | Attempts | Rejected | Accepted |
+| --- | ---: | ---: | ---: |
+| 1 | 1,479 | 0 | 1,479 |
+| 2 | 242,556 | 241,077 | 1,479 |
+| 3 or more | 0 | 0 | 0 |
+
+99.39% of width-two candidates are rejected. 242,556 equals 492 x 493, but
+the counters alone do not establish the per-rule or per-pass distribution.
+The final Linker snapshot is identical across all six runs: 2 passes, 2,964
+rule visits, 4,440 terminal rotations, 4,440 database evaluations, 3,944 domain
+pairs/unifications, and 493 final solutions/values. Reference synchronizations
+remain 244,035 OFF versus 1 ON. Timings here include diagnostic overhead and are
+not new performance evidence. No worker errors appeared in the captured logs.
+
+This identifies a better target than another synchronization optimization:
+avoid hydrating/binding most incompatible inner TValue candidates. Current
+TValueFactory.forEach snapshots IDs in insertion order, hydrates each TValue,
+sets current, then isValidFor rejects most combinations. The tuple index lookup
+inside isValidFor uses the candidate just assigned; it does not constrain the
+inner loop using the already-bound outer variables.
+
+A prospective prefilter must preserve the existing OR across matching solve
+groups, unary/unconstrained cases, identity/order and dynamic tuple publication.
+In particular, terminal callbacks can publish tuples while a loop is in flight;
+a candidate list computed once at loop entry is not automatically safe. The
+existing forEach ID snapshot and current-binding side effects also require
+qualification. No pruning is implemented in this checkpoint. Next is a shadow
+candidate-selection probe against isValidFor before any skipping is attempted.
+
+Evidence: rotation-on.csv, frontier-{off,on}.csv and frontier-{off,on}.counts.
+The former records existing final-Linker statistics without frontier counters;
+the latter include the explicit per-width diagnostic. This instrumentation
+remains confined to the experimental branch.
