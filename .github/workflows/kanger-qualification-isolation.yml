@@ -32,6 +32,7 @@ jobs:
             kanger/src \
             kanger-console/src \
             kanger-data-dumb/src \
+            kanger-data-dumb2/src \
             kanger-udf/src \
             -type f -name '*Runner.java' -print)"
           if [ -n "$remaining" ]; then
