@@ -208,6 +208,7 @@ public class Linker {
     }
 
     private void clearSolveIndex() {
+        lastSolveVersion = Long.MIN_VALUE;
         solveIndex.clear();
         indexedSolveCounts.clear();
         unarySolveKeys.clear();
@@ -247,16 +248,53 @@ public class Linker {
         }
     }
 
+    private static final ThreadLocal<long[]> solveScanProfile = new ThreadLocal<>();
+
+    /** Diagnostic counters only: calls, groups, new list slots, unchanged calls, completed calls. */
+    public static long[] experimentalSolveScanProfile() {
+        long[] counts = solveScanProfile.get();
+        return counts == null ? new long[5] : counts.clone();
+    }
+
+    private long lastSolveVersion = Long.MIN_VALUE;
+
     private void synchronizeSolveIndex() throws Exception {
-        for (Map.Entry<TVariableSet, List<TSolve>> entry : mind.getRuleSolves().entrySet()) {
+        long version = mind.ruleSolvesVersion();
+        if (Boolean.getBoolean("kanger.experiment.versionedSolveSync")
+                && !mind.ruleSolvesExposed() && version == lastSolveVersion) {
+            if (Boolean.getBoolean("kanger.experiment.verifySolveSync")) {
+                Map<TVariableSet, Integer> before = new HashMap<>(indexedSolveCounts);
+                int indexedBefore = indexedSolves.size();
+                synchronizeSolveIndexReference();
+                if (!before.equals(indexedSolveCounts) || indexedBefore != indexedSolves.size())
+                    throw new AssertionError("Reference sync changed index during proposed skip");
+            }
+            return;
+        }
+        synchronizeSolveIndexReference();
+        lastSolveVersion = version;
+    }
+
+    private void synchronizeSolveIndexReference() throws Exception {
+        long[] counts = null;
+        if (Boolean.getBoolean("kanger.experiment.profileSolveScans")) {
+            counts = solveScanProfile.get();
+            if (counts == null) { counts = new long[5]; solveScanProfile.set(counts); }
+            counts[0]++;
+        }
+        long added = 0;
+        for (Map.Entry<TVariableSet, List<TSolve>> entry : mind.ruleSolvesInternal().entrySet()) {
+            if (counts != null) counts[1]++;
             int indexed = indexedSolveCounts.containsKey(entry.getKey())
                     ? indexedSolveCounts.get(entry.getKey()) : 0;
             List<TSolve> solves = entry.getValue();
             for (int i = indexed; i < solves.size(); ++i) {
+                if (counts != null) { counts[2]++; added++; }
                 indexSolve(solves.get(i));
             }
             indexedSolveCounts.put(entry.getKey(), solves.size());
         }
+        if (counts != null) { counts[4]++; if (added == 0) counts[3]++; }
     }
 
     private List<TSolve> getSolveCandidates(TVariableSet key,
@@ -418,7 +456,7 @@ public class Linker {
         mind.getUsedRules().clear();
         mind.getFloodControl().clear();
 
-        mind.getRuleSolves().clear();
+        mind.ruleSolvesInternal().clear(); // clearSolveIndex resets this invocation's version baseline.
         clearSolveIndex();
 
         int passCounter = 0;
@@ -655,7 +693,7 @@ public class Linker {
         boolean found = false;
         boolean result = false;
         if (tail.size() > 1) {
-            for (TVariableSet key : mind.getRuleSolves().keySet()) {
+            for (TVariableSet key : mind.ruleSolvesInternal().keySet()) {
                 if (key.contains(t)) {
                     found = true;
                     boolean success = unarySolveKeys.contains(key);

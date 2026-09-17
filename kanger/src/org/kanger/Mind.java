@@ -133,6 +133,8 @@ public class Mind implements IMind {
     private final Map<Domain, Map<ArgumentsList, SortedSet<TValue>>> domainSolves = new HashMap<>();
     private final Map<TVariable, Set<TValue>> queryValues = new HashMap<>();
     private final Map<TVariableSet, List<TSolve>> ruleSolves = new LinkedHashMap<>();
+    private long ruleSolvesVersion;
+    private boolean ruleSolvesExposed;
     //
     private final Map<TVariable, long[]> floodControl = new HashMap<>();
     private final Stack<Integer> debugLevelStack = new Stack<>();
@@ -596,7 +598,7 @@ public class Mind implements IMind {
             domainCauses.clear();
             domainSolves.clear();
             queryValues.clear();
-            ruleSolves.clear();
+            clearRuleSolves();
             floodControl.clear();
 
             deleted.clear();
@@ -1014,8 +1016,16 @@ public class Mind implements IMind {
     }
 
     public Map<TVariableSet, List<TSolve>> getRuleSolves() {
+        ruleSolvesExposed = true;
         return ruleSolves;
     }
+
+    Map<TVariableSet, List<TSolve>> ruleSolvesInternal() {
+        return getClass() == Mind.class ? ruleSolves : getRuleSolves();
+    }
+    long ruleSolvesVersion() { return ruleSolvesVersion; }
+    boolean ruleSolvesExposed() { return ruleSolvesExposed || getClass() != Mind.class; }
+    private void clearRuleSolves() { ruleSolves.clear(); ++ruleSolvesVersion; }
 
     public Map<TVariable, long[]> getFloodControl() {
         return floodControl;
@@ -1771,9 +1781,9 @@ public class Mind implements IMind {
 
     public TSolve findTSolve(List<TValue> list) throws Exception {
         TVariableSet ts = new TVariableSet(list, this);
-        if (getRuleSolves().containsKey(ts)) {
+        if (ruleSolvesInternal().containsKey(ts)) {
             TSolve tmp = new TSolve(list, this);
-            for (TSolve t : getRuleSolves().get(ts)) {
+            for (TSolve t : ruleSolvesInternal().get(ts)) {
                 if (tmp.equalsTo(t)) {
                     return t;
                 }
@@ -1790,10 +1800,11 @@ public class Mind implements IMind {
         } else {
             tmp = new TSolve(list, this);
             TVariableSet ts = new TVariableSet(tmp, this);
-            if (!getRuleSolves().containsKey(ts)) {
-                getRuleSolves().put(ts, new ArrayList<>());
+            if (!ruleSolvesInternal().containsKey(ts)) {
+                ruleSolvesInternal().put(ts, new ArrayList<>());
             }
-            getRuleSolves().get(ts).add(tmp);
+            ruleSolvesInternal().get(ts).add(tmp);
+            ++ruleSolvesVersion;
             SemanticEffectTelemetry.recordTSolve(list);
             SemanticEffectTelemetry.recordTSolveCandidate(true);
             return tmp;
