@@ -22,16 +22,27 @@
         storage provider until its Context contract is qualified.
     </description>
 
+    <properties>
+        <junit.jupiter.version>5.10.3</junit.jupiter.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.kanger</groupId>
             <artifactId>kanger-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <sourceDirectory>${project.basedir}/src</sourceDirectory>
+        <testSourceDirectory>${project.basedir}/test</testSourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
