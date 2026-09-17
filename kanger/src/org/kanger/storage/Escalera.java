@@ -58,7 +58,8 @@ import java.util.*;
  * <p><strong>Checkpoint protocol.</strong> {@link #mark()} всегда открывает
  * реальный LIFO frame и сохраняет root, включая пустой root. {@link #commit()}
  * потребляет ровно один frame, сохраняя текущую цепочку; {@link #release()}
- * восстанавливает root frame и инвалидирует производные indexes. Completion
+ * восстанавливает root frame и инвалидирует производные indexes, кроме
+ * opt-in сохранения неизменного TValue index. Completion
  * без открытого frame является lifecycle error. Checkpoint не копирует graph и
  * не выполняет physical storage commit.</p>
  *
@@ -127,9 +128,11 @@ public class Escalera implements ICache {
 
     private static final class Checkpoint {
         private final IStep root;
+        private final long mutation;
 
-        private Checkpoint(IStep root) {
+        private Checkpoint(IStep root, long mutation) {
             this.root = root;
+            this.mutation = mutation;
         }
     }
 
@@ -149,6 +152,7 @@ public class Escalera implements ICache {
     private final Map<Long, Long> predecessorById = new HashMap<>();
     private boolean indexValid = false;
     private IStep indexedRoot = null;
+    private long mutation;
 
     public Escalera(Mind mind, String schema, ICache parent) {
         this.mind = mind;
@@ -247,6 +251,7 @@ public class Escalera implements ICache {
 
     @Override
     public void add(IUnit one) throws Exception {
+        mutation++;
         ensureIndex();
         Step s = new Step();
         s.setData(one);
@@ -318,11 +323,13 @@ public class Escalera implements ICache {
 
     @Override
     public void delete(long id) throws Exception {
+        mutation++;
         deleteOne(id);
     }
 
     @Override
     public void deleteAll(Collection<Long> ids) throws Exception {
+        mutation++;
         if (ids == null || ids.isEmpty()) {
             return;
         }
@@ -422,6 +429,7 @@ public class Escalera implements ICache {
 
     @Override
     public void clear() throws Exception {
+        mutation++;
         root = null;
         clearIndex();
         indexedRoot = null;
@@ -437,7 +445,7 @@ public class Escalera implements ICache {
 
     @Override
     public long mark() {
-        stack.push(new Checkpoint(root));
+        stack.push(new Checkpoint(root, mutation));
         return root == null ? -1 : root.getId();
     }
 
@@ -455,9 +463,44 @@ public class Escalera implements ICache {
         if (stack.isEmpty()) {
             throw new IllegalStateException("Escalera release without an open checkpoint");
         }
-        root = stack.pop().root;
-        invalidateIndex();
+        Checkpoint checkpoint = stack.pop();
+        IStep restored = checkpoint.root;
+        boolean preserve = "tvalues".equals(schema)
+                && Boolean.getBoolean("kanger.experiment.preserveTValueIndex")
+                && indexValid && indexedRoot == root && root == restored && mutation == checkpoint.mutation;
+        root = restored;
+        if (preserve) {
+            if (Boolean.getBoolean("kanger.experiment.verifyTValueIndex")) verifyPreservedIndex();
+        } else {
+            mutation++;
+            invalidateIndex();
+        }
         return root == null ? -1 : root.getId();
+    }
+
+    /** Independent graph reconstruction; never repairs the live maps. */
+    private void verifyPreservedIndex() {
+        Map<Long, IStep> memory = new HashMap<>();
+        Set<Long> persistent = new HashSet<>();
+        Map<Integer, Set<Long>> hashes = new HashMap<>();
+        Map<Long, Long> predecessors = new HashMap<>();
+        IStep previous = null;
+        for (IStep step = root; step != null; step = step.getNext()) {
+            long id = step.getId();
+            if (step instanceof Sapato) { persistent.add(id); memory.remove(id); }
+            else { memory.put(id, step); persistent.remove(id); }
+            Set<Long> bucket = hashes.get(step.getHash());
+            if (bucket == null) { bucket = new HashSet<>(); hashes.put(step.getHash(), bucket); }
+            bucket.add(id);
+            if (previous != null) predecessors.put(id, previous.getId());
+            previous = step;
+        }
+        if (memory.size() != memoryById.size() || !persistent.equals(persistentIds)
+                || !hashes.equals(idsByHash) || !predecessors.equals(predecessorById))
+            throw new AssertionError("Preserved TValue index differs from chain");
+        for (Map.Entry<Long, IStep> entry : memory.entrySet())
+            if (memoryById.get(entry.getKey()) != entry.getValue())
+                throw new AssertionError("Preserved TValue step identity changed");
     }
 
     @Override
@@ -483,6 +526,7 @@ public class Escalera implements ICache {
 
     @Override
     public void setRoot(IStep newRoot) {
+        mutation++;
         if (!indexValid) {
             root = newRoot;
             return;
@@ -524,6 +568,7 @@ public class Escalera implements ICache {
 
     @Override
     public boolean update() throws Exception {
+        mutation++;
         if (mind.isStorageUsed()) {
             IBase base = ((User) mind.getUser()).getStorage(schema);
             synchronized (base) {

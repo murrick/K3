@@ -14,19 +14,34 @@ concurrency:
 
 jobs:
   regression:
-    name: Maven regression and invariant gates
+    name: Maven Java ${{ matrix.java }} / TValue ${{ matrix.mode }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '21']
+        mode: ['off', 'on', 'verify']
+        include:
+          - mode: 'off'
+            options: '-Dkanger.experiment.preserveTValueIndex=false'
+          - mode: 'on'
+            options: '-Dkanger.experiment.preserveTValueIndex=true'
+          - mode: verify
+            options: '-Dkanger.experiment.preserveTValueIndex=true -Dkanger.experiment.verifyTValueIndex=true'
+    env:
+      # Inherit into exec-plugin subprocesses as well as Maven/Surefire.
+      JAVA_TOOL_OPTIONS: ${{ matrix.options }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Java 8
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '8'
+          java-version: ${{ matrix.java }}
           cache: maven
 
       - name: Compile and run regression corpus
@@ -34,6 +49,19 @@ jobs:
 
       - name: Compile DUMB2 module
         run: mvn --batch-mode --no-transfer-progress -pl kanger-data-dumb2 -am -DskipTests package
+
+      - name: TValue preservation boundaries and reopen
+        shell: bash
+        run: |
+          set -euo pipefail
+          for runner in TValueIndexBoundaryRunner TValueIndexReopenRunner; do
+            mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml \
+              -Dexec.mainClass="org.kanger.$runner" -Dexec.classpathScope=test exec:java
+          done
+
+      - name: TValue preservation guard and verifier fault probe
+        if: matrix.mode != 'off'
+        run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.TValueIndexPreservationRunner -Dexec.classpathScope=test exec:java
 
       - name: Maven module artifact boundaries
         shell: bash
@@ -126,7 +154,14 @@ jobs:
         run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.storage.DBCloseFailureIsolationSafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: DUMB reindex swap atomicity invariant
-        run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.storage.DBReindexSwapAtomicitySafetyRunner -Dexec.classpathScope=test exec:java
+        shell: bash
+        run: |
+          # This existing fault injector installs a temporary SecurityManager.
+          # Java 21 requires explicit opt-in; scope it to this test JVM only.
+          if [ '${{ matrix.java }}' = '21' ]; then
+            export JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -Djava.security.manager=allow"
+          fi
+          mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.storage.DBReindexSwapAtomicitySafetyRunner -Dexec.classpathScope=test exec:java
 
       - name: Escalera empty-root mark invariant
         run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.KangerEscaleraMarkSafetyRunner -Dexec.classpathScope=test exec:java
