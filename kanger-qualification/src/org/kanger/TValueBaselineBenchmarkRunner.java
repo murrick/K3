@@ -65,6 +65,8 @@ public final class TValueBaselineBenchmarkRunner {
             StackSampler sampler = Boolean.getBoolean("kanger.experiment.sampleQuery")
                     ? new StackSampler(Thread.currentThread()) : null;
             if (sampler != null) sampler.start();
+            long[] scansBefore = Boolean.getBoolean("kanger.experiment.profileSolveScans")
+                    ? Linker.experimentalSolveScanProfile() : null;
             long queryStarted = System.nanoTime();
             try {
                 if (!Boolean.TRUE.equals(mind.query(query, null, false))) throw new AssertionError("query " + label);
@@ -72,6 +74,11 @@ public final class TValueBaselineBenchmarkRunner {
                 if (sampler != null) sampler.running = false;
             }
             long finished = System.nanoTime();
+            if (i >= 0 && Boolean.getBoolean("kanger.experiment.profileSolveScans")) {
+                long[] scans = Linker.experimentalSolveScanProfile();
+                for (int k = 0; k < scans.length; k++) scans[k] -= scansBefore[k];
+                System.err.println("SOLVE_SCANS " + label + " " + i + " " + java.util.Arrays.toString(scans));
+            }
             if (sampler != null) {
                 sampler.join();
                 if (i >= 0) sampler.report(label, i);

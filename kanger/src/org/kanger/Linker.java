@@ -247,16 +247,34 @@ public class Linker {
         }
     }
 
+    private static final ThreadLocal<long[]> solveScanProfile = new ThreadLocal<>();
+
+    /** Diagnostic counters only: calls, groups, new list slots, unchanged calls, completed calls. */
+    public static long[] experimentalSolveScanProfile() {
+        long[] counts = solveScanProfile.get();
+        return counts == null ? new long[5] : counts.clone();
+    }
+
     private void synchronizeSolveIndex() throws Exception {
+        long[] counts = null;
+        if (Boolean.getBoolean("kanger.experiment.profileSolveScans")) {
+            counts = solveScanProfile.get();
+            if (counts == null) { counts = new long[5]; solveScanProfile.set(counts); }
+            counts[0]++;
+        }
+        long added = 0;
         for (Map.Entry<TVariableSet, List<TSolve>> entry : mind.getRuleSolves().entrySet()) {
+            if (counts != null) counts[1]++;
             int indexed = indexedSolveCounts.containsKey(entry.getKey())
                     ? indexedSolveCounts.get(entry.getKey()) : 0;
             List<TSolve> solves = entry.getValue();
             for (int i = indexed; i < solves.size(); ++i) {
+                if (counts != null) { counts[2]++; added++; }
                 indexSolve(solves.get(i));
             }
             indexedSolveCounts.put(entry.getKey(), solves.size());
         }
+        if (counts != null) { counts[4]++; if (added == 0) counts[3]++; }
     }
 
     private List<TSolve> getSolveCandidates(TVariableSet key,
