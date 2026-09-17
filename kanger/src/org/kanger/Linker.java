@@ -208,6 +208,7 @@ public class Linker {
     }
 
     private void clearSolveIndex() {
+        lastSolveVersion = Long.MIN_VALUE;
         solveIndex.clear();
         indexedSolveCounts.clear();
         unarySolveKeys.clear();
@@ -255,7 +256,26 @@ public class Linker {
         return counts == null ? new long[5] : counts.clone();
     }
 
+    private long lastSolveVersion = Long.MIN_VALUE;
+
     private void synchronizeSolveIndex() throws Exception {
+        long version = mind.ruleSolvesVersion();
+        if (Boolean.getBoolean("kanger.experiment.versionedSolveSync")
+                && !mind.ruleSolvesExposed() && version == lastSolveVersion) {
+            if (Boolean.getBoolean("kanger.experiment.verifySolveSync")) {
+                Map<TVariableSet, Integer> before = new HashMap<>(indexedSolveCounts);
+                int indexedBefore = indexedSolves.size();
+                synchronizeSolveIndexReference();
+                if (!before.equals(indexedSolveCounts) || indexedBefore != indexedSolves.size())
+                    throw new AssertionError("Reference sync changed index during proposed skip");
+            }
+            return;
+        }
+        synchronizeSolveIndexReference();
+        lastSolveVersion = version;
+    }
+
+    private void synchronizeSolveIndexReference() throws Exception {
         long[] counts = null;
         if (Boolean.getBoolean("kanger.experiment.profileSolveScans")) {
             counts = solveScanProfile.get();
@@ -263,7 +283,7 @@ public class Linker {
             counts[0]++;
         }
         long added = 0;
-        for (Map.Entry<TVariableSet, List<TSolve>> entry : mind.getRuleSolves().entrySet()) {
+        for (Map.Entry<TVariableSet, List<TSolve>> entry : mind.ruleSolvesInternal().entrySet()) {
             if (counts != null) counts[1]++;
             int indexed = indexedSolveCounts.containsKey(entry.getKey())
                     ? indexedSolveCounts.get(entry.getKey()) : 0;
@@ -436,7 +456,7 @@ public class Linker {
         mind.getUsedRules().clear();
         mind.getFloodControl().clear();
 
-        mind.getRuleSolves().clear();
+        mind.ruleSolvesInternal().clear(); // clearSolveIndex resets this invocation's version baseline.
         clearSolveIndex();
 
         int passCounter = 0;
@@ -673,7 +693,7 @@ public class Linker {
         boolean found = false;
         boolean result = false;
         if (tail.size() > 1) {
-            for (TVariableSet key : mind.getRuleSolves().keySet()) {
+            for (TVariableSet key : mind.ruleSolvesInternal().keySet()) {
                 if (key.contains(t)) {
                     found = true;
                     boolean success = unarySolveKeys.contains(key);
