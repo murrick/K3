@@ -135,3 +135,44 @@ The shadow result alone does not establish those skipping semantics or speedup.
 
 Evidence: shadow-frontier.csv, shadow-frontier.counts, shadow-state.txt and
 shadow-qualification.txt. Production develop remains untouched.
+
+## Minimal rejection bypass
+
+Default-OFF `kanger.experiment.filterRotationFrontier=true` now skips isValidFor
+only for frontier-predicted rejections. It retains TValue hydration, iteration
+order, setCurrent, and every accepted-path oracle check. Exposed solve maps and
+subclasses retain oracle checks on every candidate. Adding shadowRotationFrontier
+restores comparison against the oracle on every rejection (verified mode does
+not actually bypass those calls).
+
+RotationFrontierSafetyRunner invokes the real rotation loop with publication and
+outer-binding mutation inside terminal callbacks. Eight scenarios run in four
+modes: reference, shadow, filter and verified. They cover fresh tuple publication,
+outer-binding change, external-map append, empty eligibility, unary wildcard,
+unconstrained groups, union of groups with/without an outer pivot and null outer
+binding. Terminal visit order and final current binding match reference. The
+empty-eligibility probe confirms actual bypass (zero oracle calls versus three);
+the exposed-map probe confirms three retained oracle calls. All 32 runs pass.
+
+Filter and verified modes separately pass all 123 corpus cases; both 20-operation
+transaction projections are byte-identical to the prior reference projection.
+No worker exceptions were found in the captured logs. Qualification is still
+local Java 17 only; no default activation, merge or broader contract claim.
+
+Fresh JVMs in OFF/ON/ON/OFF order, three warmups and five timed invocations each,
+TValue preservation and versioned sync ON, stack sampling/scan counters OFF:
+
+| Pair | OFF median seconds | ON median seconds | Reduction |
+| --- | ---: | ---: | ---: |
+| OFF then ON | 0.987887476 | 0.946448606 | 4.2% |
+| ON then OFF | 1.073768273 | 0.976442166 | 9.1% |
+
+All 20 measured invocations finish with 493 solutions and values. These are warm
+method measurements including formatting/file output, not cold console timings.
+The small observed improvement is not evidence of a radical speedup. This bypass
+still pays for per-candidate hydration, binding and frontier-cache validation.
+Frontier counters also remain active in the enabled prototype. Skipping that
+earlier work would be a different experiment requiring preservation of ID-snapshot
+order, final current state and mutation during callbacks.
+
+Evidence: frontier-boundaries.txt, filter/verify-state.txt and filter-bench-*.csv.

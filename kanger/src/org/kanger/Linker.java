@@ -643,6 +643,8 @@ public class Linker {
     private boolean rotateVariables(final SortedSet<TVariable> tvars, final SortedSet<TVariable> base, final IReactor runnable) throws Exception {
         final boolean[] result = new boolean[]{false, false};
         final RotationFrontier[] frontier = new RotationFrontier[1];
+        final boolean shadowFrontier = Boolean.getBoolean("kanger.experiment.shadowRotationFrontier");
+        final boolean filterFrontier = Boolean.getBoolean("kanger.experiment.filterRotationFrontier");
         if (tvars.isEmpty()) {
             result[0] = (boolean) runnable.run(tvars);
         } else {
@@ -656,7 +658,7 @@ public class Linker {
                 public Object run(Object o) throws Exception {
                     result[1] = true;
                     Boolean predicted = null;
-                    if (Boolean.getBoolean("kanger.experiment.shadowRotationFrontier")) {
+                    if (shadowFrontier || filterFrontier) {
                         SortedSet<TVariable> suffix = base.tailSet(t);
                         synchronizeSolveIndex();
                         List<Long> bindings = new ArrayList<>();
@@ -672,12 +674,15 @@ public class Linker {
                                 || frontier[0].allowed.contains(((TValue) o).getId());
                     }
                     t.setCurrent((TValue) o);
-                    boolean accepted = isValidFor(base.tailSet(t));
+                    // Retain hydration, iteration order and current-binding side effects.
+                    boolean skipRejected = filterFrontier && !shadowFrontier
+                            && !mind.ruleSolvesExposed() && Boolean.FALSE.equals(predicted);
+                    boolean accepted = skipRejected ? false : isValidFor(base.tailSet(t));
                     if (predicted != null) {
                         long[] counts = frontierCounts();
                         counts[0]++;
                         if (!predicted) counts[2]++;
-                        if (predicted != accepted) {
+                        if (shadowFrontier && predicted != accepted) {
                             counts[3]++;
                             throw new AssertionError("Rotation frontier disagrees with isValidFor");
                         }
