@@ -21,9 +21,9 @@ class VersionTest {
 
     @Test
     void productIdentityIsIndependentFromLegacyCompatibilityAndServerArtifact() {
-        assertEquals("3.7.0", Version.PRODUCT_VERSION_S);
-        assertEquals("3.7.0", Version.CORE_VERSION_S);
-        assertEquals("3.7.0", Version.VERSION_S);
+        assertEquals("3.8.0", Version.PRODUCT_VERSION_S);
+        assertEquals("3.8.0", Version.CORE_VERSION_S);
+        assertEquals("3.8.0", Version.VERSION_S);
         assertEquals("3.3", Version.LEGACY_COMPATIBILITY_VERSION_S);
         assertEquals(0x0303, Version.VERSION_CODE);
         assertEquals("server-0.18", Version.SERVER_VERSION_S);
