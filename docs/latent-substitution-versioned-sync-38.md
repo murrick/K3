@@ -120,4 +120,39 @@ experiment/3.8.0-solve-sync-qualified. The old branch and its measurements remai
 intact. DUMB2 is taken unchanged from that current base, including the checked
 exception correction. Production delta is still confined to Mind and Linker;
 no default flag, persistence contract or substitution traversal is changed.
-Full and focused CI results on this new base are pending.
+Full and focused CI passed on this new base. General CI now adds
+Java 8/21 solve-on and solve-verify cells (TValue preservation ON) alongside the
+six existing TValue cells, so its complete invariant suite exercises the new
+path. The focused four-cell workflow additionally checks TValue OFF.
+
+Mutation-boundary source review on this base found all production tuple
+publications route through Mind.addTSolve. Mind.clearMind advances the version;
+Linker.link clears the map and immediately resets its private-index baseline.
+No other production caller of the public mutable-map getter remains. External
+getter exposure is sticky, and all subclasses conservatively use reference
+scans. This preserves the existing sequential Mind/Linker lifecycle; it does not
+introduce concurrent mutation support or stronger handling of in-place TSolve
+content changes than the original append synchronizer provides.
+
+Qualified code/workflow HEAD: 2c23776ed2803c3a067367fd59982fd5d6484a72.
+
+| Gate | Result | Run |
+| --- | --- | --- |
+| Full CI, Java 8/21, five modes per Java | 10/10 PASS | https://github.com/murrick/K3/actions/runs/35263041509 |
+| Solve-sync corpus/transactions/guards, Java 8/21 x TValue OFF/ON | 4/4 PASS | https://github.com/murrick/K3/actions/runs/35263041511 |
+| Qualification artifact isolation | PASS | https://github.com/murrick/K3/actions/runs/35263041547 |
+| Distribution bundle | PASS | https://github.com/murrick/K3/actions/runs/35262962736 |
+| Server Java 8/21 | PASS after infrastructure retry | https://github.com/murrick/K3/actions/runs/35262962775 |
+
+Server and distribution ran on 5c743c12470d5018166fd84bdd2a6bdc2e2726b5;
+the only change to 2c23776 is the additional general-CI matrix cells. The server's
+initial Java 8 job failed resolving maven-clean-plugin with Maven Central HTTP
+429; rerunning that failed job passed without source changes. Other gates above
+ran on 2c23776 itself. No new performance numbers were collected: the prior
+measurements remain tied to the original recorded base, with identical core
+optimization code. A later documentation-only checkpoint does not alter the
+qualified executable tree.
+
+Next: prepare a focused integration diff for review, retaining default OFF and
+the reference synchronizer. This is readiness evidence, not merge permission.
+No develop/release branch, tag, deployment, or default activation was changed.
