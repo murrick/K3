@@ -520,7 +520,24 @@ The dedicated cause-weight workflow builds clean Maven classes on Java 8/21,
 with TValue preservation OFF/ON, and runs cause weighting OFF/ON/verify in each
 cell: existing 123-case corpus, weight boundary fixture, and 20-step transaction
 state comparisons, plus all six fault scenarios. Versioned solve sync is ON;
-rotation experiments remain OFF. CI results are pending at this checkpoint.
+rotation experiments remain OFF.
+
+Qualification completed for executable commit
+`8693d1c039f8c9be6537a83c23cb9a269babf021`:
+
+- [Cause-weight matrix](https://github.com/murrick/K3/actions/runs/35331977127):
+  all four Java 8/21 × TValue OFF/ON jobs pass; each runs three weighting modes,
+  transaction state comparisons and six fault cases. Evidence is archived as
+  four workflow artifacts.
+- [General CI](https://github.com/murrick/K3/actions/runs/35331976871): all ten
+  Java/TValue/solve-sync jobs pass. These jobs do not enable cause weighting;
+  the dedicated matrix above supplies that coverage.
+- Server (35331976822), distribution bundle (35331976996), and production-surface
+  isolation job (35331976935) pass.
+
+This establishes the tested semantic/fallback behavior on Java 8 and 21, not
+performance on those JVMs. Timing evidence remains the earlier local Java 17
+measurements. No merge or default activation has been performed.
 
 Live develop was rechecked at f63063be8110e0b72fd2fe6ac34dd94ed588e11c.
 Its changes since this experiment's base affect DUMB2 files only. This workflow
