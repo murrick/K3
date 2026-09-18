@@ -111,6 +111,8 @@ public class CachedDomain extends Domain {
             boolean fast = Boolean.getBoolean("kanger.experiment.resolvedCauseWeights");
             Map<ICause, Integer> resolved = fast ? guardedWeights(selected, mind) : null;
             if (fast) causeWeightCounts()[resolved == null ? 5 : 4]++;
+            // Verification follows the guard too: unsupported resolution is reference-only.
+            if (fast && resolved == null) shadow = false;
             List<Long> ownIds = shadow && resolved == null ? resolvedIds(getArguments(), mind) : null;
             SortedMap<Integer, Set<ICause>> predictedGroups = shadow ? new TreeMap<>() : null;
             if (shadow) causeWeightCounts()[0]++;

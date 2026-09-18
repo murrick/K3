@@ -498,3 +498,31 @@ default activation is proposed by this measurement alone.
 
 Evidence: cause-original-compact-*.csv/.counts, cause-small-*.csv,
 cause-direct-allocation-{off,on}.csv/.counts.
+
+
+## Cause-weight fault qualification and Java matrix
+
+Added a persistent-Mind fault fixture with two distinct real Causes: a healthy
+TERM donor and either a custom Argument throwing IOException or a built-in TERM
+argument whose stored ID is absent. OFF/ON/verify must retain the healthy cause,
+produce exactly one reference diagnostic, and enter fallback in ON/verify.
+An explicit distinctness assertion prevents HashSet deduplication from hiding
+the fault. All six cases pass locally on Java 17.
+
+This exposed a verify-only error: after the fast-path guard rejected resolution,
+shadow verification still resolved unsupported arguments and could throw rather
+than follow the reference's caught-error behavior. Verification now follows the
+guard and skips speculative calculation on fallback. The new runner against the
+previous CachedDomain fails in custom/verify with the injected IOException;
+with the fix all six cases pass. Default flags remain OFF.
+
+The dedicated cause-weight workflow builds clean Maven classes on Java 8/21,
+with TValue preservation OFF/ON, and runs cause weighting OFF/ON/verify in each
+cell: existing 123-case corpus, weight boundary fixture, and 20-step transaction
+state comparisons, plus all six fault scenarios. Versioned solve sync is ON;
+rotation experiments remain OFF. CI results are pending at this checkpoint.
+
+Live develop was rechecked at f63063be8110e0b72fd2fe6ac34dd94ed588e11c.
+Its changes since this experiment's base affect DUMB2 files only. This workflow
+qualifies the experimental tree, not a newly integrated develop tree; any future
+integration must isolate the cause-weight delta onto the then-current develop.

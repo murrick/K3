@@ -1,0 +1,67 @@
+name: Cause weight qualification
+
+on:
+  push:
+    branches: ['experiment/3.8.0-set-08-02-profile']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualification:
+    name: Java ${{ matrix.java }} / TValue ${{ matrix.tvalue }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '21']
+        tvalue: ['false', 'true']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - name: Build qualification classes
+        run: mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install -DskipTests
+      - name: Compare reference, indexed and verified paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/cause-weights"
+          for mode in off on verify; do
+            enabled=false
+            verified=false
+            if [ "$mode" != off ]; then enabled=true; fi
+            if [ "$mode" = verify ]; then verified=true; fi
+            export JAVA_TOOL_OPTIONS="-Xmx512m -Dkanger.experiment.preserveTValueIndex=${{ matrix.tvalue }} -Dkanger.experiment.versionedSolveSync=true -Dkanger.experiment.resolvedCauseWeights=$enabled -Dkanger.experiment.compactCauseWeights=$enabled -Dkanger.experiment.shadowCauseWeights=$verified"
+            mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml \
+              -Dexec.mainClass=org.kanger.LatentSubstitutionCorpusRunner -Dexec.classpathScope=test exec:java \
+              > "$RUNNER_TEMP/cause-weights/$mode-corpus.log" 2>&1
+            mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml \
+              -Dexec.mainClass=org.kanger.LatentSolveSyncTransactionRunner -Dexec.classpathScope=test \
+              "-Dexec.args=$RUNNER_TEMP/cause-weights/$mode-state.txt $RUNNER_TEMP/cause-weights/$mode-work.txt" exec:java \
+              > "$RUNNER_TEMP/cause-weights/$mode-transactions.log" 2>&1
+            mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml \
+                -Dexec.mainClass=org.kanger.CauseWeightShadowSafetyRunner -Dexec.classpathScope=test exec:java \
+                > "$RUNNER_TEMP/cause-weights/$mode-safety.log" 2>&1
+          done
+          cmp "$RUNNER_TEMP/cause-weights/off-state.txt" "$RUNNER_TEMP/cause-weights/on-state.txt"
+          cmp "$RUNNER_TEMP/cause-weights/off-state.txt" "$RUNNER_TEMP/cause-weights/verify-state.txt"
+      - name: Qualify resolution failures and reference fallback
+        shell: bash
+        run: |
+          set -euo pipefail
+          export JAVA_TOOL_OPTIONS="-Xmx512m -Dkanger.experiment.preserveTValueIndex=${{ matrix.tvalue }} -Dkanger.experiment.versionedSolveSync=true"
+          mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml \
+            -Dexec.mainClass=org.kanger.CauseWeightFallbackRunner -Dexec.classpathScope=test exec:java \
+            > "$RUNNER_TEMP/cause-weights/fallback.log" 2>&1
+      - name: Preserve qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cause-weights-java-${{ matrix.java }}-tvalue-${{ matrix.tvalue }}
+          path: ${{ runner.temp }}/cause-weights/
