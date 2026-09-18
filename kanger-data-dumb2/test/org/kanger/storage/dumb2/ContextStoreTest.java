@@ -14,7 +14,6 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,64 +21,117 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Qualification for the first DUMB 2.0 Context create/open boundary. */
+/** Qualification for the DUMB 2.0 Context lifecycle boundary. */
 public class ContextStoreTest {
 
     @TempDir
     Path root;
 
     @Test
-    void createAndReopenPublishOneCoherentIdentityRevisionPair() throws Exception {
+    void createCloseAndReopenPublishOneCoherentIdentityRevisionPair() throws Exception {
         Path location = root.resolve("reopen");
 
         ContextStore created = ContextStore.create(location);
-        ContextStore reopened = ContextStore.open(location);
+        java.util.UUID contextId = created.getContextId();
+        long revision = created.getRevision();
+        created.close();
 
-        assertEquals(created.getContextId(), reopened.getContextId());
-        assertEquals(RevisionStore.INITIAL_REVISION, created.getRevision());
-        assertEquals(created.getRevision(), reopened.getRevision());
-        assertEquals(location, reopened.getLocation());
-        assertTrue(Files.isRegularFile(ContextStore.contextPath(location)));
-        assertTrue(Files.isRegularFile(ContextStore.revisionPath(location)));
+        ContextStore reopened = ContextStore.open(location);
+        try {
+            assertEquals(contextId, reopened.getContextId());
+            assertEquals(RevisionStore.INITIAL_REVISION, revision);
+            assertEquals(revision, reopened.getRevision());
+            assertEquals(location, reopened.getLocation());
+            assertTrue(Files.isRegularFile(ContextStore.contextPath(location)));
+            assertTrue(Files.isRegularFile(ContextStore.revisionPath(location)));
+        } finally {
+            reopened.close();
+        }
     }
 
     @Test
     void independentContextsReceiveDistinctIdentities() throws Exception {
         ContextStore first = ContextStore.create(root.resolve("first"));
         ContextStore second = ContextStore.create(root.resolve("second"));
-
-        assertNotEquals(first.getContextId(), second.getContextId());
-        assertEquals(0L, first.getRevision());
-        assertEquals(0L, second.getRevision());
+        try {
+            assertNotEquals(first.getContextId(), second.getContextId());
+            assertEquals(0L, first.getRevision());
+            assertEquals(0L, second.getRevision());
+        } finally {
+            first.close();
+            second.close();
+        }
     }
 
     @Test
-    void movingCompleteMetadataPairPreservesSnapshot() throws Exception {
+    void movingCompleteContextPreservesSnapshot() throws Exception {
         Path source = root.resolve("source");
         Path target = root.resolve("target");
         ContextStore before = ContextStore.create(source);
+        java.util.UUID contextId = before.getContextId();
+        long revision = before.getRevision();
+        before.close();
 
         Files.move(ContextStore.contextPath(source), ContextStore.contextPath(target),
                 StandardCopyOption.REPLACE_EXISTING);
         Files.move(ContextStore.revisionPath(source), ContextStore.revisionPath(target),
                 StandardCopyOption.REPLACE_EXISTING);
+        if (Files.exists(ContextStore.stateRoot(source))) {
+            Files.move(ContextStore.stateRoot(source), ContextStore.stateRoot(target),
+                    StandardCopyOption.REPLACE_EXISTING);
+        }
 
         ContextStore after = ContextStore.open(target);
-        assertEquals(before.getContextId(), after.getContextId());
-        assertEquals(before.getRevision(), after.getRevision());
+        try {
+            assertEquals(contextId, after.getContextId());
+            assertEquals(revision, after.getRevision());
+        } finally {
+            after.close();
+        }
     }
 
     @Test
     void secondCreateNeverReplacesExistingPair() throws Exception {
         Path location = root.resolve("existing");
         ContextStore original = ContextStore.create(location);
+        java.util.UUID contextId = original.getContextId();
+        long revision = original.getRevision();
 
         assertThrows(FileAlreadyExistsException.class,
                 () -> ContextStore.create(location));
 
+        original.close();
         ContextStore reopened = ContextStore.open(location);
-        assertEquals(original.getContextId(), reopened.getContextId());
-        assertEquals(original.getRevision(), reopened.getRevision());
+        try {
+            assertEquals(contextId, reopened.getContextId());
+            assertEquals(revision, reopened.getRevision());
+        } finally {
+            reopened.close();
+        }
+    }
+
+    @Test
+    void secondOpenIsRejectedUntilExplicitClose() throws Exception {
+        Path location = root.resolve("locked");
+        ContextStore first = ContextStore.create(location);
+
+        StorageLifecycleException failure = assertThrows(
+                StorageLifecycleException.class,
+                () -> ContextStore.open(location));
+        assertEquals(StorageLifecycleErrorCode.STORAGE_ALREADY_OPEN,
+                failure.getErrorCode());
+
+        first.close();
+        ContextStore second = ContextStore.open(location);
+        second.close();
+    }
+
+    @Test
+    void closeIsIdempotent() throws Exception {
+        ContextStore context = ContextStore.create(root.resolve("close"));
+        context.close();
+        context.close();
+        assertTrue(context.isClosed());
     }
 
     @Test
@@ -135,7 +187,9 @@ public class ContextStoreTest {
     @Test
     void codecCorruptionPropagatesThroughContextOpen() throws Exception {
         Path location = root.resolve("damaged");
-        ContextStore.create(location);
+        ContextStore created = ContextStore.create(location);
+        created.close();
+
         Path revisionPath = ContextStore.revisionPath(location);
         byte[] bytes = Files.readAllBytes(revisionPath);
         bytes[8] ^= 0x01;

@@ -135,6 +135,10 @@ final class RevisionStore {
         try {
             Files.write(temporary, encode(next),
                     StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+            try (FileChannel channel = FileChannel.open(
+                    temporary, StandardOpenOption.WRITE)) {
+                channel.force(true);
+            }
             Files.move(temporary, path,
                     StandardCopyOption.ATOMIC_MOVE,
                     StandardCopyOption.REPLACE_EXISTING);
