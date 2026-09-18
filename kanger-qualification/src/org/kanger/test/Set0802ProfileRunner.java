@@ -14,6 +14,12 @@ public final class Set0802ProfileRunner {
         results.add("sample,elapsed_ns,solutions,values,main_thread_reference_scans,last_passes,last_rule_visits,last_terminal_rotations,last_database_evaluations,last_domain_pairs,last_unifications");
         int warmups = Integer.getInteger("bench.warmups", 0);
         int samples = Integer.getInteger("bench.samples", 1);
+        com.sun.management.ThreadMXBean allocation = Boolean.getBoolean("bench.allocations")
+                ? (com.sun.management.ThreadMXBean) java.lang.management.ManagementFactory.getThreadMXBean() : null;
+        if (allocation != null) {
+            if (!allocation.isThreadAllocatedMemorySupported()) throw new IllegalStateException("Allocation counters unavailable");
+            allocation.setThreadAllocatedMemoryEnabled(true);
+        }
         for (int i = -warmups; i < samples; ++i) {
             User user = new User();
             new UDF().init(user);
@@ -27,10 +33,13 @@ public final class Set0802ProfileRunner {
             long[] causesBefore = org.kanger.units.CachedDomain.experimentalCauseProfile();
             long[] weightsBefore = org.kanger.units.CachedDomain.experimentalCauseWeightProfile();
             if (sampler != null) sampler.start();
+            long allocatedBefore = allocation == null ? 0 : allocation.getThreadAllocatedBytes(Thread.currentThread().getId());
             long start = System.nanoTime();
             try { test.set_08_02(); }
             finally { if (sampler != null) sampler.running = false; }
             long elapsed = System.nanoTime() - start;
+            if (i >= 0 && allocation != null)
+                System.err.println("MAIN_ALLOCATED_BYTES " + (allocation.getThreadAllocatedBytes(Thread.currentThread().getId()) - allocatedBefore));
             if (i >= 0 && (Boolean.getBoolean("kanger.experiment.shadowCauseWeights") || Boolean.getBoolean("kanger.experiment.resolvedCauseWeights"))) {
                 long[] weights = org.kanger.units.CachedDomain.experimentalCauseWeightProfile();
                 for (int j = 0; j < weights.length; ++j) weights[j] -= weightsBefore[j];

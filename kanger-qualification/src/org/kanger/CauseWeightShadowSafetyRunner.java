@@ -31,6 +31,14 @@ public final class CauseWeightShadowSafetyRunner {
         if (System.getProperty("kanger.experiment.shadowCauseWeights") == null)
             System.setProperty("kanger.experiment.shadowCauseWeights", "true");
         Mind mind = new Mind(new User());
+        Method primitive = CachedDomain.class.getDeclaredMethod("primitiveWeight", long[].class, int.class, long[].class, int.class);
+        primitive.setAccessible(true);
+        require((Integer) primitive.invoke(null, new long[]{7,7,9}, 3, new long[]{7,7,99}, 2) == 2,
+                "primitive duplicates and stale buffer tail");
+        require((Integer) primitive.invoke(null, new long[]{0,Long.MAX_VALUE}, 2, new long[]{Long.MAX_VALUE,0}, 2) == 2,
+                "primitive full-width IDs");
+        require((Integer) primitive.invoke(null, new long[]{7}, 1, new long[]{7}, 0) == 0,
+                "empty reused donor buffer");
         ITerm a = mind.getTerms().add("a"), b = mind.getTerms().add("b"), c = mind.getTerms().add("c");
         require(weight(args(a,a,b,null), args(a,a,null), mind) == 2, "duplicate own/donor and empty");
         require(weight(args(a,b), args(), mind) == 0, "empty donor");

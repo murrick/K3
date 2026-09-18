@@ -401,3 +401,48 @@ checkpoint remains experimental and is not proposed for merge.
 Evidence: cause-fast-{off,on,verify}-state.txt, cause-fast-bench-*.csv/.counts,
 cause-fast-profile.csv/.counts, cause-fast-qualification.txt. Profile arrays now
 append eligible-fast and fallback counts after the previous four shadow fields.
+
+## Compact per-selection argument buffers
+
+Default-OFF compactCauseWeights modifies only the eligible resolvedCauseWeights
+path. Own IDs are stored in one primitive long array per selection; one donor
+buffer grows as needed and is reused across causes. Only the populated prefix
+is compared. Each own duplicate still contributes independently, and the first
+matching donor ID ends its search. Empty arguments are omitted without reserving
+a sentinel ID. Guard checks, fallback, identity weight map, memo and minimum-only
+weight-group removal remain unchanged. No cross-call buffers or new cache.
+
+Compact ON and verify each pass the 123-case corpus, focused boundaries and the
+20-operation transaction comparison against reference. Focused checks add stale
+buffer tails, an empty reused donor buffer, duplicate IDs and full-width IDs
+(including zero and Long.MAX_VALUE). Verify still compares each weight and final
+selection to the original nested argument-resolution loop. Java 17 only.
+
+Three warmups and five measured invocations per JVM, compact OFF/ON/ON/OFF;
+TValue preservation, solve-sync and resolvedCauseWeights held ON. Other rotation
+experiments, stage timers and stack sampling OFF:
+
+| Pair | Previous resolved mode, seconds | Compact mode, seconds | Reduction |
+| --- | ---: | ---: | ---: |
+| OFF then ON | 0.953575457 | 0.904310618 | 5.2% |
+| ON then OFF | 0.987780523 | 0.913829639 | 7.5% |
+
+These compare against the preceding resolved implementation, NOT against the
+original weighting algorithm or an unoptimized product. Gains from separate
+experiments must not be added together. Larger-arity donors may have different
+performance because primitive membership is a linear scan.
+
+A separate allocation run uses ThreadMXBean thread-allocated bytes, three
+warmups and three samples per mode. Main-thread median cumulative allocations:
+1,093,624,584 bytes before versus 917,692,192 bytes compact, about 176 MB / 16.1%
+less. This includes the complete historical method and output formatting, excludes
+worker-thread allocations, and is neither retained memory nor peak heap. All
+20 timing and six allocation samples end with 493 solutions/values and logs have
+no captured exceptions/assertions. Allocation timings are not speed evidence.
+
+Next: a direct comparison of original versus compact weighting and broader
+workload/Java 8/21 qualification before any integration proposal. The experiment
+is still default OFF and no develop changes were made.
+
+Evidence: cause-compact-{on,verify}-state.txt, cause-compact-bench-*.csv/.counts,
+cause-compact-allocation-{off,on}.csv/.counts, cause-compact-qualification.txt.

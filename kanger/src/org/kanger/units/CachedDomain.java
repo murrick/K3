@@ -206,15 +206,46 @@ public class CachedDomain extends Domain {
             for (ICause cause : causes)
                 if (cause.getClass() != Cause.class
                         || !supportedArguments(((Cause) cause).getDonor().getArguments(), mind)) return null;
-            List<Long> own = resolvedIds(getArguments(), mind);
             Map<ICause, Integer> weights = new java.util.IdentityHashMap<>();
-            for (ICause cause : causes)
-                weights.put(cause, resolvedWeight(own, ((Cause) cause).getDonor().getArguments(), mind));
+            if (Boolean.getBoolean("kanger.experiment.compactCauseWeights")) {
+                long[] own = new long[getArguments().size()];
+                int ownSize = resolvedPrimitiveIds(getArguments(), mind, own);
+                long[] donor = new long[0];
+                for (ICause cause : causes) {
+                    ArgumentsList arguments = ((Cause) cause).getDonor().getArguments();
+                    if (donor.length < arguments.size()) donor = new long[arguments.size()];
+                    int donorSize = resolvedPrimitiveIds(arguments, mind, donor);
+                    weights.put(cause, primitiveWeight(own, ownSize, donor, donorSize));
+                }
+            } else {
+                List<Long> own = resolvedIds(getArguments(), mind);
+                for (ICause cause : causes)
+                    weights.put(cause, resolvedWeight(own, ((Cause) cause).getDonor().getArguments(), mind));
+            }
             return weights;
         } catch (Exception unsupportedResolution) {
             // Keep original resolution/logging/error behavior on the reference path.
             return null;
         }
+    }
+
+    private static int resolvedPrimitiveIds(ArgumentsList arguments, Mind mind, long[] ids) throws Exception {
+        int size = 0;
+        boolean profile = Boolean.getBoolean("kanger.experiment.shadowCauseWeights");
+        for (IArgument argument : arguments) {
+            ITerm value = argument.getValue(mind);
+            if (profile) causeWeightCounts()[2]++;
+            if (value != null) ids[size++] = value.getId();
+        }
+        return size;
+    }
+
+    private static int primitiveWeight(long[] own, int ownSize, long[] donor, int donorSize) {
+        int weight = 0;
+        for (int i = 0; i < ownSize; ++i)
+            for (int j = 0; j < donorSize; ++j)
+                if (own[i] == donor[j]) { ++weight; break; }
+        return weight;
     }
 
     private static boolean supportedArguments(ArgumentsList arguments, Mind mind) throws Exception {

@@ -1,0 +1,5 @@
+Java 17; resolvedCauseWeights ON; compact ON/verify
+Both modes: 123-case corpus and focused boundaries pass
+Both 20-operation transaction states equal reference
+20 timing samples and 6 allocation samples: 493 solutions/values
+No Exception or AssertionError in captured qualification, timing and allocation logs
