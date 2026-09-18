@@ -28,7 +28,8 @@ public final class CauseWeightShadowSafetyRunner {
     }
     public static void main(String[] ignored) throws Exception {
         System.setProperty("user.home", Files.createTempDirectory("cause-shadow-").toString());
-        System.setProperty("kanger.experiment.shadowCauseWeights", "true");
+        if (System.getProperty("kanger.experiment.shadowCauseWeights") == null)
+            System.setProperty("kanger.experiment.shadowCauseWeights", "true");
         Mind mind = new Mind(new User());
         ITerm a = mind.getTerms().add("a"), b = mind.getTerms().add("b"), c = mind.getTerms().add("c");
         require(weight(args(a,a,b,null), args(a,a,null), mind) == 2, "duplicate own/donor and empty");
@@ -51,6 +52,21 @@ public final class CauseWeightShadowSafetyRunner {
         Set<ICause> expected = new HashSet<ICause>(Arrays.asList(one,three));
         require(domain.getCauses(mind).equals(expected), "remove minimum only, retain intermediate");
         require(domain.getCauses(mind).equals(expected), "memo hit");
+        if (Boolean.getBoolean("kanger.experiment.resolvedCauseWeights"))
+            require(CachedDomain.experimentalCauseWeightProfile()[5] > 0, "custom cause fallback");
+        Predicate predicate = mind.getPredicates().add(mind.getTerms().add("p"), 3);
+        Rule rule = new Rule(mind);
+        CachedDomain real = new CachedDomain(predicate, false, args(a,b,c), rule);
+        Cause low = new Cause(real, new Domain(predicate, true, args(), rule), mind);
+        Cause mid = new Cause(real, new Domain(predicate, true, args(a), rule), mind);
+        Cause high = new Cause(real, new Domain(predicate, true, args(a,b,c), rule), mind);
+        Map<ArgumentsList,Set<ICause>> realMap = new HashMap<>();
+        realMap.put(real.getArguments().convertBase(mind), new HashSet<ICause>(Arrays.asList(low,mid,high)));
+        mind.getDomainCauses().put(real,realMap);
+        long eligible = CachedDomain.experimentalCauseWeightProfile()[4];
+        require(real.getCauses(mind).equals(new HashSet<ICause>(Arrays.asList(mid,high))), "real cause selection");
+        if (Boolean.getBoolean("kanger.experiment.resolvedCauseWeights"))
+            require(CachedDomain.experimentalCauseWeightProfile()[4] == eligible + 1, "fast guard eligible");
         System.out.println("CAUSE_WEIGHT_SHADOW_BOUNDARIES_PASS");
     }
     private static void require(boolean yes, String label) { if (!yes) throw new AssertionError(label); }

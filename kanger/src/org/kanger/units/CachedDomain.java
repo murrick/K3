@@ -108,13 +108,17 @@ public class CachedDomain extends Domain {
             if (profile) counts[6] += source.size();
             selected.addAll(source);
             boolean shadow = Boolean.getBoolean("kanger.experiment.shadowCauseWeights");
-            List<Long> ownIds = shadow ? resolvedIds(getArguments(), mind) : null;
+            boolean fast = Boolean.getBoolean("kanger.experiment.resolvedCauseWeights");
+            Map<ICause, Integer> resolved = fast ? guardedWeights(selected, mind) : null;
+            if (fast) causeWeightCounts()[resolved == null ? 5 : 4]++;
+            List<Long> ownIds = shadow && resolved == null ? resolvedIds(getArguments(), mind) : null;
             SortedMap<Integer, Set<ICause>> predictedGroups = shadow ? new TreeMap<>() : null;
             if (shadow) causeWeightCounts()[0]++;
             SortedMap<Integer, Set<ICause>> byWeight = new TreeMap<>();
             for (ICause cause : selected) {
                 int weight = 0;
-                for (IArgument own : getArguments()) {
+                if (resolved != null && !shadow) weight = resolved.get(cause);
+                else for (IArgument own : getArguments()) {
                     for (IArgument donor :
                             ((Cause) cause).getDonor().getArguments()) {
                         if (profile) counts[7]++;
@@ -128,7 +132,8 @@ public class CachedDomain extends Domain {
                     }
                 }
                 if (shadow) {
-                    int predicted = resolvedWeight(ownIds, ((Cause) cause).getDonor().getArguments(), mind);
+                    int predicted = resolved != null ? resolved.get(cause)
+                            : resolvedWeight(ownIds, ((Cause) cause).getDonor().getArguments(), mind);
                     causeWeightCounts()[1]++;
                     if (predicted != weight) {
                         causeWeightCounts()[3]++;
@@ -177,20 +182,56 @@ public class CachedDomain extends Domain {
     private static final ThreadLocal<long[]> weightProfile = new ThreadLocal<>();
     private static long[] causeWeightCounts() {
         long[] counts = weightProfile.get();
-        if (counts == null) { counts = new long[4]; weightProfile.set(counts); }
+        if (counts == null) { counts = new long[6]; weightProfile.set(counts); }
         return counts;
     }
-    /** Shadow miss selections, compared weights, resolved arguments, mismatches. */
+    /** Shadow miss selections, compared weights, resolved arguments, mismatches, eligible fast selections, fallback selections. */
     public static long[] experimentalCauseWeightProfile() { return causeWeightCounts().clone(); }
 
     private static List<Long> resolvedIds(ArgumentsList arguments, Mind mind) throws Exception {
         List<Long> ids = new ArrayList<>();
+        boolean profile = Boolean.getBoolean("kanger.experiment.shadowCauseWeights");
         for (IArgument argument : arguments) {
             ITerm value = argument.getValue(mind);
-            causeWeightCounts()[2]++;
+            if (profile) causeWeightCounts()[2]++;
             if (value != null) ids.add(value.getId());
         }
         return ids;
+    }
+
+    private Map<ICause, Integer> guardedWeights(Set<ICause> causes, Mind mind) {
+        if (mind.getClass() != Mind.class || getClass() != CachedDomain.class) return null;
+        try {
+            if (!supportedArguments(getArguments(), mind)) return null;
+            for (ICause cause : causes)
+                if (cause.getClass() != Cause.class
+                        || !supportedArguments(((Cause) cause).getDonor().getArguments(), mind)) return null;
+            List<Long> own = resolvedIds(getArguments(), mind);
+            Map<ICause, Integer> weights = new java.util.IdentityHashMap<>();
+            for (ICause cause : causes)
+                weights.put(cause, resolvedWeight(own, ((Cause) cause).getDonor().getArguments(), mind));
+            return weights;
+        } catch (Exception unsupportedResolution) {
+            // Keep original resolution/logging/error behavior on the reference path.
+            return null;
+        }
+    }
+
+    private static boolean supportedArguments(ArgumentsList arguments, Mind mind) throws Exception {
+        for (IArgument argument : arguments) {
+            if (argument.getClass() != org.kanger.primitives.Argument.class) return false;
+            Class<?> expected;
+            switch (argument.getType()) {
+                case EMPTY: continue;
+                case TERM: expected = Term.class; break;
+                case TVARIABLE: expected = TVariable.class; break;
+                case TVALUE: expected = TValue.class; break;
+                default: return false;
+            }
+            Object object = argument.getObject(mind);
+            if (object == null || object.getClass() != expected) return false;
+        }
+        return true;
     }
 
     private static int resolvedWeight(List<Long> ownIds, ArgumentsList donor, Mind mind) throws Exception {

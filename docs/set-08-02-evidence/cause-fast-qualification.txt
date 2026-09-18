@@ -1,0 +1,6 @@
+Java 17; TValue and solve-sync ON; selected-ID OFF
+OFF/ON/verify: 123 corpus cases pass each
+Focused cause-weight boundaries pass in all modes
+All three 20-operation transaction state files equal reference
+20 timing samples and 3 separate profile samples: 493 solutions/values
+Qualification/timing logs: no Exception or AssertionError

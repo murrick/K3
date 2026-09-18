@@ -351,3 +351,53 @@ keeping per-weight comparison available as verify mode.
 
 Evidence: cause-shadow-counts.txt, cause-shadow.csv, cause-shadow-state.txt,
 cause-shadow-boundaries.txt. Experiment only; develop unchanged.
+
+## Guarded resolved-weight execution
+
+Default-OFF resolvedCauseWeights precomputes weights for exact built-in Mind,
+CachedDomain, Cause and Argument classes. Only EMPTY, TERM, TVARIABLE and TVALUE
+arguments with exact corresponding object classes are admitted. Functions,
+FValues, subclasses and failed object/value resolution fall back to the old loop.
+Resolved weights use an identity map local to this one selection. The original
+weight groups, minimum-only removal, returned copies and memo publication remain.
+With shadowCauseWeights also enabled, each resolved weight is compared with the
+old loop and the old selection remains authoritative. Qualification does not
+establish equivalence for concurrent or custom side-effectful getters; the guard
+deliberately excludes extensions rather than making a new contract for them.
+
+OFF/ON/verify each pass the 123-case corpus and focused boundary runner. All
+20-operation transaction state projections are byte-identical to reference.
+Boundary coverage now includes real built-in Cause instances that prove the fast
+guard is entered, and synthetic Cause subclasses that prove fallback. Previous
+empty/duplicate/binding-change/multiple-weight checks remain. Local Java 17 only;
+Java 8/21 CI and exceptional-resolution adversarial cases remain future gates.
+
+Separate timing JVMs, three warmups and five samples each, OFF/ON/ON/OFF order;
+TValue preservation and solve-sync ON, selected-ID experiment and shadow OFF:
+
+| Pair | OFF median seconds | ON median seconds | Reduction |
+| --- | ---: | ---: | ---: |
+| OFF then ON | 1.005382943 | 0.982651754 | 2.3% |
+| ON then OFF | 1.019863975 | 0.954659577 | 6.4% |
+
+All 20 measured results are 493/493; no captured exceptions/assertions. Each ON
+sample records 986 eligible fast selections and zero fallbacks on the main
+thread. Eligibility counters add minor prototype overhead; stage timers and
+sampling are OFF. These modest warm-test gains do not establish cold-console or
+general workload improvement and are not grounds for default activation.
+
+A separate instrumented ON run measures 168–179 ms in miss selection, compared
+with the preceding diagnostic reference range of 220–262 ms. The runs are not a
+new controlled stage-level speed comparison: the reference also increments its
+pair counter inside the nested loop. Nevertheless, this supports that some
+selection work was removed, rather than the fast guard simply never firing.
+The new path still validates/resolves every donor and allocates per-cause ID sets
+and a per-selection weight map. No cross-call caching is proposed yet.
+
+Next decision: profile remaining guard/resolution/allocation costs and broaden
+qualification only if further benefit justifies keeping this fast path. This
+checkpoint remains experimental and is not proposed for merge.
+
+Evidence: cause-fast-{off,on,verify}-state.txt, cause-fast-bench-*.csv/.counts,
+cause-fast-profile.csv/.counts, cause-fast-qualification.txt. Profile arrays now
+append eligible-fast and fallback counts after the previous four shadow fields.

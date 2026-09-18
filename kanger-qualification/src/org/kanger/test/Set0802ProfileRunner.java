@@ -31,7 +31,7 @@ public final class Set0802ProfileRunner {
             try { test.set_08_02(); }
             finally { if (sampler != null) sampler.running = false; }
             long elapsed = System.nanoTime() - start;
-            if (i >= 0 && Boolean.getBoolean("kanger.experiment.shadowCauseWeights")) {
+            if (i >= 0 && (Boolean.getBoolean("kanger.experiment.shadowCauseWeights") || Boolean.getBoolean("kanger.experiment.resolvedCauseWeights"))) {
                 long[] weights = org.kanger.units.CachedDomain.experimentalCauseWeightProfile();
                 for (int j = 0; j < weights.length; ++j) weights[j] -= weightsBefore[j];
                 System.err.println("MAIN_CAUSE_WEIGHTS " + Arrays.toString(weights));
