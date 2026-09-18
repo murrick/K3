@@ -446,3 +446,55 @@ is still default OFF and no develop changes were made.
 
 Evidence: cause-compact-{on,verify}-state.txt, cause-compact-bench-*.csv/.counts,
 cause-compact-allocation-{off,on}.csv/.counts, cause-compact-qualification.txt.
+
+## Direct original-versus-compact comparison
+
+This comparison toggles resolvedCauseWeights and compactCauseWeights together;
+OFF uses the original weighting loop, ON uses the guarded primitive-buffer path.
+TValue preservation and versioned solve synchronization remain ON throughout.
+All frontier/rotation experiments and shadow verification are OFF. Java 17,
+512 MiB, sequential measurement JVMs. This compares modes within the experimental
+tree; it is not a separately built live-develop binary comparison.
+
+set_08_02: three warmups, five measured method invocations per JVM, both orders:
+
+| Order | Original median seconds | Compact median seconds | Reduction |
+| --- | ---: | ---: | ---: |
+| OFF then ON | 0.965856148 | 0.907685043 | 6.0% |
+| ON then OFF | 0.992403958 | 0.944193071 | 4.9% |
+
+The initial OFF/ON pair overlapped preparation of another benchmark helper and
+was replaced with an isolated repeat. Only the isolated repeat and the unaffected
+reverse pair are committed as final evidence. All 20 results are 493/493 and
+logs contain no exceptions/assertions; concurrent internal work can still vary.
+
+Additional query-only workloads use TValueBaselineBenchmarkRunner from archived
+experiment 5cc35e0 (compiled unchanged), five warmups and fifteen samples per
+fixture per JVM, OFF/ON/ON/OFF:
+
+| Fixture / order | Original median ms | Compact median ms |
+| --- | ---: | ---: |
+| natives-values / OFF then ON | 65.718 | 63.856 |
+| natives-values / ON then OFF | 62.653 | 61.087 |
+| singleton-values / OFF then ON | 17.962 | 17.075 |
+| singleton-values / ON then OFF | 17.392 | 17.029 |
+
+All 120 measured semantic fingerprints, rows and pair/unification counters match
+within their fixture across modes. Differences are small (roughly 2–5%); no
+confidence interval or universal acceleration claim is established.
+
+Separate allocation comparison, original versus compact, three warmups and
+three samples each: main-thread median cumulative allocated bytes decrease from
+954,022,208 to 921,880,432, about 32.1 MB / 3.4%. This is the relevant comparison
+to the original weighting path; the previous 176 MB / 16.1% reduction was against
+the intermediate collection-heavy resolved implementation. Neither measurement
+is retained heap or includes worker-thread allocations. All six allocation-run
+results are 493/493; allocation timings are excluded from performance evidence.
+
+No executable changes in this checkpoint. The modest but consistent local
+direction justifies the next qualification step: Java 8/21 and guard fallback
+fault cases before deciding whether to isolate an integration PR. No merge or
+default activation is proposed by this measurement alone.
+
+Evidence: cause-original-compact-*.csv/.counts, cause-small-*.csv,
+cause-direct-allocation-{off,on}.csv/.counts.
