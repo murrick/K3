@@ -267,3 +267,52 @@ AssertionError or Exception. Existing safety gates are not rerun for diagnostic
 instrumentation alone.
 
 Evidence: selector-cost.{csv,txt}, selector-stacks.{csv,txt}, selector-leaves.{csv,txt}.
+
+## Cause selection cost (2026-09-18)
+
+Default-OFF profileCauseMemo counts successful getCauses paths on each thread:
+calls, hits, convert ns, memo-check/hit-copy ns, miss-selection ns, memo-publish ns,
+source causes on misses, visited argument pairs, and returned causes. The runner
+reports main-thread deltas only. Timed selection includes its diagnostic pair
+increments; elapsed intervals are not an uninstrumented CPU profile.
+
+TValue preservation and solve-sync ON; selected-ID OFF then ON, each with two
+warmups and three measured runs. Every measured invocation reports exactly:
+
+| Metric | Count |
+| --- | ---: |
+| getCauses calls | 1,972 |
+| Memo hits | 986 |
+| Memo misses | 986 |
+| Source causes accumulated over misses | 486,098 |
+| Argument pairs visited during weighting | 3,393,822 |
+| Returned causes accumulated over all calls | 5,908 |
+
+The mean input is 493 causes per miss; that mean is not a measured distribution.
+Miss selection costs 220–262 ms with selected IDs OFF and 230–234 ms with them
+ON. Argument conversion costs 0.28–0.38 ms, memo check/copy 0.36–0.50 ms and memo
+publication 1.46–2.05 ms per invocation. Thus weighting/selection, not memo lookup
+or conversion, dominates this particular method. All six results are 493/493;
+no captured worker exceptions or assertions. No semantic algorithm change.
+
+Source review explains likely duplicate requests: Linker.logCauses and
+updateDatabase each call getCauses once for a null check and again for use. The
+50% hit rate is consistent with this pattern, but caller-tagged counts were not
+collected. Removing just those second requests is unlikely to remove the measured
+miss-selection cost.
+
+Important semantics for the next prototype: weight counts each nonempty own
+argument that matches any donor argument by resolved term ID. Duplicate own
+arguments each contribute; duplicate donor matches contribute only once per own
+argument. If there are multiple distinct weights, the existing algorithm removes
+only the minimum-weight group, not every group below the maximum. Argument.isEmpty
+itself resolves getValue, so current pair loops repeatedly resolve the same values.
+Exceptions and contextual resolution must not be silently given new semantics.
+
+Next bounded experiment: resolve reusable argument IDs within a single selection
+call and compare every calculated cause weight and final selected set against the
+reference. No cross-call cache is justified by these measurements. Start in
+shadow mode and cover empty arguments, duplicates, multiple weight levels and
+context-dependent bindings before proposing an actual fast path.
+
+Evidence: causes-selected-{off,on}.{csv,txt}.

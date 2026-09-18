@@ -68,22 +68,41 @@ public class CachedDomain extends Domain {
 
     @Override
     public Set<ICause> getCauses(Mind mind) throws Exception {
+        boolean profile = Boolean.getBoolean("kanger.experiment.profileCauseMemo");
+        long[] counts = null;
+        if (profile) {
+            counts = causeProfile.get();
+            if (counts == null) { counts = new long[9]; causeProfile.set(counts); }
+            counts[0]++;
+        }
+        long start = profile ? System.nanoTime() : 0;
         ArgumentsList current = getArguments().convertBase(mind);
+        long converted = profile ? System.nanoTime() : 0;
+        if (profile) counts[2] += converted - start;
         synchronized (causeMemoLock) {
             if (cachedCauseMind == mind
                     && cachedCauseArguments != null
                     && cachedCauses != null
                     && current.equalsBase(mind, cachedCauseArguments)) {
-                return new HashSet<>(cachedCauses);
+                Set<ICause> copy = new HashSet<>(cachedCauses);
+                if (profile) {
+                    counts[1]++;
+                    counts[3] += System.nanoTime() - converted;
+                    counts[8] += copy.size();
+                }
+                return copy;
             }
         }
 
+        long checked = profile ? System.nanoTime() : 0;
+        if (profile) counts[3] += checked - converted;
         Set<ICause> selected = new HashSet<>();
         Map<ArgumentsList, Set<ICause>> byArguments =
                 mind.getDomainCauses().get(this);
         Set<ICause> source = byArguments == null
                 ? null : byArguments.get(current);
         if (source != null) {
+            if (profile) counts[6] += source.size();
             selected.addAll(source);
             SortedMap<Integer, Set<ICause>> byWeight = new TreeMap<>();
             for (ICause cause : selected) {
@@ -91,6 +110,7 @@ public class CachedDomain extends Domain {
                 for (IArgument own : getArguments()) {
                     for (IArgument donor :
                             ((Cause) cause).getDonor().getArguments()) {
+                        if (profile) counts[7]++;
                         if (!own.isEmpty(mind)
                                 && !donor.isEmpty(mind)
                                 && own.getValue(mind).getId()
@@ -112,12 +132,25 @@ public class CachedDomain extends Domain {
             }
         }
 
+        long selectedAt = profile ? System.nanoTime() : 0;
+        if (profile) counts[4] += selectedAt - checked;
         synchronized (causeMemoLock) {
             cachedCauseMind = mind;
             cachedCauseArguments = current;
             cachedCauses = new HashSet<>(selected);
         }
+        if (profile) {
+            counts[5] += System.nanoTime() - selectedAt;
+            counts[8] += selected.size();
+        }
         return selected;
+    }
+
+    private static final ThreadLocal<long[]> causeProfile = new ThreadLocal<>();
+    /** Calls, hits, convert ns, check/copy ns, select ns, publish ns, source causes, argument pairs, returned causes. */
+    public static long[] experimentalCauseProfile() {
+        long[] counts = causeProfile.get();
+        return counts == null ? new long[9] : counts.clone();
     }
 
     @Override

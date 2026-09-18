@@ -24,11 +24,17 @@ public final class Set0802ProfileRunner {
             long[] rotationsBefore = Linker.experimentalRotationProfile();
             long[] frontierBefore = Linker.experimentalFrontierProfile();
             long[] costBefore = Linker.experimentalFrontierCost();
+            long[] causesBefore = org.kanger.units.CachedDomain.experimentalCauseProfile();
             if (sampler != null) sampler.start();
             long start = System.nanoTime();
             try { test.set_08_02(); }
             finally { if (sampler != null) sampler.running = false; }
             long elapsed = System.nanoTime() - start;
+            if (i >= 0 && Boolean.getBoolean("kanger.experiment.profileCauseMemo")) {
+                long[] causes = org.kanger.units.CachedDomain.experimentalCauseProfile();
+                for (int j = 0; j < causes.length; ++j) causes[j] -= causesBefore[j];
+                System.err.println("MAIN_CAUSE_MEMO " + Arrays.toString(causes));
+            }
             if (i >= 0 && Boolean.getBoolean("kanger.experiment.profileFrontierCost")) {
                 long[] cost = Linker.experimentalFrontierCost();
                 for (int j = 0; j < cost.length; ++j) cost[j] -= costBefore[j];
