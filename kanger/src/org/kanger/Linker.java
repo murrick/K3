@@ -705,16 +705,38 @@ public class Linker {
 
     private boolean rotationAllowed(TVariable t, SortedSet<TVariable> suffix,
             RotationFrontier[] frontier, long id) throws Exception {
+        boolean profile = Boolean.getBoolean("kanger.experiment.profileFrontierCost");
+        long start = profile ? System.nanoTime() : 0;
         synchronizeSolveIndex();
+        long synced = profile ? System.nanoTime() : 0;
         List<Long> bindings = new ArrayList<>();
         for (TVariable outer : suffix)
             if (outer.getId() != t.getId())
                 bindings.add(outer.getCurrent() == null ? null : outer.getCurrent().getId());
-        if (frontier[0] == null || mind.ruleSolvesExposed()
+        long bound = profile ? System.nanoTime() : 0;
+        boolean rebuild = frontier[0] == null || mind.ruleSolvesExposed()
                 || frontier[0].version != mind.ruleSolvesVersion()
-                || !frontier[0].bindings.equals(bindings))
+                || !frontier[0].bindings.equals(bindings);
+        if (rebuild)
             frontier[0] = buildRotationFrontier(t, suffix, bindings);
-        return frontier[0].allowed == null || frontier[0].allowed.contains(id);
+        long built = profile ? System.nanoTime() : 0;
+        boolean allowed = frontier[0].allowed == null || frontier[0].allowed.contains(id);
+        if (profile) {
+            long done = System.nanoTime();
+            long[] counts = frontierCost.get();
+            if (counts == null) { counts = new long[6]; frontierCost.set(counts); }
+            counts[0]++; counts[1] += synced - start; counts[2] += bound - synced;
+            counts[3] += built - bound; counts[4] += done - built;
+            if (rebuild) counts[5]++;
+        }
+        return allowed;
+    }
+
+    private static final ThreadLocal<long[]> frontierCost = new ThreadLocal<>();
+    /** Calls, sync ns, binding ns, validation/build ns, membership ns, rebuilds. */
+    public static long[] experimentalFrontierCost() {
+        long[] counts = frontierCost.get();
+        return counts == null ? new long[6] : counts.clone();
     }
 
     private static final ThreadLocal<long[]> frontierProfile = new ThreadLocal<>();

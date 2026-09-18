@@ -224,3 +224,46 @@ attempting traversal of only allowed IDs. The current prototype is retained as
 an experimental comparison point, not proposed for integration.
 
 Evidence: selected-boundaries.txt, selected-state.txt, selected-bench-*.csv.
+
+## Selector cost and inclusive-stack correction (2026-09-18)
+
+Added default-OFF profileFrontierCost diagnostics. Each successful rotationAllowed
+call records timed intervals for synchronization, outer-binding construction,
+cache validation/rebuild, and membership. Counts are main-thread only. Timers
+and bookkeeping perturb this very short method; they exclude property lookup,
+caller/suffix construction, pending-ID bookkeeping, and counter accumulation.
+These are elapsed instrumentation intervals, not exclusive CPU accounting.
+
+Selected-ID mode, TValue and solve-sync ON; two warmups, three measured samples:
+
+| Sample | Calls | Rebuilds | Sync ms | Bindings ms | Validate/build ms | Membership ms | Sum ms |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 244035 | 1482 | 8.969 | 18.661 | 10.161 | 6.385 | 44.176 |
+| 1 | 244035 | 1482 | 8.642 | 20.402 | 8.329 | 6.373 | 43.746 |
+| 2 | 244035 | 1482 | 8.737 | 17.537 | 8.369 | 17.860 | 52.503 |
+
+The measured selector stages are not the majority of whole-test elapsed time.
+This weakens the hypothesis that selector overhead alone explains the lack of
+a large speedup. Optimizing only those measured stages cannot account for most
+of the remaining time. No new end-to-end acceleration claim is made.
+
+The earlier rotateVariables sample counts were inclusive: they include terminal
+callbacks and their database/cause work. They must not be read as time spent
+solely enumerating candidates. A separate selected-ID stack profile and another
+run with leaf counters corroborate the distinction. In the latter run,
+rotationAllowed appears in 10 inclusive RUNNABLE observations and only 2 leaf
+observations. Leading leaf observations include Argument.isEmpty (84),
+ThreadLocalMap.getEntryAfterMiss (57), HashMap.putVal (47), CachedDomain.getCauses
+(38), AbstractCollection.addAll (36), HashMap.hash (31), and
+ArgumentsList.equalsBase (22). These are approximate sampled observations across
+scenario threads, not additive per-stage timings or proof of a library defect.
+
+Next bounded investigation: measure getCauses invocation/memo-hit frequency and
+argument conversion/comparison work, and distinguish those paths from database
+matching before proposing another optimization. No additional algorithm change
+was made in this checkpoint. All nine measured invocations (three each for cost,
+inclusive stacks and leaf stacks) end with 493 solutions/values; logs contain no
+AssertionError or Exception. Existing safety gates are not rerun for diagnostic
+instrumentation alone.
+
+Evidence: selector-cost.{csv,txt}, selector-stacks.{csv,txt}, selector-leaves.{csv,txt}.

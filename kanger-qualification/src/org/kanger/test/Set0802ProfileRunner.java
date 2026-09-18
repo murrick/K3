@@ -23,11 +23,17 @@ public final class Set0802ProfileRunner {
             long before = Linker.experimentalSolveScanProfile()[0];
             long[] rotationsBefore = Linker.experimentalRotationProfile();
             long[] frontierBefore = Linker.experimentalFrontierProfile();
+            long[] costBefore = Linker.experimentalFrontierCost();
             if (sampler != null) sampler.start();
             long start = System.nanoTime();
             try { test.set_08_02(); }
             finally { if (sampler != null) sampler.running = false; }
             long elapsed = System.nanoTime() - start;
+            if (i >= 0 && Boolean.getBoolean("kanger.experiment.profileFrontierCost")) {
+                long[] cost = Linker.experimentalFrontierCost();
+                for (int j = 0; j < cost.length; ++j) cost[j] -= costBefore[j];
+                System.err.println("MAIN_FRONTIER_COST " + Arrays.toString(cost));
+            }
             if (i >= 0 && Boolean.getBoolean("kanger.experiment.shadowRotationFrontier")) {
                 long[] frontier = Linker.experimentalFrontierProfile();
                 for (int j = 0; j < frontier.length; ++j) frontier[j] -= frontierBefore[j];
@@ -66,6 +72,11 @@ public final class Set0802ProfileRunner {
                     if (!scenario) continue;
                     observations++;
                     String state = e.getKey().getState().name();
+                    if (e.getValue().length > 0) {
+                        StackTraceElement leaf = e.getValue()[0];
+                        String key = "LEAF " + state + " " + leaf.getClassName() + "." + leaf.getMethodName();
+                        counts.put(key, counts.getOrDefault(key, 0) + 1);
+                    }
                     Set<String> frames = new HashSet<>();
                     for (StackTraceElement f : e.getValue()) frames.add(state + " " + f.getClassName() + "." + f.getMethodName());
                     for (String f : frames) counts.put(f, counts.getOrDefault(f, 0) + 1);

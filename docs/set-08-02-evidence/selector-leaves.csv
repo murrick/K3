@@ -1,0 +1,4 @@
+sample,elapsed_ns,solutions,values,main_thread_reference_scans,last_passes,last_rule_visits,last_terminal_rotations,last_database_evaluations,last_domain_pairs,last_unifications
+0,1070517101,493,493,0,2,2964,4440,4440,3944,3944
+1,1045023024,493,493,0,2,2964,4440,4440,3944,3944
+2,1107224217,493,493,0,2,2964,4440,4440,3944,3944
