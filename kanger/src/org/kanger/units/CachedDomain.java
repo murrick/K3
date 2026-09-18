@@ -18,6 +18,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.List;
+import java.util.ArrayList;
+import org.kanger.interfaces.ITerm;
 
 /**
  * Hydrated Domain with a one-entry, query-local memo for cause selection.
@@ -104,6 +107,10 @@ public class CachedDomain extends Domain {
         if (source != null) {
             if (profile) counts[6] += source.size();
             selected.addAll(source);
+            boolean shadow = Boolean.getBoolean("kanger.experiment.shadowCauseWeights");
+            List<Long> ownIds = shadow ? resolvedIds(getArguments(), mind) : null;
+            SortedMap<Integer, Set<ICause>> predictedGroups = shadow ? new TreeMap<>() : null;
+            if (shadow) causeWeightCounts()[0]++;
             SortedMap<Integer, Set<ICause>> byWeight = new TreeMap<>();
             for (ICause cause : selected) {
                 int weight = 0;
@@ -120,6 +127,17 @@ public class CachedDomain extends Domain {
                         }
                     }
                 }
+                if (shadow) {
+                    int predicted = resolvedWeight(ownIds, ((Cause) cause).getDonor().getArguments(), mind);
+                    causeWeightCounts()[1]++;
+                    if (predicted != weight) {
+                        causeWeightCounts()[3]++;
+                        throw new AssertionError("Resolved cause weight differs from reference");
+                    }
+                    Set<ICause> group = predictedGroups.get(predicted);
+                    if (group == null) { group = new HashSet<>(); predictedGroups.put(predicted, group); }
+                    group.add(cause);
+                }
                 Set<ICause> weighted = byWeight.get(weight);
                 if (weighted == null) {
                     weighted = new HashSet<>();
@@ -129,6 +147,15 @@ public class CachedDomain extends Domain {
             }
             if (byWeight.size() > 1) {
                 selected.removeAll(byWeight.get(byWeight.firstKey()));
+            }
+            if (shadow) {
+                if (predictedGroups.size() > 1) predictedGroups.remove(predictedGroups.firstKey());
+                Set<ICause> predicted = new HashSet<>();
+                for (Set<ICause> group : predictedGroups.values()) predicted.addAll(group);
+                if (!selected.equals(predicted)) {
+                    causeWeightCounts()[3]++;
+                    throw new AssertionError("Resolved cause selection differs from reference");
+                }
             }
         }
 
@@ -147,6 +174,31 @@ public class CachedDomain extends Domain {
     }
 
     private static final ThreadLocal<long[]> causeProfile = new ThreadLocal<>();
+    private static final ThreadLocal<long[]> weightProfile = new ThreadLocal<>();
+    private static long[] causeWeightCounts() {
+        long[] counts = weightProfile.get();
+        if (counts == null) { counts = new long[4]; weightProfile.set(counts); }
+        return counts;
+    }
+    /** Shadow miss selections, compared weights, resolved arguments, mismatches. */
+    public static long[] experimentalCauseWeightProfile() { return causeWeightCounts().clone(); }
+
+    private static List<Long> resolvedIds(ArgumentsList arguments, Mind mind) throws Exception {
+        List<Long> ids = new ArrayList<>();
+        for (IArgument argument : arguments) {
+            ITerm value = argument.getValue(mind);
+            causeWeightCounts()[2]++;
+            if (value != null) ids.add(value.getId());
+        }
+        return ids;
+    }
+
+    private static int resolvedWeight(List<Long> ownIds, ArgumentsList donor, Mind mind) throws Exception {
+        Set<Long> donorIds = new HashSet<>(resolvedIds(donor, mind));
+        int weight = 0;
+        for (Long id : ownIds) if (donorIds.contains(id)) ++weight;
+        return weight;
+    }
     /** Calls, hits, convert ns, check/copy ns, select ns, publish ns, source causes, argument pairs, returned causes. */
     public static long[] experimentalCauseProfile() {
         long[] counts = causeProfile.get();

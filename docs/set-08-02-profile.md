@@ -316,3 +316,38 @@ shadow mode and cover empty arguments, duplicates, multiple weight levels and
 context-dependent bindings before proposing an actual fast path.
 
 Evidence: causes-selected-{off,on}.{csv,txt}.
+
+## Resolved cause-weight shadow
+
+Default-OFF shadowCauseWeights computes own argument IDs once per miss-selection,
+donor argument IDs once per cause, and compares every predicted weight with the
+reference nested loop. Own duplicates remain in a list; donor IDs form a set,
+preserving one match per own argument. Predicted groups independently remove
+only their minimum group when multiple weights exist. The final selected set is
+compared before returning the unchanged reference result. No accelerated path
+or cross-call cache is introduced.
+
+Local Java 17, TValue and versioned solve sync ON, selected-ID rotation OFF:
+123 corpus cases pass; the 20-operation transaction state equals reference.
+Three measured set_08_02 invocations after one warmup each compare 486,098 cause
+weights across 986 miss-selections, with zero discrepancies. Each shadow run
+resolves 1,461,252 arguments and finishes with 493 solutions/values. This count
+is not directly comparable to the earlier 3,393,822 visited argument pairs;
+the reference resolves values repeatedly through both isEmpty and getValue.
+Shadow elapsed times include both algorithms and are not speedup measurements.
+
+CauseWeightShadowSafetyRunner checks empty arguments/lists, own/donor duplicates,
+TVariable binding changes and clearing, three distinct weight levels (0,1,3),
+retention of the intermediate weight and a memo hit. Its synthetic causes use
+identity equality so weight selection is isolated from cause deduplication.
+All pass. Corpus, transaction and set_08_02 logs contain no exceptions/assertions.
+
+Limit: direct resolution in this diagnostic can throw where the reference's
+isEmpty catches an exception; unusual/custom arguments may also have observable
+resolution side effects. No claim is made for those unqualified paths. An actual
+fast path must retain fallback or explicitly qualify them before adoption.
+Next: design that guard, then measure the new calculation without double work,
+keeping per-weight comparison available as verify mode.
+
+Evidence: cause-shadow-counts.txt, cause-shadow.csv, cause-shadow-state.txt,
+cause-shadow-boundaries.txt. Experiment only; develop unchanged.
