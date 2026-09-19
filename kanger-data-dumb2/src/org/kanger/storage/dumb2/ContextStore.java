@@ -8,6 +8,9 @@ package org.kanger.storage.dumb2;
 import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.internal.IBase;
+import org.kanger.storage.dumb2.descriptor.Descriptor;
+import org.kanger.storage.dumb2.descriptor.TypeDefinition;
+import org.kanger.storage.dumb2.descriptor.TypeRegistry;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -53,6 +56,7 @@ final class ContextStore implements AutoCloseable {
     private final Path location;
     private final UUID contextId;
     private final ContextLock contextLock;
+    private final TypeRegistry typeRegistry;
     private final Map<String, ContextBase> bases =
             new LinkedHashMap<String, ContextBase>();
 
@@ -62,11 +66,13 @@ final class ContextStore implements AutoCloseable {
     private ContextStore(Path location,
                          UUID contextId,
                          long revision,
-                         ContextLock contextLock) {
+                         ContextLock contextLock,
+                         TypeRegistry typeRegistry) {
         this.location = location;
         this.contextId = contextId;
         this.revision = revision;
         this.contextLock = contextLock;
+        this.typeRegistry = typeRegistry;
     }
 
     /**
@@ -81,7 +87,8 @@ final class ContextStore implements AutoCloseable {
         Path contextPath = contextPath(normalized);
         Path revisionPath = revisionPath(normalized);
 
-        UUID contextId = ContextIdStore.create(contextPath);
+        ContextManifestStore.Manifest manifest = ContextManifestStore.create(contextPath);
+        UUID contextId = manifest.getContextId();
         long revision;
         try {
             revision = RevisionStore.create(revisionPath);
@@ -97,7 +104,7 @@ final class ContextStore implements AutoCloseable {
         ContextLock lock = null;
         try {
             lock = acquireLock(normalized);
-            return new ContextStore(normalized, contextId, revision, lock);
+            return new ContextStore(normalized, contextId, revision, lock, manifest.getTypeRegistry());
         } catch (IOException | StorageLifecycleException
                  | RuntimeException | Error failure) {
             closeQuietly(lock, failure);
@@ -129,14 +136,15 @@ final class ContextStore implements AutoCloseable {
 
         ContextLock lock = acquireLock(normalized);
         try {
-            UUID contextId = ContextIdStore.read(contextPath);
+            ContextManifestStore.Manifest manifest = ContextManifestStore.read(contextPath);
+            UUID contextId = manifest.getContextId();
             long revision = RevisionStore.read(revisionPath);
             if (revision > RevisionStore.INITIAL_REVISION
                     && !Files.isDirectory(generationPath(normalized, revision))) {
                 throw corruption("DUMB2 Context revision " + revision
                         + " has no physical generation at " + normalized);
             }
-            return new ContextStore(normalized, contextId, revision, lock);
+            return new ContextStore(normalized, contextId, revision, lock, manifest.getTypeRegistry());
         } catch (NoSuchFileException failure) {
             StorageLifecycleException incomplete = incomplete(normalized);
             incomplete.addSuppressed(failure);
@@ -147,6 +155,38 @@ final class ContextStore implements AutoCloseable {
             closeQuietly(lock, failure);
             throw failure;
         }
+    }
+
+    /**
+     * Registers a persistent layout in this Context and publishes the manifest
+     * before returning its Context-local typeCode.
+     *
+     * <p>The in-memory registry is append-only. If manifest publication fails,
+     * the call fails and no record may use the returned definition; retrying
+     * the same registration republishes the same immutable code.</p>
+     */
+    synchronized TypeDefinition registerType(String typeName, Descriptor descriptor)
+            throws Exception {
+        requireOpen();
+        TypeDefinition definition = typeRegistry.register(typeName, descriptor);
+        ContextManifestStore.publish(contextPath(location), contextId, typeRegistry);
+        return definition;
+    }
+
+    synchronized TypeDefinition resolveType(int typeCode) {
+        requireOpen();
+        return typeRegistry.resolve(typeCode);
+    }
+
+    synchronized TypeRegistry snapshotTypeRegistry() {
+        requireOpen();
+        TypeRegistry snapshot = new TypeRegistry();
+        for (TypeDefinition definition : typeRegistry.definitions()) {
+            snapshot.install(definition.getTypeCode(),
+                    definition.getTypeName(),
+                    definition.getDescriptor());
+        }
+        return snapshot;
     }
 
     synchronized IBase getBase(String schema) throws Exception {
