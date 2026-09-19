@@ -1,6 +1,7 @@
 package org.kanger.storage.dumb2.adapter;
 
 import org.kanger.Mind;
+import org.kanger.enums.UnitType;
 import org.kanger.interfaces.ITerm;
 import org.kanger.storage.dumb2.descriptor.Descriptor;
 import org.kanger.storage.dumb2.descriptor.StructuralValue;
@@ -19,10 +20,11 @@ import java.util.Map;
  * <p>This class deliberately owns the KANGER knowledge. Descriptor/value codecs
  * remain unaware of TValue, UnitType and Java implementation classes.</p>
  */
-public final class TValueAdapter {
+public final class TValueAdapter implements KangerUnitAdapter<TValue> {
 
     public static final String TYPE_NAME = "TVALUE";
     public static final String LAYOUT_NAME = "TValue-v1";
+    public static final TValueAdapter INSTANCE = new TValueAdapter();
 
     private static final Descriptor DESCRIPTOR = Descriptor.struct(LAYOUT_NAME, Arrays.asList(
             Descriptor.field("id", Descriptor.INT64),
@@ -36,6 +38,31 @@ public final class TValueAdapter {
 
     public static Descriptor descriptor() {
         return DESCRIPTOR;
+    }
+
+    @Override
+    public UnitType getRuntimeType() {
+        return UnitType.TVALUE;
+    }
+
+    @Override
+    public String getTypeName() {
+        return TYPE_NAME;
+    }
+
+    @Override
+    public Descriptor getDescriptor() {
+        return DESCRIPTOR;
+    }
+
+    @Override
+    public StructuralValue project(TValue value, Mind mind) {
+        return toStructural(value, mind);
+    }
+
+    @Override
+    public TValue materialize(StructuralValue value, Mind mind) throws Exception {
+        return fromStructural(value, mind);
     }
 
     public static StructuralValue toStructural(TValue value, Mind mind) {
