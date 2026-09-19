@@ -1,0 +1,35 @@
+off LatentSubstitutionCorpusRunner
+  Fails: 0
+Stabilization Fails: 0
+C1 Fails: 0
+C4 Fails: 0
+C3 Fails: 0
+LATENT_CORPUS_PASS
+off LatentSolveSyncTransactionRunner
+LATENT_SOLVE_TRANSACTIONS_PASS operations=20
+on LatentSubstitutionCorpusRunner
+  Fails: 0
+Stabilization Fails: 0
+C1 Fails: 0
+C4 Fails: 0
+C3 Fails: 0
+LATENT_CORPUS_PASS
+on LatentSolveSyncTransactionRunner
+LATENT_SOLVE_TRANSACTIONS_PASS operations=20
+verify LatentSubstitutionCorpusRunner
+  Fails: 0
+Stabilization Fails: 0
+C1 Fails: 0
+C4 Fails: 0
+C3 Fails: 0
+LATENT_CORPUS_PASS
+verify LatentSolveSyncTransactionRunner
+LATENT_SOLVE_TRANSACTIONS_PASS operations=20
+  Fails: 0
+RULE_CANDIDATE_CONCURRENCY_PASS 1/3
+  Fails: 0
+RULE_CANDIDATE_CONCURRENCY_PASS 2/3
+  Fails: 0
+RULE_CANDIDATE_CONCURRENCY_PASS 3/3
+RULE_CANDIDATE_CONCURRENCY_OK iterations=3
+TRANSACTION_STATES_IDENTICAL off/on/verify

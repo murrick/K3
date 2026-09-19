@@ -1,0 +1,1424 @@
+MAIN_CAUSE_WEIGHTS [0, 0, 0, 0, 986, 0]
+THREAD_STACK_OBSERVATIONS 293
+218 RUNNABLE org.kanger.Mind.query
+142 RUNNABLE org.kanger.test.KangerTest.set_08_02
+142 RUNNABLE org.kanger.test.Set0802ProfileRunner.main
+141 RUNNABLE org.kanger.Mind.queryCheckTrue
+125 RUNNABLE org.kanger.Linker.link
+125 RUNNABLE org.kanger.Mind.link
+122 RUNNABLE org.kanger.Linker.rotator
+103 RUNNABLE org.kanger.Linker.rotateVariables
+91 RUNNABLE org.kanger.Linker$3.run
+77 RUNNABLE java.lang.Thread.run
+76 RUNNABLE org.kanger.Mind.queryAccept
+72 RUNNABLE org.kanger.Linker$4.run
+72 RUNNABLE org.kanger.Linker.access$5
+72 RUNNABLE org.kanger.factory.TValueFactory.forEach
+53 RUNNABLE org.kanger.Mind.compileLine
+51 RUNNABLE org.kanger.Linker.access$3
+51 RUNNABLE org.kanger.Linker.linkDatabase
+44 RUNNABLE org.kanger.compiler.Compiller.compileLine
+39 BLOCKED java.lang.Thread.run
+39 BLOCKED org.kanger.Mind.query
+39 BLOCKED org.kanger.Mind.queryAccept
+35 RUNNABLE java.util.AbstractCollection.addAll
+34 RUNNABLE org.kanger.Linker.access$1
+34 RUNNABLE org.kanger.Linker.selectDomainCandidates
+33 WAITING org.kanger.test.KangerTest.set_08_02
+33 WAITING org.kanger.test.Set0802ProfileRunner.main
+32 LEAF WAITING jdk.internal.misc.Unsafe.park
+32 ORIGIN WAITING jdk.internal.misc.Unsafe.park <- org.kanger.test.KangerTest.set_08_02
+32 RUNNABLE org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+32 RUNNABLE org.kanger.factory.RuleFactory.collectResolvedCandidateIds
+32 RUNNABLE org.kanger.factory.RuleFactory.findByResolvedDomain
+32 WAITING java.util.concurrent.CountDownLatch.await
+32 WAITING java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire
+32 WAITING java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly
+32 WAITING java.util.concurrent.locks.LockSupport.park
+32 WAITING jdk.internal.misc.Unsafe.park
+31 RUNNABLE org.kanger.factory.DictionaryFactory.add
+28 RUNNABLE java.util.HashMap.put
+27 RUNNABLE org.kanger.Analyzer.analyze
+27 RUNNABLE org.kanger.Mind.analyze
+26 RUNNABLE java.util.HashSet.add
+26 RUNNABLE org.kanger.Analyzer.checkDatabase
+25 BLOCKED org.kanger.Mind.compileLine
+25 BLOCKED org.kanger.compiler.Compiller.compileLine
+25 RUNNABLE java.util.HashMap.putVal
+25 RUNNABLE org.kanger.units.CachedDomain.getCauses
+22 RUNNABLE org.kanger.compiler.Compiller.compilePredicate
+22 RUNNABLE org.kanger.compiler.Compiller.construct
+21 LEAF RUNNABLE java.util.HashMap.putVal
+21 RUNNABLE org.kanger.Analyzer.checkRight
+21 RUNNABLE org.kanger.primitives.Argument.isEmpty
+21 RUNNABLE org.kanger.test.KangerTest$6.run
+21 RUNNABLE org.kanger.test.KangerTest$7.run
+20 LEAF RUNNABLE org.kanger.primitives.Argument.isEmpty
+20 ORIGIN RUNNABLE org.kanger.primitives.Argument.isEmpty <- org.kanger.primitives.Argument.isEmpty
+20 RUNNABLE org.kanger.test.KangerTest$5.run
+20 RUNNABLE org.kanger.units.CachedDomain.setCauses
+19 RUNNABLE org.kanger.Linker.updateDatabase
+19 RUNNABLE org.kanger.units.Domain.setCauses
+19 RUNNABLE org.kanger.units.Term.<init>
+19 RUNNABLE org.kanger.units.Term.construct
+18 RUNNABLE org.kanger.enums.Tools.parseDate
+17 BLOCKED org.kanger.factory.DictionaryFactory.add
+17 BLOCKED org.kanger.factory.DictionaryFactory.getVarIndex
+17 BLOCKED org.kanger.factory.RuleFactory.register
+17 BLOCKED org.kanger.test.KangerTest$4.run
+17 LEAF BLOCKED org.kanger.factory.DictionaryFactory.getVarIndex
+17 ORIGIN BLOCKED org.kanger.factory.DictionaryFactory.getVarIndex <- org.kanger.factory.DictionaryFactory.getVarIndex
+16 LEAF BLOCKED org.kanger.factory.DictionaryFactory.add
+16 ORIGIN BLOCKED org.kanger.factory.DictionaryFactory.add <- org.kanger.factory.DictionaryFactory.add
+16 RUNNABLE org.kanger.Linker.logCauses
+16 RUNNABLE org.kanger.units.Domain.getOverlaps
+16 RUNNABLE org.kanger.units.Domain.isExcluded
+15 RUNNABLE org.kanger.compiler.Compiller.parseArgs
+15 RUNNABLE org.kanger.test.KangerTest$4.run
+14 LEAF RUNNABLE org.kanger.factory.DictionaryFactory.getVarIndex
+14 ORIGIN RUNNABLE org.kanger.factory.DictionaryFactory.getVarIndex <- org.kanger.factory.DictionaryFactory.getVarIndex
+14 RUNNABLE org.kanger.factory.DictionaryFactory.getVarIndex
+14 RUNNABLE org.kanger.factory.RuleFactory.register
+14 RUNNABLE org.kanger.primitives.ArgumentsList.equalsBase
+13 RUNNABLE java.util.LinkedHashSet.<init>
+13 RUNNABLE org.kanger.factory.DictionaryFactory.find
+12 RUNNABLE org.kanger.factory.RuleCandidateIndex$IdIndex.get
+11 LEAF RUNNABLE org.kanger.factory.DictionaryFactory.add
+11 ORIGIN RUNNABLE org.kanger.factory.DictionaryFactory.add <- org.kanger.factory.DictionaryFactory.add
+11 RUNNABLE org.kanger.Analyzer.candidatesFor
+11 RUNNABLE org.kanger.factory.RuleFactory.findByDomain
+11 RUNNABLE org.kanger.storage.Step.getData
+10 BLOCKED org.kanger.Mind.convertExternals
+10 LEAF RUNNABLE java.util.AbstractCollection.addAll
+10 RUNNABLE java.util.HashMap.hash
+10 RUNNABLE org.kanger.Linker.access$4
+10 RUNNABLE org.kanger.Linker.isValidFor
+10 RUNNABLE org.kanger.Mind.commit
+9 BLOCKED org.kanger.test.KangerTest$6.run
+9 LEAF RUNNABLE java.lang.Throwable.fillInStackTrace
+9 ORIGIN RUNNABLE java.lang.Throwable.fillInStackTrace <- org.kanger.enums.Tools.parseDate
+9 RUNNABLE java.lang.Exception.<init>
+9 RUNNABLE java.lang.Throwable.<init>
+9 RUNNABLE java.lang.Throwable.fillInStackTrace
+9 RUNNABLE java.text.DateFormat.parse
+9 RUNNABLE java.text.ParseException.<init>
+9 RUNNABLE java.util.AbstractCollection.retainAll
+9 RUNNABLE org.kanger.TechnicalMindTransaction.commit
+8 LEAF RUNNABLE java.util.HashMap$HashIterator.nextNode
+8 RUNNABLE java.util.HashMap$HashIterator.nextNode
+8 RUNNABLE java.util.HashMap$KeyIterator.next
+8 RUNNABLE java.util.HashMap.getNode
+8 RUNNABLE org.kanger.units.CachedDomain.guardedWeights
+8 RUNNABLE org.kanger.units.Rule.setMind
+7 BLOCKED org.kanger.test.KangerTest$7.run
+7 LEAF RUNNABLE org.kanger.Mind.isUnitDeleted
+7 LEAF RUNNABLE org.kanger.units.Domain.getOverlaps
+7 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.factory.RuleCandidateIndex$IdIndex.get
+7 ORIGIN RUNNABLE org.kanger.Mind.isUnitDeleted <- org.kanger.Mind.isUnitDeleted
+7 ORIGIN RUNNABLE org.kanger.units.Domain.getOverlaps <- org.kanger.units.Domain.getOverlaps
+7 RUNNABLE org.kanger.Mind.isUnitDeleted
+7 RUNNABLE org.kanger.factory.RuleFactory$1.next
+7 RUNNABLE org.kanger.units.Rule.isDeleted
+6 BLOCKED org.kanger.compiler.Compiller.compilePredicate
+6 BLOCKED org.kanger.compiler.Compiller.construct
+6 BLOCKED org.kanger.test.KangerTest$5.run
+6 LEAF RUNNABLE org.kanger.enums.Tools.parseDate
+6 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+6 ORIGIN RUNNABLE org.kanger.enums.Tools.parseDate <- org.kanger.enums.Tools.parseDate
+6 RUNNABLE org.kanger.Linker.access$2
+6 RUNNABLE org.kanger.Linker.linkDomains
+6 RUNNABLE org.kanger.Mind.convertExternals
+6 RUNNABLE org.kanger.PortableMindLayer.capture
+6 RUNNABLE org.kanger.storage.Escalera$WalkIterator.next
+5 BLOCKED org.kanger.compiler.Compiller.parseArgs
+5 LEAF RUNNABLE java.util.HashMap.hash
+5 ORIGIN RUNNABLE java.util.HashMap$HashIterator.nextNode <- org.kanger.units.CachedDomain.getCauses
+5 RUNNABLE java.lang.StringBuilder.append
+5 RUNNABLE java.util.AbstractSet.removeAll
+5 RUNNABLE java.util.HashMap.containsKey
+5 RUNNABLE java.util.HashMap.remove
+5 RUNNABLE java.util.HashSet.contains
+5 RUNNABLE java.util.HashSet.remove
+5 RUNNABLE org.kanger.Linker.markExcluded
+5 RUNNABLE org.kanger.factory.RuleFactory.effectiveView
+5 RUNNABLE org.kanger.factory.RuleFactory.get
+5 RUNNABLE org.kanger.factory.RuleFactory.isPromoted
+5 RUNNABLE org.kanger.storage.Escalera.find
+5 RUNNABLE org.kanger.storage.Escalera.get
+5 RUNNABLE org.kanger.units.Domain.toString
+4 LEAF RUNNABLE java.lang.ThreadLocal$ThreadLocalMap.getEntryAfterMiss
+4 LEAF RUNNABLE java.util.HashMap.getNode
+4 LEAF RUNNABLE org.kanger.Linker.isValidFor
+4 LEAF RUNNABLE org.kanger.factory.RuleFactory.isPromoted
+4 LEAF RUNNABLE org.kanger.primitives.ArgumentsList.getTVariables
+4 LEAF RUNNABLE org.kanger.primitives.Solve.hashCode
+4 LEAF RUNNABLE org.kanger.units.Rule.setMind
+4 ORIGIN RUNNABLE java.lang.ThreadLocal$ThreadLocalMap.getEntryAfterMiss <- org.kanger.units.TVariable.activeMind
+4 ORIGIN RUNNABLE org.kanger.Linker.isValidFor <- org.kanger.Linker.isValidFor
+4 ORIGIN RUNNABLE org.kanger.factory.RuleFactory.isPromoted <- org.kanger.factory.RuleFactory.isPromoted
+4 ORIGIN RUNNABLE org.kanger.primitives.ArgumentsList.getTVariables <- org.kanger.primitives.ArgumentsList.getTVariables
+4 ORIGIN RUNNABLE org.kanger.primitives.Solve.hashCode <- org.kanger.primitives.Solve.hashCode
+4 ORIGIN RUNNABLE org.kanger.units.Rule.setMind <- org.kanger.units.Rule.setMind
+4 RUNNABLE java.lang.String.valueOf
+4 RUNNABLE java.lang.ThreadLocal$ThreadLocalMap.getEntry
+4 RUNNABLE java.lang.ThreadLocal$ThreadLocalMap.getEntryAfterMiss
+4 RUNNABLE java.lang.ThreadLocal.get
+4 RUNNABLE org.kanger.factory.RuleFactory.add
+4 RUNNABLE org.kanger.factory.RuleFactory.collectDomainIds
+4 RUNNABLE org.kanger.primitives.ArgumentsList.getTVariables
+4 RUNNABLE org.kanger.primitives.Cause.hashCode
+4 RUNNABLE org.kanger.primitives.Solve.hashCode
+4 RUNNABLE org.kanger.units.CachedDomain.setMind
+4 RUNNABLE org.kanger.units.Domain.equalsBase
+4 RUNNABLE org.kanger.units.Domain.setExcluded
+4 RUNNABLE org.kanger.units.Domain.setMind
+4 RUNNABLE org.kanger.units.TVariable.activeMind
+3 LEAF RUNNABLE org.kanger.Analyzer.checkDatabase
+3 LEAF RUNNABLE org.kanger.PortableMindLayer.capture
+3 LEAF RUNNABLE org.kanger.primitives.ArgumentsList.equalsBase
+3 LEAF RUNNABLE org.kanger.storage.Step.getData
+3 LEAF RUNNABLE org.kanger.units.CachedDomain.resolvedPrimitiveIds
+3 LEAF RUNNABLE org.kanger.units.CachedDomain.supportedArguments
+3 ORIGIN RUNNABLE java.util.AbstractCollection.addAll <- org.kanger.factory.RuleCandidateIndex$IdIndex.get
+3 ORIGIN RUNNABLE java.util.AbstractCollection.addAll <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+3 ORIGIN RUNNABLE java.util.HashMap.getNode <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+3 ORIGIN RUNNABLE java.util.HashMap.hash <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+3 ORIGIN RUNNABLE org.kanger.Analyzer.checkDatabase <- org.kanger.Analyzer.checkDatabase
+3 ORIGIN RUNNABLE org.kanger.PortableMindLayer.capture <- org.kanger.PortableMindLayer.capture
+3 ORIGIN RUNNABLE org.kanger.primitives.ArgumentsList.equalsBase <- org.kanger.primitives.ArgumentsList.equalsBase
+3 ORIGIN RUNNABLE org.kanger.storage.Step.getData <- org.kanger.storage.Step.getData
+3 ORIGIN RUNNABLE org.kanger.units.CachedDomain.resolvedPrimitiveIds <- org.kanger.units.CachedDomain.resolvedPrimitiveIds
+3 ORIGIN RUNNABLE org.kanger.units.CachedDomain.supportedArguments <- org.kanger.units.CachedDomain.supportedArguments
+3 RUNNABLE java.util.HashMap.get
+3 RUNNABLE java.util.HashMap.resize
+3 RUNNABLE java.util.HashSet.<init>
+3 RUNNABLE org.kanger.factory.DomainFactory.add
+3 RUNNABLE org.kanger.factory.RuleFactory.commit
+3 RUNNABLE org.kanger.factory.RuleFactory.find
+3 RUNNABLE org.kanger.storage.Escalera.ensureIndex
+3 RUNNABLE org.kanger.storage.Escalera.indexStep
+3 RUNNABLE org.kanger.stores.LogStore.add
+3 RUNNABLE org.kanger.units.CachedDomain.resolvedPrimitiveIds
+3 RUNNABLE org.kanger.units.CachedDomain.supportedArguments
+3 RUNNABLE org.kanger.units.Domain.createStored
+2 BLOCKED java.lang.String.format
+2 BLOCKED java.util.Formatter.format
+2 LEAF RUNNABLE java.util.AbstractCollection.retainAll
+2 LEAF RUNNABLE java.util.HashMap$HashIterator.<init>
+2 LEAF RUNNABLE java.util.HashMap.remove
+2 LEAF RUNNABLE java.util.HashMap.resize
+2 LEAF RUNNABLE java.util.LinkedHashMap$LinkedHashIterator.remove
+2 LEAF RUNNABLE java.util.TreeSet.iterator
+2 LEAF RUNNABLE org.kanger.Analyzer.checkRight
+2 LEAF RUNNABLE org.kanger.Linker.selectDomainCandidates
+2 LEAF RUNNABLE org.kanger.primitives.ArgumentsList.convertBase
+2 LEAF RUNNABLE org.kanger.stores.LogStore.add
+2 LEAF RUNNABLE org.kanger.units.Domain.equalsBase
+2 ORIGIN RUNNABLE java.util.AbstractCollection.addAll <- org.kanger.factory.RuleFactory.collectDomainIds
+2 ORIGIN RUNNABLE java.util.AbstractCollection.retainAll <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+2 ORIGIN RUNNABLE java.util.HashMap$HashIterator.<init> <- org.kanger.storage.Escalera.find
+2 ORIGIN RUNNABLE java.util.HashMap$HashIterator.nextNode <- org.kanger.units.Domain.isExcluded
+2 ORIGIN RUNNABLE java.util.HashMap.hash <- org.kanger.factory.RuleCandidateIndex$IdIndex.get
+2 ORIGIN RUNNABLE java.util.LinkedHashMap$LinkedHashIterator.remove <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+2 ORIGIN RUNNABLE org.kanger.Analyzer.checkRight <- org.kanger.Analyzer.checkRight
+2 ORIGIN RUNNABLE org.kanger.Linker.selectDomainCandidates <- org.kanger.Linker.selectDomainCandidates
+2 ORIGIN RUNNABLE org.kanger.primitives.ArgumentsList.convertBase <- org.kanger.primitives.ArgumentsList.convertBase
+2 ORIGIN RUNNABLE org.kanger.stores.LogStore.add <- org.kanger.stores.LogStore.add
+2 ORIGIN RUNNABLE org.kanger.units.Domain.equalsBase <- org.kanger.units.Domain.equalsBase
+2 RUNNABLE java.lang.String.format
+2 RUNNABLE java.text.SimpleDateFormat.<init>
+2 RUNNABLE java.util.HashMap$HashIterator.<init>
+2 RUNNABLE java.util.HashMap$KeyIterator.<init>
+2 RUNNABLE java.util.HashMap$KeySet.iterator
+2 RUNNABLE java.util.HashSet.iterator
+2 RUNNABLE java.util.LinkedHashMap$LinkedHashIterator.remove
+2 RUNNABLE java.util.TreeSet.iterator
+2 RUNNABLE org.kanger.Mind.finalizeTransactionRootLocked
+2 RUNNABLE org.kanger.Mind.finishTransactionLocked
+2 RUNNABLE org.kanger.Mind.logResult
+2 RUNNABLE org.kanger.Mind.pack
+2 RUNNABLE org.kanger.Mind.release
+2 RUNNABLE org.kanger.TechnicalMindTransaction.rollback
+2 RUNNABLE org.kanger.factory.DictionaryFactory.pack
+2 RUNNABLE org.kanger.factory.DomainFactory.find
+2 RUNNABLE org.kanger.factory.RuleFactory.access$1
+2 RUNNABLE org.kanger.factory.RuleFactory.getRaw
+2 RUNNABLE org.kanger.factory.RuleFactory.mergeDomainIndex
+2 RUNNABLE org.kanger.factory.TValueFactory.get
+2 RUNNABLE org.kanger.primitives.Argument.getValue
+2 RUNNABLE org.kanger.primitives.ArgumentsList.applyStamp
+2 RUNNABLE org.kanger.primitives.ArgumentsList.convertBase
+2 RUNNABLE org.kanger.primitives.Solve.toString
+2 RUNNABLE org.kanger.storage.Escalera.add
+2 RUNNABLE org.kanger.units.Domain.isStored
+2 RUNNABLE org.kanger.units.TVariable.getCurrent
+2 RUNNABLE org.kanger.units.TVariable.getValue
+2 WAITING java.lang.Thread.run
+1 BLOCKED java.text.DecimalFormatSymbols.<init>
+1 BLOCKED java.text.DecimalFormatSymbols.getInstance
+1 BLOCKED java.text.DecimalFormatSymbols.initialize
+1 BLOCKED java.text.MessageFormat.<init>
+1 BLOCKED java.text.MessageFormat.format
+1 BLOCKED java.text.SimpleDateFormat.<init>
+1 BLOCKED java.util.Formatter$FormatSpecifier.getZero
+1 BLOCKED java.util.Formatter$FormatSpecifier.localizedMagnitude
+1 BLOCKED java.util.Formatter$FormatSpecifier.print
+1 BLOCKED java.util.Formatter$FormatSpecifier.printInteger
+1 BLOCKED java.util.Formatter.parse
+1 BLOCKED java.util.Formatter.zero
+1 BLOCKED java.util.Locale.getUnicodeLocaleType
+1 BLOCKED java.util.Locale.isUnicodeExtensionKey
+1 BLOCKED org.kanger.Analyzer.analyze
+1 BLOCKED org.kanger.Analyzer.checkDatabase
+1 BLOCKED org.kanger.Mind.<init>
+1 BLOCKED org.kanger.Mind.analyze
+1 BLOCKED org.kanger.Mind.init
+1 BLOCKED org.kanger.Mind.isUnitDeleted
+1 BLOCKED org.kanger.TechnicalMindTransaction.<init>
+1 BLOCKED org.kanger.TechnicalMindTransaction.begin
+1 BLOCKED org.kanger.calculator.Calculator.<init>
+1 BLOCKED org.kanger.calculator.Functions$1.<init>
+1 BLOCKED org.kanger.calculator.Functions.<init>
+1 BLOCKED org.kanger.enums.Tools.parseDate
+1 BLOCKED org.kanger.factory.DictionaryFactory.find
+1 BLOCKED org.kanger.units.Rule.isDeleted
+1 BLOCKED org.kanger.units.Term.<init>
+1 BLOCKED org.kanger.units.Term.construct
+1 BLOCKED sun.util.locale.LocaleUtils.isAlphaNumericString
+1 BLOCKED sun.util.locale.provider.DecimalFormatSymbolsProviderImpl.getInstance
+1 BLOCKED sun.util.locale.provider.LocaleResources.getDateTimePattern
+1 LEAF BLOCKED java.text.MessageFormat.<init>
+1 LEAF BLOCKED java.util.Formatter.parse
+1 LEAF BLOCKED org.kanger.Mind.isUnitDeleted
+1 LEAF BLOCKED org.kanger.calculator.Functions$1.<init>
+1 LEAF BLOCKED org.kanger.compiler.Compiller.compileLine
+1 LEAF BLOCKED sun.util.locale.LocaleUtils.isAlphaNumericString
+1 LEAF RUNNABLE java.lang.AbstractStringBuilder.inflate
+1 LEAF RUNNABLE java.lang.Long.valueOf
+1 LEAF RUNNABLE java.lang.String.trim
+1 LEAF RUNNABLE java.text.MessageFormat.makeFormat
+1 LEAF RUNNABLE java.text.SimpleDateFormat.<init>
+1 LEAF RUNNABLE java.util.ArrayList.indexOfRange
+1 LEAF RUNNABLE java.util.Formatter.toString
+1 LEAF RUNNABLE java.util.HashMap$TreeNode.untreeify
+1 LEAF RUNNABLE java.util.HashSet.<init>
+1 LEAF RUNNABLE java.util.IdentityHashMap.resize
+1 LEAF RUNNABLE java.util.TreeMap.compare
+1 LEAF RUNNABLE java.util.TreeMap.getEntry
+1 LEAF RUNNABLE java.util.regex.Matcher.reset
+1 LEAF RUNNABLE org.kanger.Linker.checkSystem
+1 LEAF RUNNABLE org.kanger.Linker.synchronizeSolveIndex
+1 LEAF RUNNABLE org.kanger.Mind.logResult
+1 LEAF RUNNABLE org.kanger.Mind.unlinkCVar
+1 LEAF RUNNABLE org.kanger.compiler.Compiller.isFunction
+1 LEAF RUNNABLE org.kanger.compiler.Compiller.parseArgs
+1 LEAF RUNNABLE org.kanger.compiler.Parser.parse
+1 LEAF RUNNABLE org.kanger.factory.RuleFactory.copyDomainIndexLocked
+1 LEAF RUNNABLE org.kanger.factory.RuleFactory.ensureDomainIndex
+1 LEAF RUNNABLE org.kanger.factory.RuleFactory.findByDomain
+1 LEAF RUNNABLE org.kanger.primitives.ArgumentsList.getHash
+1 LEAF RUNNABLE org.kanger.primitives.ArgumentsList.getStamp
+1 LEAF RUNNABLE org.kanger.primitives.Solve.equals
+1 LEAF RUNNABLE org.kanger.primitives.Solve.toString
+1 LEAF RUNNABLE org.kanger.storage.Escalera.ensureIndex
+1 LEAF RUNNABLE org.kanger.units.CachedDomain.getCauses
+1 LEAF RUNNABLE org.kanger.units.CachedDomain.guardedWeights
+1 LEAF RUNNABLE org.kanger.units.CachedDomain.setCauses
+1 LEAF RUNNABLE org.kanger.units.TSolve.containsTValue
+1 LEAF RUNNABLE org.kanger.units.TVariable.setValue
+1 LEAF WAITING java.lang.Object.wait
+1 LEAF WAITING java.lang.Thread.start0
+1 LEAF WAITING org.kanger.test.KangerTest$7.run
+1 ORIGIN BLOCKED java.text.MessageFormat.<init> <- org.kanger.enums.Tools.parseDate
+1 ORIGIN BLOCKED java.util.Formatter.parse <- org.kanger.Mind.queryAccept
+1 ORIGIN BLOCKED org.kanger.Mind.isUnitDeleted <- org.kanger.Mind.isUnitDeleted
+1 ORIGIN BLOCKED org.kanger.calculator.Functions$1.<init> <- org.kanger.calculator.Functions$1.<init>
+1 ORIGIN BLOCKED org.kanger.compiler.Compiller.compileLine <- org.kanger.compiler.Compiller.compileLine
+1 ORIGIN BLOCKED sun.util.locale.LocaleUtils.isAlphaNumericString <- org.kanger.Mind.queryAccept
+1 ORIGIN RUNNABLE java.lang.AbstractStringBuilder.inflate <- org.kanger.enums.Tools.parseDate
+1 ORIGIN RUNNABLE java.lang.Long.valueOf <- org.kanger.factory.RuleFactory.containsPromotion
+1 ORIGIN RUNNABLE java.lang.String.trim <- org.kanger.units.Term.construct
+1 ORIGIN RUNNABLE java.text.MessageFormat.makeFormat <- org.kanger.enums.Tools.parseDate
+1 ORIGIN RUNNABLE java.text.SimpleDateFormat.<init> <- org.kanger.enums.Tools.parseDate
+1 ORIGIN RUNNABLE java.util.AbstractCollection.addAll <- org.kanger.units.CachedDomain.getCauses
+1 ORIGIN RUNNABLE java.util.AbstractCollection.addAll <- org.kanger.units.Domain.setSolves
+1 ORIGIN RUNNABLE java.util.ArrayList.indexOfRange <- org.kanger.units.TSolve.equalsTo
+1 ORIGIN RUNNABLE java.util.Formatter.toString <- org.kanger.primitives.Solve.toString
+1 ORIGIN RUNNABLE java.util.HashMap$HashIterator.nextNode <- org.kanger.units.Domain.setCauses
+1 ORIGIN RUNNABLE java.util.HashMap$TreeNode.untreeify <- org.kanger.storage.Escalera.indexStep
+1 ORIGIN RUNNABLE java.util.HashMap.getNode <- org.kanger.storage.Escalera.indexStep
+1 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.factory.RuleFactory.collectDomainIds
+1 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.factory.RuleFactory.copyTermIndexLocked
+1 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.factory.RuleFactory.indexRuleLocked
+1 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.factory.RuleFactory.release
+1 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.storage.Escalera.ensureIndex
+1 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.storage.Escalera.indexStep
+1 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.units.CachedDomain.getCauses
+1 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.units.Domain.setCauses
+1 ORIGIN RUNNABLE java.util.HashMap.remove <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+1 ORIGIN RUNNABLE java.util.HashMap.remove <- org.kanger.units.CachedDomain.getCauses
+1 ORIGIN RUNNABLE java.util.HashMap.resize <- org.kanger.factory.TValueFactory.collectIds
+1 ORIGIN RUNNABLE java.util.HashMap.resize <- org.kanger.units.CachedDomain.getCauses
+1 ORIGIN RUNNABLE java.util.HashSet.<init> <- org.kanger.Linker.linkDatabase
+1 ORIGIN RUNNABLE java.util.IdentityHashMap.resize <- org.kanger.units.CachedDomain.guardedWeights
+1 ORIGIN RUNNABLE java.util.TreeMap.compare <- org.kanger.stores.ValuesStore$ValuesIterator.next
+1 ORIGIN RUNNABLE java.util.TreeMap.getEntry <- org.kanger.units.CachedDomain.getCauses
+1 ORIGIN RUNNABLE java.util.TreeSet.iterator <- org.kanger.Linker.isValidFor
+1 ORIGIN RUNNABLE java.util.TreeSet.iterator <- org.kanger.primitives.TVariableSet.equals
+1 ORIGIN RUNNABLE java.util.regex.Matcher.reset <- org.kanger.Linker.link
+1 ORIGIN RUNNABLE org.kanger.Linker.checkSystem <- org.kanger.Linker.checkSystem
+1 ORIGIN RUNNABLE org.kanger.Linker.synchronizeSolveIndex <- org.kanger.Linker.synchronizeSolveIndex
+1 ORIGIN RUNNABLE org.kanger.Mind.logResult <- org.kanger.Mind.logResult
+1 ORIGIN RUNNABLE org.kanger.Mind.unlinkCVar <- org.kanger.Mind.unlinkCVar
+1 ORIGIN RUNNABLE org.kanger.compiler.Compiller.isFunction <- org.kanger.compiler.Compiller.isFunction
+1 ORIGIN RUNNABLE org.kanger.compiler.Compiller.parseArgs <- org.kanger.compiler.Compiller.parseArgs
+1 ORIGIN RUNNABLE org.kanger.compiler.Parser.parse <- org.kanger.compiler.Parser.parse
+1 ORIGIN RUNNABLE org.kanger.factory.RuleFactory.copyDomainIndexLocked <- org.kanger.factory.RuleFactory.copyDomainIndexLocked
+1 ORIGIN RUNNABLE org.kanger.factory.RuleFactory.ensureDomainIndex <- org.kanger.factory.RuleFactory.ensureDomainIndex
+1 ORIGIN RUNNABLE org.kanger.factory.RuleFactory.findByDomain <- org.kanger.factory.RuleFactory.findByDomain
+1 ORIGIN RUNNABLE org.kanger.primitives.ArgumentsList.getHash <- org.kanger.primitives.ArgumentsList.getHash
+1 ORIGIN RUNNABLE org.kanger.primitives.ArgumentsList.getStamp <- org.kanger.primitives.ArgumentsList.getStamp
+1 ORIGIN RUNNABLE org.kanger.primitives.Solve.equals <- org.kanger.primitives.Solve.equals
+1 ORIGIN RUNNABLE org.kanger.primitives.Solve.toString <- org.kanger.primitives.Solve.toString
+1 ORIGIN RUNNABLE org.kanger.storage.Escalera.ensureIndex <- org.kanger.storage.Escalera.ensureIndex
+1 ORIGIN RUNNABLE org.kanger.units.CachedDomain.getCauses <- org.kanger.units.CachedDomain.getCauses
+1 ORIGIN RUNNABLE org.kanger.units.CachedDomain.guardedWeights <- org.kanger.units.CachedDomain.guardedWeights
+1 ORIGIN RUNNABLE org.kanger.units.CachedDomain.setCauses <- org.kanger.units.CachedDomain.setCauses
+1 ORIGIN RUNNABLE org.kanger.units.TSolve.containsTValue <- org.kanger.units.TSolve.containsTValue
+1 ORIGIN RUNNABLE org.kanger.units.TVariable.setValue <- org.kanger.units.TVariable.setValue
+1 ORIGIN WAITING java.lang.Object.wait <- org.kanger.test.KangerTest$5.run
+1 ORIGIN WAITING java.lang.Thread.start0 <- org.kanger.test.KangerTest.set_08_02
+1 ORIGIN WAITING org.kanger.test.KangerTest$7.run <- org.kanger.test.KangerTest$7.run
+1 RUNNABLE java.lang.AbstractStringBuilder.append
+1 RUNNABLE java.lang.AbstractStringBuilder.inflate
+1 RUNNABLE java.lang.Long.valueOf
+1 RUNNABLE java.lang.String.trim
+1 RUNNABLE java.text.MessageFormat.<init>
+1 RUNNABLE java.text.MessageFormat.applyPattern
+1 RUNNABLE java.text.MessageFormat.format
+1 RUNNABLE java.text.MessageFormat.makeFormat
+1 RUNNABLE java.text.SimpleDateFormat.applyPattern
+1 RUNNABLE java.text.SimpleDateFormat.applyPatternImpl
+1 RUNNABLE java.text.SimpleDateFormat.compile
+1 RUNNABLE java.text.SimpleDateFormat.encode
+1 RUNNABLE java.util.AbstractCollection.containsAll
+1 RUNNABLE java.util.AbstractSet.equals
+1 RUNNABLE java.util.ArrayList.contains
+1 RUNNABLE java.util.ArrayList.indexOf
+1 RUNNABLE java.util.ArrayList.indexOfRange
+1 RUNNABLE java.util.Formatter.format
+1 RUNNABLE java.util.Formatter.parse
+1 RUNNABLE java.util.Formatter.toString
+1 RUNNABLE java.util.HashMap$TreeNode.split
+1 RUNNABLE java.util.HashMap$TreeNode.untreeify
+1 RUNNABLE java.util.HashMap.putAll
+1 RUNNABLE java.util.HashMap.putMapEntries
+1 RUNNABLE java.util.IdentityHashMap.put
+1 RUNNABLE java.util.IdentityHashMap.resize
+1 RUNNABLE java.util.TreeMap.addEntryToEmptyMap
+1 RUNNABLE java.util.TreeMap.compare
+1 RUNNABLE java.util.TreeMap.get
+1 RUNNABLE java.util.TreeMap.getEntry
+1 RUNNABLE java.util.TreeMap.put
+1 RUNNABLE java.util.TreeSet.addAll
+1 RUNNABLE java.util.regex.Matcher.<init>
+1 RUNNABLE java.util.regex.Matcher.reset
+1 RUNNABLE java.util.regex.Pattern.matcher
+1 RUNNABLE org.kanger.Linker.checkSystem
+1 RUNNABLE org.kanger.Linker.getSolveCandidates
+1 RUNNABLE org.kanger.Linker.synchronizeSolveIndex
+1 RUNNABLE org.kanger.Mind.addTSolve
+1 RUNNABLE org.kanger.Mind.findTSolve
+1 RUNNABLE org.kanger.Mind.formatTree
+1 RUNNABLE org.kanger.Mind.queryCheckFalse
+1 RUNNABLE org.kanger.Mind.releaseCompositeCheckpoint
+1 RUNNABLE org.kanger.Mind.releaseCompositeCheckpoints
+1 RUNNABLE org.kanger.Mind.unlinkCVar
+1 RUNNABLE org.kanger.compiler.Compiller.isFunction
+1 RUNNABLE org.kanger.compiler.Parser.parse
+1 RUNNABLE org.kanger.factory.DictionaryFactory.collectDynamicRuleTerms
+1 RUNNABLE org.kanger.factory.DictionaryFactory.get
+1 RUNNABLE org.kanger.factory.RuleFactory.containsPromotion
+1 RUNNABLE org.kanger.factory.RuleFactory.copyDomainIndexLocked
+1 RUNNABLE org.kanger.factory.RuleFactory.copyTermIndexLocked
+1 RUNNABLE org.kanger.factory.RuleFactory.ensureDomainIndex
+1 RUNNABLE org.kanger.factory.RuleFactory.indexRule
+1 RUNNABLE org.kanger.factory.RuleFactory.indexRuleLocked
+1 RUNNABLE org.kanger.factory.RuleFactory.release
+1 RUNNABLE org.kanger.factory.RuleFactory.snapshotDomainIndex
+1 RUNNABLE org.kanger.factory.RuleFactory.snapshotTermIndex
+1 RUNNABLE org.kanger.factory.TValueFactory.collectIds
+1 RUNNABLE org.kanger.factory.TValueFactory.find
+1 RUNNABLE org.kanger.primitives.ArgumentsList.equalsStamp
+1 RUNNABLE org.kanger.primitives.ArgumentsList.getHash
+1 RUNNABLE org.kanger.primitives.ArgumentsList.getStamp
+1 RUNNABLE org.kanger.primitives.ArgumentsList.hashCode
+1 RUNNABLE org.kanger.primitives.Cause.equals
+1 RUNNABLE org.kanger.primitives.Solve.equals
+1 RUNNABLE org.kanger.primitives.TVariableSet.equals
+1 RUNNABLE org.kanger.stores.ValuesStore$ValuesIterator.next
+1 RUNNABLE org.kanger.units.Domain.isProduced
+1 RUNNABLE org.kanger.units.Domain.setProduced
+1 RUNNABLE org.kanger.units.Domain.setSolves
+1 RUNNABLE org.kanger.units.Rule.toString
+1 RUNNABLE org.kanger.units.TSolve.containsTValue
+1 RUNNABLE org.kanger.units.TSolve.equalsTo
+1 RUNNABLE org.kanger.units.TVariable.find
+1 RUNNABLE org.kanger.units.TVariable.setValue
+1 RUNNABLE sun.util.locale.provider.LocaleResources.getDateTimePattern
+1 WAITING java.lang.Object.wait
+1 WAITING java.lang.Thread.start
+1 WAITING java.lang.Thread.start0
+1 WAITING org.kanger.test.KangerTest$5.run
+1 WAITING org.kanger.test.KangerTest$7.run
+MAIN_CAUSE_WEIGHTS [0, 0, 0, 0, 986, 0]
+THREAD_STACK_OBSERVATIONS 272
+208 RUNNABLE org.kanger.Mind.query
+155 RUNNABLE org.kanger.test.KangerTest.set_08_02
+155 RUNNABLE org.kanger.test.Set0802ProfileRunner.main
+153 RUNNABLE org.kanger.Mind.queryCheckTrue
+134 RUNNABLE org.kanger.Linker.link
+134 RUNNABLE org.kanger.Mind.link
+133 RUNNABLE org.kanger.Linker.rotator
+113 RUNNABLE org.kanger.Linker.rotateVariables
+94 RUNNABLE org.kanger.Linker$3.run
+84 RUNNABLE org.kanger.Linker$4.run
+84 RUNNABLE org.kanger.Linker.access$5
+84 RUNNABLE org.kanger.factory.TValueFactory.forEach
+55 RUNNABLE java.lang.Thread.run
+54 RUNNABLE org.kanger.Mind.queryAccept
+48 RUNNABLE org.kanger.Linker.access$3
+48 RUNNABLE org.kanger.Linker.linkDatabase
+39 RUNNABLE org.kanger.Linker.access$1
+39 RUNNABLE org.kanger.Linker.selectDomainCandidates
+37 BLOCKED java.lang.Thread.run
+37 BLOCKED org.kanger.Mind.query
+37 BLOCKED org.kanger.Mind.queryAccept
+37 RUNNABLE org.kanger.Mind.compileLine
+36 RUNNABLE org.kanger.factory.RuleFactory.findByResolvedDomain
+35 RUNNABLE java.util.AbstractCollection.addAll
+35 RUNNABLE java.util.HashMap.put
+35 RUNNABLE org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+35 RUNNABLE org.kanger.factory.RuleFactory.collectResolvedCandidateIds
+30 RUNNABLE java.util.HashSet.add
+28 RUNNABLE org.kanger.Analyzer.analyze
+28 RUNNABLE org.kanger.Mind.analyze
+27 BLOCKED org.kanger.Mind.compileLine
+27 BLOCKED org.kanger.compiler.Compiller.compileLine
+25 LEAF WAITING jdk.internal.misc.Unsafe.park
+25 ORIGIN WAITING jdk.internal.misc.Unsafe.park <- org.kanger.test.KangerTest.set_08_02
+25 RUNNABLE java.util.HashMap.putVal
+25 RUNNABLE org.kanger.compiler.Compiller.compileLine
+25 WAITING java.util.concurrent.CountDownLatch.await
+25 WAITING java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire
+25 WAITING java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly
+25 WAITING java.util.concurrent.locks.LockSupport.park
+25 WAITING jdk.internal.misc.Unsafe.park
+25 WAITING org.kanger.test.KangerTest.set_08_02
+25 WAITING org.kanger.test.Set0802ProfileRunner.main
+24 RUNNABLE org.kanger.Analyzer.checkDatabase
+23 RUNNABLE org.kanger.units.CachedDomain.getCauses
+22 RUNNABLE org.kanger.Analyzer.checkRight
+22 RUNNABLE org.kanger.factory.DictionaryFactory.add
+20 LEAF RUNNABLE org.kanger.primitives.Argument.isEmpty
+20 ORIGIN RUNNABLE org.kanger.primitives.Argument.isEmpty <- org.kanger.primitives.Argument.isEmpty
+20 RUNNABLE org.kanger.primitives.Argument.isEmpty
+19 RUNNABLE org.kanger.test.KangerTest$6.run
+18 RUNNABLE java.util.HashMap.hash
+18 RUNNABLE java.util.LinkedHashSet.<init>
+18 RUNNABLE org.kanger.Linker.updateDatabase
+18 RUNNABLE org.kanger.units.Term.<init>
+17 LEAF RUNNABLE java.util.HashMap.putVal
+17 RUNNABLE org.kanger.Linker.access$4
+17 RUNNABLE org.kanger.Linker.isValidFor
+17 RUNNABLE org.kanger.enums.Tools.parseDate
+17 RUNNABLE org.kanger.factory.RuleCandidateIndex$IdIndex.get
+17 RUNNABLE org.kanger.units.Term.construct
+16 BLOCKED org.kanger.factory.DictionaryFactory.getVarIndex
+16 BLOCKED org.kanger.factory.RuleFactory.register
+16 LEAF BLOCKED org.kanger.factory.DictionaryFactory.getVarIndex
+16 ORIGIN BLOCKED org.kanger.factory.DictionaryFactory.getVarIndex <- org.kanger.factory.DictionaryFactory.getVarIndex
+16 RUNNABLE org.kanger.Linker.logCauses
+16 RUNNABLE org.kanger.test.KangerTest$5.run
+16 RUNNABLE org.kanger.units.Domain.isExcluded
+15 BLOCKED org.kanger.factory.DictionaryFactory.add
+15 RUNNABLE org.kanger.units.CachedDomain.setCauses
+15 RUNNABLE org.kanger.units.Domain.setCauses
+14 RUNNABLE org.kanger.primitives.ArgumentsList.equalsBase
+13 BLOCKED org.kanger.test.KangerTest$7.run
+13 LEAF BLOCKED org.kanger.factory.DictionaryFactory.add
+13 ORIGIN BLOCKED org.kanger.factory.DictionaryFactory.add <- org.kanger.factory.DictionaryFactory.add
+13 RUNNABLE org.kanger.Analyzer.candidatesFor
+13 RUNNABLE org.kanger.factory.RuleFactory.findByDomain
+13 RUNNABLE org.kanger.units.Domain.getOverlaps
+12 LEAF RUNNABLE java.util.HashMap.hash
+11 RUNNABLE java.util.AbstractCollection.retainAll
+11 RUNNABLE java.util.HashMap.getNode
+11 RUNNABLE org.kanger.factory.DictionaryFactory.find
+11 RUNNABLE org.kanger.units.Domain.toString
+10 BLOCKED org.kanger.test.KangerTest$4.run
+10 RUNNABLE java.lang.String.valueOf
+10 RUNNABLE java.lang.StringBuilder.append
+10 RUNNABLE org.kanger.compiler.Compiller.compilePredicate
+10 RUNNABLE org.kanger.compiler.Compiller.construct
+10 RUNNABLE org.kanger.test.KangerTest$4.run
+10 RUNNABLE org.kanger.test.KangerTest$7.run
+9 RUNNABLE org.kanger.Mind.commit
+9 RUNNABLE org.kanger.factory.RuleFactory.get
+9 RUNNABLE org.kanger.stores.LogStore.add
+9 RUNNABLE org.kanger.units.CachedDomain.guardedWeights
+8 BLOCKED org.kanger.compiler.Compiller.compilePredicate
+8 BLOCKED org.kanger.compiler.Compiller.construct
+8 BLOCKED org.kanger.compiler.Compiller.parseArgs
+8 BLOCKED org.kanger.test.KangerTest$5.run
+8 LEAF RUNNABLE java.util.AbstractCollection.addAll
+8 LEAF RUNNABLE org.kanger.primitives.ArgumentsList.equalsBase
+8 ORIGIN RUNNABLE org.kanger.primitives.ArgumentsList.equalsBase <- org.kanger.primitives.ArgumentsList.equalsBase
+8 RUNNABLE java.text.DateFormat.parse
+8 RUNNABLE org.kanger.TechnicalMindTransaction.commit
+8 RUNNABLE org.kanger.storage.Escalera.ensureIndex
+8 RUNNABLE org.kanger.storage.Escalera.find
+7 LEAF RUNNABLE java.util.TreeSet.iterator
+7 LEAF RUNNABLE org.kanger.Mind.isUnitDeleted
+7 ORIGIN RUNNABLE java.util.TreeSet.iterator <- org.kanger.Linker.isValidFor
+7 ORIGIN RUNNABLE org.kanger.Mind.isUnitDeleted <- org.kanger.Mind.isUnitDeleted
+7 RUNNABLE java.util.HashMap.containsKey
+7 RUNNABLE java.util.HashSet.contains
+7 RUNNABLE java.util.TreeSet.iterator
+7 RUNNABLE org.kanger.Linker.access$2
+7 RUNNABLE org.kanger.Linker.linkDomains
+7 RUNNABLE org.kanger.Mind.isUnitDeleted
+7 RUNNABLE org.kanger.factory.RuleFactory.add
+7 RUNNABLE org.kanger.factory.RuleFactory.effectiveView
+7 RUNNABLE org.kanger.factory.RuleFactory.find
+7 RUNNABLE org.kanger.factory.RuleFactory.isPromoted
+7 RUNNABLE org.kanger.primitives.ArgumentsList.getTVariables
+7 RUNNABLE org.kanger.storage.Escalera.indexStep
+7 RUNNABLE org.kanger.storage.Step.getData
+7 RUNNABLE org.kanger.units.Rule.setMind
+6 BLOCKED org.kanger.Mind.convertExternals
+6 BLOCKED org.kanger.test.KangerTest$6.run
+6 LEAF RUNNABLE java.lang.Throwable.fillInStackTrace
+6 LEAF RUNNABLE org.kanger.Linker.isValidFor
+6 LEAF RUNNABLE org.kanger.enums.Tools.parseDate
+6 LEAF RUNNABLE org.kanger.factory.RuleFactory.isPromoted
+6 LEAF RUNNABLE org.kanger.primitives.ArgumentsList.getTVariables
+6 LEAF RUNNABLE org.kanger.stores.LogStore.add
+6 ORIGIN RUNNABLE java.lang.Throwable.fillInStackTrace <- org.kanger.enums.Tools.parseDate
+6 ORIGIN RUNNABLE java.util.HashMap.hash <- org.kanger.factory.RuleCandidateIndex$IdIndex.get
+6 ORIGIN RUNNABLE org.kanger.Linker.isValidFor <- org.kanger.Linker.isValidFor
+6 ORIGIN RUNNABLE org.kanger.enums.Tools.parseDate <- org.kanger.enums.Tools.parseDate
+6 ORIGIN RUNNABLE org.kanger.factory.RuleFactory.isPromoted <- org.kanger.factory.RuleFactory.isPromoted
+6 ORIGIN RUNNABLE org.kanger.primitives.ArgumentsList.getTVariables <- org.kanger.primitives.ArgumentsList.getTVariables
+6 ORIGIN RUNNABLE org.kanger.stores.LogStore.add <- org.kanger.stores.LogStore.add
+6 RUNNABLE java.lang.Exception.<init>
+6 RUNNABLE java.lang.Throwable.<init>
+6 RUNNABLE java.lang.Throwable.fillInStackTrace
+6 RUNNABLE java.text.ParseException.<init>
+6 RUNNABLE org.kanger.Linker.markExcluded
+6 RUNNABLE org.kanger.compiler.Compiller.parseArgs
+6 RUNNABLE org.kanger.factory.RuleFactory.getRaw
+6 RUNNABLE org.kanger.primitives.Solve.toString
+6 RUNNABLE org.kanger.storage.Escalera.get
+6 RUNNABLE org.kanger.units.Rule.isDeleted
+5 LEAF RUNNABLE java.util.HashMap$HashIterator.nextNode
+5 LEAF RUNNABLE org.kanger.units.Domain.getOverlaps
+5 ORIGIN RUNNABLE java.util.AbstractCollection.addAll <- org.kanger.factory.RuleCandidateIndex$IdIndex.get
+5 ORIGIN RUNNABLE java.util.HashMap.hash <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+5 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.factory.RuleCandidateIndex$IdIndex.get
+5 ORIGIN RUNNABLE org.kanger.units.Domain.getOverlaps <- org.kanger.units.Domain.getOverlaps
+5 RUNNABLE java.util.HashMap$HashIterator.nextNode
+5 RUNNABLE java.util.HashMap$KeyIterator.next
+5 RUNNABLE java.util.HashMap.resize
+5 RUNNABLE org.kanger.factory.RuleFactory$1.next
+4 LEAF RUNNABLE java.util.HashMap.resize
+4 LEAF RUNNABLE org.kanger.factory.DictionaryFactory.add
+4 LEAF RUNNABLE org.kanger.primitives.Solve.hashCode
+4 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+4 ORIGIN RUNNABLE org.kanger.factory.DictionaryFactory.add <- org.kanger.factory.DictionaryFactory.add
+4 ORIGIN RUNNABLE org.kanger.primitives.Solve.hashCode <- org.kanger.primitives.Solve.hashCode
+4 RUNNABLE java.util.HashMap.get
+4 RUNNABLE org.kanger.factory.RuleFactory.access$1
+4 RUNNABLE org.kanger.factory.RuleFactory.collectDomainIds
+4 RUNNABLE org.kanger.factory.RuleFactory.commit
+4 RUNNABLE org.kanger.primitives.ArgumentsList.equalsStamp
+4 RUNNABLE org.kanger.primitives.ArgumentsList.getStamp
+4 RUNNABLE org.kanger.primitives.Cause.hashCode
+4 RUNNABLE org.kanger.primitives.Solve.formatParam
+4 RUNNABLE org.kanger.primitives.Solve.hashCode
+4 RUNNABLE org.kanger.units.CachedDomain.setMind
+4 RUNNABLE org.kanger.units.Domain.createStored
+4 RUNNABLE org.kanger.units.Domain.isProduced
+4 RUNNABLE org.kanger.units.Domain.setExcluded
+4 RUNNABLE org.kanger.units.Domain.setMind
+4 RUNNABLE org.kanger.units.Domain.setProduced
+3 LEAF RUNNABLE java.util.HashMap.getNode
+3 LEAF RUNNABLE java.util.LinkedHashMap$LinkedHashIterator.remove
+3 LEAF RUNNABLE org.kanger.Linker.selectDomainCandidates
+3 LEAF RUNNABLE org.kanger.factory.DictionaryFactory.getVarIndex
+3 LEAF RUNNABLE org.kanger.primitives.ArgumentsList.getStamp
+3 LEAF RUNNABLE org.kanger.units.CachedDomain.resolvedPrimitiveIds
+3 LEAF RUNNABLE org.kanger.units.Rule.setMind
+3 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.units.CachedDomain.getCauses
+3 ORIGIN RUNNABLE java.util.LinkedHashMap$LinkedHashIterator.remove <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+3 ORIGIN RUNNABLE org.kanger.Linker.selectDomainCandidates <- org.kanger.Linker.selectDomainCandidates
+3 ORIGIN RUNNABLE org.kanger.factory.DictionaryFactory.getVarIndex <- org.kanger.factory.DictionaryFactory.getVarIndex
+3 ORIGIN RUNNABLE org.kanger.primitives.ArgumentsList.getStamp <- org.kanger.primitives.ArgumentsList.getStamp
+3 ORIGIN RUNNABLE org.kanger.units.CachedDomain.resolvedPrimitiveIds <- org.kanger.units.CachedDomain.resolvedPrimitiveIds
+3 ORIGIN RUNNABLE org.kanger.units.Rule.setMind <- org.kanger.units.Rule.setMind
+3 RUNNABLE java.lang.String.format
+3 RUNNABLE java.lang.StringBuilder.<init>
+3 RUNNABLE java.text.SimpleDateFormat.<init>
+3 RUNNABLE java.util.IdentityHashMap.put
+3 RUNNABLE java.util.LinkedHashMap$LinkedHashIterator.remove
+3 RUNNABLE org.kanger.Mind.finalizeTransactionRootLocked
+3 RUNNABLE org.kanger.Mind.finishTransactionLocked
+3 RUNNABLE org.kanger.Mind.pack
+3 RUNNABLE org.kanger.Mind.release
+3 RUNNABLE org.kanger.TechnicalMindTransaction.rollback
+3 RUNNABLE org.kanger.factory.DictionaryFactory.getVarIndex
+3 RUNNABLE org.kanger.factory.DictionaryFactory.pack
+3 RUNNABLE org.kanger.factory.RuleFactory.register
+3 RUNNABLE org.kanger.primitives.ArgumentsList.getHash
+3 RUNNABLE org.kanger.units.CachedDomain.resolvedPrimitiveIds
+3 RUNNABLE org.kanger.units.Domain.equalsBase
+2 BLOCKED java.lang.Exception.<init>
+2 BLOCKED java.lang.Throwable.<init>
+2 BLOCKED java.lang.Throwable.fillInStackTrace
+2 BLOCKED java.text.DateFormat.parse
+2 BLOCKED java.text.ParseException.<init>
+2 BLOCKED org.kanger.Analyzer.analyze
+2 BLOCKED org.kanger.Analyzer.checkDatabase
+2 BLOCKED org.kanger.Mind.analyze
+2 BLOCKED org.kanger.enums.Tools.parseDate
+2 BLOCKED org.kanger.factory.DictionaryFactory.find
+2 BLOCKED org.kanger.primitives.ArgumentsList.getTVariables
+2 BLOCKED org.kanger.units.Term.<init>
+2 BLOCKED org.kanger.units.Term.construct
+2 LEAF BLOCKED java.lang.Throwable.fillInStackTrace
+2 LEAF BLOCKED org.kanger.primitives.ArgumentsList.getTVariables
+2 LEAF RUNNABLE java.lang.Long.valueOf
+2 LEAF RUNNABLE java.lang.StringBuilder.<init>
+2 LEAF RUNNABLE java.util.AbstractCollection.retainAll
+2 LEAF RUNNABLE java.util.Arrays.copyOf
+2 LEAF RUNNABLE java.util.IdentityHashMap.resize
+2 LEAF RUNNABLE java.util.TreeMap.getEntry
+2 LEAF RUNNABLE java.util.stream.IntPipeline.forEachWithCancel
+2 LEAF RUNNABLE org.kanger.units.CachedDomain.getCauses
+2 LEAF RUNNABLE org.kanger.units.CachedDomain.guardedWeights
+2 ORIGIN BLOCKED java.lang.Throwable.fillInStackTrace <- org.kanger.enums.Tools.parseDate
+2 ORIGIN BLOCKED org.kanger.primitives.ArgumentsList.getTVariables <- org.kanger.primitives.ArgumentsList.getTVariables
+2 ORIGIN RUNNABLE java.util.AbstractCollection.retainAll <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+2 ORIGIN RUNNABLE java.util.HashMap$HashIterator.nextNode <- org.kanger.units.CachedDomain.getCauses
+2 ORIGIN RUNNABLE java.util.HashMap$HashIterator.nextNode <- org.kanger.units.Domain.isExcluded
+2 ORIGIN RUNNABLE java.util.HashMap.getNode <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+2 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.storage.Escalera.indexStep
+2 ORIGIN RUNNABLE java.util.HashMap.resize <- org.kanger.units.CachedDomain.getCauses
+2 ORIGIN RUNNABLE java.util.IdentityHashMap.resize <- org.kanger.units.CachedDomain.guardedWeights
+2 ORIGIN RUNNABLE java.util.stream.IntPipeline.forEachWithCancel <- org.kanger.units.TVariable.getVarName
+2 ORIGIN RUNNABLE org.kanger.units.CachedDomain.getCauses <- org.kanger.units.CachedDomain.getCauses
+2 ORIGIN RUNNABLE org.kanger.units.CachedDomain.guardedWeights <- org.kanger.units.CachedDomain.guardedWeights
+2 RUNNABLE java.lang.Long.valueOf
+2 RUNNABLE java.text.DecimalFormatSymbols.<init>
+2 RUNNABLE java.text.DecimalFormatSymbols.findNonFormatChar
+2 RUNNABLE java.text.DecimalFormatSymbols.getInstance
+2 RUNNABLE java.text.DecimalFormatSymbols.initialize
+2 RUNNABLE java.text.SimpleDateFormat.parse
+2 RUNNABLE java.util.AbstractSet.removeAll
+2 RUNNABLE java.util.Arrays.copyOf
+2 RUNNABLE java.util.Formatter$FormatSpecifier.getZero
+2 RUNNABLE java.util.Formatter$FormatSpecifier.localizedMagnitude
+2 RUNNABLE java.util.Formatter$FormatSpecifier.print
+2 RUNNABLE java.util.Formatter$FormatSpecifier.printInteger
+2 RUNNABLE java.util.Formatter.format
+2 RUNNABLE java.util.Formatter.zero
+2 RUNNABLE java.util.IdentityHashMap.resize
+2 RUNNABLE java.util.TreeMap.containsKey
+2 RUNNABLE java.util.TreeMap.getEntry
+2 RUNNABLE java.util.TreeSet.contains
+2 RUNNABLE java.util.stream.AbstractPipeline.copyInto
+2 RUNNABLE java.util.stream.AbstractPipeline.copyIntoWithCancel
+2 RUNNABLE java.util.stream.AbstractPipeline.evaluate
+2 RUNNABLE java.util.stream.AbstractPipeline.wrapAndCopyInto
+2 RUNNABLE java.util.stream.FindOps$FindOp.evaluateSequential
+2 RUNNABLE java.util.stream.IntPipeline.findFirst
+2 RUNNABLE java.util.stream.IntPipeline.forEachWithCancel
+2 RUNNABLE org.kanger.Mind.convertExternals
+2 RUNNABLE org.kanger.Mind.formatTree
+2 RUNNABLE org.kanger.PortableMindLayer.capture
+2 RUNNABLE org.kanger.factory.DomainFactory.add
+2 RUNNABLE org.kanger.factory.DomainFactory.find
+2 RUNNABLE org.kanger.factory.TValueFactory.collectIds
+2 RUNNABLE org.kanger.primitives.ArgumentsList.hashCode
+2 RUNNABLE org.kanger.units.Domain.isComplete
+2 RUNNABLE org.kanger.units.Domain.isStored
+2 RUNNABLE org.kanger.units.Rule.containsTerm
+2 RUNNABLE org.kanger.units.TVariable.getVarName
+2 RUNNABLE sun.util.locale.provider.DecimalFormatSymbolsProviderImpl.getInstance
+1 BLOCKED java.lang.Double.toString
+1 BLOCKED java.lang.String.format
+1 BLOCKED java.text.DecimalFormatSymbols.<init>
+1 BLOCKED java.text.DecimalFormatSymbols.getInstance
+1 BLOCKED java.text.DecimalFormatSymbols.initialize
+1 BLOCKED java.util.Formatter$FormatSpecifier.getZero
+1 BLOCKED java.util.Formatter$FormatSpecifier.localizedMagnitude
+1 BLOCKED java.util.Formatter$FormatSpecifier.print
+1 BLOCKED java.util.Formatter$FormatSpecifier.printInteger
+1 BLOCKED java.util.Formatter.format
+1 BLOCKED java.util.Formatter.zero
+1 BLOCKED java.util.HashMap.hash
+1 BLOCKED java.util.HashMap.put
+1 BLOCKED java.util.HashSet.add
+1 BLOCKED java.util.concurrent.ConcurrentHashMap.get
+1 BLOCKED jdk.internal.math.FloatingDecimal.getBinaryToASCIIConverter
+1 BLOCKED jdk.internal.math.FloatingDecimal.toJavaFormatString
+1 BLOCKED org.kanger.Analyzer.checkRight
+1 BLOCKED org.kanger.factory.RuleFactory$1.next
+1 BLOCKED org.kanger.factory.RuleFactory.add
+1 BLOCKED org.kanger.factory.RuleFactory.indexRule
+1 BLOCKED org.kanger.factory.RuleFactory.indexRuleLocked
+1 BLOCKED org.kanger.primitives.Solve.formatParam
+1 BLOCKED org.kanger.primitives.Solve.toString
+1 BLOCKED org.kanger.storage.Escalera$WalkIterator.next
+1 BLOCKED org.kanger.storage.Step.getData
+1 BLOCKED org.kanger.units.CachedDomain.setMind
+1 BLOCKED org.kanger.units.Domain.isQuery
+1 BLOCKED org.kanger.units.Domain.setMind
+1 BLOCKED org.kanger.units.Rule.setMind
+1 BLOCKED org.kanger.units.Rule.toString
+1 BLOCKED org.kanger.units.Term.formatValue
+1 BLOCKED org.kanger.units.Term.toString
+1 BLOCKED sun.util.locale.provider.DecimalFormatSymbolsProviderImpl.getInstance
+1 BLOCKED sun.util.locale.provider.LocaleResources.getDecimalFormatSymbolsData
+1 LEAF BLOCKED java.util.HashMap.hash
+1 LEAF BLOCKED java.util.concurrent.ConcurrentHashMap.get
+1 LEAF BLOCKED jdk.internal.math.FloatingDecimal.getBinaryToASCIIConverter
+1 LEAF BLOCKED org.kanger.compiler.Compiller.parseArgs
+1 LEAF RUNNABLE java.lang.AbstractStringBuilder.<init>
+1 LEAF RUNNABLE java.text.DecimalFormat.subparse
+1 LEAF RUNNABLE java.text.DecimalFormat.toPattern
+1 LEAF RUNNABLE java.util.Calendar.getSetStateFields
+1 LEAF RUNNABLE java.util.HashMap$TreeNode.balanceInsertion
+1 LEAF RUNNABLE java.util.HashMap$TreeNode.putTreeVal
+1 LEAF RUNNABLE java.util.HashMap$TreeNode.split
+1 LEAF RUNNABLE java.util.HashMap.newNode
+1 LEAF RUNNABLE java.util.IdentityHashMap.get
+1 LEAF RUNNABLE java.util.IdentityHashMap.put
+1 LEAF RUNNABLE java.util.TreeMap$AscendingSubMap.entrySet
+1 LEAF RUNNABLE java.util.concurrent.CopyOnWriteArraySet.addAll
+1 LEAF RUNNABLE java.util.concurrent.CountDownLatch.<init>
+1 LEAF RUNNABLE java.util.regex.Pattern.<init>
+1 LEAF RUNNABLE jdk.internal.math.FloatingDecimal$BinaryToASCIIBuffer.toJavaFormatString
+1 LEAF RUNNABLE org.kanger.Analyzer.checkRight
+1 LEAF RUNNABLE org.kanger.Linker.linkDomains
+1 LEAF RUNNABLE org.kanger.Linker.synchronizeSolveIndex
+1 LEAF RUNNABLE org.kanger.Mind.compileLine
+1 LEAF RUNNABLE org.kanger.compiler.Compiller.parseArgs
+1 LEAF RUNNABLE org.kanger.compiler.Parser.getOp
+1 LEAF RUNNABLE org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+1 LEAF RUNNABLE org.kanger.factory.RuleCandidateIndex.indexRule
+1 LEAF RUNNABLE org.kanger.factory.RuleFactory.collectDomainIds
+1 LEAF RUNNABLE org.kanger.factory.RuleFactory.copyTermIndexLocked
+1 LEAF RUNNABLE org.kanger.primitives.ArgumentsList.getHash
+1 LEAF RUNNABLE org.kanger.primitives.Solve.formatParam
+1 LEAF RUNNABLE org.kanger.primitives.Solve.toString
+1 LEAF RUNNABLE org.kanger.storage.Escalera.ensureIndex
+1 LEAF RUNNABLE org.kanger.units.CachedDomain.supportedArguments
+1 LEAF RUNNABLE org.kanger.units.Domain.equalsBase
+1 LEAF RUNNABLE org.kanger.units.Domain.setSolves
+1 LEAF RUNNABLE org.kanger.units.Rule.getTree
+1 LEAF RUNNABLE org.kanger.units.Term.<init>
+1 ORIGIN BLOCKED java.util.HashMap.hash <- org.kanger.factory.RuleFactory.indexRuleLocked
+1 ORIGIN BLOCKED java.util.concurrent.ConcurrentHashMap.get <- org.kanger.Mind.queryAccept
+1 ORIGIN BLOCKED jdk.internal.math.FloatingDecimal.getBinaryToASCIIConverter <- org.kanger.units.Term.formatValue
+1 ORIGIN BLOCKED org.kanger.compiler.Compiller.parseArgs <- org.kanger.compiler.Compiller.parseArgs
+1 ORIGIN RUNNABLE java.lang.AbstractStringBuilder.<init> <- org.kanger.units.Predicate.toString
+1 ORIGIN RUNNABLE java.lang.Long.valueOf <- org.kanger.factory.RuleFactory.containsPromotion
+1 ORIGIN RUNNABLE java.lang.Long.valueOf <- org.kanger.storage.Escalera.indexStep
+1 ORIGIN RUNNABLE java.lang.StringBuilder.<init> <- org.kanger.Linker.link
+1 ORIGIN RUNNABLE java.lang.StringBuilder.<init> <- org.kanger.units.Predicate.getName
+1 ORIGIN RUNNABLE java.text.DecimalFormat.subparse <- org.kanger.enums.Tools.parseDate
+1 ORIGIN RUNNABLE java.text.DecimalFormat.toPattern <- org.kanger.enums.Tools.parseDate
+1 ORIGIN RUNNABLE java.util.AbstractCollection.addAll <- org.kanger.PortableMindLayer.copy
+1 ORIGIN RUNNABLE java.util.AbstractCollection.addAll <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+1 ORIGIN RUNNABLE java.util.AbstractCollection.addAll <- org.kanger.factory.RuleFactory.collectDomainIds
+1 ORIGIN RUNNABLE java.util.Arrays.copyOf <- org.kanger.enums.Tools.parseDate
+1 ORIGIN RUNNABLE java.util.Arrays.copyOf <- org.kanger.stores.LogStore.add
+1 ORIGIN RUNNABLE java.util.Calendar.getSetStateFields <- org.kanger.enums.Tools.parseDate
+1 ORIGIN RUNNABLE java.util.HashMap$HashIterator.nextNode <- org.kanger.primitives.Solve.getTerms
+1 ORIGIN RUNNABLE java.util.HashMap$TreeNode.balanceInsertion <- org.kanger.storage.Escalera.indexStep
+1 ORIGIN RUNNABLE java.util.HashMap$TreeNode.putTreeVal <- org.kanger.storage.Escalera.indexStep
+1 ORIGIN RUNNABLE java.util.HashMap$TreeNode.split <- org.kanger.storage.Escalera.indexStep
+1 ORIGIN RUNNABLE java.util.HashMap.getNode <- org.kanger.factory.RuleCandidateIndex$IdIndex.get
+1 ORIGIN RUNNABLE java.util.HashMap.hash <- org.kanger.factory.RuleFactory.collectDomainIds
+1 ORIGIN RUNNABLE java.util.HashMap.newNode <- org.kanger.calculator.Predicates$1.<init>
+1 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.factory.RuleFactory.collectDomainIds
+1 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.factory.TValueFactory.collectIds
+1 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.units.Rule.containsTerm
+1 ORIGIN RUNNABLE java.util.HashMap.resize <- org.kanger.factory.TValueFactory.collectIds
+1 ORIGIN RUNNABLE java.util.HashMap.resize <- org.kanger.storage.Escalera.indexStep
+1 ORIGIN RUNNABLE java.util.IdentityHashMap.get <- org.kanger.units.CachedDomain.getCauses
+1 ORIGIN RUNNABLE java.util.IdentityHashMap.put <- org.kanger.units.CachedDomain.guardedWeights
+1 ORIGIN RUNNABLE java.util.TreeMap$AscendingSubMap.entrySet <- org.kanger.Linker.isValidFor
+1 ORIGIN RUNNABLE java.util.TreeMap.getEntry <- org.kanger.primitives.TVariableSet.contains
+1 ORIGIN RUNNABLE java.util.TreeMap.getEntry <- org.kanger.primitives.TVariableSet.equals
+1 ORIGIN RUNNABLE java.util.concurrent.CopyOnWriteArraySet.addAll <- org.kanger.factory.FValueFactory.commit
+1 ORIGIN RUNNABLE java.util.concurrent.CountDownLatch.<init> <- org.kanger.test.KangerTest.set_08_02
+1 ORIGIN RUNNABLE java.util.regex.Pattern.<init> <- org.kanger.enums.Tools.parseDate
+1 ORIGIN RUNNABLE jdk.internal.math.FloatingDecimal$BinaryToASCIIBuffer.toJavaFormatString <- org.kanger.units.Term.formatValue
+1 ORIGIN RUNNABLE org.kanger.Analyzer.checkRight <- org.kanger.Analyzer.checkRight
+1 ORIGIN RUNNABLE org.kanger.Linker.linkDomains <- org.kanger.Linker.linkDomains
+1 ORIGIN RUNNABLE org.kanger.Linker.synchronizeSolveIndex <- org.kanger.Linker.synchronizeSolveIndex
+1 ORIGIN RUNNABLE org.kanger.Mind.compileLine <- org.kanger.Mind.compileLine
+1 ORIGIN RUNNABLE org.kanger.compiler.Compiller.parseArgs <- org.kanger.compiler.Compiller.parseArgs
+1 ORIGIN RUNNABLE org.kanger.compiler.Parser.getOp <- org.kanger.compiler.Parser.getOp
+1 ORIGIN RUNNABLE org.kanger.factory.RuleCandidateIndex.collectResolvedLocal <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+1 ORIGIN RUNNABLE org.kanger.factory.RuleCandidateIndex.indexRule <- org.kanger.factory.RuleCandidateIndex.indexRule
+1 ORIGIN RUNNABLE org.kanger.factory.RuleFactory.collectDomainIds <- org.kanger.factory.RuleFactory.collectDomainIds
+1 ORIGIN RUNNABLE org.kanger.factory.RuleFactory.copyTermIndexLocked <- org.kanger.factory.RuleFactory.copyTermIndexLocked
+1 ORIGIN RUNNABLE org.kanger.primitives.ArgumentsList.getHash <- org.kanger.primitives.ArgumentsList.getHash
+1 ORIGIN RUNNABLE org.kanger.primitives.Solve.formatParam <- org.kanger.primitives.Solve.formatParam
+1 ORIGIN RUNNABLE org.kanger.primitives.Solve.toString <- org.kanger.primitives.Solve.toString
+1 ORIGIN RUNNABLE org.kanger.storage.Escalera.ensureIndex <- org.kanger.storage.Escalera.ensureIndex
+1 ORIGIN RUNNABLE org.kanger.units.CachedDomain.supportedArguments <- org.kanger.units.CachedDomain.supportedArguments
+1 ORIGIN RUNNABLE org.kanger.units.Domain.equalsBase <- org.kanger.units.Domain.equalsBase
+1 ORIGIN RUNNABLE org.kanger.units.Domain.setSolves <- org.kanger.units.Domain.setSolves
+1 ORIGIN RUNNABLE org.kanger.units.Rule.getTree <- org.kanger.units.Rule.getTree
+1 ORIGIN RUNNABLE org.kanger.units.Term.<init> <- org.kanger.units.Term.<init>
+1 RUNNABLE java.lang.AbstractStringBuilder.<init>
+1 RUNNABLE java.lang.Double.toString
+1 RUNNABLE java.lang.String.replaceAll
+1 RUNNABLE java.text.DateFormatSymbols.<init>
+1 RUNNABLE java.text.DateFormatSymbols.copyMembers
+1 RUNNABLE java.text.DateFormatSymbols.getInstanceRef
+1 RUNNABLE java.text.DateFormatSymbols.getProviderInstance
+1 RUNNABLE java.text.DateFormatSymbols.initializeData
+1 RUNNABLE java.text.DecimalFormat.parse
+1 RUNNABLE java.text.DecimalFormat.subparse
+1 RUNNABLE java.text.DecimalFormat.toPattern
+1 RUNNABLE java.text.SimpleDateFormat.checkNegativeNumberExpression
+1 RUNNABLE java.text.SimpleDateFormat.initialize
+1 RUNNABLE java.text.SimpleDateFormat.initializeDefaultCentury
+1 RUNNABLE java.text.SimpleDateFormat.subParse
+1 RUNNABLE java.util.AbstractCollection.containsAll
+1 RUNNABLE java.util.AbstractSet.equals
+1 RUNNABLE java.util.Calendar.getSetStateFields
+1 RUNNABLE java.util.Calendar.getTime
+1 RUNNABLE java.util.Calendar.getTimeInMillis
+1 RUNNABLE java.util.Calendar.updateTime
+1 RUNNABLE java.util.Formatter.<init>
+1 RUNNABLE java.util.GregorianCalendar.computeTime
+1 RUNNABLE java.util.HashMap$TreeNode.balanceInsertion
+1 RUNNABLE java.util.HashMap$TreeNode.putTreeVal
+1 RUNNABLE java.util.HashMap$TreeNode.split
+1 RUNNABLE java.util.HashMap$TreeNode.treeify
+1 RUNNABLE java.util.HashMap.newNode
+1 RUNNABLE java.util.HashMap.remove
+1 RUNNABLE java.util.HashMap.treeifyBin
+1 RUNNABLE java.util.HashSet.<init>
+1 RUNNABLE java.util.HashSet.remove
+1 RUNNABLE java.util.IdentityHashMap.get
+1 RUNNABLE java.util.TreeMap$AscendingSubMap.entrySet
+1 RUNNABLE java.util.TreeMap$NavigableSubMap.size
+1 RUNNABLE java.util.TreeSet.size
+1 RUNNABLE java.util.concurrent.CopyOnWriteArrayList.add
+1 RUNNABLE java.util.concurrent.CopyOnWriteArraySet.addAll
+1 RUNNABLE java.util.concurrent.CountDownLatch.<init>
+1 RUNNABLE java.util.regex.Pattern.<init>
+1 RUNNABLE java.util.regex.Pattern.compile
+1 RUNNABLE jdk.internal.math.FloatingDecimal$BinaryToASCIIBuffer.toJavaFormatString
+1 RUNNABLE jdk.internal.math.FloatingDecimal.toJavaFormatString
+1 RUNNABLE org.kanger.Linker.buildDomainIndex
+1 RUNNABLE org.kanger.Linker.getSolveCandidates
+1 RUNNABLE org.kanger.Linker.synchronizeSolveIndex
+1 RUNNABLE org.kanger.Mind.<init>
+1 RUNNABLE org.kanger.Mind.init
+1 RUNNABLE org.kanger.Mind.logResult
+1 RUNNABLE org.kanger.Mind.markCompositeCheckpoints
+1 RUNNABLE org.kanger.Mind.queryCheckFalse
+1 RUNNABLE org.kanger.PortableMindLayer.copy
+1 RUNNABLE org.kanger.TechnicalMindTransaction.<init>
+1 RUNNABLE org.kanger.TechnicalMindTransaction.begin
+1 RUNNABLE org.kanger.calculator.Calculator.<init>
+1 RUNNABLE org.kanger.calculator.Predicates$1.<init>
+1 RUNNABLE org.kanger.calculator.Predicates.<init>
+1 RUNNABLE org.kanger.compiler.Parser.getOp
+1 RUNNABLE org.kanger.compiler.Parser.parse
+1 RUNNABLE org.kanger.factory.DictionaryFactory.collectDynamicRuleTerms
+1 RUNNABLE org.kanger.factory.DictionaryFactory.collectSolutionTermIds
+1 RUNNABLE org.kanger.factory.FValueFactory.commit
+1 RUNNABLE org.kanger.factory.RuleCandidateIndex.indexRule
+1 RUNNABLE org.kanger.factory.RuleFactory.containsPromotion
+1 RUNNABLE org.kanger.factory.RuleFactory.copyTermIndexLocked
+1 RUNNABLE org.kanger.factory.RuleFactory.indexRule
+1 RUNNABLE org.kanger.factory.RuleFactory.mark
+1 RUNNABLE org.kanger.primitives.Argument.isDeleted
+1 RUNNABLE org.kanger.primitives.Solve.getHash
+1 RUNNABLE org.kanger.primitives.Solve.getTerms
+1 RUNNABLE org.kanger.primitives.TVariableSet.contains
+1 RUNNABLE org.kanger.primitives.TVariableSet.equals
+1 RUNNABLE org.kanger.storage.Escalera$WalkIterator.next
+1 RUNNABLE org.kanger.units.CachedDomain.supportedArguments
+1 RUNNABLE org.kanger.units.Domain.isQuery
+1 RUNNABLE org.kanger.units.Domain.setSolves
+1 RUNNABLE org.kanger.units.Predicate.getName
+1 RUNNABLE org.kanger.units.Predicate.toString
+1 RUNNABLE org.kanger.units.Rule.getTree
+1 RUNNABLE org.kanger.units.Rule.toString
+1 RUNNABLE org.kanger.units.TValue.toString
+1 RUNNABLE org.kanger.units.TVariable.isDeleted
+1 RUNNABLE org.kanger.units.TVariable.toString
+1 RUNNABLE org.kanger.units.Term.formatValue
+1 RUNNABLE org.kanger.units.Term.toString
+1 RUNNABLE sun.util.locale.provider.DateFormatSymbolsProviderImpl.getInstance
+1 RUNNABLE sun.util.locale.provider.LocaleResources.getDateTimePattern
+MAIN_CAUSE_WEIGHTS [0, 0, 0, 0, 986, 0]
+THREAD_STACK_OBSERVATIONS 241
+201 RUNNABLE org.kanger.Mind.query
+148 RUNNABLE org.kanger.test.KangerTest.set_08_02
+148 RUNNABLE org.kanger.test.Set0802ProfileRunner.main
+145 RUNNABLE org.kanger.Mind.queryCheckTrue
+127 RUNNABLE org.kanger.Linker.link
+127 RUNNABLE org.kanger.Mind.link
+125 RUNNABLE org.kanger.Linker.rotator
+106 RUNNABLE org.kanger.Linker.rotateVariables
+89 RUNNABLE org.kanger.Linker$3.run
+77 RUNNABLE org.kanger.Linker$4.run
+77 RUNNABLE org.kanger.Linker.access$5
+77 RUNNABLE org.kanger.factory.TValueFactory.forEach
+56 RUNNABLE java.lang.Thread.run
+55 RUNNABLE org.kanger.Mind.queryAccept
+47 RUNNABLE org.kanger.Linker.access$3
+47 RUNNABLE org.kanger.Linker.linkDatabase
+33 RUNNABLE org.kanger.Linker.access$1
+33 RUNNABLE org.kanger.Linker.selectDomainCandidates
+32 RUNNABLE java.util.AbstractCollection.addAll
+32 RUNNABLE java.util.HashMap.put
+32 RUNNABLE org.kanger.Mind.compileLine
+30 RUNNABLE java.util.HashSet.add
+30 RUNNABLE org.kanger.Analyzer.analyze
+30 RUNNABLE org.kanger.Mind.analyze
+30 RUNNABLE org.kanger.factory.RuleFactory.findByResolvedDomain
+29 RUNNABLE org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+29 RUNNABLE org.kanger.factory.RuleFactory.collectResolvedCandidateIds
+25 RUNNABLE org.kanger.compiler.Compiller.compileLine
+25 RUNNABLE org.kanger.factory.DictionaryFactory.add
+24 RUNNABLE java.util.HashMap.putVal
+24 RUNNABLE org.kanger.Analyzer.checkDatabase
+24 RUNNABLE org.kanger.units.CachedDomain.setCauses
+24 RUNNABLE org.kanger.units.Domain.setCauses
+21 LEAF RUNNABLE java.util.HashMap.putVal
+20 LEAF WAITING jdk.internal.misc.Unsafe.park
+20 ORIGIN WAITING jdk.internal.misc.Unsafe.park <- org.kanger.test.KangerTest.set_08_02
+20 WAITING java.util.concurrent.CountDownLatch.await
+20 WAITING java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire
+20 WAITING java.util.concurrent.locks.AbstractQueuedSynchronizer.acquireSharedInterruptibly
+20 WAITING java.util.concurrent.locks.LockSupport.park
+20 WAITING jdk.internal.misc.Unsafe.park
+20 WAITING org.kanger.test.KangerTest.set_08_02
+20 WAITING org.kanger.test.Set0802ProfileRunner.main
+19 RUNNABLE org.kanger.Analyzer.checkRight
+19 RUNNABLE org.kanger.Linker.updateDatabase
+19 RUNNABLE org.kanger.units.Domain.getOverlaps
+18 RUNNABLE java.util.HashMap.hash
+18 RUNNABLE org.kanger.units.CachedDomain.getCauses
+17 BLOCKED java.lang.Thread.run
+17 BLOCKED org.kanger.Mind.query
+17 BLOCKED org.kanger.Mind.queryAccept
+17 LEAF RUNNABLE org.kanger.primitives.Argument.isEmpty
+17 ORIGIN RUNNABLE org.kanger.primitives.Argument.isEmpty <- org.kanger.primitives.Argument.isEmpty
+17 RUNNABLE org.kanger.primitives.Argument.isEmpty
+16 RUNNABLE java.util.LinkedHashSet.<init>
+15 RUNNABLE java.util.HashMap.getNode
+15 RUNNABLE org.kanger.factory.RuleCandidateIndex$IdIndex.get
+15 RUNNABLE org.kanger.test.KangerTest$5.run
+15 RUNNABLE org.kanger.units.Domain.isExcluded
+14 RUNNABLE org.kanger.Analyzer.candidatesFor
+14 RUNNABLE org.kanger.enums.Tools.parseDate
+14 RUNNABLE org.kanger.factory.RuleFactory.findByDomain
+14 RUNNABLE org.kanger.test.KangerTest$6.run
+14 RUNNABLE org.kanger.test.KangerTest$7.run
+14 RUNNABLE org.kanger.units.Term.<init>
+14 RUNNABLE org.kanger.units.Term.construct
+13 RUNNABLE java.lang.StringBuilder.append
+13 RUNNABLE org.kanger.primitives.ArgumentsList.equalsBase
+13 RUNNABLE org.kanger.storage.Step.getData
+13 RUNNABLE org.kanger.test.KangerTest$4.run
+12 LEAF RUNNABLE java.util.HashMap.hash
+12 LEAF RUNNABLE org.kanger.units.Domain.getOverlaps
+12 ORIGIN RUNNABLE org.kanger.units.Domain.getOverlaps <- org.kanger.units.Domain.getOverlaps
+12 RUNNABLE java.lang.String.valueOf
+12 RUNNABLE org.kanger.Linker.access$4
+12 RUNNABLE org.kanger.Linker.isValidFor
+12 RUNNABLE org.kanger.factory.RuleFactory$1.next
+11 BLOCKED org.kanger.factory.DictionaryFactory.add
+11 LEAF RUNNABLE org.kanger.factory.DictionaryFactory.add
+11 ORIGIN RUNNABLE org.kanger.factory.DictionaryFactory.add <- org.kanger.factory.DictionaryFactory.add
+11 RUNNABLE org.kanger.compiler.Compiller.compilePredicate
+11 RUNNABLE org.kanger.compiler.Compiller.construct
+11 RUNNABLE org.kanger.units.Rule.setMind
+10 BLOCKED org.kanger.Mind.compileLine
+10 BLOCKED org.kanger.compiler.Compiller.compileLine
+10 RUNNABLE org.kanger.units.CachedDomain.guardedWeights
+9 LEAF RUNNABLE java.util.AbstractCollection.addAll
+9 LEAF RUNNABLE org.kanger.Mind.isUnitDeleted
+9 ORIGIN RUNNABLE org.kanger.Mind.isUnitDeleted <- org.kanger.Mind.isUnitDeleted
+9 RUNNABLE java.text.DateFormat.parse
+9 RUNNABLE java.util.HashMap.get
+9 RUNNABLE org.kanger.Linker.access$2
+9 RUNNABLE org.kanger.Linker.linkDomains
+9 RUNNABLE org.kanger.Mind.isUnitDeleted
+9 RUNNABLE org.kanger.factory.DictionaryFactory.find
+9 RUNNABLE org.kanger.primitives.ArgumentsList.getTVariables
+9 RUNNABLE org.kanger.units.Domain.toString
+8 LEAF BLOCKED org.kanger.factory.DictionaryFactory.add
+8 LEAF RUNNABLE java.lang.Throwable.fillInStackTrace
+8 LEAF RUNNABLE org.kanger.factory.RuleFactory.isPromoted
+8 ORIGIN BLOCKED org.kanger.factory.DictionaryFactory.add <- org.kanger.factory.DictionaryFactory.add
+8 ORIGIN RUNNABLE java.lang.Throwable.fillInStackTrace <- org.kanger.enums.Tools.parseDate
+8 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.factory.RuleCandidateIndex$IdIndex.get
+8 ORIGIN RUNNABLE org.kanger.factory.RuleFactory.isPromoted <- org.kanger.factory.RuleFactory.isPromoted
+8 RUNNABLE java.lang.Exception.<init>
+8 RUNNABLE java.lang.Throwable.<init>
+8 RUNNABLE java.lang.Throwable.fillInStackTrace
+8 RUNNABLE java.text.ParseException.<init>
+8 RUNNABLE java.util.AbstractCollection.retainAll
+8 RUNNABLE org.kanger.Linker.logCauses
+8 RUNNABLE org.kanger.Mind.commit
+8 RUNNABLE org.kanger.factory.RuleFactory.effectiveView
+8 RUNNABLE org.kanger.factory.RuleFactory.isPromoted
+7 BLOCKED org.kanger.test.KangerTest$4.run
+7 RUNNABLE org.kanger.Mind.convertExternals
+7 RUNNABLE org.kanger.TechnicalMindTransaction.commit
+7 RUNNABLE org.kanger.factory.RuleFactory.get
+7 RUNNABLE org.kanger.storage.Escalera$WalkIterator.next
+7 RUNNABLE org.kanger.storage.Escalera.get
+7 RUNNABLE org.kanger.units.CachedDomain.setMind
+7 RUNNABLE org.kanger.units.Domain.setMind
+6 BLOCKED org.kanger.compiler.Compiller.compilePredicate
+6 BLOCKED org.kanger.compiler.Compiller.construct
+6 LEAF RUNNABLE org.kanger.Linker.isValidFor
+6 LEAF RUNNABLE org.kanger.factory.DictionaryFactory.getVarIndex
+6 LEAF RUNNABLE org.kanger.primitives.ArgumentsList.getTVariables
+6 ORIGIN RUNNABLE java.util.HashMap.hash <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+6 ORIGIN RUNNABLE org.kanger.Linker.isValidFor <- org.kanger.Linker.isValidFor
+6 ORIGIN RUNNABLE org.kanger.factory.DictionaryFactory.getVarIndex <- org.kanger.factory.DictionaryFactory.getVarIndex
+6 ORIGIN RUNNABLE org.kanger.primitives.ArgumentsList.getTVariables <- org.kanger.primitives.ArgumentsList.getTVariables
+6 RUNNABLE java.util.HashMap.containsKey
+6 RUNNABLE java.util.HashSet.contains
+6 RUNNABLE org.kanger.compiler.Compiller.parseArgs
+6 RUNNABLE org.kanger.factory.DictionaryFactory.getVarIndex
+6 RUNNABLE org.kanger.factory.RuleFactory.register
+6 RUNNABLE org.kanger.units.Rule.isDeleted
+5 BLOCKED org.kanger.Mind.convertExternals
+5 LEAF RUNNABLE java.util.HashMap$HashIterator.nextNode
+5 LEAF RUNNABLE org.kanger.primitives.ArgumentsList.equalsBase
+5 ORIGIN RUNNABLE java.util.AbstractCollection.addAll <- org.kanger.factory.RuleCandidateIndex$IdIndex.get
+5 ORIGIN RUNNABLE org.kanger.primitives.ArgumentsList.equalsBase <- org.kanger.primitives.ArgumentsList.equalsBase
+5 RUNNABLE java.util.HashMap$HashIterator.nextNode
+5 RUNNABLE java.util.HashMap$KeyIterator.next
+5 RUNNABLE org.kanger.Linker.markExcluded
+5 RUNNABLE org.kanger.factory.RuleFactory.access$1
+5 RUNNABLE org.kanger.factory.RuleFactory.add
+5 RUNNABLE org.kanger.factory.RuleFactory.collectDomainIds
+5 RUNNABLE org.kanger.storage.Escalera.find
+5 RUNNABLE org.kanger.units.Domain.isProduced
+5 RUNNABLE org.kanger.units.Domain.setProduced
+4 BLOCKED org.kanger.compiler.Compiller.parseArgs
+4 BLOCKED org.kanger.test.KangerTest$6.run
+4 LEAF RUNNABLE org.kanger.units.CachedDomain.supportedArguments
+4 LEAF RUNNABLE org.kanger.units.Rule.setMind
+4 ORIGIN RUNNABLE org.kanger.units.CachedDomain.supportedArguments <- org.kanger.units.CachedDomain.supportedArguments
+4 ORIGIN RUNNABLE org.kanger.units.Rule.setMind <- org.kanger.units.Rule.setMind
+4 RUNNABLE org.kanger.factory.RuleFactory.find
+4 RUNNABLE org.kanger.factory.RuleFactory.getRaw
+4 RUNNABLE org.kanger.primitives.ArgumentsList.equalsStamp
+4 RUNNABLE org.kanger.primitives.ArgumentsList.getStamp
+4 RUNNABLE org.kanger.primitives.Solve.toString
+4 RUNNABLE org.kanger.storage.Escalera.ensureIndex
+4 RUNNABLE org.kanger.storage.Escalera.indexStep
+4 RUNNABLE org.kanger.units.CachedDomain.supportedArguments
+4 RUNNABLE org.kanger.units.Rule.toString
+3 BLOCKED org.kanger.enums.Tools.parseDate
+3 BLOCKED org.kanger.factory.DictionaryFactory.find
+3 BLOCKED org.kanger.test.KangerTest$5.run
+3 BLOCKED org.kanger.test.KangerTest$7.run
+3 BLOCKED org.kanger.units.Term.<init>
+3 BLOCKED org.kanger.units.Term.construct
+3 LEAF RUNNABLE java.util.HashMap.getNode
+3 LEAF RUNNABLE java.util.HashMap.resize
+3 LEAF RUNNABLE org.kanger.Linker.selectDomainCandidates
+3 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.factory.RuleFactory.collectDomainIds
+3 ORIGIN RUNNABLE org.kanger.Linker.selectDomainCandidates <- org.kanger.Linker.selectDomainCandidates
+3 RUNNABLE java.lang.String.format
+3 RUNNABLE java.text.SimpleDateFormat.<init>
+3 RUNNABLE java.util.HashMap.resize
+3 RUNNABLE java.util.IdentityHashMap.put
+3 RUNNABLE org.kanger.Linker.getSolveCandidates
+3 RUNNABLE org.kanger.PortableMindLayer.capture
+3 RUNNABLE org.kanger.factory.RuleFactory.commit
+3 RUNNABLE org.kanger.factory.TValueFactory.get
+3 RUNNABLE org.kanger.primitives.Argument.isDeleted
+3 RUNNABLE org.kanger.primitives.ArgumentsList.getHash
+3 RUNNABLE org.kanger.primitives.ArgumentsList.hashCode
+3 RUNNABLE org.kanger.units.Domain.createStored
+3 RUNNABLE org.kanger.units.TVariable.isDeleted
+2 BLOCKED org.kanger.Linker.link
+2 BLOCKED org.kanger.Mind.link
+2 BLOCKED org.kanger.factory.DictionaryFactory.getVarIndex
+2 BLOCKED org.kanger.factory.RuleFactory.register
+2 LEAF BLOCKED org.kanger.compiler.Compiller.parseArgs
+2 LEAF BLOCKED org.kanger.factory.DictionaryFactory.getVarIndex
+2 LEAF RUNNABLE java.util.ArrayList.indexOfRange
+2 LEAF RUNNABLE java.util.IdentityHashMap.put
+2 LEAF RUNNABLE java.util.TreeMap.getEntry
+2 LEAF RUNNABLE java.util.TreeMap.successor
+2 LEAF RUNNABLE java.util.TreeSet.iterator
+2 LEAF RUNNABLE jdk.internal.math.FloatingDecimal.getBinaryToASCIIConverter
+2 LEAF RUNNABLE org.kanger.enums.Tools.parseDate
+2 LEAF RUNNABLE org.kanger.primitives.ArgumentsList.convertBase
+2 LEAF RUNNABLE org.kanger.primitives.Solve.hashCode
+2 LEAF RUNNABLE org.kanger.storage.Step.getData
+2 LEAF RUNNABLE org.kanger.stores.LogStore.add
+2 ORIGIN BLOCKED org.kanger.compiler.Compiller.parseArgs <- org.kanger.compiler.Compiller.parseArgs
+2 ORIGIN BLOCKED org.kanger.factory.DictionaryFactory.getVarIndex <- org.kanger.factory.DictionaryFactory.getVarIndex
+2 ORIGIN RUNNABLE java.util.AbstractCollection.addAll <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+2 ORIGIN RUNNABLE java.util.ArrayList.indexOfRange <- org.kanger.units.TSolve.equalsTo
+2 ORIGIN RUNNABLE java.util.HashMap$HashIterator.nextNode <- org.kanger.units.CachedDomain.guardedWeights
+2 ORIGIN RUNNABLE java.util.HashMap$HashIterator.nextNode <- org.kanger.units.Domain.isExcluded
+2 ORIGIN RUNNABLE java.util.HashMap.getNode <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+2 ORIGIN RUNNABLE java.util.HashMap.hash <- org.kanger.factory.RuleCandidateIndex$IdIndex.get
+2 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+2 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.storage.Escalera.indexStep
+2 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.units.Domain.getOverlaps
+2 ORIGIN RUNNABLE java.util.HashMap.resize <- org.kanger.storage.Escalera.indexStep
+2 ORIGIN RUNNABLE java.util.IdentityHashMap.put <- org.kanger.units.CachedDomain.guardedWeights
+2 ORIGIN RUNNABLE java.util.TreeSet.iterator <- org.kanger.Linker.isValidFor
+2 ORIGIN RUNNABLE org.kanger.enums.Tools.parseDate <- org.kanger.enums.Tools.parseDate
+2 ORIGIN RUNNABLE org.kanger.primitives.ArgumentsList.convertBase <- org.kanger.primitives.ArgumentsList.convertBase
+2 ORIGIN RUNNABLE org.kanger.primitives.Solve.hashCode <- org.kanger.primitives.Solve.hashCode
+2 ORIGIN RUNNABLE org.kanger.storage.Step.getData <- org.kanger.storage.Step.getData
+2 ORIGIN RUNNABLE org.kanger.stores.LogStore.add <- org.kanger.stores.LogStore.add
+2 RUNNABLE java.lang.AbstractStringBuilder.append
+2 RUNNABLE java.text.MessageFormat.format
+2 RUNNABLE java.util.AbstractSet.equals
+2 RUNNABLE java.util.ArrayList.contains
+2 RUNNABLE java.util.ArrayList.indexOf
+2 RUNNABLE java.util.ArrayList.indexOfRange
+2 RUNNABLE java.util.Formatter.format
+2 RUNNABLE java.util.Formatter.parse
+2 RUNNABLE java.util.TreeMap.getEntry
+2 RUNNABLE java.util.TreeMap.successor
+2 RUNNABLE java.util.TreeSet.iterator
+2 RUNNABLE java.util.TreeSet.size
+2 RUNNABLE jdk.internal.math.FloatingDecimal.getBinaryToASCIIConverter
+2 RUNNABLE org.kanger.Mind.addTSolve
+2 RUNNABLE org.kanger.Mind.finalizeTransactionRootLocked
+2 RUNNABLE org.kanger.Mind.findTSolve
+2 RUNNABLE org.kanger.Mind.finishTransactionLocked
+2 RUNNABLE org.kanger.Mind.pack
+2 RUNNABLE org.kanger.Mind.release
+2 RUNNABLE org.kanger.TechnicalMindTransaction.rollback
+2 RUNNABLE org.kanger.factory.DictionaryFactory.pack
+2 RUNNABLE org.kanger.factory.TValueFactory.collectIds
+2 RUNNABLE org.kanger.primitives.ArgumentsList.convertBase
+2 RUNNABLE org.kanger.primitives.Cause.hashCode
+2 RUNNABLE org.kanger.primitives.Solve.hashCode
+2 RUNNABLE org.kanger.primitives.TVariableSet.equals
+2 RUNNABLE org.kanger.stores.LogStore.add
+2 RUNNABLE org.kanger.units.Domain.setExcluded
+2 RUNNABLE org.kanger.units.TSolve.equalsTo
+2 RUNNABLE sun.util.locale.provider.LocaleResources.getDateTimePattern
+1 BLOCKED java.lang.Exception.<init>
+1 BLOCKED java.lang.String.format
+1 BLOCKED java.lang.Throwable.<init>
+1 BLOCKED java.lang.Throwable.fillInStackTrace
+1 BLOCKED java.text.DateFormat.parse
+1 BLOCKED java.text.DecimalFormatSymbols.<init>
+1 BLOCKED java.text.DecimalFormatSymbols.getInstance
+1 BLOCKED java.text.DecimalFormatSymbols.initialize
+1 BLOCKED java.text.ParseException.<init>
+1 BLOCKED java.text.SimpleDateFormat.<init>
+1 BLOCKED java.text.SimpleDateFormat.initialize
+1 BLOCKED java.text.SimpleDateFormat.initializeDefaultCentury
+1 BLOCKED java.util.Calendar.getTime
+1 BLOCKED java.util.Calendar.getTimeInMillis
+1 BLOCKED java.util.Calendar.updateTime
+1 BLOCKED java.util.Formatter$FormatSpecifier.getZero
+1 BLOCKED java.util.Formatter$FormatSpecifier.localizedMagnitude
+1 BLOCKED java.util.Formatter$FormatSpecifier.print
+1 BLOCKED java.util.Formatter$FormatSpecifier.printInteger
+1 BLOCKED java.util.Formatter.format
+1 BLOCKED java.util.Formatter.zero
+1 BLOCKED java.util.GregorianCalendar.computeTime
+1 BLOCKED org.kanger.factory.RuleFactory$1.next
+1 BLOCKED org.kanger.factory.RuleFactory.access$1
+1 BLOCKED org.kanger.factory.RuleFactory.effectiveView
+1 BLOCKED org.kanger.factory.RuleFactory.isPromoted
+1 BLOCKED sun.util.locale.provider.DecimalFormatSymbolsProviderImpl.getInstance
+1 LEAF BLOCKED java.lang.Throwable.fillInStackTrace
+1 LEAF BLOCKED java.text.DecimalFormatSymbols.initialize
+1 LEAF BLOCKED java.util.GregorianCalendar.computeTime
+1 LEAF BLOCKED org.kanger.enums.Tools.parseDate
+1 LEAF BLOCKED org.kanger.factory.RuleFactory.isPromoted
+1 LEAF RUNNABLE java.lang.AbstractStringBuilder.getChars
+1 LEAF RUNNABLE java.lang.Long.getChars
+1 LEAF RUNNABLE java.lang.StringBuilder.toString
+1 LEAF RUNNABLE java.text.DecimalFormat.subparseNumber
+1 LEAF RUNNABLE java.text.MessageFormat.makeFormat
+1 LEAF RUNNABLE java.text.MessageFormat.subformat
+1 LEAF RUNNABLE java.util.AbstractCollection.retainAll
+1 LEAF RUNNABLE java.util.Date.normalize
+1 LEAF RUNNABLE java.util.Formatter.parse
+1 LEAF RUNNABLE java.util.HashMap$HashIterator.<init>
+1 LEAF RUNNABLE java.util.HashMap.remove
+1 LEAF RUNNABLE java.util.IdentityHashMap.resize
+1 LEAF RUNNABLE java.util.LinkedHashMap$LinkedHashIterator.remove
+1 LEAF RUNNABLE java.util.TreeSet.size
+1 LEAF RUNNABLE java.util.regex.Pattern$BmpCharProperty.match
+1 LEAF RUNNABLE org.kanger.Analyzer.checkRight
+1 LEAF RUNNABLE org.kanger.Linker.linkDomains
+1 LEAF RUNNABLE org.kanger.Linker.markExcluded
+1 LEAF RUNNABLE org.kanger.PortableMindLayer.empty
+1 LEAF RUNNABLE org.kanger.factory.DictionaryFactory.pack
+1 LEAF RUNNABLE org.kanger.factory.TValueFactory.mergeIndex
+1 LEAF RUNNABLE org.kanger.primitives.ArgumentsList.getStamp
+1 LEAF RUNNABLE org.kanger.primitives.Solve.toString
+1 LEAF RUNNABLE org.kanger.storage.Escalera.get
+1 LEAF RUNNABLE org.kanger.test.KangerTest.showResult
+1 LEAF RUNNABLE org.kanger.units.CachedDomain.getCauses
+1 LEAF RUNNABLE org.kanger.units.CachedDomain.resolvedPrimitiveIds
+1 LEAF RUNNABLE org.kanger.units.Domain.isProduced
+1 LEAF RUNNABLE org.kanger.units.Domain.setMind
+1 LEAF RUNNABLE org.kanger.units.TVariable.getCurrent
+1 ORIGIN BLOCKED java.lang.Throwable.fillInStackTrace <- org.kanger.enums.Tools.parseDate
+1 ORIGIN BLOCKED java.text.DecimalFormatSymbols.initialize <- org.kanger.Linker.link
+1 ORIGIN BLOCKED java.util.GregorianCalendar.computeTime <- org.kanger.enums.Tools.parseDate
+1 ORIGIN BLOCKED org.kanger.enums.Tools.parseDate <- org.kanger.enums.Tools.parseDate
+1 ORIGIN BLOCKED org.kanger.factory.RuleFactory.isPromoted <- org.kanger.factory.RuleFactory.isPromoted
+1 ORIGIN RUNNABLE java.lang.AbstractStringBuilder.getChars <- org.kanger.enums.Tools.parseDate
+1 ORIGIN RUNNABLE java.lang.Long.getChars <- org.kanger.units.Rule.toString
+1 ORIGIN RUNNABLE java.lang.StringBuilder.toString <- org.kanger.primitives.Solve.toString
+1 ORIGIN RUNNABLE java.text.DecimalFormat.subparseNumber <- org.kanger.enums.Tools.parseDate
+1 ORIGIN RUNNABLE java.text.MessageFormat.makeFormat <- org.kanger.enums.Tools.parseDate
+1 ORIGIN RUNNABLE java.text.MessageFormat.subformat <- org.kanger.enums.Tools.parseDate
+1 ORIGIN RUNNABLE java.util.AbstractCollection.addAll <- org.kanger.factory.RuleFactory.collectDomainIds
+1 ORIGIN RUNNABLE java.util.AbstractCollection.addAll <- org.kanger.units.CachedDomain.getCauses
+1 ORIGIN RUNNABLE java.util.AbstractCollection.retainAll <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+1 ORIGIN RUNNABLE java.util.Date.normalize <- org.kanger.stores.LogStore.commit
+1 ORIGIN RUNNABLE java.util.Formatter.parse <- org.kanger.primitives.Solve.toString
+1 ORIGIN RUNNABLE java.util.HashMap$HashIterator.<init> <- org.kanger.storage.Escalera.find
+1 ORIGIN RUNNABLE java.util.HashMap$HashIterator.nextNode <- org.kanger.units.CachedDomain.getCauses
+1 ORIGIN RUNNABLE java.util.HashMap.getNode <- org.kanger.factory.RuleFactory.mergeDomainIndex
+1 ORIGIN RUNNABLE java.util.HashMap.hash <- org.kanger.Linker.markExcluded
+1 ORIGIN RUNNABLE java.util.HashMap.hash <- org.kanger.factory.DictionaryFactory.collectDynamicRuleTerms
+1 ORIGIN RUNNABLE java.util.HashMap.hash <- org.kanger.factory.RuleFactory.collectDomainIds
+1 ORIGIN RUNNABLE java.util.HashMap.hash <- org.kanger.factory.TValueFactory.collectIds
+1 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.factory.RuleFactory.indexRuleLocked
+1 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.factory.TValueFactory.collectIds
+1 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.units.CachedDomain.getCauses
+1 ORIGIN RUNNABLE java.util.HashMap.putVal <- org.kanger.units.Domain.setCauses
+1 ORIGIN RUNNABLE java.util.HashMap.remove <- org.kanger.units.CachedDomain.getCauses
+1 ORIGIN RUNNABLE java.util.HashMap.resize <- org.kanger.units.Domain.setCauses
+1 ORIGIN RUNNABLE java.util.IdentityHashMap.resize <- org.kanger.units.CachedDomain.guardedWeights
+1 ORIGIN RUNNABLE java.util.LinkedHashMap$LinkedHashIterator.remove <- org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+1 ORIGIN RUNNABLE java.util.TreeMap.getEntry <- org.kanger.primitives.TVariableSet.equals
+1 ORIGIN RUNNABLE java.util.TreeMap.getEntry <- org.kanger.units.CachedDomain.getCauses
+1 ORIGIN RUNNABLE java.util.TreeMap.successor <- org.kanger.Linker.isValidFor
+1 ORIGIN RUNNABLE java.util.TreeMap.successor <- org.kanger.primitives.TVariableSet.hashCode
+1 ORIGIN RUNNABLE java.util.TreeSet.size <- org.kanger.primitives.TVariableSet.equals
+1 ORIGIN RUNNABLE java.util.regex.Pattern$BmpCharProperty.match <- org.kanger.Linker.link
+1 ORIGIN RUNNABLE jdk.internal.math.FloatingDecimal.getBinaryToASCIIConverter <- org.kanger.Analyzer.analyze
+1 ORIGIN RUNNABLE jdk.internal.math.FloatingDecimal.getBinaryToASCIIConverter <- org.kanger.units.Term.formatValue
+1 ORIGIN RUNNABLE org.kanger.Analyzer.checkRight <- org.kanger.Analyzer.checkRight
+1 ORIGIN RUNNABLE org.kanger.Linker.linkDomains <- org.kanger.Linker.linkDomains
+1 ORIGIN RUNNABLE org.kanger.Linker.markExcluded <- org.kanger.Linker.markExcluded
+1 ORIGIN RUNNABLE org.kanger.PortableMindLayer.empty <- org.kanger.PortableMindLayer.empty
+1 ORIGIN RUNNABLE org.kanger.factory.DictionaryFactory.pack <- org.kanger.factory.DictionaryFactory.pack
+1 ORIGIN RUNNABLE org.kanger.factory.TValueFactory.mergeIndex <- org.kanger.factory.TValueFactory.mergeIndex
+1 ORIGIN RUNNABLE org.kanger.primitives.ArgumentsList.getStamp <- org.kanger.primitives.ArgumentsList.getStamp
+1 ORIGIN RUNNABLE org.kanger.primitives.Solve.toString <- org.kanger.primitives.Solve.toString
+1 ORIGIN RUNNABLE org.kanger.storage.Escalera.get <- org.kanger.storage.Escalera.get
+1 ORIGIN RUNNABLE org.kanger.test.KangerTest.showResult <- org.kanger.test.KangerTest.showResult
+1 ORIGIN RUNNABLE org.kanger.units.CachedDomain.getCauses <- org.kanger.units.CachedDomain.getCauses
+1 ORIGIN RUNNABLE org.kanger.units.CachedDomain.resolvedPrimitiveIds <- org.kanger.units.CachedDomain.resolvedPrimitiveIds
+1 ORIGIN RUNNABLE org.kanger.units.Domain.isProduced <- org.kanger.units.Domain.isProduced
+1 ORIGIN RUNNABLE org.kanger.units.Domain.setMind <- org.kanger.units.Domain.setMind
+1 ORIGIN RUNNABLE org.kanger.units.TVariable.getCurrent <- org.kanger.units.TVariable.getCurrent
+1 RUNNABLE java.lang.AbstractStringBuilder.getChars
+1 RUNNABLE java.lang.Double.toString
+1 RUNNABLE java.lang.Long.getChars
+1 RUNNABLE java.lang.StringBuilder.getChars
+1 RUNNABLE java.lang.StringBuilder.toString
+1 RUNNABLE java.text.DecimalFormat.parse
+1 RUNNABLE java.text.DecimalFormat.subparse
+1 RUNNABLE java.text.DecimalFormat.subparseNumber
+1 RUNNABLE java.text.Format.format
+1 RUNNABLE java.text.MessageFormat.<init>
+1 RUNNABLE java.text.MessageFormat.applyPattern
+1 RUNNABLE java.text.MessageFormat.makeFormat
+1 RUNNABLE java.text.MessageFormat.subformat
+1 RUNNABLE java.text.SimpleDateFormat.applyPatternImpl
+1 RUNNABLE java.text.SimpleDateFormat.compile
+1 RUNNABLE java.text.SimpleDateFormat.parse
+1 RUNNABLE java.text.SimpleDateFormat.subParse
+1 RUNNABLE java.util.AbstractCollection.containsAll
+1 RUNNABLE java.util.AbstractSet.removeAll
+1 RUNNABLE java.util.Date.normalize
+1 RUNNABLE java.util.Date.toString
+1 RUNNABLE java.util.Formatter.toString
+1 RUNNABLE java.util.HashMap$HashIterator.<init>
+1 RUNNABLE java.util.HashMap$KeyIterator.<init>
+1 RUNNABLE java.util.HashMap$KeySet.iterator
+1 RUNNABLE java.util.HashMap.remove
+1 RUNNABLE java.util.HashSet.<init>
+1 RUNNABLE java.util.HashSet.iterator
+1 RUNNABLE java.util.HashSet.remove
+1 RUNNABLE java.util.IdentityHashMap.resize
+1 RUNNABLE java.util.LinkedHashMap$LinkedHashIterator.remove
+1 RUNNABLE java.util.TreeMap$KeyIterator.next
+1 RUNNABLE java.util.TreeMap$NavigableSubMap$EntrySetView.size
+1 RUNNABLE java.util.TreeMap$NavigableSubMap$SubMapEntryIterator.next
+1 RUNNABLE java.util.TreeMap$NavigableSubMap$SubMapIterator.nextEntry
+1 RUNNABLE java.util.TreeMap$NavigableSubMap.size
+1 RUNNABLE java.util.TreeMap$PrivateEntryIterator.nextEntry
+1 RUNNABLE java.util.TreeMap.containsKey
+1 RUNNABLE java.util.TreeMap.get
+1 RUNNABLE java.util.TreeSet.contains
+1 RUNNABLE java.util.regex.Matcher.find
+1 RUNNABLE java.util.regex.Matcher.search
+1 RUNNABLE java.util.regex.Pattern$BmpCharProperty.match
+1 RUNNABLE java.util.regex.Pattern$BmpCharPropertyGreedy.match
+1 RUNNABLE java.util.regex.Pattern$Branch.match
+1 RUNNABLE java.util.regex.Pattern$BranchConn.match
+1 RUNNABLE java.util.regex.Pattern$GroupHead.match
+1 RUNNABLE java.util.regex.Pattern$GroupTail.match
+1 RUNNABLE java.util.regex.Pattern$Start.match
+1 RUNNABLE jdk.internal.math.FloatingDecimal.appendTo
+1 RUNNABLE jdk.internal.math.FloatingDecimal.toJavaFormatString
+1 RUNNABLE org.kanger.Mind.<init>
+1 RUNNABLE org.kanger.Mind.copyCommitResult
+1 RUNNABLE org.kanger.Mind.logResult
+1 RUNNABLE org.kanger.Mind.queryCheckFalse
+1 RUNNABLE org.kanger.PortableMindLayer.empty
+1 RUNNABLE org.kanger.factory.DictionaryFactory.collectDynamicRuleTerms
+1 RUNNABLE org.kanger.factory.DomainFactory.add
+1 RUNNABLE org.kanger.factory.DomainFactory.find
+1 RUNNABLE org.kanger.factory.RuleFactory.indexRule
+1 RUNNABLE org.kanger.factory.RuleFactory.indexRuleLocked
+1 RUNNABLE org.kanger.factory.RuleFactory.mergeDomainIndex
+1 RUNNABLE org.kanger.factory.TValueFactory.commit
+1 RUNNABLE org.kanger.factory.TValueFactory.mergeIndex
+1 RUNNABLE org.kanger.primitives.ArgumentsList.convert
+1 RUNNABLE org.kanger.primitives.Hypothesis.<init>
+1 RUNNABLE org.kanger.primitives.Solve.formatParam
+1 RUNNABLE org.kanger.primitives.TVariableSet.hashCode
+1 RUNNABLE org.kanger.stores.LogStore.commit
+1 RUNNABLE org.kanger.test.KangerTest.showResult
+1 RUNNABLE org.kanger.units.CachedDomain.resolvedPrimitiveIds
+1 RUNNABLE org.kanger.units.Domain.equalsBase
+1 RUNNABLE org.kanger.units.Domain.isStored
+1 RUNNABLE org.kanger.units.Domain.setUsed
+1 RUNNABLE org.kanger.units.TVariable.getCurrent
+1 RUNNABLE org.kanger.units.Term.formatValue
+1 RUNNABLE org.kanger.units.Term.toString

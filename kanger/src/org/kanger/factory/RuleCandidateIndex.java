@@ -237,6 +237,11 @@ final class RuleCandidateIndex {
             return ids == null ? new LinkedHashSet<Long>() : new LinkedHashSet<>(ids);
         }
 
+        boolean contains(K key, long id) {
+            LinkedHashSet<Long> ids = values.get(key);
+            return ids != null && ids.contains(id);
+        }
+
         void clear() {
             values.clear();
             journals.clear();
@@ -560,16 +565,33 @@ final class RuleCandidateIndex {
         try {
             selected = signatures.get(signature);
             if (selected.isEmpty()) return;
-            LinkedHashSet<Long> fallback = fallbackSignatures.get(signature);
+            boolean membership = Boolean.getBoolean("kanger.experiment.candidateMembershipFilter");
+            boolean verify = membership && Boolean.getBoolean("kanger.experiment.verifyCandidateMembershipFilter");
+            LinkedHashSet<Long> fallback = !membership || verify ? fallbackSignatures.get(signature) : null;
             for (int position = 0; position < resolvedTermIds.length; ++position) {
                 Long termId = resolvedTermIds[position];
                 if (termId == null) continue;
-                LinkedHashSet<Long> compatible = positions.get(
-                        new PositionKey(signature, position, termId));
-                compatible.addAll(positions.get(
-                        new PositionKey(signature, position, WILDCARD_TERM_ID)));
-                compatible.addAll(fallback);
-                selected.retainAll(compatible);
+                PositionKey exact = new PositionKey(signature, position, termId);
+                PositionKey wildcard = new PositionKey(signature, position, WILDCARD_TERM_ID);
+                LinkedHashSet<Long> reference = verify ? new LinkedHashSet<>(selected) : null;
+                if (!membership || verify) {
+                    LinkedHashSet<Long> compatible = positions.get(exact);
+                    compatible.addAll(positions.get(wildcard));
+                    compatible.addAll(fallback);
+                    (verify ? reference : selected).retainAll(compatible);
+                }
+                if (membership) {
+                    // Only the independent selected snapshot is mutated; all index
+                    // membership reads stay inside the existing metadata lock.
+                    java.util.Iterator<Long> iterator = selected.iterator();
+                    while (iterator.hasNext()) {
+                        long id = iterator.next();
+                        if (!positions.contains(exact, id) && !positions.contains(wildcard, id)
+                                && !fallbackSignatures.contains(signature, id)) iterator.remove();
+                    }
+                    if (verify && !new ArrayList<>(selected).equals(new ArrayList<>(reference)))
+                        throw new AssertionError("Candidate membership filter differs in IDs or order");
+                }
                 if (selected.isEmpty()) return;
             }
             observedVersion = version;
