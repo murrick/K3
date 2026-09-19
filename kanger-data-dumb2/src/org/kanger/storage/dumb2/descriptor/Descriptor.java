@@ -24,6 +24,7 @@ public final class Descriptor {
         FLOAT64,
         UTF8,
         BYTES,
+        SELF,
         REF,
         LIST,
         STRUCT,
@@ -43,6 +44,7 @@ public final class Descriptor {
     public static final Descriptor FLOAT64 = primitive(Kind.FLOAT64);
     public static final Descriptor UTF8 = primitive(Kind.UTF8);
     public static final Descriptor BYTES = primitive(Kind.BYTES);
+    public static final Descriptor SELF = primitive(Kind.SELF);
 
     private final Kind kind;
     private final String name;

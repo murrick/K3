@@ -16,6 +16,7 @@ The first metamodel is intentionally finite:
 - `FLOAT64`
 - `UTF8`
 - `BYTES`
+- `SELF` for recursive values of the current named `STRUCT`
 - `REF<schema>`
 - `LIST<T>`
 - named `STRUCT`
@@ -26,6 +27,8 @@ The first metamodel is intentionally finite:
 `VARIANT` and `CONDITIONAL` may only depend on fields that precede them in the
 same `STRUCT`. This keeps generic decoding single-pass and prevents the descriptor
 model from becoming an executable language.
+
+`SELF` is the only recursive primitive in the initial vocabulary. It resolves to the nearest enclosing named `STRUCT`; this is sufficient for the current recursive `Term` payload without introducing a general symbol table or executable type resolver.
 
 `REF<schema>` is typed because DUMB 2.0 operational IDs are schema-local. A bare
 `INT64` is not sufficient to identify a referenced physical namespace.

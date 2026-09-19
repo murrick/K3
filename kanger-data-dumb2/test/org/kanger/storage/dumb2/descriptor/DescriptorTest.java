@@ -59,8 +59,8 @@ public class DescriptorTest {
                 Descriptor.variantCase("PERIOD", Descriptor.UTF8),
                 Descriptor.variantCase("STRING", Descriptor.UTF8),
                 Descriptor.variantCase("BLOB", Descriptor.BYTES),
-                Descriptor.variantCase("TERM", Descriptor.ref("dictionary")),
-                Descriptor.variantCase("SET", Descriptor.list(Descriptor.ref("dictionary")))));
+                Descriptor.variantCase("TERM", Descriptor.SELF),
+                Descriptor.variantCase("SET", Descriptor.list(Descriptor.SELF))));
         Descriptor variableData = Descriptor.struct("TermVariable-v1", Arrays.asList(
                 Descriptor.field("name", Descriptor.ref("dictionary")),
                 Descriptor.field("rule", Descriptor.ref("rules")),

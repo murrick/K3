@@ -23,12 +23,13 @@ public final class DescriptorBinaryCodec {
     private static final int T_FLOAT64 = 4;
     private static final int T_UTF8 = 5;
     private static final int T_BYTES = 6;
-    private static final int T_REF = 7;
-    private static final int T_LIST = 8;
-    private static final int T_STRUCT = 9;
-    private static final int T_ENUM = 10;
-    private static final int T_VARIANT = 11;
-    private static final int T_CONDITIONAL = 12;
+    private static final int T_SELF = 7;
+    private static final int T_REF = 8;
+    private static final int T_LIST = 9;
+    private static final int T_STRUCT = 10;
+    private static final int T_ENUM = 11;
+    private static final int T_VARIANT = 12;
+    private static final int T_CONDITIONAL = 13;
 
     private static final int C_EQUALS_INT64 = 1;
     private static final int C_GREATER_THAN_INT64 = 2;
@@ -93,6 +94,9 @@ public final class DescriptorBinaryCodec {
             case BYTES:
                 output.writeByte(T_BYTES);
                 return;
+            case SELF:
+                output.writeByte(T_SELF);
+                return;
             case REF:
                 output.writeByte(T_REF);
                 writeString(output, descriptor.getTarget());
@@ -152,6 +156,8 @@ public final class DescriptorBinaryCodec {
                 return Descriptor.UTF8;
             case T_BYTES:
                 return Descriptor.BYTES;
+            case T_SELF:
+                return Descriptor.SELF;
             case T_REF:
                 return Descriptor.ref(readString(input));
             case T_LIST:
