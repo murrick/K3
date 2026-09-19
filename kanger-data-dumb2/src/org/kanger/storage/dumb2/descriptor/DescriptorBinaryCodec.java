@@ -114,7 +114,7 @@ public final class DescriptorBinaryCodec {
             case STRUCT:
                 output.writeByte(T_STRUCT);
                 writeString(output, descriptor.getName());
-                output.writeInt(descriptor.getFields().size());
+                writeInt(output, descriptor.getFields().size());
                 for (Descriptor.Field field : descriptor.getFields()) {
                     writeString(output, field.getName());
                     writeDescriptor(output, field.getDescriptor());
@@ -123,7 +123,7 @@ public final class DescriptorBinaryCodec {
             case ENUM:
                 output.writeByte(T_ENUM);
                 writeString(output, descriptor.getName());
-                output.writeInt(descriptor.getSymbols().size());
+                writeInt(output, descriptor.getSymbols().size());
                 for (String symbol : descriptor.getSymbols()) {
                     writeString(output, symbol);
                 }
@@ -131,7 +131,7 @@ public final class DescriptorBinaryCodec {
             case VARIANT:
                 output.writeByte(T_VARIANT);
                 writeString(output, descriptor.getDiscriminatorField());
-                output.writeInt(descriptor.getCases().size());
+                writeInt(output, descriptor.getCases().size());
                 for (Descriptor.VariantCase one : descriptor.getCases()) {
                     writeString(output, one.getTag());
                     writeDescriptor(output, one.getDescriptor());
