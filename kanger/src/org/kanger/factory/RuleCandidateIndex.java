@@ -237,11 +237,6 @@ final class RuleCandidateIndex {
             return ids == null ? new LinkedHashSet<Long>() : new LinkedHashSet<>(ids);
         }
 
-        boolean contains(K key, long id) {
-            LinkedHashSet<Long> ids = values.get(key);
-            return ids != null && ids.contains(id);
-        }
-
         void clear() {
             values.clear();
             journals.clear();
@@ -583,11 +578,15 @@ final class RuleCandidateIndex {
                 if (membership) {
                     // Only the independent selected snapshot is mutated; all index
                     // membership reads stay inside the existing metadata lock.
+                    LinkedHashSet<Long> exactIds = positions.values.get(exact);
+                    LinkedHashSet<Long> wildcardIds = positions.values.get(wildcard);
+                    LinkedHashSet<Long> fallbackIds = fallbackSignatures.values.get(signature);
                     java.util.Iterator<Long> iterator = selected.iterator();
                     while (iterator.hasNext()) {
-                        long id = iterator.next();
-                        if (!positions.contains(exact, id) && !positions.contains(wildcard, id)
-                                && !fallbackSignatures.contains(signature, id)) iterator.remove();
+                        Long id = iterator.next();
+                        if (!(exactIds != null && exactIds.contains(id))
+                                && !(wildcardIds != null && wildcardIds.contains(id))
+                                && !(fallbackIds != null && fallbackIds.contains(id))) iterator.remove();
                     }
                     if (verify && !new ArrayList<>(selected).equals(new ArrayList<>(reference)))
                         throw new AssertionError("Candidate membership filter differs in IDs or order");
