@@ -99,3 +99,17 @@ no `TValue`, `UnitType` or KANGER factory switch. The adapter does not call the 
 The next slice is the Context-local type registry/manifest boundary: assign an
 immutable typeCode to `(typeName, descriptor)` and prove that a record can be decoded
 from `typeCode + manifest + bytes` without a KANGER-specific binary switch.
+
+
+## Context-local type registry
+
+The first registry layer is executable. A positive `typeCode` is allocated only
+inside one Context registry. Re-registering the same `(typeName, descriptor)` is
+idempotent. A different descriptor under the same `typeName` receives a new code,
+so old and new layouts may coexist.
+
+A code loaded from a manifest is immutable: the same code may only be installed
+again with the exact same symbolic type and descriptor. Registry enumeration is
+canonicalized by ascending code so manifest serialization does not depend on
+registration order. Separate registries may assign the same numeric code to
+different definitions; the number has no meaning outside its Context.

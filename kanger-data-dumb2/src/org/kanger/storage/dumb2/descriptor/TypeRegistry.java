@@ -2,7 +2,7 @@ package org.kanger.storage.dumb2.descriptor;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.TreeMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -17,7 +17,7 @@ import java.util.Objects;
 public final class TypeRegistry {
 
     private final Map<Integer, TypeDefinition> byCode =
-            new LinkedHashMap<Integer, TypeDefinition>();
+            new TreeMap<Integer, TypeDefinition>();
     private int nextCode = 1;
 
     public synchronized TypeDefinition register(String typeName, Descriptor descriptor) {
