@@ -113,3 +113,26 @@ again with the exact same symbolic type and descriptor. Registry enumeration is
 canonicalized by ascending code so manifest serialization does not depend on
 registration order. Separate registries may assign the same numeric code to
 different definitions; the number has no meaning outside its Context.
+
+
+## Context manifest publication
+
+The old fixed 28-byte ContextId sidecar has been replaced by a versioned Context
+manifest. The `.context` file now persists the stable ContextId and the complete
+Context-local type registry, including canonical DescriptorBinaryCodec bytes. The
+whole manifest is protected by CRC32.
+
+Registry publication uses forced temporary bytes followed by atomic same-filesystem
+replacement. ContextId never changes when the registry grows. ContextStore publishes
+a registered descriptor before returning the type definition to a caller, establishing
+the required ordering boundary for future records that reference its typeCode.
+
+Reopen reconstructs the registry from the manifest and rejects invalid codes,
+descriptors, checksums or framing. Descriptor codec incompatibility is reported as
+storage-format incompatibility rather than silently adopting a Java runtime layout.
+
+A qualification slice also proves the generic read direction:
+
+`typeCode + reopened manifest + payload bytes -> Descriptor -> StructuralValue`
+
+The decode step contains no switch on KANGER UnitType or Java unit classes.
