@@ -17,7 +17,7 @@ public class DescriptorBinaryCodecTest {
     void persistentKindTagsAreExplicitAndNotEnumOrdinals() throws Exception {
         assertArrayEquals(new byte[]{
                         0x4B, 0x33, 0x44, 0x53,
-                        0, 0, 0, 1,
+                        1, 0, 0, 0,
                         3},
                 DescriptorBinaryCodec.encode(Descriptor.INT64));
     }
@@ -49,7 +49,7 @@ public class DescriptorBinaryCodecTest {
     @Test
     void unsupportedVersionIsRejected() throws Exception {
         byte[] encoded = DescriptorBinaryCodec.encode(Descriptor.BOOL);
-        encoded[7] = 2;
+        encoded[4] = 2;
 
         assertThrows(IOException.class, () -> DescriptorBinaryCodec.decode(encoded));
     }

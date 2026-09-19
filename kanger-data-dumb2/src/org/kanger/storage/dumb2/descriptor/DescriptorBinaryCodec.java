@@ -43,8 +43,11 @@ public final class DescriptorBinaryCodec {
         }
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         DataOutputStream output = new DataOutputStream(bytes);
-        output.writeInt(MAGIC);
-        output.writeInt(VERSION);
+        output.writeByte('K');
+        output.writeByte('3');
+        output.writeByte('D');
+        output.writeByte('S');
+        writeInt(output, VERSION);
         writeDescriptor(output, descriptor);
         output.flush();
         return bytes.toByteArray();
@@ -56,8 +59,11 @@ public final class DescriptorBinaryCodec {
         }
         DataInputStream input = new DataInputStream(new ByteArrayInputStream(bytes));
         try {
-            int magic = input.readInt();
-            int version = input.readInt();
+            int magic = (input.readUnsignedByte() << 24)
+                    | (input.readUnsignedByte() << 16)
+                    | (input.readUnsignedByte() << 8)
+                    | input.readUnsignedByte();
+            int version = readInt(input);
             if (magic != MAGIC || version != VERSION) {
                 throw new IOException("Unsupported DUMB2 descriptor format");
             }
@@ -209,13 +215,13 @@ public final class DescriptorBinaryCodec {
                 throw new IOException("Unsupported condition operator " + condition.getOperator());
         }
         writeString(output, condition.getFieldName());
-        output.writeLong(condition.getOperand());
+        writeLong(output, condition.getOperand());
     }
 
     private static Descriptor.Condition readCondition(DataInputStream input) throws IOException {
         int tag = input.readUnsignedByte();
         String field = readString(input);
-        long operand = input.readLong();
+        long operand = readLong(input);
         switch (tag) {
             case C_EQUALS_INT64:
                 return Descriptor.equalsInt64(field, operand);
@@ -228,12 +234,12 @@ public final class DescriptorBinaryCodec {
 
     private static void writeString(DataOutputStream output, String value) throws IOException {
         byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
-        output.writeInt(bytes.length);
+        writeInt(output, bytes.length);
         output.write(bytes);
     }
 
     private static String readString(DataInputStream input) throws IOException {
-        int length = input.readInt();
+        int length = readInt(input);
         if (length < 0 || length > input.available()) {
             throw new IOException("Invalid DUMB2 descriptor string length " + length);
         }
@@ -242,8 +248,33 @@ public final class DescriptorBinaryCodec {
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
+    private static void writeInt(DataOutputStream output, int value) throws IOException {
+        output.writeByte(value);
+        output.writeByte(value >>> 8);
+        output.writeByte(value >>> 16);
+        output.writeByte(value >>> 24);
+    }
+
+    private static int readInt(DataInputStream input) throws IOException {
+        return input.readUnsignedByte()
+                | (input.readUnsignedByte() << 8)
+                | (input.readUnsignedByte() << 16)
+                | (input.readUnsignedByte() << 24);
+    }
+
+    private static void writeLong(DataOutputStream output, long value) throws IOException {
+        for (int i = 0; i < 8; ++i) output.writeByte((int) (value >>> (8 * i)));
+    }
+
+    private static long readLong(DataInputStream input) throws IOException {
+        long value = 0L;
+        for (int i = 0; i < 8; ++i)
+            value |= ((long) input.readUnsignedByte()) << (8 * i);
+        return value;
+    }
+
     private static int readCount(DataInputStream input, String label) throws IOException {
-        int count = input.readInt();
+        int count = readInt(input);
         if (count < 0 || count > input.available()) {
             throw new IOException("Invalid DUMB2 " + label + " count " + count);
         }

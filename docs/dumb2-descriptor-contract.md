@@ -48,7 +48,7 @@ The generic value codec built on this metamodel will use explicit representation
 - `ENUM`: explicit stable symbolic code supplied by the descriptor/manifest, never a runtime enum ordinal.
 
 The current Java implementation of the descriptor-definition codec uses its own
-versioned `K3DS` envelope. Its kind/operator tags are explicit constants and are
+versioned `K3DS` envelope. Its magic is literal ASCII and all numeric metadata after the magic is little-endian, matching the generic value contract. Its kind/operator tags are explicit constants and are
 not derived from Java enum order. The future Context manifest may embed these
 canonical descriptor bytes or carry the same logical information in a larger
 versioned envelope.
