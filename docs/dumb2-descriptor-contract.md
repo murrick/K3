@@ -80,7 +80,12 @@ or descriptor codes must be used where enum identity participates in hashing.
 ## Deliberately not in this slice
 
 This slice does not change `Sapato`, old DUMB, `ContextBase`, `.context`, or the
-runtime ServiceLoader surface. It does not yet encode/decode Unit values. The
-next proof slice is a neutral `StructuralValue` plus generic descriptor-driven
-value codec, starting with `TValue`, then `Argument`, then `Term` as the stress
-test.
+runtime ServiceLoader surface. It now includes a neutral immutable `StructuralValue`
+and a generic descriptor-driven little-endian value codec. Qualification covers a
+TValue-shaped record, an Argument-shaped `ENUM + VARIANT + REF` record, and a
+recursive Term-shaped `SELF + VARIANT + CONDITIONAL` record without a KANGER-specific
+binary switch.
+
+The next boundary is the KANGER adapter: map a live simple Unit, starting with
+`TValue`, to/from the neutral structural representation without making DUMB 2.0
+know the Java class or reusing the legacy `pack()/apply()` format.

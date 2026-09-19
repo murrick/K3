@@ -47,6 +47,16 @@ public class DescriptorBinaryCodecTest {
     }
 
     @Test
+    void recursiveSelfDescriptorRoundTrips() throws Exception {
+        Descriptor recursive = Descriptor.struct("Recursive-v1", Arrays.asList(
+                Descriptor.field("id", Descriptor.INT64),
+                Descriptor.field("children", Descriptor.list(Descriptor.SELF))));
+
+        assertEquals(recursive,
+                DescriptorBinaryCodec.decode(DescriptorBinaryCodec.encode(recursive)));
+    }
+
+    @Test
     void unsupportedVersionIsRejected() throws Exception {
         byte[] encoded = DescriptorBinaryCodec.encode(Descriptor.BOOL);
         encoded[4] = 2;
