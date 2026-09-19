@@ -123,3 +123,37 @@ direct-*-state.txt/work.txt and direct-qualification.txt in post-cause-evidence/
 The revised variant warrants Java 8/21 qualification and a focused check of
 empty buckets, fallback-only candidates, ordering and snapshot independence
 before any integration decision. It remains experimental and default OFF.
+
+
+## Java 8/21 qualification checkpoint
+
+Executable commit: fce6fd52de2ffaefbb1cd5853a5893b9ccab8020.
+
+[Candidate membership qualification](https://github.com/murrick/K3/actions/runs/35442067771)
+passes all four Java 8/21 × compact cause weights OFF/ON jobs. Each job runs:
+
+- Membership OFF/ON/verify through the existing 123-case corpus.
+- The 20-operation transaction fixture with byte-identical state comparisons.
+- CandidateMembershipSafetyRunner: 13 scenarios in three modes, 39 checks,
+  including empty/exact/wildcard/fallback selection, argument intersections,
+  insertion order, caller-result mutation, nested journal commit/release,
+  child-index merge independence, unindex/clear, and IDs 0/Long.MAX_VALUE.
+- Three persistent-DUMB four-thread scenarios with membership verification ON.
+
+The boundary runner intentionally isolates positional selection from generated
+batching via a substitutable source fixture; corpus/transaction/concurrency
+runners cover the end-to-end path. The constructor's initial empty rule branch
+is populated rather than adding a second branch, ensuring that primary fixture
+rules actually exercise the positional index rather than fallback indexing.
+
+[General CI](https://github.com/murrick/K3/actions/runs/35442067653),
+[distribution](https://github.com/murrick/K3/actions/runs/35442067714), and
+[qualification isolation](https://github.com/murrick/K3/actions/runs/35442067592)
+also pass. General CI leaves membership flags OFF; the dedicated matrix supplies
+ON/verify coverage. Logs and state files are retained as workflow artifacts.
+
+This confirms tested semantics and concurrency on Java 8/21. Performance figures
+remain the earlier local Java 17 measurements, not timings on those JVMs.
+The next integration step is an isolated source/test/workflow/documentation
+slice onto current develop; profiling helpers and raw experiment data stay here.
+No merge or default activation has been performed.
