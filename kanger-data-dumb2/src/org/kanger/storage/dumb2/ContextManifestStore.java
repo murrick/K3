@@ -153,7 +153,27 @@ final class ContextManifestStore {
     }
 
     static void publish(Path path, UUID contextId, TypeRegistry registry)
-            throws IOException {
+            throws IOException, StorageLifecycleException {
+        Manifest published = read(path);
+        if (!published.getContextId().equals(contextId)) {
+            throw corruption("DUMB2 Context manifest identity replacement rejected at "
+                    + path);
+        }
+        for (TypeDefinition oldDefinition
+                : published.getTypeRegistry().definitions()) {
+            TypeDefinition candidate;
+            try {
+                candidate = registry.resolve(oldDefinition.getTypeCode());
+            } catch (IllegalArgumentException failure) {
+                throw corruption("DUMB2 Context manifest descriptor removal rejected at "
+                        + path, failure);
+            }
+            if (!oldDefinition.equals(candidate)) {
+                throw corruption("DUMB2 Context manifest descriptor redefinition rejected at "
+                        + path);
+            }
+        }
+
         byte[] bytes = encode(contextId, registry);
         Path parent = path.getParent();
         if (parent != null) {

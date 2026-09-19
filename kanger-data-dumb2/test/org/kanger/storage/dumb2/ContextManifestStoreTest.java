@@ -99,6 +99,38 @@ public class ContextManifestStoreTest {
         assertEquals(original, ContextManifestStore.read(path).getContextId());
     }
 
+
+    @Test
+    void publishRejectsContextIdentityReplacement() throws Exception {
+        Path path = root.resolve("identity-guard.context");
+        ContextManifestStore.Manifest created = ContextManifestStore.create(path);
+
+        assertThrows(StorageLifecycleException.class, () ->
+                ContextManifestStore.publish(
+                        path, UUID.randomUUID(), created.getTypeRegistry()));
+
+        assertEquals(created.getContextId(),
+                ContextManifestStore.read(path).getContextId());
+    }
+
+    @Test
+    void publishRejectsRemovalOfPublishedDescriptor() throws Exception {
+        Path path = root.resolve("append-only.context");
+        ContextManifestStore.Manifest created = ContextManifestStore.create(path);
+        TypeDefinition published = created.getTypeRegistry()
+                .register("TVALUE", oneField("TValue-v1"));
+        ContextManifestStore.publish(
+                path, created.getContextId(), created.getTypeRegistry());
+
+        TypeRegistry empty = new TypeRegistry();
+        assertThrows(StorageLifecycleException.class, () ->
+                ContextManifestStore.publish(path, created.getContextId(), empty));
+
+        assertEquals(published,
+                ContextManifestStore.read(path).getTypeRegistry()
+                        .resolve(published.getTypeCode()));
+    }
+
     @Test
     void damagedPayloadIsSemanticCorruption() throws Exception {
         Path path = root.resolve("damaged.context");
