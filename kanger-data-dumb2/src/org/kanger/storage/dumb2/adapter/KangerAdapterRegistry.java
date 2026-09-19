@@ -29,6 +29,8 @@ public final class KangerAdapterRegistry {
 
     public KangerAdapterRegistry() {
         register(TValueAdapter.INSTANCE);
+        register(PredicateAdapter.INSTANCE);
+        register(CommentAdapter.INSTANCE);
     }
 
     public synchronized void register(KangerUnitAdapter<?> adapter) {
