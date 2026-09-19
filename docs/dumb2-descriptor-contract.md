@@ -1,0 +1,83 @@
+# DUMB 2.0 structural descriptor contract
+
+Status: first executable metamodel slice for the self-describing DUMB 2.0 representation.
+
+## Boundary
+
+A descriptor describes physical structure only. It contains no Java class names,
+`serialVersionUID`, reflection metadata, callbacks, KANGER interfaces or enum ordinals.
+KANGER semantic materialization remains an adapter responsibility.
+
+The first metamodel is intentionally finite:
+
+- `BOOL`
+- `INT32`
+- `INT64`
+- `FLOAT64`
+- `UTF8`
+- `BYTES`
+- `REF<schema>`
+- `LIST<T>`
+- named `STRUCT`
+- named `ENUM`
+- `VARIANT` selected by a previously decoded field
+- `CONDITIONAL` selected by a bounded predicate over a previously decoded field
+
+`VARIANT` and `CONDITIONAL` may only depend on fields that precede them in the
+same `STRUCT`. This keeps generic decoding single-pass and prevents the descriptor
+model from becoming an executable language.
+
+`REF<schema>` is typed because DUMB 2.0 operational IDs are schema-local. A bare
+`INT64` is not sufficient to identify a referenced physical namespace.
+
+## Scalar payload contract
+
+The generic value codec built on this metamodel will use explicit representation:
+
+- byte order: little-endian;
+- `BOOL`: one byte, values `0` or `1`;
+- `INT32`: signed 32-bit integer;
+- `INT64`: signed 64-bit integer;
+- `FLOAT64`: IEEE-754 binary64;
+- `UTF8`: unsigned 32-bit byte length followed by UTF-8 bytes;
+- `BYTES`: unsigned 32-bit byte length followed by bytes;
+- `LIST<T>`: unsigned 32-bit element count followed by elements;
+- `ENUM`: explicit stable symbolic code supplied by the descriptor/manifest, never a runtime enum ordinal.
+
+The current Java implementation of the descriptor-definition codec uses its own
+versioned `K3DS` envelope. Its kind/operator tags are explicit constants and are
+not derived from Java enum order. The future Context manifest may embed these
+canonical descriptor bytes or carry the same logical information in a larger
+versioned envelope.
+
+## Streaming rules
+
+A `STRUCT` is decoded in field order. Field names are metadata and adapter keys;
+they do not change record identity by themselves.
+
+A `VARIANT` names a preceding discriminator field and maps symbolic tags to one
+of a finite set of descriptors.
+
+A `CONDITIONAL` names a preceding field and applies one of a deliberately small
+set of predicates. The initial metamodel contains integer equality and integer
+greater-than because they are sufficient for the current inventory. New
+operators require an explicit format evolution decision; arbitrary expressions
+are not allowed.
+
+## Persistent identity rule
+
+No runtime `enum.ordinal()` is a persistent code. This applies both to the
+record-level type registry and to nested enums such as `ArgumentType`,
+`DataType`, `LibMode` and `FunctionBinding`.
+
+The same rule applies to persistent/structural identity algorithms: runtime enum
+ordering must not silently change a stored or canonical hash. Stable semantic
+or descriptor codes must be used where enum identity participates in hashing.
+
+## Deliberately not in this slice
+
+This slice does not change `Sapato`, old DUMB, `ContextBase`, `.context`, or the
+runtime ServiceLoader surface. It does not yet encode/decode Unit values. The
+next proof slice is a neutral `StructuralValue` plus generic descriptor-driven
+value codec, starting with `TValue`, then `Argument`, then `Term` as the stress
+test.
