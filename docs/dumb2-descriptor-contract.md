@@ -86,6 +86,16 @@ TValue-shaped record, an Argument-shaped `ENUM + VARIANT + REF` record, and a
 recursive Term-shaped `SELF + VARIANT + CONDITIONAL` record without a KANGER-specific
 binary switch.
 
-The next boundary is the KANGER adapter: map a live simple Unit, starting with
-`TValue`, to/from the neutral structural representation without making DUMB 2.0
-know the Java class or reusing the legacy `pack()/apply()` format.
+The first KANGER adapter boundary is now executable for `TValue`:
+
+`live TValue -> TValueAdapter -> StructuralValue -> generic codec -> bytes`
+
+and the reverse path resolves the descriptor's typed `dictionary` and `tvariables`
+references through the supplied Mind. The generic descriptor/value packages contain
+no `TValue`, `UnitType` or KANGER factory switch. The adapter does not call the legacy
+`pack()/apply()` binary format and does not register the restored unit in
+`TValueFactory`; canonicalization/publication remain Mind/factory lifecycle concerns.
+
+The next slice is the Context-local type registry/manifest boundary: assign an
+immutable typeCode to `(typeName, descriptor)` and prove that a record can be decoded
+from `typeCode + manifest + bytes` without a KANGER-specific binary switch.
