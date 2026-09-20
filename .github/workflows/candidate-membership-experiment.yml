@@ -1,0 +1,82 @@
+name: Candidate membership qualification
+
+on:
+  push:
+    branches: ['perf/3.8.0-candidate-membership', 'develop/3.8.0']
+  pull_request:
+    branches: ['develop/3.8.0']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualification:
+    name: Java ${{ matrix.java }} / Cause weights ${{ matrix.cause }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '21']
+        cause: ['false', 'true']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - name: Build qualification classes
+        run: mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install -DskipTests
+      - name: Compare reference, compact and verified paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/candidate-membership"
+          for mode in off on verify; do
+            enabled=false
+            verified=false
+            if [ "$mode" != off ]; then enabled=true; fi
+            if [ "$mode" = verify ]; then verified=true; fi
+            export JAVA_TOOL_OPTIONS="-Xmx512m -Dkanger.experiment.preserveTValueIndex=true -Dkanger.experiment.versionedSolveSync=true -Dkanger.experiment.resolvedCauseWeights=${{ matrix.cause }} -Dkanger.experiment.compactCauseWeights=${{ matrix.cause }} -Dkanger.experiment.candidateMembershipFilter=$enabled -Dkanger.experiment.verifyCandidateMembershipFilter=$verified"
+            mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml \
+              -Dexec.mainClass=org.kanger.LatentSubstitutionCorpusRunner -Dexec.classpathScope=test exec:java \
+              > "$RUNNER_TEMP/candidate-membership/$mode-corpus.log" 2>&1
+            mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml \
+              -Dexec.mainClass=org.kanger.LatentSolveSyncTransactionRunner -Dexec.classpathScope=test \
+              "-Dexec.args=$RUNNER_TEMP/candidate-membership/$mode-state.txt $RUNNER_TEMP/candidate-membership/$mode-work.txt" exec:java \
+              > "$RUNNER_TEMP/candidate-membership/$mode-transactions.log" 2>&1
+          done
+          cmp "$RUNNER_TEMP/candidate-membership/off-state.txt" "$RUNNER_TEMP/candidate-membership/on-state.txt"
+          cmp "$RUNNER_TEMP/candidate-membership/off-state.txt" "$RUNNER_TEMP/candidate-membership/verify-state.txt"
+      - name: Qualify ordered selection boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          export JAVA_TOOL_OPTIONS="-Xmx512m -Dkanger.experiment.preserveTValueIndex=true -Dkanger.experiment.versionedSolveSync=true -Dkanger.experiment.resolvedCauseWeights=${{ matrix.cause }} -Dkanger.experiment.compactCauseWeights=${{ matrix.cause }}"
+          mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml \
+            -Dexec.mainClass=org.kanger.factory.CandidateMembershipSafetyRunner -Dexec.classpathScope=test exec:java \
+            > "$RUNNER_TEMP/candidate-membership/boundaries.log" 2>&1
+      - name: Qualify persistent concurrent selection
+        shell: bash
+        run: |
+          set -euo pipefail
+          export JAVA_TOOL_OPTIONS="-Xmx512m -Dkanger.experiment.preserveTValueIndex=true -Dkanger.experiment.versionedSolveSync=true -Dkanger.experiment.resolvedCauseWeights=${{ matrix.cause }} -Dkanger.experiment.compactCauseWeights=${{ matrix.cause }} -Dkanger.experiment.candidateMembershipFilter=true -Dkanger.experiment.verifyCandidateMembershipFilter=true -Dkanger.rule.candidate.concurrency.iterations=3"
+          mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml \
+            -Dexec.mainClass=org.kanger.KangerRuleCandidateConcurrencyRunner -Dexec.classpathScope=test exec:java \
+            > "$RUNNER_TEMP/candidate-membership/concurrency.log" 2>&1
+          grep -q 'RULE_CANDIDATE_CONCURRENCY_OK iterations=3' "$RUNNER_TEMP/candidate-membership/concurrency.log"
+      - name: Print failure evidence
+        if: failure()
+        shell: bash
+        run: |
+          for log in "$RUNNER_TEMP/candidate-membership/"*.log; do
+            if [ -f "$log" ]; then tail -100 "$log"; fi
+          done
+      - name: Preserve qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: candidate-membership-java-${{ matrix.java }}-cause-${{ matrix.cause }}
+          path: ${{ runner.temp }}/candidate-membership/
