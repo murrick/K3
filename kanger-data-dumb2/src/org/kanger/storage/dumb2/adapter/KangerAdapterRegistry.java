@@ -29,6 +29,7 @@ public final class KangerAdapterRegistry {
 
     public KangerAdapterRegistry() {
         register(TValueAdapter.INSTANCE);
+        register(FValueAdapter.INSTANCE);
         register(TVariableAdapter.INSTANCE);
         register(PredicateAdapter.INSTANCE);
         register(CommentAdapter.INSTANCE);
