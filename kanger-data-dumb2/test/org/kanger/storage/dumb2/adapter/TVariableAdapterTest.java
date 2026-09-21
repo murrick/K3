@@ -26,7 +26,8 @@ public class TVariableAdapterTest {
         Rule rule = new Rule(mind);
         rule.setId(31L);
         rule.setMindId(mind.getId());
-        mind.getRules().set(rule);
+        mind.getRules().register(rule);
+        mind.getRules().add(rule);
 
         TVariable source = new TVariable(mind);
         source.setId(47L);
