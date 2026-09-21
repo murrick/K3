@@ -355,6 +355,24 @@ public class FValue implements IUnit<FValue> {
         return functionId;
     }
 
+    /** @return operational ID of the materialized result Term */
+    public long getValueId() {
+        return valueId;
+    }
+
+    /** @return defensive copy of the ordered persistent substitution stamp */
+    public List<Long> getStamp() {
+        return new ArrayList<Long>(stamp);
+    }
+
+    /** Replaces the ordered persistent substitution stamp during hydration. */
+    public void setStamp(List<Long> stamp) {
+        if (stamp == null) {
+            throw new NullPointerException("stamp");
+        }
+        this.stamp = new ArrayList<Long>(stamp);
+    }
+
     @Override
     public boolean isLoaded() {
         return function != null && functionId == function.getId();
