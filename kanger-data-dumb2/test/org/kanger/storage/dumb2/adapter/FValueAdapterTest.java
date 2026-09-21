@@ -9,6 +9,7 @@ import org.kanger.storage.dumb2.descriptor.StructuralValueCodec;
 import org.kanger.storage.dumb2.descriptor.TypeDefinition;
 import org.kanger.storage.dumb2.descriptor.TypeRegistry;
 import org.kanger.units.FValue;
+import org.kanger.primitives.ArgumentsList;
 import org.kanger.units.Function;
 import org.kanger.units.Term;
 
@@ -24,11 +25,8 @@ public class FValueAdapterTest {
     void fValueRoundTripsThroughDescriptorBytes() throws Exception {
         Mind mind = new Mind(new User());
 
-        Function function = new Function(mind);
-        function.setId(31L);
-        function.setMindId(mind.getId());
-        mind.getFunctions().register(function);
-        mind.getFunctions().add(function);
+        Term functionName = (Term) mind.getTerms().add("fvalue-test");
+        Function function = mind.getFunctions().add(functionName, new ArgumentsList());
 
         Term term = (Term) mind.getTerms().add("result");
 
