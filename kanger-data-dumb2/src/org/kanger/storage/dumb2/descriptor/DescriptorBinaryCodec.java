@@ -30,6 +30,7 @@ public final class DescriptorBinaryCodec {
     private static final int T_ENUM = 11;
     private static final int T_VARIANT = 12;
     private static final int T_CONDITIONAL = 13;
+    private static final int T_NULL = 14;
 
     private static final int C_EQUALS_INT64 = 1;
     private static final int C_GREATER_THAN_INT64 = 2;
@@ -82,6 +83,9 @@ public final class DescriptorBinaryCodec {
     private static void writeDescriptor(DataOutputStream output, Descriptor descriptor)
             throws IOException {
         switch (descriptor.getKind()) {
+            case NULL:
+                output.writeByte(T_NULL);
+                return;
             case BOOL:
                 output.writeByte(T_BOOL);
                 return;
@@ -150,6 +154,8 @@ public final class DescriptorBinaryCodec {
     private static Descriptor readDescriptor(DataInputStream input) throws IOException {
         int tag = input.readUnsignedByte();
         switch (tag) {
+            case T_NULL:
+                return Descriptor.NULL;
             case T_BOOL:
                 return Descriptor.BOOL;
             case T_INT32:
