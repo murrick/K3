@@ -32,6 +32,8 @@ public final class StructuralValueCodec {
     private static void write(Output out, Descriptor descriptor, StructuralValue value,
                               Descriptor self, Map<String, StructuralValue> scope) throws IOException {
         switch (descriptor.getKind()) {
+            case NULL:
+                require(value, StructuralValue.Kind.NULL); return;
             case BOOL:
                 require(value, StructuralValue.Kind.BOOL); out.u8(value.asBool() ? 1 : 0); return;
             case INT32:
@@ -117,6 +119,7 @@ public final class StructuralValueCodec {
     private static StructuralValue read(Input in, Descriptor descriptor, Descriptor self,
                                         Map<String, StructuralValue> scope) throws IOException {
         switch (descriptor.getKind()) {
+            case NULL: return StructuralValue.nullValue();
             case BOOL: {
                 int value = in.u8();
                 if (value != 0 && value != 1) throw new IOException("Invalid BOOL value " + value);
