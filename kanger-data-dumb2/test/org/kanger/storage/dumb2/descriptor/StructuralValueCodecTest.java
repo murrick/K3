@@ -39,14 +39,22 @@ public class StructuralValueCodecTest {
     }
 
     @Test
+    void nullValueCarriesNoPayload() throws Exception {
+        byte[] encoded = StructuralValueCodec.encode(Descriptor.NULL, StructuralValue.nullValue());
+
+        assertEquals(0, encoded.length);
+        assertEquals(StructuralValue.nullValue(),
+                StructuralValueCodec.decode(Descriptor.NULL, encoded));
+    }
+
+    @Test
     void argumentEnumSelectsVariantWithoutKangerSpecificSwitch() throws Exception {
         Descriptor argumentType = Descriptor.enumeration("ArgumentType",
                 Arrays.asList("EMPTY", "TERM", "TVARIABLE"));
-        Descriptor none = Descriptor.struct("None", Collections.<Descriptor.Field>emptyList());
         Descriptor descriptor = Descriptor.struct("Argument-v1", Arrays.asList(
                 Descriptor.field("type", argumentType),
                 Descriptor.field("value", Descriptor.variant("type", Arrays.asList(
-                        Descriptor.variantCase("EMPTY", none),
+                        Descriptor.variantCase("EMPTY", Descriptor.NULL),
                         Descriptor.variantCase("TERM", Descriptor.ref("dictionary")),
                         Descriptor.variantCase("TVARIABLE", Descriptor.ref("tvariables"))))),
                 Descriptor.field("varOrder", Descriptor.INT32)));
