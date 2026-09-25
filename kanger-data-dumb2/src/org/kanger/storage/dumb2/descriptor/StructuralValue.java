@@ -11,7 +11,7 @@ import java.util.Objects;
 /** Immutable neutral value tree consumed by the descriptor-driven DUMB 2.0 codec. */
 public final class StructuralValue {
 
-    public enum Kind { BOOL, INT32, INT64, FLOAT64, UTF8, BYTES, REF, LIST, STRUCT, ENUM }
+    public enum Kind { NULL, BOOL, INT32, INT64, FLOAT64, UTF8, BYTES, REF, LIST, STRUCT, ENUM }
 
     private final Kind kind;
     private final Object value;
@@ -23,6 +23,7 @@ public final class StructuralValue {
         this.name = name;
     }
 
+    public static StructuralValue nullValue() { return new StructuralValue(Kind.NULL, null, null); }
     public static StructuralValue bool(boolean value) { return new StructuralValue(Kind.BOOL, value, null); }
     public static StructuralValue int32(int value) { return new StructuralValue(Kind.INT32, value, null); }
     public static StructuralValue int64(long value) { return new StructuralValue(Kind.INT64, value, null); }
