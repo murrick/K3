@@ -18,6 +18,7 @@ import java.util.Set;
 public final class Descriptor {
 
     public enum Kind {
+        NULL,
         BOOL,
         INT32,
         INT64,
@@ -38,6 +39,7 @@ public final class Descriptor {
         GREATER_THAN_INT64
     }
 
+    public static final Descriptor NULL = primitive(Kind.NULL);
     public static final Descriptor BOOL = primitive(Kind.BOOL);
     public static final Descriptor INT32 = primitive(Kind.INT32);
     public static final Descriptor INT64 = primitive(Kind.INT64);
