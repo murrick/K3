@@ -23,6 +23,17 @@ public class DescriptorBinaryCodecTest {
     }
 
     @Test
+    void nullHasExplicitPersistentTagAndRoundTrips() throws Exception {
+        assertArrayEquals(new byte[]{
+                        0x4B, 0x33, 0x44, 0x53,
+                        1, 0, 0, 0,
+                        14},
+                DescriptorBinaryCodec.encode(Descriptor.NULL));
+        assertEquals(Descriptor.NULL,
+                DescriptorBinaryCodec.decode(DescriptorBinaryCodec.encode(Descriptor.NULL)));
+    }
+
+    @Test
     void complexDescriptorRoundTripsCanonically() throws Exception {
         Descriptor kind = Descriptor.enumeration("ArgumentType",
                 Arrays.asList("EMPTY", "TERM", "TVARIABLE"));
