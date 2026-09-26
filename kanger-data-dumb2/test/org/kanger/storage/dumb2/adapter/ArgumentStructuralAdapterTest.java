@@ -59,4 +59,3 @@ public class ArgumentStructuralAdapterTest {
         assertEquals(3, restored.getVarOrder());
     }
 }
-}
