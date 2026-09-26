@@ -1,8 +1,6 @@
 package org.kanger.storage.dumb2.adapter;
 
-import org.kanger.Mind;
 import org.kanger.enums.ArgumentType;
-import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.dumb2.descriptor.Descriptor;
 import org.kanger.storage.dumb2.descriptor.StructuralValue;
@@ -45,8 +43,8 @@ public final class ArgumentStructuralAdapter {
         return StructuralValue.struct(fields);
     }
 
-    public static Argument materialize(StructuralValue value, Mind mind) throws Exception {
-        if (value == null || mind == null) throw new NullPointerException();
+    public static Argument materialize(StructuralValue value) throws IOException {
+        if (value == null) throw new NullPointerException("value");
         if (value.getKind() != StructuralValue.Kind.STRUCT)
             throw new IOException("Argument structural value must be STRUCT");
         Map<String, StructuralValue> fields = value.asStruct();
@@ -63,10 +61,23 @@ public final class ArgumentStructuralAdapter {
 
         StructuralValue stored = fields.get("value");
         if (stored == null) throw new IOException("Missing Argument field value");
-        IUnit object = resolve(type, stored, mind);
+
+        long id = -1L;
+        if (type == ArgumentType.EMPTY) {
+            if (stored.getKind() != StructuralValue.Kind.NULL)
+                throw new IOException("EMPTY Argument value must be NULL");
+        } else {
+            if (stored.getKind() != StructuralValue.Kind.REF)
+                throw new IOException(type + " Argument value must be REF");
+            String expected = namespace(type);
+            if (!expected.equals(stored.getReferenceSchema()))
+                throw new IOException("Invalid Argument reference namespace: expected "
+                        + expected + " actual " + stored.getReferenceSchema());
+            id = stored.getReferenceId();
+        }
 
         Argument result = new Argument();
-        if (object != null) result.setObject(object);
+        result.setPersistentReference(id, type);
         result.setVarOrder(require(fields, "varOrder", StructuralValue.Kind.INT32).asInt32());
         return result;
     }
@@ -83,39 +94,15 @@ public final class ArgumentStructuralAdapter {
         }
     }
 
-    private static IUnit resolve(ArgumentType type, StructuralValue value, Mind mind)
-            throws Exception {
-        if (type == ArgumentType.EMPTY) {
-            if (value.getKind() != StructuralValue.Kind.NULL)
-                throw new IOException("EMPTY Argument value must be NULL");
-            return null;
-        }
-        if (value.getKind() != StructuralValue.Kind.REF)
-            throw new IOException(type + " Argument value must be REF");
-
-        String expected;
-        IUnit object;
+    private static String namespace(ArgumentType type) throws IOException {
         switch (type) {
-            case TERM:
-                expected = "dictionary"; object = (IUnit) mind.getTerms().get(value.getReferenceId()); break;
-            case FUNCTION:
-                expected = "functions"; object = mind.getFunctions().get(value.getReferenceId()); break;
-            case TVARIABLE:
-                expected = "tvariables"; object = mind.getTVars().get(value.getReferenceId()); break;
-            case FVALUE:
-                expected = "fvalues"; object = mind.getFValues().get(value.getReferenceId()); break;
-            case TVALUE:
-                expected = "tvalues"; object = mind.getTValues().get(value.getReferenceId()); break;
-            default:
-                throw new IOException("Unsupported Argument kind " + type);
+            case TERM: return "dictionary";
+            case FUNCTION: return "functions";
+            case TVARIABLE: return "tvariables";
+            case FVALUE: return "fvalues";
+            case TVALUE: return "tvalues";
+            default: throw new IOException("No reference namespace for " + type);
         }
-        if (!expected.equals(value.getReferenceSchema()))
-            throw new IOException("Invalid Argument reference namespace: expected "
-                    + expected + " actual " + value.getReferenceSchema());
-        if (object == null)
-            throw new IOException("Argument references missing " + expected
-                    + " id=" + value.getReferenceId());
-        return object;
     }
 
     private static StructuralValue require(Map<String, StructuralValue> fields,
