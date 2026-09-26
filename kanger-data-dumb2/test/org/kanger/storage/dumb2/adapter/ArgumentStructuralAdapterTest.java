@@ -1,23 +1,19 @@
 package org.kanger.storage.dumb2.adapter;
 
 import org.junit.jupiter.api.Test;
-import org.kanger.Mind;
 import org.kanger.enums.ArgumentType;
 import org.kanger.primitives.Argument;
 import org.kanger.storage.dumb2.descriptor.StructuralValue;
 import org.kanger.storage.dumb2.descriptor.StructuralValueCodec;
-import org.kanger.units.Term;
 
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 
 public class ArgumentStructuralAdapterTest {
 
     @Test
     void emptyArgumentUsesRealNullAndRoundTrips() throws Exception {
-        Mind mind = new Mind();
         Argument source = new Argument();
         source.setVarOrder(7);
 
@@ -27,7 +23,7 @@ public class ArgumentStructuralAdapterTest {
 
         byte[] bytes = StructuralValueCodec.encode(ArgumentStructuralAdapter.DESCRIPTOR, projected);
         StructuralValue decoded = StructuralValueCodec.decode(ArgumentStructuralAdapter.DESCRIPTOR, bytes);
-        Argument restored = ArgumentStructuralAdapter.materialize(decoded, mind);
+        Argument restored = ArgumentStructuralAdapter.materialize(decoded);
 
         assertEquals(ArgumentType.EMPTY, restored.getType());
         assertEquals(-1L, restored.getId());
@@ -35,25 +31,32 @@ public class ArgumentStructuralAdapterTest {
     }
 
     @Test
-    void termArgumentPreservesTypedReferenceAndIdentity() throws Exception {
-        Mind mind = new Mind();
-        Term term = (Term) mind.getTerms().add("argument-test");
-        Argument source = new Argument(term);
+    void everyTypedArgumentPreservesReferenceWithoutRuntimeResolution() throws Exception {
+        assertTypedRoundTrip(ArgumentType.TERM, "dictionary");
+        assertTypedRoundTrip(ArgumentType.FUNCTION, "functions");
+        assertTypedRoundTrip(ArgumentType.TVARIABLE, "tvariables");
+        assertTypedRoundTrip(ArgumentType.FVALUE, "fvalues");
+        assertTypedRoundTrip(ArgumentType.TVALUE, "tvalues");
+    }
+
+    private static void assertTypedRoundTrip(ArgumentType type, String namespace) throws Exception {
+        Argument source = new Argument();
+        source.setPersistentReference(41L, type);
         source.setVarOrder(3);
 
         StructuralValue projected = ArgumentStructuralAdapter.project(source);
         StructuralValue stored = projected.asStruct().get("value");
         assertEquals(StructuralValue.Kind.REF, stored.getKind());
-        assertEquals("dictionary", stored.getReferenceSchema());
-        assertEquals(term.getId(), stored.getReferenceId());
+        assertEquals(namespace, stored.getReferenceSchema());
+        assertEquals(41L, stored.getReferenceId());
 
         byte[] bytes = StructuralValueCodec.encode(ArgumentStructuralAdapter.DESCRIPTOR, projected);
         Argument restored = ArgumentStructuralAdapter.materialize(
-                StructuralValueCodec.decode(ArgumentStructuralAdapter.DESCRIPTOR, bytes), mind);
+                StructuralValueCodec.decode(ArgumentStructuralAdapter.DESCRIPTOR, bytes));
 
-        assertEquals(ArgumentType.TERM, restored.getType());
-        assertEquals(term.getId(), restored.getId());
-        assertSame(term, restored.getObject(mind));
+        assertEquals(type, restored.getType());
+        assertEquals(41L, restored.getId());
         assertEquals(3, restored.getVarOrder());
     }
+}
 }
