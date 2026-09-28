@@ -5,8 +5,6 @@ import org.kanger.enums.UnitType;
 import org.kanger.storage.dumb2.descriptor.Descriptor;
 import org.kanger.storage.dumb2.descriptor.StructuralValue;
 import org.kanger.units.FValue;
-import org.kanger.units.Function;
-import org.kanger.units.Term;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -64,11 +62,6 @@ public final class FValueAdapter implements KangerUnitAdapter<FValue> {
         requireReference(functionRef, "functions");
         requireReference(valueRef, "dictionary");
 
-        Function function = mind.getFunctions().get(functionRef.getReferenceId());
-        Term term = (Term) mind.getTerms().get(valueRef.getReferenceId());
-        if (function == null) throw new IOException("FVALUE references missing functions id=" + functionRef.getReferenceId());
-        if (term == null) throw new IOException("FVALUE references missing dictionary id=" + valueRef.getReferenceId());
-
         StructuralValue stampValue = require(fields, "stamp", StructuralValue.Kind.LIST);
         List<Long> stamp = new ArrayList<Long>();
         for (StructuralValue one : stampValue.asList()) {
@@ -81,10 +74,10 @@ public final class FValueAdapter implements KangerUnitAdapter<FValue> {
         result.setMind(mind);
         result.setId(id);
         result.setMindId(mindId);
-        result.setFunction(function);
-        result.setValue(term);
+        result.setPersistentReferences(
+                functionRef.getReferenceId(), valueRef.getReferenceId());
         result.setStamp(stamp);
-        if (deleted) result.setDeleted(true, mind);
+        if (deleted) mind.setUnitDeleted(result, true);
         return result;
     }
 
