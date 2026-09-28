@@ -201,8 +201,7 @@ public final class RuleAdapter implements KangerUnitAdapter<Rule> {
         result.setPersistentFlags(
                 query, generated, stored, substitutable, abstractive);
         result.setPersistentTreeIds(treeIds);
-        result.getPredicates().addAll(predicateIds);
-        result.getTerms().addAll(termIds);
+        result.setPersistentReferenceIndexes(predicateIds, termIds);
         result.getCauses().clear();
         result.getCauses().addAll(causes);
         if (deleted) mind.setUnitDeleted(result, true);
