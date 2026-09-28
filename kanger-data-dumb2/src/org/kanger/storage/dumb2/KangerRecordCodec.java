@@ -52,8 +52,16 @@ final class KangerRecordCodec {
         if (context == null) {
             throw new NullPointerException("context");
         }
+        return decode(context, PersistentRecordCodec.decode(bytes), mind);
+    }
 
-        PersistentRecord record = PersistentRecordCodec.decode(bytes);
+    DecodedRecord decode(ContextStore context,
+                         PersistentRecord record,
+                         Mind mind) throws Exception {
+        if (context == null || record == null) {
+            throw new NullPointerException();
+        }
+
         TypeDefinition definition = context.resolveType(record.getTypeCode());
         StructuralValue structural = StructuralValueCodec.decode(
                 definition.getDescriptor(), record.getPayload());
