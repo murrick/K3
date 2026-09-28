@@ -75,6 +75,11 @@ public class Step implements IStep {
     }
 
     @Override
+    public long getNextId() {
+        return next == null ? -1L : next.getId();
+    }
+
+    @Override
     public void setNext(IStep next) {
         this.next = next;
     }
