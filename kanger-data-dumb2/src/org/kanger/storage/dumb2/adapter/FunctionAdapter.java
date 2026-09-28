@@ -100,7 +100,7 @@ public final class FunctionAdapter implements KangerUnitAdapter<Function> {
         for (StructuralValue argument : list.asList())
             result.getArguments().add(ArgumentStructuralAdapter.materialize(argument));
         result.getArguments().add(new Argument()); // transient result slot
-        if (deleted) result.setDeleted(true, mind);
+        if (deleted) mind.setUnitDeleted(result, true);
         return result;
     }
 
