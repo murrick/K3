@@ -4,6 +4,7 @@ import org.kanger.Mind;
 import org.kanger.enums.UnitType;
 import org.kanger.storage.dumb2.descriptor.Descriptor;
 import org.kanger.storage.dumb2.descriptor.StructuralValue;
+import org.kanger.units.CachedDomain;
 import org.kanger.units.Domain;
 
 import java.io.IOException;
@@ -63,7 +64,7 @@ public final class DomainAdapter implements KangerUnitAdapter<Domain> {
             throw new IOException("Invalid DOMAIN rule reference namespace "
                     + rule.getReferenceSchema());
 
-        Domain result = new Domain(mind);
+        Domain result = new CachedDomain(mind);
         result.setId(id);
         result.setMindId(mindId);
         result.setPersistentRuleId(rule.getReferenceId());
