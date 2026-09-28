@@ -2,11 +2,9 @@ package org.kanger.storage.dumb2.adapter;
 
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;
-import org.kanger.interfaces.ITerm;
 import org.kanger.storage.dumb2.descriptor.Descriptor;
 import org.kanger.storage.dumb2.descriptor.StructuralValue;
 import org.kanger.units.TValue;
-import org.kanger.units.TVariable;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -79,12 +77,9 @@ public final class TValueAdapter implements KangerUnitAdapter<TValue> {
     }
 
     /**
-     * Materializes a TValue shell in the supplied Mind by resolving its two
-     * typed references through the current KANGER factories.
-     *
-     * <p>The returned object is not registered in TValueFactory. Registration,
-     * canonicalization and transaction publication remain factory/Mind
-     * lifecycle responsibilities, exactly as for a unit hydrated by storage.</p>
+     * Materializes only persistent TValue state. Typed reference IDs are restored
+     * immediately; referenced semantic objects remain unresolved until TValue
+     * accessors actually request them.
      */
     public static TValue fromStructural(StructuralValue value, Mind mind) throws Exception {
         if (value == null || mind == null) {
@@ -100,22 +95,13 @@ public final class TValueAdapter implements KangerUnitAdapter<TValue> {
         requireReference(termRef, "dictionary");
         requireReference(variableRef, "tvariables");
 
-        ITerm term = mind.getTerms().get(termRef.getReferenceId());
-        TVariable variable = mind.getTVars().get(variableRef.getReferenceId());
-        if (term == null) {
-            throw new IOException("TVALUE references missing dictionary id="
-                    + termRef.getReferenceId());
-        }
-        if (variable == null) {
-            throw new IOException("TVALUE references missing tvariables id="
-                    + variableRef.getReferenceId());
-        }
-
-        TValue result = new TValue(variable, term, mind);
+        TValue result = new TValue(mind);
         result.setId(id);
         result.setMindId(mindId);
+        result.setPersistentReferences(
+                termRef.getReferenceId(), variableRef.getReferenceId());
         if (deleted) {
-            result.setDeleted(true, mind);
+            mind.setUnitDeleted(result, true);
         }
         return result;
     }
