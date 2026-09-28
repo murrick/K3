@@ -32,6 +32,7 @@ public final class KangerAdapterRegistry {
         register(FValueAdapter.INSTANCE);
         register(FunctionAdapter.INSTANCE);
         register(OperationAdapter.INSTANCE);
+        register(DomainAdapter.INSTANCE);
         register(TVariableAdapter.INSTANCE);
         register(PredicateAdapter.INSTANCE);
         register(CommentAdapter.INSTANCE);
