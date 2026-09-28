@@ -338,6 +338,35 @@ public class Term implements IUnit<Term>, ITerm {
         return type;
     }
 
+    /**
+     * Returns the stored hash without triggering semantic recomputation.
+     */
+    public int getPersistentHash() {
+        return hash;
+    }
+
+    /**
+     * Restores Term payload and C-variable metadata without resolving references.
+     */
+    public void setPersistentState(DataType type,
+                                   Object value,
+                                   int hash,
+                                   int index,
+                                   long nameId,
+                                   long ruleId,
+                                   boolean domini) {
+        if (type == null) throw new NullPointerException("type");
+        this.type = type;
+        this.value = value;
+        this.hash = hash;
+        this.index = index;
+        this.name = null;
+        this.rule = null;
+        this.nameId = index > 0 ? nameId : -1;
+        this.ruleId = index > 0 ? ruleId : -1;
+        this.domini = index > 0 && domini;
+    }
+
     @Override
     public long getId() {
         return id;
@@ -543,6 +572,10 @@ public class Term implements IUnit<Term>, ITerm {
     public void setName(ITerm name) {
         this.name = name;
         this.nameId = name.getId();
+    }
+
+    public long getNameId() {
+        return nameId;
     }
 
     public int getIndex() {
