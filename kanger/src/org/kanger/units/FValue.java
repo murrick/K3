@@ -188,6 +188,16 @@ public class FValue implements IUnit<FValue> {
         this.functionId = function.getId();
     }
 
+    /**
+     * Restores persistent Function/result IDs without resolving either object.
+     */
+    public void setPersistentReferences(long functionId, long valueId) {
+        this.function = null;
+        this.value = null;
+        this.functionId = functionId;
+        this.valueId = valueId;
+    }
+
     private String formatParam(IArgument t, Mind mind) throws Exception {
         Parser.Op op = Parser.getOp(getFunction().getName(mind).toString(), getFunction().getRange());
         boolean isOp = op != null && op.getRange() == getFunction().getRange();
