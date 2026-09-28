@@ -132,6 +132,16 @@ public class Cause implements ICause {
         this.ruleId = rule.getId();
     }
 
+    /**
+     * Restores persistent Cause references without resolving the owning Rule.
+     */
+    public void setPersistentState(long ruleId, Solve donor) {
+        if (donor == null) throw new NullPointerException("donor");
+        this.rule = null;
+        this.ruleId = ruleId;
+        this.donor = donor;
+    }
+
     public long getRuleId() {
         return ruleId;
     }
