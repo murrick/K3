@@ -2,7 +2,6 @@ package org.kanger.storage.dumb2.adapter;
 
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;
-import org.kanger.interfaces.ITerm;
 import org.kanger.storage.dumb2.descriptor.Descriptor;
 import org.kanger.storage.dumb2.descriptor.StructuralValue;
 import org.kanger.units.Predicate;
@@ -71,19 +70,13 @@ public final class PredicateAdapter implements KangerUnitAdapter<Predicate> {
         if (!"dictionary".equals(name.getReferenceSchema())) {
             throw new IOException("Invalid PREDICATE name reference namespace");
         }
-        ITerm term = mind.getTerms().get(name.getReferenceId());
-        if (term == null) {
-            throw new IOException("PREDICATE references missing dictionary id="
-                    + name.getReferenceId());
-        }
-
         Predicate result = new Predicate(mind);
         result.setId(id);
         result.setMindId(mindId);
-        result.setName(term);
+        result.setPersistentNameId(name.getReferenceId());
         result.setRange(
                 require(fields, "range", StructuralValue.Kind.INT32).asInt32());
-        if (deleted) result.setDeleted(true, mind);
+        if (deleted) mind.setUnitDeleted(result, true);
         return result;
     }
 
