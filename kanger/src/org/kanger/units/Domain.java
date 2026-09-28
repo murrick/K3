@@ -154,6 +154,14 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         rule = r;
     }
 
+    /**
+     * Restores the persistent owner Rule ID without resolving the Rule.
+     */
+    public void setPersistentRuleId(long ruleId) {
+        this.rule = null;
+        this.ruleId = ruleId;
+    }
+
     @Override
     public long getId() {
         return id;
@@ -745,12 +753,20 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         this.substitutable = true;
     }
 
+    public void setSubstitutable(boolean substitutable) {
+        this.substitutable = substitutable;
+    }
+
     public boolean isAbstractive() {
         return abstractive;
     }
 
     public void setAbstractive() {
         this.abstractive = true;
+    }
+
+    public void setAbstractive(boolean abstractive) {
+        this.abstractive = abstractive;
     }
 }
 
