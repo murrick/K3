@@ -231,13 +231,7 @@ final class ContextBase implements IBase {
                     "DUMB2 persistent step must have a non-negative id");
         }
 
-        final long nextId;
-        if (one instanceof ContextStep) {
-            nextId = ((ContextStep) one).getNextId();
-        } else {
-            IStep next = one.getNext();
-            nextId = next == null ? -1L : next.getId();
-        }
+        final long nextId = one.getNextId();
 
         byte[] packed;
         if (one instanceof ContextStep
