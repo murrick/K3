@@ -41,7 +41,8 @@ final class ContextStep extends Sapato {
         return record;
     }
 
-    long getNextId() {
+    @Override
+    public long getNextId() {
         return record.getNextId();
     }
 
