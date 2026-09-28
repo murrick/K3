@@ -117,6 +117,11 @@ public final class CanonicalConsole {
                         continue;
                     }
 
+                    if (isHiddenTestCommand(trimmed)) {
+                        runHiddenTestCommand(trimmed, mind);
+                        continue;
+                    }
+
                     CommandInvocation invocation = PARSER.parse(line);
                     if (invocation.isCoreLanguage()) {
                         if (trimmed.charAt(0) == Enums.SUC) {
@@ -836,6 +841,58 @@ public final class CanonicalConsole {
     private static boolean isXplain(String line) {
         String first = line.split("\\s+", 2)[0].toLowerCase();
         return first.length() > 0 && "xplain".startsWith(first);
+    }
+
+    /**
+     * Console-only developer hook. Deliberately bypasses the canonical command
+     * grammar and is intentionally absent from help/documentation.
+     */
+    private static boolean isHiddenTestCommand(String line) {
+        String[] parts = line.trim().split("\\s+");
+        return parts.length >= 2
+                && "options".equalsIgnoreCase(parts[0])
+                && "test".equalsIgnoreCase(parts[1]);
+    }
+
+    private static void runHiddenTestCommand(String line, IMind mind) throws Exception {
+        String[] parts = line.trim().split("\\s+");
+        if (parts.length > 3) {
+            throw new CommandErrorException("Invalid options test syntax");
+        }
+        String prefix = parts.length == 3 ? parts[2] : "";
+
+        /*
+         * Do not lend the live Console Mind/User/storage to the historical test
+         * corpus. The qualification runtime creates a disposable User + Mind and,
+         * when the current Console is database-backed, a private temporary DUMB
+         * database. This preserves the live transaction stack and storage exactly.
+         *
+         * Reflection keeps the production Console independent of the qualification
+         * module. The hidden command exists only when that developer/test plane is
+         * present on the runtime class path.
+         */
+        try {
+            Class<?> runtime = Class.forName("org.kanger.IsolatedKangerTestRuntime");
+            java.lang.reflect.Method run =
+                    runtime.getDeclaredMethod("run", String.class, boolean.class);
+            run.setAccessible(true);
+            Object result = run.invoke(null, prefix, mind.isStorageUsed());
+            if (!(result instanceof Boolean) || !((Boolean) result).booleanValue()) {
+                throw new CommandErrorException("KANGER test failed");
+            }
+        } catch (ClassNotFoundException ex) {
+            throw new CommandErrorException(
+                    "Console test runtime is unavailable in this build");
+        } catch (java.lang.reflect.InvocationTargetException ex) {
+            Throwable cause = ex.getCause();
+            if (cause instanceof Exception) {
+                throw (Exception) cause;
+            }
+            if (cause instanceof Error) {
+                throw (Error) cause;
+            }
+            throw new RuntimeException(cause);
+        }
     }
 
     private static void processXplain(String line, IMind mind, ConsoleLineInput input) throws Exception {
