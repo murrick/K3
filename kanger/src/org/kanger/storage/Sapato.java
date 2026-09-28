@@ -147,8 +147,9 @@ public class Sapato implements IStep {
         }
     }
 
-    /** Physical link identity used to reconstruct chain endpoints on reopen. */
-    long getNextId() {
+    /** Physical link identity without resolving the target node. */
+    @Override
+    public long getNextId() {
         return next;
     }
 
