@@ -252,6 +252,14 @@ public class Rule implements IUnit<IRule>, IRule {
         this.originId = origin.getId();
     }
 
+    /**
+     * Restores the persistent origin Term ID without resolving the Term.
+     */
+    public void setPersistentOriginId(long originId) {
+        this.origin = null;
+        this.originId = originId;
+    }
+
     @Override
     public boolean isQuery() {
         return query;
@@ -461,6 +469,60 @@ public class Rule implements IUnit<IRule>, IRule {
 
     public void setVarIndex(int varIndex) {
         this.varIndex = varIndex;
+    }
+
+    /**
+     * Restores the persisted Rule flags without invoking runtime mutation guards.
+     */
+    public void setPersistentFlags(boolean query,
+                                   boolean generated,
+                                   boolean stored,
+                                   boolean substitutable,
+                                   boolean abstractive) {
+        this.query = query;
+        this.generated = generated;
+        this.stored = stored;
+        this.substitutable = substitutable;
+        this.abstractive = abstractive;
+    }
+
+    /**
+     * Returns the persistent Domain-ID tree without forcing Domain hydration.
+     *
+     * <p>If the tree is already materialized, its current IDs are authoritative;
+     * otherwise the unresolved treeIds loaded from storage are returned.</p>
+     */
+    public List<List<Long>> getPersistentTreeIds() {
+        List<List<Long>> result = new ArrayList<>();
+        if (!tree.isEmpty()) {
+            for (List<Domain> branch : tree) {
+                List<Long> ids = new ArrayList<>();
+                for (Domain domain : branch) {
+                    ids.add(domain.getId());
+                }
+                result.add(ids);
+            }
+        } else {
+            for (List<Long> branch : treeIds) {
+                result.add(new ArrayList<>(branch));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Restores the persistent Domain-ID tree without resolving any Domain.
+     */
+    public void setPersistentTreeIds(List<List<Long>> ids) {
+        if (ids == null) throw new NullPointerException("ids");
+        tree.clear();
+        treeIds.clear();
+        for (List<Long> branch : ids) {
+            if (branch == null) throw new NullPointerException("branch");
+            treeIds.add(new ArrayList<>(branch));
+        }
+        predicates.clear();
+        terms.clear();
     }
 
     @Override
