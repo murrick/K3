@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Qualification of Rule-v1 without eager Domain/Term/Rule hydration. */
+/** Qualification of Rule-v2 without eager Domain/Term/Rule hydration. */
 public class RuleAdapterTest {
 
     @Test
@@ -38,6 +38,10 @@ public class RuleAdapterTest {
         source.setPersistentTreeIds(Arrays.asList(
                 Arrays.asList(9101L, 9102L),
                 Arrays.asList(9103L)));
+        source.getPredicates().add(9201L);
+        source.getPredicates().add(9202L);
+        source.getTerms().add(9001L);
+        source.getTerms().add(9301L);
 
         Solve donor = new Solve();
         donor.setPersistentPredicateId(9201L);
@@ -78,6 +82,13 @@ public class RuleAdapterTest {
                 Arrays.asList(9101L, 9102L),
                 Arrays.asList(9103L)), tree);
 
+        assertEquals(
+                new java.util.HashSet<Long>(Arrays.asList(9201L, 9202L)),
+                restored.getPredicates());
+        assertEquals(
+                new java.util.HashSet<Long>(Arrays.asList(9001L, 9301L)),
+                restored.getTerms());
+
         assertEquals(1, restored.getCauses().size());
         Cause restoredCause = (Cause) restored.getCauses().iterator().next();
         assertEquals(9401L, restoredCause.getRuleId());
@@ -98,6 +109,8 @@ public class RuleAdapterTest {
         source.setPersistentOriginId(9501L);
         source.setPersistentTreeIds(Arrays.asList(
                 Arrays.asList(Long.MAX_VALUE, Long.MAX_VALUE - 1)));
+        source.getPredicates().add(777L);
+        source.getTerms().add(888L);
 
         StructuralValue projected = RuleAdapter.INSTANCE.project(source, mind);
         StructuralValue tree = projected.asStruct().get("tree");
@@ -107,6 +120,12 @@ public class RuleAdapterTest {
                 tree.asList().get(0).asList().get(0).getReferenceId());
         assertEquals(Long.MAX_VALUE - 1,
                 tree.asList().get(0).asList().get(1).getReferenceId());
+        assertEquals(777L,
+                projected.asStruct().get("predicateIndex").asList()
+                        .get(0).getReferenceId());
+        assertEquals(888L,
+                projected.asStruct().get("termIndex").asList()
+                        .get(0).getReferenceId());
     }
 
     @Test
