@@ -871,8 +871,38 @@ public final class CanonicalConsole {
          * module. The hidden command exists only when that developer/test plane is
          * present on the runtime class path.
          */
+        java.net.URLClassLoader developerLoader = null;
         try {
-            Class<?> runtime = Class.forName("org.kanger.IsolatedKangerTestRuntime");
+            Class<?> runtime;
+            try {
+                runtime = Class.forName("org.kanger.IsolatedKangerTestRuntime");
+            } catch (ClassNotFoundException missingFromRuntime) {
+                File directory = new File(System.getProperty("user.dir", "."))
+                        .getCanonicalFile();
+                File classes = null;
+                for (int depth = 0; depth < 5 && directory != null; ++depth) {
+                    File candidate = new File(directory,
+                            "kanger-qualification/target/test-classes");
+                    File marker = new File(candidate,
+                            "org/kanger/IsolatedKangerTestRuntime.class");
+                    if (marker.isFile()) {
+                        classes = candidate;
+                        break;
+                    }
+                    directory = directory.getParentFile();
+                }
+                if (classes == null) {
+                    throw missingFromRuntime;
+                }
+                developerLoader = new java.net.URLClassLoader(
+                        new java.net.URL[]{classes.toURI().toURL()},
+                        CanonicalConsole.class.getClassLoader());
+                runtime = Class.forName(
+                        "org.kanger.IsolatedKangerTestRuntime",
+                        true,
+                        developerLoader);
+            }
+
             java.lang.reflect.Method run =
                     runtime.getDeclaredMethod("run", String.class, boolean.class);
             run.setAccessible(true);
@@ -882,7 +912,7 @@ public final class CanonicalConsole {
             }
         } catch (ClassNotFoundException ex) {
             throw new CommandErrorException(
-                    "Console test runtime is unavailable in this build");
+                    "Console test runtime is unavailable; compile kanger-qualification first");
         } catch (java.lang.reflect.InvocationTargetException ex) {
             Throwable cause = ex.getCause();
             if (cause instanceof Exception) {
@@ -892,6 +922,10 @@ public final class CanonicalConsole {
                 throw (Error) cause;
             }
             throw new RuntimeException(cause);
+        } finally {
+            if (developerLoader != null) {
+                developerLoader.close();
+            }
         }
     }
 
