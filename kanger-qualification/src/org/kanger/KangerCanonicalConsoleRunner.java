@@ -64,6 +64,7 @@ public final class KangerCanonicalConsoleRunner {
                 + "sto u " + storageName + "\n"
                 + "tr\n"
                 + "tr st\n"
+                + "options test 01_01\n"
                 + "!consolecommitted;\n"
                 + "tr c\n"
                 + "?consolecommitted;\n"
@@ -132,8 +133,12 @@ public final class KangerCanonicalConsoleRunner {
 
         require(out.contains("Current storage: " + storageName),
                 "canonical storage use did not bind the requested storage");
+        require(out.contains("Visual test runtime: isolated database"),
+                "hidden options test did not run in an isolated database runtime");
+        require(out.contains("Testing: set_01_01"),
+                "hidden options test prefix did not select the historical test");
         require(out.contains("SUCCESS: Transaction committed"),
-                "canonical transaction commit did not commit storage baseline insertion");
+                "hidden options test disturbed the live Console transaction or commit");
         require(out.contains("Database " + storageName + " closed"),
                 "canonical storage close did not execute");
 
