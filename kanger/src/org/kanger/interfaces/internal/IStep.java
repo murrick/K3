@@ -107,6 +107,14 @@ public interface IStep {
     IStep getNext();
 
     /**
+     * Returns the persistent next-node ID without resolving or hydrating the
+     * target node.
+     *
+     * @return next node ID, or -1 when this node terminates the chain
+     */
+    long getNextId();
+
+    /**
      * Устанавливает следующий node linked representation.
      *
      * @param next следующий step или {@code null}
