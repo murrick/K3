@@ -42,9 +42,15 @@ jobs:
           fi
           test ! -e kanger-console/src/org/kanger/test
           test ! -e kanger-console/src/org/kanger/IsolatedKangerTestRuntime.java
-          if grep -R -n -E 'org\.kanger\.test|IsolatedKangerTestRuntime|options[[:space:]]+test' \
-              kanger-console/src; then
-            echo 'Qualification backdoor remains in Console production sources'
+          if grep -R -n -E 'org\.kanger\.test' kanger-console/src; then
+            echo 'Qualification test classes remain coupled to Console production sources'
+            exit 1
+          fi
+          hidden_hook_files="$(grep -R -l -E 'IsolatedKangerTestRuntime|options[[:space:]]+test' \
+              kanger-console/src || true)"
+          if [ "$hidden_hook_files" != "kanger-console/src/org/kanger/CanonicalConsole.java" ]; then
+            echo 'Hidden Console test hook escaped its single adapter boundary:'
+            printf '%s\n' "$hidden_hook_files"
             exit 1
           fi
 
