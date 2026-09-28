@@ -142,6 +142,14 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         this.nameId = name.getId();
     }
 
+    /**
+     * Restores the persistent name ID without resolving the Term.
+     */
+    public void setPersistentNameId(long nameId) {
+        this.name = null;
+        this.nameId = nameId;
+    }
+
     @Override
     public int getRange() {
         return range;
