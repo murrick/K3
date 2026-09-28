@@ -211,6 +211,16 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     }
 
     /**
+     * Restores persistent reference IDs without resolving their semantic objects.
+     */
+    public void setPersistentReferences(long valueId, long tVarId) {
+        this.value = null;
+        this.tVar = null;
+        this.valueId = valueId;
+        this.tVarId = tVarId;
+    }
+
+    /**
      * Формирует диагностическое представление подстановки в указанном Mind.
      * Формат зависит от debug options и не является persistence-протоколом.
      *
