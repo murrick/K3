@@ -23,7 +23,7 @@ import java.util.Map;
 public final class RuleAdapter implements KangerUnitAdapter<Rule> {
 
     public static final String TYPE_NAME = "RULE";
-    public static final String LAYOUT_NAME = "Rule-v1";
+    public static final String LAYOUT_NAME = "Rule-v2";
     public static final RuleAdapter INSTANCE = new RuleAdapter();
 
     private static final Descriptor DESCRIPTOR = Descriptor.struct(LAYOUT_NAME, Arrays.asList(
@@ -39,6 +39,10 @@ public final class RuleAdapter implements KangerUnitAdapter<Rule> {
             Descriptor.field("abstractive", Descriptor.BOOL),
             Descriptor.field("tree", Descriptor.list(
                     Descriptor.list(Descriptor.ref("domains")))),
+            Descriptor.field("predicateIndex",
+                    Descriptor.list(Descriptor.ref("predicates"))),
+            Descriptor.field("termIndex",
+                    Descriptor.list(Descriptor.ref("dictionary"))),
             Descriptor.field("causes", Descriptor.list(
                     CauseStructuralAdapter.DESCRIPTOR))));
 
@@ -58,6 +62,25 @@ public final class RuleAdapter implements KangerUnitAdapter<Rule> {
             for (Long id : branch)
                 ids.add(StructuralValue.ref("domains", id.longValue()));
             tree.add(StructuralValue.list(ids));
+        }
+
+        List<Long> predicateIds =
+                new ArrayList<Long>(value.getPredicates());
+        Collections.sort(predicateIds);
+        List<StructuralValue> predicateIndex =
+                new ArrayList<StructuralValue>(predicateIds.size());
+        for (Long predicateId : predicateIds) {
+            predicateIndex.add(StructuralValue.ref(
+                    "predicates", predicateId.longValue()));
+        }
+
+        List<Long> termIds = new ArrayList<Long>(value.getTerms());
+        Collections.sort(termIds);
+        List<StructuralValue> termIndex =
+                new ArrayList<StructuralValue>(termIds.size());
+        for (Long termId : termIds) {
+            termIndex.add(StructuralValue.ref(
+                    "dictionary", termId.longValue()));
         }
 
         List<Cause> causes = new ArrayList<Cause>();
@@ -87,6 +110,8 @@ public final class RuleAdapter implements KangerUnitAdapter<Rule> {
         fields.put("substitutable", StructuralValue.bool(value.isSubstitutable()));
         fields.put("abstractive", StructuralValue.bool(value.isAbstractive()));
         fields.put("tree", StructuralValue.list(tree));
+        fields.put("predicateIndex", StructuralValue.list(predicateIndex));
+        fields.put("termIndex", StructuralValue.list(termIndex));
         fields.put("causes", StructuralValue.list(causeValues));
         return StructuralValue.struct(fields);
     }
@@ -135,6 +160,30 @@ public final class RuleAdapter implements KangerUnitAdapter<Rule> {
             treeIds.add(branch);
         }
 
+        StructuralValue predicateIndexValue =
+                require(fields, "predicateIndex", StructuralValue.Kind.LIST);
+        List<Long> predicateIds = new ArrayList<Long>();
+        for (StructuralValue predicateRef : predicateIndexValue.asList()) {
+            if (predicateRef.getKind() != StructuralValue.Kind.REF
+                    || !"predicates".equals(predicateRef.getReferenceSchema())) {
+                throw new IOException(
+                        "RULE predicateIndex entry must be REF<predicates>");
+            }
+            predicateIds.add(predicateRef.getReferenceId());
+        }
+
+        StructuralValue termIndexValue =
+                require(fields, "termIndex", StructuralValue.Kind.LIST);
+        List<Long> termIds = new ArrayList<Long>();
+        for (StructuralValue termRef : termIndexValue.asList()) {
+            if (termRef.getKind() != StructuralValue.Kind.REF
+                    || !"dictionary".equals(termRef.getReferenceSchema())) {
+                throw new IOException(
+                        "RULE termIndex entry must be REF<dictionary>");
+            }
+            termIds.add(termRef.getReferenceId());
+        }
+
         StructuralValue causesValue =
                 require(fields, "causes", StructuralValue.Kind.LIST);
         List<Cause> causes = new ArrayList<Cause>();
@@ -152,6 +201,8 @@ public final class RuleAdapter implements KangerUnitAdapter<Rule> {
         result.setPersistentFlags(
                 query, generated, stored, substitutable, abstractive);
         result.setPersistentTreeIds(treeIds);
+        result.getPredicates().addAll(predicateIds);
+        result.getTerms().addAll(termIds);
         result.getCauses().clear();
         result.getCauses().addAll(causes);
         if (deleted) mind.setUnitDeleted(result, true);
