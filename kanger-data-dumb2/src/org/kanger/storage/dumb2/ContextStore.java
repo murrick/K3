@@ -61,6 +61,7 @@ final class ContextStore implements AutoCloseable {
             new LinkedHashMap<String, ContextBase>();
 
     private long revision;
+    private int publishedTypeCount;
     private boolean closed;
 
     private ContextStore(Path location,
@@ -73,6 +74,7 @@ final class ContextStore implements AutoCloseable {
         this.revision = revision;
         this.contextLock = contextLock;
         this.typeRegistry = typeRegistry;
+        this.publishedTypeCount = typeRegistry.size();
     }
 
     /**
@@ -169,7 +171,10 @@ final class ContextStore implements AutoCloseable {
             throws Exception {
         requireOpen();
         TypeDefinition definition = typeRegistry.register(typeName, descriptor);
-        ContextManifestStore.publish(contextPath(location), contextId, typeRegistry);
+        if (typeRegistry.size() != publishedTypeCount) {
+            ContextManifestStore.publish(contextPath(location), contextId, typeRegistry);
+            publishedTypeCount = typeRegistry.size();
+        }
         return definition;
     }
 
