@@ -63,6 +63,7 @@ public class Rule implements IUnit<IRule>, IRule {
     private List<TValue> solves = new ArrayList();
     private Set<Long> predicates = new HashSet<>();         // Список используемых предикатов
     private Set<Long> terms = new HashSet<>();              // Список используемых термов
+    private transient boolean persistentTermIndexComplete = false;
 
     private long originId = -1;
     private List<List<Long>> treeIds = new ArrayList<>();
@@ -525,6 +526,22 @@ public class Rule implements IUnit<IRule>, IRule {
         terms.clear();
     }
 
+    /**
+     * Restores complete persisted reference indexes without resolving any
+     * referenced semantic object.
+     */
+    public void setPersistentReferenceIndexes(Collection<Long> predicateIds,
+                                              Collection<Long> termIds) {
+        if (predicateIds == null || termIds == null) {
+            throw new NullPointerException();
+        }
+        predicates.clear();
+        predicates.addAll(predicateIds);
+        terms.clear();
+        terms.addAll(termIds);
+        persistentTermIndexComplete = true;
+    }
+
     @Override
     public boolean isRestored(IMind mind) {
         return ((Mind) mind).getRestored().containsKey(UnitType.RULE) && ((Mind) mind).getRestored().get(UnitType.RULE).contains(id);
@@ -695,11 +712,12 @@ public class Rule implements IUnit<IRule>, IRule {
 
     public boolean containsTerm(long id, Mind mind) throws Exception {
         /*
-         * DUMB2 restores this reference index directly, so ordinary cleanup
-         * and inference checks can stay at ID level. Legacy records do not
-         * carry the index and fall back to reconstructing it from the tree.
+         * A DUMB2 materialized Rule can answer from its complete persisted ID
+         * index while the Domain tree is still unresolved. Runtime-created and
+         * legacy-loaded Rules retain the historical reconstruction path. Once
+         * the tree is hydrated, that live tree is again authoritative.
          */
-        if (!terms.isEmpty()) {
+        if (persistentTermIndexComplete && tree.isEmpty()) {
             return terms.contains(id);
         }
         terms.add(originId);
