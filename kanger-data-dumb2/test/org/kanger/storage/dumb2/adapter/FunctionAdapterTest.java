@@ -36,8 +36,14 @@ public class FunctionAdapterTest {
         nested.setVarOrder(9);
         inputs.add(nested);
 
-        Function source = mind.getFunctions().add(name, inputs);
+        Function source = new Function(mind);
+        source.setId(47L);
+        source.setMindId(mind.getId());
+        source.setName(name);
+        source.setRange(2);
         source.setBinding(FunctionBinding.UDF_DYNAMIC);
+        source.getArguments().add(term);
+        source.getArguments().add(nested);
         source.getResult(); // prove the orchestration slot exists but is not persisted
 
         KangerAdapterRegistry adapters = new KangerAdapterRegistry();
