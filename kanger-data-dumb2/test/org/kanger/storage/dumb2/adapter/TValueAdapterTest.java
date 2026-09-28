@@ -10,13 +10,11 @@ import org.kanger.units.Rule;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
 
-import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /** First live KANGER Unit proof for the neutral DUMB2 persistent contract. */
 public class TValueAdapterTest {
@@ -53,16 +51,19 @@ public class TValueAdapterTest {
     }
 
     @Test
-    void missingReferencedUnitFailsExplicitly() throws Exception {
+    void missingReferencesRemainAsIdsUntilSemanticAccess() throws Exception {
         Mind mind = new Mind(new User());
         Map<String, StructuralValue> fields = new LinkedHashMap<String, StructuralValue>();
         fields.put("id", StructuralValue.int64(7L));
         fields.put("mindId", StructuralValue.int64(mind.getId()));
         fields.put("deleted", StructuralValue.bool(false));
         fields.put("value", StructuralValue.ref("dictionary", Long.MAX_VALUE));
-        fields.put("variable", StructuralValue.ref("tvariables", Long.MAX_VALUE));
+        fields.put("variable", StructuralValue.ref("tvariables", Long.MAX_VALUE - 1));
 
-        assertThrows(IOException.class,
-                () -> TValueAdapter.fromStructural(StructuralValue.struct(fields), mind));
+        TValue restored = TValueAdapter.fromStructural(
+                StructuralValue.struct(fields), mind);
+
+        assertEquals(Long.MAX_VALUE, restored.getValueId());
+        assertEquals(Long.MAX_VALUE - 1, restored.getTVarId());
     }
 }
