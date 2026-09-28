@@ -176,6 +176,15 @@ final class ContextBase implements IBase {
                 byte[] packed = new byte[length];
                 input.readFully(packed);
                 PersistentRecord record = PersistentRecordCodec.decode(packed);
+                try {
+                    owner.resolveType(record.getTypeCode());
+                } catch (IllegalArgumentException failure) {
+                    StorageLifecycleException invalid = corruption(
+                            "DUMB2 schema record references unpublished typeCode "
+                                    + record.getTypeCode() + " at " + path);
+                    invalid.addSuppressed(failure);
+                    throw invalid;
+                }
                 if (record.getId() != id) {
                     throw corruption("DUMB2 schema record id mismatch at " + path);
                 }
