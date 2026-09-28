@@ -261,8 +261,7 @@ final class ContextBase implements IBase {
         }
 
         records.put(Long.valueOf(one.getId()), packed);
-        nextId = Math.max(this.nextId, one.getId() + 1L);
-        this.nextId = nextId;
+        this.nextId = Math.max(this.nextId, one.getId() + 1L);
         dirty = true;
     }
 
