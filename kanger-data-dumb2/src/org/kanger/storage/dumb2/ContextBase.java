@@ -11,7 +11,6 @@ import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IStep;
-import org.kanger.storage.Sapato;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -32,10 +31,11 @@ import java.util.zip.CRC32;
 /**
  * Schema-local physical address space owned by one DUMB 2.0 Context.
  *
- * <p>The base deliberately reuses the core {@link Sapato} codec and the
- * existing {@link IBase} contract. Mutations change only the Context-owned
- * working image. They become durable only when {@link ContextStore#flush()}
- * publishes a complete next Context revision.</p>
+ * <p>The base keeps the existing {@link IBase} contract but owns a native
+ * self-describing DUMB2 record format. Record envelopes expose id/hash/next
+ * and Context-local typeCode without semantic hydration. Mutations change only
+ * the Context-owned working image and become durable only when
+ * {@link ContextStore#flush()} publishes a complete next Context revision.</p>
  *
  * <p>One immutable snapshot file contains the whole schema image for a
  * revision. This correctness-first representation removes the old acquisition
@@ -46,12 +46,13 @@ import java.util.zip.CRC32;
 final class ContextBase implements IBase {
 
     private static final int MAGIC = 0x4B334232; // K3B2
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
     private static final int CRC_SIZE = 4;
 
     private final ContextStore owner;
     private final String schema;
     private final TreeMap<Long, byte[]> records = new TreeMap<Long, byte[]>();
+    private final ContextRecordCodec recordCodec = new ContextRecordCodec();
 
     private long nextId;
     private boolean dirty;
@@ -174,8 +175,8 @@ final class ContextBase implements IBase {
                 }
                 byte[] packed = new byte[length];
                 input.readFully(packed);
-                StepHeader header = header(packed);
-                if (header.id != id) {
+                PersistentRecord record = PersistentRecordCodec.decode(packed);
+                if (record.getId() != id) {
                     throw corruption("DUMB2 schema record id mismatch at " + path);
                 }
                 if (records.put(Long.valueOf(id), packed) != null) {
@@ -216,16 +217,52 @@ final class ContextBase implements IBase {
     }
 
     private void put(IStep one) throws Exception {
-        if (one == null || one.getId() < 0L || one.pack() == null) {
-            throw new IllegalArgumentException("DUMB2 persistent step must have a non-negative id");
+        if (one == null || one.getId() < 0L) {
+            throw new IllegalArgumentException(
+                    "DUMB2 persistent step must have a non-negative id");
         }
-        byte[] packed = one.pack().getBuffer();
-        StepHeader header = header(packed);
-        if (header.id != one.getId()) {
-            throw corruption("DUMB2 packed step id differs from its operational id");
+
+        final long nextId;
+        if (one instanceof ContextStep) {
+            nextId = ((ContextStep) one).getNextId();
+        } else {
+            IStep next = one.getNext();
+            nextId = next == null ? -1L : next.getId();
         }
+
+        byte[] packed;
+        if (one instanceof ContextStep
+                && !((ContextStep) one).hasMaterializedData()) {
+            /*
+             * Link-only mutation of a lazy persistent step. Preserve the
+             * descriptor payload verbatim: changing next must not hydrate the
+             * semantic object graph.
+             */
+            packed = ((ContextStep) one).rawBytes();
+        } else {
+            Object data = one.getData();
+            if (data == null) {
+                throw new IllegalArgumentException(
+                        "DUMB2 persistent step has no attached payload");
+            }
+            packed = recordCodec.encode(
+                    owner, one.getId(), one.getHash(), nextId, data);
+            if (one instanceof ContextStep) {
+                ((ContextStep) one).replaceRecord(
+                        PersistentRecordCodec.decode(packed));
+            }
+        }
+
+        PersistentRecord record = PersistentRecordCodec.decode(packed);
+        if (record.getId() != one.getId()
+                || record.getHash() != one.getHash()
+                || record.getNextId() != nextId) {
+            throw corruption("DUMB2 packed record envelope differs from step state");
+        }
+
         records.put(Long.valueOf(one.getId()), packed);
-        nextId = Math.max(nextId, one.getId() + 1L);
+        nextId = Math.max(this.nextId, one.getId() + 1L);
+        this.nextId = nextId;
         dirty = true;
     }
 
@@ -237,12 +274,18 @@ final class ContextBase implements IBase {
     }
 
     private IStep decode(byte[] packed) throws Exception {
-        org.kanger.storage.ByteBuffer packet = new org.kanger.storage.ByteBuffer(packed);
-        packet.mark();
-        Sapato step = new Sapato(this);
-        step.apply(packet);
+        PersistentRecord record = PersistentRecordCodec.decode(packed);
+        ContextStep step = new ContextStep(this, record);
         step.setSize(packed.length);
         return step;
+    }
+
+    Object materialize(PersistentRecord record, Mind mind) throws Exception {
+        return recordCodec.decode(owner, record, mind);
+    }
+
+    boolean isNeutralPhysicalRecord(PersistentRecord record) {
+        return recordCodec.isPhysicalScalar(owner, record);
     }
 
     @Override
@@ -326,20 +369,22 @@ final class ContextBase implements IBase {
         Set<Long> referenced = new HashSet<Long>();
         TreeMap<Long, Long> nextById = new TreeMap<Long, Long>();
         for (Map.Entry<Long, byte[]> entry : records.entrySet()) {
-            StepHeader header = header(entry.getValue());
-            if (header.id != entry.getKey().longValue()) {
+            PersistentRecord record =
+                    PersistentRecordCodec.decode(entry.getValue());
+            if (record.getId() != entry.getKey().longValue()) {
                 throw corruption("DUMB2 schema key/id mismatch in " + schema);
             }
-            nextById.put(entry.getKey(), Long.valueOf(header.nextId));
-            if (header.nextId >= 0L) {
-                Long next = Long.valueOf(header.nextId);
+            nextById.put(entry.getKey(), Long.valueOf(record.getNextId()));
+            if (record.getNextId() >= 0L) {
+                Long next = Long.valueOf(record.getNextId());
                 if (!records.containsKey(next)) {
                     throw corruption("DUMB2 schema " + schema
-                            + " references missing next id " + header.nextId);
+                            + " references missing next id " + record.getNextId());
                 }
                 if (!referenced.add(next)) {
                     throw corruption("DUMB2 schema " + schema
-                            + " contains multiple predecessors for id " + header.nextId);
+                            + " contains multiple predecessors for id "
+                            + record.getNextId());
                 }
             }
         }
@@ -374,14 +419,6 @@ final class ContextBase implements IBase {
         return new long[]{root.longValue(), top.longValue()};
     }
 
-    private static StepHeader header(byte[] packed) throws Exception {
-        org.kanger.storage.ByteBuffer packet = new org.kanger.storage.ByteBuffer(packed);
-        packet.mark();
-        long id = packet.getLong();
-        packet.getInt();
-        long next = packet.getLong();
-        return new StepHeader(id, next);
-    }
 
     @Override
     public String getName() {
@@ -438,13 +475,5 @@ final class ContextBase implements IBase {
                 StorageLifecycleErrorCode.STORAGE_SEMANTIC_CORRUPTION, message);
     }
 
-    private static final class StepHeader {
-        private final long id;
-        private final long nextId;
 
-        private StepHeader(long id, long nextId) {
-            this.id = id;
-            this.nextId = nextId;
-        }
-    }
 }
