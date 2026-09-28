@@ -2,8 +2,6 @@ package org.kanger.storage.dumb2.adapter;
 
 import org.kanger.Mind;
 import org.kanger.enums.UnitType;
-import org.kanger.interfaces.IRule;
-import org.kanger.interfaces.ITerm;
 import org.kanger.storage.dumb2.descriptor.Descriptor;
 import org.kanger.storage.dumb2.descriptor.StructuralValue;
 import org.kanger.units.TVariable;
@@ -78,25 +76,14 @@ public final class TVariableAdapter implements KangerUnitAdapter<TVariable> {
         requireReference(name, "dictionary");
         requireReference(rule, "rules");
 
-        ITerm nameTerm = mind.getTerms().get(name.getReferenceId());
-        if (nameTerm == null) {
-            throw new IOException("TVARIABLE references missing dictionary id="
-                    + name.getReferenceId());
-        }
-        IRule ownerRule = mind.getRules().get(rule.getReferenceId());
-        if (ownerRule == null) {
-            throw new IOException("TVARIABLE references missing rules id="
-                    + rule.getReferenceId());
-        }
-
         TVariable result = new TVariable(mind);
         result.setId(id);
         result.setMindId(mindId);
-        result.setName(nameTerm);
+        result.setPersistentReferences(
+                name.getReferenceId(), rule.getReferenceId());
         result.setIndex(
                 require(fields, "index", StructuralValue.Kind.INT32).asInt32());
-        result.setRule(ownerRule);
-        if (deleted) result.setDeleted(true, mind);
+        if (deleted) mind.setUnitDeleted(result, true);
         return result;
     }
 
