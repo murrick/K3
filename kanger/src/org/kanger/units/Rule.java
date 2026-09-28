@@ -694,6 +694,14 @@ public class Rule implements IUnit<IRule>, IRule {
     }
 
     public boolean containsTerm(long id, Mind mind) throws Exception {
+        /*
+         * DUMB2 restores this reference index directly, so ordinary cleanup
+         * and inference checks can stay at ID level. Legacy records do not
+         * carry the index and fall back to reconstructing it from the tree.
+         */
+        if (!terms.isEmpty()) {
+            return terms.contains(id);
+        }
         terms.add(originId);
         for (List<Domain> row : getTree()) {
             for (Domain d : row) {
