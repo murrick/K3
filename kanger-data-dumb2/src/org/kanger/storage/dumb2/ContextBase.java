@@ -117,6 +117,52 @@ final class ContextBase implements IBase {
         }
     }
 
+    /**
+     * Reads only the self-identifying schema header from one snapshot.
+     *
+     * <p>The complete snapshot is subsequently validated by the normal
+     * ContextBase loader. This helper exists so ContextStore can inventory the
+     * whole visible generation without knowing acquisition order or hydrating
+     * semantic records.</p>
+     */
+    static String readStoredSchema(Path path)
+            throws IOException, StorageLifecycleException {
+        byte[] packet = Files.readAllBytes(path);
+        if (packet.length < 4 * 5 + 8 * 2 + CRC_SIZE) {
+            throw corruption("DUMB2 schema snapshot is truncated: " + path);
+        }
+
+        int bodyLength = packet.length - CRC_SIZE;
+        CRC32 crc = new CRC32();
+        crc.update(packet, 0, bodyLength);
+        int storedCrc = java.nio.ByteBuffer.wrap(
+                packet, bodyLength, CRC_SIZE).getInt();
+        if (((int) crc.getValue()) != storedCrc) {
+            throw corruption(
+                    "DUMB2 schema snapshot checksum mismatch: " + path);
+        }
+
+        try (DataInputStream input = new DataInputStream(
+                new ByteArrayInputStream(packet, 0, bodyLength))) {
+            int magic = input.readInt();
+            int version = input.readInt();
+            if (magic != MAGIC || version != VERSION) {
+                throw new StorageLifecycleException(
+                        StorageLifecycleErrorCode.STORAGE_FORMAT_INCOMPATIBLE,
+                        "Unsupported DUMB2 schema snapshot format at " + path);
+            }
+
+            int schemaLength = input.readInt();
+            if (schemaLength < 0 || schemaLength > input.available()) {
+                throw corruption(
+                        "Invalid DUMB2 schema descriptor length at " + path);
+            }
+            byte[] schemaBytes = new byte[schemaLength];
+            input.readFully(schemaBytes);
+            return new String(schemaBytes, StandardCharsets.UTF_8);
+        }
+    }
+
     private void load(Path path) throws Exception {
         if (!Files.exists(path)) {
             nextId = 0L;
