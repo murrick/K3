@@ -56,6 +56,8 @@ public final class RuleAdapter implements KangerUnitAdapter<Rule> {
     public StructuralValue project(Rule value, Mind mind) throws Exception {
         if (value == null || mind == null) throw new NullPointerException();
 
+        value.ensurePersistentReferenceIndexes(mind);
+
         List<StructuralValue> tree = new ArrayList<StructuralValue>();
         for (List<Long> branch : value.getPersistentTreeIds()) {
             List<StructuralValue> ids = new ArrayList<StructuralValue>();
