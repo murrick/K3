@@ -38,10 +38,9 @@ public class RuleAdapterTest {
         source.setPersistentTreeIds(Arrays.asList(
                 Arrays.asList(9101L, 9102L),
                 Arrays.asList(9103L)));
-        source.getPredicates().add(9201L);
-        source.getPredicates().add(9202L);
-        source.getTerms().add(9001L);
-        source.getTerms().add(9301L);
+        source.setPersistentReferenceIndexes(
+                Arrays.asList(9201L, 9202L),
+                Arrays.asList(9001L, 9301L));
 
         Solve donor = new Solve();
         donor.setPersistentPredicateId(9201L);
@@ -109,8 +108,9 @@ public class RuleAdapterTest {
         source.setPersistentOriginId(9501L);
         source.setPersistentTreeIds(Arrays.asList(
                 Arrays.asList(Long.MAX_VALUE, Long.MAX_VALUE - 1)));
-        source.getPredicates().add(777L);
-        source.getTerms().add(888L);
+        source.setPersistentReferenceIndexes(
+                Arrays.asList(777L),
+                Arrays.asList(888L, 9501L));
 
         StructuralValue projected = RuleAdapter.INSTANCE.project(source, mind);
         StructuralValue tree = projected.asStruct().get("tree");
