@@ -245,6 +245,15 @@ final class ContextStore implements AutoCloseable {
                             + revision + " actual=" + persisted);
         }
 
+        /*
+         * R is the only source allowed to seed R+1. Revalidate its complete
+         * physical image before copying anything so an out-of-band corruption
+         * cannot be silently promoted into a newly published generation.
+         */
+        if (revision > RevisionStore.INITIAL_REVISION) {
+            validatePublishedGeneration();
+        }
+
         long next = revision + 1L;
         Path root = stateRoot(location);
         Path previous = generationPath(location, revision);
@@ -392,6 +401,7 @@ final class ContextStore implements AutoCloseable {
     private void validatePublishedGeneration()
             throws IOException, StorageLifecycleException {
         Path generation = generationPath(location, revision);
+        int baseCount = 0;
         try (DirectoryStream<Path> stream =
                      Files.newDirectoryStream(generation)) {
             for (Path child : stream) {
@@ -403,6 +413,7 @@ final class ContextStore implements AutoCloseable {
                                     + child);
                 }
 
+                ++baseCount;
                 String schema = ContextBase.readStoredSchema(child);
                 Path canonical = schemaPath(generation, schema);
                 if (!canonical.equals(child)) {
@@ -429,6 +440,11 @@ final class ContextStore implements AutoCloseable {
                     }
                 }
             }
+        }
+        if (baseCount == 0) {
+            throw corruption(
+                    "Published DUMB2 revision " + revision
+                            + " contains no schema snapshots at " + generation);
         }
     }
 
