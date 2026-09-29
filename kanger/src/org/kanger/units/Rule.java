@@ -452,6 +452,39 @@ public class Rule implements IUnit<IRule>, IRule {
         return terms;
     }
 
+    /**
+     * Ensures the Rule-v2 reference indexes are complete before canonical
+     * persistence.
+     *
+     * <p>A Rule restored from Rule-v2 already carries complete ID indexes and
+     * stays lazy. Older layouts have no such indexes; canonicalization is then
+     * allowed to hydrate the Domain tree once and derive the latest persistent
+     * acceleration state.</p>
+     */
+    public void ensurePersistentReferenceIndexes(Mind activeMind)
+            throws Exception {
+        if (activeMind == null) {
+            throw new NullPointerException("activeMind");
+        }
+        if (persistentTermIndexComplete && tree.isEmpty()) {
+            return;
+        }
+
+        Set<Long> predicateIds = new HashSet<>();
+        Set<Long> termIds = new HashSet<>();
+        if (originId >= 0L) {
+            termIds.add(originId);
+        }
+
+        for (List<Domain> branch : getTree()) {
+            for (Domain domain : branch) {
+                predicateIds.add(domain.getPredicateId());
+                termIds.addAll(domain.getTerms(activeMind, true));
+            }
+        }
+        setPersistentReferenceIndexes(predicateIds, termIds);
+    }
+
     @Override
     public int hashCode() {
         int hash = 3;
@@ -524,6 +557,7 @@ public class Rule implements IUnit<IRule>, IRule {
         }
         predicates.clear();
         terms.clear();
+        persistentTermIndexComplete = false;
     }
 
     /**
