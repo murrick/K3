@@ -206,7 +206,7 @@ public class MixedLayoutContextTest {
         Predicate oldPredicate =
                 mind.getPredicates().add(oldPredicateName, 1);
         ArgumentsList oldArguments = new ArgumentsList();
-        oldArguments.add(new Argument(oldPayload));
+        oldArguments.add(new Argument((org.kanger.interfaces.ITerm) oldPayload));
         Domain oldDomain = mind.getDomains().add(
                 oldPredicate, false, oldArguments, oldRule);
         oldRule.setPersistentTreeIds(Collections.singletonList(
@@ -227,7 +227,7 @@ public class MixedLayoutContextTest {
         Predicate currentPredicate =
                 mind.getPredicates().add(currentPredicateName, 1);
         ArgumentsList currentArguments = new ArgumentsList();
-        currentArguments.add(new Argument(currentPayload));
+        currentArguments.add(new Argument((org.kanger.interfaces.ITerm) currentPayload));
         Domain currentDomain = mind.getDomains().add(
                 currentPredicate, false, currentArguments, currentRule);
         currentRule.setPersistentTreeIds(Collections.singletonList(
