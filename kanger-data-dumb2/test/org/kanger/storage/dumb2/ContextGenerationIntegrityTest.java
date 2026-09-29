@@ -59,6 +59,63 @@ public class ContextGenerationIntegrityTest {
     }
 
     @Test
+    void corruptedPublishedSourceCannotBePromotedIntoNextGeneration()
+            throws Exception {
+        Path location = root.resolve("corrupted-source");
+
+        ContextStore context = ContextStore.create(location);
+        Path untouchedSnapshot = null;
+        byte[] preservedUntouched = null;
+        try {
+            IBase changed = context.getBase("changed");
+            changed.add(step(0L, 51, Long.valueOf(500L), null));
+
+            IBase untouched = context.getBase("untouched");
+            untouched.add(step(0L, 52, Long.valueOf(600L), null));
+
+            assertEquals(1L, context.flush());
+
+            untouchedSnapshot = ContextStore.generationPath(location, 1L)
+                    .resolve("untouched.base");
+            preservedUntouched = Files.readAllBytes(untouchedSnapshot);
+
+            // The Context is still exclusively open, but simulate external
+            // disk damage after R was published.
+            byte[] damaged = preservedUntouched.clone();
+            damaged[damaged.length / 2] ^= 0x01;
+            Files.write(untouchedSnapshot, damaged);
+
+            Step previous = new Step();
+            previous.setId(0L);
+            previous.setHash(51);
+            previous.setData(Long.valueOf(500L));
+            changed.add(step(1L, 53, Long.valueOf(501L), previous));
+
+            StorageLifecycleException failure = assertThrows(
+                    StorageLifecycleException.class, context::flush);
+            assertEquals(StorageLifecycleErrorCode.STORAGE_SEMANTIC_CORRUPTION,
+                    failure.getErrorCode());
+            assertEquals(1L, context.getRevision());
+            assertEquals(1L, RevisionStore.read(
+                    ContextStore.revisionPath(location)));
+            assertFalse(Files.exists(
+                    ContextStore.generationPath(location, 2L)));
+
+            // Restore the already-published source only so close/retry can
+            // complete and release lifecycle resources cleanly.
+            Files.write(untouchedSnapshot, preservedUntouched);
+            assertEquals(2L, context.flush());
+        } finally {
+            if (untouchedSnapshot != null && preservedUntouched != null
+                    && Files.exists(untouchedSnapshot)) {
+                // harmless if already restored; protects cleanup on assertion failure
+                Files.write(untouchedSnapshot, preservedUntouched);
+            }
+            context.close();
+        }
+    }
+
+    @Test
     void unpublishedNextGenerationIsInvisibleAndRebuiltOnRetry()
             throws Exception {
         Path location = root.resolve("orphan-next-generation");
