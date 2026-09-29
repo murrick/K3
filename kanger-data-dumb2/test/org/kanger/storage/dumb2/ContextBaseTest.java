@@ -104,7 +104,7 @@ public class ContextBaseTest {
     }
 
     @Test
-    void schemaSnapshotChecksumFailureIsDetectedOnAcquisition() throws Exception {
+    void schemaSnapshotChecksumFailureIsDetectedDuringContextOpen() throws Exception {
         Path location = root.resolve("damaged-base");
         ContextStore context = ContextStore.create(location);
         IBase base = context.getBase("terms");
@@ -118,16 +118,11 @@ public class ContextBaseTest {
         bytes[bytes.length / 2] ^= 0x01;
         Files.write(snapshot, bytes);
 
-        ContextStore reopened = ContextStore.open(location);
-        try {
-            StorageLifecycleException failure = assertThrows(
-                    StorageLifecycleException.class,
-                    () -> reopened.getBase("terms"));
-            assertEquals(StorageLifecycleErrorCode.STORAGE_SEMANTIC_CORRUPTION,
-                    failure.getErrorCode());
-        } finally {
-            reopened.close();
-        }
+        StorageLifecycleException failure = assertThrows(
+                StorageLifecycleException.class,
+                () -> ContextStore.open(location));
+        assertEquals(StorageLifecycleErrorCode.STORAGE_SEMANTIC_CORRUPTION,
+                failure.getErrorCode());
     }
 
     private static Sapato step(IBase base,
