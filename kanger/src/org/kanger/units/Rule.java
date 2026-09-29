@@ -63,6 +63,7 @@ public class Rule implements IUnit<IRule>, IRule {
     private List<TValue> solves = new ArrayList();
     private Set<Long> predicates = new HashSet<>();         // Список используемых предикатов
     private Set<Long> terms = new HashSet<>();              // Список используемых термов
+    private transient boolean persistentTermIndexComplete = false;
 
     private long originId = -1;
     private List<List<Long>> treeIds = new ArrayList<>();
@@ -250,6 +251,14 @@ public class Rule implements IUnit<IRule>, IRule {
     public void setOrigin(ITerm origin) {
         this.origin = origin;
         this.originId = origin.getId();
+    }
+
+    /**
+     * Restores the persistent origin Term ID without resolving the Term.
+     */
+    public void setPersistentOriginId(long originId) {
+        this.origin = null;
+        this.originId = originId;
     }
 
     @Override
@@ -443,6 +452,39 @@ public class Rule implements IUnit<IRule>, IRule {
         return terms;
     }
 
+    /**
+     * Ensures the Rule-v2 reference indexes are complete before canonical
+     * persistence.
+     *
+     * <p>A Rule restored from Rule-v2 already carries complete ID indexes and
+     * stays lazy. Older layouts have no such indexes; canonicalization is then
+     * allowed to hydrate the Domain tree once and derive the latest persistent
+     * acceleration state.</p>
+     */
+    public void ensurePersistentReferenceIndexes(Mind activeMind)
+            throws Exception {
+        if (activeMind == null) {
+            throw new NullPointerException("activeMind");
+        }
+        if (persistentTermIndexComplete && tree.isEmpty()) {
+            return;
+        }
+
+        Set<Long> predicateIds = new HashSet<>();
+        Set<Long> termIds = new HashSet<>();
+        if (originId >= 0L) {
+            termIds.add(originId);
+        }
+
+        for (List<Domain> branch : getTree()) {
+            for (Domain domain : branch) {
+                predicateIds.add(domain.getPredicateId());
+                termIds.addAll(domain.getTerms(activeMind, true));
+            }
+        }
+        setPersistentReferenceIndexes(predicateIds, termIds);
+    }
+
     @Override
     public int hashCode() {
         int hash = 3;
@@ -461,6 +503,77 @@ public class Rule implements IUnit<IRule>, IRule {
 
     public void setVarIndex(int varIndex) {
         this.varIndex = varIndex;
+    }
+
+    /**
+     * Restores the persisted Rule flags without invoking runtime mutation guards.
+     */
+    public void setPersistentFlags(boolean query,
+                                   boolean generated,
+                                   boolean stored,
+                                   boolean substitutable,
+                                   boolean abstractive) {
+        this.query = query;
+        this.generated = generated;
+        this.stored = stored;
+        this.substitutable = substitutable;
+        this.abstractive = abstractive;
+    }
+
+    /**
+     * Returns the persistent Domain-ID tree without forcing Domain hydration.
+     *
+     * <p>If the tree is already materialized, its current IDs are authoritative;
+     * otherwise the unresolved treeIds loaded from storage are returned.</p>
+     */
+    public List<List<Long>> getPersistentTreeIds() {
+        List<List<Long>> result = new ArrayList<>();
+        if (!tree.isEmpty()) {
+            for (List<Domain> branch : tree) {
+                List<Long> ids = new ArrayList<>();
+                for (Domain domain : branch) {
+                    ids.add(domain.getId());
+                }
+                result.add(ids);
+            }
+        } else {
+            for (List<Long> branch : treeIds) {
+                result.add(new ArrayList<>(branch));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Restores the persistent Domain-ID tree without resolving any Domain.
+     */
+    public void setPersistentTreeIds(List<List<Long>> ids) {
+        if (ids == null) throw new NullPointerException("ids");
+        tree.clear();
+        treeIds.clear();
+        for (List<Long> branch : ids) {
+            if (branch == null) throw new NullPointerException("branch");
+            treeIds.add(new ArrayList<>(branch));
+        }
+        predicates.clear();
+        terms.clear();
+        persistentTermIndexComplete = false;
+    }
+
+    /**
+     * Restores complete persisted reference indexes without resolving any
+     * referenced semantic object.
+     */
+    public void setPersistentReferenceIndexes(Collection<Long> predicateIds,
+                                              Collection<Long> termIds) {
+        if (predicateIds == null || termIds == null) {
+            throw new NullPointerException();
+        }
+        predicates.clear();
+        predicates.addAll(predicateIds);
+        terms.clear();
+        terms.addAll(termIds);
+        persistentTermIndexComplete = true;
     }
 
     @Override
@@ -632,6 +745,15 @@ public class Rule implements IUnit<IRule>, IRule {
     }
 
     public boolean containsTerm(long id, Mind mind) throws Exception {
+        /*
+         * A DUMB2 materialized Rule can answer from its complete persisted ID
+         * index while the Domain tree is still unresolved. Runtime-created and
+         * legacy-loaded Rules retain the historical reconstruction path. Once
+         * the tree is hydrated, that live tree is again authoritative.
+         */
+        if (persistentTermIndexComplete && tree.isEmpty()) {
+            return terms.contains(id);
+        }
         terms.add(originId);
         for (List<Domain> row : getTree()) {
             for (Domain d : row) {

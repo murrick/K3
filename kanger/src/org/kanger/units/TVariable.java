@@ -247,6 +247,16 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
         this.ruleId = rule.getId();
     }
 
+    /**
+     * Restores persistent name/owner IDs without resolving either semantic object.
+     */
+    public void setPersistentReferences(long nameId, long ruleId) {
+        this.name = null;
+        this.rule = null;
+        this.nameId = nameId;
+        this.ruleId = ruleId;
+    }
+
     public String getVarName(Mind mind) throws Exception {
         switch (mind.getDebugLevel() & 0x00FF) {
             case Enums.DEBUG_LEVEL_DEBUG:

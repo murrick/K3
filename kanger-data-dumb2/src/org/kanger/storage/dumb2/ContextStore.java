@@ -8,6 +8,9 @@ package org.kanger.storage.dumb2;
 import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.internal.IBase;
+import org.kanger.storage.dumb2.descriptor.Descriptor;
+import org.kanger.storage.dumb2.descriptor.TypeDefinition;
+import org.kanger.storage.dumb2.descriptor.TypeRegistry;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -53,20 +56,25 @@ final class ContextStore implements AutoCloseable {
     private final Path location;
     private final UUID contextId;
     private final ContextLock contextLock;
+    private final TypeRegistry typeRegistry;
     private final Map<String, ContextBase> bases =
             new LinkedHashMap<String, ContextBase>();
 
     private long revision;
+    private int publishedTypeCount;
     private boolean closed;
 
     private ContextStore(Path location,
                          UUID contextId,
                          long revision,
-                         ContextLock contextLock) {
+                         ContextLock contextLock,
+                         TypeRegistry typeRegistry) {
         this.location = location;
         this.contextId = contextId;
         this.revision = revision;
         this.contextLock = contextLock;
+        this.typeRegistry = typeRegistry;
+        this.publishedTypeCount = typeRegistry.size();
     }
 
     /**
@@ -81,7 +89,8 @@ final class ContextStore implements AutoCloseable {
         Path contextPath = contextPath(normalized);
         Path revisionPath = revisionPath(normalized);
 
-        UUID contextId = ContextIdStore.create(contextPath);
+        ContextManifestStore.Manifest manifest = ContextManifestStore.create(contextPath);
+        UUID contextId = manifest.getContextId();
         long revision;
         try {
             revision = RevisionStore.create(revisionPath);
@@ -97,7 +106,7 @@ final class ContextStore implements AutoCloseable {
         ContextLock lock = null;
         try {
             lock = acquireLock(normalized);
-            return new ContextStore(normalized, contextId, revision, lock);
+            return new ContextStore(normalized, contextId, revision, lock, manifest.getTypeRegistry());
         } catch (IOException | StorageLifecycleException
                  | RuntimeException | Error failure) {
             closeQuietly(lock, failure);
@@ -129,14 +138,21 @@ final class ContextStore implements AutoCloseable {
 
         ContextLock lock = acquireLock(normalized);
         try {
-            UUID contextId = ContextIdStore.read(contextPath);
+            ContextManifestStore.Manifest manifest = ContextManifestStore.read(contextPath);
+            UUID contextId = manifest.getContextId();
             long revision = RevisionStore.read(revisionPath);
             if (revision > RevisionStore.INITIAL_REVISION
                     && !Files.isDirectory(generationPath(normalized, revision))) {
                 throw corruption("DUMB2 Context revision " + revision
                         + " has no physical generation at " + normalized);
             }
-            return new ContextStore(normalized, contextId, revision, lock);
+            ContextStore store = new ContextStore(
+                    normalized, contextId, revision, lock,
+                    manifest.getTypeRegistry());
+            if (revision > RevisionStore.INITIAL_REVISION) {
+                store.validatePublishedGeneration();
+            }
+            return store;
         } catch (NoSuchFileException failure) {
             StorageLifecycleException incomplete = incomplete(normalized);
             incomplete.addSuppressed(failure);
@@ -147,6 +163,41 @@ final class ContextStore implements AutoCloseable {
             closeQuietly(lock, failure);
             throw failure;
         }
+    }
+
+    /**
+     * Registers a persistent layout in this Context and publishes the manifest
+     * before returning its Context-local typeCode.
+     *
+     * <p>The in-memory registry is append-only. If manifest publication fails,
+     * the call fails and no record may use the returned definition; retrying
+     * the same registration republishes the same immutable code.</p>
+     */
+    synchronized TypeDefinition registerType(String typeName, Descriptor descriptor)
+            throws Exception {
+        requireOpen();
+        TypeDefinition definition = typeRegistry.register(typeName, descriptor);
+        if (typeRegistry.size() != publishedTypeCount) {
+            ContextManifestStore.publish(contextPath(location), contextId, typeRegistry);
+            publishedTypeCount = typeRegistry.size();
+        }
+        return definition;
+    }
+
+    synchronized TypeDefinition resolveType(int typeCode) {
+        requireOpen();
+        return typeRegistry.resolve(typeCode);
+    }
+
+    synchronized TypeRegistry snapshotTypeRegistry() {
+        requireOpen();
+        TypeRegistry snapshot = new TypeRegistry();
+        for (TypeDefinition definition : typeRegistry.definitions()) {
+            snapshot.install(definition.getTypeCode(),
+                    definition.getTypeName(),
+                    definition.getDescriptor());
+        }
+        return snapshot;
     }
 
     synchronized IBase getBase(String schema) throws Exception {
@@ -192,6 +243,15 @@ final class ContextStore implements AutoCloseable {
             throw new IllegalStateException(
                     "DUMB2 Context revision changed while open: expected="
                             + revision + " actual=" + persisted);
+        }
+
+        /*
+         * R is the only source allowed to seed R+1. Revalidate its complete
+         * physical image before copying anything so an out-of-band corruption
+         * cannot be silently promoted into a newly published generation.
+         */
+        if (revision > RevisionStore.INITIAL_REVISION) {
+            validatePublishedGeneration();
         }
 
         long next = revision + 1L;
@@ -330,6 +390,62 @@ final class ContextStore implements AutoCloseable {
 
     static Path generationPath(Path location, long revision) {
         return stateRoot(location).resolve("revision-" + revision);
+    }
+
+    /**
+     * Validates the complete visible physical generation without semantic
+     * hydration. A Context is not considered openable when any published base
+     * is malformed, misnamed, disconnected, or references a typeCode absent
+     * from the published manifest.
+     */
+    private void validatePublishedGeneration()
+            throws IOException, StorageLifecycleException {
+        Path generation = generationPath(location, revision);
+        int baseCount = 0;
+        try (DirectoryStream<Path> stream =
+                     Files.newDirectoryStream(generation)) {
+            for (Path child : stream) {
+                if (!Files.isRegularFile(
+                        child, LinkOption.NOFOLLOW_LINKS)
+                        || !child.getFileName().toString().endsWith(".base")) {
+                    throw corruption(
+                            "Unexpected entry in published DUMB2 generation "
+                                    + child);
+                }
+
+                ++baseCount;
+                String schema = ContextBase.readStoredSchema(child);
+                Path canonical = schemaPath(generation, schema);
+                if (!canonical.equals(child)) {
+                    throw corruption(
+                            "DUMB2 schema snapshot path does not match "
+                                    + "its stored descriptor: " + child);
+                }
+
+                ContextBase probe = null;
+                try {
+                    probe = new ContextBase(this, schema);
+                } catch (StorageLifecycleException failure) {
+                    throw failure;
+                } catch (IOException failure) {
+                    throw failure;
+                } catch (Exception failure) {
+                    StorageLifecycleException invalid = corruption(
+                            "Cannot validate published DUMB2 schema " + child);
+                    invalid.addSuppressed(failure);
+                    throw invalid;
+                } finally {
+                    if (probe != null) {
+                        probe.closeFromOwner();
+                    }
+                }
+            }
+        }
+        if (baseCount == 0) {
+            throw corruption(
+                    "Published DUMB2 revision " + revision
+                            + " contains no schema snapshots at " + generation);
+        }
     }
 
     private static Path lockPath(Path location) {

@@ -10,14 +10,20 @@ import org.junit.jupiter.api.io.TempDir;
 import org.kanger.Mind;
 import org.kanger.User;
 import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.interfaces.internal.IStep;
+import org.kanger.storage.dumb2.descriptor.TypeDefinition;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -80,6 +86,45 @@ public class ContextRuntimeLifecycleTest {
         assertTrue(db.isClosed());
         assertEquals(2L, RevisionStore.read(
                 ContextStore.revisionPath(databaseDir.resolve("runtime"))));
+
+        /*
+         * Inspect the runtime-produced Context below Mind/User before semantic
+         * reopen. The manifest must already describe every record type, and a
+         * persistent semantic node must expose its physical envelope without
+         * hydrating the Rule graph.
+         */
+        Path runtimeLocation = databaseDir.resolve("runtime");
+        ContextManifestStore.Manifest manifest = ContextManifestStore.read(
+                ContextStore.contextPath(runtimeLocation));
+        Set<String> typeNames = new HashSet<String>();
+        for (TypeDefinition definition :
+                manifest.getTypeRegistry().definitions()) {
+            typeNames.add(definition.getTypeName());
+        }
+        assertTrue(typeNames.contains("TERM"));
+        assertTrue(typeNames.contains("PREDICATE"));
+        assertTrue(typeNames.contains("DOMAIN"));
+        assertTrue(typeNames.contains("RULE"));
+
+        ContextStore physical = ContextStore.open(runtimeLocation);
+        try {
+            IBase ruleBase = physical.getBase("rules");
+            IStep rootRule = ruleBase.getRoot();
+            assertTrue(rootRule instanceof ContextStep);
+            ContextStep storedRule = (ContextStep) rootRule;
+            assertNull(storedRule.getData(),
+                    "Rule must remain unhydrated at physical reopen");
+            TypeDefinition storedRuleType = physical.resolveType(
+                    storedRule.getPersistentRecord().getTypeCode());
+            assertEquals("RULE", storedRuleType.getTypeName());
+            assertEquals("Rule-v2", storedRuleType.getDescriptor().getName());
+            assertTrue(storedRule.getId() >= 0L);
+            assertEquals(storedRule.getPersistentRecord().getHash(),
+                    storedRule.getHash(),
+                    "record envelope must expose hash without semantic hydration");
+        } finally {
+            physical.close();
+        }
 
         Mind reopened = (Mind) offline.useStorage("runtime");
         user.setCurrentMind(reopened);

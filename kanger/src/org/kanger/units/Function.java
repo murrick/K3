@@ -271,6 +271,15 @@ public class Function implements IUnit<Function> {
         return name;
     }
 
+    /**
+     * Restores the persistent name reference without resolving the Term.
+     * Used by descriptor-driven storage hydration; semantic resolution remains lazy.
+     */
+    public void setPersistentNameId(long nameId) {
+        this.name = null;
+        this.nameId = nameId;
+    }
+
     /** Sets the stable name reference of this definition. */
     public void setName(ITerm name) {
         this.name = name;

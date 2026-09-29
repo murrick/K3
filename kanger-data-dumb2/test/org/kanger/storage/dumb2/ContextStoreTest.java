@@ -145,9 +145,9 @@ public class ContextStoreTest {
     }
 
     @Test
-    void identityWithoutRevisionIsSemanticCorruption() throws Exception {
-        Path location = root.resolve("identity-only");
-        ContextIdStore.create(ContextStore.contextPath(location));
+    void manifestWithoutRevisionIsSemanticCorruption() throws Exception {
+        Path location = root.resolve("manifest-only");
+        ContextManifestStore.create(ContextStore.contextPath(location));
 
         StorageLifecycleException failure = assertThrows(
                 StorageLifecycleException.class,
@@ -158,7 +158,7 @@ public class ContextStoreTest {
     }
 
     @Test
-    void revisionWithoutIdentityIsSemanticCorruption() throws Exception {
+    void revisionWithoutManifestIsSemanticCorruption() throws Exception {
         Path location = root.resolve("revision-only");
         RevisionStore.create(ContextStore.revisionPath(location));
 

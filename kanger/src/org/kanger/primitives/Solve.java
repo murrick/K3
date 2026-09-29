@@ -75,6 +75,14 @@ public class Solve {
         this.range = predicate.getRange();
     }
 
+    /**
+     * Restores the persistent predicate ID without resolving the Predicate.
+     */
+    public void setPersistentPredicateId(long predicateId) {
+        this.predicate = null;
+        this.predicateId = predicateId;
+    }
+
     public ArgumentsList getArguments() {
         return arguments;
     }

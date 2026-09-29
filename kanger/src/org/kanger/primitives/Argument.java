@@ -237,6 +237,17 @@ public class Argument implements IArgument {
         return id;
     }
 
+    /**
+     * Restores the persistent argument reference without resolving it.
+     * DUMB2 uses this to preserve EMPTY and typed reference identity exactly.
+     */
+    public void setPersistentReference(long id, ArgumentType type) {
+        if (type == null) throw new NullPointerException("type");
+        this.o = null;
+        this.type = type;
+        this.id = type == ArgumentType.EMPTY ? -1 : id;
+    }
+
     @Override
     public ArgumentType getType() {
         return type;

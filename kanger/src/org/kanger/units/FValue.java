@@ -188,6 +188,16 @@ public class FValue implements IUnit<FValue> {
         this.functionId = function.getId();
     }
 
+    /**
+     * Restores persistent Function/result IDs without resolving either object.
+     */
+    public void setPersistentReferences(long functionId, long valueId) {
+        this.function = null;
+        this.value = null;
+        this.functionId = functionId;
+        this.valueId = valueId;
+    }
+
     private String formatParam(IArgument t, Mind mind) throws Exception {
         Parser.Op op = Parser.getOp(getFunction().getName(mind).toString(), getFunction().getRange());
         boolean isOp = op != null && op.getRange() == getFunction().getRange();
@@ -353,6 +363,24 @@ public class FValue implements IUnit<FValue> {
     /** @return operational ID of the represented Function */
     public long getFunctionId() {
         return functionId;
+    }
+
+    /** @return operational ID of the materialized result Term */
+    public long getValueId() {
+        return valueId;
+    }
+
+    /** @return defensive copy of the ordered persistent substitution stamp */
+    public List<Long> getStamp() {
+        return new ArrayList<Long>(stamp);
+    }
+
+    /** Replaces the ordered persistent substitution stamp during hydration. */
+    public void setStamp(List<Long> stamp) {
+        if (stamp == null) {
+            throw new NullPointerException("stamp");
+        }
+        this.stamp = new ArrayList<Long>(stamp);
     }
 
     @Override
