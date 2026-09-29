@@ -24,6 +24,50 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public final class KangerCrossContextPredicateProjectionTest {
 
     @Test
+    void equalHashPredicateBucketStillRequiresSemanticNameEquality() throws Exception {
+        String suffix = Long.toString(System.nanoTime());
+
+        User userA = (User) UserFactory.createUser(
+                "predicate-collision-a-" + suffix,
+                "predicate-collision-a-" + suffix);
+        new UDF().init(userA);
+        new DB().init(userA);
+        Mind a = (Mind) new Mind(userA).clearWorkspace();
+
+        User userB = (User) UserFactory.createUser(
+                "predicate-collision-b-" + suffix,
+                "predicate-collision-b-" + suffix);
+        new UDF().init(userB);
+        new DB().init(userB);
+        Mind b = (Mind) new Mind(userB).clearWorkspace();
+
+        Term aAa = (Term) a.getTerms().add("Aa");
+        Predicate aPredicate = a.getPredicates().add(aAa, 1);
+
+        // "Aa" and "BB" have the same Java String hash. With identical range
+        // they therefore deliberately share the Predicate candidate hash.
+        Term bBb = (Term) b.getTerms().add("BB");
+        Predicate bCollision = b.getPredicates().add(bBb, 1);
+        assertEquals(aPredicate.getHash(), bCollision.getHash(),
+                "fixture requires a real Predicate hash collision");
+        assertTrue(!aPredicate.equalsTo(bCollision),
+                "equal Predicate hash must not imply semantic identity");
+
+        int before = b.getPredicates().size();
+        assertNull(b.getPredicates().find(aAa, 1),
+                "Predicate hash collision must not resolve the wrong definition");
+        assertEquals(before, b.getPredicates().size(),
+                "collision miss must remain read-only");
+
+        Term bAa = (Term) b.getTerms().add("Aa");
+        Predicate bTwin = b.getPredicates().add(bAa, 1);
+        Predicate projected = b.getPredicates().find(aAa, 1);
+        assertNotNull(projected);
+        assertEquals(bTwin.getId(), projected.getId(),
+                "semantic equalsTo must select the B-local Predicate twin");
+    }
+
+    @Test
     void foreignPredicateNameResolvesOnlyToExistingTargetDefinition() throws Exception {
         String suffix = Long.toString(System.nanoTime());
 
