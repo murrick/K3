@@ -146,7 +146,13 @@ final class ContextStore implements AutoCloseable {
                 throw corruption("DUMB2 Context revision " + revision
                         + " has no physical generation at " + normalized);
             }
-            return new ContextStore(normalized, contextId, revision, lock, manifest.getTypeRegistry());
+            ContextStore store = new ContextStore(
+                    normalized, contextId, revision, lock,
+                    manifest.getTypeRegistry());
+            if (revision > RevisionStore.INITIAL_REVISION) {
+                store.validatePublishedGeneration();
+            }
+            return store;
         } catch (NoSuchFileException failure) {
             StorageLifecycleException incomplete = incomplete(normalized);
             incomplete.addSuppressed(failure);
@@ -375,6 +381,55 @@ final class ContextStore implements AutoCloseable {
 
     static Path generationPath(Path location, long revision) {
         return stateRoot(location).resolve("revision-" + revision);
+    }
+
+    /**
+     * Validates the complete visible physical generation without semantic
+     * hydration. A Context is not considered openable when any published base
+     * is malformed, misnamed, disconnected, or references a typeCode absent
+     * from the published manifest.
+     */
+    private void validatePublishedGeneration()
+            throws IOException, StorageLifecycleException {
+        Path generation = generationPath(location, revision);
+        try (DirectoryStream<Path> stream =
+                     Files.newDirectoryStream(generation)) {
+            for (Path child : stream) {
+                if (!Files.isRegularFile(
+                        child, LinkOption.NOFOLLOW_LINKS)
+                        || !child.getFileName().toString().endsWith(".base")) {
+                    throw corruption(
+                            "Unexpected entry in published DUMB2 generation "
+                                    + child);
+                }
+
+                String schema = ContextBase.readStoredSchema(child);
+                Path canonical = schemaPath(generation, schema);
+                if (!canonical.equals(child)) {
+                    throw corruption(
+                            "DUMB2 schema snapshot path does not match "
+                                    + "its stored descriptor: " + child);
+                }
+
+                ContextBase probe = null;
+                try {
+                    probe = new ContextBase(this, schema);
+                } catch (StorageLifecycleException failure) {
+                    throw failure;
+                } catch (IOException failure) {
+                    throw failure;
+                } catch (Exception failure) {
+                    StorageLifecycleException invalid = corruption(
+                            "Cannot validate published DUMB2 schema " + child);
+                    invalid.addSuppressed(failure);
+                    throw invalid;
+                } finally {
+                    if (probe != null) {
+                        probe.closeFromOwner();
+                    }
+                }
+            }
+        }
     }
 
     private static Path lockPath(Path location) {
