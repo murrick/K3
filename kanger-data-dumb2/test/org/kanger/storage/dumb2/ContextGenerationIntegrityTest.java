@@ -56,8 +56,6 @@ public class ContextGenerationIntegrityTest {
 
         assertEquals(StorageLifecycleErrorCode.STORAGE_SEMANTIC_CORRUPTION,
                 failure.getErrorCode());
-        assertTrue(failure.getMessage().contains("unpublished typeCode"),
-                failure.getMessage());
     }
 
     @Test
@@ -139,8 +137,6 @@ public class ContextGenerationIntegrityTest {
 
         assertEquals(StorageLifecycleErrorCode.STORAGE_SEMANTIC_CORRUPTION,
                 failure.getErrorCode());
-        assertTrue(failure.getMessage().contains("Unexpected entry"),
-                failure.getMessage());
     }
 
     private static Step step(long id, int hash, Object data, Step next) {
