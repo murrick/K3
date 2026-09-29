@@ -115,6 +115,61 @@ public class ContextGenerationIntegrityTest {
     }
 
     @Test
+    void unopenedSchemaIsCopiedForwardByteForByteIntoNextGeneration()
+            throws Exception {
+        Path location = root.resolve("carry-forward");
+
+        ContextStore created = ContextStore.create(location);
+        try {
+            IBase changed = created.getBase("changed");
+            changed.add(step(0L, 41, Long.valueOf(100L), null));
+
+            IBase untouched = created.getBase("untouched");
+            untouched.add(step(0L, 42, Long.valueOf(200L), null));
+
+            assertEquals(1L, created.flush());
+        } finally {
+            created.close();
+        }
+
+        Path revisionOneUntouched = ContextStore.generationPath(location, 1L)
+                .resolve("untouched.base");
+        byte[] originalUntouched = Files.readAllBytes(revisionOneUntouched);
+
+        ContextStore second = ContextStore.open(location);
+        try {
+            // Intentionally never acquire the "untouched" base in this handle.
+            IBase changed = second.getBase("changed");
+            Step previous = new Step();
+            previous.setId(0L);
+            previous.setHash(41);
+            previous.setData(Long.valueOf(100L));
+
+            changed.add(step(1L, 43, Long.valueOf(101L), previous));
+            assertEquals(2L, second.flush());
+        } finally {
+            second.close();
+        }
+
+        Path revisionTwoUntouched = ContextStore.generationPath(location, 2L)
+                .resolve("untouched.base");
+        assertTrue(Files.exists(revisionTwoUntouched));
+        org.junit.jupiter.api.Assertions.assertArrayEquals(
+                originalUntouched, Files.readAllBytes(revisionTwoUntouched),
+                "unopened schema must be carried forward without reinterpretation");
+
+        ContextStore finalOpen = ContextStore.open(location);
+        try {
+            assertEquals(Long.valueOf(200L),
+                    finalOpen.getBase("untouched").get(0L).getData());
+            assertEquals(Long.valueOf(101L),
+                    finalOpen.getBase("changed").get(1L).getData());
+        } finally {
+            finalOpen.close();
+        }
+    }
+
+    @Test
     void unexpectedEntryInsideVisibleGenerationIsCorruption()
             throws Exception {
         Path location = root.resolve("unexpected-visible-entry");
