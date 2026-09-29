@@ -41,7 +41,7 @@ public class KangerAdapterRegistryTest {
     }
 
     @Test
-    void historicalRuleLayoutDoesNotReplaceCurrentRuleWriter() {
+    void historicalRuleLayoutDoesNotReplaceCurrentRuleWriter() throws Exception {
         Mind mind = new Mind(new User());
         Rule rule = new Rule(mind);
 
