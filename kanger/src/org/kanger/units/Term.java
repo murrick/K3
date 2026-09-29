@@ -501,13 +501,13 @@ public class Term implements IUnit<Term>, ITerm {
                         long sum = 0;
                         try {
                             for (ITerm t : expandedSetMembers()) {
-                                sum += ((IUnit<?>) t).getHash();
+                                sum += ((Term) t).getHash();
                             }
                         } catch (Exception e) {
                             System.err.println(new Date());
                             e.printStackTrace(System.err);
                             for (ITerm t : (List<ITerm>) value) {
-                                sum += ((IUnit<?>) t).getHash();
+                                sum += ((Term) t).getHash();
                             }
                         }
                         hash = 47 * hash + (int) (sum ^ (sum >>> 32));
