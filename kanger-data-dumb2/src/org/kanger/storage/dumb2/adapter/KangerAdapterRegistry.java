@@ -38,19 +38,40 @@ public final class KangerAdapterRegistry {
         register(TVariableAdapter.INSTANCE);
         register(PredicateAdapter.INSTANCE);
         register(CommentAdapter.INSTANCE);
+
+        // Persistent read compatibility. These layouts are never selected for
+        // current runtime writes, but remain materializable by exact descriptor.
+        registerHistorical(RuleV1Adapter.INSTANCE);
     }
 
     public synchronized void register(KangerUnitAdapter<?> adapter) {
         if (adapter == null) {
             throw new NullPointerException("adapter");
         }
-        KangerUnitAdapter<?> existing = byRuntimeType.get(adapter.getRuntimeType());
+        KangerUnitAdapter<?> existing =
+                byRuntimeType.get(adapter.getRuntimeType());
         if (existing != null && existing != adapter) {
             throw new IllegalStateException(
-                    "KANGER adapter already registered for " + adapter.getRuntimeType());
+                    "KANGER current adapter already registered for "
+                            + adapter.getRuntimeType());
         }
         byRuntimeType.put(adapter.getRuntimeType(), adapter);
+        registerPersistentLayout(adapter);
+    }
 
+    /**
+     * Adds a historical persistent layout without changing the canonical
+     * runtime writer for the UnitType.
+     */
+    public synchronized void registerHistorical(
+            KangerUnitAdapter<?> adapter) {
+        if (adapter == null) {
+            throw new NullPointerException("adapter");
+        }
+        registerPersistentLayout(adapter);
+    }
+
+    private void registerPersistentLayout(KangerUnitAdapter<?> adapter) {
         List<KangerUnitAdapter<?>> layouts =
                 byPersistentName.get(adapter.getTypeName());
         if (layouts == null) {
@@ -62,7 +83,8 @@ public final class KangerAdapterRegistry {
                 if (one != adapter) {
                     throw new IllegalStateException(
                             "KANGER adapter already registered for persistent layout "
-                                    + adapter.getTypeName());
+                                    + adapter.getTypeName() + "/"
+                                    + adapter.getDescriptor().getName());
                 }
                 return;
             }
