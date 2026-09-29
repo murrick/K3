@@ -41,6 +41,30 @@ public class KangerAdapterRegistryTest {
     }
 
     @Test
+    void historicalRuleLayoutDoesNotReplaceCurrentRuleWriter() {
+        Mind mind = new Mind(new User());
+        Rule rule = new Rule(mind);
+
+        KangerAdapterRegistry adapters = new KangerAdapterRegistry();
+        TypeRegistry types = new TypeRegistry();
+
+        org.kanger.storage.dumb2.descriptor.TypeDefinition oldDefinition =
+                types.register(
+                        RuleV1Adapter.TYPE_NAME,
+                        RuleV1Adapter.INSTANCE.getDescriptor());
+        org.kanger.storage.dumb2.descriptor.TypeDefinition currentDefinition =
+                types.register(
+                        RuleAdapter.TYPE_NAME,
+                        RuleAdapter.INSTANCE.getDescriptor());
+
+        assertSame(RuleAdapter.INSTANCE, adapters.forRuntime(rule));
+        assertSame(RuleV1Adapter.INSTANCE,
+                adapters.forPersistent(oldDefinition));
+        assertSame(RuleAdapter.INSTANCE,
+                adapters.forPersistent(currentDefinition));
+    }
+
+    @Test
     void persistentLookupRequiresExactDescriptorNotOnlyTypeName() {
         KangerAdapterRegistry adapters = new KangerAdapterRegistry();
         TypeRegistry types = new TypeRegistry();
