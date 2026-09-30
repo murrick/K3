@@ -1,0 +1,150 @@
+diff --git a/kanger/src/org/kanger/primitives/Argument.java b/kanger/src/org/kanger/primitives/Argument.java
+index 8018ed0..7aafe16 100644
+--- a/kanger/src/org/kanger/primitives/Argument.java
++++ b/kanger/src/org/kanger/primitives/Argument.java
+@@ -213,6 +213,12 @@ public class Argument implements IArgument {
+         }
+     }
+ 
++    /** Already resident plain Term only; never hydrates or resolves a binding. */
++    final Term residentTermForBaseComparison() {
++        return getClass() == Argument.class && type == ArgumentType.TERM
++                && o != null && o.getClass() == Term.class ? (Term) o : null;
++    }
++
+     @Override
+     public boolean isDeleted(IMind mind) {
+         if (o == null) {
+diff --git a/kanger/src/org/kanger/primitives/ArgumentsList.java b/kanger/src/org/kanger/primitives/ArgumentsList.java
+index c33f23a..f011847 100644
+--- a/kanger/src/org/kanger/primitives/ArgumentsList.java
++++ b/kanger/src/org/kanger/primitives/ArgumentsList.java
+@@ -44,6 +44,11 @@ import java.util.*;
+  */
+ public class ArgumentsList extends ArrayList<IArgument> implements IList {
+ 
++    private static final boolean RESIDENT_BASE_COMPARISON =
++            Boolean.getBoolean("kanger.experiment.residentBaseComparison");
++    private static final boolean VERIFY_RESIDENT_BASE_COMPARISON =
++            Boolean.getBoolean("kanger.experiment.verifyResidentBaseComparison");
++
+     private Mind mind = null;
+ 
+     public ArgumentsList() {
+@@ -152,6 +157,10 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
+     }
+ 
+     public boolean equalsBase(Mind mind, Object o) {
++        return equalsBaseInternal(mind, o, RESIDENT_BASE_COMPARISON);
++    }
++
++    private boolean equalsBaseInternal(Mind mind, Object o, boolean resident) {
+         if (o != null) {
+             ArgumentsList arg = null;
+             if (o instanceof ArgumentsList) {
+@@ -163,6 +172,33 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
+                 int i = 0;
+                 try {
+                     for (; i < arg.size(); ++i) {
++                        if (resident && getClass() == ArgumentsList.class
++                                && arg.getClass() == ArgumentsList.class
++                                && mind != null && mind.getClass() == Mind.class) {
++                            IArgument left = get(i), right = arg.get(i);
++                            Term a = left instanceof Argument
++                                    ? ((Argument) left).residentTermForBaseComparison() : null;
++                            Term b = right instanceof Argument
++                                    ? ((Argument) right).residentTermForBaseComparison() : null;
++                            if (a != null && b != null) {
++                                boolean matched = (a.isCVariable() && b.isCVariable()
++                                        && (a.getId() == b.getId()
++                                        || a.getParentId(mind) == b.getId()
++                                        || a.getId() == b.getParentId(mind)))
++                                        || a.getId() == b.getId();
++                                if (VERIFY_RESIDENT_BASE_COMPARISON) {
++                                    boolean reference = !left.isEmpty(mind) && !right.isEmpty(mind)
++                                            && ((left.getValue(mind).isCVariable() && right.getValue(mind).isCVariable()
++                                            && (left.getValue(mind).getId() == right.getValue(mind).getId()
++                                            || ((Term) left.getValue(mind)).getParentId(mind) == right.getValue(mind).getId()
++                                            || left.getValue(mind).getId() == ((Term) right.getValue(mind)).getParentId(mind)))
++                                            || left.getValue(mind).getId() == right.getValue(mind).getId());
++                                    if (matched != reference) throw new AssertionError("Resident base comparison mismatch");
++                                }
++                                if (matched) continue;
++                                break;
++                            }
++                        }
+                         if (!get(i).isEmpty(mind) && !arg.get(i).isEmpty(mind)
+                                 && ((get(i).getValue(mind).isCVariable() && arg.get(i).getValue(mind).isCVariable()
+                                 && (get(i).getValue(mind).getId() == arg.get(i).getValue(mind).getId()
+diff --git a/kanger-qualification/src/org/kanger/ResidentBaseComparisonRunner.java b/kanger-qualification/src/org/kanger/ResidentBaseComparisonRunner.java
+new file mode 100644
+index 0000000..41bd109
+--- /dev/null
++++ b/kanger-qualification/src/org/kanger/ResidentBaseComparisonRunner.java
+@@ -0,0 +1,66 @@
++package org.kanger;
++
++import java.nio.file.Files;
++import org.kanger.interfaces.*;
++import org.kanger.primitives.*;
++import org.kanger.units.*;
++
++/** Focused oracle boundaries; run in separate OFF/ON/verify JVMs. */
++public final class ResidentBaseComparisonRunner {
++    private static int checks;
++    private static ArgumentsList args(ITerm... terms) {
++        ArgumentsList list = new ArgumentsList();
++        for (ITerm t : terms) list.add(t == null ? new Argument() : new Argument(t));
++        return list;
++    }
++    private static void check(boolean value, String label) {
++        if (!value) throw new AssertionError(label);
++        checks++;
++    }
++    private static final class CountingArgument extends Argument {
++        int reads;
++        CountingArgument(ITerm term) { super(term); }
++        @Override public ITerm getValue(IMind mind) throws Exception { reads++; return super.getValue(mind); }
++    }
++    public static void main(String[] ignored) throws Exception {
++        System.setProperty("user.home", Files.createTempDirectory("resident-base-").toString());
++        Mind m = new Mind(new User());
++        ITerm a = m.getTerms().add("a"), b = m.getTerms().add("b");
++        check(args().equalsBase(m,args()), "empty lists");
++        check(!args(a).equalsBase(m,args()), "different size");
++        check(args(a,b).equalsBase(m,args(a,b)), "equal terms");
++        check(!args(a,b).equalsBase(m,args(b,a)), "positional mismatch");
++        check(!args((ITerm)null).equalsBase(m,args(a)), "empty left");
++        check(!args(a).equalsBase(m,args((ITerm)null)), "empty right");
++        Rule rule = new Rule(m);
++        rule.setId(42);
++        ITerm parent = m.getTerms().createCVar(rule,a,null);
++        ITerm child = m.getTerms().createCVar(rule,b,parent);
++        Rule siblingRule = new Rule(m); siblingRule.setId(43);
++        ITerm sibling = m.getTerms().createCVar(siblingRule,a,parent);
++        check(args(parent).equalsBase(m,args(child)), "parent child");
++        check(args(child).equalsBase(m,args(parent)), "child parent");
++        check(!args(child).equalsBase(m,args(sibling)), "siblings are not base equal");
++        m.getCvarParents().remove(child);
++        check(!args(child).equalsBase(m,args(parent)), "parent relation removed");
++        Argument lazy = new Argument(a);
++        java.lang.reflect.Field object = Argument.class.getDeclaredField("o");
++        object.setAccessible(true); object.set(lazy,null);
++        ArgumentsList loaded = new ArgumentsList(); loaded.add(lazy);
++        check(loaded.equalsBase(m,args(a)), "lazy first access");
++        check(loaded.equalsBase(m,args(a)), "resident later access");
++        TVariable v = m.getTVars().createTVar(rule,a);
++        ArgumentsList dynamic = new ArgumentsList(); dynamic.add(new Argument(v));
++        v.setCurrent(m.getTValues().add(v,a));
++        check(dynamic.equalsBase(m,args(a)), "binding a");
++        v.setCurrent(m.getTValues().add(v,b));
++        check(!dynamic.equalsBase(m,args(a)), "binding changed");
++        v.setCurrent(null);
++        check(!dynamic.equalsBase(m,args(a)), "binding cleared");
++        CountingArgument custom = new CountingArgument(a);
++        ArgumentsList customList = new ArgumentsList(); customList.add(custom);
++        check(customList.equalsBase(m,args(a)), "custom argument");
++        check(custom.reads == 3, "custom resolution count: " + custom.reads);
++        System.out.println("RESIDENT_BASE_BOUNDARIES_OK checks=" + checks + " custom_reads=" + custom.reads);
++    }
++}

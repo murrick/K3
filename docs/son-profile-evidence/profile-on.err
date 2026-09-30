@@ -1,0 +1,1428 @@
+SAMPLE 0 PHASE query OBSERVATIONS 62
+62 org.kanger.SonProfileRunner.main
+62 org.kanger.Mind.query
+59 org.kanger.Mind.link
+59 org.kanger.Linker.link
+57 org.kanger.Linker.rotator
+53 org.kanger.Linker.rotateVariables
+43 org.kanger.Linker$3.run
+40 org.kanger.Mind.queryCheckFalse
+36 org.kanger.Linker$4.run
+36 org.kanger.factory.TValueFactory.forEach
+35 org.kanger.Linker.access$5
+27 org.kanger.Linker.linkDatabase
+27 org.kanger.Linker.access$3
+22 org.kanger.Mind.queryCheckTrue
+13 org.kanger.Linker.linkDomains
+13 org.kanger.Linker.access$2
+7 java.util.HashMap.getNode
+6 org.kanger.factory.RuleFactory.find
+6 org.kanger.units.Domain.isStored
+6 org.kanger.primitives.ArgumentsList.equalsBase
+5 org.kanger.units.TVariable.getValue
+5 org.kanger.Linker.access$4
+5 org.kanger.Linker.isValidFor
+5 org.kanger.primitives.Argument.getValue
+5 LEAF org.kanger.Linker.linkDatabase
+4 org.kanger.primitives.Argument.isEmpty
+4 LEAF org.kanger.units.TVariable.getValue
+4 org.kanger.primitives.Solve.toString
+4 java.util.HashMap.get
+4 org.kanger.storage.Step.getData
+4 org.kanger.Linker.updateDatabase
+4 java.util.HashSet.iterator
+4 LEAF org.kanger.primitives.ArgumentsList.equalsBase
+4 java.lang.StringBuilder.append
+4 org.kanger.storage.Escalera.get
+3 org.kanger.factory.RuleFactory.get
+3 org.kanger.units.Domain.isUsed
+3 LEAF org.kanger.units.Rule.setMind
+3 org.kanger.Mind.addTSolve
+3 org.kanger.Linker.selectDomainCandidates
+3 java.util.AbstractSet.equals
+3 org.kanger.primitives.TVariableSet.equals
+3 org.kanger.Linker.access$1
+3 java.lang.String.valueOf
+3 org.kanger.units.Domain.isExcluded
+3 org.kanger.factory.RuleFactory.findByResolvedDomain
+3 java.util.HashMap.hash
+3 org.kanger.factory.RuleFactory.getRaw
+3 org.kanger.units.Domain.toString
+3 org.kanger.Linker.checkSystem
+3 org.kanger.units.Rule.setMind
+2 org.kanger.units.Term.<init>
+2 java.util.HashMap.containsKey
+2 org.kanger.TechnicalMindTransaction.<init>
+2 LEAF java.util.HashSet.iterator
+2 org.kanger.units.TSolve.containsTVar
+2 java.util.AbstractCollection.addAll
+2 LEAF org.kanger.units.TSolve.containsTVar
+2 java.util.HashMap$KeyIterator.<init>
+2 org.kanger.primitives.Solve.formatParam
+2 org.kanger.Mind.<init>
+2 java.util.HashMap$KeySet.iterator
+2 java.text.SimpleDateFormat.<init>
+2 org.kanger.Linker.markExcluded
+2 org.kanger.storage.Escalera.find
+2 java.util.HashSet.<init>
+2 org.kanger.TechnicalMindTransaction.begin
+2 org.kanger.enums.Tools.parseDate
+2 LEAF java.util.HashMap.hash
+2 org.kanger.factory.DictionaryFactory.add
+2 java.util.HashMap$HashIterator.<init>
+2 org.kanger.factory.TValueFactory.get
+2 org.kanger.factory.RuleFactory.add
+2 org.kanger.Mind.init
+2 LEAF java.util.HashMap$HashIterator.<init>
+2 java.util.AbstractCollection.containsAll
+2 org.kanger.Mind.findTSolve
+2 org.kanger.units.Domain.createStored
+2 org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+2 org.kanger.units.Domain.setUsed
+2 org.kanger.units.TVariable.toString
+2 org.kanger.units.Term.construct
+2 LEAF org.kanger.Linker.linkDomains
+2 org.kanger.factory.RuleFactory.collectResolvedCandidateIds
+1 LEAF org.kanger.factory.RuleCandidateIndex$PositionKey.hashCode
+1 LEAF org.kanger.calculator.Predicates$1$8.<init>
+1 org.kanger.units.TVariable.isDeleted
+1 java.util.HashSet.toArray
+1 org.kanger.Mind.finalizeTransactionRootLocked
+1 java.util.TreeMap$NavigableSubMap$EntrySetView.size
+1 org.kanger.calculator.Predicates.<init>
+1 org.kanger.primitives.Argument.isDeleted
+1 org.kanger.SemanticEffectTelemetry.recordDeferredContribution
+1 LEAF java.util.stream.FindOps$FindOp.evaluateSequential
+1 org.kanger.Analyzer.<init>
+1 java.lang.AbstractStringBuilder.append
+1 org.kanger.factory.TValueFactory.mark
+1 LEAF java.util.GregorianCalendar.computeTime
+1 org.kanger.Mind.pack
+1 org.kanger.primitives.ArgumentsList.convertBase
+1 LEAF org.kanger.units.TSolve.equalsTo
+1 java.lang.StringBuilder.<init>
+1 java.util.Formatter$FormatSpecifier.print
+1 java.util.concurrent.CopyOnWriteArrayList.add
+1 LEAF java.util.TreeMap$NavigableSubMap$EntrySetView.size
+1 java.util.TreeMap$NavigableSubMap.inRange
+1 org.kanger.storage.Escalera.mark
+1 java.util.concurrent.CopyOnWriteArrayList.addAllAbsent
+1 LEAF java.util.HashSet.<init>
+1 java.text.DecimalFormatSymbols.getInstance
+1 org.kanger.SemanticEffectTelemetry.solveKey
+1 org.kanger.factory.PredicateFactory.pack
+1 org.kanger.Mind.finishTransactionLocked
+1 org.kanger.factory.TValueFactory.set
+1 java.util.stream.IntPipeline.findFirst
+1 LEAF java.util.HashMap.putVal
+1 java.util.GregorianCalendar.computeTime
+1 LEAF java.lang.AbstractStringBuilder.append
+1 java.util.TreeMap$NavigableSubMap.size
+1 LEAF org.kanger.Mind.getLog
+1 org.kanger.factory.RuleFactory$1.next
+1 sun.util.locale.provider.DecimalFormatSymbolsProviderImpl.getInstance
+1 org.kanger.Linker.synchronizeSolveIndexReference
+1 LEAF org.kanger.SemanticEffectTelemetry.solveKey
+1 org.kanger.factory.TValueFactory.collectIds
+1 org.kanger.Linker.getSolveCandidates
+1 java.util.TreeSet.size
+1 java.util.TreeMap.compare
+1 java.util.concurrent.CopyOnWriteArraySet.addAll
+1 java.text.DecimalFormatSymbols.<init>
+1 java.text.SimpleDateFormat.initialize
+1 java.util.stream.AbstractPipeline.evaluate
+1 LEAF java.util.HashSet.toArray
+1 LEAF org.kanger.primitives.Hypothesis.render
+1 java.text.SimpleDateFormat.initializeDefaultCentury
+1 org.kanger.units.TSolve.equalsTo
+1 org.kanger.factory.RuleCandidateIndex$IdIndex.get
+1 org.kanger.primitives.ArgumentsList.getHash
+1 LEAF java.util.AbstractCollection.containsAll
+1 java.util.Formatter$FormatSpecifier.getZero
+1 org.kanger.Linker.logCauses
+1 java.util.Calendar.getTime
+1 java.util.TreeMap.successor
+1 org.kanger.units.Domain.isCalculated
+1 java.lang.String.replaceAll
+1 org.kanger.units.Rule.equalsTo
+1 org.kanger.primitives.Hypothesis.render
+1 java.util.TreeMap$KeyIterator.next
+1 java.util.HashMap.putVal
+1 org.kanger.units.Domain.setCalculated
+1 org.kanger.factory.DictionaryFactory.find
+1 LEAF java.util.TreeMap.successor
+1 org.kanger.Mind.release
+1 org.kanger.units.Rule.toString
+1 org.kanger.factory.RuleFactory.findByDomain
+1 org.kanger.units.TVariable.setCurrent
+1 org.kanger.units.TVariable.getVarName
+1 java.util.Formatter$FormatSpecifier.printInteger
+1 LEAF org.kanger.Linker.link
+1 java.util.Arrays.copyOf
+1 org.kanger.factory.FValueFactory.release
+1 org.kanger.primitives.ArgumentsList.equalsStamp
+1 LEAF org.kanger.primitives.Argument.getValue
+1 LEAF java.lang.StringBuilder.<init>
+1 LEAF org.kanger.Mind.isUnitDeleted
+1 org.kanger.units.CachedDomain.getCauses
+1 java.util.stream.FindOps$FindOp.evaluateSequential
+1 java.text.DecimalFormatSymbols.findNonFormatChar
+1 java.util.TreeMap$PrivateEntryIterator.nextEntry
+1 org.kanger.factory.RuleCandidateIndex$PositionKey.hashCode
+1 org.kanger.calculator.Predicates$1.<init>
+1 LEAF java.util.TreeMap.compare
+1 LEAF org.kanger.QueryTaint.recordHypothesis
+1 sun.util.locale.provider.LocaleResources.getDateTimePattern
+1 java.text.DecimalFormatSymbols.initialize
+1 org.kanger.Mind.compileLine
+1 org.kanger.TechnicalMindTransaction.rollback
+1 java.util.Calendar.getTimeInMillis
+1 LEAF org.kanger.storage.Escalera.mark
+1 java.util.regex.Pattern.compile
+1 org.kanger.factory.DictionaryFactory.createCVar
+1 java.util.regex.Pattern.<init>
+1 java.util.HashMap.put
+1 org.kanger.calculator.Predicates$1$8.<init>
+1 java.util.TreeMap$NavigableSubMap.inClosedRange
+1 java.util.LinkedHashMap.get
+1 LEAF org.kanger.primitives.Solve.toString
+1 LEAF org.kanger.Linker.markExcluded
+1 org.kanger.units.Domain.isComplete
+1 org.kanger.Linker.synchronizeSolveIndex
+1 org.kanger.primitives.Hypothesis.toString
+1 LEAF java.util.AbstractCollection.addAll
+1 java.util.Formatter.format
+1 LEAF org.kanger.storage.Step.getData
+1 org.kanger.stores.LogStore.add
+1 java.util.TreeSet.headSet
+1 java.util.Calendar.updateTime
+1 java.util.Formatter.zero
+1 java.lang.String.format
+1 org.kanger.primitives.ArgumentsList.getStamp
+1 org.kanger.primitives.Solve.getHash
+1 org.kanger.primitives.ArgumentsList.getTVariables
+1 LEAF org.kanger.primitives.Argument.isEmpty
+1 LEAF org.kanger.primitives.ArgumentsList.convertBase
+1 LEAF org.kanger.factory.RuleCandidateIndex$SignatureKey.equals
+1 org.kanger.factory.RuleCandidateIndex$SignatureKey.equals
+1 LEAF org.kanger.factory.RuleFactory.findByDomain
+1 LEAF java.util.AbstractSet.equals
+1 java.util.TreeMap$AscendingSubMap.headMap
+1 org.kanger.calculator.Calculator.<init>
+1 LEAF org.kanger.Linker.synchronizeSolveIndexReference
+1 LEAF org.kanger.units.Rule.equalsTo
+1 org.kanger.primitives.Hypothesis.<init>
+1 LEAF org.kanger.factory.RuleFactory$1.next
+1 org.kanger.QueryTaint.recordHypothesis
+1 LEAF java.util.Arrays.copyOf
+1 org.kanger.Mind.getLog
+1 org.kanger.factory.TValueFactory.isEmpty
+1 java.util.Formatter$FormatSpecifier.localizedMagnitude
+1 org.kanger.units.Predicate.toString
+1 org.kanger.Mind.isUnitDeleted
+1 LEAF java.util.regex.Pattern.compile
+1 org.kanger.Linker.addOppositeNatives
+SAMPLE 0 PHASE optimize OBSERVATIONS 1315
+1315 org.kanger.Mind.optimizeHypothesis
+1315 org.kanger.SonProfileRunner.main
+1315 org.kanger.stores.HypothesisStore.optimize
+1252 org.kanger.Linker.link
+1252 org.kanger.Mind.link
+1226 org.kanger.Linker.rotator
+1141 org.kanger.Linker.rotateVariables
+1012 org.kanger.Linker$3.run
+886 org.kanger.Mind.query
+841 CALLSITE app//org.kanger.stores.HypothesisStore.optimize(HypothesisStore.java:222)
+780 org.kanger.factory.TValueFactory.forEach
+774 org.kanger.Linker$4.run
+769 org.kanger.Linker.access$5
+652 org.kanger.Linker.linkDatabase
+652 org.kanger.Linker.access$3
+601 org.kanger.Mind.queryCheckFalse
+403 CALLSITE app//org.kanger.stores.HypothesisStore.optimize(HypothesisStore.java:216)
+285 org.kanger.Mind.queryCheckTrue
+235 org.kanger.Linker.access$2
+233 org.kanger.Linker.linkDomains
+203 org.kanger.primitives.ArgumentsList.equalsBase
+161 LEAF org.kanger.primitives.Argument.isEmpty
+161 org.kanger.primitives.Argument.isEmpty
+160 org.kanger.units.Domain.isExcluded
+156 org.kanger.units.Domain.isStored
+143 org.kanger.factory.RuleFactory.find
+116 org.kanger.Linker.access$1
+115 org.kanger.Linker.selectDomainCandidates
+106 org.kanger.Linker.checkSystem
+106 LEAF org.kanger.primitives.ArgumentsList.equalsBase
+103 org.kanger.storage.Step.getData
+101 org.kanger.factory.RuleFactory.findByResolvedDomain
+93 java.util.AbstractCollection.addAll
+93 org.kanger.storage.Escalera.get
+91 org.kanger.units.Domain.isUsed
+90 org.kanger.units.Rule.setMind
+90 org.kanger.factory.RuleFactory.get
+84 java.util.HashMap.put
+83 java.util.HashSet.add
+81 LEAF org.kanger.Linker.linkDatabase
+80 org.kanger.factory.RuleFactory.getRaw
+79 LEAF org.kanger.Mind.isUnitDeleted
+79 org.kanger.Mind.isUnitDeleted
+77 org.kanger.primitives.ArgumentsList.getTVariables
+75 org.kanger.Linker.access$4
+75 org.kanger.Linker.isValidFor
+71 org.kanger.Linker.updateDatabase
+69 java.util.HashMap.getNode
+67 org.kanger.units.Domain.setUsed
+64 java.util.HashSet.iterator
+64 java.util.HashMap.hash
+62 org.kanger.units.CachedDomain.setMind
+62 org.kanger.units.Domain.setMind
+61 org.kanger.primitives.Argument.isDeleted
+61 org.kanger.units.TVariable.isDeleted
+58 org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+58 org.kanger.factory.RuleFactory.collectResolvedCandidateIds
+58 java.util.HashMap$KeySet.iterator
+57 java.util.HashMap.putVal
+57 org.kanger.Mind.addTSolve
+56 java.util.HashMap$KeyIterator.<init>
+56 LEAF java.util.HashMap$HashIterator.<init>
+56 java.util.HashMap$HashIterator.<init>
+52 org.kanger.storage.Escalera.find
+52 org.kanger.Mind.findTSolve
+51 org.kanger.factory.RuleFactory.add
+51 org.kanger.units.Domain.createStored
+51 java.util.HashSet.<init>
+48 LEAF java.util.HashMap$HashIterator.nextNode
+48 java.util.HashMap$HashIterator.nextNode
+47 java.util.HashMap$KeyIterator.next
+46 LEAF org.kanger.Linker.checkSystem
+46 org.kanger.primitives.ArgumentsList.getHash
+46 org.kanger.units.Domain.isCalculated
+45 CALLSITE app//org.kanger.stores.HypothesisStore.optimize(HypothesisStore.java:195)
+43 LEAF java.util.HashMap.hash
+43 org.kanger.primitives.Solve.getHash
+40 org.kanger.Linker.markExcluded
+40 LEAF java.util.HashMap.putVal
+39 org.kanger.primitives.ArgumentsList.equalsStamp
+39 org.kanger.primitives.ArgumentsList.getStamp
+33 org.kanger.factory.DictionaryFactory.add
+31 org.kanger.units.Term.<init>
+31 org.kanger.units.Term.construct
+30 java.util.HashMap.get
+30 java.util.HashMap.containsKey
+29 org.kanger.units.CachedDomain.setCauses
+29 org.kanger.enums.Tools.parseDate
+29 org.kanger.units.Domain.setCauses
+28 org.kanger.factory.RuleFactory.findByDomain
+28 LEAF org.kanger.units.Rule.setMind
+27 LEAF org.kanger.Linker.linkDomains
+26 java.util.TreeMap.getEntry
+26 LEAF org.kanger.Linker.isValidFor
+26 java.util.LinkedHashSet.<init>
+26 LEAF java.util.TreeMap.getEntry
+26 java.util.TreeSet.contains
+26 java.util.TreeMap.containsKey
+25 org.kanger.factory.TValueFactory.find
+24 org.kanger.primitives.TVariableSet.contains
+24 org.kanger.units.Predicate.toString
+23 org.kanger.Mind.analyze
+23 org.kanger.Analyzer.analyze
+23 org.kanger.Analyzer.checkDatabase
+22 org.kanger.units.Domain.isComplete
+22 LEAF java.util.AbstractCollection.addAll
+22 org.kanger.Analyzer.checkRight
+21 org.kanger.factory.TValueFactory.collectIds
+21 org.kanger.units.Predicate.getName
+21 java.lang.StringBuilder.append
+21 org.kanger.factory.DictionaryFactory.find
+21 org.kanger.Mind.compileLine
+20 org.kanger.factory.RuleFactory$1.next
+20 org.kanger.units.Domain.getOverlaps
+20 org.kanger.GeneratedCVarMaterializer.findAlphaEquivalent
+20 LEAF java.util.HashMap.getNode
+19 org.kanger.units.Domain.setExcluded
+19 org.kanger.factory.TValueFactory.get
+18 org.kanger.units.TSolve.equalsTo
+18 LEAF org.kanger.primitives.ArgumentsList.getStamp
+17 org.kanger.units.Rule.isDeleted
+17 org.kanger.Analyzer.candidatesFor
+17 LEAF org.kanger.primitives.ArgumentsList.getHash
+17 java.text.SimpleDateFormat.<init>
+17 org.kanger.units.Rule.equalsTo
+16 org.kanger.storage.Escalera$WalkIterator.next
+15 org.kanger.primitives.TVariableSet.hashCode
+15 org.kanger.factory.RuleFactory.effectiveView
+15 org.kanger.factory.RuleFactory.isPromoted
+15 org.kanger.units.Predicate.isSystem
+15 org.kanger.units.Domain.isSystem
+15 org.kanger.units.Domain.setCalculated
+15 LEAF org.kanger.primitives.ArgumentsList.getTVariables
+14 LEAF org.kanger.units.Domain.getOverlaps
+14 org.kanger.primitives.TVariableSet.equals
+14 org.kanger.units.CachedDomain.getCauses
+14 java.util.AbstractSet.equals
+14 java.lang.String.valueOf
+14 LEAF org.kanger.factory.RuleFactory.isPromoted
+13 org.kanger.Mind.release
+13 LEAF org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+13 LEAF org.kanger.primitives.TVariableSet.hashCode
+13 LEAF org.kanger.storage.Step.getData
+13 org.kanger.Linker.addOppositeNatives
+12 org.kanger.primitives.ArgumentsList.convertBase
+11 org.kanger.Mind.pack
+11 org.kanger.compiler.Compiller.compileLine
+11 org.kanger.Mind.finalizeTransactionRootLocked
+11 LEAF java.lang.String.valueOf
+11 org.kanger.Mind.finishTransactionLocked
+10 LEAF org.kanger.units.TSolve.equalsTo
+10 CALLSITE app//org.kanger.stores.HypothesisStore.optimize(HypothesisStore.java:230)
+10 LEAF org.kanger.units.Domain.setMind
+10 java.util.HashSet.contains
+9 java.util.ArrayList.indexOfRange
+9 LEAF java.lang.StringBuilder.<init>
+9 java.util.LinkedHashMap.get
+9 java.util.AbstractCollection.containsAll
+9 LEAF org.kanger.primitives.ArgumentsList.convertBase
+9 LEAF java.util.ArrayList.indexOfRange
+9 java.util.ArrayList.indexOf
+9 java.lang.StringBuilder.<init>
+9 LEAF org.kanger.units.Predicate.isSystem
+9 org.kanger.factory.RuleCandidateIndex.markCachedBatchUsed
+9 java.util.ArrayList.contains
+8 java.util.Collections.sort
+8 LEAF org.kanger.units.Rule.equalsTo
+8 LEAF org.kanger.factory.TValueFactory.forEach
+8 sun.util.locale.provider.LocaleResources.getDateTimePattern
+8 java.util.Arrays.sort
+8 org.kanger.primitives.Cause.<init>
+8 java.util.ArrayList.sort
+7 java.util.TreeMap$NavigableSubMap$EntrySetView.size
+7 org.kanger.factory.RuleFactory.collectDomainIds
+7 java.util.TreeMap$NavigableSubMap.size
+7 org.kanger.Mind.<init>
+7 LEAF org.kanger.primitives.Solve.equals
+7 LEAF org.kanger.Linker.rotator
+7 org.kanger.Linker.calcFunctions
+7 java.text.DateFormat.parse
+7 java.util.TreeSet.size
+7 org.kanger.primitives.Solve.equals
+7 org.kanger.units.Term.getParentId
+7 java.util.TimSort.sort
+7 CALLSITE app//org.kanger.stores.HypothesisStore.optimize(HypothesisStore.java:211)
+7 org.kanger.Mind.init
+7 java.util.HashMap.resize
+7 org.kanger.units.TSolve.<init>
+7 org.kanger.factory.DictionaryFactory.createCVar
+7 org.kanger.primitives.Cause.equals
+7 LEAF org.kanger.units.Domain.isCalculated
+7 LEAF java.util.HashMap.resize
+6 org.kanger.units.Rule.setUsed
+6 org.kanger.TechnicalMindTransaction.commit
+6 LEAF java.lang.StringBuilder.append
+6 org.kanger.Mind.commit
+6 LEAF java.util.AbstractCollection.containsAll
+6 LEAF org.kanger.Linker.rotateVariables
+6 org.kanger.units.CachedDomain.guardedWeights
+6 java.lang.StringBuilder.toString
+6 LEAF java.util.TreeMap$NavigableSubMap$EntrySetView.size
+6 org.kanger.factory.DictionaryFactory.pack
+6 org.kanger.units.Domain.execSystem
+6 CALLSITE app//org.kanger.stores.HypothesisStore.optimize(HypothesisStore.java:217)
+6 LEAF org.kanger.units.TSolve.<init>
+6 org.kanger.compiler.Compiller.construct
+6 java.lang.String.replaceAll
+6 org.kanger.units.TVariable.getCurrent
+6 org.kanger.primitives.TVariableSet.<init>
+6 java.util.HashMap.remove
+5 java.text.ParseException.<init>
+5 org.kanger.TechnicalMindTransaction.<init>
+5 org.kanger.calculator.Calculator.execute
+5 LEAF org.kanger.storage.Escalera.get
+5 LEAF java.util.concurrent.ConcurrentHashMap.get
+5 org.kanger.Linker.getSolveCandidates
+5 java.lang.Throwable.fillInStackTrace
+5 org.kanger.factory.RuleCandidateIndex$IdIndex.get
+5 org.kanger.factory.RuleCandidateIndex.computeBatchSummary
+5 LEAF org.kanger.factory.RuleFactory.find
+5 java.lang.Boolean.getBoolean
+5 LEAF java.util.AbstractSet.equals
+5 java.util.TreeMap.put
+5 org.kanger.Mind.executeSystem
+5 java.lang.Exception.<init>
+5 LEAF org.kanger.Linker.selectDomainCandidates
+5 java.lang.Throwable.<init>
+5 java.util.AbstractSet.removeAll
+5 LEAF org.kanger.primitives.ArgumentsList.getFunctions
+5 org.kanger.TechnicalMindTransaction.begin
+5 java.util.concurrent.ConcurrentHashMap.get
+5 java.lang.System.getProperty
+5 LEAF java.lang.StringBuilder.toString
+5 org.kanger.primitives.ArgumentsList.getFunctions
+5 LEAF java.lang.Throwable.fillInStackTrace
+5 java.util.TreeSet.add
+5 org.kanger.factory.RuleFactory.access$1
+5 org.kanger.factory.TValueFactory.release
+4 org.kanger.primitives.Argument.getObject
+4 org.kanger.factory.TValueFactory.pack
+4 org.kanger.units.Rule.getDomain
+4 java.util.TimSort.mergeAt
+4 java.util.TimSort.mergeCollapse
+4 java.util.regex.Pattern.compile
+4 LEAF org.kanger.units.Domain.isStored
+4 org.kanger.factory.RuleFactory.hasActiveRuleWithTerm
+4 java.text.SimpleDateFormat.compile
+4 org.kanger.Linker.buildDomainIndex
+4 org.kanger.storage.Escalera.add
+4 LEAF org.kanger.primitives.Argument.getObject
+4 LEAF java.util.TreeMap.put
+4 org.kanger.units.TVariable.setCurrent
+4 java.util.HashSet.remove
+4 org.kanger.factory.RuleFactory.collectTermIds
+4 java.util.regex.Pattern.<init>
+4 LEAF org.kanger.units.Term.getParentId
+4 org.kanger.factory.RuleCandidateIndex.batchGeneratedNonSubstitutablePair
+4 java.text.SimpleDateFormat.applyPatternImpl
+3 LEAF java.util.HashSet.<init>
+3 org.kanger.SemanticEffectTelemetry.solveKey
+3 org.kanger.factory.TValueFactory.set
+3 org.kanger.primitives.ArgumentsList.equals
+3 java.text.SimpleDateFormat.initialize
+3 LEAF org.kanger.primitives.Argument.<init>
+3 java.util.TreeMap.successor
+3 java.text.SimpleDateFormat.initializeCalendar
+3 LEAF java.util.TreeMap.successor
+3 java.util.Arrays.copyOf
+3 org.kanger.primitives.ArgumentsList.hashCode
+3 LEAF java.lang.System.getProperty
+3 LEAF java.lang.AbstractStringBuilder.getChars
+3 org.kanger.factory.DomainFactory.add
+3 java.util.Date.toString
+3 java.util.Calendar.createCalendar
+3 LEAF org.kanger.units.Rule.getDomain
+3 LEAF org.kanger.primitives.ArgumentsList.equals
+3 org.kanger.PortableMindLayer.capture
+3 org.kanger.GeneratedCVarMaterializer.alphaEquivalent
+3 LEAF java.util.Arrays.copyOf
+3 java.text.SimpleDateFormat.applyPattern
+3 LEAF org.kanger.Linker.buildDomainIndex
+3 java.util.Calendar.getInstance
+3 org.kanger.compiler.Compiller.compileQuainter
+3 org.kanger.units.CachedDomain.resolvedPrimitiveIds
+3 LEAF org.kanger.units.Term.getParent
+3 LEAF org.kanger.factory.TValueFactory.set
+3 org.kanger.storage.Escalera.release
+3 org.kanger.units.TVariable.isEmpty
+3 org.kanger.compiler.Compiller.compilePredicate
+3 org.kanger.units.Term.getParent
+3 org.kanger.units.TSolve.containsTValue
+3 org.kanger.primitives.Argument.<init>
+3 org.kanger.stores.HypothesisStore.find
+3 sun.util.locale.provider.CalendarProviderImpl.getInstance
+3 LEAF org.kanger.units.TSolve.containsTValue
+3 java.lang.AbstractStringBuilder.getChars
+3 java.lang.StringBuilder.getChars
+3 org.kanger.factory.FValueFactory.mark
+3 org.kanger.primitives.Hypothesis.<init>
+3 org.kanger.factory.RuleFactory.commit
+2 org.kanger.SemanticEffectTelemetry.recordDeferredContribution
+2 org.kanger.factory.TValueFactory.add
+2 java.util.TreeSet.isEmpty
+2 LEAF java.util.TimSort.gallopRight
+2 LEAF java.util.HashSet.iterator
+2 java.util.TreeSet.iterator
+2 java.util.TreeMap$AscendingSubMap.<init>
+2 LEAF org.kanger.Linker$3.run
+2 java.util.Properties.getProperty
+2 LEAF org.kanger.primitives.Solve.hashCode
+2 LEAF java.util.HashMap.keySet
+2 LEAF org.kanger.SemanticEffectTelemetry.solveKey
+2 java.util.TreeMap.compare
+2 LEAF org.kanger.factory.TValueFactory.release
+2 java.util.ArrayList.addAll
+2 java.text.SimpleDateFormat.initializeDefaultCentury
+2 org.kanger.stores.LogStore.commit
+2 CALLSITE app//org.kanger.stores.HypothesisStore.find(HypothesisStore.java:134)
+2 sun.util.locale.provider.TimeZoneNameUtility.retrieveDisplayNamesImpl
+2 java.util.TreeMap$NavigableSubMap.<init>
+2 LEAF org.kanger.GeneratedCVarMaterializer.alphaEquivalent
+2 java.util.HashMap.clear
+2 org.kanger.factory.FValueFactory.release
+2 java.util.TimeZone.getDisplayName
+2 sun.util.locale.provider.LocaleProviderAdapter.getResourceBundleBased
+2 sun.util.locale.provider.TimeZoneNameUtility.retrieveDisplayName
+2 org.kanger.factory.RuleFactory.<init>
+2 org.kanger.calculator.Predicates$1$2.run
+2 java.util.TreeMap$NavigableSubMap.isEmpty
+2 org.kanger.TechnicalMindTransaction.rollback
+2 java.util.ArrayList.toArray
+2 LEAF org.kanger.Linker.access$2
+2 java.util.ArrayList.grow
+2 java.util.TreeMap$KeySet.iterator
+2 LEAF java.util.HashSet.add
+2 org.kanger.units.Term.getChild
+2 org.kanger.factory.RuleCandidateIndex.<init>
+2 java.util.TimSort.gallopRight
+2 org.kanger.primitives.Cause.hashCode
+2 LEAF org.kanger.Linker.markExcluded
+2 org.kanger.stores.LogStore.add
+2 org.kanger.primitives.Solve.hashCode
+2 LEAF java.lang.Object.clone
+2 LEAF java.util.TreeMap.getCeilingEntry
+2 java.util.TreeMap.getCeilingEntry
+2 LEAF java.util.ArrayList.grow
+2 java.lang.Long.valueOf
+2 LEAF org.kanger.enums.Tools.parseDate
+2 LEAF java.text.DecimalFormat.subparse
+2 org.kanger.storage.Escalera.deleteOne
+2 java.lang.Object.clone
+2 java.util.LinkedHashMap$LinkedHashIterator.remove
+2 org.kanger.primitives.Solve.toString
+2 java.util.HashMap.keySet
+2 java.util.regex.Pattern.expr
+2 java.util.TreeMap$NavigableSubMap.absLowest
+2 org.kanger.storage.Escalera.removeIndexedStep
+2 LEAF org.kanger.stores.HypothesisStore.find
+2 java.text.SimpleDateFormat.subParse
+2 LEAF java.util.HashMap.clear
+2 java.util.ArrayList.add
+2 LEAF org.kanger.units.Domain.isExcluded
+2 org.kanger.storage.Escalera.indexStep
+2 LEAF java.util.HashMap$KeySet.iterator
+2 org.kanger.storage.Escalera.deleteAll
+2 java.util.Calendar$Builder.build
+2 org.kanger.Mind.getCVarChild
+2 java.text.DecimalFormat.subparse
+2 LEAF java.util.TreeMap.compare
+2 java.util.LinkedHashMap$LinkedKeySet.iterator
+2 java.text.SimpleDateFormat.parse
+2 LEAF java.util.LinkedHashMap$LinkedHashIterator.remove
+2 java.util.HashSet.clear
+2 java.util.TreeMap.keyIterator
+2 java.util.TreeMap$NavigableSubMap$SubMapIterator.nextEntry
+2 LEAF java.util.LinkedHashMap$LinkedKeySet.iterator
+2 LEAF org.kanger.Linker.calcFunctions
+2 LEAF java.lang.Long.valueOf
+2 LEAF java.util.HashMap.remove
+2 LEAF org.kanger.primitives.TVariableSet.<init>
+2 LEAF java.util.TreeMap$NavigableSubMap.isEmpty
+2 org.kanger.QueryReplayContext.observeCompilation
+2 LEAF org.kanger.units.CachedDomain.resolvedPrimitiveIds
+2 org.kanger.units.Domain.toString
+2 java.util.TreeMap$NavigableSubMap$SubMapKeyIterator.next
+2 org.kanger.storage.Escalera.ensureIndex
+2 org.kanger.factory.TValueFactory.isEmpty
+2 LEAF java.util.regex.Pattern.compile
+2 java.text.DecimalFormat.parse
+1 org.kanger.calculator.Functions$1$17.<init>
+1 java.util.Calendar.setTime
+1 LEAF java.util.ComparableTimSort.reverseRange
+1 sun.util.calendar.ZoneInfo.getTimeZone
+1 org.kanger.calculator.Functions.<init>
+1 LEAF java.util.Calendar$Builder.<init>
+1 java.lang.AbstractStringBuilder.append
+1 LEAF org.kanger.units.TVariable.getFloodCounter
+1 LEAF org.kanger.factory.CommentFactory$1.hasNext
+1 LEAF java.util.TreeMap.fixAfterInsertion
+1 java.util.regex.Pattern.Single
+1 LEAF org.kanger.units.TVariable.isEmpty
+1 LEAF org.kanger.Linker.updateDatabase
+1 LEAF java.util.TimSort.minRunLength
+1 java.util.Formatter$FormatSpecifier.print
+1 org.kanger.units.Rule.getTree
+1 java.text.DecimalFormatSymbols.getInstance
+1 java.lang.invoke.Invokers$Holder.linkToTargetMethod
+1 CALLSITE app//org.kanger.stores.HypothesisStore.find(HypothesisStore.java:137)
+1 LEAF java.util.concurrent.locks.AbstractQueuedSynchronizer.signalNext
+1 org.kanger.enums.Tools.isPeriod
+1 LEAF java.util.HashMap.put
+1 LEAF java.util.HashMap.tableSizeFor
+1 org.kanger.storage.Escalera.commit
+1 sun.util.calendar.Gregorian.newCalendarDate
+1 LEAF sun.util.locale.provider.LocaleResources.getDateTimePattern
+1 LEAF java.util.Collection.removeIf
+1 org.kanger.stores.HypothesisStore.equalsBase
+1 org.kanger.factory.RuleFactory.copyDomainIndexLocked
+1 org.kanger.Linker.synchronizeSolveIndexReference
+1 java.util.regex.Pattern.sequence
+1 LEAF org.kanger.compiler.Compiller.<init>
+1 java.util.regex.Matcher.replaceAll
+1 org.kanger.units.TVariable.setValue
+1 LEAF org.kanger.Analyzer.checkRight
+1 java.text.DecimalFormatSymbols.<init>
+1 LEAF org.kanger.storage.Escalera.find
+1 java.util.GregorianCalendar.<init>
+1 java.text.SimpleDateFormat.parseAmbiguousDatesAsAfter
+1 sun.util.calendar.Gregorian$Date.<init>
+1 java.util.Collections$UnmodifiableCollection.iterator
+1 java.util.Date.normalize
+1 LEAF org.kanger.Linker.addOppositeNatives
+1 java.text.MessageFormat.applyPattern
+1 java.util.ComparableTimSort.countRunAndMakeAscending
+1 java.util.Formatter$FormatSpecifier.getZero
+1 java.util.Calendar.getTime
+1 org.kanger.primitives.Solve.<init>
+1 java.util.TreeMap.firstKey
+1 java.text.MessageFormat.<init>
+1 java.util.concurrent.ConcurrentHashMap.containsKey
+1 java.lang.invoke.DirectMethodHandle.allocateInstance
+1 java.text.MessageFormat.makeFormat
+1 java.util.Calendar$Builder.<init>
+1 org.kanger.LinkerStatistics.incrementUnificationAttempts
+1 java.lang.Integer.parseInt
+1 java.lang.ref.Reference.refersTo
+1 LEAF org.kanger.units.Domain.execSystem
+1 LEAF java.lang.ref.Reference.refersTo
+1 org.kanger.factory.CommentFactory$1.hasNext
+1 java.util.HashMap.<init>
+1 java.util.Formatter$FormatSpecifier.printInteger
+1 java.util.TreeMap.addEntry
+1 sun.util.calendar.ZoneInfo.clone
+1 LEAF org.kanger.factory.FunctionFactory.<init>
+1 java.util.AbstractCollection.isEmpty
+1 LEAF org.kanger.storage.Escalera.removeIndexedStep
+1 org.kanger.primitives.ArgumentsList.getCVariables
+1 java.text.DigitList.clone
+1 java.util.Collections$UnmodifiableCollection$1.<init>
+1 LEAF org.kanger.Linker$4.run
+1 java.util.Collection.removeIf
+1 java.util.WeakHashMap.<init>
+1 LEAF org.kanger.units.Domain.isQuery
+1 java.lang.AbstractStringBuilder.inflate
+1 java.text.DecimalFormatSymbols.initialize
+1 org.kanger.factory.RuleFactory.collectCandidateIds
+1 LEAF java.lang.String.indexOf
+1 java.util.Calendar.getTimeInMillis
+1 java.util.TreeSet.tailSet
+1 java.util.TimeZone.clone
+1 LEAF java.util.concurrent.CopyOnWriteArrayList.addIfAbsent
+1 CALLSITE app//org.kanger.stores.HypothesisStore.optimize(HypothesisStore.java:192)
+1 java.util.regex.Matcher.search
+1 java.lang.Integer.equals
+1 java.util.Properties.containsKey
+1 LEAF org.kanger.Linker.access$1
+1 LEAF org.kanger.units.TVariable.setCurrent
+1 LEAF org.kanger.factory.DictionaryFactory.pack
+1 java.util.HashMap$EntryIterator.next
+1 LEAF org.kanger.units.CachedDomain.guardedWeights
+1 LEAF java.util.Collections$UnmodifiableCollection$1.<init>
+1 LEAF org.kanger.factory.TValueFactory.get
+1 java.lang.System.arraycopy
+1 org.kanger.factory.RuleFactory.iterator
+1 LEAF jdk.internal.misc.Unsafe.allocateInstance
+1 LEAF org.kanger.units.Domain.isUsed
+1 LEAF org.kanger.primitives.Solve.toString
+1 java.util.IdentityHashMap.put
+1 LEAF java.util.WeakHashMap.newTable
+1 LEAF java.util.TimSort.mergeHi
+1 org.kanger.Linker.synchronizeSolveIndex
+1 LEAF sun.util.calendar.Gregorian$Date.<init>
+1 LEAF java.util.TimSort.sort
+1 java.util.Formatter.format
+1 org.kanger.units.Rule.isUsed
+1 org.kanger.factory.RuleFactory.containsPromotion
+1 java.util.WeakHashMap.matchesKey
+1 java.util.TreeSet.headSet
+1 java.util.concurrent.locks.ReentrantReadWriteLock$WriteLock.unlock
+1 LEAF java.text.DigitList.clone
+1 org.kanger.compiler.Compiller.<init>
+1 java.util.Formatter.zero
+1 LEAF org.kanger.factory.RuleCandidateIndex.<init>
+1 LEAF org.kanger.stores.HypothesisStore.equalsBase
+1 java.util.TreeMap.tailMap
+1 org.kanger.primitives.Solve.getTerms
+1 java.lang.StringLatin1.newString
+1 LEAF org.kanger.units.Domain.setCalculated
+1 CALLSITE app//org.kanger.stores.HypothesisStore.equalsBase(HypothesisStore.java:147)
+1 java.util.TreeMap$AscendingSubMap.headMap
+1 org.kanger.units.TVariable.getFloodCounter
+1 LEAF org.kanger.factory.FValueFactory.release
+1 LEAF org.kanger.units.Rule.setUsed
+1 LEAF org.kanger.factory.TValueFactory.find
+1 java.util.TreeSet.addAll
+1 java.util.TreeMap$AscendingSubMap$AscendingEntrySetView.iterator
+1 java.util.TreeMap.fixAfterInsertion
+1 java.util.TimSort.countRunAndMakeAscending
+1 org.kanger.units.Term.timeZone
+1 java.util.regex.Pattern.matcher
+1 java.util.ComparableTimSort.sort
+1 LEAF java.util.TreeMap.getFirstEntry
+1 org.kanger.User.getProperty
+1 java.util.Formatter$FormatSpecifier.localizedMagnitude
+1 LEAF org.kanger.units.Rule.setOrigin
+1 java.text.DecimalFormat.clone
+1 LEAF org.kanger.units.CachedDomain.supportedArguments
+1 LEAF java.lang.Integer.equals
+1 LEAF java.util.Calendar$Builder.isInstantSet
+1 java.util.TimSort.mergeHi
+1 LEAF org.kanger.calculator.Calculator.execute
+1 org.kanger.factory.RuleFactory.mergeDomainIndex
+1 org.kanger.calculator.Functions$1.<init>
+1 java.util.concurrent.CopyOnWriteArraySet.add
+1 java.util.TreeMap$NavigableSubMap.firstKey
+1 LEAF java.util.GregorianCalendar.computeTime
+1 LEAF org.kanger.units.Predicate.toString
+1 java.lang.String.indexOf
+1 LEAF org.kanger.Mind.addTSolve
+1 LEAF java.util.LinkedList.size
+1 LEAF org.kanger.storage.Escalera.release
+1 java.util.concurrent.CopyOnWriteArrayList.add
+1 java.util.concurrent.CopyOnWriteArrayList.addAllAbsent
+1 java.util.ComparableTimSort.reverseRange
+1 java.text.MessageFormat.format
+1 org.kanger.factory.PredicateFactory.pack
+1 LEAF org.kanger.factory.RuleFactory.collectCandidateIds
+1 LEAF java.util.regex.Pattern.expr
+1 java.util.TreeMap.getFirstEntry
+1 LEAF java.util.Date.normalize
+1 java.util.GregorianCalendar.computeTime
+1 org.kanger.factory.DictionaryFactory.collectDynamicRuleTerms
+1 LEAF java.util.LinkedHashSet.<init>
+1 LEAF sun.util.locale.provider.TimeZoneNameUtility.retrieveDisplayNamesImpl
+1 java.util.WeakHashMap.newTable
+1 java.util.TimSort.mergeLo
+1 sun.util.locale.provider.DecimalFormatSymbolsProviderImpl.getInstance
+1 LEAF org.kanger.factory.RuleFactory.register
+1 org.kanger.SemanticEffectTelemetry.recordTSolve
+1 LEAF org.kanger.storage.Escalera.iterator
+1 java.util.TimeZone.getTimeZone
+1 java.util.concurrent.CopyOnWriteArraySet.addAll
+1 LEAF org.kanger.units.TVariable.getCurrent
+1 LEAF org.kanger.Mind.compileLine
+1 sun.util.locale.LocaleUtils.isAlphaNumericString
+1 LEAF java.lang.System.arraycopy
+1 org.kanger.factory.RuleFactory.expand
+1 java.lang.Character.digit
+1 LEAF java.util.TimSort.countRunAndMakeAscending
+1 java.util.IdentityHashMap.hash
+1 LEAF org.kanger.units.Rule.isUsed
+1 java.util.GregorianCalendar.computeFields
+1 org.kanger.Mind.unlinkCVar
+1 java.util.concurrent.locks.AbstractQueuedSynchronizer.release
+1 java.lang.System.identityHashCode
+1 LEAF java.lang.Character.digit
+1 LEAF org.kanger.factory.RuleFactory.commit
+1 java.lang.invoke.DirectMethodHandle$Holder.newInvokeSpecial
+1 LEAF org.kanger.storage.Escalera.commit
+1 LEAF java.util.TreeMap.firstKey
+1 org.kanger.factory.RuleFactory.snapshotDomainIndex
+1 org.kanger.units.Term.equalsTo
+1 CALLSITE app//org.kanger.stores.HypothesisStore.optimize(HypothesisStore.java:209)
+1 java.util.TreeMap$KeyIterator.next
+1 java.util.WeakHashMap.expungeStaleEntries
+1 java.util.WeakHashMap.getTable
+1 java.util.Calendar.setTimeInMillis
+1 java.util.Locale.getUnicodeLocaleType
+1 LEAF java.lang.AbstractStringBuilder.inflate
+1 java.util.concurrent.CopyOnWriteArrayList.addIfAbsent
+1 java.util.regex.Pattern.atom
+1 LEAF org.kanger.Linker.link
+1 LEAF java.lang.System.identityHashCode
+1 LEAF org.kanger.QueryTaintSolve.beginOperation
+1 java.lang.Integer.valueOf
+1 LEAF org.kanger.units.CachedDomain.getCauses
+1 java.util.TreeSet.first
+1 org.kanger.units.TValue.setDeleted
+1 org.kanger.factory.FValueFactory.<init>
+1 org.kanger.factory.FValueFactory.commit
+1 org.kanger.QueryReplayContext.publish
+1 jdk.internal.misc.Unsafe.allocateInstance
+1 LEAF sun.util.calendar.ZoneInfo.getTransitionIndex
+1 LEAF java.util.WeakHashMap.expungeStaleEntries
+1 java.util.TreeMap$PrivateEntryIterator.nextEntry
+1 org.kanger.units.CachedDomain.supportedArguments
+1 java.util.WeakHashMap.remove
+1 LEAF org.kanger.QueryTaint.recordHypothesis
+1 java.util.regex.Pattern.single
+1 org.kanger.units.Domain.isQuery
+1 java.util.TimSort.minRunLength
+1 java.util.Locale.isUnicodeExtensionKey
+1 java.lang.String.split
+1 LEAF sun.util.locale.LocaleUtils.isAlphaNumericString
+1 java.text.SimpleDateFormat.encode
+1 LEAF org.kanger.calculator.Functions$1$17.<init>
+1 java.util.HashMap.tableSizeFor
+1 org.kanger.Mind.setUnitDeleted
+1 java.util.TreeMap$AscendingSubMap.subLowest
+1 org.kanger.primitives.ArgumentsList.applyStamp
+1 LEAF java.util.regex.Pattern.matcher
+1 LEAF org.kanger.Linker$DomainKey.hashCode
+1 LEAF org.kanger.factory.FValueFactory.transaction
+1 LEAF org.kanger.Mind.getCVarChild
+1 sun.util.locale.provider.LocaleProviderAdapter.forType
+1 org.kanger.units.Rule.setOrigin
+1 org.kanger.Linker$DomainKey.hashCode
+1 LEAF java.util.TreeMap.keyIterator
+1 LEAF java.lang.Integer.valueOf
+1 LEAF java.util.regex.Pattern$Start.match
+1 org.kanger.factory.TVariableFactory.createTVar
+1 LEAF org.kanger.units.Rule.getTree
+1 java.util.Calendar.updateTime
+1 java.util.LinkedList.size
+1 sun.util.calendar.ZoneInfo.getOffsets
+1 java.util.WeakHashMap.get
+1 LEAF org.kanger.Mind.findTSolve
+1 org.kanger.factory.DomainFactory.find
+1 org.kanger.factory.FValueFactory.transaction
+1 java.util.Calendar$Builder.isInstantSet
+1 java.lang.String.format
+1 org.kanger.factory.FunctionFactory.<init>
+1 sun.util.calendar.ZoneInfo.getTransitionIndex
+1 org.kanger.factory.RuleFactory.register
+1 org.kanger.QueryTaintSolve.beginOperation
+1 LEAF org.kanger.primitives.ArgumentsList.getCVariables
+1 LEAF org.kanger.factory.DictionaryFactory.collectDynamicRuleTerms
+1 java.util.concurrent.locks.AbstractQueuedSynchronizer.signalNext
+1 LEAF java.lang.StringLatin1.newString
+1 org.kanger.calculator.Calculator.<init>
+1 CALLSITE app//org.kanger.stores.HypothesisStore.optimize(HypothesisStore.java:201)
+1 org.kanger.storage.Escalera.iterator
+1 sun.util.calendar.ZoneInfoFile.getZoneInfo
+1 LEAF org.kanger.units.Term.equalsTo
+1 LEAF org.kanger.storage.Escalera.add
+1 org.kanger.QueryTaint.recordHypothesis
+1 java.util.regex.Matcher.find
+1 java.util.regex.Pattern$Start.match
+SAMPLE 1 PHASE query OBSERVATIONS 17
+17 org.kanger.Mind.link
+17 org.kanger.Linker.link
+17 org.kanger.Linker.rotator
+17 org.kanger.Mind.query
+17 org.kanger.SonProfileRunner.main
+16 org.kanger.Linker$3.run
+16 org.kanger.Linker.rotateVariables
+11 org.kanger.Mind.queryCheckFalse
+10 org.kanger.Linker.access$5
+10 org.kanger.Linker$4.run
+10 org.kanger.factory.TValueFactory.forEach
+8 org.kanger.Linker.access$3
+8 org.kanger.Linker.linkDatabase
+7 org.kanger.Linker.linkDomains
+7 org.kanger.Linker.access$2
+6 org.kanger.Mind.queryCheckTrue
+5 org.kanger.primitives.Argument.isEmpty
+5 LEAF org.kanger.primitives.Argument.isEmpty
+4 org.kanger.factory.RuleFactory.find
+4 org.kanger.units.Domain.isStored
+3 org.kanger.primitives.ArgumentsList.equalsBase
+2 org.kanger.primitives.Solve.getHash
+2 org.kanger.storage.Escalera.find
+2 org.kanger.primitives.ArgumentsList.getHash
+2 org.kanger.units.Domain.isExcluded
+1 java.util.HashMap$KeyIterator.<init>
+1 org.kanger.factory.RuleCandidateIndex$IdIndex.add
+1 org.kanger.units.TVariable.isDeleted
+1 org.kanger.Linker.access$1
+1 java.util.HashSet.iterator
+1 LEAF java.util.HashMap$HashIterator.<init>
+1 org.kanger.units.TVariable.getVarName
+1 java.util.Formatter$FormatSpecifier.printInteger
+1 LEAF org.kanger.factory.RuleCandidateIndex$IdIndex.add
+1 java.util.HashMap.hash
+1 java.util.Formatter.format
+1 org.kanger.factory.RuleFactory.get
+1 org.kanger.primitives.Argument.isDeleted
+1 org.kanger.factory.FValueFactory.release
+1 LEAF java.util.HashMap.hash
+1 org.kanger.primitives.ArgumentsList.equalsStamp
+1 org.kanger.units.Domain.isUsed
+1 org.kanger.units.Domain.createStored
+1 org.kanger.units.Rule.setUsed
+1 LEAF org.kanger.Mind.isUnitDeleted
+1 LEAF org.kanger.units.Rule.setMind
+1 java.util.HashMap$KeySet.iterator
+1 java.util.concurrent.CopyOnWriteArraySet.addAll
+1 LEAF org.kanger.factory.TValueFactory.release
+1 java.util.Formatter.zero
+1 java.util.HashMap$HashIterator.<init>
+1 java.lang.String.format
+1 org.kanger.primitives.ArgumentsList.getStamp
+1 org.kanger.factory.TValueFactory.find
+1 org.kanger.Linker.updateDatabase
+1 org.kanger.primitives.ArgumentsList.getTVariables
+1 org.kanger.Linker.markExcluded
+1 java.util.HashMap.get
+1 LEAF org.kanger.storage.Escalera.find
+1 LEAF java.text.DecimalFormatSymbols.getInstance
+1 org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+1 org.kanger.units.Domain.setUsed
+1 java.util.Formatter$FormatSpecifier.print
+1 org.kanger.factory.RuleFactory.getRaw
+1 LEAF java.util.concurrent.CopyOnWriteArraySet.addAll
+1 org.kanger.Linker.selectDomainCandidates
+1 java.text.DecimalFormatSymbols.getInstance
+1 org.kanger.factory.RuleFactory.indexRule
+1 org.kanger.factory.RuleCandidateIndex$IdIndex.get
+1 org.kanger.factory.RuleFactory.add
+1 LEAF org.kanger.Linker.linkDatabase
+1 java.util.Formatter$FormatSpecifier.getZero
+1 org.kanger.Linker.checkSystem
+1 org.kanger.storage.Escalera.get
+1 java.util.AbstractCollection.addAll
+1 org.kanger.units.Rule.setMind
+1 org.kanger.units.TValue.toString
+1 org.kanger.factory.TValueFactory.release
+1 org.kanger.units.Domain.isCalculated
+1 org.kanger.storage.Step.getData
+1 org.kanger.factory.RuleCandidateIndex.indexRule
+1 java.util.HashSet.<init>
+1 LEAF java.util.HashSet.add
+1 LEAF org.kanger.Linker.linkDomains
+1 java.util.HashMap.getNode
+1 java.util.HashSet.add
+1 org.kanger.factory.RuleFactory.collectResolvedCandidateIds
+1 java.util.Formatter$FormatSpecifier.localizedMagnitude
+1 org.kanger.Mind.isUnitDeleted
+1 org.kanger.units.Domain.setCalculated
+1 org.kanger.factory.RuleFactory.findByResolvedDomain
+SAMPLE 1 PHASE optimize OBSERVATIONS 1087
+1087 org.kanger.Mind.optimizeHypothesis
+1087 org.kanger.SonProfileRunner.main
+1087 org.kanger.stores.HypothesisStore.optimize
+1038 org.kanger.Linker.link
+1038 org.kanger.Mind.link
+1024 org.kanger.Linker.rotator
+969 org.kanger.Linker.rotateVariables
+830 org.kanger.Linker$3.run
+728 org.kanger.Mind.query
+711 CALLSITE app//org.kanger.stores.HypothesisStore.optimize(HypothesisStore.java:222)
+685 org.kanger.factory.TValueFactory.forEach
+674 org.kanger.Linker$4.run
+665 org.kanger.Linker.access$5
+554 org.kanger.Linker.linkDatabase
+554 org.kanger.Linker.access$3
+502 org.kanger.Mind.queryCheckFalse
+341 CALLSITE app//org.kanger.stores.HypothesisStore.optimize(HypothesisStore.java:216)
+226 org.kanger.Mind.queryCheckTrue
+183 org.kanger.primitives.ArgumentsList.equalsBase
+178 org.kanger.Linker.linkDomains
+178 org.kanger.Linker.access$2
+165 LEAF org.kanger.primitives.Argument.isEmpty
+165 org.kanger.primitives.Argument.isEmpty
+152 org.kanger.units.Domain.isExcluded
+129 org.kanger.units.Domain.isStored
+124 org.kanger.factory.RuleFactory.find
+108 LEAF org.kanger.primitives.ArgumentsList.equalsBase
+103 java.util.AbstractCollection.addAll
+95 org.kanger.Linker.access$4
+95 org.kanger.Linker.isValidFor
+90 org.kanger.Linker.checkSystem
+88 org.kanger.Linker.access$1
+87 org.kanger.Linker.selectDomainCandidates
+84 org.kanger.storage.Step.getData
+83 org.kanger.factory.RuleFactory.findByResolvedDomain
+75 org.kanger.storage.Escalera.get
+74 org.kanger.units.Domain.isUsed
+73 LEAF org.kanger.Linker.linkDatabase
+70 org.kanger.primitives.ArgumentsList.getTVariables
+69 org.kanger.units.Rule.setMind
+69 org.kanger.factory.RuleFactory.get
+68 java.util.HashMap.put
+67 LEAF org.kanger.Mind.isUnitDeleted
+67 org.kanger.Mind.isUnitDeleted
+64 java.util.HashSet.add
+60 java.util.HashSet.iterator
+58 LEAF java.util.HashMap$HashIterator.<init>
+58 org.kanger.factory.RuleFactory.getRaw
+58 java.util.HashMap$KeySet.iterator
+58 java.util.HashMap$HashIterator.<init>
+57 java.util.HashMap$KeyIterator.<init>
+55 org.kanger.primitives.Argument.isDeleted
+55 org.kanger.units.TVariable.isDeleted
+52 java.util.HashMap.getNode
+51 org.kanger.units.CachedDomain.setMind
+51 org.kanger.storage.Escalera.find
+51 org.kanger.units.Domain.setMind
+50 java.util.HashSet.<init>
+48 org.kanger.Linker.updateDatabase
+47 java.util.HashMap.hash
+44 java.util.HashMap.putVal
+44 org.kanger.units.Domain.setUsed
+43 org.kanger.factory.RuleFactory.collectResolvedCandidateIds
+42 org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+41 org.kanger.units.Domain.isCalculated
+41 LEAF java.util.HashMap.putVal
+39 LEAF org.kanger.Linker.checkSystem
+38 org.kanger.primitives.ArgumentsList.equalsStamp
+38 org.kanger.factory.TValueFactory.find
+38 org.kanger.primitives.ArgumentsList.getStamp
+35 org.kanger.Linker.markExcluded
+35 org.kanger.Mind.findTSolve
+35 org.kanger.Mind.addTSolve
+34 org.kanger.factory.RuleFactory.add
+34 org.kanger.units.Domain.createStored
+32 LEAF java.util.AbstractCollection.addAll
+32 org.kanger.units.Rule.equalsTo
+30 java.util.HashMap.get
+30 org.kanger.primitives.ArgumentsList.getHash
+30 java.util.HashMap$KeyIterator.next
+30 LEAF java.util.HashMap$HashIterator.nextNode
+30 java.util.HashMap$HashIterator.nextNode
+29 LEAF org.kanger.Linker.isValidFor
+29 LEAF java.util.HashMap.hash
+29 org.kanger.primitives.Solve.getHash
+28 org.kanger.units.CachedDomain.setCauses
+27 java.util.TreeMap.getEntry
+27 org.kanger.units.Domain.setCauses
+27 LEAF java.util.TreeMap.getEntry
+27 java.util.TreeSet.contains
+27 java.util.TreeMap.containsKey
+26 org.kanger.units.Domain.getOverlaps
+26 org.kanger.factory.TValueFactory.collectIds
+25 org.kanger.factory.DictionaryFactory.add
+25 java.util.LinkedHashSet.<init>
+24 org.kanger.units.Term.<init>
+24 org.kanger.primitives.TVariableSet.contains
+24 org.kanger.enums.Tools.parseDate
+24 org.kanger.units.Domain.isComplete
+24 org.kanger.units.Term.construct
+22 org.kanger.factory.RuleFactory.findByDomain
+21 LEAF org.kanger.units.Rule.equalsTo
+20 java.util.HashMap.containsKey
+19 org.kanger.Mind.analyze
+19 org.kanger.Analyzer.analyze
+19 org.kanger.Analyzer.checkDatabase
+19 org.kanger.Mind.compileLine
+18 org.kanger.units.Domain.setExcluded
+18 org.kanger.Analyzer.checkRight
+18 java.lang.StringBuilder.append
+18 LEAF org.kanger.units.Rule.setMind
+18 org.kanger.factory.DictionaryFactory.find
+17 java.text.ParseException.<init>
+17 java.lang.Throwable.fillInStackTrace
+17 CALLSITE app//org.kanger.stores.HypothesisStore.optimize(HypothesisStore.java:195)
+17 java.lang.Exception.<init>
+17 java.text.DateFormat.parse
+17 java.lang.Throwable.<init>
+17 org.kanger.factory.TValueFactory.get
+17 LEAF java.lang.Throwable.fillInStackTrace
+16 org.kanger.primitives.TVariableSet.equals
+16 org.kanger.units.Predicate.getName
+16 java.util.AbstractSet.equals
+16 org.kanger.units.Domain.setCalculated
+16 java.lang.String.valueOf
+15 LEAF java.util.HashMap.getNode
+15 LEAF java.lang.String.valueOf
+15 LEAF org.kanger.primitives.ArgumentsList.getStamp
+15 LEAF org.kanger.storage.Step.getData
+14 LEAF org.kanger.Linker.linkDomains
+14 org.kanger.units.TSolve.equalsTo
+14 LEAF org.kanger.primitives.ArgumentsList.getTVariables
+13 org.kanger.primitives.TVariableSet.hashCode
+13 org.kanger.storage.Escalera$WalkIterator.next
+13 org.kanger.GeneratedCVarMaterializer.findAlphaEquivalent
+12 java.util.TreeMap$NavigableSubMap.size
+12 org.kanger.factory.RuleFactory$1.next
+12 org.kanger.factory.RuleFactory.effectiveView
+12 org.kanger.factory.RuleFactory.isPromoted
+12 org.kanger.units.Rule.isDeleted
+12 org.kanger.units.CachedDomain.getCauses
+12 org.kanger.Analyzer.candidatesFor
+12 java.util.AbstractCollection.containsAll
+12 java.util.TreeSet.size
+12 org.kanger.Linker.addOppositeNatives
+11 java.util.TreeMap$NavigableSubMap$EntrySetView.size
+11 org.kanger.Linker.getSolveCandidates
+11 org.kanger.units.Predicate.isSystem
+11 org.kanger.units.Domain.isSystem
+11 LEAF org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+11 LEAF org.kanger.factory.RuleFactory.isPromoted
+10 org.kanger.Linker.calcFunctions
+10 LEAF java.util.TreeMap$NavigableSubMap$EntrySetView.size
+10 LEAF org.kanger.primitives.TVariableSet.hashCode
+9 CALLSITE app//org.kanger.stores.HypothesisStore.optimize(HypothesisStore.java:230)
+9 org.kanger.Mind.release
+8 org.kanger.Mind.pack
+8 LEAF org.kanger.units.TSolve.equalsTo
+8 LEAF java.util.AbstractCollection.containsAll
+8 LEAF org.kanger.Linker.markExcluded
+8 org.kanger.Mind.finalizeTransactionRootLocked
+8 org.kanger.Mind.finishTransactionLocked
+8 LEAF org.kanger.units.Domain.setMind
+7 org.kanger.SemanticEffectTelemetry.recordDeferredContribution
+7 org.kanger.TechnicalMindTransaction.commit
+7 org.kanger.SemanticEffectTelemetry.solveKey
+7 org.kanger.Mind.commit
+7 org.kanger.factory.RuleCandidateIndex$IdIndex.get
+7 org.kanger.compiler.Compiller.compileLine
+7 LEAF org.kanger.units.TSolve.<init>
+7 org.kanger.stores.HypothesisStore.find
+7 org.kanger.units.TSolve.<init>
+6 org.kanger.factory.RuleFactory.collectDomainIds
+6 CALLSITE app//org.kanger.stores.HypothesisStore.find(HypothesisStore.java:137)
+6 LEAF org.kanger.units.Domain.getOverlaps
+6 org.kanger.stores.HypothesisStore.equalsBase
+6 LEAF org.kanger.SemanticEffectTelemetry.solveKey
+6 java.util.ArrayList.indexOfRange
+6 LEAF org.kanger.factory.RuleFactory.find
+6 LEAF org.kanger.stores.HypothesisStore.equalsBase
+6 CALLSITE app//org.kanger.stores.HypothesisStore.equalsBase(HypothesisStore.java:147)
+6 LEAF java.util.ArrayList.indexOfRange
+6 java.util.ArrayList.indexOf
+6 org.kanger.factory.RuleCandidateIndex.markCachedBatchUsed
+6 LEAF org.kanger.primitives.ArgumentsList.getFunctions
+6 CALLSITE app//org.kanger.stores.HypothesisStore.optimize(HypothesisStore.java:211)
+6 org.kanger.primitives.ArgumentsList.getFunctions
+6 java.util.ArrayList.contains
+5 org.kanger.calculator.Calculator.execute
+5 org.kanger.Linker.synchronizeSolveIndexReference
+5 LEAF org.kanger.primitives.ArgumentsList.getHash
+5 org.kanger.Linker.synchronizeSolveIndex
+5 LEAF java.util.TreeMap.getCeilingEntry
+5 java.util.TreeMap.getCeilingEntry
+5 org.kanger.Mind.executeSystem
+5 org.kanger.units.Predicate.toString
+5 org.kanger.factory.DictionaryFactory.pack
+5 org.kanger.units.Domain.execSystem
+5 java.util.TreeMap$NavigableSubMap.absLowest
+5 java.text.SimpleDateFormat.<init>
+5 org.kanger.units.Term.getParentId
+5 LEAF org.kanger.factory.TValueFactory.forEach
+4 LEAF org.kanger.storage.Escalera.get
+4 java.util.TreeSet.iterator
+4 java.util.TreeMap$KeySet.iterator
+4 LEAF java.util.AbstractSet.equals
+4 java.util.TreeMap$NavigableSubMap.firstKey
+4 LEAF org.kanger.units.Domain.isExcluded
+4 java.util.TreeSet.first
+4 java.util.TreeMap$AscendingSubMap.subLowest
+4 org.kanger.factory.DictionaryFactory.createCVar
+4 LEAF org.kanger.Linker.calcFunctions
+4 java.util.HashSet.contains
+4 LEAF org.kanger.units.Domain.isCalculated
+3 org.kanger.calculator.Functions.<init>
+3 org.kanger.TechnicalMindTransaction.<init>
+3 LEAF org.kanger.units.TSolve.containsTVar
+3 LEAF org.kanger.primitives.Solve.hashCode
+3 org.kanger.Mind.<init>
+3 LEAF org.kanger.storage.Escalera.find
+3 java.util.TreeMap.successor
+3 LEAF java.util.TreeMap.successor
+3 LEAF org.kanger.Linker.rotateVariables
+3 org.kanger.units.CachedDomain.guardedWeights
+3 org.kanger.factory.RuleFactory.collectCandidateIds
+3 org.kanger.primitives.Cause.hashCode
+3 org.kanger.primitives.Solve.hashCode
+3 org.kanger.Linker.buildDomainIndex
+3 org.kanger.calculator.Functions$1.<init>
+3 org.kanger.compiler.Compiller.compileQuainter
+3 org.kanger.units.TSolve.containsTVar
+3 CALLSITE app//org.kanger.stores.HypothesisStore.optimize(HypothesisStore.java:217)
+3 java.util.AbstractSet.removeAll
+3 org.kanger.compiler.Compiller.construct
+3 org.kanger.TechnicalMindTransaction.begin
+3 java.util.HashSet.remove
+3 org.kanger.Mind.init
+3 java.util.HashMap.remove
+3 LEAF org.kanger.units.Term.getParentId
+3 org.kanger.calculator.Calculator.<init>
+3 org.kanger.factory.FValueFactory.mark
+3 org.kanger.factory.TValueFactory.release
+2 org.kanger.primitives.ArgumentsList.convertBase
+2 LEAF java.util.concurrent.ConcurrentHashMap.get
+2 java.util.Properties.getProperty
+2 java.util.TreeMap$AscendingSubMap.keyIterator
+2 java.util.TimSort.binarySort
+2 org.kanger.factory.TValueFactory.pack
+2 org.kanger.factory.RuleCandidateIndex.computeBatchSummary
+2 org.kanger.factory.RuleCandidateIndex.collectLocal
+2 org.kanger.calculator.Predicates$1$2.run
+2 LEAF org.kanger.primitives.Solve.equals
+2 java.util.ArrayList.grow
+2 LEAF org.kanger.units.CachedDomain.guardedWeights
+2 java.util.LinkedHashMap.get
+2 org.kanger.PortableMindLayer.capture
+2 java.util.Collections.sort
+2 java.lang.Boolean.getBoolean
+2 LEAF java.util.TimSort.binarySort
+2 org.kanger.GeneratedCVarMaterializer.alphaEquivalent
+2 LEAF org.kanger.primitives.ArgumentsList.convertBase
+2 org.kanger.factory.RuleFactory.hasActiveRuleWithTerm
+2 java.text.SimpleDateFormat.compile
+2 LEAF java.util.TreeMap.getFirstEntry
+2 LEAF java.util.ArrayList.grow
+2 org.kanger.units.Domain.equalsBase
+2 LEAF org.kanger.Linker.selectDomainCandidates
+2 org.kanger.units.Rule.containsTerm
+2 LEAF org.kanger.units.Term.getParent
+2 java.util.TreeMap.getFirstEntry
+2 org.kanger.factory.DictionaryFactory.collectDynamicRuleTerms
+2 org.kanger.units.Domain.setSolves
+2 org.kanger.storage.Escalera.release
+2 org.kanger.primitives.Solve.equals
+2 org.kanger.units.Term.getParent
+2 java.util.ArrayList.add
+2 java.util.TreeMap$KeyIterator.next
+2 java.util.concurrent.ConcurrentHashMap.get
+2 java.util.TimSort.sort
+2 java.lang.System.getProperty
+2 java.util.TreeMap$PrivateEntryIterator.nextEntry
+2 org.kanger.factory.RuleFactory.collectTermIds
+2 java.util.LinkedHashMap$LinkedKeySet.iterator
+2 java.util.TreeMap.keyIterator
+2 LEAF java.util.LinkedHashMap$LinkedKeySet.iterator
+2 org.kanger.primitives.Cause.equals
+2 java.util.Arrays.sort
+2 java.text.SimpleDateFormat.applyPatternImpl
+2 org.kanger.storage.Escalera.ensureIndex
+2 java.util.ArrayList.sort
+2 org.kanger.factory.RuleFactory.commit
+1 java.util.Calendar.setTime
+1 org.kanger.factory.LibraryFactory.iterator
+1 LEAF org.kanger.units.CachedDomain.setCauses
+1 org.kanger.factory.TValueFactory.add
+1 org.kanger.units.Rule.setUsed
+1 java.lang.AbstractStringBuilder.append
+1 CALLSITE app//org.kanger.stores.HypothesisStore.removeAll(HypothesisStore.java:261)
+1 sun.util.locale.provider.DateFormatSymbolsProviderImpl.getInstance
+1 org.kanger.units.Domain.setProduced
+1 LEAF org.kanger.calculator.Functions$1.<init>
+1 org.kanger.factory.TValueFactory.set
+1 java.util.Arrays.fill
+1 org.kanger.units.Domain.isProduced
+1 sun.util.calendar.Gregorian.newCalendarDate
+1 LEAF java.util.AbstractCollection.retainAll
+1 java.text.DateFormatSymbols.getInstanceRef
+1 LEAF org.kanger.units.Domain.equalsBase
+1 LEAF org.kanger.factory.TValueFactory.release
+1 org.kanger.stores.HypothesisStore.removeAll
+1 java.text.SimpleDateFormat.initialize
+1 java.util.ArrayList.addAll
+1 java.util.GregorianCalendar.<init>
+1 java.text.SimpleDateFormat.parseAmbiguousDatesAsAfter
+1 LEAF java.util.ArrayList.batchRemove
+1 sun.util.calendar.Gregorian$Date.<init>
+1 LEAF java.lang.StringBuilder.append
+1 java.text.SimpleDateFormat.initializeDefaultCentury
+1 java.util.Date.normalize
+1 LEAF org.kanger.Linker.addOppositeNatives
+1 org.kanger.factory.TValueFactory.commit
+1 LEAF org.kanger.QueryReplayContext.publish
+1 LEAF org.kanger.units.Rule.containsTerm
+1 org.kanger.stores.LogStore.commit
+1 CALLSITE app//org.kanger.stores.HypothesisStore.find(HypothesisStore.java:134)
+1 org.kanger.factory.RuleCandidateIndex$IdIndex.snapshot
+1 LEAF java.util.HashMap.putAll
+1 java.util.ArrayList.removeAll
+1 java.text.SimpleDateFormat.initializeCalendar
+1 java.util.Arrays.copyOf
+1 org.kanger.factory.FValueFactory.release
+1 org.kanger.primitives.ArgumentsList.hashCode
+1 LEAF java.text.DateFormatSymbols.<init>
+1 org.kanger.factory.RuleCandidateIndex.mergeFrom
+1 java.lang.StringLatin1.hashCode
+1 LEAF java.util.TreeMap$AscendingSubMap.keyIterator
+1 LEAF org.kanger.Linker$4.run
+1 LEAF org.kanger.units.Domain.isQuery
+1 java.lang.AbstractStringBuilder.inflate
+1 LEAF java.lang.AbstractStringBuilder.getChars
+1 org.kanger.factory.DomainFactory.add
+1 java.util.Date.toString
+1 org.kanger.factory.RuleFactory.indexRule
+1 java.text.DateFormatSymbols.getProviderInstance
+1 java.util.Calendar.createCalendar
+1 LEAF org.kanger.Linker.access$1
+1 java.util.regex.Pattern.compile
+1 java.util.HashMap.putAll
+1 LEAF org.kanger.factory.DictionaryFactory.pack
+1 LEAF org.kanger.units.Domain.isUsed
+1 java.util.IdentityHashMap.put
+1 LEAF sun.util.calendar.Gregorian$Date.<init>
+1 org.kanger.factory.RuleFactory.containsPromotion
+1 org.kanger.stores.LogStore.add
+1 LEAF org.kanger.Linker.rotator
+1 LEAF org.kanger.Analyzer.checkDatabase
+1 LEAF org.kanger.units.Domain.isStored
+1 java.util.Calendar.setFieldsComputed
+1 org.kanger.calculator.Functions$1$28.<init>
+1 java.util.HashMap$Values.iterator
+1 java.lang.StringLatin1.newString
+1 LEAF java.lang.Object.clone
+1 LEAF org.kanger.factory.FValueFactory.release
+1 LEAF org.kanger.factory.DictionaryFactory.find
+1 java.util.TreeSet.addAll
+1 org.kanger.factory.LibraryFactory$1.<init>
+1 LEAF java.util.Arrays.copyOf
+1 java.lang.Long.valueOf
+1 LEAF org.kanger.enums.Tools.parseDate
+1 java.util.regex.Pattern$Start.<init>
+1 java.util.concurrent.CopyOnWriteArraySet.toArray
+1 java.lang.StringBuilder.toString
+1 java.text.SimpleDateFormat.applyPattern
+1 org.kanger.factory.RuleFactory.mergeDomainIndex
+1 LEAF org.kanger.Linker.buildDomainIndex
+1 java.util.Calendar.getInstance
+1 java.lang.Object.clone
+1 java.util.TreeMap$NavigableSubMap$SubMapEntryIterator.next
+1 java.util.concurrent.CopyOnWriteArrayList.addAllAbsent
+1 LEAF java.util.TreeMap$AscendingSubMap.entrySet
+1 java.util.concurrent.CopyOnWriteArrayList.addAll
+1 org.kanger.factory.RuleCandidateIndex.snapshot
+1 org.kanger.factory.PredicateFactory.pack
+1 LEAF org.kanger.factory.RuleFactory.collectCandidateIds
+1 LEAF org.kanger.storage.Escalera.ensureIndex
+1 LEAF java.util.Date.normalize
+1 java.text.DateFormatSymbols.<init>
+1 java.util.LinkedHashMap$LinkedHashIterator.remove
+1 java.util.concurrent.CopyOnWriteArrayList.toArray
+1 LEAF org.kanger.factory.LibraryFactory$1.<init>
+1 java.util.AbstractCollection.toArray
+1 org.kanger.Mind.linkCVar
+1 java.util.concurrent.CopyOnWriteArraySet.addAll
+1 LEAF org.kanger.Mind.compileLine
+1 LEAF org.kanger.stores.HypothesisStore.find
+1 LEAF java.util.Calendar.setFieldsComputed
+1 LEAF org.kanger.factory.RuleFactory.collectResolvedCandidateIds
+1 java.util.IdentityHashMap.hash
+1 java.util.GregorianCalendar.computeFields
+1 org.kanger.Mind.unlinkCVar
+1 java.util.AbstractCollection.retainAll
+1 java.lang.System.identityHashCode
+1 org.kanger.units.Term.equalsTo
+1 java.lang.String.replaceAll
+1 org.kanger.units.TSolve.containsTValue
+1 org.kanger.storage.Escalera.indexStep
+1 LEAF java.util.HashMap$KeySet.iterator
+1 java.util.Calendar.setTimeInMillis
+1 org.kanger.PortableMindLayer.copy
+1 java.util.regex.Pattern$CharProperty.study
+1 org.kanger.units.TVariable.setCurrent
+1 LEAF org.kanger.calculator.Functions$1$28.<init>
+1 java.util.Calendar$Builder.build
+1 LEAF java.lang.AbstractStringBuilder.inflate
+1 LEAF java.lang.System.identityHashCode
+1 org.kanger.factory.FValueFactory.commit
+1 LEAF java.lang.StringLatin1.hashCode
+1 org.kanger.QueryReplayContext.publish
+1 sun.util.locale.provider.CalendarProviderImpl.getInstance
+1 org.kanger.units.Domain.isQuery
+1 sun.util.locale.provider.LocaleResources.getDateTimePattern
+1 LEAF org.kanger.units.TSolve.containsTValue
+1 java.util.WeakHashMap.clear
+1 LEAF java.util.LinkedHashMap$LinkedHashIterator.remove
+1 java.text.SimpleDateFormat.encode
+1 org.kanger.Linker.indexSolve
+1 java.util.TreeMap$NavigableSubMap$SubMapIterator.nextEntry
+1 java.util.HashMap.resize
+1 org.kanger.primitives.ArgumentsList.applyStamp
+1 java.util.TreeMap$AscendingSubMap.entrySet
+1 java.util.regex.Pattern.<init>
+1 java.lang.AbstractStringBuilder.getChars
+1 LEAF java.lang.Long.valueOf
+1 LEAF java.util.Arrays.fill
+1 java.util.HashMap$ValueIterator.<init>
+1 LEAF java.util.HashMap.remove
+1 java.lang.StringBuilder.getChars
+1 org.kanger.factory.DomainFactory.find
+1 LEAF org.kanger.Mind.findTSolve
+1 org.kanger.QueryReplayContext.observeCompilation
+1 LEAF org.kanger.GeneratedCVarMaterializer.findAlphaEquivalent
+1 java.util.ArrayList.batchRemove
+1 LEAF java.util.HashMap.resize
+1 org.kanger.factory.RuleFactory.access$1
+1 org.kanger.factory.RuleCandidateIndex.batchGeneratedNonSubstitutablePair
+1 LEAF java.lang.StringLatin1.newString
+1 org.kanger.primitives.Cause.<init>
+1 org.kanger.factory.RuleCandidateIndex.indexRule
+1 LEAF org.kanger.units.Term.equalsTo
+1 LEAF java.util.regex.Pattern$CharProperty.study
+1 LEAF java.util.AbstractCollection.toArray
+1 java.lang.String.hashCode

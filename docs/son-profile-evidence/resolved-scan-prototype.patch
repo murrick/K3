@@ -1,0 +1,117 @@
+diff --git a/kanger/src/org/kanger/primitives/Argument.java b/kanger/src/org/kanger/primitives/Argument.java
+index 8018ed0..085fb7d 100644
+--- a/kanger/src/org/kanger/primitives/Argument.java
++++ b/kanger/src/org/kanger/primitives/Argument.java
+@@ -202,6 +202,22 @@ public class Argument implements IArgument {
+         id = -1;
+     }
+ 
++    /** Experimental guard: inspect resident built-ins without hydration. */
++    public final boolean supportsScanResolution() throws Exception {
++        if (getClass() != Argument.class || o == null) return false;
++        if (type == ArgumentType.TERM) return o.getClass() == Term.class;
++        if (type == ArgumentType.TVARIABLE && o.getClass() == TVariable.class) {
++            TValue current = ((TVariable) o).getCurrent();
++            return current != null && current.getClass() == TValue.class;
++        }
++        return type == ArgumentType.TVALUE && o.getClass() == TValue.class;
++    }
++
++    public final Term residentScanTerm() {
++        return getClass() == Argument.class && type == ArgumentType.TERM
++            && o != null && o.getClass() == Term.class ? (Term) o : null;
++    }
++
+     @Override
+     public boolean isEmpty(Mind mind) {
+         try {
+diff --git a/kanger/src/org/kanger/units/Domain.java b/kanger/src/org/kanger/units/Domain.java
+index d244069..5e7dd3c 100644
+--- a/kanger/src/org/kanger/units/Domain.java
++++ b/kanger/src/org/kanger/units/Domain.java
+@@ -344,6 +344,19 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
+     }
+ 
+     public boolean isUsed(ArgumentsList arguments, Mind mind) {
++        if (Boolean.getBoolean("kanger.experiment.resolvedDomainScan")) {
++            Boolean fast = resolvedScan(arguments, mind, mind.getUsedDomains().get(this));
++            if (fast != null) {
++                if (Boolean.getBoolean("kanger.experiment.verifyResolvedDomainScan")
++                        && fast.booleanValue() != isUsedReference(arguments, mind))
++                    throw new AssertionError("Resolved domain scan mismatch");
++                return fast;
++            }
++        }
++        return isUsedReference(arguments, mind);
++    }
++
++    private boolean isUsedReference(ArgumentsList arguments, Mind mind) {
+         if (mind.getUsedDomains().containsKey(this)) {
+             for (ArgumentsList list : mind.getUsedDomains().get(this)) {
+                 if (arguments.equalsBase(mind, list)) {
+@@ -364,6 +377,19 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
+     }
+ 
+     public boolean isExcluded(ArgumentsList args, Mind mind) {
++        if (Boolean.getBoolean("kanger.experiment.resolvedDomainScan")) {
++            Boolean fast = resolvedScan(args, mind, mind.getExcludedDomains().get(this));
++            if (fast != null) {
++                if (Boolean.getBoolean("kanger.experiment.verifyResolvedDomainScan")
++                        && fast.booleanValue() != isExcludedReference(args, mind))
++                    throw new AssertionError("Resolved domain scan mismatch");
++                return fast;
++            }
++        }
++        return isExcludedReference(args, mind);
++    }
++
++    private boolean isExcludedReference(ArgumentsList args, Mind mind) {
+         if (mind.getExcludedDomains().containsKey(this)) {
+             for (ArgumentsList list : mind.getExcludedDomains().get(this)) {
+                 if (args.equalsBase(mind, list)) {
+@@ -374,6 +400,45 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
+         return false;
+     }
+ 
++    /** Experimental per-call snapshot. Unsupported inputs retain reference behavior. */
++    private Boolean resolvedScan(ArgumentsList args, Mind mind, java.util.Set<ArgumentsList> rows) {
++        if (rows == null || rows.isEmpty()) return false;
++        if (mind == null || mind.getClass() != Mind.class || args.getClass() != ArgumentsList.class)
++            return null;
++        // Preflight donor tuples before resolving the dynamic left side.
++        for (ArgumentsList row : rows) {
++            if (row == null || row.getClass() != ArgumentsList.class || row.size() != args.size()) return null;
++            for (org.kanger.interfaces.IArgument a : row)
++                if (!(a instanceof org.kanger.primitives.Argument)
++                        || ((org.kanger.primitives.Argument) a).residentScanTerm() == null) return null;
++        }
++        try {
++            for (org.kanger.interfaces.IArgument a : args)
++                if (!(a instanceof org.kanger.primitives.Argument)
++                        || !((org.kanger.primitives.Argument) a).supportsScanResolution()) return null;
++            Term[] values = new Term[args.size()];
++            for (int i = 0; i < values.length; i++) {
++                org.kanger.interfaces.ITerm value = args.get(i).getValue(mind);
++                if (value == null || value.getClass() != Term.class) return null;
++                values[i] = (Term) value;
++            }
++            for (ArgumentsList row : rows) {
++                boolean equal = true;
++                for (int i = 0; i < values.length; i++) {
++                    Term a = values[i];
++                    Term b = ((org.kanger.primitives.Argument) row.get(i)).residentScanTerm();
++                    if (!((a.isCVariable() && b.isCVariable()
++                            && (a.getId() == b.getId() || a.getParentId(mind) == b.getId()
++                            || a.getId() == b.getParentId(mind))) || a.getId() == b.getId())) {
++                        equal = false; break;
++                    }
++                }
++                if (equal) return true;
++            }
++            return false;
++        } catch (Exception unsupported) { return null; }
++    }
++
+     public boolean isExcluded(Mind mind) {
+         return isExcluded(arguments, mind);
+     }

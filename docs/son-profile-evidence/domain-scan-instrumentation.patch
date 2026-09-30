@@ -1,0 +1,102 @@
+diff --git a/kanger-qualification/src/org/kanger/SonProfileRunner.java b/kanger-qualification/src/org/kanger/SonProfileRunner.java
+index 10ae4f2..11a6f62 100644
+--- a/kanger-qualification/src/org/kanger/SonProfileRunner.java
++++ b/kanger-qualification/src/org/kanger/SonProfileRunner.java
+@@ -18,6 +18,7 @@ public final class SonProfileRunner {
+         long start = System.nanoTime();
+         if (!mind.compile(source)) throw new AssertionError("Compilation rejected");
+         System.out.println("COMPILE_NS " + (System.nanoTime() - start));
++        org.kanger.units.Domain.reportScans("compile");
+         int samples = Integer.getInteger("bench.samples", 4);
+         for (int i = 0; i < samples; i++) {
+             Sampler sampler = Boolean.getBoolean("bench.sample") ? new Sampler(Thread.currentThread()) : null;
+@@ -28,6 +29,7 @@ public final class SonProfileRunner {
+             finally { if (sampler != null) sampler.running = false; }
+             long queryNs = System.nanoTime() - start;
+             if (sampler != null) { sampler.join(); sampler.report(i, "query"); }
++            org.kanger.units.Domain.reportScans("query-" + i);
+             List<String> raw = texts(mind);
+             sampler = Boolean.getBoolean("bench.sample") ? new Sampler(Thread.currentThread()) : null;
+             if (sampler != null) sampler.start();
+@@ -36,6 +38,7 @@ public final class SonProfileRunner {
+             finally { if (sampler != null) sampler.running = false; }
+             long optimizeNs = System.nanoTime() - start;
+             if (sampler != null) { sampler.join(); sampler.report(i, "optimize"); }
++            org.kanger.units.Domain.reportScans("optimize-" + i);
+             List<String> optimized = texts(mind);
+             if (result != null || optimized.size() != 6) throw new AssertionError("Unexpected result");
+             System.out.println("SAMPLE " + i + " query_ns=" + queryNs + " optimize_ns=" + optimizeNs
+diff --git a/kanger/src/org/kanger/units/Domain.java b/kanger/src/org/kanger/units/Domain.java
+index d244069..9a93af6 100644
+--- a/kanger/src/org/kanger/units/Domain.java
++++ b/kanger/src/org/kanger/units/Domain.java
+@@ -344,14 +344,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
+     }
+ 
+     public boolean isUsed(ArgumentsList arguments, Mind mind) {
+-        if (mind.getUsedDomains().containsKey(this)) {
+-            for (ArgumentsList list : mind.getUsedDomains().get(this)) {
+-                if (arguments.equalsBase(mind, list)) {
+-                    return true;
+-                }
+-            }
+-        }
+-        return false;
++        return measuredMembership(arguments, mind, mind.getUsedDomains().get(this), 0);
+     }
+ 
+     public void setUsed(ArgumentsList arguments, Mind mind) {
+@@ -364,14 +357,46 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
+     }
+ 
+     public boolean isExcluded(ArgumentsList args, Mind mind) {
+-        if (mind.getExcludedDomains().containsKey(this)) {
+-            for (ArgumentsList list : mind.getExcludedDomains().get(this)) {
+-                if (args.equalsBase(mind, list)) {
+-                    return true;
+-                }
+-            }
++        return measuredMembership(args, mind, mind.getExcludedDomains().get(this), 1);
++    }
++
++    // Temporary diagnostic only: run single-threaded; archive as patch after measurement.
++    private static final long[][] scanCounts = new long[2][6];
++    private static final java.util.Map<String,Long> scanShapes = new java.util.TreeMap<>();
++    private static final java.util.Map<Integer,Long>[] scanSizes = new java.util.Map[]{new java.util.TreeMap<Integer,Long>(), new java.util.TreeMap<Integer,Long>()};
++    private static final java.util.Map<Integer,Long>[] scanLengths = new java.util.Map[]{new java.util.TreeMap<Integer,Long>(), new java.util.TreeMap<Integer,Long>()};
++    private boolean measuredMembership(ArgumentsList args, Mind mind, java.util.Set<ArgumentsList> bucket, int kind) {
++        int size = bucket == null ? 0 : bucket.size();
++        int comparisons = 0;
++        boolean found = false;
++        if (bucket != null) for (ArgumentsList row : bucket) {
++            comparisons++;
++            if (args.equalsBase(mind, row)) { found = true; break; }
++        }
++        StringBuilder shape = new StringBuilder(kind == 0 ? "used:" : "excluded:");
++        for (org.kanger.interfaces.IArgument a : args) {
++            shape.append(a != null && a.getClass() == org.kanger.primitives.Argument.class
++                ? a.getType().name() : "CUSTOM").append('/');
++        }
++        String shapeKey = shape.toString();
++        scanShapes.put(shapeKey, scanShapes.getOrDefault(shapeKey, 0L) + comparisons);
++        long[] c = scanCounts[kind];
++        c[0]++; c[1] += comparisons; c[2] += size;
++        if (found) c[3]++; else { c[4]++; c[5] += comparisons; }
++        scanSizes[kind].put(size, scanSizes[kind].getOrDefault(size, 0L) + 1);
++        scanLengths[kind].put(comparisons, scanLengths[kind].getOrDefault(comparisons, 0L) + 1);
++        return found;
++    }
++    public static void reportScans(String phase) {
++        System.out.println("SHAPES_COMPARISONS " + phase + " " + scanShapes);
++        scanShapes.clear();
++        for (int k = 0; k < 2; k++) {
++            System.out.println("SCAN " + phase + " " + (k == 0 ? "used" : "excluded")
++                + " calls,comparisons,candidate_sum,hits,misses,miss_comparisons=" + java.util.Arrays.toString(scanCounts[k]));
++            System.out.println("SIZES " + phase + " " + k + " " + scanSizes[k]);
++            System.out.println("LENGTHS " + phase + " " + k + " " + scanLengths[k]);
++            java.util.Arrays.fill(scanCounts[k], 0); scanSizes[k].clear(); scanLengths[k].clear();
+         }
+-        return false;
+     }
+ 
+     public boolean isExcluded(Mind mind) {

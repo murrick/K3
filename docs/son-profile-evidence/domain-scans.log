@@ -1,0 +1,39 @@
+COMPILE_NS 375713845
+SCAN compile used calls,comparisons,candidate_sum,hits,misses,miss_comparisons=[13610, 25993, 29837, 9470, 4140, 8680]
+SIZES compile 0 {0=881, 1=6372, 2=1704, 3=1996, 4=577, 5=719, 6=1361}
+LENGTHS compile 0 {0=881, 1=6959, 2=1828, 3=2052, 4=665, 5=788, 6=437}
+SCAN compile excluded calls,comparisons,candidate_sum,hits,misses,miss_comparisons=[13122, 46023, 59253, 4289, 8833, 29906]
+SIZES compile 1 {0=1908, 1=1435, 2=2620, 3=72, 4=1711, 5=2484, 6=12, 7=337, 8=445, 9=76, 10=74, 11=166, 12=474, 13=744, 14=165, 15=197, 16=202}
+LENGTHS compile 1 {0=1908, 1=2329, 2=2802, 3=564, 4=1593, 5=1951, 6=169, 7=312, 8=269, 9=136, 10=134, 11=177, 12=236, 13=274, 14=88, 15=96, 16=84}
+SCAN query-0 used calls,comparisons,candidate_sum,hits,misses,miss_comparisons=[33542, 54226, 63270, 23984, 9558, 17600]
+SIZES query-0 0 {0=1916, 1=16306, 2=5554, 3=5733, 4=2337, 5=1261, 6=41, 7=394}
+LENGTHS query-0 0 {0=1916, 1=18145, 2=7414, 3=4200, 4=1055, 5=593, 6=65, 7=154}
+SCAN query-0 excluded calls,comparisons,candidate_sum,hits,misses,miss_comparisons=[34339, 154363, 204602, 11364, 22975, 97224]
+SIZES query-0 1 {0=5570, 1=3312, 2=6433, 3=52, 4=1009, 5=3768, 6=4325, 7=24, 8=342, 9=156, 10=570, 11=20, 12=1463, 13=1626, 14=714, 15=1740, 16=1040, 17=1632, 18=277, 19=266}
+LENGTHS query-0 1 {0=5570, 1=5194, 2=6711, 3=1156, 4=1842, 5=3540, 6=3461, 7=481, 8=525, 9=466, 10=540, 11=387, 12=831, 13=873, 14=429, 15=873, 16=552, 17=695, 18=89, 19=124}
+SCAN optimize-0 used calls,comparisons,candidate_sum,hits,misses,miss_comparisons=[2126237, 3215033, 3694394, 1483818, 642419, 1011600]
+SIZES optimize-0 0 {0=144551, 1=1067816, 2=451601, 3=282645, 4=101504, 5=33537, 6=17807, 7=19310, 8=7466}
+LENGTHS optimize-0 0 {0=144551, 1=1205300, 2=473889, 3=208888, 4=59580, 5=17431, 6=8352, 7=6264, 8=1982}
+SCAN optimize-0 excluded calls,comparisons,candidate_sum,hits,misses,miss_comparisons=[2221036, 11202902, 14672499, 706261, 1514775, 7285668]
+SIZES optimize-0 1 {0=361832, 1=186929, 2=365388, 3=70981, 4=45307, 5=176073, 6=278853, 7=90110, 8=14258, 9=17900, 10=36543, 11=3536, 12=57832, 13=55323, 14=37048, 15=59277, 16=53051, 17=111627, 18=31317, 19=71948, 20=46184, 21=21590, 22=26416, 23=898, 24=574, 25=241}
+LENGTHS optimize-0 1 {0=361832, 1=299412, 2=391091, 3=116826, 4=96410, 5=185148, 6=229366, 7=90696, 8=31066, 9=31439, 10=33578, 11=22515, 12=40771, 13=37959, 14=28895, 15=38599, 16=35094, 17=54763, 18=18472, 19=33003, 20=22711, 21=10446, 22=10385, 23=332, 24=171, 25=56}
+SAMPLE 0 query_ns=271828599 optimize_ns=7620930192 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+SCAN query-1 used calls,comparisons,candidate_sum,hits,misses,miss_comparisons=[33542, 51647, 63270, 23984, 9558, 17600]
+SIZES query-1 0 {0=1916, 1=16306, 2=5554, 3=5733, 4=2337, 5=1261, 6=41, 7=394}
+LENGTHS query-1 0 {0=1916, 1=19539, 2=6900, 3=3284, 4=1210, 5=590, 6=55, 7=48}
+SCAN query-1 excluded calls,comparisons,candidate_sum,hits,misses,miss_comparisons=[34339, 154704, 204602, 11364, 22975, 97224]
+SIZES query-1 1 {0=5570, 1=3312, 2=6433, 3=52, 4=1009, 5=3768, 6=4325, 7=24, 8=342, 9=156, 10=570, 11=20, 12=1463, 13=1626, 14=714, 15=1740, 16=1040, 17=1632, 18=277, 19=266}
+LENGTHS query-1 1 {0=5570, 1=5193, 2=6663, 3=1127, 4=1844, 5=3540, 6=3503, 7=507, 8=527, 9=465, 10=541, 11=384, 12=837, 13=876, 14=429, 15=878, 16=552, 17=691, 18=89, 19=123}
+SCAN optimize-1 used calls,comparisons,candidate_sum,hits,misses,miss_comparisons=[2126237, 3208555, 3694394, 1483818, 642419, 1011600]
+SIZES optimize-1 0 {0=144551, 1=1067816, 2=451601, 3=282645, 4=101504, 5=33537, 6=17807, 7=19310, 8=7466}
+LENGTHS optimize-1 0 {0=144551, 1=1223753, 2=451782, 3=209270, 4=60451, 5=18455, 6=9118, 7=6215, 8=2642}
+SCAN optimize-1 excluded calls,comparisons,candidate_sum,hits,misses,miss_comparisons=[2221036, 11200127, 14672499, 706261, 1514775, 7285668]
+SIZES optimize-1 1 {0=361832, 1=186929, 2=365388, 3=70981, 4=45307, 5=176073, 6=278853, 7=90110, 8=14258, 9=17900, 10=36543, 11=3536, 12=57832, 13=55323, 14=37048, 15=59277, 16=53051, 17=111627, 18=31317, 19=71948, 20=46184, 21=21590, 22=26416, 23=898, 24=574, 25=241}
+LENGTHS optimize-1 1 {0=361832, 1=299545, 2=390752, 3=117251, 4=96505, 5=185297, 6=229657, 7=90536, 8=31178, 9=30866, 10=33386, 11=22488, 12=40749, 13=38062, 14=28895, 15=38536, 16=35224, 17=54684, 18=18485, 19=33028, 20=22630, 21=10501, 22=10389, 23=333, 24=171, 25=56}
+SAMPLE 1 query_ns=128076864 optimize_ns=5793666705 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
