@@ -50,7 +50,7 @@ import java.util.UUID;
  * {@code <location>.dumb2}. Moving or renaming the complete Context preserves
  * its persisted ContextId and revision.</p>
  */
-final class ContextStore implements AutoCloseable {
+final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
     static final String CONTEXT_SUFFIX = ".context";
     static final String REVISION_SUFFIX = ".revision";
@@ -187,7 +187,8 @@ final class ContextStore implements AutoCloseable {
         return definition;
     }
 
-    synchronized TypeDefinition resolveType(int typeCode) {
+    @Override
+    public synchronized TypeDefinition resolveType(int typeCode) {
         requireOpen();
         return typeRegistry.resolve(typeCode);
     }
