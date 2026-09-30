@@ -135,6 +135,13 @@ public class ContextSnapshotRuntimeTest {
         assertEquals(publishedRevision, readerData.getRevision());
         assertEquals(publishedRevision, writerData.getRevision());
 
+        // Runtime-only IDs may be discarded by Escalera rollback cleanup.
+        dictionary.delete(first);
+
+        long persistentId = dictionary.getRoot().getId();
+        org.junit.jupiter.api.Assertions.assertThrows(
+                UnsupportedOperationException.class,
+                () -> dictionary.delete(persistentId));
         org.junit.jupiter.api.Assertions.assertThrows(
                 UnsupportedOperationException.class,
                 () -> dictionary.clear());
