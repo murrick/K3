@@ -5,6 +5,7 @@
  */
 package org.kanger.storage.dumb2;
 
+import org.kanger.Mind;
 import org.kanger.User;
 import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.CommandErrorException;
@@ -174,9 +175,14 @@ public final class DB implements IData {
     }
 
     @Override
-    public void reindex(IReactor<String> reactor, IMind mind) {
-        throw new UnsupportedOperationException(
-                "DUMB2 reindex is outside M1 base lifecycle");
+    public synchronized void reindex(IReactor<String> reactor, IMind mind)
+            throws Exception {
+        requireOpen();
+        if (!(mind instanceof Mind)) {
+            throw new IllegalArgumentException(
+                    "DUMB2 reindex requires org.kanger.Mind");
+        }
+        context.reindex(reactor, (Mind) mind);
     }
 
     @Override
