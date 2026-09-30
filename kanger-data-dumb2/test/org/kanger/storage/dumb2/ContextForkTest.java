@@ -7,9 +7,12 @@ package org.kanger.storage.dumb2;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.kanger.Mind;
+import org.kanger.User;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.storage.Step;
 
+import java.io.File;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * M2 qualification for independent Context copy/fork semantics.
@@ -169,6 +173,78 @@ public class ContextForkTest {
                 snapshot.close();
             }
             source.close();
+        }
+    }
+
+    @Test
+    void forkRunsImmediatelyAsIndependentMindStorageWithoutConversion()
+            throws Exception {
+        Path databaseDir = root.resolve("runtime-database");
+        Files.createDirectories(databaseDir);
+        Path sourceLocation = databaseDir.resolve("source");
+        Path forkLocation = databaseDir.resolve("fork");
+
+        User sourceUser = new User();
+        sourceUser.setDatabaseDir(databaseDir.toString() + File.separator);
+        DB sourceData = new DB();
+        sourceData.init(sourceUser);
+
+        Mind sourceMind = new Mind(sourceUser);
+        sourceUser.setCurrentMind(sourceMind);
+        sourceMind = (Mind) sourceMind.useStorage("source");
+        sourceUser.setCurrentMind(sourceMind);
+
+        ContextSnapshot snapshot = null;
+        ContextStore forkStore = null;
+        Mind forkMind = null;
+        User forkUser = null;
+        try {
+            assertTrue(Boolean.TRUE.equals(sourceMind.query("!baseline;")));
+            long sourceRevision = sourceData.getRevision();
+            UUID sourceContextId = sourceData.getContextId();
+
+            snapshot = ContextSnapshot.open(sourceLocation);
+
+            assertTrue(Boolean.TRUE.equals(sourceMind.query("!later;")));
+            assertEquals(sourceRevision + 1L, sourceData.getRevision());
+
+            forkStore = snapshot.fork(forkLocation);
+            UUID forkContextId = forkStore.getContextId();
+            assertNotEquals(sourceContextId, forkContextId);
+            assertOrigin(forkStore.getOrigin(),
+                    sourceContextId, sourceRevision);
+            forkStore.close();
+            forkStore = null;
+
+            forkUser = new User();
+            forkUser.setDatabaseDir(databaseDir.toString() + File.separator);
+            DB forkData = new DB();
+            forkData.init(forkUser);
+
+            forkMind = new Mind(forkUser);
+            forkUser.setCurrentMind(forkMind);
+            forkMind = (Mind) forkMind.useStorage("fork");
+            forkUser.setCurrentMind(forkMind);
+
+            assertEquals(forkContextId, forkData.getContextId());
+            assertTrue(Boolean.TRUE.equals(forkMind.query("?baseline;")));
+            assertFalse(Boolean.TRUE.equals(forkMind.query("?later;")),
+                    "fork must run the selected source revision, not source HEAD");
+
+            assertTrue(Boolean.TRUE.equals(forkMind.query("!fork_only;")));
+            assertFalse(Boolean.TRUE.equals(sourceMind.query("?fork_only;")),
+                    "later fork commits must not mutate the source Context");
+        } finally {
+            if (forkMind != null && forkUser != null) {
+                forkUser.setCurrentMind(forkMind.closeStorage());
+            }
+            if (forkStore != null) {
+                forkStore.close();
+            }
+            if (snapshot != null) {
+                snapshot.close();
+            }
+            sourceUser.setCurrentMind(sourceMind.closeStorage());
         }
     }
 
