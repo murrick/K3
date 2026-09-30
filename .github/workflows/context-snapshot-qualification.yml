@@ -1,0 +1,29 @@
+name: DUMB2 context snapshot qualification
+
+on:
+  push:
+    branches:
+      - qualify/3.8.0-context-read-snapshot
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dumb2-tests:
+    name: DUMB2 snapshot tests / Java 26
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 26
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '26'
+          cache: maven
+
+      - name: Run DUMB2 tests
+        run: mvn --batch-mode --no-transfer-progress -pl kanger-data-dumb2 -am test
