@@ -1,3 +1,5 @@
 {
-    "java.dependency.packagePresentation": "hierarchical"
+    "java.dependency.packagePresentation": "hierarchical",
+    "java.autobuild.enabled": false,
+    "java.configuration.updateBuildConfiguration": "interactive"
 }
