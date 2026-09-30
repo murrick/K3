@@ -161,9 +161,8 @@ final class ContextBase implements IBase {
         return true;
     }
 
-    void installPublishedRecords(Map<Long, byte[]> image) throws Exception {
+    void installPublishedRecords(Map<Long, byte[]> image) {
         requireOpen();
-        resolveEndpoints(image);
         records.clear();
         records.putAll(image);
         nextId = records.isEmpty()
