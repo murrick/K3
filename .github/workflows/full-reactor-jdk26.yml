@@ -2,12 +2,15 @@ name: KANGER full reactor JDK 26
 
 on:
   push:
-    branches:
-      - fix/3.8.0-full-reactor-jdk26
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: kanger-full-reactor-jdk26-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   full-reactor:
