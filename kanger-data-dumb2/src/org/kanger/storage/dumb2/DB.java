@@ -30,9 +30,10 @@ import java.util.Map;
 /**
  * Runtime-facing IData adapter for one autonomous DUMB 2.0 Context.
  *
- * <p>This class intentionally is not registered through RuntimeBootstrap yet.
- * M1 qualification attaches it explicitly to a {@link User}; production
- * selection therefore remains on the existing DUMB provider.</p>
+ * <p>This class is exposed through the explicit {@code dumb2}
+ * RuntimeBootstrap provider. The normal Console/Server runtime layout still
+ * packages only the stable DUMB provider; isolated manual-soak launchers place
+ * DUMB2 on the classpath instead.</p>
  *
  * <p>The adapter owns only physical Context lifecycle. Semantic transaction
  * layering, commit/rollback and factory publication remain in User/Mind.
