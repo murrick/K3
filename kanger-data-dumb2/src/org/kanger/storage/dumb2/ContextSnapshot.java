@@ -39,6 +39,7 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
     private final Path generation;
     private final UUID contextId;
     private final long revision;
+    private final ContextManifestStore.Origin origin;
     private final TypeRegistry typeRegistry;
     private final Map<String, ContextBase> bases =
             new LinkedHashMap<String, ContextBase>();
@@ -48,10 +49,12 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
     private ContextSnapshot(Path location,
                             UUID contextId,
                             long revision,
+                            ContextManifestStore.Origin origin,
                             TypeRegistry typeRegistry) {
         this.location = location;
         this.contextId = contextId;
         this.revision = revision;
+        this.origin = origin;
         this.typeRegistry = typeRegistry;
         this.generation = ContextStore.generationPath(location, revision);
     }
@@ -103,6 +106,7 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
                 location,
                 manifest.getContextId(),
                 revision,
+                manifest.getOrigin(),
                 copyRegistry(manifest.getTypeRegistry()));
         try {
             snapshot.validatePublishedGeneration();
@@ -120,6 +124,20 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
 
     long getRevision() {
         return revision;
+    }
+
+    ContextManifestStore.Origin getOrigin() {
+        return origin;
+    }
+
+    TypeRegistry snapshotTypeRegistry() {
+        requireOpen();
+        return copyRegistry(typeRegistry);
+    }
+
+    ContextStore fork(Path target) throws Exception {
+        requireOpen();
+        return ContextStore.fork(this, target);
     }
 
     Path getLocation() {
