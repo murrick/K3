@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.ServiceLoader;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class Dumb2RuntimeModuleTest {
 
@@ -36,8 +35,9 @@ public class Dumb2RuntimeModuleTest {
 
         module.init(user);
 
+        assertEquals(DB.class, user.getData().getClass());
         assertEquals("DUMB 2.0 data model", user.getData().getDescription());
-        assertFalse(user.getData() == null);
-        assertSame(user.getData(), user.getData());
+        assertTrue(user.getData().isClosed(),
+                "provider attachment must not implicitly open a Context");
     }
 }
