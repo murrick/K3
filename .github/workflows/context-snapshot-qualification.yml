@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - qualify/3.8.0-context-read-snapshot
+  pull_request:
+    branches:
+      - develop/3.8.0
   workflow_dispatch:
 
 permissions:
