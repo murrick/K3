@@ -57,13 +57,20 @@ final class RevisionStore {
      * @throws IOException if the marker cannot be created
      */
     static long create(Path path) throws IOException {
+        return create(path, INITIAL_REVISION);
+    }
+
+    static long create(Path path, long revision) throws IOException {
+        if (revision < INITIAL_REVISION) {
+            throw new IllegalArgumentException("revision must be non-negative");
+        }
         Path parent = path.getParent();
         if (parent != null) {
             Files.createDirectories(parent);
         }
-        Files.write(path, encode(INITIAL_REVISION),
+        Files.write(path, encode(revision),
                 StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
-        return INITIAL_REVISION;
+        return revision;
     }
 
     /**
