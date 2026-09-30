@@ -58,13 +58,31 @@ final class SnapshotRuntimeBase implements IBase {
     }
 
     @Override
-    public void delete(long id) {
-        rejectMutation();
+    public void delete(long id) throws Exception {
+        requireOpen();
+        if (source.containsKey(id)) {
+            rejectMutation();
+        }
+        /*
+         * Escalera uses IBase.delete() while packing away transient compiler
+         * units after a rolled-back query. IDs allocated by this wrapper are
+         * not present in the pinned source, so their cleanup is purely
+         * runtime-local and has no physical record to delete.
+         */
     }
 
     @Override
-    public void deleteAll(Collection<Long> ids) {
-        rejectMutation();
+    public void deleteAll(Collection<Long> ids) throws Exception {
+        requireOpen();
+        if (ids == null) {
+            return;
+        }
+        for (Long id : ids) {
+            if (id != null && source.containsKey(id.longValue())) {
+                rejectMutation();
+            }
+        }
+        // Every remaining ID belongs only to the runtime overlay.
     }
 
     @Override
