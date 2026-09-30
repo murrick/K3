@@ -51,7 +51,9 @@ final class ContextBase implements IBase {
     private static final int CRC_SIZE = 4;
 
     private final ContextStore owner;
+    private final PersistentTypeResolver typeResolver;
     private final String schema;
+    private final boolean readOnly;
     private final TreeMap<Long, byte[]> records = new TreeMap<Long, byte[]>();
     private final ContextRecordCodec recordCodec = new ContextRecordCodec();
 
@@ -60,9 +62,34 @@ final class ContextBase implements IBase {
     private boolean closed;
 
     ContextBase(ContextStore owner, String schema) throws Exception {
+        if (owner == null) {
+            throw new NullPointerException("owner");
+        }
         this.owner = owner;
+        this.typeResolver = owner;
         this.schema = schema;
+        this.readOnly = false;
         load(owner.schemaPath(schema));
+    }
+
+    /**
+     * Opens one schema image from an immutable published Context revision.
+     *
+     * <p>The snapshot base deliberately has no mutable ContextStore owner.
+     * Reads and semantic hydration use only the frozen type resolver; all
+     * physical mutation surfaces reject deterministically.</p>
+     */
+    ContextBase(PersistentTypeResolver typeResolver,
+                String schema,
+                Path snapshotPath) throws Exception {
+        if (typeResolver == null || snapshotPath == null) {
+            throw new NullPointerException();
+        }
+        this.owner = null;
+        this.typeResolver = typeResolver;
+        this.schema = schema;
+        this.readOnly = true;
+        load(snapshotPath);
     }
 
     boolean isDirty() {
@@ -88,7 +115,7 @@ final class ContextBase implements IBase {
 
     void writeSnapshot(Path generation,
                        Map<Long, byte[]> image) throws Exception {
-        requireOpen();
+        requireWritable();
         long[] endpoints = resolveEndpoints(image);
 
         byte[] schemaBytes = schema.getBytes(StandardCharsets.UTF_8);
@@ -124,7 +151,7 @@ final class ContextBase implements IBase {
     }
 
     TreeMap<Long, byte[]> canonicalizedRecords(Mind mind) throws Exception {
-        requireOpen();
+        requireWritable();
         if (mind == null) {
             throw new IllegalArgumentException("mind is required");
         }
@@ -162,7 +189,7 @@ final class ContextBase implements IBase {
     }
 
     void installPublishedRecords(Map<Long, byte[]> image) {
-        requireOpen();
+        requireWritable();
         records.clear();
         records.putAll(image);
         nextId = records.isEmpty()
@@ -277,7 +304,7 @@ final class ContextBase implements IBase {
                 input.readFully(packed);
                 PersistentRecord record = PersistentRecordCodec.decode(packed);
                 try {
-                    owner.resolveType(record.getTypeCode());
+                    typeResolver.resolveType(record.getTypeCode());
                 } catch (IllegalArgumentException failure) {
                     StorageLifecycleException invalid = corruption(
                             "DUMB2 schema record references unpublished typeCode "
@@ -315,13 +342,13 @@ final class ContextBase implements IBase {
 
     @Override
     public synchronized void add(IStep one) throws Exception {
-        requireOpen();
+        requireWritable();
         put(one);
     }
 
     @Override
     public synchronized void update(IStep one) throws Exception {
-        requireOpen();
+        requireWritable();
         put(one);
     }
 
@@ -383,11 +410,11 @@ final class ContextBase implements IBase {
     }
 
     Object materialize(PersistentRecord record, Mind mind) throws Exception {
-        return recordCodec.decode(owner, record, mind);
+        return recordCodec.decode(typeResolver, record, mind);
     }
 
     boolean isNeutralPhysicalRecord(PersistentRecord record) {
-        return recordCodec.isPhysicalScalar(owner, record);
+        return recordCodec.isPhysicalScalar(typeResolver, record);
     }
 
     @Override
@@ -402,6 +429,7 @@ final class ContextBase implements IBase {
 
     @Override
     public synchronized void delete(long id) {
+        requireWritable();
         if (records.remove(Long.valueOf(id)) != null) {
             dirty = true;
         }
@@ -409,6 +437,7 @@ final class ContextBase implements IBase {
 
     @Override
     public synchronized void deleteAll(Collection<Long> ids) {
+        requireWritable();
         if (ids == null) {
             return;
         }
@@ -421,6 +450,7 @@ final class ContextBase implements IBase {
 
     @Override
     public synchronized void clear() {
+        requireWritable();
         if (!records.isEmpty()) {
             records.clear();
             dirty = true;
@@ -552,17 +582,23 @@ final class ContextBase implements IBase {
 
     @Override
     public synchronized long nextId() {
+        requireWritable();
         return nextId++;
     }
 
     @Override
     public void flush() throws Exception {
+        requireWritable();
         owner.flush();
     }
 
     @Override
     public void close() throws Exception {
-        owner.close();
+        if (readOnly) {
+            closeFromOwner();
+        } else {
+            owner.close();
+        }
     }
 
     @Override
@@ -571,8 +607,16 @@ final class ContextBase implements IBase {
     }
 
     private void requireOpen() {
-        if (closed || owner.isClosed()) {
+        if (closed || (owner != null && owner.isClosed())) {
             throw new IllegalStateException("DUMB2 schema base is closed: " + schema);
+        }
+    }
+
+    private void requireWritable() {
+        requireOpen();
+        if (readOnly) {
+            throw new UnsupportedOperationException(
+                    "DUMB2 Context snapshot is read-only: " + schema);
         }
     }
 
