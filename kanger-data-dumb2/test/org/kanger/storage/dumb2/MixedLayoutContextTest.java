@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.primitives.Argument;
 import org.kanger.primitives.ArgumentsList;
@@ -18,13 +19,16 @@ import org.kanger.units.Predicate;
 import org.kanger.units.Rule;
 import org.kanger.units.Term;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -148,6 +152,119 @@ public class MixedLayoutContextTest {
         } finally {
             target.close();
             source.close();
+        }
+    }
+
+    @Test
+    void inPlaceReindexPublishesCanonicalLayoutWithoutChangingContextIdentity()
+            throws Exception {
+        Fixture fixture = fixture();
+        Path location = root.resolve("in-place");
+
+        ContextStore store = ContextStore.create(location);
+        UUID contextId = store.getContextId();
+        try {
+            ContextBase base = (ContextBase) store.getBase("rules");
+            base.add(historicalStep(
+                    store, base, fixture.oldRule, -1L, 3001));
+            assertEquals(1L, store.flush());
+
+            long published = store.reindex(null, fixture.mind);
+            assertEquals(2L, published,
+                    "historical layout must publish one canonical revision");
+            assertEquals(contextId, store.getContextId(),
+                    "reindex must preserve Context identity");
+
+            ContextStep migrated =
+                    (ContextStep) base.get(fixture.oldRule.getId());
+            TypeDefinition targetType = store.resolveType(
+                    migrated.getPersistentRecord().getTypeCode());
+            assertEquals("RULE", targetType.getTypeName());
+            assertEquals("Rule-v2", targetType.getDescriptor().getName());
+
+            Rule restored = (Rule) migrated.getData(fixture.mind);
+            assertEquals(fixture.oldRule.getId(), restored.getId());
+            assertEquals(fixture.oldRule.getOriginId(), restored.getOriginId());
+            assertEquals(fixture.oldRule.getPersistentTreeIds(),
+                    restored.getPersistentTreeIds());
+            assertRuleIndexes(restored, fixture.oldPredicate,
+                    fixture.oldPayload, fixture.origin);
+        } finally {
+            store.close();
+        }
+
+        ContextStore reopened = ContextStore.open(location);
+        try {
+            assertEquals(contextId, reopened.getContextId());
+            assertEquals(2L, reopened.getRevision());
+
+            ContextBase base = (ContextBase) reopened.getBase("rules");
+            ContextStep migrated =
+                    (ContextStep) base.get(fixture.oldRule.getId());
+            TypeDefinition targetType = reopened.resolveType(
+                    migrated.getPersistentRecord().getTypeCode());
+            assertEquals("Rule-v2", targetType.getDescriptor().getName());
+        } finally {
+            reopened.close();
+        }
+    }
+
+    @Test
+    void failedReindexLeavesPublishedRevisionAndRecordsUntouched()
+            throws Exception {
+        Fixture fixture = fixture();
+        Path location = root.resolve("failed");
+
+        ContextStore store = ContextStore.create(location);
+        try {
+            ContextBase rules = (ContextBase) store.getBase("rules");
+            rules.add(historicalStep(
+                    store, rules, fixture.oldRule, -1L, 4001));
+            store.getBase("terms");
+            assertEquals(1L, store.flush());
+
+            assertThrows(IllegalStateException.class,
+                    () -> store.reindex(new IReactor<String>() {
+                        private int seen;
+
+                        @Override
+                        public Object run(String schema) {
+                            if (++seen == 2) {
+                                throw new IllegalStateException(
+                                        "synthetic reindex failure");
+                            }
+                            return null;
+                        }
+                    }, fixture.mind));
+
+            assertEquals(1L, store.getRevision(),
+                    "failed reindex must not publish a new revision");
+            assertTrue(Files.notExists(
+                    ContextStore.generationPath(location, 2L)),
+                    "failed reindex must not expose a next generation");
+
+            ContextStep unchanged =
+                    (ContextStep) rules.get(fixture.oldRule.getId());
+            TypeDefinition oldType = store.resolveType(
+                    unchanged.getPersistentRecord().getTypeCode());
+            assertEquals("Rule-v1", oldType.getDescriptor().getName(),
+                    "working image must remain historical after failure");
+        } finally {
+            store.close();
+        }
+
+        ContextStore reopened = ContextStore.open(location);
+        try {
+            assertEquals(1L, reopened.getRevision());
+            ContextBase rules = (ContextBase) reopened.getBase("rules");
+            ContextStep unchanged =
+                    (ContextStep) rules.get(fixture.oldRule.getId());
+            TypeDefinition oldType = reopened.resolveType(
+                    unchanged.getPersistentRecord().getTypeCode());
+            assertEquals("Rule-v1", oldType.getDescriptor().getName(),
+                    "authoritative published generation must remain untouched");
+        } finally {
+            reopened.close();
         }
     }
 
