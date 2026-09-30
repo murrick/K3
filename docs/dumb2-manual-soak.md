@@ -45,6 +45,10 @@ use soak
 ?baseline;
 ?committed;
 ?rolled_back;
+reindex soak
+?baseline;
+?committed;
+?rolled_back;
 ```
 
 Expected semantic result: `baseline` and `committed` survive close/reopen;
@@ -53,8 +57,15 @@ Expected semantic result: `baseline` and `committed` survive close/reopen;
 Then exercise normal source loading, larger databases, queries, collisions,
 repeated close/open, and process restart.
 
-`storage reindex` is intentionally not part of the M1 runtime surface and is
-not a manual-soak target yet.
+`storage reindex` is part of the completed M1 runtime surface. It performs
+in-place physical canonicalization inside the same Context identity. Historical
+supported layouts are materialized through their descriptor/adapter and
+re-encoded through the latest canonical layout, then published as one atomic
+next revision. If the Context is already fully canonical, reindex is a semantic
+no-op and does not invent a revision.
+
+A failed reindex must leave the previously published revision authoritative and
+must not expose a partially canonicalized generation.
 
 Set `KANGER_DUMB2_REBUILD=0` to reuse already-built artifacts.
 
