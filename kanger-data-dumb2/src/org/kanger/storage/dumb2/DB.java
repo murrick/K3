@@ -5,6 +5,7 @@
  */
 package org.kanger.storage.dumb2;
 
+import org.kanger.Mind;
 import org.kanger.User;
 import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.CommandErrorException;
@@ -30,9 +31,10 @@ import java.util.Map;
 /**
  * Runtime-facing IData adapter for one autonomous DUMB 2.0 Context.
  *
- * <p>This class intentionally is not registered through RuntimeBootstrap yet.
- * M1 qualification attaches it explicitly to a {@link User}; production
- * selection therefore remains on the existing DUMB provider.</p>
+ * <p>This class is exposed through the explicit {@code dumb2}
+ * RuntimeBootstrap provider. The normal Console/Server runtime layout still
+ * packages only the stable DUMB provider; isolated manual-soak launchers place
+ * DUMB2 on the classpath instead.</p>
  *
  * <p>The adapter owns only physical Context lifecycle. Semantic transaction
  * layering, commit/rollback and factory publication remain in User/Mind.
@@ -173,9 +175,14 @@ public final class DB implements IData {
     }
 
     @Override
-    public void reindex(IReactor<String> reactor, IMind mind) {
-        throw new UnsupportedOperationException(
-                "DUMB2 reindex is outside M1 base lifecycle");
+    public synchronized void reindex(IReactor<String> reactor, IMind mind)
+            throws Exception {
+        requireOpen();
+        if (!(mind instanceof Mind)) {
+            throw new IllegalArgumentException(
+                    "DUMB2 reindex requires org.kanger.Mind");
+        }
+        context.reindex(reactor, (Mind) mind);
     }
 
     @Override

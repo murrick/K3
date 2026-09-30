@@ -137,4 +137,39 @@ public class ContextRuntimeLifecycleTest {
 
         user.setCurrentMind(reopened.closeStorage());
     }
+
+    @Test
+    void publicReindexKeepsCanonicalRuntimeStateAndContextIdentity()
+            throws Exception {
+        Path databaseDir = root.resolve("reindex-database");
+        Files.createDirectories(databaseDir);
+
+        User user = new User();
+        user.setDatabaseDir(databaseDir.toString() + File.separator);
+
+        DB db = new DB();
+        db.init(user);
+
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        mind = (Mind) mind.useStorage("runtime");
+        user.setCurrentMind(mind);
+
+        assertTrue(Boolean.TRUE.equals(mind.query("!baseline;")));
+        UUID contextId = db.getContextId();
+        long revision = db.getRevision();
+
+        Mind reindexed =
+                (Mind) user.reindex(null, mind, "runtime");
+        user.setCurrentMind(reindexed);
+
+        assertEquals(contextId, db.getContextId(),
+                "public reindex must preserve Context identity");
+        assertEquals(revision, db.getRevision(),
+                "already-canonical Context must not invent a revision");
+        assertTrue(Boolean.TRUE.equals(reindexed.query("?baseline;")),
+                "semantic state must survive public reindex lifecycle");
+
+        user.setCurrentMind(reindexed.closeStorage());
+    }
 }

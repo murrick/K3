@@ -1,0 +1,39 @@
+name: KANGER full reactor JDK 26
+
+on:
+  push:
+    branches:
+      - develop/3.8.0
+  pull_request:
+    branches:
+      - develop/3.8.0
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kanger-full-reactor-jdk26-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full-reactor:
+    name: Full root reactor / Java 26
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 26
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '26'
+          cache: maven
+
+      - name: Maven environment
+        run: mvn --version
+
+      - name: Clean full reactor build
+        run: mvn --batch-mode --no-transfer-progress clean install

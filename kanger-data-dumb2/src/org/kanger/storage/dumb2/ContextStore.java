@@ -5,8 +5,10 @@
  */
 package org.kanger.storage.dumb2;
 
+import org.kanger.Mind;
 import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.StorageLifecycleException;
+import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.storage.dumb2.descriptor.Descriptor;
 import org.kanger.storage.dumb2.descriptor.TypeDefinition;
@@ -27,6 +29,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 import java.util.UUID;
 
 /**
@@ -47,7 +50,7 @@ import java.util.UUID;
  * {@code <location>.dumb2}. Moving or renaming the complete Context preserves
  * its persisted ContextId and revision.</p>
  */
-final class ContextStore implements AutoCloseable {
+final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
     static final String CONTEXT_SUFFIX = ".context";
     static final String REVISION_SUFFIX = ".revision";
@@ -55,6 +58,7 @@ final class ContextStore implements AutoCloseable {
 
     private final Path location;
     private final UUID contextId;
+    private final ContextManifestStore.Origin origin;
     private final ContextLock contextLock;
     private final TypeRegistry typeRegistry;
     private final Map<String, ContextBase> bases =
@@ -67,11 +71,13 @@ final class ContextStore implements AutoCloseable {
     private ContextStore(Path location,
                          UUID contextId,
                          long revision,
+                         ContextManifestStore.Origin origin,
                          ContextLock contextLock,
                          TypeRegistry typeRegistry) {
         this.location = location;
         this.contextId = contextId;
         this.revision = revision;
+        this.origin = origin;
         this.contextLock = contextLock;
         this.typeRegistry = typeRegistry;
         this.publishedTypeCount = typeRegistry.size();
@@ -106,7 +112,8 @@ final class ContextStore implements AutoCloseable {
         ContextLock lock = null;
         try {
             lock = acquireLock(normalized);
-            return new ContextStore(normalized, contextId, revision, lock, manifest.getTypeRegistry());
+            return new ContextStore(normalized, contextId, revision,
+                    manifest.getOrigin(), lock, manifest.getTypeRegistry());
         } catch (IOException | StorageLifecycleException
                  | RuntimeException | Error failure) {
             closeQuietly(lock, failure);
@@ -147,7 +154,7 @@ final class ContextStore implements AutoCloseable {
                         + " has no physical generation at " + normalized);
             }
             ContextStore store = new ContextStore(
-                    normalized, contextId, revision, lock,
+                    normalized, contextId, revision, manifest.getOrigin(), lock,
                     manifest.getTypeRegistry());
             if (revision > RevisionStore.INITIAL_REVISION) {
                 store.validatePublishedGeneration();
@@ -161,6 +168,96 @@ final class ContextStore implements AutoCloseable {
         } catch (IOException | StorageLifecycleException
                  | RuntimeException | Error failure) {
             closeQuietly(lock, failure);
+            throw failure;
+        }
+    }
+
+    /**
+     * Forks exactly one immutable source snapshot into a new independent
+     * mutable Context.
+     *
+     * <p>The target receives a new ContextId and records provenance to the
+     * exact source Context/revision. Persistent schema images are copied
+     * byte-for-byte, so local operational ids are preserved. A non-empty
+     * source starts the new independent revision lineage at R1; an empty R0
+     * snapshot remains R0.</p>
+     */
+    static ContextStore fork(ContextSnapshot source, Path target)
+            throws IOException, StorageLifecycleException {
+        Objects.requireNonNull(source, "source");
+        if (source.isClosed()) {
+            throw new IllegalStateException("DUMB2 source snapshot is closed");
+        }
+
+        Path normalized = requireLocation(target);
+        Path targetContext = contextPath(normalized);
+        Path targetRevision = revisionPath(normalized);
+        Path targetState = stateRoot(normalized);
+        if (Files.exists(targetContext)
+                || Files.exists(targetRevision)
+                || Files.exists(targetState)) {
+            throw new java.nio.file.FileAlreadyExistsException(
+                    "DUMB2 fork target already exists: " + normalized);
+        }
+
+        boolean manifestCreated = false;
+        try {
+            ContextManifestStore.createFork(
+                    targetContext,
+                    source.getContextId(),
+                    source.getRevision(),
+                    source.snapshotTypeRegistry());
+            manifestCreated = true;
+
+            long forkRevision =
+                    source.getRevision() == RevisionStore.INITIAL_REVISION
+                            ? RevisionStore.INITIAL_REVISION
+                            : 1L;
+
+            if (forkRevision > RevisionStore.INITIAL_REVISION) {
+                Files.createDirectories(targetState);
+                Path generation = generationPath(normalized, forkRevision);
+                Path staging = targetState.resolve(
+                        ".fork-" + forkRevision + "-"
+                                + UUID.randomUUID().toString());
+                boolean installed = false;
+                try {
+                    copyDirectory(source.getGeneration(), staging);
+                    Files.move(staging, generation,
+                            StandardCopyOption.ATOMIC_MOVE);
+                    installed = true;
+                } catch (java.nio.file.AtomicMoveNotSupportedException failure) {
+                    throw new IOException(
+                            "DUMB2 requires atomic same-filesystem fork publication: "
+                                    + generation, failure);
+                } finally {
+                    if (!installed || Files.exists(staging)) {
+                        deleteRecursively(staging);
+                    }
+                }
+            }
+
+            RevisionStore.create(targetRevision, forkRevision);
+            return ContextStore.open(normalized);
+        } catch (IOException | StorageLifecycleException
+                 | RuntimeException | Error failure) {
+            if (manifestCreated) {
+                try {
+                    deleteRecursively(targetState);
+                } catch (IOException cleanupFailure) {
+                    failure.addSuppressed(cleanupFailure);
+                }
+                try {
+                    Files.deleteIfExists(targetRevision);
+                } catch (IOException cleanupFailure) {
+                    failure.addSuppressed(cleanupFailure);
+                }
+                try {
+                    Files.deleteIfExists(targetContext);
+                } catch (IOException cleanupFailure) {
+                    failure.addSuppressed(cleanupFailure);
+                }
+            }
             throw failure;
         }
     }
@@ -184,7 +281,8 @@ final class ContextStore implements AutoCloseable {
         return definition;
     }
 
-    synchronized TypeDefinition resolveType(int typeCode) {
+    @Override
+    public synchronized TypeDefinition resolveType(int typeCode) {
         requireOpen();
         return typeRegistry.resolve(typeCode);
     }
@@ -326,6 +424,138 @@ final class ContextStore implements AutoCloseable {
         }
     }
 
+    /**
+     * Rewrites every acquired schema through the current canonical adapters
+     * and publishes the result as one atomic next Context revision.
+     *
+     * <p>Canonical images are built without mutating the live bases. Only after
+     * the complete pass succeeds is a new immutable generation installed and
+     * the revision marker advanced. Therefore a failed reindex cannot leak a
+     * partially canonicalized generation through a later close/flush.</p>
+     *
+     * @return the published revision; unchanged when every record is already
+     *         in its canonical physical layout
+     */
+    synchronized long reindex(IReactor<String> reactor, Mind mind)
+            throws Exception {
+        requireOpen();
+        if (mind == null) {
+            throw new IllegalArgumentException("mind is required");
+        }
+
+        for (ContextBase base : bases.values()) {
+            if (base.isDirty()) {
+                throw new IllegalStateException(
+                        "DUMB2 reindex requires a settled Context");
+            }
+        }
+
+        long persisted = RevisionStore.read(revisionPath(location));
+        if (persisted != revision) {
+            throw new IllegalStateException(
+                    "DUMB2 Context revision changed while open: expected="
+                            + revision + " actual=" + persisted);
+        }
+
+        if (revision > RevisionStore.INITIAL_REVISION) {
+            validatePublishedGeneration();
+        }
+
+        Map<String, TreeMap<Long, byte[]>> canonical =
+                new LinkedHashMap<String, TreeMap<Long, byte[]>>();
+        boolean changed = false;
+        for (Map.Entry<String, ContextBase> entry : bases.entrySet()) {
+            if (reactor != null) {
+                reactor.run(entry.getKey());
+            }
+            TreeMap<Long, byte[]> image =
+                    entry.getValue().canonicalizedRecords(mind);
+            canonical.put(entry.getKey(), image);
+            if (!entry.getValue().sameRecords(image)) {
+                changed = true;
+            }
+        }
+
+        if (!changed) {
+            return revision;
+        }
+        if (revision == Long.MAX_VALUE) {
+            throw new IllegalStateException("DUMB2 revision space exhausted");
+        }
+
+        long next = revision + 1L;
+        Path root = stateRoot(location);
+        Path previous = generationPath(location, revision);
+        Path target = generationPath(location, next);
+        Path staging = root.resolve(
+                ".reindex-" + next + "-" + UUID.randomUUID().toString());
+
+        Files.createDirectories(root);
+        deleteRecursively(staging);
+
+        boolean generationInstalled = false;
+        try {
+            if (revision > RevisionStore.INITIAL_REVISION) {
+                if (!Files.isDirectory(previous)) {
+                    throw corruption("DUMB2 Context revision " + revision
+                            + " lost its physical generation at " + location);
+                }
+                copyDirectory(previous, staging);
+            } else {
+                Files.createDirectories(staging);
+            }
+
+            for (Map.Entry<String, TreeMap<Long, byte[]>> entry
+                    : canonical.entrySet()) {
+                ContextBase base = bases.get(entry.getKey());
+                if (!base.sameRecords(entry.getValue())) {
+                    base.writeSnapshot(staging, entry.getValue());
+                }
+            }
+
+            if (Files.exists(target)) {
+                deleteRecursively(target);
+            }
+
+            try {
+                Files.move(staging, target, StandardCopyOption.ATOMIC_MOVE);
+            } catch (java.nio.file.AtomicMoveNotSupportedException failure) {
+                throw new IOException(
+                        "DUMB2 requires atomic same-filesystem reindex publication: "
+                                + target, failure);
+            }
+            generationInstalled = true;
+
+            long published =
+                    RevisionStore.advance(revisionPath(location), revision);
+            if (published != next) {
+                throw new IllegalStateException(
+                        "Unexpected DUMB2 reindex revision " + published
+                                + "; expected " + next);
+            }
+
+            revision = published;
+            for (Map.Entry<String, TreeMap<Long, byte[]>> entry
+                    : canonical.entrySet()) {
+                ContextBase base = bases.get(entry.getKey());
+                if (!base.sameRecords(entry.getValue())) {
+                    base.installPublishedRecords(entry.getValue());
+                }
+            }
+            return revision;
+        } finally {
+            if (!generationInstalled || Files.exists(staging)) {
+                deleteRecursively(staging);
+            }
+            /*
+             * If the generation was installed but revision publication failed,
+             * it remains an unpublished orphan while the visible marker still
+             * names the previous authoritative revision. A later publication
+             * rebuilds the same target under the exclusive Context lock.
+             */
+        }
+    }
+
     @Override
     public synchronized void close() throws Exception {
         if (closed) {
@@ -354,6 +584,10 @@ final class ContextStore implements AutoCloseable {
         return contextId;
     }
 
+    ContextManifestStore.Origin getOrigin() {
+        return origin;
+    }
+
     synchronized long getRevision() {
         return revision;
     }
@@ -367,6 +601,11 @@ final class ContextStore implements AutoCloseable {
     }
 
     Path schemaPath(Path generation, String schema) {
+        return schemaPathForGeneration(generation, schema);
+    }
+
+    static Path schemaPathForGeneration(Path generation, String schema) {
+        Objects.requireNonNull(generation, "generation");
         return generation.resolve(encodeSchema(requireSchema(schema)) + ".base");
     }
 

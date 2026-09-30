@@ -46,7 +46,7 @@ final class KangerRecordCodec {
                 id, hash, nextId, definition.getTypeCode(), payload));
     }
 
-    DecodedRecord decode(ContextStore context,
+    DecodedRecord decode(PersistentTypeResolver context,
                          byte[] bytes,
                          Mind mind) throws Exception {
         if (context == null) {
@@ -55,7 +55,7 @@ final class KangerRecordCodec {
         return decode(context, PersistentRecordCodec.decode(bytes), mind);
     }
 
-    DecodedRecord decode(ContextStore context,
+    DecodedRecord decode(PersistentTypeResolver context,
                          PersistentRecord record,
                          Mind mind) throws Exception {
         if (context == null || record == null) {

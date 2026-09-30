@@ -84,7 +84,7 @@ final class ContextRecordCodec {
                 "Unsupported DUMB2 persistent payload " + data.getClass().getName());
     }
 
-    Object decode(ContextStore context,
+    Object decode(PersistentTypeResolver context,
                   PersistentRecord record,
                   Mind mind) throws Exception {
         if (context == null || record == null) {
@@ -127,7 +127,7 @@ final class ContextRecordCodec {
         return kanger.decode(context, record, mind).getUnit();
     }
 
-    boolean isPhysicalScalar(ContextStore context, PersistentRecord record) {
+    boolean isPhysicalScalar(PersistentTypeResolver context, PersistentRecord record) {
         TypeDefinition definition = context.resolveType(record.getTypeCode());
         return LONG_TYPE.equals(definition.getTypeName())
                 || LONGS_TYPE.equals(definition.getTypeName());
