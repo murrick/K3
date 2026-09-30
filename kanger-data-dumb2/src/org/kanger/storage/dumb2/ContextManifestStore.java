@@ -36,7 +36,9 @@ import java.util.zip.CRC32;
  * registry. Numeric typeCode values have meaning only through this file.</p>
  *
  * <pre>
- * K3CM | version | UUID-msb | UUID-lsb | type-count
+ * K3CM | version | UUID-msb | UUID-lsb | origin-flag
+ * [origin UUID-msb | origin UUID-lsb | origin revision]
+ * type-count
  * repeated:
  *   typeCode | typeName-utf8 | descriptor-bytes
  * CRC32(all previous bytes)
@@ -48,7 +50,7 @@ import java.util.zip.CRC32;
 final class ContextManifestStore {
 
     static final int MAGIC = 0x4B33434D; // K3CM
-    static final int VERSION = 1;
+    static final int VERSION = 2;
     private static final int MAX_STRING_BYTES = 1024 * 1024;
     private static final int MAX_DESCRIPTOR_BYTES = 16 * 1024 * 1024;
 
@@ -56,13 +58,36 @@ final class ContextManifestStore {
     }
 
     static Manifest create(Path path) throws IOException {
+        return create(path, null, new TypeRegistry());
+    }
+
+    static Manifest createFork(Path path,
+                               UUID originContextId,
+                               long originRevision,
+                               TypeRegistry registry) throws IOException {
+        if (originContextId == null || isZero(originContextId)) {
+            throw new IllegalArgumentException("origin ContextId must be non-zero");
+        }
+        if (originRevision < 0L) {
+            throw new IllegalArgumentException("origin revision must be non-negative");
+        }
+        if (registry == null) {
+            throw new NullPointerException("registry");
+        }
+        return create(path,
+                new Origin(originContextId, originRevision),
+                copyRegistry(registry));
+    }
+
+    private static Manifest create(Path path,
+                                   Origin origin,
+                                   TypeRegistry registry) throws IOException {
         UUID contextId;
         do {
             contextId = UUID.randomUUID();
         } while (isZero(contextId));
 
-        TypeRegistry registry = new TypeRegistry();
-        byte[] bytes = encode(contextId, registry);
+        byte[] bytes = encode(contextId, origin, registry);
         Path parent = path.getParent();
         if (parent != null) {
             Files.createDirectories(parent);
@@ -77,12 +102,12 @@ final class ContextManifestStore {
             }
             channel.force(true);
         }
-        return new Manifest(contextId, registry);
+        return new Manifest(contextId, origin, registry);
     }
 
     static Manifest read(Path path) throws IOException, StorageLifecycleException {
         byte[] bytes = Files.readAllBytes(path);
-        if (bytes.length < 4 + 4 + 8 + 8 + 4 + 4) {
+        if (bytes.length < 4 + 4 + 8 + 8 + 4 + 4 + 4) {
             throw corruption("Invalid DUMB2 Context manifest length "
                     + bytes.length + " at " + path);
         }
@@ -112,6 +137,21 @@ final class ContextManifestStore {
             UUID contextId = new UUID(readLong(input), readLong(input));
             if (isZero(contextId)) {
                 throw corruption("DUMB2 Context identity is zero at " + path);
+            }
+
+            int originFlag = readInt(input);
+            Origin origin = null;
+            if (originFlag == 1) {
+                UUID originContextId =
+                        new UUID(readLong(input), readLong(input));
+                long originRevision = readLong(input);
+                if (isZero(originContextId) || originRevision < 0L) {
+                    throw corruption("Invalid DUMB2 Context origin at " + path);
+                }
+                origin = new Origin(originContextId, originRevision);
+            } else if (originFlag != 0) {
+                throw corruption("Invalid DUMB2 Context origin flag "
+                        + originFlag + " at " + path);
             }
 
             int count = readInt(input);
@@ -146,7 +186,7 @@ final class ContextManifestStore {
             if (input.available() != 0) {
                 throw corruption("Trailing bytes in DUMB2 Context manifest at " + path);
             }
-            return new Manifest(contextId, registry);
+            return new Manifest(contextId, origin, registry);
         } catch (EOFException failure) {
             throw corruption("Truncated DUMB2 Context manifest at " + path, failure);
         }
@@ -174,7 +214,7 @@ final class ContextManifestStore {
             }
         }
 
-        byte[] bytes = encode(contextId, registry);
+        byte[] bytes = encode(contextId, published.getOrigin(), registry);
         Path parent = path.getParent();
         if (parent != null) {
             Files.createDirectories(parent);
@@ -205,7 +245,9 @@ final class ContextManifestStore {
         }
     }
 
-    private static byte[] encode(UUID contextId, TypeRegistry registry)
+    private static byte[] encode(UUID contextId,
+                                 Origin origin,
+                                 TypeRegistry registry)
             throws IOException {
         if (contextId == null || isZero(contextId)) {
             throw new IllegalArgumentException("ContextId must be non-zero");
@@ -220,6 +262,14 @@ final class ContextManifestStore {
         writeInt(output, VERSION);
         writeLong(output, contextId.getMostSignificantBits());
         writeLong(output, contextId.getLeastSignificantBits());
+        if (origin == null) {
+            writeInt(output, 0);
+        } else {
+            writeInt(output, 1);
+            writeLong(output, origin.getContextId().getMostSignificantBits());
+            writeLong(output, origin.getContextId().getLeastSignificantBits());
+            writeLong(output, origin.getRevision());
+        }
         writeInt(output, registry.size());
 
         for (TypeDefinition definition : registry.definitions()) {
@@ -241,6 +291,16 @@ final class ContextManifestStore {
         writeInt(result, (int) crc.getValue());
         result.flush();
         return resultBytes.toByteArray();
+    }
+
+    private static TypeRegistry copyRegistry(TypeRegistry source) {
+        TypeRegistry copy = new TypeRegistry();
+        for (TypeDefinition definition : source.definitions()) {
+            copy.install(definition.getTypeCode(),
+                    definition.getTypeName(),
+                    definition.getDescriptor());
+        }
+        return copy;
     }
 
     private static void writeString(DataOutputStream output, String value)
@@ -321,10 +381,14 @@ final class ContextManifestStore {
 
     static final class Manifest {
         private final UUID contextId;
+        private final Origin origin;
         private final TypeRegistry typeRegistry;
 
-        private Manifest(UUID contextId, TypeRegistry typeRegistry) {
+        private Manifest(UUID contextId,
+                         Origin origin,
+                         TypeRegistry typeRegistry) {
             this.contextId = contextId;
+            this.origin = origin;
             this.typeRegistry = typeRegistry;
         }
 
@@ -332,8 +396,30 @@ final class ContextManifestStore {
             return contextId;
         }
 
+        Origin getOrigin() {
+            return origin;
+        }
+
         TypeRegistry getTypeRegistry() {
             return typeRegistry;
+        }
+    }
+
+    static final class Origin {
+        private final UUID contextId;
+        private final long revision;
+
+        private Origin(UUID contextId, long revision) {
+            this.contextId = contextId;
+            this.revision = revision;
+        }
+
+        UUID getContextId() {
+            return contextId;
+        }
+
+        long getRevision() {
+            return revision;
         }
     }
 }

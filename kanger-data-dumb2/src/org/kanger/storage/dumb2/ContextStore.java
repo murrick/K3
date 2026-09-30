@@ -58,6 +58,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
     private final Path location;
     private final UUID contextId;
+    private final ContextManifestStore.Origin origin;
     private final ContextLock contextLock;
     private final TypeRegistry typeRegistry;
     private final Map<String, ContextBase> bases =
@@ -70,11 +71,13 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
     private ContextStore(Path location,
                          UUID contextId,
                          long revision,
+                         ContextManifestStore.Origin origin,
                          ContextLock contextLock,
                          TypeRegistry typeRegistry) {
         this.location = location;
         this.contextId = contextId;
         this.revision = revision;
+        this.origin = origin;
         this.contextLock = contextLock;
         this.typeRegistry = typeRegistry;
         this.publishedTypeCount = typeRegistry.size();
@@ -109,7 +112,8 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         ContextLock lock = null;
         try {
             lock = acquireLock(normalized);
-            return new ContextStore(normalized, contextId, revision, lock, manifest.getTypeRegistry());
+            return new ContextStore(normalized, contextId, revision,
+                    manifest.getOrigin(), lock, manifest.getTypeRegistry());
         } catch (IOException | StorageLifecycleException
                  | RuntimeException | Error failure) {
             closeQuietly(lock, failure);
@@ -150,7 +154,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                         + " has no physical generation at " + normalized);
             }
             ContextStore store = new ContextStore(
-                    normalized, contextId, revision, lock,
+                    normalized, contextId, revision, manifest.getOrigin(), lock,
                     manifest.getTypeRegistry());
             if (revision > RevisionStore.INITIAL_REVISION) {
                 store.validatePublishedGeneration();
@@ -164,6 +168,96 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         } catch (IOException | StorageLifecycleException
                  | RuntimeException | Error failure) {
             closeQuietly(lock, failure);
+            throw failure;
+        }
+    }
+
+    /**
+     * Forks exactly one immutable source snapshot into a new independent
+     * mutable Context.
+     *
+     * <p>The target receives a new ContextId and records provenance to the
+     * exact source Context/revision. Persistent schema images are copied
+     * byte-for-byte, so local operational ids are preserved. A non-empty
+     * source starts the new independent revision lineage at R1; an empty R0
+     * snapshot remains R0.</p>
+     */
+    static ContextStore fork(ContextSnapshot source, Path target)
+            throws IOException, StorageLifecycleException {
+        Objects.requireNonNull(source, "source");
+        if (source.isClosed()) {
+            throw new IllegalStateException("DUMB2 source snapshot is closed");
+        }
+
+        Path normalized = requireLocation(target);
+        Path targetContext = contextPath(normalized);
+        Path targetRevision = revisionPath(normalized);
+        Path targetState = stateRoot(normalized);
+        if (Files.exists(targetContext)
+                || Files.exists(targetRevision)
+                || Files.exists(targetState)) {
+            throw new java.nio.file.FileAlreadyExistsException(
+                    "DUMB2 fork target already exists: " + normalized);
+        }
+
+        boolean manifestCreated = false;
+        try {
+            ContextManifestStore.createFork(
+                    targetContext,
+                    source.getContextId(),
+                    source.getRevision(),
+                    source.snapshotTypeRegistry());
+            manifestCreated = true;
+
+            long forkRevision =
+                    source.getRevision() == RevisionStore.INITIAL_REVISION
+                            ? RevisionStore.INITIAL_REVISION
+                            : 1L;
+
+            if (forkRevision > RevisionStore.INITIAL_REVISION) {
+                Files.createDirectories(targetState);
+                Path generation = generationPath(normalized, forkRevision);
+                Path staging = targetState.resolve(
+                        ".fork-" + forkRevision + "-"
+                                + UUID.randomUUID().toString());
+                boolean installed = false;
+                try {
+                    copyDirectory(source.getGeneration(), staging);
+                    Files.move(staging, generation,
+                            StandardCopyOption.ATOMIC_MOVE);
+                    installed = true;
+                } catch (java.nio.file.AtomicMoveNotSupportedException failure) {
+                    throw new IOException(
+                            "DUMB2 requires atomic same-filesystem fork publication: "
+                                    + generation, failure);
+                } finally {
+                    if (!installed || Files.exists(staging)) {
+                        deleteRecursively(staging);
+                    }
+                }
+            }
+
+            RevisionStore.create(targetRevision, forkRevision);
+            return ContextStore.open(normalized);
+        } catch (IOException | StorageLifecycleException
+                 | RuntimeException | Error failure) {
+            if (manifestCreated) {
+                try {
+                    deleteRecursively(targetState);
+                } catch (IOException cleanupFailure) {
+                    failure.addSuppressed(cleanupFailure);
+                }
+                try {
+                    Files.deleteIfExists(targetRevision);
+                } catch (IOException cleanupFailure) {
+                    failure.addSuppressed(cleanupFailure);
+                }
+                try {
+                    Files.deleteIfExists(targetContext);
+                } catch (IOException cleanupFailure) {
+                    failure.addSuppressed(cleanupFailure);
+                }
+            }
             throw failure;
         }
     }
@@ -488,6 +582,10 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
     UUID getContextId() {
         return contextId;
+    }
+
+    ContextManifestStore.Origin getOrigin() {
+        return origin;
     }
 
     synchronized long getRevision() {
