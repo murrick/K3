@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -82,8 +83,13 @@ final class ContextBase implements IBase {
     }
 
     void writeSnapshot(Path generation) throws Exception {
+        writeSnapshot(generation, records);
+    }
+
+    void writeSnapshot(Path generation,
+                       Map<Long, byte[]> image) throws Exception {
         requireOpen();
-        long[] endpoints = resolveEndpoints();
+        long[] endpoints = resolveEndpoints(image);
 
         byte[] schemaBytes = schema.getBytes(StandardCharsets.UTF_8);
         ByteArrayOutputStream payloadBytes = new ByteArrayOutputStream();
@@ -94,8 +100,8 @@ final class ContextBase implements IBase {
         payload.write(schemaBytes);
         payload.writeLong(endpoints[0]);
         payload.writeLong(endpoints[1]);
-        payload.writeInt(records.size());
-        for (Map.Entry<Long, byte[]> entry : records.entrySet()) {
+        payload.writeInt(image.size());
+        for (Map.Entry<Long, byte[]> entry : image.entrySet()) {
             payload.writeLong(entry.getKey().longValue());
             payload.writeInt(entry.getValue().length);
             payload.write(entry.getValue());
@@ -115,6 +121,54 @@ final class ContextBase implements IBase {
             output.flush();
             file.getFD().sync();
         }
+    }
+
+    TreeMap<Long, byte[]> canonicalizedRecords(Mind mind) throws Exception {
+        requireOpen();
+        if (mind == null) {
+            throw new IllegalArgumentException("mind is required");
+        }
+
+        TreeMap<Long, byte[]> canonical =
+                new TreeMap<Long, byte[]>();
+        for (Map.Entry<Long, byte[]> entry : records.entrySet()) {
+            PersistentRecord record =
+                    PersistentRecordCodec.decode(entry.getValue());
+            Object data = recordCodec.decode(owner, record, mind);
+            byte[] packed = recordCodec.encode(
+                    owner,
+                    record.getId(),
+                    record.getHash(),
+                    record.getNextId(),
+                    data);
+            canonical.put(entry.getKey(), packed);
+        }
+        resolveEndpoints(canonical);
+        return canonical;
+    }
+
+    boolean sameRecords(Map<Long, byte[]> image) {
+        if (image == null || records.size() != image.size()) {
+            return false;
+        }
+        for (Map.Entry<Long, byte[]> entry : records.entrySet()) {
+            byte[] candidate = image.get(entry.getKey());
+            if (candidate == null
+                    || !Arrays.equals(entry.getValue(), candidate)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    void installPublishedRecords(Map<Long, byte[]> image) {
+        requireOpen();
+        records.clear();
+        records.putAll(image);
+        nextId = records.isEmpty()
+                ? 0L
+                : records.lastKey().longValue() + 1L;
+        dirty = false;
     }
 
     /**
@@ -410,13 +464,17 @@ final class ContextBase implements IBase {
     }
 
     private long[] resolveEndpoints() throws Exception {
-        if (records.isEmpty()) {
+        return resolveEndpoints(records);
+    }
+
+    private long[] resolveEndpoints(Map<Long, byte[]> image) throws Exception {
+        if (image.isEmpty()) {
             return new long[]{-1L, -1L};
         }
 
         Set<Long> referenced = new HashSet<Long>();
         TreeMap<Long, Long> nextById = new TreeMap<Long, Long>();
-        for (Map.Entry<Long, byte[]> entry : records.entrySet()) {
+        for (Map.Entry<Long, byte[]> entry : image.entrySet()) {
             PersistentRecord record =
                     PersistentRecordCodec.decode(entry.getValue());
             if (record.getId() != entry.getKey().longValue()) {
@@ -425,7 +483,7 @@ final class ContextBase implements IBase {
             nextById.put(entry.getKey(), Long.valueOf(record.getNextId()));
             if (record.getNextId() >= 0L) {
                 Long next = Long.valueOf(record.getNextId());
-                if (!records.containsKey(next)) {
+                if (!image.containsKey(next)) {
                     throw corruption("DUMB2 schema " + schema
                             + " references missing next id " + record.getNextId());
                 }
@@ -438,7 +496,7 @@ final class ContextBase implements IBase {
         }
 
         Long root = null;
-        for (Long id : records.keySet()) {
+        for (Long id : image.keySet()) {
             if (!referenced.contains(id)) {
                 if (root != null) {
                     throw corruption("DUMB2 schema " + schema + " contains multiple roots");
@@ -461,7 +519,7 @@ final class ContextBase implements IBase {
             Long next = nextById.get(current);
             current = next == null || next.longValue() < 0L ? null : next;
         }
-        if (visited.size() != records.size()) {
+        if (visited.size() != image.size()) {
             throw corruption("DUMB2 schema " + schema + " contains disconnected records");
         }
         return new long[]{root.longValue(), top.longValue()};

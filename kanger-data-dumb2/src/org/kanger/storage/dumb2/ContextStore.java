@@ -5,8 +5,10 @@
  */
 package org.kanger.storage.dumb2;
 
+import org.kanger.Mind;
 import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.StorageLifecycleException;
+import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.storage.dumb2.descriptor.Descriptor;
 import org.kanger.storage.dumb2.descriptor.TypeDefinition;
@@ -27,6 +29,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 import java.util.UUID;
 
 /**
@@ -322,6 +325,138 @@ final class ContextStore implements AutoCloseable {
              * If generation installation succeeded but revision publication
              * failed, target intentionally remains an unpublished orphan. The
              * next exclusive flush rebuilds it while revision still names R.
+             */
+        }
+    }
+
+    /**
+     * Rewrites every acquired schema through the current canonical adapters
+     * and publishes the result as one atomic next Context revision.
+     *
+     * <p>Canonical images are built without mutating the live bases. Only after
+     * the complete pass succeeds is a new immutable generation installed and
+     * the revision marker advanced. Therefore a failed reindex cannot leak a
+     * partially canonicalized generation through a later close/flush.</p>
+     *
+     * @return the published revision; unchanged when every record is already
+     *         in its canonical physical layout
+     */
+    synchronized long reindex(IReactor<String> reactor, Mind mind)
+            throws Exception {
+        requireOpen();
+        if (mind == null) {
+            throw new IllegalArgumentException("mind is required");
+        }
+
+        for (ContextBase base : bases.values()) {
+            if (base.isDirty()) {
+                throw new IllegalStateException(
+                        "DUMB2 reindex requires a settled Context");
+            }
+        }
+
+        long persisted = RevisionStore.read(revisionPath(location));
+        if (persisted != revision) {
+            throw new IllegalStateException(
+                    "DUMB2 Context revision changed while open: expected="
+                            + revision + " actual=" + persisted);
+        }
+
+        if (revision > RevisionStore.INITIAL_REVISION) {
+            validatePublishedGeneration();
+        }
+
+        Map<String, TreeMap<Long, byte[]>> canonical =
+                new LinkedHashMap<String, TreeMap<Long, byte[]>>();
+        boolean changed = false;
+        for (Map.Entry<String, ContextBase> entry : bases.entrySet()) {
+            if (reactor != null) {
+                reactor.run(entry.getKey());
+            }
+            TreeMap<Long, byte[]> image =
+                    entry.getValue().canonicalizedRecords(mind);
+            canonical.put(entry.getKey(), image);
+            if (!entry.getValue().sameRecords(image)) {
+                changed = true;
+            }
+        }
+
+        if (!changed) {
+            return revision;
+        }
+        if (revision == Long.MAX_VALUE) {
+            throw new IllegalStateException("DUMB2 revision space exhausted");
+        }
+
+        long next = revision + 1L;
+        Path root = stateRoot(location);
+        Path previous = generationPath(location, revision);
+        Path target = generationPath(location, next);
+        Path staging = root.resolve(
+                ".reindex-" + next + "-" + UUID.randomUUID().toString());
+
+        Files.createDirectories(root);
+        deleteRecursively(staging);
+
+        boolean generationInstalled = false;
+        try {
+            if (revision > RevisionStore.INITIAL_REVISION) {
+                if (!Files.isDirectory(previous)) {
+                    throw corruption("DUMB2 Context revision " + revision
+                            + " lost its physical generation at " + location);
+                }
+                copyDirectory(previous, staging);
+            } else {
+                Files.createDirectories(staging);
+            }
+
+            for (Map.Entry<String, TreeMap<Long, byte[]>> entry
+                    : canonical.entrySet()) {
+                ContextBase base = bases.get(entry.getKey());
+                if (!base.sameRecords(entry.getValue())) {
+                    base.writeSnapshot(staging, entry.getValue());
+                }
+            }
+
+            if (Files.exists(target)) {
+                deleteRecursively(target);
+            }
+
+            try {
+                Files.move(staging, target, StandardCopyOption.ATOMIC_MOVE);
+            } catch (java.nio.file.AtomicMoveNotSupportedException failure) {
+                throw new IOException(
+                        "DUMB2 requires atomic same-filesystem reindex publication: "
+                                + target, failure);
+            }
+            generationInstalled = true;
+
+            long published =
+                    RevisionStore.advance(revisionPath(location), revision);
+            if (published != next) {
+                throw new IllegalStateException(
+                        "Unexpected DUMB2 reindex revision " + published
+                                + "; expected " + next);
+            }
+
+            revision = published;
+            for (Map.Entry<String, TreeMap<Long, byte[]>> entry
+                    : canonical.entrySet()) {
+                ContextBase base = bases.get(entry.getKey());
+                if (!base.sameRecords(entry.getValue())) {
+                    base.installPublishedRecords(entry.getValue());
+                }
+            }
+            return revision;
+        } finally {
+            if (!generationInstalled || Files.exists(staging)) {
+                deleteRecursively(staging);
+            }
+            /*
+             * If the generation was installed but revision publication failed,
+             * it remains an unpublished orphan while the visible marker still
+             * names the previous authoritative revision. A later publication
+             * rebuilds the same target under the exclusive Context lock.
              */
         }
     }
