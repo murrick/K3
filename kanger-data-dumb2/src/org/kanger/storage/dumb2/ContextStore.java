@@ -503,6 +503,11 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
     }
 
     Path schemaPath(Path generation, String schema) {
+        return schemaPathForGeneration(generation, schema);
+    }
+
+    static Path schemaPathForGeneration(Path generation, String schema) {
+        Objects.requireNonNull(generation, "generation");
         return generation.resolve(encodeSchema(requireSchema(schema)) + ".base");
     }
 
