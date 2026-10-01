@@ -195,6 +195,16 @@ final class FrontierContinuationEngine {
             Throwable failure = null;
             if (root != null && work != null) {
                 try {
+                    /*
+                     * Mind.release historically publishes presentation result
+                     * stores even for rollback. Federation evidence must not
+                     * become a reachability root in the snapshot dictionary:
+                     * drop operation-local Solutions/Values before settlement
+                     * so ordinary DictionaryFactory.pack can discard every
+                     * transient projected Term before read-only update.
+                     */
+                    work.getSolutions().clear();
+                    work.getValues().clear();
                     root.release(work);
                 } catch (Throwable releaseFailure) {
                     failure = releaseFailure;
