@@ -4,7 +4,9 @@ import org.junit.jupiter.api.Test;
 import org.kanger.FrontierDomain;
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
+import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 
 import java.util.LinkedList;
@@ -78,6 +80,71 @@ public class AnalyzerFrontierSurfaceTest {
                     domain.getVariables().get(0).getName());
             assertFalse(
                     domain.getVariables().get(0).isBound());
+        } finally {
+            mind.release(child);
+        }
+    }
+
+    @Test
+    void linkedDependencyFrontierCharacterization()
+            throws Exception {
+        Mind mind = offlineMind();
+        org.junit.jupiter.api.Assertions.assertTrue(
+                mind.compile("!@x source(x) -> target(x);"));
+
+        Mind child = new Mind(mind);
+        try {
+            Rule query = (Rule) child.compileLine(
+                    "?target(Tom);",
+                    true,
+                    new LinkedList<ITerm>());
+
+            child.analyze(query, false);
+            child.link(query, false);
+            child.analyze(query, false);
+
+            StringBuilder state = new StringBuilder();
+            state.append("frontier=")
+                    .append(child.getFrontierDomains().size());
+            for (IRule candidate : child.getRules()) {
+                Rule rule = (Rule) candidate;
+                state.append("\nRULE id=")
+                        .append(rule.getId())
+                        .append(" stored=").append(rule.isStored())
+                        .append(" query=").append(rule.isQuery())
+                        .append(" generated=").append(rule.isGenerated())
+                        .append(" deleted=").append(rule.isDeleted(child))
+                        .append(" origin=").append(rule.getOrigin());
+                int branchIndex = 0;
+                for (List<Domain> branch : rule.getTree()) {
+                    int domainIndex = 0;
+                    for (Domain domain : branch) {
+                        state.append("\n  D ")
+                                .append(branchIndex).append(":")
+                                .append(domainIndex)
+                                .append(" pred=")
+                                .append(domain.getPredicate(child).getName(child))
+                                .append(" antc=").append(domain.isAntc())
+                                .append(" query=").append(domain.isQuery(child))
+                                .append(" used=").append(domain.isUsed(child))
+                                .append(" stored=").append(domain.isStored(child))
+                                .append(" calc=").append(domain.isCalculated(child))
+                                .append(" complete=").append(domain.isComplete())
+                                .append(" text=").append(domain.toString(child));
+                        ++domainIndex;
+                    }
+                    ++branchIndex;
+                }
+            }
+
+            org.junit.jupiter.api.Assertions.assertEquals(
+                    1,
+                    child.getFrontierDomains().size(),
+                    state.toString());
+            org.junit.jupiter.api.Assertions.assertEquals(
+                    "source",
+                    child.getFrontierDomains().get(0).getPredicateName(),
+                    state.toString());
         } finally {
             mind.release(child);
         }
