@@ -1289,7 +1289,7 @@ public class Mind implements IMind {
 
             setCompliedLine(line);
             Rule r = (Rule) m.compileLine(
-                    line, true, externals);
+                    line, true, convertExternals(ext));
             if (r != null && !r.isSecond()) {
 
                 m.link(r, logging);
@@ -1593,7 +1593,8 @@ public class Mind implements IMind {
                 m.getLog().add(LogMode.ANALYZER, "============= TRUE CHECKING ===============");
             }
 
-            Rule r = (Rule) m.compileLine(line, true, convertExternals(ext));
+            Rule r = (Rule) m.compileLine(
+                    line, true, externals);
             setCompliedLine(line);
             if (r != null && !r.isSecond()) {
                 boolean ar = m.analyze(r, logging);
