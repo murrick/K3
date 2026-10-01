@@ -8,24 +8,30 @@ package org.kanger.storage.dumb2;
 import org.kanger.FrontierDomain;
 import org.kanger.Mind;
 import org.kanger.interfaces.IRule;
+import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Reduces an Analyzer frontier through local X inference only.
  *
- * <p>The operation Mind already contains the generated demand Rules created by
- * Linker (for example {@code ?gate(Tom)}). Recompiling the same query in a
- * child is semantically wrong because it becomes a duplicate/second Rule and
- * enters the normal FALSE/TRUE query protocol. Instead this helper finds the
- * existing generated demand in an isolated probe and lets Linker expand that
- * exact demand through X-local knowledge.</p>
+ * <p>The operation Mind already contains generated demand Rules created by
+ * Linker. A demand is expanded by running Linker on that exact Rule in an
+ * isolated child and inspecting Linker's query-local trace directly:
+ * newly-created generated demands plus unresolved premises adjacent to exact
+ * used Domain occurrences. Analyzer is deliberately not used here because its
+ * contract is a full visible-database interpretation, not seed-local
+ * dependency discovery.</p>
  *
- * <p>No ConnectionVector or foreign Context is consulted here. A demand with
- * no deeper local dependency remains an external frontier leaf.</p>
+ * <p>No ConnectionVector or foreign Context is consulted. If local linking
+ * produces no deeper dependency and does not consume the demand, the demand is
+ * an external frontier leaf. If it consumes the demand without leaving a
+ * deeper dependency, X has closed it locally.</p>
  */
 final class LocalFrontierExpansion {
 
@@ -90,32 +96,23 @@ final class LocalFrontierExpansion {
         }
 
         probe.link(demand, false);
-        boolean locallyResolved =
-                probe.analyze(demand, false);
-        if (locallyResolved) {
-            return;
-        }
 
         List<FrontierDomain> deeper =
-                new ArrayList<FrontierDomain>(
-                        probe.getFrontierDomains());
-        List<FrontierDomain> meaningful =
-                new ArrayList<FrontierDomain>();
-        for (FrontierDomain candidate : deeper) {
-            if (!candidate.semanticallyEquivalent(frontier)) {
-                addUnique(meaningful, candidate);
+                collectLocalDependencies(
+                        operationMind,
+                        probe,
+                        frontier);
+        if (deeper.isEmpty()) {
+            if (!wasDemandUsed(probe, frontier)) {
+                addUnique(result, frontier);
             }
-        }
-
-        if (meaningful.isEmpty()) {
-            addUnique(result, frontier);
             return;
         }
 
         List<FrontierDomain> nextTrail =
                 new ArrayList<FrontierDomain>(trail);
         nextTrail.add(frontier);
-        for (FrontierDomain candidate : meaningful) {
+        for (FrontierDomain candidate : deeper) {
             expandInProbe(
                     operationMind,
                     probe,
@@ -124,6 +121,105 @@ final class LocalFrontierExpansion {
                     nextTrail,
                     depth + 1);
         }
+    }
+
+    private static List<FrontierDomain> collectLocalDependencies(
+            Mind operationMind,
+            Mind probe,
+            FrontierDomain current) throws Exception {
+        List<FrontierDomain> result =
+                new ArrayList<FrontierDomain>();
+
+        /*
+         * Single unresolved local premise is often materialized by Linker as a
+         * new generated demand owned by this probe.
+         */
+        for (IRule candidate : probe.getRules()) {
+            if (candidate == null
+                    || candidate.isDeleted(probe)
+                    || !candidate.isStored()
+                    || !candidate.isGenerated()
+                    || candidate.getMindId() != probe.getId()) {
+                continue;
+            }
+            Rule generated = (Rule) candidate;
+            Domain domain = generated.getDomain();
+            if (domain.isAntc()
+                    || !domain.isComplete()
+                    || domain.isCalculated(probe)) {
+                continue;
+            }
+            FrontierDomain descriptor =
+                    capture(domain, probe);
+            if (descriptor != null
+                    && !descriptor.semanticallyEquivalent(current)) {
+                addUnique(result, descriptor);
+            }
+        }
+
+        /*
+         * Multi-premise local dependency does not have to materialize generated
+         * Rules. Linker's usedDomains map contains the exact occurrences it
+         * consumed. Unused ordinary premises in the same branch are therefore
+         * the deeper local demand frontier.
+         */
+        for (Map.Entry<Domain, Set<org.kanger.primitives.ArgumentsList>> entry
+                : probe.getUsedDomains().entrySet()) {
+            Domain used = entry.getKey();
+            IRule owner = used.getRule();
+            if (!(owner instanceof Rule)
+                    || owner.isDeleted(probe)) {
+                continue;
+            }
+
+            for (List<Domain> branch : ((Rule) owner).getTree()) {
+                if (!containsOccurrence(branch, used)) {
+                    continue;
+                }
+                for (Domain domain : branch) {
+                    if (sameOccurrence(domain, used)
+                            || domain.isAntc()
+                            || !domain.isComplete()
+                            || domain.isUsed(probe)
+                            || domain.isCalculated(probe)
+                            || domain.isSystem(probe)) {
+                        continue;
+                    }
+                    FrontierDomain descriptor =
+                            capture(domain, probe);
+                    if (descriptor != null
+                            && !descriptor.semanticallyEquivalent(current)) {
+                        addUnique(result, descriptor);
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static boolean wasDemandUsed(
+            Mind probe,
+            FrontierDomain frontier) throws Exception {
+        for (Domain used : probe.getUsedDomains().keySet()) {
+            if (frontier.semanticallyMatches(
+                    used, probe)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static FrontierDomain capture(
+            Domain domain, Mind probe) throws Exception {
+        /*
+         * semanticallyMatches already performs the same detached capture but
+         * returns only equality. Use a tiny temporary Analyzer-visible wrapper
+         * path by asking the public descriptor matcher against candidates
+         * generated from current frontier state is not possible here, so
+         * capture through the ordinary Analyzer surface helper exposed below.
+         */
+        return FrontierDomain.fromDomain(domain, probe);
     }
 
     private static Rule findGeneratedDemand(
@@ -151,6 +247,22 @@ final class LocalFrontierExpansion {
             }
         }
         return null;
+    }
+
+    private static boolean containsOccurrence(
+            List<Domain> branch, Domain used) {
+        for (Domain candidate : branch) {
+            if (sameOccurrence(candidate, used)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean sameOccurrence(
+            Domain left, Domain right) {
+        return left == right
+                || left.getId() == right.getId();
     }
 
     private static boolean containsEquivalent(

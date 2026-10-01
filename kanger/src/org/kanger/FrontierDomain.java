@@ -56,6 +56,16 @@ public final class FrontierDomain {
         this.ground = ground;
     }
 
+    /**
+     * Captures one live Domain as an operation-local detached frontier
+     * descriptor. The returned object carries no Context-local IDs as semantic
+     * identity.
+     */
+    public static FrontierDomain fromDomain(
+            Domain domain, Mind mind) throws Exception {
+        return capture(domain, mind);
+    }
+
     static FrontierDomain capture(Domain domain, Mind mind)
             throws Exception {
         String predicateName =
