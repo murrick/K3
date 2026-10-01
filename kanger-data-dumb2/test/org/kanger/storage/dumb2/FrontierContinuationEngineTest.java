@@ -104,8 +104,8 @@ public class FrontierContinuationEngineTest {
             throws Exception {
         ContextFixture x = context(
                 "X-wave",
-                "!@x $y seed(x,y) -> gate(y);",
-                "!@y gate(y), remote(y) -> target(y);");
+                "!seed(Rick,Tom) -> gate(Tom);",
+                "!gate(Tom), remote(Tom) -> target(Tom);");
         ContextFixture a = context(
                 "A-wave",
                 "!seed(Rick,Tom);");

@@ -282,12 +282,14 @@ final class FrontierContinuationEngine {
             return false;
         }
 
-        work.link(assertion, false);
-        if (work.analyze(assertion, false)) {
-            throw new IllegalStateException(
-                    "Ephemeral federation evidence conflicts in X: "
-                            + frontier.getPredicateName());
-        }
+        /*
+         * Do not analyze the donor assertion as an independent ACCEPT. The
+         * operation Mind already contains the opposite-polarity generated
+         * demand, so ordinary ACCEPT collision semantics would correctly see
+         * that pair as a collision. In federation that pair means "the answer
+         * arrived". Retain the donor Rule and let the original compiled query
+         * Rule consume it on the next link/analyze continuation.
+         */
         return true;
     }
 

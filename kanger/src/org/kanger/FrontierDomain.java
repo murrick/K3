@@ -199,6 +199,40 @@ public final class FrontierDomain {
     }
 
     /**
+     * Query-local semantic equivalence used only to collapse multiple internal
+     * KANGER representations of the same unresolved Domain (for example a
+     * generated demand and its originating branch premise).
+     */
+    public boolean semanticallyEquivalent(
+            FrontierDomain other) {
+        if (other == null
+                || negated != other.negated
+                || !predicateName.equals(other.predicateName)
+                || !querySource.equals(other.querySource)
+                || arguments.size() != other.arguments.size()) {
+            return false;
+        }
+        for (int i = 0; i < arguments.size(); ++i) {
+            ArgumentState left = arguments.get(i);
+            ArgumentState right = other.arguments.get(i);
+            if (left.isVariable() != right.isVariable()) {
+                return false;
+            }
+            if (left.isVariable()) {
+                if (!left.getVariableName().equals(
+                        right.getVariableName())) {
+                    return false;
+                }
+            } else if (!left.getFixedValue()
+                    .semanticallyEquals(
+                            right.getFixedValue())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Projects fixed X arguments into the target Context in query-template
      * placeholder order.
      */

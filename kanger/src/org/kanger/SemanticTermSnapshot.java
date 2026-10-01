@@ -135,6 +135,22 @@ public final class SemanticTermSnapshot {
     }
 
     /**
+     * Exact semantic equality. Hash is only a prefilter; Term.equalsTo remains
+     * the authority so frontier deduplication cannot turn a hash collision into
+     * a missing query.
+     */
+    public boolean semanticallyEquals(
+            SemanticTermSnapshot other) {
+        if (other == null
+                || type != other.type
+                || hash != other.hash) {
+            return false;
+        }
+        return materialize().equalsTo(
+                other.materialize());
+    }
+
+    /**
      * Recreates a detached Term with no operational ID or Mind ownership.
      */
     public Term materialize() {

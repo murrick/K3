@@ -318,7 +318,6 @@ public class Analyzer {
 
         List<FrontierDomain> frontier =
                 new ArrayList<FrontierDomain>();
-        Set<String> frontierKeys = new HashSet<String>();
 
         /*
          * Historical stored-query orphans remain the first frontier source.
@@ -327,8 +326,7 @@ public class Analyzer {
         for (Rule unresolved : orfans) {
             addFrontier(
                     unresolved.getDomain(),
-                    frontier,
-                    frontierKeys);
+                    frontier);
         }
 
         /*
@@ -352,8 +350,7 @@ public class Analyzer {
                             && !domain.isCalculated(mind)) {
                         addFrontier(
                                 domain,
-                                frontier,
-                                frontierKeys);
+                                frontier);
                     }
                 }
             }
@@ -381,8 +378,7 @@ public class Analyzer {
                     && !domain.isCalculated(mind)) {
                 addFrontier(
                         domain,
-                        frontier,
-                        frontierKeys);
+                        frontier);
             }
         }
 
@@ -426,8 +422,7 @@ public class Analyzer {
                             && !domain.isCalculated(mind)) {
                         addFrontier(
                                 domain,
-                                frontier,
-                                frontierKeys);
+                                frontier);
                     }
                 }
             }
@@ -450,8 +445,7 @@ public class Analyzer {
 
     private void addFrontier(
             Domain domain,
-            List<FrontierDomain> frontier,
-            Set<String> keys) throws Exception {
+            List<FrontierDomain> frontier) throws Exception {
         if (!isExternalizable(domain)) {
             return;
         }
@@ -460,12 +454,13 @@ public class Analyzer {
         if (descriptor == null) {
             return;
         }
-        String key = descriptor.getPredicateName()
-                + "\u0000"
-                + descriptor.getDiagnosticSource();
-        if (keys.add(key)) {
-            frontier.add(descriptor);
+        for (FrontierDomain existing : frontier) {
+            if (existing.semanticallyEquivalent(
+                    descriptor)) {
+                return;
+            }
         }
+        frontier.add(descriptor);
     }
 
     private boolean isExternalizable(Domain domain)
