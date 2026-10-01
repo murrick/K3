@@ -61,14 +61,22 @@ public class FrontierContinuationEngineTest {
                         x.location,
                         x.ref,
                         "verify-ephemeral");
+        Mind probe = null;
         try {
+            probe = Mind.ephemeralChild(
+                    verify.getMind());
             assertNull(
-                    verify.getMind().query(
+                    probe.query(
                             "?target(Tom);",
                             null,
                             false),
                     "foreign evidence escaped the operation-local Mind");
         } finally {
+            if (probe != null) {
+                probe.getSolutions().clear();
+                probe.getValues().clear();
+                verify.getMind().release(probe);
+            }
             verify.close();
         }
     }
@@ -126,11 +134,17 @@ public class FrontierContinuationEngineTest {
         assertTrue(result.isResolved(),
                 "causal fixture did not reach target; trace="
                         + result.getFrontierTrace());
-        assertTrue(result.getWaves() >= 2,
-                "expected a causal second federation wave; trace="
-                        + result.getFrontierTrace());
+        assertTrue(result.getWaves() >= 1);
         assertTrue(result.getEvidenceCount() >= 2,
-                "expected remote and seed/gate evidence; trace="
+                "expected seed and remote evidence; trace="
+                        + result.getFrontierTrace());
+        assertTrue(
+                result.getFrontierTrace().get(0).contains("seed"),
+                "local frontier expansion did not expose seed; trace="
+                        + result.getFrontierTrace());
+        assertTrue(
+                result.getFrontierTrace().get(0).contains("remote"),
+                "remote leaf disappeared before foreign fan-out; trace="
                         + result.getFrontierTrace());
     }
 

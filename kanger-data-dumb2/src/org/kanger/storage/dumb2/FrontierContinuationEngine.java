@@ -97,7 +97,9 @@ final class FrontierContinuationEngine {
 
             while (waves < MAX_WAVES) {
                 List<FrontierDomain> frontiers =
-                        work.getFrontierDomains();
+                        LocalFrontierExpansion.expand(
+                                work,
+                                work.getFrontierDomains());
                 if (frontiers.isEmpty()) {
                     return new Result(
                             false,
