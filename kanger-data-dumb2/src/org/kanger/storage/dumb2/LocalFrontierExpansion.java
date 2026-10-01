@@ -86,8 +86,7 @@ final class LocalFrontierExpansion {
         }
 
         Rule demand =
-                findGeneratedDemand(
-                        operationMind,
+                findOrCreateDemand(
                         probe,
                         frontier);
         if (demand == null) {
@@ -224,10 +223,13 @@ final class LocalFrontierExpansion {
         return FrontierDomain.fromDomain(domain, probe);
     }
 
-    private static Rule findGeneratedDemand(
-            Mind operationMind,
+    private static Rule findOrCreateDemand(
             Mind probe,
             FrontierDomain frontier) throws Exception {
+        /*
+         * Prefer a canonical generated representation if one already exists in
+         * the pinned Context or was created earlier in this probe.
+         */
         for (IRule candidate : probe.getRules()) {
             if (candidate == null
                     || candidate.isDeleted(probe)
@@ -237,19 +239,40 @@ final class LocalFrontierExpansion {
             }
 
             Rule rule = (Rule) candidate;
-
-            /*
-             * The current FrontierDomain is already the query-local authority.
-             * RuleFactory may reuse a semantically identical generated Rule
-             * restored from the pinned Context instead of creating a new Rule
-             * owned by operationMind. Ownership therefore must not gate lookup
-             * of the representation used only as a local Linker seed.
-             */
             if (frontier.semanticallyMatches(
                     rule.getDomain(), probe)) {
                 return rule;
             }
         }
+
+        /*
+         * With several unresolved premises Linker intentionally may leave the
+         * demand only as a live Domain occurrence in the local rule branch.
+         * Materialize the ordinary one-domain generated demand through the same
+         * RuleFactory.add(Domain) primitive used by Linker itself. Because
+         * probe is an ephemeral child, this representation dies with the local
+         * expansion and is never published to X.
+         */
+        for (IRule candidate : probe.getRules()) {
+            if (candidate == null
+                    || candidate.isDeleted(probe)) {
+                continue;
+            }
+            Rule rule = (Rule) candidate;
+            for (List<Domain> branch : rule.getTree()) {
+                for (Domain domain : branch) {
+                    if (frontier.semanticallyMatches(
+                            domain, probe)) {
+                        IRule demand =
+                                probe.getRules().add(domain);
+                        return demand == null
+                                ? null
+                                : (Rule) demand;
+                    }
+                }
+            }
+        }
+
         return null;
     }
 
