@@ -1,0 +1,10 @@
+candidate-snapshot-1-false.log seconds=12.837 MB=5254.4
+candidate-snapshot-2-true.log seconds=14.522 MB=4765.3
+candidate-snapshot-3-true.log seconds=9.808 MB=4790.8
+candidate-snapshot-4-false.log seconds=11.643 MB=5352.5
+candidate-snapshot-5-false.log seconds=11.684 MB=5353.0
+candidate-snapshot-6-true.log seconds=10.009 MB=4803.6
+PAIR time_reduction=-13.13% allocation_reduction=9.31%
+PAIR time_reduction=15.76% allocation_reduction=10.49%
+PAIR time_reduction=14.34% allocation_reduction=10.26%
+BENCHMARK_SNAPSHOTS_EQUAL samples=24
