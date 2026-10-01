@@ -1,0 +1,73 @@
+Testing: set_08_02
+Timing: 3.001 sec
+set_08_02	3.001 sec
+Success: 1
+  Fails: 0
+SET08_SAMPLE_OK 0
+Testing: set_08_02
+Timing: 1.624 sec
+set_08_02	1.624 sec
+Success: 1
+  Fails: 0
+SET08_SAMPLE_OK 1
+Testing: set_08_02
+Timing: 1.466 sec
+set_08_02	1.466 sec
+Success: 1
+  Fails: 0
+SET08_SAMPLE_OK 2
+Testing: set_08_02
+Timing: 1.116 sec
+set_08_02	1.116 sec
+Success: 1
+  Fails: 0
+SET08_SAMPLE_OK 3
+Testing: set_08_02
+Timing: 1.094 sec
+set_08_02	1.094 sec
+Success: 1
+  Fails: 0
+SET08_SAMPLE_OK 4
+Testing: set_08_02
+Timing: 0.989 sec
+set_08_02	0.989 sec
+Success: 1
+  Fails: 0
+SET08_SAMPLE_OK 5
+Testing: set_08_02
+Timing: 1.111 sec
+set_08_02	1.111 sec
+Success: 1
+  Fails: 0
+SET08_SAMPLE_OK 6
+Testing: set_08_02
+Timing: 1.032 sec
+set_08_02	1.032 sec
+Success: 1
+  Fails: 0
+SET08_SAMPLE_OK 7
+Testing: set_08_02
+Timing: 0.974 sec
+set_08_02	0.974 sec
+Success: 1
+  Fails: 0
+SET08_SAMPLE_OK 8
+Testing: set_08_02
+Timing: 1.04 sec
+set_08_02	1.04 sec
+Success: 1
+  Fails: 0
+SET08_SAMPLE_OK 9
+Testing: set_08_02
+Timing: 1.005 sec
+set_08_02	1.005 sec
+Success: 1
+  Fails: 0
+SET08_SAMPLE_OK 10
+Testing: set_08_02
+Timing: 1.041 sec
+set_08_02	1.041 sec
+Success: 1
+  Fails: 0
+SET08_SAMPLE_OK 11
+SET08_PROFILE_OK samples=12

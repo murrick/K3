@@ -43,3 +43,16 @@ Four fresh JVMs OFF/ON/ON/OFF, eight repetitions each; both new flags toggled to
 | ON/OFF | 0.896 | 0.931 | -3.91% |
 
 All 32 tests passed; empty stderr. Within-JVM times continue declining after two warmups, so these are harness medians, not fully stabilized JIT steady-state estimates. No speedup observed; both comparisons show a small slowdown. Do not promote the two paths as universally faster or default-enable on this evidence. A local comparison should include both hypotheses and set_08_02 before considering integration. This does not invalidate the directly measured allocation savings in the hypothesis workload. Local launch instructions: combined-allocation-local-check.md. No further production changes.
+
+## Four-mode set_08_02 repeat
+
+No production changes. Same Java17 Xmx512m build, prior six flags ON. Eight sequential fresh JVMs 00/10/01/11/11/01/10/00, 12 repetitions per JVM; discard first six, compare median of final six. All 96 original tests pass; stderr empty. Archived filtered logs retain test names, original method timing, success/failure counts and every per-sample/end marker; full verbose transcripts remain reproducible through the driver (temporary ../build output).
+
+| Mode | Forward median s | Forward reduction vs 00 | Reverse median s | Reverse reduction vs 00 |
+|---|---:|---:|---:|---:|
+| 00 | 0.9045 | reference | 0.9295 | reference |
+| 10 | 0.8735 | 3.43% | 0.9480 | -1.99% |
+| 01 | 0.8600 | 4.92% | 1.0360 | -11.46% |
+| 11 | 1.0170 | -12.44% | 0.8820 | 5.11% |
+
+Every treatment changes the sign of its elapsed result between the two orders. This repeat neither confirms a stable speedup nor isolates a consistently slower new path. Earlier 2.5–3.9% slowdowns remain real observations, but are not established as a repeatable regression. Four-worker scheduling and JVM effects are possible sources of variation; this measurement does not identify their cause. Do not remove guards/default-enable or merge on these numbers. Local comparison on both hypotheses and set_08_02 remains the next integration decision input; avoid further indiscriminate timing batches on this noisy environment.

@@ -1,0 +1,15 @@
+set08-factorial-1-00.log samples=[2.71, 1.587, 1.915, 1.351, 1.167, 1.033, 0.892, 0.96, 0.844, 0.917, 0.931, 0.879] warm_median_s=0.9045
+set08-factorial-2-10.log samples=[2.832, 1.907, 1.513, 1.258, 1.036, 0.889, 0.856, 0.936, 0.84, 0.891, 0.909, 0.795] warm_median_s=0.8735
+set08-factorial-3-01.log samples=[2.695, 1.378, 1.351, 1.471, 0.945, 0.95, 0.914, 0.802, 0.966, 0.826, 0.88, 0.84] warm_median_s=0.8600
+set08-factorial-4-11.log samples=[2.749, 1.716, 1.369, 0.973, 1.002, 0.953, 1.012, 1.071, 1.106, 1.022, 0.964, 0.964] warm_median_s=1.0170
+set08-factorial-5-11.log samples=[2.694, 1.501, 1.499, 1.136, 0.958, 0.91, 1.04, 0.851, 0.856, 0.899, 0.865, 1.138] warm_median_s=0.8820
+set08-factorial-6-01.log samples=[3.001, 1.624, 1.466, 1.116, 1.094, 0.989, 1.111, 1.032, 0.974, 1.04, 1.005, 1.041] warm_median_s=1.0360
+set08-factorial-7-10.log samples=[2.56, 1.588, 1.859, 1.255, 1.126, 0.946, 0.959, 1.013, 0.907, 0.931, 0.959, 0.937] warm_median_s=0.9480
+set08-factorial-8-00.log samples=[2.483, 1.713, 1.474, 1.048, 1.029, 1.104, 1.054, 0.989, 0.907, 0.932, 0.927, 0.89] warm_median_s=0.9295
+VS_REFERENCE batch=1 mode=10 wall_reduction=3.43%
+VS_REFERENCE batch=1 mode=01 wall_reduction=4.92%
+VS_REFERENCE batch=1 mode=11 wall_reduction=-12.44%
+VS_REFERENCE batch=2 mode=10 wall_reduction=-1.99%
+VS_REFERENCE batch=2 mode=01 wall_reduction=-11.46%
+VS_REFERENCE batch=2 mode=11 wall_reduction=5.11%
+SET08_FACTORIAL_ALL_PASS samples=96
