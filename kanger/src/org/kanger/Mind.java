@@ -110,6 +110,9 @@ import java.util.*;
  */
 public class Mind implements IMind {
 
+    private static final boolean EMPTY_DELETION_LAYER_SHORTCUT =
+            Boolean.getBoolean("kanger.experiment.emptyDeletionLayerShortcut");
+
     private static final boolean DEBUG_DISABLE_FALSE_CHECK = false;
     private static final int FLOOD_CONTROL_LIMIT = 10000;
 
@@ -1900,6 +1903,10 @@ public class Mind implements IMind {
         for (IMind level = this; level != null; level = level.getNext()) {
             Mind current = (Mind) level;
             synchronized (current.locker) {
+                if (EMPTY_DELETION_LAYER_SHORTCUT
+                        && current.restored.isEmpty() && current.deleted.isEmpty()) {
+                    continue;
+                }
                 Set<Long> restoredIds = current.restored.get(unitType);
                 if (restoredIds != null && restoredIds.contains(unitId)) {
                     return false;

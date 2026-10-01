@@ -1,0 +1,32 @@
+diff --git a/kanger/src/org/kanger/Mind.java b/kanger/src/org/kanger/Mind.java
+index 00963aa..4a0a77b 100644
+--- a/kanger/src/org/kanger/Mind.java
++++ b/kanger/src/org/kanger/Mind.java
+@@ -1894,12 +1894,17 @@ public class Mind implements IMind {
+         return true;
+     }
+ 
++    public static long diagnosticDeletionLevels, diagnosticEmptyLayers, diagnosticAbsentTypes;
++
+     public boolean isUnitDeleted(IUnit unit) {
+         UnitType unitType = unit.getUnitType();
+         long unitId = unit.getId();
+         for (IMind level = this; level != null; level = level.getNext()) {
+             Mind current = (Mind) level;
+             synchronized (current.locker) {
++                diagnosticDeletionLevels++;
++                if (current.restored.isEmpty() && current.deleted.isEmpty()) diagnosticEmptyLayers++;
++                if (!current.restored.containsKey(unitType) && !current.deleted.containsKey(unitType)) diagnosticAbsentTypes++;
+                 Set<Long> restoredIds = current.restored.get(unitType);
+                 if (restoredIds != null && restoredIds.contains(unitId)) {
+                     return false;
+--- a/kanger-qualification/src/org/kanger/SonProfileRunner.java
++++ b/kanger-qualification/src/org/kanger/SonProfileRunner.java
+@@ -48,6 +48,7 @@
+                     + " rotations=" + s.getTerminalRotations() + " pairs=" + s.getDomainPairs()
+                     + " unifications=" + s.getUnificationAttempts());
+         }
++        System.out.println("DELETION_LAYERS total="+Mind.diagnosticDeletionLevels+" empty="+Mind.diagnosticEmptyLayers+" absent_type="+Mind.diagnosticAbsentTypes);
+     }
+ 
+     private static List<String> texts(Mind mind) throws Exception {
