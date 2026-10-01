@@ -359,6 +359,37 @@ public class Analyzer {
             }
         }
 
+        /*
+         * Linker can turn a demanded local premise into a generated stored
+         * succedent Rule. Historical query flags are deliberately cleared on
+         * that Rule, so neither orfans nor the non-stored-query scan above can
+         * see it. The operation-local mindId is the crucial boundary here:
+         * only generated demands created by this saturation pass are eligible;
+         * durable/generated products inherited from the Context are not.
+         *
+         * M3.6 currently externalizes the positive-query/succedent form. The
+         * opposite-polarity truth/conflict matrix is completed in M3.7.
+         */
+        for (IRule candidate : mind.getRules()) {
+            Rule generated = (Rule) candidate;
+            if (generated.isDeleted(mind)
+                    || !generated.isStored()
+                    || !generated.isGenerated()
+                    || generated.getMindId() != mind.getId()) {
+                continue;
+            }
+            Domain domain = generated.getDomain();
+            if (!domain.isAntc()
+                    && domain.isComplete()
+                    && !domain.isUsed(mind)
+                    && !domain.isCalculated(mind)) {
+                addFrontier(
+                        domain,
+                        frontier,
+                        frontierKeys);
+            }
+        }
+
         mind.replaceFrontierDomains(frontier);
 
         // Контроль закрытия всех веток запроса
