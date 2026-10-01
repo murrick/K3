@@ -838,47 +838,79 @@ public class RuleFactory implements IFactory<IRule> {
             }
             return rule;
         } else {
-            ArgumentsList list;
-
-            if (domain.isQuery(mind)) {
-                list = domain.getArguments().convert(mind);
-                for (TValue t : list.getTValues(mind, true)) {
-                    t.setQuery(mind);
-                }
-            } else {
-                list = domain.getArguments().convertBase(mind);
-            }
-            Rule r = new Rule(mind);
-            register(r);
-            if (!domain.isQuery(mind)) {
-                list = GeneratedCVarMaterializer.rebindForGeneratedRule(list, domain, mind, r);
-            }
-
-            Domain d = mind.getDomains().add(domain.getPredicate(), domain.isAntc(), list, r);
-            r.getTree().get(0).add(d);
-            r.setGenerated(true);
-            r.setStored(mind);
-
-            if (domain.isQuery(mind)) {
-                r.setQuery(true);
-            }
-
-            int save = mind.getDebugLevel();
-            mind.setDebugLevel(0);
-            ITerm origin = mind.getTerms().add(d.toString());
-            mind.setDebugLevel(save);
-            r.setOrigin(origin);
-
-            r.getTerms().add(origin.getId());
-            r.getTerms().addAll(d.getTerms(mind, true));
-            r.getPredicates().add(d.getPredicateId());
-
-            IRule inserted = add(r);
-            if (inserted == r) {
-                SemanticEffectTelemetry.recordGeneratedRule(r);
-            }
-            return inserted;
+            return createGeneratedDomainRule(domain);
         }
+    }
+
+    /**
+     * Materializes one exact one-Domain generated demand without using the
+     * historical {@link #find(Solve)} shortcut.
+     *
+     * <p>The shortcut intentionally treats a Domain as equal to
+     * {@code rule.getDomain()}, i.e. the first Domain of a multi-Domain Rule.
+     * That behavior is correct for historical storage deduplication but is not
+     * correct for frontier expansion: asking for {@code seed(...)} must not
+     * return the primary Rule {@code seed(...) -> gate(...)}. This method
+     * always builds the one-Domain representation first and then delegates to
+     * {@link #add(IRule)}, whose identity comparison covers the complete Rule
+     * tree.</p>
+     */
+    public synchronized IRule materializeDemand(Domain domain)
+            throws Exception {
+        if (domain == null) {
+            throw new NullPointerException("domain");
+        }
+        return createGeneratedDomainRule(domain);
+    }
+
+    private IRule createGeneratedDomainRule(Domain domain)
+            throws Exception {
+        ArgumentsList list;
+
+        if (domain.isQuery(mind)) {
+            list = domain.getArguments().convert(mind);
+            for (TValue t : list.getTValues(mind, true)) {
+                t.setQuery(mind);
+            }
+        } else {
+            list = domain.getArguments().convertBase(mind);
+        }
+
+        Rule r = new Rule(mind);
+        register(r);
+        if (!domain.isQuery(mind)) {
+            list = GeneratedCVarMaterializer.rebindForGeneratedRule(
+                    list, domain, mind, r);
+        }
+
+        Domain d = mind.getDomains().add(
+                domain.getPredicate(),
+                domain.isAntc(),
+                list,
+                r);
+        r.getTree().get(0).add(d);
+        r.setGenerated(true);
+        r.setStored(mind);
+
+        if (domain.isQuery(mind)) {
+            r.setQuery(true);
+        }
+
+        int save = mind.getDebugLevel();
+        mind.setDebugLevel(0);
+        ITerm origin = mind.getTerms().add(d.toString());
+        mind.setDebugLevel(save);
+        r.setOrigin(origin);
+
+        r.getTerms().add(origin.getId());
+        r.getTerms().addAll(d.getTerms(mind, true));
+        r.getPredicates().add(d.getPredicateId());
+
+        IRule inserted = add(r);
+        if (inserted == r) {
+            SemanticEffectTelemetry.recordGeneratedRule(r);
+        }
+        return inserted;
     }
 
     public IRule store(Domain d) throws Exception {

@@ -264,7 +264,8 @@ final class LocalFrontierExpansion {
                     if (frontier.semanticallyMatches(
                             domain, probe)) {
                         IRule demand =
-                                probe.getRules().add(domain);
+                                probe.getRules()
+                                        .materializeDemand(domain);
                         return demand == null
                                 ? null
                                 : (Rule) demand;
