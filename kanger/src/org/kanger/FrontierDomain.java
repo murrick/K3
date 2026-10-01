@@ -126,10 +126,6 @@ public final class FrontierDomain {
             Domain domain, Mind mind) throws Exception {
         int previousDebug = mind.getDebugLevel();
         try {
-            /*
-             * Source rendering must not inherit diagnostic TValue/status
-             * decorations from the active Mind.
-             */
             mind.setDebugLevel(Enums.DEBUG_LEVEL_QUIET);
 
             ArgumentsList rendered = new ArgumentsList();
@@ -175,38 +171,7 @@ public final class FrontierDomain {
             StringBuilder source = new StringBuilder();
             source.append(body.charAt(0));
             for (String variable : declarations) {
-                source.append('
-
-        private final String name;
-        private final int index;
-        private final String boundValue;
-
-        private VariableState(String name,
-                              int index,
-                              String boundValue) {
-            this.name = name;
-            this.index = index;
-            this.boundValue = boundValue;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public boolean isBound() {
-            return boundValue != null;
-        }
-
-        public String getBoundValue() {
-            return boundValue;
-        }
-    }
-}
-).append(variable).append(' ');
+                source.append('$').append(variable).append(' ');
             }
             source.append(body.substring(1));
             return source.toString();
