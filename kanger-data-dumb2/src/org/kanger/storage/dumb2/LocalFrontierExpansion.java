@@ -7,19 +7,25 @@ package org.kanger.storage.dumb2;
 
 import org.kanger.FrontierDomain;
 import org.kanger.Mind;
+import org.kanger.interfaces.IRule;
+import org.kanger.units.Rule;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * Expands an Analyzer frontier through local X inference only.
+ * Reduces an Analyzer frontier through local X inference only.
  *
- * <p>A frontier such as {@code gate(Tom)} may itself be derivable from an
- * unresolved local premise such as {@code seed(Tom)}. Before any foreign
- * fan-out, this helper probes the current operation Mind in an ephemeral child
- * and replaces locally reducible frontiers with their unresolved leaf
- * dependencies. No connected Context is consulted here.</p>
+ * <p>The operation Mind already contains the generated demand Rules created by
+ * Linker (for example {@code ?gate(Tom)}). Recompiling the same query in a
+ * child is semantically wrong because it becomes a duplicate/second Rule and
+ * enters the normal FALSE/TRUE query protocol. Instead this helper finds the
+ * existing generated demand in an isolated probe and lets Linker expand that
+ * exact demand through X-local knowledge.</p>
+ *
+ * <p>No ConnectionVector or foreign Context is consulted here. A demand with
+ * no deeper local dependency remains an external frontier leaf.</p>
  */
 final class LocalFrontierExpansion {
 
@@ -41,18 +47,28 @@ final class LocalFrontierExpansion {
         List<FrontierDomain> result =
                 new ArrayList<FrontierDomain>();
         for (FrontierDomain frontier : source) {
-            expandOne(
-                    operationMind,
-                    frontier,
-                    result,
-                    new ArrayList<FrontierDomain>(),
-                    0);
+            Mind probe =
+                    Mind.ephemeralChild(operationMind);
+            try {
+                expandInProbe(
+                        operationMind,
+                        probe,
+                        frontier,
+                        result,
+                        new ArrayList<FrontierDomain>(),
+                        0);
+            } finally {
+                probe.getSolutions().clear();
+                probe.getValues().clear();
+                operationMind.release(probe);
+            }
         }
         return result;
     }
 
-    private static void expandOne(
+    private static void expandInProbe(
             Mind operationMind,
+            Mind probe,
             FrontierDomain frontier,
             List<FrontierDomain> result,
             List<FrontierDomain> trail,
@@ -63,32 +79,26 @@ final class LocalFrontierExpansion {
             return;
         }
 
-        Mind probe =
-                Mind.ephemeralChild(operationMind);
-        List<FrontierDomain> deeper;
-        Boolean localResult;
-        try {
-            localResult = probe.queryCanonical(
-                    frontier.getQuerySource(),
-                    frontier.projectFixedArguments(probe),
-                    false);
-            deeper = new ArrayList<FrontierDomain>(
-                    probe.getFrontierDomains());
-        } finally {
-            probe.getSolutions().clear();
-            probe.getValues().clear();
-            operationMind.release(probe);
-        }
-
-        /*
-         * A locally decisive answer is not an external dependency. M3.6 needs
-         * only positive continuation; the final TRUE/FALSE/NULL/CONFLICT
-         * aggregation of decisive local/foreign evidence is completed in M3.7.
-         */
-        if (localResult != null) {
+        Rule demand =
+                findGeneratedDemand(
+                        operationMind,
+                        probe,
+                        frontier);
+        if (demand == null) {
+            addUnique(result, frontier);
             return;
         }
 
+        probe.link(demand, false);
+        boolean locallyResolved =
+                probe.analyze(demand, false);
+        if (locallyResolved) {
+            return;
+        }
+
+        List<FrontierDomain> deeper =
+                new ArrayList<FrontierDomain>(
+                        probe.getFrontierDomains());
         List<FrontierDomain> meaningful =
                 new ArrayList<FrontierDomain>();
         for (FrontierDomain candidate : deeper) {
@@ -106,13 +116,41 @@ final class LocalFrontierExpansion {
                 new ArrayList<FrontierDomain>(trail);
         nextTrail.add(frontier);
         for (FrontierDomain candidate : meaningful) {
-            expandOne(
+            expandInProbe(
                     operationMind,
+                    probe,
                     candidate,
                     result,
                     nextTrail,
                     depth + 1);
         }
+    }
+
+    private static Rule findGeneratedDemand(
+            Mind operationMind,
+            Mind probe,
+            FrontierDomain frontier) throws Exception {
+        for (IRule candidate : probe.getRules()) {
+            if (candidate == null
+                    || candidate.isDeleted(probe)
+                    || !candidate.isStored()
+                    || !candidate.isGenerated()) {
+                continue;
+            }
+
+            Rule rule = (Rule) candidate;
+            long owner = rule.getMindId();
+            if (owner != operationMind.getId()
+                    && owner != probe.getId()) {
+                continue;
+            }
+
+            if (frontier.semanticallyMatches(
+                    rule.getDomain(), probe)) {
+                return rule;
+            }
+        }
+        return null;
     }
 
     private static boolean containsEquivalent(

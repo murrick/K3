@@ -233,6 +233,18 @@ public final class FrontierDomain {
     }
 
     /**
+     * Compares this detached frontier with one live Domain in the supplied
+     * Mind without using Context-local Rule/Domain/Term IDs as identity.
+     */
+    public boolean semanticallyMatches(
+            Domain domain, Mind mind) throws Exception {
+        FrontierDomain other =
+                capture(domain, mind);
+        return other != null
+                && semanticallyEquivalent(other);
+    }
+
+    /**
      * Projects fixed X arguments into the target Context in query-template
      * placeholder order.
      */
