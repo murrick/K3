@@ -1,0 +1,7 @@
+repeat-snapshot-1-true.log wall_s=5.227 cpu_s=5.141 allocated_MB=4803.7
+repeat-snapshot-2-false.log wall_s=5.347 cpu_s=5.226 allocated_MB=5436.0
+repeat-snapshot-3-false.log wall_s=5.245 cpu_s=5.146 allocated_MB=5433.6
+repeat-snapshot-4-true.log wall_s=5.254 cpu_s=5.165 allocated_MB=4804.1
+PAIR wall_reduction=2.23% cpu_reduction=1.63% allocation_reduction=11.63%
+PAIR wall_reduction=-0.17% cpu_reduction=-0.36% allocation_reduction=11.59%
+REPEAT_SNAPSHOTS_EQUAL samples=24

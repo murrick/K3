@@ -36,3 +36,16 @@ Sequential six JVM benchmark, Java 17 Xmx512m, prior six flags ON, name optimiza
 | 3 OFF/ON | 11.684 | 10.009 | 5353.0 | 4803.6 | 14.34% | 10.26% |
 
 Allocation reduction is consistent, roughly 0.49–0.56 GB per optimization here. Time results favor ON in two pairs but reverse in one; large within-JVM jitter prevents a stable speedup claim. Do not merge/default-enable yet. Next: a focused repeat to determine elapsed-time stability, then assess a combined name+snapshot path only after independent evidence. Do not add percentage improvements from the two experiments.
+
+## Warmed repeat: elapsed gain not established
+
+Same production code as 8c2d68e; no further optimization. Diagnostic runner also records main-thread CPU nanoseconds. Four sequential fresh JVMs ON/OFF/OFF/ON, six queries each, discard first two; medians of final four. Prior flags ON, direct predicate-name optimization absent/OFF. Java 17 Xmx512m. CPU measurement covers the main thread, not GC/background workers or process CPU.
+
+| Pair | OFF wall s | ON wall s | OFF CPU s | ON CPU s | OFF MB | ON MB | Wall reduction | CPU reduction | Allocation reduction |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| ON/OFF | 5.347 | 5.227 | 5.226 | 5.141 | 5436.0 | 4803.7 | 2.23% | 1.63% | 11.63% |
+| OFF/ON | 5.245 | 5.254 | 5.146 | 5.165 | 5433.6 | 4804.1 | -0.17% | -0.36% | 11.59% |
+
+All 24 repeat raw and final hypothesis snapshots equal; zero solutions/values; empty benchmark stderr. Total initial+repeat comparisons: 48 samples. Allocation reduction persists; the earlier 14–16% elapsed gains do not reproduce in this more stable warmed batch. Absolute times changed greatly between batches, so do not compare their durations as optimization gains. No proven material CPU or elapsed improvement. Preserve experiment isolated, default OFF; no merge requested/performed. A combined predicate-name+snapshot experiment may assess cumulative allocation savings, but percentages must not be added and speedup must be measured anew.
+
+Reproducible repeat driver, analysis and raw logs are in candidate-snapshot-evidence/. All workflows for preceding evidence checkpoint 2ad59ff completed successfully.

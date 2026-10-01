@@ -41,16 +41,19 @@ public final class SonProfileRunner {
             sampler = Boolean.getBoolean("bench.sample") ? new Sampler(Thread.currentThread()) : null;
             if (sampler != null) sampler.start();
             start = System.nanoTime();
+            java.lang.management.ThreadMXBean cpu = java.lang.management.ManagementFactory.getThreadMXBean();
+            long cpuBefore = cpu.isCurrentThreadCpuTimeSupported() ? cpu.getCurrentThreadCpuTime() : -1;
             long allocatedBefore = allocation == null ? -1 : allocation.getThreadAllocatedBytes(Thread.currentThread().getId());
             try { mind.optimizeHypothesis(); }
             finally { if (sampler != null) sampler.running = false; }
             long optimizeNs = System.nanoTime() - start;
+            long cpuNs = cpuBefore < 0 ? -1 : cpu.getCurrentThreadCpuTime() - cpuBefore;
             if (sampler != null) { sampler.join(); sampler.report(i, "optimize"); }
             long allocatedBytes = allocation == null ? -1 : allocation.getThreadAllocatedBytes(Thread.currentThread().getId()) - allocatedBefore;
             List<String> optimized = texts(mind);
             if (result != null || optimized.size() != 6) throw new AssertionError("Unexpected result");
             System.out.println("SAMPLE " + i + " query_ns=" + queryNs + " optimize_ns=" + optimizeNs
-                    + " optimize_allocated_bytes=" + allocatedBytes + " raw=" + raw.size() + " optimized=" + optimized.size()
+                    + " optimize_cpu_ns=" + cpuNs + " optimize_allocated_bytes=" + allocatedBytes + " raw=" + raw.size() + " optimized=" + optimized.size()
                     + " solutions=" + mind.getSolutions().size() + " values=" + mind.getValues().size());
             System.out.println("RAW " + raw);
             System.out.println("OPTIMIZED " + optimized);
