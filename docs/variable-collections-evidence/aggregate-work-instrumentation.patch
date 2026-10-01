@@ -1,0 +1,49 @@
+--- a/kanger/src/org/kanger/LinkerStatistics.java
++++ b/kanger/src/org/kanger/LinkerStatistics.java
+@@ -10,6 +10,7 @@
+  * execution state only; it is neither serialized nor part of logical results.
+  */
+ public final class LinkerStatistics {
++    public static final long[] diagnosticGlobal = new long[6];
+ 
+     public static final int EFFECT_NEW_TVALUE = 1;
+     public static final int EFFECT_NEW_CAUSE = 1 << 1;
+@@ -88,16 +89,17 @@
+         return new LinkerStatistics(this);
+     }
+ 
+-    void incrementPasses() { ++passes; }
+-    void incrementRuleVisits() { ++ruleVisits; }
++    void incrementPasses() { ++diagnosticGlobal[0]; ++passes; }
++    void incrementRuleVisits() { ++diagnosticGlobal[1]; ++ruleVisits; }
+     void incrementBranchVisits() { ++branchVisits; }
+-    void incrementTerminalRotations() { ++terminalRotations; }
+-    void incrementCandidateRuleVisits() { ++candidateRuleVisits; }
+-    void incrementDomainPairs() { ++domainPairs; }
++    void incrementTerminalRotations() { ++diagnosticGlobal[3]; ++terminalRotations; }
++    void incrementCandidateRuleVisits() { ++diagnosticGlobal[2]; ++candidateRuleVisits; }
++    void incrementDomainPairs() { ++diagnosticGlobal[4]; ++domainPairs; }
+ 
+     long incrementUnificationAttempts(boolean firstPass,
+                                       boolean query,
+                                       boolean generated) {
++        ++diagnosticGlobal[5];
+         long operationId = ++unificationAttempts;
+         QueryTaintSolve.beginOperation(operationId);
+         if (firstPass) {
+--- a/kanger-qualification/src/org/kanger/SonProfileRunner.java
++++ b/kanger-qualification/src/org/kanger/SonProfileRunner.java
+@@ -42,11 +42,13 @@
+             if (sampler != null) sampler.start();
+             start = System.nanoTime();
+             long allocatedBefore = allocation == null ? -1 : allocation.getThreadAllocatedBytes(Thread.currentThread().getId());
++            java.util.Arrays.fill(LinkerStatistics.diagnosticGlobal,0L);
+             try { mind.optimizeHypothesis(); }
+             finally { if (sampler != null) sampler.running = false; }
+             long optimizeNs = System.nanoTime() - start;
+             if (sampler != null) { sampler.join(); sampler.report(i, "optimize"); }
+             long allocatedBytes = allocation == null ? -1 : allocation.getThreadAllocatedBytes(Thread.currentThread().getId()) - allocatedBefore;
++            System.out.println("AGGREGATE_OPTIMIZE_WORK "+java.util.Arrays.toString(LinkerStatistics.diagnosticGlobal));
+             List<String> optimized = texts(mind);
+             if (result != null || optimized.size() != 6) throw new AssertionError("Unexpected result");
+             System.out.println("SAMPLE " + i + " query_ns=" + queryNs + " optimize_ns=" + optimizeNs

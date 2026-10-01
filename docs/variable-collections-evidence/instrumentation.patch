@@ -1,0 +1,62 @@
+--- a/kanger/src/org/kanger/primitives/ArgumentsList.java
++++ b/kanger/src/org/kanger/primitives/ArgumentsList.java
+@@ -238,7 +238,11 @@
+     }
+ 
+ 
++    public static long diagnosticVariableLists, diagnosticInputArguments;
++    public static final long[] diagnosticVariableListSizes = new long[17];
++
+     public List<TVariable> getTVariables(IMind mind) throws Exception {
++        diagnosticVariableLists++; diagnosticInputArguments += size();
+         List<TVariable> list = new ArrayList<>();
+         for (IArgument a : this) {
+             if (a.getType() == ArgumentType.TVARIABLE
+@@ -255,6 +259,7 @@
+                 }
+             }
+         }
++        diagnosticVariableListSizes[Math.min(16,list.size())]++;
+         return list;
+     }
+ 
+--- a/kanger/src/org/kanger/primitives/TVariableSet.java
++++ b/kanger/src/org/kanger/primitives/TVariableSet.java
+@@ -40,21 +40,26 @@
+ public class TVariableSet implements Comparable<TVariableSet> {
+ 
+     private SortedSet<TVariable> set = new TreeSet<>();
++    public static long diagnosticHashes, diagnosticHashMembers;
++    public static final long[] diagnosticSetSizes = new long[17];
+ 
+     public TVariableSet(List<TValue> list, Mind mind) throws Exception {
+         for (TValue v : list) {
+             set.add(v.getTVar(mind));
+         }
++        diagnosticSetSizes[Math.min(16,set.size())]++;
+     }
+ 
+     public TVariableSet(TSolve solve, Mind mind) throws Exception {
+         for (TValue v : solve.getSolve()) {
+             set.add(v.getTVar(mind));
+         }
++        diagnosticSetSizes[Math.min(16,set.size())]++;
+     }
+ 
+     @Override
+     public int hashCode() {
++        diagnosticHashes++; diagnosticHashMembers += set.size();
+         int hashCode = 3;
+         for (TVariable t : set) {
+             long id = t.getId();
+--- a/kanger-qualification/src/org/kanger/SonProfileRunner.java
++++ b/kanger-qualification/src/org/kanger/SonProfileRunner.java
+@@ -48,6 +48,8 @@
+                     + " rotations=" + s.getTerminalRotations() + " pairs=" + s.getDomainPairs()
+                     + " unifications=" + s.getUnificationAttempts());
+         }
++        System.out.println("VARIABLE_LISTS calls="+org.kanger.primitives.ArgumentsList.diagnosticVariableLists+" input_arguments="+org.kanger.primitives.ArgumentsList.diagnosticInputArguments+" output_sizes="+java.util.Arrays.toString(org.kanger.primitives.ArgumentsList.diagnosticVariableListSizes));
++        System.out.println("VARIABLE_SETS sizes="+java.util.Arrays.toString(org.kanger.primitives.TVariableSet.diagnosticSetSizes)+" hashes="+org.kanger.primitives.TVariableSet.diagnosticHashes+" hash_members="+org.kanger.primitives.TVariableSet.diagnosticHashMembers);
+     }
+ 
+     private static List<String> texts(Mind mind) throws Exception {

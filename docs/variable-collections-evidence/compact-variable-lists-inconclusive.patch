@@ -1,0 +1,137 @@
+diff --git a/kanger-qualification/src/org/kanger/CompactVariableListsRunner.java b/kanger-qualification/src/org/kanger/CompactVariableListsRunner.java
+new file mode 100644
+index 0000000..b57cce0
+--- /dev/null
++++ b/kanger-qualification/src/org/kanger/CompactVariableListsRunner.java
+@@ -0,0 +1,93 @@
++/* MIT License. Copyright (c) 2026 Dmitry G. Quznetsov. */
++package org.kanger;
++
++import java.nio.file.Files;
++import java.util.*;
++import org.kanger.interfaces.IMind;
++import org.kanger.primitives.Argument;
++import org.kanger.primitives.ArgumentsList;
++import org.kanger.units.*;
++
++/** Ordered deduplication, lazy hydration, recursive growth and custom callbacks. */
++public final class CompactVariableListsRunner {
++    private static int checks;
++    private static void check(boolean result) {
++        if (!result) throw new AssertionError("check " + checks);
++        checks++;
++    }
++    private static ArgumentsList args(Argument... arguments) {
++        ArgumentsList result = new ArgumentsList(); Collections.addAll(result, arguments); return result;
++    }
++    private static final class CountingArgument extends Argument {
++        int deletionReads, objectReads;
++        boolean flip;
++        CountingArgument(TVariable variable) { super(variable); }
++        @Override public boolean isDeleted(IMind mind) {
++            deletionReads++; return flip && deletionReads == 2;
++        }
++        @Override public org.kanger.interfaces.internal.IUnit getObject(IMind mind) throws Exception {
++            objectReads++; return super.getObject(mind);
++        }
++    }
++    private static final class CustomList extends ArgumentsList {
++        int sizeReads;
++        @Override public int size() { sizeReads++; return super.size(); }
++    }
++    public static void main(String[] ignored) throws Exception {
++        System.setProperty("user.home", Files.createTempDirectory("compact-variable-lists-").toString());
++        Mind m = new Mind(new User());
++        Term a = (Term) m.getTerms().add("a"), b = (Term) m.getTerms().add("b");
++        Rule rule = new Rule(m); rule.setId(42);
++        TVariable x = m.getTVars().createTVar(rule,a), y = m.getTVars().createTVar(rule,b);
++        ArgumentsList empty = args(new Argument((org.kanger.interfaces.ITerm)a),new Argument());
++        List<TVariable> result = empty.getTVariables(m);
++        check(result.isEmpty()); result.add(x); check(result.size()==1);
++        check(empty.getTVariables(m).isEmpty());
++        ArgumentsList mixed = args(new Argument(y),new Argument((org.kanger.interfaces.ITerm)a),new Argument(x),new Argument(y));
++        check(mixed.getTVariables(m).equals(Arrays.asList(y,x)));
++        result = mixed.getTVariables(m); result.clear();
++        check(mixed.getTVariables(m).equals(Arrays.asList(y,x)));
++        m.setUnitDeleted(x,true);
++        check(mixed.getTVariables(m).equals(Arrays.asList(y)));
++        m.setUnitDeleted(x,false);
++        check(mixed.getTVariables(m).equals(Arrays.asList(y,x)));
++        CountingArgument custom = new CountingArgument(x);
++        check(args(custom).getTVariables(m).equals(Arrays.asList(x)));
++        check(custom.deletionReads==2); check(custom.objectReads==2);
++        CountingArgument flipping = new CountingArgument(x); flipping.flip=true;
++        check(args(flipping).getTVariables(m).isEmpty());
++        check(flipping.deletionReads==2); check(flipping.objectReads==0);
++        CustomList subclass = new CustomList(); subclass.add(new Argument(x));
++        check(subclass.getTVariables(m).equals(Arrays.asList(x)));
++        check(subclass.sizeReads==0);
++        Argument lazy = new Argument(x);
++        java.lang.reflect.Field object = Argument.class.getDeclaredField("o");
++        object.setAccessible(true); object.set(lazy,null);
++        m.setUnitDeleted(x,true);
++        check(args(lazy).getTVariables(m).equals(Arrays.asList(x)));
++        check(args(lazy).getTVariables(m).isEmpty());
++        m.setUnitDeleted(x,false);
++        Function inner = new Function(m), outer = new Function(m);
++        inner.getArguments().add(new Argument(x)); inner.getArguments().add(new Argument(y));
++        inner.getArguments().add(new Argument(x));
++        outer.getArguments().add(new Argument(y)); outer.getArguments().add(new Argument(inner));
++        check(args(new Argument(outer),new Argument(x)).getTVariables(m).equals(Arrays.asList(y,x)));
++        Function large = new Function(m); List<TVariable> expected = new ArrayList<>();
++        for(int i=0;i<30;i++) {
++            TVariable v=m.getTVars().createTVar(rule,m.getTerms().add("large-"+i));
++            expected.add(v); large.getArguments().add(new Argument(v));
++        }
++        check(args(new Argument(large)).getTVariables(m).equals(expected));
++        check(large.getArguments().getTVariables(m).equals(expected));
++        result=args(new Argument(large)).getTVariables(m); result.add(x);
++        check(result.size()==31);
++        m.setUnitDeleted(x,true);
++        Mind child = new Mind(m);
++        try {
++            child.setUnitDeleted(x,false);
++            check(mixed.getTVariables(child).equals(Arrays.asList(y,x)));
++            check(mixed.getTVariables(m).equals(Arrays.asList(y)));
++        } finally { m.release(child); }
++        System.out.println("COMPACT_VARIABLE_LISTS_BOUNDARIES_OK checks="+checks);
++    }
++}
+diff --git a/kanger/src/org/kanger/primitives/ArgumentsList.java b/kanger/src/org/kanger/primitives/ArgumentsList.java
+index c33f23a..5742607 100644
+--- a/kanger/src/org/kanger/primitives/ArgumentsList.java
++++ b/kanger/src/org/kanger/primitives/ArgumentsList.java
+@@ -44,6 +44,9 @@ import java.util.*;
+  */
+ public class ArgumentsList extends ArrayList<IArgument> implements IList {
+ 
++    private static final boolean COMPACT_VARIABLE_LISTS =
++            Boolean.getBoolean("kanger.experiment.compactVariableLists");
++
+     private Mind mind = null;
+ 
+     public ArgumentsList() {
+@@ -239,17 +242,21 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
+ 
+ 
+     public List<TVariable> getTVariables(IMind mind) throws Exception {
+-        List<TVariable> list = new ArrayList<>();
++        boolean compact = COMPACT_VARIABLE_LISTS && getClass() == ArgumentsList.class;
++        ArrayList<TVariable> list = compact ? new ArrayList<TVariable>(0) : new ArrayList<TVariable>();
+         for (IArgument a : this) {
+             if (a.getType() == ArgumentType.TVARIABLE
+                     && !a.isDeleted(mind)
+                     && !a.isDeleted(mind)
+                     && !list.contains(a.getObject(mind))) {
+-                list.add(((TVariable) a.getObject(mind)));
++                TVariable variable = (TVariable) a.getObject(mind);
++                if (compact && list.isEmpty()) list.ensureCapacity(Math.max(2, Math.min(size(), 10)));
++                list.add(variable);
+             } else if (a.getType() == ArgumentType.FUNCTION) {
+                 List<TVariable> temp = ((Function) a.getObject(mind)).getArguments().getTVariables(mind);
+                 for (TVariable t : temp) {
+                     if (!list.contains(t)) {
++                        if (compact && list.isEmpty()) list.ensureCapacity(Math.max(2, Math.min(size(), 10)));
+                         list.add(t);
+                     }
+                 }
