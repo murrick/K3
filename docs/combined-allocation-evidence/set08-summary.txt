@@ -1,0 +1,7 @@
+set08-1-false.log samples=[1.992, 1.375, 1.058, 1.199, 0.85, 0.82, 0.814, 0.785] warm_median_s=0.835
+set08-2-true.log samples=[1.937, 1.506, 1.038, 0.901, 0.918, 0.811, 0.807, 0.774] warm_median_s=0.856
+set08-3-true.log samples=[1.881, 1.326, 1.147, 1.141, 0.851, 0.839, 0.818, 1.011] warm_median_s=0.931
+set08-4-false.log samples=[1.94, 1.293, 1.083, 0.918, 0.948, 0.833, 0.874, 0.863] warm_median_s=0.896
+PAIR wall_reduction=-2.51%
+PAIR wall_reduction=-3.91%
+SET08_ALL_PASS samples=32

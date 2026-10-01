@@ -32,3 +32,14 @@ All 48 raw/final hypothesis snapshots equal; every sample has 18 raw and six fin
 Dedicated CI run 36898354727: six Java8/21/26 × prior flags OFF/ON jobs passed. Each runs all four new-flag combinations, both boundary runners, regression corpus, cross-context projection and transactions; compares all states; candidate concurrency runs with both new flags ON. General CI, server and distribution passed; isolation workflow was still running when report was written.
 
 Raw logs, scripts and summary: combined-allocation-evidence/. Previous individual reports remain valid and must not be relabeled as stable standalone acceleration.
+
+## Second workload: original set_08_02
+
+Four fresh JVMs OFF/ON/ON/OFF, eight repetitions each; both new flags toggled together, prior six ON; Java17 Xmx512m, no storage selected. Each iteration creates a fresh User/Mind and executes KangerTest.test("set_08_02"), retaining the historical four worker threads and assertions. Discard first two, median last six; method times are millisecond-resolution values printed by the original harness. Do not compare against main-thread allocation/CPU measurements from the single-thread hypothesis scenario.
+
+| Pair | OFF median s | ON median s | Time reduction |
+|---|---:|---:|---:|
+| OFF/ON | 0.835 | 0.856 | -2.51% |
+| ON/OFF | 0.896 | 0.931 | -3.91% |
+
+All 32 tests passed; empty stderr. Within-JVM times continue declining after two warmups, so these are harness medians, not fully stabilized JIT steady-state estimates. No speedup observed; both comparisons show a small slowdown. Do not promote the two paths as universally faster or default-enable on this evidence. A local comparison should include both hypotheses and set_08_02 before considering integration. This does not invalidate the directly measured allocation savings in the hypothesis workload. Local launch instructions: combined-allocation-local-check.md. No further production changes.
