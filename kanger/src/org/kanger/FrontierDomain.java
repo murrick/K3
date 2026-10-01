@@ -89,6 +89,13 @@ public final class FrontierDomain {
                                         variable.getIndex(),
                                         null));
                     }
+                } else if (current.getValue(mind).isCVariable()) {
+                    /*
+                     * A C-variable is an operation-local existential
+                     * descriptor, not a concrete cross-Context value.
+                     * Keep this Domain local until ordinary evidence binds it.
+                     */
+                    return null;
                 } else {
                     SemanticTermSnapshot fixed =
                             SemanticTermSnapshot.capture(
