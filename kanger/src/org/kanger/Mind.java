@@ -166,6 +166,7 @@ public class Mind implements IMind {
     private boolean changed = false;
     private Boolean queryResult = null;
     private String querySource = "";
+    private final List<FrontierDomain> frontierDomains = new ArrayList<>();
     private QueryPass queryPass = QueryPass.SILENCE;
     private User user = null;
     private String compliedLine = "";
@@ -519,6 +520,7 @@ public class Mind implements IMind {
         queryResult = child.getQueryResult();
         compliedLine = child.getCompliedString();
         lastLinkerStatistics = child.linker.snapshotStatistics();
+        replaceFrontierDomains(child.frontierDomains);
     }
 
     private void finishFailedTransactionLocked() {
@@ -565,6 +567,7 @@ public class Mind implements IMind {
             queryResult = m.getQueryResult();
             compliedLine = m.getCompliedString();
             lastLinkerStatistics = ((Mind) m).linker.snapshotStatistics();
+            replaceFrontierDomains(((Mind) m).frontierDomains);
 
             finishTransactionLocked();
         }
@@ -608,6 +611,7 @@ public class Mind implements IMind {
             acceptedRule = null;
             queryResult = null;
             querySource = "";
+            frontierDomains.clear();
             queryPass = QueryPass.SILENCE;
             compliedLine = "";
             lastLinkerStatistics = new LinkerStatistics();
@@ -1187,6 +1191,28 @@ public class Mind implements IMind {
         return querySource;
     }
 
+    /**
+     * Returns the unresolved ordinary query Domains captured by the most
+     * recent Analyzer pass. The returned objects are immutable operation-local
+     * descriptors; an empty list preserves the historical single-Context path.
+     */
+    public List<FrontierDomain> getFrontierDomains() {
+        return Collections.unmodifiableList(
+                new ArrayList<FrontierDomain>(frontierDomains));
+    }
+
+    void clearFrontierDomains() {
+        frontierDomains.clear();
+    }
+
+    void replaceFrontierDomains(
+            Collection<FrontierDomain> frontier) {
+        frontierDomains.clear();
+        if (frontier != null) {
+            frontierDomains.addAll(frontier);
+        }
+    }
+
     @Override
     public Boolean getQueryResult() {
         return queryResult;
@@ -1617,6 +1643,7 @@ public class Mind implements IMind {
 
         Boolean res = null;
         acceptedRule = null;
+        frontierDomains.clear();
 
         getQueryValues().clear();
         getLog().clear();

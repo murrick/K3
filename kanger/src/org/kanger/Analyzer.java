@@ -111,6 +111,7 @@ public class Analyzer {
     public boolean analyze(Rule rule, boolean logging) throws Exception {
         boolean result = false;
         collisions.clear();
+        mind.clearFrontierDomains();
 
         long start = System.currentTimeMillis();
 
@@ -314,6 +315,17 @@ public class Analyzer {
             }
         }
 
+        List<FrontierDomain> frontier =
+                new ArrayList<FrontierDomain>();
+        for (Rule unresolved : orfans) {
+            if (isExternalizable(unresolved)) {
+                frontier.add(
+                        FrontierDomain.capture(
+                                unresolved.getDomain(), mind));
+            }
+        }
+        mind.replaceFrontierDomains(frontier);
+
         // Контроль закрытия всех веток запроса
         if (!orfans.isEmpty() && !calculated) {
             result = false;
@@ -325,5 +337,18 @@ public class Analyzer {
             }
         }
         return result;
+    }
+
+    private boolean isExternalizable(Rule rule)
+            throws Exception {
+        if (rule.getDomain()
+                .getPredicate(mind)
+                .isSystem(mind)) {
+            return false;
+        }
+        return !"rule(1)".equals(
+                rule.getDomain()
+                        .getPredicate(mind)
+                        .toString(mind));
     }
 }
