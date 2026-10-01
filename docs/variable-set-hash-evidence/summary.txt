@@ -1,0 +1,7 @@
+variable-set-hash-1-true.log wall_s=5.293 cpu_s=5.176 allocated_MB=5256.9
+variable-set-hash-2-false.log wall_s=5.189 cpu_s=5.090 allocated_MB=5386.3
+variable-set-hash-3-false.log wall_s=4.990 cpu_s=4.884 allocated_MB=5384.5
+variable-set-hash-4-true.log wall_s=4.945 cpu_s=4.844 allocated_MB=5203.7
+PAIR wall_reduction=-1.99% cpu_reduction=-1.69% allocation_reduction=2.40%
+PAIR wall_reduction=0.90% cpu_reduction=0.81% allocation_reduction=3.36%
+REPEAT_SNAPSHOTS_EQUAL samples=24
