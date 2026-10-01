@@ -62,17 +62,19 @@ final class LocalFrontierExecutor {
                         Long.valueOf(target.getRevision()));
         data.init(user);
 
-        if (!target.getContextId().equals(data.getContextId())
-                || target.getRevision() != data.getRevision()) {
-            throw new IllegalStateException(
-                    "Frontier target changed during exact-revision attach: "
-                            + target);
-        }
-
         Mind mind = new Mind(user);
         user.setCurrentMind(mind);
         mind = (Mind) mind.useStorage(logicalName);
         user.setCurrentMind(mind);
+
+        if (!target.getContextId().equals(data.getContextId())
+                || target.getRevision() != data.getRevision()) {
+            mind = (Mind) mind.closeStorage();
+            user.setCurrentMind(mind);
+            throw new IllegalStateException(
+                    "Frontier target changed during exact-revision attach: "
+                            + target);
+        }
 
         try {
             Boolean result = mind.query(
