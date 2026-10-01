@@ -71,6 +71,9 @@ import java.util.Set;
  */
 public class Predicate implements IUnit<Predicate>, IPredicate {
 
+    private static final boolean DIRECT_STRING_NAME =
+            Boolean.getBoolean("kanger.experiment.directPredicateName");
+
     private static final long serialVersionUID = 196402070004L;
 
     private long id = -1;
@@ -133,7 +136,11 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         if (name == null) {
             name = mind.getTerms().get(nameId);
         }
-        return name.getValue() + "";
+        Object value = name.getValue();
+        if (DIRECT_STRING_NAME && value instanceof String) {
+            return (String) value;
+        }
+        return value + "";
     }
 
     /** Sets the stable name reference; it does not change assertion membership. */
