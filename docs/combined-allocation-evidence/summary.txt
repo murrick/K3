@@ -1,0 +1,15 @@
+combined-1-00.log wall_s=5.422 cpu_s=5.302 allocated_MB=5302.1
+combined-2-10.log wall_s=5.060 cpu_s=4.953 allocated_MB=4785.6
+combined-3-01.log wall_s=4.932 cpu_s=4.837 allocated_MB=4808.5
+combined-4-11.log wall_s=4.989 cpu_s=4.912 allocated_MB=4334.4
+combined-5-11.log wall_s=4.814 cpu_s=4.725 allocated_MB=4204.4
+combined-6-01.log wall_s=5.038 cpu_s=4.941 allocated_MB=4818.0
+combined-7-10.log wall_s=5.155 cpu_s=5.058 allocated_MB=4930.8
+combined-8-00.log wall_s=5.105 cpu_s=4.999 allocated_MB=5386.1
+VS_REFERENCE batch=1 mode=10 wall_reduction=6.69% cpu_reduction=6.58% allocation_reduction=9.74%
+VS_REFERENCE batch=1 mode=01 wall_reduction=9.04% cpu_reduction=8.76% allocation_reduction=9.31%
+VS_REFERENCE batch=1 mode=11 wall_reduction=7.99% cpu_reduction=7.34% allocation_reduction=18.25%
+VS_REFERENCE batch=2 mode=10 wall_reduction=-0.99% cpu_reduction=-1.17% allocation_reduction=8.45%
+VS_REFERENCE batch=2 mode=01 wall_reduction=1.29% cpu_reduction=1.17% allocation_reduction=10.55%
+VS_REFERENCE batch=2 mode=11 wall_reduction=5.69% cpu_reduction=5.49% allocation_reduction=21.94%
+COMBINED_SNAPSHOTS_EQUAL samples=48
