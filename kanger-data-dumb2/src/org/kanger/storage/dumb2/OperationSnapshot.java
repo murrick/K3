@@ -5,6 +5,7 @@
  */
 package org.kanger.storage.dumb2;
 
+import org.kanger.Version;
 import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.StorageLifecycleException;
 
@@ -43,9 +44,20 @@ final class OperationSnapshot implements AutoCloseable {
         try {
             ConnectionVector vector = ConnectionStore.read(
                     sourceLocation, source.getContextId());
+            RevisionRef sourceRef = new RevisionRef(
+                    source.getContextId(), source.getRevision());
             for (ContextConnection connection
                     : vector.getConnections()) {
                 RevisionRef targetRef = connection.getTarget();
+                if (!connection.getCertificate().matches(
+                        sourceRef,
+                        targetRef,
+                        Version.CORE_VERSION_S)) {
+                    throw new StorageLifecycleException(
+                            StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                            "Compatibility certificate is stale for "
+                                    + sourceRef + " / " + targetRef);
+                }
                 ContextSnapshot target = ContextSnapshot.open(
                         connection.getTargetLocation(),
                         targetRef.getRevision());

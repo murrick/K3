@@ -37,9 +37,9 @@ final class ConnectionStore {
 
     static final String CONNECTION_SUFFIX = ".connections";
     private static final int MAGIC = 0x4B33434E; // K3CN
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
     private static final int MAX_CONNECTIONS = 10000;
-    private static final int MAX_LOCATOR_BYTES = 1024 * 1024;
+    private static final int MAX_STRING_BYTES = 1024 * 1024;
 
     private ConnectionStore() {
     }
@@ -104,17 +104,18 @@ final class ConnectionStore {
             ArrayList<ContextConnection> result =
                     new ArrayList<ContextConnection>(count);
             for (int i = 0; i < count; ++i) {
-                UUID targetId = new UUID(
-                        input.readLong(), input.readLong());
-                long revision = input.readLong();
-                if (revision < RevisionStore.INITIAL_REVISION) {
-                    throw corruption(
-                            "Negative pinned Context revision at " + path);
-                }
+                RevisionRef target = readRevisionRef(input, path);
                 String locator = readString(input, path);
+                RevisionRef left = readRevisionRef(input, path);
+                RevisionRef right = readRevisionRef(input, path);
+                String semanticVersion = readString(input, path);
+                CompatibilityCertificate certificate =
+                        new CompatibilityCertificate(
+                                left, right, semanticVersion);
                 result.add(new ContextConnection(
                         Paths.get(locator),
-                        new RevisionRef(targetId, revision)));
+                        target,
+                        certificate));
             }
 
             if (input.available() != 0) {
@@ -161,14 +162,14 @@ final class ConnectionStore {
         payload.writeLong(sourceContextId.getLeastSignificantBits());
         payload.writeInt(vector.size());
         for (ContextConnection connection : vector.getConnections()) {
-            RevisionRef target = connection.getTarget();
-            payload.writeLong(
-                    target.getContextId().getMostSignificantBits());
-            payload.writeLong(
-                    target.getContextId().getLeastSignificantBits());
-            payload.writeLong(target.getRevision());
+            writeRevisionRef(payload, connection.getTarget());
             writeString(payload,
                     connection.getTargetLocation().toString());
+            CompatibilityCertificate certificate =
+                    connection.getCertificate();
+            writeRevisionRef(payload, certificate.getLeft());
+            writeRevisionRef(payload, certificate.getRight());
+            writeString(payload, certificate.getSemanticVersion());
         }
         payload.flush();
 
@@ -222,12 +223,35 @@ final class ConnectionStore {
         Files.deleteIfExists(path(location));
     }
 
+    private static void writeRevisionRef(
+            DataOutputStream output, RevisionRef ref)
+            throws IOException {
+        output.writeLong(
+                ref.getContextId().getMostSignificantBits());
+        output.writeLong(
+                ref.getContextId().getLeastSignificantBits());
+        output.writeLong(ref.getRevision());
+    }
+
+    private static RevisionRef readRevisionRef(
+            DataInputStream input, Path path)
+            throws IOException, StorageLifecycleException {
+        UUID contextId = new UUID(
+                input.readLong(), input.readLong());
+        long revision = input.readLong();
+        if (revision < RevisionStore.INITIAL_REVISION) {
+            throw corruption(
+                    "Negative pinned Context revision at " + path);
+        }
+        return new RevisionRef(contextId, revision);
+    }
+
     private static void writeString(
             DataOutputStream output, String value)
             throws IOException {
         byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
-        if (bytes.length > MAX_LOCATOR_BYTES) {
-            throw new IOException("DUMB2 Context locator is too large");
+        if (bytes.length > MAX_STRING_BYTES) {
+            throw new IOException("DUMB2 connection string is too large");
         }
         output.writeInt(bytes.length);
         output.write(bytes);
@@ -237,9 +261,9 @@ final class ConnectionStore {
             DataInputStream input, Path path)
             throws IOException, StorageLifecycleException {
         int length = input.readInt();
-        if (length < 0 || length > MAX_LOCATOR_BYTES) {
+        if (length < 0 || length > MAX_STRING_BYTES) {
             throw corruption(
-                    "Invalid DUMB2 Context locator length at " + path);
+                    "Invalid DUMB2 connection string length at " + path);
         }
         byte[] bytes = new byte[length];
         input.readFully(bytes);

@@ -2,6 +2,7 @@ package org.kanger.storage.dumb2;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.kanger.Version;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.storage.Step;
 
@@ -41,11 +42,16 @@ public class OperationSnapshotTest {
             aBase.add(step(0L, 21, Long.valueOf(10L), null));
             assertEquals(1L, a.flush());
 
+            RevisionRef xR1 =
+                    new RevisionRef(x.getContextId(), 1L);
             RevisionRef aR1 =
                     new RevisionRef(a.getContextId(), 1L);
+            CompatibilityCertificate certificateR1 =
+                    new CompatibilityCertificate(
+                            xR1, aR1, Version.CORE_VERSION_S);
             ConnectionVector vector = new ConnectionVector(
                     Arrays.asList(new ContextConnection(
-                            aLocation, aR1)));
+                            aLocation, aR1, certificateR1)));
             ConnectionStore.write(
                     xLocation, x.getContextId(), vector);
 
@@ -96,10 +102,16 @@ public class OperationSnapshotTest {
             /*
              * A deliberate repin is visible only to the next operation.
              */
+            RevisionRef aR2 =
+                    new RevisionRef(a.getContextId(), 2L);
             ConnectionVector repinned = vector.with(
                     new ContextConnection(
                             aLocation,
-                            new RevisionRef(a.getContextId(), 2L)));
+                            aR2,
+                            new CompatibilityCertificate(
+                                    xR1,
+                                    aR2,
+                                    Version.CORE_VERSION_S)));
             ConnectionStore.write(
                     xLocation, x.getContextId(), repinned);
 
