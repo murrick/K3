@@ -56,78 +56,125 @@ final class FrontierLiftSession implements AutoCloseable {
                                 .getContextId().toString());
         boolean success = false;
         try {
-            List<String> order =
-                    answers.isEmpty()
-                            ? Collections.<String>emptyList()
-                            : answers.get(0).getVariableOrder();
-            Map<List<Long>, MutableTuple> unique =
-                    new LinkedHashMap<List<Long>, MutableTuple>();
-
-            for (FrontierAnswer answer : answers) {
-                ContextConnection connection =
-                        operation.getConnections().find(
-                                answer.getSource().getContextId());
-                if (connection == null
-                        || !connection.getTarget()
-                        .equals(answer.getSource())) {
-                    throw new IllegalArgumentException(
-                            "Frontier answer is not from an exact direct connection: "
-                                    + answer.getSource());
-                }
-                if (!order.equals(answer.getVariableOrder())) {
-                    throw new IllegalArgumentException(
-                            "Frontier answers use different variable order");
-                }
-
-                for (List<FrontierAnswer.ValueRef> row
-                        : answer.getValues()) {
-                    if (row.size() != order.size()) {
-                        throw new IllegalArgumentException(
-                                "Frontier tuple arity does not match variable order");
-                    }
-
-                    List<ITerm> lifted =
-                            new ArrayList<ITerm>();
-                    List<Long> key =
-                            new ArrayList<Long>();
-                    for (FrontierAnswer.ValueRef value : row) {
-                        ITerm canonical =
-                                runtime.getMind()
-                                        .getTerms()
-                                        .projectSemantic(
-                                                value.materialize());
-                        lifted.add(canonical);
-                        key.add(Long.valueOf(canonical.getId()));
-                    }
-
-                    MutableTuple tuple = unique.get(key);
-                    if (tuple == null) {
-                        tuple = new MutableTuple(lifted);
-                        unique.put(
-                                new ArrayList<Long>(key),
-                                tuple);
-                    }
-                    tuple.supports.add(answer.getSource());
-                }
-            }
-
-            List<LiftedTuple> result =
-                    new ArrayList<LiftedTuple>();
-            for (MutableTuple tuple : unique.values()) {
-                result.add(new LiftedTuple(
-                        tuple.values,
-                        tuple.supports));
-            }
-
+            LiftResult result =
+                    liftInto(
+                            runtime.getMind(),
+                            operation,
+                            answers);
             FrontierLiftSession session =
                     new FrontierLiftSession(
-                            runtime, order, result);
+                            runtime,
+                            result.getVariableOrder(),
+                            result.getTuples());
             success = true;
             return session;
         } finally {
             if (!success) {
                 runtime.close();
             }
+        }
+    }
+
+    static LiftResult liftInto(
+            Mind target,
+            OperationSnapshot operation,
+            List<FrontierAnswer> answers) throws Exception {
+        if (target == null) {
+            throw new NullPointerException("target");
+        }
+        if (operation == null) {
+            throw new NullPointerException("operation");
+        }
+        if (answers == null) {
+            throw new NullPointerException("answers");
+        }
+
+        List<String> order =
+                answers.isEmpty()
+                        ? Collections.<String>emptyList()
+                        : answers.get(0).getVariableOrder();
+        Map<List<Long>, MutableTuple> unique =
+                new LinkedHashMap<List<Long>, MutableTuple>();
+
+        for (FrontierAnswer answer : answers) {
+            ContextConnection connection =
+                    operation.getConnections().find(
+                            answer.getSource().getContextId());
+            if (connection == null
+                    || !connection.getTarget()
+                    .equals(answer.getSource())) {
+                throw new IllegalArgumentException(
+                        "Frontier answer is not from an exact direct connection: "
+                                + answer.getSource());
+            }
+            if (!order.equals(answer.getVariableOrder())) {
+                throw new IllegalArgumentException(
+                        "Frontier answers use different variable order");
+            }
+            if (answer.getTruth() != FrontierAnswer.Truth.TRUE) {
+                continue;
+            }
+
+            for (List<FrontierAnswer.ValueRef> row
+                    : answer.getValues()) {
+                if (row.size() != order.size()) {
+                    throw new IllegalArgumentException(
+                            "Frontier tuple arity does not match variable order");
+                }
+
+                List<ITerm> liftedValues =
+                        new ArrayList<ITerm>();
+                List<Long> key =
+                        new ArrayList<Long>();
+                for (FrontierAnswer.ValueRef value : row) {
+                    ITerm canonical =
+                            target.getTerms()
+                                    .projectSemantic(
+                                            value.materialize());
+                    liftedValues.add(canonical);
+                    key.add(Long.valueOf(canonical.getId()));
+                }
+
+                MutableTuple tuple = unique.get(key);
+                if (tuple == null) {
+                    tuple = new MutableTuple(liftedValues);
+                    unique.put(
+                            new ArrayList<Long>(key),
+                            tuple);
+                }
+                tuple.supports.add(answer.getSource());
+            }
+        }
+
+        List<LiftedTuple> result =
+                new ArrayList<LiftedTuple>();
+        for (MutableTuple tuple : unique.values()) {
+            result.add(new LiftedTuple(
+                    tuple.values,
+                    tuple.supports));
+        }
+        return new LiftResult(order, result);
+    }
+
+    static final class LiftResult {
+
+        private final List<String> variableOrder;
+        private final List<LiftedTuple> tuples;
+
+        private LiftResult(List<String> variableOrder,
+                           List<LiftedTuple> tuples) {
+            this.variableOrder = Collections.unmodifiableList(
+                    new ArrayList<String>(variableOrder));
+            this.tuples = Collections.unmodifiableList(
+                    new ArrayList<LiftedTuple>(tuples));
+        }
+
+        List<String> getVariableOrder() {
+            return variableOrder;
+        }
+
+        List<LiftedTuple> getTuples() {
+            return tuples;
         }
     }
 
