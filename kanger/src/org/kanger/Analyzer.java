@@ -31,6 +31,7 @@ import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IRule;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.stores.LogStore;
+import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
@@ -317,13 +318,47 @@ public class Analyzer {
 
         List<FrontierDomain> frontier =
                 new ArrayList<FrontierDomain>();
+        Set<String> frontierKeys = new HashSet<String>();
+
+        /*
+         * Historical stored-query orphans remain the first frontier source.
+         * They include ground ordinary queries such as ?male(Tom).
+         */
         for (Rule unresolved : orfans) {
-            if (isExternalizable(unresolved)) {
-                frontier.add(
-                        FrontierDomain.capture(
-                                unresolved.getDomain(), mind));
+            addFrontier(
+                    unresolved.getDomain(),
+                    frontier,
+                    frontierKeys);
+        }
+
+        /*
+         * A query Domain containing an unbound TVariable may remain part of a
+         * non-stored query Rule. Such a Rule is intentionally skipped by the
+         * historical checkDatabase loop above, even though the Domain itself
+         * is unresolved and externally answerable. Expose that Domain without
+         * changing Analyzer truth/hypothesis semantics.
+         */
+        for (IRule candidate : mind.getRules()) {
+            Rule query = (Rule) candidate;
+            if (query.isDeleted(mind)
+                    || query.isStored()
+                    || !query.isQuery()) {
+                continue;
+            }
+            for (List<Domain> branch : query.getTree()) {
+                for (Domain domain : branch) {
+                    if (domain.isQuery(mind)
+                            && !domain.isUsed(mind)
+                            && !domain.isCalculated(mind)) {
+                        addFrontier(
+                                domain,
+                                frontier,
+                                frontierKeys);
+                    }
+                }
             }
         }
+
         mind.replaceFrontierDomains(frontier);
 
         // Контроль закрытия всех веток запроса
@@ -339,16 +374,29 @@ public class Analyzer {
         return result;
     }
 
-    private boolean isExternalizable(Rule rule)
+    private void addFrontier(
+            Domain domain,
+            List<FrontierDomain> frontier,
+            Set<String> keys) throws Exception {
+        if (!isExternalizable(domain)) {
+            return;
+        }
+        FrontierDomain descriptor =
+                FrontierDomain.capture(domain, mind);
+        String key = descriptor.getPredicateName()
+                + "\u0000"
+                + descriptor.getDiagnosticSource();
+        if (keys.add(key)) {
+            frontier.add(descriptor);
+        }
+    }
+
+    private boolean isExternalizable(Domain domain)
             throws Exception {
-        if (rule.getDomain()
-                .getPredicate(mind)
-                .isSystem(mind)) {
+        if (domain.getPredicate(mind).isSystem(mind)) {
             return false;
         }
         return !"rule(1)".equals(
-                rule.getDomain()
-                        .getPredicate(mind)
-                        .toString(mind));
+                domain.getPredicate(mind).toString(mind));
     }
 }
