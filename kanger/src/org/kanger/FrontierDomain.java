@@ -43,10 +43,8 @@ public final class FrontierDomain {
     static FrontierDomain capture(Domain domain, Mind mind)
             throws Exception {
         String predicateName =
-                String.valueOf(
-                        domain.getPredicate(mind)
-                                .getName(mind)
-                                .getValue());
+                domain.getPredicate(mind)
+                        .getName(mind);
 
         List<VariableState> variables =
                 new ArrayList<VariableState>();
