@@ -1,0 +1,33 @@
+COMPILE_NS 718449910
+FIND_BUCKETS query schema=dictionary counts=[54, 6, 0, 0, 0, 0, 0, 0, 0, 6]
+FIND_BUCKETS query schema=domains counts=[34, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+FIND_BUCKETS query schema=library counts=[4, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+FIND_BUCKETS query schema=predicates counts=[0, 2, 0, 0, 0, 0, 0, 0, 0, 2]
+FIND_BUCKETS query schema=rules counts=[27590, 20677, 879, 0, 0, 0, 0, 0, 0, 22435]
+FIND_BUCKETS query schema=tvalues counts=[103, 10492, 0, 0, 0, 0, 0, 0, 0, 10492]
+FIND_BUCKETS optimize schema=dictionary counts=[2695, 395, 0, 0, 0, 0, 0, 0, 0, 395]
+FIND_BUCKETS optimize schema=domains counts=[2098, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+FIND_BUCKETS optimize schema=library counts=[262, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+FIND_BUCKETS optimize schema=predicates counts=[0, 133, 0, 0, 0, 0, 0, 0, 0, 133]
+FIND_BUCKETS optimize schema=rules counts=[1926682, 1247935, 47122, 0, 0, 0, 0, 0, 0, 1342179]
+FIND_BUCKETS optimize schema=tvalues counts=[4587, 657818, 77, 0, 0, 0, 0, 0, 0, 657972]
+SAMPLE 0 query_ns=989903089 optimize_ns=19110877464 optimize_allocated_bytes=-1 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+FIND_BUCKETS query schema=dictionary counts=[54, 6, 0, 0, 0, 0, 0, 0, 0, 6]
+FIND_BUCKETS query schema=domains counts=[34, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+FIND_BUCKETS query schema=library counts=[4, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+FIND_BUCKETS query schema=predicates counts=[0, 2, 0, 0, 0, 0, 0, 0, 0, 2]
+FIND_BUCKETS query schema=rules counts=[28178, 20149, 819, 0, 0, 0, 0, 0, 0, 21787]
+FIND_BUCKETS query schema=tvalues counts=[101, 10462, 32, 0, 0, 0, 0, 0, 0, 10526]
+FIND_BUCKETS optimize schema=dictionary counts=[2695, 395, 0, 0, 0, 0, 0, 0, 0, 395]
+FIND_BUCKETS optimize schema=domains counts=[2098, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+FIND_BUCKETS optimize schema=library counts=[262, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+FIND_BUCKETS optimize schema=predicates counts=[0, 133, 0, 0, 0, 0, 0, 0, 0, 133]
+FIND_BUCKETS optimize schema=rules counts=[1932324, 1244372, 45043, 0, 0, 0, 0, 0, 0, 1334458]
+FIND_BUCKETS optimize schema=tvalues counts=[4589, 657887, 6, 0, 0, 0, 0, 0, 0, 657899]
+SAMPLE 1 query_ns=927370028 optimize_ns=13306090224 optimize_allocated_bytes=-1 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080

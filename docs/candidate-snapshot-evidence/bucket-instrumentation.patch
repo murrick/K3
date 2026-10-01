@@ -1,0 +1,29 @@
+diff --git a/kanger/src/org/kanger/storage/Escalera.java b/kanger/src/org/kanger/storage/Escalera.java
+index f57498c..bdb62ad 100644
+--- a/kanger/src/org/kanger/storage/Escalera.java
++++ b/kanger/src/org/kanger/storage/Escalera.java
+@@ -119,6 +119,12 @@ import java.util.*;
+  */
+ public class Escalera implements ICache {
+ 
++    private static final Map<String, long[]> FIND_DIAGNOSTICS = new java.util.TreeMap<>();
++    public static void resetFindDiagnostics() { FIND_DIAGNOSTICS.clear(); }
++    public static void printFindDiagnostics(String phase) {
++        for (Map.Entry<String,long[]> e : FIND_DIAGNOSTICS.entrySet())
++            System.out.println("FIND_BUCKETS " + phase + " schema=" + e.getKey() + " counts=" + java.util.Arrays.toString(e.getValue()));
++    }
+     private IStep root = null;
+ 
+     private String schema = "";
+@@ -424,6 +430,11 @@ public class Escalera implements ICache {
+     public Set<Long> find(int h) throws Exception {
+         ensureIndex();
+         Set<Long> ids = idsByHash.get(h);
++        long[] counts = FIND_DIAGNOSTICS.get(schema);
++        if (counts == null) { counts = new long[10]; FIND_DIAGNOSTICS.put(schema, counts); }
++        int size = ids == null ? 0 : ids.size();
++        counts[Math.min(size, 8)]++;
++        counts[9] += size;
+         return ids == null ? new HashSet<Long>() : new HashSet<>(ids);
+     }
+ 
