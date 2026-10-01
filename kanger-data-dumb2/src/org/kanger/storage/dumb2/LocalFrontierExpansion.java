@@ -237,12 +237,14 @@ final class LocalFrontierExpansion {
             }
 
             Rule rule = (Rule) candidate;
-            long owner = rule.getMindId();
-            if (owner != operationMind.getId()
-                    && owner != probe.getId()) {
-                continue;
-            }
 
+            /*
+             * The current FrontierDomain is already the query-local authority.
+             * RuleFactory may reuse a semantically identical generated Rule
+             * restored from the pinned Context instead of creating a new Rule
+             * owned by operationMind. Ownership therefore must not gate lookup
+             * of the representation used only as a local Linker seed.
+             */
             if (frontier.semanticallyMatches(
                     rule.getDomain(), probe)) {
                 return rule;
