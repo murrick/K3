@@ -138,11 +138,13 @@ final class LocalFrontierExpansion {
             if (candidate == null
                     || candidate.isDeleted(probe)
                     || !candidate.isStored()
-                    || !candidate.isGenerated()
-                    || candidate.getMindId() != probe.getId()) {
+                    || !candidate.isGenerated()) {
                 continue;
             }
             Rule generated = (Rule) candidate;
+            if (generated.getMindId() != probe.getId()) {
+                continue;
+            }
             Domain domain = generated.getDomain();
             if (domain.isAntc()
                     || !domain.isComplete()
