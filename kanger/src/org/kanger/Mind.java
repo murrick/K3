@@ -1288,7 +1288,8 @@ public class Mind implements IMind {
             line = invert(line);
 
             setCompliedLine(line);
-            Rule r = (Rule) m.compileLine(line, true, convertExternals(ext));
+            Rule r = (Rule) m.compileLine(
+                    line, true, externals);
             if (r != null && !r.isSecond()) {
 
                 m.link(r, logging);
@@ -1492,6 +1493,14 @@ public class Mind implements IMind {
     }
 
     public Boolean queryCheckFalse(String line, Object[] ext, boolean logging) throws Exception {
+        return queryCheckFalseCanonical(
+                line, convertExternals(ext), logging);
+    }
+
+    private Boolean queryCheckFalseCanonical(
+            String line,
+            Queue<ITerm> externals,
+            boolean logging) throws Exception {
         Boolean res = null;
         try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
             Mind m = tx.mind();
@@ -1500,7 +1509,8 @@ public class Mind implements IMind {
                 m.getLog().add(LogMode.ANALYZER, "============= FALSE CHECKING ==============");
             }
 
-            Rule r = (Rule) m.compileLine(invert(line), true, convertExternals(ext));
+            Rule r = (Rule) m.compileLine(
+                    invert(line), true, externals);
             setCompliedLine(line);
             if (r != null && !r.isSecond()) {
                 boolean ar = m.analyze(r, logging);
@@ -1567,6 +1577,14 @@ public class Mind implements IMind {
     }
 
     public Boolean queryCheckTrue(String line, Object[] ext, boolean logging) throws Exception {
+        return queryCheckTrueCanonical(
+                line, convertExternals(ext), logging);
+    }
+
+    private Boolean queryCheckTrueCanonical(
+            String line,
+            Queue<ITerm> externals,
+            boolean logging) throws Exception {
         Boolean res = null;
         try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
             Mind m = tx.mind();
@@ -1636,6 +1654,58 @@ public class Mind implements IMind {
             tx.rollback();
             return res;
         }
+    }
+
+    /**
+     * Executes a query whose external parameters are already canonical Terms
+     * of this Mind. This avoids value re-parsing at cross-Context runtime
+     * boundaries while preserving the historical FALSE-then-TRUE query
+     * lifecycle.
+     */
+    public Boolean queryCanonical(
+            String line,
+            Queue<ITerm> externals,
+            boolean logging) throws Exception {
+        if (line == null || line.isEmpty()
+                || line.charAt(0) != Enums.SUC) {
+            throw new IllegalArgumentException(
+                    "Canonical query requires a query source");
+        }
+
+        this.logging = logging;
+        querySource = line;
+        queryPass = QueryPass.SILENCE;
+        acceptedRule = null;
+        frontierDomains.clear();
+
+        getQueryValues().clear();
+        getLog().clear();
+        getSolutions().clear();
+        getValues().clear();
+        getHypothesis().clear();
+        hypothesis.clear();
+        tempHypothesis.clear();
+
+        Queue<ITerm> source =
+                externals == null
+                        ? new LinkedList<ITerm>()
+                        : new LinkedList<ITerm>(externals);
+
+        Boolean result = null;
+        if (!DEBUG_DISABLE_FALSE_CHECK) {
+            result = queryCheckFalseCanonical(
+                    line,
+                    new LinkedList<ITerm>(source),
+                    logging);
+        }
+        if (result == null) {
+            result = queryCheckTrueCanonical(
+                    line,
+                    new LinkedList<ITerm>(source),
+                    logging);
+        }
+        queryResult = result;
+        return result;
     }
 
     public Boolean query(String line, Object[] ext, boolean logging) throws Exception {

@@ -474,6 +474,14 @@ public class Term implements IUnit<Term>, ITerm {
         return members;
     }
 
+    /**
+     * Returns the semantic SET membership used by hash/equality, detached from
+     * physical storage representation details.
+     */
+    public List<ITerm> semanticMembers() throws Exception {
+        return new ArrayList<ITerm>(expandedSetMembers());
+    }
+
     @Override
     public int getHash() {
         if (hash == 0) {

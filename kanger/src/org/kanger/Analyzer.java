@@ -383,6 +383,9 @@ public class Analyzer {
         }
         FrontierDomain descriptor =
                 FrontierDomain.capture(domain, mind);
+        if (descriptor == null) {
+            return;
+        }
         String key = descriptor.getPredicateName()
                 + "\u0000"
                 + descriptor.getDiagnosticSource();

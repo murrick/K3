@@ -68,7 +68,7 @@ public class LocalFrontierExecutorTest {
         FrontierDomain frontier =
                 frontier("?$y age(Tom,y);");
 
-        assertEquals("?$y age(Tom,y);",
+        assertEquals("?$y age(?,y);",
                 frontier.getQuerySource());
 
         FrontierAnswer answer =
@@ -85,6 +85,27 @@ public class LocalFrontierExecutorTest {
         assertEquals(1, answer.getValues().get(0).size());
         assertEquals("42.0",
                 answer.getValues().get(0).get(0).getRendered());
+    }
+
+    @Test
+    void fixedAmbiguousStringKeepsStringTypeAcrossForeignQuery()
+            throws Exception {
+        ContextFixture a =
+                context("A-string", "!code(Tom,'42');");
+        FrontierDomain frontier =
+                frontier("?code(Tom,'42');");
+
+        assertEquals("?code(?,?);",
+                frontier.getQuerySource());
+
+        FrontierAnswer answer =
+                LocalFrontierExecutor.execute(
+                        a.location,
+                        a.ref(),
+                        frontier);
+
+        assertEquals(FrontierAnswer.Truth.TRUE,
+                answer.getTruth());
     }
 
     @Test

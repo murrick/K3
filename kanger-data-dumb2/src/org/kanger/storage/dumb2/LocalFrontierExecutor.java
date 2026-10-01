@@ -77,9 +77,9 @@ final class LocalFrontierExecutor {
         }
 
         try {
-            Boolean result = mind.query(
+            Boolean result = mind.queryCanonical(
                     frontier.getQuerySource(),
-                    null,
+                    frontier.projectFixedArguments(mind),
                     false);
 
             List<String> order = new ArrayList<String>();
