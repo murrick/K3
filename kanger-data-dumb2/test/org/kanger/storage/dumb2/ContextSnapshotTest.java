@@ -80,6 +80,43 @@ public class ContextSnapshotTest {
     }
 
     @Test
+    void exactRevisionCanBeReopenedAfterCurrentAdvances()
+            throws Exception {
+        Path location = root.resolve("exact-revision");
+
+        ContextStore writer = ContextStore.create(location);
+        ContextSnapshot pinned = null;
+        try {
+            IBase mutable = writer.getBase("index");
+            mutable.add(step(0L, 31, Long.valueOf(10L), null));
+            assertEquals(1L, writer.flush());
+
+            Step previous = new Step();
+            previous.setId(0L);
+            previous.setHash(31);
+            previous.setData(Long.valueOf(10L));
+            mutable.add(step(1L, 32, Long.valueOf(20L), previous));
+            assertEquals(2L, writer.flush());
+
+            pinned = ContextSnapshot.open(location, 1L);
+            assertEquals(writer.getContextId(), pinned.getContextId());
+            assertEquals(1L, pinned.getRevision());
+            assertEquals(Long.valueOf(10L),
+                    pinned.getBase("index").get(0L).getData());
+            assertNull(pinned.getBase("index").get(1L),
+                    "opening pinned R1 must not observe CURRENT R2");
+
+            assertThrows(org.kanger.exception.StorageLifecycleException.class,
+                    () -> ContextSnapshot.open(location, 3L));
+        } finally {
+            if (pinned != null) {
+                pinned.close();
+            }
+            writer.close();
+        }
+    }
+
+    @Test
     void snapshotBaseRejectsPhysicalMutation() throws Exception {
         Path location = root.resolve("read-only");
 

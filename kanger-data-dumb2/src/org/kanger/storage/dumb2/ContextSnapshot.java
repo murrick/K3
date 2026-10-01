@@ -70,6 +70,66 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
      */
     static ContextSnapshot open(Path location)
             throws IOException, StorageLifecycleException {
+        Path revisionPath = requireContextMetadata(location);
+        long revision = RevisionStore.read(revisionPath);
+        return open(location, revision);
+    }
+
+    /**
+     * Opens one exact already-published Context revision.
+     *
+     * <p>This is the storage primitive used by pinned M3 connections. A later
+     * publication may advance CURRENT, but an operation that selected revision
+     * {@code R} continues to read the immutable generation for {@code R}.</p>
+     */
+    static ContextSnapshot open(Path location, long revision)
+            throws IOException, StorageLifecycleException {
+        if (revision < RevisionStore.INITIAL_REVISION) {
+            throw new IllegalArgumentException(
+                    "DUMB2 Context revision must be non-negative");
+        }
+
+        Path revisionPath = requireContextMetadata(location);
+        long currentRevision = RevisionStore.read(revisionPath);
+        if (revision > currentRevision) {
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_NOT_FOUND,
+                    "DUMB2 Context revision " + revision
+                            + " is not published at " + location
+                            + " (current " + currentRevision + ")");
+        }
+
+        Path contextPath = ContextStore.contextPath(location);
+        ContextManifestStore.Manifest manifest =
+                ContextManifestStore.read(contextPath);
+
+        if (revision > RevisionStore.INITIAL_REVISION
+                && !Files.isDirectory(
+                ContextStore.generationPath(location, revision))) {
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_NOT_FOUND,
+                    "DUMB2 Context revision " + revision
+                            + " is not retained at " + location);
+        }
+
+        ContextSnapshot snapshot = new ContextSnapshot(
+                location,
+                manifest.getContextId(),
+                revision,
+                manifest.getOrigin(),
+                copyRegistry(manifest.getTypeRegistry()));
+        try {
+            snapshot.validatePublishedGeneration();
+            return snapshot;
+        } catch (IOException | StorageLifecycleException
+                 | RuntimeException | Error failure) {
+            snapshot.closeQuietly();
+            throw failure;
+        }
+    }
+
+    private static Path requireContextMetadata(Path location)
+            throws StorageLifecycleException {
         if (location == null || location.getFileName() == null) {
             throw new IllegalArgumentException(
                     "DUMB2 Context location must have a final path component");
@@ -90,32 +150,7 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
                     + ": both " + ContextStore.CONTEXT_SUFFIX + " and "
                     + ContextStore.REVISION_SUFFIX + " sidecars are required");
         }
-
-        long revision = RevisionStore.read(revisionPath);
-        ContextManifestStore.Manifest manifest =
-                ContextManifestStore.read(contextPath);
-
-        if (revision > RevisionStore.INITIAL_REVISION
-                && !Files.isDirectory(
-                ContextStore.generationPath(location, revision))) {
-            throw corruption("DUMB2 Context revision " + revision
-                    + " has no physical generation at " + location);
-        }
-
-        ContextSnapshot snapshot = new ContextSnapshot(
-                location,
-                manifest.getContextId(),
-                revision,
-                manifest.getOrigin(),
-                copyRegistry(manifest.getTypeRegistry()));
-        try {
-            snapshot.validatePublishedGeneration();
-            return snapshot;
-        } catch (IOException | StorageLifecycleException
-                 | RuntimeException | Error failure) {
-            snapshot.closeQuietly();
-            throw failure;
-        }
+        return revisionPath;
     }
 
     UUID getContextId() {
