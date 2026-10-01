@@ -152,6 +152,11 @@ public final class DB implements IData {
         } catch (IOException error) {
             failure = accumulate(failure, error);
         }
+        try {
+            ConnectionStore.delete(location);
+        } catch (IOException error) {
+            failure = accumulate(failure, error);
+        }
 
         if (failure != null || storageArtifactsExist(location)) {
             StorageLifecycleException incomplete = new StorageLifecycleException(
@@ -282,7 +287,8 @@ public final class DB implements IData {
     private boolean storageArtifactsExist(Path location) {
         return Files.exists(ContextStore.contextPath(location))
                 || Files.exists(ContextStore.revisionPath(location))
-                || Files.exists(ContextStore.stateRoot(location));
+                || Files.exists(ContextStore.stateRoot(location))
+                || Files.exists(ConnectionStore.path(location));
     }
 
     private Path location(String name) {
