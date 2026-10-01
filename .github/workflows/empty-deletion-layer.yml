@@ -1,0 +1,56 @@
+name: Empty deletion layer qualification
+on:
+  push:
+    branches: ['experiment/3.8.0-base-operands', 'develop/3.8.0']
+  pull_request:
+    branches: ['develop/3.8.0']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  qualification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '21', '26']
+        previous-optimizations: ['false', 'true']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - run: mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install -DskipTests
+      - name: Qualify empty layers, publication and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/empty-deletion"
+          for mode in false true; do
+            export JAVA_TOOL_OPTIONS="-Xmx512m -Dkanger.experiment.emptyDeletionLayerShortcut=$mode -Dkanger.experiment.singleTValueLookup=${{ matrix.previous-optimizations }} -Dkanger.experiment.preserveTValueIndex=${{ matrix.previous-optimizations }} -Dkanger.experiment.versionedSolveSync=${{ matrix.previous-optimizations }} -Dkanger.experiment.resolvedCauseWeights=${{ matrix.previous-optimizations }} -Dkanger.experiment.compactCauseWeights=${{ matrix.previous-optimizations }} -Dkanger.experiment.candidateMembershipFilter=${{ matrix.previous-optimizations }}"
+            for runner in LatentSubstitutionCorpusRunner EmptyDeletionLayerRunner KangerMindPartialMarkAcquisitionSafetyRunner KangerMindRollbackFailureIsolationSafetyRunner KangerMindPartialCommitCompletionSafetyRunner; do
+              mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.$runner -Dexec.classpathScope=test exec:java > "$RUNNER_TEMP/empty-deletion/$mode-$runner.log" 2>&1
+            done
+            grep -q '^LATENT_CORPUS_PASS$' "$RUNNER_TEMP/empty-deletion/$mode-LatentSubstitutionCorpusRunner.log"
+            grep -q '^EMPTY_DELETION_BOUNDARIES_OK checks=27$' "$RUNNER_TEMP/empty-deletion/$mode-EmptyDeletionLayerRunner.log"
+            grep -q '^MIND_PARTIAL_MARK_ACQUISITION_OK$' "$RUNNER_TEMP/empty-deletion/$mode-KangerMindPartialMarkAcquisitionSafetyRunner.log"
+            grep -q '^MIND_ROLLBACK_FAILURE_ISOLATION_OK$' "$RUNNER_TEMP/empty-deletion/$mode-KangerMindRollbackFailureIsolationSafetyRunner.log"
+            grep -q '^MIND_PARTIAL_COMMIT_COMPLETION_OK$' "$RUNNER_TEMP/empty-deletion/$mode-KangerMindPartialCommitCompletionSafetyRunner.log"
+            mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.LatentSolveSyncTransactionRunner -Dexec.classpathScope=test "-Dexec.args=$RUNNER_TEMP/empty-deletion/$mode.state $RUNNER_TEMP/empty-deletion/$mode.work" exec:java > "$RUNNER_TEMP/empty-deletion/$mode-transactions.log" 2>&1
+            grep -q '^LATENT_SOLVE_TRANSACTIONS_PASS operations=20$' "$RUNNER_TEMP/empty-deletion/$mode-transactions.log"
+          done
+          cmp "$RUNNER_TEMP/empty-deletion/false.state" "$RUNNER_TEMP/empty-deletion/true.state"
+          export JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -Dkanger.rule.candidate.concurrency.iterations=3"
+          mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.KangerRuleCandidateConcurrencyRunner -Dexec.classpathScope=test exec:java > "$RUNNER_TEMP/empty-deletion/concurrency.log" 2>&1
+          grep -q '^RULE_CANDIDATE_CONCURRENCY_OK iterations=3$' "$RUNNER_TEMP/empty-deletion/concurrency.log"
+      - name: Print failure logs
+        if: failure()
+        run: tail -100 "$RUNNER_TEMP/empty-deletion/"*.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: empty-deletion-java-${{ matrix.java }}-previous-${{ matrix.previous-optimizations }}
+          path: ${{ runner.temp }}/empty-deletion/
