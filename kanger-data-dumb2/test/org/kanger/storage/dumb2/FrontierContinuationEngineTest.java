@@ -126,9 +126,11 @@ public class FrontierContinuationEngineTest {
         assertTrue(result.isResolved(),
                 "causal fixture did not reach target; trace="
                         + result.getFrontierTrace());
-        assertTrue(result.getWaves() >= 1);
+        assertTrue(result.getWaves() >= 2,
+                "expected a causal second federation wave; trace="
+                        + result.getFrontierTrace());
         assertTrue(result.getEvidenceCount() >= 2,
-                "expected seed and remote evidence; trace="
+                "expected remote and seed/gate evidence; trace="
                         + result.getFrontierTrace());
     }
 

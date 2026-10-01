@@ -193,6 +193,26 @@ public class Mind implements IMind {
     }
 
     public Mind(IMind root) throws Exception {
+        this(root, false);
+    }
+
+    /**
+     * Creates a technical child whose canonical Term/Predicate additions are
+     * confined to child overlays instead of the historically shared parent
+     * factories.
+     *
+     * <p>This is the operation boundary used by federation: foreign query
+     * constants, projected values and ephemeral evidence may participate in
+     * ordinary compiler/linker/analyzer semantics, but they must disappear
+     * when the child is released and must never reach a read-only Context
+     * snapshot root.</p>
+     */
+    public static Mind ephemeralChild(IMind root) throws Exception {
+        return new Mind(root, true);
+    }
+
+    private Mind(IMind root,
+                 boolean isolateCanonicalFactories) throws Exception {
         next = root;
         user = (User) root.getUser();
         id = user.nextId(); //root.getId() + 1;
@@ -202,8 +222,15 @@ public class Mind implements IMind {
         parent.incTransactionCounter();
         boolean initialized = false;
         try {
-            terms = (DictionaryFactory) root.getTerms();
-            predicates = (PredicateFactory) root.getPredicates();
+            if (isolateCanonicalFactories) {
+                terms.transaction(
+                        (DictionaryFactory) root.getTerms());
+                predicates.transaction(
+                        (PredicateFactory) root.getPredicates());
+            } else {
+                terms = (DictionaryFactory) root.getTerms();
+                predicates = (PredicateFactory) root.getPredicates();
+            }
 
             library.transaction((LibraryFactory) root.getLibrary());
 

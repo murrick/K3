@@ -23,14 +23,17 @@ import java.util.UUID;
 final class FrontierLiftSession implements AutoCloseable {
 
     private final SnapshotMindRuntime runtime;
+    private final Mind operationMind;
     private final List<String> variableOrder;
     private final List<LiftedTuple> tuples;
     private boolean closed;
 
     private FrontierLiftSession(SnapshotMindRuntime runtime,
+                                Mind operationMind,
                                 List<String> variableOrder,
                                 List<LiftedTuple> tuples) {
         this.runtime = runtime;
+        this.operationMind = operationMind;
         this.variableOrder = Collections.unmodifiableList(
                 new ArrayList<String>(variableOrder));
         this.tuples = Collections.unmodifiableList(
@@ -54,22 +57,29 @@ final class FrontierLiftSession implements AutoCloseable {
                         "frontier-lift-"
                                 + operation.getSourceRef()
                                 .getContextId().toString());
+        Mind operationMind = null;
         boolean success = false;
         try {
+            operationMind =
+                    Mind.ephemeralChild(runtime.getMind());
             LiftResult result =
                     liftInto(
-                            runtime.getMind(),
+                            operationMind,
                             operation,
                             answers);
             FrontierLiftSession session =
                     new FrontierLiftSession(
                             runtime,
+                            operationMind,
                             result.getVariableOrder(),
                             result.getTuples());
             success = true;
             return session;
         } finally {
             if (!success) {
+                if (operationMind != null) {
+                    runtime.getMind().release(operationMind);
+                }
                 runtime.close();
             }
         }
@@ -180,7 +190,7 @@ final class FrontierLiftSession implements AutoCloseable {
 
     Mind getMind() {
         requireOpen();
-        return runtime.getMind();
+        return operationMind;
     }
 
     List<String> getVariableOrder() {
@@ -198,6 +208,9 @@ final class FrontierLiftSession implements AutoCloseable {
         if (closed) {
             return;
         }
+        operationMind.getSolutions().clear();
+        operationMind.getValues().clear();
+        runtime.getMind().release(operationMind);
         runtime.close();
         closed = true;
     }

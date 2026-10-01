@@ -65,7 +65,7 @@ final class FrontierContinuationEngine {
                             + operation.getSourceRef()
                                     .getContextId().toString());
             root = runtime.getMind();
-            work = new Mind(root);
+            work = Mind.ephemeralChild(root);
             work.setQueryPass(QueryPass.CHECKTRUE);
 
             Rule query = (Rule) work.compileLine(
@@ -173,7 +173,15 @@ final class FrontierContinuationEngine {
                 }
 
                 work.setQueryPass(QueryPass.CHECKTRUE);
-                work.link(query, false);
+                /*
+                 * New foreign evidence can satisfy a premise one or more local
+                 * rules away from the original query. Rule-scoped linking
+                 * intentionally builds a narrow candidate closure; after a
+                 * federation wave we therefore run full local saturation in
+                 * the same operation Mind, then analyze the same compiled query
+                 * Rule. No query recompilation or foreign recursion occurs.
+                 */
+                work.link(null, false);
                 if (work.analyze(query, false)) {
                     return new Result(
                             true,

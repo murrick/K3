@@ -62,20 +62,21 @@ final class LocalFrontierExecutor {
                         Long.valueOf(target.getRevision()));
         data.init(user);
 
-        Mind mind = new Mind(user);
-        user.setCurrentMind(mind);
-        mind = (Mind) mind.useStorage(logicalName);
-        user.setCurrentMind(mind);
+        Mind root = new Mind(user);
+        user.setCurrentMind(root);
+        root = (Mind) root.useStorage(logicalName);
+        user.setCurrentMind(root);
 
         if (!target.getContextId().equals(data.getContextId())
                 || target.getRevision() != data.getRevision()) {
-            mind = (Mind) mind.closeStorage();
-            user.setCurrentMind(mind);
+            root = (Mind) root.closeStorage();
+            user.setCurrentMind(root);
             throw new IllegalStateException(
                     "Frontier target changed during exact-revision attach: "
                             + target);
         }
 
+        Mind mind = Mind.ephemeralChild(root);
         try {
             Boolean result = mind.queryCanonical(
                     frontier.getQuerySource(),
@@ -125,8 +126,11 @@ final class LocalFrontierExecutor {
                     rows,
                     hypotheses);
         } finally {
-            mind = (Mind) mind.closeStorage();
-            user.setCurrentMind(mind);
+            mind.getSolutions().clear();
+            mind.getValues().clear();
+            root.release(mind);
+            root = (Mind) root.closeStorage();
+            user.setCurrentMind(root);
         }
     }
 }
