@@ -94,59 +94,7 @@ final class LocalFrontierExpansion {
             return;
         }
 
-        boolean diagnosticGate =
-                "gate".equals(frontier.getPredicateName());
-        if (diagnosticGate) {
-            System.err.println("[M3-EXPAND] frontier="
-                    + frontier.getDiagnosticSource()
-                    + " demandId=" + demand.getId()
-                    + " demandMind=" + demand.getMindId()
-                    + " origin=" + demand.getOrigin());
-        }
-
         probe.link(demand, false);
-
-        if (diagnosticGate) {
-            System.err.println("[M3-EXPAND] usedDomains="
-                    + probe.getUsedDomains().size());
-            for (Domain used : probe.getUsedDomains().keySet()) {
-                IRule owner = used.getRule();
-                System.err.println("[M3-EXPAND] used="
-                        + used.toString(probe)
-                        + " ownerId="
-                        + (owner == null ? -1 : owner.getId())
-                        + " ownerGenerated="
-                        + (owner != null && owner.isGenerated())
-                        + " ownerOrigin="
-                        + (owner == null ? "<null>" : owner.getOrigin()));
-                if (owner instanceof Rule) {
-                    for (List<Domain> branch : ((Rule) owner).getTree()) {
-                        StringBuilder branchText =
-                                new StringBuilder("[M3-EXPAND] branch=");
-                        for (Domain domain : branch) {
-                            branchText.append(" {")
-                                    .append(domain.toString(probe))
-                                    .append(" used=")
-                                    .append(domain.isUsed(probe))
-                                    .append(" antc=")
-                                    .append(domain.isAntc())
-                                    .append("}");
-                        }
-                        System.err.println(branchText.toString());
-                    }
-                }
-            }
-            for (IRule one : probe.getRules()) {
-                if (one.isGenerated()
-                        && !one.isDeleted(probe)) {
-                    Rule generated = (Rule) one;
-                    System.err.println("[M3-EXPAND] generated id="
-                            + generated.getId()
-                            + " mind=" + generated.getMindId()
-                            + " origin=" + generated.getOrigin());
-                }
-            }
-        }
 
         List<FrontierDomain> deeper =
                 collectLocalDependencies(
@@ -340,8 +288,20 @@ final class LocalFrontierExpansion {
 
     private static boolean sameOccurrence(
             Domain left, Domain right) {
-        return left == right
-                || left.getId() == right.getId();
+        if (left == right) {
+            return true;
+        }
+
+        /*
+         * Transient Domains legitimately use the sentinel ID -1. Two distinct
+         * occurrences in the same unpersisted Rule therefore must never be
+         * collapsed merely because both IDs are -1.
+         */
+        long leftId = left.getId();
+        long rightId = right.getId();
+        return leftId >= 0L
+                && rightId >= 0L
+                && leftId == rightId;
     }
 
     private static boolean containsEquivalent(
