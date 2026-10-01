@@ -39,6 +39,9 @@ import java.util.TreeSet;
  */
 public class TVariableSet implements Comparable<TVariableSet> {
 
+    private static final boolean SMALL_SET_HASH =
+            Boolean.getBoolean("kanger.experiment.smallVariableSetHash");
+
     private SortedSet<TVariable> set = new TreeSet<>();
 
     public TVariableSet(List<TValue> list, Mind mind) throws Exception {
@@ -56,6 +59,16 @@ public class TVariableSet implements Comparable<TVariableSet> {
     @Override
     public int hashCode() {
         int hashCode = 3;
+        if (SMALL_SET_HASH && set.size() <= 2) {
+            if (set.isEmpty()) return hashCode;
+            long id = set.first().getId();
+            hashCode = 47 * hashCode + (int) (id ^ (id >>> 32));
+            if (set.size() == 2) {
+                id = set.last().getId();
+                hashCode = 47 * hashCode + (int) (id ^ (id >>> 32));
+            }
+            return hashCode;
+        }
         for (TVariable t : set) {
             long id = t.getId();
             hashCode = 47 * hashCode + (int) (id ^ (id >>> 32));

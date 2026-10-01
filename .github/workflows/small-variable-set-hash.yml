@@ -1,0 +1,54 @@
+name: Small variable set hash qualification
+on:
+  push:
+    branches: ['experiment/3.8.0-variable-set-hash']
+  pull_request:
+    branches: ['develop/3.8.0']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  qualification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '21', '26']
+        prior: ['false', 'true']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - run: mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install -DskipTests
+      - name: Qualify reference and small set hash
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/variable-set-hash"
+          for mode in false true; do
+            export JAVA_TOOL_OPTIONS="-Xmx512m -Dkanger.experiment.smallVariableSetHash=$mode -Dkanger.experiment.singleTValueLookup=${{ matrix.prior }} -Dkanger.experiment.preserveTValueIndex=${{ matrix.prior }} -Dkanger.experiment.versionedSolveSync=${{ matrix.prior }} -Dkanger.experiment.resolvedCauseWeights=${{ matrix.prior }} -Dkanger.experiment.compactCauseWeights=${{ matrix.prior }} -Dkanger.experiment.candidateMembershipFilter=${{ matrix.prior }}"
+            for runner in LatentSubstitutionCorpusRunner SmallVariableSetHashRunner; do
+              mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.$runner -Dexec.classpathScope=test exec:java > "$RUNNER_TEMP/variable-set-hash/$mode-$runner.log" 2>&1
+            done
+            grep -q '^LATENT_CORPUS_PASS$' "$RUNNER_TEMP/variable-set-hash/$mode-LatentSubstitutionCorpusRunner.log"
+            grep -q '^SMALL_VARIABLE_SET_HASH_OK checks=18$' "$RUNNER_TEMP/variable-set-hash/$mode-SmallVariableSetHashRunner.log"
+            mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dtest=KangerCrossContextPredicateProjectionTest surefire:test > "$RUNNER_TEMP/variable-set-hash/$mode-projection.log" 2>&1
+            mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.LatentSolveSyncTransactionRunner -Dexec.classpathScope=test "-Dexec.args=$RUNNER_TEMP/variable-set-hash/$mode.state $RUNNER_TEMP/variable-set-hash/$mode.work" exec:java > "$RUNNER_TEMP/variable-set-hash/$mode-transactions.log" 2>&1
+            grep -q '^LATENT_SOLVE_TRANSACTIONS_PASS operations=20$' "$RUNNER_TEMP/variable-set-hash/$mode-transactions.log"
+          done
+          cmp "$RUNNER_TEMP/variable-set-hash/false.state" "$RUNNER_TEMP/variable-set-hash/true.state"
+          export JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -Dkanger.rule.candidate.concurrency.iterations=3"
+          mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.KangerRuleCandidateConcurrencyRunner -Dexec.classpathScope=test exec:java > "$RUNNER_TEMP/variable-set-hash/concurrency.log" 2>&1
+          grep -q '^RULE_CANDIDATE_CONCURRENCY_OK iterations=3$' "$RUNNER_TEMP/variable-set-hash/concurrency.log"
+      - name: Print failure logs
+        if: failure()
+        run: tail -100 "$RUNNER_TEMP/variable-set-hash/"*.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: variable-set-hash-java-${{ matrix.java }}-prior-${{ matrix.prior }}
+          path: ${{ runner.temp }}/variable-set-hash/
