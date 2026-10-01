@@ -103,11 +103,8 @@ final class LocalFrontierExecutor {
                         break;
                     }
                     Term term = (Term) value;
-                    tuple.add(new FrontierAnswer.ValueRef(
-                            term.getId(),
-                            term.getHash(),
-                            term.getType(),
-                            term.toString()));
+                    tuple.add(
+                            FrontierAnswer.ValueRef.capture(term));
                 }
                 if (complete) {
                     rows.add(tuple);

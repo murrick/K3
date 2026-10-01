@@ -19,15 +19,19 @@ import java.util.UUID;
  */
 final class OperationSnapshot implements AutoCloseable {
 
+    private final Path sourceLocation;
     private final ContextSnapshot source;
     private final RevisionRef sourceRef;
     private final ConnectionVector connections;
     private final Map<UUID, ContextSnapshot> targets;
     private boolean closed;
 
-    private OperationSnapshot(ContextSnapshot source,
+    private OperationSnapshot(Path sourceLocation,
+                              ContextSnapshot source,
                               ConnectionVector connections,
                               Map<UUID, ContextSnapshot> targets) {
+        this.sourceLocation =
+                sourceLocation.toAbsolutePath().normalize();
         this.source = source;
         this.sourceRef = new RevisionRef(
                 source.getContextId(), source.getRevision());
@@ -76,7 +80,7 @@ final class OperationSnapshot implements AutoCloseable {
                 targets.put(targetRef.getContextId(), target);
             }
             return new OperationSnapshot(
-                    source, vector, targets);
+                    sourceLocation, source, vector, targets);
         } catch (Exception failure) {
             for (ContextSnapshot target : targets.values()) {
                 target.close();
@@ -95,6 +99,11 @@ final class OperationSnapshot implements AutoCloseable {
     RevisionRef getSourceRef() {
         requireOpen();
         return sourceRef;
+    }
+
+    Path getSourceLocation() {
+        requireOpen();
+        return sourceLocation;
     }
 
     ContextSnapshot getSource() {
