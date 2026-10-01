@@ -360,33 +360,47 @@ public class Analyzer {
         }
 
         /*
-         * Linker can turn a demanded local premise into a generated stored
-         * succedent Rule. Historical query flags are deliberately cleared on
-         * that Rule, so neither orfans nor the non-stored-query scan above can
-         * see it. The operation-local mindId is the crucial boundary here:
-         * only generated demands created by this saturation pass are eligible;
-         * durable/generated products inherited from the Context are not.
+         * Query-driven local inference can consume one Domain of an ordinary
+         * Rule while leaving other complete premises unresolved. With one
+         * missing premise Linker may also materialize a generated stored
+         * succedent; with several missing premises it deliberately does not.
+         * The stable signal common to both shapes is therefore the branch:
+         * at least one Domain participated in the current link (used), while
+         * another ordinary premise is complete but still unused.
          *
-         * M3.6 currently externalizes the positive-query/succedent form. The
-         * opposite-polarity truth/conflict matrix is completed in M3.7.
+         * Used/excluded/calculated state is query-local and Linker resets it at
+         * the start of saturation, so inherited durable Rules do not become a
+         * federation frontier merely by existing. M3.6 externalizes only the
+         * positive-query premise polarity here; the opposite-polarity truth
+         * matrix is completed in M3.7.
          */
         for (IRule candidate : mind.getRules()) {
-            Rule generated = (Rule) candidate;
-            if (generated.isDeleted(mind)
-                    || !generated.isStored()
-                    || !generated.isGenerated()
-                    || generated.getMindId() != mind.getId()) {
+            if (candidate.isDeleted(mind)) {
                 continue;
             }
-            Domain domain = generated.getDomain();
-            if (!domain.isAntc()
-                    && domain.isComplete()
-                    && !domain.isUsed(mind)
-                    && !domain.isCalculated(mind)) {
-                addFrontier(
-                        domain,
-                        frontier,
-                        frontierKeys);
+            Rule rule = (Rule) candidate;
+            for (List<Domain> branch : rule.getTree()) {
+                boolean queryRelevant = false;
+                for (Domain domain : branch) {
+                    if (domain.isUsed(mind)) {
+                        queryRelevant = true;
+                        break;
+                    }
+                }
+                if (!queryRelevant) {
+                    continue;
+                }
+                for (Domain domain : branch) {
+                    if (!domain.isAntc()
+                            && domain.isComplete()
+                            && !domain.isUsed(mind)
+                            && !domain.isCalculated(mind)) {
+                        addFrontier(
+                                domain,
+                                frontier,
+                                frontierKeys);
+                    }
+                }
             }
         }
 
