@@ -360,34 +360,63 @@ public class Analyzer {
         }
 
         /*
-         * Query-driven local inference can consume one Domain of an ordinary
-         * Rule while leaving other complete premises unresolved. With one
-         * missing premise Linker may also materialize a generated stored
-         * succedent; with several missing premises it deliberately does not.
-         * The stable signal common to both shapes is therefore the branch:
-         * at least one Domain participated in the current link (used), while
-         * another ordinary premise is complete but still unused.
-         *
-         * Used/excluded/calculated state is query-local and Linker resets it at
-         * the start of saturation, so inherited durable Rules do not become a
-         * federation frontier merely by existing. M3.6 externalizes only the
-         * positive-query premise polarity here; the opposite-polarity truth
-         * matrix is completed in M3.7.
+         * Linker may materialize a single demanded premise as a generated
+         * stored succedent Rule. That Rule intentionally no longer carries the
+         * historical query flag, but its operation-local mindId identifies it
+         * as demand produced by this saturation rather than inherited durable
+         * knowledge.
          */
         for (IRule candidate : mind.getRules()) {
-            if (candidate.isDeleted(mind)) {
+            Rule generated = (Rule) candidate;
+            if (generated.isDeleted(mind)
+                    || !generated.isStored()
+                    || !generated.isGenerated()
+                    || generated.getMindId() != mind.getId()) {
                 continue;
             }
-            Rule rule = (Rule) candidate;
-            for (List<Domain> branch : rule.getTree()) {
-                boolean queryRelevant = false;
-                for (Domain domain : branch) {
-                    if (domain.isUsed(mind)) {
-                        queryRelevant = true;
+            Domain domain = generated.getDomain();
+            if (!domain.isAntc()
+                    && domain.isComplete()
+                    && !domain.isUsed(mind)
+                    && !domain.isCalculated(mind)) {
+                addFrontier(
+                        domain,
+                        frontier,
+                        frontierKeys);
+            }
+        }
+
+        /*
+         * Multi-premise demand does not necessarily create generated Rules:
+         * Linker records the exact resolved Domain occurrences it actually
+         * consumed in Mind.usedDomains. Start from those canonical occurrence
+         * objects and expose complete, still-unused ordinary premises from the
+         * same terminal branch. Do not rediscover "used" through another
+         * transactional Rule view: Domain.isUsed is intentionally keyed by
+         * occurrence object identity plus resolved ArgumentsList snapshots.
+         *
+         * M3.6 externalizes the positive-query premise polarity. M3.7 extends
+         * the same occurrence boundary to the opposite-polarity truth matrix.
+         */
+        for (Domain used
+                : new ArrayList<Domain>(
+                        mind.getUsedDomains().keySet())) {
+            IRule owner = used.getRule();
+            if (!(owner instanceof Rule)
+                    || owner.isDeleted(mind)) {
+                continue;
+            }
+            for (List<Domain> branch
+                    : ((Rule) owner).getTree()) {
+                boolean containsUsed = false;
+                for (Domain candidate : branch) {
+                    if (candidate == used
+                            || candidate.getId() == used.getId()) {
+                        containsUsed = true;
                         break;
                     }
                 }
-                if (!queryRelevant) {
+                if (!containsUsed) {
                     continue;
                 }
                 for (Domain domain : branch) {
