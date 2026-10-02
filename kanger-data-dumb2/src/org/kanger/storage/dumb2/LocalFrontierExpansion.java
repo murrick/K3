@@ -174,11 +174,11 @@ final class LocalFrontierExpansion {
             }
 
             for (List<Domain> branch : ((Rule) owner).getTree()) {
-                if (!containsOccurrence(branch, used)) {
+                if (!containsOccurrence(branch, used, probe)) {
                     continue;
                 }
                 for (Domain domain : branch) {
-                    if (sameOccurrence(domain, used)
+                    if (sameOccurrence(domain, used, probe)
                             || domain.isAntc()
                             || !domain.isComplete()
                             || domain.isUsed(probe)
@@ -278,9 +278,11 @@ final class LocalFrontierExpansion {
     }
 
     private static boolean containsOccurrence(
-            List<Domain> branch, Domain used) throws Exception {
+            List<Domain> branch,
+            Domain used,
+            Mind mind) throws Exception {
         for (Domain candidate : branch) {
-            if (sameOccurrence(candidate, used)) {
+            if (sameOccurrence(candidate, used, mind)) {
                 return true;
             }
         }
@@ -288,24 +290,35 @@ final class LocalFrontierExpansion {
     }
 
     private static boolean sameOccurrence(
-            Domain left, Domain right) throws Exception {
+            Domain left,
+            Domain right,
+            Mind mind) throws Exception {
         if (left == right) {
             return true;
         }
 
         /*
          * Persistent Domain IDs are authoritative when available. Transient
-         * transactional views legitimately use the sentinel ID -1 and may
-         * materialize the same logical occurrence as different Java objects,
-         * so identity alone is insufficient there. Fall back to KANGER's own
-         * structural occurrence comparison instead of treating -1 as identity.
+         * transactional views legitimately use sentinel IDs and may expose the
+         * same logical occurrence through different Java objects and different
+         * internal Argument forms (for example TERM versus resolved TVALUE).
+         * Federation therefore falls back to the same detached semantic Domain
+         * comparison used at Context boundaries, not physical structure.
          */
         long leftId = left.getId();
         long rightId = right.getId();
         if (leftId >= 0L && rightId >= 0L) {
             return leftId == rightId;
         }
-        return left.equalsToStruct(right);
+
+        FrontierDomain leftSemantic =
+                FrontierDomain.fromDomain(left, mind);
+        FrontierDomain rightSemantic =
+                FrontierDomain.fromDomain(right, mind);
+        return leftSemantic != null
+                && rightSemantic != null
+                && leftSemantic.semanticallyEquivalent(
+                        rightSemantic);
     }
 
     private static boolean containsEquivalent(
