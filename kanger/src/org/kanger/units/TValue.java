@@ -150,6 +150,16 @@ public class TValue implements Comparable<TValue>, IUnit<TValue> {
     }
 
     /**
+     * Internal resident-only probe for guarded comparisons. Never hydrates and
+     * never calls user methods; null means the caller must use the normal path.
+     * Does not establish an ID match or a persistent validity guarantee.
+     */
+    public Term peekBuiltinTerm() {
+        return getClass() == TValue.class && value != null && value.getClass() == Term.class
+                ? (Term) value : null;
+    }
+
+    /**
      * Возвращает терм-донор, при необходимости гидратируя его через Mind.
      *
      * @param mind контекст hydration

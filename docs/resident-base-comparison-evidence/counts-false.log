@@ -1,0 +1,53 @@
+COMPILE_NS 448036229
+COUNT sample=0 TVariable.diagValue=75747028
+COUNT sample=0 TVariable.diagCurrent=5697532
+COUNT sample=0 TVariable.diagActive=87555216
+COUNT sample=0 TVariable.diagSet=3869968
+COUNT sample=0 TVariable.diagSame=3861441
+COUNT sample=0 TVariable.diagDifferent=8527
+COUNT sample=0 TVariable.diagUnset=0
+COUNT sample=0 TVariable.diagValueInBase=43648177
+COUNT sample=0 TVariable.diagCurrentInBase=0
+COUNT sample=0 Argument.diagValue=149118394
+COUNT sample=0 Argument.diagEmpty=61665764
+COUNT sample=0 Argument.diagValueInBase=100178508
+COUNT sample=0 Argument.diagEmptyInBase=36277175
+COUNT sample=0 ArgumentsList.diagCalls=14437010
+COUNT sample=0 ArgumentsList.diagDepth=0
+COUNT sample=0 ArgumentsList.diagIterations=18160054
+COUNT sample=0 ArgumentsList.diagFastEqual=0
+COUNT sample=0 ArgumentsList.diagFastMismatch=0
+COUNT sample=0 ArgumentsList.diagParentFallback=0
+COUNT sample=0 Domain.diagSet=4898306
+COUNT sample=0 TValueFactory.diagGet=86354640
+COUNT sample=0 TValueFactory.diagGetInBase=43648177
+SAMPLE 0 query_ns=314998493 optimize_ns=10272002595 optimize_cpu_ns=10062360756 optimize_allocated_bytes=-1 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+COUNT sample=1 TVariable.diagValue=75807250
+COUNT sample=1 TVariable.diagCurrent=5697532
+COUNT sample=1 TVariable.diagActive=87615438
+COUNT sample=1 TVariable.diagSet=3869968
+COUNT sample=1 TVariable.diagSame=3861441
+COUNT sample=1 TVariable.diagDifferent=8527
+COUNT sample=1 TVariable.diagUnset=0
+COUNT sample=1 TVariable.diagValueInBase=43708415
+COUNT sample=1 TVariable.diagCurrentInBase=0
+COUNT sample=1 Argument.diagValue=149212855
+COUNT sample=1 Argument.diagEmpty=61661740
+COUNT sample=1 Argument.diagValueInBase=100273063
+COUNT sample=1 Argument.diagEmptyInBase=36273197
+COUNT sample=1 ArgumentsList.diagCalls=14427757
+COUNT sample=1 ArgumentsList.diagDepth=0
+COUNT sample=1 ArgumentsList.diagIterations=18158065
+COUNT sample=1 ArgumentsList.diagFastEqual=0
+COUNT sample=1 ArgumentsList.diagFastMismatch=0
+COUNT sample=1 ArgumentsList.diagParentFallback=0
+COUNT sample=1 Domain.diagSet=4891518
+COUNT sample=1 TValueFactory.diagGet=86414862
+COUNT sample=1 TValueFactory.diagGetInBase=43708415
+SAMPLE 1 query_ns=133056096 optimize_ns=8185045918 optimize_cpu_ns=8055938830 optimize_allocated_bytes=-1 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
