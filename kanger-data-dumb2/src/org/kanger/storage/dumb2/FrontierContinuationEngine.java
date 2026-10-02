@@ -148,40 +148,30 @@ final class FrontierContinuationEngine {
                             aggregate.getHypotheses());
 
                     /*
-                     * Ground truth aggregation belongs exactly here: it governs
-                     * whether one fully-grounded frontier may become factual
-                     * operation-local evidence in X. A conflict never injects
-                     * either side; UNKNOWN injects nothing.
+                     * Ground truth aggregation belongs exactly here. TRUE means
+                     * the queried frontier polarity itself is factual and may
+                     * become an operation-local donor in X.
+                     *
+                     * FALSE is not an instruction to synthesize the opposite
+                     * assertion. In KANGER the opposite proposition is a
+                     * separate frontier (for example ?~p versus ?p); if that
+                     * frontier is queried, a foreign negative fact answers TRUE
+                     * and is injected naturally with its own polarity.
+                     *
+                     * UNKNOWN and CONFLICT likewise remain observations only.
                      */
-                    if (frontier.isGround()) {
-                        Boolean factualTruth = null;
-                        switch (aggregate.getTruth()) {
-                            case TRUE:
-                                factualTruth = Boolean.TRUE;
-                                break;
-                            case FALSE:
-                                factualTruth = Boolean.FALSE;
-                                break;
-                            case UNKNOWN:
-                            case CONFLICT:
-                                break;
-                            default:
-                                throw new IllegalStateException(
-                                        "Unsupported aggregate truth: "
-                                                + aggregate.getTruth());
-                        }
-
-                        if (factualTruth != null
-                                && inject(
-                                        work,
-                                        frontier,
-                                        Collections.<String>emptyList(),
-                                        Collections.<ITerm>emptyList(),
-                                        evidence,
-                                        factualTruth.booleanValue())) {
-                            ++evidenceCount;
-                            changed = true;
-                        }
+                    if (frontier.isGround()
+                            && aggregate.getTruth()
+                                    == FrontierAggregate.Truth.TRUE
+                            && inject(
+                                    work,
+                                    frontier,
+                                    Collections.<String>emptyList(),
+                                    Collections.<ITerm>emptyList(),
+                                    evidence,
+                                    true)) {
+                        ++evidenceCount;
+                        changed = true;
                     }
 
                     FrontierLiftSession.LiftResult lifted =
@@ -333,19 +323,6 @@ final class FrontierContinuationEngine {
                 false,
                 new LinkedList<ITerm>(arguments));
         work.setQueryPass(QueryPass.CHECKTRUE);
-
-        if (!truth) {
-            System.err.println("[M3-FALSE] source="
-                    + evidenceSource
-                    + " assertion="
-                    + (assertion == null
-                            ? "<null>"
-                            : ("id=" + assertion.getId()
-                                    + " generated=" + assertion.isGenerated()
-                                    + " query=" + assertion.isQuery()
-                                    + " second=" + assertion.isSecond()
-                                    + " stored=" + assertion.isStored())));
-        }
 
         if (assertion == null || assertion.isSecond()) {
             return false;

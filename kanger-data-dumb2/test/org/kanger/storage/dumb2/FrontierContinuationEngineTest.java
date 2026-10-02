@@ -82,7 +82,7 @@ public class FrontierContinuationEngineTest {
     }
 
     @Test
-    void falseGroundAggregateInjectsOnlyNegativeDonor()
+    void falseGroundAggregateRemainsObservationOnly()
             throws Exception {
         ContextFixture x = context(
                 "X-false",
@@ -100,10 +100,38 @@ public class FrontierContinuationEngineTest {
                         "?source(Tom);");
 
         assertFalse(result.isResolved());
-        assertEquals(1, result.getEvidenceCount());
+        assertEquals(0, result.getEvidenceCount());
         assertEquals(1, result.getObservations().size());
         assertEquals(
                 FrontierAggregate.Truth.FALSE,
+                result.getObservations().get(0)
+                        .getAggregate().getTruth());
+        assertFalse(result.hasConflict());
+    }
+
+    @Test
+    void negativeFrontierUsesTrueNegativeFactAsFactualDonor()
+            throws Exception {
+        ContextFixture x = context(
+                "X-negative-frontier",
+                "!anchor(X);");
+        ContextFixture a = context(
+                "A-negative-frontier",
+                "!~source(Tom);");
+
+        ConnectionManager.connect(
+                x.location, a.location);
+
+        FrontierContinuationEngine.Result result =
+                FrontierContinuationEngine.execute(
+                        x.location,
+                        "?~source(Tom);");
+
+        assertTrue(result.isResolved());
+        assertEquals(1, result.getEvidenceCount());
+        assertEquals(1, result.getObservations().size());
+        assertEquals(
+                FrontierAggregate.Truth.TRUE,
                 result.getObservations().get(0)
                         .getAggregate().getTruth());
         assertFalse(result.hasConflict());
