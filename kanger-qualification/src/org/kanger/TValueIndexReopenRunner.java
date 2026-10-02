@@ -27,7 +27,7 @@ public final class TValueIndexReopenRunner {
         require(!values.isEmpty(), "nonempty inference TValue fixture");
         cache.mark(); cache.release();
         Field valid = Escalera.class.getDeclaredField("indexValid"); valid.setAccessible(true);
-        require(valid.getBoolean(cache) == Boolean.getBoolean("kanger.experiment.preserveTValueIndex"), "release guard");
+        require(valid.getBoolean(cache) == Boolean.parseBoolean(System.getProperty("kanger.experiment.preserveTValueIndex", "true")), "release guard");
         Collections.sort(values);
         System.out.println(label + " tvalues=" + values);
         List<String> rules = new ArrayList<>();

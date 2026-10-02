@@ -22,7 +22,7 @@ public final class TValueIndexBoundaryRunner {
     private static void unchanged(Escalera cache) throws Exception {
         cache.size(); cache.mark(); cache.release();
         require((Boolean) field(cache, "indexValid") ==
-                Boolean.getBoolean("kanger.experiment.preserveTValueIndex"), "no-change guard");
+                Boolean.parseBoolean(System.getProperty("kanger.experiment.preserveTValueIndex", "true")), "no-change guard");
     }
     private static void check(Escalera cache, String label, TValue... values) throws Exception {
         List<Long> actual = new ArrayList<>(), expected = new ArrayList<>();
