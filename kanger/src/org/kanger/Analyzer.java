@@ -382,52 +382,6 @@ public class Analyzer {
             }
         }
 
-        /*
-         * Multi-premise demand does not necessarily create generated Rules:
-         * Linker records the exact resolved Domain occurrences it actually
-         * consumed in Mind.usedDomains. Start from those canonical occurrence
-         * objects and expose complete, still-unused ordinary premises from the
-         * same terminal branch. Do not rediscover "used" through another
-         * transactional Rule view: Domain.isUsed is intentionally keyed by
-         * occurrence object identity plus resolved ArgumentsList snapshots.
-         *
-         * M3.6 externalizes the positive-query premise polarity. M3.7 extends
-         * the same occurrence boundary to the opposite-polarity truth matrix.
-         */
-        for (Domain used
-                : new ArrayList<Domain>(
-                        mind.getUsedDomains().keySet())) {
-            IRule owner = used.getRule();
-            if (!(owner instanceof Rule)
-                    || owner.isDeleted(mind)) {
-                continue;
-            }
-            for (List<Domain> branch
-                    : ((Rule) owner).getTree()) {
-                boolean containsUsed = false;
-                for (Domain candidate : branch) {
-                    if (candidate == used
-                            || candidate.getId() == used.getId()) {
-                        containsUsed = true;
-                        break;
-                    }
-                }
-                if (!containsUsed) {
-                    continue;
-                }
-                for (Domain domain : branch) {
-                    if (!domain.isAntc()
-                            && domain.isComplete()
-                            && !domain.isUsed(mind)
-                            && !domain.isCalculated(mind)) {
-                        addFrontier(
-                                domain,
-                                frontier);
-                    }
-                }
-            }
-        }
-
         mind.replaceFrontierDomains(frontier);
 
         // Контроль закрытия всех веток запроса

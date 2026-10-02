@@ -56,16 +56,6 @@ public final class FrontierDomain {
         this.ground = ground;
     }
 
-    /**
-     * Captures one live Domain as an operation-local detached frontier
-     * descriptor. The returned object carries no Context-local IDs as semantic
-     * identity.
-     */
-    public static FrontierDomain fromDomain(
-            Domain domain, Mind mind) throws Exception {
-        return capture(domain, mind);
-    }
-
     static FrontierDomain capture(Domain domain, Mind mind)
             throws Exception {
         String predicateName =
@@ -240,18 +230,6 @@ public final class FrontierDomain {
             }
         }
         return true;
-    }
-
-    /**
-     * Compares this detached frontier with one live Domain in the supplied
-     * Mind without using Context-local Rule/Domain/Term IDs as identity.
-     */
-    public boolean semanticallyMatches(
-            Domain domain, Mind mind) throws Exception {
-        FrontierDomain other =
-                capture(domain, mind);
-        return other != null
-                && semanticallyEquivalent(other);
     }
 
     /**

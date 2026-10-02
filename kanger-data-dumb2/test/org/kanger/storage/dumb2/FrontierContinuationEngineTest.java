@@ -2,18 +2,12 @@ package org.kanger.storage.dumb2;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.kanger.FrontierDomain;
 import org.kanger.Mind;
 import org.kanger.User;
-import org.kanger.enums.QueryPass;
-import org.kanger.interfaces.ITerm;
-import org.kanger.units.Rule;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedList;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -111,146 +105,6 @@ public class FrontierContinuationEngineTest {
         assertEquals("missing",
                 result.getFrontierTrace()
                         .get(0).get(0));
-    }
-
-    @Test
-    void localExpansionReducesGateToSeedBeforeForeignFanOut()
-            throws Exception {
-        ContextFixture x = context(
-                "X-expand",
-                "!seed(Tom) -> gate(Tom);",
-                "!gate(Tom) -> target(Tom);");
-
-        OperationSnapshot operation =
-                OperationSnapshot.open(x.location);
-        SnapshotMindRuntime runtime = null;
-        Mind work = null;
-        Mind rootMind = null;
-        try {
-            runtime = SnapshotMindRuntime.open(
-                    operation.getSourceLocation(),
-                    operation.getSourceRef(),
-                    "frontier-expand-characterization");
-            rootMind = runtime.getMind();
-            work = Mind.ephemeralChild(rootMind);
-            work.setQueryPass(QueryPass.CHECKTRUE);
-
-            Rule query = (Rule) work.compileLine(
-                    "?target(Tom);",
-                    true,
-                    new LinkedList<ITerm>());
-            assertFalse(work.analyze(query, false));
-            work.link(query, false);
-            assertFalse(work.analyze(query, false));
-
-            List<FrontierDomain> initial =
-                    work.getFrontierDomains();
-            assertTrue(
-                    initial.stream().anyMatch(
-                            d -> "gate".equals(
-                                    d.getPredicateName())),
-                    "initial frontier=" + predicates(initial));
-            List<FrontierDomain> expanded =
-                    LocalFrontierExpansion.expand(
-                            work, initial);
-            assertTrue(
-                    expanded.stream().anyMatch(
-                            d -> "seed".equals(
-                                    d.getPredicateName())),
-                    "expanded frontier=" + predicates(expanded));
-            assertFalse(
-                    expanded.stream().anyMatch(
-                            d -> "gate".equals(
-                                    d.getPredicateName())),
-                    "gate survived local expansion: "
-                            + predicates(expanded));
-        } finally {
-            if (rootMind != null && work != null) {
-                work.getSolutions().clear();
-                work.getValues().clear();
-                rootMind.release(work);
-            }
-            if (runtime != null) {
-                runtime.close();
-            }
-            operation.close();
-        }
-    }
-
-    @Test
-    void causalFixtureIsProvableByOrdinaryLocalKanger()
-            throws Exception {
-        User user = new User();
-        Mind mind = new Mind(user);
-        user.setCurrentMind(mind);
-
-        assertTrue(Boolean.TRUE.equals(
-                mind.query(
-                        "!seed(Tom) -> gate(Tom);",
-                        null,
-                        false)));
-        assertTrue(Boolean.TRUE.equals(
-                mind.query(
-                        "!gate(Tom) -> target(Tom);",
-                        null,
-                        false)));
-        assertTrue(Boolean.TRUE.equals(
-                mind.query(
-                        "!seed(Tom);",
-                        null,
-                        false)));
-        assertTrue(Boolean.TRUE.equals(
-                mind.query(
-                        "?target(Tom);",
-                        null,
-                        false)),
-                "ordinary local KANGER did not prove the causal fixture");
-    }
-
-    @Test
-    void causalFixtureReportsWhetherSecondFrontierNeedsAnotherWave()
-            throws Exception {
-        ContextFixture x = context(
-                "X-wave",
-                "!seed(Tom) -> gate(Tom);",
-                "!gate(Tom) -> target(Tom);");
-        ContextFixture a = context(
-                "A-wave",
-                "!seed(Tom);");
-
-        ConnectionManager.connect(
-                x.location, a.location);
-
-        FrontierContinuationEngine.Result result =
-                FrontierContinuationEngine.execute(
-                        x.location,
-                        "?target(Tom);");
-
-        assertTrue(result.isResolved(),
-                "causal fixture did not reach target; trace="
-                        + result.getFrontierTrace());
-        assertTrue(result.getWaves() >= 1);
-        assertEquals(1, result.getEvidenceCount(),
-                "expected one foreign seed donor; trace="
-                        + result.getFrontierTrace());
-        assertTrue(
-                result.getFrontierTrace().get(0).contains("seed"),
-                "local frontier expansion did not expose seed; trace="
-                        + result.getFrontierTrace());
-        assertFalse(
-                result.getFrontierTrace().get(0).contains("gate"),
-                "intermediate gate escaped local expansion; trace="
-                        + result.getFrontierTrace());
-    }
-
-    private static String predicates(
-            List<FrontierDomain> frontier) {
-        java.util.List<String> names =
-                new java.util.ArrayList<String>();
-        for (FrontierDomain domain : frontier) {
-            names.add(domain.getPredicateName());
-        }
-        return names.toString();
     }
 
     private ContextFixture context(
