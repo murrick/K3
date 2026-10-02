@@ -1,0 +1,37 @@
+[
+  {
+    "id": 36984603447,
+    "name": "KANGER distribution bundle",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/murrick/K3/actions/runs/36984603447"
+  },
+  {
+    "id": 36984603429,
+    "name": "KANGER Server",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/murrick/K3/actions/runs/36984603429"
+  },
+  {
+    "id": 36984603569,
+    "name": "Active Mind reuse qualification",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/murrick/K3/actions/runs/36984603569"
+  },
+  {
+    "id": 36984603453,
+    "name": "KANGER qualification isolation",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/murrick/K3/actions/runs/36984603453"
+  },
+  {
+    "id": 36984603493,
+    "name": "KANGER CI",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/murrick/K3/actions/runs/36984603493"
+  }
+]

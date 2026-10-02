@@ -1,0 +1,7 @@
+repeat-active-mind-reuse-1-false.log wall_s=5.399 cpu_s=5.289 allocated_MB=5436.4
+repeat-active-mind-reuse-2-true.log wall_s=5.136 cpu_s=5.032 allocated_MB=5262.8
+repeat-active-mind-reuse-3-true.log wall_s=5.245 cpu_s=5.119 allocated_MB=5272.1
+repeat-active-mind-reuse-4-false.log wall_s=5.206 cpu_s=5.090 allocated_MB=5386.1
+PAIR wall_reduction=4.87% cpu_reduction=4.86% allocation_reduction=3.19%
+PAIR wall_reduction=-0.75% cpu_reduction=-0.57% allocation_reduction=2.12%
+REPEAT_SNAPSHOTS_EQUAL samples=24
