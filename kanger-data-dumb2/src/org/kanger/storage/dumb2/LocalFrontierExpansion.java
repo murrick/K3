@@ -79,12 +79,6 @@ final class LocalFrontierExpansion {
             List<FrontierDomain> result,
             List<FrontierDomain> trail,
             int depth) throws Exception {
-        System.err.println("[M3-RECURSE] enter depth="
-                + depth
-                + " frontier="
-                + frontier.getPredicateName()
-                + " trail="
-                + names(trail));
         if (depth >= MAX_DEPTH
                 || containsEquivalent(trail, frontier)) {
             addUnique(result, frontier);
@@ -100,28 +94,20 @@ final class LocalFrontierExpansion {
             return;
         }
 
+        Set<Long> generatedBefore =
+                generatedRuleIds(probe);
+
         probe.link(demand, false);
 
         List<FrontierDomain> deeper =
                 collectLocalDependencies(
                         operationMind,
                         probe,
-                        frontier);
-        System.err.println("[M3-RECURSE] frontier="
-                + frontier.getPredicateName()
-                + " deeper="
-                + names(deeper)
-                + " used="
-                + wasDemandUsed(probe, frontier));
+                        frontier,
+                        generatedBefore);
         if (deeper.isEmpty()) {
             if (!wasDemandUsed(probe, frontier)) {
                 addUnique(result, frontier);
-                System.err.println("[M3-RECURSE] leaf-add="
-                        + frontier.getPredicateName()
-                        + " result=" + names(result));
-            } else {
-                System.err.println("[M3-RECURSE] locally-used="
-                        + frontier.getPredicateName());
             }
             return;
         }
@@ -143,7 +129,8 @@ final class LocalFrontierExpansion {
     private static List<FrontierDomain> collectLocalDependencies(
             Mind operationMind,
             Mind probe,
-            FrontierDomain current) throws Exception {
+            FrontierDomain current,
+            Set<Long> generatedBefore) throws Exception {
         List<FrontierDomain> result =
                 new ArrayList<FrontierDomain>();
 
@@ -159,7 +146,9 @@ final class LocalFrontierExpansion {
                 continue;
             }
             Rule generated = (Rule) candidate;
-            if (generated.getMindId() != probe.getId()) {
+            if (generated.getMindId() != probe.getId()
+                    || generatedBefore.contains(
+                            Long.valueOf(generated.getId()))) {
                 continue;
             }
             Domain domain = generated.getDomain();
@@ -355,13 +344,19 @@ final class LocalFrontierExpansion {
                         rightSemantic);
     }
 
-    private static String names(
-            List<FrontierDomain> values) {
-        List<String> result = new ArrayList<String>();
-        for (FrontierDomain value : values) {
-            result.add(value.getPredicateName());
+    private static Set<Long> generatedRuleIds(
+            Mind probe) throws Exception {
+        Set<Long> result =
+                new java.util.HashSet<Long>();
+        for (IRule candidate : probe.getRules()) {
+            if (candidate != null
+                    && candidate.isGenerated()
+                    && !candidate.isDeleted(probe)) {
+                result.add(Long.valueOf(
+                        candidate.getId()));
+            }
         }
-        return result.toString();
+        return result;
     }
 
     private static boolean containsEquivalent(
