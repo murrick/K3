@@ -66,6 +66,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
     private long revision;
     private int publishedTypeCount;
+    private CandidateGate candidateGate;
     private boolean closed;
 
     private ContextStore(Path location,
@@ -287,6 +288,12 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         return typeRegistry.resolve(typeCode);
     }
 
+    synchronized void setCandidateGate(
+            CandidateGate candidateGate) {
+        requireOpen();
+        this.candidateGate = candidateGate;
+    }
+
     synchronized TypeRegistry snapshotTypeRegistry() {
         requireOpen();
         TypeRegistry snapshot = new TypeRegistry();
@@ -381,33 +388,19 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
             }
 
             /*
-             * M3.8 qualification is performed against the exact serialized
-             * candidate bytes before they become a visible generation. A
-             * rejected candidate never reaches target and CURRENT remains R.
+             * Physical storage remains policy-neutral. A runtime may install a
+             * semantic pre-publication gate; direct ContextStore users retain
+             * the historical physical publication contract.
              */
-            ContextSnapshot candidate =
-                    ContextSnapshot.openCandidate(
-                            location,
-                            contextId,
-                            next,
-                            origin,
-                            snapshotTypeRegistry(),
-                            staging);
-            CandidateQualification.Result local;
-            try {
-                local = CandidateQualification.qualifyLocal(
-                        candidate);
-                candidate = null; // qualification runtime consumed/closed it
-            } finally {
-                if (candidate != null) {
-                    candidate.close();
-                }
-            }
-            if (!local.isValid()) {
-                throw new StorageLifecycleException(
-                        StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
-                        "DUMB2 candidate Context qualification rejected "
-                                + local.getCandidate());
+            if (candidateGate != null) {
+                candidateGate.qualify(
+                        new ContextCandidate(
+                                location,
+                                contextId,
+                                next,
+                                origin,
+                                snapshotTypeRegistry(),
+                                staging));
             }
 
             /*

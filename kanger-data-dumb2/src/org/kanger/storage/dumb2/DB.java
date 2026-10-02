@@ -80,6 +80,13 @@ public final class DB implements IData {
             acquired = ContextStore.open(location);
         }
 
+        /*
+         * Federation semantics are installed at the runtime boundary rather
+         * than hard-wired into the physical ContextStore. The gate is a no-op
+         * for Contexts with no active ConnectionVector.
+         */
+        acquired.setCandidateGate(
+                new FederatedWriteGate());
         context = acquired;
         storageName = name;
         bases.clear();

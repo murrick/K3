@@ -185,6 +185,56 @@ public class ContextStoreTest {
     }
 
     @Test
+    void candidateGateRejectsBeforeGenerationInstallAndRevisionAdvance()
+            throws Exception {
+        Path location = root.resolve("candidate-gate");
+        ContextStore context =
+                ContextStore.create(location);
+        try {
+            org.kanger.interfaces.internal.IBase base =
+                    context.getBase("index");
+            base.add(step(
+                    0L, 91, Long.valueOf(10L), null));
+            assertEquals(1L, context.flush());
+
+            context.setCandidateGate(
+                    candidate -> {
+                        throw new StorageLifecycleException(
+                                StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                                "qualification rejected "
+                                        + candidate.getRef());
+                    });
+
+            Step previous = new Step();
+            previous.setId(0L);
+            previous.setHash(91);
+            previous.setData(Long.valueOf(10L));
+            base.add(step(
+                    1L, 92, Long.valueOf(20L), previous));
+
+            StorageLifecycleException failure =
+                    assertThrows(
+                            StorageLifecycleException.class,
+                            context::flush);
+            assertEquals(
+                    StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                    failure.getErrorCode());
+            assertEquals(1L, context.getRevision());
+            assertEquals(1L,
+                    RevisionStore.read(
+                            ContextStore.revisionPath(location)));
+            assertFalse(
+                    Files.exists(
+                            ContextStore.generationPath(
+                                    location, 2L)),
+                    "rejected candidate became a visible generation");
+        } finally {
+            context.setCandidateGate(null);
+            context.close();
+        }
+    }
+
+    @Test
     void codecCorruptionPropagatesThroughContextOpen() throws Exception {
         Path location = root.resolve("damaged");
         ContextStore created = ContextStore.create(location);
