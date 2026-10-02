@@ -1,0 +1,5 @@
+../build/hypothesis-cpu.jfr samples=2654 get=368 isEmpty=355 isEmpty_inside_get=322
+CALLER	322	org.kanger.factory.TValueFactory.get
+CALLER	33	org.kanger.units.TVariable.isEmpty
+../build/current-lookup-cpu.jfr samples=2658 get=349 isEmpty=18 isEmpty_inside_get=0
+CALLER	18	org.kanger.units.TVariable.isEmpty

@@ -1,0 +1,37 @@
+[
+  {
+    "id": 36981352411,
+    "name": "KANGER qualification isolation",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/murrick/K3/actions/runs/36981352411"
+  },
+  {
+    "id": 36981352462,
+    "name": "KANGER distribution bundle",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/murrick/K3/actions/runs/36981352462"
+  },
+  {
+    "id": 36981352477,
+    "name": "KANGER Server",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/murrick/K3/actions/runs/36981352477"
+  },
+  {
+    "id": 36981352576,
+    "name": "Guarded current lookup qualification",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/murrick/K3/actions/runs/36981352576"
+  },
+  {
+    "id": 36981352420,
+    "name": "KANGER CI",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/murrick/K3/actions/runs/36981352420"
+  }
+]

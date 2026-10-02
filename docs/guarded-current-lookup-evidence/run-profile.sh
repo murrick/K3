@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+java -Xmx512m -XX:FlightRecorderOptions=stackdepth=256 -XX:StartFlightRecording=filename=../build/current-lookup-cpu.jfr,settings=profile,dumponexit=true -Dbench.samples=6 -Dkanger.experiment.guardedCurrentLookup=true -Dkanger.experiment.preserveTValueIndex=true -Dkanger.experiment.versionedSolveSync=true -Dkanger.experiment.resolvedCauseWeights=true -Dkanger.experiment.compactCauseWeights=true -Dkanger.experiment.candidateMembershipFilter=true -Dkanger.experiment.singleTValueLookup=true -cp ../build/current-classes:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar org.kanger.SonProfileRunner > docs/guarded-current-lookup-evidence/profile.log 2> docs/guarded-current-lookup-evidence/profile.err
+java -jar ../tooling/ecj.jar -17 -nowarn -d ../build/current-jfr-tools docs/guarded-current-lookup-evidence/ReadExecutionProfile.java docs/guarded-current-lookup-evidence/ReadLookupCallers.java
+java -cp ../build/current-jfr-tools ReadExecutionProfile ../build/current-lookup-cpu.jfr > docs/guarded-current-lookup-evidence/execution.tsv

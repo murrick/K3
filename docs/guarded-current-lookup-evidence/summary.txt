@@ -1,0 +1,7 @@
+guarded-current-lookup-1-true.log wall_s=5.216 cpu_s=5.107 allocated_MB=5392.2
+guarded-current-lookup-2-false.log wall_s=4.984 cpu_s=4.923 allocated_MB=5345.0
+guarded-current-lookup-3-false.log wall_s=5.104 cpu_s=4.974 allocated_MB=5393.3
+guarded-current-lookup-4-true.log wall_s=5.044 cpu_s=4.953 allocated_MB=5384.5
+PAIR wall_reduction=-4.66% cpu_reduction=-3.74% allocation_reduction=-0.88%
+PAIR wall_reduction=1.17% cpu_reduction=0.43% allocation_reduction=0.16%
+REPEAT_SNAPSHOTS_EQUAL samples=24
