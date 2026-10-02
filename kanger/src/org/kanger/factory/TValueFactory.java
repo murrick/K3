@@ -326,7 +326,17 @@ public class TValueFactory implements IFactory<TValue> {
         return t;
     }
 
+    /** Default-OFF experiment; selected at JVM startup. */
+    private static final boolean GUARDED_CURRENT_LOOKUP =
+            Boolean.getBoolean("kanger.experiment.guardedCurrentLookup");
+
     public TValue get(TVariable tv) {
+        // Built-in hashCode/equals read fields only. Keep overridden factory and
+        // key callbacks (including their second invocation) on the original path.
+        if (GUARDED_CURRENT_LOOKUP && getClass() == TValueFactory.class
+                && (tv == null || tv.getClass() == TVariable.class)) {
+            return current.get(tv);
+        }
         if (isEmpty(tv)) {
             return null;
         }
