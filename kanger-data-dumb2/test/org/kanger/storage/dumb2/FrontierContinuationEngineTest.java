@@ -2,12 +2,18 @@ package org.kanger.storage.dumb2;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.kanger.FrontierDomain;
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.enums.QueryPass;
+import org.kanger.interfaces.ITerm;
+import org.kanger.units.Rule;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -108,6 +114,81 @@ public class FrontierContinuationEngineTest {
     }
 
     @Test
+    void localExpansionReducesGateToSeedBeforeForeignFanOut()
+            throws Exception {
+        ContextFixture x = context(
+                "X-expand",
+                "!seed(Rick,Tom) -> gate(Tom);",
+                "!gate(Tom), remote(Tom) -> target(Tom);");
+
+        OperationSnapshot operation =
+                OperationSnapshot.open(x.location);
+        SnapshotMindRuntime runtime = null;
+        Mind work = null;
+        Mind rootMind = null;
+        try {
+            runtime = SnapshotMindRuntime.open(
+                    operation.getSourceLocation(),
+                    operation.getSourceRef(),
+                    "frontier-expand-characterization");
+            rootMind = runtime.getMind();
+            work = Mind.ephemeralChild(rootMind);
+            work.setQueryPass(QueryPass.CHECKTRUE);
+
+            Rule query = (Rule) work.compileLine(
+                    "?target(Tom);",
+                    true,
+                    new LinkedList<ITerm>());
+            assertFalse(work.analyze(query, false));
+            work.link(query, false);
+            assertFalse(work.analyze(query, false));
+
+            List<FrontierDomain> initial =
+                    work.getFrontierDomains();
+            assertTrue(
+                    initial.stream().anyMatch(
+                            d -> "gate".equals(
+                                    d.getPredicateName())),
+                    "initial frontier=" + predicates(initial));
+            assertTrue(
+                    initial.stream().anyMatch(
+                            d -> "remote".equals(
+                                    d.getPredicateName())),
+                    "initial frontier=" + predicates(initial));
+
+            List<FrontierDomain> expanded =
+                    LocalFrontierExpansion.expand(
+                            work, initial);
+            assertTrue(
+                    expanded.stream().anyMatch(
+                            d -> "seed".equals(
+                                    d.getPredicateName())),
+                    "expanded frontier=" + predicates(expanded));
+            assertTrue(
+                    expanded.stream().anyMatch(
+                            d -> "remote".equals(
+                                    d.getPredicateName())),
+                    "expanded frontier=" + predicates(expanded));
+            assertFalse(
+                    expanded.stream().anyMatch(
+                            d -> "gate".equals(
+                                    d.getPredicateName())),
+                    "gate survived local expansion: "
+                            + predicates(expanded));
+        } finally {
+            if (rootMind != null && work != null) {
+                work.getSolutions().clear();
+                work.getValues().clear();
+                rootMind.release(work);
+            }
+            if (runtime != null) {
+                runtime.close();
+            }
+            operation.close();
+        }
+    }
+
+    @Test
     void causalFixtureReportsWhetherSecondFrontierNeedsAnotherWave()
             throws Exception {
         ContextFixture x = context(
@@ -146,6 +227,16 @@ public class FrontierContinuationEngineTest {
                 result.getFrontierTrace().get(0).contains("remote"),
                 "remote leaf disappeared before foreign fan-out; trace="
                         + result.getFrontierTrace());
+    }
+
+    private static String predicates(
+            List<FrontierDomain> frontier) {
+        java.util.List<String> names =
+                new java.util.ArrayList<String>();
+        for (FrontierDomain domain : frontier) {
+            names.add(domain.getPredicateName());
+        }
+        return names.toString();
     }
 
     private ContextFixture context(
