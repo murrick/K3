@@ -381,6 +381,36 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
             }
 
             /*
+             * M3.8 qualification is performed against the exact serialized
+             * candidate bytes before they become a visible generation. A
+             * rejected candidate never reaches target and CURRENT remains R.
+             */
+            ContextSnapshot candidate =
+                    ContextSnapshot.openCandidate(
+                            location,
+                            contextId,
+                            next,
+                            origin,
+                            snapshotTypeRegistry(),
+                            staging);
+            CandidateQualification.Result local;
+            try {
+                local = CandidateQualification.qualifyLocal(
+                        candidate);
+                candidate = null; // qualification runtime consumed/closed it
+            } finally {
+                if (candidate != null) {
+                    candidate.close();
+                }
+            }
+            if (!local.isValid()) {
+                throw new StorageLifecycleException(
+                        StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                        "DUMB2 candidate Context qualification rejected "
+                                + local.getCandidate());
+            }
+
+            /*
              * A target with no matching visible revision is an orphan left by
              * a failed/crashed publication. The Context lock proves that no
              * concurrent writer can own it now, so rebuilding it is safe.
