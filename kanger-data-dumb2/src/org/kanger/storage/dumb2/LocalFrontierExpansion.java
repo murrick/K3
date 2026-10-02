@@ -79,6 +79,12 @@ final class LocalFrontierExpansion {
             List<FrontierDomain> result,
             List<FrontierDomain> trail,
             int depth) throws Exception {
+        System.err.println("[M3-RECURSE] enter depth="
+                + depth
+                + " frontier="
+                + frontier.getPredicateName()
+                + " trail="
+                + names(trail));
         if (depth >= MAX_DEPTH
                 || containsEquivalent(trail, frontier)) {
             addUnique(result, frontier);
@@ -101,9 +107,21 @@ final class LocalFrontierExpansion {
                         operationMind,
                         probe,
                         frontier);
+        System.err.println("[M3-RECURSE] frontier="
+                + frontier.getPredicateName()
+                + " deeper="
+                + names(deeper)
+                + " used="
+                + wasDemandUsed(probe, frontier));
         if (deeper.isEmpty()) {
             if (!wasDemandUsed(probe, frontier)) {
                 addUnique(result, frontier);
+                System.err.println("[M3-RECURSE] leaf-add="
+                        + frontier.getPredicateName()
+                        + " result=" + names(result));
+            } else {
+                System.err.println("[M3-RECURSE] locally-used="
+                        + frontier.getPredicateName());
             }
             return;
         }
@@ -335,6 +353,15 @@ final class LocalFrontierExpansion {
                 && rightSemantic != null
                 && leftSemantic.semanticallyEquivalent(
                         rightSemantic);
+    }
+
+    private static String names(
+            List<FrontierDomain> values) {
+        List<String> result = new ArrayList<String>();
+        for (FrontierDomain value : values) {
+            result.add(value.getPredicateName());
+        }
+        return result.toString();
     }
 
     private static boolean containsEquivalent(
