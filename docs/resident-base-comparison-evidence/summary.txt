@@ -1,0 +1,7 @@
+resident-base-comparison-1-true.log wall_s=7.468 cpu_s=7.333 allocated_MB=5283.1
+resident-base-comparison-2-false.log wall_s=8.333 cpu_s=8.190 allocated_MB=5471.9
+resident-base-comparison-3-false.log wall_s=9.794 cpu_s=9.627 allocated_MB=5387.6
+resident-base-comparison-4-true.log wall_s=7.666 cpu_s=7.524 allocated_MB=5267.4
+PAIR wall_reduction=10.38% cpu_reduction=10.46% allocation_reduction=3.45%
+PAIR wall_reduction=21.73% cpu_reduction=21.84% allocation_reduction=2.23%
+REPEAT_SNAPSHOTS_EQUAL samples=24

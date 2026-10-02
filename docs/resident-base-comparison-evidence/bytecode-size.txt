@@ -1,0 +1,2 @@
+../build/base-reference-classes/org/kanger/primitives/ArgumentsList.class equalsBase (Lorg/kanger/Mind;Ljava/lang/Object;)Z bytecode_length=370
+../build/base-classes/org/kanger/primitives/ArgumentsList.class equalsBase (Lorg/kanger/Mind;Ljava/lang/Object;)Z bytecode_length=515

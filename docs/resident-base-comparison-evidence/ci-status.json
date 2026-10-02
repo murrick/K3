@@ -1,0 +1,40 @@
+{
+  "code_sha": "918417b1ffb96caa5d9d7315cf163199dd371f2c",
+  "runs": [
+    {
+      "id": 36990810897,
+      "name": "Resident base comparison qualification",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/36990810897"
+    },
+    {
+      "id": 36990810771,
+      "name": "KANGER CI",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/36990810771"
+    },
+    {
+      "id": 36990810856,
+      "name": "KANGER qualification isolation",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/36990810856"
+    },
+    {
+      "id": 36990810901,
+      "name": "KANGER distribution bundle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/36990810901"
+    },
+    {
+      "id": 36990810811,
+      "name": "KANGER Server",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/36990810811"
+    }
+  ]
+}

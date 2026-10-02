@@ -44,6 +44,10 @@ import java.util.*;
  */
 public class ArgumentsList extends ArrayList<IArgument> implements IList {
 
+    /** Default-OFF experiment; selected at JVM startup. */
+    private static final boolean RESIDENT_BASE_COMPARISON =
+            Boolean.getBoolean("kanger.experiment.residentBaseComparison");
+
     private Mind mind = null;
 
     public ArgumentsList() {
@@ -160,9 +164,20 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
                 arg = (ArgumentsList) o;
             }
             if (arg != null && arg.size() == size()) {
+                boolean residentPath = RESIDENT_BASE_COMPARISON
+                        && getClass() == ArgumentsList.class && arg.getClass() == ArgumentsList.class;
                 int i = 0;
                 try {
                     for (; i < arg.size(); ++i) {
+                        if (residentPath && get(i) instanceof Argument && arg.get(i) instanceof Argument) {
+                            Term left = ((Argument) get(i)).residentBaseTerm(mind);
+                            Term right = left == null ? null : ((Argument) arg.get(i)).residentBaseTerm(mind);
+                            if (left != null && right != null) {
+                                if (left.getId() == right.getId()) continue;
+                                if (!left.isCVariable() || !right.isCVariable()) break;
+                                // Different CVars retain all parent lookups and intervening reads.
+                            }
+                        }
                         if (!get(i).isEmpty(mind) && !arg.get(i).isEmpty(mind)
                                 && ((get(i).getValue(mind).isCVariable() && arg.get(i).getValue(mind).isCVariable()
                                 && (get(i).getValue(mind).getId() == arg.get(i).getValue(mind).getId()

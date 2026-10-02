@@ -1,0 +1,13 @@
+SAMPLE 0 positions 18160054 fast 16721529 parent_fallback 858524 unknown 580001 fast_fraction=0.920786
+Argument.diagValueInBase OFF 100178508 ON 10987379 reduction=89.0322%
+TVariable.diagValueInBase OFF 43648177 ON 5394400 reduction=87.6412%
+TValueFactory.diagGetInBase OFF 43648177 ON 19562972 reduction=55.1803%
+TValueFactory.diagGet OFF 86354640 ON 62269435 reduction=27.8910%
+TVariable.diagActive OFF 87555216 ON 63470011 reduction=27.5086%
+SAMPLE 1 positions 18158065 fast 16722767 parent_fallback 865589 unknown 569709 fast_fraction=0.920955
+Argument.diagValueInBase OFF 100273063 ON 11048299 reduction=88.9818%
+TVariable.diagValueInBase OFF 43708415 ON 5425667 reduction=87.5867%
+TValueFactory.diagGetInBase OFF 43708415 ON 19600776 reduction=55.1556%
+TValueFactory.diagGet OFF 86414862 ON 62307223 reduction=27.8976%
+TVariable.diagActive OFF 87615438 ON 63507799 reduction=27.5153%
+COUNTER_TRACE_COUNTS_AND_HYPOTHESES_EQUAL samples=4
