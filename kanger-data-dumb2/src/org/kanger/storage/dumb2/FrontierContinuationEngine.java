@@ -334,6 +334,19 @@ final class FrontierContinuationEngine {
                 new LinkedList<ITerm>(arguments));
         work.setQueryPass(QueryPass.CHECKTRUE);
 
+        if (!truth) {
+            System.err.println("[M3-FALSE] source="
+                    + evidenceSource
+                    + " assertion="
+                    + (assertion == null
+                            ? "<null>"
+                            : ("id=" + assertion.getId()
+                                    + " generated=" + assertion.isGenerated()
+                                    + " query=" + assertion.isQuery()
+                                    + " second=" + assertion.isSecond()
+                                    + " stored=" + assertion.isStored())));
+        }
+
         if (assertion == null || assertion.isSecond()) {
             return false;
         }
