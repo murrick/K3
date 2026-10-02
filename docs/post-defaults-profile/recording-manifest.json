@@ -1,0 +1,18 @@
+{
+  "base": "3a2a6f0bccac11ac0d646178c4384ba73d7a5260",
+  "java": "17.0.20",
+  "heap": "512m",
+  "natives_sha256": "bd0bac2c92badbf1b7f2396b434eda8d9d7c562ff4c09c5e4d790f30d9f5f8ed",
+  "recordings": [
+    {
+      "file": "../build/post-defaults-1.jfr",
+      "bytes": 6261119,
+      "sha256": "c7e7c1d6acec83d3b9458150bb64c8631c9ca41ff4ad7b0aa7af7505b6181b82"
+    },
+    {
+      "file": "../build/post-defaults-2.jfr",
+      "bytes": 6112162,
+      "sha256": "0ebcb401a930b99464cb26ff66d796d014ce23e898c83204173133b3514790df"
+    }
+  ]
+}
