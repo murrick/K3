@@ -189,6 +189,41 @@ public class FrontierContinuationEngineTest {
     }
 
     @Test
+    void causalFixtureIsProvableByOrdinaryLocalKanger()
+            throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+
+        assertTrue(Boolean.TRUE.equals(
+                mind.query(
+                        "!seed(Rick,Tom) -> gate(Tom);",
+                        null,
+                        false)));
+        assertTrue(Boolean.TRUE.equals(
+                mind.query(
+                        "!gate(Tom), remote(Tom) -> target(Tom);",
+                        null,
+                        false)));
+        assertTrue(Boolean.TRUE.equals(
+                mind.query(
+                        "!seed(Rick,Tom);",
+                        null,
+                        false)));
+        assertTrue(Boolean.TRUE.equals(
+                mind.query(
+                        "!remote(Tom);",
+                        null,
+                        false)));
+        assertTrue(Boolean.TRUE.equals(
+                mind.query(
+                        "?target(Tom);",
+                        null,
+                        false)),
+                "ordinary local KANGER did not prove the causal fixture");
+    }
+
+    @Test
     void causalFixtureReportsWhetherSecondFrontierNeedsAnotherWave()
             throws Exception {
         ContextFixture x = context(
