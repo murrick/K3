@@ -278,7 +278,7 @@ final class LocalFrontierExpansion {
     }
 
     private static boolean containsOccurrence(
-            List<Domain> branch, Domain used) {
+            List<Domain> branch, Domain used) throws Exception {
         for (Domain candidate : branch) {
             if (sameOccurrence(candidate, used)) {
                 return true;
@@ -288,21 +288,24 @@ final class LocalFrontierExpansion {
     }
 
     private static boolean sameOccurrence(
-            Domain left, Domain right) {
+            Domain left, Domain right) throws Exception {
         if (left == right) {
             return true;
         }
 
         /*
-         * Transient Domains legitimately use the sentinel ID -1. Two distinct
-         * occurrences in the same unpersisted Rule therefore must never be
-         * collapsed merely because both IDs are -1.
+         * Persistent Domain IDs are authoritative when available. Transient
+         * transactional views legitimately use the sentinel ID -1 and may
+         * materialize the same logical occurrence as different Java objects,
+         * so identity alone is insufficient there. Fall back to KANGER's own
+         * structural occurrence comparison instead of treating -1 as identity.
          */
         long leftId = left.getId();
         long rightId = right.getId();
-        return leftId >= 0L
-                && rightId >= 0L
-                && leftId == rightId;
+        if (leftId >= 0L && rightId >= 0L) {
+            return leftId == rightId;
+        }
+        return left.equalsToStruct(right);
     }
 
     private static boolean containsEquivalent(
