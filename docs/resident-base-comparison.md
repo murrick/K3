@@ -88,8 +88,13 @@ Local Java 17.0.20 OFF/ON with all six integrated flags ON:
   rollback/commit/collisions, 20 transaction operations with equal saved states.
 - Candidate concurrency in OFF/ON, three iterations each.
 
-CI will run Java 8/21/26 x prior six flags OFF/ON, new mode OFF/ON per job,
-including projection, storage and concurrency checks. Pending at first push.
+Code checkpoint: `918417b1ffb96caa5d9d7315cf163199dd371f2c`.
+CI run: https://github.com/murrick/K3/actions/runs/36990810897.
+CI runs Java 8/21/26 x prior six flags OFF/ON, new mode OFF/ON per job,
+including projection, storage and concurrency checks. All six dedicated jobs
+and all five triggered workflows (including general KANGER CI) passed at the
+code checkpoint. Final workflow status is saved in
+resident-base-comparison-evidence/ci-status.json.
 
 ## Clean measurement protocol
 
@@ -100,3 +105,64 @@ complete raw/final hypotheses and result/solution/value counts. Java 17.0.20,
 profiler or verify flags. Single local workload, no retained-heap claim.
 
 No merge, release, deploy or default enable is authorized by this checkpoint.
+
+## Initial two-mode timing batch
+
+| JVM/order | Mode | Wall median s | Main CPU median s | Allocated MB |
+| --- | --- | ---: | ---: | ---: |
+| 1 | ON | 7.468 | 7.333 | 5283.1 |
+| 2 | OFF | 8.333 | 8.190 | 5471.9 |
+| 3 | OFF | 9.794 | 9.627 | 5387.6 |
+| 4 | ON | 7.666 | 7.524 | 5267.4 |
+
+Paired wall reductions: 10.38%, 21.73%; CPU: 10.46%, 21.84%; allocation:
+3.45%, 2.23%. All 24 full raw/final hypothesis snapshots and result counts match.
+Absolute times differ from earlier experiments, so these pairs alone are not
+sufficient to establish improvement over unmodified develop.
+
+The follow-up batch compiles clean develop sources at the pinned base into
+base-reference-classes, with an identical diagnostic runner. Input natives.k
+has SHA256 bd0bac2c92badbf1b7f2396b434eda8d9d7c562ff4c09c5e4d790f30d9f5f8ed
+in all compared worktrees. Class files contain no entry-counter fields.
+Fresh JVM order: reference/OFF/ON/ON/OFF/reference, six samples each, discard two.
+No counter/profile overhead in timing; six integrated flags ON everywhere.
+
+## Follow-up against unmodified develop
+
+| JVM/order | Mode | Wall median s | Main CPU median s | Allocated MB |
+| --- | --- | ---: | ---: | ---: |
+| 1 | Reference | 8.353 | 8.190 | 5386.5 |
+| 2 | OFF | 8.041 | 7.906 | 5391.9 |
+| 3 | ON | 7.318 | 7.175 | 5347.2 |
+| 4 | ON | 7.476 | 7.327 | 5436.8 |
+| 5 | OFF | 7.989 | 7.863 | 5391.5 |
+| 6 | Reference | 8.146 | 8.000 | 5430.4 |
+
+Compared with the clean pinned develop reference, ON reduces wall time by
+12.39% forward and 8.23% reverse; main-thread CPU by 12.39% and 8.41%.
+Compared with experimental OFF, wall reductions are 8.98% and 6.43%; CPU
+9.25% and 6.82%. OFF itself differs from the reference by 1.92–3.74% in wall
+time, so report both controls rather than attribute that difference to enabled
+work. These are paired observations on this local hypothesis workload, not a
+confidence interval or a prediction for other queries, machines or flag stacks.
+
+Allocated-byte changes against reference are +0.73% reduction and -0.12%
+reduction; against OFF +0.83% and -0.84%. There is no consistent allocation gain
+in the follow-up. The target is removed repeated resolution work, supported by
+the separate factory-lookup census, not a memory optimization.
+
+All 36 follow-up raw/final hypothesis texts and result/solution/value counts
+match. Joint validation across this batch and the initial batch matches all 60
+snapshots, with empty stderr. Scripts, raw logs and summaries are saved beside
+this report. The reference also runs slower than older experiments; absolute
+times from those separate sessions are not comparable.
+
+Decision: retain the qualified default-OFF prototype for local validation.
+The evidence supports further evaluation of this prefilter; it does not justify
+removing the fallback or caching values across parent lookups. The 08_02 workload
+has not been timed for this slice. See resident-base-comparison-local-check.md.
+
+Method Code lengths are 370 bytes in the reference and 515 in this prototype.
+The local VM's FreqInlineSize is 325, so both exceed that value; bytecode size
+alone does not establish an inlining threshold regression. No causal JIT claim
+is made without compilation evidence. See read-bytecode-size.py.
