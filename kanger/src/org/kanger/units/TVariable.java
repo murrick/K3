@@ -89,8 +89,8 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     private long nameId = -1;
     private long ruleId = -1;
 
-    /** Default-OFF experiment; property is selected at JVM startup. */
-    private static final boolean SINGLE_LOOKUP = Boolean.getBoolean("kanger.experiment.singleTValueLookup");
+    /** Enabled by default; false selects the reference path at JVM startup. */
+    private static final boolean SINGLE_LOOKUP = Boolean.parseBoolean(System.getProperty("kanger.experiment.singleTValueLookup", "true"));
 
     /** Stable owner/default context for this transaction-owned object. */
     private Mind mind = null;

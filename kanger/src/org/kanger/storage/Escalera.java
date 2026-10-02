@@ -466,7 +466,7 @@ public class Escalera implements ICache {
         Checkpoint checkpoint = stack.pop();
         IStep restored = checkpoint.root;
         boolean preserve = "tvalues".equals(schema)
-                && Boolean.getBoolean("kanger.experiment.preserveTValueIndex")
+                && Boolean.parseBoolean(System.getProperty("kanger.experiment.preserveTValueIndex", "true"))
                 && indexValid && indexedRoot == root && root == restored && mutation == checkpoint.mutation;
         root = restored;
         if (preserve) {

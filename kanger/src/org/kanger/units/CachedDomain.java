@@ -89,7 +89,7 @@ public class CachedDomain extends Domain {
         if (source != null) {
             selected.addAll(source);
             boolean shadow = Boolean.getBoolean("kanger.experiment.shadowCauseWeights");
-            boolean fast = Boolean.getBoolean("kanger.experiment.resolvedCauseWeights");
+            boolean fast = Boolean.parseBoolean(System.getProperty("kanger.experiment.resolvedCauseWeights", "true"));
             Map<ICause, Integer> resolved = fast ? guardedWeights(selected, mind) : null;
             if (fast) causeWeightCounts()[resolved == null ? 5 : 4]++;
             // Verification follows the guard too: unsupported resolution is reference-only.
@@ -182,7 +182,7 @@ public class CachedDomain extends Domain {
                 if (cause.getClass() != Cause.class
                         || !supportedArguments(((Cause) cause).getDonor().getArguments(), mind)) return null;
             Map<ICause, Integer> weights = new java.util.IdentityHashMap<>();
-            if (Boolean.getBoolean("kanger.experiment.compactCauseWeights")) {
+            if (Boolean.parseBoolean(System.getProperty("kanger.experiment.compactCauseWeights", "true"))) {
                 long[] own = new long[getArguments().size()];
                 int ownSize = resolvedPrimitiveIds(getArguments(), mind, own);
                 long[] donor = new long[0];

@@ -260,7 +260,7 @@ public class Linker {
 
     private void synchronizeSolveIndex() throws Exception {
         long version = mind.ruleSolvesVersion();
-        if (Boolean.getBoolean("kanger.experiment.versionedSolveSync")
+        if (Boolean.parseBoolean(System.getProperty("kanger.experiment.versionedSolveSync", "true"))
                 && !mind.ruleSolvesExposed() && version == lastSolveVersion) {
             if (Boolean.getBoolean("kanger.experiment.verifySolveSync")) {
                 Map<TVariableSet, Integer> before = new HashMap<>(indexedSolveCounts);

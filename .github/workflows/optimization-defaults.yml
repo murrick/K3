@@ -1,0 +1,35 @@
+name: Optimization defaults qualification
+on:
+  push:
+    branches: ['perf/3.8.0-enabled-defaults', 'develop/3.8.0']
+  pull_request:
+    branches: ['develop/3.8.0']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  qualification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '21', '26']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - run: mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install
+      - name: Compare defaults, explicit ON and reference OFF
+        run: python3 docs/optimization-defaults/qualify.py --output "$RUNNER_TEMP/optimization-defaults"
+      - name: Print failure logs
+        if: failure()
+        run: tail -100 "$RUNNER_TEMP/optimization-defaults/"*.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: optimization-defaults-java-${{ matrix.java }}
+          path: ${{ runner.temp }}/optimization-defaults/

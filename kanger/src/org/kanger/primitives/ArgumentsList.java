@@ -44,9 +44,9 @@ import java.util.*;
  */
 public class ArgumentsList extends ArrayList<IArgument> implements IList {
 
-    /** Default-OFF experiment; selected at JVM startup. */
+    /** Enabled by default; false selects the reference path at JVM startup. */
     private static final boolean RESIDENT_BASE_COMPARISON =
-            Boolean.getBoolean("kanger.experiment.residentBaseComparison");
+            Boolean.parseBoolean(System.getProperty("kanger.experiment.residentBaseComparison", "true"));
 
     private Mind mind = null;
 
