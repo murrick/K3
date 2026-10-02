@@ -1,0 +1,11 @@
+PROFILE ../build/hypothesis-cpu.jfr optimize_samples=2654
+CURRENT_LOOKUP total=368 equalsBase=251 fraction=0.6821
+ACTIVE_MIND total=173 equalsBase=124 fraction=0.7168
+SET_MIND total=20 equalsBase=0 fraction=0.0000
+PROFILE ../build/current-lookup-cpu.jfr optimize_samples=2658
+CURRENT_LOOKUP total=349 equalsBase=182 fraction=0.5215
+ACTIVE_MIND total=231 equalsBase=136 fraction=0.5887
+SET_MIND total=33 equalsBase=0 fraction=0.0000
+sample=0 same_context_fraction=0.997797 Argument_base_reads_per_iteration=5.516421
+sample=1 same_context_fraction=0.997797 Argument_base_reads_per_iteration=5.522233
+COUNTER_HYPOTHESIS_TEXTS_EQUAL samples=2

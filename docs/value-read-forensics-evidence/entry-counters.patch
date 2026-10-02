@@ -1,0 +1,179 @@
+--- a/kanger/src/org/kanger/units/TVariable.java
++++ b/kanger/src/org/kanger/units/TVariable.java
+@@ -77,6 +77,9 @@
+  * undefined value != deleted variable; serialized form != canonical identity.</p>
+  */
+ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
++    public static long diagValue, diagCurrent, diagActive, diagSet, diagSame, diagDifferent, diagUnset;
++    public static long diagValueInBase, diagCurrentInBase;
++
+ 
+     private static final long serialVersionUID = 196402070010L;
+ 
+@@ -114,6 +117,8 @@
+     }
+ 
+     private Mind activeMind() {
++        diagActive++;
++
+         WeakReference<Mind> reference = runtimeMind.get();
+         Mind active = reference == null ? null : reference.get();
+         return active == null ? mind : active;
+@@ -194,6 +199,9 @@
+      * @throws Exception if the TValue or Term cannot be resolved
+      */
+     public ITerm getValue() throws Exception {
++        diagValue++;
++        if (org.kanger.primitives.ArgumentsList.diagDepth > 0) diagValueInBase++;
++
+         Mind active = activeMind();
+         if (SINGLE_LOOKUP
+                 && getClass() == TVariable.class && active != null && active.getClass() == Mind.class
+@@ -210,6 +218,9 @@
+ 
+     /** @return current TValue projection in the active Mind, or {@code null} */
+     public TValue getCurrent() {
++        diagCurrent++;
++        if (org.kanger.primitives.ArgumentsList.diagDepth > 0) diagCurrentInBase++;
++
+         Mind active = activeMind();
+         if (SINGLE_LOOKUP
+                 && getClass() == TVariable.class && active != null && active.getClass() == Mind.class
+@@ -321,6 +332,12 @@
+      */
+     @Override
+     public TVariable setMind(Mind mind) {
++        diagSet++;
++        WeakReference<Mind> previous = runtimeMind.get();
++        if (previous == null) diagUnset++;
++        else if (previous.get() == mind) diagSame++;
++        else diagDifferent++;
++
+         runtimeMind.set(new WeakReference<>(mind));
+         if (this.mind == null || mind.getNext() == null || mindId == mind.getId()) {
+             this.mind = mind;
+--- a/kanger/src/org/kanger/primitives/Argument.java
++++ b/kanger/src/org/kanger/primitives/Argument.java
+@@ -48,6 +48,8 @@
+  * Решение для предиката
+  */
+ public class Argument implements IArgument {
++    public static long diagValue, diagEmpty, diagValueInBase, diagEmptyInBase;
++
+ 
+     private static final long serialVersionUID = -7113328096110690461L; //196402070011L;
+ 
+@@ -126,6 +128,9 @@
+ 
+     @Override
+     public ITerm getValue(IMind mind) throws Exception {
++        diagValue++;
++        if (ArgumentsList.diagDepth > 0) diagValueInBase++;
++
+         switch (type) {
+             case TERM:
+                 return (Term) getObject(mind);
+@@ -204,6 +209,9 @@
+ 
+     @Override
+     public boolean isEmpty(Mind mind) {
++        diagEmpty++;
++        if (ArgumentsList.diagDepth > 0) diagEmptyInBase++;
++
+         try {
+             return getValue(mind) == null;
+         } catch (Exception e) {
+--- a/kanger/src/org/kanger/primitives/ArgumentsList.java
++++ b/kanger/src/org/kanger/primitives/ArgumentsList.java
+@@ -43,6 +43,8 @@
+  * Created by Dmitry G. Quznetsov on 27.05.20.
+  */
+ public class ArgumentsList extends ArrayList<IArgument> implements IList {
++    public static long diagCalls, diagDepth, diagIterations;
++
+ 
+     private Mind mind = null;
+ 
+@@ -152,6 +154,8 @@
+     }
+ 
+     public boolean equalsBase(Mind mind, Object o) {
++        diagCalls++; diagDepth++;
++        try {
+         if (o != null) {
+             ArgumentsList arg = null;
+             if (o instanceof ArgumentsList) {
+@@ -163,6 +167,7 @@
+                 int i = 0;
+                 try {
+                     for (; i < arg.size(); ++i) {
++                        diagIterations++;
+                         if (!get(i).isEmpty(mind) && !arg.get(i).isEmpty(mind)
+                                 && ((get(i).getValue(mind).isCVariable() && arg.get(i).getValue(mind).isCVariable()
+                                 && (get(i).getValue(mind).getId() == arg.get(i).getValue(mind).getId()
+@@ -183,6 +188,7 @@
+             }
+         }
+         return false;
++        } finally { diagDepth--; }
+     }
+ 
+     public ArgumentsList convert(Mind mind) {
+--- a/kanger/src/org/kanger/units/Domain.java
++++ b/kanger/src/org/kanger/units/Domain.java
+@@ -47,6 +47,8 @@
+  * Описатель варианта решения предиката
+  */
+ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
++    public static long diagSet;
++
+ 
+     private static final long serialVersionUID = 196402070001L;
+ 
+@@ -559,6 +561,8 @@
+ 
+     @Override
+     public Domain setMind(Mind mind) throws Exception {
++        diagSet++;
++
+         this.mind = mind;
+         for (TVariable t : arguments.getTVariables(mind)) {
+             t.setMind(mind);
+--- a/kanger-qualification/src/org/kanger/SonProfileRunner.java
++++ b/kanger-qualification/src/org/kanger/SonProfileRunner.java
+@@ -9,6 +9,22 @@
+ 
+ /** Diagnostic runner: normal logged query, separate hypothesis optimization. */
+ public final class SonProfileRunner {
++    private static final Class<?>[] COUNTER_TYPES = {
++        org.kanger.units.TVariable.class, org.kanger.primitives.Argument.class,
++        org.kanger.primitives.ArgumentsList.class, org.kanger.units.Domain.class
++    };
++    private static void resetCounters() throws Exception {
++        for (Class<?> type : COUNTER_TYPES)
++            for (java.lang.reflect.Field field : type.getDeclaredFields())
++                if (field.getName().startsWith("diag") && field.getType() == long.class) field.setLong(null, 0);
++    }
++    private static void dumpCounters(int sample) throws Exception {
++        for (Class<?> type : COUNTER_TYPES)
++            for (java.lang.reflect.Field field : type.getDeclaredFields())
++                if (field.getName().startsWith("diag") && field.getType() == long.class)
++                    System.out.println("COUNT sample="+sample+" "+type.getSimpleName()+"."+field.getName()+"="+field.getLong(null));
++    }
++
+     public static void main(String[] args) throws Exception {
+         System.setProperty("user.home", Files.createTempDirectory("son-profile-").toString());
+         User user = new User();
+@@ -44,9 +60,12 @@
+             java.lang.management.ThreadMXBean cpu = java.lang.management.ManagementFactory.getThreadMXBean();
+             long cpuBefore = cpu.isCurrentThreadCpuTimeSupported() ? cpu.getCurrentThreadCpuTime() : -1;
+             long allocatedBefore = allocation == null ? -1 : allocation.getThreadAllocatedBytes(Thread.currentThread().getId());
++            resetCounters();
+             try { mind.optimizeHypothesis(); }
+             finally { if (sampler != null) sampler.running = false; }
+             long optimizeNs = System.nanoTime() - start;
++            dumpCounters(i);
++
+             long cpuNs = cpuBefore < 0 ? -1 : cpu.getCurrentThreadCpuTime() - cpuBefore;
+             if (sampler != null) { sampler.join(); sampler.report(i, "optimize"); }
+             long allocatedBytes = allocation == null ? -1 : allocation.getThreadAllocatedBytes(Thread.currentThread().getId()) - allocatedBefore;
