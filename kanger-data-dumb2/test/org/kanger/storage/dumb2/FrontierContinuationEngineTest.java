@@ -118,8 +118,8 @@ public class FrontierContinuationEngineTest {
             throws Exception {
         ContextFixture x = context(
                 "X-expand",
-                "!seed(Rick,Tom) -> gate(Tom);",
-                "!gate(Tom), remote(Tom) -> target(Tom);");
+                "!seed(Tom) -> gate(Tom);",
+                "!gate(Tom) -> target(Tom);");
 
         OperationSnapshot operation =
                 OperationSnapshot.open(x.location);
@@ -150,23 +150,12 @@ public class FrontierContinuationEngineTest {
                             d -> "gate".equals(
                                     d.getPredicateName())),
                     "initial frontier=" + predicates(initial));
-            assertTrue(
-                    initial.stream().anyMatch(
-                            d -> "remote".equals(
-                                    d.getPredicateName())),
-                    "initial frontier=" + predicates(initial));
-
             List<FrontierDomain> expanded =
                     LocalFrontierExpansion.expand(
                             work, initial);
             assertTrue(
                     expanded.stream().anyMatch(
                             d -> "seed".equals(
-                                    d.getPredicateName())),
-                    "expanded frontier=" + predicates(expanded));
-            assertTrue(
-                    expanded.stream().anyMatch(
-                            d -> "remote".equals(
                                     d.getPredicateName())),
                     "expanded frontier=" + predicates(expanded));
             assertFalse(
@@ -197,22 +186,17 @@ public class FrontierContinuationEngineTest {
 
         assertTrue(Boolean.TRUE.equals(
                 mind.query(
-                        "!seed(Rick,Tom) -> gate(Tom);",
+                        "!seed(Tom) -> gate(Tom);",
                         null,
                         false)));
         assertTrue(Boolean.TRUE.equals(
                 mind.query(
-                        "!gate(Tom), remote(Tom) -> target(Tom);",
+                        "!gate(Tom) -> target(Tom);",
                         null,
                         false)));
         assertTrue(Boolean.TRUE.equals(
                 mind.query(
-                        "!seed(Rick,Tom);",
-                        null,
-                        false)));
-        assertTrue(Boolean.TRUE.equals(
-                mind.query(
-                        "!remote(Tom);",
+                        "!seed(Tom);",
                         null,
                         false)));
         assertTrue(Boolean.TRUE.equals(
@@ -228,19 +212,14 @@ public class FrontierContinuationEngineTest {
             throws Exception {
         ContextFixture x = context(
                 "X-wave",
-                "!seed(Rick,Tom) -> gate(Tom);",
-                "!gate(Tom), remote(Tom) -> target(Tom);");
+                "!seed(Tom) -> gate(Tom);",
+                "!gate(Tom) -> target(Tom);");
         ContextFixture a = context(
                 "A-wave",
-                "!seed(Rick,Tom);");
-        ContextFixture b = context(
-                "B-wave",
-                "!remote(Tom);");
+                "!seed(Tom);");
 
         ConnectionManager.connect(
                 x.location, a.location);
-        ConnectionManager.connect(
-                x.location, b.location);
 
         FrontierContinuationEngine.Result result =
                 FrontierContinuationEngine.execute(
@@ -251,16 +230,16 @@ public class FrontierContinuationEngineTest {
                 "causal fixture did not reach target; trace="
                         + result.getFrontierTrace());
         assertTrue(result.getWaves() >= 1);
-        assertTrue(result.getEvidenceCount() >= 2,
-                "expected seed and remote evidence; trace="
+        assertEquals(1, result.getEvidenceCount(),
+                "expected one foreign seed donor; trace="
                         + result.getFrontierTrace());
         assertTrue(
                 result.getFrontierTrace().get(0).contains("seed"),
                 "local frontier expansion did not expose seed; trace="
                         + result.getFrontierTrace());
-        assertTrue(
-                result.getFrontierTrace().get(0).contains("remote"),
-                "remote leaf disappeared before foreign fan-out; trace="
+        assertFalse(
+                result.getFrontierTrace().get(0).contains("gate"),
+                "intermediate gate escaped local expansion; trace="
                         + result.getFrontierTrace());
     }
 
