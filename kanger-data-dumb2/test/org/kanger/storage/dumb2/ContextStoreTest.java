@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.StorageLifecycleException;
+import org.kanger.storage.Step;
 
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -232,6 +233,19 @@ public class ContextStoreTest {
             context.setCandidateGate(null);
             context.close();
         }
+    }
+
+    private static Step step(
+            long id,
+            int hash,
+            Object data,
+            Step next) {
+        Step step = new Step();
+        step.setId(id);
+        step.setHash(hash);
+        step.setData(data);
+        step.setNext(next);
+        return step;
     }
 
     @Test
