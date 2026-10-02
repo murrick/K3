@@ -187,20 +187,6 @@ final class LocalFrontierExpansion {
                             domain.isCalculated(probe);
                     boolean system = domain.isSystem(probe);
 
-                    if ("gate".equals(current.getPredicateName())) {
-                        System.err.println(
-                                "[M3-SIBLING] used="
-                                + used.toString(probe)
-                                + " candidate="
-                                + domain.toString(probe)
-                                + " same=" + same
-                                + " antc=" + antc
-                                + " complete=" + complete
-                                + " usedFlag=" + domainUsed
-                                + " calculated=" + calculated
-                                + " system=" + system);
-                    }
-
                     if (same
                             || antc
                             || !complete
@@ -211,13 +197,6 @@ final class LocalFrontierExpansion {
                     }
                     FrontierDomain descriptor =
                             capture(domain, probe);
-                    if ("gate".equals(current.getPredicateName())) {
-                        System.err.println(
-                                "[M3-SIBLING] captured="
-                                + (descriptor == null
-                                        ? "<null>"
-                                        : descriptor.getDiagnosticSource()));
-                    }
                     if (descriptor != null
                             && !descriptor.semanticallyEquivalent(current)) {
                         addUnique(result, descriptor);
@@ -337,10 +316,17 @@ final class LocalFrontierExpansion {
          */
         long leftId = left.getId();
         long rightId = right.getId();
-        if (leftId >= 0L && rightId >= 0L) {
-            return leftId == rightId;
+        if (leftId >= 0L
+                && rightId >= 0L
+                && leftId == rightId) {
+            return true;
         }
 
+        /*
+         * Different positive IDs are not proof of semantic difference in a
+         * transactional/projection view. Treat IDs only as a fast positive
+         * match; semantic identity remains authoritative for the fallback.
+         */
         FrontierDomain leftSemantic =
                 FrontierDomain.fromDomain(left, mind);
         FrontierDomain rightSemantic =
