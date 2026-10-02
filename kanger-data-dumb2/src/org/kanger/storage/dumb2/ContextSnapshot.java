@@ -51,12 +51,26 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
                             long revision,
                             ContextManifestStore.Origin origin,
                             TypeRegistry typeRegistry) {
+        this(location,
+                contextId,
+                revision,
+                origin,
+                typeRegistry,
+                ContextStore.generationPath(location, revision));
+    }
+
+    private ContextSnapshot(Path location,
+                            UUID contextId,
+                            long revision,
+                            ContextManifestStore.Origin origin,
+                            TypeRegistry typeRegistry,
+                            Path generation) {
         this.location = location;
         this.contextId = contextId;
         this.revision = revision;
         this.origin = origin;
         this.typeRegistry = typeRegistry;
-        this.generation = ContextStore.generationPath(location, revision);
+        this.generation = generation;
     }
 
     /**
@@ -118,6 +132,78 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
                 revision,
                 manifest.getOrigin(),
                 copyRegistry(manifest.getTypeRegistry()));
+        try {
+            snapshot.validatePublishedGeneration();
+            return snapshot;
+        } catch (IOException | StorageLifecycleException
+                 | RuntimeException | Error failure) {
+            snapshot.closeQuietly();
+            throw failure;
+        }
+    }
+
+    /**
+     * Opens one unpublished immutable candidate generation.
+     *
+     * <p>The candidate belongs to the same Context identity and proposed
+     * revision lineage as the mutable writer, but its physical generation has
+     * not yet been installed and the CURRENT revision marker must still name
+     * the previous revision. This is the M3.8 qualification surface: semantic
+     * checks run against exactly the bytes that would be published.</p>
+     */
+    static ContextSnapshot openCandidate(
+            Path location,
+            UUID contextId,
+            long revision,
+            ContextManifestStore.Origin origin,
+            TypeRegistry typeRegistry,
+            Path generation)
+            throws IOException, StorageLifecycleException {
+        if (location == null || location.getFileName() == null) {
+            throw new IllegalArgumentException(
+                    "DUMB2 Context location must have a final path component");
+        }
+        if (contextId == null) {
+            throw new NullPointerException("contextId");
+        }
+        if (typeRegistry == null) {
+            throw new NullPointerException("typeRegistry");
+        }
+        if (generation == null) {
+            throw new NullPointerException("generation");
+        }
+        if (revision <= RevisionStore.INITIAL_REVISION) {
+            throw new IllegalArgumentException(
+                    "candidate revision must be greater than zero");
+        }
+        if (!Files.isDirectory(generation)) {
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_NOT_FOUND,
+                    "DUMB2 candidate generation does not exist: "
+                            + generation);
+        }
+
+        /*
+         * Candidate qualification must never reinterpret a generation as a
+         * different Context. The visible manifest is append-only and therefore
+         * already authoritative for candidate type definitions.
+         */
+        ContextManifestStore.Manifest manifest =
+                ContextManifestStore.read(
+                        ContextStore.contextPath(location));
+        if (!contextId.equals(manifest.getContextId())) {
+            throw corruption(
+                    "DUMB2 candidate ContextId does not match manifest at "
+                            + location);
+        }
+
+        ContextSnapshot snapshot = new ContextSnapshot(
+                location,
+                contextId,
+                revision,
+                origin,
+                copyRegistry(typeRegistry),
+                generation);
         try {
             snapshot.validatePublishedGeneration();
             return snapshot;

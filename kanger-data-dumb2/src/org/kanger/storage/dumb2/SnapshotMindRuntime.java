@@ -26,6 +26,46 @@ final class SnapshotMindRuntime implements AutoCloseable {
     }
 
     static SnapshotMindRuntime open(
+            ContextSnapshot snapshot,
+            String logicalName) throws Exception {
+        if (snapshot == null) {
+            throw new NullPointerException("snapshot");
+        }
+        if (snapshot.isClosed()) {
+            throw new IllegalStateException(
+                    "Context snapshot is already closed");
+        }
+
+        RevisionRef expected =
+                new RevisionRef(
+                        snapshot.getContextId(),
+                        snapshot.getRevision());
+        User user = new User();
+        ContextSnapshotData data =
+                new ContextSnapshotData(
+                        snapshot,
+                        logicalName);
+        data.init(user);
+
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        mind = (Mind) mind.useStorage(logicalName);
+        user.setCurrentMind(mind);
+
+        if (!expected.getContextId().equals(data.getContextId())
+                || expected.getRevision() != data.getRevision()) {
+            mind = (Mind) mind.closeStorage();
+            user.setCurrentMind(mind);
+            throw new IllegalStateException(
+                    "Candidate Context runtime identity mismatch: expected "
+                            + expected);
+        }
+
+        return new SnapshotMindRuntime(
+                user, expected, mind);
+    }
+
+    static SnapshotMindRuntime open(
             Path location,
             RevisionRef expected,
             String logicalName) throws Exception {

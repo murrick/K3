@@ -38,6 +38,7 @@ final class ContextSnapshotData implements IData {
     private final Path location;
     private final String logicalName;
     private final Long exactRevision;
+    private ContextSnapshot suppliedSnapshot;
     private final Map<String, SnapshotRuntimeBase> bases =
             new LinkedHashMap<String, SnapshotRuntimeBase>();
 
@@ -46,6 +47,21 @@ final class ContextSnapshotData implements IData {
 
     ContextSnapshotData(Path location, String logicalName) {
         this(location, logicalName, null);
+    }
+
+    ContextSnapshotData(
+            ContextSnapshot suppliedSnapshot,
+            String logicalName) {
+        if (suppliedSnapshot == null) {
+            throw new NullPointerException("suppliedSnapshot");
+        }
+        if (logicalName == null || logicalName.trim().isEmpty()) {
+            throw new IllegalArgumentException("logicalName must not be blank");
+        }
+        this.location = suppliedSnapshot.getLocation();
+        this.logicalName = logicalName;
+        this.exactRevision = null;
+        this.suppliedSnapshot = suppliedSnapshot;
     }
 
     ContextSnapshotData(Path location,
@@ -92,10 +108,16 @@ final class ContextSnapshotData implements IData {
             close();
         }
 
-        ContextSnapshot acquired = exactRevision == null
-                ? ContextSnapshot.open(location)
-                : ContextSnapshot.open(
-                        location, exactRevision.longValue());
+        ContextSnapshot acquired;
+        if (suppliedSnapshot != null) {
+            acquired = suppliedSnapshot;
+            suppliedSnapshot = null;
+        } else {
+            acquired = exactRevision == null
+                    ? ContextSnapshot.open(location)
+                    : ContextSnapshot.open(
+                            location, exactRevision.longValue());
+        }
         snapshot = acquired;
         bases.clear();
     }
