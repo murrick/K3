@@ -164,6 +164,26 @@ final class FrontierAggregate {
         String getStatement() {
             return statement;
         }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (!(other instanceof ProvisionalHypothesis)) {
+                return false;
+            }
+            ProvisionalHypothesis value =
+                    (ProvisionalHypothesis) other;
+            return source.equals(value.source)
+                    && statement.equals(value.statement);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * source.hashCode()
+                    + statement.hashCode();
+        }
     }
 
     private static final class HypothesisKey {

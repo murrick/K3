@@ -21,7 +21,7 @@ import java.util.Queue;
 import java.util.Set;
 
 /**
- * M3.6 positive-query continuation over ephemeral foreign evidence.
+ * M3.6/M3.7 continuation over ephemeral foreign evidence.
  *
  * <p>The query Rule is compiled exactly once in one operation-local child Mind.
  * Each federation wave may add ordinary assertion Rules to that same child,
@@ -29,8 +29,11 @@ import java.util.Set;
  * evidence is committed to the source Context and no query is recursively
  * federated by target Contexts.</p>
  *
- * <p>This engine proves only the queried proposition or reaches a fixed point.
- * FALSE/UNKNOWN/CONFLICT aggregation belongs to M3.7.</p>
+ * <p>M3.7 aggregates every foreign frontier independently. Ground TRUE and
+ * FALSE aggregates become operation-local factual donors of the corresponding
+ * polarity. UNKNOWN and CONFLICT remain observations only. Provisional foreign
+ * hypotheses are retained with exact source/revision provenance and never
+ * become factual donors.</p>
  */
 final class FrontierContinuationEngine {
 
@@ -79,13 +82,22 @@ final class FrontierContinuationEngine {
             }
 
             long queryRuleId = query.getId();
+            List<FrontierObservation> observations =
+                    new ArrayList<FrontierObservation>();
+            Set<FrontierAggregate.ProvisionalHypothesis>
+                    provisionalHypotheses =
+                    new LinkedHashSet<
+                            FrontierAggregate.ProvisionalHypothesis>();
+
             if (prove(work, query)) {
                 return new Result(
                         true,
                         0,
                         0,
                         queryRuleId,
-                        Collections.<List<String>>emptyList());
+                        Collections.<List<String>>emptyList(),
+                        observations,
+                        provisionalHypotheses);
             }
 
             Set<EvidenceKey> evidence =
@@ -105,7 +117,9 @@ final class FrontierContinuationEngine {
                             waves,
                             evidenceCount,
                             queryRuleId,
-                            frontierTrace);
+                            frontierTrace,
+                            observations,
+                            provisionalHypotheses);
                 }
 
                 List<String> predicates =
@@ -123,23 +137,48 @@ final class FrontierContinuationEngine {
                     List<FrontierAnswer> answers =
                             FrontierFanOut.execute(
                                     operation, frontier);
+                    FrontierAggregate aggregate =
+                            FrontierAggregate.of(answers);
+                    observations.add(
+                            new FrontierObservation(
+                                    waves,
+                                    frontier,
+                                    aggregate));
+                    provisionalHypotheses.addAll(
+                            aggregate.getHypotheses());
 
+                    /*
+                     * Ground truth aggregation belongs exactly here: it governs
+                     * whether one fully-grounded frontier may become factual
+                     * operation-local evidence in X. A conflict never injects
+                     * either side; UNKNOWN injects nothing.
+                     */
                     if (frontier.isGround()) {
-                        Set<RevisionRef> supports =
-                                new LinkedHashSet<RevisionRef>();
-                        for (FrontierAnswer answer : answers) {
-                            if (answer.getTruth()
-                                    == FrontierAnswer.Truth.TRUE) {
-                                supports.add(answer.getSource());
-                            }
+                        Boolean factualTruth = null;
+                        switch (aggregate.getTruth()) {
+                            case TRUE:
+                                factualTruth = Boolean.TRUE;
+                                break;
+                            case FALSE:
+                                factualTruth = Boolean.FALSE;
+                                break;
+                            case UNKNOWN:
+                            case CONFLICT:
+                                break;
+                            default:
+                                throw new IllegalStateException(
+                                        "Unsupported aggregate truth: "
+                                                + aggregate.getTruth());
                         }
-                        if (!supports.isEmpty()
+
+                        if (factualTruth != null
                                 && inject(
                                         work,
                                         frontier,
                                         Collections.<String>emptyList(),
                                         Collections.<ITerm>emptyList(),
-                                        evidence)) {
+                                        evidence,
+                                        factualTruth.booleanValue())) {
                             ++evidenceCount;
                             changed = true;
                         }
@@ -157,7 +196,8 @@ final class FrontierContinuationEngine {
                                 frontier,
                                 lifted.getVariableOrder(),
                                 tuple.getValues(),
-                                evidence)) {
+                                evidence,
+                                true)) {
                             ++evidenceCount;
                             changed = true;
                         }
@@ -170,7 +210,9 @@ final class FrontierContinuationEngine {
                             waves,
                             evidenceCount,
                             queryRuleId,
-                            frontierTrace);
+                            frontierTrace,
+                            observations,
+                            provisionalHypotheses);
                 }
 
                 work.setQueryPass(QueryPass.CHECKTRUE);
@@ -189,7 +231,9 @@ final class FrontierContinuationEngine {
                             waves,
                             evidenceCount,
                             queryRuleId,
-                            frontierTrace);
+                            frontierTrace,
+                            observations,
+                            provisionalHypotheses);
                 }
                 if (query.getId() != queryRuleId) {
                     throw new AssertionError(
@@ -266,15 +310,18 @@ final class FrontierContinuationEngine {
             FrontierDomain frontier,
             List<String> variableOrder,
             List<ITerm> values,
-            Set<EvidenceKey> evidence) throws Exception {
+            Set<EvidenceKey> evidence,
+            boolean truth) throws Exception {
         Queue<ITerm> arguments =
                 frontier.evidenceArguments(
                         work,
                         variableOrder,
                         values);
+        String evidenceSource =
+                frontier.getEvidenceSource(truth);
         EvidenceKey key =
                 EvidenceKey.of(
-                        frontier.getEvidenceSource(true),
+                        evidenceSource,
                         arguments);
         if (!evidence.add(key)) {
             return false;
@@ -282,7 +329,7 @@ final class FrontierContinuationEngine {
 
         work.setQueryPass(QueryPass.ACCEPT);
         Rule assertion = (Rule) work.compileLine(
-                frontier.getEvidenceSource(true),
+                evidenceSource,
                 false,
                 new LinkedList<ITerm>(arguments));
         work.setQueryPass(QueryPass.CHECKTRUE);
@@ -309,16 +356,24 @@ final class FrontierContinuationEngine {
         private final int evidenceCount;
         private final long queryRuleId;
         private final List<List<String>> frontierTrace;
+        private final List<FrontierObservation> observations;
+        private final List<FrontierAggregate.ProvisionalHypothesis>
+                provisionalHypotheses;
 
-        private Result(boolean resolved,
-                       int waves,
-                       int evidenceCount,
-                       long queryRuleId,
-                       List<List<String>> frontierTrace) {
+        private Result(
+                boolean resolved,
+                int waves,
+                int evidenceCount,
+                long queryRuleId,
+                List<List<String>> frontierTrace,
+                List<FrontierObservation> observations,
+                Set<FrontierAggregate.ProvisionalHypothesis>
+                        provisionalHypotheses) {
             this.resolved = resolved;
             this.waves = waves;
             this.evidenceCount = evidenceCount;
             this.queryRuleId = queryRuleId;
+
             List<List<String>> copied =
                     new ArrayList<List<String>>();
             for (List<String> wave : frontierTrace) {
@@ -327,6 +382,15 @@ final class FrontierContinuationEngine {
             }
             this.frontierTrace =
                     Collections.unmodifiableList(copied);
+            this.observations =
+                    Collections.unmodifiableList(
+                            new ArrayList<FrontierObservation>(
+                                    observations));
+            this.provisionalHypotheses =
+                    Collections.unmodifiableList(
+                            new ArrayList<
+                                    FrontierAggregate.ProvisionalHypothesis>(
+                                    provisionalHypotheses));
         }
 
         boolean isResolved() {
@@ -347,6 +411,59 @@ final class FrontierContinuationEngine {
 
         List<List<String>> getFrontierTrace() {
             return frontierTrace;
+        }
+
+        List<FrontierObservation> getObservations() {
+            return observations;
+        }
+
+        List<FrontierAggregate.ProvisionalHypothesis>
+                getProvisionalHypotheses() {
+            return provisionalHypotheses;
+        }
+
+        boolean hasConflict() {
+            for (FrontierObservation observation : observations) {
+                if (observation.getAggregate().getTruth()
+                        == FrontierAggregate.Truth.CONFLICT) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    static final class FrontierObservation {
+
+        private final int wave;
+        private final String predicateName;
+        private final String querySource;
+        private final FrontierAggregate aggregate;
+
+        private FrontierObservation(
+                int wave,
+                FrontierDomain frontier,
+                FrontierAggregate aggregate) {
+            this.wave = wave;
+            this.predicateName = frontier.getPredicateName();
+            this.querySource = frontier.getQuerySource();
+            this.aggregate = aggregate;
+        }
+
+        int getWave() {
+            return wave;
+        }
+
+        String getPredicateName() {
+            return predicateName;
+        }
+
+        String getQuerySource() {
+            return querySource;
+        }
+
+        FrontierAggregate getAggregate() {
+            return aggregate;
         }
     }
 

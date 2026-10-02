@@ -82,6 +82,100 @@ public class FrontierContinuationEngineTest {
     }
 
     @Test
+    void falseGroundAggregateInjectsOnlyNegativeDonor()
+            throws Exception {
+        ContextFixture x = context(
+                "X-false",
+                "!anchor(X);");
+        ContextFixture a = context(
+                "A-false",
+                "!~source(Tom);");
+
+        ConnectionManager.connect(
+                x.location, a.location);
+
+        FrontierContinuationEngine.Result result =
+                FrontierContinuationEngine.execute(
+                        x.location,
+                        "?source(Tom);");
+
+        assertFalse(result.isResolved());
+        assertEquals(1, result.getEvidenceCount());
+        assertEquals(1, result.getObservations().size());
+        assertEquals(
+                FrontierAggregate.Truth.FALSE,
+                result.getObservations().get(0)
+                        .getAggregate().getTruth());
+        assertFalse(result.hasConflict());
+    }
+
+    @Test
+    void conflictingGroundAggregateNeverInjectsEitherSide()
+            throws Exception {
+        ContextFixture x = context(
+                "X-conflict",
+                "!anchor(X);");
+        ContextFixture a = context(
+                "A-conflict",
+                "!source(Tom);");
+        ContextFixture b = context(
+                "B-conflict",
+                "!~source(Tom);");
+
+        ConnectionManager.connect(
+                x.location, a.location);
+        ConnectionManager.connect(
+                x.location, b.location);
+
+        FrontierContinuationEngine.Result result =
+                FrontierContinuationEngine.execute(
+                        x.location,
+                        "?source(Tom);");
+
+        assertFalse(result.isResolved());
+        assertEquals(0, result.getEvidenceCount());
+        assertTrue(result.hasConflict());
+        assertEquals(
+                FrontierAggregate.Truth.CONFLICT,
+                result.getObservations().get(0)
+                        .getAggregate().getTruth());
+        assertEquals(1,
+                result.getObservations().get(0)
+                        .getAggregate().getTrueSources().size());
+        assertEquals(1,
+                result.getObservations().get(0)
+                        .getAggregate().getFalseSources().size());
+    }
+
+    @Test
+    void unknownGroundAggregateRemainsObservationOnly()
+            throws Exception {
+        ContextFixture x = context(
+                "X-unknown",
+                "!anchor(X);");
+        ContextFixture a = context(
+                "A-unknown",
+                "!other(Tom);");
+
+        ConnectionManager.connect(
+                x.location, a.location);
+
+        FrontierContinuationEngine.Result result =
+                FrontierContinuationEngine.execute(
+                        x.location,
+                        "?source(Tom);");
+
+        assertFalse(result.isResolved());
+        assertEquals(0, result.getEvidenceCount());
+        assertEquals(
+                FrontierAggregate.Truth.UNKNOWN,
+                result.getObservations().get(0)
+                        .getAggregate().getTruth());
+        assertTrue(
+                result.getProvisionalHypotheses().isEmpty());
+    }
+
+    @Test
     void noNewEvidenceTerminatesAtFixedPoint()
             throws Exception {
         ContextFixture x = context(
