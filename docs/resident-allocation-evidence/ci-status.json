@@ -1,0 +1,40 @@
+{
+  "code_sha": "accc82156306f2c8593e1dc4949420c1e3e4833a",
+  "runs": [
+    {
+      "id": 37044273956,
+      "name": "KANGER Server",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37044273956"
+    },
+    {
+      "id": 37044273848,
+      "name": "KANGER distribution bundle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37044273848"
+    },
+    {
+      "id": 37044273906,
+      "name": "KANGER CI",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37044273906"
+    },
+    {
+      "id": 37044274199,
+      "name": "Resident allocation qualification",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37044274199"
+    },
+    {
+      "id": 37044273819,
+      "name": "KANGER qualification isolation",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37044273819"
+    }
+  ]
+}

@@ -24,6 +24,8 @@ for label, off, on in [('name_forward', 1, 2), ('name_reverse', 8, 7),
                        ('snapshot_forward', 1, 3), ('snapshot_reverse', 8, 6),
                        ('combined_forward', 1, 4), ('combined_reverse', 8, 5),
                        ('combined_vs_reference_forward', 0, 4), ('combined_vs_reference_reverse', 9, 5),
+                       ('snapshot_vs_reference_forward', 0, 3), ('snapshot_vs_reference_reverse', 9, 6),
+                       ('name_vs_reference_forward', 0, 2), ('name_vs_reference_reverse', 9, 7),
                        ('snapshot_vs_combined_forward', 3, 4), ('snapshot_vs_combined_reverse', 6, 5)]:
     print(label, 'wall_reduction=%.2f%% cpu_reduction=%.2f%% allocation_reduction=%.2f%%' %
           tuple((1 - rows[on][i] / rows[off][i]) * 100 for i in range(3)))

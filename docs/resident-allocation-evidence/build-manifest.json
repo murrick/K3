@@ -1,0 +1,10 @@
+{
+  "base": "3a2a6f0bccac11ac0d646178c4384ba73d7a5260",
+  "java": "17.0.20",
+  "natives_sha256": "bd0bac2c92badbf1b7f2396b434eda8d9d7c562ff4c09c5e4d790f30d9f5f8ed",
+  "reference_classpath": "../build/defaults-classes",
+  "experiment_classpath": "../build/resident-allocation-classes",
+  "runner_bytecode_equal": true,
+  "reference_has_prototype_flags": false,
+  "counter_fields": false
+}
