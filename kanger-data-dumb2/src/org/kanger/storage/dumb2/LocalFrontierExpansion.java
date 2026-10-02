@@ -178,16 +178,46 @@ final class LocalFrontierExpansion {
                     continue;
                 }
                 for (Domain domain : branch) {
-                    if (sameOccurrence(domain, used, probe)
-                            || domain.isAntc()
-                            || !domain.isComplete()
-                            || domain.isUsed(probe)
-                            || domain.isCalculated(probe)
-                            || domain.isSystem(probe)) {
+                    boolean same =
+                            sameOccurrence(domain, used, probe);
+                    boolean antc = domain.isAntc();
+                    boolean complete = domain.isComplete();
+                    boolean domainUsed = domain.isUsed(probe);
+                    boolean calculated =
+                            domain.isCalculated(probe);
+                    boolean system = domain.isSystem(probe);
+
+                    if ("gate".equals(current.getPredicateName())) {
+                        System.err.println(
+                                "[M3-SIBLING] used="
+                                + used.toString(probe)
+                                + " candidate="
+                                + domain.toString(probe)
+                                + " same=" + same
+                                + " antc=" + antc
+                                + " complete=" + complete
+                                + " usedFlag=" + domainUsed
+                                + " calculated=" + calculated
+                                + " system=" + system);
+                    }
+
+                    if (same
+                            || antc
+                            || !complete
+                            || domainUsed
+                            || calculated
+                            || system) {
                         continue;
                     }
                     FrontierDomain descriptor =
                             capture(domain, probe);
+                    if ("gate".equals(current.getPredicateName())) {
+                        System.err.println(
+                                "[M3-SIBLING] captured="
+                                + (descriptor == null
+                                        ? "<null>"
+                                        : descriptor.getDiagnosticSource()));
+                    }
                     if (descriptor != null
                             && !descriptor.semanticallyEquivalent(current)) {
                         addUnique(result, descriptor);
