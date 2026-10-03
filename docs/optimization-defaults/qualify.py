@@ -7,7 +7,7 @@ import subprocess
 
 FLAGS = ['preserveTValueIndex', 'versionedSolveSync', 'resolvedCauseWeights',
          'compactCauseWeights', 'candidateMembershipFilter', 'singleTValueLookup',
-         'residentBaseComparison']
+         'residentBaseComparison', 'compactFindSnapshots']
 parser = argparse.ArgumentParser()
 parser.add_argument('--output', required=True)
 parser.add_argument('--classpath', help='Direct Java invocation; otherwise use Maven exec')
@@ -21,7 +21,8 @@ for mode in ['defaults', 'on', 'off']:
     if mode != 'defaults':
         env['JAVA_TOOL_OPTIONS'] += ''.join(' -Dkanger.experiment.' + flag + '=' +
                                            ('true' if mode == 'on' else 'false') for flag in FLAGS)
-    runners = {'ResidentBaseComparisonRunner': 'RESIDENT_BASE_COMPARISON_OK checks=48 custom_reads=3',
+    runners = {'CompactFindSnapshotsRunner': 'COMPACT_FIND_SNAPSHOTS_OK checks=23',
+               'ResidentBaseComparisonRunner': 'RESIDENT_BASE_COMPARISON_OK checks=48 custom_reads=3',
                'SingleTValueLookupRunner': 'SINGLE_LOOKUP_BOUNDARIES_OK checks=15',
                'TValueIndexBoundaryRunner': 'TVALUE_INDEX_BOUNDARY_PASS',
                'TValueIndexReopenRunner': 'TVALUE_INDEX_REOPEN_PASS',

@@ -1,5 +1,9 @@
 # Isolated compact candidate snapshots
 
+Historical experiment report: the default-OFF statements below describe
+experiment/3.8.0-resident-snapshots. The proposed default-ON integration is
+documented in docs/optimization-defaults.md.
+
 Base: develop/3.8.0 at 3a2a6f0bccac11ac0d646178c4384ba73d7a5260.
 
 This experiment contains only compactFindSnapshots (default OFF). Predicate.java is byte-identical to the base; no directPredicateName code is included. Public ICache.find ownership remains unchanged. Internal factory iteration uses immutable empty/singleton snapshots for exact Escalera instances and the original HashSet copy for multiple candidates. Custom caches retain their original find calls.

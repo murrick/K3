@@ -421,7 +421,7 @@ public class Escalera implements ICache {
     }
 
     private static final boolean COMPACT_FIND_SNAPSHOTS =
-            Boolean.getBoolean("kanger.experiment.compactFindSnapshots");
+            Boolean.parseBoolean(System.getProperty("kanger.experiment.compactFindSnapshots", "true"));
 
     /** Internal read-only iteration snapshot; public find retains mutable ownership. */
     public static Iterable<Long> findCandidates(ICache cache, int hash) throws Exception {

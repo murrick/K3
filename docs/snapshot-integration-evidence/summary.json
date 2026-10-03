@@ -1,0 +1,15 @@
+{
+  "base": "3a2a6f0bccac11ac0d646178c4384ba73d7a5260",
+  "java": "17.0.20",
+  "modes": [
+    "defaults",
+    "on",
+    "off"
+  ],
+  "runners_per_mode": 8,
+  "hypothesis_samples": 6,
+  "raw_and_optimized_texts_equal": true,
+  "transaction_states_equal": true,
+  "transaction_state_sha256": "c230b44a51bb11b8b19a198c9064000db28e26a29d6c956a7183a35c10d74e0c",
+  "marker": "OPTIMIZATION_DEFAULTS_PASS modes=3 hypothesis_samples=6 transaction_states=equal"
+}

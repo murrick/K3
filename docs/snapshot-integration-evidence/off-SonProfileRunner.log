@@ -1,0 +1,10 @@
+Picked up JAVA_TOOL_OPTIONS: -Xmx512m -Dbench.samples=2 -Dkanger.experiment.preserveTValueIndex=false -Dkanger.experiment.versionedSolveSync=false -Dkanger.experiment.resolvedCauseWeights=false -Dkanger.experiment.compactCauseWeights=false -Dkanger.experiment.candidateMembershipFilter=false -Dkanger.experiment.singleTValueLookup=false -Dkanger.experiment.residentBaseComparison=false -Dkanger.experiment.compactFindSnapshots=false
+COMPILE_NS 373663467
+SAMPLE 0 query_ns=277597721 optimize_ns=9688046866 optimize_cpu_ns=9374419484 optimize_allocated_bytes=-1 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+SAMPLE 1 query_ns=145436375 optimize_ns=8820702002 optimize_cpu_ns=8612157814 optimize_allocated_bytes=-1 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
