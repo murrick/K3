@@ -47,16 +47,17 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
     private boolean closed;
 
     private ContextSnapshot(Path location,
+                            Path generation,
                             UUID contextId,
                             long revision,
                             ContextManifestStore.Origin origin,
                             TypeRegistry typeRegistry) {
         this.location = location;
+        this.generation = generation;
         this.contextId = contextId;
         this.revision = revision;
         this.origin = origin;
         this.typeRegistry = typeRegistry;
-        this.generation = ContextStore.generationPath(location, revision);
     }
 
     /**
@@ -114,10 +115,52 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
 
         ContextSnapshot snapshot = new ContextSnapshot(
                 location,
+                ContextStore.generationPath(location, revision),
                 manifest.getContextId(),
                 revision,
                 manifest.getOrigin(),
                 copyRegistry(manifest.getTypeRegistry()));
+        try {
+            snapshot.validatePublishedGeneration();
+            return snapshot;
+        } catch (IOException | StorageLifecycleException
+                 | RuntimeException | Error failure) {
+            snapshot.closeQuietly();
+            throw failure;
+        }
+    }
+
+    static ContextSnapshot openCandidate(
+            Path location,
+            Path generation,
+            UUID contextId,
+            long revision,
+            ContextManifestStore.Origin origin,
+            TypeRegistry typeRegistry) throws Exception {
+        if (location == null
+                || generation == null
+                || contextId == null
+                || typeRegistry == null) {
+            throw new NullPointerException();
+        }
+        if (revision <= RevisionStore.INITIAL_REVISION) {
+            throw new IllegalArgumentException(
+                    "candidate revision must be positive");
+        }
+        if (!Files.isDirectory(generation)) {
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_NOT_FOUND,
+                    "DUMB2 candidate generation does not exist: "
+                            + generation);
+        }
+
+        ContextSnapshot snapshot = new ContextSnapshot(
+                location.toAbsolutePath().normalize(),
+                generation.toAbsolutePath().normalize(),
+                contextId,
+                revision,
+                origin,
+                copyRegistry(typeRegistry));
         try {
             snapshot.validatePublishedGeneration();
             return snapshot;

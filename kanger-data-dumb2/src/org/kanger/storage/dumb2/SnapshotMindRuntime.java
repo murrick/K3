@@ -32,13 +32,34 @@ final class SnapshotMindRuntime implements AutoCloseable {
         if (expected == null) {
             throw new NullPointerException("expected");
         }
-
-        User user = new User();
-        ContextSnapshotData data =
+        return open(
                 new ContextSnapshotData(
                         location,
                         logicalName,
-                        Long.valueOf(expected.getRevision()));
+                        Long.valueOf(expected.getRevision())),
+                expected,
+                logicalName);
+    }
+
+    static SnapshotMindRuntime open(
+            ContextCandidate candidate,
+            String logicalName) throws Exception {
+        if (candidate == null) {
+            throw new NullPointerException("candidate");
+        }
+        return open(
+                new ContextSnapshotData(
+                        candidate,
+                        logicalName),
+                candidate.getRef(),
+                logicalName);
+    }
+
+    private static SnapshotMindRuntime open(
+            ContextSnapshotData data,
+            RevisionRef expected,
+            String logicalName) throws Exception {
+        User user = new User();
         data.init(user);
 
         Mind mind = new Mind(user);
