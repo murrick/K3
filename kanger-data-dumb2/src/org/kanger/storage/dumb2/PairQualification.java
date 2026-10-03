@@ -21,10 +21,9 @@ import java.util.List;
 /**
  * Full-state compatibility qualification for two exact DUMB2 revisions.
  *
- * <p>Both replay directions are executed. This deliberately favors a simple
- * correctness proof over the future smaller-source optimization: a successful
- * result proves that replaying either authoritative source over the other
- * reaches the same collision verdict.</p>
+ * <p>Both replay directions are executed. The left side may be either an
+ * already-published revision or one immutable unpublished ContextCandidate.
+ * Qualification never publishes either side.</p>
  */
 final class PairQualification {
 
@@ -42,55 +41,143 @@ final class PairQualification {
                 AttachedMind.open(
                         rightLocation, rightRevision, "pair-right");
         try {
-            RevisionRef leftRef = left.ref();
-            RevisionRef rightRef = right.ref();
-
-            PortableSource leftSource =
-                    PortableSource.capture(left.mind);
-            PortableSource rightSource =
-                    PortableSource.capture(right.mind);
-
-            boolean leftOverRight =
-                    qualifyDirection(leftSource, right.mind);
-            boolean rightOverLeft =
-                    qualifyDirection(rightSource, left.mind);
-
-            if (leftOverRight != rightOverLeft) {
-                throw new IllegalStateException(
-                        "Pair qualification is direction-dependent for "
-                                + leftRef + " and " + rightRef
-                                + ": left-over-right=" + leftOverRight
-                                + ", right-over-left=" + rightOverLeft);
-            }
-
-            CompatibilityCertificate certificate =
-                    leftOverRight
-                            ? new CompatibilityCertificate(
-                                    leftRef,
-                                    rightRef,
-                                    Version.CORE_VERSION_S)
-                            : null;
-            return new Result(
-                    leftRef,
-                    rightRef,
-                    leftOverRight,
-                    rightOverLeft,
-                    certificate);
+            return qualify(left, right);
         } finally {
             right.close();
             left.close();
         }
     }
 
+    static Result qualify(ContextCandidate leftCandidate,
+                          Path rightLocation,
+                          long rightRevision) throws Exception {
+        AttachedMind left =
+                AttachedMind.open(
+                        leftCandidate, "pair-candidate-left");
+        AttachedMind right =
+                AttachedMind.open(
+                        rightLocation, rightRevision, "pair-right");
+        try {
+            return qualify(left, right);
+        } finally {
+            right.close();
+            left.close();
+        }
+    }
+
+    static boolean qualifyLocal(
+            ContextCandidate candidate) throws Exception {
+        AttachedMind attached =
+                AttachedMind.open(
+                        candidate, "write-candidate-local");
+        try {
+            return Boolean.TRUE.equals(
+                    attached.mind.queryCheck(false));
+        } finally {
+            attached.close();
+        }
+    }
+
+    /**
+     * Validates the transient union candidate + every direct target at once.
+     * No target may recursively consult its own connections.
+     */
+    static boolean qualifyComposition(
+            ContextCandidate candidate,
+            ConnectionVector connections) throws Exception {
+        AttachedMind attached =
+                AttachedMind.open(
+                        candidate, "write-candidate-composition");
+        Mind overlay = null;
+        try {
+            overlay =
+                    Mind.ephemeralChild(attached.mind);
+            for (ContextConnection connection
+                    : connections.getConnections()) {
+                AttachedMind target =
+                        AttachedMind.open(
+                                connection.getTargetLocation(),
+                                connection.getTarget().getRevision(),
+                                "composition-target");
+                try {
+                    if (!connection.getTarget().equals(
+                            target.ref())) {
+                        throw new IllegalStateException(
+                                "Pinned target identity changed during composition qualification: expected "
+                                        + connection.getTarget()
+                                        + " found " + target.ref());
+                    }
+                    PortableSource.capture(
+                            target.mind).replay(overlay);
+                } finally {
+                    target.close();
+                }
+            }
+            return Boolean.TRUE.equals(
+                    overlay.queryCheck(false));
+        } finally {
+            if (overlay != null) {
+                overlay.getSolutions().clear();
+                overlay.getValues().clear();
+                attached.mind.release(overlay);
+            }
+            attached.close();
+        }
+    }
+
+    private static Result qualify(
+            AttachedMind left,
+            AttachedMind right) throws Exception {
+        RevisionRef leftRef = left.ref();
+        RevisionRef rightRef = right.ref();
+
+        PortableSource leftSource =
+                PortableSource.capture(left.mind);
+        PortableSource rightSource =
+                PortableSource.capture(right.mind);
+
+        boolean leftOverRight =
+                qualifyDirection(
+                        leftSource, right.mind);
+        boolean rightOverLeft =
+                qualifyDirection(
+                        rightSource, left.mind);
+
+        if (leftOverRight != rightOverLeft) {
+            throw new IllegalStateException(
+                    "Pair qualification is direction-dependent for "
+                            + leftRef + " and " + rightRef
+                            + ": left-over-right=" + leftOverRight
+                            + ", right-over-left=" + rightOverLeft);
+        }
+
+        CompatibilityCertificate certificate =
+                leftOverRight
+                        ? new CompatibilityCertificate(
+                                leftRef,
+                                rightRef,
+                                Version.CORE_VERSION_S)
+                        : null;
+        return new Result(
+                leftRef,
+                rightRef,
+                leftOverRight,
+                rightOverLeft,
+                certificate);
+    }
+
     private static boolean qualifyDirection(
             PortableSource source,
             Mind target) throws Exception {
-        Mind overlay = new Mind(target);
+        Mind overlay =
+                Mind.ephemeralChild(target);
         try {
             source.replay(overlay);
             return Boolean.TRUE.equals(
                     overlay.queryCheck(false));
         } finally {
+            overlay.getSolutions().clear();
+            overlay.getValues().clear();
             target.release(overlay);
         }
     }
@@ -144,7 +231,7 @@ final class PairQualification {
      * Same portable authoritative surface already used by Core rebase:
      * visible non-generated Rule origins plus visible UDF source.
      */
-    private static final class PortableSource {
+    static final class PortableSource {
 
         private final List<String> rules =
                 new ArrayList<String>();
@@ -159,10 +246,12 @@ final class PairQualification {
                 Rule rule = (Rule) candidate;
                 if (!rule.isGenerated()
                         && !rule.isDeleted(source)) {
-                    result.rules.add(rule.getOrigin());
+                    result.rules.add(
+                            rule.getOrigin());
                 }
             }
-            for (IOperation operation : source.getLibrary()) {
+            for (IOperation operation
+                    : source.getLibrary()) {
                 if (!operation.isDeleted(source)) {
                     result.operations.add(
                             operation.asString());
@@ -173,7 +262,8 @@ final class PairQualification {
 
         void replay(Mind target) throws Exception {
             for (String operation : operations) {
-                target.query(operation, null, false);
+                target.query(
+                        operation, null, false);
             }
             for (String rule : rules) {
                 target.compileLine(
@@ -191,27 +281,46 @@ final class PairQualification {
         private final ContextSnapshotData data;
         private Mind mind;
 
-        private AttachedMind(User user,
-                             ContextSnapshotData data,
-                             Mind mind) {
+        private AttachedMind(
+                User user,
+                ContextSnapshotData data,
+                Mind mind) {
             this.user = user;
             this.data = data;
             this.mind = mind;
         }
 
-        static AttachedMind open(Path location,
-                                 long revision,
-                                 String logicalName) throws Exception {
-            User user = new User();
-            ContextSnapshotData data =
+        static AttachedMind open(
+                Path location,
+                long revision,
+                String logicalName) throws Exception {
+            return open(
                     new ContextSnapshotData(
                             location,
                             logicalName,
-                            Long.valueOf(revision));
+                            Long.valueOf(revision)),
+                    logicalName);
+        }
+
+        static AttachedMind open(
+                ContextCandidate candidate,
+                String logicalName) throws Exception {
+            return open(
+                    new ContextSnapshotData(
+                            candidate,
+                            logicalName),
+                    logicalName);
+        }
+
+        private static AttachedMind open(
+                ContextSnapshotData data,
+                String logicalName) throws Exception {
+            User user = new User();
             data.init(user);
             Mind mind = new Mind(user);
             user.setCurrentMind(mind);
-            mind = (Mind) mind.useStorage(logicalName);
+            mind = (Mind) mind.useStorage(
+                    logicalName);
             user.setCurrentMind(mind);
             return new AttachedMind(
                     user, data, mind);
