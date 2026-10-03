@@ -5,6 +5,7 @@
  */
 package org.kanger.storage.dumb2;
 
+import org.kanger.ContextQualification;
 import org.kanger.Mind;
 import org.kanger.User;
 import org.kanger.Version;
@@ -15,8 +16,10 @@ import org.kanger.units.Rule;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Full-state compatibility qualification for two exact DUMB2 revisions.
@@ -100,13 +103,23 @@ final class PairQualification {
             Path sourceLocation,
             long sourceRevision,
             ConnectionVector connections) throws Exception {
+        return qualifyCompositionState(
+                sourceLocation,
+                sourceRevision,
+                connections).isValid();
+    }
+
+    static CompositionQualification qualifyCompositionState(
+            Path sourceLocation,
+            long sourceRevision,
+            ConnectionVector connections) throws Exception {
         AttachedMind attached =
                 AttachedMind.open(
                         sourceLocation,
                         sourceRevision,
                         "connection-switch-composition");
         try {
-            return qualifyComposition(
+            return qualifyCompositionState(
                     attached, connections);
         } finally {
             attached.close();
@@ -114,6 +127,13 @@ final class PairQualification {
     }
 
     private static boolean qualifyComposition(
+            AttachedMind attached,
+            ConnectionVector connections) throws Exception {
+        return qualifyCompositionState(
+                attached, connections).isValid();
+    }
+
+    private static CompositionQualification qualifyCompositionState(
             AttachedMind attached,
             ConnectionVector connections) throws Exception {
         Mind overlay = null;
@@ -141,14 +161,65 @@ final class PairQualification {
                     target.close();
                 }
             }
-            return Boolean.TRUE.equals(
-                    overlay.queryCheck(false));
+            ContextQualification qualification =
+                    ContextQualification.inspect(
+                            overlay, false);
+            return new CompositionQualification(
+                    qualification.isValid(),
+                    collisionKeys(qualification));
         } finally {
             if (overlay != null) {
                 overlay.getSolutions().clear();
                 overlay.getValues().clear();
                 attached.mind.release(overlay);
             }
+        }
+    }
+
+    private static Set<String> collisionKeys(
+            ContextQualification qualification) {
+        Set<String> result =
+                new LinkedHashSet<String>();
+        for (ContextQualification.CollisionWitness witness
+                : qualification.getCollisions()) {
+            String left = witness.getLeft();
+            String right = witness.getRight();
+            if (left.compareTo(right) <= 0) {
+                result.add(left + "\u0000" + right);
+            } else {
+                result.add(right + "\u0000" + left);
+            }
+        }
+        return result;
+    }
+
+    static final class CompositionQualification {
+
+        private final boolean valid;
+        private final Set<String> collisions;
+
+        private CompositionQualification(
+                boolean valid,
+                Set<String> collisions) {
+            this.valid = valid;
+            this.collisions =
+                    new LinkedHashSet<String>(collisions);
+        }
+
+        boolean isValid() {
+            return valid;
+        }
+
+        boolean introducesNewCollisionComparedTo(
+                CompositionQualification baseline) {
+            if (baseline == null) {
+                throw new NullPointerException("baseline");
+            }
+            if (!valid && collisions.isEmpty()) {
+                return true;
+            }
+            return !baseline.collisions.containsAll(
+                    collisions);
         }
     }
 

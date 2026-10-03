@@ -348,6 +348,52 @@ public class ConnectionManagerTest {
     }
 
     @Test
+    void revisionSwitchRejectsAdditionalConflictWhenCompositionAlreadyConflicted()
+            throws Exception {
+        ContextFixture x =
+                context("XSN", "!anchor(X);");
+        ContextFixture a =
+                context("ASN", "!male(Tom);");
+        ContextFixture b =
+                context("BSN", "!~male(Tom);");
+
+        advance(
+                b,
+                "!~female(Jane);");
+
+        ConnectionManager.connect(
+                x.location, a.location);
+        ConnectionManager.connect(
+                x.location, b.location);
+
+        advance(
+                a,
+                "!female(Jane);");
+
+        assertThrows(
+                StorageLifecycleException.class,
+                () -> ConnectionManager.switchRevision(
+                        x.location,
+                        a.contextId,
+                        a.revision + 1L));
+
+        OperationSnapshot unchanged =
+                OperationSnapshot.open(x.location);
+        try {
+            assertEquals(
+                    a.revision,
+                    unchanged.getTarget(
+                            a.contextId).getRevision());
+            assertEquals(
+                    b.revision + 1L,
+                    unchanged.getTarget(
+                            b.contextId).getRevision());
+        } finally {
+            unchanged.close();
+        }
+    }
+
+    @Test
     void revisionSwitchDoesNotFreezeOnPreExistingCombinedConflict()
             throws Exception {
         ContextFixture x =

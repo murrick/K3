@@ -192,24 +192,27 @@ final class ConnectionManager {
         /*
          * Direct Contexts are autonomous truth sources. A conflict already
          * present in the current vector is a legal federation observation and
-         * must not freeze unrelated revision movement. Reject only a switch
-         * that turns a previously composition-compatible vector into an
-         * incompatible one.
+         * must not freeze unrelated revision movement. Compare detached
+         * collision witnesses and reject only a switch that introduces at
+         * least one new composition conflict.
          */
-        boolean originalCompositionCompatible =
-                PairQualification.qualifyComposition(
+        PairQualification.CompositionQualification
+                originalComposition =
+                PairQualification.qualifyCompositionState(
                         sourceLocation,
                         sourceRef.getRevision(),
                         original);
-        boolean candidateCompositionCompatible =
-                PairQualification.qualifyComposition(
+        PairQualification.CompositionQualification
+                candidateComposition =
+                PairQualification.qualifyCompositionState(
                         sourceLocation,
                         sourceRef.getRevision(),
                         candidate);
-        if (originalCompositionCompatible
-                && !candidateCompositionCompatible) {
+        if (candidateComposition
+                .introducesNewCollisionComparedTo(
+                        originalComposition)) {
             throw conflict(
-                    "Requested Context revision introduces a direct multi-context composition conflict: "
+                    "Requested Context revision introduces a new direct multi-context composition conflict: "
                             + requestedTarget);
         }
 
