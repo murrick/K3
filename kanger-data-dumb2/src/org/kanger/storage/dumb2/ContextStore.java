@@ -380,6 +380,9 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                 }
             }
 
+            qualifyAndStageConnectionTransition(
+                    staging, next);
+
             /*
              * A target with no matching visible revision is an orphan left by
              * a failed/crashed publication. The Context lock proves that no
@@ -513,6 +516,9 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                 }
             }
 
+            qualifyAndStageConnectionTransition(
+                    staging, next);
+
             if (Files.exists(target)) {
                 deleteRecursively(target);
             }
@@ -554,6 +560,75 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
              * rebuilds the same target under the exclusive Context lock.
              */
         }
+    }
+
+    /**
+     * Runs M3.8 qualification against the complete unpublished generation and
+     * pre-publishes a revision-aware connection transition.
+     *
+     * <p>The sidecar contains both source revisions before CURRENT advances.
+     * Therefore R continues to select its old certificates if publication
+     * stops or the process crashes, while R+1 already has a fully qualified
+     * vector waiting when the revision marker moves.</p>
+     */
+    private void qualifyAndStageConnectionTransition(
+            Path staging,
+            long next) throws Exception {
+        /*
+         * DUMB2 is also exercised as a low-level self-describing storage
+         * substrate (codec/reindex/mixed-layout tests). Semantic federation
+         * qualification belongs only to Contexts that actually participate in
+         * a direct ConnectionVector. A disconnected Context retains the
+         * historical Core transaction qualification path and must not be
+         * reinterpreted here as a second semantic runtime.
+         */
+        Path connectionsPath =
+                ConnectionStore.path(location);
+        if (!Files.exists(connectionsPath)) {
+            return;
+        }
+
+        RevisionRef currentSource =
+                new RevisionRef(
+                        contextId, revision);
+        RevisionRef candidateSource =
+                new RevisionRef(
+                        contextId, next);
+
+        ConnectionVector currentConnections =
+                ConnectionStore.read(
+                        location, currentSource);
+        if (currentConnections.isEmpty()) {
+            ConnectionStore.delete(location);
+            return;
+        }
+
+        ContextCandidate candidate =
+                ContextCandidate.of(
+                        this, staging, next);
+        WriteCandidateQualification.Result qualification =
+                WriteCandidateQualification.qualify(
+                        candidate,
+                        currentConnections);
+
+        if (!candidateSource.equals(
+                qualification.getCandidate())) {
+            throw new IllegalStateException(
+                    "Qualified candidate identity mismatch: expected "
+                            + candidateSource
+                            + " found "
+                            + qualification.getCandidate());
+        }
+
+        ConnectionVector candidateConnections =
+                qualification.getConnections();
+
+        ConnectionStore.writeTransition(
+                location,
+                currentSource,
+                currentConnections,
+                candidateSource,
+                candidateConnections);
     }
 
     @Override

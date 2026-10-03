@@ -82,6 +82,7 @@ Transaction rollback and storage reindex are not routed through this confirmatio
 | Transactions | `transaction`, `transaction start|commit|rollback|squash` | Inspect and manage explicit user transaction levels |
 | Sources | `get [<source>]`, `put <source>`, `delete [<source>]` | List/load/save/delete server-side source files |
 | Storage | `storage`, `storage use|close|drop|reindex ...` | Inspect and manage persistent storage |
+| Context federation | `ctx`, `ctx connect|disconnect|switch|query ...` | Inspect exact-revision direct Context connections and run diagnostic federation queries |
 | Status | `status [core [objects|transaction|levels]|storage|session|runtime]` | Cheap canonical product telemetry |
 | Session | `timezone [<zoneId>]`, `help`, `quit` | Inspect or change session timezone, show help, or end the session |
 | Workspace | `erase` | Clear the current workspace through qualified runtime semantics |
@@ -404,6 +405,82 @@ storage reindex natives
 ```
 
 Rebuilds the explicitly named storage using the storage lifecycle. It requires a legal/quiescent transaction topology. Reindex is not protected by the generic confirmation dialogue, so treat it as an explicit administrative data-maintenance command.
+
+---
+
+## 11A. Context federation (`ctx`)
+
+The `ctx` family is the first operator-visible projection of exact-revision
+Context federation. It is available only when the active storage backend
+implements the Context federation capability; the default/stable DUMB provider
+is unchanged.
+
+### `ctx`
+
+Shows the current Context identity/revision and its direct connections.
+
+The Console projection uses human-readable Context locators/storage names.
+Internal `ContextId` UUIDs remain authoritative identity in the semantic
+model and structured API, but are not required for normal operator work.
+
+For each connection the projection includes:
+
+- target locator/storage name;
+- exact pinned `RevisionId`;
+- pin policy `EXACT_REVISION`;
+- compatibility/certificate state;
+- target `CURRENT` revision when it differs from the pin.
+
+A newer target `CURRENT` is informational only. It never moves the existing
+pin automatically.
+
+### `ctx connect <locator>`
+
+Qualifies the current Context against the target at its current exact revision
+and creates the direct connection only if qualification succeeds.
+
+For local DUMB2 operation, a logical storage name may be used as the locator.
+
+### `ctx disconnect <locator>`
+
+Removes one direct connection by its operator-visible locator/storage name.
+Disconnecting does not rewrite local knowledge and does not require cleanup of
+previously queried foreign evidence because such evidence is operation-local.
+
+### `ctx switch <locator> <RevisionId>`
+
+Deliberately attempts to repin one existing direct connection to the requested
+exact target revision. The requested target is pair-qualified against the
+source Context. Direct-composition collision witnesses are then compared before
+and after the proposed repin: any newly introduced composition conflict rejects
+the switch.
+
+An already-existing conflict between autonomous direct Contexts does not freeze
+an unrelated revision move; such foreign truth conflicts remain observable as
+`CONFLICT` through `ctx query`. Existing conflicts may disappear, but a
+repin may not add a new collision witness. If qualification fails, the old pin
+remains authoritative. There is no `FOLLOW_HEAD` mode.
+
+### `ctx query <query...>`
+
+Runs one diagnostic federated KANGER query through the proven frontier-driven
+federation engine.
+
+Example:
+
+```text
+ctx query ?male(Tom);
+ctx query ?$x son(John, x);
+```
+
+The projection reports resolved/unresolved state, federation waves, aggregate
+`TRUE`/`FALSE`/`UNKNOWN`/`CONFLICT` observations, exact source
+Context/revision provenance using human-readable locators, and provisional
+foreign hypotheses when present.
+
+This command does not change ordinary bare `?...` query semantics. Foreign
+evidence used by the diagnostic operation remains ephemeral and is not
+published into the source Context.
 
 ---
 

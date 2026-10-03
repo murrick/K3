@@ -56,6 +56,12 @@ public enum CommandIntent {
     STORAGE_DROP,
     STORAGE_REINDEX,
 
+    CTX_STATUS,
+    CTX_CONNECT,
+    CTX_DISCONNECT,
+    CTX_SWITCH,
+    CTX_QUERY,
+
     STATUS,
     TIMEZONE,
     ERASE,

@@ -166,6 +166,7 @@ public class Mind implements IMind {
     private boolean changed = false;
     private Boolean queryResult = null;
     private String querySource = "";
+    private final List<FrontierDomain> frontierDomains = new ArrayList<>();
     private QueryPass queryPass = QueryPass.SILENCE;
     private User user = null;
     private String compliedLine = "";
@@ -192,6 +193,26 @@ public class Mind implements IMind {
     }
 
     public Mind(IMind root) throws Exception {
+        this(root, false);
+    }
+
+    /**
+     * Creates a technical child whose canonical Term/Predicate additions are
+     * confined to child overlays instead of the historically shared parent
+     * factories.
+     *
+     * <p>This is the operation boundary used by federation: foreign query
+     * constants, projected values and ephemeral evidence may participate in
+     * ordinary compiler/linker/analyzer semantics, but they must disappear
+     * when the child is released and must never reach a read-only Context
+     * snapshot root.</p>
+     */
+    public static Mind ephemeralChild(IMind root) throws Exception {
+        return new Mind(root, true);
+    }
+
+    private Mind(IMind root,
+                 boolean isolateCanonicalFactories) throws Exception {
         next = root;
         user = (User) root.getUser();
         id = user.nextId(); //root.getId() + 1;
@@ -201,8 +222,15 @@ public class Mind implements IMind {
         parent.incTransactionCounter();
         boolean initialized = false;
         try {
-            terms = (DictionaryFactory) root.getTerms();
-            predicates = (PredicateFactory) root.getPredicates();
+            if (isolateCanonicalFactories) {
+                terms.transaction(
+                        (DictionaryFactory) root.getTerms());
+                predicates.transaction(
+                        (PredicateFactory) root.getPredicates());
+            } else {
+                terms = (DictionaryFactory) root.getTerms();
+                predicates = (PredicateFactory) root.getPredicates();
+            }
 
             library.transaction((LibraryFactory) root.getLibrary());
 
@@ -519,6 +547,7 @@ public class Mind implements IMind {
         queryResult = child.getQueryResult();
         compliedLine = child.getCompliedString();
         lastLinkerStatistics = child.linker.snapshotStatistics();
+        replaceFrontierDomains(child.frontierDomains);
     }
 
     private void finishFailedTransactionLocked() {
@@ -565,6 +594,7 @@ public class Mind implements IMind {
             queryResult = m.getQueryResult();
             compliedLine = m.getCompliedString();
             lastLinkerStatistics = ((Mind) m).linker.snapshotStatistics();
+            replaceFrontierDomains(((Mind) m).frontierDomains);
 
             finishTransactionLocked();
         }
@@ -608,6 +638,7 @@ public class Mind implements IMind {
             acceptedRule = null;
             queryResult = null;
             querySource = "";
+            frontierDomains.clear();
             queryPass = QueryPass.SILENCE;
             compliedLine = "";
             lastLinkerStatistics = new LinkerStatistics();
@@ -1187,6 +1218,28 @@ public class Mind implements IMind {
         return querySource;
     }
 
+    /**
+     * Returns the unresolved ordinary query Domains captured by the most
+     * recent Analyzer pass. The returned objects are immutable operation-local
+     * descriptors; an empty list preserves the historical single-Context path.
+     */
+    public List<FrontierDomain> getFrontierDomains() {
+        return Collections.unmodifiableList(
+                new ArrayList<FrontierDomain>(frontierDomains));
+    }
+
+    void clearFrontierDomains() {
+        frontierDomains.clear();
+    }
+
+    void replaceFrontierDomains(
+            Collection<FrontierDomain> frontier) {
+        frontierDomains.clear();
+        if (frontier != null) {
+            frontierDomains.addAll(frontier);
+        }
+    }
+
     @Override
     public Boolean getQueryResult() {
         return queryResult;
@@ -1262,7 +1315,8 @@ public class Mind implements IMind {
             line = invert(line);
 
             setCompliedLine(line);
-            Rule r = (Rule) m.compileLine(line, true, convertExternals(ext));
+            Rule r = (Rule) m.compileLine(
+                    line, true, convertExternals(ext));
             if (r != null && !r.isSecond()) {
 
                 m.link(r, logging);
@@ -1466,6 +1520,14 @@ public class Mind implements IMind {
     }
 
     public Boolean queryCheckFalse(String line, Object[] ext, boolean logging) throws Exception {
+        return queryCheckFalseCanonical(
+                line, convertExternals(ext), logging);
+    }
+
+    private Boolean queryCheckFalseCanonical(
+            String line,
+            Queue<ITerm> externals,
+            boolean logging) throws Exception {
         Boolean res = null;
         try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
             Mind m = tx.mind();
@@ -1474,7 +1536,8 @@ public class Mind implements IMind {
                 m.getLog().add(LogMode.ANALYZER, "============= FALSE CHECKING ==============");
             }
 
-            Rule r = (Rule) m.compileLine(invert(line), true, convertExternals(ext));
+            Rule r = (Rule) m.compileLine(
+                    invert(line), true, externals);
             setCompliedLine(line);
             if (r != null && !r.isSecond()) {
                 boolean ar = m.analyze(r, logging);
@@ -1541,6 +1604,14 @@ public class Mind implements IMind {
     }
 
     public Boolean queryCheckTrue(String line, Object[] ext, boolean logging) throws Exception {
+        return queryCheckTrueCanonical(
+                line, convertExternals(ext), logging);
+    }
+
+    private Boolean queryCheckTrueCanonical(
+            String line,
+            Queue<ITerm> externals,
+            boolean logging) throws Exception {
         Boolean res = null;
         try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
             Mind m = tx.mind();
@@ -1549,7 +1620,8 @@ public class Mind implements IMind {
                 m.getLog().add(LogMode.ANALYZER, "============= TRUE CHECKING ===============");
             }
 
-            Rule r = (Rule) m.compileLine(line, true, convertExternals(ext));
+            Rule r = (Rule) m.compileLine(
+                    line, true, externals);
             setCompliedLine(line);
             if (r != null && !r.isSecond()) {
                 boolean ar = m.analyze(r, logging);
@@ -1612,11 +1684,64 @@ public class Mind implements IMind {
         }
     }
 
+    /**
+     * Executes a query whose external parameters are already canonical Terms
+     * of this Mind. This avoids value re-parsing at cross-Context runtime
+     * boundaries while preserving the historical FALSE-then-TRUE query
+     * lifecycle.
+     */
+    public Boolean queryCanonical(
+            String line,
+            Queue<ITerm> externals,
+            boolean logging) throws Exception {
+        if (line == null || line.isEmpty()
+                || line.charAt(0) != Enums.SUC) {
+            throw new IllegalArgumentException(
+                    "Canonical query requires a query source");
+        }
+
+        this.logging = logging;
+        querySource = line;
+        queryPass = QueryPass.SILENCE;
+        acceptedRule = null;
+        frontierDomains.clear();
+
+        getQueryValues().clear();
+        getLog().clear();
+        getSolutions().clear();
+        getValues().clear();
+        getHypothesis().clear();
+        hypothesis.clear();
+        tempHypothesis.clear();
+
+        Queue<ITerm> source =
+                externals == null
+                        ? new LinkedList<ITerm>()
+                        : new LinkedList<ITerm>(externals);
+
+        Boolean result = null;
+        if (!DEBUG_DISABLE_FALSE_CHECK) {
+            result = queryCheckFalseCanonical(
+                    line,
+                    new LinkedList<ITerm>(source),
+                    logging);
+        }
+        if (result == null) {
+            result = queryCheckTrueCanonical(
+                    line,
+                    new LinkedList<ITerm>(source),
+                    logging);
+        }
+        queryResult = result;
+        return result;
+    }
+
     public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
         this.logging = logging;
 
         Boolean res = null;
         acceptedRule = null;
+        frontierDomains.clear();
 
         getQueryValues().clear();
         getLog().clear();

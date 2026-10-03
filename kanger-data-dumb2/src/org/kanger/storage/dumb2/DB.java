@@ -7,6 +7,7 @@ package org.kanger.storage.dumb2;
 
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.Version;
 import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.StorageLifecycleException;
@@ -15,6 +16,7 @@ import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IData;
+import org.kanger.interfaces.internal.IContextFederation;
 import org.kanger.interfaces.internal.StorageTelemetry;
 
 import java.io.IOException;
@@ -41,7 +43,7 @@ import java.util.Map;
  * Root settlement eventually reaches {@link #flush()}, where
  * {@link ContextStore} publishes one storage-wide revision.</p>
  */
-public final class DB implements IData {
+public final class DB implements IData, IContextFederation {
 
     private IUser user;
     private ContextStore context;
@@ -152,6 +154,11 @@ public final class DB implements IData {
         } catch (IOException error) {
             failure = accumulate(failure, error);
         }
+        try {
+            ConnectionStore.delete(location);
+        } catch (IOException error) {
+            failure = accumulate(failure, error);
+        }
 
         if (failure != null || storageArtifactsExist(location)) {
             StorageLifecycleException incomplete = new StorageLifecycleException(
@@ -253,6 +260,295 @@ public final class DB implements IData {
         return context == null ? null : context.getContextId();
     }
 
+    @Override
+    public synchronized IContextFederation.Snapshot federationSnapshot()
+            throws Exception {
+        requireOpen();
+
+        Path sourceLocation = context.getLocation();
+        ContextSnapshot source =
+                ContextSnapshot.open(sourceLocation);
+        try {
+            RevisionRef sourceRef = new RevisionRef(
+                    source.getContextId(),
+                    source.getRevision());
+            ConnectionVector vector = ConnectionStore.read(
+                    sourceLocation,
+                    sourceRef);
+            ArrayList<IContextFederation.Connection> connections =
+                    new ArrayList<IContextFederation.Connection>();
+            for (ContextConnection connection
+                    : vector.getConnections()) {
+                connections.add(projectConnection(
+                        sourceRef, connection));
+            }
+            return new IContextFederation.Snapshot(
+                    storageName,
+                    sourceRef.getContextId(),
+                    sourceRef.getRevision(),
+                    connections);
+        } finally {
+            source.close();
+        }
+    }
+
+    @Override
+    public synchronized IContextFederation.Connection connectContext(
+            String targetLocator) throws Exception {
+        requireOpen();
+        ContextConnection connection =
+                ConnectionManager.connect(
+                        context.getLocation(),
+                        resolveFederationLocator(targetLocator));
+        return projectConnection(
+                new RevisionRef(
+                        context.getContextId(),
+                        context.getRevision()),
+                connection);
+    }
+
+    @Override
+    public synchronized void disconnectContext(
+            String targetLocator) throws Exception {
+        disconnectContext(
+                connectedContextId(targetLocator));
+    }
+
+    @Override
+    public synchronized void disconnectContext(
+            java.util.UUID targetContextId) throws Exception {
+        requireOpen();
+        ConnectionManager.disconnect(
+                context.getLocation(),
+                targetContextId);
+    }
+
+    @Override
+    public synchronized IContextFederation.Connection switchContextRevision(
+            String targetLocator,
+            long targetRevision) throws Exception {
+        return switchContextRevision(
+                connectedContextId(targetLocator),
+                targetRevision);
+    }
+
+    @Override
+    public synchronized IContextFederation.Connection switchContextRevision(
+            java.util.UUID targetContextId,
+            long targetRevision) throws Exception {
+        requireOpen();
+        ContextConnection connection =
+                ConnectionManager.switchRevision(
+                        context.getLocation(),
+                        targetContextId,
+                        targetRevision);
+        return projectConnection(
+                new RevisionRef(
+                        context.getContextId(),
+                        context.getRevision()),
+                connection);
+    }
+
+    private IContextFederation.Connection projectConnection(
+            RevisionRef sourceRef,
+            ContextConnection connection) throws Exception {
+        RevisionRef targetRef = connection.getTarget();
+
+        ContextSnapshot pinned = ContextSnapshot.open(
+                connection.getTargetLocation(),
+                targetRef.getRevision());
+        try {
+            if (!targetRef.getContextId().equals(
+                    pinned.getContextId())) {
+                throw new StorageLifecycleException(
+                        StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                        "Pinned Context identity mismatch for "
+                                + connection.getTargetLocation()
+                                + ": expected "
+                                + targetRef.getContextId()
+                                + ", found "
+                                + pinned.getContextId());
+            }
+        } finally {
+            pinned.close();
+        }
+
+        long currentRevision;
+        ContextSnapshot current = ContextSnapshot.open(
+                connection.getTargetLocation());
+        try {
+            if (!targetRef.getContextId().equals(
+                    current.getContextId())) {
+                throw new StorageLifecycleException(
+                        StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                        "Target CURRENT identity mismatch for "
+                                + connection.getTargetLocation()
+                                + ": expected "
+                                + targetRef.getContextId()
+                                + ", found "
+                                + current.getContextId());
+            }
+            currentRevision = current.getRevision();
+        } finally {
+            current.close();
+        }
+
+        CompatibilityCertificate certificate =
+                connection.getCertificate();
+        IContextFederation.CompatibilityStatus status =
+                certificate.matches(
+                        sourceRef,
+                        targetRef,
+                        Version.CORE_VERSION_S)
+                ? IContextFederation.CompatibilityStatus.QUALIFIED
+                : IContextFederation.CompatibilityStatus.STALE;
+
+        return new IContextFederation.Connection(
+                displayFederationLocator(
+                        connection.getTargetLocation()),
+                targetRef.getContextId(),
+                targetRef.getRevision(),
+                currentRevision,
+                IContextFederation.PinPolicy.EXACT_REVISION,
+                status,
+                certificate.getSemanticVersion());
+    }
+
+    @Override
+    public synchronized IContextFederation.QueryResult executeFederatedQuery(
+            String querySource) throws Exception {
+        requireOpen();
+
+        FrontierContinuationEngine.Result result =
+                FrontierContinuationEngine.execute(
+                        context.getLocation(),
+                        querySource);
+
+        ArrayList<IContextFederation.FrontierObservation> observations =
+                new ArrayList<IContextFederation.FrontierObservation>();
+        for (FrontierContinuationEngine.FrontierObservation observation
+                : result.getObservations()) {
+            FrontierAggregate aggregate =
+                    observation.getAggregate();
+            observations.add(
+                    new IContextFederation.FrontierObservation(
+                            observation.getWave(),
+                            observation.getQuerySource(),
+                            projectTruth(aggregate.getTruth()),
+                            projectRevisions(
+                                    aggregate.getTrueSources()),
+                            projectRevisions(
+                                    aggregate.getFalseSources()),
+                            projectRevisions(
+                                    aggregate.getUnknownSources())));
+        }
+
+        ArrayList<IContextFederation.ProvisionalHypothesis> hypotheses =
+                new ArrayList<IContextFederation.ProvisionalHypothesis>();
+        for (FrontierAggregate.ProvisionalHypothesis hypothesis
+                : result.getProvisionalHypotheses()) {
+            hypotheses.add(
+                    new IContextFederation.ProvisionalHypothesis(
+                            projectRevision(
+                                    hypothesis.getSource()),
+                            hypothesis.getStatement()));
+        }
+
+        return new IContextFederation.QueryResult(
+                result.isResolved(),
+                result.getWaves(),
+                result.getEvidenceCount(),
+                observations,
+                hypotheses);
+    }
+
+    private IContextFederation.FrontierTruth projectTruth(
+            FrontierAggregate.Truth truth) {
+        switch (truth) {
+            case TRUE:
+                return IContextFederation.FrontierTruth.TRUE;
+            case FALSE:
+                return IContextFederation.FrontierTruth.FALSE;
+            case UNKNOWN:
+                return IContextFederation.FrontierTruth.UNKNOWN;
+            case CONFLICT:
+                return IContextFederation.FrontierTruth.CONFLICT;
+            default:
+                throw new IllegalStateException(
+                        "Unsupported frontier truth: " + truth);
+        }
+    }
+
+    private ArrayList<IContextFederation.Revision> projectRevisions(
+            Collection<RevisionRef> source) {
+        ArrayList<IContextFederation.Revision> result =
+                new ArrayList<IContextFederation.Revision>();
+        for (RevisionRef ref : source) {
+            result.add(projectRevision(ref));
+        }
+        return result;
+    }
+
+    private IContextFederation.Revision projectRevision(
+            RevisionRef ref) {
+        return new IContextFederation.Revision(
+                ref.getContextId(),
+                ref.getRevision());
+    }
+
+    private java.util.UUID connectedContextId(
+            String targetLocator) throws Exception {
+        requireOpen();
+        Path requested =
+                resolveFederationLocator(targetLocator);
+        RevisionRef sourceRef =
+                new RevisionRef(
+                        context.getContextId(),
+                        context.getRevision());
+        ConnectionVector vector =
+                ConnectionStore.read(
+                        context.getLocation(),
+                        sourceRef);
+        for (ContextConnection connection
+                : vector.getConnections()) {
+            Path target =
+                    connection.getTargetLocation()
+                            .toAbsolutePath().normalize();
+            if (requested.equals(target)) {
+                return connection.getTarget()
+                        .getContextId();
+            }
+        }
+        throw new CommandErrorException(
+                "No direct Context connection exists for locator "
+                        + targetLocator);
+    }
+
+    private Path resolveFederationLocator(
+            String locator) throws CommandErrorException {
+        if (locator == null || locator.trim().isEmpty()) {
+            throw new CommandErrorException(
+                    "Context locator expected");
+        }
+        Path path = Paths.get(locator.trim());
+        if (!path.isAbsolute()) {
+            path = databaseRoot().resolve(path);
+        }
+        return path.toAbsolutePath().normalize();
+    }
+
+    private String displayFederationLocator(
+            Path location) {
+        Path root = databaseRoot()
+                .toAbsolutePath().normalize();
+        Path target = location
+                .toAbsolutePath().normalize();
+        if (target.startsWith(root)) {
+            return root.relativize(target).toString();
+        }
+        return target.toString();
+    }
+
     private void collectContexts(Path root,
                                  Path directory,
                                  Collection<String> result) throws IOException {
@@ -282,7 +578,8 @@ public final class DB implements IData {
     private boolean storageArtifactsExist(Path location) {
         return Files.exists(ContextStore.contextPath(location))
                 || Files.exists(ContextStore.revisionPath(location))
-                || Files.exists(ContextStore.stateRoot(location));
+                || Files.exists(ContextStore.stateRoot(location))
+                || Files.exists(ConnectionStore.path(location));
     }
 
     private Path location(String name) {

@@ -43,6 +43,9 @@ import org.kanger.units.Rule;
 import org.kanger.units.Term;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -234,6 +237,92 @@ public class DictionaryFactory implements IFactory<ITerm> {
             }
         }
         return null;
+    }
+
+    /**
+     * Canonicalizes one semantically foreign Term inside this dictionary.
+     *
+     * <p>The lookup deliberately reuses the ordinary hash bucket plus
+     * {@code equalsTo} contract. On a miss, only semantic payload is copied;
+     * foreign operational IDs, Mind ownership and variable descriptors are
+     * never imported. Callers that require non-durable projection must invoke
+     * this method only inside an isolated operation runtime.</p>
+     *
+     * @param source foreign semantic Term
+     * @return the existing or newly projected canonical Term of this Mind
+     */
+    public synchronized ITerm projectSemantic(ITerm source) throws Exception {
+        if (source == null) {
+            throw new NullPointerException("source");
+        }
+        if (!(source instanceof Term)) {
+            throw new IllegalArgumentException(
+                    "Semantic projection requires a Term");
+        }
+
+        Term foreign = (Term) source;
+        if (foreign.isCVariable()) {
+            throw new IllegalArgumentException(
+                    "C-variable semantic projection is not a value projection");
+        }
+
+        Term existing = find(foreign);
+        if (existing != null) {
+            return existing;
+        }
+
+        Term projected = new Term(mind);
+        projected.setPersistentState(
+                foreign.getType(),
+                projectSemanticValue(foreign),
+                foreign.getHash(),
+                0,
+                -1L,
+                -1L,
+                false);
+        projected.setId(((User) mind.getUser()).nextId(SCHEMA));
+        projected.setMindId(mind.getId());
+        projected.setMind(mind);
+
+        cache.add(projected);
+        packCandidates.add(projected.getId());
+        if (top == null) {
+            top = cache.getRoot();
+        }
+        return projected;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object projectSemanticValue(Term source) throws Exception {
+        Object value = source.getValue();
+        switch (source.getType()) {
+            case BLOB:
+                byte[] blob = (byte[]) value;
+                return blob == null
+                        ? null
+                        : Arrays.copyOf(blob, blob.length);
+            case DATE:
+                return value == null
+                        ? null
+                        : new Date(((Date) value).getTime());
+            case SET:
+            case INTERVAL:
+                if (value == null) {
+                    return null;
+                }
+                List<ITerm> projected =
+                        new ArrayList<ITerm>();
+                for (ITerm member : (Collection<ITerm>) value) {
+                    projected.add(projectSemantic(member));
+                }
+                return projected;
+            case TERM:
+                return value == null
+                        ? null
+                        : projectSemantic((ITerm) value);
+            default:
+                return value;
+        }
     }
 
     /**

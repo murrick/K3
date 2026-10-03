@@ -31,6 +31,7 @@ import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IRule;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.stores.LogStore;
+import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
@@ -111,6 +112,7 @@ public class Analyzer {
     public boolean analyze(Rule rule, boolean logging) throws Exception {
         boolean result = false;
         collisions.clear();
+        mind.clearFrontierDomains();
 
         long start = System.currentTimeMillis();
 
@@ -314,6 +316,74 @@ public class Analyzer {
             }
         }
 
+        List<FrontierDomain> frontier =
+                new ArrayList<FrontierDomain>();
+
+        /*
+         * Historical stored-query orphans remain the first frontier source.
+         * They include ground ordinary queries such as ?male(Tom).
+         */
+        for (Rule unresolved : orfans) {
+            addFrontier(
+                    unresolved.getDomain(),
+                    frontier);
+        }
+
+        /*
+         * A query Domain containing an unbound TVariable may remain part of a
+         * non-stored query Rule. Such a Rule is intentionally skipped by the
+         * historical checkDatabase loop above, even though the Domain itself
+         * is unresolved and externally answerable. Expose that Domain without
+         * changing Analyzer truth/hypothesis semantics.
+         */
+        for (IRule candidate : mind.getRules()) {
+            Rule query = (Rule) candidate;
+            if (query.isDeleted(mind)
+                    || query.isStored()
+                    || !query.isQuery()) {
+                continue;
+            }
+            for (List<Domain> branch : query.getTree()) {
+                for (Domain domain : branch) {
+                    if (domain.isQuery(mind)
+                            && !domain.isUsed(mind)
+                            && !domain.isCalculated(mind)) {
+                        addFrontier(
+                                domain,
+                                frontier);
+                    }
+                }
+            }
+        }
+
+        /*
+         * Linker may materialize a single demanded premise as a generated
+         * stored succedent Rule. That Rule intentionally no longer carries the
+         * historical query flag, but its operation-local mindId identifies it
+         * as demand produced by this saturation rather than inherited durable
+         * knowledge.
+         */
+        for (IRule candidate : mind.getRules()) {
+            Rule generated = (Rule) candidate;
+            if (generated.isDeleted(mind)
+                    || !generated.isStored()
+                    || !generated.isGenerated()
+                    || generated.getMindId() != mind.getId()) {
+                continue;
+            }
+            Domain domain = generated.getDomain();
+            if (!domain.isAntc()
+                    && domain.isComplete()
+                    && !domain.isUsed(mind)
+                    && !domain.isCalculated(mind)) {
+                addFrontier(
+                        domain,
+                        frontier);
+            }
+        }
+
+        mind.replaceFrontierDomains(frontier);
+
         // Контроль закрытия всех веток запроса
         if (!orfans.isEmpty() && !calculated) {
             result = false;
@@ -325,5 +395,34 @@ public class Analyzer {
             }
         }
         return result;
+    }
+
+    private void addFrontier(
+            Domain domain,
+            List<FrontierDomain> frontier) throws Exception {
+        if (!isExternalizable(domain)) {
+            return;
+        }
+        FrontierDomain descriptor =
+                FrontierDomain.capture(domain, mind);
+        if (descriptor == null) {
+            return;
+        }
+        for (FrontierDomain existing : frontier) {
+            if (existing.semanticallyEquivalent(
+                    descriptor)) {
+                return;
+            }
+        }
+        frontier.add(descriptor);
+    }
+
+    private boolean isExternalizable(Domain domain)
+            throws Exception {
+        if (domain.getPredicate(mind).isSystem(mind)) {
+            return false;
+        }
+        return !"rule(1)".equals(
+                domain.getPredicate(mind).toString(mind));
     }
 }

@@ -28,6 +28,7 @@ import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IContextFederation;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.stores.HypothesisStore;
 import org.kanger.units.Rule;
@@ -342,6 +343,30 @@ public final class CanonicalConsole {
                 } else {
                     showStorage(storage.getStorageStatus());
                 }
+                return same(mind);
+
+            case CTX_STATUS:
+            case CTX_CONNECT:
+            case CTX_DISCONNECT:
+            case CTX_SWITCH:
+            case CTX_QUERY:
+                CanonicalCommandProcessor.Result federation =
+                        COMMAND_PROCESSOR.execute(invocation, mind.getUser());
+                if (!federation.isHandled()
+                        || federation.getFederationSnapshot() == null) {
+                    throw new CommandErrorException(
+                            "Unsupported canonical intent "
+                                    + invocation.getIntent());
+                }
+                mind = track(shutdownHook, federation.getMind());
+                if (!federation.getDescription().isEmpty()
+                        && invocation.getIntent()
+                                != org.kanger.command.CommandIntent.CTX_STATUS) {
+                    System.out.println(federation.getDescription());
+                }
+                showFederation(
+                        federation.getFederationSnapshot(),
+                        federation.getFederationQueryResult());
                 return same(mind);
 
             case ERASE:
@@ -751,6 +776,94 @@ public final class CanonicalConsole {
             throw new CommandErrorException("Cannot delete source file " + name);
         }
         System.out.println("Source file " + name + " deleted.");
+    }
+
+    private static void showFederation(
+            IContextFederation.Snapshot snapshot,
+            IContextFederation.QueryResult query) {
+        System.out.printf("Context %s@%d%n",
+                snapshot.getSourceLocator(),
+                snapshot.getSourceRevision());
+        if (snapshot.getConnections().isEmpty()) {
+            System.out.println("Direct connections: none");
+        } else {
+            System.out.println("Direct connections:");
+            for (IContextFederation.Connection connection
+                    : snapshot.getConnections()) {
+                System.out.printf(
+                        "  %s@%d  %-10s  %s%s%n",
+                        connection.getLocator(),
+                        connection.getPinnedRevision(),
+                        connection.getCompatibilityStatus(),
+                        connection.getPinPolicy(),
+                        connection.hasNewerRevision()
+                                ? "  [CURRENT="
+                                        + connection.getCurrentRevision()
+                                        + "]"
+                                : "");
+            }
+        }
+
+        if (query == null) {
+            return;
+        }
+        System.out.printf(
+                "Federated query: %s, waves=%d, evidence=%d%n",
+                query.isResolved() ? "RESOLVED" : "UNRESOLVED",
+                query.getWaves(),
+                query.getEvidenceCount());
+        for (IContextFederation.FrontierObservation observation
+                : query.getObservations()) {
+            System.out.printf("  wave %d  %s  => %s%n",
+                    observation.getWave(),
+                    observation.getQuerySource(),
+                    observation.getTruth());
+            showRevisionSources("TRUE",
+                    observation.getTrueSources(), snapshot);
+            showRevisionSources("FALSE",
+                    observation.getFalseSources(), snapshot);
+            showRevisionSources("UNKNOWN",
+                    observation.getUnknownSources(), snapshot);
+        }
+        if (!query.getProvisionalHypotheses().isEmpty()) {
+            System.out.println("  provisional hypotheses:");
+            for (IContextFederation.ProvisionalHypothesis hypothesis
+                    : query.getProvisionalHypotheses()) {
+                System.out.printf("    %s@%d  %s%n",
+                        contextLocator(
+                                snapshot,
+                                hypothesis.getSource().getContextId()),
+                        hypothesis.getSource().getRevision(),
+                        hypothesis.getStatement());
+            }
+        }
+    }
+
+    private static void showRevisionSources(
+            String label,
+            List<IContextFederation.Revision> revisions,
+            IContextFederation.Snapshot snapshot) {
+        for (IContextFederation.Revision revision : revisions) {
+            System.out.printf("      %s: %s@%d%n",
+                    label,
+                    contextLocator(snapshot, revision.getContextId()),
+                    revision.getRevision());
+        }
+    }
+
+    private static String contextLocator(
+            IContextFederation.Snapshot snapshot,
+            java.util.UUID contextId) {
+        if (snapshot.getSourceContextId().equals(contextId)) {
+            return snapshot.getSourceLocator();
+        }
+        for (IContextFederation.Connection connection
+                : snapshot.getConnections()) {
+            if (connection.getTargetContextId().equals(contextId)) {
+                return connection.getLocator();
+            }
+        }
+        return "<unknown-context>";
     }
 
     private static void showStorage(CanonicalCommandProcessor.StorageStatus status) {
