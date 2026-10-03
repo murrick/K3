@@ -79,7 +79,7 @@ public class ConnectionManagerTest {
     }
 
     @Test
-    void sourceRevisionAdvanceMakesCertificateStale()
+    void sourceRevisionAdvanceRefreshesQualifiedConnection()
             throws Exception {
         ContextFixture x =
                 context("X", "!parent(John,Tom);");
@@ -104,9 +104,102 @@ public class ConnectionManagerTest {
                 mind.query("!female(Jane);", null, false)));
         user.setCurrentMind(mind.closeStorage());
 
+        RevisionRef expectedSource =
+                new RevisionRef(
+                        x.contextId,
+                        x.revision + 1L);
+        RevisionRef expectedTarget =
+                new RevisionRef(
+                        a.contextId,
+                        a.revision);
+
+        OperationSnapshot operation =
+                OperationSnapshot.open(x.location);
+        try {
+            assertEquals(
+                    expectedSource,
+                    operation.getSourceRef());
+            ContextConnection refreshed =
+                    operation.getConnections()
+                            .find(a.contextId);
+            assertNotNull(refreshed);
+            assertTrue(
+                    refreshed.getCertificate().matches(
+                            expectedSource,
+                            expectedTarget,
+                            Version.CORE_VERSION_S));
+            assertEquals(
+                    a.revision,
+                    operation.getTarget(
+                            a.contextId).getRevision());
+        } finally {
+            operation.close();
+        }
+    }
+
+    @Test
+    void combinedTargetConflictBlocksCandidatePublication()
+            throws Exception {
+        ContextFixture x =
+                context("XC", "!anchor(X);");
+        ContextFixture a =
+                context("AC", "!male(Tom);");
+        ContextFixture b =
+                context("BC", "!~male(Tom);");
+
+        ConnectionManager.connect(
+                x.location, a.location);
+        ConnectionManager.connect(
+                x.location, b.location);
+
+        User user = new User();
+        user.setDatabaseDir(
+                x.location.getParent().toString()
+                        + File.separator);
+        DB data = new DB();
+        data.init(user);
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        mind = (Mind) mind.useStorage(
+                x.location.getFileName().toString());
+        user.setCurrentMind(mind);
+
         assertThrows(
-                StorageLifecycleException.class,
-                () -> OperationSnapshot.open(x.location));
+                Exception.class,
+                () -> mind.query(
+                        "!female(Jane);",
+                        null,
+                        false));
+
+        ContextSnapshot stillPublished =
+                ContextSnapshot.open(x.location);
+        try {
+            assertEquals(
+                    x.revision,
+                    stillPublished.getRevision(),
+                    "failed composition qualification must not publish R+1");
+        } finally {
+            stillPublished.close();
+        }
+
+        /*
+         * Repair only operational topology, then settle the already-staged
+         * local change so the test releases the mutable Context cleanly.
+         */
+        ConnectionManager.disconnect(
+                x.location, b.contextId);
+        user.setCurrentMind(
+                mind.closeStorage());
+
+        ContextSnapshot repaired =
+                ContextSnapshot.open(x.location);
+        try {
+            assertEquals(
+                    x.revision + 1L,
+                    repaired.getRevision());
+        } finally {
+            repaired.close();
+        }
     }
 
     private ContextFixture context(

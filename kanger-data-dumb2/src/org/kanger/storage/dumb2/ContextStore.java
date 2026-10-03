@@ -380,6 +380,9 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                 }
             }
 
+            qualifyAndStageConnectionTransition(
+                    staging, next);
+
             /*
              * A target with no matching visible revision is an orphan left by
              * a failed/crashed publication. The Context lock proves that no
@@ -513,6 +516,9 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                 }
             }
 
+            qualifyAndStageConnectionTransition(
+                    staging, next);
+
             if (Files.exists(target)) {
                 deleteRecursively(target);
             }
@@ -554,6 +560,67 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
              * rebuilds the same target under the exclusive Context lock.
              */
         }
+    }
+
+    /**
+     * Runs M3.8 qualification against the complete unpublished generation and
+     * pre-publishes a revision-aware connection transition.
+     *
+     * <p>The sidecar contains both source revisions before CURRENT advances.
+     * Therefore R continues to select its old certificates if publication
+     * stops or the process crashes, while R+1 already has a fully qualified
+     * vector waiting when the revision marker moves.</p>
+     */
+    private void qualifyAndStageConnectionTransition(
+            Path staging,
+            long next) throws Exception {
+        RevisionRef currentSource =
+                new RevisionRef(
+                        contextId, revision);
+        RevisionRef candidateSource =
+                new RevisionRef(
+                        contextId, next);
+
+        ConnectionVector currentConnections =
+                ConnectionStore.read(
+                        location, currentSource);
+
+        ContextCandidate candidate =
+                ContextCandidate.of(
+                        this, staging, next);
+        WriteCandidateQualification.Result qualification =
+                WriteCandidateQualification.qualify(
+                        candidate,
+                        currentConnections);
+
+        if (!candidateSource.equals(
+                qualification.getCandidate())) {
+            throw new IllegalStateException(
+                    "Qualified candidate identity mismatch: expected "
+                            + candidateSource
+                            + " found "
+                            + qualification.getCandidate());
+        }
+
+        ConnectionVector candidateConnections =
+                qualification.getConnections();
+        if (currentConnections.isEmpty()
+                && candidateConnections.isEmpty()) {
+            /*
+             * No operational metadata is required for a disconnected Context.
+             * Remove any obsolete transition sidecar left by an earlier
+             * interrupted lifecycle before publishing the disconnected R+1.
+             */
+            ConnectionStore.delete(location);
+            return;
+        }
+
+        ConnectionStore.writeTransition(
+                location,
+                currentSource,
+                currentConnections,
+                candidateSource,
+                candidateConnections);
     }
 
     @Override
