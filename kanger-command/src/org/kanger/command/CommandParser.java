@@ -437,14 +437,14 @@ public final class CommandParser {
                 requireSize(tokens, 3);
                 return CommandInvocation.command(
                         CommandIntent.CTX_DISCONNECT,
-                        args("ContextId", uuid(tokens.get(2).value)), raw);
+                        args("locator", tokens.get(2).value), raw);
             case SWITCH:
                 requireRequiredArgument(tokens, 3);
                 requireRequiredArgument(tokens, 4);
                 requireSize(tokens, 4);
                 Map<String, Object> arguments =
                         new LinkedHashMap<String, Object>();
-                arguments.put("ContextId", uuid(tokens.get(2).value));
+                arguments.put("locator", tokens.get(2).value);
                 arguments.put("RevisionId",
                         parseNonNegativeLong(
                                 tokens.get(3).value,
@@ -479,16 +479,6 @@ public final class CommandParser {
         return CommandInvocation.command(
                 CommandIntent.CTX_QUERY,
                 args("query", query), raw);
-    }
-
-    private String uuid(String value)
-            throws CommandParseException {
-        try {
-            return java.util.UUID.fromString(value).toString();
-        } catch (IllegalArgumentException failure) {
-            throw error(INVALID_ARGUMENT_SHAPE,
-                    "Invalid ContextId " + value);
-        }
     }
 
     private CommandInvocation parseStatus(String raw, List<Token> tokens)
