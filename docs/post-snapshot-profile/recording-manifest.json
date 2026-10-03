@@ -1,0 +1,21 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "base_tree": "b0a207803a5fa76690fe281181ef1a0444c7f849",
+  "java": "17.0.20",
+  "heap": "512 MB",
+  "all_eight_optimization_properties": "unset; defaults ON",
+  "natives_sha256": "bd0bac2c92badbf1b7f2396b434eda8d9d7c562ff4c09c5e4d790f30d9f5f8ed",
+  "recordings": [
+    {
+      "local_path": "../build/post-snapshot-1.jfr",
+      "size": 5609517,
+      "sha256": "8838bc6bce55e846af946727ffbfce5705099c3380f84651f1c7fef0e265d1f0"
+    },
+    {
+      "local_path": "../build/post-snapshot-2.jfr",
+      "size": 5392726,
+      "sha256": "e197525547d0f0cf57ce72c4a9dfd77150d358cea416ed600415f1ee0d8a4e2b"
+    }
+  ],
+  "stdout_normalization": "Trailing whitespace removed from JFR startup messages only; runner samples and logical texts unchanged."
+}

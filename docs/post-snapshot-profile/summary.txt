@@ -1,0 +1,21 @@
+PROFILE 1 warm_execution_samples 2344 allocation_weight_MB 19952.381456
+INCLUSIVE org.kanger.Mind.isUnitDeleted 466 sample_share=19.88%
+INCLUSIVE org.kanger.primitives.ArgumentsList.equalsBase 190 sample_share=8.11%
+INCLUSIVE org.kanger.units.Predicate.getName 154 sample_share=6.57%
+INCLUSIVE org.kanger.units.TVariable.activeMind 223 sample_share=9.51%
+ALLOCATION_WEIGHT org.kanger.units.Predicate.getName 3028894768 weight_share=15.18%
+ALLOCATION_WEIGHT org.kanger.storage.Escalera.find 0 weight_share=0.00%
+ALLOCATION_WEIGHT org.kanger.storage.Escalera.findCandidates 1126788480 weight_share=5.65%
+ALLOCATION_WEIGHT org.kanger.units.TVariable.setMind 446911280 weight_share=2.24%
+CURRENT_LOOKUP_SAMPLES 170 sample_share=7.25%
+PROFILE 2 warm_execution_samples 2367 allocation_weight_MB 19237.936472
+INCLUSIVE org.kanger.Mind.isUnitDeleted 455 sample_share=19.22%
+INCLUSIVE org.kanger.primitives.ArgumentsList.equalsBase 197 sample_share=8.32%
+INCLUSIVE org.kanger.units.Predicate.getName 202 sample_share=8.53%
+INCLUSIVE org.kanger.units.TVariable.activeMind 178 sample_share=7.52%
+ALLOCATION_WEIGHT org.kanger.units.Predicate.getName 2480011008 weight_share=12.89%
+ALLOCATION_WEIGHT org.kanger.storage.Escalera.find 1047392 weight_share=0.01%
+ALLOCATION_WEIGHT org.kanger.storage.Escalera.findCandidates 1100591080 weight_share=5.72%
+ALLOCATION_WEIGHT org.kanger.units.TVariable.setMind 445228944 weight_share=2.31%
+CURRENT_LOOKUP_SAMPLES 154 sample_share=6.51%
+PROFILE_HYPOTHESES_EQUAL samples=12 stderr=empty
