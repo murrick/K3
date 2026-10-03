@@ -1,0 +1,25 @@
+COMPILE_NS 577651289
+SAMPLE 0 query_ns=405553113 optimize_ns=9617360746 optimize_cpu_ns=9452577388 optimize_allocated_bytes=5532863448 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+SAMPLE 1 query_ns=276031219 optimize_ns=9614184920 optimize_cpu_ns=9438548666 optimize_allocated_bytes=5387572680 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+SAMPLE 2 query_ns=161575509 optimize_ns=8211660726 optimize_cpu_ns=8049863780 optimize_allocated_bytes=5387553712 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+SAMPLE 3 query_ns=123639281 optimize_ns=8146926986 optimize_cpu_ns=8009902508 optimize_allocated_bytes=5386806848 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+SAMPLE 4 query_ns=129246458 optimize_ns=8494489981 optimize_cpu_ns=8330213248 optimize_allocated_bytes=5386250208 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+SAMPLE 5 query_ns=131583843 optimize_ns=8631910478 optimize_cpu_ns=8467504481 optimize_allocated_bytes=5386261520 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080

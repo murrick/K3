@@ -1,0 +1,35 @@
+{
+  "code": "f866587c1c078d5be88f8be715faedecf7f70cf9",
+  "runs": [
+    {
+      "id": 37104504421,
+      "name": "Resident snapshots qualification",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37104504371,
+      "name": "KANGER distribution bundle",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37104504361,
+      "name": "KANGER Server",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37104504391,
+      "name": "KANGER CI",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37104504411,
+      "name": "KANGER qualification isolation",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ]
+}

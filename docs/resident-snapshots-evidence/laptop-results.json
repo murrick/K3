@@ -1,0 +1,49 @@
+{
+  "reported_at": "2026-10-03T10:24:59+03:00",
+  "accepted_at": "2026-10-03T10:26:26+03:00",
+  "source": "Rick laptop timings reported in conversation",
+  "branch": "experiment/3.8.0-resident-snapshots",
+  "snapshot_flag": {
+    "false": {
+      "08_02_seconds": [
+        3.135,
+        1.268,
+        1.239,
+        1.173
+      ],
+      "son_seconds": [
+        10.32,
+        8.48,
+        7.83,
+        7.45
+      ]
+    },
+    "true": {
+      "08_02_seconds": [
+        5.784,
+        1.307,
+        1.158,
+        1.159
+      ],
+      "son_seconds": [
+        9.41,
+        7.94,
+        7.32,
+        7.48
+      ]
+    }
+  },
+  "seven_prior_optimizations": "ON; residentBaseComparison omitted in vmArgs but defaults true",
+  "user_decision": "ок ) оставляем )",
+  "manual_semantic_checks": "No additional DB, transaction or collision outcomes reported in this laptop message.",
+  "08_02_seconds_warm": {
+    "off_median": 1.239,
+    "on_median": 1.159,
+    "time_reduction_percent": 6.456820016142051
+  },
+  "son_seconds_warm": {
+    "off_median": 7.83,
+    "on_median": 7.48,
+    "time_reduction_percent": 4.469987228607919
+  }
+}

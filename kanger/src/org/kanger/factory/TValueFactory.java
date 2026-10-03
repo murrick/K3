@@ -339,7 +339,7 @@ public class TValueFactory implements IFactory<TValue> {
 
     public TValue find(TVariable tv, ITerm v) throws Exception {
         TValue temp = new TValue(tv, v);
-        for (long id : cache.find(temp.getHash())) {
+        for (long id : Escalera.findCandidates(cache, temp.getHash())) {
             IUnit one = get(id);
             // Intentionally no deleted filter: canonical resurrection reuses the
             // existing TValue identity and clears its transaction deletion mark.

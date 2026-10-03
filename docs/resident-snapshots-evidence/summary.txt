@@ -1,0 +1,13 @@
+snapshot-1-reference.log wall_s=4.680 cpu_s=4.574 allocated_MB=5396.3
+snapshot-2-false.log wall_s=4.567 cpu_s=4.457 allocated_MB=5435.1
+snapshot-3-true.log wall_s=4.387 cpu_s=4.288 allocated_MB=4856.0
+snapshot-4-true.log wall_s=4.379 cpu_s=4.278 allocated_MB=4808.8
+snapshot-5-false.log wall_s=4.617 cpu_s=4.523 allocated_MB=5433.6
+snapshot-6-reference.log wall_s=4.711 cpu_s=4.600 allocated_MB=5384.4
+ON_vs_clean_forward wall_reduction=6.26% cpu_reduction=6.26% allocation_reduction=10.01%
+ON_vs_clean_reverse wall_reduction=7.05% cpu_reduction=7.01% allocation_reduction=10.69%
+ON_vs_OFF_forward wall_reduction=3.93% cpu_reduction=3.80% allocation_reduction=10.65%
+ON_vs_OFF_reverse wall_reduction=5.17% cpu_reduction=5.42% allocation_reduction=11.50%
+OFF_vs_clean_forward wall_reduction=2.42% cpu_reduction=2.56% allocation_reduction=-0.72%
+OFF_vs_clean_reverse wall_reduction=1.98% cpu_reduction=1.67% allocation_reduction=-0.91%
+ALL_RAW_AND_FINAL_TEXTS_EQUAL samples=36

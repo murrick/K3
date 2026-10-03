@@ -60,7 +60,7 @@ public final class CauseWeightShadowSafetyRunner {
         Set<ICause> expected = new HashSet<ICause>(Arrays.asList(one,three));
         require(domain.getCauses(mind).equals(expected), "remove minimum only, retain intermediate");
         require(domain.getCauses(mind).equals(expected), "memo hit");
-        if (Boolean.getBoolean("kanger.experiment.resolvedCauseWeights"))
+        if (Boolean.parseBoolean(System.getProperty("kanger.experiment.resolvedCauseWeights", "true")))
             require(CachedDomain.experimentalCauseWeightProfile()[5] > 0, "custom cause fallback");
         Predicate predicate = mind.getPredicates().add(mind.getTerms().add("p"), 3);
         Rule rule = new Rule(mind);
@@ -73,7 +73,7 @@ public final class CauseWeightShadowSafetyRunner {
         mind.getDomainCauses().put(real,realMap);
         long eligible = CachedDomain.experimentalCauseWeightProfile()[4];
         require(real.getCauses(mind).equals(new HashSet<ICause>(Arrays.asList(mid,high))), "real cause selection");
-        if (Boolean.getBoolean("kanger.experiment.resolvedCauseWeights"))
+        if (Boolean.parseBoolean(System.getProperty("kanger.experiment.resolvedCauseWeights", "true")))
             require(CachedDomain.experimentalCauseWeightProfile()[4] == eligible + 1, "fast guard eligible");
         System.out.println("CAUSE_WEIGHT_SHADOW_BOUNDARIES_PASS");
     }

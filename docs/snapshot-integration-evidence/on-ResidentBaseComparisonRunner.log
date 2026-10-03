@@ -1,0 +1,2 @@
+Picked up JAVA_TOOL_OPTIONS: -Xmx512m -Dbench.samples=2 -Dkanger.experiment.preserveTValueIndex=true -Dkanger.experiment.versionedSolveSync=true -Dkanger.experiment.resolvedCauseWeights=true -Dkanger.experiment.compactCauseWeights=true -Dkanger.experiment.candidateMembershipFilter=true -Dkanger.experiment.singleTValueLookup=true -Dkanger.experiment.residentBaseComparison=true -Dkanger.experiment.compactFindSnapshots=true
+RESIDENT_BASE_COMPARISON_OK checks=48 custom_reads=3

@@ -560,7 +560,7 @@ final class RuleCandidateIndex {
         try {
             selected = signatures.get(signature);
             if (selected.isEmpty()) return;
-            boolean membership = Boolean.getBoolean("kanger.experiment.candidateMembershipFilter");
+            boolean membership = Boolean.parseBoolean(System.getProperty("kanger.experiment.candidateMembershipFilter", "true"));
             boolean verify = membership && Boolean.getBoolean("kanger.experiment.verifyCandidateMembershipFilter");
             LinkedHashSet<Long> fallback = !membership || verify ? fallbackSignatures.get(signature) : null;
             for (int position = 0; position < resolvedTermIds.length; ++position) {

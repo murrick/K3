@@ -124,6 +124,24 @@ public class Argument implements IArgument {
         }
     }
 
+    /** Callback-free resident probe; null retains the full reference path. */
+    final Term residentBaseTerm(Mind mind) {
+        if (getClass() != Argument.class || o == null) return null;
+        if (type == ArgumentType.TERM) return o.getClass() == Term.class ? (Term) o : null;
+        if (type == ArgumentType.TVALUE) {
+            return o.getClass() == TValue.class ? ((TValue) o).peekBuiltinTerm() : null;
+        }
+        if (type != ArgumentType.TVARIABLE || o.getClass() != TVariable.class
+                || mind == null || mind.getClass() != Mind.class) return null;
+        TVariable variable = (TVariable) o;
+        // Only use the caller's context when it matches the thread-local view.
+        if (variable.getMind() != mind) return null;
+        org.kanger.factory.TValueFactory factory = mind.getTValues();
+        if (factory.getClass() != org.kanger.factory.TValueFactory.class) return null;
+        TValue value = factory.get(variable);
+        return value == null || value.getClass() != TValue.class ? null : value.peekBuiltinTerm();
+    }
+
     @Override
     public ITerm getValue(IMind mind) throws Exception {
         switch (type) {

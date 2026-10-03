@@ -1,0 +1,1 @@
+ALL_TIMING_HYPOTHESES_EQUAL samples=60 jvms=10 stderr=empty
