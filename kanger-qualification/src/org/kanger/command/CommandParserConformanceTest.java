@@ -331,8 +331,6 @@ public final class CommandParserConformanceTest {
     }
 
     private void contextFamily() throws Exception {
-        String a = "11111111-1111-1111-1111-111111111111";
-
         expect("ctx", CommandIntent.CTX_STATUS);
         expect("ct", CommandIntent.CTX_STATUS);
         expectArgument("ctx connect A", CommandIntent.CTX_CONNECT,
@@ -340,16 +338,19 @@ public final class CommandParserConformanceTest {
         expectArgument("ctx connect \"test context\"",
                 CommandIntent.CTX_CONNECT,
                 "locator", "test context");
-        expectArgument("ctx disconnect " + a,
+        expectArgument("ctx disconnect A",
                 CommandIntent.CTX_DISCONNECT,
-                "ContextId", a);
+                "locator", "A");
+        expectArgument("ctx disconnect \"test context\"",
+                CommandIntent.CTX_DISCONNECT,
+                "locator", "test context");
 
         CommandInvocation switched =
-                parser.parse("ctx switch " + a + " 7");
+                parser.parse("ctx switch A 7");
         check(switched.getIntent() == CommandIntent.CTX_SWITCH,
                 "ctx switch intent");
-        check(a.equals(switched.getArgument("ContextId")),
-                "ctx switch ContextId");
+        check("A".equals(switched.getArgument("locator")),
+                "ctx switch locator");
         check(Long.valueOf(7L).equals(
                         switched.getArgument("RevisionId")),
                 "ctx switch RevisionId");
@@ -364,11 +365,9 @@ public final class CommandParserConformanceTest {
 
         reject("ctx connect", MISSING_ARGUMENT);
         reject("ctx disconnect", MISSING_ARGUMENT);
-        reject("ctx disconnect not-a-uuid",
-                INVALID_ARGUMENT_SHAPE);
-        reject("ctx switch " + a,
+        reject("ctx switch A",
                 MISSING_ARGUMENT);
-        reject("ctx switch " + a + " -1",
+        reject("ctx switch A -1",
                 INVALID_ARGUMENT_SHAPE);
         reject("ctx query", MISSING_ARGUMENT);
         reject("ctx query male(Tom);",
@@ -536,9 +535,9 @@ public final class CommandParserConformanceTest {
                 "help contains reindex alias");
         check(help.contains("ctx connect <locator>"),
                 "help contains Context connect syntax");
-        check(help.contains("ctx disconnect <ContextId>"),
+        check(help.contains("ctx disconnect <locator>"),
                 "help contains Context disconnect syntax");
-        check(help.contains("ctx switch <ContextId> <RevisionId>"),
+        check(help.contains("ctx switch <locator> <RevisionId>"),
                 "help contains Context revision switch syntax");
         check(help.contains("ctx query <query...>"),
                 "help contains federated query diagnostic syntax");
