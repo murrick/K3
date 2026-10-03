@@ -119,6 +119,85 @@ public class ContextFederationOperatorTest {
                 mind.closeStorage());
     }
 
+    @Test
+    void federatedQueryProjectsTruthAndExactProvenance()
+            throws Exception {
+        ContextFixture x =
+                context("QX", "!anchor(X);");
+        ContextFixture a =
+                context("QA", "!male(Tom);");
+        ContextFixture b =
+                context("QB", "!~male(Tom);");
+
+        User user = new User();
+        user.setDatabaseDir(
+                root.toString() + File.separator);
+        DB data = new DB();
+        data.init(user);
+
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        mind = (Mind) mind.useStorage("QX");
+        user.setCurrentMind(mind);
+
+        IContextFederation federation = data;
+        federation.connectContext("QA");
+
+        IContextFederation.QueryResult positive =
+                federation.executeFederatedQuery(
+                        "?male(Tom);");
+        assertTrue(positive.isResolved());
+        assertEquals(1, positive.getObservations().size());
+        IContextFederation.FrontierObservation trueObservation =
+                positive.getObservations().get(0);
+        assertEquals(
+                IContextFederation.FrontierTruth.TRUE,
+                trueObservation.getTruth());
+        assertEquals(
+                a.contextId,
+                trueObservation.getTrueSources()
+                        .get(0).getContextId());
+        assertEquals(
+                a.revision,
+                trueObservation.getTrueSources()
+                        .get(0).getRevision());
+
+        federation.connectContext("QB");
+
+        IContextFederation.QueryResult conflict =
+                federation.executeFederatedQuery(
+                        "?male(Tom);");
+        assertFalse(conflict.isResolved());
+        assertEquals(1, conflict.getObservations().size());
+        IContextFederation.FrontierObservation conflictObservation =
+                conflict.getObservations().get(0);
+        assertEquals(
+                IContextFederation.FrontierTruth.CONFLICT,
+                conflictObservation.getTruth());
+        assertEquals(
+                a.contextId,
+                conflictObservation.getTrueSources()
+                        .get(0).getContextId());
+        assertEquals(
+                b.contextId,
+                conflictObservation.getFalseSources()
+                        .get(0).getContextId());
+        assertTrue(conflict.getProvisionalHypotheses().isEmpty());
+
+        IContextFederation.Snapshot snapshot =
+                federation.federationSnapshot();
+        assertEquals(
+                x.contextId,
+                snapshot.getSourceContextId());
+        assertEquals(
+                x.revision,
+                snapshot.getSourceRevision(),
+                "federated query must not publish foreign evidence");
+
+        user.setCurrentMind(
+                mind.closeStorage());
+    }
+
     private void advance(
             String name,
             String assertion) throws Exception {
