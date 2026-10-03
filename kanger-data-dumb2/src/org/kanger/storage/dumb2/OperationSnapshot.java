@@ -46,10 +46,10 @@ final class OperationSnapshot implements AutoCloseable {
         Map<UUID, ContextSnapshot> targets =
                 new LinkedHashMap<UUID, ContextSnapshot>();
         try {
-            ConnectionVector vector = ConnectionStore.read(
-                    sourceLocation, source.getContextId());
             RevisionRef sourceRef = new RevisionRef(
                     source.getContextId(), source.getRevision());
+            ConnectionVector vector = ConnectionStore.read(
+                    sourceLocation, sourceRef);
             for (ContextConnection connection
                     : vector.getConnections()) {
                 RevisionRef targetRef = connection.getTarget();

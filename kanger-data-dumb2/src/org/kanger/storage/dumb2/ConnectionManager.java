@@ -85,7 +85,7 @@ final class ConnectionManager {
 
             ConnectionVector vector = ConnectionStore.read(
                     sourceLocation,
-                    source.getContextId());
+                    source);
             ContextConnection connection =
                     new ContextConnection(
                             targetLocation,
@@ -93,7 +93,7 @@ final class ConnectionManager {
                             qualification.getCertificate());
             ConnectionStore.write(
                     sourceLocation,
-                    source.getContextId(),
+                    source,
                     vector.with(connection));
             return connection;
         } finally {
@@ -107,12 +107,15 @@ final class ConnectionManager {
         ContextSnapshot source =
                 ContextSnapshot.open(sourceLocation);
         try {
+            RevisionRef sourceRef = new RevisionRef(
+                    source.getContextId(),
+                    source.getRevision());
             ConnectionVector vector = ConnectionStore.read(
                     sourceLocation,
-                    source.getContextId());
+                    sourceRef);
             ConnectionStore.write(
                     sourceLocation,
-                    source.getContextId(),
+                    sourceRef,
                     vector.without(targetContextId));
         } finally {
             source.close();

@@ -161,6 +161,85 @@ public class OperationSnapshotTest {
         }
     }
 
+    @Test
+    void revisionAwareConnectionSidecarSwitchesOnlyWithSourceMarker()
+            throws Exception {
+        Path xLocation = root.resolve("XT");
+        Path aLocation = root.resolve("AT");
+
+        ContextStore x = ContextStore.create(xLocation);
+        ContextStore a = ContextStore.create(aLocation);
+        try {
+            IBase xBase = x.getBase("index");
+            xBase.add(step(0L, 11, Long.valueOf(100L), null));
+            assertEquals(1L, x.flush());
+
+            a.getBase("index").add(
+                    step(0L, 21, Long.valueOf(10L), null));
+            assertEquals(1L, a.flush());
+
+            RevisionRef xR1 =
+                    new RevisionRef(x.getContextId(), 1L);
+            RevisionRef xR2 =
+                    new RevisionRef(x.getContextId(), 2L);
+            RevisionRef aR1 =
+                    new RevisionRef(a.getContextId(), 1L);
+
+            ConnectionVector r1 = new ConnectionVector(
+                    Arrays.asList(new ContextConnection(
+                            aLocation,
+                            aR1,
+                            new CompatibilityCertificate(
+                                    xR1,
+                                    aR1,
+                                    Version.CORE_VERSION_S))));
+            ConnectionVector r2 = new ConnectionVector(
+                    Arrays.asList(new ContextConnection(
+                            aLocation,
+                            aR1,
+                            new CompatibilityCertificate(
+                                    xR2,
+                                    aR1,
+                                    Version.CORE_VERSION_S))));
+
+            ConnectionStore.writeTransition(
+                    xLocation,
+                    xR1,
+                    r1,
+                    xR2,
+                    r2);
+
+            OperationSnapshot before =
+                    OperationSnapshot.open(xLocation);
+            try {
+                assertEquals(xR1, before.getSourceRef());
+                assertEquals(r1, before.getConnections(),
+                        "candidate connection vector must not leak before R2 publication");
+            } finally {
+                before.close();
+            }
+
+            Step previous = step(
+                    0L, 11, Long.valueOf(100L), null);
+            xBase.add(step(
+                    1L, 12, Long.valueOf(200L), previous));
+            assertEquals(2L, x.flush());
+
+            OperationSnapshot after =
+                    OperationSnapshot.open(xLocation);
+            try {
+                assertEquals(xR2, after.getSourceRef());
+                assertEquals(r2, after.getConnections(),
+                        "R2 publication must select the prequalified R2 vector");
+            } finally {
+                after.close();
+            }
+        } finally {
+            a.close();
+            x.close();
+        }
+    }
+
     private static Step step(long id,
                              int hash,
                              Object data,
