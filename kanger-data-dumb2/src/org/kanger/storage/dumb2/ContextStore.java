@@ -574,6 +574,20 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
     private void qualifyAndStageConnectionTransition(
             Path staging,
             long next) throws Exception {
+        /*
+         * DUMB2 is also exercised as a low-level self-describing storage
+         * substrate (codec/reindex/mixed-layout tests). Semantic federation
+         * qualification belongs only to Contexts that actually participate in
+         * a direct ConnectionVector. A disconnected Context retains the
+         * historical Core transaction qualification path and must not be
+         * reinterpreted here as a second semantic runtime.
+         */
+        Path connectionsPath =
+                ConnectionStore.path(location);
+        if (!Files.exists(connectionsPath)) {
+            return;
+        }
+
         RevisionRef currentSource =
                 new RevisionRef(
                         contextId, revision);
@@ -584,6 +598,10 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         ConnectionVector currentConnections =
                 ConnectionStore.read(
                         location, currentSource);
+        if (currentConnections.isEmpty()) {
+            ConnectionStore.delete(location);
+            return;
+        }
 
         ContextCandidate candidate =
                 ContextCandidate.of(
@@ -604,16 +622,6 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
         ConnectionVector candidateConnections =
                 qualification.getConnections();
-        if (currentConnections.isEmpty()
-                && candidateConnections.isEmpty()) {
-            /*
-             * No operational metadata is required for a disconnected Context.
-             * Remove any obsolete transition sidecar left by an earlier
-             * interrupted lifecycle before publishing the disconnected R+1.
-             */
-            ConnectionStore.delete(location);
-            return;
-        }
 
         ConnectionStore.writeTransition(
                 location,
