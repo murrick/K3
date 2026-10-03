@@ -116,10 +116,10 @@ public final class CommandFormatter {
             case CTX_CONNECT:
                 return "ctx connect " + argument(invocation.getArgument("locator"));
             case CTX_DISCONNECT:
-                return "ctx disconnect " + argument(invocation.getArgument("ContextId"));
+                return "ctx disconnect " + argument(invocation.getArgument("locator"));
             case CTX_SWITCH:
                 return "ctx switch "
-                        + argument(invocation.getArgument("ContextId"))
+                        + argument(invocation.getArgument("locator"))
                         + " " + number(invocation, "RevisionId");
             case CTX_QUERY:
                 return "ctx query " + rawQuery(invocation.getArgument("query"));
