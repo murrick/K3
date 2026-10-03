@@ -397,6 +397,88 @@ public final class DB implements IData, IContextFederation {
                 certificate.getSemanticVersion());
     }
 
+    @Override
+    public synchronized IContextFederation.QueryResult executeFederatedQuery(
+            String querySource) throws Exception {
+        requireOpen();
+
+        FrontierContinuationEngine.Result result =
+                FrontierContinuationEngine.execute(
+                        context.getLocation(),
+                        querySource);
+
+        ArrayList<IContextFederation.FrontierObservation> observations =
+                new ArrayList<IContextFederation.FrontierObservation>();
+        for (FrontierContinuationEngine.FrontierObservation observation
+                : result.getObservations()) {
+            FrontierAggregate aggregate =
+                    observation.getAggregate();
+            observations.add(
+                    new IContextFederation.FrontierObservation(
+                            observation.getWave(),
+                            observation.getQuerySource(),
+                            projectTruth(aggregate.getTruth()),
+                            projectRevisions(
+                                    aggregate.getTrueSources()),
+                            projectRevisions(
+                                    aggregate.getFalseSources()),
+                            projectRevisions(
+                                    aggregate.getUnknownSources())));
+        }
+
+        ArrayList<IContextFederation.ProvisionalHypothesis> hypotheses =
+                new ArrayList<IContextFederation.ProvisionalHypothesis>();
+        for (FrontierAggregate.ProvisionalHypothesis hypothesis
+                : result.getProvisionalHypotheses()) {
+            hypotheses.add(
+                    new IContextFederation.ProvisionalHypothesis(
+                            projectRevision(
+                                    hypothesis.getSource()),
+                            hypothesis.getStatement()));
+        }
+
+        return new IContextFederation.QueryResult(
+                result.isResolved(),
+                result.getWaves(),
+                result.getEvidenceCount(),
+                observations,
+                hypotheses);
+    }
+
+    private IContextFederation.FrontierTruth projectTruth(
+            FrontierAggregate.Truth truth) {
+        switch (truth) {
+            case TRUE:
+                return IContextFederation.FrontierTruth.TRUE;
+            case FALSE:
+                return IContextFederation.FrontierTruth.FALSE;
+            case UNKNOWN:
+                return IContextFederation.FrontierTruth.UNKNOWN;
+            case CONFLICT:
+                return IContextFederation.FrontierTruth.CONFLICT;
+            default:
+                throw new IllegalStateException(
+                        "Unsupported frontier truth: " + truth);
+        }
+    }
+
+    private ArrayList<IContextFederation.Revision> projectRevisions(
+            Collection<RevisionRef> source) {
+        ArrayList<IContextFederation.Revision> result =
+                new ArrayList<IContextFederation.Revision>();
+        for (RevisionRef ref : source) {
+            result.add(projectRevision(ref));
+        }
+        return result;
+    }
+
+    private IContextFederation.Revision projectRevision(
+            RevisionRef ref) {
+        return new IContextFederation.Revision(
+                ref.getContextId(),
+                ref.getRevision());
+    }
+
     private Path resolveFederationLocator(
             String locator) throws CommandErrorException {
         if (locator == null || locator.trim().isEmpty()) {
