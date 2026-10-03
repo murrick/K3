@@ -28,6 +28,7 @@ public final class CommandRegistry {
 
     public enum Family {
         BASE,
+        CONTEXT,
         DELETE,
         ERASE,
         FUNCTION,
@@ -60,8 +61,12 @@ public final class CommandRegistry {
         ACCEPT,
         START,
         COMMIT,
+        CONNECT,
+        DISCONNECT,
+        QUERY,
         ROLLBACK,
         SQUASH,
+        SWITCH,
         USE,
         CLOSE,
         DROP,
@@ -146,6 +151,7 @@ public final class CommandRegistry {
 
     static {
         family(Family.BASE, "base");
+        family(Family.CONTEXT, "ctx");
         family(Family.DELETE, "delete");
         family(Family.ERASE, "erase");
         family(Family.FUNCTION, "function", "functions");
@@ -191,6 +197,11 @@ public final class CommandRegistry {
         keyword(Family.STORAGE, Keyword.CLOSE, "close");
         keyword(Family.STORAGE, Keyword.DROP, "drop");
         keyword(Family.STORAGE, Keyword.REINDEX, "reindex");
+
+        keyword(Family.CONTEXT, Keyword.CONNECT, "connect");
+        keyword(Family.CONTEXT, Keyword.DISCONNECT, "disconnect");
+        keyword(Family.CONTEXT, Keyword.SWITCH, "switch");
+        keyword(Family.CONTEXT, Keyword.QUERY, "query");
 
         keyword(Family.STATUS, Keyword.CORE, "core");
         keyword(Family.STATUS, Keyword.OBJECTS, "objects");
@@ -289,6 +300,23 @@ public final class CommandRegistry {
                 args("name", "Storage logical name."), aliases("drop <name>"), n++);
         define(CommandIntent.STORAGE_REINDEX, "storage reindex <name>", "STORAGE", "Reindex one explicitly named storage.",
                 args("name", "Storage logical name."), aliases("reindex <name>"), n++);
+
+        define(CommandIntent.CTX_STATUS, "ctx", "CONTEXT",
+                "Show direct exact-revision Context federation connections.",
+                noArgs(), n++);
+        define(CommandIntent.CTX_CONNECT, "ctx connect <locator>", "CONTEXT",
+                "Qualify and connect one direct Context at its current exact revision.",
+                args("locator", "Context locator or DUMB2 logical storage name."), n++);
+        define(CommandIntent.CTX_DISCONNECT, "ctx disconnect <ContextId>", "CONTEXT",
+                "Disconnect one direct Context by external ContextId.",
+                args("ContextId", "Target Context UUID."), n++);
+        define(CommandIntent.CTX_SWITCH, "ctx switch <ContextId> <RevisionId>", "CONTEXT",
+                "Deliberately requalify and repin one direct Context to an exact revision.",
+                args("ContextId", "Target Context UUID.",
+                        "RevisionId", "Exact target revision."), n++);
+        define(CommandIntent.CTX_QUERY, "ctx query <query...>", "CONTEXT",
+                "Execute one operation-local federated query for M3 diagnostics.",
+                args("query", "KANGER query beginning with ?."), n++);
 
         define(CommandIntent.STATUS,
                 "status [core [objects|transaction|levels]|storage|session|runtime]",
