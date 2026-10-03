@@ -1,0 +1,19 @@
+{
+  "base": "3a2a6f0bccac11ac0d646178c4384ba73d7a5260",
+  "code": "f866587c1c078d5be88f8be715faedecf7f70cf9",
+  "java": "17.0.20",
+  "reference_classpath": "../build/defaults-classes",
+  "experiment_classpath": "../build/resident-snapshots-classes",
+  "natives_sha256": "bd0bac2c92badbf1b7f2396b434eda8d9d7c562ff4c09c5e4d790f30d9f5f8ed",
+  "runner_bytecode_equal": true,
+  "predicate_bytecode_equal": true,
+  "changed_class_files": [
+    "org/kanger/storage/Escalera$WalkIterator.class",
+    "org/kanger/storage/Escalera.class",
+    "org/kanger/factory/RuleFactory.class",
+    "org/kanger/factory/TValueFactory.class"
+  ],
+  "walk_iterator_difference": "line numbers only",
+  "reference_has_prototype_flags": false,
+  "name_prototype_absent": true
+}
