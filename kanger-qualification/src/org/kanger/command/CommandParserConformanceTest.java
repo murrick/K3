@@ -451,6 +451,8 @@ public final class CommandParserConformanceTest {
         expectCanonical("re demo", "storage reindex demo");
         expectCanonical("ct", "ctx");
         expectCanonical("ctx connect A", "ctx connect A");
+        expectCanonical("ctx disconnect B", "ctx disconnect B");
+        expectCanonical("ctx switch A 1", "ctx switch A 1");
         expectCanonical("ctx query ?$x son(John, x);",
                 "ctx query ?$x son(John, x);");
         expectCanonical("g", "get");
