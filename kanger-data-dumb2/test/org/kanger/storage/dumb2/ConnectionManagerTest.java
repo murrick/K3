@@ -163,10 +163,11 @@ public class ConnectionManagerTest {
         mind = (Mind) mind.useStorage(
                 x.location.getFileName().toString());
         user.setCurrentMind(mind);
+        final Mind active = mind;
 
         assertThrows(
                 Exception.class,
-                () -> mind.query(
+                () -> active.query(
                         "!female(Jane);",
                         null,
                         false));
