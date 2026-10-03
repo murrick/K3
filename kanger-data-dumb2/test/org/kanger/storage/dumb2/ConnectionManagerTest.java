@@ -347,6 +347,50 @@ public class ConnectionManagerTest {
         }
     }
 
+    @Test
+    void revisionSwitchDoesNotFreezeOnPreExistingCombinedConflict()
+            throws Exception {
+        ContextFixture x =
+                context("XSP", "!anchor(X);");
+        ContextFixture a =
+                context("ASP", "!male(Tom);");
+        ContextFixture b =
+                context("BSP", "!~male(Tom);");
+
+        ConnectionManager.connect(
+                x.location, a.location);
+        ConnectionManager.connect(
+                x.location, b.location);
+
+        advance(
+                a,
+                "!female(Jane);");
+
+        ContextConnection switched =
+                ConnectionManager.switchRevision(
+                        x.location,
+                        a.contextId,
+                        a.revision + 1L);
+        assertEquals(
+                a.revision + 1L,
+                switched.getTarget().getRevision());
+
+        OperationSnapshot updated =
+                OperationSnapshot.open(x.location);
+        try {
+            assertEquals(
+                    a.revision + 1L,
+                    updated.getTarget(
+                            a.contextId).getRevision());
+            assertEquals(
+                    b.revision,
+                    updated.getTarget(
+                            b.contextId).getRevision());
+        } finally {
+            updated.close();
+        }
+    }
+
     private void advance(
             ContextFixture fixture,
             String assertion) throws Exception {

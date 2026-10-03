@@ -189,12 +189,27 @@ final class ConnectionManager {
         ConnectionVector candidate =
                 original.with(replacement);
 
-        if (!PairQualification.qualifyComposition(
-                sourceLocation,
-                sourceRef.getRevision(),
-                candidate)) {
+        /*
+         * Direct Contexts are autonomous truth sources. A conflict already
+         * present in the current vector is a legal federation observation and
+         * must not freeze unrelated revision movement. Reject only a switch
+         * that turns a previously composition-compatible vector into an
+         * incompatible one.
+         */
+        boolean originalCompositionCompatible =
+                PairQualification.qualifyComposition(
+                        sourceLocation,
+                        sourceRef.getRevision(),
+                        original);
+        boolean candidateCompositionCompatible =
+                PairQualification.qualifyComposition(
+                        sourceLocation,
+                        sourceRef.getRevision(),
+                        candidate);
+        if (originalCompositionCompatible
+                && !candidateCompositionCompatible) {
             throw conflict(
-                    "Requested Context revision fails direct multi-context composition qualification: "
+                    "Requested Context revision introduces a direct multi-context composition conflict: "
                             + requestedTarget);
         }
 

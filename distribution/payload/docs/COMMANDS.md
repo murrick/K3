@@ -447,11 +447,15 @@ foreign evidence because such evidence is operation-local.
 ### `ctx switch <ContextId> <RevisionId>`
 
 Deliberately attempts to repin one existing direct connection to the requested
-exact target revision. The switch performs the existing pair and direct
-multi-Context composition qualification before replacing the pin.
+exact target revision. The requested target is pair-qualified against the
+source Context. Direct-composition validity is then compared before and after
+the proposed repin: a switch that turns a previously compatible composition
+into an incompatible one is rejected.
 
-If qualification fails, the old pin remains authoritative. There is no
-`FOLLOW_HEAD` mode.
+An already-existing conflict between autonomous direct Contexts does not freeze
+an unrelated revision move; such foreign truth conflicts remain observable as
+`CONFLICT` through `ctx query`. If qualification fails, the old pin remains
+authoritative. There is no `FOLLOW_HEAD` mode.
 
 ### `ctx query <query...>`
 

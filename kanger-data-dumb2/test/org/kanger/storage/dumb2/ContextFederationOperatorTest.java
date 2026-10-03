@@ -186,6 +186,39 @@ public class ContextFederationOperatorTest {
                         .get(0).getContextId());
         assertTrue(conflict.getProvisionalHypotheses().isEmpty());
 
+        /*
+         * A pre-existing foreign truth conflict must not freeze an unrelated
+         * exact-revision move. This is the operator-level regression for the
+         * manual-soak path A@1/B@1 -> A@2/B@1.
+         */
+        advance("QA", "!female(Jane);");
+
+        IContextFederation.Connection switched =
+                federation.switchContextRevision(
+                        a.contextId,
+                        a.revision + 1L);
+        assertEquals(
+                a.revision + 1L,
+                switched.getPinnedRevision());
+
+        IContextFederation.QueryResult conflictAfterSwitch =
+                federation.executeFederatedQuery(
+                        "?male(Tom);");
+        assertFalse(conflictAfterSwitch.isResolved());
+        IContextFederation.FrontierObservation switchedObservation =
+                conflictAfterSwitch.getObservations().get(0);
+        assertEquals(
+                IContextFederation.FrontierTruth.CONFLICT,
+                switchedObservation.getTruth());
+        assertEquals(
+                a.revision + 1L,
+                switchedObservation.getTrueSources()
+                        .get(0).getRevision());
+        assertEquals(
+                b.revision,
+                switchedObservation.getFalseSources()
+                        .get(0).getRevision());
+
         IContextFederation.Snapshot snapshot =
                 federation.federationSnapshot();
         assertEquals(
