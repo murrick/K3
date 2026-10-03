@@ -419,14 +419,17 @@ is unchanged.
 
 Shows the current Context identity/revision and its direct connections.
 
+The Console projection uses human-readable Context locators/storage names.
+Internal `ContextId` UUIDs remain authoritative identity in the semantic
+model and structured API, but are not required for normal operator work.
+
 For each connection the projection includes:
 
-- external target `ContextId`;
+- target locator/storage name;
 - exact pinned `RevisionId`;
 - pin policy `EXACT_REVISION`;
 - compatibility/certificate state;
-- target `CURRENT` revision when it differs from the pin;
-- the target locator.
+- target `CURRENT` revision when it differs from the pin.
 
 A newer target `CURRENT` is informational only. It never moves the existing
 pin automatically.
@@ -438,13 +441,13 @@ and creates the direct connection only if qualification succeeds.
 
 For local DUMB2 operation, a logical storage name may be used as the locator.
 
-### `ctx disconnect <ContextId>`
+### `ctx disconnect <locator>`
 
-Removes one direct connection by external Context UUID. Disconnecting does not
-rewrite local knowledge and does not require cleanup of previously queried
-foreign evidence because such evidence is operation-local.
+Removes one direct connection by its operator-visible locator/storage name.
+Disconnecting does not rewrite local knowledge and does not require cleanup of
+previously queried foreign evidence because such evidence is operation-local.
 
-### `ctx switch <ContextId> <RevisionId>`
+### `ctx switch <locator> <RevisionId>`
 
 Deliberately attempts to repin one existing direct connection to the requested
 exact target revision. The requested target is pair-qualified against the
@@ -472,7 +475,8 @@ ctx query ?$x son(John, x);
 
 The projection reports resolved/unresolved state, federation waves, aggregate
 `TRUE`/`FALSE`/`UNKNOWN`/`CONFLICT` observations, exact source
-Context/revision provenance, and provisional foreign hypotheses when present.
+Context/revision provenance using human-readable locators, and provisional
+foreign hypotheses when present.
 
 This command does not change ordinary bare `?...` query semantics. Foreign
 evidence used by the diagnostic operation remains ephemeral and is not
