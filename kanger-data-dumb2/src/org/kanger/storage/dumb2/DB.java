@@ -283,6 +283,7 @@ public final class DB implements IData, IContextFederation {
                         sourceRef, connection));
             }
             return new IContextFederation.Snapshot(
+                    storageName,
                     sourceRef.getContextId(),
                     sourceRef.getRevision(),
                     connections);
@@ -308,11 +309,27 @@ public final class DB implements IData, IContextFederation {
 
     @Override
     public synchronized void disconnectContext(
+            String targetLocator) throws Exception {
+        disconnectContext(
+                connectedContextId(targetLocator));
+    }
+
+    @Override
+    public synchronized void disconnectContext(
             java.util.UUID targetContextId) throws Exception {
         requireOpen();
         ConnectionManager.disconnect(
                 context.getLocation(),
                 targetContextId);
+    }
+
+    @Override
+    public synchronized IContextFederation.Connection switchContextRevision(
+            String targetLocator,
+            long targetRevision) throws Exception {
+        return switchContextRevision(
+                connectedContextId(targetLocator),
+                targetRevision);
     }
 
     @Override
@@ -477,6 +494,34 @@ public final class DB implements IData, IContextFederation {
         return new IContextFederation.Revision(
                 ref.getContextId(),
                 ref.getRevision());
+    }
+
+    private java.util.UUID connectedContextId(
+            String targetLocator) throws Exception {
+        requireOpen();
+        Path requested =
+                resolveFederationLocator(targetLocator);
+        RevisionRef sourceRef =
+                new RevisionRef(
+                        context.getContextId(),
+                        context.getRevision());
+        ConnectionVector vector =
+                ConnectionStore.read(
+                        context.getLocation(),
+                        sourceRef);
+        for (ContextConnection connection
+                : vector.getConnections()) {
+            Path target =
+                    connection.getTargetLocation()
+                            .toAbsolutePath().normalize();
+            if (requested.equals(target)) {
+                return connection.getTarget()
+                        .getContextId();
+            }
+        }
+        throw new CommandErrorException(
+                "No direct Context connection exists for locator "
+                        + targetLocator);
     }
 
     private Path resolveFederationLocator(
