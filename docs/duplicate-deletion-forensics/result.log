@@ -1,0 +1,7 @@
+CASE stable-builtins reference=1 single=1 reference_callbacks=0 single_callbacks=0
+CASE argument-second-true reference=0 single=1 reference_callbacks=2 single_callbacks=1
+CASE argument-second-throw reference=-1 single=1 reference_callbacks=2 single_callbacks=1
+CASE parent-marks-child reference=0 single=1 reference_callbacks=1 single_callbacks=1
+CASE exact-builtins-set-second-true reference=0 single=1 reference_callbacks=2 single_callbacks=1
+CASE exact-builtins-set-second-throw reference=-1 single=1 reference_callbacks=2 single_callbacks=1
+DUPLICATE_DELETION_FORENSICS_OK scenarios=6 divergent=5 checks=40

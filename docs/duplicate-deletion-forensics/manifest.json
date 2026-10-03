@@ -1,0 +1,12 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "java": "17.0.20",
+  "target": "Java8",
+  "flags": "all eight unset/default ON",
+  "scenarios": 6,
+  "divergent": 5,
+  "checks": 40,
+  "stderr_empty": true,
+  "production_unchanged": true,
+  "classification": "simple coalescing deferred; no claim that all stronger guards are impossible"
+}
