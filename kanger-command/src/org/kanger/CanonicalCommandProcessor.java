@@ -11,10 +11,13 @@ import org.kanger.enums.Enums;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IContextFederation;
+import org.kanger.interfaces.internal.IData;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Transport-neutral semantic execution boundary for canonical KANGER commands.
@@ -46,7 +49,12 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.STORAGE_USE
                 || intent == CommandIntent.STORAGE_CLOSE
                 || intent == CommandIntent.STORAGE_DROP
-                || intent == CommandIntent.STORAGE_REINDEX;
+                || intent == CommandIntent.STORAGE_REINDEX
+                || intent == CommandIntent.CTX_STATUS
+                || intent == CommandIntent.CTX_CONNECT
+                || intent == CommandIntent.CTX_DISCONNECT
+                || intent == CommandIntent.CTX_SWITCH
+                || intent == CommandIntent.CTX_QUERY;
     }
 
     public Result execute(CommandInvocation invocation, IUser user) throws Exception {
@@ -165,9 +173,96 @@ public final class CanonicalCommandProcessor {
                         "Database reindexed",
                         storageStatus(mind));
 
+            case CTX_STATUS: {
+                IContextFederation federation =
+                        contextFederation(user, mind);
+                return Result.successFederation(
+                        mind, "",
+                        federation.federationSnapshot(), null);
+            }
+
+            case CTX_CONNECT: {
+                IContextFederation federation =
+                        contextFederation(user, mind);
+                IContextFederation.Connection connection =
+                        federation.connectContext(String.valueOf(
+                                invocation.getArgument("locator")));
+                return Result.successFederation(
+                        mind,
+                        "Context connected: "
+                                + connection.getTargetContextId()
+                                + "@"
+                                + connection.getPinnedRevision(),
+                        federation.federationSnapshot(), null);
+            }
+
+            case CTX_DISCONNECT: {
+                IContextFederation federation =
+                        contextFederation(user, mind);
+                UUID contextId = UUID.fromString(String.valueOf(
+                        invocation.getArgument("ContextId")));
+                federation.disconnectContext(contextId);
+                return Result.successFederation(
+                        mind,
+                        "Context disconnected: " + contextId,
+                        federation.federationSnapshot(), null);
+            }
+
+            case CTX_SWITCH: {
+                IContextFederation federation =
+                        contextFederation(user, mind);
+                UUID contextId = UUID.fromString(String.valueOf(
+                        invocation.getArgument("ContextId")));
+                long revision = ((Number) invocation.getArgument(
+                        "RevisionId")).longValue();
+                IContextFederation.Connection connection =
+                        federation.switchContextRevision(
+                                contextId, revision);
+                return Result.successFederation(
+                        mind,
+                        "Context pin switched: "
+                                + connection.getTargetContextId()
+                                + "@"
+                                + connection.getPinnedRevision(),
+                        federation.federationSnapshot(), null);
+            }
+
+            case CTX_QUERY: {
+                IContextFederation federation =
+                        contextFederation(user, mind);
+                IContextFederation.QueryResult query =
+                        federation.executeFederatedQuery(
+                                String.valueOf(
+                                        invocation.getArgument("query")));
+                return Result.successFederation(
+                        mind,
+                        query.isResolved()
+                                ? "Federated query resolved"
+                                : "Federated query unresolved",
+                        federation.federationSnapshot(), query);
+            }
+
             default:
                 return Result.unhandled(mind);
         }
+    }
+
+    private IContextFederation contextFederation(
+            IUser user, IMind mind) throws Exception {
+        if (!mind.isStorageUsed()) {
+            throw new org.kanger.exception.CommandErrorException(
+                    "No storage is open");
+        }
+        if (!(user instanceof User)) {
+            throw new org.kanger.exception.CommandErrorException(
+                    "Context federation requires the canonical User runtime");
+        }
+        IData data = ((User) user).getData();
+        if (!(data instanceof IContextFederation)) {
+            throw new org.kanger.exception.CommandErrorException(
+                    "Current storage does not support Context federation");
+        }
+        return (IContextFederation) data;
     }
 
     private Result canonicalStatus(CommandInvocation invocation,
@@ -500,6 +595,8 @@ public final class CanonicalCommandProcessor {
         private final StorageStatus storageStatus;
         private final Rejection rejection;
         private final TransactionStatus transactionStatus;
+        private final IContextFederation.Snapshot federationSnapshot;
+        private final IContextFederation.QueryResult federationQueryResult;
 
         private Result(boolean handled,
                        boolean success,
@@ -508,6 +605,20 @@ public final class CanonicalCommandProcessor {
                        StorageStatus storageStatus,
                        Rejection rejection,
                        TransactionStatus transactionStatus) {
+            this(handled, success, mind, description,
+                    storageStatus, rejection, transactionStatus,
+                    null, null);
+        }
+
+        private Result(boolean handled,
+                       boolean success,
+                       IMind mind,
+                       String description,
+                       StorageStatus storageStatus,
+                       Rejection rejection,
+                       TransactionStatus transactionStatus,
+                       IContextFederation.Snapshot federationSnapshot,
+                       IContextFederation.QueryResult federationQueryResult) {
             this.handled = handled;
             this.success = success;
             this.mind = mind;
@@ -515,6 +626,8 @@ public final class CanonicalCommandProcessor {
             this.storageStatus = storageStatus;
             this.rejection = rejection;
             this.transactionStatus = transactionStatus;
+            this.federationSnapshot = federationSnapshot;
+            this.federationQueryResult = federationQueryResult;
         }
 
         private static Result unhandled(IMind mind) {
@@ -536,6 +649,17 @@ public final class CanonicalCommandProcessor {
                                                  TransactionStatus transactionStatus) {
             return new Result(true, true, mind, description, null, null,
                     transactionStatus);
+        }
+
+        private static Result successFederation(
+                IMind mind,
+                String description,
+                IContextFederation.Snapshot federationSnapshot,
+                IContextFederation.QueryResult federationQueryResult) {
+            return new Result(
+                    true, true, mind, description,
+                    null, null, null,
+                    federationSnapshot, federationQueryResult);
         }
 
         private static Result rejected(IMind mind, String description) {
@@ -576,6 +700,14 @@ public final class CanonicalCommandProcessor {
 
         public TransactionStatus getTransactionStatus() {
             return transactionStatus;
+        }
+
+        public IContextFederation.Snapshot getFederationSnapshot() {
+            return federationSnapshot;
+        }
+
+        public IContextFederation.QueryResult getFederationQueryResult() {
+            return federationQueryResult;
         }
     }
 }
