@@ -31,13 +31,19 @@ public interface IContextFederation {
 
     final class Snapshot {
 
+        private final String sourceLocator;
         private final UUID sourceContextId;
         private final long sourceRevision;
         private final List<Connection> connections;
 
-        public Snapshot(UUID sourceContextId,
+        public Snapshot(String sourceLocator,
+                        UUID sourceContextId,
                         long sourceRevision,
                         List<Connection> connections) {
+            if (sourceLocator == null || sourceLocator.trim().isEmpty()) {
+                throw new IllegalArgumentException(
+                        "sourceLocator must not be blank");
+            }
             if (sourceContextId == null) {
                 throw new NullPointerException("sourceContextId");
             }
@@ -48,10 +54,15 @@ public interface IContextFederation {
             if (connections == null) {
                 throw new NullPointerException("connections");
             }
+            this.sourceLocator = sourceLocator.trim();
             this.sourceContextId = sourceContextId;
             this.sourceRevision = sourceRevision;
             this.connections = Collections.unmodifiableList(
                     new ArrayList<Connection>(connections));
+        }
+
+        public String getSourceLocator() {
+            return sourceLocator;
         }
 
         public UUID getSourceContextId() {
@@ -349,8 +360,15 @@ public interface IContextFederation {
     Connection connectContext(String targetLocator)
             throws Exception;
 
+    void disconnectContext(String targetLocator)
+            throws Exception;
+
     void disconnectContext(UUID targetContextId)
             throws Exception;
+
+    Connection switchContextRevision(
+            String targetLocator,
+            long targetRevision) throws Exception;
 
     Connection switchContextRevision(
             UUID targetContextId,
