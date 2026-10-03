@@ -203,6 +203,174 @@ public class ConnectionManagerTest {
         }
     }
 
+    @Test
+    void deliberateRevisionSwitchAffectsOnlyFutureOperations()
+            throws Exception {
+        ContextFixture x =
+                context("XS", "!anchor(X);");
+        ContextFixture a =
+                context("AS", "!male(Tom);");
+
+        ConnectionManager.connect(
+                x.location, a.location);
+
+        OperationSnapshot running =
+                OperationSnapshot.open(x.location);
+        try {
+            assertEquals(
+                    a.revision,
+                    running.getTarget(
+                            a.contextId).getRevision());
+
+            advance(
+                    a,
+                    "!female(Jane);");
+
+            OperationSnapshot stillPinned =
+                    OperationSnapshot.open(x.location);
+            try {
+                assertEquals(
+                        a.revision,
+                        stillPinned.getTarget(
+                                a.contextId).getRevision(),
+                        "target CURRENT advance must not imply FOLLOW_HEAD");
+            } finally {
+                stillPinned.close();
+            }
+
+            ContextConnection switched =
+                    ConnectionManager.switchRevision(
+                            x.location,
+                            a.contextId,
+                            a.revision + 1L);
+            assertEquals(
+                    a.revision + 1L,
+                    switched.getTarget().getRevision());
+
+            OperationSnapshot next =
+                    OperationSnapshot.open(x.location);
+            try {
+                assertEquals(
+                        a.revision + 1L,
+                        next.getTarget(
+                                a.contextId).getRevision());
+                assertEquals(
+                        x.revision,
+                        next.getSourceRef().getRevision(),
+                        "target repin must not advance source revision");
+            } finally {
+                next.close();
+            }
+
+            assertEquals(
+                    a.revision,
+                    running.getTarget(
+                            a.contextId).getRevision(),
+                    "running operation must retain old target snapshot");
+        } finally {
+            running.close();
+        }
+    }
+
+    @Test
+    void incompatibleRevisionSwitchLeavesOriginalPinUntouched()
+            throws Exception {
+        ContextFixture x =
+                context("XSI", "!male(Tom);");
+        ContextFixture a =
+                context("ASI", "!friend(A,B);");
+
+        ConnectionManager.connect(
+                x.location, a.location);
+        advance(
+                a,
+                "!~male(Tom);");
+
+        assertThrows(
+                StorageLifecycleException.class,
+                () -> ConnectionManager.switchRevision(
+                        x.location,
+                        a.contextId,
+                        a.revision + 1L));
+
+        OperationSnapshot unchanged =
+                OperationSnapshot.open(x.location);
+        try {
+            assertEquals(
+                    a.revision,
+                    unchanged.getTarget(
+                            a.contextId).getRevision());
+        } finally {
+            unchanged.close();
+        }
+    }
+
+    @Test
+    void revisionSwitchRejectsPairwiseCompatibleButCombinedConflict()
+            throws Exception {
+        ContextFixture x =
+                context("XSC", "!anchor(X);");
+        ContextFixture a =
+                context("ASC", "!friend(A,B);");
+        ContextFixture b =
+                context("BSC", "!male(Tom);");
+
+        ConnectionManager.connect(
+                x.location, a.location);
+        ConnectionManager.connect(
+                x.location, b.location);
+
+        advance(
+                a,
+                "!~male(Tom);");
+
+        assertThrows(
+                StorageLifecycleException.class,
+                () -> ConnectionManager.switchRevision(
+                        x.location,
+                        a.contextId,
+                        a.revision + 1L));
+
+        OperationSnapshot unchanged =
+                OperationSnapshot.open(x.location);
+        try {
+            assertEquals(
+                    a.revision,
+                    unchanged.getTarget(
+                            a.contextId).getRevision());
+            assertEquals(
+                    b.revision,
+                    unchanged.getTarget(
+                            b.contextId).getRevision());
+        } finally {
+            unchanged.close();
+        }
+    }
+
+    private void advance(
+            ContextFixture fixture,
+            String assertion) throws Exception {
+        User user = new User();
+        user.setDatabaseDir(
+                fixture.location.getParent().toString()
+                        + File.separator);
+        DB data = new DB();
+        data.init(user);
+
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        mind = (Mind) mind.useStorage(
+                fixture.location.getFileName().toString());
+        user.setCurrentMind(mind);
+        assertTrue(Boolean.TRUE.equals(
+                mind.query(
+                        assertion,
+                        null,
+                        false)));
+        user.setCurrentMind(
+                mind.closeStorage());
+    }
+
     private ContextFixture context(
             String name, String assertion) throws Exception {
         Path databaseDir =
