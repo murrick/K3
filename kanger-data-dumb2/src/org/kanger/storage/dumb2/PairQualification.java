@@ -88,6 +88,34 @@ final class PairQualification {
         AttachedMind attached =
                 AttachedMind.open(
                         candidate, "write-candidate-composition");
+        try {
+            return qualifyComposition(
+                    attached, connections);
+        } finally {
+            attached.close();
+        }
+    }
+
+    static boolean qualifyComposition(
+            Path sourceLocation,
+            long sourceRevision,
+            ConnectionVector connections) throws Exception {
+        AttachedMind attached =
+                AttachedMind.open(
+                        sourceLocation,
+                        sourceRevision,
+                        "connection-switch-composition");
+        try {
+            return qualifyComposition(
+                    attached, connections);
+        } finally {
+            attached.close();
+        }
+    }
+
+    private static boolean qualifyComposition(
+            AttachedMind attached,
+            ConnectionVector connections) throws Exception {
         Mind overlay = null;
         try {
             overlay =
@@ -121,7 +149,6 @@ final class PairQualification {
                 overlay.getValues().clear();
                 attached.mind.release(overlay);
             }
-            attached.close();
         }
     }
 
