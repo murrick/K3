@@ -782,7 +782,7 @@ public final class CanonicalConsole {
             IContextFederation.Snapshot snapshot,
             IContextFederation.QueryResult query) {
         System.out.printf("Context %s@%d%n",
-                snapshot.getSourceContextId(),
+                snapshot.getSourceLocator(),
                 snapshot.getSourceRevision());
         if (snapshot.getConnections().isEmpty()) {
             System.out.println("Direct connections: none");
@@ -791,12 +791,11 @@ public final class CanonicalConsole {
             for (IContextFederation.Connection connection
                     : snapshot.getConnections()) {
                 System.out.printf(
-                        "  %s@%d  %-10s  %s  locator=%s%s%n",
-                        connection.getTargetContextId(),
+                        "  %s@%d  %-10s  %s%s%n",
+                        connection.getLocator(),
                         connection.getPinnedRevision(),
                         connection.getCompatibilityStatus(),
                         connection.getPinPolicy(),
-                        connection.getLocator(),
                         connection.hasNewerRevision()
                                 ? "  [CURRENT="
                                         + connection.getCurrentRevision()
@@ -820,18 +819,20 @@ public final class CanonicalConsole {
                     observation.getQuerySource(),
                     observation.getTruth());
             showRevisionSources("TRUE",
-                    observation.getTrueSources());
+                    observation.getTrueSources(), snapshot);
             showRevisionSources("FALSE",
-                    observation.getFalseSources());
+                    observation.getFalseSources(), snapshot);
             showRevisionSources("UNKNOWN",
-                    observation.getUnknownSources());
+                    observation.getUnknownSources(), snapshot);
         }
         if (!query.getProvisionalHypotheses().isEmpty()) {
             System.out.println("  provisional hypotheses:");
             for (IContextFederation.ProvisionalHypothesis hypothesis
                     : query.getProvisionalHypotheses()) {
                 System.out.printf("    %s@%d  %s%n",
-                        hypothesis.getSource().getContextId(),
+                        contextLocator(
+                                snapshot,
+                                hypothesis.getSource().getContextId()),
                         hypothesis.getSource().getRevision(),
                         hypothesis.getStatement());
             }
@@ -840,13 +841,29 @@ public final class CanonicalConsole {
 
     private static void showRevisionSources(
             String label,
-            List<IContextFederation.Revision> revisions) {
+            List<IContextFederation.Revision> revisions,
+            IContextFederation.Snapshot snapshot) {
         for (IContextFederation.Revision revision : revisions) {
             System.out.printf("      %s: %s@%d%n",
                     label,
-                    revision.getContextId(),
+                    contextLocator(snapshot, revision.getContextId()),
                     revision.getRevision());
         }
+    }
+
+    private static String contextLocator(
+            IContextFederation.Snapshot snapshot,
+            java.util.UUID contextId) {
+        if (snapshot.getSourceContextId().equals(contextId)) {
+            return snapshot.getSourceLocator();
+        }
+        for (IContextFederation.Connection connection
+                : snapshot.getConnections()) {
+            if (connection.getTargetContextId().equals(contextId)) {
+                return connection.getLocator();
+            }
+        }
+        return "<unknown-context>";
     }
 
     private static void showStorage(CanonicalCommandProcessor.StorageStatus status) {
