@@ -302,7 +302,7 @@ class CanonicalCommandProcessorTest {
                             parser.parse("ctx"),
                             fixture.user));
 
-            assertTrue(rejected.getMessage().contains(
+            assertTrue(rejected.toString().contains(
                     "does not support Context federation"));
             assertSame(
                     fixture.root,
