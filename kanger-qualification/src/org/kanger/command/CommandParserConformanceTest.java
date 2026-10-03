@@ -41,6 +41,7 @@ public final class CommandParserConformanceTest {
         transactionFamily();
         sourceFamily();
         storageFamily();
+        contextFamily();
         aliasVocabulary();
         systemFamily();
         canonicalEcho();
@@ -87,6 +88,7 @@ public final class CommandParserConformanceTest {
         reject("c", AMBIGUOUS_PREFIX);
         expect("co", CommandIntent.TX_COMMIT);
         expect("cl", CommandIntent.STORAGE_CLOSE);
+        expect("ct", CommandIntent.CTX_STATUS);
         reject("d", AMBIGUOUS_PREFIX);
         expect("de", CommandIntent.SOURCE_DELETE);
         expect("de foo.k", CommandIntent.SOURCE_DELETE);
@@ -328,6 +330,51 @@ public final class CommandParserConformanceTest {
         reject("storage close foo", EXTRA_ARGUMENT);
     }
 
+    private void contextFamily() throws Exception {
+        String a = "11111111-1111-1111-1111-111111111111";
+
+        expect("ctx", CommandIntent.CTX_STATUS);
+        expect("ct", CommandIntent.CTX_STATUS);
+        expectArgument("ctx connect A", CommandIntent.CTX_CONNECT,
+                "locator", "A");
+        expectArgument("ctx connect \"test context\"",
+                CommandIntent.CTX_CONNECT,
+                "locator", "test context");
+        expectArgument("ctx disconnect " + a,
+                CommandIntent.CTX_DISCONNECT,
+                "ContextId", a);
+
+        CommandInvocation switched =
+                parser.parse("ctx switch " + a + " 7");
+        check(switched.getIntent() == CommandIntent.CTX_SWITCH,
+                "ctx switch intent");
+        check(a.equals(switched.getArgument("ContextId")),
+                "ctx switch ContextId");
+        check(Long.valueOf(7L).equals(
+                        switched.getArgument("RevisionId")),
+                "ctx switch RevisionId");
+
+        CommandInvocation query =
+                parser.parse("ctx query ?$x son(John, x);");
+        check(query.getIntent() == CommandIntent.CTX_QUERY,
+                "ctx query intent");
+        check("?$x son(John, x);".equals(
+                        query.getArgument("query")),
+                "ctx query preserves KANGER source");
+
+        reject("ctx connect", MISSING_ARGUMENT);
+        reject("ctx disconnect", MISSING_ARGUMENT);
+        reject("ctx disconnect not-a-uuid",
+                INVALID_ARGUMENT_SHAPE);
+        reject("ctx switch " + a,
+                MISSING_ARGUMENT);
+        reject("ctx switch " + a + " -1",
+                INVALID_ARGUMENT_SHAPE);
+        reject("ctx query", MISSING_ARGUMENT);
+        reject("ctx query male(Tom);",
+                INVALID_ARGUMENT_SHAPE);
+    }
+
     private void aliasVocabulary() throws Exception {
         expect("start", CommandIntent.TX_START);
         expect("commit", CommandIntent.TX_COMMIT);
@@ -403,6 +450,10 @@ public final class CommandParserConformanceTest {
         expectCanonical("cl", "storage close");
         expectCanonical("dr demo", "storage drop demo");
         expectCanonical("re demo", "storage reindex demo");
+        expectCanonical("ct", "ctx");
+        expectCanonical("ctx connect A", "ctx connect A");
+        expectCanonical("ctx query ?$x son(John, x);",
+                "ctx query ?$x son(John, x);");
         expectCanonical("g", "get");
         expectCanonical("de", "delete");
         expectCanonical("g foo", "get foo.k");
@@ -483,6 +534,14 @@ public final class CommandParserConformanceTest {
                 "help contains drop alias");
         check(help.contains("storage reindex <name>  (alias: reindex <name>)"),
                 "help contains reindex alias");
+        check(help.contains("ctx connect <locator>"),
+                "help contains Context connect syntax");
+        check(help.contains("ctx disconnect <ContextId>"),
+                "help contains Context disconnect syntax");
+        check(help.contains("ctx switch <ContextId> <RevisionId>"),
+                "help contains Context revision switch syntax");
+        check(help.contains("ctx query <query...>"),
+                "help contains federated query diagnostic syntax");
     }
 
     private void expect(String source, CommandIntent intent) throws Exception {
