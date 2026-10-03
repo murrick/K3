@@ -260,6 +260,10 @@ public class ContextFederationOperatorTest {
                 processor.execute(
                         parser.parse("ctx"), user);
         assertEquals(
+                "CX",
+                initial.getFederationSnapshot()
+                        .getSourceLocator());
+        assertEquals(
                 x.contextId,
                 initial.getFederationSnapshot()
                         .getSourceContextId());
@@ -302,9 +306,7 @@ public class ContextFederationOperatorTest {
         CanonicalCommandProcessor.Result switched =
                 processor.execute(
                         parser.parse(
-                                "ctx switch "
-                                        + a.contextId
-                                        + " "
+                                "ctx switch CA "
                                         + (a.revision + 1L)),
                         user);
         assertEquals(
@@ -316,8 +318,7 @@ public class ContextFederationOperatorTest {
         CanonicalCommandProcessor.Result disconnected =
                 processor.execute(
                         parser.parse(
-                                "ctx disconnect "
-                                        + a.contextId),
+                                "ctx disconnect CA"),
                         user);
         assertTrue(
                 disconnected.getFederationSnapshot()
