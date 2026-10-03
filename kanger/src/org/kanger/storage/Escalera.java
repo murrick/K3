@@ -420,6 +420,23 @@ public class Escalera implements ICache {
         return root == null;
     }
 
+    private static final boolean COMPACT_FIND_SNAPSHOTS =
+            Boolean.parseBoolean(System.getProperty("kanger.experiment.compactFindSnapshots", "true"));
+
+    /** Internal read-only iteration snapshot; public find retains mutable ownership. */
+    public static Iterable<Long> findCandidates(ICache cache, int hash) throws Exception {
+        if (!COMPACT_FIND_SNAPSHOTS || cache.getClass() != Escalera.class) {
+            return cache.find(hash);
+        }
+        Escalera owner = (Escalera) cache;
+        owner.ensureIndex();
+        Set<Long> ids = owner.idsByHash.get(hash);
+        if (ids == null || ids.isEmpty()) return java.util.Collections.emptyList();
+        if (ids.size() == 1) return java.util.Collections.singletonList(ids.iterator().next());
+        // Preserve the reference copy's iteration order and callback isolation.
+        return new HashSet<>(ids);
+    }
+
     @Override
     public Set<Long> find(int h) throws Exception {
         ensureIndex();

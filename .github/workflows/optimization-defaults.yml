@@ -1,7 +1,7 @@
 name: Optimization defaults qualification
 on:
   push:
-    branches: ['perf/3.8.0-enabled-defaults', 'develop/3.8.0']
+    branches: ['perf/3.8.0-enabled-defaults', 'perf/3.8.0-compact-find-snapshots', 'develop/3.8.0']
   pull_request:
     branches: ['develop/3.8.0']
   workflow_dispatch:

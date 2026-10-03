@@ -1,0 +1,42 @@
+{
+  "code": "8e22b1ff5e854b92522b5b8a780ec1305b4b5a23",
+  "base": "3a2a6f0bccac11ac0d646178c4384ba73d7a5260",
+  "runs": [
+    {
+      "id": 37132529591,
+      "name": "KANGER distribution bundle",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37132529628,
+      "name": "KANGER Server",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37132529632,
+      "name": "Resident snapshots qualification",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37132529578,
+      "name": "Optimization defaults qualification",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37132529595,
+      "name": "KANGER qualification isolation",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 37132529629,
+      "name": "KANGER CI",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ]
+}
