@@ -307,12 +307,12 @@ public final class CommandRegistry {
         define(CommandIntent.CTX_CONNECT, "ctx connect <locator>", "CONTEXT",
                 "Qualify and connect one direct Context at its current exact revision.",
                 args("locator", "Context locator or DUMB2 logical storage name."), n++);
-        define(CommandIntent.CTX_DISCONNECT, "ctx disconnect <ContextId>", "CONTEXT",
-                "Disconnect one direct Context by external ContextId.",
-                args("ContextId", "Target Context UUID."), n++);
-        define(CommandIntent.CTX_SWITCH, "ctx switch <ContextId> <RevisionId>", "CONTEXT",
+        define(CommandIntent.CTX_DISCONNECT, "ctx disconnect <locator>", "CONTEXT",
+                "Disconnect one direct Context by locator.",
+                args("locator", "Context locator or DUMB2 logical storage name."), n++);
+        define(CommandIntent.CTX_SWITCH, "ctx switch <locator> <RevisionId>", "CONTEXT",
                 "Deliberately requalify and repin one direct Context to an exact revision.",
-                args("ContextId", "Target Context UUID.",
+                args("locator", "Context locator or DUMB2 logical storage name.",
                         "RevisionId", "Exact target revision."), n++);
         define(CommandIntent.CTX_QUERY, "ctx query <query...>", "CONTEXT",
                 "Execute one operation-local federated query for M3 diagnostics.",
