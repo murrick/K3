@@ -23,6 +23,7 @@ import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IContextFederation;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.units.Predicate;
@@ -109,6 +110,11 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             case STORAGE_CLOSE:
             case STORAGE_DROP:
             case STORAGE_REINDEX:
+            case CTX_STATUS:
+            case CTX_CONNECT:
+            case CTX_DISCONNECT:
+            case CTX_SWITCH:
+            case CTX_QUERY:
                 result = executeShared(invocation, user);
                 break;
             case HELP:
@@ -228,7 +234,101 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                 result.put("name", storage.getCurrent());
             }
         }
+        IContextFederation.Snapshot federation =
+                outcome.getFederationSnapshot();
+        if (federation != null) {
+            result.put("context_federation",
+                    federationSnapshot(federation));
+        }
+        IContextFederation.QueryResult federationQuery =
+                outcome.getFederationQueryResult();
+        if (federationQuery != null) {
+            result.put("federation_query",
+                    federationQuery(federationQuery));
+        }
         return result;
+    }
+
+    private JSONObject federationSnapshot(
+            IContextFederation.Snapshot snapshot) {
+        JSONArray connections = new JSONArray();
+        for (IContextFederation.Connection connection
+                : snapshot.getConnections()) {
+            connections.put(new JSONObject()
+                    .put("locator", connection.getLocator())
+                    .put("context_id",
+                            connection.getTargetContextId().toString())
+                    .put("pinned_revision",
+                            connection.getPinnedRevision())
+                    .put("current_revision",
+                            connection.getCurrentRevision())
+                    .put("newer_revision",
+                            connection.hasNewerRevision())
+                    .put("pin_policy",
+                            connection.getPinPolicy().name())
+                    .put("compatibility",
+                            connection.getCompatibilityStatus().name())
+                    .put("semantic_version",
+                            connection.getSemanticVersion()));
+        }
+        return new JSONObject()
+                .put("schema", 1)
+                .put("source_context_id",
+                        snapshot.getSourceContextId().toString())
+                .put("source_revision",
+                        snapshot.getSourceRevision())
+                .put("connections", connections);
+    }
+
+    private JSONObject federationQuery(
+            IContextFederation.QueryResult query) {
+        JSONArray observations = new JSONArray();
+        for (IContextFederation.FrontierObservation observation
+                : query.getObservations()) {
+            observations.put(new JSONObject()
+                    .put("wave", observation.getWave())
+                    .put("query", observation.getQuerySource())
+                    .put("truth", observation.getTruth().name())
+                    .put("true_sources",
+                            revisions(observation.getTrueSources()))
+                    .put("false_sources",
+                            revisions(observation.getFalseSources()))
+                    .put("unknown_sources",
+                            revisions(observation.getUnknownSources())));
+        }
+
+        JSONArray hypotheses = new JSONArray();
+        for (IContextFederation.ProvisionalHypothesis hypothesis
+                : query.getProvisionalHypotheses()) {
+            hypotheses.put(new JSONObject()
+                    .put("source", revision(hypothesis.getSource()))
+                    .put("statement", hypothesis.getStatement()));
+        }
+
+        return new JSONObject()
+                .put("schema", 1)
+                .put("resolved", query.isResolved())
+                .put("waves", query.getWaves())
+                .put("evidence_count", query.getEvidenceCount())
+                .put("observations", observations)
+                .put("provisional_hypotheses", hypotheses);
+    }
+
+    private JSONArray revisions(
+            List<IContextFederation.Revision> revisions) {
+        JSONArray result = new JSONArray();
+        for (IContextFederation.Revision revision : revisions) {
+            result.put(revision(revision));
+        }
+        return result;
+    }
+
+    private JSONObject revision(
+            IContextFederation.Revision revision) {
+        return new JSONObject()
+                .put("context_id",
+                        revision.getContextId().toString())
+                .put("revision", revision.getRevision());
     }
 
     private JSONObject statusSnapshot(CanonicalStatusSnapshot snapshot) {
