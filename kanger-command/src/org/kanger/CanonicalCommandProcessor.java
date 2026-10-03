@@ -17,7 +17,6 @@ import org.kanger.interfaces.internal.IData;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Transport-neutral semantic execution boundary for canonical KANGER commands.
@@ -190,7 +189,7 @@ public final class CanonicalCommandProcessor {
                 return Result.successFederation(
                         mind,
                         "Context connected: "
-                                + connection.getTargetContextId()
+                                + connection.getLocator()
                                 + "@"
                                 + connection.getPinnedRevision(),
                         federation.federationSnapshot(), null);
@@ -199,29 +198,29 @@ public final class CanonicalCommandProcessor {
             case CTX_DISCONNECT: {
                 IContextFederation federation =
                         contextFederation(user, mind);
-                UUID contextId = UUID.fromString(String.valueOf(
-                        invocation.getArgument("ContextId")));
-                federation.disconnectContext(contextId);
+                String locator = String.valueOf(
+                        invocation.getArgument("locator"));
+                federation.disconnectContext(locator);
                 return Result.successFederation(
                         mind,
-                        "Context disconnected: " + contextId,
+                        "Context disconnected: " + locator,
                         federation.federationSnapshot(), null);
             }
 
             case CTX_SWITCH: {
                 IContextFederation federation =
                         contextFederation(user, mind);
-                UUID contextId = UUID.fromString(String.valueOf(
-                        invocation.getArgument("ContextId")));
+                String locator = String.valueOf(
+                        invocation.getArgument("locator"));
                 long revision = ((Number) invocation.getArgument(
                         "RevisionId")).longValue();
                 IContextFederation.Connection connection =
                         federation.switchContextRevision(
-                                contextId, revision);
+                                locator, revision);
                 return Result.successFederation(
                         mind,
                         "Context pin switched: "
-                                + connection.getTargetContextId()
+                                + connection.getLocator()
                                 + "@"
                                 + connection.getPinnedRevision(),
                         federation.federationSnapshot(), null);
