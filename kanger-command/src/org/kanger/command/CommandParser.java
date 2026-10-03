@@ -62,6 +62,10 @@ public final class CommandParser {
                 && resolvesTo(family, prefix.get(1).value, Keyword.ORDER)) {
             return parseValuesOrder(line);
         }
+        if (family == Family.CONTEXT && prefix.size() > 1
+                && resolvesTo(family, prefix.get(1).value, Keyword.QUERY)) {
+            return parseContextQuery(line);
+        }
 
         List<Token> tokens = tokenize(line, Integer.MAX_VALUE, true);
         switch (family) {
@@ -91,6 +95,8 @@ public final class CommandParser {
                         line, tokens, CommandIntent.SOURCE_DELETE, "source");
             case STORAGE:
                 return parseStorage(line, tokens);
+            case CONTEXT:
+                return parseContext(line, tokens);
             case STATUS:
                 return parseStatus(line, tokens);
             case TIMEZONE:
@@ -399,6 +405,89 @@ public final class CommandParser {
                         args("name", tokens.get(2).value), raw);
             default:
                 throw error(INVALID_GRAMMAR, "Invalid storage action");
+        }
+    }
+
+    private CommandInvocation parseContext(String raw, List<Token> tokens)
+            throws CommandParseException {
+        if (tokens.size() == 1) {
+            return CommandInvocation.command(CommandIntent.CTX_STATUS, raw);
+        }
+        Keyword keyword;
+        try {
+            keyword = CommandRegistry.resolveKeyword(
+                    Family.CONTEXT, tokens.get(1).value,
+                    Keyword.CONNECT, Keyword.DISCONNECT,
+                    Keyword.SWITCH, Keyword.QUERY);
+        } catch (CommandParseException rejected) {
+            if (rejected.getReason() == AMBIGUOUS_PREFIX) {
+                throw rejected;
+            }
+            throw error(INVALID_GRAMMAR, "Invalid ctx production");
+        }
+        switch (keyword) {
+            case CONNECT:
+                requireRequiredArgument(tokens, 3);
+                requireSize(tokens, 3);
+                return CommandInvocation.command(
+                        CommandIntent.CTX_CONNECT,
+                        args("locator", tokens.get(2).value), raw);
+            case DISCONNECT:
+                requireRequiredArgument(tokens, 3);
+                requireSize(tokens, 3);
+                return CommandInvocation.command(
+                        CommandIntent.CTX_DISCONNECT,
+                        args("ContextId", uuid(tokens.get(2).value)), raw);
+            case SWITCH:
+                requireRequiredArgument(tokens, 3);
+                requireRequiredArgument(tokens, 4);
+                requireSize(tokens, 4);
+                Map<String, Object> arguments =
+                        new LinkedHashMap<String, Object>();
+                arguments.put("ContextId", uuid(tokens.get(2).value));
+                arguments.put("RevisionId",
+                        parseNonNegativeLong(
+                                tokens.get(3).value,
+                                "RevisionId"));
+                return CommandInvocation.command(
+                        CommandIntent.CTX_SWITCH,
+                        arguments, raw);
+            case QUERY:
+                throw error(MISSING_ARGUMENT,
+                        "ctx query requires a KANGER query");
+            default:
+                throw error(INVALID_GRAMMAR, "Invalid ctx action");
+        }
+    }
+
+    private CommandInvocation parseContextQuery(String raw)
+            throws CommandParseException {
+        List<Token> prefix = tokenize(raw, 2, false);
+        if (prefix.size() < 2) {
+            throw error(MISSING_ARGUMENT,
+                    "ctx query requires a KANGER query");
+        }
+        String query = tailAfter(raw, prefix.get(1).end);
+        if (query.isEmpty()) {
+            throw error(MISSING_ARGUMENT,
+                    "ctx query requires a KANGER query");
+        }
+        if (query.charAt(0) != '?') {
+            throw error(INVALID_ARGUMENT_SHAPE,
+                    "ctx query requires a query beginning with ?");
+        }
+        return CommandInvocation.command(
+                CommandIntent.CTX_QUERY,
+                args("query", query), raw);
+    }
+
+    private String uuid(String value)
+            throws CommandParseException {
+        try {
+            return java.util.UUID.fromString(value).toString();
+        } catch (IllegalArgumentException failure) {
+            throw error(INVALID_ARGUMENT_SHAPE,
+                    "Invalid ContextId " + value);
         }
     }
 
