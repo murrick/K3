@@ -111,6 +111,19 @@ public final class CommandFormatter {
             case STORAGE_REINDEX:
                 return "storage reindex " + argument(invocation.getArgument("name"));
 
+            case CTX_STATUS:
+                return "ctx";
+            case CTX_CONNECT:
+                return "ctx connect " + argument(invocation.getArgument("locator"));
+            case CTX_DISCONNECT:
+                return "ctx disconnect " + argument(invocation.getArgument("ContextId"));
+            case CTX_SWITCH:
+                return "ctx switch "
+                        + argument(invocation.getArgument("ContextId"))
+                        + " " + number(invocation, "RevisionId");
+            case CTX_QUERY:
+                return "ctx query " + rawQuery(invocation.getArgument("query"));
+
             case ERASE:
                 return "erase";
             case HELP:
@@ -158,6 +171,18 @@ public final class CommandFormatter {
                             ? "desc" : "asc");
         }
         return out.toString();
+    }
+
+    private String rawQuery(Object value) {
+        if (value == null) {
+            throw new IllegalArgumentException("query must not be null");
+        }
+        String query = String.valueOf(value).trim();
+        if (query.isEmpty() || query.charAt(0) != '?') {
+            throw new IllegalArgumentException(
+                    "query must begin with ?");
+        }
+        return query;
     }
 
     private String optionalArgumentCommand(String command, Object value) {
