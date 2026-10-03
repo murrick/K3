@@ -2,8 +2,10 @@ package org.kanger.storage.dumb2;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.kanger.CanonicalCommandProcessor;
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.command.CommandParser;
 import org.kanger.interfaces.internal.IContextFederation;
 
 import java.io.File;
@@ -193,6 +195,100 @@ public class ContextFederationOperatorTest {
                 x.revision,
                 snapshot.getSourceRevision(),
                 "federated query must not publish foreign evidence");
+
+        user.setCurrentMind(
+                mind.closeStorage());
+    }
+
+    @Test
+    void canonicalCtxSurfaceDrivesQualifiedDumb2Federation()
+            throws Exception {
+        ContextFixture x =
+                context("CX", "!anchor(X);");
+        ContextFixture a =
+                context("CA", "!male(Tom);");
+
+        User user = new User();
+        user.setDatabaseDir(
+                root.toString() + File.separator);
+        DB data = new DB();
+        data.init(user);
+
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        mind = (Mind) mind.useStorage("CX");
+        user.setCurrentMind(mind);
+
+        CanonicalCommandProcessor processor =
+                new CanonicalCommandProcessor();
+        CommandParser parser = new CommandParser();
+
+        CanonicalCommandProcessor.Result initial =
+                processor.execute(
+                        parser.parse("ctx"), user);
+        assertEquals(
+                x.contextId,
+                initial.getFederationSnapshot()
+                        .getSourceContextId());
+        assertTrue(
+                initial.getFederationSnapshot()
+                        .getConnections().isEmpty());
+
+        CanonicalCommandProcessor.Result connected =
+                processor.execute(
+                        parser.parse("ctx connect CA"), user);
+        assertEquals(
+                a.contextId,
+                connected.getFederationSnapshot()
+                        .getConnections().get(0)
+                        .getTargetContextId());
+
+        CanonicalCommandProcessor.Result query =
+                processor.execute(
+                        parser.parse("ctx query ?male(Tom);"),
+                        user);
+        assertTrue(
+                query.getFederationQueryResult()
+                        .isResolved());
+        assertEquals(
+                IContextFederation.FrontierTruth.TRUE,
+                query.getFederationQueryResult()
+                        .getObservations().get(0)
+                        .getTruth());
+
+        advance("CA", "!female(Jane);");
+
+        CanonicalCommandProcessor.Result newer =
+                processor.execute(
+                        parser.parse("ctx"), user);
+        assertTrue(
+                newer.getFederationSnapshot()
+                        .getConnections().get(0)
+                        .hasNewerRevision());
+
+        CanonicalCommandProcessor.Result switched =
+                processor.execute(
+                        parser.parse(
+                                "ctx switch "
+                                        + a.contextId
+                                        + " "
+                                        + (a.revision + 1L)),
+                        user);
+        assertEquals(
+                a.revision + 1L,
+                switched.getFederationSnapshot()
+                        .getConnections().get(0)
+                        .getPinnedRevision());
+
+        CanonicalCommandProcessor.Result disconnected =
+                processor.execute(
+                        parser.parse(
+                                "ctx disconnect "
+                                        + a.contextId),
+                        user);
+        assertTrue(
+                disconnected.getFederationSnapshot()
+                        .getConnections().isEmpty());
 
         user.setCurrentMind(
                 mind.closeStorage());
