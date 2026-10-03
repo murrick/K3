@@ -907,7 +907,7 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public IRule find(Solve domain) throws Exception {
-        for (long id : cache.find(domain.getHash(mind))) {
+        for (long id : Escalera.findCandidates(cache, domain.getHash(mind))) {
             IRule one = get(id);
             if (((Rule) one).equalsTo(domain)) {
                 if (shouldPromoteInsertResult(domain, one)) {
@@ -921,7 +921,7 @@ public class RuleFactory implements IFactory<IRule> {
 
     public IRule find(IRule rule) throws Exception {
         IRule self = null;
-        for (long id : cache.find(((Rule) rule).getHash())) {
+        for (long id : Escalera.findCandidates(cache, ((Rule) rule).getHash())) {
             IRule one = get(id);
             if (((Rule) one).equalsTo(rule)) {
                 if (one.getId() != rule.getId()) {
