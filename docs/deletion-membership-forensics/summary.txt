@@ -1,0 +1,20 @@
+WARM run=1 sample=2 calls=17573710 levels=46897159 avg_depth=2.668598 restored_contains=0 deleted_contains=0 repeated_builtin_box_opportunities=0
+WARM run=1 sample=3 calls=17573710 levels=46897159 avg_depth=2.668598 restored_contains=0 deleted_contains=0 repeated_builtin_box_opportunities=0
+WARM run=1 sample=4 calls=17573710 levels=46897159 avg_depth=2.668598 restored_contains=0 deleted_contains=0 repeated_builtin_box_opportunities=0
+WARM run=1 sample=5 calls=17573710 levels=46897159 avg_depth=2.668598 restored_contains=0 deleted_contains=0 repeated_builtin_box_opportunities=0
+PROFILE_COMPLETE 1
+WARM run=2 sample=2 calls=17573710 levels=46897159 avg_depth=2.668598 restored_contains=0 deleted_contains=0 repeated_builtin_box_opportunities=0
+WARM run=2 sample=3 calls=17573710 levels=46897159 avg_depth=2.668598 restored_contains=0 deleted_contains=0 repeated_builtin_box_opportunities=0
+WARM run=2 sample=4 calls=17573710 levels=46897159 avg_depth=2.668598 restored_contains=0 deleted_contains=0 repeated_builtin_box_opportunities=0
+WARM run=2 sample=5 calls=17573710 levels=46897159 avg_depth=2.668598 restored_contains=0 deleted_contains=0 repeated_builtin_box_opportunities=0
+PROFILE_COMPLETE 2
+empty_restored_maps count=46897159 share=100.000000%
+empty_deleted_maps count=46897159 share=100.000000%
+absent_restored_sets count=46897159 share=100.000000%
+absent_deleted_sets count=46897159 share=100.000000%
+depth_p50=3
+depth_p95=3
+depth_p99=3
+depth_p100=4
+DELETION_MEMBERSHIP_FORENSICS_OK samples=12 warm_samples=8 texts_equal_to_clean_base=true
+TIMING_EXCLUDED diagnostic_instrumentation=true main_optimization_thread_only=true

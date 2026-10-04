@@ -1,0 +1,64 @@
+--- a/kanger/src/org/kanger/Mind.java
++++ b/kanger/src/org/kanger/Mind.java
+@@ -1896,0 +1897,19 @@
++
++    // Diagnostic-only: main optimization thread; no timing inference from this build.
++    private static Thread deletionProfileThread;
++    private static long[] deletionProfileCounts = new long[15];
++    private static long[] deletionProfileDepths = new long[65];
++    public static void resetDeletionMembershipProfile() {
++        deletionProfileCounts = new long[15];
++        deletionProfileDepths = new long[65];
++        deletionProfileThread = Thread.currentThread();
++    }
++    private static void finishDeletionMembershipProfile(int depth) {
++        deletionProfileDepths[Math.min(depth, 64)]++;
++    }
++    public static void reportDeletionMembershipProfile(int sample) {
++        deletionProfileThread = null;
++        System.out.println("DELETION_COUNTS " + sample + " " + Arrays.toString(deletionProfileCounts));
++        System.out.println("DELETION_DEPTHS " + sample + " " + Arrays.toString(deletionProfileDepths));
++    }
++
+@@ -1899,0 +1919,4 @@
++        boolean count = Thread.currentThread() == deletionProfileThread;
++        int depth = 0;
++        boolean builtinSeen = false;
++        if (count) deletionProfileCounts[0]++;
+@@ -1901,0 +1925,2 @@
++            depth++;
++            if (count) deletionProfileCounts[1]++;
+@@ -1903,0 +1929,13 @@
++                if (count) {
++                    if (current.restored.isEmpty()) deletionProfileCounts[2]++;
++                    if (restoredIds == null) deletionProfileCounts[4]++;
++                    else {
++                        deletionProfileCounts[6]++;
++                        if (restoredIds.getClass() == HashSet.class) {
++                            deletionProfileCounts[10]++;
++                            if (builtinSeen && (unitId < -128 || unitId > 127)) deletionProfileCounts[13]++;
++                            builtinSeen = true;
++                        } else deletionProfileCounts[11]++;
++                        if (unitId < -128 || unitId > 127) deletionProfileCounts[12]++;
++                    }
++                }
+@@ -1904,0 +1943 @@
++                    if (count) { deletionProfileCounts[8]++; finishDeletionMembershipProfile(depth); }
+@@ -1907,0 +1947,13 @@
++                if (count) {
++                    if (current.deleted.isEmpty()) deletionProfileCounts[3]++;
++                    if (deletedIds == null) deletionProfileCounts[5]++;
++                    else {
++                        deletionProfileCounts[7]++;
++                        if (deletedIds.getClass() == HashSet.class) {
++                            deletionProfileCounts[10]++;
++                            if (builtinSeen && (unitId < -128 || unitId > 127)) deletionProfileCounts[13]++;
++                            builtinSeen = true;
++                        } else deletionProfileCounts[11]++;
++                        if (unitId < -128 || unitId > 127) deletionProfileCounts[12]++;
++                    }
++                }
+@@ -1908,0 +1961 @@
++                    if (count) { deletionProfileCounts[9]++; finishDeletionMembershipProfile(depth); }
+@@ -1912,0 +1966 @@
++        if (count) { deletionProfileCounts[14]++; finishDeletionMembershipProfile(depth); }
