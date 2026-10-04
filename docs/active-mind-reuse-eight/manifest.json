@@ -1,0 +1,16 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "code": "d167b0d266f63f1f2c953657aada2f79f5e5be73",
+  "java": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment (build 17.0.20+8-1-24.04-Ubuntu)\nOpenJDK 64-Bit Server VM (build 17.0.20+8-1-24.04-Ubuntu, mixed mode, sharing)",
+  "natives_sha256": "bd0bac2c92badbf1b7f2396b434eda8d9d7c562ff4c09c5e4d790f30d9f5f8ed",
+  "class_sha256": {
+    "reference": {
+      "org/kanger/units/TVariable.class": "7115310606d595796f48ac64b9caba09a78cab0ab53d88161ec5a806613c1e9f",
+      "org/kanger/SonProfileRunner.class": "a6e1e4d619670763d894cb2dce3e9e43eba00af1e3cb4c3be0d2b01c31d9dfd8"
+    },
+    "experiment": {
+      "org/kanger/units/TVariable.class": "71d7c103a3b03225dddceccdfd65a0f8e2cb402bcc1cb39bf4529d6480183fb7",
+      "org/kanger/SonProfileRunner.class": "a6e1e4d619670763d894cb2dce3e9e43eba00af1e3cb4c3be0d2b01c31d9dfd8"
+    }
+  }
+}

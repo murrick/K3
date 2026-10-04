@@ -1,0 +1,83 @@
+{
+  "code_sha": "d167b0d266f63f1f2c953657aada2f79f5e5be73",
+  "workflows": [
+    {
+      "id": 37179874440,
+      "name": "KANGER distribution bundle",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "d167b0d266f63f1f2c953657aada2f79f5e5be73",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37179874440"
+    },
+    {
+      "id": 37179874420,
+      "name": "KANGER Server",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "d167b0d266f63f1f2c953657aada2f79f5e5be73",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37179874420"
+    },
+    {
+      "id": 37179874515,
+      "name": "Active Mind reuse qualification",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "d167b0d266f63f1f2c953657aada2f79f5e5be73",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37179874515"
+    },
+    {
+      "id": 37179874422,
+      "name": "KANGER CI",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "d167b0d266f63f1f2c953657aada2f79f5e5be73",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37179874422"
+    },
+    {
+      "id": 37179874414,
+      "name": "KANGER qualification isolation",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "d167b0d266f63f1f2c953657aada2f79f5e5be73",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37179874414"
+    }
+  ],
+  "specialized_jobs": [
+    {
+      "id": 111370094933,
+      "name": "qualification (21, false)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 111370095069,
+      "name": "qualification (8, true)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 111370095113,
+      "name": "qualification (21, true)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 111370095119,
+      "name": "qualification (26, false)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 111370095157,
+      "name": "qualification (8, false)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 111370095164,
+      "name": "qualification (26, true)",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ]
+}

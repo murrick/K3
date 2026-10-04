@@ -1,0 +1,13 @@
+reuse-1-reference.log wall_s=4.527 cpu_s=4.439 allocated_MB=4813.4
+reuse-2-false.log wall_s=4.645 cpu_s=4.542 allocated_MB=4807.5
+reuse-3-true.log wall_s=4.464 cpu_s=4.372 allocated_MB=4639.6
+reuse-4-true.log wall_s=4.335 cpu_s=4.233 allocated_MB=4684.6
+reuse-5-false.log wall_s=4.474 cpu_s=4.392 allocated_MB=4848.8
+reuse-6-reference.log wall_s=4.397 cpu_s=4.303 allocated_MB=4801.2
+ON_vs_clean_forward wall_reduction=1.37% cpu_reduction=1.51% allocation_reduction=3.61%
+ON_vs_clean_reverse wall_reduction=1.42% cpu_reduction=1.63% allocation_reduction=2.43%
+ON_vs_OFF_forward wall_reduction=3.89% cpu_reduction=3.76% allocation_reduction=3.49%
+ON_vs_OFF_reverse wall_reduction=3.12% cpu_reduction=3.63% allocation_reduction=3.39%
+OFF_vs_clean_forward wall_reduction=-2.62% cpu_reduction=-2.34% allocation_reduction=0.12%
+OFF_vs_clean_reverse wall_reduction=-1.75% cpu_reduction=-2.07% allocation_reduction=-0.99%
+ALL_RAW_AND_FINAL_TEXTS_EQUAL samples=36
