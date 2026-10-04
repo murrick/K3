@@ -48,6 +48,10 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
     private static final boolean RESIDENT_BASE_COMPARISON =
             Boolean.parseBoolean(System.getProperty("kanger.experiment.residentBaseComparison", "true"));
 
+    /** Default-OFF experiment; local snapshot only, never shared between comparisons. */
+    private static final boolean COMPACT_CURRENT_STAMP =
+            Boolean.getBoolean("kanger.experiment.compactCurrentStamp");
+
     private Mind mind = null;
 
     public ArgumentsList() {
@@ -362,6 +366,9 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
 
     public boolean equalsStamp(Mind mind, List<ITerm> list) throws Exception {
         try {
+            if (COMPACT_CURRENT_STAMP && getClass() == ArgumentsList.class) {
+                return equalsCompactStamp(mind, list);
+            }
             List<ITerm> curr = getStamp(mind);
             if (curr.size() == list.size()) {
                 for (int i = 0; i < curr.size(); ++i) {
@@ -376,6 +383,27 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
         } catch (ParametersIncompleteException e) {
             return false;
         }
+    }
+
+    private boolean equalsCompactStamp(Mind mind, List<ITerm> list) throws Exception {
+        List<TVariable> variables = getTVariables(mind);
+        ITerm[] current = new ITerm[variables.size()];
+        int position = 0;
+        for (TVariable variable : variables) {
+            if (variable.isEmpty()) {
+                throw new ParametersIncompleteException(variable.toString());
+            }
+            current[position++] = variable.getValue();
+        }
+        if (current.length != list.size()) {
+            return false;
+        }
+        for (int i = 0; i < current.length; i++) {
+            if (current[i].isEmpty() || current[i].getId() != list.get(i).getId()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public void applyStamp(Mind mind, List<ITerm> list) throws Exception {

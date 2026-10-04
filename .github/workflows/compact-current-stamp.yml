@@ -1,0 +1,58 @@
+name: Compact current stamp qualification
+on:
+  push:
+    branches: ['experiment/3.8.0-compact-current-stamp']
+  pull_request:
+    branches: ['develop/3.8.0']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  qualification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '21', '26']
+        prior: ['false', 'true']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - run: mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install -DskipTests
+      - name: Qualify reference and active Mind reuse
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/compact-current-stamp"
+          for mode in false true; do
+            export JAVA_TOOL_OPTIONS="-Xmx512m -Dkanger.experiment.compactCurrentStamp=$mode -Dkanger.experiment.preserveTValueIndex=${{ matrix.prior }} -Dkanger.experiment.versionedSolveSync=${{ matrix.prior }} -Dkanger.experiment.resolvedCauseWeights=${{ matrix.prior }} -Dkanger.experiment.compactCauseWeights=${{ matrix.prior }} -Dkanger.experiment.candidateMembershipFilter=${{ matrix.prior }} -Dkanger.experiment.singleTValueLookup=${{ matrix.prior }} -Dkanger.experiment.residentBaseComparison=${{ matrix.prior }} -Dkanger.experiment.compactFindSnapshots=${{ matrix.prior }}"
+            for runner in LatentSubstitutionCorpusRunner CompactCurrentStampRunner SingleTValueLookupRunner ResidentBaseComparisonRunner CompactFindSnapshotsRunner TValueIndexReopenRunner; do
+              mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.$runner -Dexec.classpathScope=test exec:java > "$RUNNER_TEMP/compact-current-stamp/$mode-$runner.log" 2>&1
+            done
+            grep -q '^LATENT_CORPUS_PASS$' "$RUNNER_TEMP/compact-current-stamp/$mode-LatentSubstitutionCorpusRunner.log"
+            grep -q '^SINGLE_LOOKUP_BOUNDARIES_OK checks=15$' "$RUNNER_TEMP/compact-current-stamp/$mode-SingleTValueLookupRunner.log"
+            grep -q '^TVALUE_INDEX_REOPEN_PASS$' "$RUNNER_TEMP/compact-current-stamp/$mode-TValueIndexReopenRunner.log"
+            grep -q '^COMPACT_CURRENT_STAMP_OK scenarios=19 checks=47$' "$RUNNER_TEMP/compact-current-stamp/$mode-CompactCurrentStampRunner.log"
+            grep -q '^RESIDENT_BASE_COMPARISON_OK checks=48 custom_reads=3$' "$RUNNER_TEMP/compact-current-stamp/$mode-ResidentBaseComparisonRunner.log"
+            grep -q '^COMPACT_FIND_SNAPSHOTS_OK checks=23$' "$RUNNER_TEMP/compact-current-stamp/$mode-CompactFindSnapshotsRunner.log"
+            mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dtest=KangerCrossContextPredicateProjectionTest surefire:test > "$RUNNER_TEMP/compact-current-stamp/$mode-projection.log" 2>&1
+            mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.LatentSolveSyncTransactionRunner -Dexec.classpathScope=test "-Dexec.args=$RUNNER_TEMP/compact-current-stamp/$mode.state $RUNNER_TEMP/compact-current-stamp/$mode.work" exec:java > "$RUNNER_TEMP/compact-current-stamp/$mode-transactions.log" 2>&1
+            grep -q '^LATENT_SOLVE_TRANSACTIONS_PASS operations=20$' "$RUNNER_TEMP/compact-current-stamp/$mode-transactions.log"
+            export JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -Dkanger.rule.candidate.concurrency.iterations=3"
+            mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.KangerRuleCandidateConcurrencyRunner -Dexec.classpathScope=test exec:java > "$RUNNER_TEMP/compact-current-stamp/$mode-concurrency.log" 2>&1
+            grep -q '^RULE_CANDIDATE_CONCURRENCY_OK iterations=3$' "$RUNNER_TEMP/compact-current-stamp/$mode-concurrency.log"
+          done
+          cmp "$RUNNER_TEMP/compact-current-stamp/false.state" "$RUNNER_TEMP/compact-current-stamp/true.state"
+      - name: Print failure logs
+        if: failure()
+        run: tail -100 "$RUNNER_TEMP/compact-current-stamp/"*.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compact-current-stamp-java-${{ matrix.java }}-prior-${{ matrix.prior }}
+          path: ${{ runner.temp }}/compact-current-stamp/
