@@ -38,6 +38,11 @@ public class ContextCandidateTest {
                     .resolve(".candidate-test");
             Files.createDirectories(staging);
             base.writeSnapshot(staging);
+            RevisionManifestStore.seal(
+                    staging,
+                    store.getContextId(),
+                    2L,
+                    1L);
 
             ContextCandidate candidate =
                     ContextCandidate.of(
