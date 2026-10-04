@@ -8,6 +8,7 @@ import org.kanger.Version;
 import org.kanger.exception.StorageLifecycleException;
 
 import java.io.File;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -46,9 +47,8 @@ public class WriteCandidateQualificationTest {
             ContextCandidate candidate =
                     ContextCandidate.of(
                             owner,
-                            ContextStore.generationPath(
-                                    x.location,
-                                    x.revision),
+                            sealedCandidate(
+                                    owner, x),
                             x.revision + 1L);
 
             WriteCandidateQualification.Result result =
@@ -116,9 +116,8 @@ public class WriteCandidateQualificationTest {
             ContextCandidate candidate =
                     ContextCandidate.of(
                             owner,
-                            ContextStore.generationPath(
-                                    x.location,
-                                    x.revision),
+                            sealedCandidate(
+                                    owner, x),
                             x.revision + 1L);
 
             assertThrows(
@@ -132,6 +131,38 @@ public class WriteCandidateQualificationTest {
 
         assertRevision(
                 x.location, x.revision);
+    }
+
+    private Path sealedCandidate(
+            ContextStore owner,
+            ContextFixture source) throws Exception {
+        Path sourceGeneration =
+                ContextStore.generationPath(
+                        source.location,
+                        source.revision);
+        Path candidate =
+                root.resolve(
+                        "candidate-"
+                                + java.util.UUID.randomUUID().toString());
+        Files.createDirectories(candidate);
+        try (DirectoryStream<Path> stream =
+                     Files.newDirectoryStream(
+                             sourceGeneration,
+                             "*.base")) {
+            for (Path one : stream) {
+                Files.copy(
+                        one,
+                        candidate.resolve(
+                                one.getFileName().toString()));
+            }
+        }
+
+        RevisionManifestStore.seal(
+                candidate,
+                owner.getContextId(),
+                source.revision + 1L,
+                source.revision);
+        return candidate;
     }
 
     private ContextFixture context(

@@ -29,6 +29,36 @@ public class ContextGenerationIntegrityTest {
     Path root;
 
     @Test
+    void publishedRevisionRequiresItsSealedRevisionManifest()
+            throws Exception {
+        Path location = root.resolve("missing-revision-manifest");
+
+        ContextStore created = ContextStore.create(location);
+        try {
+            IBase base = created.getBase("index");
+            base.add(step(0L, 7, Long.valueOf(10L), null));
+            assertEquals(1L, created.flush());
+        } finally {
+            created.close();
+        }
+
+        Path generation =
+                ContextStore.generationPath(location, 1L);
+        assertTrue(
+                RevisionManifestStore.exists(generation));
+        Files.delete(
+                RevisionManifestStore.path(generation));
+
+        StorageLifecycleException failure =
+                assertThrows(
+                        StorageLifecycleException.class,
+                        () -> ContextStore.open(location));
+        assertEquals(
+                StorageLifecycleErrorCode.STORAGE_SEMANTIC_CORRUPTION,
+                failure.getErrorCode());
+    }
+
+    @Test
     void openRejectsUnknownTypeCodeInAnOtherwiseValidUnopenedBase()
             throws Exception {
         Path location = root.resolve("unknown-record-type");

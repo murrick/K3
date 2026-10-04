@@ -40,6 +40,7 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
     private final UUID contextId;
     private final long revision;
     private final ContextManifestStore.Origin origin;
+    private final long revisionManifestBaseline;
     private final TypeRegistry typeRegistry;
     private final Map<String, ContextBase> bases =
             new LinkedHashMap<String, ContextBase>();
@@ -51,12 +52,15 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
                             UUID contextId,
                             long revision,
                             ContextManifestStore.Origin origin,
+                            long revisionManifestBaseline,
                             TypeRegistry typeRegistry) {
         this.location = location;
         this.generation = generation;
         this.contextId = contextId;
         this.revision = revision;
         this.origin = origin;
+        this.revisionManifestBaseline =
+                revisionManifestBaseline;
         this.typeRegistry = typeRegistry;
     }
 
@@ -119,6 +123,7 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
                 manifest.getContextId(),
                 revision,
                 manifest.getOrigin(),
+                manifest.getRevisionManifestBaseline(),
                 copyRegistry(manifest.getTypeRegistry()));
         try {
             snapshot.validatePublishedGeneration();
@@ -160,6 +165,7 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
                 contextId,
                 revision,
                 origin,
+                ContextManifestStore.NEW_CONTEXT_REVISION_MANIFEST_BASELINE,
                 copyRegistry(typeRegistry));
         try {
             snapshot.validatePublishedGeneration();
@@ -270,9 +276,20 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
         try (DirectoryStream<Path> stream =
                      Files.newDirectoryStream(generation)) {
             for (Path child : stream) {
+                String file =
+                        child.getFileName().toString();
+                if (RevisionManifestStore.FILE_NAME.equals(file)) {
+                    if (!Files.isRegularFile(
+                            child, LinkOption.NOFOLLOW_LINKS)) {
+                        throw corruption(
+                                "Invalid DUMB2 revision manifest entry "
+                                        + child);
+                    }
+                    continue;
+                }
                 if (!Files.isRegularFile(
                         child, LinkOption.NOFOLLOW_LINKS)
-                        || !child.getFileName().toString().endsWith(".base")) {
+                        || !file.endsWith(".base")) {
                     throw corruption(
                             "Unexpected entry in published DUMB2 generation "
                                     + child);
@@ -312,6 +329,23 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
             throw corruption(
                     "Published DUMB2 revision " + revision
                             + " contains no schema snapshots at " + generation);
+        }
+
+        boolean sealed =
+                RevisionManifestStore.exists(generation);
+        if (revision >= revisionManifestBaseline
+                && !sealed) {
+            throw corruption(
+                    "Published DUMB2 revision " + revision
+                            + " requires a revision manifest at "
+                            + generation);
+        }
+        if (sealed) {
+            RevisionManifestStore.validate(
+                    generation,
+                    contextId,
+                    revision,
+                    revision - 1L);
         }
     }
 

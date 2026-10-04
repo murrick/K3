@@ -13,12 +13,15 @@ import org.kanger.storage.dumb2.descriptor.Descriptor;
 import org.kanger.storage.dumb2.descriptor.TypeDefinition;
 import org.kanger.storage.dumb2.descriptor.TypeRegistry;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.UUID;
+import java.util.zip.CRC32;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -40,6 +43,9 @@ public class ContextManifestStoreTest {
 
         assertFalse(isZero(created.getContextId()));
         assertEquals(created.getContextId(), reopened.getContextId());
+        assertEquals(
+                ContextManifestStore.NEW_CONTEXT_REVISION_MANIFEST_BASELINE,
+                reopened.getRevisionManifestBaseline());
         assertEquals(0, reopened.getTypeRegistry().size());
     }
 
@@ -132,6 +138,35 @@ public class ContextManifestStoreTest {
     }
 
     @Test
+    void legacyManifestCanDeclareFutureRevisionSealBaseline()
+            throws Exception {
+        Path path = root.resolve("legacy.context");
+        UUID contextId = UUID.randomUUID();
+        writeLegacyManifest(path, contextId);
+
+        ContextManifestStore.Manifest legacy =
+                ContextManifestStore.read(path);
+        assertEquals(
+                ContextManifestStore.LEGACY_REVISION_MANIFEST_BASELINE,
+                legacy.getRevisionManifestBaseline());
+
+        ContextManifestStore.Manifest upgraded =
+                ContextManifestStore.requireRevisionManifestsFrom(
+                        path,
+                        contextId,
+                        3L,
+                        new TypeRegistry());
+
+        assertEquals(
+                3L,
+                upgraded.getRevisionManifestBaseline());
+        assertEquals(
+                3L,
+                ContextManifestStore.read(path)
+                        .getRevisionManifestBaseline());
+    }
+
+    @Test
     void damagedPayloadIsSemanticCorruption() throws Exception {
         Path path = root.resolve("damaged.context");
         ContextManifestStore.create(path);
@@ -155,6 +190,59 @@ public class ContextManifestStoreTest {
                 .getContextId();
 
         assertNotEquals(first, second);
+    }
+
+    private static void writeLegacyManifest(
+            Path path,
+            UUID contextId) throws Exception {
+        ByteArrayOutputStream payloadBytes =
+                new ByteArrayOutputStream();
+        DataOutputStream payload =
+                new DataOutputStream(payloadBytes);
+        writeInt(payload, ContextManifestStore.MAGIC);
+        writeInt(
+                payload,
+                ContextManifestStore.LEGACY_VERSION);
+        writeLong(
+                payload,
+                contextId.getMostSignificantBits());
+        writeLong(
+                payload,
+                contextId.getLeastSignificantBits());
+        writeInt(payload, 0); // no origin
+        writeInt(payload, 0); // no type definitions
+        payload.flush();
+
+        byte[] body = payloadBytes.toByteArray();
+        CRC32 crc = new CRC32();
+        crc.update(body);
+
+        ByteArrayOutputStream result =
+                new ByteArrayOutputStream();
+        result.write(body);
+        DataOutputStream output =
+                new DataOutputStream(result);
+        writeInt(output, (int) crc.getValue());
+        output.flush();
+        Files.write(path, result.toByteArray());
+    }
+
+    private static void writeInt(
+            DataOutputStream output,
+            int value) throws Exception {
+        output.writeByte(value);
+        output.writeByte(value >>> 8);
+        output.writeByte(value >>> 16);
+        output.writeByte(value >>> 24);
+    }
+
+    private static void writeLong(
+            DataOutputStream output,
+            long value) throws Exception {
+        for (int i = 0; i < 8; ++i) {
+            output.writeByte(
+                    (int) (value >>> (8 * i)));
+        }
     }
 
     private static Descriptor oneField(String name) {

@@ -38,6 +38,7 @@ import java.util.zip.CRC32;
  * <pre>
  * K3CM | version | UUID-msb | UUID-lsb | origin-flag
  * [origin UUID-msb | origin UUID-lsb | origin revision]
+ * revision-manifest-baseline
  * type-count
  * repeated:
  *   typeCode | typeName-utf8 | descriptor-bytes
@@ -50,7 +51,10 @@ import java.util.zip.CRC32;
 final class ContextManifestStore {
 
     static final int MAGIC = 0x4B33434D; // K3CM
-    static final int VERSION = 2;
+    static final int VERSION = 3;
+    static final int LEGACY_VERSION = 2;
+    static final long LEGACY_REVISION_MANIFEST_BASELINE = Long.MAX_VALUE;
+    static final long NEW_CONTEXT_REVISION_MANIFEST_BASELINE = 1L;
     private static final int MAX_STRING_BYTES = 1024 * 1024;
     private static final int MAX_DESCRIPTOR_BYTES = 16 * 1024 * 1024;
 
@@ -58,7 +62,11 @@ final class ContextManifestStore {
     }
 
     static Manifest create(Path path) throws IOException {
-        return create(path, null, new TypeRegistry());
+        return create(
+                path,
+                null,
+                NEW_CONTEXT_REVISION_MANIFEST_BASELINE,
+                new TypeRegistry());
     }
 
     static Manifest createFork(Path path,
@@ -74,20 +82,27 @@ final class ContextManifestStore {
         if (registry == null) {
             throw new NullPointerException("registry");
         }
-        return create(path,
+        return create(
+                path,
                 new Origin(originContextId, originRevision),
+                NEW_CONTEXT_REVISION_MANIFEST_BASELINE,
                 copyRegistry(registry));
     }
 
     private static Manifest create(Path path,
                                    Origin origin,
+                                   long revisionManifestBaseline,
                                    TypeRegistry registry) throws IOException {
         UUID contextId;
         do {
             contextId = UUID.randomUUID();
         } while (isZero(contextId));
 
-        byte[] bytes = encode(contextId, origin, registry);
+        byte[] bytes = encode(
+                contextId,
+                origin,
+                revisionManifestBaseline,
+                registry);
         Path parent = path.getParent();
         if (parent != null) {
             Files.createDirectories(parent);
@@ -102,7 +117,11 @@ final class ContextManifestStore {
             }
             channel.force(true);
         }
-        return new Manifest(contextId, origin, registry);
+        return new Manifest(
+                contextId,
+                origin,
+                revisionManifestBaseline,
+                registry);
     }
 
     static Manifest read(Path path) throws IOException, StorageLifecycleException {
@@ -128,7 +147,9 @@ final class ContextManifestStore {
         try {
             int magic = readInt(input);
             int version = readInt(input);
-            if (magic != MAGIC || version != VERSION) {
+            if (magic != MAGIC
+                    || (version != VERSION
+                            && version != LEGACY_VERSION)) {
                 throw new StorageLifecycleException(
                         StorageLifecycleErrorCode.STORAGE_FORMAT_INCOMPATIBLE,
                         "Unsupported DUMB2 Context manifest format at " + path);
@@ -152,6 +173,18 @@ final class ContextManifestStore {
             } else if (originFlag != 0) {
                 throw corruption("Invalid DUMB2 Context origin flag "
                         + originFlag + " at " + path);
+            }
+
+            long revisionManifestBaseline =
+                    version >= VERSION
+                            ? readLong(input)
+                            : LEGACY_REVISION_MANIFEST_BASELINE;
+            if (revisionManifestBaseline
+                    < NEW_CONTEXT_REVISION_MANIFEST_BASELINE) {
+                throw corruption(
+                        "Invalid DUMB2 revision manifest baseline "
+                                + revisionManifestBaseline
+                                + " at " + path);
             }
 
             int count = readInt(input);
@@ -186,7 +219,11 @@ final class ContextManifestStore {
             if (input.available() != 0) {
                 throw corruption("Trailing bytes in DUMB2 Context manifest at " + path);
             }
-            return new Manifest(contextId, origin, registry);
+            return new Manifest(
+                    contextId,
+                    origin,
+                    revisionManifestBaseline,
+                    registry);
         } catch (EOFException failure) {
             throw corruption("Truncated DUMB2 Context manifest at " + path, failure);
         }
@@ -199,54 +236,76 @@ final class ContextManifestStore {
             throw corruption("DUMB2 Context manifest identity replacement rejected at "
                     + path);
         }
-        for (TypeDefinition oldDefinition
-                : published.getTypeRegistry().definitions()) {
-            TypeDefinition candidate;
-            try {
-                candidate = registry.resolve(oldDefinition.getTypeCode());
-            } catch (IllegalArgumentException failure) {
-                throw corruption("DUMB2 Context manifest descriptor removal rejected at "
-                        + path, failure);
-            }
-            if (!oldDefinition.equals(candidate)) {
-                throw corruption("DUMB2 Context manifest descriptor redefinition rejected at "
-                        + path);
-            }
+        validateRegistryExtension(
+                path,
+                published.getTypeRegistry(),
+                registry);
+
+        publishManifest(
+                path,
+                contextId,
+                published.getOrigin(),
+                published.getRevisionManifestBaseline(),
+                registry);
+    }
+
+    /**
+     * Declares the first revision that must carry a sealed Revision manifest.
+     *
+     * <p>Legacy v2 Contexts are upgraded atomically before the first M4
+     * publication. Revisions below the recorded baseline remain readable as
+     * legacy immutable generations; the baseline itself never moves later.</p>
+     */
+    static Manifest requireRevisionManifestsFrom(
+            Path path,
+            UUID contextId,
+            long baseline,
+            TypeRegistry registry)
+            throws IOException, StorageLifecycleException {
+        if (baseline < NEW_CONTEXT_REVISION_MANIFEST_BASELINE) {
+            throw new IllegalArgumentException(
+                    "revision manifest baseline must be positive");
         }
 
-        byte[] bytes = encode(contextId, published.getOrigin(), registry);
-        Path parent = path.getParent();
-        if (parent != null) {
-            Files.createDirectories(parent);
+        Manifest published = read(path);
+        if (!published.getContextId().equals(contextId)) {
+            throw corruption(
+                    "DUMB2 Context manifest identity replacement rejected at "
+                            + path);
         }
-        Path temp = path.resolveSibling(path.getFileName().toString()
-                + ".tmp-" + UUID.randomUUID().toString());
-        try {
-            try (FileChannel channel = FileChannel.open(temp,
-                    StandardOpenOption.CREATE_NEW,
-                    StandardOpenOption.WRITE)) {
-                java.nio.ByteBuffer buffer = java.nio.ByteBuffer.wrap(bytes);
-                while (buffer.hasRemaining()) {
-                    channel.write(buffer);
-                }
-                channel.force(true);
-            }
-            try {
-                Files.move(temp, path,
-                        StandardCopyOption.ATOMIC_MOVE,
-                        StandardCopyOption.REPLACE_EXISTING);
-            } catch (AtomicMoveNotSupportedException failure) {
-                throw new IOException(
-                        "DUMB2 requires atomic same-filesystem manifest publication: "
-                                + path, failure);
-            }
-        } finally {
-            Files.deleteIfExists(temp);
+        validateRegistryExtension(
+                path,
+                published.getTypeRegistry(),
+                registry);
+
+        long existing =
+                published.getRevisionManifestBaseline();
+        long effective =
+                existing == LEGACY_REVISION_MANIFEST_BASELINE
+                        ? baseline
+                        : existing;
+        if (effective > baseline) {
+            throw new IllegalStateException(
+                    "DUMB2 revision manifest baseline cannot move backward: "
+                            + existing + " -> " + baseline);
         }
+
+        if (existing == effective) {
+            return published;
+        }
+
+        publishManifest(
+                path,
+                contextId,
+                published.getOrigin(),
+                effective,
+                registry);
+        return read(path);
     }
 
     private static byte[] encode(UUID contextId,
                                  Origin origin,
+                                 long revisionManifestBaseline,
                                  TypeRegistry registry)
             throws IOException {
         if (contextId == null || isZero(contextId)) {
@@ -254,6 +313,11 @@ final class ContextManifestStore {
         }
         if (registry == null) {
             throw new NullPointerException("registry");
+        }
+        if (revisionManifestBaseline
+                < NEW_CONTEXT_REVISION_MANIFEST_BASELINE) {
+            throw new IllegalArgumentException(
+                    "revision manifest baseline must be positive");
         }
 
         ByteArrayOutputStream payloadBytes = new ByteArrayOutputStream();
@@ -270,6 +334,7 @@ final class ContextManifestStore {
             writeLong(output, origin.getContextId().getLeastSignificantBits());
             writeLong(output, origin.getRevision());
         }
+        writeLong(output, revisionManifestBaseline);
         writeInt(output, registry.size());
 
         for (TypeDefinition definition : registry.definitions()) {
@@ -291,6 +356,81 @@ final class ContextManifestStore {
         writeInt(result, (int) crc.getValue());
         result.flush();
         return resultBytes.toByteArray();
+    }
+
+    private static void validateRegistryExtension(
+            Path path,
+            TypeRegistry published,
+            TypeRegistry candidateRegistry)
+            throws StorageLifecycleException {
+        for (TypeDefinition oldDefinition
+                : published.definitions()) {
+            TypeDefinition candidate;
+            try {
+                candidate =
+                        candidateRegistry.resolve(
+                                oldDefinition.getTypeCode());
+            } catch (IllegalArgumentException failure) {
+                throw corruption(
+                        "DUMB2 Context manifest descriptor removal rejected at "
+                                + path,
+                        failure);
+            }
+            if (!oldDefinition.equals(candidate)) {
+                throw corruption(
+                        "DUMB2 Context manifest descriptor redefinition rejected at "
+                                + path);
+            }
+        }
+    }
+
+    private static void publishManifest(
+            Path path,
+            UUID contextId,
+            Origin origin,
+            long revisionManifestBaseline,
+            TypeRegistry registry)
+            throws IOException {
+        byte[] bytes = encode(
+                contextId,
+                origin,
+                revisionManifestBaseline,
+                registry);
+        Path parent = path.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+        Path temp = path.resolveSibling(
+                path.getFileName().toString()
+                        + ".tmp-"
+                        + UUID.randomUUID().toString());
+        try {
+            try (FileChannel channel = FileChannel.open(
+                    temp,
+                    StandardOpenOption.CREATE_NEW,
+                    StandardOpenOption.WRITE)) {
+                java.nio.ByteBuffer buffer =
+                        java.nio.ByteBuffer.wrap(bytes);
+                while (buffer.hasRemaining()) {
+                    channel.write(buffer);
+                }
+                channel.force(true);
+            }
+            try {
+                Files.move(
+                        temp,
+                        path,
+                        StandardCopyOption.ATOMIC_MOVE,
+                        StandardCopyOption.REPLACE_EXISTING);
+            } catch (AtomicMoveNotSupportedException failure) {
+                throw new IOException(
+                        "DUMB2 requires atomic same-filesystem manifest publication: "
+                                + path,
+                        failure);
+            }
+        } finally {
+            Files.deleteIfExists(temp);
+        }
     }
 
     private static TypeRegistry copyRegistry(TypeRegistry source) {
@@ -382,13 +522,17 @@ final class ContextManifestStore {
     static final class Manifest {
         private final UUID contextId;
         private final Origin origin;
+        private final long revisionManifestBaseline;
         private final TypeRegistry typeRegistry;
 
         private Manifest(UUID contextId,
                          Origin origin,
+                         long revisionManifestBaseline,
                          TypeRegistry typeRegistry) {
             this.contextId = contextId;
             this.origin = origin;
+            this.revisionManifestBaseline =
+                    revisionManifestBaseline;
             this.typeRegistry = typeRegistry;
         }
 
@@ -398,6 +542,16 @@ final class ContextManifestStore {
 
         Origin getOrigin() {
             return origin;
+        }
+
+        long getRevisionManifestBaseline() {
+            return revisionManifestBaseline;
+        }
+
+        boolean requiresRevisionManifest(
+                long revision) {
+            return revision
+                    >= revisionManifestBaseline;
         }
 
         TypeRegistry getTypeRegistry() {

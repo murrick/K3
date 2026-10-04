@@ -65,6 +65,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
             new LinkedHashMap<String, ContextBase>();
 
     private long revision;
+    private long revisionManifestBaseline;
     private int publishedTypeCount;
     private boolean closed;
 
@@ -72,12 +73,15 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                          UUID contextId,
                          long revision,
                          ContextManifestStore.Origin origin,
+                         long revisionManifestBaseline,
                          ContextLock contextLock,
                          TypeRegistry typeRegistry) {
         this.location = location;
         this.contextId = contextId;
         this.revision = revision;
         this.origin = origin;
+        this.revisionManifestBaseline =
+                revisionManifestBaseline;
         this.contextLock = contextLock;
         this.typeRegistry = typeRegistry;
         this.publishedTypeCount = typeRegistry.size();
@@ -112,8 +116,14 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         ContextLock lock = null;
         try {
             lock = acquireLock(normalized);
-            return new ContextStore(normalized, contextId, revision,
-                    manifest.getOrigin(), lock, manifest.getTypeRegistry());
+            return new ContextStore(
+                    normalized,
+                    contextId,
+                    revision,
+                    manifest.getOrigin(),
+                    manifest.getRevisionManifestBaseline(),
+                    lock,
+                    manifest.getTypeRegistry());
         } catch (IOException | StorageLifecycleException
                  | RuntimeException | Error failure) {
             closeQuietly(lock, failure);
@@ -154,7 +164,12 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                         + " has no physical generation at " + normalized);
             }
             ContextStore store = new ContextStore(
-                    normalized, contextId, revision, manifest.getOrigin(), lock,
+                    normalized,
+                    contextId,
+                    revision,
+                    manifest.getOrigin(),
+                    manifest.getRevisionManifestBaseline(),
+                    lock,
                     manifest.getTypeRegistry());
             if (revision > RevisionStore.INITIAL_REVISION) {
                 store.validatePublishedGeneration();
@@ -202,11 +217,12 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
         boolean manifestCreated = false;
         try {
-            ContextManifestStore.createFork(
-                    targetContext,
-                    source.getContextId(),
-                    source.getRevision(),
-                    source.snapshotTypeRegistry());
+            ContextManifestStore.Manifest targetManifest =
+                    ContextManifestStore.createFork(
+                            targetContext,
+                            source.getContextId(),
+                            source.getRevision(),
+                            source.snapshotTypeRegistry());
             manifestCreated = true;
 
             long forkRevision =
@@ -223,6 +239,11 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                 boolean installed = false;
                 try {
                     copyDirectory(source.getGeneration(), staging);
+                    RevisionManifestStore.seal(
+                            staging,
+                            targetManifest.getContextId(),
+                            forkRevision,
+                            RevisionStore.INITIAL_REVISION);
                     Files.move(staging, generation,
                             StandardCopyOption.ATOMIC_MOVE);
                     installed = true;
@@ -353,6 +374,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         }
 
         long next = revision + 1L;
+        ensureRevisionManifestPolicy(next);
         Path root = stateRoot(location);
         Path previous = generationPath(location, revision);
         Path target = generationPath(location, next);
@@ -379,6 +401,12 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                     base.writeSnapshot(staging);
                 }
             }
+
+            RevisionManifestStore.seal(
+                    staging,
+                    contextId,
+                    next,
+                    revision);
 
             qualifyAndStageConnectionTransition(
                     staging, next);
@@ -487,6 +515,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         }
 
         long next = revision + 1L;
+        ensureRevisionManifestPolicy(next);
         Path root = stateRoot(location);
         Path previous = generationPath(location, revision);
         Path target = generationPath(location, next);
@@ -515,6 +544,12 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                     base.writeSnapshot(staging, entry.getValue());
                 }
             }
+
+            RevisionManifestStore.seal(
+                    staging,
+                    contextId,
+                    next,
+                    revision);
 
             qualifyAndStageConnectionTransition(
                     staging, next);
@@ -719,9 +754,20 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         try (DirectoryStream<Path> stream =
                      Files.newDirectoryStream(generation)) {
             for (Path child : stream) {
+                String file =
+                        child.getFileName().toString();
+                if (RevisionManifestStore.FILE_NAME.equals(file)) {
+                    if (!Files.isRegularFile(
+                            child, LinkOption.NOFOLLOW_LINKS)) {
+                        throw corruption(
+                                "Invalid DUMB2 revision manifest entry "
+                                        + child);
+                    }
+                    continue;
+                }
                 if (!Files.isRegularFile(
                         child, LinkOption.NOFOLLOW_LINKS)
-                        || !child.getFileName().toString().endsWith(".base")) {
+                        || !file.endsWith(".base")) {
                     throw corruption(
                             "Unexpected entry in published DUMB2 generation "
                                     + child);
@@ -760,6 +806,36 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                     "Published DUMB2 revision " + revision
                             + " contains no schema snapshots at " + generation);
         }
+
+        boolean sealed =
+                RevisionManifestStore.exists(generation);
+        if (revision >= revisionManifestBaseline
+                && !sealed) {
+            throw corruption(
+                    "Published DUMB2 revision " + revision
+                            + " requires a revision manifest at "
+                            + generation);
+        }
+        if (sealed) {
+            RevisionManifestStore.validate(
+                    generation,
+                    contextId,
+                    revision,
+                    revision - 1L);
+        }
+    }
+
+    private void ensureRevisionManifestPolicy(
+            long nextRevision)
+            throws IOException, StorageLifecycleException {
+        ContextManifestStore.Manifest manifest =
+                ContextManifestStore.requireRevisionManifestsFrom(
+                        contextPath(location),
+                        contextId,
+                        nextRevision,
+                        typeRegistry);
+        revisionManifestBaseline =
+                manifest.getRevisionManifestBaseline();
     }
 
     private static Path lockPath(Path location) {
