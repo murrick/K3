@@ -1,0 +1,110 @@
+[
+  {
+    "site": "QueryTaintSolve:221",
+    "path": "kanger/src/org/kanger/QueryTaintSolve.java",
+    "line": 221,
+    "original": "for (TVariable variable : candidate.getArguments().getTVariables(mind)) {"
+  },
+  {
+    "site": "QueryTaintCarrier:407",
+    "path": "kanger/src/org/kanger/QueryTaintCarrier.java",
+    "line": 407,
+    "original": "variables.addAll(domain.getArguments().getTVariables(mind));"
+  },
+  {
+    "site": "Linker:587",
+    "path": "kanger/src/org/kanger/Linker.java",
+    "line": 587,
+    "original": "tvars.addAll(d.getArguments().getTVariables(mind));"
+  },
+  {
+    "site": "Linker:1333",
+    "path": "kanger/src/org/kanger/Linker.java",
+    "line": 1333,
+    "original": "for (TVariable t : d.getArguments().getTVariables(mind)) {"
+  },
+  {
+    "site": "ArgumentsList:265",
+    "path": "kanger/src/org/kanger/primitives/ArgumentsList.java",
+    "line": 265,
+    "original": "List<TVariable> temp = ((Function) a.getObject(mind)).getArguments().getTVariables(mind);"
+  },
+  {
+    "site": "ArgumentsList:354",
+    "path": "kanger/src/org/kanger/primitives/ArgumentsList.java",
+    "line": 354,
+    "original": "for (TVariable t : getTVariables(mind)) {"
+  },
+  {
+    "site": "ArgumentsList:382",
+    "path": "kanger/src/org/kanger/primitives/ArgumentsList.java",
+    "line": 382,
+    "original": "List<TVariable> curr = getTVariables(mind);"
+  },
+  {
+    "site": "FValue:105",
+    "path": "kanger/src/org/kanger/units/FValue.java",
+    "line": 105,
+    "original": "for (TVariable t : f.getArguments().getTVariables(mind)) {"
+  },
+  {
+    "site": "FValue:245",
+    "path": "kanger/src/org/kanger/units/FValue.java",
+    "line": 245,
+    "original": "List<TVariable> list = f.getArguments().getTVariables(mind);"
+  },
+  {
+    "site": "Domain:338",
+    "path": "kanger/src/org/kanger/units/Domain.java",
+    "line": 338,
+    "original": "for (TVariable x : arguments.getTVariables(mind)) {"
+  },
+  {
+    "site": "Domain:502",
+    "path": "kanger/src/org/kanger/units/Domain.java",
+    "line": 502,
+    "original": "for (TVariable t : arguments.getTVariables(mind)) {"
+  },
+  {
+    "site": "Domain:563",
+    "path": "kanger/src/org/kanger/units/Domain.java",
+    "line": 563,
+    "original": "for (TVariable t : arguments.getTVariables(mind)) {"
+  },
+  {
+    "site": "Domain:647",
+    "path": "kanger/src/org/kanger/units/Domain.java",
+    "line": 647,
+    "original": "for (TVariable t : getArguments().getTVariables(mind)) {"
+  },
+  {
+    "site": "Function:370",
+    "path": "kanger/src/org/kanger/units/Function.java",
+    "line": 370,
+    "original": "return arguments.getTVariables(mind).size() > 0;"
+  },
+  {
+    "site": "Function:387",
+    "path": "kanger/src/org/kanger/units/Function.java",
+    "line": 387,
+    "original": "for (TVariable t : arguments.getTVariables(mind)) {"
+  },
+  {
+    "site": "RuleFactory:635",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 635,
+    "original": "for (TVariable t : d.getArguments().getTVariables(mind)) {"
+  },
+  {
+    "site": "RuleFactory:649",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 649,
+    "original": "if (!tree.get(0).getArguments().getTVariables(mind).isEmpty()) {"
+  },
+  {
+    "site": "DomainFactory:181",
+    "path": "kanger/src/org/kanger/factory/DomainFactory.java",
+    "line": 181,
+    "original": "if (!arg.getTVariables(mind).isEmpty()) {"
+  }
+]

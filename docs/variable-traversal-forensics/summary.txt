@@ -1,0 +1,16 @@
+PROFILE_COMPLETE 1
+PROFILE_COMPLETE 2
+ArgumentsList:354 calls_min=1706357 calls_max=1706357 deletion_calls=6822620 share=38.8229% unique_lists=80 result_max=2 empty_min=642 empty_max=642
+ArgumentsList:382 calls_min=11955 calls_max=11955 deletion_calls=47604 share=0.2709% unique_lists=63 result_max=2 empty_min=0 empty_max=0
+Domain:502 calls_min=47958 calls_max=47958 deletion_calls=69950 share=0.3980% unique_lists=2140 result_max=2 empty_min=30359 empty_max=30359
+Domain:563 calls_min=4888581 calls_max=4893872 deletion_calls=7750474 share=44.1027% unique_lists=2257 result_max=2 empty_min=2678084 empty_max=2683375
+DomainFactory:181 calls_min=2098 calls_max=2098 deletion_calls=90 share=0.0005% unique_lists=2098 result_max=1 empty_min=2053 empty_max=2053
+Linker:1333 calls_min=73239 calls_max=73239 deletion_calls=292300 share=1.6633% unique_lists=18 result_max=2 empty_min=164 empty_max=164
+Linker:587 calls_min=202938 calls_max=202938 deletion_calls=219084 share=1.2467% unique_lists=2254 result_max=2 empty_min=140088 empty_max=140088
+RuleFactory:635 calls_min=2098 calls_max=2098 deletion_calls=90 share=0.0005% unique_lists=2098 result_max=1 empty_min=2053 empty_max=2053
+RuleFactory:649 calls_min=133 calls_max=133 deletion_calls=90 share=0.0005% unique_lists=133 result_max=1 empty_min=88 empty_max=88
+outside_getTVariables deletion_calls=2371408 share=13.4941%
+STAMP isCalculated entries=2220870 comparisons=1665824 avg_comparisons_per_entry=0.750077
+STAMP isProduced entries=13659 comparisons=25378 avg_comparisons_per_entry=1.857969
+VARIABLE_TRAVERSAL_FORENSICS_OK samples=12 warm_samples=8 texts_equal_to_clean_base=true
+TIMING_EXCLUDED diagnostic_instrumentation=true main_optimization_thread_only=true

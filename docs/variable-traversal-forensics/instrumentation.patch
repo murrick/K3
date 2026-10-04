@@ -1,0 +1,90 @@
+--- a/kanger/src/org/kanger/QueryTaintSolve.java
++++ b/kanger/src/org/kanger/QueryTaintSolve.java
+@@ -221 +221 @@
+-                for (TVariable variable : candidate.getArguments().getTVariables(mind)) {
++                for (TVariable variable : org.kanger.VariableTraversalProfile.variables(candidate.getArguments(), mind, "QueryTaintSolve:221")) {
+--- a/kanger/src/org/kanger/QueryTaintCarrier.java
++++ b/kanger/src/org/kanger/QueryTaintCarrier.java
+@@ -407 +407 @@
+-                variables.addAll(domain.getArguments().getTVariables(mind));
++                variables.addAll(org.kanger.VariableTraversalProfile.variables(domain.getArguments(), mind, "QueryTaintCarrier:407"));
+--- a/kanger/src/org/kanger/Linker.java
++++ b/kanger/src/org/kanger/Linker.java
+@@ -587 +587 @@
+-                    tvars.addAll(d.getArguments().getTVariables(mind));
++                    tvars.addAll(org.kanger.VariableTraversalProfile.variables(d.getArguments(), mind, "Linker:587"));
+@@ -1333 +1333 @@
+-                    for (TVariable t : d.getArguments().getTVariables(mind)) {
++                    for (TVariable t : org.kanger.VariableTraversalProfile.variables(d.getArguments(), mind, "Linker:1333")) {
+--- a/kanger/src/org/kanger/Mind.java
++++ b/kanger/src/org/kanger/Mind.java
+@@ -1899,0 +1900 @@
++        org.kanger.VariableTraversalProfile.deletion();
+--- a/kanger/src/org/kanger/primitives/ArgumentsList.java
++++ b/kanger/src/org/kanger/primitives/ArgumentsList.java
+@@ -258,0 +259 @@
++            org.kanger.VariableTraversalProfile.argument();
+@@ -265 +266 @@
+-                List<TVariable> temp = ((Function) a.getObject(mind)).getArguments().getTVariables(mind);
++                List<TVariable> temp = org.kanger.VariableTraversalProfile.variables(((Function) a.getObject(mind)).getArguments(), mind, "ArgumentsList:265");
+@@ -354 +355 @@
+-        for (TVariable t : getTVariables(mind)) {
++        for (TVariable t : org.kanger.VariableTraversalProfile.variables(this, mind, "ArgumentsList:354")) {
+@@ -382 +383 @@
+-        List<TVariable> curr = getTVariables(mind);
++        List<TVariable> curr = org.kanger.VariableTraversalProfile.variables(this, mind, "ArgumentsList:382");
+--- a/kanger/src/org/kanger/units/FValue.java
++++ b/kanger/src/org/kanger/units/FValue.java
+@@ -105 +105 @@
+-        for (TVariable t : f.getArguments().getTVariables(mind)) {
++        for (TVariable t : org.kanger.VariableTraversalProfile.variables(f.getArguments(), mind, "FValue:105")) {
+@@ -245 +245 @@
+-                List<TVariable> list = f.getArguments().getTVariables(mind);
++                List<TVariable> list = org.kanger.VariableTraversalProfile.variables(f.getArguments(), mind, "FValue:245");
+--- a/kanger/src/org/kanger/units/Domain.java
++++ b/kanger/src/org/kanger/units/Domain.java
+@@ -338 +338 @@
+-        for (TVariable x : arguments.getTVariables(mind)) {
++        for (TVariable x : org.kanger.VariableTraversalProfile.variables(arguments, mind, "Domain:338")) {
+@@ -398,0 +399 @@
++        org.kanger.VariableTraversalProfile.stamp("isProduced", 0);
+@@ -400,0 +402 @@
++                org.kanger.VariableTraversalProfile.stamp("isProduced", 1);
+@@ -425,0 +428 @@
++        org.kanger.VariableTraversalProfile.stamp("isCalculated", 0);
+@@ -427,0 +431 @@
++                org.kanger.VariableTraversalProfile.stamp("isCalculated", 1);
+@@ -436,0 +441 @@
++        org.kanger.VariableTraversalProfile.stamp("unCalculated", 0);
+@@ -438,0 +444 @@
++                org.kanger.VariableTraversalProfile.stamp("unCalculated", 1);
+@@ -502 +508 @@
+-            for (TVariable t : arguments.getTVariables(mind)) {
++            for (TVariable t : org.kanger.VariableTraversalProfile.variables(arguments, mind, "Domain:502")) {
+@@ -563 +569 @@
+-        for (TVariable t : arguments.getTVariables(mind)) {
++        for (TVariable t : org.kanger.VariableTraversalProfile.variables(arguments, mind, "Domain:563")) {
+@@ -647 +653 @@
+-        for (TVariable t : getArguments().getTVariables(mind)) {
++        for (TVariable t : org.kanger.VariableTraversalProfile.variables(getArguments(), mind, "Domain:647")) {
+--- a/kanger/src/org/kanger/units/Function.java
++++ b/kanger/src/org/kanger/units/Function.java
+@@ -370 +370 @@
+-        return arguments.getTVariables(mind).size() > 0;
++        return org.kanger.VariableTraversalProfile.variables(arguments, mind, "Function:370").size() > 0;
+@@ -387 +387 @@
+-        for (TVariable t : arguments.getTVariables(mind)) {
++        for (TVariable t : org.kanger.VariableTraversalProfile.variables(arguments, mind, "Function:387")) {
+--- a/kanger/src/org/kanger/factory/RuleFactory.java
++++ b/kanger/src/org/kanger/factory/RuleFactory.java
+@@ -635 +635 @@
+-                    for (TVariable t : d.getArguments().getTVariables(mind)) {
++                    for (TVariable t : org.kanger.VariableTraversalProfile.variables(d.getArguments(), mind, "RuleFactory:635")) {
+@@ -649 +649 @@
+-                if (!tree.get(0).getArguments().getTVariables(mind).isEmpty()) {
++                if (!org.kanger.VariableTraversalProfile.variables(tree.get(0).getArguments(), mind, "RuleFactory:649").isEmpty()) {
+--- a/kanger/src/org/kanger/factory/DomainFactory.java
++++ b/kanger/src/org/kanger/factory/DomainFactory.java
+@@ -181 +181 @@
+-                if (!arg.getTVariables(mind).isEmpty()) {
++                if (!org.kanger.VariableTraversalProfile.variables(arg, mind, "DomainFactory:181").isEmpty()) {
