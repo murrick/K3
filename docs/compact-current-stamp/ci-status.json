@@ -1,0 +1,83 @@
+{
+  "code_sha": "249f3ac09433d029aff8add6e415f51c23f07a05",
+  "workflows": [
+    {
+      "id": 37213375059,
+      "name": "KANGER distribution bundle",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "249f3ac09433d029aff8add6e415f51c23f07a05",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37213375059"
+    },
+    {
+      "id": 37213375041,
+      "name": "KANGER Server",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "249f3ac09433d029aff8add6e415f51c23f07a05",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37213375041"
+    },
+    {
+      "id": 37213375043,
+      "name": "Compact current stamp qualification",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "249f3ac09433d029aff8add6e415f51c23f07a05",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37213375043"
+    },
+    {
+      "id": 37213375036,
+      "name": "KANGER CI",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "249f3ac09433d029aff8add6e415f51c23f07a05",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37213375036"
+    },
+    {
+      "id": 37213375035,
+      "name": "KANGER qualification isolation",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "249f3ac09433d029aff8add6e415f51c23f07a05",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37213375035"
+    }
+  ],
+  "specialized_jobs": [
+    {
+      "id": 111468867541,
+      "name": "qualification (26, false)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 111468867633,
+      "name": "qualification (21, true)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 111468867642,
+      "name": "qualification (26, true)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 111468867674,
+      "name": "qualification (21, false)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 111468867681,
+      "name": "qualification (8, true)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 111468867702,
+      "name": "qualification (8, false)",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ]
+}

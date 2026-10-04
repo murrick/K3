@@ -1,0 +1,11 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "code": "249f3ac09433d029aff8add6e415f51c23f07a05",
+  "java": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment (build 17.0.20+8-1-24.04-Ubuntu)\nOpenJDK 64-Bit Server VM (build 17.0.20+8-1-24.04-Ubuntu, mixed mode, sharing)",
+  "natives_sha256": "bd0bac2c92badbf1b7f2396b434eda8d9d7c562ff4c09c5e4d790f30d9f5f8ed",
+  "compiled_class_differences": [
+    "org/kanger/primitives/ArgumentsList.class"
+  ],
+  "SonProfileRunner_sha256": "a6e1e4d619670763d894cb2dce3e9e43eba00af1e3cb4c3be0d2b01c31d9dfd8",
+  "scope": "six sequential fresh JVMs, six samples each, first two discarded; no profiling counters"
+}
