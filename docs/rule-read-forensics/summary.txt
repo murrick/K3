@@ -1,0 +1,26 @@
+PROFILE_COMPLETE 1
+PROFILE_COMPLETE 2
+DomainFactory:155 counts_min=[133, 133, 0, 45, 45, 0, 0] counts_max=[133, 133, 0, 45, 45, 0, 0] unique_domains=[133]
+Escalera:655>Step:57 counts_min=[30574, 0, 30574, 13803, 13803, 0, 0] counts_max=[30574, 0, 30574, 13803, 13803, 0, 0] unique_domains=[1085]
+Escalera:655>Step:57>Rule:390 counts_min=[1244915, 1222106, 22809, 325475, 321882, 3593, 0] counts_max=[1244915, 1222106, 22809, 325475, 321882, 3593, 0] unique_domains=[2257]
+RuleFactory:1037>Step:57>Rule:390 counts_min=[133, 133, 0, 45, 45, 0, 0] counts_max=[133, 133, 0, 45, 45, 0, 0] unique_domains=[133]
+RuleFactory:446>RuleFactory:664>Escalera:280>Step:57>Rule:390 counts_min=[593602, 593602, 0, 689222, 689222, 0, 0] counts_max=[593602, 593602, 0, 689222, 689222, 0, 0] unique_domains=[2234]
+RuleFactory:475>RuleFactory:664>Escalera:280>Step:57>Rule:390 counts_min=[12940, 12940, 0, 8379, 8379, 0, 0] counts_max=[12940, 12940, 0, 8379, 8379, 0, 0] unique_domains=[496]
+RuleFactory:503>RuleFactory:664>Escalera:280>Step:57>Rule:390 counts_min=[1633243, 1633243, 0, 2779801, 2779801, 0, 0] counts_max=[1633243, 1633243, 0, 2779801, 2779801, 0, 0] unique_domains=[398]
+RuleFactory:515>RuleFactory:664>Escalera:280>Step:57>Rule:390 counts_min=[4464, 4464, 0, 0, 0, 0, 0] counts_max=[4464, 4464, 0, 0, 0, 0, 0] unique_domains=[3]
+RuleFactory:567>Rule:390 counts_min=[133, 133, 0, 45, 45, 0, 0] counts_max=[133, 133, 0, 45, 45, 0, 0] unique_domains=[133]
+RuleFactory:658 counts_min=[133, 133, 0, 45, 45, 0, 0] counts_max=[133, 133, 0, 45, 45, 0, 0] unique_domains=[133]
+RuleFactory:664>Escalera:280>Step:57>Rule:390 counts_min=[58204, 58204, 0, 46939, 46939, 0, 0] counts_max=[58204, 58204, 0, 46939, 46939, 0, 0] unique_domains=[2043]
+RuleFactory:911>RuleFactory:664>Escalera:280>Step:57>Rule:390 counts_min=[1310098, 1307058, 3040, 0, 0, 0, 0] counts_max=[1315389, 1312349, 3040, 0, 0, 0, 0] unique_domains=[2164, 2165]
+RuleFactory:925>RuleFactory:664>Escalera:280>Step:57>Rule:390 counts_min=[9, 9, 0, 0, 0, 0, 0] counts_max=[9, 9, 0, 0, 0, 0, 0] unique_domains=[9]
+domain_calls min=4888581 max=4893872
+same_domain_mind min=4832158 max=4837449
+changed_domain_mind min=56423 max=56423
+variable_selections min=3863799 max=3863799
+same_variable_mind min=3860206 max=3860206
+changed_variable_mind min=3593 max=3593
+same_domain_changed_variable min=0 max=0
+RESOLVED_VARIABLE_SELECTION_SHARE percent=71.944762
+DOMAIN_BINDING_WITNESS_OK scenarios=3 checks=21
+RULE_READ_FORENSICS_OK samples=12 warm_samples=8 texts_equal_to_clean_base=true
+TIMING_EXCLUDED diagnostic_instrumentation=true

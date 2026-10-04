@@ -1,0 +1,4 @@
+WITNESS mode=0 reference=root-a naive=child-b
+WITNESS mode=1 reference=root-a naive=child-b
+WITNESS mode=2 reference=root-a naive=child-b
+DOMAIN_BINDING_WITNESS_OK scenarios=3 checks=21

@@ -1,0 +1,103 @@
+COMPILE_NS 424675682
+BINDING_ROUTE 0 DomainFactory:155 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 0 Escalera:655>Step:57 [30574, 0, 30574, 13803, 13803, 0, 0] unique_domains=1085
+BINDING_ROUTE 0 Escalera:655>Step:57>Rule:390 [1244915, 1222106, 22809, 325475, 321882, 3593, 0] unique_domains=2257
+BINDING_ROUTE 0 RuleFactory:1037>Step:57>Rule:390 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 0 RuleFactory:446>RuleFactory:664>Escalera:280>Step:57>Rule:390 [593602, 593602, 0, 689222, 689222, 0, 0] unique_domains=2234
+BINDING_ROUTE 0 RuleFactory:475>RuleFactory:664>Escalera:280>Step:57>Rule:390 [12940, 12940, 0, 8379, 8379, 0, 0] unique_domains=496
+BINDING_ROUTE 0 RuleFactory:503>RuleFactory:664>Escalera:280>Step:57>Rule:390 [1633243, 1633243, 0, 2779801, 2779801, 0, 0] unique_domains=398
+BINDING_ROUTE 0 RuleFactory:515>RuleFactory:664>Escalera:280>Step:57>Rule:390 [4464, 4464, 0, 0, 0, 0, 0] unique_domains=3
+BINDING_ROUTE 0 RuleFactory:567>Rule:390 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 0 RuleFactory:658 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 0 RuleFactory:664>Escalera:280>Step:57>Rule:390 [58204, 58204, 0, 46939, 46939, 0, 0] unique_domains=2043
+BINDING_ROUTE 0 RuleFactory:911>RuleFactory:664>Escalera:280>Step:57>Rule:390 [1319803, 1316762, 3041, 0, 0, 0, 0] unique_domains=2167
+BINDING_ROUTE 0 RuleFactory:925>RuleFactory:664>Escalera:280>Step:57>Rule:390 [29, 29, 0, 0, 0, 0, 0] unique_domains=29
+SAMPLE 0 query_ns=295393957 optimize_ns=7057692804 optimize_cpu_ns=6729763973 optimize_allocated_bytes=-1 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+BINDING_ROUTE 1 DomainFactory:155 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 1 Escalera:655>Step:57 [30574, 0, 30574, 13803, 13803, 0, 0] unique_domains=1085
+BINDING_ROUTE 1 Escalera:655>Step:57>Rule:390 [1244915, 1222106, 22809, 325475, 321882, 3593, 0] unique_domains=2257
+BINDING_ROUTE 1 RuleFactory:1037>Step:57>Rule:390 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 1 RuleFactory:446>RuleFactory:664>Escalera:280>Step:57>Rule:390 [593602, 593602, 0, 689222, 689222, 0, 0] unique_domains=2234
+BINDING_ROUTE 1 RuleFactory:475>RuleFactory:664>Escalera:280>Step:57>Rule:390 [12940, 12940, 0, 8379, 8379, 0, 0] unique_domains=496
+BINDING_ROUTE 1 RuleFactory:503>RuleFactory:664>Escalera:280>Step:57>Rule:390 [1633243, 1633243, 0, 2779801, 2779801, 0, 0] unique_domains=398
+BINDING_ROUTE 1 RuleFactory:515>RuleFactory:664>Escalera:280>Step:57>Rule:390 [4464, 4464, 0, 0, 0, 0, 0] unique_domains=3
+BINDING_ROUTE 1 RuleFactory:567>Rule:390 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 1 RuleFactory:658 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 1 RuleFactory:664>Escalera:280>Step:57>Rule:390 [58204, 58204, 0, 46939, 46939, 0, 0] unique_domains=2043
+BINDING_ROUTE 1 RuleFactory:911>RuleFactory:664>Escalera:280>Step:57>Rule:390 [1313035, 1309995, 3040, 0, 0, 0, 0] unique_domains=2164
+BINDING_ROUTE 1 RuleFactory:925>RuleFactory:664>Escalera:280>Step:57>Rule:390 [9, 9, 0, 0, 0, 0, 0] unique_domains=9
+SAMPLE 1 query_ns=168101379 optimize_ns=5472056189 optimize_cpu_ns=5225294965 optimize_allocated_bytes=-1 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+BINDING_ROUTE 2 DomainFactory:155 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 2 Escalera:655>Step:57 [30574, 0, 30574, 13803, 13803, 0, 0] unique_domains=1085
+BINDING_ROUTE 2 Escalera:655>Step:57>Rule:390 [1244915, 1222106, 22809, 325475, 321882, 3593, 0] unique_domains=2257
+BINDING_ROUTE 2 RuleFactory:1037>Step:57>Rule:390 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 2 RuleFactory:446>RuleFactory:664>Escalera:280>Step:57>Rule:390 [593602, 593602, 0, 689222, 689222, 0, 0] unique_domains=2234
+BINDING_ROUTE 2 RuleFactory:475>RuleFactory:664>Escalera:280>Step:57>Rule:390 [12940, 12940, 0, 8379, 8379, 0, 0] unique_domains=496
+BINDING_ROUTE 2 RuleFactory:503>RuleFactory:664>Escalera:280>Step:57>Rule:390 [1633243, 1633243, 0, 2779801, 2779801, 0, 0] unique_domains=398
+BINDING_ROUTE 2 RuleFactory:515>RuleFactory:664>Escalera:280>Step:57>Rule:390 [4464, 4464, 0, 0, 0, 0, 0] unique_domains=3
+BINDING_ROUTE 2 RuleFactory:567>Rule:390 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 2 RuleFactory:658 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 2 RuleFactory:664>Escalera:280>Step:57>Rule:390 [58204, 58204, 0, 46939, 46939, 0, 0] unique_domains=2043
+BINDING_ROUTE 2 RuleFactory:911>RuleFactory:664>Escalera:280>Step:57>Rule:390 [1315389, 1312349, 3040, 0, 0, 0, 0] unique_domains=2164
+BINDING_ROUTE 2 RuleFactory:925>RuleFactory:664>Escalera:280>Step:57>Rule:390 [9, 9, 0, 0, 0, 0, 0] unique_domains=9
+SAMPLE 2 query_ns=73447650 optimize_ns=4923936082 optimize_cpu_ns=4742405296 optimize_allocated_bytes=-1 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+BINDING_ROUTE 3 DomainFactory:155 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 3 Escalera:655>Step:57 [30574, 0, 30574, 13803, 13803, 0, 0] unique_domains=1085
+BINDING_ROUTE 3 Escalera:655>Step:57>Rule:390 [1244915, 1222106, 22809, 325475, 321882, 3593, 0] unique_domains=2257
+BINDING_ROUTE 3 RuleFactory:1037>Step:57>Rule:390 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 3 RuleFactory:446>RuleFactory:664>Escalera:280>Step:57>Rule:390 [593602, 593602, 0, 689222, 689222, 0, 0] unique_domains=2234
+BINDING_ROUTE 3 RuleFactory:475>RuleFactory:664>Escalera:280>Step:57>Rule:390 [12940, 12940, 0, 8379, 8379, 0, 0] unique_domains=496
+BINDING_ROUTE 3 RuleFactory:503>RuleFactory:664>Escalera:280>Step:57>Rule:390 [1633243, 1633243, 0, 2779801, 2779801, 0, 0] unique_domains=398
+BINDING_ROUTE 3 RuleFactory:515>RuleFactory:664>Escalera:280>Step:57>Rule:390 [4464, 4464, 0, 0, 0, 0, 0] unique_domains=3
+BINDING_ROUTE 3 RuleFactory:567>Rule:390 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 3 RuleFactory:658 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 3 RuleFactory:664>Escalera:280>Step:57>Rule:390 [58204, 58204, 0, 46939, 46939, 0, 0] unique_domains=2043
+BINDING_ROUTE 3 RuleFactory:911>RuleFactory:664>Escalera:280>Step:57>Rule:390 [1311971, 1308931, 3040, 0, 0, 0, 0] unique_domains=2165
+BINDING_ROUTE 3 RuleFactory:925>RuleFactory:664>Escalera:280>Step:57>Rule:390 [9, 9, 0, 0, 0, 0, 0] unique_domains=9
+SAMPLE 3 query_ns=117068501 optimize_ns=4922660076 optimize_cpu_ns=4773782338 optimize_allocated_bytes=-1 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+BINDING_ROUTE 4 DomainFactory:155 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 4 Escalera:655>Step:57 [30574, 0, 30574, 13803, 13803, 0, 0] unique_domains=1085
+BINDING_ROUTE 4 Escalera:655>Step:57>Rule:390 [1244915, 1222106, 22809, 325475, 321882, 3593, 0] unique_domains=2257
+BINDING_ROUTE 4 RuleFactory:1037>Step:57>Rule:390 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 4 RuleFactory:446>RuleFactory:664>Escalera:280>Step:57>Rule:390 [593602, 593602, 0, 689222, 689222, 0, 0] unique_domains=2234
+BINDING_ROUTE 4 RuleFactory:475>RuleFactory:664>Escalera:280>Step:57>Rule:390 [12940, 12940, 0, 8379, 8379, 0, 0] unique_domains=496
+BINDING_ROUTE 4 RuleFactory:503>RuleFactory:664>Escalera:280>Step:57>Rule:390 [1633243, 1633243, 0, 2779801, 2779801, 0, 0] unique_domains=398
+BINDING_ROUTE 4 RuleFactory:515>RuleFactory:664>Escalera:280>Step:57>Rule:390 [4464, 4464, 0, 0, 0, 0, 0] unique_domains=3
+BINDING_ROUTE 4 RuleFactory:567>Rule:390 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 4 RuleFactory:658 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 4 RuleFactory:664>Escalera:280>Step:57>Rule:390 [58204, 58204, 0, 46939, 46939, 0, 0] unique_domains=2043
+BINDING_ROUTE 4 RuleFactory:911>RuleFactory:664>Escalera:280>Step:57>Rule:390 [1310098, 1307058, 3040, 0, 0, 0, 0] unique_domains=2164
+BINDING_ROUTE 4 RuleFactory:925>RuleFactory:664>Escalera:280>Step:57>Rule:390 [9, 9, 0, 0, 0, 0, 0] unique_domains=9
+SAMPLE 4 query_ns=72333903 optimize_ns=5102174849 optimize_cpu_ns=4956253752 optimize_allocated_bytes=-1 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+BINDING_ROUTE 5 DomainFactory:155 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 5 Escalera:655>Step:57 [30574, 0, 30574, 13803, 13803, 0, 0] unique_domains=1085
+BINDING_ROUTE 5 Escalera:655>Step:57>Rule:390 [1244915, 1222106, 22809, 325475, 321882, 3593, 0] unique_domains=2257
+BINDING_ROUTE 5 RuleFactory:1037>Step:57>Rule:390 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 5 RuleFactory:446>RuleFactory:664>Escalera:280>Step:57>Rule:390 [593602, 593602, 0, 689222, 689222, 0, 0] unique_domains=2234
+BINDING_ROUTE 5 RuleFactory:475>RuleFactory:664>Escalera:280>Step:57>Rule:390 [12940, 12940, 0, 8379, 8379, 0, 0] unique_domains=496
+BINDING_ROUTE 5 RuleFactory:503>RuleFactory:664>Escalera:280>Step:57>Rule:390 [1633243, 1633243, 0, 2779801, 2779801, 0, 0] unique_domains=398
+BINDING_ROUTE 5 RuleFactory:515>RuleFactory:664>Escalera:280>Step:57>Rule:390 [4464, 4464, 0, 0, 0, 0, 0] unique_domains=3
+BINDING_ROUTE 5 RuleFactory:567>Rule:390 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 5 RuleFactory:658 [133, 133, 0, 45, 45, 0, 0] unique_domains=133
+BINDING_ROUTE 5 RuleFactory:664>Escalera:280>Step:57>Rule:390 [58204, 58204, 0, 46939, 46939, 0, 0] unique_domains=2043
+BINDING_ROUTE 5 RuleFactory:911>RuleFactory:664>Escalera:280>Step:57>Rule:390 [1310147, 1307107, 3040, 0, 0, 0, 0] unique_domains=2164
+BINDING_ROUTE 5 RuleFactory:925>RuleFactory:664>Escalera:280>Step:57>Rule:390 [9, 9, 0, 0, 0, 0, 0] unique_domains=9
+SAMPLE 5 query_ns=71613625 optimize_ns=5019430869 optimize_cpu_ns=4767491578 optimize_allocated_bytes=-1 raw=18 optimized=6 solutions=0 values=0
+RAW [!daughter(Tom,John);, !daughter(Tom,Mary);, !female(Tom);, !male(Tom);, !sibling(Sarah,Sarah);, !sibling(Tom,Tom);, !son(Tom,John);, !son(Tom,Mary);, ?daughter(Tom,John);, ?daughter(Tom,Mary);, ?divorced(John,Mary);, ?divorced(Mary,John);, ?female(Tom);, ?male(Tom);, ?son(Tom,John);, ?son(Tom,Mary);, ?spouse(John,Mary);, ?spouse(Mary,John);]
+OPTIMIZED [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
