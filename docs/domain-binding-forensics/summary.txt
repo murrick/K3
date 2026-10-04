@@ -1,0 +1,19 @@
+PROFILE_COMPLETE 1
+PROFILE_COMPLETE 2
+DomainFactory:155 counts_min=[133, 133, 0, 45, 45, 0, 0] counts_max=[133, 133, 0, 45, 45, 0, 0] unique_domains=[133]
+RuleFactory:567>Rule:390 counts_min=[133, 133, 0, 45, 45, 0, 0] counts_max=[133, 133, 0, 45, 45, 0, 0] unique_domains=[133]
+RuleFactory:658 counts_min=[133, 133, 0, 45, 45, 0, 0] counts_max=[133, 133, 0, 45, 45, 0, 0] unique_domains=[133]
+Step:57 counts_min=[30574, 0, 30574, 13803, 13803, 0, 0] counts_max=[30574, 0, 30574, 13803, 13803, 0, 0] unique_domains=[1085]
+Step:57>Rule:390 counts_min=[4857608, 4831759, 25849, 3849861, 3846268, 3593, 0] counts_max=[4862899, 4837050, 25849, 3849861, 3846268, 3593, 0] unique_domains=[2257]
+domain_calls min=4888581 max=4893872
+same_domain_mind min=4832158 max=4837449
+changed_domain_mind min=56423 max=56423
+variable_selections min=3863799 max=3863799
+same_variable_mind min=3860206 max=3860206
+changed_variable_mind min=3593 max=3593
+same_domain_changed_variable min=0 max=0
+rule_cache_cascade share_min=99.366421% share_max=99.367106%
+same_domain_mind share_min=98.845820% share_max=98.847068%
+same_variable_mind share_min=99.907009% share_max=99.907009%
+DOMAIN_BINDING_FORENSICS_OK samples=12 warm_samples=8 texts_equal_to_clean_base=true witnesses=3
+TIMING_EXCLUDED diagnostic_instrumentation=true main_optimization_thread_only=true

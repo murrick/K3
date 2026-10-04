@@ -1,0 +1,92 @@
+[
+  {
+    "site": "Rule:390",
+    "path": "kanger/src/org/kanger/units/Rule.java",
+    "line": 390,
+    "original": "d.setMind(mind);"
+  },
+  {
+    "site": "Step:57",
+    "path": "kanger/src/org/kanger/storage/Step.java",
+    "line": 57,
+    "original": "((IUnit) data).setMind(mind);"
+  },
+  {
+    "site": "Sapato:124",
+    "path": "kanger/src/org/kanger/storage/Sapato.java",
+    "line": 124,
+    "original": "((IUnit) data).setMind(mind);"
+  },
+  {
+    "site": "TValueFactory:291",
+    "path": "kanger/src/org/kanger/factory/TValueFactory.java",
+    "line": 291,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "DictionaryFactory:177",
+    "path": "kanger/src/org/kanger/factory/DictionaryFactory.java",
+    "line": 177,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "FunctionFactory:156",
+    "path": "kanger/src/org/kanger/factory/FunctionFactory.java",
+    "line": 156,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "FValueFactory:183",
+    "path": "kanger/src/org/kanger/factory/FValueFactory.java",
+    "line": 183,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "RuleFactory:567",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 567,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "RuleFactory:658",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 658,
+    "original": "d.setMind(mind);"
+  },
+  {
+    "site": "RuleFactory:715",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 715,
+    "original": "view.setMind(mind);"
+  },
+  {
+    "site": "PredicateFactory:135",
+    "path": "kanger/src/org/kanger/factory/PredicateFactory.java",
+    "line": 135,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "LibraryFactory:286",
+    "path": "kanger/src/org/kanger/factory/LibraryFactory.java",
+    "line": 286,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "CommentFactory:225",
+    "path": "kanger/src/org/kanger/factory/CommentFactory.java",
+    "line": 225,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "TVariableFactory:145",
+    "path": "kanger/src/org/kanger/factory/TVariableFactory.java",
+    "line": 145,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "DomainFactory:155",
+    "path": "kanger/src/org/kanger/factory/DomainFactory.java",
+    "line": 155,
+    "original": "((IUnit) s).setMind(mind);"
+  }
+]

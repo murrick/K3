@@ -1,0 +1,83 @@
+--- a/kanger/src/org/kanger/units/Domain.java
++++ b/kanger/src/org/kanger/units/Domain.java
+@@ -561,0 +562,2 @@
++        org.kanger.DomainBindingProfile.enter(this, this.mind, mind);
++        try {
+@@ -566,0 +569 @@
++        } finally { org.kanger.DomainBindingProfile.leave(); }
+--- a/kanger/src/org/kanger/units/Rule.java
++++ b/kanger/src/org/kanger/units/Rule.java
+@@ -390 +390 @@
+-                d.setMind(mind);
++                org.kanger.DomainBindingProfile.select(d, mind, "Rule:390");
+--- a/kanger/src/org/kanger/units/TVariable.java
++++ b/kanger/src/org/kanger/units/TVariable.java
+@@ -323,0 +324,2 @@
++        if (org.kanger.DomainBindingProfile.inspectVariable())
++            org.kanger.DomainBindingProfile.variable(this, activeMind(), mind);
+--- a/kanger/src/org/kanger/storage/Step.java
++++ b/kanger/src/org/kanger/storage/Step.java
+@@ -57 +57 @@
+-            ((IUnit) data).setMind(mind);
++            org.kanger.DomainBindingProfile.select((IUnit) data, mind, "Step:57");
+--- a/kanger/src/org/kanger/storage/Sapato.java
++++ b/kanger/src/org/kanger/storage/Sapato.java
+@@ -124 +124 @@
+-            ((IUnit) data).setMind(mind);
++            org.kanger.DomainBindingProfile.select((IUnit) data, mind, "Sapato:124");
+--- a/kanger/src/org/kanger/factory/TValueFactory.java
++++ b/kanger/src/org/kanger/factory/TValueFactory.java
+@@ -291 +291 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.DomainBindingProfile.select((IUnit) s, mind, "TValueFactory:291");
+--- a/kanger/src/org/kanger/factory/DictionaryFactory.java
++++ b/kanger/src/org/kanger/factory/DictionaryFactory.java
+@@ -177 +177 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.DomainBindingProfile.select((IUnit) s, mind, "DictionaryFactory:177");
+--- a/kanger/src/org/kanger/factory/FunctionFactory.java
++++ b/kanger/src/org/kanger/factory/FunctionFactory.java
+@@ -156 +156 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.DomainBindingProfile.select((IUnit) s, mind, "FunctionFactory:156");
+--- a/kanger/src/org/kanger/factory/FValueFactory.java
++++ b/kanger/src/org/kanger/factory/FValueFactory.java
+@@ -183 +183 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.DomainBindingProfile.select((IUnit) s, mind, "FValueFactory:183");
+--- a/kanger/src/org/kanger/factory/RuleFactory.java
++++ b/kanger/src/org/kanger/factory/RuleFactory.java
+@@ -567 +567 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.DomainBindingProfile.select((IUnit) s, mind, "RuleFactory:567");
+@@ -658 +658 @@
+-                d.setMind(mind);
++                org.kanger.DomainBindingProfile.select(d, mind, "RuleFactory:658");
+@@ -715 +715 @@
+-                view.setMind(mind);
++                org.kanger.DomainBindingProfile.select(view, mind, "RuleFactory:715");
+--- a/kanger/src/org/kanger/factory/PredicateFactory.java
++++ b/kanger/src/org/kanger/factory/PredicateFactory.java
+@@ -135 +135 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.DomainBindingProfile.select((IUnit) s, mind, "PredicateFactory:135");
+--- a/kanger/src/org/kanger/factory/LibraryFactory.java
++++ b/kanger/src/org/kanger/factory/LibraryFactory.java
+@@ -286 +286 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.DomainBindingProfile.select((IUnit) s, mind, "LibraryFactory:286");
+--- a/kanger/src/org/kanger/factory/CommentFactory.java
++++ b/kanger/src/org/kanger/factory/CommentFactory.java
+@@ -225 +225 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.DomainBindingProfile.select((IUnit) s, mind, "CommentFactory:225");
+--- a/kanger/src/org/kanger/factory/TVariableFactory.java
++++ b/kanger/src/org/kanger/factory/TVariableFactory.java
+@@ -145 +145 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.DomainBindingProfile.select((IUnit) s, mind, "TVariableFactory:145");
+--- a/kanger/src/org/kanger/factory/DomainFactory.java
++++ b/kanger/src/org/kanger/factory/DomainFactory.java
+@@ -155 +155 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.DomainBindingProfile.select((IUnit) s, mind, "DomainFactory:155");

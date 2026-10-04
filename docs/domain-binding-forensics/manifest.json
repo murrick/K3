@@ -1,0 +1,17 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "reference_evidence_commit": "e5a6f6608df967491dfb86295e6542cc84c7e8bf",
+  "java": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment (build 17.0.20+8-1-24.04-Ubuntu)\nOpenJDK 64-Bit Server VM (build 17.0.20+8-1-24.04-Ubuntu, mixed mode, sharing)",
+  "natives_sha256": "bd0bac2c92badbf1b7f2396b434eda8d9d7c562ff4c09c5e4d790f30d9f5f8ed",
+  "scope": "main optimization thread only",
+  "timing": "excluded",
+  "counter_names": [
+    "domain_calls",
+    "same_domain_mind",
+    "changed_domain_mind",
+    "variable_selections",
+    "same_variable_mind",
+    "changed_variable_mind",
+    "same_domain_changed_variable"
+  ]
+}
