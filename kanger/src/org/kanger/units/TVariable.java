@@ -92,6 +92,10 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     /** Enabled by default; false selects the reference path at JVM startup. */
     private static final boolean SINGLE_LOOKUP = Boolean.parseBoolean(System.getProperty("kanger.experiment.singleTValueLookup", "true"));
 
+    /** Default-OFF experiment; preserves thread confinement and weak ownership. */
+    private static final boolean REUSE_ACTIVE_MIND =
+            Boolean.getBoolean("kanger.experiment.reuseActiveMind");
+
     /** Stable owner/default context for this transaction-owned object. */
     private Mind mind = null;
 
@@ -321,7 +325,14 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
      */
     @Override
     public TVariable setMind(Mind mind) {
-        runtimeMind.set(new WeakReference<>(mind));
+        if (REUSE_ACTIVE_MIND && getClass() == TVariable.class) {
+            WeakReference<Mind> previous = runtimeMind.get();
+            if (previous == null || previous.get() != mind) {
+                runtimeMind.set(new WeakReference<>(mind));
+            }
+        } else {
+            runtimeMind.set(new WeakReference<>(mind));
+        }
         if (this.mind == null || mind.getNext() == null || mindId == mind.getId()) {
             this.mind = mind;
         }
