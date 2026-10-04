@@ -107,6 +107,89 @@ public class RevisionClosureReproducibilityTest {
         }
     }
 
+    @Test
+    void recursiveMultiWaveClosureRebuildsFromPrimarySource()
+            throws Exception {
+        String seed =
+                "!@x @y @z move(x,y), move(y,z) -> move(x,z);\n"
+                        + "!move(A,B);\n"
+                        + "!move(B,C);\n"
+                        + "!move(C,D);\n";
+
+        Path originalDir =
+                root.resolve("recursive-original-db");
+        Files.createDirectories(originalDir);
+        Fixture original =
+                open(originalDir, "recursive-original");
+        String authoritativeSource;
+        Set<String> originalGenerated;
+        try {
+            assertTrue(original.mind.compile(seed));
+
+            authoritativeSource =
+                    original.mind.getSourceCode();
+            originalGenerated =
+                    generatedSemantics(original.mind);
+
+            assertFalse(
+                    originalGenerated.isEmpty(),
+                    "recursive qualification seed did not produce materialized G");
+            assertTrue(Boolean.TRUE.equals(
+                    original.mind.query("?move(A,C);")));
+            assertTrue(Boolean.TRUE.equals(
+                    original.mind.query("?move(B,D);")));
+            assertTrue(Boolean.TRUE.equals(
+                    original.mind.query("?move(A,D);")));
+        } finally {
+            original.close();
+        }
+
+        Path rebuiltDir =
+                root.resolve("recursive-rebuilt-db");
+        Files.createDirectories(rebuiltDir);
+        Fixture rebuilt =
+                open(rebuiltDir, "recursive-rebuilt");
+        try {
+            assertTrue(
+                    rebuilt.mind.compile(
+                            authoritativeSource));
+
+            assertEquals(
+                    authoritativeSource,
+                    rebuilt.mind.getSourceCode(),
+                    "recursive B projection changed while rebuilding");
+            assertEquals(
+                    originalGenerated,
+                    generatedSemantics(rebuilt.mind),
+                    "recursive materialized G differs after rebuilding from B");
+            assertTrue(Boolean.TRUE.equals(
+                    rebuilt.mind.query("?move(A,C);")));
+            assertTrue(Boolean.TRUE.equals(
+                    rebuilt.mind.query("?move(B,D);")));
+            assertTrue(Boolean.TRUE.equals(
+                    rebuilt.mind.query("?move(A,D);")));
+        } finally {
+            rebuilt.close();
+        }
+
+        Fixture reopened =
+                open(rebuiltDir, "recursive-rebuilt");
+        try {
+            assertEquals(
+                    authoritativeSource,
+                    reopened.mind.getSourceCode(),
+                    "reopen changed recursive authoritative B projection");
+            assertEquals(
+                    originalGenerated,
+                    generatedSemantics(reopened.mind),
+                    "reopen changed recursive reconstructed materialized G");
+            assertTrue(Boolean.TRUE.equals(
+                    reopened.mind.query("?move(A,D);")));
+        } finally {
+            reopened.close();
+        }
+    }
+
     private Set<String> generatedSemantics(
             Mind mind) throws Exception {
         Set<String> result =
