@@ -42,6 +42,11 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
     private final ContextManifestStore.Origin origin;
     private final long revisionManifestBaseline;
     private final TypeRegistry typeRegistry;
+    /*
+     * Non-null only for an unpublished candidate. Published snapshots resolve
+     * their exact dependency vector from ConnectionStore by RevisionId.
+     */
+    private final ConnectionVector candidateDependencies;
     private final Map<String, ContextBase> bases =
             new LinkedHashMap<String, ContextBase>();
 
@@ -53,7 +58,8 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
                             long revision,
                             ContextManifestStore.Origin origin,
                             long revisionManifestBaseline,
-                            TypeRegistry typeRegistry) {
+                            TypeRegistry typeRegistry,
+                            ConnectionVector candidateDependencies) {
         this.location = location;
         this.generation = generation;
         this.contextId = contextId;
@@ -62,6 +68,8 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
         this.revisionManifestBaseline =
                 revisionManifestBaseline;
         this.typeRegistry = typeRegistry;
+        this.candidateDependencies =
+                candidateDependencies;
     }
 
     /**
@@ -124,7 +132,8 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
                 revision,
                 manifest.getOrigin(),
                 manifest.getRevisionManifestBaseline(),
-                copyRegistry(manifest.getTypeRegistry()));
+                copyRegistry(manifest.getTypeRegistry()),
+                null);
         try {
             snapshot.validatePublishedGeneration();
             return snapshot;
@@ -142,10 +151,29 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
             long revision,
             ContextManifestStore.Origin origin,
             TypeRegistry typeRegistry) throws Exception {
+        return openCandidate(
+                location,
+                generation,
+                contextId,
+                revision,
+                origin,
+                typeRegistry,
+                ConnectionVector.empty());
+    }
+
+    static ContextSnapshot openCandidate(
+            Path location,
+            Path generation,
+            UUID contextId,
+            long revision,
+            ContextManifestStore.Origin origin,
+            TypeRegistry typeRegistry,
+            ConnectionVector dependencies) throws Exception {
         if (location == null
                 || generation == null
                 || contextId == null
-                || typeRegistry == null) {
+                || typeRegistry == null
+                || dependencies == null) {
             throw new NullPointerException();
         }
         if (revision <= RevisionStore.INITIAL_REVISION) {
@@ -166,7 +194,8 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
                 revision,
                 origin,
                 ContextManifestStore.NEW_CONTEXT_REVISION_MANIFEST_BASELINE,
-                copyRegistry(typeRegistry));
+                copyRegistry(typeRegistry),
+                dependencies);
         try {
             snapshot.validatePublishedGeneration();
             return snapshot;
@@ -341,11 +370,26 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
                             + generation);
         }
         if (sealed) {
-            RevisionManifestStore.validate(
-                    generation,
-                    contextId,
-                    revision,
-                    revision - 1L);
+            RevisionManifestStore.Manifest revisionManifest =
+                    RevisionManifestStore.validate(
+                            generation,
+                            contextId,
+                            revision,
+                            revision - 1L);
+            if (revisionManifest.hasDependencyDigest()) {
+                ConnectionVector dependencies =
+                        candidateDependencies != null
+                                ? candidateDependencies
+                                : ConnectionStore.read(
+                                        location,
+                                        new RevisionRef(
+                                                contextId,
+                                                revision));
+                RevisionManifestStore.validateDependencyVector(
+                        revisionManifest,
+                        dependencies,
+                        generation);
+            }
         }
     }
 
