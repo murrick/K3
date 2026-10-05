@@ -1,0 +1,1042 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "snapshots_verified": 12,
+  "matching_warm_sample_pairs": 4,
+  "identical_warm_counters": 8,
+  "warm_rows": [
+    {
+      "run": 1,
+      "sample": 2,
+      "max_depth": 4,
+      "groups": {
+        "DOMAIN": {
+          "calls": 7632,
+          "levels": 7632,
+          "restored_set_present": 0,
+          "deleted_probes": 7632,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 7632,
+          "depths": {
+            "1": 7632
+          }
+        },
+        "PREDICATE": {
+          "calls": 757,
+          "levels": 757,
+          "restored_set_present": 0,
+          "deleted_probes": 757,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 757,
+          "depths": {
+            "1": 757
+          }
+        },
+        "RULE": {
+          "calls": 2309593,
+          "levels": 6137467,
+          "restored_set_present": 0,
+          "deleted_probes": 6137467,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 2309593,
+          "depths": {
+            "1": 50112,
+            "2": 691132,
+            "3": 1568305,
+            "4": 44
+          }
+        },
+        "TERM": {
+          "calls": 5649,
+          "levels": 8800,
+          "restored_set_present": 0,
+          "deleted_probes": 8800,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 5649,
+          "depths": {
+            "1": 3579,
+            "2": 1033,
+            "3": 993,
+            "4": 44
+          }
+        },
+        "TVALUE": {
+          "calls": 45665,
+          "levels": 112157,
+          "restored_set_present": 0,
+          "deleted_probes": 112157,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 45665,
+          "depths": {
+            "1": 4464,
+            "2": 15910,
+            "3": 25291
+          }
+        },
+        "TVARIABLE": {
+          "calls": 15203598,
+          "levels": 40629530,
+          "restored_set_present": 0,
+          "deleted_probes": 40629530,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 15203598,
+          "depths": {
+            "1": 29424,
+            "2": 4938836,
+            "3": 10218918,
+            "4": 16420
+          }
+        },
+        "COMMENT": {
+          "calls": 816,
+          "levels": 816,
+          "restored_set_present": 0,
+          "deleted_probes": 816,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 816,
+          "depths": {
+            "1": 816
+          }
+        }
+      }
+    },
+    {
+      "run": 1,
+      "sample": 3,
+      "max_depth": 4,
+      "groups": {
+        "DOMAIN": {
+          "calls": 7632,
+          "levels": 7632,
+          "restored_set_present": 0,
+          "deleted_probes": 7632,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 7632,
+          "depths": {
+            "1": 7632
+          }
+        },
+        "PREDICATE": {
+          "calls": 757,
+          "levels": 757,
+          "restored_set_present": 0,
+          "deleted_probes": 757,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 757,
+          "depths": {
+            "1": 757
+          }
+        },
+        "RULE": {
+          "calls": 2309593,
+          "levels": 6137467,
+          "restored_set_present": 0,
+          "deleted_probes": 6137467,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 2309593,
+          "depths": {
+            "1": 50112,
+            "2": 691132,
+            "3": 1568305,
+            "4": 44
+          }
+        },
+        "TERM": {
+          "calls": 5649,
+          "levels": 8800,
+          "restored_set_present": 0,
+          "deleted_probes": 8800,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 5649,
+          "depths": {
+            "1": 3579,
+            "2": 1033,
+            "3": 993,
+            "4": 44
+          }
+        },
+        "TVALUE": {
+          "calls": 45665,
+          "levels": 112157,
+          "restored_set_present": 0,
+          "deleted_probes": 112157,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 45665,
+          "depths": {
+            "1": 4464,
+            "2": 15910,
+            "3": 25291
+          }
+        },
+        "TVARIABLE": {
+          "calls": 15203598,
+          "levels": 40629530,
+          "restored_set_present": 0,
+          "deleted_probes": 40629530,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 15203598,
+          "depths": {
+            "1": 29424,
+            "2": 4938836,
+            "3": 10218918,
+            "4": 16420
+          }
+        },
+        "COMMENT": {
+          "calls": 816,
+          "levels": 816,
+          "restored_set_present": 0,
+          "deleted_probes": 816,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 816,
+          "depths": {
+            "1": 816
+          }
+        }
+      }
+    },
+    {
+      "run": 1,
+      "sample": 4,
+      "max_depth": 4,
+      "groups": {
+        "DOMAIN": {
+          "calls": 7632,
+          "levels": 7632,
+          "restored_set_present": 0,
+          "deleted_probes": 7632,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 7632,
+          "depths": {
+            "1": 7632
+          }
+        },
+        "PREDICATE": {
+          "calls": 757,
+          "levels": 757,
+          "restored_set_present": 0,
+          "deleted_probes": 757,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 757,
+          "depths": {
+            "1": 757
+          }
+        },
+        "RULE": {
+          "calls": 2309593,
+          "levels": 6137467,
+          "restored_set_present": 0,
+          "deleted_probes": 6137467,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 2309593,
+          "depths": {
+            "1": 50112,
+            "2": 691132,
+            "3": 1568305,
+            "4": 44
+          }
+        },
+        "TERM": {
+          "calls": 5649,
+          "levels": 8800,
+          "restored_set_present": 0,
+          "deleted_probes": 8800,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 5649,
+          "depths": {
+            "1": 3579,
+            "2": 1033,
+            "3": 993,
+            "4": 44
+          }
+        },
+        "TVALUE": {
+          "calls": 45665,
+          "levels": 112157,
+          "restored_set_present": 0,
+          "deleted_probes": 112157,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 45665,
+          "depths": {
+            "1": 4464,
+            "2": 15910,
+            "3": 25291
+          }
+        },
+        "TVARIABLE": {
+          "calls": 15203598,
+          "levels": 40629530,
+          "restored_set_present": 0,
+          "deleted_probes": 40629530,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 15203598,
+          "depths": {
+            "1": 29424,
+            "2": 4938836,
+            "3": 10218918,
+            "4": 16420
+          }
+        },
+        "COMMENT": {
+          "calls": 816,
+          "levels": 816,
+          "restored_set_present": 0,
+          "deleted_probes": 816,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 816,
+          "depths": {
+            "1": 816
+          }
+        }
+      }
+    },
+    {
+      "run": 1,
+      "sample": 5,
+      "max_depth": 4,
+      "groups": {
+        "DOMAIN": {
+          "calls": 7632,
+          "levels": 7632,
+          "restored_set_present": 0,
+          "deleted_probes": 7632,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 7632,
+          "depths": {
+            "1": 7632
+          }
+        },
+        "PREDICATE": {
+          "calls": 757,
+          "levels": 757,
+          "restored_set_present": 0,
+          "deleted_probes": 757,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 757,
+          "depths": {
+            "1": 757
+          }
+        },
+        "RULE": {
+          "calls": 2309593,
+          "levels": 6137467,
+          "restored_set_present": 0,
+          "deleted_probes": 6137467,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 2309593,
+          "depths": {
+            "1": 50112,
+            "2": 691132,
+            "3": 1568305,
+            "4": 44
+          }
+        },
+        "TERM": {
+          "calls": 5649,
+          "levels": 8800,
+          "restored_set_present": 0,
+          "deleted_probes": 8800,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 5649,
+          "depths": {
+            "1": 3579,
+            "2": 1033,
+            "3": 993,
+            "4": 44
+          }
+        },
+        "TVALUE": {
+          "calls": 45665,
+          "levels": 112157,
+          "restored_set_present": 0,
+          "deleted_probes": 112157,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 45665,
+          "depths": {
+            "1": 4464,
+            "2": 15910,
+            "3": 25291
+          }
+        },
+        "TVARIABLE": {
+          "calls": 15203598,
+          "levels": 40629530,
+          "restored_set_present": 0,
+          "deleted_probes": 40629530,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 15203598,
+          "depths": {
+            "1": 29424,
+            "2": 4938836,
+            "3": 10218918,
+            "4": 16420
+          }
+        },
+        "COMMENT": {
+          "calls": 816,
+          "levels": 816,
+          "restored_set_present": 0,
+          "deleted_probes": 816,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 816,
+          "depths": {
+            "1": 816
+          }
+        }
+      }
+    },
+    {
+      "run": 2,
+      "sample": 2,
+      "max_depth": 4,
+      "groups": {
+        "DOMAIN": {
+          "calls": 7632,
+          "levels": 7632,
+          "restored_set_present": 0,
+          "deleted_probes": 7632,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 7632,
+          "depths": {
+            "1": 7632
+          }
+        },
+        "PREDICATE": {
+          "calls": 757,
+          "levels": 757,
+          "restored_set_present": 0,
+          "deleted_probes": 757,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 757,
+          "depths": {
+            "1": 757
+          }
+        },
+        "RULE": {
+          "calls": 2309593,
+          "levels": 6137467,
+          "restored_set_present": 0,
+          "deleted_probes": 6137467,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 2309593,
+          "depths": {
+            "1": 50112,
+            "2": 691132,
+            "3": 1568305,
+            "4": 44
+          }
+        },
+        "TERM": {
+          "calls": 5649,
+          "levels": 8800,
+          "restored_set_present": 0,
+          "deleted_probes": 8800,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 5649,
+          "depths": {
+            "1": 3579,
+            "2": 1033,
+            "3": 993,
+            "4": 44
+          }
+        },
+        "TVALUE": {
+          "calls": 45665,
+          "levels": 112157,
+          "restored_set_present": 0,
+          "deleted_probes": 112157,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 45665,
+          "depths": {
+            "1": 4464,
+            "2": 15910,
+            "3": 25291
+          }
+        },
+        "TVARIABLE": {
+          "calls": 15203598,
+          "levels": 40629530,
+          "restored_set_present": 0,
+          "deleted_probes": 40629530,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 15203598,
+          "depths": {
+            "1": 29424,
+            "2": 4938836,
+            "3": 10218918,
+            "4": 16420
+          }
+        },
+        "COMMENT": {
+          "calls": 816,
+          "levels": 816,
+          "restored_set_present": 0,
+          "deleted_probes": 816,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 816,
+          "depths": {
+            "1": 816
+          }
+        }
+      }
+    },
+    {
+      "run": 2,
+      "sample": 3,
+      "max_depth": 4,
+      "groups": {
+        "DOMAIN": {
+          "calls": 7632,
+          "levels": 7632,
+          "restored_set_present": 0,
+          "deleted_probes": 7632,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 7632,
+          "depths": {
+            "1": 7632
+          }
+        },
+        "PREDICATE": {
+          "calls": 757,
+          "levels": 757,
+          "restored_set_present": 0,
+          "deleted_probes": 757,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 757,
+          "depths": {
+            "1": 757
+          }
+        },
+        "RULE": {
+          "calls": 2309593,
+          "levels": 6137467,
+          "restored_set_present": 0,
+          "deleted_probes": 6137467,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 2309593,
+          "depths": {
+            "1": 50112,
+            "2": 691132,
+            "3": 1568305,
+            "4": 44
+          }
+        },
+        "TERM": {
+          "calls": 5649,
+          "levels": 8800,
+          "restored_set_present": 0,
+          "deleted_probes": 8800,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 5649,
+          "depths": {
+            "1": 3579,
+            "2": 1033,
+            "3": 993,
+            "4": 44
+          }
+        },
+        "TVALUE": {
+          "calls": 45665,
+          "levels": 112157,
+          "restored_set_present": 0,
+          "deleted_probes": 112157,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 45665,
+          "depths": {
+            "1": 4464,
+            "2": 15910,
+            "3": 25291
+          }
+        },
+        "TVARIABLE": {
+          "calls": 15203598,
+          "levels": 40629530,
+          "restored_set_present": 0,
+          "deleted_probes": 40629530,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 15203598,
+          "depths": {
+            "1": 29424,
+            "2": 4938836,
+            "3": 10218918,
+            "4": 16420
+          }
+        },
+        "COMMENT": {
+          "calls": 816,
+          "levels": 816,
+          "restored_set_present": 0,
+          "deleted_probes": 816,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 816,
+          "depths": {
+            "1": 816
+          }
+        }
+      }
+    },
+    {
+      "run": 2,
+      "sample": 4,
+      "max_depth": 4,
+      "groups": {
+        "DOMAIN": {
+          "calls": 7632,
+          "levels": 7632,
+          "restored_set_present": 0,
+          "deleted_probes": 7632,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 7632,
+          "depths": {
+            "1": 7632
+          }
+        },
+        "PREDICATE": {
+          "calls": 757,
+          "levels": 757,
+          "restored_set_present": 0,
+          "deleted_probes": 757,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 757,
+          "depths": {
+            "1": 757
+          }
+        },
+        "RULE": {
+          "calls": 2309593,
+          "levels": 6137467,
+          "restored_set_present": 0,
+          "deleted_probes": 6137467,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 2309593,
+          "depths": {
+            "1": 50112,
+            "2": 691132,
+            "3": 1568305,
+            "4": 44
+          }
+        },
+        "TERM": {
+          "calls": 5649,
+          "levels": 8800,
+          "restored_set_present": 0,
+          "deleted_probes": 8800,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 5649,
+          "depths": {
+            "1": 3579,
+            "2": 1033,
+            "3": 993,
+            "4": 44
+          }
+        },
+        "TVALUE": {
+          "calls": 45665,
+          "levels": 112157,
+          "restored_set_present": 0,
+          "deleted_probes": 112157,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 45665,
+          "depths": {
+            "1": 4464,
+            "2": 15910,
+            "3": 25291
+          }
+        },
+        "TVARIABLE": {
+          "calls": 15203598,
+          "levels": 40629530,
+          "restored_set_present": 0,
+          "deleted_probes": 40629530,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 15203598,
+          "depths": {
+            "1": 29424,
+            "2": 4938836,
+            "3": 10218918,
+            "4": 16420
+          }
+        },
+        "COMMENT": {
+          "calls": 816,
+          "levels": 816,
+          "restored_set_present": 0,
+          "deleted_probes": 816,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 816,
+          "depths": {
+            "1": 816
+          }
+        }
+      }
+    },
+    {
+      "run": 2,
+      "sample": 5,
+      "max_depth": 4,
+      "groups": {
+        "DOMAIN": {
+          "calls": 7632,
+          "levels": 7632,
+          "restored_set_present": 0,
+          "deleted_probes": 7632,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 7632,
+          "depths": {
+            "1": 7632
+          }
+        },
+        "PREDICATE": {
+          "calls": 757,
+          "levels": 757,
+          "restored_set_present": 0,
+          "deleted_probes": 757,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 757,
+          "depths": {
+            "1": 757
+          }
+        },
+        "RULE": {
+          "calls": 2309593,
+          "levels": 6137467,
+          "restored_set_present": 0,
+          "deleted_probes": 6137467,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 2309593,
+          "depths": {
+            "1": 50112,
+            "2": 691132,
+            "3": 1568305,
+            "4": 44
+          }
+        },
+        "TERM": {
+          "calls": 5649,
+          "levels": 8800,
+          "restored_set_present": 0,
+          "deleted_probes": 8800,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 5649,
+          "depths": {
+            "1": 3579,
+            "2": 1033,
+            "3": 993,
+            "4": 44
+          }
+        },
+        "TVALUE": {
+          "calls": 45665,
+          "levels": 112157,
+          "restored_set_present": 0,
+          "deleted_probes": 112157,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 45665,
+          "depths": {
+            "1": 4464,
+            "2": 15910,
+            "3": 25291
+          }
+        },
+        "TVARIABLE": {
+          "calls": 15203598,
+          "levels": 40629530,
+          "restored_set_present": 0,
+          "deleted_probes": 40629530,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 15203598,
+          "depths": {
+            "1": 29424,
+            "2": 4938836,
+            "3": 10218918,
+            "4": 16420
+          }
+        },
+        "COMMENT": {
+          "calls": 816,
+          "levels": 816,
+          "restored_set_present": 0,
+          "deleted_probes": 816,
+          "deleted_set_present": 0,
+          "restored_hits": 0,
+          "deleted_hits": 0,
+          "not_found": 816,
+          "depths": {
+            "1": 816
+          }
+        }
+      }
+    }
+  ],
+  "aggregates": [
+    {
+      "run": 1,
+      "sample": 2,
+      "calls": 17573710,
+      "levels": 46897159,
+      "ancestor_levels": 29323449,
+      "average_depth": 2.66859752437021,
+      "depths": {
+        "1": 96784,
+        "2": 5646911,
+        "3": 11813507,
+        "4": 16508
+      },
+      "restored_probes": 46897159,
+      "deleted_probes": 46897159,
+      "restored_set_present": 0,
+      "deleted_set_present": 0,
+      "restored_hits": 0,
+      "deleted_hits": 0
+    },
+    {
+      "run": 1,
+      "sample": 3,
+      "calls": 17573710,
+      "levels": 46897159,
+      "ancestor_levels": 29323449,
+      "average_depth": 2.66859752437021,
+      "depths": {
+        "1": 96784,
+        "2": 5646911,
+        "3": 11813507,
+        "4": 16508
+      },
+      "restored_probes": 46897159,
+      "deleted_probes": 46897159,
+      "restored_set_present": 0,
+      "deleted_set_present": 0,
+      "restored_hits": 0,
+      "deleted_hits": 0
+    },
+    {
+      "run": 1,
+      "sample": 4,
+      "calls": 17573710,
+      "levels": 46897159,
+      "ancestor_levels": 29323449,
+      "average_depth": 2.66859752437021,
+      "depths": {
+        "1": 96784,
+        "2": 5646911,
+        "3": 11813507,
+        "4": 16508
+      },
+      "restored_probes": 46897159,
+      "deleted_probes": 46897159,
+      "restored_set_present": 0,
+      "deleted_set_present": 0,
+      "restored_hits": 0,
+      "deleted_hits": 0
+    },
+    {
+      "run": 1,
+      "sample": 5,
+      "calls": 17573710,
+      "levels": 46897159,
+      "ancestor_levels": 29323449,
+      "average_depth": 2.66859752437021,
+      "depths": {
+        "1": 96784,
+        "2": 5646911,
+        "3": 11813507,
+        "4": 16508
+      },
+      "restored_probes": 46897159,
+      "deleted_probes": 46897159,
+      "restored_set_present": 0,
+      "deleted_set_present": 0,
+      "restored_hits": 0,
+      "deleted_hits": 0
+    },
+    {
+      "run": 2,
+      "sample": 2,
+      "calls": 17573710,
+      "levels": 46897159,
+      "ancestor_levels": 29323449,
+      "average_depth": 2.66859752437021,
+      "depths": {
+        "1": 96784,
+        "2": 5646911,
+        "3": 11813507,
+        "4": 16508
+      },
+      "restored_probes": 46897159,
+      "deleted_probes": 46897159,
+      "restored_set_present": 0,
+      "deleted_set_present": 0,
+      "restored_hits": 0,
+      "deleted_hits": 0
+    },
+    {
+      "run": 2,
+      "sample": 3,
+      "calls": 17573710,
+      "levels": 46897159,
+      "ancestor_levels": 29323449,
+      "average_depth": 2.66859752437021,
+      "depths": {
+        "1": 96784,
+        "2": 5646911,
+        "3": 11813507,
+        "4": 16508
+      },
+      "restored_probes": 46897159,
+      "deleted_probes": 46897159,
+      "restored_set_present": 0,
+      "deleted_set_present": 0,
+      "restored_hits": 0,
+      "deleted_hits": 0
+    },
+    {
+      "run": 2,
+      "sample": 4,
+      "calls": 17573710,
+      "levels": 46897159,
+      "ancestor_levels": 29323449,
+      "average_depth": 2.66859752437021,
+      "depths": {
+        "1": 96784,
+        "2": 5646911,
+        "3": 11813507,
+        "4": 16508
+      },
+      "restored_probes": 46897159,
+      "deleted_probes": 46897159,
+      "restored_set_present": 0,
+      "deleted_set_present": 0,
+      "restored_hits": 0,
+      "deleted_hits": 0
+    },
+    {
+      "run": 2,
+      "sample": 5,
+      "calls": 17573710,
+      "levels": 46897159,
+      "ancestor_levels": 29323449,
+      "average_depth": 2.66859752437021,
+      "depths": {
+        "1": 96784,
+        "2": 5646911,
+        "3": 11813507,
+        "4": 16508
+      },
+      "restored_probes": 46897159,
+      "deleted_probes": 46897159,
+      "restored_set_present": 0,
+      "deleted_set_present": 0,
+      "restored_hits": 0,
+      "deleted_hits": 0
+    }
+  ]
+}

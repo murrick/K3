@@ -1,0 +1,89 @@
+[
+  {
+    "run": 1,
+    "sample": 2,
+    "calls": 17573710,
+    "levels": 46897159,
+    "ancestor_levels": 29323449,
+    "average_depth": 2.66859752437021,
+    "depths": {
+      "1": 96784,
+      "2": 5646911,
+      "3": 11813507,
+      "4": 16508
+    },
+    "restored_probes": 46897159,
+    "deleted_probes": 46897159,
+    "restored_set_present": 0,
+    "deleted_set_present": 0,
+    "restored_hits": 0,
+    "deleted_hits": 0
+  },
+  {
+    "run": 1,
+    "sample": 3,
+    "calls": 17573710,
+    "levels": 46897159,
+    "ancestor_levels": 29323449,
+    "average_depth": 2.66859752437021,
+    "depths": {
+      "1": 96784,
+      "2": 5646911,
+      "3": 11813507,
+      "4": 16508
+    },
+    "restored_probes": 46897159,
+    "deleted_probes": 46897159,
+    "restored_set_present": 0,
+    "deleted_set_present": 0,
+    "restored_hits": 0,
+    "deleted_hits": 0
+  },
+  {
+    "run": 1,
+    "sample": 4,
+    "calls": 17573710,
+    "levels": 46897159,
+    "ancestor_levels": 29323449,
+    "average_depth": 2.66859752437021,
+    "depths": {
+      "1": 96784,
+      "2": 5646911,
+      "3": 11813507,
+      "4": 16508
+    },
+    "restored_probes": 46897159,
+    "deleted_probes": 46897159,
+    "restored_set_present": 0,
+    "deleted_set_present": 0,
+    "restored_hits": 0,
+    "deleted_hits": 0
+  },
+  {
+    "run": 1,
+    "sample": 5,
+    "calls": 17573710,
+    "levels": 46897159,
+    "ancestor_levels": 29323449,
+    "average_depth": 2.66859752437021,
+    "depths": {
+      "1": 96784,
+      "2": 5646911,
+      "3": 11813507,
+      "4": 16508
+    },
+    "restored_probes": 46897159,
+    "deleted_probes": 46897159,
+    "restored_set_present": 0,
+    "deleted_set_present": 0,
+    "restored_hits": 0,
+    "deleted_hits": 0
+  }
+]
+DOMAIN calls_range [7632, 7632] levels_range [7632, 7632]
+PREDICATE calls_range [757, 757] levels_range [757, 757]
+RULE calls_range [2309593, 2309593] levels_range [6137467, 6137467]
+TERM calls_range [5649, 5649] levels_range [8800, 8800]
+TVALUE calls_range [45665, 45665] levels_range [112157, 112157]
+TVARIABLE calls_range [15203598, 15203598] levels_range [40629530, 40629530]
+COMMENT calls_range [816, 816] levels_range [816, 816]

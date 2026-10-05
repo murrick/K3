@@ -1,0 +1,29 @@
+--- kanger/src/org/kanger/Mind.java	2026-10-05 12:37:39.008343676 -0600
++++ ../build/deletion-chain-source/Mind.java	2026-10-05 12:44:24.742342144 -0600
+@@ -1897,19 +1897,26 @@
+     public boolean isUnitDeleted(IUnit unit) {
+         UnitType unitType = unit.getUnitType();
+         long unitId = unit.getId();
++        int diagnosticDepth = 0;
+         for (IMind level = this; level != null; level = level.getNext()) {
+             Mind current = (Mind) level;
++            ++diagnosticDepth;
+             synchronized (current.locker) {
+                 Set<Long> restoredIds = current.restored.get(unitType);
++                DeletionChainCounters.restoredProbe(unitType, restoredIds != null);
+                 if (restoredIds != null && restoredIds.contains(unitId)) {
++                    DeletionChainCounters.complete(unitType, diagnosticDepth, 0);
+                     return false;
+                 }
+                 Set<Long> deletedIds = current.deleted.get(unitType);
++                DeletionChainCounters.deletedProbe(unitType, deletedIds != null);
+                 if (deletedIds != null && deletedIds.contains(unitId)) {
++                    DeletionChainCounters.complete(unitType, diagnosticDepth, 1);
+                     return true;
+                 }
+             }
+         }
++        DeletionChainCounters.complete(unitType, diagnosticDepth, 2);
+         return false;
+     }
+ 
