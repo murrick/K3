@@ -243,21 +243,15 @@ public class ContextFederationOperatorTest {
         context("IB", "!secret(Tom);");
 
         /*
-         * Give A its own direct connection to B. An isolated query in A must
-         * still remain local-only and therefore must not see B.
+         * Give A a durable exact dependency on B. This publishes A@R+1.
+         * An isolated query in A must still remain local-only and therefore
+         * must not traverse A's own ConnectionVector.
          */
-        User aUser = new User();
-        aUser.setDatabaseDir(
-                root.toString() + File.separator);
-        DB aData = new DB();
-        aData.init(aUser);
-        Mind aMind = new Mind(aUser);
-        aUser.setCurrentMind(aMind);
-        aMind = (Mind) aMind.useStorage("IA");
-        aUser.setCurrentMind(aMind);
-        aData.connectContext("IB");
-        aUser.setCurrentMind(
-                aMind.closeStorage());
+        ConnectionManager.connect(
+                root.resolve("IA"),
+                root.resolve("IB"));
+        long pinnedARevision =
+                a.revision + 1L;
 
         User user = new User();
         user.setDatabaseDir(
@@ -315,7 +309,7 @@ public class ContextFederationOperatorTest {
                 IContextFederation.FrontierTruth.UNKNOWN,
                 pinned.getResultTruth());
         assertEquals(
-                a.revision,
+                pinnedARevision,
                 federation.federationSnapshot()
                         .getConnections().get(0)
                         .getPinnedRevision());
