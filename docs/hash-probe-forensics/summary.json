@@ -1,0 +1,158 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "snapshots_verified": 12,
+  "identical_warm_sample_pairs": 4,
+  "sizes": [
+    1,
+    4,
+    16,
+    64,
+    256
+  ],
+  "warm_rows": [
+    {
+      "run": 1,
+      "sample": 2,
+      "calls": 3884221,
+      "small": 0,
+      "empty": 1934579,
+      "singleton": 1904323,
+      "multiple": 45319,
+      "owners": 399,
+      "distinct": 19962,
+      "hits": [
+        264847,
+        1182842,
+        1699841,
+        2414284,
+        3114779
+      ]
+    },
+    {
+      "run": 1,
+      "sample": 3,
+      "calls": 3884221,
+      "small": 0,
+      "empty": 1937923,
+      "singleton": 1901255,
+      "multiple": 45043,
+      "owners": 399,
+      "distinct": 20057,
+      "hits": [
+        264847,
+        1164082,
+        1699995,
+        2425326,
+        3133519
+      ]
+    },
+    {
+      "run": 1,
+      "sample": 4,
+      "calls": 3884221,
+      "small": 0,
+      "empty": 1939801,
+      "singleton": 1899091,
+      "multiple": 45329,
+      "owners": 399,
+      "distinct": 20133,
+      "hits": [
+        264847,
+        1194929,
+        1698969,
+        2428614,
+        3137114
+      ]
+    },
+    {
+      "run": 1,
+      "sample": 5,
+      "calls": 3884221,
+      "small": 0,
+      "empty": 1939801,
+      "singleton": 1899365,
+      "multiple": 45055,
+      "owners": 399,
+      "distinct": 19997,
+      "hits": [
+        264847,
+        1157029,
+        1692011,
+        2424237,
+        3131527
+      ]
+    },
+    {
+      "run": 2,
+      "sample": 2,
+      "calls": 3884221,
+      "small": 0,
+      "empty": 1934579,
+      "singleton": 1904323,
+      "multiple": 45319,
+      "owners": 399,
+      "distinct": 19962,
+      "hits": [
+        264847,
+        1182842,
+        1699841,
+        2414284,
+        3114779
+      ]
+    },
+    {
+      "run": 2,
+      "sample": 3,
+      "calls": 3884221,
+      "small": 0,
+      "empty": 1937923,
+      "singleton": 1901255,
+      "multiple": 45043,
+      "owners": 399,
+      "distinct": 20057,
+      "hits": [
+        264847,
+        1164082,
+        1699995,
+        2425326,
+        3133519
+      ]
+    },
+    {
+      "run": 2,
+      "sample": 4,
+      "calls": 3884221,
+      "small": 0,
+      "empty": 1939801,
+      "singleton": 1899091,
+      "multiple": 45329,
+      "owners": 399,
+      "distinct": 20133,
+      "hits": [
+        264847,
+        1194929,
+        1698969,
+        2428614,
+        3137114
+      ]
+    },
+    {
+      "run": 2,
+      "sample": 5,
+      "calls": 3884221,
+      "small": 0,
+      "empty": 1939801,
+      "singleton": 1899365,
+      "multiple": 45055,
+      "owners": 399,
+      "distinct": 19997,
+      "hits": [
+        264847,
+        1157029,
+        1692011,
+        2424237,
+        3131527
+      ]
+    }
+  ]
+}

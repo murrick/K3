@@ -1,0 +1,22 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "java": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment (build 17.0.20+8-1-24.04-Ubuntu)\nOpenJDK 64-Bit Server VM (build 17.0.20+8-1-24.04-Ubuntu, mixed mode, sharing)\n",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+  "jvms": 2,
+  "samples_per_jvm": 6,
+  "discard_first": 2,
+  "heap": "512m",
+  "timing_interpretation": "Instrumented counts only; diagnostic timings are not performance results.",
+  "scope": "Exact Escalera compact findCandidates only, main thread optimizeHypothesis. Public find and custom ICache fallback not counted.",
+  "production_diff": "none; one observe call inserted into temporary build source",
+  "flags": [
+    "preserveTValueIndex",
+    "versionedSolveSync",
+    "resolvedCauseWeights",
+    "compactCauseWeights",
+    "candidateMembershipFilter",
+    "singleTValueLookup",
+    "residentBaseComparison",
+    "compactFindSnapshots"
+  ]
+}

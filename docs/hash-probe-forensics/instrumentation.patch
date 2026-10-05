@@ -1,0 +1,10 @@
+--- kanger/src/org/kanger/storage/Escalera.java	2026-10-05 12:02:05.623438280 -0600
++++ ../build/hash-probe-source/Escalera.java	2026-10-05 12:03:41.377186993 -0600
+@@ -431,6 +431,7 @@
+         Escalera owner = (Escalera) cache;
+         owner.ensureIndex();
+         Set<Long> ids = owner.idsByHash.get(hash);
++        HashProbeCounters.observe(owner, hash, ids);
+         if (ids == null || ids.isEmpty()) return java.util.Collections.emptyList();
+         if (ids.size() == 1) return java.util.Collections.singletonList(ids.iterator().next());
+         // Preserve the reference copy's iteration order and callback isolation.

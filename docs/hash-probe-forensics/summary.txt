@@ -1,0 +1,75 @@
+[
+  {
+    "sample": 2,
+    "calls": 3884221,
+    "small": 0,
+    "empty": 1934579,
+    "singleton": 1904323,
+    "multiple": 45319,
+    "owners": 399,
+    "distinct": 19962,
+    "hits": [
+      264847,
+      1182842,
+      1699841,
+      2414284,
+      3114779
+    ]
+  },
+  {
+    "sample": 3,
+    "calls": 3884221,
+    "small": 0,
+    "empty": 1937923,
+    "singleton": 1901255,
+    "multiple": 45043,
+    "owners": 399,
+    "distinct": 20057,
+    "hits": [
+      264847,
+      1164082,
+      1699995,
+      2425326,
+      3133519
+    ]
+  },
+  {
+    "sample": 4,
+    "calls": 3884221,
+    "small": 0,
+    "empty": 1939801,
+    "singleton": 1899091,
+    "multiple": 45329,
+    "owners": 399,
+    "distinct": 20133,
+    "hits": [
+      264847,
+      1194929,
+      1698969,
+      2428614,
+      3137114
+    ]
+  },
+  {
+    "sample": 5,
+    "calls": 3884221,
+    "small": 0,
+    "empty": 1939801,
+    "singleton": 1899365,
+    "multiple": 45055,
+    "owners": 399,
+    "distinct": 19997,
+    "hits": [
+      264847,
+      1157029,
+      1692011,
+      2424237,
+      3131527
+    ]
+  }
+]
+SIMULATED_KEY_CACHE 1 hits_range [264847, 264847] percent_range [6.82, 6.82] nominal_bytes_range_at_16_byte_Integer [4237552, 4237552]
+SIMULATED_KEY_CACHE 4 hits_range [1157029, 1194929] percent_range [29.79, 30.76] nominal_bytes_range_at_16_byte_Integer [18512464, 19118864]
+SIMULATED_KEY_CACHE 16 hits_range [1692011, 1699995] percent_range [43.56, 43.77] nominal_bytes_range_at_16_byte_Integer [27072176, 27199920]
+SIMULATED_KEY_CACHE 64 hits_range [2414284, 2428614] percent_range [62.16, 62.53] nominal_bytes_range_at_16_byte_Integer [38628544, 38857824]
+SIMULATED_KEY_CACHE 256 hits_range [3114779, 3137114] percent_range [80.19, 80.77] nominal_bytes_range_at_16_byte_Integer [49836464, 50193824]
