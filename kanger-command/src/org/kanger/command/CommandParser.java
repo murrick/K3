@@ -66,6 +66,10 @@ public final class CommandParser {
                 && resolvesTo(family, prefix.get(1).value, Keyword.QUERY)) {
             return parseContextQuery(line);
         }
+        if (family == Family.CONTEXT && prefix.size() > 1
+                && resolvesTo(family, prefix.get(1).value, Keyword.EXPLAIN)) {
+            return parseContextExplain(line);
+        }
 
         List<Token> tokens = tokenize(line, Integer.MAX_VALUE, true);
         switch (family) {
@@ -419,7 +423,7 @@ public final class CommandParser {
                     Family.CONTEXT, tokens.get(1).value,
                     Keyword.CONNECT, Keyword.DISCONNECT,
                     Keyword.SWITCH, Keyword.VERSION,
-                    Keyword.QUERY);
+                    Keyword.EXPLAIN, Keyword.QUERY);
         } catch (CommandParseException rejected) {
             if (rejected.getReason() == AMBIGUOUS_PREFIX) {
                 throw rejected;
@@ -464,12 +468,36 @@ public final class CommandParser {
                         CommandIntent.CTX_VERSION,
                         args("locator", tokens.get(2).value),
                         raw);
+            case EXPLAIN:
+                throw error(MISSING_ARGUMENT,
+                        "ctx explain requires a KANGER query");
             case QUERY:
                 throw error(MISSING_ARGUMENT,
                         "ctx query requires a KANGER query");
             default:
                 throw error(INVALID_GRAMMAR, "Invalid ctx action");
         }
+    }
+
+    private CommandInvocation parseContextExplain(String raw)
+            throws CommandParseException {
+        List<Token> prefix = tokenize(raw, 2, false);
+        if (prefix.size() < 2) {
+            throw error(MISSING_ARGUMENT,
+                    "ctx explain requires a KANGER query");
+        }
+        String query = tailAfter(raw, prefix.get(1).end);
+        if (query.isEmpty()) {
+            throw error(MISSING_ARGUMENT,
+                    "ctx explain requires a KANGER query");
+        }
+        if (query.charAt(0) != '?') {
+            throw error(INVALID_ARGUMENT_SHAPE,
+                    "ctx explain requires a query beginning with ?");
+        }
+        return CommandInvocation.command(
+                CommandIntent.CTX_EXPLAIN,
+                args("query", query), raw);
     }
 
     private CommandInvocation parseContextQuery(String raw)
