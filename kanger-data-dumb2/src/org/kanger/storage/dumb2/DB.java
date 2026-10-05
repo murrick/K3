@@ -30,6 +30,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -288,6 +290,157 @@ public final class DB implements IData, IContextFederation {
 
     synchronized java.util.UUID getContextId() {
         return context == null ? null : context.getContextId();
+    }
+
+    @Override
+    public synchronized IContextFederation.SourceDependencyPlan
+            prepareSourceDependencies(
+                    List<IContextFederation.SourceDependencyRequest> requests)
+            throws Exception {
+        requireOpen();
+        if (requests == null) {
+            throw new NullPointerException("requests");
+        }
+
+        RevisionRef sourceRef =
+                new RevisionRef(
+                        context.getContextId(),
+                        context.getRevision());
+        ConnectionVector prepared =
+                ConnectionVector.empty();
+        ArrayList<IContextFederation.SourceDependency> projected =
+                new ArrayList<IContextFederation.SourceDependency>();
+
+        for (IContextFederation.SourceDependencyRequest request
+                : requests) {
+            if (request == null) {
+                throw new NullPointerException(
+                        "source dependency request");
+            }
+            Path targetLocation =
+                    resolveFederationLocator(
+                            request.getLocator());
+            ContextConnection connection =
+                    request.isExact()
+                            ? ConnectionManager.qualifyConnect(
+                                    context.getLocation(),
+                                    targetLocation,
+                                    request.getExactRevision())
+                            : ConnectionManager.qualifyConnect(
+                                    context.getLocation(),
+                                    targetLocation);
+
+            java.util.UUID targetId =
+                    connection.getTarget()
+                            .getContextId();
+            if (prepared.find(targetId) != null) {
+                throw new IllegalArgumentException(
+                        "Duplicate source dependency Context: "
+                                + targetId);
+            }
+            prepared = prepared.with(connection);
+            projected.add(
+                    projectSourceDependency(
+                            connection));
+        }
+
+        sortSourceDependencies(projected);
+        return new PreparedSourceDependencyPlan(
+                sourceRef,
+                prepared,
+                projected);
+    }
+
+    @Override
+    public synchronized void installSourceDependencies(
+            IContextFederation.SourceDependencyPlan plan)
+            throws Exception {
+        requireOpen();
+        if (!(plan instanceof PreparedSourceDependencyPlan)) {
+            throw new IllegalArgumentException(
+                    "Source dependency plan does not belong to DUMB2");
+        }
+        PreparedSourceDependencyPlan prepared =
+                (PreparedSourceDependencyPlan) plan;
+        RevisionRef sourceRef =
+                new RevisionRef(
+                        context.getContextId(),
+                        context.getRevision());
+        if (!sourceRef.equals(prepared.source)) {
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                    "Source Context advanced while compiling declarative dependencies: "
+                            + prepared.source + " -> " + sourceRef);
+        }
+
+        for (ContextConnection connection
+                : prepared.vector.getConnections()) {
+            if (!connection.getCertificate().matches(
+                    sourceRef,
+                    connection.getTarget(),
+                    Version.CORE_VERSION_S)) {
+                throw new StorageLifecycleException(
+                        StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                        "Prepared source dependency certificate is stale for "
+                                + sourceRef + " / "
+                                + connection.getTarget());
+            }
+        }
+        workingConnections = prepared.vector;
+    }
+
+    @Override
+    public synchronized List<IContextFederation.SourceDependency>
+            sourceDependencies() throws Exception {
+        requireOpen();
+        ArrayList<IContextFederation.SourceDependency> result =
+                new ArrayList<IContextFederation.SourceDependency>();
+        for (ContextConnection connection
+                : workingConnections.getConnections()) {
+            result.add(
+                    projectSourceDependency(
+                            connection));
+        }
+        sortSourceDependencies(result);
+        return Collections.unmodifiableList(result);
+    }
+
+    private IContextFederation.SourceDependency projectSourceDependency(
+            ContextConnection connection) {
+        return new IContextFederation.SourceDependency(
+                displayFederationLocator(
+                        connection.getTargetLocation()),
+                connection.getTarget()
+                        .getContextId(),
+                connection.getTarget()
+                        .getRevision());
+    }
+
+    private void sortSourceDependencies(
+            List<IContextFederation.SourceDependency> dependencies) {
+        Collections.sort(
+                dependencies,
+                new Comparator<IContextFederation.SourceDependency>() {
+                    @Override
+                    public int compare(
+                            IContextFederation.SourceDependency left,
+                            IContextFederation.SourceDependency right) {
+                        int locator = left.getLocator()
+                                .compareTo(right.getLocator());
+                        if (locator != 0) {
+                            return locator;
+                        }
+                        int context = left.getContextId().toString()
+                                .compareTo(
+                                        right.getContextId().toString());
+                        if (context != 0) {
+                            return context;
+                        }
+                        return Long.compare(
+                                left.getRevision(),
+                                right.getRevision());
+                    }
+                });
     }
 
     @Override
@@ -874,6 +1027,33 @@ public final class DB implements IData, IContextFederation {
                 Path relative = root.relativize(logical);
                 result.add(relative.toString());
             }
+        }
+    }
+
+    private static final class PreparedSourceDependencyPlan
+            implements IContextFederation.SourceDependencyPlan {
+
+        private final RevisionRef source;
+        private final ConnectionVector vector;
+        private final List<IContextFederation.SourceDependency>
+                dependencies;
+
+        private PreparedSourceDependencyPlan(
+                RevisionRef source,
+                ConnectionVector vector,
+                List<IContextFederation.SourceDependency> dependencies) {
+            this.source = source;
+            this.vector = vector;
+            this.dependencies =
+                    Collections.unmodifiableList(
+                            new ArrayList<IContextFederation.SourceDependency>(
+                                    dependencies));
+        }
+
+        @Override
+        public List<IContextFederation.SourceDependency>
+                getDependencies() {
+            return dependencies;
         }
     }
 
