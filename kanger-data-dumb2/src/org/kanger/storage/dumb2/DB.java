@@ -899,6 +899,21 @@ public final class DB implements IData, IContextFederation {
                                     aggregate.getUnknownSources())));
         }
 
+        ArrayList<IContextFederation.EvidenceInjection> injections =
+                new ArrayList<IContextFederation.EvidenceInjection>();
+        for (FrontierContinuationEngine.EvidenceInjection injection
+                : result.getEvidenceInjections()) {
+            LinkedHashMap<String, String> substitutions =
+                    new LinkedHashMap<String, String>(
+                            injection.getSubstitutions());
+            injections.add(
+                    new IContextFederation.EvidenceInjection(
+                            injection.getStatement(),
+                            substitutions,
+                            projectRevisions(
+                                    injection.getSupports())));
+        }
+
         ArrayList<IContextFederation.ProvisionalHypothesis> hypotheses =
                 new ArrayList<IContextFederation.ProvisionalHypothesis>();
         for (FrontierAggregate.ProvisionalHypothesis hypothesis
@@ -912,9 +927,15 @@ public final class DB implements IData, IContextFederation {
 
         return new IContextFederation.QueryResult(
                 result.isResolved(),
+                result.isResolved()
+                        ? IContextFederation.FrontierTruth.TRUE
+                        : IContextFederation.FrontierTruth.UNKNOWN,
                 result.getWaves(),
                 result.getEvidenceCount(),
                 observations,
+                java.util.Collections
+                        .<IContextFederation.ValueRow>emptyList(),
+                injections,
                 hypotheses);
     }
 
