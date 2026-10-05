@@ -31,12 +31,11 @@ import java.util.zip.CRC32;
 /**
  * Durable directed connection configuration for one DUMB2 Context.
  *
- * <p>Connection metadata is operational state, not authoritative knowledge.
- * Version 3 stores vectors by exact source revision. This lets a writer stage
- * both the currently visible vector R and the already-qualified candidate
- * vector R+1 before the Context revision marker advances. Operations select the
- * vector matching their exact source revision, so a process crash between
- * sidecar publication and revision publication is still unambiguous.</p>
+ * <p>Version 3 stores exact dependency vectors by source revision. Published
+ * entries are revision-bound: ordinary runtime topology changes must never
+ * rewrite them in place. A writer may stage R+1 before CURRENT advances, while
+ * exact operation snapshots keep selecting the vector belonging to their
+ * source RevisionId.</p>
  *
  * <p>Version 2 is read for compatibility. A V2 vector contains certificates
  * for exactly one source revision, which is inferred from those certificates.</p>
@@ -48,7 +47,7 @@ final class ConnectionStore {
     private static final int VERSION = 3;
     private static final int LEGACY_VERSION = 2;
     private static final int MAX_CONNECTIONS = 10000;
-    private static final int MAX_REVISIONS = 32;
+    private static final int MAX_REVISIONS = 1000000;
     private static final int MAX_STRING_BYTES = 1024 * 1024;
 
     private ConnectionStore() {
@@ -170,11 +169,29 @@ final class ConnectionStore {
         validateVector(currentSource, currentVector);
         validateVector(candidateSource, candidateVector);
 
-        State state =
-                new State(currentSource.getContextId());
-        state.byRevision.put(
-                Long.valueOf(currentSource.getRevision()),
-                currentVector);
+        State state = readState(
+                location, currentSource.getContextId());
+        if (state == null) {
+            state = new State(currentSource.getContextId());
+        }
+
+        Long currentRevision =
+                Long.valueOf(currentSource.getRevision());
+        ConnectionVector storedCurrent =
+                state.byRevision.get(currentRevision);
+        if (storedCurrent != null
+                && !storedCurrent.equals(currentVector)) {
+            throw new IllegalStateException(
+                    "published connection vector changed for "
+                            + currentSource);
+        }
+
+        /*
+         * Preserve every historical published vector. R+1 may already be
+         * present only as an unpublished crash/retry candidate, so replacing
+         * that one exact entry is safe while CURRENT still names R.
+         */
+        state.byRevision.put(currentRevision, currentVector);
         state.byRevision.put(
                 Long.valueOf(candidateSource.getRevision()),
                 candidateVector);

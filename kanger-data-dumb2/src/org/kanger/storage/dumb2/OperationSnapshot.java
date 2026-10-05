@@ -43,13 +43,52 @@ final class OperationSnapshot implements AutoCloseable {
             throws Exception {
         ContextSnapshot source =
                 ContextSnapshot.open(sourceLocation);
+        try {
+            RevisionRef sourceRef = new RevisionRef(
+                    source.getContextId(), source.getRevision());
+            return openSelected(
+                    sourceLocation,
+                    source,
+                    ConnectionStore.read(
+                            sourceLocation, sourceRef));
+        } catch (Exception | Error failure) {
+            source.close();
+            throw failure;
+        }
+    }
+
+    /**
+     * Freezes one session-local working topology for the duration of an
+     * operation. The supplied vector is never persisted here.
+     */
+    static OperationSnapshot open(
+            Path sourceLocation,
+            ConnectionVector connections) throws Exception {
+        if (connections == null) {
+            throw new NullPointerException("connections");
+        }
+        ContextSnapshot source =
+                ContextSnapshot.open(sourceLocation);
+        try {
+            return openSelected(
+                    sourceLocation,
+                    source,
+                    connections);
+        } catch (Exception | Error failure) {
+            source.close();
+            throw failure;
+        }
+    }
+
+    private static OperationSnapshot openSelected(
+            Path sourceLocation,
+            ContextSnapshot source,
+            ConnectionVector vector) throws Exception {
         Map<UUID, ContextSnapshot> targets =
                 new LinkedHashMap<UUID, ContextSnapshot>();
         try {
             RevisionRef sourceRef = new RevisionRef(
                     source.getContextId(), source.getRevision());
-            ConnectionVector vector = ConnectionStore.read(
-                    sourceLocation, sourceRef);
             for (ContextConnection connection
                     : vector.getConnections()) {
                 RevisionRef targetRef = connection.getTarget();
@@ -85,13 +124,11 @@ final class OperationSnapshot implements AutoCloseable {
             for (ContextSnapshot target : targets.values()) {
                 target.close();
             }
-            source.close();
             throw failure;
         } catch (Error failure) {
             for (ContextSnapshot target : targets.values()) {
                 target.close();
             }
-            source.close();
             throw failure;
         }
     }

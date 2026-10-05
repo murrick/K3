@@ -634,7 +634,12 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                 ConnectionStore.read(
                         location, currentSource);
         if (currentConnections.isEmpty()) {
-            ConnectionStore.delete(location);
+            ConnectionStore.writeTransition(
+                    location,
+                    currentSource,
+                    currentConnections,
+                    candidateSource,
+                    ConnectionVector.empty());
             return;
         }
 

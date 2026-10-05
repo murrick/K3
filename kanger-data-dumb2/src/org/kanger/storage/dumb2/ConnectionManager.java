@@ -18,7 +18,41 @@ final class ConnectionManager {
     private ConnectionManager() {
     }
 
+    /**
+     * Legacy package-level publication helper retained for existing storage
+     * regression fixtures. Runtime/operator code must use
+     * {@link #qualifyConnect(Path, Path)} and keep the result in its working
+     * topology candidate.
+     */
     static ContextConnection connect(
+            Path sourceLocation,
+            Path targetLocation) throws Exception {
+        ContextConnection connection =
+                qualifyConnect(sourceLocation, targetLocation);
+
+        ContextSnapshot sourceSnapshot =
+                ContextSnapshot.open(sourceLocation);
+        try {
+            RevisionRef source = new RevisionRef(
+                    sourceSnapshot.getContextId(),
+                    sourceSnapshot.getRevision());
+            ConnectionVector vector =
+                    ConnectionStore.read(sourceLocation, source);
+            ConnectionStore.write(
+                    sourceLocation,
+                    source,
+                    vector.with(connection));
+        } finally {
+            sourceSnapshot.close();
+        }
+        return connection;
+    }
+
+    /**
+     * Qualifies one proposed direct connection without changing durable
+     * revision metadata.
+     */
+    static ContextConnection qualifyConnect(
             Path sourceLocation,
             Path targetLocation) throws Exception {
         RevisionRef source;
@@ -66,10 +100,6 @@ final class ConnectionManager {
                             + source + " / " + target);
         }
 
-        /*
-         * Re-read the source identity before publication. If CURRENT advanced
-         * while qualification was running, do not publish a stale certificate.
-         */
         ContextSnapshot currentSource =
                 ContextSnapshot.open(sourceLocation);
         try {
@@ -82,35 +112,62 @@ final class ConnectionManager {
                         "Source Context advanced during pair qualification: "
                                 + source + " -> " + now);
             }
-
-            ConnectionVector vector = ConnectionStore.read(
-                    sourceLocation,
-                    source);
-            ContextConnection connection =
-                    new ContextConnection(
-                            targetLocation,
-                            target,
-                            qualification.getCertificate());
-            ConnectionStore.write(
-                    sourceLocation,
-                    source,
-                    vector.with(connection));
-            return connection;
+            return new ContextConnection(
+                    targetLocation,
+                    target,
+                    qualification.getCertificate());
         } finally {
             currentSource.close();
         }
     }
 
     /**
-     * Deliberately repins one existing direct connection to one exact retained
-     * target revision. Target CURRENT is never followed implicitly.
+     * Legacy package-level publication helper retained for existing storage
+     * regression fixtures. Runtime/operator code uses the working-vector
+     * qualification overload below.
      */
     static ContextConnection switchRevision(
             Path sourceLocation,
             java.util.UUID targetContextId,
             long targetRevision) throws Exception {
-        if (targetContextId == null) {
-            throw new NullPointerException("targetContextId");
+        ContextSnapshot source =
+                ContextSnapshot.open(sourceLocation);
+        RevisionRef sourceRef;
+        ConnectionVector original;
+        try {
+            sourceRef = new RevisionRef(
+                    source.getContextId(),
+                    source.getRevision());
+            original = ConnectionStore.read(
+                    sourceLocation, sourceRef);
+        } finally {
+            source.close();
+        }
+
+        ContextConnection replacement =
+                qualifySwitchRevision(
+                        sourceLocation,
+                        original,
+                        targetContextId,
+                        targetRevision);
+        ConnectionStore.write(
+                sourceLocation,
+                sourceRef,
+                original.with(replacement));
+        return replacement;
+    }
+
+    /**
+     * Qualifies a deliberate repin against one session-local working vector
+     * without rewriting the published vector of the source revision.
+     */
+    static ContextConnection qualifySwitchRevision(
+            Path sourceLocation,
+            ConnectionVector original,
+            java.util.UUID targetContextId,
+            long targetRevision) throws Exception {
+        if (original == null || targetContextId == null) {
+            throw new NullPointerException();
         }
         if (targetRevision < RevisionStore.INITIAL_REVISION) {
             throw new IllegalArgumentException(
@@ -118,7 +175,6 @@ final class ConnectionManager {
         }
 
         RevisionRef sourceRef;
-        ConnectionVector original;
         ContextConnection existing;
 
         ContextSnapshot source =
@@ -127,8 +183,6 @@ final class ConnectionManager {
             sourceRef = new RevisionRef(
                     source.getContextId(),
                     source.getRevision());
-            original = ConnectionStore.read(
-                    sourceLocation, sourceRef);
             existing = original.find(targetContextId);
             if (existing == null) {
                 throw conflict(
@@ -189,21 +243,12 @@ final class ConnectionManager {
         ConnectionVector candidate =
                 original.with(replacement);
 
-        /*
-         * Direct Contexts are autonomous truth sources. A conflict already
-         * present in the current vector is a legal federation observation and
-         * must not freeze unrelated revision movement. Compare detached
-         * collision witnesses and reject only a switch that introduces at
-         * least one new composition conflict.
-         */
-        PairQualification.CompositionQualification
-                originalComposition =
+        PairQualification.CompositionQualification originalComposition =
                 PairQualification.qualifyCompositionState(
                         sourceLocation,
                         sourceRef.getRevision(),
                         original);
-        PairQualification.CompositionQualification
-                candidateComposition =
+        PairQualification.CompositionQualification candidateComposition =
                 PairQualification.qualifyCompositionState(
                         sourceLocation,
                         sourceRef.getRevision(),
@@ -216,10 +261,6 @@ final class ConnectionManager {
                             + requestedTarget);
         }
 
-        /*
-         * Pair/composition qualification may take time. Re-read both source
-         * CURRENT and operational topology before atomic sidecar publication.
-         */
         ContextSnapshot current =
                 ContextSnapshot.open(sourceLocation);
         try {
@@ -231,20 +272,6 @@ final class ConnectionManager {
                         "Source Context advanced during revision switch: "
                                 + sourceRef + " -> " + now);
             }
-
-            ConnectionVector live =
-                    ConnectionStore.read(
-                            sourceLocation, sourceRef);
-            if (!original.equals(live)) {
-                throw conflict(
-                        "Connection vector changed during revision switch for "
-                                + sourceRef);
-            }
-
-            ConnectionStore.write(
-                    sourceLocation,
-                    sourceRef,
-                    candidate);
             return replacement;
         } finally {
             current.close();

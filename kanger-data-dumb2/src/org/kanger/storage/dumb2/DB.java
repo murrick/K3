@@ -56,6 +56,14 @@ public final class DB implements IData, IContextFederation {
     private String storageName = "";
     private final Map<String, IBase> bases =
             new LinkedHashMap<String, IBase>();
+    /*
+     * Session-local topology candidate. Published vectors remain immutable
+     * revision state in ConnectionStore; ctx connect/disconnect/switch mutate
+     * only this adapter instance until a future authorized publication boundary
+     * is introduced.
+     */
+    private ConnectionVector workingConnections =
+            ConnectionVector.empty();
 
     @Override
     public synchronized void init(IUser user) {
@@ -91,12 +99,14 @@ public final class DB implements IData, IContextFederation {
         context = acquired;
         storageName = name;
         bases.clear();
+        workingConnections = publishedConnections();
     }
 
     @Override
     public synchronized void close() throws Exception {
         if (context == null) {
             bases.clear();
+            workingConnections = ConnectionVector.empty();
             storageName = "";
             return;
         }
@@ -108,6 +118,7 @@ public final class DB implements IData, IContextFederation {
          */
         context.close();
         bases.clear();
+        workingConnections = ConnectionVector.empty();
         context = null;
         storageName = "";
     }
@@ -115,7 +126,16 @@ public final class DB implements IData, IContextFederation {
     @Override
     public synchronized void flush() throws Exception {
         requireOpen();
+        long before = context.getRevision();
         context.flush();
+        if (context.getRevision() != before) {
+            /*
+             * A local semantic publication establishes a new immutable source
+             * revision. A session topology candidate is revision-scoped, so it
+             * is conservatively rebased to that revision's published vector.
+             */
+            workingConnections = publishedConnections();
+        }
     }
 
     @Override
@@ -195,7 +215,11 @@ public final class DB implements IData, IContextFederation {
             throw new IllegalArgumentException(
                     "DUMB2 reindex requires org.kanger.Mind");
         }
+        long before = context.getRevision();
         context.reindex(reactor, (Mind) mind);
+        if (context.getRevision() != before) {
+            workingConnections = publishedConnections();
+        }
     }
 
     @Override
@@ -278,13 +302,10 @@ public final class DB implements IData, IContextFederation {
             RevisionRef sourceRef = new RevisionRef(
                     source.getContextId(),
                     source.getRevision());
-            ConnectionVector vector = ConnectionStore.read(
-                    sourceLocation,
-                    sourceRef);
             ArrayList<IContextFederation.Connection> connections =
                     new ArrayList<IContextFederation.Connection>();
             for (ContextConnection connection
-                    : vector.getConnections()) {
+                    : workingConnections.getConnections()) {
                 connections.add(projectConnection(
                         sourceRef, connection));
             }
@@ -303,9 +324,11 @@ public final class DB implements IData, IContextFederation {
             String targetLocator) throws Exception {
         requireOpen();
         ContextConnection connection =
-                ConnectionManager.connect(
+                ConnectionManager.qualifyConnect(
                         context.getLocation(),
                         resolveFederationLocator(targetLocator));
+        workingConnections =
+                workingConnections.with(connection);
         return projectConnection(
                 new RevisionRef(
                         context.getContextId(),
@@ -324,9 +347,8 @@ public final class DB implements IData, IContextFederation {
     public synchronized void disconnectContext(
             java.util.UUID targetContextId) throws Exception {
         requireOpen();
-        ConnectionManager.disconnect(
-                context.getLocation(),
-                targetContextId);
+        workingConnections =
+                workingConnections.without(targetContextId);
     }
 
     @Override
@@ -344,10 +366,13 @@ public final class DB implements IData, IContextFederation {
             long targetRevision) throws Exception {
         requireOpen();
         ContextConnection connection =
-                ConnectionManager.switchRevision(
+                ConnectionManager.qualifySwitchRevision(
                         context.getLocation(),
+                        workingConnections,
                         targetContextId,
                         targetRevision);
+        workingConnections =
+                workingConnections.with(connection);
         return projectConnection(
                 new RevisionRef(
                         context.getContextId(),
@@ -424,15 +449,7 @@ public final class DB implements IData, IContextFederation {
     public synchronized boolean hasConnectedContexts()
             throws Exception {
         requireOpen();
-        RevisionRef sourceRef =
-                new RevisionRef(
-                        context.getContextId(),
-                        context.getRevision());
-        return !ConnectionStore.read(
-                context.getLocation(),
-                sourceRef)
-                .getConnections()
-                .isEmpty();
+        return !workingConnections.isEmpty();
     }
 
     @Override
@@ -455,6 +472,7 @@ public final class DB implements IData, IContextFederation {
                 FrontierContinuationEngine.execute(
                         (Mind) sourceMind,
                         context.getLocation(),
+                        workingConnections,
                         querySource,
                         externals,
                         logging);
@@ -606,6 +624,7 @@ public final class DB implements IData, IContextFederation {
         FrontierContinuationEngine.Result result =
                 FrontierContinuationEngine.execute(
                         context.getLocation(),
+                        workingConnections,
                         querySource);
         return projectQueryResult(result);
     }
@@ -697,16 +716,8 @@ public final class DB implements IData, IContextFederation {
             Path requested,
             String targetLocator) throws Exception {
         requireOpen();
-        RevisionRef sourceRef =
-                new RevisionRef(
-                        context.getContextId(),
-                        context.getRevision());
-        ConnectionVector vector =
-                ConnectionStore.read(
-                        context.getLocation(),
-                        sourceRef);
         for (ContextConnection connection
-                : vector.getConnections()) {
+                : workingConnections.getConnections()) {
             Path target =
                     connection.getTargetLocation()
                             .toAbsolutePath().normalize();
@@ -768,6 +779,15 @@ public final class DB implements IData, IContextFederation {
                 result.add(relative.toString());
             }
         }
+    }
+
+    private ConnectionVector publishedConnections()
+            throws Exception {
+        RevisionRef sourceRef = new RevisionRef(
+                context.getContextId(),
+                context.getRevision());
+        return ConnectionStore.read(
+                context.getLocation(), sourceRef);
     }
 
     private boolean storageArtifactsExist(Path location) {

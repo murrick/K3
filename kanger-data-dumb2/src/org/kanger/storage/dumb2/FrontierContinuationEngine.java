@@ -46,10 +46,20 @@ final class FrontierContinuationEngine {
     static Result execute(
             Path sourceLocation,
             String querySource) throws Exception {
+        return execute(sourceLocation, null, querySource);
+    }
+
+    static Result execute(
+            Path sourceLocation,
+            ConnectionVector connections,
+            String querySource) throws Exception {
         validateQuerySource(sourceLocation, querySource);
 
         OperationSnapshot operation =
-                OperationSnapshot.open(sourceLocation);
+                connections == null
+                        ? OperationSnapshot.open(sourceLocation)
+                        : OperationSnapshot.open(
+                                sourceLocation, connections);
         SnapshotMindRuntime runtime = null;
         Mind root = null;
         Mind work = null;
@@ -102,13 +112,32 @@ final class FrontierContinuationEngine {
             String querySource,
             Queue<ITerm> externals,
             boolean logging) throws Exception {
+        return execute(
+                sourceMind,
+                sourceLocation,
+                null,
+                querySource,
+                externals,
+                logging);
+    }
+
+    static Result execute(
+            Mind sourceMind,
+            Path sourceLocation,
+            ConnectionVector connections,
+            String querySource,
+            Queue<ITerm> externals,
+            boolean logging) throws Exception {
         if (sourceMind == null) {
             throw new NullPointerException("sourceMind");
         }
         validateQuerySource(sourceLocation, querySource);
 
         OperationSnapshot operation =
-                OperationSnapshot.open(sourceLocation);
+                connections == null
+                        ? OperationSnapshot.open(sourceLocation)
+                        : OperationSnapshot.open(
+                                sourceLocation, connections);
         Mind work = Mind.ephemeralChild(sourceMind);
         try {
             Result result = run(
