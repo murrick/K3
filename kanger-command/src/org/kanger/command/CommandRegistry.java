@@ -67,6 +67,7 @@ public final class CommandRegistry {
         ROLLBACK,
         SQUASH,
         SWITCH,
+        VERSION,
         USE,
         CLOSE,
         DROP,
@@ -201,6 +202,7 @@ public final class CommandRegistry {
         keyword(Family.CONTEXT, Keyword.CONNECT, "connect");
         keyword(Family.CONTEXT, Keyword.DISCONNECT, "disconnect");
         keyword(Family.CONTEXT, Keyword.SWITCH, "switch");
+        keyword(Family.CONTEXT, Keyword.VERSION, "version");
         keyword(Family.CONTEXT, Keyword.QUERY, "query");
 
         keyword(Family.STATUS, Keyword.CORE, "core");
@@ -314,6 +316,9 @@ public final class CommandRegistry {
                 "Deliberately requalify and repin one direct Context to an exact revision.",
                 args("locator", "Context locator or DUMB2 logical storage name.",
                         "RevisionId", "Exact target revision."), n++);
+        define(CommandIntent.CTX_VERSION, "ctx version [<locator>]", "CONTEXT",
+                "Show immutable revision history and PINNED/CURRENT markers.",
+                args("locator", "Optional current or direct connected Context locator."), n++);
         define(CommandIntent.CTX_ISOLATED_QUERY,
                 "ctx <locator> <query...>", "CONTEXT",
                 "Execute one local-only diagnostic query in X or one exact-pinned direct Context.",
