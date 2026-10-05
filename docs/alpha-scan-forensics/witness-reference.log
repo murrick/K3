@@ -1,0 +1,4 @@
+ALPHA_WITNESS mode=0 reference=target:root-a narrowed=null:child-b
+ALPHA_WITNESS mode=1 reference=null:root-a narrowed=null:child-b
+ALPHA_WITNESS mode=2 reference=target:root-a narrowed=null:child-b
+ALPHA_SCAN_WITNESS_OK scenarios=3 checks=45

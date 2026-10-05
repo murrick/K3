@@ -1,0 +1,46 @@
+--- a/kanger/src/org/kanger/GeneratedCVarMaterializer.java
++++ b/kanger/src/org/kanger/GeneratedCVarMaterializer.java
+@@ -53 +53,5 @@
+-        if (source.isQuery(mind) || !containsCVariable(source, mind)) {
++        org.kanger.AlphaScanProfile.enter();
++        try {
++        if (org.kanger.AlphaScanProfile.test("sourceQuery", source.isQuery(mind))
++                || !org.kanger.AlphaScanProfile.test("sourceContainsCVar", containsCVariable(source, mind))) {
++            org.kanger.AlphaScanProfile.finish("gateRejected");
+@@ -56,0 +61 @@
++        org.kanger.AlphaScanProfile.event("eligible");
+@@ -59 +64,4 @@
+-            if (!rule.isStored() || rule.isQuery()) {
++            org.kanger.AlphaScanProfile.visit();
++            if (org.kanger.AlphaScanProfile.test("notStored", !rule.isStored())
++                    || org.kanger.AlphaScanProfile.test("candidateQuery", rule.isQuery())) {
++                org.kanger.AlphaScanProfile.event("flagsRejected");
+@@ -62,0 +71 @@
++            org.kanger.AlphaScanProfile.event("shapeCalls");
+@@ -63,0 +73 @@
++                org.kanger.AlphaScanProfile.finish("hit");
+@@ -66,0 +77 @@
++        org.kanger.AlphaScanProfile.finish("miss");
+@@ -67,0 +79 @@
++        } finally { org.kanger.AlphaScanProfile.leave(); }
+@@ -127,3 +139,3 @@
+-        if (left.isAntc() != right.isAntc()
+-                || left.getPredicateId() != right.getPredicateId()
+-                || left.getRange() != right.getRange()) {
++        if (org.kanger.AlphaScanProfile.test("polarityMismatch", left.isAntc() != right.isAntc())
++                || org.kanger.AlphaScanProfile.test("predicateMismatch", left.getPredicateId() != right.getPredicateId())
++                || org.kanger.AlphaScanProfile.test("arityMismatch", left.getRange() != right.getRange())) {
+@@ -132,0 +145 @@
++        org.kanger.AlphaScanProfile.event("shapeAccepted");
+@@ -136,0 +150 @@
++            org.kanger.AlphaScanProfile.event("argumentPositions");
+@@ -139,0 +154 @@
++                org.kanger.AlphaScanProfile.event("emptyArgument");
+@@ -147,0 +163 @@
++                org.kanger.AlphaScanProfile.event("cvarKindMismatch");
+@@ -154,0 +171 @@
++                    org.kanger.AlphaScanProfile.event("dominiMismatch");
+@@ -166,0 +184 @@
++                    org.kanger.AlphaScanProfile.event("bijectionMismatch");
+@@ -169,0 +188 @@
++                org.kanger.AlphaScanProfile.event("termMismatch");

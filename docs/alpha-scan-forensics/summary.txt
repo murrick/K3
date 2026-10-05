@@ -1,0 +1,32 @@
+PROFILE_COMPLETE 1
+PROFILE_COMPLETE 2
+event argumentPositions 109187
+event bijectionMismatch 1
+event calls 11793
+event cvarKindMismatch 32342
+event dominiMismatch 0
+event eligible 11648
+event emptyArgument 0
+event exception 0
+event flagsRejected 33955
+event gateRejected 145
+event hit 9828
+event miss 1820
+event shapeAccepted 94548
+event shapeCalls 795590
+event termMismatch 52377
+event visits 829545
+test arityMismatch false=94548 true=0
+test candidateQuery false=795590 true=6341
+test notStored false=801931 true=27614
+test polarityMismatch false=641664 true=153926
+test predicateMismatch false=94548 true=547116
+test sourceContainsCVar false=122 true=11648
+test sourceQuery false=11770 true=23
+scan hit count=9828 visits=557711 mean=56.747151 median=59 p95=94 max=159
+scan miss count=1820 visits=271834 mean=149.359341 median=146 p95=175 max=242
+shape_rejected_share=84.509219%
+all_rejected_before_arguments_share=88.602427%
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+ALPHA_SCAN_FORENSICS_OK samples=12 warm_samples=8 texts_equal_to_clean_base=true witnesses=3 checks_per_build=45
+TIMING_EXCLUDED diagnostic_instrumentation=true main_optimization_thread_only=true
