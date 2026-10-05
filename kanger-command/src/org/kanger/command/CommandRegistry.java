@@ -63,6 +63,7 @@ public final class CommandRegistry {
         COMMIT,
         CONNECT,
         DISCONNECT,
+        EXPLAIN,
         QUERY,
         ROLLBACK,
         SQUASH,
@@ -201,6 +202,7 @@ public final class CommandRegistry {
 
         keyword(Family.CONTEXT, Keyword.CONNECT, "connect");
         keyword(Family.CONTEXT, Keyword.DISCONNECT, "disconnect");
+        keyword(Family.CONTEXT, Keyword.EXPLAIN, "explain");
         keyword(Family.CONTEXT, Keyword.SWITCH, "switch");
         keyword(Family.CONTEXT, Keyword.VERSION, "version");
         keyword(Family.CONTEXT, Keyword.QUERY, "query");
@@ -319,6 +321,9 @@ public final class CommandRegistry {
         define(CommandIntent.CTX_VERSION, "ctx version [<locator>]", "CONTEXT",
                 "Show immutable revision history and PINNED/CURRENT markers.",
                 args("locator", "Optional current or direct connected Context locator."), n++);
+        define(CommandIntent.CTX_EXPLAIN, "ctx explain <query...>", "CONTEXT",
+                "Execute the normal query path and show its semantic federation trace.",
+                args("query", "KANGER query beginning with ?."), n++);
         define(CommandIntent.CTX_ISOLATED_QUERY,
                 "ctx <locator> <query...>", "CONTEXT",
                 "Execute one local-only diagnostic query in X or one exact-pinned direct Context.",
