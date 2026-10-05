@@ -418,7 +418,8 @@ public final class CommandParser {
             keyword = CommandRegistry.resolveKeyword(
                     Family.CONTEXT, tokens.get(1).value,
                     Keyword.CONNECT, Keyword.DISCONNECT,
-                    Keyword.SWITCH, Keyword.QUERY);
+                    Keyword.SWITCH, Keyword.VERSION,
+                    Keyword.QUERY);
         } catch (CommandParseException rejected) {
             if (rejected.getReason() == AMBIGUOUS_PREFIX) {
                 throw rejected;
@@ -452,6 +453,17 @@ public final class CommandParser {
                 return CommandInvocation.command(
                         CommandIntent.CTX_SWITCH,
                         arguments, raw);
+            case VERSION:
+                if (tokens.size() == 2) {
+                    return CommandInvocation.command(
+                            CommandIntent.CTX_VERSION,
+                            raw);
+                }
+                requireSize(tokens, 3);
+                return CommandInvocation.command(
+                        CommandIntent.CTX_VERSION,
+                        args("locator", tokens.get(2).value),
+                        raw);
             case QUERY:
                 throw error(MISSING_ARGUMENT,
                         "ctx query requires a KANGER query");
