@@ -1,0 +1,106 @@
+[
+  {
+    "run": 1,
+    "sample": 2,
+    "calls": 4893872,
+    "custom": 0,
+    "failures": 0,
+    "overflow": 0,
+    "lengths": {
+      "0": 2683375,
+      "1": 557195,
+      "2": 1653302
+    }
+  },
+  {
+    "run": 1,
+    "sample": 3,
+    "calls": 4890454,
+    "custom": 0,
+    "failures": 0,
+    "overflow": 0,
+    "lengths": {
+      "0": 2679957,
+      "1": 557195,
+      "2": 1653302
+    }
+  },
+  {
+    "run": 1,
+    "sample": 4,
+    "calls": 4888581,
+    "custom": 0,
+    "failures": 0,
+    "overflow": 0,
+    "lengths": {
+      "0": 2678084,
+      "1": 557195,
+      "2": 1653302
+    }
+  },
+  {
+    "run": 1,
+    "sample": 5,
+    "calls": 4888630,
+    "custom": 0,
+    "failures": 0,
+    "overflow": 0,
+    "lengths": {
+      "0": 2678133,
+      "1": 557195,
+      "2": 1653302
+    }
+  },
+  {
+    "run": 2,
+    "sample": 2,
+    "calls": 4893872,
+    "custom": 0,
+    "failures": 0,
+    "overflow": 0,
+    "lengths": {
+      "0": 2683375,
+      "1": 557195,
+      "2": 1653302
+    }
+  },
+  {
+    "run": 2,
+    "sample": 3,
+    "calls": 4890454,
+    "custom": 0,
+    "failures": 0,
+    "overflow": 0,
+    "lengths": {
+      "0": 2679957,
+      "1": 557195,
+      "2": 1653302
+    }
+  },
+  {
+    "run": 2,
+    "sample": 4,
+    "calls": 4888581,
+    "custom": 0,
+    "failures": 0,
+    "overflow": 0,
+    "lengths": {
+      "0": 2678084,
+      "1": 557195,
+      "2": 1653302
+    }
+  },
+  {
+    "run": 2,
+    "sample": 5,
+    "calls": 4888630,
+    "custom": 0,
+    "failures": 0,
+    "overflow": 0,
+    "lengths": {
+      "0": 2678133,
+      "1": 557195,
+      "2": 1653302
+    }
+  }
+]

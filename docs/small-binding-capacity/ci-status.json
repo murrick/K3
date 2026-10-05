@@ -1,0 +1,40 @@
+{
+  "code_commit": "2308a5b861d6665274e0342397a7a6dac1ec96fc",
+  "runs": [
+    {
+      "name": "KANGER distribution bundle",
+      "status": "completed",
+      "conclusion": "success",
+      "id": 37331249151,
+      "url": "https://github.com/murrick/K3/actions/runs/37331249151"
+    },
+    {
+      "name": "KANGER Server",
+      "status": "completed",
+      "conclusion": "success",
+      "id": 37331249243,
+      "url": "https://github.com/murrick/K3/actions/runs/37331249243"
+    },
+    {
+      "name": "KANGER CI",
+      "status": "completed",
+      "conclusion": "success",
+      "id": 37331249084,
+      "url": "https://github.com/murrick/K3/actions/runs/37331249084"
+    },
+    {
+      "name": "Small binding capacity qualification",
+      "status": "completed",
+      "conclusion": "success",
+      "id": 37331249320,
+      "url": "https://github.com/murrick/K3/actions/runs/37331249320"
+    },
+    {
+      "name": "KANGER qualification isolation",
+      "status": "completed",
+      "conclusion": "success",
+      "id": 37331249241,
+      "url": "https://github.com/murrick/K3/actions/runs/37331249241"
+    }
+  ]
+}

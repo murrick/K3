@@ -1,0 +1,11 @@
+--- kanger/src/org/kanger/units/Domain.java	2026-10-05 17:09:06.495474040 +0200
++++ ../build/binding-size-source/Domain.java	2026-10-05 17:10:12.860596993 +0200
+@@ -560,7 +560,7 @@
+     @Override
+     public Domain setMind(Mind mind) throws Exception {
+         this.mind = mind;
+-        for (TVariable t : arguments.getTVariables(mind)) {
++        for (TVariable t : org.kanger.BindingSizeCounters.enumerate(arguments, mind)) {
+             t.setMind(mind);
+         }
+         return this;
