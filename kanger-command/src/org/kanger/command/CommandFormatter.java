@@ -121,6 +121,13 @@ public final class CommandFormatter {
                 return "ctx switch "
                         + argument(invocation.getArgument("locator"))
                         + " " + number(invocation, "RevisionId");
+            case CTX_VERSION:
+                Object versionLocator =
+                        invocation.getArgument("locator");
+                return versionLocator == null
+                        ? "ctx version"
+                        : "ctx version "
+                                + argument(versionLocator);
             case CTX_ISOLATED_QUERY:
                 return "ctx "
                         + argument(invocation.getArgument("locator"))
