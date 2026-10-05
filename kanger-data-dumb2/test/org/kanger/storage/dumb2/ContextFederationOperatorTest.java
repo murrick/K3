@@ -351,6 +351,88 @@ public class ContextFederationOperatorTest {
     }
 
     @Test
+    void workingTopologyDoesNotRewritePublishedRevision()
+            throws Exception {
+        ContextFixture x =
+                context("WX", "!anchor(X);");
+        ContextFixture a =
+                context("WA", "!male(Tom);");
+
+        User user = new User();
+        user.setDatabaseDir(
+                root.toString() + File.separator);
+        DB data = new DB();
+        data.init(user);
+
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        mind = (Mind) mind.useStorage("WX");
+        user.setCurrentMind(mind);
+
+        IContextFederation federation = data;
+        federation.connectContext("WA");
+        assertEquals(
+                1,
+                federation.federationSnapshot()
+                        .getConnections().size());
+
+        /*
+         * The live session sees its candidate topology, but an independent
+         * exact-revision operation still sees the immutable published vector.
+         */
+        OperationSnapshot published =
+                OperationSnapshot.open(root.resolve("WX"));
+        try {
+            assertEquals(
+                    new RevisionRef(x.contextId, x.revision),
+                    published.getSourceRef());
+            assertTrue(
+                    published.getConnections().isEmpty(),
+                    "working connect must not rewrite published X@R");
+        } finally {
+            published.close();
+        }
+
+        advance("WA", "!female(Jane);");
+        federation.switchContextRevision(
+                a.contextId,
+                a.revision + 1L);
+        assertEquals(
+                a.revision + 1L,
+                federation.federationSnapshot()
+                        .getConnections().get(0)
+                        .getPinnedRevision());
+
+        federation.disconnectContext(a.contextId);
+        assertTrue(
+                federation.federationSnapshot()
+                        .getConnections().isEmpty());
+
+        user.setCurrentMind(
+                mind.closeStorage());
+
+        /*
+         * Closing the session discards the working candidate; reopen restores
+         * the vector bound to the published revision.
+         */
+        User reopenedUser = new User();
+        reopenedUser.setDatabaseDir(
+                root.toString() + File.separator);
+        DB reopenedData = new DB();
+        reopenedData.init(reopenedUser);
+        Mind reopenedMind = new Mind(reopenedUser);
+        reopenedUser.setCurrentMind(reopenedMind);
+        reopenedMind = (Mind) reopenedMind.useStorage("WX");
+        reopenedUser.setCurrentMind(reopenedMind);
+        assertTrue(
+                ((IContextFederation) reopenedData)
+                        .federationSnapshot()
+                        .getConnections().isEmpty());
+        reopenedUser.setCurrentMind(
+                reopenedMind.closeStorage());
+    }
+
+    @Test
     void canonicalCtxSurfaceDrivesQualifiedDumb2Federation()
             throws Exception {
         ContextFixture x =
