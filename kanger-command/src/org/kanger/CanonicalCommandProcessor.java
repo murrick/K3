@@ -54,6 +54,7 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.CTX_DISCONNECT
                 || intent == CommandIntent.CTX_SWITCH
                 || intent == CommandIntent.CTX_VERSION
+                || intent == CommandIntent.CTX_EXPLAIN
                 || intent == CommandIntent.CTX_ISOLATED_QUERY
                 || intent == CommandIntent.CTX_QUERY;
     }
@@ -243,6 +244,20 @@ public final class CanonicalCommandProcessor {
                         mind,
                         federation.federationSnapshot(),
                         versions);
+            }
+
+            case CTX_EXPLAIN: {
+                if (!(mind instanceof Mind)) {
+                    throw new org.kanger.exception.CommandErrorException(
+                            "Context explain requires the canonical Mind runtime");
+                }
+                IContextFederation.ExplainResult explain =
+                        ((Mind) mind).explainQuery(
+                                String.valueOf(
+                                        invocation.getArgument("query")));
+                return Result.successContextExplain(
+                        mind,
+                        explain);
             }
 
             case CTX_ISOLATED_QUERY: {
@@ -634,6 +649,7 @@ public final class CanonicalCommandProcessor {
         private final IContextFederation.Snapshot federationSnapshot;
         private final IContextFederation.QueryResult federationQueryResult;
         private final IContextFederation.VersionHistory contextVersionHistory;
+        private final IContextFederation.ExplainResult contextExplainResult;
 
         private Result(boolean handled,
                        boolean success,
@@ -644,7 +660,7 @@ public final class CanonicalCommandProcessor {
                        TransactionStatus transactionStatus) {
             this(handled, success, mind, description,
                     storageStatus, rejection, transactionStatus,
-                    null, null, null);
+                    null, null, null, null);
         }
 
         private Result(boolean handled,
@@ -659,7 +675,7 @@ public final class CanonicalCommandProcessor {
             this(handled, success, mind, description,
                     storageStatus, rejection, transactionStatus,
                     federationSnapshot, federationQueryResult,
-                    null);
+                    null, null);
         }
 
         private Result(boolean handled,
@@ -671,7 +687,8 @@ public final class CanonicalCommandProcessor {
                        TransactionStatus transactionStatus,
                        IContextFederation.Snapshot federationSnapshot,
                        IContextFederation.QueryResult federationQueryResult,
-                       IContextFederation.VersionHistory contextVersionHistory) {
+                       IContextFederation.VersionHistory contextVersionHistory,
+                       IContextFederation.ExplainResult contextExplainResult) {
             this.handled = handled;
             this.success = success;
             this.mind = mind;
@@ -682,6 +699,7 @@ public final class CanonicalCommandProcessor {
             this.federationSnapshot = federationSnapshot;
             this.federationQueryResult = federationQueryResult;
             this.contextVersionHistory = contextVersionHistory;
+            this.contextExplainResult = contextExplainResult;
         }
 
         private static Result unhandled(IMind mind) {
@@ -716,6 +734,17 @@ public final class CanonicalCommandProcessor {
                     federationSnapshot, federationQueryResult);
         }
 
+        private static Result successContextExplain(
+                IMind mind,
+                IContextFederation.ExplainResult contextExplainResult) {
+            return new Result(
+                    true, true, mind, "",
+                    null, null, null,
+                    contextExplainResult.getContext(),
+                    null, null,
+                    contextExplainResult);
+        }
+
         private static Result successContextVersion(
                 IMind mind,
                 IContextFederation.Snapshot federationSnapshot,
@@ -724,7 +753,7 @@ public final class CanonicalCommandProcessor {
                     true, true, mind, "",
                     null, null, null,
                     federationSnapshot, null,
-                    contextVersionHistory);
+                    contextVersionHistory, null);
         }
 
         private static Result rejected(IMind mind, String description) {
@@ -777,6 +806,10 @@ public final class CanonicalCommandProcessor {
 
         public IContextFederation.VersionHistory getContextVersionHistory() {
             return contextVersionHistory;
+        }
+
+        public IContextFederation.ExplainResult getContextExplainResult() {
+            return contextExplainResult;
         }
     }
 }
