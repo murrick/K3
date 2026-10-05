@@ -13,6 +13,7 @@ import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
+import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IData;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Queue;
 
 /**
  * Runtime-facing IData adapter for one autonomous DUMB 2.0 Context.
@@ -415,6 +417,47 @@ public final class DB implements IData, IContextFederation {
     }
 
     @Override
+    public synchronized boolean hasConnectedContexts()
+            throws Exception {
+        requireOpen();
+        RevisionRef sourceRef =
+                new RevisionRef(
+                        context.getContextId(),
+                        context.getRevision());
+        return !ConnectionStore.read(
+                context.getLocation(),
+                sourceRef)
+                .getConnections()
+                .isEmpty();
+    }
+
+    @Override
+    public synchronized IContextFederation.QueryResult continueFederatedQuery(
+            IMind sourceMind,
+            String querySource,
+            Queue<ITerm> externals,
+            boolean logging) throws Exception {
+        requireOpen();
+        if (!(sourceMind instanceof Mind)) {
+            throw new IllegalArgumentException(
+                    "Federated continuation requires org.kanger.Mind");
+        }
+        if (sourceMind.getUser() != user) {
+            throw new IllegalArgumentException(
+                    "Federated continuation requires the active storage User");
+        }
+
+        FrontierContinuationEngine.Result result =
+                FrontierContinuationEngine.execute(
+                        (Mind) sourceMind,
+                        context.getLocation(),
+                        querySource,
+                        externals,
+                        logging);
+        return projectQueryResult(result);
+    }
+
+    @Override
     public synchronized IContextFederation.QueryResult executeFederatedQuery(
             String querySource) throws Exception {
         requireOpen();
@@ -423,7 +466,11 @@ public final class DB implements IData, IContextFederation {
                 FrontierContinuationEngine.execute(
                         context.getLocation(),
                         querySource);
+        return projectQueryResult(result);
+    }
 
+    private IContextFederation.QueryResult projectQueryResult(
+            FrontierContinuationEngine.Result result) {
         ArrayList<IContextFederation.FrontierObservation> observations =
                 new ArrayList<IContextFederation.FrontierObservation>();
         for (FrontierContinuationEngine.FrontierObservation observation

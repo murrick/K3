@@ -7,6 +7,7 @@ package org.kanger.storage.dumb2;
 
 import org.kanger.FrontierDomain;
 import org.kanger.Mind;
+import org.kanger.enums.Enums;
 import org.kanger.enums.QueryPass;
 import org.kanger.interfaces.ITerm;
 import org.kanger.units.Rule;
@@ -45,21 +46,13 @@ final class FrontierContinuationEngine {
     static Result execute(
             Path sourceLocation,
             String querySource) throws Exception {
-        if (sourceLocation == null) {
-            throw new NullPointerException("sourceLocation");
-        }
-        if (querySource == null
-                || querySource.isEmpty()
-                || querySource.charAt(0) != '?') {
-            throw new IllegalArgumentException(
-                    "Federated continuation requires a query source");
-        }
+        validateQuerySource(sourceLocation, querySource);
 
         OperationSnapshot operation =
                 OperationSnapshot.open(sourceLocation);
         SnapshotMindRuntime runtime = null;
-        Mind work = null;
         Mind root = null;
+        Mind work = null;
         try {
             runtime = SnapshotMindRuntime.open(
                     operation.getSourceLocation(),
@@ -69,228 +62,277 @@ final class FrontierContinuationEngine {
                                     .getContextId().toString());
             root = runtime.getMind();
             work = Mind.ephemeralChild(root);
-            work.setQueryPass(QueryPass.CHECKTRUE);
 
-            Rule query = (Rule) work.compileLine(
+            Result result = run(
+                    work,
+                    operation,
                     querySource,
-                    true,
-                    new LinkedList<ITerm>());
-            if (query == null || query.isSecond()) {
-                throw new IllegalStateException(
-                        "Unable to establish operation-local query Rule: "
-                                + querySource);
+                    new LinkedList<ITerm>(),
+                    false);
+
+            Mind settled = work;
+            work = null;
+            root.discardEphemeral(settled);
+            return result;
+        } finally {
+            if (root != null && work != null) {
+                Mind unsettled = work;
+                work = null;
+                root.discardEphemeral(unsettled);
             }
+            if (runtime != null) {
+                runtime.close();
+            }
+            operation.close();
+        }
+    }
 
-            long queryRuleId = query.getId();
-            List<FrontierObservation> observations =
-                    new ArrayList<FrontierObservation>();
-            Set<FrontierAggregate.ProvisionalHypothesis>
-                    provisionalHypotheses =
-                    new LinkedHashSet<
-                            FrontierAggregate.ProvisionalHypothesis>();
+    /**
+     * Continues one unresolved polarity against the live initiating Mind.
+     *
+     * <p>The source Mind may include a user transaction overlay. Only foreign
+     * targets are read from exact immutable pins captured by OperationSnapshot.
+     * A resolved pass publishes query presentation state back to the source;
+     * an unresolved pass is discarded without replacing the caller's previous
+     * local Values/Solutions/logs.</p>
+     */
+    static Result execute(
+            Mind sourceMind,
+            Path sourceLocation,
+            String querySource,
+            Queue<ITerm> externals,
+            boolean logging) throws Exception {
+        if (sourceMind == null) {
+            throw new NullPointerException("sourceMind");
+        }
+        validateQuerySource(sourceLocation, querySource);
 
-            if (prove(work, query)) {
+        OperationSnapshot operation =
+                OperationSnapshot.open(sourceLocation);
+        Mind work = Mind.ephemeralChild(sourceMind);
+        try {
+            Result result = run(
+                    work,
+                    operation,
+                    querySource,
+                    externals == null
+                            ? new LinkedList<ITerm>()
+                            : new LinkedList<ITerm>(externals),
+                    logging);
+
+            Mind settled = work;
+            work = null;
+            if (result.isResolved()) {
+                sourceMind.release(settled);
+            } else {
+                sourceMind.discardEphemeral(settled);
+            }
+            return result;
+        } finally {
+            if (work != null) {
+                Mind unsettled = work;
+                work = null;
+                sourceMind.discardEphemeral(unsettled);
+            }
+            operation.close();
+        }
+    }
+
+    private static void validateQuerySource(
+            Path sourceLocation,
+            String querySource) {
+        if (sourceLocation == null) {
+            throw new NullPointerException("sourceLocation");
+        }
+        if (querySource == null || querySource.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Federated continuation requires a query source");
+        }
+        char operator = querySource.charAt(0);
+        if (operator != Enums.SUC
+                && operator != Enums.ANT) {
+            throw new IllegalArgumentException(
+                    "Federated continuation requires a TRUE/FALSE query pass");
+        }
+    }
+
+    private static Result run(
+            Mind work,
+            OperationSnapshot operation,
+            String querySource,
+            Queue<ITerm> externals,
+            boolean logging) throws Exception {
+        QueryPass queryPass =
+                querySource.charAt(0) == Enums.ANT
+                        ? QueryPass.CHECKFALSE
+                        : QueryPass.CHECKTRUE;
+        work.setQueryPass(queryPass);
+
+        Rule query = (Rule) work.compileLine(
+                querySource,
+                true,
+                externals);
+        if (query == null || query.isSecond()) {
+            throw new IllegalStateException(
+                    "Unable to establish operation-local query Rule: "
+                            + querySource);
+        }
+
+        long queryRuleId = query.getId();
+        List<FrontierObservation> observations =
+                new ArrayList<FrontierObservation>();
+        Set<FrontierAggregate.ProvisionalHypothesis>
+                provisionalHypotheses =
+                new LinkedHashSet<
+                        FrontierAggregate.ProvisionalHypothesis>();
+
+        if (prove(work, query, logging)) {
+            return new Result(
+                    true,
+                    0,
+                    0,
+                    queryRuleId,
+                    Collections.<List<String>>emptyList(),
+                    observations,
+                    provisionalHypotheses);
+        }
+
+        Set<EvidenceKey> evidence =
+                new LinkedHashSet<EvidenceKey>();
+        List<List<String>> frontierTrace =
+                new ArrayList<List<String>>();
+        int waves = 0;
+        int evidenceCount = 0;
+
+        while (waves < MAX_WAVES) {
+            List<FrontierDomain> frontiers =
+                    new ArrayList<FrontierDomain>(
+                            work.getFrontierDomains());
+            if (frontiers.isEmpty()) {
                 return new Result(
-                        true,
-                        0,
-                        0,
+                        false,
+                        waves,
+                        evidenceCount,
                         queryRuleId,
-                        Collections.<List<String>>emptyList(),
+                        frontierTrace,
                         observations,
                         provisionalHypotheses);
             }
 
-            Set<EvidenceKey> evidence =
-                    new LinkedHashSet<EvidenceKey>();
-            List<List<String>> frontierTrace =
-                    new ArrayList<List<String>>();
-            int waves = 0;
-            int evidenceCount = 0;
+            List<String> predicates =
+                    new ArrayList<String>();
+            for (FrontierDomain frontier : frontiers) {
+                predicates.add(
+                        frontier.getPredicateName());
+            }
+            frontierTrace.add(
+                    Collections.unmodifiableList(predicates));
+            ++waves;
 
-            while (waves < MAX_WAVES) {
-                List<FrontierDomain> frontiers =
-                        new ArrayList<FrontierDomain>(
-                                work.getFrontierDomains());
-                if (frontiers.isEmpty()) {
-                    return new Result(
-                            false,
-                            waves,
-                            evidenceCount,
-                            queryRuleId,
-                            frontierTrace,
-                            observations,
-                            provisionalHypotheses);
+            boolean changed = false;
+            for (FrontierDomain frontier : frontiers) {
+                List<FrontierAnswer> answers =
+                        FrontierFanOut.execute(
+                                operation, frontier);
+                FrontierAggregate aggregate =
+                        FrontierAggregate.of(answers);
+                observations.add(
+                        new FrontierObservation(
+                                waves,
+                                frontier,
+                                aggregate));
+                provisionalHypotheses.addAll(
+                        aggregate.getHypotheses());
+
+                /*
+                 * Ground TRUE is a factual donor for this exact frontier
+                 * polarity. FALSE, UNKNOWN and CONFLICT remain observations;
+                 * the opposite proposition is handled by the separate
+                 * historical FALSE query pass.
+                 */
+                if (frontier.isGround()
+                        && aggregate.getTruth()
+                                == FrontierAggregate.Truth.TRUE
+                        && inject(
+                                work,
+                                frontier,
+                                Collections.<String>emptyList(),
+                                Collections.<ITerm>emptyList(),
+                                evidence,
+                                true,
+                                queryPass)) {
+                    ++evidenceCount;
+                    changed = true;
                 }
 
-                List<String> predicates =
-                        new ArrayList<String>();
-                for (FrontierDomain frontier : frontiers) {
-                    predicates.add(
-                            frontier.getPredicateName());
-                }
-                frontierTrace.add(
-                        Collections.unmodifiableList(predicates));
-                ++waves;
-
-                boolean changed = false;
-                for (FrontierDomain frontier : frontiers) {
-                    List<FrontierAnswer> answers =
-                            FrontierFanOut.execute(
-                                    operation, frontier);
-                    FrontierAggregate aggregate =
-                            FrontierAggregate.of(answers);
-                    observations.add(
-                            new FrontierObservation(
-                                    waves,
-                                    frontier,
-                                    aggregate));
-                    provisionalHypotheses.addAll(
-                            aggregate.getHypotheses());
-
-                    /*
-                     * Ground truth aggregation belongs exactly here. TRUE means
-                     * the queried frontier polarity itself is factual and may
-                     * become an operation-local donor in X.
-                     *
-                     * FALSE is not an instruction to synthesize the opposite
-                     * assertion. In KANGER the opposite proposition is a
-                     * separate frontier (for example ?~p versus ?p); if that
-                     * frontier is queried, a foreign negative fact answers TRUE
-                     * and is injected naturally with its own polarity.
-                     *
-                     * UNKNOWN and CONFLICT likewise remain observations only.
-                     */
-                    if (frontier.isGround()
-                            && aggregate.getTruth()
-                                    == FrontierAggregate.Truth.TRUE
-                            && inject(
-                                    work,
-                                    frontier,
-                                    Collections.<String>emptyList(),
-                                    Collections.<ITerm>emptyList(),
-                                    evidence,
-                                    true)) {
+                FrontierLiftSession.LiftResult lifted =
+                        FrontierLiftSession.liftInto(
+                                work,
+                                operation,
+                                answers);
+                for (FrontierLiftSession.LiftedTuple tuple
+                        : lifted.getTuples()) {
+                    if (inject(
+                            work,
+                            frontier,
+                            lifted.getVariableOrder(),
+                            tuple.getValues(),
+                            evidence,
+                            true,
+                            queryPass)) {
                         ++evidenceCount;
                         changed = true;
                     }
-
-                    FrontierLiftSession.LiftResult lifted =
-                            FrontierLiftSession.liftInto(
-                                    work,
-                                    operation,
-                                    answers);
-                    for (FrontierLiftSession.LiftedTuple tuple
-                            : lifted.getTuples()) {
-                        if (inject(
-                                work,
-                                frontier,
-                                lifted.getVariableOrder(),
-                                tuple.getValues(),
-                                evidence,
-                                true)) {
-                            ++evidenceCount;
-                            changed = true;
-                        }
-                    }
-                }
-
-                if (!changed) {
-                    return new Result(
-                            false,
-                            waves,
-                            evidenceCount,
-                            queryRuleId,
-                            frontierTrace,
-                            observations,
-                            provisionalHypotheses);
-                }
-
-                work.setQueryPass(QueryPass.CHECKTRUE);
-                /*
-                 * New foreign evidence can satisfy a premise one or more local
-                 * rules away from the original query. Rule-scoped linking
-                 * intentionally builds a narrow candidate closure; after a
-                 * federation wave we therefore run full local saturation in
-                 * the same operation Mind, then analyze the same compiled query
-                 * Rule. No query recompilation or foreign recursion occurs.
-                 */
-                work.link(null, false);
-                if (work.analyze(query, false)) {
-                    return new Result(
-                            true,
-                            waves,
-                            evidenceCount,
-                            queryRuleId,
-                            frontierTrace,
-                            observations,
-                            provisionalHypotheses);
-                }
-                if (query.getId() != queryRuleId) {
-                    throw new AssertionError(
-                            "Federated continuation replaced the compiled query Rule");
                 }
             }
 
-            throw new IllegalStateException(
-                    "Federated continuation exceeded "
-                            + MAX_WAVES + " waves");
-        } finally {
-            Throwable failure = null;
-            if (root != null && work != null) {
-                try {
-                    /*
-                     * Mind.release historically publishes presentation result
-                     * stores even for rollback. Federation evidence must not
-                     * become a reachability root in the snapshot dictionary:
-                     * drop operation-local Solutions/Values before settlement
-                     * so ordinary DictionaryFactory.pack can discard every
-                     * transient projected Term before read-only update.
-                     */
-                    work.getSolutions().clear();
-                    work.getValues().clear();
-                    root.release(work);
-                } catch (Throwable releaseFailure) {
-                    failure = releaseFailure;
-                }
+            if (!changed) {
+                return new Result(
+                        false,
+                        waves,
+                        evidenceCount,
+                        queryRuleId,
+                        frontierTrace,
+                        observations,
+                        provisionalHypotheses);
             }
-            if (runtime != null) {
-                try {
-                    runtime.close();
-                } catch (Throwable closeFailure) {
-                    if (failure == null) {
-                        failure = closeFailure;
-                    } else if (closeFailure != failure) {
-                        failure.addSuppressed(closeFailure);
-                    }
-                }
+
+            work.setQueryPass(queryPass);
+            /*
+             * New foreign evidence can satisfy a premise one or more local
+             * rules away from the original query. Saturate the same operation
+             * Mind, then re-analyze the same compiled query Rule.
+             */
+            work.link(null, logging);
+            if (work.analyze(query, logging)) {
+                return new Result(
+                        true,
+                        waves,
+                        evidenceCount,
+                        queryRuleId,
+                        frontierTrace,
+                        observations,
+                        provisionalHypotheses);
             }
-            try {
-                operation.close();
-            } catch (Throwable closeFailure) {
-                if (failure == null) {
-                    failure = closeFailure;
-                } else if (closeFailure != failure) {
-                    failure.addSuppressed(closeFailure);
-                }
-            }
-            if (failure != null) {
-                if (failure instanceof Exception) {
-                    throw (Exception) failure;
-                }
-                if (failure instanceof Error) {
-                    throw (Error) failure;
-                }
-                throw new RuntimeException(failure);
+            if (query.getId() != queryRuleId) {
+                throw new AssertionError(
+                        "Federated continuation replaced the compiled query Rule");
             }
         }
+
+        throw new IllegalStateException(
+                "Federated continuation exceeded "
+                        + MAX_WAVES + " waves");
     }
 
     private static boolean prove(
-            Mind work, Rule query) throws Exception {
-        boolean result = work.analyze(query, false);
+            Mind work,
+            Rule query,
+            boolean logging) throws Exception {
+        boolean result = work.analyze(query, logging);
         if (!result) {
-            work.link(query, false);
-            result = work.analyze(query, false);
+            work.link(query, logging);
+            result = work.analyze(query, logging);
         }
         return result;
     }
@@ -301,7 +343,8 @@ final class FrontierContinuationEngine {
             List<String> variableOrder,
             List<ITerm> values,
             Set<EvidenceKey> evidence,
-            boolean truth) throws Exception {
+            boolean truth,
+            QueryPass queryPass) throws Exception {
         Queue<ITerm> arguments =
                 frontier.evidenceArguments(
                         work,
@@ -322,7 +365,7 @@ final class FrontierContinuationEngine {
                 evidenceSource,
                 false,
                 new LinkedList<ITerm>(arguments));
-        work.setQueryPass(QueryPass.CHECKTRUE);
+        work.setQueryPass(queryPass);
 
         if (assertion == null || assertion.isSecond()) {
             return false;

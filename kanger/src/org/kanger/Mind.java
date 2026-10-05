@@ -34,6 +34,8 @@ import org.kanger.enums.*;
 import org.kanger.factory.*;
 import org.kanger.exception.TransactionSettlementException;
 import org.kanger.interfaces.*;
+import org.kanger.interfaces.internal.IContextFederation;
+import org.kanger.interfaces.internal.IData;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.primitives.Hypothesis;
@@ -596,6 +598,26 @@ public class Mind implements IMind {
             lastLinkerStatistics = ((Mind) m).linker.snapshotStatistics();
             replaceFrontierDomains(((Mind) m).frontierDomains);
 
+            finishTransactionLocked();
+        }
+    }
+
+    /**
+     * Settles an {@link #ephemeralChild(IMind)} without publishing any of its
+     * presentation state.
+     *
+     * <p>The child factories are operation-local overlays and are deliberately
+     * discarded. This is the federation no-result boundary: an unresolved
+     * foreign pass must not erase the caller's existing local query
+     * Values/Solutions/logs while still consuming exactly one transaction
+     * reservation.</p>
+     */
+    public void discardEphemeral(IMind m) {
+        if (m == null) {
+            throw new IllegalArgumentException(
+                    "ephemeral Mind must not be null");
+        }
+        synchronized (locker) {
             finishTransactionLocked();
         }
     }
@@ -1736,6 +1758,83 @@ public class Mind implements IMind {
         return result;
     }
 
+    /**
+     * Extends an otherwise unresolved ordinary query through direct Context
+     * federation while preserving the historical FALSE-then-TRUE KANGER
+     * lifecycle.
+     *
+     * <p>Local inference has already run before this method is entered. The
+     * federation capability therefore receives the live initiating Mind only
+     * for unresolved continuation. Each pass executes in an isolated ephemeral
+     * child; resolved Values/Solutions are published back by the capability,
+     * while unresolved passes are discarded without touching the existing
+     * local presentation state.</p>
+     */
+    private Boolean continueFederatedQuery(
+            String line,
+            Object[] ext,
+            boolean logging) throws Exception {
+        if (!isStorageUsed()
+                || line == null
+                || line.length() <= 1
+                || line.charAt(0) != Enums.SUC) {
+            return null;
+        }
+
+        IData data = user.getData();
+        if (!(data instanceof IContextFederation)) {
+            return null;
+        }
+
+        IContextFederation federation =
+                (IContextFederation) data;
+        if (!federation.hasConnectedContexts()) {
+            return null;
+        }
+
+        Queue<ITerm> externals = convertExternals(ext);
+
+        if (!DEBUG_DISABLE_FALSE_CHECK) {
+            IContextFederation.QueryResult opposite =
+                    federation.continueFederatedQuery(
+                            this,
+                            invert(line),
+                            new LinkedList<ITerm>(externals),
+                            logging);
+            if (opposite.isResolved()) {
+                hypothesis.clear();
+                tempHypothesis.clear();
+                if (logging) {
+                    log.add(
+                            LogMode.ANALYZER,
+                            "Result: FALSE");
+                    logResult(this);
+                }
+                return false;
+            }
+        }
+
+        IContextFederation.QueryResult positive =
+                federation.continueFederatedQuery(
+                        this,
+                        line,
+                        new LinkedList<ITerm>(externals),
+                        logging);
+        if (positive.isResolved()) {
+            hypothesis.clear();
+            tempHypothesis.clear();
+            if (logging) {
+                log.add(
+                        LogMode.ANALYZER,
+                        "Result: TRUE");
+                logResult(this);
+            }
+            return true;
+        }
+
+        return null;
+    }
+
     public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
         this.logging = logging;
 
@@ -1797,6 +1896,10 @@ public class Mind implements IMind {
                     }
                     if (res == null) {
                         res = queryCheckTrue(line, ext, logging);
+                    }
+                    if (res == null) {
+                        res = continueFederatedQuery(
+                                line, ext, logging);
                     }
 
                 }

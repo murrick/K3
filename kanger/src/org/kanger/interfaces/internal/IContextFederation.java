@@ -5,9 +5,13 @@
  */
 package org.kanger.interfaces.internal;
 
+import org.kanger.interfaces.IMind;
+import org.kanger.interfaces.ITerm;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Queue;
 import java.util.UUID;
 
 /**
@@ -373,6 +377,31 @@ public interface IContextFederation {
     Connection switchContextRevision(
             UUID targetContextId,
             long targetRevision) throws Exception;
+
+    /**
+     * Returns whether the currently open Context has at least one direct
+     * connection eligible for federation.
+     */
+    boolean hasConnectedContexts() throws Exception;
+
+    /**
+     * Continues one unresolved query polarity in the live initiating Mind.
+     *
+     * <p>The source Mind remains the owner of variables, substitution
+     * convergence and final Values/Solutions. Foreign Contexts execute only
+     * local exact-revision frontier queries. A leading {@code ?} represents the
+     * normal TRUE pass; a leading {@code !} is the historical inverted FALSE
+     * pass compiled as a query, not an assertion.</p>
+     *
+     * <p>When the pass resolves, query presentation state is published back to
+     * {@code sourceMind}. Foreign semantic objects themselves remain confined to
+     * an ephemeral child and are never committed into the source factories.</p>
+     */
+    QueryResult continueFederatedQuery(
+            IMind sourceMind,
+            String querySource,
+            Queue<ITerm> externals,
+            boolean logging) throws Exception;
 
     /**
      * Executes one operation-local federated query for operator diagnostics.
