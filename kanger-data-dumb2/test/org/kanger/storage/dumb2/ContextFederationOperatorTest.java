@@ -94,6 +94,31 @@ public class ContextFederationOperatorTest {
                 stillPinned.getCurrentRevision());
         assertTrue(stillPinned.hasNewerRevision());
 
+        IContextFederation.VersionHistory versions =
+                federation.versionHistory("A");
+        assertEquals(
+                a.revision,
+                versions.getPinnedRevision());
+        assertEquals(
+                a.revision + 1L,
+                versions.getCurrentRevision());
+        assertEquals(
+                a.revision + 1L,
+                versions.getRevisions().get(0)
+                        .getRevision());
+        assertEquals(
+                a.revision,
+                versions.getRevisions().get(1)
+                        .getRevision());
+
+        IContextFederation.VersionHistory sourceVersions =
+                federation.versionHistory(null);
+        assertFalse(
+                sourceVersions.hasPinnedRevision());
+        assertEquals(
+                x.revision,
+                sourceVersions.getCurrentRevision());
+
         IContextFederation.Connection switched =
                 federation.switchContextRevision(
                         a.contextId,
@@ -504,6 +529,19 @@ public class ContextFederationOperatorTest {
                 newer.getFederationSnapshot()
                         .getConnections().get(0)
                         .hasNewerRevision());
+
+        CanonicalCommandProcessor.Result version =
+                processor.execute(
+                        parser.parse("ctx version CA"),
+                        user);
+        assertEquals(
+                a.revision,
+                version.getContextVersionHistory()
+                        .getPinnedRevision());
+        assertEquals(
+                a.revision + 1L,
+                version.getContextVersionHistory()
+                        .getCurrentRevision());
 
         CanonicalCommandProcessor.Result switched =
                 processor.execute(
