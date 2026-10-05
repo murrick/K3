@@ -170,6 +170,7 @@ public class Mind implements IMind {
     private String querySource = "";
     private final List<FrontierDomain> frontierDomains = new ArrayList<>();
     private QueryPass queryPass = QueryPass.SILENCE;
+    private List<IContextFederation.ExplainPass> activeExplainPasses;
     private User user = null;
     private String compliedLine = "";
     //
@@ -1855,6 +1856,9 @@ public class Mind implements IMind {
                             invert(line),
                             new LinkedList<ITerm>(externals),
                             logging);
+            recordExplainPass(
+                    IContextFederation.ExplainPolarity.FALSE_PASS,
+                    opposite);
             if (opposite.isResolved()) {
                 hypothesis.clear();
                 tempHypothesis.clear();
@@ -1874,6 +1878,9 @@ public class Mind implements IMind {
                         line,
                         new LinkedList<ITerm>(externals),
                         logging);
+        recordExplainPass(
+                IContextFederation.ExplainPolarity.TRUE_PASS,
+                positive);
         if (positive.isResolved()) {
             hypothesis.clear();
             tempHypothesis.clear();
@@ -1887,6 +1894,108 @@ public class Mind implements IMind {
         }
 
         return null;
+    }
+
+    public IContextFederation.ExplainResult explainQuery(
+            String line) throws Exception {
+        if (line == null
+                || line.isEmpty()
+                || line.charAt(0) != Enums.SUC) {
+            throw new IllegalArgumentException(
+                    "Context explain requires a KANGER query beginning with ?");
+        }
+        if (!isStorageUsed()
+                || !(user.getData() instanceof IContextFederation)) {
+            throw new IllegalStateException(
+                    "Context explain requires an active Context federation storage");
+        }
+        if (activeExplainPasses != null) {
+            throw new IllegalStateException(
+                    "Nested Context explain is not supported");
+        }
+
+        IContextFederation federation =
+                (IContextFederation) user.getData();
+        ArrayList<IContextFederation.ExplainPass> passes =
+                new ArrayList<IContextFederation.ExplainPass>();
+        activeExplainPasses = passes;
+        try {
+            Boolean answer =
+                    query(line, null, false);
+            IContextFederation.FrontierTruth finalTruth =
+                    explainTruth(answer, passes);
+            IContextFederation.FrontierTruth localTruth =
+                    passes.isEmpty()
+                            ? finalTruth
+                            : IContextFederation.FrontierTruth.UNKNOWN;
+
+            ArrayList<IContextFederation.ValueRow> values =
+                    new ArrayList<IContextFederation.ValueRow>();
+            for (Map<String, ITerm> row : getValues()) {
+                LinkedHashMap<String, String> bindings =
+                        new LinkedHashMap<String, String>();
+                for (Map.Entry<String, ITerm> binding
+                        : row.entrySet()) {
+                    ITerm value = binding.getValue();
+                    bindings.put(
+                            binding.getKey(),
+                            value == null
+                                    ? ""
+                                    : value.toString());
+                }
+                values.add(
+                        new IContextFederation.ValueRow(
+                                bindings));
+            }
+
+            ArrayList<String> solutions =
+                    new ArrayList<String>();
+            for (IRule solution : getSolutions()) {
+                solutions.add(
+                        ((Rule) solution).toString(this));
+            }
+
+            return new IContextFederation.ExplainResult(
+                    federation.federationSnapshot(),
+                    localTruth,
+                    finalTruth,
+                    passes,
+                    values,
+                    solutions);
+        } finally {
+            activeExplainPasses = null;
+        }
+    }
+
+    private void recordExplainPass(
+            IContextFederation.ExplainPolarity polarity,
+            IContextFederation.QueryResult continuation) {
+        if (activeExplainPasses != null) {
+            activeExplainPasses.add(
+                    new IContextFederation.ExplainPass(
+                            polarity,
+                            continuation));
+        }
+    }
+
+    private IContextFederation.FrontierTruth explainTruth(
+            Boolean answer,
+            List<IContextFederation.ExplainPass> passes) {
+        if (answer != null) {
+            return answer.booleanValue()
+                    ? IContextFederation.FrontierTruth.TRUE
+                    : IContextFederation.FrontierTruth.FALSE;
+        }
+        for (IContextFederation.ExplainPass pass : passes) {
+            for (IContextFederation.FrontierObservation observation
+                    : pass.getContinuation().getObservations()) {
+                if (observation.getTruth()
+                        == IContextFederation.FrontierTruth.CONFLICT) {
+                    return IContextFederation.FrontierTruth.CONFLICT;
+                }
+            }
+        }
+        return IContextFederation.FrontierTruth.UNKNOWN;
     }
 
     public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
