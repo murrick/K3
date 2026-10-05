@@ -1,0 +1,58 @@
+name: Candidate hash key reuse qualification
+on:
+  push:
+    branches: ['experiment/3.8.0-reuse-candidate-hash-keys']
+  pull_request:
+    branches: ['develop/3.8.0']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  qualification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '21', '26']
+        prior: ['false', 'true']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - run: mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install -DskipTests
+      - name: Qualify reference and candidate hash key reuse
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/reuse-candidate-hash-keys"
+          for mode in false true; do
+            export JAVA_TOOL_OPTIONS="-Xmx512m -Dkanger.experiment.reuseCandidateHashKeys=$mode -Dkanger.experiment.preserveTValueIndex=${{ matrix.prior }} -Dkanger.experiment.versionedSolveSync=${{ matrix.prior }} -Dkanger.experiment.resolvedCauseWeights=${{ matrix.prior }} -Dkanger.experiment.compactCauseWeights=${{ matrix.prior }} -Dkanger.experiment.candidateMembershipFilter=${{ matrix.prior }} -Dkanger.experiment.singleTValueLookup=${{ matrix.prior }} -Dkanger.experiment.residentBaseComparison=${{ matrix.prior }} -Dkanger.experiment.compactFindSnapshots=${{ matrix.prior }}"
+            for runner in LatentSubstitutionCorpusRunner ReuseCandidateHashKeysRunner SingleTValueLookupRunner ResidentBaseComparisonRunner CompactFindSnapshotsRunner TValueIndexReopenRunner; do
+              mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.$runner -Dexec.classpathScope=test exec:java > "$RUNNER_TEMP/reuse-candidate-hash-keys/$mode-$runner.log" 2>&1
+            done
+            grep -q '^LATENT_CORPUS_PASS$' "$RUNNER_TEMP/reuse-candidate-hash-keys/$mode-LatentSubstitutionCorpusRunner.log"
+            grep -q '^SINGLE_LOOKUP_BOUNDARIES_OK checks=15$' "$RUNNER_TEMP/reuse-candidate-hash-keys/$mode-SingleTValueLookupRunner.log"
+            grep -q '^TVALUE_INDEX_REOPEN_PASS$' "$RUNNER_TEMP/reuse-candidate-hash-keys/$mode-TValueIndexReopenRunner.log"
+            grep -q '^REUSE_CANDIDATE_HASH_KEYS_OK checks=.* concurrent_probes=20000$' "$RUNNER_TEMP/reuse-candidate-hash-keys/$mode-ReuseCandidateHashKeysRunner.log"
+            grep -q '^RESIDENT_BASE_COMPARISON_OK checks=48 custom_reads=3$' "$RUNNER_TEMP/reuse-candidate-hash-keys/$mode-ResidentBaseComparisonRunner.log"
+            grep -q '^COMPACT_FIND_SNAPSHOTS_OK checks=23$' "$RUNNER_TEMP/reuse-candidate-hash-keys/$mode-CompactFindSnapshotsRunner.log"
+            mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dtest=KangerCrossContextPredicateProjectionTest surefire:test > "$RUNNER_TEMP/reuse-candidate-hash-keys/$mode-projection.log" 2>&1
+            mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.LatentSolveSyncTransactionRunner -Dexec.classpathScope=test "-Dexec.args=$RUNNER_TEMP/reuse-candidate-hash-keys/$mode.state $RUNNER_TEMP/reuse-candidate-hash-keys/$mode.work" exec:java > "$RUNNER_TEMP/reuse-candidate-hash-keys/$mode-transactions.log" 2>&1
+            grep -q '^LATENT_SOLVE_TRANSACTIONS_PASS operations=20$' "$RUNNER_TEMP/reuse-candidate-hash-keys/$mode-transactions.log"
+            export JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -Dkanger.rule.candidate.concurrency.iterations=3"
+            mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.KangerRuleCandidateConcurrencyRunner -Dexec.classpathScope=test exec:java > "$RUNNER_TEMP/reuse-candidate-hash-keys/$mode-concurrency.log" 2>&1
+            grep -q '^RULE_CANDIDATE_CONCURRENCY_OK iterations=3$' "$RUNNER_TEMP/reuse-candidate-hash-keys/$mode-concurrency.log"
+          done
+          cmp "$RUNNER_TEMP/reuse-candidate-hash-keys/false.state" "$RUNNER_TEMP/reuse-candidate-hash-keys/true.state"
+      - name: Print failure logs
+        if: failure()
+        run: tail -100 "$RUNNER_TEMP/reuse-candidate-hash-keys/"*.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reuse-candidate-hash-keys-java-${{ matrix.java }}-prior-${{ matrix.prior }}
+          path: ${{ runner.temp }}/reuse-candidate-hash-keys/

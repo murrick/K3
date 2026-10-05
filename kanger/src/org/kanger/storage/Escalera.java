@@ -149,6 +149,10 @@ public class Escalera implements ICache {
     private final Map<Long, IStep> memoryById = new HashMap<>();
     private final Set<Long> persistentIds = new HashSet<>();
     private final Map<Integer, Set<Long>> idsByHash = new HashMap<>();
+    private static final boolean REUSE_CANDIDATE_HASH_KEYS =
+            Boolean.parseBoolean(System.getProperty("kanger.experiment.reuseCandidateHashKeys", "false"));
+    // Immutable keys only: candidate sets and absent results are never cached.
+    private final Integer[] candidateHashKeys = REUSE_CANDIDATE_HASH_KEYS ? new Integer[256] : null;
     private final Map<Long, Long> predecessorById = new HashMap<>();
     private boolean indexValid = false;
     private IStep indexedRoot = null;
@@ -423,6 +427,17 @@ public class Escalera implements ICache {
     private static final boolean COMPACT_FIND_SNAPSHOTS =
             Boolean.parseBoolean(System.getProperty("kanger.experiment.compactFindSnapshots", "true"));
 
+    private Integer candidateHashKey(int hash) {
+        if (!REUSE_CANDIDATE_HASH_KEYS) return Integer.valueOf(hash);
+        int slot = (hash ^ (hash >>> 16)) & (candidateHashKeys.length - 1);
+        // A concurrent replacement cannot change this local immutable key.
+        Integer cached = candidateHashKeys[slot];
+        if (cached != null && cached.intValue() == hash) return cached;
+        Integer key = Integer.valueOf(hash);
+        candidateHashKeys[slot] = key;
+        return key;
+    }
+
     /** Internal read-only iteration snapshot; public find retains mutable ownership. */
     public static Iterable<Long> findCandidates(ICache cache, int hash) throws Exception {
         if (!COMPACT_FIND_SNAPSHOTS || cache.getClass() != Escalera.class) {
@@ -430,7 +445,7 @@ public class Escalera implements ICache {
         }
         Escalera owner = (Escalera) cache;
         owner.ensureIndex();
-        Set<Long> ids = owner.idsByHash.get(hash);
+        Set<Long> ids = owner.idsByHash.get(owner.candidateHashKey(hash));
         if (ids == null || ids.isEmpty()) return java.util.Collections.emptyList();
         if (ids.size() == 1) return java.util.Collections.singletonList(ids.iterator().next());
         // Preserve the reference copy's iteration order and callback isolation.
