@@ -82,7 +82,7 @@ Transaction rollback and storage reindex are not routed through this confirmatio
 | Transactions | `transaction`, `transaction start|commit|rollback|squash` | Inspect and manage explicit user transaction levels |
 | Sources | `get [<source>]`, `put <source>`, `delete [<source>]` | List/load/save/delete server-side source files |
 | Storage | `storage`, `storage use|close|drop|reindex ...` | Inspect and manage persistent storage |
-| Context federation | `ctx`, `ctx connect|disconnect|switch|query ...` | Inspect exact-revision direct Context connections and run diagnostic federation queries |
+| Context federation | `ctx`, `ctx connect|disconnect|switch|query ...`, `ctx <locator> <query...>` | Inspect exact-revision direct Context connections and run federated or isolated diagnostic queries |
 | Status | `status [core [objects|transaction|levels]|storage|session|runtime]` | Cheap canonical product telemetry |
 | Session | `timezone [<zoneId>]`, `help`, `quit` | Inspect or change session timezone, show help, or end the session |
 | Workspace | `erase` | Clear the current workspace through qualified runtime semantics |
@@ -461,6 +461,25 @@ an unrelated revision move; such foreign truth conflicts remain observable as
 repin may not add a new collision witness. If qualification fails, the old pin
 remains authoritative. There is no `FOLLOW_HEAD` mode.
 
+### `ctx <locator> <query...>`
+
+Runs one isolated local-only KANGER query in the selected Context.
+The locator may name the initiating Context itself or one of its explicit direct
+connections. A foreign locator is resolved only through the initiating
+Context's exact-pinned ConnectionVector; there is no global lookup, implicit
+connect, or recursive traversal of the target Context's own connections.
+
+Examples:
+
+```text
+ctx X ?male(Tom);
+ctx A ?$x son(John, x);
+```
+
+The projection reports the selected exact revision, final truth, user-readable
+Values and provisional hypotheses. The query is diagnostic: it does not mutate
+the initiating Context or publish foreign state.
+
 ### `ctx query <query...>`
 
 Runs one diagnostic federated KANGER query through the proven frontier-driven
@@ -478,8 +497,11 @@ The projection reports resolved/unresolved state, federation waves, aggregate
 Context/revision provenance using human-readable locators, and provisional
 foreign hypotheses when present.
 
-This command does not change ordinary bare `?...` query semantics. Foreign
-evidence used by the diagnostic operation remains ephemeral and is not
+Ordinary bare `?...` remains the canonical query surface: with no direct
+connections it preserves historical local-only behavior; with a non-empty
+ConnectionVector it continues unresolved FALSE/TRUE passes through exact-pinned
+direct Contexts. `ctx query` is the temporary developer diagnostic projection
+of that federation path. Foreign evidence remains operation-local and is not
 published into the source Context.
 
 ---
