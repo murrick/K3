@@ -59,7 +59,7 @@ Timing reverses direction: versus OFF, ON is 5.38% faster forward and 4.05% slow
 
 **Keep as a qualified allocation improvement with inconclusive timing. Do not integrate or default-enable.** No additional indiscriminate timing batch is warranted. This result does not justify changing HashSet ordering, skipping Domain reads, or omitting keyed callbacks. Default remains OFF.
 
-Dedicated Java 8/21/26 × prior OFF/ON qualification, server, distribution and isolation workflows passed. General CI has one remaining job at this evidence checkpoint. Final workflow statuses and URLs are in lazy-classification-sets/ci-status.json. Later documentation-only updates do not change tested code.
+All five workflows passed: dedicated Java 8/21/26 × prior eight flags OFF/ON qualification, general KANGER CI, server, distribution and qualification isolation. This flag is tested OFF/ON in the dedicated matrix, with cross-context projections, transactions and concurrency. Final workflow statuses and URLs are in lazy-classification-sets/ci-status.json. Evidence/status commits change only documentation and logs; tested production, runner and workflow sources remain identical to the code commit.
 
 ## Reproduce
 
