@@ -450,11 +450,16 @@ public class ConnectionManagerTest {
                 a.revision + 1L,
                 switched.getTarget().getRevision());
 
-        assertEquals(
-                x.revision,
-                ContextSnapshot.open(x.location)
-                        .getRevision(),
-                "working repin must not publish source revision");
+        ContextSnapshot unchanged =
+                ContextSnapshot.open(x.location);
+        try {
+            assertEquals(
+                    x.revision,
+                    unchanged.getRevision(),
+                    "working repin must not publish source revision");
+        } finally {
+            unchanged.close();
+        }
     }
 
     private void advance(
