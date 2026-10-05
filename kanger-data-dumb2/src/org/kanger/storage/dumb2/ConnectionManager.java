@@ -76,6 +76,27 @@ final class ConnectionManager {
     static ContextConnection qualifyConnect(
             Path sourceLocation,
             Path targetLocation) throws Exception {
+        ContextSnapshot targetSnapshot =
+                ContextSnapshot.open(targetLocation);
+        try {
+            return qualifyConnect(
+                    sourceLocation,
+                    targetLocation,
+                    targetSnapshot.getRevision());
+        } finally {
+            targetSnapshot.close();
+        }
+    }
+
+    static ContextConnection qualifyConnect(
+            Path sourceLocation,
+            Path targetLocation,
+            long targetRevision) throws Exception {
+        if (targetRevision < RevisionStore.INITIAL_REVISION) {
+            throw new IllegalArgumentException(
+                    "targetRevision must be non-negative");
+        }
+
         RevisionRef source;
         RevisionRef target;
 
@@ -90,7 +111,9 @@ final class ConnectionManager {
         }
 
         ContextSnapshot targetSnapshot =
-                ContextSnapshot.open(targetLocation);
+                ContextSnapshot.open(
+                        targetLocation,
+                        targetRevision);
         try {
             target = new RevisionRef(
                     targetSnapshot.getContextId(),
@@ -121,6 +144,11 @@ final class ConnectionManager {
                             + source + " / " + target);
         }
 
+        /*
+         * Pair qualification may take time. Re-read source CURRENT before
+         * exposing the prepared exact pin so the certificate is never stale at
+         * birth. Target identity/revision is exact and KEEP_ALL-addressable.
+         */
         ContextSnapshot currentSource =
                 ContextSnapshot.open(sourceLocation);
         try {
