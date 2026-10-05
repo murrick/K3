@@ -11,9 +11,11 @@ import org.kanger.Version;
 import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.StorageLifecycleException;
+import org.kanger.interfaces.IHypothesis;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.ITerm;
+import org.kanger.primitives.Hypothesis;
 import org.kanger.interfaces.IUser;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IData;
@@ -29,6 +31,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
@@ -458,6 +462,143 @@ public final class DB implements IData, IContextFederation {
     }
 
     @Override
+    public synchronized IContextFederation.QueryResult executeIsolatedQuery(
+            IMind sourceMind,
+            String targetLocator,
+            String querySource) throws Exception {
+        requireOpen();
+        if (!(sourceMind instanceof Mind)) {
+            throw new IllegalArgumentException(
+                    "Isolated Context query requires org.kanger.Mind");
+        }
+        if (sourceMind.getUser() != user) {
+            throw new IllegalArgumentException(
+                    "Isolated Context query requires the active storage User");
+        }
+        if (querySource == null
+                || querySource.isEmpty()
+                || querySource.charAt(0) != '?') {
+            throw new IllegalArgumentException(
+                    "Isolated Context query requires a query source");
+        }
+
+        Path requested =
+                resolveFederationLocator(targetLocator);
+        Path sourceLocation =
+                context.getLocation()
+                        .toAbsolutePath().normalize();
+        RevisionRef sourceRef =
+                new RevisionRef(
+                        context.getContextId(),
+                        context.getRevision());
+
+        if (sourceLocation.equals(requested)) {
+            return projectLocalQuery(
+                    (Mind) sourceMind,
+                    sourceRef,
+                    querySource);
+        }
+
+        ContextConnection connection =
+                connectedContext(requested, targetLocator);
+        RevisionRef targetRef =
+                connection.getTarget();
+        SnapshotMindRuntime runtime =
+                SnapshotMindRuntime.open(
+                        connection.getTargetLocation(),
+                        targetRef,
+                        "isolated-"
+                                + targetRef.getContextId().toString());
+        Mind root = runtime.getMind();
+        Mind work = Mind.ephemeralChild(root);
+        try {
+            return projectLocalQuery(
+                    work,
+                    targetRef,
+                    querySource);
+        } finally {
+            Throwable failure = null;
+            try {
+                work.getSolutions().clear();
+                work.getValues().clear();
+                root.release(work);
+            } catch (Throwable releaseFailure) {
+                failure = releaseFailure;
+            }
+            try {
+                runtime.close();
+            } catch (Throwable closeFailure) {
+                if (failure == null) {
+                    failure = closeFailure;
+                } else if (closeFailure != failure) {
+                    failure.addSuppressed(closeFailure);
+                }
+            }
+            if (failure != null) {
+                if (failure instanceof Exception) {
+                    throw (Exception) failure;
+                }
+                if (failure instanceof Error) {
+                    throw (Error) failure;
+                }
+                throw new RuntimeException(failure);
+            }
+        }
+    }
+
+    private IContextFederation.QueryResult projectLocalQuery(
+            Mind mind,
+            RevisionRef source,
+            String querySource) throws Exception {
+        Boolean answer =
+                mind.queryCanonical(
+                        querySource,
+                        new LinkedList<ITerm>(),
+                        false);
+
+        ArrayList<IContextFederation.ValueRow> values =
+                new ArrayList<IContextFederation.ValueRow>();
+        for (Map<String, ITerm> row : mind.getValues()) {
+            LinkedHashMap<String, String> bindings =
+                    new LinkedHashMap<String, String>();
+            for (Map.Entry<String, ITerm> binding
+                    : row.entrySet()) {
+                ITerm value = binding.getValue();
+                bindings.put(
+                        binding.getKey(),
+                        value == null ? "" : value.toString());
+            }
+            values.add(
+                    new IContextFederation.ValueRow(bindings));
+        }
+
+        ArrayList<IContextFederation.ProvisionalHypothesis> hypotheses =
+                new ArrayList<IContextFederation.ProvisionalHypothesis>();
+        IContextFederation.Revision revision =
+                projectRevision(source);
+        for (IHypothesis hypothesis : mind.getHypothesis()) {
+            hypotheses.add(
+                    new IContextFederation.ProvisionalHypothesis(
+                            revision,
+                            ((Hypothesis) hypothesis).toString(mind)));
+        }
+
+        return new IContextFederation.QueryResult(
+                answer != null,
+                answer == null
+                        ? IContextFederation.FrontierTruth.UNKNOWN
+                        : (answer.booleanValue()
+                                ? IContextFederation.FrontierTruth.TRUE
+                                : IContextFederation.FrontierTruth.FALSE),
+                0,
+                0,
+                java.util.Collections
+                        .<IContextFederation.FrontierObservation>emptyList(),
+                values,
+                hypotheses);
+    }
+
+    @Override
     public synchronized IContextFederation.QueryResult executeFederatedQuery(
             String querySource) throws Exception {
         requireOpen();
@@ -545,9 +686,17 @@ public final class DB implements IData, IContextFederation {
 
     private java.util.UUID connectedContextId(
             String targetLocator) throws Exception {
+        return connectedContext(
+                resolveFederationLocator(targetLocator),
+                targetLocator)
+                .getTarget()
+                .getContextId();
+    }
+
+    private ContextConnection connectedContext(
+            Path requested,
+            String targetLocator) throws Exception {
         requireOpen();
-        Path requested =
-                resolveFederationLocator(targetLocator);
         RevisionRef sourceRef =
                 new RevisionRef(
                         context.getContextId(),
@@ -562,8 +711,7 @@ public final class DB implements IData, IContextFederation {
                     connection.getTargetLocation()
                             .toAbsolutePath().normalize();
             if (requested.equals(target)) {
-                return connection.getTarget()
-                        .getContextId();
+                return connection;
             }
         }
         throw new CommandErrorException(

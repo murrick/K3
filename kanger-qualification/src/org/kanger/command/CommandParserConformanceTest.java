@@ -355,6 +355,28 @@ public final class CommandParserConformanceTest {
                         switched.getArgument("RevisionId")),
                 "ctx switch RevisionId");
 
+        CommandInvocation isolated =
+                parser.parse("ctx A ?male(Tom);");
+        check(isolated.getIntent()
+                        == CommandIntent.CTX_ISOLATED_QUERY,
+                "ctx isolated query intent");
+        check("A".equals(
+                        isolated.getArgument("locator")),
+                "ctx isolated query locator");
+        check("?male(Tom);".equals(
+                        isolated.getArgument("query")),
+                "ctx isolated query source");
+
+        CommandInvocation quotedIsolated =
+                parser.parse(
+                        "ctx \"test context\" ?$x son(John, x);");
+        check(quotedIsolated.getIntent()
+                        == CommandIntent.CTX_ISOLATED_QUERY,
+                "quoted ctx isolated query intent");
+        check("test context".equals(
+                        quotedIsolated.getArgument("locator")),
+                "quoted ctx isolated query locator");
+
         CommandInvocation query =
                 parser.parse("ctx query ?$x son(John, x);");
         check(query.getIntent() == CommandIntent.CTX_QUERY,
@@ -368,6 +390,9 @@ public final class CommandParserConformanceTest {
         reject("ctx switch A",
                 MISSING_ARGUMENT);
         reject("ctx switch A -1",
+                INVALID_ARGUMENT_SHAPE);
+        reject("ctx A", MISSING_ARGUMENT);
+        reject("ctx A male(Tom);",
                 INVALID_ARGUMENT_SHAPE);
         reject("ctx query", MISSING_ARGUMENT);
         reject("ctx query male(Tom);",
@@ -453,6 +478,12 @@ public final class CommandParserConformanceTest {
         expectCanonical("ctx connect A", "ctx connect A");
         expectCanonical("ctx disconnect B", "ctx disconnect B");
         expectCanonical("ctx switch A 1", "ctx switch A 1");
+        expectCanonical(
+                "ctx A ?male(Tom);",
+                "ctx A ?male(Tom);");
+        expectCanonical(
+                "ctx \"test context\" ?$x son(John, x);",
+                "ctx \"test context\" ?$x son(John, x);");
         expectCanonical("ctx query ?$x son(John, x);",
                 "ctx query ?$x son(John, x);");
         expectCanonical("g", "get");
@@ -541,6 +572,8 @@ public final class CommandParserConformanceTest {
                 "help contains Context disconnect syntax");
         check(help.contains("ctx switch <locator> <RevisionId>"),
                 "help contains Context revision switch syntax");
+        check(help.contains("ctx <locator> <query...>"),
+                "help contains isolated Context query syntax");
         check(help.contains("ctx query <query...>"),
                 "help contains federated query diagnostic syntax");
     }

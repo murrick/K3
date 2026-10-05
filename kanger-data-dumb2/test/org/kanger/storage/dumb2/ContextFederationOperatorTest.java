@@ -6,6 +6,7 @@ import org.kanger.CanonicalCommandProcessor;
 import org.kanger.Mind;
 import org.kanger.User;
 import org.kanger.command.CommandParser;
+import org.kanger.exception.CommandErrorException;
 import org.kanger.interfaces.internal.IContextFederation;
 
 import java.io.File;
@@ -14,6 +15,7 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -234,6 +236,120 @@ public class ContextFederationOperatorTest {
     }
 
     @Test
+    void isolatedCtxQueryUsesOnlyRequestedExactContext()
+            throws Exception {
+        ContextFixture a =
+                context("IA", "!age(Tom,42);");
+        context("IB", "!secret(Tom);");
+
+        /*
+         * Give A its own direct connection to B. An isolated query in A must
+         * still remain local-only and therefore must not see B.
+         */
+        User aUser = new User();
+        aUser.setDatabaseDir(
+                root.toString() + File.separator);
+        DB aData = new DB();
+        aData.init(aUser);
+        Mind aMind = new Mind(aUser);
+        aUser.setCurrentMind(aMind);
+        aMind = (Mind) aMind.useStorage("IA");
+        aUser.setCurrentMind(aMind);
+        aData.connectContext("IB");
+        aUser.setCurrentMind(
+                aMind.closeStorage());
+
+        User user = new User();
+        user.setDatabaseDir(
+                root.toString() + File.separator);
+        DB data = new DB();
+        data.init(user);
+
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        mind = (Mind) mind.useStorage("IX");
+        user.setCurrentMind(mind);
+        assertTrue(Boolean.TRUE.equals(
+                mind.query(
+                        "!local(OnlyX);",
+                        null,
+                        false)));
+
+        IContextFederation federation = data;
+        federation.connectContext("IA");
+
+        IContextFederation.QueryResult foreign =
+                federation.executeIsolatedQuery(
+                        mind,
+                        "IA",
+                        "?$x age(Tom,x);");
+        assertEquals(
+                IContextFederation.FrontierTruth.TRUE,
+                foreign.getResultTruth());
+        assertEquals(1, foreign.getValues().size());
+        assertEquals(
+                "42.0",
+                foreign.getValues().get(0)
+                        .getBindings().get("x"));
+
+        IContextFederation.QueryResult noRecursiveFederation =
+                federation.executeIsolatedQuery(
+                        mind,
+                        "IA",
+                        "?secret(Tom);");
+        assertEquals(
+                IContextFederation.FrontierTruth.UNKNOWN,
+                noRecursiveFederation.getResultTruth());
+
+        /*
+         * Advance A after X pinned it. Diagnostic addressing must still use
+         * the exact pinned revision until deliberate ctx switch.
+         */
+        advance("IA", "!female(Jane);");
+        IContextFederation.QueryResult pinned =
+                federation.executeIsolatedQuery(
+                        mind,
+                        "IA",
+                        "?female(Jane);");
+        assertEquals(
+                IContextFederation.FrontierTruth.UNKNOWN,
+                pinned.getResultTruth());
+        assertEquals(
+                a.revision,
+                federation.federationSnapshot()
+                        .getConnections().get(0)
+                        .getPinnedRevision());
+
+        IContextFederation.QueryResult local =
+                federation.executeIsolatedQuery(
+                        mind,
+                        "IX",
+                        "?local(OnlyX);");
+        assertEquals(
+                IContextFederation.FrontierTruth.TRUE,
+                local.getResultTruth());
+
+        IContextFederation.QueryResult localDoesNotSeeA =
+                federation.executeIsolatedQuery(
+                        mind,
+                        "IX",
+                        "?age(Tom,42);");
+        assertEquals(
+                IContextFederation.FrontierTruth.UNKNOWN,
+                localDoesNotSeeA.getResultTruth());
+
+        assertThrows(
+                CommandErrorException.class,
+                () -> federation.executeIsolatedQuery(
+                        mind,
+                        "NOT_CONNECTED",
+                        "?male(Tom);"));
+
+        user.setCurrentMind(
+                mind.closeStorage());
+    }
+
+    @Test
     void canonicalCtxSurfaceDrivesQualifiedDumb2Federation()
             throws Exception {
         ContextFixture x =
@@ -279,6 +395,15 @@ public class ContextFederationOperatorTest {
                 connected.getFederationSnapshot()
                         .getConnections().get(0)
                         .getTargetContextId());
+
+        CanonicalCommandProcessor.Result isolated =
+                processor.execute(
+                        parser.parse("ctx CA ?male(Tom);"),
+                        user);
+        assertEquals(
+                IContextFederation.FrontierTruth.TRUE,
+                isolated.getFederationQueryResult()
+                        .getResultTruth());
 
         CanonicalCommandProcessor.Result query =
                 processor.execute(

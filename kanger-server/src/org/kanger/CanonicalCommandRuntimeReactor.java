@@ -114,6 +114,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             case CTX_CONNECT:
             case CTX_DISCONNECT:
             case CTX_SWITCH:
+            case CTX_ISOLATED_QUERY:
             case CTX_QUERY:
                 result = executeShared(invocation, user);
                 break;
@@ -243,8 +244,19 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
         IContextFederation.QueryResult federationQuery =
                 outcome.getFederationQueryResult();
         if (federationQuery != null) {
-            result.put("federation_query",
-                    federationQuery(federationQuery));
+            if (invocation.getIntent()
+                    == CommandIntent.CTX_ISOLATED_QUERY) {
+                result.put(
+                        "context_query",
+                        contextQuery(
+                                federationQuery,
+                                String.valueOf(
+                                        invocation.getArgument(
+                                                "locator"))));
+            } else {
+                result.put("federation_query",
+                        federationQuery(federationQuery));
+            }
         }
         return result;
     }
@@ -278,6 +290,39 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                 .put("source_revision",
                         snapshot.getSourceRevision())
                 .put("connections", connections);
+    }
+
+    private JSONObject contextQuery(
+            IContextFederation.QueryResult query,
+            String locator) {
+        JSONArray values = new JSONArray();
+        for (IContextFederation.ValueRow row
+                : query.getValues()) {
+            JSONObject one = new JSONObject();
+            for (Map.Entry<String, String> binding
+                    : row.getBindings().entrySet()) {
+                one.put(
+                        binding.getKey(),
+                        binding.getValue());
+            }
+            values.put(one);
+        }
+
+        JSONArray hypotheses = new JSONArray();
+        for (IContextFederation.ProvisionalHypothesis hypothesis
+                : query.getProvisionalHypotheses()) {
+            hypotheses.put(new JSONObject()
+                    .put("source", revision(hypothesis.getSource()))
+                    .put("statement", hypothesis.getStatement()));
+        }
+
+        return new JSONObject()
+                .put("schema", 1)
+                .put("locator", locator)
+                .put("resolved", query.isResolved())
+                .put("truth", query.getResultTruth().name())
+                .put("values", values)
+                .put("provisional_hypotheses", hypotheses);
     }
 
     private JSONObject federationQuery(

@@ -423,7 +423,7 @@ public final class CommandParser {
             if (rejected.getReason() == AMBIGUOUS_PREFIX) {
                 throw rejected;
             }
-            throw error(INVALID_GRAMMAR, "Invalid ctx production");
+            return parseContextIsolatedQuery(raw);
         }
         switch (keyword) {
             case CONNECT:
@@ -479,6 +479,32 @@ public final class CommandParser {
         return CommandInvocation.command(
                 CommandIntent.CTX_QUERY,
                 args("query", query), raw);
+    }
+
+    private CommandInvocation parseContextIsolatedQuery(String raw)
+            throws CommandParseException {
+        List<Token> prefix = tokenize(raw, 2, false);
+        if (prefix.size() < 2) {
+            throw error(MISSING_ARGUMENT,
+                    "ctx diagnostic query requires a Context locator");
+        }
+        String query = tailAfter(raw, prefix.get(1).end);
+        if (query.isEmpty()) {
+            throw error(MISSING_ARGUMENT,
+                    "ctx diagnostic query requires a KANGER query");
+        }
+        if (query.charAt(0) != '?') {
+            throw error(INVALID_ARGUMENT_SHAPE,
+                    "ctx diagnostic query requires a query beginning with ?");
+        }
+        Map<String, Object> arguments =
+                new LinkedHashMap<String, Object>();
+        arguments.put("locator", prefix.get(1).value);
+        arguments.put("query", query);
+        return CommandInvocation.command(
+                CommandIntent.CTX_ISOLATED_QUERY,
+                arguments,
+                raw);
     }
 
     private CommandInvocation parseStatus(String raw, List<Token> tokens)

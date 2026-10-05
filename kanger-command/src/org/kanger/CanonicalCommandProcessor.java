@@ -53,6 +53,7 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.CTX_CONNECT
                 || intent == CommandIntent.CTX_DISCONNECT
                 || intent == CommandIntent.CTX_SWITCH
+                || intent == CommandIntent.CTX_ISOLATED_QUERY
                 || intent == CommandIntent.CTX_QUERY;
     }
 
@@ -224,6 +225,24 @@ public final class CanonicalCommandProcessor {
                                 + "@"
                                 + connection.getPinnedRevision(),
                         federation.federationSnapshot(), null);
+            }
+
+            case CTX_ISOLATED_QUERY: {
+                IContextFederation federation =
+                        contextFederation(user, mind);
+                String locator = String.valueOf(
+                        invocation.getArgument("locator"));
+                IContextFederation.QueryResult query =
+                        federation.executeIsolatedQuery(
+                                mind,
+                                locator,
+                                String.valueOf(
+                                        invocation.getArgument("query")));
+                return Result.successFederation(
+                        mind,
+                        "Context query: " + locator,
+                        federation.federationSnapshot(),
+                        query);
             }
 
             case CTX_QUERY: {

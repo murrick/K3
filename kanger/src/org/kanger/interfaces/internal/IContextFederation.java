@@ -10,7 +10,9 @@ import org.kanger.interfaces.ITerm;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
 
@@ -304,12 +306,31 @@ public interface IContextFederation {
         }
     }
 
+    final class ValueRow {
+
+        private final Map<String, String> bindings;
+
+        public ValueRow(Map<String, String> bindings) {
+            if (bindings == null) {
+                throw new NullPointerException("bindings");
+            }
+            this.bindings = Collections.unmodifiableMap(
+                    new LinkedHashMap<String, String>(bindings));
+        }
+
+        public Map<String, String> getBindings() {
+            return bindings;
+        }
+    }
+
     final class QueryResult {
 
         private final boolean resolved;
+        private final FrontierTruth resultTruth;
         private final int waves;
         private final int evidenceCount;
         private final List<FrontierObservation> observations;
+        private final List<ValueRow> values;
         private final List<ProvisionalHypothesis> provisionalHypotheses;
 
         public QueryResult(
@@ -318,20 +339,47 @@ public interface IContextFederation {
                 int evidenceCount,
                 List<FrontierObservation> observations,
                 List<ProvisionalHypothesis> provisionalHypotheses) {
+            this(
+                    resolved,
+                    resolved
+                            ? FrontierTruth.TRUE
+                            : FrontierTruth.UNKNOWN,
+                    waves,
+                    evidenceCount,
+                    observations,
+                    Collections.<ValueRow>emptyList(),
+                    provisionalHypotheses);
+        }
+
+        public QueryResult(
+                boolean resolved,
+                FrontierTruth resultTruth,
+                int waves,
+                int evidenceCount,
+                List<FrontierObservation> observations,
+                List<ValueRow> values,
+                List<ProvisionalHypothesis> provisionalHypotheses) {
+            if (resultTruth == null) {
+                throw new NullPointerException("resultTruth");
+            }
             if (waves < 0 || evidenceCount < 0) {
                 throw new IllegalArgumentException(
                         "query counters must be non-negative");
             }
             if (observations == null
+                    || values == null
                     || provisionalHypotheses == null) {
                 throw new NullPointerException();
             }
             this.resolved = resolved;
+            this.resultTruth = resultTruth;
             this.waves = waves;
             this.evidenceCount = evidenceCount;
             this.observations = Collections.unmodifiableList(
                     new ArrayList<FrontierObservation>(
                             observations));
+            this.values = Collections.unmodifiableList(
+                    new ArrayList<ValueRow>(values));
             this.provisionalHypotheses =
                     Collections.unmodifiableList(
                             new ArrayList<ProvisionalHypothesis>(
@@ -340,6 +388,10 @@ public interface IContextFederation {
 
         public boolean isResolved() {
             return resolved;
+        }
+
+        public FrontierTruth getResultTruth() {
+            return resultTruth;
         }
 
         public int getWaves() {
@@ -352,6 +404,10 @@ public interface IContextFederation {
 
         public List<FrontierObservation> getObservations() {
             return observations;
+        }
+
+        public List<ValueRow> getValues() {
+            return values;
         }
 
         public List<ProvisionalHypothesis> getProvisionalHypotheses() {
@@ -402,6 +458,20 @@ public interface IContextFederation {
             String querySource,
             Queue<ITerm> externals,
             boolean logging) throws Exception;
+
+    /**
+     * Executes one local-only diagnostic query against X or one explicitly
+     * connected exact-pinned Context.
+     *
+     * <p>The source locator selects the live initiating Mind. A foreign locator
+     * resolves only through the source Context's direct ConnectionVector and
+     * executes against that immutable pinned revision. Target connections are
+     * never traversed.</p>
+     */
+    QueryResult executeIsolatedQuery(
+            IMind sourceMind,
+            String targetLocator,
+            String querySource) throws Exception;
 
     /**
      * Executes one operation-local federated query for operator diagnostics.
