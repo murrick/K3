@@ -50,6 +50,10 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
 
     private static final long serialVersionUID = 196402070001L;
 
+    /** Experimental; explicit true is required at JVM startup. */
+    private static final boolean LAZY_BINDING_VARIABLES = Boolean.parseBoolean(
+            System.getProperty("kanger.experiment.lazyBindingVariables", "false"));
+
     private long id = -1;                   // id домена
     private long mindId = -1;               // id транзакции
     private IRule rule = null;              // Ссылка на правило
@@ -560,8 +564,15 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     @Override
     public Domain setMind(Mind mind) throws Exception {
         this.mind = mind;
-        for (TVariable t : arguments.getTVariables(mind)) {
-            t.setMind(mind);
+        if (LAZY_BINDING_VARIABLES && arguments.getClass() == ArgumentsList.class) {
+            List<TVariable> variables = ArgumentsList.getTVariablesForBinding(arguments, mind);
+            if (variables != null) {
+                for (TVariable t : variables) t.setMind(mind);
+            }
+        } else {
+            for (TVariable t : arguments.getTVariables(mind)) {
+                t.setMind(mind);
+            }
         }
         return this;
     }
@@ -769,4 +780,3 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         this.abstractive = abstractive;
     }
 }
-

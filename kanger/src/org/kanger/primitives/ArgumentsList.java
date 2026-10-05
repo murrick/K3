@@ -273,6 +273,41 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
         return list;
     }
 
+    /**
+     * Internal binding snapshot: null denotes an empty exact-built-in result.
+     * Subclasses retain their virtual enumeration and result contract.
+     * Enumeration completes before any variable is rebound by the caller.
+     */
+    public static List<TVariable> getTVariablesForBinding(ArgumentsList arguments, IMind mind) throws Exception {
+        if (arguments.getClass() != ArgumentsList.class) {
+            return arguments.getTVariables(mind);
+        }
+        List<TVariable> list = null;
+        for (IArgument a : arguments) {
+            if (a.getType() == ArgumentType.TVARIABLE
+                    && !a.isDeleted(mind)
+                    && !a.isDeleted(mind)
+                    && !bindingContains(list, a.getObject(mind))) {
+                TVariable variable = (TVariable) a.getObject(mind);
+                if (list == null) list = new ArrayList<>();
+                list.add(variable);
+            } else if (a.getType() == ArgumentType.FUNCTION) {
+                List<TVariable> temp = ((Function) a.getObject(mind)).getArguments().getTVariables(mind);
+                for (TVariable t : temp) {
+                    if (!bindingContains(list, t)) {
+                        if (list == null) list = new ArrayList<>();
+                        list.add(t);
+                    }
+                }
+            }
+        }
+        return list;
+    }
+
+    private static boolean bindingContains(List<TVariable> list, Object value) {
+        return list != null && list.contains(value);
+    }
+
     public List<ITerm> getCVariables(Mind mind) throws Exception {
         List<ITerm> list = new ArrayList<>();
         for (IArgument a : this) {
