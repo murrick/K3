@@ -1,0 +1,477 @@
+[
+  {
+    "site": "GeneratedCVarMaterializer:57",
+    "path": "kanger/src/org/kanger/GeneratedCVarMaterializer.java",
+    "line": 57,
+    "original": "for (Object value : factory) {",
+    "kind": "source"
+  },
+  {
+    "site": "QueryTaintSolveAlternatives:70",
+    "path": "kanger/src/org/kanger/QueryTaintSolveAlternatives.java",
+    "line": 70,
+    "original": "for (IRule candidate : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "QueryDemandTrace:158",
+    "path": "kanger/src/org/kanger/QueryDemandTrace.java",
+    "line": 158,
+    "original": "for (IRule candidate : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "QueryDemandTrace:198",
+    "path": "kanger/src/org/kanger/QueryDemandTrace.java",
+    "line": 198,
+    "original": "for (IRule candidate : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "Linker:496",
+    "path": "kanger/src/org/kanger/Linker.java",
+    "line": 496,
+    "original": "for (IRule r : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "Linker:516",
+    "path": "kanger/src/org/kanger/Linker.java",
+    "line": 516,
+    "original": "for (IRule r : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "Linker:528",
+    "path": "kanger/src/org/kanger/Linker.java",
+    "line": 528,
+    "original": "for (IRule r : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "CurrentLevelSourceMaterializer:93",
+    "path": "kanger/src/org/kanger/CurrentLevelSourceMaterializer.java",
+    "line": 93,
+    "original": "for (IRule candidate : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "Analyzer:129",
+    "path": "kanger/src/org/kanger/Analyzer.java",
+    "line": 129,
+    "original": "for (IRule r : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "Analyzer:179",
+    "path": "kanger/src/org/kanger/Analyzer.java",
+    "line": 179,
+    "original": "for (IRule rule : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "Analyzer:308",
+    "path": "kanger/src/org/kanger/Analyzer.java",
+    "line": 308,
+    "original": "for (IRule p : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "Mind:1426",
+    "path": "kanger/src/org/kanger/Mind.java",
+    "line": 1426,
+    "original": "for (IRule rx : m.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "Mind:1695",
+    "path": "kanger/src/org/kanger/Mind.java",
+    "line": 1695,
+    "original": "for (IRule r : m.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "PortableMindLayer:154",
+    "path": "kanger/src/org/kanger/PortableMindLayer.java",
+    "line": 154,
+    "original": "for (IRule candidate : root.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "PortableMindLayer:194",
+    "path": "kanger/src/org/kanger/PortableMindLayer.java",
+    "line": 194,
+    "original": "for (IRule candidate : child.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "PortableMindLayer:450",
+    "path": "kanger/src/org/kanger/PortableMindLayer.java",
+    "line": 450,
+    "original": "for (IRule candidate : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "Domain:460",
+    "path": "kanger/src/org/kanger/units/Domain.java",
+    "line": 460,
+    "original": "IRule r = mind.getRules().find(this);",
+    "kind": "source"
+  },
+  {
+    "site": "Domain:466",
+    "path": "kanger/src/org/kanger/units/Domain.java",
+    "line": 466,
+    "original": "IRule r = mind.getRules().find(d);",
+    "kind": "source"
+  },
+  {
+    "site": "Rule:390",
+    "path": "kanger/src/org/kanger/units/Rule.java",
+    "line": 390,
+    "original": "d.setMind(mind);"
+  },
+  {
+    "site": "Rule:210",
+    "path": "kanger/src/org/kanger/units/Rule.java",
+    "line": 210,
+    "original": "for (IRule r : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "Predicate:183",
+    "path": "kanger/src/org/kanger/units/Predicate.java",
+    "line": 183,
+    "original": "for (IRule r : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "Escalera:280",
+    "path": "kanger/src/org/kanger/storage/Escalera.java",
+    "line": 280,
+    "original": "return step == null ? null : step.getData(mind);",
+    "kind": "data_read"
+  },
+  {
+    "site": "Escalera:602",
+    "path": "kanger/src/org/kanger/storage/Escalera.java",
+    "line": 602,
+    "original": "p.setData(e.getData(mind));",
+    "kind": "data_read"
+  },
+  {
+    "site": "Escalera:655",
+    "path": "kanger/src/org/kanger/storage/Escalera.java",
+    "line": 655,
+    "original": "Object o = step.getData(mind);",
+    "kind": "data_read"
+  },
+  {
+    "site": "Step:57",
+    "path": "kanger/src/org/kanger/storage/Step.java",
+    "line": 57,
+    "original": "((IUnit) data).setMind(mind);"
+  },
+  {
+    "site": "Sapato:124",
+    "path": "kanger/src/org/kanger/storage/Sapato.java",
+    "line": 124,
+    "original": "((IUnit) data).setMind(mind);"
+  },
+  {
+    "site": "TValueFactory:291",
+    "path": "kanger/src/org/kanger/factory/TValueFactory.java",
+    "line": 291,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "TValueFactory:358",
+    "path": "kanger/src/org/kanger/factory/TValueFactory.java",
+    "line": 358,
+    "original": "t = (TValue) s.getData(mind);",
+    "kind": "data_read"
+  },
+  {
+    "site": "TValueFactory:500",
+    "path": "kanger/src/org/kanger/factory/TValueFactory.java",
+    "line": 500,
+    "original": "if (((TValue) root.getData(mind)).getTVarId() == t.getId()) {",
+    "kind": "data_read"
+  },
+  {
+    "site": "TValueFactory:501",
+    "path": "kanger/src/org/kanger/factory/TValueFactory.java",
+    "line": 501,
+    "original": "reactor.run(root.getData(mind));",
+    "kind": "data_read"
+  },
+  {
+    "site": "DictionaryFactory:177",
+    "path": "kanger/src/org/kanger/factory/DictionaryFactory.java",
+    "line": 177,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "DictionaryFactory:277",
+    "path": "kanger/src/org/kanger/factory/DictionaryFactory.java",
+    "line": 277,
+    "original": "t = (Term) s.getData(mind);",
+    "kind": "data_read"
+  },
+  {
+    "site": "DictionaryFactory:314",
+    "path": "kanger/src/org/kanger/factory/DictionaryFactory.java",
+    "line": 314,
+    "original": "for (IRule candidate : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "FunctionFactory:156",
+    "path": "kanger/src/org/kanger/factory/FunctionFactory.java",
+    "line": 156,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "FunctionFactory:195",
+    "path": "kanger/src/org/kanger/factory/FunctionFactory.java",
+    "line": 195,
+    "original": "t = (Function) s.getData(mind);",
+    "kind": "data_read"
+  },
+  {
+    "site": "FValueFactory:183",
+    "path": "kanger/src/org/kanger/factory/FValueFactory.java",
+    "line": 183,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "FValueFactory:264",
+    "path": "kanger/src/org/kanger/factory/FValueFactory.java",
+    "line": 264,
+    "original": "t = (FValue) s.getData(mind);",
+    "kind": "data_read"
+  },
+  {
+    "site": "RuleFactory:567",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 567,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "RuleFactory:658",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 658,
+    "original": "d.setMind(mind);"
+  },
+  {
+    "site": "RuleFactory:715",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 715,
+    "original": "view.setMind(mind);"
+  },
+  {
+    "site": "RuleFactory:319",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 319,
+    "original": "for (Object value : cache) {",
+    "kind": "source"
+  },
+  {
+    "site": "RuleFactory:446",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 446,
+    "original": "IRule rule = get(id);",
+    "kind": "source"
+  },
+  {
+    "site": "RuleFactory:475",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 475,
+    "original": "IRule rule = get(id);",
+    "kind": "source"
+  },
+  {
+    "site": "RuleFactory:503",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 503,
+    "original": "IRule rule = get(id);",
+    "kind": "source"
+  },
+  {
+    "site": "RuleFactory:515",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 515,
+    "original": "Rule rule = get(id);",
+    "kind": "source"
+  },
+  {
+    "site": "RuleFactory:565",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 565,
+    "original": "for (Object s : cache) {",
+    "kind": "source"
+  },
+  {
+    "site": "RuleFactory:668",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 668,
+    "original": "rule = (Rule) s.getData(mind);",
+    "kind": "data_read"
+  },
+  {
+    "site": "RuleFactory:911",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 911,
+    "original": "IRule one = get(id);",
+    "kind": "source"
+  },
+  {
+    "site": "RuleFactory:925",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 925,
+    "original": "IRule one = get(id);",
+    "kind": "source"
+  },
+  {
+    "site": "RuleFactory:1008",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 1008,
+    "original": "for (Object o : cache) {",
+    "kind": "source"
+  },
+  {
+    "site": "RuleFactory:1025",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 1025,
+    "original": "for (Object o : this) {",
+    "kind": "source"
+  },
+  {
+    "site": "RuleFactory:1037",
+    "path": "kanger/src/org/kanger/factory/RuleFactory.java",
+    "line": 1037,
+    "original": "return effectiveView((Rule) s.getData(mind));",
+    "kind": "data_read"
+  },
+  {
+    "site": "PredicateFactory:135",
+    "path": "kanger/src/org/kanger/factory/PredicateFactory.java",
+    "line": 135,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "PredicateFactory:181",
+    "path": "kanger/src/org/kanger/factory/PredicateFactory.java",
+    "line": 181,
+    "original": "t = (Predicate) s.getData(mind);",
+    "kind": "data_read"
+  },
+  {
+    "site": "PredicateFactory:212",
+    "path": "kanger/src/org/kanger/factory/PredicateFactory.java",
+    "line": 212,
+    "original": "for (IRule r : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "LibraryFactory:286",
+    "path": "kanger/src/org/kanger/factory/LibraryFactory.java",
+    "line": 286,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "LibraryFactory:230",
+    "path": "kanger/src/org/kanger/factory/LibraryFactory.java",
+    "line": 230,
+    "original": "value = (Operation) step.getData(mind);",
+    "kind": "data_read"
+  },
+  {
+    "site": "RuleCandidateIndex:518",
+    "path": "kanger/src/org/kanger/factory/RuleCandidateIndex.java",
+    "line": 518,
+    "original": "Rule candidate = (Rule) activeMind.getRules().get(id);",
+    "kind": "source"
+  },
+  {
+    "site": "CommentFactory:225",
+    "path": "kanger/src/org/kanger/factory/CommentFactory.java",
+    "line": 225,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "CommentFactory:182",
+    "path": "kanger/src/org/kanger/factory/CommentFactory.java",
+    "line": 182,
+    "original": "value = (Comment) step.getData(mind);",
+    "kind": "data_read"
+  },
+  {
+    "site": "TVariableFactory:145",
+    "path": "kanger/src/org/kanger/factory/TVariableFactory.java",
+    "line": 145,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "TVariableFactory:175",
+    "path": "kanger/src/org/kanger/factory/TVariableFactory.java",
+    "line": 175,
+    "original": "t = (TVariable) s.getData(mind);",
+    "kind": "data_read"
+  },
+  {
+    "site": "DomainFactory:155",
+    "path": "kanger/src/org/kanger/factory/DomainFactory.java",
+    "line": 155,
+    "original": "((IUnit) s).setMind(mind);"
+  },
+  {
+    "site": "DomainFactory:224",
+    "path": "kanger/src/org/kanger/factory/DomainFactory.java",
+    "line": 224,
+    "original": "t = (Domain) s.getData(mind);",
+    "kind": "data_read"
+  },
+  {
+    "site": "CanonicalConsole:505",
+    "path": "kanger-console/src/org/kanger/CanonicalConsole.java",
+    "line": 505,
+    "original": "for (IRule rule : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "Console:1096",
+    "path": "kanger-console/src/org/kanger/Console.java",
+    "line": 1096,
+    "original": "for (IRule r : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "Console:1259",
+    "path": "kanger-console/src/org/kanger/Console.java",
+    "line": 1259,
+    "original": "for (IRule r : mind.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "Console:1309",
+    "path": "kanger-console/src/org/kanger/Console.java",
+    "line": 1309,
+    "original": "for (IRule r : level.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "KangerTest:2317",
+    "path": "kanger-qualification/src/org/kanger/test/KangerTest.java",
+    "line": 2317,
+    "original": "for (IRule candidate : current.getRules()) {",
+    "kind": "source"
+  },
+  {
+    "site": "KangerC1PromotionTest:87",
+    "path": "kanger-qualification/src/org/kanger/test/KangerC1PromotionTest.java",
+    "line": 87,
+    "original": "for (IRule candidate : context.getRules()) {",
+    "kind": "source"
+  }
+]

@@ -1,0 +1,277 @@
+--- a/kanger/src/org/kanger/GeneratedCVarMaterializer.java
++++ b/kanger/src/org/kanger/GeneratedCVarMaterializer.java
+@@ -57 +57 @@
+-        for (Object value : factory) {
++        for (Object value : org.kanger.RuleReadProfile.iterate(factory, "GeneratedCVarMaterializer:57")) {
+--- a/kanger/src/org/kanger/QueryTaintSolveAlternatives.java
++++ b/kanger/src/org/kanger/QueryTaintSolveAlternatives.java
+@@ -70 +70 @@
+-        for (IRule candidate : mind.getRules()) {
++        for (IRule candidate : org.kanger.RuleReadProfile.iterate(mind.getRules(), "QueryTaintSolveAlternatives:70")) {
+--- a/kanger/src/org/kanger/QueryDemandTrace.java
++++ b/kanger/src/org/kanger/QueryDemandTrace.java
+@@ -158 +158 @@
+-                for (IRule candidate : mind.getRules()) {
++                for (IRule candidate : org.kanger.RuleReadProfile.iterate(mind.getRules(), "QueryDemandTrace:158")) {
+@@ -198 +198 @@
+-            for (IRule candidate : mind.getRules()) {
++            for (IRule candidate : org.kanger.RuleReadProfile.iterate(mind.getRules(), "QueryDemandTrace:198")) {
+--- a/kanger/src/org/kanger/Linker.java
++++ b/kanger/src/org/kanger/Linker.java
+@@ -496 +496 @@
+-                            for (IRule r : mind.getRules()) {
++                            for (IRule r : org.kanger.RuleReadProfile.iterate(mind.getRules(), "Linker:496")) {
+@@ -516 +516 @@
+-                for (IRule r : mind.getRules()) {
++                for (IRule r : org.kanger.RuleReadProfile.iterate(mind.getRules(), "Linker:516")) {
+@@ -528 +528 @@
+-                for (IRule r : mind.getRules()) {
++                for (IRule r : org.kanger.RuleReadProfile.iterate(mind.getRules(), "Linker:528")) {
+--- a/kanger/src/org/kanger/CurrentLevelSourceMaterializer.java
++++ b/kanger/src/org/kanger/CurrentLevelSourceMaterializer.java
+@@ -93 +93 @@
+-        for (IRule candidate : mind.getRules()) {
++        for (IRule candidate : org.kanger.RuleReadProfile.iterate(mind.getRules(), "CurrentLevelSourceMaterializer:93")) {
+--- a/kanger/src/org/kanger/Analyzer.java
++++ b/kanger/src/org/kanger/Analyzer.java
+@@ -129 +129 @@
+-            for (IRule r : mind.getRules()) {
++            for (IRule r : org.kanger.RuleReadProfile.iterate(mind.getRules(), "Analyzer:129")) {
+@@ -179 +179 @@
+-        for (IRule rule : mind.getRules()) {
++        for (IRule rule : org.kanger.RuleReadProfile.iterate(mind.getRules(), "Analyzer:179")) {
+@@ -308 +308 @@
+-        for (IRule p : mind.getRules()) {
++        for (IRule p : org.kanger.RuleReadProfile.iterate(mind.getRules(), "Analyzer:308")) {
+--- a/kanger/src/org/kanger/Mind.java
++++ b/kanger/src/org/kanger/Mind.java
+@@ -1426 +1426 @@
+-            for (IRule rx : m.getRules()) {
++            for (IRule rx : org.kanger.RuleReadProfile.iterate(m.getRules(), "Mind:1426")) {
+@@ -1695 +1695 @@
+-            for (IRule r : m.getRules()) {
++            for (IRule r : org.kanger.RuleReadProfile.iterate(m.getRules(), "Mind:1695")) {
+--- a/kanger/src/org/kanger/PortableMindLayer.java
++++ b/kanger/src/org/kanger/PortableMindLayer.java
+@@ -154 +154 @@
+-        for (IRule candidate : root.getRules()) {
++        for (IRule candidate : org.kanger.RuleReadProfile.iterate(root.getRules(), "PortableMindLayer:154")) {
+@@ -194 +194 @@
+-        for (IRule candidate : child.getRules()) {
++        for (IRule candidate : org.kanger.RuleReadProfile.iterate(child.getRules(), "PortableMindLayer:194")) {
+@@ -450 +450 @@
+-        for (IRule candidate : mind.getRules()) {
++        for (IRule candidate : org.kanger.RuleReadProfile.iterate(mind.getRules(), "PortableMindLayer:450")) {
+--- a/kanger/src/org/kanger/units/Domain.java
++++ b/kanger/src/org/kanger/units/Domain.java
+@@ -460 +460 @@
+-        IRule r = mind.getRules().find(this);
++        IRule r = org.kanger.RuleReadProfile.find(mind.getRules(), this, "Domain:460");
+@@ -466 +466 @@
+-        IRule r = mind.getRules().find(d);
++        IRule r = org.kanger.RuleReadProfile.find(mind.getRules(), d, "Domain:466");
+@@ -561,0 +562,2 @@
++        org.kanger.RuleReadProfile.enter(this, this.mind, mind);
++        try {
+@@ -566,0 +569 @@
++        } finally { org.kanger.RuleReadProfile.leave(); }
+--- a/kanger/src/org/kanger/units/Rule.java
++++ b/kanger/src/org/kanger/units/Rule.java
+@@ -210 +210 @@
+-                for (IRule r : mind.getRules()) {
++                for (IRule r : org.kanger.RuleReadProfile.iterate(mind.getRules(), "Rule:210")) {
+@@ -390 +390 @@
+-                d.setMind(mind);
++                org.kanger.RuleReadProfile.select(d, mind, "Rule:390");
+--- a/kanger/src/org/kanger/units/Predicate.java
++++ b/kanger/src/org/kanger/units/Predicate.java
+@@ -183 +183 @@
+-        for (IRule r : mind.getRules()) {
++        for (IRule r : org.kanger.RuleReadProfile.iterate(mind.getRules(), "Predicate:183")) {
+--- a/kanger/src/org/kanger/units/TVariable.java
++++ b/kanger/src/org/kanger/units/TVariable.java
+@@ -323,0 +324,2 @@
++        if (org.kanger.RuleReadProfile.inspectVariable())
++            org.kanger.RuleReadProfile.variable(this, activeMind(), mind);
+--- a/kanger/src/org/kanger/storage/Escalera.java
++++ b/kanger/src/org/kanger/storage/Escalera.java
+@@ -280 +280 @@
+-        return step == null ? null : step.getData(mind);
++        return step == null ? null : org.kanger.RuleReadProfile.read(step, mind, "Escalera:280");
+@@ -602 +602 @@
+-                    p.setData(e.getData(mind));
++                    p.setData(org.kanger.RuleReadProfile.read(e, mind, "Escalera:602"));
+@@ -655 +655 @@
+-                Object o = step.getData(mind);
++                Object o = org.kanger.RuleReadProfile.read(step, mind, "Escalera:655");
+--- a/kanger/src/org/kanger/storage/Step.java
++++ b/kanger/src/org/kanger/storage/Step.java
+@@ -57 +57 @@
+-            ((IUnit) data).setMind(mind);
++            org.kanger.RuleReadProfile.select((IUnit) data, mind, "Step:57");
+--- a/kanger/src/org/kanger/storage/Sapato.java
++++ b/kanger/src/org/kanger/storage/Sapato.java
+@@ -124 +124 @@
+-            ((IUnit) data).setMind(mind);
++            org.kanger.RuleReadProfile.select((IUnit) data, mind, "Sapato:124");
+--- a/kanger/src/org/kanger/factory/TValueFactory.java
++++ b/kanger/src/org/kanger/factory/TValueFactory.java
+@@ -291 +291 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.RuleReadProfile.select((IUnit) s, mind, "TValueFactory:291");
+@@ -358 +358 @@
+-                t = (TValue) s.getData(mind);
++                t = (TValue) org.kanger.RuleReadProfile.read(s, mind, "TValueFactory:358");
+@@ -500,2 +500,2 @@
+-                    if (((TValue) root.getData(mind)).getTVarId() == t.getId()) {
+-                        reactor.run(root.getData(mind));
++                    if (((TValue) org.kanger.RuleReadProfile.read(root, mind, "TValueFactory:500")).getTVarId() == t.getId()) {
++                        reactor.run(org.kanger.RuleReadProfile.read(root, mind, "TValueFactory:501"));
+--- a/kanger/src/org/kanger/factory/DictionaryFactory.java
++++ b/kanger/src/org/kanger/factory/DictionaryFactory.java
+@@ -177 +177 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.RuleReadProfile.select((IUnit) s, mind, "DictionaryFactory:177");
+@@ -277 +277 @@
+-                t = (Term) s.getData(mind);
++                t = (Term) org.kanger.RuleReadProfile.read(s, mind, "DictionaryFactory:277");
+@@ -314 +314 @@
+-        for (IRule candidate : mind.getRules()) {
++        for (IRule candidate : org.kanger.RuleReadProfile.iterate(mind.getRules(), "DictionaryFactory:314")) {
+--- a/kanger/src/org/kanger/factory/FunctionFactory.java
++++ b/kanger/src/org/kanger/factory/FunctionFactory.java
+@@ -156 +156 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.RuleReadProfile.select((IUnit) s, mind, "FunctionFactory:156");
+@@ -195 +195 @@
+-                t = (Function) s.getData(mind);
++                t = (Function) org.kanger.RuleReadProfile.read(s, mind, "FunctionFactory:195");
+--- a/kanger/src/org/kanger/factory/FValueFactory.java
++++ b/kanger/src/org/kanger/factory/FValueFactory.java
+@@ -183 +183 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.RuleReadProfile.select((IUnit) s, mind, "FValueFactory:183");
+@@ -264 +264 @@
+-                t = (FValue) s.getData(mind);
++                t = (FValue) org.kanger.RuleReadProfile.read(s, mind, "FValueFactory:264");
+--- a/kanger/src/org/kanger/factory/RuleFactory.java
++++ b/kanger/src/org/kanger/factory/RuleFactory.java
+@@ -319 +319 @@
+-            for (Object value : cache) {
++            for (Object value : org.kanger.RuleReadProfile.iterate(cache, "RuleFactory:319")) {
+@@ -446 +446 @@
+-            IRule rule = get(id);
++            IRule rule = org.kanger.RuleReadProfile.lookup(this, id, "RuleFactory:446");
+@@ -475 +475 @@
+-            IRule rule = get(id);
++            IRule rule = org.kanger.RuleReadProfile.lookup(this, id, "RuleFactory:475");
+@@ -503 +503 @@
+-            IRule rule = get(id);
++            IRule rule = org.kanger.RuleReadProfile.lookup(this, id, "RuleFactory:503");
+@@ -515 +515 @@
+-            Rule rule = get(id);
++            Rule rule = org.kanger.RuleReadProfile.lookup(this, id, "RuleFactory:515");
+@@ -565 +565 @@
+-        for (Object s : cache) {
++        for (Object s : org.kanger.RuleReadProfile.iterate(cache, "RuleFactory:565")) {
+@@ -567 +567 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.RuleReadProfile.select((IUnit) s, mind, "RuleFactory:567");
+@@ -658 +658 @@
+-                d.setMind(mind);
++                org.kanger.RuleReadProfile.select(d, mind, "RuleFactory:658");
+@@ -668 +668 @@
+-                rule = (Rule) s.getData(mind);
++                rule = (Rule) org.kanger.RuleReadProfile.read(s, mind, "RuleFactory:668");
+@@ -715 +715 @@
+-                view.setMind(mind);
++                org.kanger.RuleReadProfile.select(view, mind, "RuleFactory:715");
+@@ -911 +911 @@
+-            IRule one = get(id);
++            IRule one = org.kanger.RuleReadProfile.lookup(this, id, "RuleFactory:911");
+@@ -925 +925 @@
+-            IRule one = get(id);
++            IRule one = org.kanger.RuleReadProfile.lookup(this, id, "RuleFactory:925");
+@@ -1008 +1008 @@
+-        for (Object o : cache) {
++        for (Object o : org.kanger.RuleReadProfile.iterate(cache, "RuleFactory:1008")) {
+@@ -1025 +1025 @@
+-        for (Object o : this) {
++        for (Object o : org.kanger.RuleReadProfile.iterate(this, "RuleFactory:1025")) {
+@@ -1037 +1037 @@
+-            return effectiveView((Rule) s.getData(mind));
++            return effectiveView((Rule) org.kanger.RuleReadProfile.read(s, mind, "RuleFactory:1037"));
+--- a/kanger/src/org/kanger/factory/PredicateFactory.java
++++ b/kanger/src/org/kanger/factory/PredicateFactory.java
+@@ -135 +135 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.RuleReadProfile.select((IUnit) s, mind, "PredicateFactory:135");
+@@ -181 +181 @@
+-                t = (Predicate) s.getData(mind);
++                t = (Predicate) org.kanger.RuleReadProfile.read(s, mind, "PredicateFactory:181");
+@@ -212 +212 @@
+-                for (IRule r : mind.getRules()) {
++                for (IRule r : org.kanger.RuleReadProfile.iterate(mind.getRules(), "PredicateFactory:212")) {
+--- a/kanger/src/org/kanger/factory/LibraryFactory.java
++++ b/kanger/src/org/kanger/factory/LibraryFactory.java
+@@ -230 +230 @@
+-                value = (Operation) step.getData(mind);
++                value = (Operation) org.kanger.RuleReadProfile.read(step, mind, "LibraryFactory:230");
+@@ -286 +286 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.RuleReadProfile.select((IUnit) s, mind, "LibraryFactory:286");
+--- a/kanger/src/org/kanger/factory/RuleCandidateIndex.java
++++ b/kanger/src/org/kanger/factory/RuleCandidateIndex.java
+@@ -518 +518 @@
+-            Rule candidate = (Rule) activeMind.getRules().get(id);
++            Rule candidate = (Rule) org.kanger.RuleReadProfile.lookup(activeMind.getRules(), id, "RuleCandidateIndex:518");
+--- a/kanger/src/org/kanger/factory/CommentFactory.java
++++ b/kanger/src/org/kanger/factory/CommentFactory.java
+@@ -182 +182 @@
+-                value = (Comment) step.getData(mind);
++                value = (Comment) org.kanger.RuleReadProfile.read(step, mind, "CommentFactory:182");
+@@ -225 +225 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.RuleReadProfile.select((IUnit) s, mind, "CommentFactory:225");
+--- a/kanger/src/org/kanger/factory/TVariableFactory.java
++++ b/kanger/src/org/kanger/factory/TVariableFactory.java
+@@ -145 +145 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.RuleReadProfile.select((IUnit) s, mind, "TVariableFactory:145");
+@@ -175 +175 @@
+-                t = (TVariable) s.getData(mind);
++                t = (TVariable) org.kanger.RuleReadProfile.read(s, mind, "TVariableFactory:175");
+--- a/kanger/src/org/kanger/factory/DomainFactory.java
++++ b/kanger/src/org/kanger/factory/DomainFactory.java
+@@ -155 +155 @@
+-                ((IUnit) s).setMind(mind);
++                org.kanger.RuleReadProfile.select((IUnit) s, mind, "DomainFactory:155");
+@@ -224 +224 @@
+-                t = (Domain) s.getData(mind);
++                t = (Domain) org.kanger.RuleReadProfile.read(s, mind, "DomainFactory:224");
+--- a/kanger-console/src/org/kanger/CanonicalConsole.java
++++ b/kanger-console/src/org/kanger/CanonicalConsole.java
+@@ -505 +505 @@
+-        for (IRule rule : mind.getRules()) {
++        for (IRule rule : org.kanger.RuleReadProfile.iterate(mind.getRules(), "CanonicalConsole:505")) {
+--- a/kanger-console/src/org/kanger/Console.java
++++ b/kanger-console/src/org/kanger/Console.java
+@@ -1096 +1096 @@
+-        for (IRule r : mind.getRules()) {
++        for (IRule r : org.kanger.RuleReadProfile.iterate(mind.getRules(), "Console:1096")) {
+@@ -1259 +1259 @@
+-        for (IRule r : mind.getRules()) {
++        for (IRule r : org.kanger.RuleReadProfile.iterate(mind.getRules(), "Console:1259")) {
+@@ -1309 +1309 @@
+-        for (IRule r : level.getRules()) {
++        for (IRule r : org.kanger.RuleReadProfile.iterate(level.getRules(), "Console:1309")) {
+--- a/kanger-qualification/src/org/kanger/test/KangerTest.java
++++ b/kanger-qualification/src/org/kanger/test/KangerTest.java
+@@ -2317 +2317 @@
+-        for (IRule candidate : current.getRules()) {
++        for (IRule candidate : org.kanger.RuleReadProfile.iterate(current.getRules(), "KangerTest:2317")) {
+--- a/kanger-qualification/src/org/kanger/test/KangerC1PromotionTest.java
++++ b/kanger-qualification/src/org/kanger/test/KangerC1PromotionTest.java
+@@ -87 +87 @@
+-        for (IRule candidate : context.getRules()) {
++        for (IRule candidate : org.kanger.RuleReadProfile.iterate(context.getRules(), "KangerC1PromotionTest:87")) {

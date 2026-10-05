@@ -1,0 +1,32 @@
+PROFILE_COMPLETE 1
+PROFILE_COMPLETE 2
+Domain:460>RuleFactory:911>Escalera:280>Step:57 reads_min=1306463 reads_max=1311754 unique_rules=[2164, 2165] domain_calls_min=1306463 domain_calls_max=1311754
+GeneratedCVarMaterializer:57>Escalera:655>Step:57 reads_min=829545 reads_max=829545 unique_rules=[2226] domain_calls_min=900525 domain_calls_max=900525
+RuleFactory:503>Escalera:280>Step:57 reads_min=328854 reads_max=328854 unique_rules=[367] domain_calls_min=1633243 domain_calls_max=1633243
+RuleFactory:446>Escalera:280>Step:57 reads_min=272360 reads_max=272360 unique_rules=[2203] domain_calls_min=593602 domain_calls_max=593602
+Linker:516>Escalera:655>Step:57 reads_min=111062 reads_max=111062 unique_rules=[2226] domain_calls_min=140312 domain_calls_max=140312
+RuleCandidateIndex:518>Escalera:280>Step:57 reads_min=36402 reads_max=36402 unique_rules=[2012] domain_calls_min=58204 domain_calls_max=58204
+Analyzer:308>Escalera:655>Step:57 reads_min=33540 reads_max=33540 unique_rules=[2226] domain_calls_min=42081 domain_calls_max=42081
+PredicateFactory:212>Escalera:655>Step:57 reads_min=33360 reads_max=33360 unique_rules=[115] domain_calls_min=33936 domain_calls_max=33936
+Analyzer:129>Escalera:655>Step:57 reads_min=31860 reads_max=31860 unique_rules=[1940] domain_calls_min=40011 domain_calls_max=40011
+Escalera:655>Step:57 reads_min=18819 reads_max=18819 unique_rules=[1054] domain_calls_min=24006 domain_calls_max=24006
+PortableMindLayer:194>Escalera:655>Step:57 reads_min=18819 reads_max=18819 unique_rules=[1054] domain_calls_min=24006 domain_calls_max=24006
+RuleFactory:565>Escalera:655>Step:57 reads_min=18819 reads_max=18819 unique_rules=[1054] domain_calls_min=24006 domain_calls_max=24006
+RuleFactory:475>Escalera:280>Step:57 reads_min=9113 reads_max=9113 unique_rules=[465] domain_calls_min=12940 domain_calls_max=12940
+DictionaryFactory:314>Escalera:655>Step:57 reads_min=6144 reads_max=6144 unique_rules=[128] domain_calls_min=8016 domain_calls_max=8016
+RuleFactory:1008>Escalera:655>Step:57 reads_min=6144 reads_max=6144 unique_rules=[128] domain_calls_min=8016 domain_calls_max=8016
+RuleFactory:515>Escalera:280>Step:57 reads_min=4464 reads_max=4464 unique_rules=[3] domain_calls_min=4464 domain_calls_max=4464
+RuleFactory:911>Escalera:280>Step:57 reads_min=3547 reads_max=3547 unique_rules=[348] domain_calls_min=3547 domain_calls_max=3547
+RuleFactory:1037>Step:57 reads_min=133 reads_max=133 unique_rules=[133] domain_calls_min=133 domain_calls_max=133
+Domain:466>RuleFactory:911>Escalera:280>Step:57 reads_min=88 reads_max=88 unique_rules=[88] domain_calls_min=88 domain_calls_max=88
+RuleFactory:925>Escalera:280>Step:57 reads_min=9 reads_max=9 unique_rules=[9] domain_calls_min=9 domain_calls_max=9
+point_reads min=1961300 max=1966591
+iterator_reads min=1108112 max=1108112
+top_reads min=133 max=133
+total_domain_calls 4888581 4893872
+rule_cascade_domain_calls 4857608 4862899
+Domain:460> reads=[1306463, 1306512, 1308336, 1311754] domains=[1306463, 1306512, 1308336, 1311754] all_domain_share_min=26.724790% all_domain_share_max=26.804011%
+GeneratedCVarMaterializer:57> reads=[829545] domains=[900525] all_domain_share_min=18.401074% all_domain_share_max=18.420990%
+POST_OPTIMIZE_LAST_LINKER_STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+RULE_READ_FORENSICS_OK samples=12 warm_samples=8 texts_equal_to_clean_base=true
+TIMING_EXCLUDED diagnostic_instrumentation=true main_optimization_thread_only=true
