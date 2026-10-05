@@ -370,6 +370,99 @@ public class ContextFederationOperatorTest {
     }
 
     @Test
+    void ctxExplainTracesTheOrdinaryFederatedQuery()
+            throws Exception {
+        ContextFixture x =
+                context("EX", "!anchor(X);");
+        ContextFixture a =
+                context("EA", "!son(John,Tom);");
+
+        User user = new User();
+        user.setDatabaseDir(
+                root.toString() + File.separator);
+        DB data = new DB();
+        data.init(user);
+
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        mind = (Mind) mind.useStorage("EX");
+        user.setCurrentMind(mind);
+
+        CanonicalCommandProcessor processor =
+                new CanonicalCommandProcessor();
+        CommandParser parser = new CommandParser();
+
+        processor.execute(
+                parser.parse("ctx connect EA"),
+                user);
+
+        CanonicalCommandProcessor.Result result =
+                processor.execute(
+                        parser.parse(
+                                "ctx explain ?$x son(John,x);"),
+                        user);
+        IContextFederation.ExplainResult explain =
+                result.getContextExplainResult();
+
+        assertNotNull(explain);
+        assertEquals(
+                IContextFederation.FrontierTruth.UNKNOWN,
+                explain.getLocalTruth());
+        assertEquals(
+                IContextFederation.FrontierTruth.TRUE,
+                explain.getFinalTruth());
+        assertFalse(explain.getPasses().isEmpty());
+        assertEquals(
+                x.contextId,
+                explain.getContext()
+                        .getSourceContextId());
+        assertEquals(
+                x.revision,
+                explain.getContext()
+                        .getSourceRevision(),
+                "explain must not publish the initiating Context");
+
+        assertFalse(explain.getValues().isEmpty());
+        String finalX =
+                explain.getValues().get(0)
+                        .getBindings().get("x");
+        assertNotNull(finalX);
+
+        boolean tracedSubstitution = false;
+        boolean tracedProvenance = false;
+        for (IContextFederation.ExplainPass pass
+                : explain.getPasses()) {
+            for (IContextFederation.EvidenceInjection injection
+                    : pass.getContinuation()
+                            .getEvidenceInjections()) {
+                if (finalX.equals(
+                        injection.getSubstitutions()
+                                .get("x"))) {
+                    tracedSubstitution = true;
+                }
+                for (IContextFederation.Revision support
+                        : injection.getSupports()) {
+                    if (a.contextId.equals(
+                            support.getContextId())
+                            && a.revision
+                            == support.getRevision()) {
+                        tracedProvenance = true;
+                    }
+                }
+            }
+        }
+        assertTrue(
+                tracedSubstitution,
+                "explain must expose the semantic lift substitution");
+        assertTrue(
+                tracedProvenance,
+                "explain must expose exact foreign provenance");
+
+        user.setCurrentMind(
+                mind.closeStorage());
+    }
+
+    @Test
     void workingTopologyDoesNotRewritePublishedRevision()
             throws Exception {
         ContextFixture x =
