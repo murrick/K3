@@ -61,6 +61,7 @@ public enum CommandIntent {
     CTX_DISCONNECT,
     CTX_SWITCH,
     CTX_VERSION,
+    CTX_EXPLAIN,
     CTX_ISOLATED_QUERY,
     CTX_QUERY,
 
