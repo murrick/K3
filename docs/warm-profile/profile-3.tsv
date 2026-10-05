@@ -1,0 +1,1109 @@
+WINDOW	0	10032984443
+WINDOW	1	6966908672
+WINDOW	2	6364372411
+WINDOW	3	6536677071
+WINDOW	4	6160858677
+WINDOW	5	5840874531
+TOTAL	cpu_samples=2094 allocation_samples=7171 sampled_allocation_weight=19515304776 truncated_cpu=0 truncated_alloc=0
+CPU_LEAF	359	org.kanger.Mind.isUnitDeleted
+CPU_LEAF	223	java.util.HashMap.getNode
+CPU_LEAF	146	java.lang.ThreadLocal.get
+CPU_LEAF	137	java.lang.AbstractStringBuilder.<init>
+CPU_LEAF	87	java.util.HashMap$HashIterator.nextNode
+CPU_LEAF	61	org.kanger.storage.Step.getData
+CPU_LEAF	59	org.kanger.units.Domain.setMind
+CPU_LEAF	57	java.util.HashMap.putVal
+CPU_LEAF	55	org.kanger.primitives.TVariableSet.hashCode
+CPU_LEAF	50	java.lang.Integer.equals
+CPU_LEAF	43	java.util.HashMap$HashIterator.<init>
+CPU_LEAF	41	org.kanger.primitives.Argument.getValue
+CPU_LEAF	34	org.kanger.units.Domain.isComplete
+CPU_LEAF	32	java.lang.ThreadLocal$ThreadLocalMap.getEntryAfterMiss
+CPU_LEAF	30	org.kanger.Linker.linkDatabase
+CPU_LEAF	29	org.kanger.units.TSolve.equalsTo
+CPU_LEAF	25	org.kanger.primitives.ArgumentsList.getHash
+CPU_LEAF	24	org.kanger.units.Predicate.getName
+CPU_LEAF	23	org.kanger.factory.RuleFactory.isPromoted
+CPU_LEAF	21	org.kanger.primitives.ArgumentsList.getTVariables
+CPU_LEAF	21	org.kanger.primitives.ArgumentsList.equalsBase
+CPU_LEAF	20	org.kanger.factory.TValueFactory.release
+CPU_LEAF	19	java.lang.ThreadLocal$ThreadLocalMap.set
+CPU_LEAF	16	java.util.concurrent.ConcurrentHashMap.get
+CPU_LEAF	16	org.kanger.units.TVariable.setMind
+CPU_LEAF	16	org.kanger.Linker.linkDomains
+CPU_LEAF	16	org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+CPU_LEAF	16	java.util.TreeMap.successor
+CPU_LEAF	15	java.util.ArrayList.indexOfRange
+CPU_LEAF	15	java.util.HashMap.resize
+CPU_LEAF	13	java.util.AbstractCollection.addAll
+CPU_LEAF	12	org.kanger.storage.Escalera.mark
+CPU_LEAF	12	java.lang.String.valueOf
+CPU_LEAF	12	org.kanger.units.Domain.isExcluded
+CPU_LEAF	11	java.util.TreeMap$AscendingSubMap.keyIterator
+CPU_LEAF	11	org.kanger.primitives.Solve.equals
+CPU_LEAF	11	java.util.AbstractSet.equals
+CPU_LEAF	9	org.kanger.factory.TValueFactory.mark
+CPU_LEAF	8	java.util.TreeMap.getEntry
+CPU_LEAF	8	org.kanger.primitives.ArgumentsList.convertBase
+CPU_LEAF	8	org.kanger.primitives.ArgumentsList.getFunctions
+CPU_LEAF	8	java.util.ArrayList$Itr.next
+CPU_LEAF	7	java.util.concurrent.CopyOnWriteArrayList.clear
+CPU_LEAF	7	org.kanger.Linker.isValidFor
+CPU_LEAF	7	org.kanger.units.TVariable.getCurrent
+CPU_LEAF	7	org.kanger.stores.HypothesisStore.find
+CPU_LEAF	7	java.util.HashMap.removeNode
+CPU_LEAF	7	org.kanger.Linker.getSolveCandidates
+CPU_LEAF	7	org.kanger.Linker.checkSystem
+CPU_LEAF	7	org.kanger.factory.RuleFactory.collectResolvedCandidateIds
+CPU_LEAF	7	java.util.LinkedHashMap$LinkedHashIterator.nextNode
+CPU_LEAF	6	java.util.Arrays.copyOf
+CPU_LEAF	6	org.kanger.Linker.rotator
+CPU_LEAF	6	org.kanger.primitives.ArgumentsList.getStamp
+CPU_LEAF	5	java.util.ArrayList.grow
+CPU_LEAF	5	org.kanger.Linker$DomainKey.equals
+CPU_LEAF	5	org.kanger.primitives.Solve.hashCode
+CPU_LEAF	5	org.kanger.Linker.markExcluded
+CPU_LEAF	5	org.kanger.units.Rule.setMind
+CPU_LEAF	5	org.kanger.units.TSolve.containsTValue
+CPU_LEAF	5	java.lang.Long.valueOf
+CPU_LEAF	4	java.util.TreeMap$NavigableSubMap$EntrySetView.size
+CPU_LEAF	4	org.kanger.primitives.ArgumentsList.equalsStamp
+CPU_LEAF	4	java.util.HashMap.remove
+CPU_LEAF	4	org.kanger.storage.Escalera.commit
+CPU_LEAF	4	org.kanger.stores.HypothesisStore.equalsBase
+CPU_LEAF	4	org.kanger.Linker.synchronizeSolveIndex
+CPU_LEAF	4	org.kanger.units.Domain.isUsed
+CPU_LEAF	4	org.kanger.units.Domain.setCauses
+CPU_LEAF	4	java.util.concurrent.CopyOnWriteArraySet.addAll
+CPU_LEAF	4	org.kanger.factory.RuleCandidateIndex$SignatureKey.equals
+CPU_LEAF	3	org.kanger.units.TSolve.size
+CPU_LEAF	3	java.util.ArrayList$Itr.hasNext
+CPU_LEAF	3	java.util.Objects.checkIndex
+CPU_LEAF	3	org.kanger.units.TSolve.containsTVar
+CPU_LEAF	3	java.util.TreeMap.getFirstEntry
+CPU_LEAF	3	java.util.TreeMap.getLowerEntry
+CPU_LEAF	3	org.kanger.units.Domain.getOverlaps
+CPU_LEAF	3	java.util.TreeMap$NavigableSubMap.tooHigh
+CPU_LEAF	3	org.kanger.Linker.selectDomainCandidates
+CPU_LEAF	3	java.util.TreeMap.put
+CPU_LEAF	2	org.kanger.storage.Escalera.findCandidates
+CPU_LEAF	2	org.kanger.units.CachedDomain.supportedArguments
+CPU_LEAF	2	java.util.LinkedHashMap$LinkedKeySet.iterator
+CPU_LEAF	2	org.kanger.units.TVariable.compareTo
+CPU_LEAF	2	org.kanger.units.Domain.execSystem
+CPU_LEAF	2	org.kanger.units.TSolve.<init>
+CPU_LEAF	2	java.lang.ref.ReferenceQueue.reallyPoll
+CPU_LEAF	2	java.util.HashMap.put
+CPU_LEAF	2	org.kanger.factory.RuleFactory.find
+CPU_LEAF	2	java.util.HashMap.hash
+CPU_LEAF	2	java.util.TreeMap.compare
+CPU_LEAF	2	org.kanger.primitives.Solve.getHash
+CPU_LEAF	2	java.util.TimSort.binarySort
+CPU_LEAF	2	org.kanger.units.Term.getParent
+CPU_LEAF	2	org.kanger.storage.Escalera.get
+CPU_LEAF	2	java.util.LinkedHashMap.newNode
+CPU_LEAF	2	org.kanger.Linker.calcFunctions
+CPU_LEAF	2	org.kanger.units.Rule.equalsTo
+CPU_LEAF	2	org.kanger.factory.TValueFactory.forEach
+CPU_LEAF	1	org.kanger.Linker.access$1
+CPU_LEAF	1	org.kanger.units.Operation.<init>
+CPU_LEAF	1	org.kanger.calculator.Functions$1.<init>
+CPU_LEAF	1	org.kanger.primitives.ArgumentsList.hashCode
+CPU_LEAF	1	org.kanger.primitives.TVariableSet.<init>
+CPU_LEAF	1	java.util.TreeMap$NavigableSubMap$SubMapIterator.hasNext
+CPU_LEAF	1	java.util.concurrent.CopyOnWriteArrayList$COWIterator.hasNext
+CPU_LEAF	1	org.kanger.units.CachedDomain.getCauses
+CPU_LEAF	1	java.lang.Long.getChars
+CPU_LEAF	1	org.kanger.units.Domain.calcVarOrders
+CPU_LEAF	1	sun.util.locale.provider.CalendarProviderImpl.getInstance
+CPU_LEAF	1	java.lang.StringBuilder.<init>
+CPU_LEAF	1	org.kanger.factory.RuleFactory.collectTermIds
+CPU_LEAF	1	org.kanger.SemanticEffectTelemetry.solveKey
+CPU_LEAF	1	java.util.LinkedHashMap$LinkedHashIterator.remove
+CPU_LEAF	1	jdk.internal.util.Preconditions.checkIndex
+CPU_LEAF	1	java.util.TimSort.gallopRight
+CPU_LEAF	1	java.util.TreeMap$NavigableSubMap.size
+CPU_LEAF	1	java.util.IdentityHashMap.put
+CPU_LEAF	1	java.util.AbstractCollection.containsAll
+CPU_LEAF	1	org.kanger.factory.TVariableFactory.createTVar
+CPU_LEAF	1	org.kanger.stores.LogStore.add
+CPU_LEAF	1	org.kanger.factory.TValueFactory.collectIds
+CPU_LEAF	1	org.kanger.units.Domain.isStored
+CPU_LEAF	1	java.util.IdentityHashMap.resize
+CPU_LEAF	1	java.util.Calendar.setFieldsComputed
+CPU_LEAF	1	sun.util.calendar.ZoneInfo.getTransitionIndex
+CPU_LEAF	1	java.util.ArrayList.iterator
+CPU_LEAF	1	org.kanger.units.Domain.setExcluded
+CPU_LEAF	1	java.util.HashMap.newNode
+CPU_LEAF	1	java.util.ComparableTimSort.countRunAndMakeAscending
+CPU_LEAF	1	java.text.SimpleDateFormat.compile
+CPU_LEAF	1	java.util.HashMap.keysToArray
+CPU_LEAF	1	org.kanger.units.Domain.getSolves
+CPU_LEAF	1	java.lang.Long.equals
+CPU_LEAF	1	org.kanger.units.Term.equalsTo
+CPU_LEAF	1	org.kanger.units.Domain.isCalculated
+CPU_LEAF	1	java.util.TreeMap.getCeilingEntry
+CPU_LEAF	1	java.lang.ref.Reference.refersTo
+CPU_LEAF	1	java.text.Format.format
+CPU_LEAF	1	java.util.LinkedHashMap.keySet
+CPU_FIRST_KANGER	179	org.kanger.Mind.isUnitDeleted:1900
+CPU_FIRST_KANGER	173	org.kanger.units.Predicate.getName:136
+CPU_FIRST_KANGER	165	org.kanger.units.TVariable.activeMind:117
+CPU_FIRST_KANGER	97	org.kanger.factory.TValueFactory.isEmpty:337
+CPU_FIRST_KANGER	96	org.kanger.Mind.isUnitDeleted:1904
+CPU_FIRST_KANGER	87	org.kanger.Mind.isUnitDeleted:1903
+CPU_FIRST_KANGER	66	org.kanger.primitives.TVariableSet.hashCode:59
+CPU_FIRST_KANGER	59	org.kanger.units.Domain.setMind:563
+CPU_FIRST_KANGER	58	org.kanger.units.Domain.isExcluded:376
+CPU_FIRST_KANGER	51	org.kanger.storage.Escalera.findCandidates:433
+CPU_FIRST_KANGER	36	org.kanger.units.TSolve.equalsTo:171
+CPU_FIRST_KANGER	35	org.kanger.storage.Escalera.findCandidates:435
+CPU_FIRST_KANGER	35	org.kanger.units.TVariable.setMind:324
+CPU_FIRST_KANGER	34	org.kanger.units.Domain.isComplete:546
+CPU_FIRST_KANGER	33	org.kanger.storage.Step.getData:57
+CPU_FIRST_KANGER	28	org.kanger.storage.Step.getData:56
+CPU_FIRST_KANGER	28	org.kanger.primitives.Argument.getValue:153
+CPU_FIRST_KANGER	27	org.kanger.primitives.TVariableSet.equals:68
+CPU_FIRST_KANGER	25	org.kanger.primitives.ArgumentsList.getHash:91
+CPU_FIRST_KANGER	23	org.kanger.units.Domain.isUsed:356
+CPU_FIRST_KANGER	23	org.kanger.factory.RuleFactory.isPromoted:722
+CPU_FIRST_KANGER	21	org.kanger.primitives.ArgumentsList.getTVariables:258
+CPU_FIRST_KANGER	20	org.kanger.factory.TValueFactory.collectIds:262
+CPU_FIRST_KANGER	20	org.kanger.factory.TValueFactory.release:426
+CPU_FIRST_KANGER	17	org.kanger.Linker.linkDatabase:1007
+CPU_FIRST_KANGER	16	org.kanger.factory.TValueFactory.get:333
+CPU_FIRST_KANGER	14	org.kanger.units.Domain.isExcluded:375
+CPU_FIRST_KANGER	13	org.kanger.units.Domain.setUsed:366
+CPU_FIRST_KANGER	13	org.kanger.storage.Escalera.release:490
+CPU_FIRST_KANGER	12	org.kanger.units.TSolve.containsTVar:232
+CPU_FIRST_KANGER	12	org.kanger.primitives.Argument.getValue:149
+CPU_FIRST_KANGER	11	org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:542
+CPU_FIRST_KANGER	11	org.kanger.primitives.Solve.equals:206
+CPU_FIRST_KANGER	10	org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:634
+CPU_FIRST_KANGER	10	org.kanger.factory.RuleFactory.collectDomainIds:398
+CPU_FIRST_KANGER	10	org.kanger.primitives.ArgumentsList.getTVariables:262
+CPU_FIRST_KANGER	9	org.kanger.units.Domain.isUsed:355
+CPU_FIRST_KANGER	9	org.kanger.primitives.ArgumentsList.equalsBase:195
+CPU_FIRST_KANGER	9	org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:589
+CPU_FIRST_KANGER	9	org.kanger.units.Domain.isExcluded:377
+CPU_FIRST_KANGER	9	org.kanger.factory.TValueFactory.mark:401
+CPU_FIRST_KANGER	8	org.kanger.Linker.isValidFor:704
+CPU_FIRST_KANGER	8	org.kanger.Linker.linkDatabase:1021
+CPU_FIRST_KANGER	8	org.kanger.Linker.linkDatabase:1147
+CPU_FIRST_KANGER	8	org.kanger.primitives.ArgumentsList.equalsBase:171
+CPU_FIRST_KANGER	8	org.kanger.primitives.ArgumentsList.convertBase:225
+CPU_FIRST_KANGER	7	org.kanger.factory.FValueFactory.release:301
+CPU_FIRST_KANGER	7	org.kanger.storage.Escalera.mark:465
+CPU_FIRST_KANGER	7	org.kanger.units.TVariable.getCurrent:217
+CPU_FIRST_KANGER	7	org.kanger.stores.HypothesisStore.find:134
+CPU_FIRST_KANGER	7	org.kanger.Linker.linkDatabase:1063
+CPU_FIRST_KANGER	6	org.kanger.primitives.ArgumentsList.getStamp:354
+CPU_FIRST_KANGER	6	org.kanger.factory.RuleCandidateIndex$IdIndex.get:237
+CPU_FIRST_KANGER	6	org.kanger.Mind.isUnitDeleted:1908
+CPU_FIRST_KANGER	6	org.kanger.Mind.isUnitDeleted:1907
+CPU_FIRST_KANGER	6	org.kanger.Linker.isValidFor:696
+CPU_FIRST_KANGER	5	org.kanger.factory.TValueFactory.collectIds:260
+CPU_FIRST_KANGER	5	org.kanger.Linker.selectDomainCandidates:397
+CPU_FIRST_KANGER	5	org.kanger.primitives.ArgumentsList.getFunctions:244
+CPU_FIRST_KANGER	5	org.kanger.factory.FValueFactory.release:302
+CPU_FIRST_KANGER	5	org.kanger.Linker.checkSystem:1306
+CPU_FIRST_KANGER	5	org.kanger.units.Domain.isCalculated:426
+CPU_FIRST_KANGER	5	org.kanger.storage.Escalera.mark:466
+CPU_FIRST_KANGER	5	org.kanger.units.TSolve.containsTValue:241
+CPU_FIRST_KANGER	5	org.kanger.Linker.linkDatabase:1019
+CPU_FIRST_KANGER	5	org.kanger.Linker.markExcluded:924
+CPU_FIRST_KANGER	5	org.kanger.units.Domain.setCauses:231
+CPU_FIRST_KANGER	5	org.kanger.Linker.getSolveCandidates:314
+CPU_FIRST_KANGER	5	org.kanger.Linker$DomainKey.equals:346
+CPU_FIRST_KANGER	5	org.kanger.units.Rule.setMind:388
+CPU_FIRST_KANGER	5	org.kanger.primitives.Solve.hashCode:196
+CPU_FIRST_KANGER	5	org.kanger.Linker.getSolveCandidates:306
+CPU_FIRST_KANGER	5	org.kanger.enums.Tools.parseDate:124
+CPU_FIRST_KANGER	5	org.kanger.factory.RuleFactory.collectResolvedCandidateIds:490
+CPU_FIRST_KANGER	5	org.kanger.Linker.linkDomains:892
+CPU_FIRST_KANGER	5	org.kanger.Linker.linkDatabase:1055
+CPU_FIRST_KANGER	5	org.kanger.Linker.isValidFor:695
+CPU_FIRST_KANGER	4	org.kanger.factory.RuleFactory.containsPromotion:680
+CPU_FIRST_KANGER	4	org.kanger.units.Domain.setCauses:232
+CPU_FIRST_KANGER	4	org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:636
+CPU_FIRST_KANGER	4	org.kanger.Linker.getSolveCandidates:310
+CPU_FIRST_KANGER	4	org.kanger.units.Domain.isUsed:357
+CPU_FIRST_KANGER	4	org.kanger.units.Rule.setUsed:203
+CPU_FIRST_KANGER	4	org.kanger.Linker.rotator:585
+CPU_FIRST_KANGER	4	org.kanger.factory.RuleFactory.collectTermIds:411
+CPU_FIRST_KANGER	4	org.kanger.storage.Escalera.commit:471
+CPU_FIRST_KANGER	4	org.kanger.units.Term.getParent:739
+CPU_FIRST_KANGER	4	org.kanger.factory.RuleCandidateIndex$SignatureKey.equals:120
+CPU_FIRST_KANGER	4	org.kanger.Linker.synchronizeSolveIndex:274
+CPU_FIRST_KANGER	4	org.kanger.QueryTaintSolve.beginOperation:96
+CPU_FIRST_KANGER	4	org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:584
+CPU_FIRST_KANGER	4	org.kanger.QueryTaintSolve.recordDeferredContribution:129
+CPU_FIRST_KANGER	4	org.kanger.primitives.ArgumentsList.equalsStamp:367
+CPU_FIRST_KANGER	4	org.kanger.storage.Escalera.indexStep:197
+CPU_FIRST_KANGER	3	org.kanger.units.Domain.get:176
+CPU_FIRST_KANGER	3	org.kanger.Linker.linkDatabase:1042
+CPU_FIRST_KANGER	3	org.kanger.units.TSolve.size:250
+CPU_FIRST_KANGER	3	org.kanger.primitives.ArgumentsList.getFunctions:245
+CPU_FIRST_KANGER	3	org.kanger.factory.RuleCandidateIndex.computeBatchSummary:517
+CPU_FIRST_KANGER	3	org.kanger.SemanticEffectTelemetry.recordTSolveCandidate:186
+CPU_FIRST_KANGER	3	org.kanger.Linker.rotateVariables:637
+CPU_FIRST_KANGER	3	org.kanger.Linker.buildDomainIndex:363
+CPU_FIRST_KANGER	3	org.kanger.Linker.markExcluded:943
+CPU_FIRST_KANGER	3	org.kanger.factory.TValueFactory.set:446
+CPU_FIRST_KANGER	3	org.kanger.factory.RuleFactory.find:910
+CPU_FIRST_KANGER	3	org.kanger.Linker.linkDomains:764
+CPU_FIRST_KANGER	3	org.kanger.units.Rule.setUsed:200
+CPU_FIRST_KANGER	3	org.kanger.Linker.rotator:587
+CPU_FIRST_KANGER	3	org.kanger.Linker.rotateVariables:640
+CPU_FIRST_KANGER	3	org.kanger.stores.HypothesisStore.equalsBase:147
+CPU_FIRST_KANGER	3	org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:598
+CPU_FIRST_KANGER	3	org.kanger.units.Domain.getOverlaps:330
+CPU_FIRST_KANGER	3	org.kanger.factory.TValueFactory.forEach:484
+CPU_FIRST_KANGER	3	org.kanger.Linker.linkDomains:743
+CPU_FIRST_KANGER	3	org.kanger.Linker.linkDatabase:1053
+CPU_FIRST_KANGER	2	org.kanger.primitives.Solve.<init>:62
+CPU_FIRST_KANGER	2	org.kanger.primitives.TVariableSet.<init>:46
+CPU_FIRST_KANGER	2	org.kanger.units.CachedDomain.guardedWeights:193
+CPU_FIRST_KANGER	2	org.kanger.Linker.linkDatabase:1033
+CPU_FIRST_KANGER	2	org.kanger.Linker.calcFunctions:1261
+CPU_FIRST_KANGER	2	org.kanger.SemanticEffectTelemetry.recordCause:134
+CPU_FIRST_KANGER	2	org.kanger.units.Domain.setCauses:233
+CPU_FIRST_KANGER	2	org.kanger.units.Domain.getSolves:263
+CPU_FIRST_KANGER	2	org.kanger.units.TVariable.compareTo:366
+CPU_FIRST_KANGER	2	org.kanger.Linker.markExcluded:919
+CPU_FIRST_KANGER	2	org.kanger.units.Domain.execSystem:485
+CPU_FIRST_KANGER	2	org.kanger.storage.Escalera.findCandidates:437
+CPU_FIRST_KANGER	2	org.kanger.storage.Escalera.findCandidates:432
+CPU_FIRST_KANGER	2	org.kanger.Linker.selectDomainCandidates:401
+CPU_FIRST_KANGER	2	org.kanger.Linker.selectDomainCandidates:400
+CPU_FIRST_KANGER	2	org.kanger.primitives.ArgumentsList.equalsBase:185
+CPU_FIRST_KANGER	2	org.kanger.Linker.markExcluded:952
+CPU_FIRST_KANGER	2	org.kanger.units.Domain.setUsed:370
+CPU_FIRST_KANGER	2	org.kanger.units.CachedDomain.supportedArguments:227
+CPU_FIRST_KANGER	2	org.kanger.units.TSolve.<init>:56
+CPU_FIRST_KANGER	2	org.kanger.units.Domain.setExcluded:394
+CPU_FIRST_KANGER	2	org.kanger.factory.RuleFactory.collectResolvedCandidateIds:487
+CPU_FIRST_KANGER	2	org.kanger.units.Term.getParent:741
+CPU_FIRST_KANGER	2	org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:585
+CPU_FIRST_KANGER	2	org.kanger.units.Domain.toString:281
+CPU_FIRST_KANGER	2	org.kanger.primitives.Solve.getHash:255
+CPU_FIRST_KANGER	2	org.kanger.storage.Escalera.get:274
+CPU_FIRST_KANGER	2	org.kanger.units.Domain.getOverlaps:328
+CPU_FIRST_KANGER	2	org.kanger.Linker.link:539
+CPU_FIRST_KANGER	2	org.kanger.Linker$4.run:651
+CPU_FIRST_KANGER	2	org.kanger.Linker.linkDomains:744
+CPU_FIRST_KANGER	2	org.kanger.storage.Escalera.indexStep:191
+CPU_FIRST_KANGER	1	org.kanger.storage.Escalera.ensureIndex:234
+CPU_FIRST_KANGER	1	org.kanger.units.CachedDomain.getCauses:152
+CPU_FIRST_KANGER	1	org.kanger.factory.TValueFactory.collectIds:256
+CPU_FIRST_KANGER	1	org.kanger.primitives.ArgumentsList.getStamp:358
+CPU_FIRST_KANGER	1	org.kanger.primitives.TVariableSet.<init>:45
+CPU_FIRST_KANGER	1	org.kanger.Mind.getCVarChild:1070
+CPU_FIRST_KANGER	1	org.kanger.Linker.linkDatabase:1152
+CPU_FIRST_KANGER	1	org.kanger.Linker.selectDomainCandidates:396
+CPU_FIRST_KANGER	1	org.kanger.Linker.checkSystem:1332
+CPU_FIRST_KANGER	1	org.kanger.units.Domain.calcVarOrders:699
+CPU_FIRST_KANGER	1	org.kanger.Linker.checkSystem:1309
+CPU_FIRST_KANGER	1	org.kanger.units.Domain.setSolves:256
+CPU_FIRST_KANGER	1	org.kanger.Linker.checkSystem:1305
+CPU_FIRST_KANGER	1	org.kanger.units.Domain.isCalculated:422
+CPU_FIRST_KANGER	1	org.kanger.Linker.access$1:377
+CPU_FIRST_KANGER	1	org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:621
+CPU_FIRST_KANGER	1	org.kanger.units.CachedDomain.getCauses:91
+CPU_FIRST_KANGER	1	org.kanger.Linker.synchronizeSolveIndexReference:295
+CPU_FIRST_KANGER	1	org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:617
+CPU_FIRST_KANGER	1	org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:632
+CPU_FIRST_KANGER	1	org.kanger.Linker.markExcluded:928
+CPU_FIRST_KANGER	1	org.kanger.Linker.updateDatabase:1197
+CPU_FIRST_KANGER	1	org.kanger.Linker.linkDatabase:1122
+CPU_FIRST_KANGER	1	org.kanger.factory.TVariableFactory.createTVar:159
+CPU_FIRST_KANGER	1	org.kanger.Linker.linkDatabase:1004
+CPU_FIRST_KANGER	1	org.kanger.units.CachedDomain.getCauses:101
+CPU_FIRST_KANGER	1	org.kanger.Linker.markExcluded:939
+CPU_FIRST_KANGER	1	org.kanger.Linker.synchronizeSolveIndex:265
+CPU_FIRST_KANGER	1	org.kanger.primitives.ArgumentsList.equalsBase:186
+CPU_FIRST_KANGER	1	org.kanger.Linker.markExcluded:940
+CPU_FIRST_KANGER	1	org.kanger.primitives.ArgumentsList.equalsBase:183
+CPU_FIRST_KANGER	1	org.kanger.Linker.markExcluded:950
+CPU_FIRST_KANGER	1	org.kanger.stores.LogStore.add:109
+CPU_FIRST_KANGER	1	org.kanger.SemanticEffectTelemetry.solveKey:213
+CPU_FIRST_KANGER	1	org.kanger.SemanticEffectTelemetry.solveKey:218
+CPU_FIRST_KANGER	1	org.kanger.units.Operation.<init>:47
+CPU_FIRST_KANGER	1	org.kanger.stores.LogStore.add:112
+CPU_FIRST_KANGER	1	org.kanger.stores.LogStore.add:113
+CPU_FIRST_KANGER	1	org.kanger.Linker.addOppositeNatives:416
+CPU_FIRST_KANGER	1	org.kanger.Linker.addOppositeNatives:418
+CPU_FIRST_KANGER	1	org.kanger.units.Domain.setExcluded:391
+CPU_FIRST_KANGER	1	org.kanger.factory.RuleFactory.indexRuleLocked:306
+CPU_FIRST_KANGER	1	org.kanger.units.TVariable.getFloodCounter:467
+CPU_FIRST_KANGER	1	org.kanger.Linker.linkDomains:773
+CPU_FIRST_KANGER	1	org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:563
+CPU_FIRST_KANGER	1	org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:561
+CPU_FIRST_KANGER	1	org.kanger.Linker.link:546
+CPU_FIRST_KANGER	1	org.kanger.enums.Tools.parseDate:132
+CPU_FIRST_KANGER	1	org.kanger.primitives.ArgumentsList.hashCode:104
+CPU_FIRST_KANGER	1	org.kanger.Linker.linkDomains:896
+CPU_FIRST_KANGER	1	org.kanger.Linker.linkDomains:774
+CPU_FIRST_KANGER	1	org.kanger.Linker.linkDomains:776
+CPU_FIRST_KANGER	1	org.kanger.primitives.Solve.equals:207
+CPU_FIRST_KANGER	1	org.kanger.units.Term.equalsTo:531
+CPU_FIRST_KANGER	1	org.kanger.Linker.updateDatabase:1229
+CPU_FIRST_KANGER	1	org.kanger.stores.HypothesisStore.equalsBase:146
+CPU_FIRST_KANGER	1	org.kanger.units.Rule.equalsTo:413
+CPU_FIRST_KANGER	1	org.kanger.storage.Escalera.get:280
+CPU_FIRST_KANGER	1	org.kanger.units.CachedDomain.getCauses:80
+CPU_FIRST_KANGER	1	org.kanger.calculator.Functions$1.<init>:717
+CPU_FIRST_KANGER	1	org.kanger.units.Rule.isUsed:196
+CPU_FIRST_KANGER	1	org.kanger.primitives.Argument.getValue:147
+CPU_FIRST_KANGER	1	org.kanger.storage.Escalera.get:273
+CPU_FIRST_KANGER	1	org.kanger.calculator.Calculator.execute:170
+CPU_FIRST_KANGER	1	org.kanger.units.Domain.isStored:460
+CPU_FIRST_KANGER	1	org.kanger.units.CachedDomain.guardedWeights:181
+CPU_FIRST_KANGER	1	org.kanger.Linker.linkDatabase:1065
+CPU_FIRST_KANGER	1	org.kanger.Linker.checkSystem:1344
+CPU_FIRST_KANGER	1	org.kanger.Linker.checkSystem:1345
+CPU_FIRST_KANGER	1	org.kanger.units.Domain.getOverlaps:327
+CPU_FIRST_KANGER	1	org.kanger.Linker.linkDomains:863
+CPU_FIRST_KANGER	1	org.kanger.Linker.linkDomains:741
+CPU_FIRST_KANGER	1	org.kanger.units.Rule.equalsTo:441
+CPU_FIRST_KANGER	1	org.kanger.storage.Escalera.indexStep:199
+CPU_FIRST_KANGER	1	org.kanger.storage.Escalera.indexStep:192
+CPU_FIRST_KANGER	1	org.kanger.Linker.linkDomains:753
+CPU_INCLUSIVE	2093	org.kanger.WarmProfileRunner.main
+CPU_INCLUSIVE	2093	org.kanger.Mind.optimizeHypothesis
+CPU_INCLUSIVE	2093	org.kanger.stores.HypothesisStore.optimize
+CPU_INCLUSIVE	1999	org.kanger.Mind.link
+CPU_INCLUSIVE	1999	org.kanger.Linker.link
+CPU_INCLUSIVE	1961	org.kanger.Linker.rotator
+CPU_INCLUSIVE	1851	org.kanger.Linker.rotateVariables
+CPU_INCLUSIVE	1672	org.kanger.Linker$3.run
+CPU_INCLUSIVE	1449	org.kanger.Mind.query
+CPU_INCLUSIVE	1208	org.kanger.factory.TValueFactory.forEach
+CPU_INCLUSIVE	1194	org.kanger.Linker$4.run
+CPU_INCLUSIVE	1190	org.kanger.Linker.access$5
+CPU_INCLUSIVE	1036	org.kanger.Linker.linkDatabase
+CPU_INCLUSIVE	1036	org.kanger.Linker.access$3
+CPU_INCLUSIVE	1012	org.kanger.Mind.queryCheckFalse
+CPU_INCLUSIVE	437	org.kanger.Mind.queryCheckTrue
+CPU_INCLUSIVE	374	org.kanger.Mind.isUnitDeleted
+CPU_INCLUSIVE	363	org.kanger.Linker.linkDomains
+CPU_INCLUSIVE	363	org.kanger.Linker.access$2
+CPU_INCLUSIVE	351	org.kanger.primitives.ArgumentsList.getTVariables
+CPU_INCLUSIVE	333	org.kanger.storage.Step.getData
+CPU_INCLUSIVE	320	org.kanger.units.TVariable.isDeleted
+CPU_INCLUSIVE	320	org.kanger.primitives.Argument.isDeleted
+CPU_INCLUSIVE	271	org.kanger.units.Rule.setMind
+CPU_INCLUSIVE	270	org.kanger.factory.RuleFactory.get
+CPU_INCLUSIVE	268	org.kanger.storage.Escalera.get
+CPU_INCLUSIVE	267	org.kanger.units.CachedDomain.setMind
+CPU_INCLUSIVE	267	org.kanger.units.Domain.setMind
+CPU_INCLUSIVE	263	org.kanger.Linker.access$1
+CPU_INCLUSIVE	262	org.kanger.Linker.selectDomainCandidates
+CPU_INCLUSIVE	249	org.kanger.factory.RuleFactory.getRaw
+CPU_INCLUSIVE	248	org.kanger.factory.RuleFactory.findByResolvedDomain
+CPU_INCLUSIVE	245	org.kanger.units.Domain.isStored
+CPU_INCLUSIVE	239	org.kanger.Linker.checkSystem
+CPU_INCLUSIVE	225	org.kanger.factory.RuleFactory.find
+CPU_INCLUSIVE	193	org.kanger.units.Domain.isCalculated
+CPU_INCLUSIVE	193	org.kanger.units.Domain.isExcluded
+CPU_INCLUSIVE	192	org.kanger.primitives.ArgumentsList.equalsStamp
+CPU_INCLUSIVE	190	org.kanger.primitives.ArgumentsList.getStamp
+CPU_INCLUSIVE	173	org.kanger.units.Predicate.getName
+CPU_INCLUSIVE	165	org.kanger.units.TVariable.activeMind
+CPU_INCLUSIVE	164	org.kanger.primitives.ArgumentsList.equalsBase
+CPU_INCLUSIVE	157	org.kanger.primitives.Argument.getValue
+CPU_INCLUSIVE	143	org.kanger.units.Predicate.isSystem
+CPU_INCLUSIVE	143	org.kanger.units.Domain.isSystem
+CPU_INCLUSIVE	127	org.kanger.Linker.access$4
+CPU_INCLUSIVE	127	org.kanger.Linker.isValidFor
+CPU_INCLUSIVE	120	org.kanger.factory.TValueFactory.get
+CPU_INCLUSIVE	117	org.kanger.units.TVariable.getValue
+CPU_INCLUSIVE	107	org.kanger.primitives.Argument.residentBaseTerm
+CPU_INCLUSIVE	101	org.kanger.primitives.Argument.isEmpty
+CPU_INCLUSIVE	97	org.kanger.factory.TValueFactory.isEmpty
+CPU_INCLUSIVE	94	org.kanger.storage.Escalera.findCandidates
+CPU_INCLUSIVE	92	org.kanger.factory.RuleFactory.collectResolvedCandidateIds
+CPU_INCLUSIVE	88	org.kanger.Linker.updateDatabase
+CPU_INCLUSIVE	87	org.kanger.units.Domain.isUsed
+CPU_INCLUSIVE	85	org.kanger.factory.RuleCandidateIndex.collectResolvedLocal
+CPU_INCLUSIVE	84	org.kanger.Mind.addTSolve
+CPU_INCLUSIVE	80	org.kanger.units.TVariable.getMind
+CPU_INCLUSIVE	79	org.kanger.Mind.findTSolve
+CPU_INCLUSIVE	79	org.kanger.units.Domain.setUsed
+CPU_INCLUSIVE	73	org.kanger.factory.RuleFactory$1.next
+CPU_INCLUSIVE	72	org.kanger.Linker.markExcluded
+CPU_INCLUSIVE	72	org.kanger.factory.RuleFactory.findByDomain
+CPU_INCLUSIVE	69	org.kanger.factory.RuleFactory.add
+CPU_INCLUSIVE	69	org.kanger.storage.Escalera$WalkIterator.next
+CPU_INCLUSIVE	66	org.kanger.primitives.TVariableSet.hashCode
+CPU_INCLUSIVE	64	org.kanger.Mind.analyze
+CPU_INCLUSIVE	64	org.kanger.Analyzer.analyze
+CPU_INCLUSIVE	64	org.kanger.units.Domain.createStored
+CPU_INCLUSIVE	62	org.kanger.units.Domain.setCalculated
+CPU_INCLUSIVE	61	org.kanger.primitives.ArgumentsList.getHash
+CPU_INCLUSIVE	61	org.kanger.primitives.Solve.getHash
+CPU_INCLUSIVE	57	org.kanger.Analyzer.checkDatabase
+CPU_INCLUSIVE	55	org.kanger.Analyzer.checkRight
+CPU_INCLUSIVE	52	org.kanger.units.Domain.isComplete
+CPU_INCLUSIVE	52	org.kanger.GeneratedCVarMaterializer.findAlphaEquivalent
+CPU_INCLUSIVE	50	org.kanger.units.Rule.isDeleted
+CPU_INCLUSIVE	50	org.kanger.Analyzer.candidatesFor
+CPU_INCLUSIVE	40	org.kanger.units.CachedDomain.setCauses
+CPU_INCLUSIVE	40	org.kanger.units.Domain.setCauses
+CPU_INCLUSIVE	36	org.kanger.units.TSolve.equalsTo
+CPU_INCLUSIVE	36	org.kanger.factory.TValueFactory.find
+CPU_INCLUSIVE	35	org.kanger.units.TVariable.getCurrent
+CPU_INCLUSIVE	35	org.kanger.units.TVariable.setMind
+CPU_INCLUSIVE	34	org.kanger.units.Rule.equalsTo
+CPU_INCLUSIVE	33	org.kanger.units.Domain.setExcluded
+CPU_INCLUSIVE	30	org.kanger.factory.TValueFactory.release
+CPU_INCLUSIVE	29	org.kanger.units.Predicate.toString
+CPU_INCLUSIVE	27	org.kanger.factory.RuleFactory.effectiveView
+CPU_INCLUSIVE	27	org.kanger.factory.RuleFactory.isPromoted
+CPU_INCLUSIVE	27	org.kanger.primitives.TVariableSet.equals
+CPU_INCLUSIVE	26	org.kanger.units.TVariable.isEmpty
+CPU_INCLUSIVE	26	org.kanger.factory.TValueFactory.collectIds
+CPU_INCLUSIVE	25	org.kanger.units.Domain.getOverlaps
+CPU_INCLUSIVE	24	org.kanger.Linker.addOppositeNatives
+CPU_INCLUSIVE	22	org.kanger.Linker.getSolveCandidates
+CPU_INCLUSIVE	17	org.kanger.factory.RuleCandidateIndex.computeBatchSummary
+CPU_INCLUSIVE	16	org.kanger.units.CachedDomain.getCauses
+CPU_INCLUSIVE	16	org.kanger.Mind.compileLine
+CPU_INCLUSIVE	15	org.kanger.factory.FValueFactory.release
+CPU_INCLUSIVE	14	org.kanger.primitives.ArgumentsList.convertBase
+CPU_INCLUSIVE	13	org.kanger.storage.Escalera.release
+CPU_INCLUSIVE	12	org.kanger.storage.Escalera.mark
+CPU_INCLUSIVE	12	org.kanger.units.TSolve.containsTVar
+CPU_INCLUSIVE	12	org.kanger.primitives.Solve.equals
+CPU_INCLUSIVE	12	org.kanger.primitives.Cause.equals
+CPU_INCLUSIVE	12	org.kanger.factory.FValueFactory.mark
+CPU_INCLUSIVE	11	org.kanger.Mind.finalizeTransactionRootLocked
+CPU_INCLUSIVE	11	org.kanger.Mind.pack
+CPU_INCLUSIVE	11	org.kanger.Mind.finishTransactionLocked
+CPU_INCLUSIVE	11	org.kanger.Mind.release
+CPU_INCLUSIVE	11	org.kanger.stores.HypothesisStore.find
+CPU_INCLUSIVE	10	org.kanger.factory.RuleFactory.collectDomainIds
+CPU_INCLUSIVE	10	org.kanger.units.Domain.execSystem
+CPU_INCLUSIVE	10	org.kanger.factory.RuleCandidateIndex.markCachedBatchUsed
+CPU_INCLUSIVE	10	org.kanger.Linker.calcFunctions
+CPU_INCLUSIVE	9	org.kanger.factory.TValueFactory.mark
+CPU_INCLUSIVE	9	org.kanger.storage.Escalera.ensureIndex
+CPU_INCLUSIVE	8	org.kanger.storage.Escalera.indexStep
+CPU_INCLUSIVE	8	org.kanger.primitives.ArgumentsList.getFunctions
+CPU_INCLUSIVE	8	org.kanger.primitives.Cause.<init>
+CPU_INCLUSIVE	7	org.kanger.units.Rule.setUsed
+CPU_INCLUSIVE	7	org.kanger.compiler.Compiller.compileLine
+CPU_INCLUSIVE	6	org.kanger.units.Term.<init>
+CPU_INCLUSIVE	6	org.kanger.units.Domain.setProduced
+CPU_INCLUSIVE	6	org.kanger.units.Term.getParentId
+CPU_INCLUSIVE	6	org.kanger.factory.RuleCandidateIndex$IdIndex.get
+CPU_INCLUSIVE	6	org.kanger.units.Term.getParent
+CPU_INCLUSIVE	6	org.kanger.enums.Tools.parseDate
+CPU_INCLUSIVE	6	org.kanger.factory.DictionaryFactory.add
+CPU_INCLUSIVE	6	org.kanger.units.CachedDomain.guardedWeights
+CPU_INCLUSIVE	6	org.kanger.factory.DomainFactory.add
+CPU_INCLUSIVE	6	org.kanger.Linker.synchronizeSolveIndex
+CPU_INCLUSIVE	6	org.kanger.factory.RuleFactory.access$1
+CPU_INCLUSIVE	6	org.kanger.factory.RuleCandidateIndex.batchGeneratedNonSubstitutablePair
+CPU_INCLUSIVE	6	org.kanger.units.Term.construct
+CPU_INCLUSIVE	5	org.kanger.SemanticEffectTelemetry.recordDeferredContribution
+CPU_INCLUSIVE	5	org.kanger.factory.TValueFactory.add
+CPU_INCLUSIVE	5	org.kanger.units.Domain.isProduced
+CPU_INCLUSIVE	5	org.kanger.storage.Escalera.find
+CPU_INCLUSIVE	5	org.kanger.units.TSolve.containsTValue
+CPU_INCLUSIVE	5	org.kanger.factory.DictionaryFactory.find
+CPU_INCLUSIVE	5	org.kanger.Linker$DomainKey.equals
+CPU_INCLUSIVE	5	org.kanger.primitives.Cause.hashCode
+CPU_INCLUSIVE	5	org.kanger.primitives.Solve.hashCode
+CPU_INCLUSIVE	5	org.kanger.factory.DomainFactory.find
+CPU_INCLUSIVE	4	org.kanger.calculator.Calculator.execute
+CPU_INCLUSIVE	4	org.kanger.storage.Escalera.commit
+CPU_INCLUSIVE	4	org.kanger.stores.HypothesisStore.equalsBase
+CPU_INCLUSIVE	4	org.kanger.factory.TValueFactory.pack
+CPU_INCLUSIVE	4	org.kanger.LinkerStatistics.incrementUnificationAttempts
+CPU_INCLUSIVE	4	org.kanger.factory.RuleFactory.collectTermIds
+CPU_INCLUSIVE	4	org.kanger.primitives.ArgumentsList.applyStamp
+CPU_INCLUSIVE	4	org.kanger.factory.RuleFactory.containsPromotion
+CPU_INCLUSIVE	4	org.kanger.stores.LogStore.add
+CPU_INCLUSIVE	4	org.kanger.QueryTaintSolve.beginOperation
+CPU_INCLUSIVE	4	org.kanger.factory.RuleCandidateIndex$SignatureKey.equals
+CPU_INCLUSIVE	4	org.kanger.factory.RuleFactory.hasActiveRuleWithTerm
+CPU_INCLUSIVE	4	org.kanger.QueryTaintSolve.recordDeferredContribution
+CPU_INCLUSIVE	4	org.kanger.Mind.executeSystem
+CPU_INCLUSIVE	4	org.kanger.Linker.buildDomainIndex
+CPU_INCLUSIVE	3	org.kanger.units.TSolve.size
+CPU_INCLUSIVE	3	org.kanger.units.Domain.get
+CPU_INCLUSIVE	3	org.kanger.TechnicalMindTransaction.commit
+CPU_INCLUSIVE	3	org.kanger.factory.PredicateFactory.pack
+CPU_INCLUSIVE	3	org.kanger.factory.TValueFactory.set
+CPU_INCLUSIVE	3	org.kanger.units.TVariable.setValue
+CPU_INCLUSIVE	3	org.kanger.Mind.commit
+CPU_INCLUSIVE	3	org.kanger.units.TVariable.setCurrent
+CPU_INCLUSIVE	3	org.kanger.units.TValue.setDeleted
+CPU_INCLUSIVE	3	org.kanger.primitives.TVariableSet.<init>
+CPU_INCLUSIVE	3	org.kanger.Mind.setUnitDeleted
+CPU_INCLUSIVE	3	org.kanger.PortableMindLayer.capture
+CPU_INCLUSIVE	3	org.kanger.SemanticEffectTelemetry.recordTSolveCandidate
+CPU_INCLUSIVE	3	org.kanger.primitives.Hypothesis.<init>
+CPU_INCLUSIVE	2	org.kanger.calculator.Functions.<init>
+CPU_INCLUSIVE	2	org.kanger.calculator.Functions$1.<init>
+CPU_INCLUSIVE	2	org.kanger.factory.DomainFactory.pack
+CPU_INCLUSIVE	2	org.kanger.TechnicalMindTransaction.<init>
+CPU_INCLUSIVE	2	org.kanger.SemanticEffectTelemetry.solveKey
+CPU_INCLUSIVE	2	org.kanger.Mind.<init>
+CPU_INCLUSIVE	2	org.kanger.factory.TValueFactory.commit
+CPU_INCLUSIVE	2	org.kanger.primitives.Solve.<init>
+CPU_INCLUSIVE	2	org.kanger.TechnicalMindTransaction.begin
+CPU_INCLUSIVE	2	org.kanger.primitives.ArgumentsList.hashCode
+CPU_INCLUSIVE	2	org.kanger.factory.FValueFactory.commit
+CPU_INCLUSIVE	2	org.kanger.units.CachedDomain.supportedArguments
+CPU_INCLUSIVE	2	org.kanger.calculator.Predicates$1$2.run
+CPU_INCLUSIVE	2	org.kanger.units.TVariable.compareTo
+CPU_INCLUSIVE	2	org.kanger.Mind.init
+CPU_INCLUSIVE	2	org.kanger.units.TSolve.<init>
+CPU_INCLUSIVE	2	org.kanger.SemanticEffectTelemetry.recordCause
+CPU_INCLUSIVE	2	org.kanger.units.Domain.toString
+CPU_INCLUSIVE	2	org.kanger.calculator.Calculator.<init>
+CPU_INCLUSIVE	2	org.kanger.units.Domain.getSolves
+CPU_INCLUSIVE	2	org.kanger.stores.HypothesisStore.add
+CPU_INCLUSIVE	2	org.kanger.factory.RuleCandidateIndex$BatchKey.equals
+CPU_INCLUSIVE	1	org.kanger.factory.RuleFactory.indexRuleLocked
+CPU_INCLUSIVE	1	org.kanger.compiler.Compiller.compileQuainter
+CPU_INCLUSIVE	1	org.kanger.units.Domain.calcVarOrders
+CPU_INCLUSIVE	1	org.kanger.units.CachedDomain.resolvedPrimitiveIds
+CPU_INCLUSIVE	1	org.kanger.factory.DictionaryFactory.pack
+CPU_INCLUSIVE	1	org.kanger.units.Domain.getHashBase
+CPU_INCLUSIVE	1	org.kanger.storage.Escalera.add
+CPU_INCLUSIVE	1	org.kanger.primitives.ArgumentsList.equals
+CPU_INCLUSIVE	1	org.kanger.SemanticEffectTelemetry.recordTSolve
+CPU_INCLUSIVE	1	org.kanger.Linker.synchronizeSolveIndexReference
+CPU_INCLUSIVE	1	org.kanger.units.Domain.setSolves
+CPU_INCLUSIVE	1	org.kanger.units.Domain.getVarOrder
+CPU_INCLUSIVE	1	org.kanger.compiler.Compiller.construct
+CPU_INCLUSIVE	1	org.kanger.units.Domain.getHashStruct
+CPU_INCLUSIVE	1	org.kanger.units.Term.equalsTo
+CPU_INCLUSIVE	1	org.kanger.factory.RuleCandidateIndex.collectLocal
+CPU_INCLUSIVE	1	org.kanger.units.Operation.<init>
+CPU_INCLUSIVE	1	org.kanger.units.Domain.isDeleted
+CPU_INCLUSIVE	1	org.kanger.Mind.getCVarChild
+CPU_INCLUSIVE	1	org.kanger.factory.RuleFactory.pack
+CPU_INCLUSIVE	1	org.kanger.units.Domain.getHash
+CPU_INCLUSIVE	1	org.kanger.units.Rule.getHash
+CPU_INCLUSIVE	1	org.kanger.factory.RuleFactory.collectCandidateIds
+CPU_INCLUSIVE	1	org.kanger.factory.RuleCandidateIndex.resolvedTermId
+CPU_INCLUSIVE	1	org.kanger.factory.RuleFactory.indexRule
+CPU_INCLUSIVE	1	org.kanger.factory.DictionaryFactory.createCVar
+CPU_INCLUSIVE	1	org.kanger.units.Term.getChild
+CPU_INCLUSIVE	1	org.kanger.units.Rule.isUsed
+CPU_INCLUSIVE	1	org.kanger.factory.TVariableFactory.createTVar
+CPU_INCLUSIVE	1	org.kanger.Mind.formatTree
+CPU_INCLUSIVE	1	org.kanger.GeneratedCVarMaterializer.alphaEquivalent
+CPU_INCLUSIVE	1	org.kanger.units.TVariable.getFloodCounter
+CPU_PATH	14	org.kanger.primitives.TVariableSet.hashCode:59 <- org.kanger.Linker.isValidFor:699 <- org.kanger.Linker.access$4:690 <- org.kanger.Linker$4.run:650 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	13	org.kanger.units.Predicate.getName:136 <- org.kanger.units.Predicate.isSystem:332 <- org.kanger.units.Domain.isSystem:481 <- org.kanger.Linker.linkDatabase:1048 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	13	org.kanger.units.Predicate.getName:136 <- org.kanger.units.Predicate.isSystem:332 <- org.kanger.units.Domain.isSystem:481 <- org.kanger.Linker.linkDatabase:1048 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	13	org.kanger.units.Predicate.getName:136 <- org.kanger.units.Predicate.isSystem:332 <- org.kanger.units.Domain.isSystem:481 <- org.kanger.Linker.checkSystem:1306 <- org.kanger.Linker.linkDatabase:1004 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.stores.HypothesisStore.optimize:216 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	10	org.kanger.units.Domain.isExcluded:376 <- org.kanger.units.Domain.isExcluded:386 <- org.kanger.Linker.linkDatabase:1052 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	9	org.kanger.units.Predicate.getName:136 <- org.kanger.units.Predicate.isSystem:332 <- org.kanger.units.Domain.isSystem:481 <- org.kanger.Linker.checkSystem:1306 <- org.kanger.Linker.linkDatabase:1004 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	9	org.kanger.units.Predicate.getName:136 <- org.kanger.units.Predicate.isSystem:332 <- org.kanger.units.Domain.isSystem:481 <- org.kanger.Linker.linkDatabase:1048 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.stores.HypothesisStore.optimize:216 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	9	org.kanger.Mind.isUnitDeleted:1900 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:261 <- org.kanger.primitives.ArgumentsList.getStamp:354 <- org.kanger.primitives.ArgumentsList.equalsStamp:365 <- org.kanger.units.Domain.isCalculated:428 <- org.kanger.units.Domain.isCalculated:422 <- org.kanger.Linker.linkDatabase:1046 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	8	org.kanger.units.TSolve.equalsTo:171 <- org.kanger.Mind.findTSolve:1787 <- org.kanger.Mind.addTSolve:1796 <- org.kanger.Linker.linkDomains:904 <- org.kanger.Linker.access$2:734 <- org.kanger.Linker$3.run:604 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	8	org.kanger.Mind.isUnitDeleted:1904 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:260 <- org.kanger.units.Domain.setMind:563 <- org.kanger.units.CachedDomain.setMind:264 <- org.kanger.units.CachedDomain.setMind:1 <- org.kanger.units.Rule.setMind:390 <- org.kanger.units.Rule.setMind:1 <- org.kanger.storage.Step.getData:57 <- org.kanger.storage.Escalera.get:280 <- org.kanger.factory.RuleFactory.getRaw:664 <- org.kanger.factory.RuleFactory.get:675 <- org.kanger.factory.RuleFactory.findByResolvedDomain:503 <- org.kanger.Linker.selectDomainCandidates:389 <- org.kanger.Linker.access$1:377 <- org.kanger.Linker$3.run:604 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	8	org.kanger.units.Predicate.getName:136 <- org.kanger.units.Predicate.isSystem:332 <- org.kanger.units.Domain.isSystem:481 <- org.kanger.Linker.linkDatabase:1048 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.stores.HypothesisStore.optimize:216 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	8	org.kanger.units.Predicate.getName:136 <- org.kanger.units.Predicate.isSystem:332 <- org.kanger.units.Domain.isSystem:481 <- org.kanger.Linker.checkSystem:1306 <- org.kanger.Linker.linkDatabase:1004 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckTrue:1565 <- org.kanger.Mind.query:1674 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	8	org.kanger.units.Domain.isExcluded:376 <- org.kanger.units.Domain.isExcluded:386 <- org.kanger.Linker.linkDatabase:1052 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.stores.HypothesisStore.optimize:216 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	8	org.kanger.Mind.isUnitDeleted:1900 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:261 <- org.kanger.primitives.ArgumentsList.getStamp:354 <- org.kanger.primitives.ArgumentsList.equalsStamp:365 <- org.kanger.units.Domain.isCalculated:428 <- org.kanger.units.Domain.isCalculated:422 <- org.kanger.Linker.checkSystem:1345 <- org.kanger.Linker.linkDatabase:1004 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	7	org.kanger.units.Domain.isExcluded:376 <- org.kanger.units.Domain.isExcluded:386 <- org.kanger.Linker.linkDatabase:1052 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	7	org.kanger.units.Predicate.getName:136 <- org.kanger.units.Predicate.isSystem:332 <- org.kanger.units.Domain.isSystem:481 <- org.kanger.Linker.checkSystem:1306 <- org.kanger.Linker.linkDatabase:1004 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	7	org.kanger.Mind.isUnitDeleted:1900 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:261 <- org.kanger.primitives.ArgumentsList.getStamp:354 <- org.kanger.primitives.ArgumentsList.equalsStamp:365 <- org.kanger.units.Domain.isCalculated:428 <- org.kanger.units.Domain.isCalculated:422 <- org.kanger.units.Domain.setCalculated:451 <- org.kanger.Linker.checkSystem:1325 <- org.kanger.Linker.linkDatabase:1004 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	7	org.kanger.units.Predicate.getName:136 <- org.kanger.units.Predicate.isSystem:332 <- org.kanger.units.Domain.isSystem:481 <- org.kanger.Linker.checkSystem:1306 <- org.kanger.Linker.linkDatabase:1004 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.stores.HypothesisStore.optimize:216 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	7	org.kanger.units.Domain.isExcluded:376 <- org.kanger.units.Domain.isExcluded:386 <- org.kanger.Linker.linkDatabase:1052 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.stores.HypothesisStore.optimize:216 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	7	org.kanger.factory.TValueFactory.isEmpty:337 <- org.kanger.factory.TValueFactory.get:330 <- org.kanger.primitives.Argument.residentBaseTerm:141 <- org.kanger.primitives.ArgumentsList.equalsBase:173 <- org.kanger.units.Domain.isExcluded:377 <- org.kanger.units.Domain.isExcluded:386 <- org.kanger.Linker.linkDatabase:1052 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	6	org.kanger.units.TVariable.activeMind:117 <- org.kanger.units.TVariable.getMind:316 <- org.kanger.primitives.Argument.residentBaseTerm:138 <- org.kanger.primitives.ArgumentsList.equalsBase:173 <- org.kanger.units.Domain.isExcluded:377 <- org.kanger.units.Domain.isExcluded:386 <- org.kanger.Linker.linkDatabase:1052 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	6	org.kanger.Mind.isUnitDeleted:1903 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:261 <- org.kanger.units.Domain.setMind:563 <- org.kanger.units.CachedDomain.setMind:264 <- org.kanger.units.CachedDomain.setMind:1 <- org.kanger.units.Rule.setMind:390 <- org.kanger.units.Rule.setMind:1 <- org.kanger.storage.Step.getData:57 <- org.kanger.storage.Escalera.get:280 <- org.kanger.factory.RuleFactory.getRaw:664 <- org.kanger.factory.RuleFactory.get:675 <- org.kanger.factory.RuleFactory.findByResolvedDomain:503 <- org.kanger.Linker.selectDomainCandidates:389 <- org.kanger.Linker.access$1:377 <- org.kanger.Linker$3.run:604 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	6	org.kanger.Mind.isUnitDeleted:1900 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:260 <- org.kanger.units.Domain.setMind:563 <- org.kanger.units.CachedDomain.setMind:264 <- org.kanger.units.CachedDomain.setMind:1 <- org.kanger.units.Rule.setMind:390 <- org.kanger.units.Rule.setMind:1 <- org.kanger.storage.Step.getData:57 <- org.kanger.storage.Escalera.get:280 <- org.kanger.factory.RuleFactory.getRaw:664 <- org.kanger.factory.RuleFactory.get:675 <- org.kanger.factory.RuleFactory.findByResolvedDomain:503 <- org.kanger.Linker.selectDomainCandidates:389 <- org.kanger.Linker.access$1:377 <- org.kanger.Linker$3.run:604 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	6	org.kanger.Mind.isUnitDeleted:1900 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:260 <- org.kanger.primitives.ArgumentsList.getStamp:354 <- org.kanger.primitives.ArgumentsList.equalsStamp:365 <- org.kanger.units.Domain.isCalculated:428 <- org.kanger.units.Domain.isCalculated:422 <- org.kanger.Linker.checkSystem:1345 <- org.kanger.Linker.linkDatabase:1004 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	6	org.kanger.storage.Escalera.findCandidates:433 <- org.kanger.factory.RuleFactory.find:910 <- org.kanger.units.Domain.isStored:460 <- org.kanger.Linker.linkDatabase:1057 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	6	org.kanger.primitives.TVariableSet.hashCode:59 <- org.kanger.Linker.isValidFor:699 <- org.kanger.Linker.access$4:690 <- org.kanger.Linker$4.run:650 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.stores.HypothesisStore.optimize:216 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	6	org.kanger.storage.Escalera.findCandidates:433 <- org.kanger.factory.TValueFactory.find:342 <- org.kanger.Linker.linkDomains:799 <- org.kanger.Linker.access$2:734 <- org.kanger.Linker$3.run:604 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	6	org.kanger.Mind.isUnitDeleted:1904 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:260 <- org.kanger.primitives.ArgumentsList.getStamp:354 <- org.kanger.primitives.ArgumentsList.equalsStamp:365 <- org.kanger.units.Domain.isCalculated:428 <- org.kanger.units.Domain.isCalculated:422 <- org.kanger.units.Domain.setCalculated:451 <- org.kanger.Linker.checkSystem:1325 <- org.kanger.Linker.linkDatabase:1004 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	6	org.kanger.Mind.isUnitDeleted:1900 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:260 <- org.kanger.primitives.ArgumentsList.getStamp:354 <- org.kanger.primitives.ArgumentsList.equalsStamp:365 <- org.kanger.units.Domain.isCalculated:428 <- org.kanger.units.Domain.isCalculated:422 <- org.kanger.Linker.linkDatabase:1046 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	6	org.kanger.Mind.isUnitDeleted:1900 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:261 <- org.kanger.units.Domain.setMind:563 <- org.kanger.units.CachedDomain.setMind:264 <- org.kanger.units.CachedDomain.setMind:1 <- org.kanger.units.Rule.setMind:390 <- org.kanger.units.Rule.setMind:1 <- org.kanger.storage.Step.getData:57 <- org.kanger.storage.Escalera.get:280 <- org.kanger.factory.RuleFactory.getRaw:664 <- org.kanger.factory.RuleFactory.get:675 <- org.kanger.factory.RuleFactory.findByResolvedDomain:503 <- org.kanger.Linker.selectDomainCandidates:389 <- org.kanger.Linker.access$1:377 <- org.kanger.Linker$3.run:604 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckTrue:1565 <- org.kanger.Mind.query:1674 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	6	org.kanger.units.TSolve.equalsTo:171 <- org.kanger.Mind.findTSolve:1787 <- org.kanger.Mind.addTSolve:1796 <- org.kanger.Linker.linkDomains:904 <- org.kanger.Linker.access$2:734 <- org.kanger.Linker$3.run:604 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	6	org.kanger.Mind.isUnitDeleted:1904 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:260 <- org.kanger.primitives.ArgumentsList.getStamp:354 <- org.kanger.primitives.ArgumentsList.equalsStamp:365 <- org.kanger.units.Domain.isCalculated:428 <- org.kanger.units.Domain.isCalculated:422 <- org.kanger.Linker.linkDatabase:1046 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	6	org.kanger.primitives.TVariableSet.hashCode:59 <- org.kanger.Linker.isValidFor:699 <- org.kanger.Linker.access$4:690 <- org.kanger.Linker$4.run:650 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	6	org.kanger.Mind.isUnitDeleted:1904 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:260 <- org.kanger.primitives.ArgumentsList.getStamp:354 <- org.kanger.primitives.ArgumentsList.equalsStamp:365 <- org.kanger.units.Domain.isCalculated:428 <- org.kanger.units.Domain.isCalculated:422 <- org.kanger.units.Domain.setCalculated:451 <- org.kanger.Linker.checkSystem:1325 <- org.kanger.Linker.linkDatabase:1004 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	5	org.kanger.Mind.isUnitDeleted:1904 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:260 <- org.kanger.units.Domain.setMind:563 <- org.kanger.units.CachedDomain.setMind:264 <- org.kanger.units.CachedDomain.setMind:1 <- org.kanger.units.Rule.setMind:390 <- org.kanger.units.Rule.setMind:1 <- org.kanger.storage.Step.getData:57 <- org.kanger.storage.Escalera.get:280 <- org.kanger.factory.RuleFactory.getRaw:664 <- org.kanger.factory.RuleFactory.get:675 <- org.kanger.factory.RuleFactory.findByResolvedDomain:503 <- org.kanger.Linker.selectDomainCandidates:389 <- org.kanger.Linker.access$1:377 <- org.kanger.Linker$3.run:604 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckTrue:1565 <- org.kanger.Mind.query:1674 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	5	org.kanger.units.Domain.setMind:563 <- org.kanger.units.CachedDomain.setMind:264 <- org.kanger.units.CachedDomain.setMind:1 <- org.kanger.units.Rule.setMind:390 <- org.kanger.units.Rule.setMind:1 <- org.kanger.storage.Step.getData:57 <- org.kanger.storage.Escalera.get:280 <- org.kanger.factory.RuleFactory.getRaw:664 <- org.kanger.factory.RuleFactory.get:675 <- org.kanger.factory.RuleFactory.findByResolvedDomain:503 <- org.kanger.Linker.selectDomainCandidates:389 <- org.kanger.Linker.access$1:377 <- org.kanger.Linker$3.run:604 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	5	org.kanger.Mind.isUnitDeleted:1900 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:260 <- org.kanger.units.Domain.setMind:563 <- org.kanger.units.CachedDomain.setMind:264 <- org.kanger.units.CachedDomain.setMind:1 <- org.kanger.units.Rule.setMind:390 <- org.kanger.units.Rule.setMind:1 <- org.kanger.storage.Step.getData:57 <- org.kanger.storage.Escalera.get:280 <- org.kanger.factory.RuleFactory.getRaw:664 <- org.kanger.factory.RuleFactory.get:675 <- org.kanger.factory.RuleFactory.findByResolvedDomain:503 <- org.kanger.Linker.selectDomainCandidates:389 <- org.kanger.Linker.access$1:377 <- org.kanger.Linker$3.run:604 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	5	org.kanger.Mind.isUnitDeleted:1903 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:261 <- org.kanger.primitives.ArgumentsList.getStamp:354 <- org.kanger.primitives.ArgumentsList.equalsStamp:365 <- org.kanger.units.Domain.isCalculated:428 <- org.kanger.units.Domain.isCalculated:422 <- org.kanger.Linker.checkSystem:1345 <- org.kanger.Linker.linkDatabase:1004 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	5	org.kanger.units.TSolve.equalsTo:171 <- org.kanger.Mind.findTSolve:1787 <- org.kanger.Mind.addTSolve:1796 <- org.kanger.Linker.linkDomains:904 <- org.kanger.Linker.access$2:734 <- org.kanger.Linker$3.run:604 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.stores.HypothesisStore.optimize:216 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	5	org.kanger.units.Predicate.getName:136 <- org.kanger.units.Predicate.isSystem:332 <- org.kanger.units.Domain.isSystem:481 <- org.kanger.Linker.checkSystem:1306 <- org.kanger.Linker.linkDatabase:1004 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	5	org.kanger.Mind.isUnitDeleted:1900 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:261 <- org.kanger.units.Domain.setMind:563 <- org.kanger.units.CachedDomain.setMind:264 <- org.kanger.units.CachedDomain.setMind:1 <- org.kanger.units.Rule.setMind:390 <- org.kanger.units.Rule.setMind:1 <- org.kanger.storage.Step.getData:57 <- org.kanger.storage.Escalera.get:280 <- org.kanger.factory.RuleFactory.getRaw:664 <- org.kanger.factory.RuleFactory.get:675 <- org.kanger.factory.RuleFactory.findByResolvedDomain:503 <- org.kanger.Linker.selectDomainCandidates:389 <- org.kanger.Linker.access$1:377 <- org.kanger.Linker$3.run:604 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.stores.HypothesisStore.optimize:216 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	5	org.kanger.Mind.isUnitDeleted:1904 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:260 <- org.kanger.primitives.ArgumentsList.getStamp:354 <- org.kanger.primitives.ArgumentsList.equalsStamp:365 <- org.kanger.units.Domain.isCalculated:428 <- org.kanger.units.Domain.isCalculated:422 <- org.kanger.Linker.checkSystem:1345 <- org.kanger.Linker.linkDatabase:1004 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	5	org.kanger.factory.TValueFactory.isEmpty:337 <- org.kanger.factory.TValueFactory.get:330 <- org.kanger.primitives.Argument.residentBaseTerm:141 <- org.kanger.primitives.ArgumentsList.equalsBase:173 <- org.kanger.units.Domain.isExcluded:377 <- org.kanger.units.Domain.isExcluded:386 <- org.kanger.Linker.linkDatabase:1052 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.stores.HypothesisStore.optimize:216 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	5	org.kanger.units.Predicate.getName:136 <- org.kanger.units.Predicate.toString:194 <- org.kanger.Linker.linkDatabase:1042 <- org.kanger.Linker.access$3:999 <- org.kanger.Linker$3.run:612 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.access$5:635 <- org.kanger.Linker$4.run:651 <- org.kanger.factory.TValueFactory.forEach:487 <- org.kanger.Linker.rotateVariables:645 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.stores.HypothesisStore.optimize:216 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	5	org.kanger.units.TVariable.setMind:324 <- org.kanger.units.Domain.setMind:564 <- org.kanger.units.CachedDomain.setMind:264 <- org.kanger.units.CachedDomain.setMind:1 <- org.kanger.units.Rule.setMind:390 <- org.kanger.units.Rule.setMind:1 <- org.kanger.storage.Step.getData:57 <- org.kanger.storage.Escalera.get:280 <- org.kanger.factory.RuleFactory.getRaw:664 <- org.kanger.factory.RuleFactory.get:675 <- org.kanger.factory.RuleFactory.findByResolvedDomain:503 <- org.kanger.Linker.selectDomainCandidates:389 <- org.kanger.Linker.access$1:377 <- org.kanger.Linker$3.run:604 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	5	org.kanger.factory.TValueFactory.release:426 <- org.kanger.Linker.linkDomains:872 <- org.kanger.Linker.access$2:734 <- org.kanger.Linker$3.run:604 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	5	org.kanger.Mind.isUnitDeleted:1900 <- org.kanger.units.TVariable.isDeleted:373 <- org.kanger.primitives.Argument.isDeleted:239 <- org.kanger.primitives.ArgumentsList.getTVariables:261 <- org.kanger.units.Domain.setMind:563 <- org.kanger.units.CachedDomain.setMind:264 <- org.kanger.units.CachedDomain.setMind:1 <- org.kanger.units.Rule.setMind:390 <- org.kanger.units.Rule.setMind:1 <- org.kanger.storage.Step.getData:57 <- org.kanger.storage.Escalera.get:280 <- org.kanger.factory.RuleFactory.getRaw:664 <- org.kanger.factory.RuleFactory.get:675 <- org.kanger.factory.RuleFactory.findByResolvedDomain:503 <- org.kanger.Linker.selectDomainCandidates:389 <- org.kanger.Linker.access$1:377 <- org.kanger.Linker$3.run:604 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.stores.HypothesisStore.optimize:216 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	5	org.kanger.storage.Escalera.findCandidates:435 <- org.kanger.factory.TValueFactory.find:342 <- org.kanger.Linker.linkDomains:799 <- org.kanger.Linker.access$2:734 <- org.kanger.Linker$3.run:604 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	5	org.kanger.storage.Step.getData:56 <- org.kanger.storage.Escalera$WalkIterator.next:655 <- org.kanger.factory.RuleFactory$1.next:960 <- org.kanger.GeneratedCVarMaterializer.findAlphaEquivalent:57 <- org.kanger.factory.RuleFactory.add:829 <- org.kanger.units.Domain.createStored:476 <- org.kanger.Linker.updateDatabase:1212 <- org.kanger.Linker.rotator:626 <- org.kanger.Linker.link:554 <- org.kanger.Mind.link:823 <- org.kanger.Mind.queryCheckFalse:1490 <- org.kanger.Mind.query:1671 <- org.kanger.stores.HypothesisStore.optimize:222 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+CPU_PATH	5	org.kanger.units.TSolve.equalsTo:171 <- org.kanger.Mind.findTSolve:1787 <- org.kanger.Mind.addTSolve:1796 <- org.kanger.Linker.linkDomains:904 <- org.kanger.Linker.access$2:734 <- org.kanger.Linker$3.run:604 <- org.kanger.Linker.rotateVariables:638 <- org.kanger.Linker.rotator:598 <- org.kanger.Linker.link:555 <- org.kanger.Mind.link:823 <- org.kanger.stores.HypothesisStore.optimize:216 <- org.kanger.Mind.optimizeHypothesis:2084 <- org.kanger.WarmProfileRunner.main:55 <- 
+ALLOC_CLASS_WEIGHT	2669564592	[Ljava.lang.Object;
+ALLOC_CLASS_WEIGHT	1929381424	[B
+ALLOC_CLASS_WEIGHT	1365987544	java.util.ArrayList
+ALLOC_CLASS_WEIGHT	1289056360	java.util.ArrayList$Itr
+ALLOC_CLASS_WEIGHT	1166733192	java.util.HashMap
+ALLOC_CLASS_WEIGHT	952859384	java.lang.String
+ALLOC_CLASS_WEIGHT	946326720	[Ljava.util.HashMap$Node;
+ALLOC_CLASS_WEIGHT	868131376	java.util.HashMap$KeyIterator
+ALLOC_CLASS_WEIGHT	865140368	java.util.HashMap$Node
+ALLOC_CLASS_WEIGHT	730415432	java.util.LinkedHashMap$Entry
+ALLOC_CLASS_WEIGHT	698891296	java.util.TreeMap$KeyIterator
+ALLOC_CLASS_WEIGHT	568087328	java.lang.ref.WeakReference
+ALLOC_CLASS_WEIGHT	465036936	java.util.LinkedHashMap$LinkedKeyIterator
+ALLOC_CLASS_WEIGHT	455479168	java.util.HashSet
+ALLOC_CLASS_WEIGHT	332006104	java.util.concurrent.CopyOnWriteArrayList$COWIterator
+ALLOC_CLASS_WEIGHT	330468008	java.lang.Integer
+ALLOC_CLASS_WEIGHT	312094840	java.util.TreeSet
+ALLOC_CLASS_WEIGHT	286756400	java.lang.Long
+ALLOC_CLASS_WEIGHT	267583784	java.util.TreeMap$AscendingSubMap$AscendingEntrySetView
+ALLOC_CLASS_WEIGHT	252925400	java.util.Collections$1
+ALLOC_CLASS_WEIGHT	251347840	java.lang.StringBuilder
+ALLOC_CLASS_WEIGHT	220453328	java.util.TreeMap$AscendingSubMap
+ALLOC_CLASS_WEIGHT	205288232	java.util.TreeMap$NavigableSubMap$SubMapKeyIterator
+ALLOC_CLASS_WEIGHT	195437104	java.util.LinkedHashMap$LinkedKeySet
+ALLOC_CLASS_WEIGHT	181587856	org.kanger.primitives.ArgumentsList
+ALLOC_CLASS_WEIGHT	154854912	java.util.TreeMap$Entry
+ALLOC_CLASS_WEIGHT	147158624	java.util.LinkedHashMap
+ALLOC_CLASS_WEIGHT	131442432	java.util.Collections$SingletonList
+ALLOC_CLASS_WEIGHT	130082592	org.kanger.primitives.Argument
+ALLOC_CLASS_WEIGHT	123571976	[Ljava.lang.Long;
+ALLOC_CLASS_WEIGHT	117725104	[Z
+ALLOC_CLASS_WEIGHT	111021376	org.kanger.storage.Escalera$Checkpoint
+ALLOC_CLASS_WEIGHT	94238920	java.util.TreeMap$KeySet
+ALLOC_CLASS_WEIGHT	75407248	java.text.DecimalFormatSymbols
+ALLOC_CLASS_WEIGHT	57083384	java.util.LinkedHashSet
+ALLOC_CLASS_WEIGHT	55511400	java.util.HashMap$KeySet
+ALLOC_CLASS_WEIGHT	50798272	org.kanger.factory.RuleCandidateIndex$SignatureKey
+ALLOC_CLASS_WEIGHT	45561712	java.util.TreeMap
+ALLOC_CLASS_WEIGHT	42363704	org.kanger.factory.RuleCandidateIndex$BatchKey
+ALLOC_CLASS_WEIGHT	41895488	[Lorg.kanger.units.TValue;
+ALLOC_CLASS_WEIGHT	40178448	org.kanger.primitives.Cause
+ALLOC_CLASS_WEIGHT	37592248	org.kanger.Linker$DomainKey
+ALLOC_CLASS_WEIGHT	31344344	[I
+ALLOC_CLASS_WEIGHT	26165288	[J
+ALLOC_CLASS_WEIGHT	18326608	java.text.ParseException
+ALLOC_CLASS_WEIGHT	17805592	org.kanger.Linker$DeferredSolveCandidate
+ALLOC_CLASS_WEIGHT	17798168	[S
+ALLOC_CLASS_WEIGHT	17281896	java.util.HashMap$EntrySet
+ALLOC_CLASS_WEIGHT	15710000	org.kanger.primitives.Solve
+ALLOC_CLASS_WEIGHT	12045032	[C
+ALLOC_CLASS_WEIGHT	10475408	org.kanger.primitives.Hypothesis
+ALLOC_CLASS_WEIGHT	10450000	java.text.ParsePosition
+ALLOC_CLASS_WEIGHT	9950112	org.kanger.Linker$3
+ALLOC_CLASS_WEIGHT	9426512	org.kanger.Linker$4
+ALLOC_CLASS_WEIGHT	7331872	[Ljava.util.regex.Pattern$GroupHead;
+ALLOC_CLASS_WEIGHT	6284224	java.text.MessageFormat
+ALLOC_CLASS_WEIGHT	4189632	org.kanger.units.Domain
+ALLOC_CLASS_WEIGHT	4189472	org.kanger.units.Operation
+ALLOC_CLASS_WEIGHT	3665848	java.util.Formatter$FormatSpecifier
+ALLOC_CLASS_WEIGHT	3142200	org.kanger.factory.RuleFactory$DomainKey
+ALLOC_CLASS_WEIGHT	3142152	sun.util.calendar.Gregorian$Date
+ALLOC_CLASS_WEIGHT	3137584	org.kanger.calculator.Functions$1$36
+ALLOC_CLASS_WEIGHT	2618424	java.util.GregorianCalendar
+ALLOC_CLASS_WEIGHT	2618408	[Ljava.lang.String;
+ALLOC_CLASS_WEIGHT	2094808	org.kanger.primitives.TVariableSet
+ALLOC_CLASS_WEIGHT	2094792	org.kanger.units.TSolve
+ALLOC_CLASS_WEIGHT	1571104	org.kanger.storage.Escalera
+ALLOC_CLASS_WEIGHT	1571096	java.util.IdentityHashMap
+ALLOC_CLASS_WEIGHT	1571096	java.lang.Object
+ALLOC_CLASS_WEIGHT	1571032	java.util.regex.Matcher
+ALLOC_CLASS_WEIGHT	1061816	org.kanger.LinkerStatistics
+ALLOC_CLASS_WEIGHT	1047696	org.kanger.Linker$1
+ALLOC_CLASS_WEIGHT	1047352	org.kanger.storage.Step
+ALLOC_CLASS_WEIGHT	523712	java.util.concurrent.CopyOnWriteArraySet
+ALLOC_CLASS_WEIGHT	523640	java.util.regex.Pattern
+ALLOC_SITE_WEIGHT	1427293616	[B @ org.kanger.units.Predicate.getName:136
+ALLOC_SITE_WEIGHT	785830496	java.lang.String @ org.kanger.units.Predicate.getName:136
+ALLOC_SITE_WEIGHT	710009248	java.util.ArrayList @ org.kanger.primitives.ArgumentsList.getTVariables:257
+ALLOC_SITE_WEIGHT	618863016	[Ljava.lang.Object; @ org.kanger.primitives.ArgumentsList.getTVariables:263
+ALLOC_SITE_WEIGHT	568087328	java.lang.ref.WeakReference @ org.kanger.units.TVariable.setMind:324
+ALLOC_SITE_WEIGHT	528388896	[Ljava.lang.Object; @ org.kanger.primitives.ArgumentsList.getStamp:358
+ALLOC_SITE_WEIGHT	449300760	[B @ org.kanger.units.Predicate.toString:194
+ALLOC_SITE_WEIGHT	395150328	java.util.TreeMap$KeyIterator @ org.kanger.primitives.TVariableSet.hashCode:59
+ALLOC_SITE_WEIGHT	393683376	java.util.ArrayList$Itr @ org.kanger.units.TSolve.equalsTo:170
+ALLOC_SITE_WEIGHT	338820696	java.util.LinkedHashMap$Entry @ org.kanger.factory.TValueFactory.collectIds:262
+ALLOC_SITE_WEIGHT	315243800	java.lang.Integer @ org.kanger.storage.Escalera.findCandidates:433
+ALLOC_SITE_WEIGHT	302134880	java.util.HashMap$Node @ org.kanger.Linker.linkDatabase:1055
+ALLOC_SITE_WEIGHT	289586592	java.util.concurrent.CopyOnWriteArrayList$COWIterator @ org.kanger.Linker.linkDatabase:1021
+ALLOC_SITE_WEIGHT	269528152	java.util.ArrayList @ org.kanger.primitives.ArgumentsList.getFunctions:244
+ALLOC_SITE_WEIGHT	266857416	[Ljava.lang.Object; @ org.kanger.stores.LogStore.add:113
+ALLOC_SITE_WEIGHT	257831696	java.util.HashMap @ org.kanger.Linker.linkDomains:736
+ALLOC_SITE_WEIGHT	244010400	java.util.HashMap$KeyIterator @ org.kanger.storage.Escalera.findCandidates:435
+ALLOC_SITE_WEIGHT	225710320	java.util.TreeMap$KeyIterator @ org.kanger.primitives.TVariableSet.equals:68
+ALLOC_SITE_WEIGHT	217837464	java.util.HashMap @ org.kanger.Linker.linkDatabase:1017
+ALLOC_SITE_WEIGHT	213556040	java.util.HashMap$KeyIterator @ org.kanger.units.Domain.isUsed:356
+ALLOC_SITE_WEIGHT	208218952	[Ljava.util.HashMap$Node; @ org.kanger.Linker.linkDatabase:1055
+ALLOC_SITE_WEIGHT	207894896	java.util.ArrayList$Itr @ org.kanger.Linker.linkDatabase:1151
+ALLOC_SITE_WEIGHT	205288232	java.util.TreeMap$NavigableSubMap$SubMapKeyIterator @ org.kanger.Linker.isValidFor:704
+ALLOC_SITE_WEIGHT	194288288	java.util.HashMap$KeyIterator @ org.kanger.units.Domain.isExcluded:376
+ALLOC_SITE_WEIGHT	171760648	java.util.TreeMap$AscendingSubMap$AscendingEntrySetView @ org.kanger.Linker.rotateVariables:637
+ALLOC_SITE_WEIGHT	167116624	java.util.HashMap @ org.kanger.Linker.linkDatabase:1014
+ALLOC_SITE_WEIGHT	166527744	[Ljava.util.HashMap$Node; @ org.kanger.Linker.buildDomainIndex:363
+ALLOC_SITE_WEIGHT	161815424	java.util.ArrayList$Itr @ org.kanger.Linker.linkDomains:744
+ALLOC_SITE_WEIGHT	158138080	java.util.ArrayList$Itr @ org.kanger.units.TSolve.containsTVar:232
+ALLOC_SITE_WEIGHT	155112408	java.util.LinkedHashMap$LinkedKeySet @ org.kanger.factory.TValueFactory.collectIds:262
+ALLOC_SITE_WEIGHT	153963968	java.lang.String @ org.kanger.units.Predicate.toString:194
+ALLOC_SITE_WEIGHT	153940784	java.util.TreeSet @ org.kanger.primitives.TVariableSet.<init>:42
+ALLOC_SITE_WEIGHT	153435304	java.util.LinkedHashMap$Entry @ org.kanger.factory.RuleFactory.collectDomainIds:398
+ALLOC_SITE_WEIGHT	149268408	java.util.LinkedHashMap$LinkedKeyIterator @ org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:584
+ALLOC_SITE_WEIGHT	148686464	[Ljava.lang.Object; @ org.kanger.Linker.linkDatabase:1009
+ALLOC_SITE_WEIGHT	148193232	[Ljava.lang.Object; @ org.kanger.Linker.markExcluded:952
+ALLOC_SITE_WEIGHT	146591512	[Ljava.lang.Object; @ org.kanger.primitives.Solve.<init>:62
+ALLOC_SITE_WEIGHT	145577584	java.util.HashMap$KeyIterator @ org.kanger.Linker.linkDatabase:1063
+ALLOC_SITE_WEIGHT	144533424	java.util.Collections$1 @ org.kanger.factory.RuleFactory.find:910
+ALLOC_SITE_WEIGHT	139692056	org.kanger.primitives.ArgumentsList @ org.kanger.primitives.ArgumentsList.convertBase:224
+ALLOC_SITE_WEIGHT	135113504	[Ljava.lang.Object; @ org.kanger.Linker.buildDomainIndex:369
+ALLOC_SITE_WEIGHT	133002152	java.util.ArrayList$Itr @ org.kanger.Linker.checkSystem:1333
+ALLOC_SITE_WEIGHT	131951360	java.util.TreeMap$AscendingSubMap @ org.kanger.Linker$4.run:650
+ALLOC_SITE_WEIGHT	131442432	java.util.Collections$SingletonList @ org.kanger.storage.Escalera.findCandidates:435
+ALLOC_SITE_WEIGHT	130082592	org.kanger.primitives.Argument @ org.kanger.primitives.ArgumentsList.convertBase:235
+ALLOC_SITE_WEIGHT	127742024	[Ljava.lang.Object; @ org.kanger.primitives.ArgumentsList.convertBase:235
+ALLOC_SITE_WEIGHT	127107280	java.util.TreeMap$Entry @ org.kanger.primitives.TVariableSet.<init>:46
+ALLOC_SITE_WEIGHT	125163264	java.lang.Long @ org.kanger.factory.RuleFactory.containsPromotion:680
+ALLOC_SITE_WEIGHT	123571976	[Ljava.lang.Long; @ org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:541
+ALLOC_SITE_WEIGHT	122544056	java.lang.StringBuilder @ org.kanger.primitives.Solve.toString:163
+ALLOC_SITE_WEIGHT	120331336	java.util.LinkedHashMap$Entry @ org.kanger.factory.RuleCandidateIndex$IdIndex.get:237
+ALLOC_SITE_WEIGHT	116820192	java.util.HashSet @ org.kanger.Linker.linkDatabase:1016
+ALLOC_SITE_WEIGHT	116764680	java.util.LinkedHashMap$LinkedKeyIterator @ org.kanger.factory.TValueFactory.collectIds:262
+ALLOC_SITE_WEIGHT	115711392	java.lang.StringBuilder @ org.kanger.units.Predicate.getName:136
+ALLOC_SITE_WEIGHT	113118208	java.util.HashMap @ org.kanger.Linker.linkDatabase:1016
+ALLOC_SITE_WEIGHT	111964448	[Z @ org.kanger.Linker.rotateVariables:636
+ALLOC_SITE_WEIGHT	111021376	org.kanger.storage.Escalera$Checkpoint @ org.kanger.storage.Escalera.mark:465
+ALLOC_SITE_WEIGHT	108391976	java.util.Collections$1 @ org.kanger.factory.TValueFactory.find:342
+ALLOC_SITE_WEIGHT	100495296	[Ljava.util.HashMap$Node; @ org.kanger.Linker.linkDatabase:1058
+ALLOC_SITE_WEIGHT	99918120	java.util.ArrayList @ org.kanger.Linker.linkDatabase:1006
+ALLOC_SITE_WEIGHT	99486760	java.util.HashMap$Node @ org.kanger.Linker.buildDomainIndex:363
+ALLOC_SITE_WEIGHT	95823136	java.util.TreeMap$AscendingSubMap$AscendingEntrySetView @ org.kanger.Linker.isValidFor:695
+ALLOC_SITE_WEIGHT	95289376	java.util.HashMap$Node @ org.kanger.Linker.linkDatabase:1058
+ALLOC_SITE_WEIGHT	94787008	java.util.HashMap @ org.kanger.units.Domain.getOverlaps:326
+ALLOC_SITE_WEIGHT	94264552	[Ljava.util.HashMap$Node; @ org.kanger.factory.TValueFactory.collectIds:262
+ALLOC_SITE_WEIGHT	92170504	[Ljava.lang.Object; @ org.kanger.units.TSolve.<init>:55
+ALLOC_SITE_WEIGHT	92168640	java.util.HashMap @ org.kanger.Linker.linkDatabase:1013
+ALLOC_SITE_WEIGHT	90073808	java.util.TreeSet @ org.kanger.Linker$4.run:651
+ALLOC_SITE_WEIGHT	88501968	java.util.TreeMap$AscendingSubMap @ org.kanger.Linker$4.run:651
+ALLOC_SITE_WEIGHT	84120344	java.util.HashSet @ org.kanger.Linker.linkDatabase:1014
+ALLOC_SITE_WEIGHT	82735568	[Ljava.util.HashMap$Node; @ org.kanger.Linker.selectDomainCandidates:397
+ALLOC_SITE_WEIGHT	79601920	java.util.LinkedHashMap$LinkedKeyIterator @ org.kanger.Linker.isValidFor:696
+ALLOC_SITE_WEIGHT	79578056	[Ljava.lang.Object; @ org.kanger.factory.FValueFactory.release:302
+ALLOC_SITE_WEIGHT	76983256	java.util.TreeMap$KeyIterator @ org.kanger.Linker.linkDatabase:1007
+ALLOC_SITE_WEIGHT	75407248	java.text.DecimalFormatSymbols @ org.kanger.enums.Tools.parseDate:124
+ALLOC_SITE_WEIGHT	68861528	java.util.HashMap @ org.kanger.Linker.linkDatabase:1015
+ALLOC_SITE_WEIGHT	68080512	java.util.HashSet @ org.kanger.Linker.linkDatabase:1013
+ALLOC_SITE_WEIGHT	68063664	java.util.HashMap$Node @ org.kanger.Linker.linkDatabase:1053
+ALLOC_SITE_WEIGHT	67556312	java.util.ArrayList @ org.kanger.Linker.checkSystem:1304
+ALLOC_SITE_WEIGHT	66162232	java.util.HashSet @ org.kanger.Linker.linkDatabase:1015
+ALLOC_SITE_WEIGHT	64938248	java.util.ArrayList$Itr @ org.kanger.Linker.checkSystem:1305
+ALLOC_SITE_WEIGHT	63864160	[Ljava.util.HashMap$Node; @ org.kanger.Linker.linkDatabase:1053
+ALLOC_SITE_WEIGHT	60224864	java.util.TreeSet @ org.kanger.Linker$4.run:650
+ALLOC_SITE_WEIGHT	59701536	java.util.ArrayList$Itr @ org.kanger.Linker.isValidFor:701
+ALLOC_SITE_WEIGHT	58653752	java.util.LinkedHashMap @ org.kanger.factory.TValueFactory.collectIds:262
+ALLOC_SITE_WEIGHT	58126488	java.util.LinkedHashMap$Entry @ org.kanger.factory.RuleFactory.collectTermIds:411
+ALLOC_SITE_WEIGHT	57083064	java.util.HashSet @ org.kanger.Linker.linkDatabase:1017
+ALLOC_SITE_WEIGHT	56035568	[Ljava.lang.Object; @ org.kanger.units.TSolve.<init>:57
+ALLOC_SITE_WEIGHT	55510568	java.util.TreeMap$KeySet @ org.kanger.Linker.isValidFor:704
+ALLOC_SITE_WEIGHT	55480368	[Ljava.util.HashMap$Node; @ org.kanger.factory.RuleCandidateIndex$IdIndex.get:237
+ALLOC_SITE_WEIGHT	52893152	[Ljava.lang.Object; @ org.kanger.Linker.markExcluded:924
+ALLOC_SITE_WEIGHT	52369912	java.util.LinkedHashMap @ org.kanger.factory.RuleCandidateIndex$IdIndex.get:237
+ALLOC_SITE_WEIGHT	51322440	java.util.LinkedHashMap$Entry @ org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:636
+ALLOC_SITE_WEIGHT	50798272	org.kanger.factory.RuleCandidateIndex$SignatureKey @ org.kanger.factory.RuleCandidateIndex.signature:650
+ALLOC_SITE_WEIGHT	50782880	java.util.HashMap$Node @ org.kanger.Linker.selectDomainCandidates:397
+ALLOC_SITE_WEIGHT	47656184	java.util.HashMap$Node @ org.kanger.Linker.markExcluded:950
+ALLOC_SITE_WEIGHT	47132664	[Ljava.lang.Object; @ org.kanger.factory.RuleFactory.findByDomain:448
+ALLOC_SITE_WEIGHT	44514264	java.util.HashMap$KeyIterator @ org.kanger.Linker.linkDatabase:1147
+ALLOC_SITE_WEIGHT	42419512	java.util.concurrent.CopyOnWriteArrayList$COWIterator @ org.kanger.factory.FValueFactory.mark:284
+ALLOC_SITE_WEIGHT	42419432	java.lang.Long @ org.kanger.storage.Escalera.get:274
+ALLOC_SITE_WEIGHT	42417104	java.util.ArrayList @ org.kanger.factory.TValueFactory.mark:401
+ALLOC_SITE_WEIGHT	42363704	org.kanger.factory.RuleCandidateIndex$BatchKey @ org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:552
+ALLOC_SITE_WEIGHT	40178448	org.kanger.primitives.Cause @ org.kanger.Linker.markExcluded:939
+ALLOC_SITE_WEIGHT	38229224	java.util.LinkedHashMap$LinkedKeyIterator @ org.kanger.factory.RuleCandidateIndex$IdIndex.get:237
+ALLOC_SITE_WEIGHT	36658544	java.lang.Long @ org.kanger.units.TSolve.equalsTo:171
+ALLOC_SITE_WEIGHT	35611344	[Ljava.lang.Object; @ org.kanger.SemanticEffectTelemetry.solveKey:215
+ALLOC_SITE_WEIGHT	35603032	java.util.HashSet @ org.kanger.units.CachedDomain.getCauses:130
+ALLOC_SITE_WEIGHT	35586176	java.util.TreeMap$KeySet @ org.kanger.primitives.TVariableSet.hashCode:59
+ALLOC_SITE_WEIGHT	32992984	java.util.ArrayList @ org.kanger.Linker.markExcluded:950
+ALLOC_SITE_WEIGHT	29850584	java.util.HashMap @ org.kanger.storage.Escalera.indexStep:196
+ALLOC_SITE_WEIGHT	29835760	[Ljava.lang.Object; @ org.kanger.factory.FValueFactory.release:301
+ALLOC_SITE_WEIGHT	28279720	org.kanger.primitives.ArgumentsList @ org.kanger.primitives.Solve.<init>:52
+ALLOC_SITE_WEIGHT	27756144	[Ljava.util.HashMap$Node; @ org.kanger.Linker.markExcluded:950
+ALLOC_SITE_WEIGHT	27326432	java.util.ArrayList @ org.kanger.units.TSolve.<init>:46
+ALLOC_SITE_WEIGHT	27223904	java.util.TreeMap$Entry @ org.kanger.primitives.TVariableSet.<init>:52
+ALLOC_SITE_WEIGHT	26708544	java.util.HashMap$Node @ org.kanger.units.Domain.getOverlaps:330
+ALLOC_SITE_WEIGHT	26185328	[Ljava.util.HashMap$Node; @ org.kanger.units.Domain.getOverlaps:330
+ALLOC_SITE_WEIGHT	26184896	java.util.TreeMap @ org.kanger.primitives.TVariableSet.<init>:42
+ALLOC_SITE_WEIGHT	26184792	java.util.LinkedHashMap$LinkedKeyIterator @ org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:634
+ALLOC_SITE_WEIGHT	26184720	[Ljava.lang.Object; @ org.kanger.primitives.Hypothesis.<init>:78
+ALLOC_SITE_WEIGHT	26184232	java.util.HashMap$KeySet @ org.kanger.Linker.linkDatabase:1147
+ALLOC_SITE_WEIGHT	25165552	java.util.HashMap @ org.kanger.Mind.unlinkCVar:1113
+ALLOC_SITE_WEIGHT	24613768	[Ljava.util.HashMap$Node; @ org.kanger.factory.RuleFactory.collectDomainIds:398
+ALLOC_SITE_WEIGHT	24575392	[Ljava.lang.Object; @ org.kanger.factory.RuleFactory.findByResolvedDomain:505
+ALLOC_SITE_WEIGHT	24536736	java.util.ArrayList$Itr @ org.kanger.Linker.rotator:587
+ALLOC_SITE_WEIGHT	24089768	java.util.ArrayList @ org.kanger.Linker.linkDomains:895
+ALLOC_SITE_WEIGHT	23990768	org.kanger.Linker$DomainKey @ org.kanger.Linker.buildDomainIndex:362
+ALLOC_SITE_WEIGHT	23566256	[Lorg.kanger.units.TValue; @ org.kanger.Linker.linkDomains:750
+ALLOC_SITE_WEIGHT	22890672	[Ljava.lang.Object; @ org.kanger.Linker.linkDomains:899
+ALLOC_SITE_WEIGHT	22519160	java.util.HashMap$Node @ org.kanger.units.Domain.setCauses:233
+ALLOC_SITE_WEIGHT	22488768	java.util.HashMap @ org.kanger.factory.FValueFactory.mark:284
+ALLOC_SITE_WEIGHT	21995160	java.util.ArrayList$Itr @ org.kanger.Mind.findTSolve:1786
+ALLOC_SITE_WEIGHT	20947960	java.util.LinkedHashSet @ org.kanger.factory.RuleCandidateIndex$IdIndex.get:237
+ALLOC_SITE_WEIGHT	20947904	java.util.LinkedHashMap$LinkedKeyIterator @ org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:636
+ALLOC_SITE_WEIGHT	20947800	[Ljava.lang.Object; @ org.kanger.Linker.selectDomainCandidates:402
+ALLOC_SITE_WEIGHT	20947688	java.util.LinkedHashMap$LinkedKeyIterator @ org.kanger.factory.TValueFactory.forEach:484
+ALLOC_SITE_WEIGHT	20926360	java.util.ArrayList @ org.kanger.SemanticEffectTelemetry.solveKey:209
+ALLOC_SITE_WEIGHT	20924528	java.util.HashMap$Node @ org.kanger.storage.Escalera.indexStep:199
+ALLOC_SITE_WEIGHT	20424200	java.util.ArrayList @ org.kanger.units.TSolve.<init>:48
+ALLOC_SITE_WEIGHT	19851376	[B @ org.kanger.enums.Tools.parseDate:124
+ALLOC_SITE_WEIGHT	19376816	java.util.TreeMap @ org.kanger.Linker.rotator:584
+ALLOC_SITE_WEIGHT	19376760	java.util.LinkedHashMap$LinkedKeySet @ org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:584
+ALLOC_SITE_WEIGHT	18329232	[Lorg.kanger.units.TValue; @ org.kanger.Linker.linkDomains:751
+ALLOC_SITE_WEIGHT	17805704	java.util.LinkedHashSet @ org.kanger.factory.TValueFactory.forEach:482
+ALLOC_SITE_WEIGHT	17805592	org.kanger.Linker$DeferredSolveCandidate @ org.kanger.Linker.markExcluded:952
+ALLOC_SITE_WEIGHT	17798168	[S @ org.kanger.enums.Tools.parseDate:137
+ALLOC_SITE_WEIGHT	17282056	java.lang.Long @ org.kanger.Linker.selectDomainCandidates:401
+ALLOC_SITE_WEIGHT	17281896	java.util.HashMap$EntrySet @ org.kanger.Linker.linkDomains:892
+ALLOC_SITE_WEIGHT	16758328	java.util.ArrayList @ org.kanger.factory.RuleFactory.findByResolvedDomain:501
+ALLOC_SITE_WEIGHT	16050296	java.lang.Long @ org.kanger.storage.Escalera.indexStep:199
+ALLOC_SITE_WEIGHT	15710816	java.util.HashSet @ org.kanger.factory.FValueFactory.mark:284
+ALLOC_SITE_WEIGHT	15710000	org.kanger.primitives.Solve @ org.kanger.primitives.Cause.<init>:59
+ALLOC_SITE_WEIGHT	15187168	[B @ org.kanger.calculator.Calculator.execute:168
+ALLOC_SITE_WEIGHT	14139840	[Ljava.util.HashMap$Node; @ org.kanger.factory.RuleCandidateIndex.collectResolvedLocal:636
+ALLOC_SITE_WEIGHT	14139416	java.lang.Integer @ org.kanger.storage.Escalera.indexStep:197
+ALLOC_SITE_WEIGHT	13616264	[Ljava.util.HashMap$Node; @ org.kanger.Linker.linkDatabase:1033
+ALLOC_SITE_WEIGHT	13616152	java.lang.Long @ org.kanger.Linker.getSolveCandidates:314
+ALLOC_SITE_WEIGHT	13616080	org.kanger.primitives.ArgumentsList @ org.kanger.primitives.Hypothesis.<init>:58
+ALLOC_SITE_WEIGHT	13601480	org.kanger.Linker$DomainKey @ org.kanger.Linker.addOppositeNatives:414
+ALLOC_SITE_WEIGHT	13092552	java.util.HashMap @ org.kanger.Linker.selectDomainCandidates:395
+ALLOC_SITE_WEIGHT	13092392	java.lang.StringBuilder @ org.kanger.calculator.Calculator.execute:168
+ALLOC_SITE_WEIGHT	12568944	java.util.ArrayList @ org.kanger.Linker.checkSystem:1332
+ALLOC_SITE_WEIGHT	12568800	java.util.HashMap$Node @ org.kanger.units.CachedDomain.getCauses:80
+ALLOC_SITE_WEIGHT	12568792	[Ljava.lang.Object; @ org.kanger.Linker.checkSystem:1337
+ALLOC_SITE_WEIGHT	12045160	java.util.HashMap$Node @ org.kanger.Linker.linkDatabase:1033
+ALLOC_SITE_WEIGHT	12045032	[C @ org.kanger.enums.Tools.parseDate:124
+ALLOC_SITE_WEIGHT	12044992	java.util.HashMap @ org.kanger.Linker.buildDomainIndex:359
+ALLOC_SITE_WEIGHT	11521456	java.lang.Long @ org.kanger.units.Domain.getOverlaps:330
+ALLOC_SITE_WEIGHT	11521352	java.util.HashMap @ org.kanger.GeneratedCVarMaterializer.alphaEquivalent:134
+ALLOC_SITE_WEIGHT	11521256	java.text.ParseException @ org.kanger.enums.Tools.parseDate:145
+ALLOC_SITE_WEIGHT	10997640	java.util.HashMap @ org.kanger.GeneratedCVarMaterializer.alphaEquivalent:133
+ALLOC_SITE_WEIGHT	10997600	[Ljava.util.HashMap$Node; @ org.kanger.Linker.linkDatabase:1047
+ALLOC_SITE_WEIGHT	10997456	java.util.LinkedHashMap @ org.kanger.factory.RuleFactory.findByDomain:442
+ALLOC_SITE_WEIGHT	10997456	java.util.ArrayList$Itr @ org.kanger.Linker.indexSolve:234
+ALLOC_SITE_WEIGHT	10475408	org.kanger.primitives.Hypothesis @ org.kanger.Linker.linkDatabase:1160
+ALLOC_SITE_WEIGHT	10466920	[I @ org.kanger.enums.Tools.parseDate:124
+ALLOC_SITE_WEIGHT	9950304	java.util.HashMap$Node @ org.kanger.Linker.updateDatabase:1225
+ALLOC_SITE_WEIGHT	9950304	java.util.ArrayList$Itr @ org.kanger.Linker.linkDomains:741
+ALLOC_SITE_WEIGHT	9950176	java.util.ArrayList$Itr @ org.kanger.Linker.checkSystem:1344
+ALLOC_SITE_WEIGHT	9950128	java.util.LinkedHashMap$LinkedKeyIterator @ org.kanger.factory.RuleFactory.findByResolvedDomain:502
+ALLOC_SITE_WEIGHT	9950112	org.kanger.Linker$3 @ org.kanger.Linker.rotator:598
+ALLOC_SITE_WEIGHT	9426960	[I @ org.kanger.enums.Tools.parseDate:137
+ALLOC_SITE_WEIGHT	9426512	org.kanger.Linker$4 @ org.kanger.Linker.rotateVariables:645
+ALLOC_SITE_WEIGHT	9426432	java.util.LinkedHashMap @ org.kanger.factory.RuleFactory.findByResolvedDomain:499
+ALLOC_SITE_WEIGHT	8913784	[J @ org.kanger.enums.Tools.parseDate:141
+ALLOC_SITE_WEIGHT	8902944	[Ljava.lang.Object; @ org.kanger.Linker.checkSystem:1334
+ALLOC_SITE_WEIGHT	8902856	java.util.LinkedHashMap$LinkedKeySet @ org.kanger.factory.TValueFactory.forEach:484
+ALLOC_SITE_WEIGHT	8902856	java.util.ArrayList$Itr @ org.kanger.Linker.checkSystem:1356
+ALLOC_SITE_WEIGHT	8379000	java.util.HashMap$KeySet @ org.kanger.Linker.linkDatabase:1063
+ALLOC_SITE_WEIGHT	7855520	[Ljava.lang.Object; @ org.kanger.units.CachedDomain.guardedWeights:184
+ALLOC_SITE_WEIGHT	7855504	java.util.HashMap$KeySet @ org.kanger.units.CachedDomain.guardedWeights:181
+ALLOC_SITE_WEIGHT	7855496	java.util.HashMap$Node @ org.kanger.units.CachedDomain.getCauses:133
+ALLOC_SITE_WEIGHT	7855424	java.util.HashMap$KeyIterator @ org.kanger.units.CachedDomain.getCauses:101
+ALLOC_SITE_WEIGHT	7855416	java.util.ArrayList @ org.kanger.Linker.selectDomainCandidates:399
+ALLOC_SITE_WEIGHT	7855376	java.util.HashMap @ org.kanger.storage.Escalera.findCandidates:437
+ALLOC_SITE_WEIGHT	7784472	[I @ org.kanger.enums.Tools.parseDate:145
+ALLOC_SITE_WEIGHT	7331872	[Ljava.util.regex.Pattern$GroupHead; @ org.kanger.enums.Tools.parseDate:124
+ALLOC_SITE_WEIGHT	7331784	[Ljava.util.HashMap$Node; @ org.kanger.storage.Escalera.findCandidates:437
+ALLOC_SITE_WEIGHT	7331760	java.util.HashMap$Node @ org.kanger.storage.Escalera.indexStep:197
+ALLOC_SITE_WEIGHT	7331672	java.util.HashMap$KeyIterator @ org.kanger.storage.Escalera.findCandidates:437
+ALLOC_SITE_WEIGHT	7331432	java.util.HashMap$Node @ org.kanger.primitives.Solve.getTerms:262
+ALLOC_SITE_WEIGHT	6808184	[J @ org.kanger.units.CachedDomain.guardedWeights:191
+ALLOC_SITE_WEIGHT	6807368	java.util.HashMap$Node @ org.kanger.units.Domain.setExcluded:394
+ALLOC_SITE_WEIGHT	6284440	java.util.LinkedHashMap$LinkedKeySet @ org.kanger.factory.RuleFactory.collectDomainIds:398
+ALLOC_SITE_WEIGHT	6284368	java.util.HashMap$Node @ org.kanger.Linker.addOppositeNatives:421
+ALLOC_SITE_WEIGHT	6284360	java.util.HashMap$Node @ org.kanger.units.CachedDomain.getCauses:90
+ALLOC_SITE_WEIGHT	6284232	java.util.LinkedHashSet @ org.kanger.factory.RuleFactory.findByDomain:442
+ALLOC_SITE_WEIGHT	6284224	java.text.MessageFormat @ org.kanger.enums.Tools.parseDate:124
+ALLOC_SITE_WEIGHT	6284144	java.text.ParsePosition @ org.kanger.enums.Tools.parseDate:137
+ALLOC_SITE_WEIGHT	6283904	java.util.HashMap$Node @ org.kanger.primitives.ArgumentsList.getTerms:330
+ALLOC_SITE_WEIGHT	6272600	java.util.HashSet @ org.kanger.storage.Escalera.indexStep:196
+ALLOC_SITE_WEIGHT	5761040	[J @ org.kanger.units.CachedDomain.guardedWeights:186
+ALLOC_SITE_WEIGHT	5760792	[Ljava.lang.Object; @ org.kanger.enums.Tools.parseDate:133
+ALLOC_SITE_WEIGHT	5760768	java.util.HashMap$KeySet @ org.kanger.units.CachedDomain.getCauses:80
+ALLOC_SITE_WEIGHT	5760744	java.util.LinkedHashMap @ org.kanger.factory.TValueFactory.forEach:482
+ALLOC_SITE_WEIGHT	5760704	java.util.HashMap @ org.kanger.units.CachedDomain.getCauses:152
+ALLOC_SITE_WEIGHT	5760688	java.util.HashMap$Node @ org.kanger.Linker.linkDatabase:1047
+ALLOC_SITE_WEIGHT	5760672	[Ljava.util.HashMap$Node; @ org.kanger.storage.Escalera.indexStep:199
+ALLOC_SITE_WEIGHT	5760664	java.util.HashMap$Node @ org.kanger.Linker.link:519
+ALLOC_SITE_WEIGHT	5760648	java.util.LinkedHashSet @ org.kanger.factory.RuleFactory.findByResolvedDomain:499
+ALLOC_SITE_WEIGHT	5758072	java.lang.Long @ org.kanger.SemanticEffectTelemetry.solveKey:215
+ALLOC_SITE_WEIGHT	5757992	java.text.ParseException @ org.kanger.enums.Tools.parseDate:133
+ALLOC_SITE_WEIGHT	5237688	[Ljava.util.HashMap$Node; @ org.kanger.factory.RuleFactory.collectTermIds:411
+ALLOC_SITE_WEIGHT	5237000	java.util.LinkedHashMap @ org.kanger.factory.RuleFactory.collectDomainIds:398
+ALLOC_SITE_WEIGHT	5236984	java.lang.String @ org.kanger.enums.Tools.parseDate:124
+ALLOC_SITE_WEIGHT	5236952	java.util.ArrayList$Itr @ org.kanger.Linker.checkSystem:1309
+ALLOC_SITE_WEIGHT	5236920	java.util.HashMap @ org.kanger.factory.RuleFactory.<init>:228
+ALLOC_SITE_WEIGHT	5236896	java.util.HashMap$Node @ org.kanger.Linker.indexSolve:245
+ALLOC_SITE_WEIGHT	5236888	java.util.ArrayList$Itr @ org.kanger.units.Domain.setSolves:256
+ALLOC_SITE_WEIGHT	5236856	java.lang.String @ org.kanger.calculator.Calculator.execute:168
+ALLOC_SITE_WEIGHT	4713456	[Ljava.util.HashMap$Node; @ org.kanger.storage.Escalera.indexStep:197
+ALLOC_SITE_WEIGHT	4713376	java.lang.Long @ org.kanger.units.TSolve.<init>:57
+ALLOC_SITE_WEIGHT	4713272	java.util.TreeSet @ org.kanger.Linker.rotator:584
+ALLOC_SITE_WEIGHT	4681272	[B @ org.kanger.enums.Tools.parseDate:132
+ALLOC_SITE_WEIGHT	4189776	[Ljava.lang.Object; @ org.kanger.Linker.indexSolve:219
+ALLOC_SITE_WEIGHT	4189632	org.kanger.units.Domain @ org.kanger.factory.DomainFactory.find:204
+ALLOC_SITE_WEIGHT	4189616	java.util.HashSet @ org.kanger.storage.Escalera.findCandidates:437
+ALLOC_SITE_WEIGHT	4189600	java.util.HashMap$Node @ org.kanger.units.Rule.setUsed:203
+ALLOC_SITE_WEIGHT	4189536	[Z @ org.kanger.enums.Tools.parseDate:133
+ALLOC_SITE_WEIGHT	4174848	[Ljava.util.HashMap$Node; @ org.kanger.units.Domain.setUsed:370
+ALLOC_SITE_WEIGHT	3666040	[Ljava.lang.Object; @ org.kanger.enums.Tools.parseDate:145
+ALLOC_SITE_WEIGHT	3665984	java.util.HashMap$KeyIterator @ org.kanger.units.Domain.setCauses:231
+ALLOC_SITE_WEIGHT	3665960	java.util.LinkedHashMap @ org.kanger.factory.RuleFactory.indexRuleLocked:305
+ALLOC_SITE_WEIGHT	3665928	java.util.HashMap$Node @ org.kanger.factory.RuleFactory.indexRuleLocked:306
+ALLOC_SITE_WEIGHT	3665928	[Ljava.util.HashMap$Node; @ org.kanger.units.CachedDomain.getCauses:152
+ALLOC_SITE_WEIGHT	3665880	[Ljava.lang.Object; @ org.kanger.Linker.updateDatabase:1229
+ALLOC_SITE_WEIGHT	3665880	java.util.HashMap$Node @ org.kanger.storage.Escalera.ensureIndex:234
+ALLOC_SITE_WEIGHT	3665848	java.util.LinkedHashMap$Entry @ org.kanger.factory.RuleCandidateIndex.collectLocal:464
+ALLOC_SITE_WEIGHT	3665848	java.util.Formatter$FormatSpecifier @ org.kanger.primitives.Solve.toString:126
+ALLOC_SITE_WEIGHT	3665832	java.util.HashMap @ org.kanger.units.Domain.setCauses:227
+ALLOC_SITE_WEIGHT	3665784	org.kanger.units.Operation @ org.kanger.calculator.Functions$1.<init>:858
+ALLOC_SITE_WEIGHT	3665680	java.util.LinkedHashSet @ org.kanger.factory.TValueFactory.collectIds:262
+ALLOC_SITE_WEIGHT	3142408	[B @ org.kanger.enums.Tools.parseDate:144
+ALLOC_SITE_WEIGHT	3142368	[Ljava.lang.Object; @ org.kanger.stores.HypothesisStore.add:103
+ALLOC_SITE_WEIGHT	3142280	[I @ org.kanger.enums.Tools.parseDate:133
+ALLOC_SITE_WEIGHT	3142232	java.util.ArrayList$Itr @ org.kanger.factory.RuleCandidateIndex.indexRule:402
+ALLOC_SITE_WEIGHT	3142200	org.kanger.factory.RuleFactory$DomainKey @ org.kanger.factory.RuleFactory.findByDomain:443
+ALLOC_SITE_WEIGHT	3142200	java.lang.Long @ org.kanger.storage.Escalera.ensureIndex:234
+ALLOC_SITE_WEIGHT	3142200	java.util.HashMap$Node @ org.kanger.units.Domain.setSolves:252
+ALLOC_SITE_WEIGHT	3142192	[Ljava.util.HashMap$Node; @ org.kanger.GeneratedCVarMaterializer.alphaEquivalent:162
+ALLOC_SITE_WEIGHT	3142192	java.util.HashMap @ org.kanger.units.Domain.setCauses:224
+ALLOC_SITE_WEIGHT	3142176	java.util.TreeMap$KeySet @ org.kanger.Linker.linkDatabase:1007
+ALLOC_SITE_WEIGHT	3142152	sun.util.calendar.Gregorian$Date @ org.kanger.enums.Tools.parseDate:124
+ALLOC_SITE_WEIGHT	3142152	[J @ org.kanger.enums.Tools.parseDate:133
+ALLOC_SITE_WEIGHT	3142120	java.util.LinkedHashMap$LinkedKeySet @ org.kanger.factory.RuleFactory.findByResolvedDomain:502
+ALLOC_SITE_WEIGHT	3142112	java.util.TreeSet @ org.kanger.units.Domain.setSolves:252
+ALLOC_SITE_WEIGHT	3141992	[Ljava.util.HashMap$Node; @ org.kanger.units.TVariable.incFloodControl:453
+ALLOC_SITE_WEIGHT	3137584	org.kanger.calculator.Functions$1$36 @ org.kanger.calculator.Functions$1.<init>:1122
+ALLOC_SITE_WEIGHT	3125824	java.util.ArrayList$Itr @ org.kanger.Linker.linkDatabase:1121
+ALLOC_SITE_WEIGHT	3094488	java.util.HashMap$Node @ org.kanger.Linker.markExcluded:943
+ALLOC_SITE_WEIGHT	2618712	java.util.HashMap$KeySet @ org.kanger.units.Rule.containsTerm:760
+ALLOC_SITE_WEIGHT	2618520	[B @ org.kanger.enums.Tools.parseDate:140
+ALLOC_SITE_WEIGHT	2618512	java.util.HashMap$Node @ org.kanger.Linker.linkDatabase:1125
+ALLOC_SITE_WEIGHT	2618512	java.util.ArrayList @ org.kanger.units.Operation.<init>:49
+ALLOC_SITE_WEIGHT	2618496	java.util.HashMap$KeyIterator @ org.kanger.factory.DictionaryFactory.find:230
+ALLOC_SITE_WEIGHT	2618472	java.util.HashMap$KeyIterator @ org.kanger.units.Rule.containsTerm:760
+ALLOC_SITE_WEIGHT	2618464	java.util.ArrayList$Itr @ org.kanger.Linker.linkDatabase:1068
+ALLOC_SITE_WEIGHT	2618424	java.util.GregorianCalendar @ org.kanger.enums.Tools.parseDate:124
+ALLOC_SITE_WEIGHT	2618408	[Ljava.lang.String; @ org.kanger.enums.Tools.parseDate:124
+ALLOC_SITE_WEIGHT	2513992	[Ljava.util.HashMap$Node; @ org.kanger.factory.RuleCandidateIndex.computeBatchSummary:522
+ALLOC_SITE_WEIGHT	2095456	java.util.LinkedHashSet @ org.kanger.factory.TValueFactory.indexLocked:195
+ALLOC_SITE_WEIGHT	2094904	java.text.ParsePosition @ org.kanger.enums.Tools.parseDate:133
+ALLOC_SITE_WEIGHT	2094856	java.util.ArrayList @ org.kanger.units.Rule.<init>:60
+ALLOC_SITE_WEIGHT	2094848	[Ljava.lang.Object; @ org.kanger.units.Domain.add:180
+ALLOC_SITE_WEIGHT	2094832	java.util.ArrayList$Itr @ org.kanger.GeneratedCVarMaterializer.containsCVariable:112
+ALLOC_SITE_WEIGHT	2094824	java.util.LinkedHashMap$Entry @ org.kanger.factory.RuleCandidateIndex.computeBatchSummary:522
+ALLOC_SITE_WEIGHT	2094808	java.util.LinkedHashMap$Entry @ org.kanger.factory.RuleFactory.copyTermIndexLocked:277
+ALLOC_SITE_WEIGHT	2094808	org.kanger.primitives.TVariableSet @ org.kanger.Mind.addTSolve:1802
+ALLOC_SITE_WEIGHT	2094800	java.lang.Long @ org.kanger.Linker.selectDomainCandidates:397
+ALLOC_SITE_WEIGHT	2094792	org.kanger.units.TSolve @ org.kanger.Mind.addTSolve:1801
+ALLOC_SITE_WEIGHT	2094768	java.util.ArrayList @ org.kanger.units.Operation.<init>:47
+ALLOC_SITE_WEIGHT	2094768	java.util.ArrayList$Itr @ org.kanger.Linker.addOppositeNatives:421
+ALLOC_SITE_WEIGHT	2094760	[B @ org.kanger.enums.Tools.parseDate:133
+ALLOC_SITE_WEIGHT	2094736	java.util.HashMap$KeySet @ org.kanger.factory.RuleFactory.find:910
+ALLOC_SITE_WEIGHT	2094360	[Ljava.util.HashMap$Node; @ org.kanger.units.Domain.setCauses:233
+ALLOC_SITE_WEIGHT	2093880	[Ljava.lang.Object; @ org.kanger.enums.Tools.parseDate:141
+ALLOC_SITE_WEIGHT	2069456	[B @ org.kanger.enums.Tools.parseDate:128
+ALLOC_SITE_WEIGHT	2067384	java.lang.Long @ org.kanger.storage.Escalera.indexStep:191
+ALLOC_SITE_WEIGHT	2063896	java.util.HashMap$Node @ org.kanger.storage.Escalera.indexStep:191
+ALLOC_SITE_WEIGHT	2058928	java.util.HashMap$Node @ org.kanger.units.Domain.setUsed:367
+ALLOC_SITE_WEIGHT	2038040	[Ljava.util.HashMap$Node; @ org.kanger.storage.Escalera.ensureIndex:234
+ALLOC_SITE_WEIGHT	1571152	[Ljava.util.HashMap$Node; @ org.kanger.Linker.indexSolve:245
+ALLOC_SITE_WEIGHT	1571144	java.util.LinkedHashMap$LinkedKeySet @ org.kanger.PortableMindLayer.overlayMarkers:138
+ALLOC_SITE_WEIGHT	1571128	java.text.ParsePosition @ org.kanger.enums.Tools.parseDate:145
+ALLOC_SITE_WEIGHT	1571120	[Z @ org.kanger.enums.Tools.parseDate:124
+ALLOC_SITE_WEIGHT	1571112	java.lang.Long @ org.kanger.storage.Escalera.add:264
+ALLOC_SITE_WEIGHT	1571112	java.util.HashMap$Node @ org.kanger.calculator.Functions$1.<init>:653
+ALLOC_SITE_WEIGHT	1571104	[Ljava.lang.Object; @ org.kanger.enums.Tools.parseDate:137
+ALLOC_SITE_WEIGHT	1571104	org.kanger.storage.Escalera @ org.kanger.factory.TVariableFactory.transaction:130
+ALLOC_SITE_WEIGHT	1571104	java.util.HashMap$Node @ org.kanger.units.CachedDomain.getCauses:152
+ALLOC_SITE_WEIGHT	1571096	java.lang.Object @ org.kanger.units.CachedDomain.<init>:38
+ALLOC_SITE_WEIGHT	1571096	java.util.IdentityHashMap @ org.kanger.units.CachedDomain.guardedWeights:184
+ALLOC_SITE_WEIGHT	1571088	[Ljava.util.HashMap$Node; @ org.kanger.primitives.Solve.getTerms:262
+ALLOC_SITE_WEIGHT	1571088	java.lang.Long @ org.kanger.factory.RuleFactory.add:628
+ALLOC_SITE_WEIGHT	1571080	java.lang.Long @ org.kanger.factory.RuleCandidateIndex.resolvedTermId:640
+ALLOC_SITE_WEIGHT	1571080	java.util.LinkedHashMap$LinkedKeyIterator @ org.kanger.factory.RuleFactory.findByDomain:445
+ALLOC_SITE_WEIGHT	1571080	java.util.ArrayList @ org.kanger.factory.RuleCandidateIndex.batchGeneratedNonSubstitutablePair:486
+ALLOC_SITE_WEIGHT	1571072	java.util.HashMap$Node @ org.kanger.storage.Escalera.findCandidates:437
+ALLOC_SITE_WEIGHT	1571064	java.util.ArrayList @ org.kanger.primitives.ArgumentsList.getStamp:353
+ALLOC_SITE_WEIGHT	1571056	[B @ org.kanger.primitives.Solve.toString:159
+ALLOC_SITE_WEIGHT	1571056	[Ljava.lang.Object; @ org.kanger.factory.RuleCandidateIndex.batchGeneratedNonSubstitutablePair:495
+ALLOC_SITE_WEIGHT	1571056	java.util.HashMap$KeyIterator @ org.kanger.factory.RuleFactory.find:910
+ALLOC_SITE_WEIGHT	1571056	java.util.HashMap$KeySet @ org.kanger.units.Domain.isUsed:356
+ALLOC_SITE_WEIGHT	1571040	[Ljava.lang.Object; @ org.kanger.enums.Tools.parseDate:129
+ALLOC_SITE_WEIGHT	1571040	[Ljava.util.HashMap$Node; @ org.kanger.units.CachedDomain.getCauses:90
+ALLOC_SITE_WEIGHT	1571032	[Ljava.util.HashMap$Node; @ org.kanger.primitives.ArgumentsList.getTerms:330
+ALLOC_SITE_WEIGHT	1571032	java.util.regex.Matcher @ org.kanger.enums.Tools.parseDate:124
+ALLOC_SITE_WEIGHT	1571032	[B @ org.kanger.enums.Tools.parseDate:136
+ALLOC_SITE_WEIGHT	1540128	[J @ org.kanger.enums.Tools.parseDate:137
+ALLOC_SITE_WEIGHT	1436760	java.util.HashSet @ org.kanger.units.Domain.setExcluded:391
+ALLOC_SITE_WEIGHT	1061816	org.kanger.LinkerStatistics @ org.kanger.LinkerStatistics.snapshot:88
+ALLOC_SITE_WEIGHT	1047728	[Ljava.lang.Object; @ org.kanger.units.CachedDomain.guardedWeights:193
+ALLOC_SITE_WEIGHT	1047696	org.kanger.Linker$1 @ org.kanger.Linker.link:539
+ALLOC_SITE_WEIGHT	1047464	[Ljava.util.HashMap$Node; @ org.kanger.units.CachedDomain.getCauses:133
+ALLOC_SITE_WEIGHT	1047440	java.lang.String @ org.kanger.enums.Tools.parseDate:137
+ALLOC_SITE_WEIGHT	1047424	java.util.ArrayList @ org.kanger.Linker.markExcluded:918
+ALLOC_SITE_WEIGHT	1047416	[Ljava.util.HashMap$Node; @ org.kanger.GeneratedCVarMaterializer.alphaEquivalent:161
+ALLOC_SITE_WEIGHT	1047416	[Ljava.util.HashMap$Node; @ org.kanger.Linker.updateDatabase:1225
+ALLOC_SITE_WEIGHT	1047416	[Ljava.util.HashMap$Node; @ org.kanger.Mind.unlinkCVar:1128
+ALLOC_SITE_WEIGHT	1047408	java.util.HashMap$Node @ org.kanger.units.Domain.setProduced:411
+ALLOC_SITE_WEIGHT	1047408	java.util.ArrayList @ org.kanger.units.Rule.<init>:63
+ALLOC_SITE_WEIGHT	1047408	java.util.HashMap @ org.kanger.storage.Escalera.find:444
+ALLOC_SITE_WEIGHT	1047408	java.util.LinkedHashMap$LinkedKeyIterator @ org.kanger.factory.RuleFactory.collectDomainIds:398
+ALLOC_SITE_WEIGHT	1047400	[Ljava.lang.Object; @ org.kanger.Linker.link:545
+ALLOC_SITE_WEIGHT	1047392	java.util.HashMap$KeySet @ org.kanger.units.CachedDomain.getCauses:136
+ALLOC_SITE_WEIGHT	1047392	java.util.TreeMap$KeyIterator @ org.kanger.Linker.updateDatabase:1229
+ALLOC_SITE_WEIGHT	1047392	java.util.HashMap @ org.kanger.primitives.ArgumentsList.getTerms:327
+ALLOC_SITE_WEIGHT	1047384	java.util.HashMap @ org.kanger.units.CachedDomain.getCauses:80
+ALLOC_SITE_WEIGHT	1047384	java.util.ArrayList @ org.kanger.Linker.buildDomainIndex:366
+ALLOC_SITE_WEIGHT	1047376	java.util.LinkedHashMap$LinkedKeySet @ org.kanger.factory.RuleFactory.findByDomain:445
+ALLOC_SITE_WEIGHT	1047376	java.util.HashMap @ org.kanger.units.Domain.setUsed:367
+ALLOC_SITE_WEIGHT	1047368	java.util.HashMap$Node @ org.kanger.Linker.buildDomainIndex:367
+ALLOC_SITE_WEIGHT	1047368	[Ljava.util.HashMap$Node; @ org.kanger.units.Domain.setExcluded:391
+ALLOC_SITE_WEIGHT	1047360	java.text.ParseException @ org.kanger.enums.Tools.parseDate:137
+ALLOC_SITE_WEIGHT	1047352	org.kanger.storage.Step @ org.kanger.storage.Escalera.add:256
+ALLOC_SITE_WEIGHT	1019952	java.lang.String @ org.kanger.enums.Tools.parseDate:129
+ALLOC_SITE_WEIGHT	702848	java.lang.Long @ org.kanger.storage.Escalera.removeIndexedStep:203
+ALLOC_SITE_WEIGHT	553696	java.lang.Integer @ org.kanger.storage.Escalera.removeIndexedStep:206
+ALLOC_SITE_WEIGHT	523792	[Ljava.util.HashMap$Node; @ org.kanger.units.Domain.setExcluded:394
+ALLOC_SITE_WEIGHT	523760	java.util.HashMap$Node @ org.kanger.units.Domain.setCauses:227
+ALLOC_SITE_WEIGHT	523728	java.util.TreeMap$Entry @ org.kanger.units.Domain.setSolves:256
+ALLOC_SITE_WEIGHT	523728	[Ljava.lang.Object; @ org.kanger.storage.Escalera.<init>:125
+ALLOC_SITE_WEIGHT	523712	[Ljava.util.HashMap$Node; @ org.kanger.units.Domain.setCauses:227
+ALLOC_SITE_WEIGHT	523712	java.lang.Long @ org.kanger.storage.Escalera.removeIndexedStep:204
+ALLOC_SITE_WEIGHT	523712	java.util.concurrent.CopyOnWriteArraySet @ org.kanger.factory.LibraryFactory.<init>:178
+ALLOC_SITE_WEIGHT	523712	[I @ org.kanger.enums.Tools.parseDate:129
+ALLOC_SITE_WEIGHT	523704	java.util.LinkedHashSet @ org.kanger.factory.RuleFactory.indexRuleLocked:305
+ALLOC_SITE_WEIGHT	523704	java.util.LinkedHashMap$LinkedKeyIterator @ org.kanger.factory.RuleCandidateIndex.computeBatchSummary:517
+ALLOC_SITE_WEIGHT	523704	java.lang.Integer @ org.kanger.storage.Escalera.find:443
+ALLOC_SITE_WEIGHT	523704	java.util.LinkedHashMap @ org.kanger.Mind.<init>:135
+ALLOC_SITE_WEIGHT	523696	java.util.HashMap$KeyIterator @ org.kanger.units.CachedDomain.guardedWeights:181
+ALLOC_SITE_WEIGHT	523688	java.lang.String @ org.kanger.primitives.Solve.toString:183
+ALLOC_SITE_WEIGHT	523688	org.kanger.units.Operation @ org.kanger.calculator.Functions$1.<init>:579
+ALLOC_SITE_WEIGHT	523688	java.util.LinkedHashMap$Entry @ org.kanger.factory.TValueFactory.indexLocked:198
+ALLOC_SITE_WEIGHT	523680	java.util.ArrayList @ org.kanger.enums.Tools.parseDate:124
+ALLOC_SITE_WEIGHT	523664	java.util.LinkedHashMap @ org.kanger.factory.RuleFactory.hasActiveRuleWithTerm:512
+ALLOC_SITE_WEIGHT	523648	[Ljava.util.HashMap$Node; @ org.kanger.primitives.ArgumentsList.getTerms:338
+ALLOC_SITE_WEIGHT	523640	[Ljava.util.HashMap$Node; @ org.kanger.units.Domain.setSolves:252
+ALLOC_SITE_WEIGHT	523640	java.util.regex.Pattern @ org.kanger.enums.Tools.parseDate:124
+ALLOC_SITE_WEIGHT	499824	java.text.ParsePosition @ org.kanger.enums.Tools.parseDate:129
+ALLOC_SITE_WEIGHT	329528	java.lang.Long @ org.kanger.storage.Escalera.removeIndexedStep:208
+ALLOC_SITE_WEIGHT	241936	java.util.HashMap$Node @ org.kanger.units.Domain.setUsed:370
+ALLOC_SITE_WEIGHT	7392	java.lang.Integer @ org.kanger.storage.Escalera.indexStep:194

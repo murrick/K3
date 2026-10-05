@@ -1,0 +1,90 @@
+[
+  {
+    "run": 2,
+    "totals": {
+      "cpu_samples": 2027,
+      "allocation_samples": 6907,
+      "sampled_allocation_weight": 19627748920,
+      "truncated_cpu": 0,
+      "truncated_alloc": 0
+    },
+    "points": {
+      "org.kanger.Mind.isUnitDeleted": {
+        "samples": 395,
+        "share_pct": 19.49
+      },
+      "org.kanger.units.TVariable.activeMind": {
+        "samples": 195,
+        "share_pct": 9.62
+      },
+      "org.kanger.units.Predicate.getName": {
+        "samples": 161,
+        "share_pct": 7.94
+      },
+      "org.kanger.factory.TValueFactory.isEmpty": {
+        "samples": 77,
+        "share_pct": 3.8
+      },
+      "org.kanger.primitives.ArgumentsList.getTVariables_allocation": {
+        "weight": 1732303512,
+        "share_pct": 8.83
+      },
+      "org.kanger.primitives.ArgumentsList.getStamp_allocation": {
+        "weight": 424540800,
+        "share_pct": 2.16
+      },
+      "org.kanger.units.Predicate.getName_allocation": {
+        "weight": 2008792288,
+        "share_pct": 10.23
+      },
+      "org.kanger.units.TVariable.setMind_allocation": {
+        "weight": 751084224,
+        "share_pct": 3.83
+      }
+    }
+  },
+  {
+    "run": 3,
+    "totals": {
+      "cpu_samples": 2094,
+      "allocation_samples": 7171,
+      "sampled_allocation_weight": 19515304776,
+      "truncated_cpu": 0,
+      "truncated_alloc": 0
+    },
+    "points": {
+      "org.kanger.Mind.isUnitDeleted": {
+        "samples": 374,
+        "share_pct": 17.86
+      },
+      "org.kanger.units.TVariable.activeMind": {
+        "samples": 165,
+        "share_pct": 7.88
+      },
+      "org.kanger.units.Predicate.getName": {
+        "samples": 173,
+        "share_pct": 8.26
+      },
+      "org.kanger.factory.TValueFactory.isEmpty": {
+        "samples": 97,
+        "share_pct": 4.63
+      },
+      "org.kanger.primitives.ArgumentsList.getTVariables_allocation": {
+        "weight": 1328872264,
+        "share_pct": 6.81
+      },
+      "org.kanger.primitives.ArgumentsList.getStamp_allocation": {
+        "weight": 529959960,
+        "share_pct": 2.72
+      },
+      "org.kanger.units.Predicate.getName_allocation": {
+        "weight": 2328835504,
+        "share_pct": 11.93
+      },
+      "org.kanger.units.TVariable.setMind_allocation": {
+        "weight": 568087328,
+        "share_pct": 2.91
+      }
+    }
+  }
+]
