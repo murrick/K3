@@ -98,8 +98,8 @@ final class ConnectionStore {
     }
 
     /**
-     * Replaces operational metadata with one vector for one exact source
-     * revision. Used by ordinary connect/disconnect operations.
+     * Legacy package-level helper used by pre-revision-bound storage fixtures.
+     * Runtime/operator topology mutation must not call this method.
      */
     static void write(Path location,
                       RevisionRef source,
