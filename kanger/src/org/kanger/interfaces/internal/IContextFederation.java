@@ -172,6 +172,97 @@ public interface IContextFederation {
         }
     }
 
+    final class RevisionVersion {
+
+        private final long revision;
+        private final String description;
+
+        public RevisionVersion(
+                long revision,
+                String description) {
+            if (revision < 0L) {
+                throw new IllegalArgumentException(
+                        "revision must be non-negative");
+            }
+            if (description == null) {
+                throw new NullPointerException("description");
+            }
+            this.revision = revision;
+            this.description = description;
+        }
+
+        public long getRevision() {
+            return revision;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+    }
+
+    final class VersionHistory {
+
+        private final String locator;
+        private final UUID contextId;
+        private final long currentRevision;
+        private final long pinnedRevision;
+        private final List<RevisionVersion> revisions;
+
+        public VersionHistory(
+                String locator,
+                UUID contextId,
+                long currentRevision,
+                long pinnedRevision,
+                List<RevisionVersion> revisions) {
+            if (locator == null
+                    || locator.trim().isEmpty()) {
+                throw new IllegalArgumentException(
+                        "locator must not be blank");
+            }
+            if (contextId == null
+                    || revisions == null) {
+                throw new NullPointerException();
+            }
+            if (currentRevision < 0L
+                    || pinnedRevision < -1L) {
+                throw new IllegalArgumentException(
+                        "invalid revision marker");
+            }
+            this.locator = locator.trim();
+            this.contextId = contextId;
+            this.currentRevision = currentRevision;
+            this.pinnedRevision = pinnedRevision;
+            this.revisions =
+                    Collections.unmodifiableList(
+                            new ArrayList<RevisionVersion>(
+                                    revisions));
+        }
+
+        public String getLocator() {
+            return locator;
+        }
+
+        public UUID getContextId() {
+            return contextId;
+        }
+
+        public long getCurrentRevision() {
+            return currentRevision;
+        }
+
+        public boolean hasPinnedRevision() {
+            return pinnedRevision >= 0L;
+        }
+
+        public long getPinnedRevision() {
+            return pinnedRevision;
+        }
+
+        public List<RevisionVersion> getRevisions() {
+            return revisions;
+        }
+    }
+
     enum FrontierTruth {
         TRUE,
         FALSE,
@@ -416,6 +507,11 @@ public interface IContextFederation {
     }
 
     Snapshot federationSnapshot() throws Exception;
+
+    VersionHistory versionHistory(
+            String targetLocator) throws Exception;
+
+
 
     Connection connectContext(String targetLocator)
             throws Exception;
