@@ -1,0 +1,94 @@
+--- kanger/src/org/kanger/Mind.java	2026-10-05 21:24:13.116545779 +0100
++++ ../build/unit-state-guard-source/Mind.java	2026-10-05 21:33:10.418108310 +0100
+@@ -114,6 +114,7 @@
+     private static final int FLOOD_CONTROL_LIMIT = 10000;
+ 
+     private final Object locker = new Object();
++    private boolean diagnosticMapsExposed;
+     //
+     private long id = 0;
+     private IMind next = null;
+@@ -1034,10 +1035,12 @@
+     }
+ 
+     public Map<UnitType, Set<Long>> getDeleted() {
++        diagnosticMapsExposed = DeletionCallerCounters.expose(diagnosticMapsExposed);
+         return deleted;
+     }
+ 
+     public Map<UnitType, Set<Long>> getRestored() {
++        diagnosticMapsExposed = DeletionCallerCounters.expose(diagnosticMapsExposed);
+         return restored;
+     }
+ 
+@@ -1933,19 +1936,27 @@
+     public boolean isUnitDeleted(IUnit unit) {
+         UnitType unitType = unit.getUnitType();
+         long unitId = unit.getId();
++        int diagnosticDepth = 0;
++        boolean diagnosticExposed = false;
+         for (IMind level = this; level != null; level = level.getNext()) {
+             Mind current = (Mind) level;
++            ++diagnosticDepth;
+             synchronized (current.locker) {
+                 Set<Long> restoredIds = current.restored.get(unitType);
++                diagnosticExposed |= DeletionCallerCounters.restoredProbe(unitType, restoredIds != null, current.diagnosticMapsExposed);
+                 if (restoredIds != null && restoredIds.contains(unitId)) {
++                    DeletionCallerCounters.complete(unitType, diagnosticDepth, 0, !diagnosticExposed);
+                     return false;
+                 }
+                 Set<Long> deletedIds = current.deleted.get(unitType);
++                DeletionCallerCounters.deletedProbe(unitType, deletedIds != null);
+                 if (deletedIds != null && deletedIds.contains(unitId)) {
++                    DeletionCallerCounters.complete(unitType, diagnosticDepth, 1, !diagnosticExposed);
+                     return true;
+                 }
+             }
+         }
++        DeletionCallerCounters.complete(unitType, diagnosticDepth, 2, !diagnosticExposed);
+         return false;
+     }
+ 
+--- kanger/src/org/kanger/primitives/ArgumentsList.java	2026-10-05 21:20:46.938577875 +0100
++++ ../build/unit-state-guard-source/ArgumentsList.java	2026-10-05 21:33:10.418398777 +0100
+@@ -257,8 +257,8 @@
+         List<TVariable> list = new ArrayList<>();
+         for (IArgument a : this) {
+             if (a.getType() == ArgumentType.TVARIABLE
+-                    && !a.isDeleted(mind)
+-                    && !a.isDeleted(mind)
++                    && !org.kanger.DeletionCallerCounters.argumentDeleted(a, mind, 1)
++                    && !org.kanger.DeletionCallerCounters.argumentDeleted(a, mind, 2)
+                     && !list.contains(a.getObject(mind))) {
+                 list.add(((TVariable) a.getObject(mind)));
+             } else if (a.getType() == ArgumentType.FUNCTION) {
+@@ -351,7 +351,7 @@
+ 
+     public List<ITerm> getStamp(Mind mind) throws Exception {
+         List<ITerm> list = new ArrayList<>();
+-        for (TVariable t : getTVariables(mind)) {
++        for (TVariable t : org.kanger.DeletionCallerCounters.collect(this, mind, 2)) {
+             if (t.isEmpty()) {
+                 throw new ParametersIncompleteException(t.toString());
+             }
+--- kanger/src/org/kanger/units/Domain.java	2026-10-05 21:20:46.939435695 +0100
++++ ../build/unit-state-guard-source/Domain.java	2026-10-05 21:33:10.421071331 +0100
+@@ -560,7 +560,7 @@
+     @Override
+     public Domain setMind(Mind mind) throws Exception {
+         this.mind = mind;
+-        for (TVariable t : arguments.getTVariables(mind)) {
++        for (TVariable t : org.kanger.DeletionCallerCounters.collect(arguments, mind, 1)) {
+             t.setMind(mind);
+         }
+         return this;
+--- kanger/src/org/kanger/primitives/Argument.java	2026-10-05 21:20:46.938172846 +0100
++++ ../build/unit-state-guard-source/Argument.java	2026-10-05 21:33:10.421234937 +0100
+@@ -233,6 +233,7 @@
+ 
+     @Override
+     public boolean isDeleted(IMind mind) {
++        org.kanger.DeletionCallerCounters.argumentBoundary(this, o, mind);
+         if (o == null) {
+             return false;
+         } else {

@@ -1,0 +1,17 @@
+PASS InternalUnitStateReadsRunner false
+PASS CompactFindSnapshotsRunner false
+PASS ResidentBaseComparisonRunner false
+PASS SingleTValueLookupRunner false
+PASS TValueIndexReopenRunner false
+PASS LatentSubstitutionCorpusRunner false
+PASS LatentSolveSyncTransactionRunner false
+PASS KangerRuleCandidateConcurrencyRunner false
+PASS InternalUnitStateReadsRunner true
+PASS CompactFindSnapshotsRunner true
+PASS ResidentBaseComparisonRunner true
+PASS SingleTValueLookupRunner true
+PASS TValueIndexReopenRunner true
+PASS LatentSubstitutionCorpusRunner true
+PASS LatentSolveSyncTransactionRunner true
+PASS KangerRuleCandidateConcurrencyRunner true
+TRANSACTION_STATES_EQUAL
