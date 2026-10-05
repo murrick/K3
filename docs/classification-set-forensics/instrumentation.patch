@@ -1,0 +1,36 @@
+--- kanger/src/org/kanger/Linker.java	2026-10-05 17:25:41.546071929 +0200
++++ ../build/classification-source/Linker.java	2026-10-05 17:26:36.059973007 +0200
+@@ -1010,11 +1010,12 @@
+                 }
+             }
+ 
+-            Set<Domain> excluded = new HashSet<>();
+-            Set<Domain> calculated = new HashSet<>();
+-            Set<Domain> candidates = new HashSet<>();
+-            Set<Domain> assumed = new HashSet<>();
+-            Set<Domain> stored = new HashSet<>();
++            Set<Domain> excluded = ClassificationCounters.create(0);
++            Set<Domain> calculated = ClassificationCounters.create(1);
++            Set<Domain> candidates = ClassificationCounters.create(2);
++            Set<Domain> assumed = ClassificationCounters.create(3);
++            Set<Domain> stored = ClassificationCounters.create(4);
++            try {
+ 
+             for (Domain d : tree) {
+ 
+@@ -1059,6 +1060,7 @@
+                 }
+             }
+ 
++            ClassificationCounters.checkpoint(excluded, calculated, candidates, assumed, stored);
+             if (candidates.size() == 1) {
+                 for (Domain d : candidates) {
+                     occurs = true;
+@@ -1175,6 +1177,7 @@
+                     log.add(LogMode.STORAGE, "-------------------------------------------");
+                 }
+             }
++            } finally { ClassificationCounters.complete(excluded, calculated, candidates, assumed, stored); }
+         }
+         return result;
+     }

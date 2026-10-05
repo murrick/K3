@@ -1,0 +1,40 @@
+{
+  "code_commit": "14418d90d18c0050ac638b2327f1bc6824a58669",
+  "runs": [
+    {
+      "id": 37334121539,
+      "name": "KANGER CI",
+      "status": "in_progress",
+      "conclusion": null,
+      "url": "https://github.com/murrick/K3/actions/runs/37334121539"
+    },
+    {
+      "id": 37334121705,
+      "name": "Lazy classification sets qualification",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37334121705"
+    },
+    {
+      "id": 37334121558,
+      "name": "KANGER Server",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37334121558"
+    },
+    {
+      "id": 37334121538,
+      "name": "KANGER distribution bundle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37334121538"
+    },
+    {
+      "id": 37334121602,
+      "name": "KANGER qualification isolation",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37334121602"
+    }
+  ]
+}

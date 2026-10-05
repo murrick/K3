@@ -1,0 +1,14 @@
+binding-1-reference.log wall_s=4.752 cpu_s=4.657 allocated_MB=4844.0
+binding-2-false.log wall_s=4.897 cpu_s=4.799 allocated_MB=4723.2
+binding-3-true.log wall_s=4.634 cpu_s=4.528 allocated_MB=4591.3
+binding-4-true.log wall_s=5.060 cpu_s=4.932 allocated_MB=4623.5
+binding-5-false.log wall_s=4.863 cpu_s=4.752 allocated_MB=4850.4
+binding-6-reference.log wall_s=4.641 cpu_s=4.544 allocated_MB=4731.8
+ON_vs_clean_forward wall_reduction=2.49% cpu_reduction=2.77% allocation_reduction=5.22%
+ON_vs_clean_reverse wall_reduction=-9.02% cpu_reduction=-8.54% allocation_reduction=2.29%
+ON_vs_OFF_forward wall_reduction=5.38% cpu_reduction=5.64% allocation_reduction=2.79%
+ON_vs_OFF_reverse wall_reduction=-4.05% cpu_reduction=-3.79% allocation_reduction=4.68%
+OFF_vs_clean_forward wall_reduction=-3.05% cpu_reduction=-3.05% allocation_reduction=2.49%
+OFF_vs_clean_reverse wall_reduction=-4.79% cpu_reduction=-4.57% allocation_reduction=-2.51%
+ALL_RAW_AND_FINAL_TEXTS_EQUAL samples=36
+LAST_LINKER_STATISTICS_EQUAL samples=36
