@@ -15,9 +15,11 @@ import org.kanger.units.Rule;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
@@ -214,6 +216,8 @@ final class FrontierContinuationEngine {
                 provisionalHypotheses =
                 new LinkedHashSet<
                         FrontierAggregate.ProvisionalHypothesis>();
+        List<EvidenceInjection> injections =
+                new ArrayList<EvidenceInjection>();
 
         if (prove(work, query, logging)) {
             return new Result(
@@ -223,6 +227,7 @@ final class FrontierContinuationEngine {
                     queryRuleId,
                     Collections.<List<String>>emptyList(),
                     observations,
+                    injections,
                     provisionalHypotheses);
         }
 
@@ -245,6 +250,7 @@ final class FrontierContinuationEngine {
                         queryRuleId,
                         frontierTrace,
                         observations,
+                        injections,
                         provisionalHypotheses);
             }
 
@@ -292,6 +298,12 @@ final class FrontierContinuationEngine {
                                 queryPass)) {
                     ++evidenceCount;
                     changed = true;
+                    injections.add(
+                            EvidenceInjection.of(
+                                    frontier,
+                                    Collections.<String>emptyList(),
+                                    Collections.<ITerm>emptyList(),
+                                    aggregate.getTrueSources()));
                 }
 
                 FrontierLiftSession.LiftResult lifted =
@@ -311,6 +323,12 @@ final class FrontierContinuationEngine {
                             queryPass)) {
                         ++evidenceCount;
                         changed = true;
+                        injections.add(
+                                EvidenceInjection.of(
+                                        frontier,
+                                        lifted.getVariableOrder(),
+                                        tuple.getValues(),
+                                        tuple.getSupports()));
                     }
                 }
             }
@@ -419,6 +437,7 @@ final class FrontierContinuationEngine {
         private final long queryRuleId;
         private final List<List<String>> frontierTrace;
         private final List<FrontierObservation> observations;
+        private final List<EvidenceInjection> evidenceInjections;
         private final List<FrontierAggregate.ProvisionalHypothesis>
                 provisionalHypotheses;
 
@@ -429,6 +448,7 @@ final class FrontierContinuationEngine {
                 long queryRuleId,
                 List<List<String>> frontierTrace,
                 List<FrontierObservation> observations,
+                List<EvidenceInjection> evidenceInjections,
                 Set<FrontierAggregate.ProvisionalHypothesis>
                         provisionalHypotheses) {
             this.resolved = resolved;
@@ -448,6 +468,10 @@ final class FrontierContinuationEngine {
                     Collections.unmodifiableList(
                             new ArrayList<FrontierObservation>(
                                     observations));
+            this.evidenceInjections =
+                    Collections.unmodifiableList(
+                            new ArrayList<EvidenceInjection>(
+                                    evidenceInjections));
             this.provisionalHypotheses =
                     Collections.unmodifiableList(
                             new ArrayList<
@@ -477,6 +501,10 @@ final class FrontierContinuationEngine {
 
         List<FrontierObservation> getObservations() {
             return observations;
+        }
+
+        List<EvidenceInjection> getEvidenceInjections() {
+            return evidenceInjections;
         }
 
         List<FrontierAggregate.ProvisionalHypothesis>
@@ -526,6 +554,58 @@ final class FrontierContinuationEngine {
 
         FrontierAggregate getAggregate() {
             return aggregate;
+        }
+    }
+
+    static final class EvidenceInjection {
+
+        private final String statement;
+        private final Map<String, String> substitutions;
+        private final Set<RevisionRef> supports;
+
+        private EvidenceInjection(
+                String statement,
+                Map<String, String> substitutions,
+                Set<RevisionRef> supports) {
+            this.statement = statement;
+            this.substitutions =
+                    Collections.unmodifiableMap(
+                            new LinkedHashMap<String, String>(
+                                    substitutions));
+            this.supports =
+                    Collections.unmodifiableSet(
+                            new LinkedHashSet<RevisionRef>(
+                                    supports));
+        }
+
+        static EvidenceInjection of(
+                FrontierDomain frontier,
+                List<String> variableOrder,
+                List<ITerm> values,
+                Set<RevisionRef> supports) {
+            LinkedHashMap<String, String> substitutions =
+                    new LinkedHashMap<String, String>();
+            for (int i = 0; i < variableOrder.size(); ++i) {
+                substitutions.put(
+                        variableOrder.get(i),
+                        values.get(i).toString());
+            }
+            return new EvidenceInjection(
+                    frontier.getDiagnosticSource(),
+                    substitutions,
+                    supports);
+        }
+
+        String getStatement() {
+            return statement;
+        }
+
+        Map<String, String> getSubstitutions() {
+            return substitutions;
+        }
+
+        Set<RevisionRef> getSupports() {
+            return supports;
         }
     }
 
