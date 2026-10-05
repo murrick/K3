@@ -102,6 +102,31 @@ public class ConnectionManagerTest {
     }
 
     @Test
+    void publishedDependencySidecarMismatchIsSemanticCorruption()
+            throws Exception {
+        ContextFixture x =
+                context("XD", "!anchor(X);");
+        ContextFixture a =
+                context("AD", "!male(Tom);");
+
+        ConnectionManager.connect(
+                x.location,
+                a.location);
+
+        ConnectionStore.delete(x.location);
+
+        StorageLifecycleException failure =
+                assertThrows(
+                        StorageLifecycleException.class,
+                        () -> ContextSnapshot.open(
+                                x.location));
+        assertEquals(
+                org.kanger.enums.StorageLifecycleErrorCode
+                        .STORAGE_SEMANTIC_CORRUPTION,
+                failure.getErrorCode());
+    }
+
+    @Test
     void incompatibleConnectDoesNotPublishConnection()
             throws Exception {
         ContextFixture x =
