@@ -198,7 +198,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
      * snapshot remains R0.</p>
      */
     static ContextStore fork(ContextSnapshot source, Path target)
-            throws IOException, StorageLifecycleException {
+            throws Exception {
         Objects.requireNonNull(source, "source");
         if (source.isClosed()) {
             throw new IllegalStateException("DUMB2 source snapshot is closed");
@@ -210,10 +210,20 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         Path targetState = stateRoot(normalized);
         if (Files.exists(targetContext)
                 || Files.exists(targetRevision)
-                || Files.exists(targetState)) {
+                || Files.exists(targetState)
+                || Files.exists(ConnectionStore.path(normalized))) {
             throw new java.nio.file.FileAlreadyExistsException(
                     "DUMB2 fork target already exists: " + normalized);
         }
+
+        RevisionRef sourceRef =
+                new RevisionRef(
+                        source.getContextId(),
+                        source.getRevision());
+        ConnectionVector sourceDependencies =
+                ConnectionStore.read(
+                        source.getLocation(),
+                        sourceRef);
 
         boolean manifestCreated = false;
         try {
@@ -232,25 +242,80 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
             if (forkRevision > RevisionStore.INITIAL_REVISION) {
                 Files.createDirectories(targetState);
-                Path generation = generationPath(normalized, forkRevision);
+                Path generation =
+                        generationPath(normalized, forkRevision);
                 Path staging = targetState.resolve(
                         ".fork-" + forkRevision + "-"
                                 + UUID.randomUUID().toString());
                 boolean installed = false;
                 try {
-                    copyDirectory(source.getGeneration(), staging);
+                    copyDirectory(
+                            source.getGeneration(),
+                            staging);
+
                     RevisionManifestStore.seal(
                             staging,
                             targetManifest.getContextId(),
                             forkRevision,
-                            RevisionStore.INITIAL_REVISION);
-                    Files.move(staging, generation,
+                            RevisionStore.INITIAL_REVISION,
+                            sourceDependencies,
+                            "");
+
+                    ConnectionVector forkDependencies =
+                            ConnectionVector.empty();
+                    if (!sourceDependencies.isEmpty()) {
+                        ContextCandidate candidate =
+                                ContextCandidate.of(
+                                        normalized,
+                                        staging,
+                                        targetManifest.getContextId(),
+                                        forkRevision,
+                                        targetManifest.getOrigin(),
+                                        targetManifest.getTypeRegistry(),
+                                        sourceDependencies);
+                        WriteCandidateQualification.Result qualification =
+                                WriteCandidateQualification.qualify(
+                                        candidate,
+                                        sourceDependencies);
+                        RevisionRef expected =
+                                new RevisionRef(
+                                        targetManifest.getContextId(),
+                                        forkRevision);
+                        if (!expected.equals(
+                                qualification.getCandidate())) {
+                            throw new IllegalStateException(
+                                    "Qualified fork candidate identity mismatch: expected "
+                                            + expected
+                                            + " found "
+                                            + qualification.getCandidate());
+                        }
+                        forkDependencies =
+                                qualification.getConnections();
+                        RevisionManifestStore
+                                .validateDependencyVector(
+                                        staging,
+                                        forkDependencies);
+                    }
+
+                    Files.move(
+                            staging,
+                            generation,
                             StandardCopyOption.ATOMIC_MOVE);
                     installed = true;
+
+                    if (!forkDependencies.isEmpty()) {
+                        ConnectionStore.stageInitialRevision(
+                                normalized,
+                                new RevisionRef(
+                                        targetManifest.getContextId(),
+                                        forkRevision),
+                                forkDependencies);
+                    }
                 } catch (java.nio.file.AtomicMoveNotSupportedException failure) {
                     throw new IOException(
                             "DUMB2 requires atomic same-filesystem fork publication: "
-                                    + generation, failure);
+                                    + generation,
+                            failure);
                 } finally {
                     if (!installed || Files.exists(staging)) {
                         deleteRecursively(staging);
@@ -258,13 +323,20 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                 }
             }
 
-            RevisionStore.create(targetRevision, forkRevision);
+            RevisionStore.create(
+                    targetRevision,
+                    forkRevision);
             return ContextStore.open(normalized);
-        } catch (IOException | StorageLifecycleException
-                 | RuntimeException | Error failure) {
+        } catch (Exception | Error failure) {
             if (manifestCreated) {
                 try {
                     deleteRecursively(targetState);
+                } catch (IOException cleanupFailure) {
+                    failure.addSuppressed(cleanupFailure);
+                }
+                try {
+                    Files.deleteIfExists(
+                            ConnectionStore.path(normalized));
                 } catch (IOException cleanupFailure) {
                     failure.addSuppressed(cleanupFailure);
                 }
@@ -375,6 +447,8 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
         long next = revision + 1L;
         ensureRevisionManifestPolicy(next);
+        ConnectionVector currentConnections =
+                publishedConnections();
         Path root = stateRoot(location);
         Path previous = generationPath(location, revision);
         Path target = generationPath(location, next);
@@ -406,10 +480,14 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                     staging,
                     contextId,
                     next,
-                    revision);
+                    revision,
+                    currentConnections,
+                    "");
 
             qualifyAndStageConnectionTransition(
-                    staging, next);
+                    staging,
+                    next,
+                    currentConnections);
 
             /*
              * A target with no matching visible revision is an orphan left by
@@ -516,6 +594,8 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
         long next = revision + 1L;
         ensureRevisionManifestPolicy(next);
+        ConnectionVector currentConnections =
+                publishedConnections();
         Path root = stateRoot(location);
         Path previous = generationPath(location, revision);
         Path target = generationPath(location, next);
@@ -549,10 +629,14 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                     staging,
                     contextId,
                     next,
-                    revision);
+                    revision,
+                    currentConnections,
+                    "");
 
             qualifyAndStageConnectionTransition(
-                    staging, next);
+                    staging,
+                    next,
+                    currentConnections);
 
             if (Files.exists(target)) {
                 deleteRecursively(target);
@@ -608,18 +692,22 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
      */
     private void qualifyAndStageConnectionTransition(
             Path staging,
-            long next) throws Exception {
+            long next,
+            ConnectionVector currentConnections)
+            throws Exception {
+        if (currentConnections == null) {
+            throw new NullPointerException(
+                    "currentConnections");
+        }
+
         /*
-         * DUMB2 is also exercised as a low-level self-describing storage
-         * substrate (codec/reindex/mixed-layout tests). Semantic federation
-         * qualification belongs only to Contexts that actually participate in
-         * a direct ConnectionVector. A disconnected Context retains the
-         * historical Core transaction qualification path and must not be
-         * reinterpreted here as a second semantic runtime.
+         * No sidecar is needed for a historically disconnected Context.
+         * The v2 manifest still binds the canonical empty dependency set.
          */
         Path connectionsPath =
                 ConnectionStore.path(location);
-        if (!Files.exists(connectionsPath)) {
+        if (currentConnections.isEmpty()
+                && !Files.exists(connectionsPath)) {
             return;
         }
 
@@ -630,10 +718,10 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                 new RevisionRef(
                         contextId, next);
 
-        ConnectionVector currentConnections =
-                ConnectionStore.read(
-                        location, currentSource);
         if (currentConnections.isEmpty()) {
+            RevisionManifestStore.validateDependencyVector(
+                    staging,
+                    ConnectionVector.empty());
             ConnectionStore.writeTransition(
                     location,
                     currentSource,
@@ -645,7 +733,10 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
         ContextCandidate candidate =
                 ContextCandidate.of(
-                        this, staging, next);
+                        this,
+                        staging,
+                        next,
+                        currentConnections);
         WriteCandidateQualification.Result qualification =
                 WriteCandidateQualification.qualify(
                         candidate,
@@ -662,6 +753,14 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
         ConnectionVector candidateConnections =
                 qualification.getConnections();
+        /*
+         * Qualification refreshes certificates for source R+1 but is not
+         * allowed to change the exact target ContextId/RevisionId set sealed
+         * into the candidate manifest.
+         */
+        RevisionManifestStore.validateDependencyVector(
+                staging,
+                candidateConnections);
 
         ConnectionStore.writeTransition(
                 location,
@@ -669,6 +768,15 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                 currentConnections,
                 candidateSource,
                 candidateConnections);
+    }
+
+    private ConnectionVector publishedConnections()
+            throws IOException, StorageLifecycleException {
+        return ConnectionStore.read(
+                location,
+                new RevisionRef(
+                        contextId,
+                        revision));
     }
 
     @Override
@@ -822,11 +930,24 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                             + generation);
         }
         if (sealed) {
-            RevisionManifestStore.validate(
-                    generation,
-                    contextId,
-                    revision,
-                    revision - 1L);
+            RevisionManifestStore.Manifest revisionManifest =
+                    RevisionManifestStore.validate(
+                            generation,
+                            contextId,
+                            revision,
+                            revision - 1L);
+            if (revisionManifest.hasDependencyDigest()) {
+                ConnectionVector dependencies =
+                        ConnectionStore.read(
+                                location,
+                                new RevisionRef(
+                                        contextId,
+                                        revision));
+                RevisionManifestStore.validateDependencyVector(
+                        revisionManifest,
+                        dependencies,
+                        generation);
+            }
         }
     }
 
