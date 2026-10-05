@@ -47,6 +47,10 @@ import java.util.*;
  * Описатель варианта решения предиката
  */
 public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
+    /** Experimental, default OFF; selected at JVM startup. */
+    private static final boolean SMALL_BINDING_CAPACITY =
+            Boolean.getBoolean("kanger.experiment.smallBindingCapacity");
+
 
     private static final long serialVersionUID = 196402070001L;
 
@@ -560,7 +564,9 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     @Override
     public Domain setMind(Mind mind) throws Exception {
         this.mind = mind;
-        for (TVariable t : arguments.getTVariables(mind)) {
+        for (TVariable t : SMALL_BINDING_CAPACITY && arguments != null
+                && arguments.getClass() == ArgumentsList.class
+                ? ArgumentsList.getTVariablesForSmallBinding(arguments, mind) : arguments.getTVariables(mind)) {
             t.setMind(mind);
         }
         return this;

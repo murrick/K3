@@ -273,6 +273,31 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
         return list;
     }
 
+    /** Internal owned snapshot; public enumeration and subclass paths stay unchanged. */
+    public static List<TVariable> getTVariablesForSmallBinding(ArgumentsList arguments, IMind mind) throws Exception {
+        if (arguments.getClass() != ArgumentsList.class) return arguments.getTVariables(mind);
+        ArrayList<TVariable> list = new ArrayList<>(0);
+        for (IArgument a : arguments) {
+            if (a.getType() == ArgumentType.TVARIABLE
+                    && !a.isDeleted(mind)
+                    && !a.isDeleted(mind)
+                    && !list.contains(a.getObject(mind))) {
+                TVariable variable = (TVariable) a.getObject(mind);
+                if (list.isEmpty()) list.ensureCapacity(2);
+                list.add(variable);
+            } else if (a.getType() == ArgumentType.FUNCTION) {
+                List<TVariable> temp = ((Function) a.getObject(mind)).getArguments().getTVariables(mind);
+                for (TVariable t : temp) {
+                    if (!list.contains(t)) {
+                        if (list.isEmpty()) list.ensureCapacity(2);
+                        list.add(t);
+                    }
+                }
+            }
+        }
+        return list;
+    }
+
     public List<ITerm> getCVariables(Mind mind) throws Exception {
         List<ITerm> list = new ArrayList<>();
         for (IArgument a : this) {
