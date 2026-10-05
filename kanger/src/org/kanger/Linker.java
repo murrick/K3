@@ -149,6 +149,9 @@ import java.util.*;
  * @see LinkerStatistics
  */
 public class Linker {
+    private static final boolean LAZY_CLASSIFICATION_SETS =
+            Boolean.getBoolean("kanger.experiment.lazyClassificationSets");
+
 
     private final transient Mind mind;
     private final LogStore log;
@@ -966,6 +969,17 @@ public class Linker {
     }
 
 
+    /** Preserve ordinary HashSet capacity, hashing, equality and iteration order. */
+    private static Set<Domain> addClassificationDomain(Set<Domain> set, Domain domain) {
+        if (set == null) set = new HashSet<>();
+        set.add(domain);
+        return set;
+    }
+
+    private static boolean classificationEmpty(Set<Domain> set) {
+        return set == null || set.isEmpty();
+    }
+
     /**
      * Классифицирует terminal branch и регистрирует её отложенный
      * семантический эффект.
@@ -1010,11 +1024,11 @@ public class Linker {
                 }
             }
 
-            Set<Domain> excluded = new HashSet<>();
-            Set<Domain> calculated = new HashSet<>();
+            Set<Domain> excluded = LAZY_CLASSIFICATION_SETS ? null : new HashSet<>();
+            Set<Domain> calculated = LAZY_CLASSIFICATION_SETS ? null : new HashSet<>();
             Set<Domain> candidates = new HashSet<>();
-            Set<Domain> assumed = new HashSet<>();
-            Set<Domain> stored = new HashSet<>();
+            Set<Domain> assumed = LAZY_CLASSIFICATION_SETS ? null : new HashSet<>();
+            Set<Domain> stored = LAZY_CLASSIFICATION_SETS ? null : new HashSet<>();
 
             for (Domain d : tree) {
 
@@ -1030,7 +1044,7 @@ public class Linker {
                             }
                         }
                         if (success) {
-                            assumed.add(d);
+                            assumed = addClassificationDomain(assumed, d);
                         }
                     }
                 }
@@ -1044,25 +1058,25 @@ public class Linker {
                     log.add(LogMode.STORAGE, "DB assumed record (r): " + d);
                     occurs = true;
                 } else if (d.isCalculated(mind)) {
-                    calculated.add(d);
+                    calculated = addClassificationDomain(calculated, d);
                 } else if (d.isSystem(mind) || !d.isComplete()) {
-                    excluded.clear();
+                    if (excluded != null) excluded.clear();
                     candidates.clear();
                     break;
                 } else if (d.isExcluded(mind)) {
-                    excluded.add(d);
+                    excluded = addClassificationDomain(excluded, d);
                 } else {
                     candidates.add(d);
                 }
                 if (d.isStored(mind)) {
-                    stored.add(d);
+                    stored = addClassificationDomain(stored, d);
                 }
             }
 
             if (candidates.size() == 1) {
                 for (Domain d : candidates) {
                     occurs = true;
-                    if (!d.isStored(mind) && (d.setCauses(causes.get(d.getRule()), mind) || !calculated.isEmpty() || !excluded.isEmpty())) {
+                    if (!d.isStored(mind) && (d.setCauses(causes.get(d.getRule()), mind) || !classificationEmpty(calculated) || !classificationEmpty(excluded))) {
                         boolean term = false;
                         boolean abst = false;
                         for (IArgument a : d.getArguments()) {
@@ -1084,7 +1098,7 @@ public class Linker {
                         }
                     }
                 }
-            } else if (!excluded.isEmpty() && candidates.isEmpty() && stored.isEmpty()) {
+            } else if (!classificationEmpty(excluded) && candidates.isEmpty() && classificationEmpty(stored)) {
                 occurs = true;
                 for (Domain d : excluded) {
                     if (!d.isStored(mind) && d.setCauses(causes.get(d.getRule()), mind)) {
@@ -1099,7 +1113,7 @@ public class Linker {
                 }
             }
 
-            if (!calculated.isEmpty() && candidates.isEmpty() /*&& tree.size() - excluded.size() == calculated.size()*/) {
+            if (!classificationEmpty(calculated) && candidates.isEmpty() /*&& tree.size() - excluded.size() == calculated.size()*/) {
                 occurs = true;
                 for (Domain d : calculated) {
                     if (!d.isStored(mind)) {
@@ -1115,20 +1129,20 @@ public class Linker {
                 }
             }
 
-            if (!occurs && !assumed.isEmpty() && tree.size() > 1) {
+            if (!occurs && !classificationEmpty(assumed) && tree.size() > 1) {
                 candidates.clear();
-                excluded.clear();
+                if (excluded != null) excluded.clear();
                 for (Domain d : tree) {
                     if (d.isComplete() && !d.isCalculated(mind) && !d.isSystem(mind) && !assumed.contains(d)) {
                         occurs = true;
                         if (!d.isExcluded(mind)) {
                             candidates.add(d);
                         } else {
-                            excluded.add(d);
+                            excluded = addClassificationDomain(excluded, d);
                         }
                     }
                 }
-                if (candidates.size() == 1 && !excluded.isEmpty()) {
+                if (candidates.size() == 1 && !classificationEmpty(excluded)) {
                     Domain d = candidates.toArray(new Domain[]{})[0];
                     if (!d.isStored(mind) && d.setCauses(causes.get(d.getRule()), mind)) {
                         occurs = true;
