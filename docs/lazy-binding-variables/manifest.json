@@ -1,0 +1,38 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "code_commit": "e3f287ede67b28b8941a769381eaf3d84ec9acfb",
+  "flag": "kanger.experiment.lazyBindingVariables",
+  "default": false,
+  "java": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment (build 17.0.20+8-1-24.04-Ubuntu)\nOpenJDK 64-Bit Server VM (build 17.0.20+8-1-24.04-Ubuntu, mixed mode, sharing)\n",
+  "benchmark_order": [
+    "reference",
+    "false",
+    "true",
+    "true",
+    "false",
+    "reference"
+  ],
+  "samples_per_jvm": 6,
+  "warm_discard": 2,
+  "runner_sha256": "a6e1e4d619670763d894cb2dce3e9e43eba00af1e3cb4c3be0d2b01c31d9dfd8",
+  "reference_runner_sha256": "a6e1e4d619670763d894cb2dce3e9e43eba00af1e3cb4c3be0d2b01c31d9dfd8",
+  "qualification_markers": {
+    "LatentSolveSyncTransactionRunner-true.log": "LATENT_SOLVE_TRANSACTIONS_PASS operations=20",
+    "CompactFindSnapshotsRunner-true.log": "COMPACT_FIND_SNAPSHOTS_OK checks=23",
+    "ResidentBaseComparisonRunner-false.log": "RESIDENT_BASE_COMPARISON_OK checks=48 custom_reads=3",
+    "CompactFindSnapshotsRunner-false.log": "COMPACT_FIND_SNAPSHOTS_OK checks=23",
+    "LazyBindingVariablesRunner-true.log": "LAZY_BINDING_VARIABLES_OK scenarios=22 checks=58",
+    "KangerRuleCandidateConcurrencyRunner-false.log": "RULE_CANDIDATE_CONCURRENCY_OK iterations=3",
+    "KangerRuleCandidateConcurrencyRunner-true.log": "RULE_CANDIDATE_CONCURRENCY_OK iterations=3",
+    "TValueIndexReopenRunner-false.log": "TVALUE_INDEX_REOPEN_PASS",
+    "LatentSolveSyncTransactionRunner-false.log": "LATENT_SOLVE_TRANSACTIONS_PASS operations=20",
+    "LazyBindingVariablesRunner-false.log": "LAZY_BINDING_VARIABLES_OK scenarios=22 checks=58",
+    "SingleTValueLookupRunner-true.log": "SINGLE_LOOKUP_BOUNDARIES_OK checks=15",
+    "LatentSubstitutionCorpusRunner-false.log": "LATENT_CORPUS_PASS",
+    "TValueIndexReopenRunner-true.log": "TVALUE_INDEX_REOPEN_PASS",
+    "ResidentBaseComparisonRunner-true.log": "RESIDENT_BASE_COMPARISON_OK checks=48 custom_reads=3",
+    "SingleTValueLookupRunner-false.log": "SINGLE_LOOKUP_BOUNDARIES_OK checks=15",
+    "LatentSubstitutionCorpusRunner-true.log": "LATENT_CORPUS_PASS"
+  },
+  "transaction_states_equal": true
+}

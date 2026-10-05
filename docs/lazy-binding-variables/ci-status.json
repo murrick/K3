@@ -1,0 +1,45 @@
+{
+  "code_commit": "e3f287ede67b28b8941a769381eaf3d84ec9acfb",
+  "workflows": [
+    {
+      "id": 37290606550,
+      "name": "KANGER CI",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37290606550",
+      "head_sha": "e3f287ede67b28b8941a769381eaf3d84ec9acfb"
+    },
+    {
+      "id": 37290606514,
+      "name": "KANGER distribution bundle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37290606514",
+      "head_sha": "e3f287ede67b28b8941a769381eaf3d84ec9acfb"
+    },
+    {
+      "id": 37290606521,
+      "name": "KANGER Server",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37290606521",
+      "head_sha": "e3f287ede67b28b8941a769381eaf3d84ec9acfb"
+    },
+    {
+      "id": 37290606738,
+      "name": "Lazy binding variables qualification",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37290606738",
+      "head_sha": "e3f287ede67b28b8941a769381eaf3d84ec9acfb"
+    },
+    {
+      "id": 37290606553,
+      "name": "KANGER qualification isolation",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37290606553",
+      "head_sha": "e3f287ede67b28b8941a769381eaf3d84ec9acfb"
+    }
+  ]
+}
