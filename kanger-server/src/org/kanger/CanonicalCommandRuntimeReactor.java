@@ -114,6 +114,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             case CTX_CONNECT:
             case CTX_DISCONNECT:
             case CTX_SWITCH:
+            case CTX_VERSION:
             case CTX_ISOLATED_QUERY:
             case CTX_QUERY:
                 result = executeShared(invocation, user);
@@ -241,6 +242,14 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             result.put("context_federation",
                     federationSnapshot(federation));
         }
+        IContextFederation.VersionHistory contextVersion =
+                outcome.getContextVersionHistory();
+        if (contextVersion != null) {
+            result.put(
+                    "context_version",
+                    contextVersion(contextVersion));
+        }
+
         IContextFederation.QueryResult federationQuery =
                 outcome.getFederationQueryResult();
         if (federationQuery != null) {
@@ -290,6 +299,46 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                 .put("source_revision",
                         snapshot.getSourceRevision())
                 .put("connections", connections);
+    }
+
+    private JSONObject contextVersion(
+            IContextFederation.VersionHistory history) {
+        JSONArray revisions = new JSONArray();
+        for (IContextFederation.RevisionVersion revision
+                : history.getRevisions()) {
+            JSONObject row = new JSONObject()
+                    .put("revision",
+                            revision.getRevision())
+                    .put("description",
+                            revision.getDescription())
+                    .put("current",
+                            revision.getRevision()
+                                    == history.getCurrentRevision());
+            if (history.hasPinnedRevision()) {
+                row.put(
+                        "pinned",
+                        revision.getRevision()
+                                == history.getPinnedRevision());
+            } else {
+                row.put("pinned", false);
+            }
+            revisions.put(row);
+        }
+
+        JSONObject result = new JSONObject()
+                .put("schema", 1)
+                .put("locator", history.getLocator())
+                .put("context_id",
+                        history.getContextId().toString())
+                .put("current_revision",
+                        history.getCurrentRevision())
+                .put("revisions", revisions);
+        if (history.hasPinnedRevision()) {
+            result.put(
+                    "pinned_revision",
+                    history.getPinnedRevision());
+        }
+        return result;
     }
 
     private JSONObject contextQuery(
