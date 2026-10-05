@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -27,7 +28,7 @@ public class ConnectionManagerTest {
     Path root;
 
     @Test
-    void compatibleConnectPersistsCertificateAndDisconnectInvalidatesIt()
+    void compatibleConnectPublishesNewRevisionAndDisconnectPreservesHistory()
             throws Exception {
         ContextFixture x =
                 context("X", "!parent(John,Tom);");
@@ -38,17 +39,29 @@ public class ConnectionManagerTest {
                 ConnectionManager.connect(
                         x.location, a.location);
 
-        assertEquals(a.contextId,
+        RevisionRef connectedSource =
+                new RevisionRef(
+                        x.contextId,
+                        x.revision + 1L);
+        assertEquals(
+                a.contextId,
                 connection.getTarget().getContextId());
-        assertTrue(connection.getCertificate().matches(
-                new RevisionRef(x.contextId, x.revision),
-                new RevisionRef(a.contextId, a.revision),
-                Version.CORE_VERSION_S));
+        assertTrue(
+                connection.getCertificate().matches(
+                        connectedSource,
+                        new RevisionRef(
+                                a.contextId,
+                                a.revision),
+                        Version.CORE_VERSION_S));
 
         OperationSnapshot operation =
                 OperationSnapshot.open(x.location);
         try {
-            assertEquals(a.revision,
+            assertEquals(
+                    connectedSource,
+                    operation.getSourceRef());
+            assertEquals(
+                    a.revision,
                     operation.getTarget(
                             a.contextId).getRevision());
         } finally {
@@ -57,8 +70,35 @@ public class ConnectionManagerTest {
 
         ConnectionManager.disconnect(
                 x.location, a.contextId);
-        assertFalse(Files.exists(
-                ConnectionStore.path(x.location)));
+
+        OperationSnapshot disconnected =
+                OperationSnapshot.open(x.location);
+        try {
+            assertEquals(
+                    x.revision + 2L,
+                    disconnected.getSourceRef()
+                            .getRevision());
+            assertTrue(
+                    disconnected.getConnections()
+                            .isEmpty());
+        } finally {
+            disconnected.close();
+        }
+
+        /*
+         * KEEP_ALL: the vector bound to the previous published revision remains
+         * addressable after CURRENT moves to the disconnected revision.
+         */
+        ConnectionVector historical =
+                ConnectionStore.read(
+                        x.location,
+                        connectedSource);
+        assertNotNull(
+                historical.find(a.contextId));
+        assertTrue(
+                Files.exists(
+                        ConnectionStore.path(
+                                x.location)));
     }
 
     @Test
@@ -107,7 +147,7 @@ public class ConnectionManagerTest {
         RevisionRef expectedSource =
                 new RevisionRef(
                         x.contextId,
-                        x.revision + 1L);
+                        x.revision + 2L);
         RevisionRef expectedTarget =
                 new RevisionRef(
                         a.contextId,
@@ -138,7 +178,7 @@ public class ConnectionManagerTest {
     }
 
     @Test
-    void combinedTargetConflictBlocksCandidatePublication()
+    void combinedTargetConflictBlocksTopologyPublication()
             throws Exception {
         ContextFixture x =
                 context("XC", "!anchor(X);");
@@ -149,57 +189,28 @@ public class ConnectionManagerTest {
 
         ConnectionManager.connect(
                 x.location, a.location);
-        ConnectionManager.connect(
-                x.location, b.location);
-
-        User user = new User();
-        user.setDatabaseDir(
-                x.location.getParent().toString()
-                        + File.separator);
-        DB data = new DB();
-        data.init(user);
-        Mind mind = new Mind(user);
-        user.setCurrentMind(mind);
-        mind = (Mind) mind.useStorage(
-                x.location.getFileName().toString());
-        user.setCurrentMind(mind);
-        final Mind active = mind;
 
         assertThrows(
-                Exception.class,
-                () -> active.query(
-                        "!female(Jane);",
-                        null,
-                        false));
+                StorageLifecycleException.class,
+                () -> ConnectionManager.connect(
+                        x.location, b.location));
 
-        ContextSnapshot stillPublished =
-                ContextSnapshot.open(x.location);
-        try {
-            assertEquals(
-                    x.revision,
-                    stillPublished.getRevision(),
-                    "failed composition qualification must not publish R+1");
-        } finally {
-            stillPublished.close();
-        }
-
-        /*
-         * Repair only operational topology, then settle the already-staged
-         * local change so the test releases the mutable Context cleanly.
-         */
-        ConnectionManager.disconnect(
-                x.location, b.contextId);
-        user.setCurrentMind(
-                mind.closeStorage());
-
-        ContextSnapshot repaired =
-                ContextSnapshot.open(x.location);
+        OperationSnapshot stillPublished =
+                OperationSnapshot.open(x.location);
         try {
             assertEquals(
                     x.revision + 1L,
-                    repaired.getRevision());
+                    stillPublished.getSourceRef()
+                            .getRevision(),
+                    "failed topology qualification must not publish R+2");
+            assertNotNull(
+                    stillPublished.getConnections()
+                            .find(a.contextId));
+            assertNull(
+                    stillPublished.getConnections()
+                            .find(b.contextId));
         } finally {
-            repaired.close();
+            stillPublished.close();
         }
     }
 
@@ -217,6 +228,10 @@ public class ConnectionManagerTest {
         OperationSnapshot running =
                 OperationSnapshot.open(x.location);
         try {
+            assertEquals(
+                    x.revision + 1L,
+                    running.getSourceRef()
+                            .getRevision());
             assertEquals(
                     a.revision,
                     running.getTarget(
@@ -255,9 +270,9 @@ public class ConnectionManagerTest {
                         next.getTarget(
                                 a.contextId).getRevision());
                 assertEquals(
-                        x.revision,
+                        x.revision + 2L,
                         next.getSourceRef().getRevision(),
-                        "target repin must not advance source revision");
+                        "durable target repin must publish a new source revision");
             } finally {
                 next.close();
             }
@@ -348,7 +363,7 @@ public class ConnectionManagerTest {
     }
 
     @Test
-    void revisionSwitchRejectsAdditionalConflictWhenCompositionAlreadyConflicted()
+    void revisionSwitchRejectsAdditionalConflictWhenWorkingCompositionAlreadyConflicted()
             throws Exception {
         ContextFixture x =
                 context("XSN", "!anchor(X);");
@@ -361,10 +376,18 @@ public class ConnectionManagerTest {
                 b,
                 "!~female(Jane);");
 
-        ConnectionManager.connect(
-                x.location, a.location);
-        ConnectionManager.connect(
-                x.location, b.location);
+        ContextConnection toA =
+                ConnectionManager.qualifyConnect(
+                        x.location,
+                        a.location);
+        ContextConnection toB =
+                ConnectionManager.qualifyConnect(
+                        x.location,
+                        b.location);
+        ConnectionVector working =
+                ConnectionVector.empty()
+                        .with(toA)
+                        .with(toB);
 
         advance(
                 a,
@@ -372,29 +395,26 @@ public class ConnectionManagerTest {
 
         assertThrows(
                 StorageLifecycleException.class,
-                () -> ConnectionManager.switchRevision(
+                () -> ConnectionManager.qualifySwitchRevision(
                         x.location,
+                        working,
                         a.contextId,
                         a.revision + 1L));
 
-        OperationSnapshot unchanged =
-                OperationSnapshot.open(x.location);
+        ContextSnapshot unchanged =
+                ContextSnapshot.open(x.location);
         try {
             assertEquals(
-                    a.revision,
-                    unchanged.getTarget(
-                            a.contextId).getRevision());
-            assertEquals(
-                    b.revision + 1L,
-                    unchanged.getTarget(
-                            b.contextId).getRevision());
+                    x.revision,
+                    unchanged.getRevision(),
+                    "working topology qualification must not publish X");
         } finally {
             unchanged.close();
         }
     }
 
     @Test
-    void revisionSwitchDoesNotFreezeOnPreExistingCombinedConflict()
+    void revisionSwitchDoesNotFreezeOnPreExistingWorkingConflict()
             throws Exception {
         ContextFixture x =
                 context("XSP", "!anchor(X);");
@@ -403,38 +423,38 @@ public class ConnectionManagerTest {
         ContextFixture b =
                 context("BSP", "!~male(Tom);");
 
-        ConnectionManager.connect(
-                x.location, a.location);
-        ConnectionManager.connect(
-                x.location, b.location);
+        ContextConnection toA =
+                ConnectionManager.qualifyConnect(
+                        x.location,
+                        a.location);
+        ContextConnection toB =
+                ConnectionManager.qualifyConnect(
+                        x.location,
+                        b.location);
+        ConnectionVector working =
+                ConnectionVector.empty()
+                        .with(toA)
+                        .with(toB);
 
         advance(
                 a,
                 "!female(Jane);");
 
         ContextConnection switched =
-                ConnectionManager.switchRevision(
+                ConnectionManager.qualifySwitchRevision(
                         x.location,
+                        working,
                         a.contextId,
                         a.revision + 1L);
         assertEquals(
                 a.revision + 1L,
                 switched.getTarget().getRevision());
 
-        OperationSnapshot updated =
-                OperationSnapshot.open(x.location);
-        try {
-            assertEquals(
-                    a.revision + 1L,
-                    updated.getTarget(
-                            a.contextId).getRevision());
-            assertEquals(
-                    b.revision,
-                    updated.getTarget(
-                            b.contextId).getRevision());
-        } finally {
-            updated.close();
-        }
+        assertEquals(
+                x.revision,
+                ContextSnapshot.open(x.location)
+                        .getRevision(),
+                "working repin must not publish source revision");
     }
 
     private void advance(
