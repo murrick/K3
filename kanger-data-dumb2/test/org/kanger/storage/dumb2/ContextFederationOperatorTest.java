@@ -338,10 +338,11 @@ public class ContextFederationOperatorTest {
                 IContextFederation.FrontierTruth.UNKNOWN,
                 localDoesNotSeeA.getResultTruth());
 
+        final Mind isolatedMind = mind;
         assertThrows(
                 CommandErrorException.class,
                 () -> federation.executeIsolatedQuery(
-                        mind,
+                        isolatedMind,
                         "NOT_CONNECTED",
                         "?male(Tom);"));
 
