@@ -115,6 +115,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             case CTX_DISCONNECT:
             case CTX_SWITCH:
             case CTX_VERSION:
+            case CTX_EXPLAIN:
             case CTX_ISOLATED_QUERY:
             case CTX_QUERY:
                 result = executeShared(invocation, user);
@@ -250,6 +251,14 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                     contextVersion(contextVersion));
         }
 
+        IContextFederation.ExplainResult contextExplain =
+                outcome.getContextExplainResult();
+        if (contextExplain != null) {
+            result.put(
+                    "context_explain",
+                    contextExplain(contextExplain));
+        }
+
         IContextFederation.QueryResult federationQuery =
                 outcome.getFederationQueryResult();
         if (federationQuery != null) {
@@ -299,6 +308,164 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                 .put("source_revision",
                         snapshot.getSourceRevision())
                 .put("connections", connections);
+    }
+
+    private JSONObject contextExplain(
+            IContextFederation.ExplainResult explain) {
+        IContextFederation.Snapshot snapshot =
+                explain.getContext();
+
+        JSONArray pins = new JSONArray();
+        for (IContextFederation.Connection connection
+                : snapshot.getConnections()) {
+            pins.put(
+                    new JSONObject()
+                            .put("locator",
+                                    connection.getLocator())
+                            .put("revision",
+                                    connection.getPinnedRevision()));
+        }
+
+        JSONArray passes = new JSONArray();
+        for (IContextFederation.ExplainPass pass
+                : explain.getPasses()) {
+            IContextFederation.QueryResult continuation =
+                    pass.getContinuation();
+
+            JSONArray observations = new JSONArray();
+            for (IContextFederation.FrontierObservation observation
+                    : continuation.getObservations()) {
+                observations.put(
+                        new JSONObject()
+                                .put("wave",
+                                        observation.getWave())
+                                .put("query",
+                                        observation.getQuerySource())
+                                .put("truth",
+                                        observation.getTruth().name())
+                                .put("true_sources",
+                                        explainSources(
+                                                snapshot,
+                                                observation.getTrueSources()))
+                                .put("false_sources",
+                                        explainSources(
+                                                snapshot,
+                                                observation.getFalseSources()))
+                                .put("unknown_sources",
+                                        explainSources(
+                                                snapshot,
+                                                observation.getUnknownSources())));
+            }
+
+            JSONArray injections = new JSONArray();
+            for (IContextFederation.EvidenceInjection injection
+                    : continuation.getEvidenceInjections()) {
+                JSONObject substitutions =
+                        new JSONObject();
+                for (Map.Entry<String, String> binding
+                        : injection.getSubstitutions()
+                                .entrySet()) {
+                    substitutions.put(
+                            binding.getKey(),
+                            binding.getValue());
+                }
+                injections.put(
+                        new JSONObject()
+                                .put("statement",
+                                        injection.getStatement())
+                                .put("substitutions",
+                                        substitutions)
+                                .put("supports",
+                                        explainSources(
+                                                snapshot,
+                                                injection.getSupports())));
+            }
+
+            passes.put(
+                    new JSONObject()
+                            .put("polarity",
+                                    pass.getPolarity().name())
+                            .put("resolved",
+                                    continuation.isResolved())
+                            .put("waves",
+                                    continuation.getWaves())
+                            .put("evidence_count",
+                                    continuation.getEvidenceCount())
+                            .put("observations",
+                                    observations)
+                            .put("injections",
+                                    injections));
+        }
+
+        JSONArray values = new JSONArray();
+        for (IContextFederation.ValueRow row
+                : explain.getValues()) {
+            JSONObject bindings = new JSONObject();
+            for (Map.Entry<String, String> binding
+                    : row.getBindings().entrySet()) {
+                bindings.put(
+                        binding.getKey(),
+                        binding.getValue());
+            }
+            values.put(bindings);
+        }
+
+        JSONArray solutions = new JSONArray();
+        for (String solution : explain.getSolutions()) {
+            solutions.put(solution);
+        }
+
+        return new JSONObject()
+                .put("schema", 1)
+                .put("source",
+                        new JSONObject()
+                                .put("locator",
+                                        snapshot.getSourceLocator())
+                                .put("revision",
+                                        snapshot.getSourceRevision()))
+                .put("pins", pins)
+                .put("local_truth",
+                        explain.getLocalTruth().name())
+                .put("passes", passes)
+                .put("final_truth",
+                        explain.getFinalTruth().name())
+                .put("values", values)
+                .put("solutions", solutions);
+    }
+
+    private JSONArray explainSources(
+            IContextFederation.Snapshot snapshot,
+            java.util.List<IContextFederation.Revision> revisions) {
+        JSONArray result = new JSONArray();
+        for (IContextFederation.Revision revision
+                : revisions) {
+            result.put(
+                    new JSONObject()
+                            .put("locator",
+                                    explainLocator(
+                                            snapshot,
+                                            revision.getContextId()))
+                            .put("revision",
+                                    revision.getRevision()));
+        }
+        return result;
+    }
+
+    private String explainLocator(
+            IContextFederation.Snapshot snapshot,
+            java.util.UUID contextId) {
+        if (snapshot.getSourceContextId()
+                .equals(contextId)) {
+            return snapshot.getSourceLocator();
+        }
+        for (IContextFederation.Connection connection
+                : snapshot.getConnections()) {
+            if (connection.getTargetContextId()
+                    .equals(contextId)) {
+                return connection.getLocator();
+            }
+        }
+        return "<unknown-context>";
     }
 
     private JSONObject contextVersion(
