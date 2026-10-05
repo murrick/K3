@@ -229,8 +229,15 @@ final class RevisionManifestStore {
             String description = "";
             byte[] dependencyDigest = null;
             if (version >= VERSION) {
-                description = validateDescription(
-                        readString(input, path));
+                try {
+                    description = validateDescription(
+                            readString(input, path));
+                } catch (IllegalArgumentException failure) {
+                    throw corruption(
+                            "Invalid DUMB2 revision description at "
+                                    + path,
+                            failure);
+                }
                 int dependencyDigestLength =
                         input.readInt();
                 if (dependencyDigestLength
@@ -319,6 +326,39 @@ final class RevisionManifestStore {
         }
 
         return manifest;
+    }
+
+    static void validateDependencyVector(
+            Path generation,
+            ConnectionVector dependencies)
+            throws IOException, StorageLifecycleException {
+        Manifest manifest = read(generation);
+        validateDependencyVector(
+                manifest, dependencies, generation);
+    }
+
+    static void validateDependencyVector(
+            Manifest manifest,
+            ConnectionVector dependencies,
+            Path generation)
+            throws StorageLifecycleException {
+        if (manifest == null
+                || dependencies == null
+                || generation == null) {
+            throw new NullPointerException();
+        }
+        if (!manifest.hasDependencyDigest()) {
+            return;
+        }
+        byte[] actual =
+                dependencyDigest(dependencies);
+        if (!Arrays.equals(
+                manifest.getDependencyDigest(),
+                actual)) {
+            throw corruption(
+                    "DUMB2 revision dependency identity digest mismatch at "
+                            + generation);
+        }
     }
 
     static boolean exists(Path generation) {
