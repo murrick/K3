@@ -19,33 +19,54 @@ final class ConnectionManager {
     }
 
     /**
-     * Legacy package-level publication helper retained for existing storage
-     * regression fixtures. Runtime/operator code must use
-     * {@link #qualifyConnect(Path, Path)} and keep the result in its working
-     * topology candidate.
+     * Package-level durable publication helper for storage qualification.
+     * Runtime/operator code must use {@link #qualifyConnect(Path, Path)} and
+     * keep the result in its session-local working topology until an authorized
+     * publication boundary is invoked.
      */
     static ContextConnection connect(
             Path sourceLocation,
             Path targetLocation) throws Exception {
-        ContextConnection connection =
-                qualifyConnect(sourceLocation, targetLocation);
-
-        ContextSnapshot sourceSnapshot =
-                ContextSnapshot.open(sourceLocation);
+        ContextStore source =
+                ContextStore.open(sourceLocation);
         try {
-            RevisionRef source = new RevisionRef(
-                    sourceSnapshot.getContextId(),
-                    sourceSnapshot.getRevision());
-            ConnectionVector vector =
-                    ConnectionStore.read(sourceLocation, source);
-            ConnectionStore.write(
-                    sourceLocation,
-                    source,
-                    vector.with(connection));
+            RevisionRef sourceRef =
+                    new RevisionRef(
+                            source.getContextId(),
+                            source.getRevision());
+            ConnectionVector current =
+                    ConnectionStore.read(
+                            sourceLocation,
+                            sourceRef);
+            ContextConnection proposed =
+                    qualifyConnect(
+                            sourceLocation,
+                            targetLocation);
+            java.util.UUID targetContextId =
+                    proposed.getTarget()
+                            .getContextId();
+
+            long published =
+                    source.publishTopology(
+                            current.with(proposed),
+                            "");
+            ConnectionVector result =
+                    ConnectionStore.read(
+                            sourceLocation,
+                            new RevisionRef(
+                                    source.getContextId(),
+                                    published));
+            ContextConnection connection =
+                    result.find(targetContextId);
+            if (connection == null) {
+                throw new IllegalStateException(
+                        "Published topology lost target "
+                                + targetContextId);
+            }
+            return connection;
         } finally {
-            sourceSnapshot.close();
+            source.close();
         }
-        return connection;
     }
 
     /**
@@ -122,39 +143,51 @@ final class ConnectionManager {
     }
 
     /**
-     * Legacy package-level publication helper retained for existing storage
-     * regression fixtures. Runtime/operator code uses the working-vector
-     * qualification overload below.
+     * Package-level durable repin publication helper used by storage
+     * qualification. A successful durable switch creates a new source Revision.
      */
     static ContextConnection switchRevision(
             Path sourceLocation,
             java.util.UUID targetContextId,
             long targetRevision) throws Exception {
-        ContextSnapshot source =
-                ContextSnapshot.open(sourceLocation);
-        RevisionRef sourceRef;
-        ConnectionVector original;
+        ContextStore source =
+                ContextStore.open(sourceLocation);
         try {
-            sourceRef = new RevisionRef(
-                    source.getContextId(),
-                    source.getRevision());
-            original = ConnectionStore.read(
-                    sourceLocation, sourceRef);
+            RevisionRef sourceRef =
+                    new RevisionRef(
+                            source.getContextId(),
+                            source.getRevision());
+            ConnectionVector original =
+                    ConnectionStore.read(
+                            sourceLocation,
+                            sourceRef);
+            ContextConnection replacement =
+                    qualifySwitchRevision(
+                            sourceLocation,
+                            original,
+                            targetContextId,
+                            targetRevision);
+
+            long published =
+                    source.publishTopology(
+                            original.with(replacement),
+                            "");
+            ContextConnection result =
+                    ConnectionStore.read(
+                            sourceLocation,
+                            new RevisionRef(
+                                    source.getContextId(),
+                                    published))
+                            .find(targetContextId);
+            if (result == null) {
+                throw new IllegalStateException(
+                        "Published topology lost target "
+                                + targetContextId);
+            }
+            return result;
         } finally {
             source.close();
         }
-
-        ContextConnection replacement =
-                qualifySwitchRevision(
-                        sourceLocation,
-                        original,
-                        targetContextId,
-                        targetRevision);
-        ConnectionStore.write(
-                sourceLocation,
-                sourceRef,
-                original.with(replacement));
-        return replacement;
     }
 
     /**
@@ -281,19 +314,20 @@ final class ConnectionManager {
     static void disconnect(
             Path sourceLocation,
             java.util.UUID targetContextId) throws Exception {
-        ContextSnapshot source =
-                ContextSnapshot.open(sourceLocation);
+        ContextStore source =
+                ContextStore.open(sourceLocation);
         try {
-            RevisionRef sourceRef = new RevisionRef(
-                    source.getContextId(),
-                    source.getRevision());
-            ConnectionVector vector = ConnectionStore.read(
-                    sourceLocation,
-                    sourceRef);
-            ConnectionStore.write(
-                    sourceLocation,
-                    sourceRef,
-                    vector.without(targetContextId));
+            RevisionRef sourceRef =
+                    new RevisionRef(
+                            source.getContextId(),
+                            source.getRevision());
+            ConnectionVector current =
+                    ConnectionStore.read(
+                            sourceLocation,
+                            sourceRef);
+            source.publishTopology(
+                    current.without(targetContextId),
+                    "");
         } finally {
             source.close();
         }
