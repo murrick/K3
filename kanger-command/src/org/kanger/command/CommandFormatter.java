@@ -128,6 +128,9 @@ public final class CommandFormatter {
                         ? "ctx version"
                         : "ctx version "
                                 + argument(versionLocator);
+            case CTX_EXPLAIN:
+                return "ctx explain "
+                        + rawQuery(invocation.getArgument("query"));
             case CTX_ISOLATED_QUERY:
                 return "ctx "
                         + argument(invocation.getArgument("locator"))
