@@ -534,6 +534,153 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
     }
 
     /**
+     * Publishes one already-qualified working dependency topology as a new
+     * immutable Context revision without changing local B/G content.
+     *
+     * <p>This is a storage primitive only. Authorization/ownership is a higher
+     * publication-layer concern and must gate callers before this method becomes
+     * a user-visible operation.</p>
+     */
+    synchronized long publishTopology(
+            ConnectionVector desiredConnections,
+            String description) throws Exception {
+        requireOpen();
+        if (desiredConnections == null
+                || description == null) {
+            throw new NullPointerException();
+        }
+        if (revision <= RevisionStore.INITIAL_REVISION) {
+            throw new IllegalStateException(
+                    "DUMB2 topology publication requires a materialized Context revision");
+        }
+        if (revision == Long.MAX_VALUE) {
+            throw new IllegalStateException(
+                    "DUMB2 revision space exhausted");
+        }
+
+        long persisted =
+                RevisionStore.read(
+                        revisionPath(location));
+        if (persisted != revision) {
+            throw new IllegalStateException(
+                    "DUMB2 Context revision changed while open: expected="
+                            + revision + " actual=" + persisted);
+        }
+
+        validatePublishedGeneration();
+
+        ConnectionVector currentConnections =
+                publishedConnections();
+        if (java.util.Arrays.equals(
+                RevisionManifestStore.dependencyDigest(
+                        currentConnections),
+                RevisionManifestStore.dependencyDigest(
+                        desiredConnections))) {
+            return revision;
+        }
+
+        long next = revision + 1L;
+        ensureRevisionManifestPolicy(next);
+        Path root = stateRoot(location);
+        Path previous =
+                generationPath(location, revision);
+        Path target =
+                generationPath(location, next);
+        Path staging = root.resolve(
+                ".topology-" + next + "-"
+                        + UUID.randomUUID().toString());
+
+        Files.createDirectories(root);
+        deleteRecursively(staging);
+
+        boolean generationInstalled = false;
+        try {
+            if (!Files.isDirectory(previous)) {
+                throw corruption(
+                        "DUMB2 Context revision " + revision
+                                + " lost its physical generation at "
+                                + location);
+            }
+            copyDirectory(previous, staging);
+
+            RevisionManifestStore.seal(
+                    staging,
+                    contextId,
+                    next,
+                    revision,
+                    desiredConnections,
+                    description);
+
+            ContextCandidate candidate =
+                    ContextCandidate.of(
+                            this,
+                            staging,
+                            next,
+                            desiredConnections);
+            WriteCandidateQualification.Result qualification =
+                    WriteCandidateQualification.qualify(
+                            candidate,
+                            desiredConnections);
+            RevisionRef candidateSource =
+                    new RevisionRef(contextId, next);
+            if (!candidateSource.equals(
+                    qualification.getCandidate())) {
+                throw new IllegalStateException(
+                        "Qualified topology candidate identity mismatch: expected "
+                                + candidateSource
+                                + " found "
+                                + qualification.getCandidate());
+            }
+
+            ConnectionVector publishedConnections =
+                    qualification.getConnections();
+            RevisionManifestStore.validateDependencyVector(
+                    staging,
+                    publishedConnections);
+            ConnectionStore.writeTransition(
+                    location,
+                    new RevisionRef(contextId, revision),
+                    currentConnections,
+                    candidateSource,
+                    publishedConnections);
+
+            if (Files.exists(target)) {
+                deleteRecursively(target);
+            }
+            try {
+                Files.move(
+                        staging,
+                        target,
+                        StandardCopyOption.ATOMIC_MOVE);
+            } catch (java.nio.file.AtomicMoveNotSupportedException failure) {
+                throw new IOException(
+                        "DUMB2 requires atomic same-filesystem topology publication: "
+                                + target,
+                        failure);
+            }
+            generationInstalled = true;
+
+            long published =
+                    RevisionStore.advance(
+                            revisionPath(location),
+                            revision);
+            if (published != next) {
+                throw new IllegalStateException(
+                        "Unexpected DUMB2 topology revision "
+                                + published
+                                + "; expected " + next);
+            }
+            revision = published;
+            return revision;
+        } finally {
+            if (!generationInstalled
+                    || Files.exists(staging)) {
+                deleteRecursively(staging);
+            }
+        }
+    }
+
+    /**
      * Rewrites every acquired schema through the current canonical adapters
      * and publishes the result as one atomic next Context revision.
      *
