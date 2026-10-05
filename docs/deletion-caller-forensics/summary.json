@@ -1,0 +1,3152 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "snapshots_verified": 12,
+  "identical_warm_deletion_groups": 8,
+  "previous_totals_reconciled": true,
+  "warm_rows": [
+    {
+      "run": 1,
+      "sample": 2,
+      "groups": [
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "DOMAIN",
+          "totals": [
+            7632,
+            7632,
+            0,
+            7632,
+            0,
+            0,
+            0,
+            7632
+          ],
+          "depths": {
+            "1": 7632
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "PREDICATE",
+          "totals": [
+            757,
+            757,
+            0,
+            757,
+            0,
+            0,
+            0,
+            757
+          ],
+          "depths": {
+            "1": 757
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "RULE",
+          "totals": [
+            2309593,
+            6137467,
+            0,
+            6137467,
+            0,
+            0,
+            0,
+            2309593
+          ],
+          "depths": {
+            "1": 50112,
+            "2": 691132,
+            "3": 1568305,
+            "4": 44
+          },
+          "never_exposed": [
+            0,
+            874089
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TERM",
+          "totals": [
+            5649,
+            8800,
+            0,
+            8800,
+            0,
+            0,
+            0,
+            5649
+          ],
+          "depths": {
+            "1": 3579,
+            "2": 1033,
+            "3": 993,
+            "4": 44
+          },
+          "never_exposed": [
+            0,
+            1206
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TVALUE",
+          "totals": [
+            45665,
+            112157,
+            0,
+            112157,
+            0,
+            0,
+            0,
+            45665
+          ],
+          "depths": {
+            "1": 4464,
+            "2": 15910,
+            "3": 25291
+          },
+          "never_exposed": [
+            0,
+            16387
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TVARIABLE",
+          "totals": [
+            1296,
+            1296,
+            0,
+            1296,
+            0,
+            0,
+            0,
+            1296
+          ],
+          "depths": {
+            "1": 1296
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "COMMENT",
+          "totals": [
+            816,
+            816,
+            0,
+            816,
+            0,
+            0,
+            0,
+            816
+          ],
+          "depths": {
+            "1": 816
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            314604,
+            834202,
+            0,
+            834202,
+            0,
+            0,
+            0,
+            314604
+          ],
+          "depths": {
+            "2": 109736,
+            "3": 204742,
+            "4": 126
+          },
+          "never_exposed": [
+            0,
+            114793
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            314604,
+            834202,
+            0,
+            834202,
+            0,
+            0,
+            0,
+            314604
+          ],
+          "depths": {
+            "2": 109736,
+            "3": 204742,
+            "4": 126
+          },
+          "never_exposed": [
+            0,
+            114793
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            3875237,
+            10359542,
+            0,
+            10359542,
+            0,
+            0,
+            0,
+            3875237
+          ],
+          "depths": {
+            "1": 14064,
+            "2": 1246125,
+            "3": 2606964,
+            "4": 8084
+          },
+          "never_exposed": [
+            0,
+            1564411
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            3875237,
+            10359542,
+            0,
+            10359542,
+            0,
+            0,
+            0,
+            3875237
+          ],
+          "depths": {
+            "1": 14064,
+            "2": 1246125,
+            "3": 2606964,
+            "4": 8084
+          },
+          "never_exposed": [
+            0,
+            1564411
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            3411310,
+            9120373,
+            0,
+            9120373,
+            0,
+            0,
+            0,
+            3411310
+          ],
+          "depths": {
+            "2": 1113557,
+            "3": 2297753
+          },
+          "never_exposed": [
+            0,
+            1155823
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            3411310,
+            9120373,
+            0,
+            9120373,
+            0,
+            0,
+            0,
+            3411310
+          ],
+          "depths": {
+            "2": 1113557,
+            "3": 2297753
+          },
+          "never_exposed": [
+            0,
+            1155823
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "values": [
+            23,
+            23,
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "FIRST",
+          "values": [
+            314604,
+            314604,
+            314604,
+            314604
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "SECOND",
+          "values": [
+            314604,
+            314604,
+            314604,
+            314604
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "FIRST",
+          "values": [
+            3875237,
+            3875237,
+            3875237,
+            3875237
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "SECOND",
+          "values": [
+            3875237,
+            3875237,
+            3875237,
+            3875237
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "FIRST",
+          "values": [
+            3411310,
+            3411310,
+            3411310,
+            3411310
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "SECOND",
+          "values": [
+            3411310,
+            3411310,
+            3411310,
+            3411310
+          ]
+        }
+      ],
+      "collectors": [
+        0,
+        4893872,
+        1706357
+      ],
+      "exposure": {
+        "minds": 821,
+        "getters": 85200
+      }
+    },
+    {
+      "run": 1,
+      "sample": 3,
+      "groups": [
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "DOMAIN",
+          "totals": [
+            7632,
+            7632,
+            0,
+            7632,
+            0,
+            0,
+            0,
+            7632
+          ],
+          "depths": {
+            "1": 7632
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "PREDICATE",
+          "totals": [
+            757,
+            757,
+            0,
+            757,
+            0,
+            0,
+            0,
+            757
+          ],
+          "depths": {
+            "1": 757
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "RULE",
+          "totals": [
+            2309593,
+            6137467,
+            0,
+            6137467,
+            0,
+            0,
+            0,
+            2309593
+          ],
+          "depths": {
+            "1": 50112,
+            "2": 691132,
+            "3": 1568305,
+            "4": 44
+          },
+          "never_exposed": [
+            0,
+            874089
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TERM",
+          "totals": [
+            5649,
+            8800,
+            0,
+            8800,
+            0,
+            0,
+            0,
+            5649
+          ],
+          "depths": {
+            "1": 3579,
+            "2": 1033,
+            "3": 993,
+            "4": 44
+          },
+          "never_exposed": [
+            0,
+            1206
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TVALUE",
+          "totals": [
+            45665,
+            112157,
+            0,
+            112157,
+            0,
+            0,
+            0,
+            45665
+          ],
+          "depths": {
+            "1": 4464,
+            "2": 15910,
+            "3": 25291
+          },
+          "never_exposed": [
+            0,
+            16387
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TVARIABLE",
+          "totals": [
+            1296,
+            1296,
+            0,
+            1296,
+            0,
+            0,
+            0,
+            1296
+          ],
+          "depths": {
+            "1": 1296
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "COMMENT",
+          "totals": [
+            816,
+            816,
+            0,
+            816,
+            0,
+            0,
+            0,
+            816
+          ],
+          "depths": {
+            "1": 816
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            314604,
+            834202,
+            0,
+            834202,
+            0,
+            0,
+            0,
+            314604
+          ],
+          "depths": {
+            "2": 109736,
+            "3": 204742,
+            "4": 126
+          },
+          "never_exposed": [
+            0,
+            114793
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            314604,
+            834202,
+            0,
+            834202,
+            0,
+            0,
+            0,
+            314604
+          ],
+          "depths": {
+            "2": 109736,
+            "3": 204742,
+            "4": 126
+          },
+          "never_exposed": [
+            0,
+            114793
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            3875237,
+            10359542,
+            0,
+            10359542,
+            0,
+            0,
+            0,
+            3875237
+          ],
+          "depths": {
+            "1": 14064,
+            "2": 1246125,
+            "3": 2606964,
+            "4": 8084
+          },
+          "never_exposed": [
+            0,
+            1564411
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            3875237,
+            10359542,
+            0,
+            10359542,
+            0,
+            0,
+            0,
+            3875237
+          ],
+          "depths": {
+            "1": 14064,
+            "2": 1246125,
+            "3": 2606964,
+            "4": 8084
+          },
+          "never_exposed": [
+            0,
+            1564411
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            3411310,
+            9120373,
+            0,
+            9120373,
+            0,
+            0,
+            0,
+            3411310
+          ],
+          "depths": {
+            "2": 1113557,
+            "3": 2297753
+          },
+          "never_exposed": [
+            0,
+            1155823
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            3411310,
+            9120373,
+            0,
+            9120373,
+            0,
+            0,
+            0,
+            3411310
+          ],
+          "depths": {
+            "2": 1113557,
+            "3": 2297753
+          },
+          "never_exposed": [
+            0,
+            1155823
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "values": [
+            23,
+            23,
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "FIRST",
+          "values": [
+            314604,
+            314604,
+            314604,
+            314604
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "SECOND",
+          "values": [
+            314604,
+            314604,
+            314604,
+            314604
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "FIRST",
+          "values": [
+            3875237,
+            3875237,
+            3875237,
+            3875237
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "SECOND",
+          "values": [
+            3875237,
+            3875237,
+            3875237,
+            3875237
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "FIRST",
+          "values": [
+            3411310,
+            3411310,
+            3411310,
+            3411310
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "SECOND",
+          "values": [
+            3411310,
+            3411310,
+            3411310,
+            3411310
+          ]
+        }
+      ],
+      "collectors": [
+        0,
+        4890454,
+        1706357
+      ],
+      "exposure": {
+        "minds": 1087,
+        "getters": 113556
+      }
+    },
+    {
+      "run": 1,
+      "sample": 4,
+      "groups": [
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "DOMAIN",
+          "totals": [
+            7632,
+            7632,
+            0,
+            7632,
+            0,
+            0,
+            0,
+            7632
+          ],
+          "depths": {
+            "1": 7632
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "PREDICATE",
+          "totals": [
+            757,
+            757,
+            0,
+            757,
+            0,
+            0,
+            0,
+            757
+          ],
+          "depths": {
+            "1": 757
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "RULE",
+          "totals": [
+            2309593,
+            6137467,
+            0,
+            6137467,
+            0,
+            0,
+            0,
+            2309593
+          ],
+          "depths": {
+            "1": 50112,
+            "2": 691132,
+            "3": 1568305,
+            "4": 44
+          },
+          "never_exposed": [
+            0,
+            874089
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TERM",
+          "totals": [
+            5649,
+            8800,
+            0,
+            8800,
+            0,
+            0,
+            0,
+            5649
+          ],
+          "depths": {
+            "1": 3579,
+            "2": 1033,
+            "3": 993,
+            "4": 44
+          },
+          "never_exposed": [
+            0,
+            1206
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TVALUE",
+          "totals": [
+            45665,
+            112157,
+            0,
+            112157,
+            0,
+            0,
+            0,
+            45665
+          ],
+          "depths": {
+            "1": 4464,
+            "2": 15910,
+            "3": 25291
+          },
+          "never_exposed": [
+            0,
+            16387
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TVARIABLE",
+          "totals": [
+            1296,
+            1296,
+            0,
+            1296,
+            0,
+            0,
+            0,
+            1296
+          ],
+          "depths": {
+            "1": 1296
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "COMMENT",
+          "totals": [
+            816,
+            816,
+            0,
+            816,
+            0,
+            0,
+            0,
+            816
+          ],
+          "depths": {
+            "1": 816
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            314604,
+            834202,
+            0,
+            834202,
+            0,
+            0,
+            0,
+            314604
+          ],
+          "depths": {
+            "2": 109736,
+            "3": 204742,
+            "4": 126
+          },
+          "never_exposed": [
+            0,
+            114793
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            314604,
+            834202,
+            0,
+            834202,
+            0,
+            0,
+            0,
+            314604
+          ],
+          "depths": {
+            "2": 109736,
+            "3": 204742,
+            "4": 126
+          },
+          "never_exposed": [
+            0,
+            114793
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            3875237,
+            10359542,
+            0,
+            10359542,
+            0,
+            0,
+            0,
+            3875237
+          ],
+          "depths": {
+            "1": 14064,
+            "2": 1246125,
+            "3": 2606964,
+            "4": 8084
+          },
+          "never_exposed": [
+            0,
+            1564411
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            3875237,
+            10359542,
+            0,
+            10359542,
+            0,
+            0,
+            0,
+            3875237
+          ],
+          "depths": {
+            "1": 14064,
+            "2": 1246125,
+            "3": 2606964,
+            "4": 8084
+          },
+          "never_exposed": [
+            0,
+            1564411
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            3411310,
+            9120373,
+            0,
+            9120373,
+            0,
+            0,
+            0,
+            3411310
+          ],
+          "depths": {
+            "2": 1113557,
+            "3": 2297753
+          },
+          "never_exposed": [
+            0,
+            1155823
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            3411310,
+            9120373,
+            0,
+            9120373,
+            0,
+            0,
+            0,
+            3411310
+          ],
+          "depths": {
+            "2": 1113557,
+            "3": 2297753
+          },
+          "never_exposed": [
+            0,
+            1155823
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "values": [
+            23,
+            23,
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "FIRST",
+          "values": [
+            314604,
+            314604,
+            314604,
+            314604
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "SECOND",
+          "values": [
+            314604,
+            314604,
+            314604,
+            314604
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "FIRST",
+          "values": [
+            3875237,
+            3875237,
+            3875237,
+            3875237
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "SECOND",
+          "values": [
+            3875237,
+            3875237,
+            3875237,
+            3875237
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "FIRST",
+          "values": [
+            3411310,
+            3411310,
+            3411310,
+            3411310
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "SECOND",
+          "values": [
+            3411310,
+            3411310,
+            3411310,
+            3411310
+          ]
+        }
+      ],
+      "collectors": [
+        0,
+        4888581,
+        1706357
+      ],
+      "exposure": {
+        "minds": 1353,
+        "getters": 141912
+      }
+    },
+    {
+      "run": 1,
+      "sample": 5,
+      "groups": [
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "DOMAIN",
+          "totals": [
+            7632,
+            7632,
+            0,
+            7632,
+            0,
+            0,
+            0,
+            7632
+          ],
+          "depths": {
+            "1": 7632
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "PREDICATE",
+          "totals": [
+            757,
+            757,
+            0,
+            757,
+            0,
+            0,
+            0,
+            757
+          ],
+          "depths": {
+            "1": 757
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "RULE",
+          "totals": [
+            2309593,
+            6137467,
+            0,
+            6137467,
+            0,
+            0,
+            0,
+            2309593
+          ],
+          "depths": {
+            "1": 50112,
+            "2": 691132,
+            "3": 1568305,
+            "4": 44
+          },
+          "never_exposed": [
+            0,
+            874089
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TERM",
+          "totals": [
+            5649,
+            8800,
+            0,
+            8800,
+            0,
+            0,
+            0,
+            5649
+          ],
+          "depths": {
+            "1": 3579,
+            "2": 1033,
+            "3": 993,
+            "4": 44
+          },
+          "never_exposed": [
+            0,
+            1206
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TVALUE",
+          "totals": [
+            45665,
+            112157,
+            0,
+            112157,
+            0,
+            0,
+            0,
+            45665
+          ],
+          "depths": {
+            "1": 4464,
+            "2": 15910,
+            "3": 25291
+          },
+          "never_exposed": [
+            0,
+            16387
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TVARIABLE",
+          "totals": [
+            1296,
+            1296,
+            0,
+            1296,
+            0,
+            0,
+            0,
+            1296
+          ],
+          "depths": {
+            "1": 1296
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "COMMENT",
+          "totals": [
+            816,
+            816,
+            0,
+            816,
+            0,
+            0,
+            0,
+            816
+          ],
+          "depths": {
+            "1": 816
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            314604,
+            834202,
+            0,
+            834202,
+            0,
+            0,
+            0,
+            314604
+          ],
+          "depths": {
+            "2": 109736,
+            "3": 204742,
+            "4": 126
+          },
+          "never_exposed": [
+            0,
+            114793
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            314604,
+            834202,
+            0,
+            834202,
+            0,
+            0,
+            0,
+            314604
+          ],
+          "depths": {
+            "2": 109736,
+            "3": 204742,
+            "4": 126
+          },
+          "never_exposed": [
+            0,
+            114793
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            3875237,
+            10359542,
+            0,
+            10359542,
+            0,
+            0,
+            0,
+            3875237
+          ],
+          "depths": {
+            "1": 14064,
+            "2": 1246125,
+            "3": 2606964,
+            "4": 8084
+          },
+          "never_exposed": [
+            0,
+            1564411
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            3875237,
+            10359542,
+            0,
+            10359542,
+            0,
+            0,
+            0,
+            3875237
+          ],
+          "depths": {
+            "1": 14064,
+            "2": 1246125,
+            "3": 2606964,
+            "4": 8084
+          },
+          "never_exposed": [
+            0,
+            1564411
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            3411310,
+            9120373,
+            0,
+            9120373,
+            0,
+            0,
+            0,
+            3411310
+          ],
+          "depths": {
+            "2": 1113557,
+            "3": 2297753
+          },
+          "never_exposed": [
+            0,
+            1155823
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            3411310,
+            9120373,
+            0,
+            9120373,
+            0,
+            0,
+            0,
+            3411310
+          ],
+          "depths": {
+            "2": 1113557,
+            "3": 2297753
+          },
+          "never_exposed": [
+            0,
+            1155823
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "values": [
+            23,
+            23,
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "FIRST",
+          "values": [
+            314604,
+            314604,
+            314604,
+            314604
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "SECOND",
+          "values": [
+            314604,
+            314604,
+            314604,
+            314604
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "FIRST",
+          "values": [
+            3875237,
+            3875237,
+            3875237,
+            3875237
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "SECOND",
+          "values": [
+            3875237,
+            3875237,
+            3875237,
+            3875237
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "FIRST",
+          "values": [
+            3411310,
+            3411310,
+            3411310,
+            3411310
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "SECOND",
+          "values": [
+            3411310,
+            3411310,
+            3411310,
+            3411310
+          ]
+        }
+      ],
+      "collectors": [
+        0,
+        4888630,
+        1706357
+      ],
+      "exposure": {
+        "minds": 1619,
+        "getters": 170268
+      }
+    },
+    {
+      "run": 2,
+      "sample": 2,
+      "groups": [
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "DOMAIN",
+          "totals": [
+            7632,
+            7632,
+            0,
+            7632,
+            0,
+            0,
+            0,
+            7632
+          ],
+          "depths": {
+            "1": 7632
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "PREDICATE",
+          "totals": [
+            757,
+            757,
+            0,
+            757,
+            0,
+            0,
+            0,
+            757
+          ],
+          "depths": {
+            "1": 757
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "RULE",
+          "totals": [
+            2309593,
+            6137467,
+            0,
+            6137467,
+            0,
+            0,
+            0,
+            2309593
+          ],
+          "depths": {
+            "1": 50112,
+            "2": 691132,
+            "3": 1568305,
+            "4": 44
+          },
+          "never_exposed": [
+            0,
+            874089
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TERM",
+          "totals": [
+            5649,
+            8800,
+            0,
+            8800,
+            0,
+            0,
+            0,
+            5649
+          ],
+          "depths": {
+            "1": 3579,
+            "2": 1033,
+            "3": 993,
+            "4": 44
+          },
+          "never_exposed": [
+            0,
+            1206
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TVALUE",
+          "totals": [
+            45665,
+            112157,
+            0,
+            112157,
+            0,
+            0,
+            0,
+            45665
+          ],
+          "depths": {
+            "1": 4464,
+            "2": 15910,
+            "3": 25291
+          },
+          "never_exposed": [
+            0,
+            16387
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TVARIABLE",
+          "totals": [
+            1296,
+            1296,
+            0,
+            1296,
+            0,
+            0,
+            0,
+            1296
+          ],
+          "depths": {
+            "1": 1296
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "COMMENT",
+          "totals": [
+            816,
+            816,
+            0,
+            816,
+            0,
+            0,
+            0,
+            816
+          ],
+          "depths": {
+            "1": 816
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            314604,
+            834202,
+            0,
+            834202,
+            0,
+            0,
+            0,
+            314604
+          ],
+          "depths": {
+            "2": 109736,
+            "3": 204742,
+            "4": 126
+          },
+          "never_exposed": [
+            0,
+            114793
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            314604,
+            834202,
+            0,
+            834202,
+            0,
+            0,
+            0,
+            314604
+          ],
+          "depths": {
+            "2": 109736,
+            "3": 204742,
+            "4": 126
+          },
+          "never_exposed": [
+            0,
+            114793
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            3875237,
+            10359542,
+            0,
+            10359542,
+            0,
+            0,
+            0,
+            3875237
+          ],
+          "depths": {
+            "1": 14064,
+            "2": 1246125,
+            "3": 2606964,
+            "4": 8084
+          },
+          "never_exposed": [
+            0,
+            1564411
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            3875237,
+            10359542,
+            0,
+            10359542,
+            0,
+            0,
+            0,
+            3875237
+          ],
+          "depths": {
+            "1": 14064,
+            "2": 1246125,
+            "3": 2606964,
+            "4": 8084
+          },
+          "never_exposed": [
+            0,
+            1564411
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            3411310,
+            9120373,
+            0,
+            9120373,
+            0,
+            0,
+            0,
+            3411310
+          ],
+          "depths": {
+            "2": 1113557,
+            "3": 2297753
+          },
+          "never_exposed": [
+            0,
+            1155823
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            3411310,
+            9120373,
+            0,
+            9120373,
+            0,
+            0,
+            0,
+            3411310
+          ],
+          "depths": {
+            "2": 1113557,
+            "3": 2297753
+          },
+          "never_exposed": [
+            0,
+            1155823
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "values": [
+            23,
+            23,
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "FIRST",
+          "values": [
+            314604,
+            314604,
+            314604,
+            314604
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "SECOND",
+          "values": [
+            314604,
+            314604,
+            314604,
+            314604
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "FIRST",
+          "values": [
+            3875237,
+            3875237,
+            3875237,
+            3875237
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "SECOND",
+          "values": [
+            3875237,
+            3875237,
+            3875237,
+            3875237
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "FIRST",
+          "values": [
+            3411310,
+            3411310,
+            3411310,
+            3411310
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "SECOND",
+          "values": [
+            3411310,
+            3411310,
+            3411310,
+            3411310
+          ]
+        }
+      ],
+      "collectors": [
+        0,
+        4893872,
+        1706357
+      ],
+      "exposure": {
+        "minds": 821,
+        "getters": 85200
+      }
+    },
+    {
+      "run": 2,
+      "sample": 3,
+      "groups": [
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "DOMAIN",
+          "totals": [
+            7632,
+            7632,
+            0,
+            7632,
+            0,
+            0,
+            0,
+            7632
+          ],
+          "depths": {
+            "1": 7632
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "PREDICATE",
+          "totals": [
+            757,
+            757,
+            0,
+            757,
+            0,
+            0,
+            0,
+            757
+          ],
+          "depths": {
+            "1": 757
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "RULE",
+          "totals": [
+            2309593,
+            6137467,
+            0,
+            6137467,
+            0,
+            0,
+            0,
+            2309593
+          ],
+          "depths": {
+            "1": 50112,
+            "2": 691132,
+            "3": 1568305,
+            "4": 44
+          },
+          "never_exposed": [
+            0,
+            874089
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TERM",
+          "totals": [
+            5649,
+            8800,
+            0,
+            8800,
+            0,
+            0,
+            0,
+            5649
+          ],
+          "depths": {
+            "1": 3579,
+            "2": 1033,
+            "3": 993,
+            "4": 44
+          },
+          "never_exposed": [
+            0,
+            1206
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TVALUE",
+          "totals": [
+            45665,
+            112157,
+            0,
+            112157,
+            0,
+            0,
+            0,
+            45665
+          ],
+          "depths": {
+            "1": 4464,
+            "2": 15910,
+            "3": 25291
+          },
+          "never_exposed": [
+            0,
+            16387
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TVARIABLE",
+          "totals": [
+            1296,
+            1296,
+            0,
+            1296,
+            0,
+            0,
+            0,
+            1296
+          ],
+          "depths": {
+            "1": 1296
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "COMMENT",
+          "totals": [
+            816,
+            816,
+            0,
+            816,
+            0,
+            0,
+            0,
+            816
+          ],
+          "depths": {
+            "1": 816
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            314604,
+            834202,
+            0,
+            834202,
+            0,
+            0,
+            0,
+            314604
+          ],
+          "depths": {
+            "2": 109736,
+            "3": 204742,
+            "4": 126
+          },
+          "never_exposed": [
+            0,
+            114793
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            314604,
+            834202,
+            0,
+            834202,
+            0,
+            0,
+            0,
+            314604
+          ],
+          "depths": {
+            "2": 109736,
+            "3": 204742,
+            "4": 126
+          },
+          "never_exposed": [
+            0,
+            114793
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            3875237,
+            10359542,
+            0,
+            10359542,
+            0,
+            0,
+            0,
+            3875237
+          ],
+          "depths": {
+            "1": 14064,
+            "2": 1246125,
+            "3": 2606964,
+            "4": 8084
+          },
+          "never_exposed": [
+            0,
+            1564411
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            3875237,
+            10359542,
+            0,
+            10359542,
+            0,
+            0,
+            0,
+            3875237
+          ],
+          "depths": {
+            "1": 14064,
+            "2": 1246125,
+            "3": 2606964,
+            "4": 8084
+          },
+          "never_exposed": [
+            0,
+            1564411
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            3411310,
+            9120373,
+            0,
+            9120373,
+            0,
+            0,
+            0,
+            3411310
+          ],
+          "depths": {
+            "2": 1113557,
+            "3": 2297753
+          },
+          "never_exposed": [
+            0,
+            1155823
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            3411310,
+            9120373,
+            0,
+            9120373,
+            0,
+            0,
+            0,
+            3411310
+          ],
+          "depths": {
+            "2": 1113557,
+            "3": 2297753
+          },
+          "never_exposed": [
+            0,
+            1155823
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "values": [
+            23,
+            23,
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "FIRST",
+          "values": [
+            314604,
+            314604,
+            314604,
+            314604
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "SECOND",
+          "values": [
+            314604,
+            314604,
+            314604,
+            314604
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "FIRST",
+          "values": [
+            3875237,
+            3875237,
+            3875237,
+            3875237
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "SECOND",
+          "values": [
+            3875237,
+            3875237,
+            3875237,
+            3875237
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "FIRST",
+          "values": [
+            3411310,
+            3411310,
+            3411310,
+            3411310
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "SECOND",
+          "values": [
+            3411310,
+            3411310,
+            3411310,
+            3411310
+          ]
+        }
+      ],
+      "collectors": [
+        0,
+        4890454,
+        1706357
+      ],
+      "exposure": {
+        "minds": 1087,
+        "getters": 113556
+      }
+    },
+    {
+      "run": 2,
+      "sample": 4,
+      "groups": [
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "DOMAIN",
+          "totals": [
+            7632,
+            7632,
+            0,
+            7632,
+            0,
+            0,
+            0,
+            7632
+          ],
+          "depths": {
+            "1": 7632
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "PREDICATE",
+          "totals": [
+            757,
+            757,
+            0,
+            757,
+            0,
+            0,
+            0,
+            757
+          ],
+          "depths": {
+            "1": 757
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "RULE",
+          "totals": [
+            2309593,
+            6137467,
+            0,
+            6137467,
+            0,
+            0,
+            0,
+            2309593
+          ],
+          "depths": {
+            "1": 50112,
+            "2": 691132,
+            "3": 1568305,
+            "4": 44
+          },
+          "never_exposed": [
+            0,
+            874089
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TERM",
+          "totals": [
+            5649,
+            8800,
+            0,
+            8800,
+            0,
+            0,
+            0,
+            5649
+          ],
+          "depths": {
+            "1": 3579,
+            "2": 1033,
+            "3": 993,
+            "4": 44
+          },
+          "never_exposed": [
+            0,
+            1206
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TVALUE",
+          "totals": [
+            45665,
+            112157,
+            0,
+            112157,
+            0,
+            0,
+            0,
+            45665
+          ],
+          "depths": {
+            "1": 4464,
+            "2": 15910,
+            "3": 25291
+          },
+          "never_exposed": [
+            0,
+            16387
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TVARIABLE",
+          "totals": [
+            1296,
+            1296,
+            0,
+            1296,
+            0,
+            0,
+            0,
+            1296
+          ],
+          "depths": {
+            "1": 1296
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "COMMENT",
+          "totals": [
+            816,
+            816,
+            0,
+            816,
+            0,
+            0,
+            0,
+            816
+          ],
+          "depths": {
+            "1": 816
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            314604,
+            834202,
+            0,
+            834202,
+            0,
+            0,
+            0,
+            314604
+          ],
+          "depths": {
+            "2": 109736,
+            "3": 204742,
+            "4": 126
+          },
+          "never_exposed": [
+            0,
+            114793
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            314604,
+            834202,
+            0,
+            834202,
+            0,
+            0,
+            0,
+            314604
+          ],
+          "depths": {
+            "2": 109736,
+            "3": 204742,
+            "4": 126
+          },
+          "never_exposed": [
+            0,
+            114793
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            3875237,
+            10359542,
+            0,
+            10359542,
+            0,
+            0,
+            0,
+            3875237
+          ],
+          "depths": {
+            "1": 14064,
+            "2": 1246125,
+            "3": 2606964,
+            "4": 8084
+          },
+          "never_exposed": [
+            0,
+            1564411
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            3875237,
+            10359542,
+            0,
+            10359542,
+            0,
+            0,
+            0,
+            3875237
+          ],
+          "depths": {
+            "1": 14064,
+            "2": 1246125,
+            "3": 2606964,
+            "4": 8084
+          },
+          "never_exposed": [
+            0,
+            1564411
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            3411310,
+            9120373,
+            0,
+            9120373,
+            0,
+            0,
+            0,
+            3411310
+          ],
+          "depths": {
+            "2": 1113557,
+            "3": 2297753
+          },
+          "never_exposed": [
+            0,
+            1155823
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            3411310,
+            9120373,
+            0,
+            9120373,
+            0,
+            0,
+            0,
+            3411310
+          ],
+          "depths": {
+            "2": 1113557,
+            "3": 2297753
+          },
+          "never_exposed": [
+            0,
+            1155823
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "values": [
+            23,
+            23,
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "FIRST",
+          "values": [
+            314604,
+            314604,
+            314604,
+            314604
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "SECOND",
+          "values": [
+            314604,
+            314604,
+            314604,
+            314604
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "FIRST",
+          "values": [
+            3875237,
+            3875237,
+            3875237,
+            3875237
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "SECOND",
+          "values": [
+            3875237,
+            3875237,
+            3875237,
+            3875237
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "FIRST",
+          "values": [
+            3411310,
+            3411310,
+            3411310,
+            3411310
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "SECOND",
+          "values": [
+            3411310,
+            3411310,
+            3411310,
+            3411310
+          ]
+        }
+      ],
+      "collectors": [
+        0,
+        4888581,
+        1706357
+      ],
+      "exposure": {
+        "minds": 1353,
+        "getters": 141912
+      }
+    },
+    {
+      "run": 2,
+      "sample": 5,
+      "groups": [
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "DOMAIN",
+          "totals": [
+            7632,
+            7632,
+            0,
+            7632,
+            0,
+            0,
+            0,
+            7632
+          ],
+          "depths": {
+            "1": 7632
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "PREDICATE",
+          "totals": [
+            757,
+            757,
+            0,
+            757,
+            0,
+            0,
+            0,
+            757
+          ],
+          "depths": {
+            "1": 757
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "RULE",
+          "totals": [
+            2309593,
+            6137467,
+            0,
+            6137467,
+            0,
+            0,
+            0,
+            2309593
+          ],
+          "depths": {
+            "1": 50112,
+            "2": 691132,
+            "3": 1568305,
+            "4": 44
+          },
+          "never_exposed": [
+            0,
+            874089
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TERM",
+          "totals": [
+            5649,
+            8800,
+            0,
+            8800,
+            0,
+            0,
+            0,
+            5649
+          ],
+          "depths": {
+            "1": 3579,
+            "2": 1033,
+            "3": 993,
+            "4": 44
+          },
+          "never_exposed": [
+            0,
+            1206
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TVALUE",
+          "totals": [
+            45665,
+            112157,
+            0,
+            112157,
+            0,
+            0,
+            0,
+            45665
+          ],
+          "depths": {
+            "1": 4464,
+            "2": 15910,
+            "3": 25291
+          },
+          "never_exposed": [
+            0,
+            16387
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "TVARIABLE",
+          "totals": [
+            1296,
+            1296,
+            0,
+            1296,
+            0,
+            0,
+            0,
+            1296
+          ],
+          "depths": {
+            "1": 1296
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "type": "COMMENT",
+          "totals": [
+            816,
+            816,
+            0,
+            816,
+            0,
+            0,
+            0,
+            816
+          ],
+          "depths": {
+            "1": 816
+          },
+          "never_exposed": [
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            314604,
+            834202,
+            0,
+            834202,
+            0,
+            0,
+            0,
+            314604
+          ],
+          "depths": {
+            "2": 109736,
+            "3": 204742,
+            "4": 126
+          },
+          "never_exposed": [
+            0,
+            114793
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            314604,
+            834202,
+            0,
+            834202,
+            0,
+            0,
+            0,
+            314604
+          ],
+          "depths": {
+            "2": 109736,
+            "3": 204742,
+            "4": 126
+          },
+          "never_exposed": [
+            0,
+            114793
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            3875237,
+            10359542,
+            0,
+            10359542,
+            0,
+            0,
+            0,
+            3875237
+          ],
+          "depths": {
+            "1": 14064,
+            "2": 1246125,
+            "3": 2606964,
+            "4": 8084
+          },
+          "never_exposed": [
+            0,
+            1564411
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            3875237,
+            10359542,
+            0,
+            10359542,
+            0,
+            0,
+            0,
+            3875237
+          ],
+          "depths": {
+            "1": 14064,
+            "2": 1246125,
+            "3": 2606964,
+            "4": 8084
+          },
+          "never_exposed": [
+            0,
+            1564411
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "FIRST",
+          "type": "TVARIABLE",
+          "totals": [
+            3411310,
+            9120373,
+            0,
+            9120373,
+            0,
+            0,
+            0,
+            3411310
+          ],
+          "depths": {
+            "2": 1113557,
+            "3": 2297753
+          },
+          "never_exposed": [
+            0,
+            1155823
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "SECOND",
+          "type": "TVARIABLE",
+          "totals": [
+            3411310,
+            9120373,
+            0,
+            9120373,
+            0,
+            0,
+            0,
+            3411310
+          ],
+          "depths": {
+            "2": 1113557,
+            "3": 2297753
+          },
+          "never_exposed": [
+            0,
+            1155823
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "role": "OTHER",
+          "phase": "OUTSIDE",
+          "values": [
+            23,
+            23,
+            0,
+            0
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "FIRST",
+          "values": [
+            314604,
+            314604,
+            314604,
+            314604
+          ]
+        },
+        {
+          "role": "OTHER",
+          "phase": "SECOND",
+          "values": [
+            314604,
+            314604,
+            314604,
+            314604
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "FIRST",
+          "values": [
+            3875237,
+            3875237,
+            3875237,
+            3875237
+          ]
+        },
+        {
+          "role": "BINDING",
+          "phase": "SECOND",
+          "values": [
+            3875237,
+            3875237,
+            3875237,
+            3875237
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "FIRST",
+          "values": [
+            3411310,
+            3411310,
+            3411310,
+            3411310
+          ]
+        },
+        {
+          "role": "STAMP",
+          "phase": "SECOND",
+          "values": [
+            3411310,
+            3411310,
+            3411310,
+            3411310
+          ]
+        }
+      ],
+      "collectors": [
+        0,
+        4888630,
+        1706357
+      ],
+      "exposure": {
+        "minds": 1619,
+        "getters": 170268
+      }
+    }
+  ]
+}

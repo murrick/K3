@@ -1,0 +1,50 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "java": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment (build 17.0.20+8-1-24.04-Ubuntu)\nOpenJDK 64-Bit Server VM (build 17.0.20+8-1-24.04-Ubuntu, mixed mode, sharing)\n",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+  "compiler": "ECJ Java 8 language target",
+  "jvms": 2,
+  "samples_per_jvm": 6,
+  "discard_first": 2,
+  "heap": "512m",
+  "scope": "Main-thread optimizeHypothesis for counts; exposure tracking starts before User/Mind construction and compilation",
+  "production_diff": "none; four temporary baseline sources instrumented",
+  "instrumented_sources": [
+    "Mind.java",
+    "ArgumentsList.java",
+    "Argument.java",
+    "Domain.java"
+  ],
+  "timings": "Diagnostic overhead; not performance evidence",
+  "roles": {
+    "BINDING": "Domain.setMind call to arguments.getTVariables, including nested enumeration",
+    "STAMP": "ArgumentsList.getStamp call to getTVariables, including nested enumeration",
+    "OTHER": "No tagged collection scope"
+  },
+  "phases": {
+    "FIRST": "First Argument.isDeleted expression inside getTVariables",
+    "SECOND": "Second Argument.isDeleted expression inside getTVariables",
+    "OUTSIDE": "No tagged deletion expression"
+  },
+  "edge_columns": [
+    "Argument.isDeleted inherited body calls",
+    "exact_Argument",
+    "exact_Argument_and_held_TVariable",
+    "exact_Argument_and_held_TVariable_and_initial_Mind"
+  ],
+  "eligibility_columns": [
+    "calls_without_observed_exposure_in_any_visited_layer",
+    "layers_without_observed_exposure"
+  ],
+  "exposure_observer": "Boolean in temporary Mind source; no owner registry or retained Mind references; getter calls from main tracing thread only",
+  "flags_on": [
+    "preserveTValueIndex",
+    "versionedSolveSync",
+    "resolvedCauseWeights",
+    "compactCauseWeights",
+    "candidateMembershipFilter",
+    "singleTValueLookup",
+    "residentBaseComparison",
+    "compactFindSnapshots"
+  ]
+}
