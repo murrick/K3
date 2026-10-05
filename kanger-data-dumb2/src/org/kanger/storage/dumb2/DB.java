@@ -320,6 +320,102 @@ public final class DB implements IData, IContextFederation {
     }
 
     @Override
+    public synchronized IContextFederation.VersionHistory versionHistory(
+            String targetLocator) throws Exception {
+        requireOpen();
+
+        Path sourceLocation =
+                context.getLocation()
+                        .toAbsolutePath()
+                        .normalize();
+        Path selectedLocation = sourceLocation;
+        String selectedLocator = storageName;
+        long pinnedRevision = -1L;
+
+        if (targetLocator != null
+                && !targetLocator.trim().isEmpty()) {
+            Path requested =
+                    resolveFederationLocator(
+                            targetLocator);
+            if (!sourceLocation.equals(requested)) {
+                ContextConnection connection =
+                        connectedContext(
+                                requested,
+                                targetLocator);
+                selectedLocation =
+                        connection.getTargetLocation()
+                                .toAbsolutePath()
+                                .normalize();
+                selectedLocator =
+                        displayFederationLocator(
+                                connection.getTargetLocation());
+                pinnedRevision =
+                        connection.getTarget()
+                                .getRevision();
+            }
+        }
+
+        ContextSnapshot current =
+                ContextSnapshot.open(
+                        selectedLocation);
+        try {
+            long currentRevision =
+                    current.getRevision();
+            ArrayList<IContextFederation.RevisionVersion>
+                    revisions =
+                    new ArrayList<IContextFederation.RevisionVersion>();
+
+            if (currentRevision
+                    == RevisionStore.INITIAL_REVISION) {
+                revisions.add(
+                        new IContextFederation.RevisionVersion(
+                                RevisionStore.INITIAL_REVISION,
+                                ""));
+            } else {
+                for (long revision = currentRevision;
+                     revision > RevisionStore.INITIAL_REVISION;
+                     --revision) {
+                    Path generation =
+                            ContextStore.generationPath(
+                                    selectedLocation,
+                                    revision);
+                    if (!Files.isDirectory(generation)) {
+                        throw new StorageLifecycleException(
+                                StorageLifecycleErrorCode
+                                        .STORAGE_SEMANTIC_CORRUPTION,
+                                "DUMB2 revision history lost "
+                                        + selectedLocator
+                                        + "@"
+                                        + revision);
+                    }
+
+                    String description = "";
+                    if (RevisionManifestStore.exists(
+                            generation)) {
+                        description =
+                                RevisionManifestStore.read(
+                                        generation)
+                                        .getDescription();
+                    }
+                    revisions.add(
+                            new IContextFederation.RevisionVersion(
+                                    revision,
+                                    description));
+                }
+            }
+
+            return new IContextFederation.VersionHistory(
+                    selectedLocator,
+                    current.getContextId(),
+                    currentRevision,
+                    pinnedRevision,
+                    revisions);
+        } finally {
+            current.close();
+        }
+    }
+
+    @Override
     public synchronized IContextFederation.Connection connectContext(
             String targetLocator) throws Exception {
         requireOpen();
