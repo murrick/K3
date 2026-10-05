@@ -900,7 +900,42 @@ public class Mind implements IMind {
     }
 
     public boolean compile(String src, Object[] ext, boolean logging) throws Exception {
-        src = compilerInput(src);
+        ContextSourceMetadata.Parsed sourceMetadata =
+                ContextSourceMetadata.parse(src);
+        IContextFederation sourceFederation = null;
+        IContextFederation.SourceDependencyPlan sourceDependencyPlan = null;
+        IContextFederation.SourceDependencyPlan previousDependencyPlan = null;
+
+        if (sourceMetadata.isPresent()) {
+            IData data = user.getData();
+            if (!isStorageUsed()
+                    || !(data instanceof IContextFederation)) {
+                throw new IllegalStateException(
+                        "Context dependency metadata requires an active Context federation storage");
+            }
+            sourceFederation =
+                    (IContextFederation) data;
+            sourceDependencyPlan =
+                    sourceFederation.prepareSourceDependencies(
+                            sourceMetadata.getRequests());
+
+            ArrayList<IContextFederation.SourceDependencyRequest>
+                    previousRequests =
+                    new ArrayList<IContextFederation.SourceDependencyRequest>();
+            for (IContextFederation.SourceDependency dependency
+                    : sourceFederation.sourceDependencies()) {
+                previousRequests.add(
+                        new IContextFederation.SourceDependencyRequest(
+                                dependency.getLocator(),
+                                Long.valueOf(
+                                        dependency.getRevision())));
+            }
+            previousDependencyPlan =
+                    sourceFederation.prepareSourceDependencies(
+                            previousRequests);
+        }
+
+        src = compilerInput(sourceMetadata.getSource());
         this.logging = logging;
 
         getQueryValues().clear();
@@ -953,7 +988,26 @@ public class Mind implements IMind {
                 if (logging) {
                     m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
                 }
-                tx.commit();
+                if (sourceDependencyPlan != null) {
+                    try {
+                        sourceFederation.installSourceDependencies(
+                                sourceDependencyPlan);
+                        tx.commit();
+                    } catch (Exception | Error failure) {
+                        if (previousDependencyPlan != null) {
+                            try {
+                                sourceFederation.installSourceDependencies(
+                                        previousDependencyPlan);
+                            } catch (Exception restoreFailure) {
+                                failure.addSuppressed(
+                                        restoreFailure);
+                            }
+                        }
+                        throw failure;
+                    }
+                } else {
+                    tx.commit();
+                }
                 return true;
             }
         }
@@ -2041,6 +2095,17 @@ public class Mind implements IMind {
 
     public String getSourceCode() throws Exception {
         String str = "";
+        IData sourceData = user.getData();
+        if (isStorageUsed()
+                && sourceData instanceof IContextFederation) {
+            IContextFederation federation =
+                    (IContextFederation) sourceData;
+            str += ContextSourceMetadata.canonicalHeader(
+                    federation.sourceDependencies(),
+                    Enums.LINE_SEPARATOR);
+            str += Enums.LINE_SEPARATOR;
+        }
+
         SortedMap<Long, IRule> map = new TreeMap<>();
         for (IRule r : getRules()) {
             if (!r.isGenerated()) {
