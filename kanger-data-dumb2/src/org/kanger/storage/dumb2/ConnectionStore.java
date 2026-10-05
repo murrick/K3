@@ -147,7 +147,8 @@ final class ConnectionStore {
             RevisionRef currentSource,
             ConnectionVector currentVector,
             RevisionRef candidateSource,
-            ConnectionVector candidateVector) throws IOException {
+            ConnectionVector candidateVector)
+            throws IOException, StorageLifecycleException {
         if (currentSource == null
                 || currentVector == null
                 || candidateSource == null
