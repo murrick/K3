@@ -350,6 +350,7 @@ public final class CanonicalConsole {
             case CTX_DISCONNECT:
             case CTX_SWITCH:
             case CTX_VERSION:
+            case CTX_EXPLAIN:
             case CTX_ISOLATED_QUERY:
             case CTX_QUERY:
                 CanonicalCommandProcessor.Result federation =
@@ -370,6 +371,10 @@ public final class CanonicalConsole {
                         == org.kanger.command.CommandIntent.CTX_VERSION) {
                     showContextVersion(
                             federation.getContextVersionHistory());
+                } else if (invocation.getIntent()
+                        == org.kanger.command.CommandIntent.CTX_EXPLAIN) {
+                    showContextExplain(
+                            federation.getContextExplainResult());
                 } else if (invocation.getIntent()
                         == org.kanger.command.CommandIntent.CTX_ISOLATED_QUERY) {
                     showIsolatedContextQuery(
@@ -791,6 +796,1019 @@ public final class CanonicalConsole {
             throw new CommandErrorException("Cannot delete source file " + name);
         }
         System.out.println("Source file " + name + " deleted.");
+    }
+
+    private static void showContextExplain(
+            IContextFederation.ExplainResult explain) {
+        if (explain == null) {
+            return;
+        }
+        IContextFederation.Snapshot snapshot =
+                explain.getContext();
+
+        System.out.printf(
+                "Context %s@%d [explain]%n",
+                snapshot.getSourceLocator(),
+                snapshot.getSourceRevision());
+        if (snapshot.getConnections().isEmpty()) {
+            System.out.println("Pins: none");
+        } else {
+            System.out.println("Pins:");
+            for (IContextFederation.Connection connection
+                    : snapshot.getConnections()) {
+                System.out.printf(
+                        "  %s@%d%n",
+                        connection.getLocator(),
+                        connection.getPinnedRevision());
+            }
+        }
+
+        System.out.println(
+                "Local X: " + explain.getLocalTruth());
+
+        for (IContextFederation.ExplainPass pass
+                : explain.getPasses()) {
+            IContextFederation.QueryResult continuation =
+                    pass.getContinuation();
+            System.out.println(
+                    pass.getPolarity()
+                            == IContextFederation.ExplainPolarity.FALSE_PASS
+                            ? "FALSE pass:"
+                            : "TRUE pass:");
+
+            for (IContextFederation.FrontierObservation observation
+                    : continuation.getObservations()) {
+                System.out.printf(
+                        "  wave %d  %s  => %s%n",
+                        observation.getWave(),
+                        observation.getQuerySource(),
+                        observation.getTruth());
+                showRevisionSources(
+                        "TRUE",
+                        observation.getTrueSources(),
+                        snapshot);
+                showRevisionSources(
+                        "FALSE",
+                        observation.getFalseSources(),
+                        snapshot);
+                showRevisionSources(
+                        "UNKNOWN",
+                        observation.getUnknownSources(),
+                        snapshot);
+            }
+
+            for (IContextFederation.EvidenceInjection injection
+                    : continuation.getEvidenceInjections()) {
+                StringBuilder line =
+                        new StringBuilder(
+                                "  inject into X: ")
+                                .append(
+                                        injection.getStatement());
+                if (!injection.getSubstitutions()
+                        .isEmpty()) {
+                    line.append("  ");
+                    boolean first = true;
+                    for (java.util.Map.Entry<String, String> binding
+                            : injection.getSubstitutions()
+                                    .entrySet()) {
+                        if (!first) {
+                            line.append(", ");
+                        }
+                        line.append('
+            IContextFederation.VersionHistory history) {
+        if (history == null) {
+            return;
+        }
+        System.out.println(
+                "Context " + history.getLocator());
+        if (history.hasPinnedRevision()) {
+            System.out.println(
+                    "Pinned: "
+                            + history.getPinnedRevision());
+        }
+        System.out.println(
+                "Current: "
+                        + history.getCurrentRevision());
+        System.out.println();
+        System.out.println(
+                "Revision   Description");
+        for (IContextFederation.RevisionVersion revision
+                : history.getRevisions()) {
+            StringBuilder markers =
+                    new StringBuilder();
+            if (revision.getRevision()
+                    == history.getCurrentRevision()) {
+                markers.append(" [CURRENT]");
+            }
+            if (history.hasPinnedRevision()
+                    && revision.getRevision()
+                            == history.getPinnedRevision()) {
+                markers.append(" [PINNED]");
+            }
+            System.out.printf(
+                    "%-10d %s%s%n",
+                    revision.getRevision(),
+                    revision.getDescription(),
+                    markers.toString());
+        }
+    }
+
+    private static void showIsolatedContextQuery(
+            IContextFederation.Snapshot snapshot,
+            IContextFederation.QueryResult query,
+            String locator) {
+        if (query == null) {
+            return;
+        }
+        long revision = isolatedRevision(snapshot, locator);
+        System.out.printf(
+                "Context %s%s [isolated]%n",
+                locator,
+                revision < 0 ? "" : "@" + revision);
+        System.out.println("Result: " + query.getResultTruth());
+
+        if (!query.getValues().isEmpty()) {
+            System.out.println("Values:");
+            for (IContextFederation.ValueRow row : query.getValues()) {
+                StringBuilder line = new StringBuilder("  ");
+                boolean first = true;
+                for (java.util.Map.Entry<String, String> binding
+                        : row.getBindings().entrySet()) {
+                    if (!first) {
+                        line.append(", ");
+                    }
+                    line.append("$")
+                            .append(binding.getKey())
+                            .append(" = ")
+                            .append(binding.getValue());
+                    first = false;
+                }
+                System.out.println(line.toString());
+            }
+        }
+
+        if (!query.getProvisionalHypotheses().isEmpty()) {
+            System.out.println("Hypotheses:");
+            for (IContextFederation.ProvisionalHypothesis hypothesis
+                    : query.getProvisionalHypotheses()) {
+                System.out.println("  " + hypothesis.getStatement());
+            }
+        }
+    }
+
+    private static long isolatedRevision(
+            IContextFederation.Snapshot snapshot,
+            String locator) {
+        if (snapshot.getSourceLocator().equals(locator)) {
+            return snapshot.getSourceRevision();
+        }
+        for (IContextFederation.Connection connection
+                : snapshot.getConnections()) {
+            if (connection.getLocator().equals(locator)) {
+                return connection.getPinnedRevision();
+            }
+        }
+        return -1L;
+    }
+    private static void showFederation(
+            IContextFederation.Snapshot snapshot,
+            IContextFederation.QueryResult query) {
+        System.out.printf("Context %s@%d%n",
+                snapshot.getSourceLocator(),
+                snapshot.getSourceRevision());
+        if (snapshot.getConnections().isEmpty()) {
+            System.out.println("Direct connections: none");
+        } else {
+            System.out.println("Direct connections:");
+            for (IContextFederation.Connection connection
+                    : snapshot.getConnections()) {
+                System.out.printf(
+                        "  %s@%d  %-10s  %s%s%n",
+                        connection.getLocator(),
+                        connection.getPinnedRevision(),
+                        connection.getCompatibilityStatus(),
+                        connection.getPinPolicy(),
+                        connection.hasNewerRevision()
+                                ? "  [CURRENT="
+                                        + connection.getCurrentRevision()
+                                        + "]"
+                                : "");
+            }
+        }
+
+        if (query == null) {
+            return;
+        }
+        System.out.printf(
+                "Federated query: %s, waves=%d, evidence=%d%n",
+                query.isResolved() ? "RESOLVED" : "UNRESOLVED",
+                query.getWaves(),
+                query.getEvidenceCount());
+        for (IContextFederation.FrontierObservation observation
+                : query.getObservations()) {
+            System.out.printf("  wave %d  %s  => %s%n",
+                    observation.getWave(),
+                    observation.getQuerySource(),
+                    observation.getTruth());
+            showRevisionSources("TRUE",
+                    observation.getTrueSources(), snapshot);
+            showRevisionSources("FALSE",
+                    observation.getFalseSources(), snapshot);
+            showRevisionSources("UNKNOWN",
+                    observation.getUnknownSources(), snapshot);
+        }
+        if (!query.getProvisionalHypotheses().isEmpty()) {
+            System.out.println("  provisional hypotheses:");
+            for (IContextFederation.ProvisionalHypothesis hypothesis
+                    : query.getProvisionalHypotheses()) {
+                System.out.printf("    %s@%d  %s%n",
+                        contextLocator(
+                                snapshot,
+                                hypothesis.getSource().getContextId()),
+                        hypothesis.getSource().getRevision(),
+                        hypothesis.getStatement());
+            }
+        }
+    }
+
+    private static void showRevisionSources(
+            String label,
+            List<IContextFederation.Revision> revisions,
+            IContextFederation.Snapshot snapshot) {
+        for (IContextFederation.Revision revision : revisions) {
+            System.out.printf("      %s: %s@%d%n",
+                    label,
+                    contextLocator(snapshot, revision.getContextId()),
+                    revision.getRevision());
+        }
+    }
+
+    private static String contextLocator(
+            IContextFederation.Snapshot snapshot,
+            java.util.UUID contextId) {
+        if (snapshot.getSourceContextId().equals(contextId)) {
+            return snapshot.getSourceLocator();
+        }
+        for (IContextFederation.Connection connection
+                : snapshot.getConnections()) {
+            if (connection.getTargetContextId().equals(contextId)) {
+                return connection.getLocator();
+            }
+        }
+        return "<unknown-context>";
+    }
+
+    private static void showStorage(CanonicalCommandProcessor.StorageStatus status) {
+        List<String> names = status.getNames();
+        String current = status.getCurrent();
+        if (names.isEmpty()) {
+            System.out.println("No storages available");
+        } else {
+            System.out.println("Storages available:");
+            for (String name : names) {
+                System.out.printf("\t%s%s%n", name,
+                        current != null && current.equals(name) ? "  [current]" : "");
+            }
+        }
+        System.out.println("Current storage: "
+                + (status.isUsed() ? current : "none"));
+    }
+
+    private static void showStorage(IMind mind) throws Exception {
+        List<String> names = new ArrayList<String>();
+        for (String name : mind.getStoragesList()) {
+            names.add(name);
+        }
+        Collections.sort(names);
+        if (names.isEmpty()) {
+            System.out.println("No storages available");
+        } else {
+            System.out.println("Storages available:");
+            String current = mind.isStorageUsed() ? mind.getStorageName() : null;
+            for (String name : names) {
+                System.out.printf("\t%s%s%n", name,
+                        current != null && current.equals(name) ? "  [current]" : "");
+            }
+        }
+        if (mind.isStorageUsed()) {
+            System.out.println("Current storage: " + mind.getStorageName());
+        } else {
+            System.out.println("Current storage: none");
+        }
+    }
+
+    private static IMind erase(IMind mind, ConsoleLineInput input) throws Exception {
+        String prompt = "Erase workspace?";
+        if (mind.isStorageUsed()) {
+            prompt += "\nWARNING: The contents of the currently open database "
+                    + "will also be erased.";
+        }
+        if (!confirm(input, prompt)) {
+            return mind;
+        }
+        while (mind.getNext() != null) {
+            IMind parent = mind.getNext();
+            parent.release(mind);
+            mind = parent;
+        }
+        return mind.clearWorkspace();
+    }
+
+    private static boolean confirmQuit(IMind mind, ConsoleLineInput input) {
+        if (mind.isStorageUsed() && mind.getTransactionLevel() > 0 && !mind.isEmptyLevel()) {
+            return confirm(input, "Quit with an uncommitted transaction?");
+        }
+        return true;
+    }
+
+    private static boolean confirm(ConsoleLineInput input, String prompt) {
+        String answer = input.readAuxiliary(prompt + " [y/N]? ").trim();
+        return !answer.isEmpty() && Character.toUpperCase(answer.charAt(0)) == 'Y';
+    }
+
+    private static void showHelp() {
+        System.out.print(HELP.render());
+        System.out.println();
+        System.out.println("Console-local forms:");
+        System.out.println("  get | put | delete     list available source names (read-only)");
+        System.out.println("  xplain                 show accumulated analyzer log");
+        System.out.println("  xplain <file>          write accumulated analyzer log to file");
+        System.out.println("  xplain mode on|off     toggle runtime explanation display mode");
+        System.out.println("  z                      repeat the last Core query");
+    }
+
+    private static boolean isBareSourceList(String line) {
+        return "get".equalsIgnoreCase(line)
+                || "put".equalsIgnoreCase(line)
+                || "delete".equalsIgnoreCase(line);
+    }
+
+    private static boolean isXplain(String line) {
+        String first = line.split("\\s+", 2)[0].toLowerCase();
+        return first.length() > 0 && "xplain".startsWith(first);
+    }
+
+    /**
+     * Console-only developer hook. Deliberately bypasses the canonical command
+     * grammar and is intentionally absent from help/documentation.
+     */
+    private static boolean isHiddenTestCommand(String line) {
+        String[] parts = line.trim().split("\\s+");
+        return parts.length >= 2
+                && "options".equalsIgnoreCase(parts[0])
+                && "test".equalsIgnoreCase(parts[1]);
+    }
+
+    private static void runHiddenTestCommand(String line, IMind mind) throws Exception {
+        String[] parts = line.trim().split("\\s+");
+        if (parts.length > 3) {
+            throw new CommandErrorException("Invalid options test syntax");
+        }
+        String prefix = parts.length == 3 ? parts[2] : "";
+
+        /*
+         * Do not lend the live Console Mind/User/storage to the historical test
+         * corpus. The qualification runtime creates a disposable User + Mind and,
+         * when the current Console is database-backed, a private temporary DUMB
+         * database. This preserves the live transaction stack and storage exactly.
+         *
+         * Reflection keeps the production Console independent of the qualification
+         * module. The hidden command exists only when that developer/test plane is
+         * present on the runtime class path.
+         */
+        java.net.URLClassLoader developerLoader = null;
+        try {
+            Class<?> runtime;
+            try {
+                runtime = Class.forName("org.kanger.IsolatedKangerTestRuntime");
+            } catch (ClassNotFoundException missingFromRuntime) {
+                File directory = new File(System.getProperty("user.dir", "."))
+                        .getCanonicalFile();
+                File classes = null;
+                for (int depth = 0; depth < 5 && directory != null; ++depth) {
+                    File candidate = new File(directory,
+                            "kanger-qualification/target/test-classes");
+                    File marker = new File(candidate,
+                            "org/kanger/IsolatedKangerTestRuntime.class");
+                    if (marker.isFile()) {
+                        classes = candidate;
+                        break;
+                    }
+                    directory = directory.getParentFile();
+                }
+                if (classes == null) {
+                    throw missingFromRuntime;
+                }
+                developerLoader = new java.net.URLClassLoader(
+                        new java.net.URL[]{classes.toURI().toURL()},
+                        CanonicalConsole.class.getClassLoader());
+                runtime = Class.forName(
+                        "org.kanger.IsolatedKangerTestRuntime",
+                        true,
+                        developerLoader);
+            }
+
+            java.lang.reflect.Method run =
+                    runtime.getDeclaredMethod("run", String.class, boolean.class);
+            run.setAccessible(true);
+            Object result = run.invoke(null, prefix, mind.isStorageUsed());
+            if (!(result instanceof Boolean) || !((Boolean) result).booleanValue()) {
+                throw new CommandErrorException("KANGER test failed");
+            }
+        } catch (ClassNotFoundException ex) {
+            throw new CommandErrorException(
+                    "Console test runtime is unavailable; compile kanger-qualification first");
+        } catch (java.lang.reflect.InvocationTargetException ex) {
+            Throwable cause = ex.getCause();
+            if (cause instanceof Exception) {
+                throw (Exception) cause;
+            }
+            if (cause instanceof Error) {
+                throw (Error) cause;
+            }
+            throw new RuntimeException(cause);
+        } finally {
+            if (developerLoader != null) {
+                developerLoader.close();
+            }
+        }
+    }
+
+    private static void processXplain(String line, IMind mind, ConsoleLineInput input) throws Exception {
+        String[] parts = line.split("\\s+");
+        if (parts.length == 3
+                && "mode".equalsIgnoreCase(parts[1])
+                && ("on".equalsIgnoreCase(parts[2]) || "off".equalsIgnoreCase(parts[2]))) {
+            if ("on".equalsIgnoreCase(parts[2])) {
+                mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_RTLOGS);
+            } else {
+                mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RTLOGS);
+            }
+            System.out.println("Xplain runtime mode: "
+                    + (((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) != 0) ? "ON" : "OFF"));
+            return;
+        }
+        if (parts.length > 2) {
+            throw new CommandErrorException("Invalid xplain syntax");
+        }
+        if (parts.length == 1) {
+            Console.showExplanation(mind, LogMode.ALL, "xplain", null);
+            return;
+        }
+        if (!parts[1].isEmpty() && Character.toUpperCase(parts[1].charAt(0)) == 'W') {
+            String fileName = input.readAuxiliary("Save analyzer log to file: ").trim();
+            Console.showExplanation(mind, LogMode.ALL,
+                    fileName.isEmpty() ? "xplain" : "xplain " + fileName, null);
+            return;
+        }
+        Console.showExplanation(mind, LogMode.ALL, "xplain " + parts[1], null);
+    }
+
+    private static long number(CommandInvocation invocation, String name) {
+        return ((Number) invocation.getArgument(name)).longValue();
+    }
+
+    private static IMind track(ShutdownHook hook, IMind mind) {
+        if (mind != null) {
+            mind.getUser().setCurrentMind(mind);
+        }
+        if (hook != null) {
+            hook.setMind(mind);
+        }
+        return mind;
+    }
+
+    private static void setParseSource(ParseSourceContext context, String source) {
+        if (context != null) {
+            context.source = source;
+        }
+    }
+
+    private static DispatchResult same(IMind mind) {
+        return new DispatchResult(mind, false);
+    }
+
+    private static final class ParseSourceContext {
+        private String source;
+
+        private String sourceOr(String fallback) {
+            return source == null ? fallback : source;
+        }
+    }
+
+    private static final class DispatchResult {
+        private final IMind mind;
+        private final boolean stop;
+
+        private DispatchResult(IMind mind, boolean stop) {
+            this.mind = mind;
+            this.stop = stop;
+        }
+    }
+}
+)
+                                .append(binding.getKey())
+                                .append(" <- ")
+                                .append(binding.getValue());
+                        first = false;
+                    }
+                }
+                if (!injection.getSupports().isEmpty()) {
+                    line.append("  [");
+                    boolean first = true;
+                    for (IContextFederation.Revision support
+                            : injection.getSupports()) {
+                        if (!first) {
+                            line.append(", ");
+                        }
+                        line.append(
+                                contextLocator(
+                                        snapshot,
+                                        support.getContextId()))
+                                .append('@')
+                                .append(
+                                        support.getRevision());
+                        first = false;
+                    }
+                    line.append(']');
+                }
+                System.out.println(line.toString());
+            }
+
+            System.out.printf(
+                    "  continuation X: %s, waves=%d, evidence=%d%n",
+                    continuation.isResolved()
+                            ? "RESOLVED"
+                            : "UNRESOLVED",
+                    continuation.getWaves(),
+                    continuation.getEvidenceCount());
+        }
+
+        System.out.println(
+                "Final: " + explain.getFinalTruth());
+
+        if (!explain.getValues().isEmpty()) {
+            System.out.println("Values:");
+            for (IContextFederation.ValueRow row
+                    : explain.getValues()) {
+                StringBuilder line =
+                        new StringBuilder("  ");
+                boolean first = true;
+                for (java.util.Map.Entry<String, String> binding
+                        : row.getBindings().entrySet()) {
+                    if (!first) {
+                        line.append(", ");
+                    }
+                    line.append('
+            IContextFederation.VersionHistory history) {
+        if (history == null) {
+            return;
+        }
+        System.out.println(
+                "Context " + history.getLocator());
+        if (history.hasPinnedRevision()) {
+            System.out.println(
+                    "Pinned: "
+                            + history.getPinnedRevision());
+        }
+        System.out.println(
+                "Current: "
+                        + history.getCurrentRevision());
+        System.out.println();
+        System.out.println(
+                "Revision   Description");
+        for (IContextFederation.RevisionVersion revision
+                : history.getRevisions()) {
+            StringBuilder markers =
+                    new StringBuilder();
+            if (revision.getRevision()
+                    == history.getCurrentRevision()) {
+                markers.append(" [CURRENT]");
+            }
+            if (history.hasPinnedRevision()
+                    && revision.getRevision()
+                            == history.getPinnedRevision()) {
+                markers.append(" [PINNED]");
+            }
+            System.out.printf(
+                    "%-10d %s%s%n",
+                    revision.getRevision(),
+                    revision.getDescription(),
+                    markers.toString());
+        }
+    }
+
+    private static void showIsolatedContextQuery(
+            IContextFederation.Snapshot snapshot,
+            IContextFederation.QueryResult query,
+            String locator) {
+        if (query == null) {
+            return;
+        }
+        long revision = isolatedRevision(snapshot, locator);
+        System.out.printf(
+                "Context %s%s [isolated]%n",
+                locator,
+                revision < 0 ? "" : "@" + revision);
+        System.out.println("Result: " + query.getResultTruth());
+
+        if (!query.getValues().isEmpty()) {
+            System.out.println("Values:");
+            for (IContextFederation.ValueRow row : query.getValues()) {
+                StringBuilder line = new StringBuilder("  ");
+                boolean first = true;
+                for (java.util.Map.Entry<String, String> binding
+                        : row.getBindings().entrySet()) {
+                    if (!first) {
+                        line.append(", ");
+                    }
+                    line.append("$")
+                            .append(binding.getKey())
+                            .append(" = ")
+                            .append(binding.getValue());
+                    first = false;
+                }
+                System.out.println(line.toString());
+            }
+        }
+
+        if (!query.getProvisionalHypotheses().isEmpty()) {
+            System.out.println("Hypotheses:");
+            for (IContextFederation.ProvisionalHypothesis hypothesis
+                    : query.getProvisionalHypotheses()) {
+                System.out.println("  " + hypothesis.getStatement());
+            }
+        }
+    }
+
+    private static long isolatedRevision(
+            IContextFederation.Snapshot snapshot,
+            String locator) {
+        if (snapshot.getSourceLocator().equals(locator)) {
+            return snapshot.getSourceRevision();
+        }
+        for (IContextFederation.Connection connection
+                : snapshot.getConnections()) {
+            if (connection.getLocator().equals(locator)) {
+                return connection.getPinnedRevision();
+            }
+        }
+        return -1L;
+    }
+    private static void showFederation(
+            IContextFederation.Snapshot snapshot,
+            IContextFederation.QueryResult query) {
+        System.out.printf("Context %s@%d%n",
+                snapshot.getSourceLocator(),
+                snapshot.getSourceRevision());
+        if (snapshot.getConnections().isEmpty()) {
+            System.out.println("Direct connections: none");
+        } else {
+            System.out.println("Direct connections:");
+            for (IContextFederation.Connection connection
+                    : snapshot.getConnections()) {
+                System.out.printf(
+                        "  %s@%d  %-10s  %s%s%n",
+                        connection.getLocator(),
+                        connection.getPinnedRevision(),
+                        connection.getCompatibilityStatus(),
+                        connection.getPinPolicy(),
+                        connection.hasNewerRevision()
+                                ? "  [CURRENT="
+                                        + connection.getCurrentRevision()
+                                        + "]"
+                                : "");
+            }
+        }
+
+        if (query == null) {
+            return;
+        }
+        System.out.printf(
+                "Federated query: %s, waves=%d, evidence=%d%n",
+                query.isResolved() ? "RESOLVED" : "UNRESOLVED",
+                query.getWaves(),
+                query.getEvidenceCount());
+        for (IContextFederation.FrontierObservation observation
+                : query.getObservations()) {
+            System.out.printf("  wave %d  %s  => %s%n",
+                    observation.getWave(),
+                    observation.getQuerySource(),
+                    observation.getTruth());
+            showRevisionSources("TRUE",
+                    observation.getTrueSources(), snapshot);
+            showRevisionSources("FALSE",
+                    observation.getFalseSources(), snapshot);
+            showRevisionSources("UNKNOWN",
+                    observation.getUnknownSources(), snapshot);
+        }
+        if (!query.getProvisionalHypotheses().isEmpty()) {
+            System.out.println("  provisional hypotheses:");
+            for (IContextFederation.ProvisionalHypothesis hypothesis
+                    : query.getProvisionalHypotheses()) {
+                System.out.printf("    %s@%d  %s%n",
+                        contextLocator(
+                                snapshot,
+                                hypothesis.getSource().getContextId()),
+                        hypothesis.getSource().getRevision(),
+                        hypothesis.getStatement());
+            }
+        }
+    }
+
+    private static void showRevisionSources(
+            String label,
+            List<IContextFederation.Revision> revisions,
+            IContextFederation.Snapshot snapshot) {
+        for (IContextFederation.Revision revision : revisions) {
+            System.out.printf("      %s: %s@%d%n",
+                    label,
+                    contextLocator(snapshot, revision.getContextId()),
+                    revision.getRevision());
+        }
+    }
+
+    private static String contextLocator(
+            IContextFederation.Snapshot snapshot,
+            java.util.UUID contextId) {
+        if (snapshot.getSourceContextId().equals(contextId)) {
+            return snapshot.getSourceLocator();
+        }
+        for (IContextFederation.Connection connection
+                : snapshot.getConnections()) {
+            if (connection.getTargetContextId().equals(contextId)) {
+                return connection.getLocator();
+            }
+        }
+        return "<unknown-context>";
+    }
+
+    private static void showStorage(CanonicalCommandProcessor.StorageStatus status) {
+        List<String> names = status.getNames();
+        String current = status.getCurrent();
+        if (names.isEmpty()) {
+            System.out.println("No storages available");
+        } else {
+            System.out.println("Storages available:");
+            for (String name : names) {
+                System.out.printf("\t%s%s%n", name,
+                        current != null && current.equals(name) ? "  [current]" : "");
+            }
+        }
+        System.out.println("Current storage: "
+                + (status.isUsed() ? current : "none"));
+    }
+
+    private static void showStorage(IMind mind) throws Exception {
+        List<String> names = new ArrayList<String>();
+        for (String name : mind.getStoragesList()) {
+            names.add(name);
+        }
+        Collections.sort(names);
+        if (names.isEmpty()) {
+            System.out.println("No storages available");
+        } else {
+            System.out.println("Storages available:");
+            String current = mind.isStorageUsed() ? mind.getStorageName() : null;
+            for (String name : names) {
+                System.out.printf("\t%s%s%n", name,
+                        current != null && current.equals(name) ? "  [current]" : "");
+            }
+        }
+        if (mind.isStorageUsed()) {
+            System.out.println("Current storage: " + mind.getStorageName());
+        } else {
+            System.out.println("Current storage: none");
+        }
+    }
+
+    private static IMind erase(IMind mind, ConsoleLineInput input) throws Exception {
+        String prompt = "Erase workspace?";
+        if (mind.isStorageUsed()) {
+            prompt += "\nWARNING: The contents of the currently open database "
+                    + "will also be erased.";
+        }
+        if (!confirm(input, prompt)) {
+            return mind;
+        }
+        while (mind.getNext() != null) {
+            IMind parent = mind.getNext();
+            parent.release(mind);
+            mind = parent;
+        }
+        return mind.clearWorkspace();
+    }
+
+    private static boolean confirmQuit(IMind mind, ConsoleLineInput input) {
+        if (mind.isStorageUsed() && mind.getTransactionLevel() > 0 && !mind.isEmptyLevel()) {
+            return confirm(input, "Quit with an uncommitted transaction?");
+        }
+        return true;
+    }
+
+    private static boolean confirm(ConsoleLineInput input, String prompt) {
+        String answer = input.readAuxiliary(prompt + " [y/N]? ").trim();
+        return !answer.isEmpty() && Character.toUpperCase(answer.charAt(0)) == 'Y';
+    }
+
+    private static void showHelp() {
+        System.out.print(HELP.render());
+        System.out.println();
+        System.out.println("Console-local forms:");
+        System.out.println("  get | put | delete     list available source names (read-only)");
+        System.out.println("  xplain                 show accumulated analyzer log");
+        System.out.println("  xplain <file>          write accumulated analyzer log to file");
+        System.out.println("  xplain mode on|off     toggle runtime explanation display mode");
+        System.out.println("  z                      repeat the last Core query");
+    }
+
+    private static boolean isBareSourceList(String line) {
+        return "get".equalsIgnoreCase(line)
+                || "put".equalsIgnoreCase(line)
+                || "delete".equalsIgnoreCase(line);
+    }
+
+    private static boolean isXplain(String line) {
+        String first = line.split("\\s+", 2)[0].toLowerCase();
+        return first.length() > 0 && "xplain".startsWith(first);
+    }
+
+    /**
+     * Console-only developer hook. Deliberately bypasses the canonical command
+     * grammar and is intentionally absent from help/documentation.
+     */
+    private static boolean isHiddenTestCommand(String line) {
+        String[] parts = line.trim().split("\\s+");
+        return parts.length >= 2
+                && "options".equalsIgnoreCase(parts[0])
+                && "test".equalsIgnoreCase(parts[1]);
+    }
+
+    private static void runHiddenTestCommand(String line, IMind mind) throws Exception {
+        String[] parts = line.trim().split("\\s+");
+        if (parts.length > 3) {
+            throw new CommandErrorException("Invalid options test syntax");
+        }
+        String prefix = parts.length == 3 ? parts[2] : "";
+
+        /*
+         * Do not lend the live Console Mind/User/storage to the historical test
+         * corpus. The qualification runtime creates a disposable User + Mind and,
+         * when the current Console is database-backed, a private temporary DUMB
+         * database. This preserves the live transaction stack and storage exactly.
+         *
+         * Reflection keeps the production Console independent of the qualification
+         * module. The hidden command exists only when that developer/test plane is
+         * present on the runtime class path.
+         */
+        java.net.URLClassLoader developerLoader = null;
+        try {
+            Class<?> runtime;
+            try {
+                runtime = Class.forName("org.kanger.IsolatedKangerTestRuntime");
+            } catch (ClassNotFoundException missingFromRuntime) {
+                File directory = new File(System.getProperty("user.dir", "."))
+                        .getCanonicalFile();
+                File classes = null;
+                for (int depth = 0; depth < 5 && directory != null; ++depth) {
+                    File candidate = new File(directory,
+                            "kanger-qualification/target/test-classes");
+                    File marker = new File(candidate,
+                            "org/kanger/IsolatedKangerTestRuntime.class");
+                    if (marker.isFile()) {
+                        classes = candidate;
+                        break;
+                    }
+                    directory = directory.getParentFile();
+                }
+                if (classes == null) {
+                    throw missingFromRuntime;
+                }
+                developerLoader = new java.net.URLClassLoader(
+                        new java.net.URL[]{classes.toURI().toURL()},
+                        CanonicalConsole.class.getClassLoader());
+                runtime = Class.forName(
+                        "org.kanger.IsolatedKangerTestRuntime",
+                        true,
+                        developerLoader);
+            }
+
+            java.lang.reflect.Method run =
+                    runtime.getDeclaredMethod("run", String.class, boolean.class);
+            run.setAccessible(true);
+            Object result = run.invoke(null, prefix, mind.isStorageUsed());
+            if (!(result instanceof Boolean) || !((Boolean) result).booleanValue()) {
+                throw new CommandErrorException("KANGER test failed");
+            }
+        } catch (ClassNotFoundException ex) {
+            throw new CommandErrorException(
+                    "Console test runtime is unavailable; compile kanger-qualification first");
+        } catch (java.lang.reflect.InvocationTargetException ex) {
+            Throwable cause = ex.getCause();
+            if (cause instanceof Exception) {
+                throw (Exception) cause;
+            }
+            if (cause instanceof Error) {
+                throw (Error) cause;
+            }
+            throw new RuntimeException(cause);
+        } finally {
+            if (developerLoader != null) {
+                developerLoader.close();
+            }
+        }
+    }
+
+    private static void processXplain(String line, IMind mind, ConsoleLineInput input) throws Exception {
+        String[] parts = line.split("\\s+");
+        if (parts.length == 3
+                && "mode".equalsIgnoreCase(parts[1])
+                && ("on".equalsIgnoreCase(parts[2]) || "off".equalsIgnoreCase(parts[2]))) {
+            if ("on".equalsIgnoreCase(parts[2])) {
+                mind.setDebugLevel(mind.getDebugLevel() | Enums.DEBUG_OPTION_RTLOGS);
+            } else {
+                mind.setDebugLevel(mind.getDebugLevel() & ~Enums.DEBUG_OPTION_RTLOGS);
+            }
+            System.out.println("Xplain runtime mode: "
+                    + (((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) != 0) ? "ON" : "OFF"));
+            return;
+        }
+        if (parts.length > 2) {
+            throw new CommandErrorException("Invalid xplain syntax");
+        }
+        if (parts.length == 1) {
+            Console.showExplanation(mind, LogMode.ALL, "xplain", null);
+            return;
+        }
+        if (!parts[1].isEmpty() && Character.toUpperCase(parts[1].charAt(0)) == 'W') {
+            String fileName = input.readAuxiliary("Save analyzer log to file: ").trim();
+            Console.showExplanation(mind, LogMode.ALL,
+                    fileName.isEmpty() ? "xplain" : "xplain " + fileName, null);
+            return;
+        }
+        Console.showExplanation(mind, LogMode.ALL, "xplain " + parts[1], null);
+    }
+
+    private static long number(CommandInvocation invocation, String name) {
+        return ((Number) invocation.getArgument(name)).longValue();
+    }
+
+    private static IMind track(ShutdownHook hook, IMind mind) {
+        if (mind != null) {
+            mind.getUser().setCurrentMind(mind);
+        }
+        if (hook != null) {
+            hook.setMind(mind);
+        }
+        return mind;
+    }
+
+    private static void setParseSource(ParseSourceContext context, String source) {
+        if (context != null) {
+            context.source = source;
+        }
+    }
+
+    private static DispatchResult same(IMind mind) {
+        return new DispatchResult(mind, false);
+    }
+
+    private static final class ParseSourceContext {
+        private String source;
+
+        private String sourceOr(String fallback) {
+            return source == null ? fallback : source;
+        }
+    }
+
+    private static final class DispatchResult {
+        private final IMind mind;
+        private final boolean stop;
+
+        private DispatchResult(IMind mind, boolean stop) {
+            this.mind = mind;
+            this.stop = stop;
+        }
+    }
+}
+)
+                            .append(binding.getKey())
+                            .append(" <- ")
+                            .append(binding.getValue());
+                    first = false;
+                }
+                System.out.println(line.toString());
+            }
+        }
+
+        if (!explain.getSolutions().isEmpty()) {
+            System.out.println("Solutions:");
+            for (String solution
+                    : explain.getSolutions()) {
+                System.out.println(
+                        "  " + solution);
+            }
+        }
     }
 
     private static void showContextVersion(
