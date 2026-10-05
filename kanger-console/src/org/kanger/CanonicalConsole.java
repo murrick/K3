@@ -349,6 +349,7 @@ public final class CanonicalConsole {
             case CTX_CONNECT:
             case CTX_DISCONNECT:
             case CTX_SWITCH:
+            case CTX_VERSION:
             case CTX_ISOLATED_QUERY:
             case CTX_QUERY:
                 CanonicalCommandProcessor.Result federation =
@@ -366,6 +367,10 @@ public final class CanonicalConsole {
                     System.out.println(federation.getDescription());
                 }
                 if (invocation.getIntent()
+                        == org.kanger.command.CommandIntent.CTX_VERSION) {
+                    showContextVersion(
+                            federation.getContextVersionHistory());
+                } else if (invocation.getIntent()
                         == org.kanger.command.CommandIntent.CTX_ISOLATED_QUERY) {
                     showIsolatedContextQuery(
                             federation.getFederationSnapshot(),
@@ -786,6 +791,45 @@ public final class CanonicalConsole {
             throw new CommandErrorException("Cannot delete source file " + name);
         }
         System.out.println("Source file " + name + " deleted.");
+    }
+
+    private static void showContextVersion(
+            IContextFederation.VersionHistory history) {
+        if (history == null) {
+            return;
+        }
+        System.out.println(
+                "Context " + history.getLocator());
+        if (history.hasPinnedRevision()) {
+            System.out.println(
+                    "Pinned: "
+                            + history.getPinnedRevision());
+        }
+        System.out.println(
+                "Current: "
+                        + history.getCurrentRevision());
+        System.out.println();
+        System.out.println(
+                "Revision   Description");
+        for (IContextFederation.RevisionVersion revision
+                : history.getRevisions()) {
+            StringBuilder markers =
+                    new StringBuilder();
+            if (revision.getRevision()
+                    == history.getCurrentRevision()) {
+                markers.append(" [CURRENT]");
+            }
+            if (history.hasPinnedRevision()
+                    && revision.getRevision()
+                            == history.getPinnedRevision()) {
+                markers.append(" [PINNED]");
+            }
+            System.out.printf(
+                    "%-10d %s%s%n",
+                    revision.getRevision(),
+                    revision.getDescription(),
+                    markers.toString());
+        }
     }
 
     private static void showIsolatedContextQuery(
