@@ -82,7 +82,7 @@ Transaction rollback and storage reindex are not routed through this confirmatio
 | Transactions | `transaction`, `transaction start|commit|rollback|squash` | Inspect and manage explicit user transaction levels |
 | Sources | `get [<source>]`, `put <source>`, `delete [<source>]` | List/load/save/delete server-side source files |
 | Storage | `storage`, `storage use|close|drop|reindex ...` | Inspect and manage persistent storage |
-| Context federation | `ctx`, `ctx connect|disconnect|switch|query ...`, `ctx <locator> <query...>` | Inspect exact-revision direct Context connections and run federated or isolated diagnostic queries |
+| Context federation | `ctx`, `ctx connect|disconnect|switch|version|query ...`, `ctx <locator> <query...>` | Inspect or mutate the session working topology, inspect revision history, and run federated or isolated diagnostic queries |
 | Status | `status [core [objects|transaction|levels]|storage|session|runtime]` | Cheap canonical product telemetry |
 | Session | `timezone [<zoneId>]`, `help`, `quit` | Inspect or change session timezone, show help, or end the session |
 | Workspace | `erase` | Clear the current workspace through qualified runtime semantics |
@@ -437,29 +437,47 @@ pin automatically.
 ### `ctx connect <locator>`
 
 Qualifies the current Context against the target at its current exact revision
-and creates the direct connection only if qualification succeeds.
+and adds that exact pin to the **session working topology** only if qualification
+succeeds.
 
-For local DUMB2 operation, a logical storage name may be used as the locator.
+The already published source revision is immutable: `ctx connect` does not
+rewrite its ConnectionVector and does not publish a new source revision. For
+local DUMB2 operation, a logical storage name may be used as the locator.
 
 ### `ctx disconnect <locator>`
 
-Removes one direct connection by its operator-visible locator/storage name.
-Disconnecting does not rewrite local knowledge and does not require cleanup of
-previously queried foreign evidence because such evidence is operation-local.
+Removes one direct connection from the session working topology. The published
+source revision remains unchanged. Disconnecting does not rewrite local
+knowledge and does not require cleanup of previously queried foreign evidence
+because such evidence is operation-local.
 
 ### `ctx switch <locator> <RevisionId>`
 
-Deliberately attempts to repin one existing direct connection to the requested
+Deliberately attempts to repin one existing working connection to the requested
 exact target revision. The requested target is pair-qualified against the
 source Context. Direct-composition collision witnesses are then compared before
 and after the proposed repin: any newly introduced composition conflict rejects
 the switch.
 
 An already-existing conflict between autonomous direct Contexts does not freeze
-an unrelated revision move; such foreign truth conflicts remain observable as
+an unrelated working repin; such foreign truth conflicts remain observable as
 `CONFLICT` through `ctx query`. Existing conflicts may disappear, but a
-repin may not add a new collision witness. If qualification fails, the old pin
-remains authoritative. There is no `FOLLOW_HEAD` mode.
+repin may not add a new collision witness. If qualification fails, the old
+working pin remains authoritative. There is no `FOLLOW_HEAD` mode.
+
+Durable topology publication is a separate revision/publication boundary; these
+operator commands do not bypass that boundary.
+
+### `ctx version [<locator>]`
+
+Shows immutable revision history. Without a locator it shows the initiating
+Context. With a locator it accepts that Context itself or one direct working
+connection.
+
+For a connected Context the projection shows both the exact `PINNED` revision
+and its informational `CURRENT` revision. Revision descriptions come from the
+immutable revision manifest. The command is read-only: it does not notify,
+follow HEAD, switch pins or publish anything.
 
 ### `ctx <locator> <query...>`
 
