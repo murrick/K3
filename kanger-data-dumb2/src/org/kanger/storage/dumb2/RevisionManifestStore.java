@@ -35,9 +35,10 @@ import java.util.zip.CRC32;
  * Immutable descriptor sealed together with one physical DUMB2 revision
  * generation.
  *
- * <p>The manifest does not include ConnectionVector state: direct Context
- * topology is operational federation metadata and may change while the local
- * Context RevisionId remains unchanged.</p>
+ * <p>Codec v2 binds the immutable semantic dependency identities of the
+ * revision. Only exact target ContextId + RevisionId pairs participate in that
+ * digest; physical locators and compatibility-certificate bytes are routing /
+ * derived proof and deliberately do not define revision identity.</p>
  *
  * <pre>
  * K3RM | codec-version | storage-format-version
@@ -45,8 +46,13 @@ import java.util.zip.CRC32;
  * RevisionId | parent-RevisionId
  * semantic-fingerprint-utf8
  * base-count | generation-sha256
+ * description-utf8
+ * dependency-identity-sha256
  * CRC32(all previous bytes)
  * </pre>
+ *
+ * <p>Codec v1 remains readable for pre-binding M4 revisions. Every newly sealed
+ * manifest is v2.</p>
  *
  * <p>The generation digest covers only canonical {@code *.base} images in
  * lexical filename order. The manifest itself is excluded so the digest is
@@ -57,7 +63,8 @@ final class RevisionManifestStore {
     static final String FILE_NAME = "revision.manifest";
 
     static final int MAGIC = 0x4B33524D; // K3RM
-    static final int VERSION = 1;
+    static final int LEGACY_VERSION = 1;
+    static final int VERSION = 2;
 
     /**
      * Version of the revision-level physical contract. Individual codecs remain
@@ -67,6 +74,7 @@ final class RevisionManifestStore {
 
     private static final int DIGEST_LENGTH = 32;
     private static final int MAX_STRING_BYTES = 64 * 1024;
+    private static final int MAX_DESCRIPTION_CODE_POINTS = 512;
 
     private RevisionManifestStore() {
     }
@@ -76,7 +84,26 @@ final class RevisionManifestStore {
                          long revision,
                          long parentRevision)
             throws IOException, StorageLifecycleException {
-        if (generation == null || contextId == null) {
+        return seal(
+                generation,
+                contextId,
+                revision,
+                parentRevision,
+                ConnectionVector.empty(),
+                "");
+    }
+
+    static Manifest seal(Path generation,
+                         UUID contextId,
+                         long revision,
+                         long parentRevision,
+                         ConnectionVector dependencies,
+                         String description)
+            throws IOException, StorageLifecycleException {
+        if (generation == null
+                || contextId == null
+                || dependencies == null
+                || description == null) {
             throw new NullPointerException();
         }
         if (revision <= RevisionStore.INITIAL_REVISION) {
@@ -90,16 +117,21 @@ final class RevisionManifestStore {
                             + parentRevision + " for " + revision);
         }
 
+        String normalizedDescription =
+                validateDescription(description);
         GenerationDigest generationDigest =
                 digestGeneration(generation);
         Manifest manifest = new Manifest(
+                VERSION,
                 contextId,
                 revision,
                 parentRevision,
                 STORAGE_FORMAT_VERSION,
                 Version.CORE_VERSION_S,
                 generationDigest.baseCount,
-                generationDigest.digest);
+                generationDigest.digest,
+                normalizedDescription,
+                dependencyDigest(dependencies));
 
         byte[] bytes = encode(manifest);
         Files.write(
@@ -139,7 +171,9 @@ final class RevisionManifestStore {
                                      bytes, 0, payloadLength))) {
             int magic = input.readInt();
             int version = input.readInt();
-            if (magic != MAGIC || version != VERSION) {
+            if (magic != MAGIC
+                    || (version != LEGACY_VERSION
+                    && version != VERSION)) {
                 throw new StorageLifecycleException(
                         StorageLifecycleErrorCode.STORAGE_FORMAT_INCOMPATIBLE,
                         "Unsupported DUMB2 revision manifest format at "
@@ -192,6 +226,25 @@ final class RevisionManifestStore {
             byte[] digest = new byte[digestLength];
             input.readFully(digest);
 
+            String description = "";
+            byte[] dependencyDigest = null;
+            if (version >= VERSION) {
+                description = validateDescription(
+                        readString(input, path));
+                int dependencyDigestLength =
+                        input.readInt();
+                if (dependencyDigestLength
+                        != DIGEST_LENGTH) {
+                    throw corruption(
+                            "Invalid DUMB2 dependency digest length "
+                                    + dependencyDigestLength
+                                    + " at " + path);
+                }
+                dependencyDigest =
+                        new byte[dependencyDigestLength];
+                input.readFully(dependencyDigest);
+            }
+
             if (input.available() != 0) {
                 throw corruption(
                         "Trailing bytes in DUMB2 revision manifest at "
@@ -199,13 +252,16 @@ final class RevisionManifestStore {
             }
 
             return new Manifest(
+                    version,
                     contextId,
                     revision,
                     parentRevision,
                     storageFormatVersion,
                     semanticFingerprint,
                     baseCount,
-                    digest);
+                    digest,
+                    description,
+                    dependencyDigest);
         } catch (EOFException failure) {
             throw corruption(
                     "Truncated DUMB2 revision manifest at " + path,
@@ -302,6 +358,13 @@ final class RevisionManifestStore {
                     manifest.getGenerationDigest();
             output.writeInt(digest.length);
             output.write(digest);
+            writeString(
+                    output,
+                    manifest.getDescription());
+            byte[] dependencyDigest =
+                    manifest.getDependencyDigest();
+            output.writeInt(dependencyDigest.length);
+            output.write(dependencyDigest);
         }
 
         byte[] payload = payloadBytes.toByteArray();
@@ -381,6 +444,82 @@ final class RevisionManifestStore {
                 digest.digest());
     }
 
+    static byte[] dependencyDigest(
+            ConnectionVector dependencies) {
+        if (dependencies == null) {
+            throw new NullPointerException("dependencies");
+        }
+
+        ArrayList<RevisionRef> refs =
+                new ArrayList<RevisionRef>();
+        for (ContextConnection connection
+                : dependencies.getConnections()) {
+            refs.add(connection.getTarget());
+        }
+        Collections.sort(
+                refs,
+                new Comparator<RevisionRef>() {
+                    @Override
+                    public int compare(
+                            RevisionRef left,
+                            RevisionRef right) {
+                        UUID leftId = left.getContextId();
+                        UUID rightId = right.getContextId();
+                        int most = Long.compare(
+                                leftId.getMostSignificantBits(),
+                                rightId.getMostSignificantBits());
+                        if (most != 0) {
+                            return most;
+                        }
+                        int least = Long.compare(
+                                leftId.getLeastSignificantBits(),
+                                rightId.getLeastSignificantBits());
+                        if (least != 0) {
+                            return least;
+                        }
+                        return Long.compare(
+                                left.getRevision(),
+                                right.getRevision());
+                    }
+                });
+
+        MessageDigest digest = sha256();
+        updateInt(digest, refs.size());
+        for (RevisionRef ref : refs) {
+            updateLong(
+                    digest,
+                    ref.getContextId()
+                            .getMostSignificantBits());
+            updateLong(
+                    digest,
+                    ref.getContextId()
+                            .getLeastSignificantBits());
+            updateLong(digest, ref.getRevision());
+        }
+        return digest.digest();
+    }
+
+    private static String validateDescription(
+            String description) {
+        if (description == null) {
+            throw new NullPointerException("description");
+        }
+        if (description.indexOf('\n') >= 0
+                || description.indexOf('\r') >= 0) {
+            throw new IllegalArgumentException(
+                    "revision description must be one line");
+        }
+        if (description.codePointCount(
+                0, description.length())
+                > MAX_DESCRIPTION_CODE_POINTS) {
+            throw new IllegalArgumentException(
+                    "revision description exceeds "
+                            + MAX_DESCRIPTION_CODE_POINTS
+                            + " Unicode code points");
+        }
+        return description;
+    }
+
     private static MessageDigest sha256() {
         try {
             return MessageDigest.getInstance("SHA-256");
@@ -457,6 +596,7 @@ final class RevisionManifestStore {
 
     static final class Manifest {
 
+        private final int codecVersion;
         private final UUID contextId;
         private final long revision;
         private final long parentRevision;
@@ -464,14 +604,20 @@ final class RevisionManifestStore {
         private final String semanticFingerprint;
         private final int baseCount;
         private final byte[] generationDigest;
+        private final String description;
+        private final byte[] dependencyDigest;
 
-        private Manifest(UUID contextId,
+        private Manifest(int codecVersion,
+                         UUID contextId,
                          long revision,
                          long parentRevision,
                          int storageFormatVersion,
                          String semanticFingerprint,
                          int baseCount,
-                         byte[] generationDigest) {
+                         byte[] generationDigest,
+                         String description,
+                         byte[] dependencyDigest) {
+            this.codecVersion = codecVersion;
             this.contextId = contextId;
             this.revision = revision;
             this.parentRevision = parentRevision;
@@ -482,6 +628,15 @@ final class RevisionManifestStore {
             this.baseCount = baseCount;
             this.generationDigest =
                     generationDigest.clone();
+            this.description = description;
+            this.dependencyDigest =
+                    dependencyDigest == null
+                            ? null
+                            : dependencyDigest.clone();
+        }
+
+        int getCodecVersion() {
+            return codecVersion;
         }
 
         UUID getContextId() {
@@ -510,6 +665,20 @@ final class RevisionManifestStore {
 
         byte[] getGenerationDigest() {
             return generationDigest.clone();
+        }
+
+        String getDescription() {
+            return description;
+        }
+
+        boolean hasDependencyDigest() {
+            return dependencyDigest != null;
+        }
+
+        byte[] getDependencyDigest() {
+            return dependencyDigest == null
+                    ? null
+                    : dependencyDigest.clone();
         }
     }
 
