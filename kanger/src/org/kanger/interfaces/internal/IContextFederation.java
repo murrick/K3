@@ -263,6 +263,90 @@ public interface IContextFederation {
         }
     }
 
+    final class SourceDependencyRequest {
+
+        private final String locator;
+        private final Long exactRevision;
+
+        public SourceDependencyRequest(
+                String locator,
+                Long exactRevision) {
+            if (locator == null
+                    || locator.trim().isEmpty()) {
+                throw new IllegalArgumentException(
+                        "locator must not be blank");
+            }
+            if (exactRevision != null
+                    && exactRevision.longValue() < 0L) {
+                throw new IllegalArgumentException(
+                        "exactRevision must be non-negative");
+            }
+            this.locator = locator.trim();
+            this.exactRevision = exactRevision;
+        }
+
+        public String getLocator() {
+            return locator;
+        }
+
+        public boolean isExact() {
+            return exactRevision != null;
+        }
+
+        public long getExactRevision() {
+            if (exactRevision == null) {
+                throw new IllegalStateException(
+                        "dependency request resolves CURRENT");
+            }
+            return exactRevision.longValue();
+        }
+    }
+
+    final class SourceDependency {
+
+        private final String locator;
+        private final UUID contextId;
+        private final long revision;
+
+        public SourceDependency(
+                String locator,
+                UUID contextId,
+                long revision) {
+            if (locator == null
+                    || locator.trim().isEmpty()) {
+                throw new IllegalArgumentException(
+                        "locator must not be blank");
+            }
+            if (contextId == null) {
+                throw new NullPointerException("contextId");
+            }
+            if (revision < 0L) {
+                throw new IllegalArgumentException(
+                        "revision must be non-negative");
+            }
+            this.locator = locator.trim();
+            this.contextId = contextId;
+            this.revision = revision;
+        }
+
+        public String getLocator() {
+            return locator;
+        }
+
+        public UUID getContextId() {
+            return contextId;
+        }
+
+        public long getRevision() {
+            return revision;
+        }
+    }
+
+    interface SourceDependencyPlan {
+
+        List<SourceDependency> getDependencies();
+    }
+
     enum FrontierTruth {
         TRUE,
         FALSE,
@@ -505,6 +589,16 @@ public interface IContextFederation {
             return provisionalHypotheses;
         }
     }
+
+    SourceDependencyPlan prepareSourceDependencies(
+            List<SourceDependencyRequest> requests)
+            throws Exception;
+
+    void installSourceDependencies(
+            SourceDependencyPlan plan) throws Exception;
+
+    List<SourceDependency> sourceDependencies()
+            throws Exception;
 
     Snapshot federationSnapshot() throws Exception;
 
