@@ -301,6 +301,9 @@ final class PortableMindLayer {
     }
 
     private static Set<Long> localIds(Mind mind, UnitType type, boolean deleted) {
+        if (mind != null && mind.usesInternalUnitStateReads()) {
+            return mind.copyLocalUnitIds(type, deleted);
+        }
         Map<UnitType, Set<Long>> source = deleted ? mind.getDeleted() : mind.getRestored();
         Set<Long> ids = source.get(type);
         return ids == null ? new LinkedHashSet<Long>() : new LinkedHashSet<Long>(ids);

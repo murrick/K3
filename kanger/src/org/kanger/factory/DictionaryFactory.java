@@ -370,9 +370,13 @@ public class DictionaryFactory implements IFactory<ITerm> {
                     packCandidates.add(termId);
                 }
             }
-            Set<Long> explicitlyDeleted = mind.getDeleted().get(UnitType.TERM);
-            if (explicitlyDeleted != null) {
-                packCandidates.addAll(explicitlyDeleted);
+            if (mind != null && mind.usesInternalUnitStateReads()) {
+                mind.appendLocalDeletedIds(UnitType.TERM, packCandidates);
+            } else {
+                Set<Long> explicitlyDeleted = mind.getDeleted().get(UnitType.TERM);
+                if (explicitlyDeleted != null) {
+                    packCandidates.addAll(explicitlyDeleted);
+                }
             }
             if (packCandidates.isEmpty()) {
                 previousRuleTerms = currentRuleTerms;

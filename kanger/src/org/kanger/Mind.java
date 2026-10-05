@@ -123,6 +123,8 @@ public class Mind implements IMind {
     private final Map<ITerm, ITerm> cvarParents = new HashMap<>();
     private final Map<UnitType, Set<Long>> deleted = new HashMap<>();
     private final Map<UnitType, Set<Long>> restored = new HashMap<>();
+    private static final boolean INTERNAL_UNIT_STATE_READS =
+            Boolean.parseBoolean(System.getProperty("kanger.experiment.internalUnitStateReads", "false"));
     private PortableMindLayer portableRebaseResidue = PortableMindLayer.empty();
     private final Map<Long, Set<IRule>> usedRules = new HashMap<>();
     private final Map<Domain, Set<ArgumentsList>> usedDomains = new HashMap<>();
@@ -463,12 +465,12 @@ public class Mind implements IMind {
 
     private void mergeUnitState(Mind child) {
         Set<UnitType> unitTypes = new HashSet<>();
-        unitTypes.addAll(child.getDeleted().keySet());
-        unitTypes.addAll(child.getRestored().keySet());
+        unitTypes.addAll(child.localUnitStateMap(true).keySet());
+        unitTypes.addAll(child.localUnitStateMap(false).keySet());
 
         for (UnitType unitType : unitTypes) {
-            Set<Long> childDeleted = child.getDeleted().get(unitType);
-            Set<Long> childRestored = child.getRestored().get(unitType);
+            Set<Long> childDeleted = child.localUnitStateMap(true).get(unitType);
+            Set<Long> childRestored = child.localUnitStateMap(false).get(unitType);
             Set<Long> ids = new HashSet<>();
             if (childDeleted != null) {
                 ids.addAll(childDeleted);
@@ -1037,6 +1039,40 @@ public class Mind implements IMind {
 
     public Map<UnitType, Set<Long>> getRestored() {
         return restored;
+    }
+
+    /** Internal read routing; subclasses retain their virtual public getters. */
+    public final boolean usesInternalUnitStateReads() {
+        return INTERNAL_UNIT_STATE_READS && getClass() == Mind.class;
+    }
+
+    private Map<UnitType, Set<Long>> localUnitStateMap(boolean deleting) {
+        if (usesInternalUnitStateReads()) return deleting ? deleted : restored;
+        return deleting ? getDeleted() : getRestored();
+    }
+
+    /** Factory bridge: append IDs without lending the authoritative map or set. */
+    public final void appendLocalDeletedIds(UnitType type, java.util.Collection<Long> target) {
+        Set<Long> ids = localUnitStateMap(true).get(type);
+        if (ids != null) {
+            // The factory owns an exact LinkedHashSet. An arbitrary target's
+            // addAll callback can retain ids, so account for public exposure.
+            if (usesInternalUnitStateReads() && target != null
+                    && target.getClass() != java.util.LinkedHashSet.class) getDeleted();
+            target.addAll(ids);
+        }
+    }
+
+    /** Rule bridge: keep containsKey/get/contains ordering and null-set failure. */
+    public final boolean isLocalUnitRestored(UnitType type, long unitId) {
+        return localUnitStateMap(false).containsKey(type)
+                && localUnitStateMap(false).get(type).contains(unitId);
+    }
+
+    /** Owned copy for portable capture; original source iteration is retained. */
+    final Set<Long> copyLocalUnitIds(UnitType type, boolean deleting) {
+        Set<Long> ids = localUnitStateMap(deleting).get(type);
+        return ids == null ? new java.util.LinkedHashSet<Long>() : new java.util.LinkedHashSet<Long>(ids);
     }
 
     PortableMindLayer getPortableRebaseResidue() {

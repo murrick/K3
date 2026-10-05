@@ -578,6 +578,9 @@ public class Rule implements IUnit<IRule>, IRule {
 
     @Override
     public boolean isRestored(IMind mind) {
+        if (mind instanceof Mind && ((Mind) mind).usesInternalUnitStateReads()) {
+            return ((Mind) mind).isLocalUnitRestored(UnitType.RULE, id);
+        }
         return ((Mind) mind).getRestored().containsKey(UnitType.RULE) && ((Mind) mind).getRestored().get(UnitType.RULE).contains(id);
     }
 
