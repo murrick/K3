@@ -553,6 +553,12 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
             throw new IllegalStateException(
                     "DUMB2 topology publication requires a materialized Context revision");
         }
+        for (ContextBase base : bases.values()) {
+            if (base.isDirty()) {
+                throw new IllegalStateException(
+                        "DUMB2 topology publication requires a settled Context");
+            }
+        }
         if (revision == Long.MAX_VALUE) {
             throw new IllegalStateException(
                     "DUMB2 revision space exhausted");
