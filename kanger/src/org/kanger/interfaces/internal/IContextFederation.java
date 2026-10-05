@@ -498,6 +498,49 @@ public interface IContextFederation {
         }
     }
 
+    final class EvidenceInjection {
+
+        private final String statement;
+        private final Map<String, String> substitutions;
+        private final List<Revision> supports;
+
+        public EvidenceInjection(
+                String statement,
+                Map<String, String> substitutions,
+                List<Revision> supports) {
+            if (statement == null
+                    || statement.trim().isEmpty()) {
+                throw new IllegalArgumentException(
+                        "statement must not be blank");
+            }
+            if (substitutions == null
+                    || supports == null) {
+                throw new NullPointerException();
+            }
+            this.statement = statement;
+            this.substitutions =
+                    Collections.unmodifiableMap(
+                            new LinkedHashMap<String, String>(
+                                    substitutions));
+            this.supports =
+                    Collections.unmodifiableList(
+                            new ArrayList<Revision>(
+                                    supports));
+        }
+
+        public String getStatement() {
+            return statement;
+        }
+
+        public Map<String, String> getSubstitutions() {
+            return substitutions;
+        }
+
+        public List<Revision> getSupports() {
+            return supports;
+        }
+    }
+
     final class QueryResult {
 
         private final boolean resolved;
@@ -506,6 +549,7 @@ public interface IContextFederation {
         private final int evidenceCount;
         private final List<FrontierObservation> observations;
         private final List<ValueRow> values;
+        private final List<EvidenceInjection> evidenceInjections;
         private final List<ProvisionalHypothesis> provisionalHypotheses;
 
         public QueryResult(
@@ -523,6 +567,7 @@ public interface IContextFederation {
                     evidenceCount,
                     observations,
                     Collections.<ValueRow>emptyList(),
+                    Collections.<EvidenceInjection>emptyList(),
                     provisionalHypotheses);
         }
 
@@ -534,6 +579,26 @@ public interface IContextFederation {
                 List<FrontierObservation> observations,
                 List<ValueRow> values,
                 List<ProvisionalHypothesis> provisionalHypotheses) {
+            this(
+                    resolved,
+                    resultTruth,
+                    waves,
+                    evidenceCount,
+                    observations,
+                    values,
+                    Collections.<EvidenceInjection>emptyList(),
+                    provisionalHypotheses);
+        }
+
+        public QueryResult(
+                boolean resolved,
+                FrontierTruth resultTruth,
+                int waves,
+                int evidenceCount,
+                List<FrontierObservation> observations,
+                List<ValueRow> values,
+                List<EvidenceInjection> evidenceInjections,
+                List<ProvisionalHypothesis> provisionalHypotheses) {
             if (resultTruth == null) {
                 throw new NullPointerException("resultTruth");
             }
@@ -543,6 +608,7 @@ public interface IContextFederation {
             }
             if (observations == null
                     || values == null
+                    || evidenceInjections == null
                     || provisionalHypotheses == null) {
                 throw new NullPointerException();
             }
@@ -555,6 +621,10 @@ public interface IContextFederation {
                             observations));
             this.values = Collections.unmodifiableList(
                     new ArrayList<ValueRow>(values));
+            this.evidenceInjections =
+                    Collections.unmodifiableList(
+                            new ArrayList<EvidenceInjection>(
+                                    evidenceInjections));
             this.provisionalHypotheses =
                     Collections.unmodifiableList(
                             new ArrayList<ProvisionalHypothesis>(
@@ -585,8 +655,108 @@ public interface IContextFederation {
             return values;
         }
 
+        public List<EvidenceInjection> getEvidenceInjections() {
+            return evidenceInjections;
+        }
+
         public List<ProvisionalHypothesis> getProvisionalHypotheses() {
             return provisionalHypotheses;
+        }
+    }
+
+    enum ExplainPolarity {
+        FALSE_PASS,
+        TRUE_PASS
+    }
+
+    final class ExplainPass {
+
+        private final ExplainPolarity polarity;
+        private final QueryResult continuation;
+
+        public ExplainPass(
+                ExplainPolarity polarity,
+                QueryResult continuation) {
+            if (polarity == null
+                    || continuation == null) {
+                throw new NullPointerException();
+            }
+            this.polarity = polarity;
+            this.continuation = continuation;
+        }
+
+        public ExplainPolarity getPolarity() {
+            return polarity;
+        }
+
+        public QueryResult getContinuation() {
+            return continuation;
+        }
+    }
+
+    final class ExplainResult {
+
+        private final Snapshot context;
+        private final FrontierTruth localTruth;
+        private final FrontierTruth finalTruth;
+        private final List<ExplainPass> passes;
+        private final List<ValueRow> values;
+        private final List<String> solutions;
+
+        public ExplainResult(
+                Snapshot context,
+                FrontierTruth localTruth,
+                FrontierTruth finalTruth,
+                List<ExplainPass> passes,
+                List<ValueRow> values,
+                List<String> solutions) {
+            if (context == null
+                    || localTruth == null
+                    || finalTruth == null
+                    || passes == null
+                    || values == null
+                    || solutions == null) {
+                throw new NullPointerException();
+            }
+            this.context = context;
+            this.localTruth = localTruth;
+            this.finalTruth = finalTruth;
+            this.passes =
+                    Collections.unmodifiableList(
+                            new ArrayList<ExplainPass>(
+                                    passes));
+            this.values =
+                    Collections.unmodifiableList(
+                            new ArrayList<ValueRow>(
+                                    values));
+            this.solutions =
+                    Collections.unmodifiableList(
+                            new ArrayList<String>(
+                                    solutions));
+        }
+
+        public Snapshot getContext() {
+            return context;
+        }
+
+        public FrontierTruth getLocalTruth() {
+            return localTruth;
+        }
+
+        public FrontierTruth getFinalTruth() {
+            return finalTruth;
+        }
+
+        public List<ExplainPass> getPasses() {
+            return passes;
+        }
+
+        public List<ValueRow> getValues() {
+            return values;
+        }
+
+        public List<String> getSolutions() {
+            return solutions;
         }
     }
 
