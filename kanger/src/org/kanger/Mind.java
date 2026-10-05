@@ -612,7 +612,7 @@ public class Mind implements IMind {
      * Values/Solutions/logs while still consuming exactly one transaction
      * reservation.</p>
      */
-    public void discardEphemeral(IMind m) {
+    public void discardEphemeral(IMind m) throws Exception {
         if (m == null) {
             throw new IllegalArgumentException(
                     "ephemeral Mind must not be null");
