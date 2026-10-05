@@ -82,7 +82,7 @@ Transaction rollback and storage reindex are not routed through this confirmatio
 | Transactions | `transaction`, `transaction start|commit|rollback|squash` | Inspect and manage explicit user transaction levels |
 | Sources | `get [<source>]`, `put <source>`, `delete [<source>]` | List/load/save/delete server-side source files |
 | Storage | `storage`, `storage use|close|drop|reindex ...` | Inspect and manage persistent storage |
-| Context federation | `ctx`, `ctx connect|disconnect|switch|version|query ...`, `ctx <locator> <query...>` | Inspect or mutate the session working topology, inspect revision history, and run federated or isolated diagnostic queries |
+| Context federation | `ctx`, `ctx connect|disconnect|switch|version|explain|query ...`, `ctx <locator> <query...>` | Inspect or mutate working topology, inspect revision history, and run normal-query semantic traces or isolated diagnostics |
 | Status | `status [core [objects|transaction|levels]|storage|session|runtime]` | Cheap canonical product telemetry |
 | Session | `timezone [<zoneId>]`, `help`, `quit` | Inspect or change session timezone, show help, or end the session |
 | Workspace | `erase` | Clear the current workspace through qualified runtime semantics |
@@ -478,6 +478,27 @@ For a connected Context the projection shows both the exact `PINNED` revision
 and its informational `CURRENT` revision. Revision descriptions come from the
 immutable revision manifest. The command is read-only: it does not notify,
 follow HEAD, switch pins or publish anything.
+
+### `ctx explain <query...>`
+
+Runs the **normal `Mind.query()` path** and adds a semantic trace around that
+same execution. It is not a second query engine.
+
+The trace reports the initiating Context, exact working pins, the local result,
+the historical FALSE/TRUE federation passes actually entered, frontier waves,
+per-Context `TRUE`/`FALSE`/`UNKNOWN`/`CONFLICT` observations, semantic
+lift substitutions, evidence injected into the initiating operation, subsequent
+continuation in X, and final Values/Solutions.
+
+Example:
+
+```text
+ctx explain ?$x son(John, x);
+```
+
+The projection is deliberately semantic. Storage-local ids, hash buckets,
+factories, caches and other runtime implementation details are not part of this
+surface.
 
 ### `ctx <locator> <query...>`
 
