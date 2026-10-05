@@ -112,6 +112,135 @@ public class ContextForkTest {
     }
 
     @Test
+    void forkCarriesExactDependenciesAndRequalifiesCertificates()
+            throws Exception {
+        Path databaseDir =
+                root.resolve("fork-dependencies-db");
+        Files.createDirectories(databaseDir);
+        Path sourceLocation =
+                databaseDir.resolve("source");
+        Path targetLocation =
+                databaseDir.resolve("target");
+        Path forkLocation =
+                databaseDir.resolve("fork");
+
+        User targetUser = new User();
+        targetUser.setDatabaseDir(
+                databaseDir.toString()
+                        + File.separator);
+        DB targetData = new DB();
+        targetData.init(targetUser);
+        Mind targetMind = new Mind(targetUser);
+        targetUser.setCurrentMind(targetMind);
+        targetMind = (Mind) targetMind.useStorage("target");
+        targetUser.setCurrentMind(targetMind);
+        assertTrue(Boolean.TRUE.equals(
+                targetMind.query("!male(Tom);")));
+        UUID targetId = targetData.getContextId();
+        long targetRevision = targetData.getRevision();
+        targetUser.setCurrentMind(
+                targetMind.closeStorage());
+
+        User sourceUser = new User();
+        sourceUser.setDatabaseDir(
+                databaseDir.toString()
+                        + File.separator);
+        DB sourceData = new DB();
+        sourceData.init(sourceUser);
+        Mind sourceMind = new Mind(sourceUser);
+        sourceUser.setCurrentMind(sourceMind);
+        sourceMind = (Mind) sourceMind.useStorage("source");
+        sourceUser.setCurrentMind(sourceMind);
+        assertTrue(Boolean.TRUE.equals(
+                sourceMind.query("!anchor(X);")));
+        UUID sourceId = sourceData.getContextId();
+        long sourceBeforeTopology =
+                sourceData.getRevision();
+        sourceUser.setCurrentMind(
+                sourceMind.closeStorage());
+
+        ConnectionManager.connect(
+                sourceLocation,
+                targetLocation);
+
+        ContextSnapshot sourceSnapshot =
+                ContextSnapshot.open(sourceLocation);
+        ContextStore fork = null;
+        try {
+            assertEquals(
+                    sourceBeforeTopology + 1L,
+                    sourceSnapshot.getRevision());
+
+            RevisionRef sourceRef =
+                    new RevisionRef(
+                            sourceId,
+                            sourceSnapshot.getRevision());
+            ConnectionVector sourceVector =
+                    ConnectionStore.read(
+                            sourceLocation,
+                            sourceRef);
+            assertEquals(
+                    new RevisionRef(
+                            targetId,
+                            targetRevision),
+                    sourceVector.find(targetId)
+                            .getTarget());
+
+            fork = sourceSnapshot.fork(
+                    forkLocation);
+            UUID forkId = fork.getContextId();
+            assertNotEquals(sourceId, forkId);
+            assertEquals(1L, fork.getRevision());
+            assertOrigin(
+                    fork.getOrigin(),
+                    sourceId,
+                    sourceSnapshot.getRevision());
+
+            RevisionRef forkRef =
+                    new RevisionRef(
+                            forkId,
+                            1L);
+            ConnectionVector forkVector =
+                    ConnectionStore.read(
+                            forkLocation,
+                            forkRef);
+            ContextConnection dependency =
+                    forkVector.find(targetId);
+            assertEquals(
+                    new RevisionRef(
+                            targetId,
+                            targetRevision),
+                    dependency.getTarget());
+            assertTrue(
+                    dependency.getCertificate().matches(
+                            forkRef,
+                            dependency.getTarget(),
+                            org.kanger.Version.CORE_VERSION_S));
+
+            OperationSnapshot operation =
+                    OperationSnapshot.open(
+                            forkLocation);
+            try {
+                assertEquals(
+                        forkRef,
+                        operation.getSourceRef());
+                assertEquals(
+                        targetRevision,
+                        operation.getTarget(
+                                targetId)
+                                .getRevision());
+            } finally {
+                operation.close();
+            }
+        } finally {
+            if (fork != null) {
+                fork.close();
+            }
+            sourceSnapshot.close();
+        }
+    }
+
+    @Test
     void emptySnapshotForkRemainsRevisionZeroButGetsNewIdentity()
             throws Exception {
         Path sourceLocation = root.resolve("empty-source");
