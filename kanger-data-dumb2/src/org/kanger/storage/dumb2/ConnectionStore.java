@@ -139,6 +139,30 @@ final class ConnectionStore {
     }
 
     /**
+     * Stages the exact dependency vector of a brand-new Context revision before
+     * that revision becomes visible through its CURRENT marker.
+     */
+    static void stageInitialRevision(
+            Path location,
+            RevisionRef source,
+            ConnectionVector vector)
+            throws IOException {
+        if (source == null || vector == null) {
+            throw new NullPointerException();
+        }
+        validateVector(source, vector);
+        if (vector.isEmpty()) {
+            Files.deleteIfExists(path(location));
+            return;
+        }
+        State state = new State(source.getContextId());
+        state.byRevision.put(
+                Long.valueOf(source.getRevision()),
+                vector);
+        writeState(location, state);
+    }
+
+    /**
      * Publishes a crash-safe transition sidecar before Context R+1 becomes
      * visible. Both vectors remain selectable by exact source revision.
      */
