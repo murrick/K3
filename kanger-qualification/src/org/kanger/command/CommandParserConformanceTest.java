@@ -355,6 +355,23 @@ public final class CommandParserConformanceTest {
                         switched.getArgument("RevisionId")),
                 "ctx switch RevisionId");
 
+        CommandInvocation version =
+                parser.parse("ctx version");
+        check(version.getIntent()
+                        == CommandIntent.CTX_VERSION,
+                "ctx version intent");
+        check(version.getArgument("locator") == null,
+                "ctx version current Context");
+
+        CommandInvocation versionA =
+                parser.parse("ctx version A");
+        check(versionA.getIntent()
+                        == CommandIntent.CTX_VERSION,
+                "ctx version locator intent");
+        check("A".equals(
+                        versionA.getArgument("locator")),
+                "ctx version locator");
+
         CommandInvocation isolated =
                 parser.parse("ctx A ?male(Tom);");
         check(isolated.getIntent()
@@ -391,6 +408,8 @@ public final class CommandParserConformanceTest {
                 MISSING_ARGUMENT);
         reject("ctx switch A -1",
                 INVALID_ARGUMENT_SHAPE);
+        reject("ctx version A extra",
+                EXTRA_ARGUMENT);
         reject("ctx A", MISSING_ARGUMENT);
         reject("ctx A male(Tom);",
                 INVALID_ARGUMENT_SHAPE);
@@ -478,6 +497,8 @@ public final class CommandParserConformanceTest {
         expectCanonical("ctx connect A", "ctx connect A");
         expectCanonical("ctx disconnect B", "ctx disconnect B");
         expectCanonical("ctx switch A 1", "ctx switch A 1");
+        expectCanonical("ctx version", "ctx version");
+        expectCanonical("ctx version A", "ctx version A");
         expectCanonical(
                 "ctx A ?male(Tom);",
                 "ctx A ?male(Tom);");
@@ -572,6 +593,8 @@ public final class CommandParserConformanceTest {
                 "help contains Context disconnect syntax");
         check(help.contains("ctx switch <locator> <RevisionId>"),
                 "help contains Context revision switch syntax");
+        check(help.contains("ctx version [<locator>]"),
+                "help contains Context revision history syntax");
         check(help.contains("ctx <locator> <query...>"),
                 "help contains isolated Context query syntax");
         check(help.contains("ctx query <query...>"),
