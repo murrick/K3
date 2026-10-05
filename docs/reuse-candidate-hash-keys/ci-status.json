@@ -1,0 +1,176 @@
+{
+  "code_commit": "ddd648d8568e82e5db0ba1d4fdc7e88c0fd1b889",
+  "all_workflows_success": true,
+  "workflows": [
+    {
+      "id": 37355830402,
+      "name": "KANGER CI",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "ddd648d8568e82e5db0ba1d4fdc7e88c0fd1b889",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37355830402",
+      "jobs": [
+        {
+          "id": 111917863649,
+          "name": "Maven Java 8 / TValue verify",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 111917863904,
+          "name": "Maven Java 8 / TValue off",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 111917863909,
+          "name": "Maven Java 21 / TValue off",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 111917864037,
+          "name": "Maven Java 21 / TValue on",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 111917864039,
+          "name": "Maven Java 8 / TValue on",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 111917864092,
+          "name": "Maven Java 21 / TValue solve-verify",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 111917864102,
+          "name": "Maven Java 21 / TValue solve-on",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 111917864105,
+          "name": "Maven Java 8 / TValue solve-verify",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 111917864156,
+          "name": "Maven Java 21 / TValue verify",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 111917864209,
+          "name": "Maven Java 8 / TValue solve-on",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 37355830295,
+      "name": "KANGER distribution bundle",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "ddd648d8568e82e5db0ba1d4fdc7e88c0fd1b889",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37355830295",
+      "jobs": [
+        {
+          "id": 111917864706,
+          "name": "Build and verify product bundle",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 37355830543,
+      "name": "KANGER qualification isolation",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "ddd648d8568e82e5db0ba1d4fdc7e88c0fd1b889",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37355830543",
+      "jobs": [
+        {
+          "id": 111917864377,
+          "name": "Production surface excludes qualification",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 37355830431,
+      "name": "Candidate hash key reuse qualification",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "ddd648d8568e82e5db0ba1d4fdc7e88c0fd1b889",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37355830431",
+      "jobs": [
+        {
+          "id": 111917863397,
+          "name": "qualification (21, true)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 111917863625,
+          "name": "qualification (8, true)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 111917863638,
+          "name": "qualification (8, false)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 111917863833,
+          "name": "qualification (21, false)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 111917863880,
+          "name": "qualification (26, true)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 111917864267,
+          "name": "qualification (26, false)",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 37355830377,
+      "name": "KANGER Server",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "ddd648d8568e82e5db0ba1d4fdc7e88c0fd1b889",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37355830377",
+      "jobs": [
+        {
+          "id": 111917862721,
+          "name": "Build on Java 8",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 111917863181,
+          "name": "Build on Java 21",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ]
+}

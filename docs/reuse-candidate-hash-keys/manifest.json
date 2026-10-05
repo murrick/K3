@@ -1,0 +1,50 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "code_ci_commit": "ddd648d8568e82e5db0ba1d4fdc7e88c0fd1b889",
+  "java": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment (build 17.0.20+8-1-24.04-Ubuntu)\nOpenJDK 64-Bit Server VM (build 17.0.20+8-1-24.04-Ubuntu, mixed mode, sharing)\n",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+  "compiler": "ECJ ../tooling/ecj.jar -1.8",
+  "flag": "kanger.experiment.reuseCandidateHashKeys",
+  "default": false,
+  "capacity": 256,
+  "benchmark_sequence": [
+    "clean",
+    "OFF",
+    "ON",
+    "ON",
+    "OFF",
+    "clean"
+  ],
+  "samples_per_jvm": 6,
+  "discard_first": 2,
+  "cpu": "ThreadMXBean current thread CPU",
+  "allocation": "ThreadMXBean main-thread allocated bytes",
+  "heap": "512m",
+  "flags_on": [
+    "preserveTValueIndex",
+    "versionedSolveSync",
+    "resolvedCauseWeights",
+    "compactCauseWeights",
+    "candidateMembershipFilter",
+    "singleTValueLookup",
+    "residentBaseComparison",
+    "compactFindSnapshots"
+  ],
+  "production_files": [
+    "kanger/src/org/kanger/storage/Escalera.java"
+  ],
+  "local_qualification": {
+    "new_runner_OFF_checks": 1411,
+    "new_runner_ON_checks": 1423,
+    "concurrent_probes_per_mode": 20000,
+    "compact_snapshot_checks": 23,
+    "resident_checks": 48,
+    "custom_reads": 3,
+    "single_lookup_checks": 15,
+    "transaction_operations": 20,
+    "transaction_states_equal": true,
+    "candidate_concurrency_iterations": 3,
+    "reopen": "PASS",
+    "corpus": "PASS"
+  }
+}
