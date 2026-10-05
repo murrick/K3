@@ -24,6 +24,7 @@ final class ContextCandidate {
     private final long revision;
     private final ContextManifestStore.Origin origin;
     private final TypeRegistry typeRegistry;
+    private final ConnectionVector dependencies;
 
     private ContextCandidate(
             Path location,
@@ -31,7 +32,8 @@ final class ContextCandidate {
             UUID contextId,
             long revision,
             ContextManifestStore.Origin origin,
-            TypeRegistry typeRegistry) {
+            TypeRegistry typeRegistry,
+            ConnectionVector dependencies) {
         this.location = Objects.requireNonNull(
                 location, "location")
                 .toAbsolutePath().normalize();
@@ -49,12 +51,26 @@ final class ContextCandidate {
         this.typeRegistry = copyRegistry(
                 Objects.requireNonNull(
                         typeRegistry, "typeRegistry"));
+        this.dependencies = Objects.requireNonNull(
+                dependencies, "dependencies");
     }
 
     static ContextCandidate of(
             ContextStore owner,
             Path generation,
             long revision) {
+        return of(
+                owner,
+                generation,
+                revision,
+                ConnectionVector.empty());
+    }
+
+    static ContextCandidate of(
+            ContextStore owner,
+            Path generation,
+            long revision,
+            ConnectionVector dependencies) {
         if (owner == null) {
             throw new NullPointerException("owner");
         }
@@ -64,7 +80,26 @@ final class ContextCandidate {
                 owner.getContextId(),
                 revision,
                 owner.getOrigin(),
-                owner.snapshotTypeRegistry());
+                owner.snapshotTypeRegistry(),
+                dependencies);
+    }
+
+    static ContextCandidate of(
+            Path location,
+            Path generation,
+            UUID contextId,
+            long revision,
+            ContextManifestStore.Origin origin,
+            TypeRegistry typeRegistry,
+            ConnectionVector dependencies) {
+        return new ContextCandidate(
+                location,
+                generation,
+                contextId,
+                revision,
+                origin,
+                typeRegistry,
+                dependencies);
     }
 
     RevisionRef getRef() {
@@ -86,7 +121,8 @@ final class ContextCandidate {
                 contextId,
                 revision,
                 origin,
-                typeRegistry);
+                typeRegistry,
+                dependencies);
     }
 
     private static TypeRegistry copyRegistry(
