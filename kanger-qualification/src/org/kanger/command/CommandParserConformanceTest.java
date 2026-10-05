@@ -394,6 +394,16 @@ public final class CommandParserConformanceTest {
                         quotedIsolated.getArgument("locator")),
                 "quoted ctx isolated query locator");
 
+        CommandInvocation explain =
+                parser.parse(
+                        "ctx explain ?$x son(John, x);");
+        check(explain.getIntent()
+                        == CommandIntent.CTX_EXPLAIN,
+                "ctx explain intent");
+        check("?$x son(John, x);".equals(
+                        explain.getArgument("query")),
+                "ctx explain preserves KANGER source");
+
         CommandInvocation query =
                 parser.parse("ctx query ?$x son(John, x);");
         check(query.getIntent() == CommandIntent.CTX_QUERY,
@@ -410,6 +420,9 @@ public final class CommandParserConformanceTest {
                 INVALID_ARGUMENT_SHAPE);
         reject("ctx version A extra",
                 EXTRA_ARGUMENT);
+        reject("ctx explain", MISSING_ARGUMENT);
+        reject("ctx explain male(Tom);",
+                INVALID_ARGUMENT_SHAPE);
         reject("ctx A", MISSING_ARGUMENT);
         reject("ctx A male(Tom);",
                 INVALID_ARGUMENT_SHAPE);
@@ -499,6 +512,9 @@ public final class CommandParserConformanceTest {
         expectCanonical("ctx switch A 1", "ctx switch A 1");
         expectCanonical("ctx version", "ctx version");
         expectCanonical("ctx version A", "ctx version A");
+        expectCanonical(
+                "ctx explain ?$x son(John, x);",
+                "ctx explain ?$x son(John, x);");
         expectCanonical(
                 "ctx A ?male(Tom);",
                 "ctx A ?male(Tom);");
@@ -595,6 +611,8 @@ public final class CommandParserConformanceTest {
                 "help contains Context revision switch syntax");
         check(help.contains("ctx version [<locator>]"),
                 "help contains Context revision history syntax");
+        check(help.contains("ctx explain <query...>"),
+                "help contains Context explain syntax");
         check(help.contains("ctx <locator> <query...>"),
                 "help contains isolated Context query syntax");
         check(help.contains("ctx query <query...>"),
