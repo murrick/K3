@@ -7,6 +7,7 @@ import org.kanger.Mind;
 import org.kanger.User;
 import org.kanger.command.CommandParser;
 import org.kanger.exception.CommandErrorException;
+import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.internal.IContextFederation;
 
 import java.io.File;
@@ -146,6 +147,47 @@ public class ContextFederationOperatorTest {
 
         user.setCurrentMind(
                 mind.closeStorage());
+    }
+
+    @Test
+    void connectRejectsNewXAnchoredCompositionConflict()
+            throws Exception {
+        context("CXA", "!left(Tom);");
+        context("CXB", "!right(Tom);");
+        context(
+                "CXX",
+                "!~target(Tom); "
+                        + "!@x left(x) && right(x) -> target(x);");
+
+        User user = new User();
+        user.setDatabaseDir(
+                root.toString() + File.separator);
+        DB data = new DB();
+        data.init(user);
+
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        mind = (Mind) mind.useStorage("CXX");
+        user.setCurrentMind(mind);
+
+        try {
+            data.connectContext("CXB");
+            StorageLifecycleException failure =
+                    assertThrows(
+                            StorageLifecycleException.class,
+                            () -> data.connectContext("CXA"));
+            assertFalse(
+                    failure.getCollisions().isEmpty(),
+                    "connect rejection must expose X-anchored witnesses");
+            assertEquals(
+                    1,
+                    data.federationSnapshot()
+                            .getConnections().size(),
+                    "failed connect must preserve previous working topology");
+        } finally {
+            user.setCurrentMind(
+                    mind.closeStorage());
+        }
     }
 
     @Test

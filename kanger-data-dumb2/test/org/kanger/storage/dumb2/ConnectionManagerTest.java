@@ -17,7 +17,6 @@ import java.util.zip.CRC32;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -258,7 +257,7 @@ public class ConnectionManagerTest {
     }
 
     @Test
-    void combinedTargetConflictBlocksTopologyPublication()
+    void foreignOnlyTargetConflictCanBePublished()
             throws Exception {
         ContextFixture x =
                 context("XC", "!anchor(X);");
@@ -269,28 +268,24 @@ public class ConnectionManagerTest {
 
         ConnectionManager.connect(
                 x.location, a.location);
+        ConnectionManager.connect(
+                x.location, b.location);
 
-        assertThrows(
-                StorageLifecycleException.class,
-                () -> ConnectionManager.connect(
-                        x.location, b.location));
-
-        OperationSnapshot stillPublished =
+        OperationSnapshot published =
                 OperationSnapshot.open(x.location);
         try {
             assertEquals(
-                    x.revision + 1L,
-                    stillPublished.getSourceRef()
-                            .getRevision(),
-                    "failed topology qualification must not publish R+2");
+                    x.revision + 2L,
+                    published.getSourceRef()
+                            .getRevision());
             assertNotNull(
-                    stillPublished.getConnections()
+                    published.getConnections()
                             .find(a.contextId));
-            assertNull(
-                    stillPublished.getConnections()
+            assertNotNull(
+                    published.getConnections()
                             .find(b.contextId));
         } finally {
-            stillPublished.close();
+            published.close();
         }
     }
 
@@ -405,14 +400,17 @@ public class ConnectionManagerTest {
     }
 
     @Test
-    void revisionSwitchRejectsPairwiseCompatibleButCombinedConflict()
+    void revisionSwitchRejectsNewXAnchoredCombinedConflict()
             throws Exception {
         ContextFixture x =
-                context("XSC", "!anchor(X);");
+                context(
+                        "XSC",
+                        "!~target(Tom); "
+                                + "!@x left(x) && right(x) -> target(x);");
         ContextFixture a =
                 context("ASC", "!friend(A,B);");
         ContextFixture b =
-                context("BSC", "!male(Tom);");
+                context("BSC", "!right(Tom);");
 
         ConnectionManager.connect(
                 x.location, a.location);
@@ -421,14 +419,18 @@ public class ConnectionManagerTest {
 
         advance(
                 a,
-                "!~male(Tom);");
+                "!left(Tom);");
 
-        assertThrows(
-                StorageLifecycleException.class,
-                () -> ConnectionManager.switchRevision(
-                        x.location,
-                        a.contextId,
-                        a.revision + 1L));
+        StorageLifecycleException failure =
+                assertThrows(
+                        StorageLifecycleException.class,
+                        () -> ConnectionManager.switchRevision(
+                                x.location,
+                                a.contextId,
+                                a.revision + 1L));
+        assertFalse(
+                failure.getCollisions().isEmpty(),
+                "X-anchored composition rejection must expose witnesses");
 
         OperationSnapshot unchanged =
                 OperationSnapshot.open(x.location);
@@ -447,7 +449,7 @@ public class ConnectionManagerTest {
     }
 
     @Test
-    void revisionSwitchRejectsAdditionalConflictWhenWorkingCompositionAlreadyConflicted()
+    void foreignOnlyAdditionalConflictDoesNotBlockRevisionSwitch()
             throws Exception {
         ContextFixture x =
                 context("XSN", "!anchor(X);");
@@ -477,13 +479,15 @@ public class ConnectionManagerTest {
                 a,
                 "!female(Jane);");
 
-        assertThrows(
-                StorageLifecycleException.class,
-                () -> ConnectionManager.qualifySwitchRevision(
+        ContextConnection switched =
+                ConnectionManager.qualifySwitchRevision(
                         x.location,
                         working,
                         a.contextId,
-                        a.revision + 1L));
+                        a.revision + 1L);
+        assertEquals(
+                a.revision + 1L,
+                switched.getTarget().getRevision());
 
         ContextSnapshot unchanged =
                 ContextSnapshot.open(x.location);

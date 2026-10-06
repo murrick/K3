@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.internal.IContextFederation;
 
 import java.io.File;
@@ -159,6 +160,60 @@ public class ContextSourceMetadataIntegrationTest {
                     session.data.federationSnapshot()
                             .getConnections().size(),
                     "failed source compile must preserve previous working topology");
+        } finally {
+            session.close();
+        }
+    }
+
+    @Test
+    void foreignOnlyDependencyConflictIsAllowed()
+            throws Exception {
+        context("A-foreign", "!male(Tom);");
+        context("B-foreign", "!~male(Tom);");
+        context("X-foreign", "!anchor(X);");
+
+        Session session = open("X-foreign");
+        try {
+            assertTrue(
+                    session.mind.compile(
+                            "//! ctx connect A-foreign\n"
+                                    + "//! ctx connect B-foreign\n"
+                                    + "!female(Jane);\n"));
+            assertEquals(
+                    2,
+                    session.data.federationSnapshot()
+                            .getConnections().size());
+        } finally {
+            session.close();
+        }
+    }
+
+    @Test
+    void xAnchoredDependencyConflictReturnsWitnesses()
+            throws Exception {
+        context("A-anchor", "!left(Tom);");
+        context("B-anchor", "!right(Tom);");
+        context(
+                "X-anchor",
+                "!~target(Tom); "
+                        + "!@x left(x) && right(x) -> target(x);");
+
+        Session session = open("X-anchor");
+        try {
+            StorageLifecycleException failure =
+                    assertThrows(
+                            StorageLifecycleException.class,
+                            () -> session.mind.compile(
+                                    "//! ctx connect A-anchor\n"
+                                            + "//! ctx connect B-anchor\n"
+                                            + "!female(Jane);\n"));
+            assertFalse(
+                    failure.getCollisions().isEmpty(),
+                    "X-anchored dependency rejection must expose witnesses");
+            assertTrue(
+                    session.data.federationSnapshot()
+                            .getConnections().isEmpty(),
+                    "failed dependency qualification must preserve working topology");
         } finally {
             session.close();
         }

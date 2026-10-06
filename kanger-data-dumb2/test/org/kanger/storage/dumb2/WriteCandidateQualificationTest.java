@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -89,7 +90,7 @@ public class WriteCandidateQualificationTest {
     }
 
     @Test
-    void pairwiseCompatibleTargetsCanFailCombinedComposition()
+    void foreignOnlyConflictDoesNotRejectCandidate()
             throws Exception {
         ContextFixture x =
                 context("X-composition", "!anchor(X);");
@@ -108,27 +109,68 @@ public class WriteCandidateQualificationTest {
         ContextStore owner =
                 ContextStore.open(x.location);
         try {
-            RevisionRef current =
-                    new RevisionRef(
-                            owner.getContextId(),
-                            owner.getRevision());
-            ConnectionVector currentVector =
-                    working;
-            assertEquals(2, currentVector.size());
-
             ContextCandidate candidate =
                     ContextCandidate.of(
                             owner,
                             sealedCandidate(
-                                    owner, x, currentVector),
+                                    owner, x, working),
                             x.revision + 1L,
-                            currentVector);
+                            working);
 
-            assertThrows(
-                    StorageLifecycleException.class,
-                    () -> WriteCandidateQualification.qualify(
-                            candidate,
-                            currentVector));
+            WriteCandidateQualification.Result result =
+                    WriteCandidateQualification.qualify(
+                            candidate, working);
+            assertEquals(
+                    2,
+                    result.getConnections().size(),
+                    "A/B-only collision must not invalidate X candidate");
+        } finally {
+            owner.close();
+        }
+
+        assertRevision(
+                x.location, x.revision);
+    }
+
+    @Test
+    void xAnchoredCombinedConflictRejectsCandidate()
+            throws Exception {
+        ContextFixture x =
+                context(
+                        "X-anchored-composition",
+                        "!~target(Tom); "
+                                + "!@x left(x) && right(x) -> target(x);");
+        ContextFixture a =
+                context("A-anchored-composition", "!left(Tom);");
+        ContextFixture b =
+                context("B-anchored-composition", "!right(Tom);");
+
+        ConnectionVector working =
+                ConnectionVector.empty()
+                        .with(ConnectionManager.qualifyConnect(
+                                x.location, a.location))
+                        .with(ConnectionManager.qualifyConnect(
+                                x.location, b.location));
+
+        ContextStore owner =
+                ContextStore.open(x.location);
+        try {
+            ContextCandidate candidate =
+                    ContextCandidate.of(
+                            owner,
+                            sealedCandidate(
+                                    owner, x, working),
+                            x.revision + 1L,
+                            working);
+
+            StorageLifecycleException failure =
+                    assertThrows(
+                            StorageLifecycleException.class,
+                            () -> WriteCandidateQualification.qualify(
+                                    candidate, working));
+            assertFalse(
+                    failure.getCollisions().isEmpty(),
+                    "X-anchored composition rejection must expose witnesses");
         } finally {
             owner.close();
         }

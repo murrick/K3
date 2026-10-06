@@ -630,8 +630,26 @@ public final class DB implements IData, IContextFederation {
                 ConnectionManager.qualifyConnect(
                         context.getLocation(),
                         resolveFederationLocator(targetLocator));
-        workingConnections =
+        ConnectionVector candidate =
                 workingConnections.with(connection);
+        PairQualification.CompositionQualification before =
+                PairQualification.qualifyCompositionState(
+                        context.getLocation(),
+                        context.getRevision(),
+                        workingConnections);
+        PairQualification.CompositionQualification after =
+                PairQualification.qualifyCompositionState(
+                        context.getLocation(),
+                        context.getRevision(),
+                        candidate);
+        if (after.introducesNewCollisionComparedTo(before)) {
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                    "Context connection introduces a new X-anchored composition conflict: "
+                            + connection.getTarget(),
+                    after.introducedCollisionsComparedTo(before));
+        }
+        workingConnections = candidate;
         return projectConnection(
                 new RevisionRef(
                         context.getContextId(),

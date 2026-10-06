@@ -5,6 +5,7 @@
  */
 package org.kanger.storage.dumb2;
 
+import org.kanger.ContextQualification;
 import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.StorageLifecycleException;
 
@@ -26,10 +27,13 @@ final class WriteCandidateQualification {
             throw new NullPointerException();
         }
 
-        if (!PairQualification.qualifyLocal(candidate)) {
+        ContextQualification local =
+                PairQualification.qualifyLocalState(candidate);
+        if (!local.isValid()) {
             throw conflict(
                     "Candidate Context is locally inconsistent: "
-                            + candidate.getRef());
+                            + candidate.getRef(),
+                    local.getCollisions());
         }
 
         ConnectionVector refreshed =
@@ -55,7 +59,8 @@ final class WriteCandidateQualification {
                         "Candidate Context pair is not compatible: "
                                 + candidate.getRef()
                                 + " / "
-                                + connection.getTarget());
+                                + connection.getTarget(),
+                        pair.getCollisions());
             }
 
             refreshed = refreshed.with(
@@ -65,11 +70,14 @@ final class WriteCandidateQualification {
                             pair.getCertificate()));
         }
 
-        if (!PairQualification.qualifyComposition(
-                candidate, currentConnections)) {
+        PairQualification.CompositionQualification composition =
+                PairQualification.qualifyCompositionState(
+                        candidate, currentConnections);
+        if (!composition.isValid()) {
             throw conflict(
-                    "Candidate Context fails direct multi-context composition qualification: "
-                            + candidate.getRef());
+                    "Candidate Context fails X-anchored multi-context composition qualification: "
+                            + candidate.getRef(),
+                    composition.getCollisions());
         }
 
         return new Result(
@@ -82,6 +90,15 @@ final class WriteCandidateQualification {
         return new StorageLifecycleException(
                 StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
                 message);
+    }
+
+    private static StorageLifecycleException conflict(
+            String message,
+            java.util.List<ContextQualification.CollisionWitness> collisions) {
+        return new StorageLifecycleException(
+                StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                message,
+                collisions);
     }
 
     static final class Result {

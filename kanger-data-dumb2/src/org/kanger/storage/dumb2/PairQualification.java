@@ -71,12 +71,17 @@ final class PairQualification {
 
     static boolean qualifyLocal(
             ContextCandidate candidate) throws Exception {
+        return qualifyLocalState(candidate).isValid();
+    }
+
+    static ContextQualification qualifyLocalState(
+            ContextCandidate candidate) throws Exception {
         AttachedMind attached =
                 AttachedMind.open(
                         candidate, "write-candidate-local");
         try {
-            return Boolean.TRUE.equals(
-                    attached.mind.queryCheck(false));
+            return ContextQualification.inspect(
+                    attached.mind, false);
         } finally {
             attached.close();
         }
@@ -89,11 +94,18 @@ final class PairQualification {
     static boolean qualifyComposition(
             ContextCandidate candidate,
             ConnectionVector connections) throws Exception {
+        return qualifyCompositionState(
+                candidate, connections).isValid();
+    }
+
+    static CompositionQualification qualifyCompositionState(
+            ContextCandidate candidate,
+            ConnectionVector connections) throws Exception {
         AttachedMind attached =
                 AttachedMind.open(
                         candidate, "write-candidate-composition");
         try {
-            return qualifyComposition(
+            return qualifyCompositionState(
                     attached, connections);
         } finally {
             attached.close();
@@ -135,6 +147,50 @@ final class PairQualification {
     }
 
     private static CompositionQualification qualifyCompositionState(
+            AttachedMind attached,
+            ConnectionVector connections) throws Exception {
+        CompositionQualification complete =
+                qualifyRawCompositionState(
+                        attached, connections);
+        CompositionQualification foreignOnly =
+                qualifyForeignCompositionState(
+                        connections);
+        return complete.relativeTo(foreignOnly);
+    }
+
+    private static CompositionQualification qualifyForeignCompositionState(
+            ConnectionVector connections) throws Exception {
+        if (connections.isEmpty()) {
+            return new CompositionQualification(
+                    true,
+                    Collections.<ContextQualification.CollisionWitness>emptyList());
+        }
+
+        ContextConnection first =
+                connections.getConnections().get(0);
+        AttachedMind anchor =
+                AttachedMind.open(
+                        first.getTargetLocation(),
+                        first.getTarget().getRevision(),
+                        "composition-foreign-baseline");
+        try {
+            if (!first.getTarget().equals(
+                    anchor.ref())) {
+                throw new IllegalStateException(
+                        "Pinned target identity changed during foreign composition baseline: expected "
+                                + first.getTarget()
+                                + " found " + anchor.ref());
+            }
+            return qualifyRawCompositionState(
+                    anchor,
+                    connections.without(
+                            first.getTarget().getContextId()));
+        } finally {
+            anchor.close();
+        }
+    }
+
+    private static CompositionQualification qualifyRawCompositionState(
             AttachedMind attached,
             ConnectionVector connections) throws Exception {
         Mind overlay = null;
@@ -250,6 +306,15 @@ final class PairQualification {
                 }
             }
             return Collections.unmodifiableList(result);
+        }
+
+        CompositionQualification relativeTo(
+                CompositionQualification baseline) {
+            List<ContextQualification.CollisionWitness> introduced =
+                    introducedCollisionsComparedTo(baseline);
+            return new CompositionQualification(
+                    !introducesNewCollisionComparedTo(baseline),
+                    introduced);
         }
     }
 
