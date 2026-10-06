@@ -71,6 +71,9 @@ public class PairQualificationTest {
         assertFalse(result.isLeftOverRightValid());
         assertFalse(result.isRightOverLeftValid());
         assertNull(result.getCertificate());
+        assertFalse(
+                result.getCollisions().isEmpty(),
+                "rejected pair qualification must preserve collision witnesses");
 
         assertRevision(left.location, left.revision);
         assertRevision(right.location, right.revision);

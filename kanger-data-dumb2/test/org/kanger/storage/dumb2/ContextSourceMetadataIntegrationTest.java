@@ -144,6 +144,15 @@ public class ContextSourceMetadataIntegrationTest {
                             "//! ctx dependencies none\n"
                                     + "!probe(Tom);\n"
                                     + "!~probe(Tom);\n"));
+            assertTrue(
+                    session.mind.getLastCompileQualification() != null
+                            && !session.mind
+                                    .getLastCompileQualification()
+                                    .isValid());
+            assertFalse(
+                    session.mind.getLastCompileQualification()
+                            .getCollisions().isEmpty(),
+                    "failed .k compile must retain collision witnesses before rollback");
 
             assertEquals(
                     1,

@@ -112,6 +112,9 @@ public class RootCompileSourceBoundaryTest {
                     "!collision;!~collision;");
 
             assertEquals("error", failed.getString("result"), failed.toString());
+            assertTrue(failed.has("collisions"), failed.toString());
+            assertTrue(failed.getJSONArray("collisions").length() > 0,
+                    failed.toString());
             assertSame(root, user.getCurrentMind());
             assertEquals(before,
                     SourceContextMaterializer.materializeCurrentLevel(root));

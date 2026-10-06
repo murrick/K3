@@ -185,10 +185,14 @@ public class ConnectionManagerTest {
         ContextFixture a =
                 context("A", "!~male(Tom);");
 
-        assertThrows(
-                StorageLifecycleException.class,
-                () -> ConnectionManager.connect(
-                        x.location, a.location));
+        StorageLifecycleException failure =
+                assertThrows(
+                        StorageLifecycleException.class,
+                        () -> ConnectionManager.connect(
+                                x.location, a.location));
+        assertFalse(
+                failure.getCollisions().isEmpty(),
+                "connect rejection must expose qualification witnesses");
 
         assertFalse(Files.exists(
                 ConnectionStore.path(x.location)));
@@ -377,12 +381,16 @@ public class ConnectionManagerTest {
                 a,
                 "!~male(Tom);");
 
-        assertThrows(
-                StorageLifecycleException.class,
-                () -> ConnectionManager.switchRevision(
-                        x.location,
-                        a.contextId,
-                        a.revision + 1L));
+        StorageLifecycleException failure =
+                assertThrows(
+                        StorageLifecycleException.class,
+                        () -> ConnectionManager.switchRevision(
+                                x.location,
+                                a.contextId,
+                                a.revision + 1L));
+        assertFalse(
+                failure.getCollisions().isEmpty(),
+                "revision switch rejection must expose qualification witnesses");
 
         OperationSnapshot unchanged =
                 OperationSnapshot.open(x.location);
