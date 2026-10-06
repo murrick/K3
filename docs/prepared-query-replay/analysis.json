@@ -1,0 +1,2701 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "shared_baseline_classes_identical": 651,
+  "logs": {
+    "small-exact.log.gz": {
+      "mode": "exact",
+      "checks": 35,
+      "cases": {
+        "small": {
+          "rows": 3,
+          "accepted": [
+            "!seed(item);",
+            "!~target(item);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 1,
+            "False": 1,
+            "None": 1
+          },
+          "collision": 0,
+          "order": [
+            "!seed(item);",
+            "!~target(item);",
+            "!unrelated(item);"
+          ]
+        },
+        "external-item": {
+          "rows": 3,
+          "accepted": [
+            "!seed(item);",
+            "!~target(item);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 1,
+            "False": 1,
+            "None": 1
+          },
+          "collision": 0,
+          "order": [
+            "!seed(item);",
+            "!~target(item);",
+            "!unrelated(item);"
+          ]
+        },
+        "external-other": {
+          "rows": 3,
+          "accepted": [],
+          "differences": [],
+          "answers": {
+            "True": 0,
+            "False": 0,
+            "None": 3
+          },
+          "collision": 0,
+          "order": [
+            "!seed(item);",
+            "!~target(item);",
+            "!unrelated(item);"
+          ]
+        }
+      },
+      "timings": {}
+    },
+    "small-full.log.gz": {
+      "mode": "full",
+      "checks": 72,
+      "cases": {
+        "small": {
+          "rows": 3,
+          "accepted": [
+            "!seed(item);",
+            "!~target(item);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 1,
+            "False": 1,
+            "None": 1
+          },
+          "collision": 0,
+          "order": [
+            "!seed(item);",
+            "!~target(item);",
+            "!unrelated(item);"
+          ]
+        },
+        "external-item": {
+          "rows": 3,
+          "accepted": [
+            "!seed(item);",
+            "!~target(item);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 1,
+            "False": 1,
+            "None": 1
+          },
+          "collision": 0,
+          "order": [
+            "!seed(item);",
+            "!~target(item);",
+            "!unrelated(item);"
+          ]
+        },
+        "external-other": {
+          "rows": 3,
+          "accepted": [],
+          "differences": [],
+          "answers": {
+            "True": 0,
+            "False": 0,
+            "None": 3
+          },
+          "collision": 0,
+          "order": [
+            "!seed(item);",
+            "!~target(item);",
+            "!unrelated(item);"
+          ]
+        }
+      },
+      "timings": {}
+    },
+    "small-prepared.log.gz": {
+      "mode": "prepared",
+      "checks": 72,
+      "cases": {
+        "small": {
+          "rows": 3,
+          "accepted": [
+            "!seed(item);",
+            "!~target(item);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 1,
+            "False": 1,
+            "None": 1
+          },
+          "collision": 0,
+          "order": [
+            "!seed(item);",
+            "!~target(item);",
+            "!unrelated(item);"
+          ]
+        },
+        "external-item": {
+          "rows": 3,
+          "accepted": [
+            "!seed(item);",
+            "!~target(item);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 1,
+            "False": 1,
+            "None": 1
+          },
+          "collision": 0,
+          "order": [
+            "!seed(item);",
+            "!~target(item);",
+            "!unrelated(item);"
+          ]
+        },
+        "external-other": {
+          "rows": 3,
+          "accepted": [],
+          "differences": [],
+          "answers": {
+            "True": 0,
+            "False": 0,
+            "None": 3
+          },
+          "collision": 0,
+          "order": [
+            "!seed(item);",
+            "!~target(item);",
+            "!unrelated(item);"
+          ]
+        }
+      },
+      "timings": {}
+    },
+    "son-compiled.log.gz": {
+      "mode": "compiled",
+      "checks": 149,
+      "cases": {
+        "son": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "!$y son(John,y);",
+            "?$y child(John,y);"
+          ],
+          "differences": [
+            {
+              "source": "?$y son(John,y);",
+              "expected": {
+                "compiled": true,
+                "collision": false,
+                "answer": false,
+                "accepted": true
+              },
+              "actual": {
+                "compiled": true,
+                "collision": false,
+                "answer": null,
+                "accepted": false
+              }
+            },
+            {
+              "source": "!$y son(John,y);",
+              "expected": {
+                "compiled": true,
+                "collision": false,
+                "answer": null,
+                "accepted": false
+              },
+              "actual": {
+                "compiled": true,
+                "collision": false,
+                "answer": true,
+                "accepted": true
+              }
+            }
+          ],
+          "answers": {
+            "True": 5,
+            "False": 1,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        }
+      },
+      "timings": {}
+    },
+    "son-exact-e1.log.gz": {
+      "mode": "exact",
+      "checks": 339,
+      "cases": {
+        "son-0": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-1": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-2": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-3": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-4": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-5": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        }
+      },
+      "timings": {
+        "son-0": {
+          "wall_ns": 7315069072,
+          "cpu_ns": 7153140958,
+          "allocation_bytes": 4839324680
+        },
+        "son-1": {
+          "wall_ns": 5099162946,
+          "cpu_ns": 5001264282,
+          "allocation_bytes": 4728503120
+        },
+        "son-2": {
+          "wall_ns": 5228226507,
+          "cpu_ns": 5130512099,
+          "allocation_bytes": 4728082768
+        },
+        "son-3": {
+          "wall_ns": 5613388781,
+          "cpu_ns": 5501187063,
+          "allocation_bytes": 4727595904
+        },
+        "son-4": {
+          "wall_ns": 5561195665,
+          "cpu_ns": 5431355411,
+          "allocation_bytes": 4727351168
+        },
+        "son-5": {
+          "wall_ns": 5438785182,
+          "cpu_ns": 5320470416,
+          "allocation_bytes": 4727344624
+        }
+      }
+    },
+    "son-exact-e2.log.gz": {
+      "mode": "exact",
+      "checks": 339,
+      "cases": {
+        "son-0": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-1": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-2": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-3": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-4": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-5": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        }
+      },
+      "timings": {
+        "son-0": {
+          "wall_ns": 7753593049,
+          "cpu_ns": 7538788354,
+          "allocation_bytes": 4742575240
+        },
+        "son-1": {
+          "wall_ns": 5448199553,
+          "cpu_ns": 5351021242,
+          "allocation_bytes": 4689349392
+        },
+        "son-2": {
+          "wall_ns": 5380697556,
+          "cpu_ns": 5277932513,
+          "allocation_bytes": 4688744144
+        },
+        "son-3": {
+          "wall_ns": 5044992473,
+          "cpu_ns": 4951418436,
+          "allocation_bytes": 4688253600
+        },
+        "son-4": {
+          "wall_ns": 5256185618,
+          "cpu_ns": 5148669618,
+          "allocation_bytes": 4688008728
+        },
+        "son-5": {
+          "wall_ns": 5305912900,
+          "cpu_ns": 5192182817,
+          "allocation_bytes": 4688002240
+        }
+      }
+    },
+    "son-exact-focus.log.gz": {
+      "mode": "exact",
+      "checks": 13,
+      "cases": {
+        "son": {
+          "rows": 1,
+          "accepted": [],
+          "differences": [],
+          "answers": {
+            "True": 0,
+            "False": 0,
+            "None": 1
+          },
+          "collision": 0,
+          "order": [
+            "!$y son(John,y);"
+          ]
+        }
+      },
+      "timings": {}
+    },
+    "son-exact-reverse.log.gz": {
+      "mode": "exact",
+      "checks": 59,
+      "cases": {
+        "son": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!$y child(John,y);",
+            "!$x parent(x,John);",
+            "!$y son(John,y);",
+            "!$x mother(x,John);",
+            "!$x father(x,John);",
+            "?$y child(John,y);",
+            "?$x parent(x,John);",
+            "!$y son(Sarah,y);",
+            "!$y son(Mary,y);",
+            "!$x sibling(x,John);",
+            "!$y parent(John,y);",
+            "?$y son(John,y);",
+            "!$y sibling(John,y);",
+            "!$x parent(x,Tom);",
+            "!$x parent(x,Sarah);",
+            "!$x child(x,John);",
+            "!$y father(John,y);",
+            "!$y child(Tom,y);",
+            "!$y child(Sarah,y);",
+            "!$x mother(x,Sarah);",
+            "!$x mother(x,Tom);",
+            "!$x father(x,Tom);",
+            "!$x father(x,Sarah);",
+            "!$x son(x,John);",
+            "!$x daughter(x,John);",
+            "!$y son(Tom,y);",
+            "!$y daughter(John,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(Tom,y);",
+            "?divorced(John,Mary);",
+            "?spouse(John,Mary);",
+            "!daughter(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!son(Tom,Mary);",
+            "!son(Tom,John);",
+            "?male(Tom);",
+            "?female(Tom);",
+            "!sibling(Sarah,Sarah);",
+            "!sibling(Tom,Tom);",
+            "?divorced(Mary,John);",
+            "?spouse(Mary,John);",
+            "?daughter(Tom,John);",
+            "?daughter(Tom,Mary);",
+            "!female(Tom);",
+            "?son(Tom,John);",
+            "?son(Tom,Mary);",
+            "!male(Tom);"
+          ]
+        }
+      },
+      "timings": {}
+    },
+    "son-exact.log.gz": {
+      "mode": "exact",
+      "checks": 59,
+      "cases": {
+        "son": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        }
+      },
+      "timings": {}
+    },
+    "son-full-f1.log.gz": {
+      "mode": "full",
+      "checks": 885,
+      "cases": {
+        "son-0": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-1": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-2": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-3": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-4": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-5": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        }
+      },
+      "timings": {
+        "son-0": {
+          "wall_ns": 7723999813,
+          "cpu_ns": 7450534254,
+          "allocation_bytes": 5136124088
+        },
+        "son-1": {
+          "wall_ns": 5686053227,
+          "cpu_ns": 5489867848,
+          "allocation_bytes": 4996314288
+        },
+        "son-2": {
+          "wall_ns": 5500324448,
+          "cpu_ns": 5317987962,
+          "allocation_bytes": 4993620544
+        },
+        "son-3": {
+          "wall_ns": 5283593744,
+          "cpu_ns": 5093987358,
+          "allocation_bytes": 4989644872
+        },
+        "son-4": {
+          "wall_ns": 5271308177,
+          "cpu_ns": 5059502393,
+          "allocation_bytes": 4989594896
+        },
+        "son-5": {
+          "wall_ns": 5429844899,
+          "cpu_ns": 5190628348,
+          "allocation_bytes": 4989196496
+        }
+      }
+    },
+    "son-full-f2.log.gz": {
+      "mode": "full",
+      "checks": 885,
+      "cases": {
+        "son-0": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-1": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-2": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-3": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-4": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        },
+        "son-5": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        }
+      },
+      "timings": {
+        "son-0": {
+          "wall_ns": 7438449961,
+          "cpu_ns": 7167535747,
+          "allocation_bytes": 5262376768
+        },
+        "son-1": {
+          "wall_ns": 5954106013,
+          "cpu_ns": 5769721095,
+          "allocation_bytes": 5125777064
+        },
+        "son-2": {
+          "wall_ns": 5539972408,
+          "cpu_ns": 5360504946,
+          "allocation_bytes": 5123926960
+        },
+        "son-3": {
+          "wall_ns": 5401970836,
+          "cpu_ns": 5223793377,
+          "allocation_bytes": 5123402696
+        },
+        "son-4": {
+          "wall_ns": 6077747166,
+          "cpu_ns": 5800809227,
+          "allocation_bytes": 5123353992
+        },
+        "son-5": {
+          "wall_ns": 5892251105,
+          "cpu_ns": 5602834248,
+          "allocation_bytes": 5122955592
+        }
+      }
+    },
+    "son-full-focus.log.gz": {
+      "mode": "full",
+      "checks": 22,
+      "cases": {
+        "son": {
+          "rows": 1,
+          "accepted": [],
+          "differences": [],
+          "answers": {
+            "True": 0,
+            "False": 0,
+            "None": 1
+          },
+          "collision": 0,
+          "order": [
+            "!$y son(John,y);"
+          ]
+        }
+      },
+      "timings": {}
+    },
+    "son-full-reverse.log.gz": {
+      "mode": "full",
+      "checks": 150,
+      "cases": {
+        "son": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!$y child(John,y);",
+            "!$x parent(x,John);",
+            "!$y son(John,y);",
+            "!$x mother(x,John);",
+            "!$x father(x,John);",
+            "?$y child(John,y);",
+            "?$x parent(x,John);",
+            "!$y son(Sarah,y);",
+            "!$y son(Mary,y);",
+            "!$x sibling(x,John);",
+            "!$y parent(John,y);",
+            "?$y son(John,y);",
+            "!$y sibling(John,y);",
+            "!$x parent(x,Tom);",
+            "!$x parent(x,Sarah);",
+            "!$x child(x,John);",
+            "!$y father(John,y);",
+            "!$y child(Tom,y);",
+            "!$y child(Sarah,y);",
+            "!$x mother(x,Sarah);",
+            "!$x mother(x,Tom);",
+            "!$x father(x,Tom);",
+            "!$x father(x,Sarah);",
+            "!$x son(x,John);",
+            "!$x daughter(x,John);",
+            "!$y son(Tom,y);",
+            "!$y daughter(John,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(Tom,y);",
+            "?divorced(John,Mary);",
+            "?spouse(John,Mary);",
+            "!daughter(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!son(Tom,Mary);",
+            "!son(Tom,John);",
+            "?male(Tom);",
+            "?female(Tom);",
+            "!sibling(Sarah,Sarah);",
+            "!sibling(Tom,Tom);",
+            "?divorced(Mary,John);",
+            "?spouse(Mary,John);",
+            "?daughter(Tom,John);",
+            "?daughter(Tom,Mary);",
+            "!female(Tom);",
+            "?son(Tom,John);",
+            "?son(Tom,Mary);",
+            "!male(Tom);"
+          ]
+        }
+      },
+      "timings": {}
+    },
+    "son-full.log.gz": {
+      "mode": "full",
+      "checks": 150,
+      "cases": {
+        "son": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [],
+          "answers": {
+            "True": 4,
+            "False": 2,
+            "None": 37
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        }
+      },
+      "timings": {}
+    },
+    "son-prepared-focus.log.gz": {
+      "mode": "prepared",
+      "checks": 22,
+      "cases": {
+        "son": {
+          "rows": 1,
+          "accepted": [
+            "!$y son(John,y);"
+          ],
+          "differences": [
+            {
+              "source": "!$y son(John,y);",
+              "expected": {
+                "compiled": true,
+                "collision": false,
+                "answer": null,
+                "accepted": false
+              },
+              "actual": {
+                "compiled": true,
+                "collision": false,
+                "answer": true,
+                "accepted": true
+              }
+            }
+          ],
+          "answers": {
+            "True": 1,
+            "False": 0,
+            "None": 0
+          },
+          "collision": 0,
+          "order": [
+            "!$y son(John,y);"
+          ]
+        }
+      },
+      "timings": {}
+    },
+    "son-prepared.log.gz": {
+      "mode": "prepared",
+      "checks": 150,
+      "cases": {
+        "son": {
+          "rows": 47,
+          "accepted": [
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);",
+            "!$y son(John,y);",
+            "?$y child(John,y);",
+            "?$y son(John,y);"
+          ],
+          "differences": [
+            {
+              "source": "!$y son(John,y);",
+              "expected": {
+                "compiled": true,
+                "collision": false,
+                "answer": null,
+                "accepted": false
+              },
+              "actual": {
+                "compiled": true,
+                "collision": false,
+                "answer": true,
+                "accepted": true
+              }
+            }
+          ],
+          "answers": {
+            "True": 5,
+            "False": 2,
+            "None": 36
+          },
+          "collision": 4,
+          "order": [
+            "!male(Tom);",
+            "?son(Tom,Mary);",
+            "?son(Tom,John);",
+            "!female(Tom);",
+            "?daughter(Tom,Mary);",
+            "?daughter(Tom,John);",
+            "?spouse(Mary,John);",
+            "?divorced(Mary,John);",
+            "!sibling(Tom,Tom);",
+            "!sibling(Sarah,Sarah);",
+            "?female(Tom);",
+            "?male(Tom);",
+            "!son(Tom,John);",
+            "!son(Tom,Mary);",
+            "!daughter(Tom,John);",
+            "!daughter(Tom,Mary);",
+            "?spouse(John,Mary);",
+            "?divorced(John,Mary);",
+            "!$y daughter(Tom,y);",
+            "!$y daughter(Sarah,y);",
+            "!$y daughter(John,y);",
+            "!$y son(Tom,y);",
+            "!$x daughter(x,John);",
+            "!$x son(x,John);",
+            "!$x father(x,Sarah);",
+            "!$x father(x,Tom);",
+            "!$x mother(x,Tom);",
+            "!$x mother(x,Sarah);",
+            "!$y child(Sarah,y);",
+            "!$y child(Tom,y);",
+            "!$y father(John,y);",
+            "!$x child(x,John);",
+            "!$x parent(x,Sarah);",
+            "!$x parent(x,Tom);",
+            "!$y sibling(John,y);",
+            "?$y son(John,y);",
+            "!$y parent(John,y);",
+            "!$x sibling(x,John);",
+            "!$y son(Mary,y);",
+            "!$y son(Sarah,y);",
+            "?$x parent(x,John);",
+            "?$y child(John,y);",
+            "!$x father(x,John);",
+            "!$x mother(x,John);",
+            "!$y son(John,y);",
+            "!$x parent(x,John);",
+            "!$y child(John,y);"
+          ]
+        }
+      },
+      "timings": {}
+    }
+  },
+  "workflow_timing": {
+    "e1": {
+      "cpu_ns": {
+        "all_samples": [
+          7153140958,
+          5001264282,
+          5130512099,
+          5501187063,
+          5431355411,
+          5320470416
+        ],
+        "warm_mean": 5345881247.25,
+        "warm_min": 5130512099,
+        "warm_max": 5501187063
+      },
+      "wall_ns": {
+        "all_samples": [
+          7315069072,
+          5099162946,
+          5228226507,
+          5613388781,
+          5561195665,
+          5438785182
+        ],
+        "warm_mean": 5460399033.75,
+        "warm_min": 5228226507,
+        "warm_max": 5613388781
+      },
+      "allocation_bytes": {
+        "all_samples": [
+          4839324680,
+          4728503120,
+          4728082768,
+          4727595904,
+          4727351168,
+          4727344624
+        ],
+        "warm_mean": 4727593616,
+        "warm_min": 4727344624,
+        "warm_max": 4728082768
+      }
+    },
+    "f1": {
+      "cpu_ns": {
+        "all_samples": [
+          7450534254,
+          5489867848,
+          5317987962,
+          5093987358,
+          5059502393,
+          5190628348
+        ],
+        "warm_mean": 5165526515.25,
+        "warm_min": 5059502393,
+        "warm_max": 5317987962
+      },
+      "wall_ns": {
+        "all_samples": [
+          7723999813,
+          5686053227,
+          5500324448,
+          5283593744,
+          5271308177,
+          5429844899
+        ],
+        "warm_mean": 5371267817,
+        "warm_min": 5271308177,
+        "warm_max": 5500324448
+      },
+      "allocation_bytes": {
+        "all_samples": [
+          5136124088,
+          4996314288,
+          4993620544,
+          4989644872,
+          4989594896,
+          4989196496
+        ],
+        "warm_mean": 4990514202,
+        "warm_min": 4989196496,
+        "warm_max": 4993620544
+      }
+    },
+    "f2": {
+      "cpu_ns": {
+        "all_samples": [
+          7167535747,
+          5769721095,
+          5360504946,
+          5223793377,
+          5800809227,
+          5602834248
+        ],
+        "warm_mean": 5496985449.5,
+        "warm_min": 5223793377,
+        "warm_max": 5800809227
+      },
+      "wall_ns": {
+        "all_samples": [
+          7438449961,
+          5954106013,
+          5539972408,
+          5401970836,
+          6077747166,
+          5892251105
+        ],
+        "warm_mean": 5727985378.75,
+        "warm_min": 5401970836,
+        "warm_max": 6077747166
+      },
+      "allocation_bytes": {
+        "all_samples": [
+          5262376768,
+          5125777064,
+          5123926960,
+          5123402696,
+          5123353992,
+          5122955592
+        ],
+        "warm_mean": 5123409810,
+        "warm_min": 5122955592,
+        "warm_max": 5123926960
+      }
+    },
+    "e2": {
+      "cpu_ns": {
+        "all_samples": [
+          7538788354,
+          5351021242,
+          5277932513,
+          4951418436,
+          5148669618,
+          5192182817
+        ],
+        "warm_mean": 5142550846,
+        "warm_min": 4951418436,
+        "warm_max": 5277932513
+      },
+      "wall_ns": {
+        "all_samples": [
+          7753593049,
+          5448199553,
+          5380697556,
+          5044992473,
+          5256185618,
+          5305912900
+        ],
+        "warm_mean": 5246947136.75,
+        "warm_min": 5044992473,
+        "warm_max": 5380697556
+      },
+      "allocation_bytes": {
+        "all_samples": [
+          4742575240,
+          4689349392,
+          4688744144,
+          4688253600,
+          4688008728,
+          4688002240
+        ],
+        "warm_mean": 4688252178,
+        "warm_min": 4688002240,
+        "warm_max": 4688744144
+      }
+    }
+  },
+  "full_over_exact_warm_mean_ratios": {
+    "e1-f1": {
+      "cpu_ns": 0.966262862256288,
+      "wall_ns": 0.9836767942783866,
+      "allocation_bytes": 1.055614041171004
+    },
+    "e2-f2": {
+      "cpu_ns": 1.0689219444034643,
+      "wall_ns": 1.091679643316925,
+      "allocation_bytes": 1.0928187340352578
+    }
+  },
+  "scope": "template preparation + candidate validation + relevance forks + template release; excludes initial query, candidate pool expansion and final verification; main-thread CPU/allocation; first two of six samples excluded"
+}

@@ -1,0 +1,8 @@
+START son ['exact'] {'TAG': 'e1', 'SAMPLES': '6', 'MEASURE': 'true'}
+DONE son exact
+START son ['full'] {'TAG': 'f1', 'SAMPLES': '6', 'MEASURE': 'true'}
+DONE son full
+START son ['full'] {'TAG': 'f2', 'SAMPLES': '6', 'MEASURE': 'true'}
+DONE son full
+START son ['exact'] {'TAG': 'e2', 'SAMPLES': '6', 'MEASURE': 'true'}
+DONE son exact

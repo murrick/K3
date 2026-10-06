@@ -1,0 +1,31 @@
+{
+  "date_utc": "2026-10-06",
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "java": "OpenJDK 17.0.20",
+  "compiler": "ECJ -1.8 ../tooling/ecj.jar",
+  "heap": "-Xmx512m",
+  "flags_enabled": [
+    "preserveTValueIndex",
+    "versionedSolveSync",
+    "resolvedCauseWeights",
+    "compactCauseWeights",
+    "candidateMembershipFilter",
+    "singleTValueLookup",
+    "residentBaseComparison",
+    "compactFindSnapshots"
+  ],
+  "architecture": "x86_64",
+  "logical_cpus": 9,
+  "cpu_models": [
+    "AMD EPYC 9V74 80-Core Processor"
+  ],
+  "timing_order": [
+    "exact-e1",
+    "full-f1",
+    "full-f2",
+    "exact-e2"
+  ],
+  "samples_per_jvm": 6,
+  "discard_first": 2,
+  "serial_jvms": true
+}

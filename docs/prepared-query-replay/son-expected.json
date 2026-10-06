@@ -1,0 +1,284 @@
+{
+  "!$x child(x,John);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$x daughter(x,John);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$x father(x,John);": {
+    "compiled": true,
+    "collision": false,
+    "answer": true,
+    "accepted": true
+  },
+  "!$x father(x,Sarah);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$x father(x,Tom);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$x mother(x,John);": {
+    "compiled": true,
+    "collision": false,
+    "answer": true,
+    "accepted": true
+  },
+  "!$x mother(x,Sarah);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$x mother(x,Tom);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$x parent(x,John);": {
+    "compiled": true,
+    "collision": false,
+    "answer": true,
+    "accepted": true
+  },
+  "!$x parent(x,Sarah);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$x parent(x,Tom);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$x sibling(x,John);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$x son(x,John);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$y child(John,y);": {
+    "compiled": true,
+    "collision": false,
+    "answer": true,
+    "accepted": true
+  },
+  "!$y child(Sarah,y);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$y child(Tom,y);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$y daughter(John,y);": {
+    "compiled": true,
+    "collision": true,
+    "answer": null,
+    "accepted": false
+  },
+  "!$y daughter(Sarah,y);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$y daughter(Tom,y);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$y father(John,y);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$y parent(John,y);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$y sibling(John,y);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$y son(John,y);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!$y son(Mary,y);": {
+    "compiled": true,
+    "collision": true,
+    "answer": null,
+    "accepted": false
+  },
+  "!$y son(Sarah,y);": {
+    "compiled": true,
+    "collision": true,
+    "answer": null,
+    "accepted": false
+  },
+  "!$y son(Tom,y);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!daughter(Tom,John);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!daughter(Tom,Mary);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!female(Tom);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!male(Tom);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!sibling(Sarah,Sarah);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!sibling(Tom,Tom);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!son(Tom,John);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "!son(Tom,Mary);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "?$x parent(x,John);": {
+    "compiled": true,
+    "collision": true,
+    "answer": null,
+    "accepted": false
+  },
+  "?$y child(John,y);": {
+    "compiled": true,
+    "collision": false,
+    "answer": false,
+    "accepted": true
+  },
+  "?$y son(John,y);": {
+    "compiled": true,
+    "collision": false,
+    "answer": false,
+    "accepted": true
+  },
+  "?daughter(Tom,John);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "?daughter(Tom,Mary);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "?divorced(John,Mary);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "?divorced(Mary,John);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "?female(Tom);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "?male(Tom);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "?son(Tom,John);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "?son(Tom,Mary);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "?spouse(John,Mary);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  },
+  "?spouse(Mary,John);": {
+    "compiled": true,
+    "collision": false,
+    "answer": null,
+    "accepted": false
+  }
+}

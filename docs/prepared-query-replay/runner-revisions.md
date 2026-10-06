@@ -1,0 +1,3 @@
+Initial small/SON exact, prepared, compiled and full controls used runner v1 (class-sha256-v1.json). Its source is preserved at runner-v1/PreparedQueryReplayStudy.java; all four rebuilt runner classes match their archived SHA-256 hashes (runner-v1-comparison.json).
+
+Runner v2 adds optional focus, candidate reversal, repeated samples and coarse workflow timing with buffered diagnostic output. Default semantic operations are unchanged. Later focus/order/timing runs and small full-mode controls use class-sha256.json. All 651 shared baseline classes remain identical. build.py verifies both the baseline classes and archived v1 runner.
