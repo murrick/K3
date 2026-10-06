@@ -349,10 +349,23 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     /** @return {@code true} when no current TValue exists in the active Mind */
     public boolean isEmpty() {
         Mind active = activeMind();
+        if (SINGLE_VARIABLE_EMPTY && getClass() == TVariable.class
+                && active != null && active.getClass() == Mind.class) {
+            org.kanger.factory.TValueFactory values = active.getTValues();
+            if (values != null && values.getClass() == org.kanger.factory.TValueFactory.class) {
+                // One fresh probe, including mapped-null entries in the public map.
+                // Built-in hashCode/equals read fields only; subclasses keep callbacks.
+                return values.getCurrent().get(this) == null;
+            }
+        }
         return active == null
                 || active.getTValues().isEmpty(this)
                 || active.getTValues().get(this) == null;
     }
+
+    /** Default-OFF experiment, selected at JVM startup. */
+    private static final boolean SINGLE_VARIABLE_EMPTY =
+            Boolean.getBoolean("kanger.experiment.singleVariableEmpty");
 
     /** Tests whether the current TValue belongs to the query-result projection. */
     public boolean isQuery(Mind mind) {
