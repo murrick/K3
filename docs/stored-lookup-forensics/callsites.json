@@ -1,0 +1,38 @@
+[
+  {
+    "tag": 1,
+    "line": 1057,
+    "path": "kanger/src/org/kanger/Linker.java",
+    "original": "if (d.isStored(mind)) {"
+  },
+  {
+    "tag": 2,
+    "line": 1065,
+    "path": "kanger/src/org/kanger/Linker.java",
+    "original": "if (!d.isStored(mind) && (d.setCauses(causes.get(d.getRule()), mind) || !calculated.isEmpty() || !excluded.isEmpty())) {"
+  },
+  {
+    "tag": 3,
+    "line": 1090,
+    "path": "kanger/src/org/kanger/Linker.java",
+    "original": "if (!d.isStored(mind) && d.setCauses(causes.get(d.getRule()), mind)) {"
+  },
+  {
+    "tag": 4,
+    "line": 1105,
+    "path": "kanger/src/org/kanger/Linker.java",
+    "original": "if (!d.isStored(mind)) {"
+  },
+  {
+    "tag": 5,
+    "line": 1133,
+    "path": "kanger/src/org/kanger/Linker.java",
+    "original": "if (!d.isStored(mind) && d.setCauses(causes.get(d.getRule()), mind)) {"
+  },
+  {
+    "tag": 6,
+    "line": 1148,
+    "path": "kanger/src/org/kanger/Linker.java",
+    "original": "if (!d.isStored(mind) && d.isComplete() && !d.isUsed(mind)) {"
+  }
+]

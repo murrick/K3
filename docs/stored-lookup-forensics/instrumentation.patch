@@ -1,0 +1,58 @@
+--- a/kanger/src/org/kanger/Linker.java
++++ b/kanger/src/org/kanger/Linker.java
+@@ -1000,0 +1001,2 @@
++        org.kanger.StoredLookupProfile.LinkFrame frame = org.kanger.StoredLookupProfile.beginLink();
++        try {
+@@ -1057 +1059 @@
+-                if (d.isStored(mind)) {
++                if (org.kanger.StoredLookupProfile.atSite(d, mind, 1)) {
+@@ -1065 +1067 @@
+-                    if (!d.isStored(mind) && (d.setCauses(causes.get(d.getRule()), mind) || !calculated.isEmpty() || !excluded.isEmpty())) {
++                    if (!org.kanger.StoredLookupProfile.atSite(d, mind, 2) && (d.setCauses(causes.get(d.getRule()), mind) || !calculated.isEmpty() || !excluded.isEmpty())) {
+@@ -1090 +1092 @@
+-                    if (!d.isStored(mind) && d.setCauses(causes.get(d.getRule()), mind)) {
++                    if (!org.kanger.StoredLookupProfile.atSite(d, mind, 3) && d.setCauses(causes.get(d.getRule()), mind)) {
+@@ -1105 +1107 @@
+-                    if (!d.isStored(mind)) {
++                    if (!org.kanger.StoredLookupProfile.atSite(d, mind, 4)) {
+@@ -1133 +1135 @@
+-                    if (!d.isStored(mind) && d.setCauses(causes.get(d.getRule()), mind)) {
++                    if (!org.kanger.StoredLookupProfile.atSite(d, mind, 5) && d.setCauses(causes.get(d.getRule()), mind)) {
+@@ -1148 +1150 @@
+-                    if (!d.isStored(mind) && d.isComplete() && !d.isUsed(mind)) {
++                    if (!org.kanger.StoredLookupProfile.atSite(d, mind, 6) && d.isComplete() && !d.isUsed(mind)) {
+@@ -1179,0 +1182 @@
++        } finally { org.kanger.StoredLookupProfile.endLink(frame); }
+--- a/kanger/src/org/kanger/units/Domain.java
++++ b/kanger/src/org/kanger/units/Domain.java
+@@ -459,0 +460,2 @@
++        org.kanger.StoredLookupProfile.StoredFrame frame = org.kanger.StoredLookupProfile.beginStored(this, mind, false);
++        try {
+@@ -461 +463,2 @@
+-        return r != null && !r.isDeleted(mind);
++        return org.kanger.StoredLookupProfile.storedResult(r != null && !r.isDeleted(mind));
++        } finally { org.kanger.StoredLookupProfile.endStored(frame); }
+@@ -464,0 +468,2 @@
++        org.kanger.StoredLookupProfile.StoredFrame frame = org.kanger.StoredLookupProfile.beginStored(this, mind, true);
++        try {
+@@ -467 +472,2 @@
+-        return r != null && !r.isDeleted(mind);
++        return org.kanger.StoredLookupProfile.storedResult(r != null && !r.isDeleted(mind));
++        } finally { org.kanger.StoredLookupProfile.endStored(frame); }
+--- a/kanger/src/org/kanger/factory/RuleFactory.java
++++ b/kanger/src/org/kanger/factory/RuleFactory.java
+@@ -909,0 +910,2 @@
++        org.kanger.StoredLookupProfile.FindFrame frame = org.kanger.StoredLookupProfile.beginFind(this);
++        try {
+@@ -910,0 +913 @@
++            org.kanger.StoredLookupProfile.visit();
+@@ -912 +915,2 @@
+-            if (((Rule) one).equalsTo(domain)) {
++            org.kanger.StoredLookupProfile.candidate(one);
++            if (org.kanger.StoredLookupProfile.comparison(((Rule) one).equalsTo(domain))) {
+@@ -915,0 +920 @@
++                org.kanger.StoredLookupProfile.findResult(true);
+@@ -918,0 +924 @@
++        org.kanger.StoredLookupProfile.findResult(false);
+@@ -919,0 +926 @@
++        } finally { org.kanger.StoredLookupProfile.endFind(frame); }

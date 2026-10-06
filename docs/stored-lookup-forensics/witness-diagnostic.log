@@ -1,0 +1,4 @@
+STORED_WITNESS mode=0 reference=true:root-a reused=true:child-b
+STORED_WITNESS mode=1 reference=true:root-a reused=true:child-b
+STORED_WITNESS mode=2 reference=false reused=true
+STORED_LOOKUP_WITNESS_OK scenarios=3 checks=33
