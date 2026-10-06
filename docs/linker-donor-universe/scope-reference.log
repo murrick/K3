@@ -1,0 +1,5 @@
+DONOR_SCOPE_CASE name=full order=descending execution=3 donors=3 candidate_donors=2 alpha=true beta=true used=true
+DONOR_SCOPE_CASE name=receiver-limited order=descending execution=1 donors=1 candidate_donors=0 alpha=false beta=false used=false
+DONOR_SCOPE_CASE name=full order=ascending execution=3 donors=3 candidate_donors=2 alpha=true beta=true used=true
+DONOR_SCOPE_CASE name=receiver-limited order=ascending execution=1 donors=1 candidate_donors=0 alpha=false beta=false used=false
+LINKER_DONOR_SCOPE_OK mode=reference checks=44

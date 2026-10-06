@@ -1,0 +1,1 @@
+ExactCandidateReplayRunner, FrontierDependencyWitness and frozen oracles are copied unchanged from the preceding frontier census. The base hash oracle contains 651 original classes. LinkerScopeTrace and ScopeTraceSonRunner observe native Rule-ID sequences in temporary source copies only. The final production source contains no diagnostic trace calls.

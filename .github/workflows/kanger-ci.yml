@@ -153,6 +153,9 @@ jobs:
       - name: Linker rule ordering invariant
         run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.KangerLinkerRuleOrderingSafetyRunner -Dexec.classpathScope=test exec:java
 
+      - name: Linker execution and donor scope invariant
+        run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.KangerLinkerDonorScopeSafetyRunner -Dexec.classpathScope=test exec:java
+
       - name: C-variable Rule-scope invariant
         run: mvn --batch-mode --no-transfer-progress -f kanger-qualification/pom.xml -Dexec.mainClass=org.kanger.KangerCVarRuleScopeSafetyRunner -Dexec.classpathScope=test exec:java
 

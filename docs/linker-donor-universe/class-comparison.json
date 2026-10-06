@@ -1,0 +1,13 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "baseline_classes_identical": 651,
+  "changed_shared_classes": [
+    "org/kanger/Linker$1.class",
+    "org/kanger/Linker$2.class",
+    "org/kanger/Linker$3.class",
+    "org/kanger/Linker$4.class",
+    "org/kanger/Linker$DeferredSolveCandidate.class",
+    "org/kanger/Linker$DomainKey.class",
+    "org/kanger/Linker.class"
+  ]
+}

@@ -64,7 +64,10 @@ import java.util.*;
  * расширяет множество opposite-polarity native candidates, уже used Rules и
  * новых generated Rules текущей границы. Candidate indexes сокращают число
  * проверок, но итоговое сопоставление, hydration и semantic validation остаются
- * в Linker и Rule/Domain.</p>
+ * в Linker и Rule/Domain. Список исполняемых Rule передаётся отдельно от
+ * упорядоченного списка доступных доноров. Текущий полный обход передаёт
+ * один и тот же порядок для обоих назначений; сужение исполняемого набора
+ * не должно неявно сужать набор доноров.</p>
  *
  * <p><strong>Порядок прохода.</strong> Каждый saturation pass дважды обходит
  * один и тот же Rule-set: сначала в строгом порядке убывания полного
@@ -551,8 +554,9 @@ public class Linker {
             });
 
 
-            rotator(leftList, causes, logging);
-            rotator(ruleList, causes, logging);
+            // Keep each traversal's complete active donor view and its order.
+            rotator(leftList, leftList, causes, logging);
+            rotator(ruleList, ruleList, causes, logging);
 
 
         } while (mind.getRules().isAction()
@@ -569,12 +573,23 @@ public class Linker {
         }
     }
 
-    private boolean rotator(final Collection<IRule> ruleList, final Map<IRule, Set<Cause>> causes, final boolean logging) throws Exception {
+    /**
+     * Executes only {@code executionRules}, resolving domain donors against
+     * {@code donorRules}. Both collections retain the caller's traversal order.
+     * The donor view covers this pass's complete native active Rule-set; it is
+     * not rebuilt from a future narrowed execution frontier or expanded to all
+     * visible Rules. Generated Rules become eligible at the existing next-pass
+     * boundary. This separation does not authorize skipping rule execution.
+     */
+    private boolean rotator(final Collection<IRule> executionRules,
+                            final Collection<IRule> donorRules,
+                            final Map<IRule, Set<Cause>> causes,
+                            final boolean logging) throws Exception {
 
         boolean used = false;
-        final Map<DomainKey, List<IRule>> domainIndex = buildDomainIndex(ruleList);
+        final Map<DomainKey, List<IRule>> domainIndex = buildDomainIndex(donorRules);
 
-        for (IRule r : ruleList) {
+        for (IRule r : executionRules) {
 
             statistics.incrementRuleVisits();
             mind.getProducedDomains().clear();

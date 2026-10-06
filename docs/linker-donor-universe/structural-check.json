@@ -1,0 +1,9 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "pre_link_body_identical": true,
+  "semantic_kernel_tail_identical": true,
+  "link_normalized_identical": true,
+  "rotator_normalized_identical": true,
+  "production_trace_absent": true,
+  "kernel_sha256": "77f2b78b7307a0c2137f8fcd0ea08ea76acd71766a22aa4ad5bde64559c17b01"
+}

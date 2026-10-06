@@ -1,0 +1,32 @@
+{
+  "baseline_classes_identical": 651,
+  "candidate_sources_per_mode": 47,
+  "candidate_modes": 4,
+  "scope_checks_reference": 44,
+  "scope_checks_split": 88,
+  "native_witness_checks_per_mode": 31,
+  "transaction_operations_per_mode": 20,
+  "semantic_snapshots": 12,
+  "exact_native_order_traces_equal": true,
+  "traced_samples": {
+    "0": {
+      "links": 135,
+      "rule_visits": 158970,
+      "pass_order_groups": 1526
+    },
+    "1": {
+      "links": 135,
+      "rule_visits": 158970,
+      "pass_order_groups": 1526
+    },
+    "2": {
+      "links": 135,
+      "rule_visits": 158970,
+      "pass_order_groups": 1526
+    }
+  },
+  "corpora_semantics_equal": true,
+  "stderr_all_successful_runs_empty": true,
+  "truncated_attempt": "failed-attempts/split-corpus-truncated.log.gz; exit 0 without completion marker, not accepted; fresh retry passed; cause unresolved",
+  "timing": "no speedup claim; this is a role separation only"
+}
