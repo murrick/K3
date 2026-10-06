@@ -1,0 +1,173 @@
+{
+  "observed_at": "2026-10-06T06:14:12.722Z",
+  "code_commit": "049317a427b6ac11edc757a4ce4798039f026e12",
+  "runs": [
+    {
+      "id": 37422156508,
+      "name": "KANGER distribution bundle",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "049317a427b6ac11edc757a4ce4798039f026e12",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37422156508"
+    },
+    {
+      "id": 37422156558,
+      "name": "KANGER Server",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "049317a427b6ac11edc757a4ce4798039f026e12",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37422156558"
+    },
+    {
+      "id": 37422156496,
+      "name": "KANGER CI",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "049317a427b6ac11edc757a4ce4798039f026e12",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37422156496"
+    },
+    {
+      "id": 37422156691,
+      "name": "Fresh predicate name qualification",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "049317a427b6ac11edc757a4ce4798039f026e12",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37422156691"
+    },
+    {
+      "id": 37422156541,
+      "name": "KANGER qualification isolation",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "049317a427b6ac11edc757a4ce4798039f026e12",
+      "html_url": "https://github.com/murrick/K3/actions/runs/37422156541"
+    }
+  ],
+  "jobs": [
+    {
+      "id": 37422156508,
+      "jobs": [
+        {
+          "name": "Build and verify product bundle",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 37422156558,
+      "jobs": [
+        {
+          "name": "Build on Java 8",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build on Java 21",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 37422156496,
+      "jobs": [
+        {
+          "name": "Maven Java 21 / TValue on",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 21 / TValue verify",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 21 / TValue off",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 21 / TValue solve-on",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 8 / TValue off",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 8 / TValue solve-verify",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 8 / TValue on",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 21 / TValue solve-verify",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 8 / TValue verify",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 8 / TValue solve-on",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 37422156691,
+      "jobs": [
+        {
+          "name": "qualification (8, false)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "qualification (8, true)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "qualification (21, true)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "qualification (26, false)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "qualification (21, false)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "qualification (26, true)",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 37422156541,
+      "jobs": [
+        {
+          "name": "Production surface excludes qualification",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ]
+}

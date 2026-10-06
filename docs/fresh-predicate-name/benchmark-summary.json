@@ -1,0 +1,47 @@
+{
+  "rows": [
+    {
+      "sequence": 1,
+      "mode": "reference",
+      "wall_s": 5.448970795,
+      "cpu_s": 5.3366678565,
+      "allocated_MB": 4717.844516
+    },
+    {
+      "sequence": 2,
+      "mode": "false",
+      "wall_s": 5.6976185355,
+      "cpu_s": 5.5683770205,
+      "allocated_MB": 4854.730412
+    },
+    {
+      "sequence": 3,
+      "mode": "true",
+      "wall_s": 5.399531875,
+      "cpu_s": 5.2761071465,
+      "allocated_MB": 4344.47594
+    },
+    {
+      "sequence": 4,
+      "mode": "true",
+      "wall_s": 5.343318065,
+      "cpu_s": 5.2419122605,
+      "allocated_MB": 4294.001836
+    },
+    {
+      "sequence": 5,
+      "mode": "false",
+      "wall_s": 5.844580854,
+      "cpu_s": 5.7155039005,
+      "allocated_MB": 4851.402344
+    },
+    {
+      "sequence": 6,
+      "mode": "reference",
+      "wall_s": 5.5679148935,
+      "cpu_s": 5.4604014935,
+      "allocated_MB": 4801.799104
+    }
+  ],
+  "snapshots_verified": 36
+}

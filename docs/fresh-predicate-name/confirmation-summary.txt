@@ -1,0 +1,8 @@
+confirm-1-reference.log wall_s=5.785 cpu_s=5.646 allocated_MB=4804.1
+confirm-2-true.log wall_s=5.183 cpu_s=5.075 allocated_MB=4165.2
+confirm-3-true.log wall_s=5.253 cpu_s=5.140 allocated_MB=4292.3
+confirm-4-reference.log wall_s=5.675 cpu_s=5.545 allocated_MB=4811.4
+ON_vs_clean_forward wall_reduction=10.40% cpu_reduction=10.12% allocation_reduction=13.30%
+ON_vs_clean_reverse wall_reduction=7.42% cpu_reduction=7.31% allocation_reduction=10.79%
+ALL_RAW_AND_FINAL_TEXTS_EQUAL samples=24
+LAST_LINKER_STATISTICS_EQUAL samples=24
