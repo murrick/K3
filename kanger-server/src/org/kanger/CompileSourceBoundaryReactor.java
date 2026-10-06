@@ -5,12 +5,14 @@
  */
 package org.kanger;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
 
 import java.net.URLDecoder;
+import java.util.List;
 
 /**
  * Owns Editor source replacement for every explicit user transaction level.
@@ -54,22 +56,35 @@ final class CompileSourceBoundaryReactor implements IReactor<JSONObject> {
                 parameters.getString("compile"), "UTF-8");
         boolean accepted;
         String description;
+        List<ContextQualification.CollisionWitness> collisions;
         if (user.getCurrentMind().getTransactionLevel() == 0) {
             RootCurrentLevelSourceReplacement.Outcome outcome =
                     RootCurrentLevelSourceReplacement.replace(user, exactSource);
             accepted = outcome.isAccepted();
             description = outcome.getDescription();
+            collisions = outcome.getCollisions();
         } else {
             NestedCurrentLevelSourceReplacement.Outcome outcome =
                     NestedCurrentLevelSourceReplacement.replace(user, exactSource);
             accepted = outcome.isAccepted();
             description = outcome.getDescription();
+            collisions = outcome.getCollisions();
         }
 
         IMind current = user.getCurrentMind();
         JSONObject result = accepted
                 ? ok(description)
                 : error("compile_rejected", description);
+        if (!accepted && !collisions.isEmpty()) {
+            JSONArray diagnostic = new JSONArray();
+            for (ContextQualification.CollisionWitness witness
+                    : collisions) {
+                diagnostic.put(new JSONObject()
+                        .put("left", witness.getLeft())
+                        .put("right", witness.getRight()));
+            }
+            result.put("collisions", diagnostic);
+        }
         result.put("transaction", current.getTransactionLevel());
         result.put("empty", current.isEmptyLevel());
         return result;

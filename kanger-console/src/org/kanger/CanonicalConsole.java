@@ -150,6 +150,11 @@ public final class CanonicalConsole {
                             ex.getCode(),
                             action == null || action.isEmpty() ? "" : " [" + action + "]",
                             ex.toString());
+                    for (ContextQualification.CollisionWitness witness
+                            : ex.getCollisions()) {
+                        System.err.printf("  collision: %s <> %s%n",
+                                witness.getLeft(), witness.getRight());
+                    }
                 } catch (RuntimeErrorException ex) {
                     System.err.println(ex.toString());
                 } catch (Exception ex) {
@@ -766,9 +771,26 @@ public final class CanonicalConsole {
         if (accepted) {
             System.out.println("File " + file.getName() + " loaded");
         } else {
+            showCompileCollisions(mind);
             System.out.println("Use xplain for analysis");
         }
         return mind;
+    }
+
+    private static void showCompileCollisions(IMind mind) {
+        if (!(mind instanceof Mind)) {
+            return;
+        }
+        ContextQualification qualification =
+                ((Mind) mind).getLastCompileQualification();
+        if (qualification == null || qualification.isValid()) {
+            return;
+        }
+        for (ContextQualification.CollisionWitness witness
+                : qualification.getCollisions()) {
+            System.out.printf("  collision: %s <> %s%n",
+                    witness.getLeft(), witness.getRight());
+        }
     }
 
     private static void saveSource(IMind mind, String name, ConsoleLineInput input) throws Exception {

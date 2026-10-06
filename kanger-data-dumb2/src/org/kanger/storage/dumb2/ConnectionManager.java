@@ -5,6 +5,7 @@
  */
 package org.kanger.storage.dumb2;
 
+import org.kanger.ContextQualification;
 import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.StorageLifecycleException;
 
@@ -141,7 +142,8 @@ final class ConnectionManager {
             throw new StorageLifecycleException(
                     StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
                     "Context pair is not compatible: "
-                            + source + " / " + target);
+                            + source + " / " + target,
+                    qualification.getCollisions());
         }
 
         /*
@@ -291,9 +293,11 @@ final class ConnectionManager {
                 || !requestedTarget.equals(pair.getRight())
                 || !pair.isCompatible()
                 || pair.getCertificate() == null) {
-            throw conflict(
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
                     "Requested Context revision is not compatible: "
-                            + sourceRef + " / " + requestedTarget);
+                            + sourceRef + " / " + requestedTarget,
+                    pair.getCollisions());
         }
 
         ContextConnection replacement =
@@ -317,9 +321,16 @@ final class ConnectionManager {
         if (candidateComposition
                 .introducesNewCollisionComparedTo(
                         originalComposition)) {
-            throw conflict(
+            java.util.List<ContextQualification.CollisionWitness>
+                    introduced =
+                            candidateComposition
+                                    .introducedCollisionsComparedTo(
+                                            originalComposition);
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
                     "Requested Context revision introduces a new direct multi-context composition conflict: "
-                            + requestedTarget);
+                            + requestedTarget,
+                    introduced);
         }
 
         ContextSnapshot current =

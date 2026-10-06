@@ -16,6 +16,7 @@ import org.kanger.units.Rule;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -166,7 +167,7 @@ final class PairQualification {
                             overlay, false);
             return new CompositionQualification(
                     qualification.isValid(),
-                    collisionKeys(qualification));
+                    qualification.getCollisions());
         } finally {
             if (overlay != null) {
                 overlay.getSolutions().clear();
@@ -176,19 +177,22 @@ final class PairQualification {
         }
     }
 
+    private static String collisionKey(
+            ContextQualification.CollisionWitness witness) {
+        String left = witness.getLeft();
+        String right = witness.getRight();
+        return left.compareTo(right) <= 0
+                ? left + "\u0000" + right
+                : right + "\u0000" + left;
+    }
+
     private static Set<String> collisionKeys(
-            ContextQualification qualification) {
+            List<ContextQualification.CollisionWitness> collisions) {
         Set<String> result =
                 new LinkedHashSet<String>();
         for (ContextQualification.CollisionWitness witness
-                : qualification.getCollisions()) {
-            String left = witness.getLeft();
-            String right = witness.getRight();
-            if (left.compareTo(right) <= 0) {
-                result.add(left + "\u0000" + right);
-            } else {
-                result.add(right + "\u0000" + left);
-            }
+                : collisions) {
+            result.add(collisionKey(witness));
         }
         return result;
     }
@@ -196,18 +200,26 @@ final class PairQualification {
     static final class CompositionQualification {
 
         private final boolean valid;
-        private final Set<String> collisions;
+        private final List<ContextQualification.CollisionWitness> collisions;
+        private final Set<String> collisionKeys;
 
         private CompositionQualification(
                 boolean valid,
-                Set<String> collisions) {
+                List<ContextQualification.CollisionWitness> collisions) {
             this.valid = valid;
-            this.collisions =
-                    new LinkedHashSet<String>(collisions);
+            this.collisions = Collections.unmodifiableList(
+                    new ArrayList<ContextQualification.CollisionWitness>(
+                            collisions));
+            this.collisionKeys =
+                    PairQualification.collisionKeys(collisions);
         }
 
         boolean isValid() {
             return valid;
+        }
+
+        List<ContextQualification.CollisionWitness> getCollisions() {
+            return collisions;
         }
 
         boolean introducesNewCollisionComparedTo(
@@ -218,8 +230,26 @@ final class PairQualification {
             if (!valid && collisions.isEmpty()) {
                 return true;
             }
-            return !baseline.collisions.containsAll(
-                    collisions);
+            return !baseline.collisionKeys.containsAll(
+                    collisionKeys);
+        }
+
+        List<ContextQualification.CollisionWitness>
+                introducedCollisionsComparedTo(
+                        CompositionQualification baseline) {
+            if (baseline == null) {
+                throw new NullPointerException("baseline");
+            }
+            List<ContextQualification.CollisionWitness> result =
+                    new ArrayList<ContextQualification.CollisionWitness>();
+            for (ContextQualification.CollisionWitness witness
+                    : collisions) {
+                if (!baseline.collisionKeys.contains(
+                        collisionKey(witness))) {
+                    result.add(witness);
+                }
+            }
+            return Collections.unmodifiableList(result);
         }
     }
 
@@ -234,23 +264,24 @@ final class PairQualification {
         PortableSource rightSource =
                 PortableSource.capture(right.mind);
 
-        boolean leftOverRight =
+        ContextQualification leftOverRight =
                 qualifyDirection(
                         leftSource, right.mind);
-        boolean rightOverLeft =
+        ContextQualification rightOverLeft =
                 qualifyDirection(
                         rightSource, left.mind);
 
-        if (leftOverRight != rightOverLeft) {
+        if (leftOverRight.isValid()
+                != rightOverLeft.isValid()) {
             throw new IllegalStateException(
                     "Pair qualification is direction-dependent for "
                             + leftRef + " and " + rightRef
-                            + ": left-over-right=" + leftOverRight
-                            + ", right-over-left=" + rightOverLeft);
+                            + ": left-over-right=" + leftOverRight.isValid()
+                            + ", right-over-left=" + rightOverLeft.isValid());
         }
 
         CompatibilityCertificate certificate =
-                leftOverRight
+                leftOverRight.isValid()
                         ? new CompatibilityCertificate(
                                 leftRef,
                                 rightRef,
@@ -264,15 +295,15 @@ final class PairQualification {
                 certificate);
     }
 
-    private static boolean qualifyDirection(
+    private static ContextQualification qualifyDirection(
             PortableSource source,
             Mind target) throws Exception {
         Mind overlay =
                 Mind.ephemeralChild(target);
         try {
             source.replay(overlay);
-            return Boolean.TRUE.equals(
-                    overlay.queryCheck(false));
+            return ContextQualification.inspect(
+                    overlay, false);
         } finally {
             overlay.getSolutions().clear();
             overlay.getValues().clear();
@@ -284,14 +315,14 @@ final class PairQualification {
 
         private final RevisionRef left;
         private final RevisionRef right;
-        private final boolean leftOverRight;
-        private final boolean rightOverLeft;
+        private final ContextQualification leftOverRight;
+        private final ContextQualification rightOverLeft;
         private final CompatibilityCertificate certificate;
 
         private Result(RevisionRef left,
                        RevisionRef right,
-                       boolean leftOverRight,
-                       boolean rightOverLeft,
+                       ContextQualification leftOverRight,
+                       ContextQualification rightOverLeft,
                        CompatibilityCertificate certificate) {
             this.left = left;
             this.right = right;
@@ -309,15 +340,33 @@ final class PairQualification {
         }
 
         boolean isCompatible() {
-            return leftOverRight && rightOverLeft;
+            return leftOverRight.isValid()
+                    && rightOverLeft.isValid();
         }
 
         boolean isLeftOverRightValid() {
-            return leftOverRight;
+            return leftOverRight.isValid();
         }
 
         boolean isRightOverLeftValid() {
-            return rightOverLeft;
+            return rightOverLeft.isValid();
+        }
+
+        List<ContextQualification.CollisionWitness> getCollisions() {
+            List<ContextQualification.CollisionWitness> result =
+                    new ArrayList<ContextQualification.CollisionWitness>();
+            Set<String> seen = new LinkedHashSet<String>();
+            for (ContextQualification qualification
+                    : new ContextQualification[] {
+                            leftOverRight, rightOverLeft }) {
+                for (ContextQualification.CollisionWitness witness
+                        : qualification.getCollisions()) {
+                    if (seen.add(collisionKey(witness))) {
+                        result.add(witness);
+                    }
+                }
+            }
+            return Collections.unmodifiableList(result);
         }
 
         CompatibilityCertificate getCertificate() {

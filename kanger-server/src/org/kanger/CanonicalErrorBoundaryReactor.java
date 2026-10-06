@@ -5,6 +5,7 @@
  */
 package org.kanger;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.kanger.account.AccountErrorCode;
 import org.kanger.account.PendingRegistrationException;
@@ -72,6 +73,16 @@ final class CanonicalErrorBoundaryReactor implements IReactor<JSONObject> {
             String action = failure.getRequiredAction();
             if (action != null && !action.isEmpty()) {
                 result.put("required_action", action);
+            }
+            if (!failure.getCollisions().isEmpty()) {
+                JSONArray collisions = new JSONArray();
+                for (ContextQualification.CollisionWitness witness
+                        : failure.getCollisions()) {
+                    collisions.put(new JSONObject()
+                            .put("left", witness.getLeft())
+                            .put("right", witness.getRight()));
+                }
+                result.put("collisions", collisions);
             }
             return withFailureWorkspace(packet, result);
         } catch (TransactionSettlementException failure) {

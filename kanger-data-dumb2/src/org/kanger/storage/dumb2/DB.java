@@ -344,14 +344,17 @@ public final class DB implements IData, IContextFederation {
                             connection));
         }
 
-        if (!PairQualification.qualifyComposition(
-                context.getLocation(),
-                sourceRef.getRevision(),
-                prepared)) {
+        PairQualification.CompositionQualification composition =
+                PairQualification.qualifyCompositionState(
+                        context.getLocation(),
+                        sourceRef.getRevision(),
+                        prepared);
+        if (!composition.isValid()) {
             throw new StorageLifecycleException(
                     StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
                     "Declarative source dependencies fail direct multi-context composition qualification for "
-                            + sourceRef);
+                            + sourceRef,
+                    composition.getCollisions());
         }
 
         sortSourceDependencies(projected);
@@ -410,14 +413,17 @@ public final class DB implements IData, IContextFederation {
             }
         }
 
-        if (!PairQualification.qualifyComposition(
-                context.getLocation(),
-                sourceRef.getRevision(),
-                vector)) {
+        PairQualification.CompositionQualification composition =
+                PairQualification.qualifyCompositionState(
+                        context.getLocation(),
+                        sourceRef.getRevision(),
+                        vector);
+        if (!composition.isValid()) {
             throw new StorageLifecycleException(
                     StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
                     "Declarative source dependencies fail direct multi-context composition qualification for "
-                            + sourceRef);
+                            + sourceRef,
+                    composition.getCollisions());
         }
 
         for (ContextConnection connection

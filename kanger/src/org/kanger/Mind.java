@@ -164,6 +164,7 @@ public class Mind implements IMind {
     private Compiller compiler = null;                                   // Компилятор
     private Linker linker = null;                                         // Линкер
     private LinkerStatistics lastLinkerStatistics = new LinkerStatistics();
+    private ContextQualification lastCompileQualification = null;
 
     private boolean changed = false;
     private Boolean queryResult = null;
@@ -901,6 +902,7 @@ public class Mind implements IMind {
     }
 
     public boolean compile(String src, Object[] ext, boolean logging) throws Exception {
+        lastCompileQualification = null;
         ContextSourceMetadata.Parsed sourceMetadata =
                 ContextSourceMetadata.parse(src);
         IContextFederation sourceFederation = null;
@@ -963,6 +965,10 @@ public class Mind implements IMind {
 
             m.link(null, logging);
             Boolean ar = m.analyze(null, logging);
+            lastCompileQualification =
+                    new ContextQualification(
+                            !Boolean.TRUE.equals(ar),
+                            m.analyzer.getCollisionWitnesses());
 
             if (ar) {
                 if (logging) {
@@ -1560,6 +1566,10 @@ public class Mind implements IMind {
             tempHypothesis.clear();
         }
         return result;
+    }
+
+    public ContextQualification getLastCompileQualification() {
+        return lastCompileQualification;
     }
 
     public Boolean queryCheck(boolean logging) throws Exception {
