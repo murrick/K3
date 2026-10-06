@@ -461,8 +461,9 @@ the switch.
 
 An already-existing conflict between autonomous direct Contexts does not freeze
 an unrelated working repin; such foreign truth conflicts remain observable as
-`CONFLICT` through `ctx query`. Existing conflicts may disappear, but a
-repin may not add a new collision witness. If qualification fails, the old
+`CONFLICT` through the ordinary federated query path (and can be traced with
+`ctx explain`). Existing conflicts may disappear, but a repin may not add a
+new collision witness. If qualification fails, the old
 working pin remains authoritative. There is no `FOLLOW_HEAD` mode.
 
 Durable topology publication is a separate revision/publication boundary; these
@@ -519,28 +520,11 @@ The projection reports the selected exact revision, final truth, user-readable
 Values and provisional hypotheses. The query is diagnostic: it does not mutate
 the initiating Context or publish foreign state.
 
-### `ctx query <query...>`
-
-Runs one diagnostic federated KANGER query through the proven frontier-driven
-federation engine.
-
-Example:
-
-```text
-ctx query ?male(Tom);
-ctx query ?$x son(John, x);
-```
-
-The projection reports resolved/unresolved state, federation waves, aggregate
-`TRUE`/`FALSE`/`UNKNOWN`/`CONFLICT` observations, exact source
-Context/revision provenance using human-readable locators, and provisional
-foreign hypotheses when present.
-
-Ordinary bare `?...` remains the canonical query surface: with no direct
+Ordinary bare `?...` is the canonical query surface: with no direct
 connections it preserves historical local-only behavior; with a non-empty
 ConnectionVector it continues unresolved FALSE/TRUE passes through exact-pinned
-direct Contexts. `ctx query` is the temporary developer diagnostic projection
-of that federation path. Foreign evidence remains operation-local and is not
+direct Contexts. Use `ctx explain ?...` when the same normal federated query
+needs a semantic trace. Foreign evidence remains operation-local and is not
 published into the source Context.
 
 ---

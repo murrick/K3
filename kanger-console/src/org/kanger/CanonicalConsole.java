@@ -357,7 +357,6 @@ public final class CanonicalConsole {
             case CTX_VERSION:
             case CTX_EXPLAIN:
             case CTX_ISOLATED_QUERY:
-            case CTX_QUERY:
                 CanonicalCommandProcessor.Result federation =
                         COMMAND_PROCESSOR.execute(invocation, mind.getUser());
                 if (!federation.isHandled()

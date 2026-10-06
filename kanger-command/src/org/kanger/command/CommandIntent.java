@@ -63,7 +63,6 @@ public enum CommandIntent {
     CTX_VERSION,
     CTX_EXPLAIN,
     CTX_ISOLATED_QUERY,
-    CTX_QUERY,
 
     STATUS,
     TIMEZONE,

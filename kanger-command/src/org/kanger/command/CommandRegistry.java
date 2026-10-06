@@ -329,10 +329,6 @@ public final class CommandRegistry {
                 "Execute one local-only diagnostic query in X or one exact-pinned direct Context.",
                 args("locator", "Current Context or direct connected Context locator.",
                         "query", "KANGER query beginning with ?."), n++);
-        define(CommandIntent.CTX_QUERY, "ctx query <query...>", "CONTEXT",
-                "Execute one operation-local federated query for M3 diagnostics.",
-                args("query", "KANGER query beginning with ?."), n++);
-
         define(CommandIntent.STATUS,
                 "status [core [objects|transaction|levels]|storage|session|runtime]",
                 "STATUS",

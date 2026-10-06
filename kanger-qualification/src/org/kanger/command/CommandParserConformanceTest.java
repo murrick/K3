@@ -404,14 +404,6 @@ public final class CommandParserConformanceTest {
                         explain.getArgument("query")),
                 "ctx explain preserves KANGER source");
 
-        CommandInvocation query =
-                parser.parse("ctx query ?$x son(John, x);");
-        check(query.getIntent() == CommandIntent.CTX_QUERY,
-                "ctx query intent");
-        check("?$x son(John, x);".equals(
-                        query.getArgument("query")),
-                "ctx query preserves KANGER source");
-
         reject("ctx connect", MISSING_ARGUMENT);
         reject("ctx disconnect", MISSING_ARGUMENT);
         reject("ctx switch A",
@@ -521,8 +513,6 @@ public final class CommandParserConformanceTest {
         expectCanonical(
                 "ctx \"test context\" ?$x son(John, x);",
                 "ctx \"test context\" ?$x son(John, x);");
-        expectCanonical("ctx query ?$x son(John, x);",
-                "ctx query ?$x son(John, x);");
         expectCanonical("g", "get");
         expectCanonical("de", "delete");
         expectCanonical("g foo", "get foo.k");
@@ -615,8 +605,6 @@ public final class CommandParserConformanceTest {
                 "help contains Context explain syntax");
         check(help.contains("ctx <locator> <query...>"),
                 "help contains isolated Context query syntax");
-        check(help.contains("ctx query <query...>"),
-                "help contains federated query diagnostic syntax");
     }
 
     private void expect(String source, CommandIntent intent) throws Exception {

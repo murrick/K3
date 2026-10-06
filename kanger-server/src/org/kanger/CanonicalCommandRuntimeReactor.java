@@ -117,7 +117,6 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             case CTX_VERSION:
             case CTX_EXPLAIN:
             case CTX_ISOLATED_QUERY:
-            case CTX_QUERY:
                 result = executeShared(invocation, user);
                 break;
             case HELP:

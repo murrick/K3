@@ -55,8 +55,7 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.CTX_SWITCH
                 || intent == CommandIntent.CTX_VERSION
                 || intent == CommandIntent.CTX_EXPLAIN
-                || intent == CommandIntent.CTX_ISOLATED_QUERY
-                || intent == CommandIntent.CTX_QUERY;
+                || intent == CommandIntent.CTX_ISOLATED_QUERY;
     }
 
     public Result execute(CommandInvocation invocation, IUser user) throws Exception {
@@ -276,21 +275,6 @@ public final class CanonicalCommandProcessor {
                         "Context query: " + locator,
                         federation.federationSnapshot(),
                         query);
-            }
-
-            case CTX_QUERY: {
-                IContextFederation federation =
-                        contextFederation(user, mind);
-                IContextFederation.QueryResult query =
-                        federation.executeFederatedQuery(
-                                String.valueOf(
-                                        invocation.getArgument("query")));
-                return Result.successFederation(
-                        mind,
-                        query.isResolved()
-                                ? "Federated query resolved"
-                                : "Federated query unresolved",
-                        federation.federationSnapshot(), query);
             }
 
             default:

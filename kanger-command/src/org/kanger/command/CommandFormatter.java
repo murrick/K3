@@ -136,9 +136,6 @@ public final class CommandFormatter {
                         + argument(invocation.getArgument("locator"))
                         + " "
                         + rawQuery(invocation.getArgument("query"));
-            case CTX_QUERY:
-                return "ctx query " + rawQuery(invocation.getArgument("query"));
-
             case ERASE:
                 return "erase";
             case HELP:

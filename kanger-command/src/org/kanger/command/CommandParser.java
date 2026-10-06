@@ -63,10 +63,6 @@ public final class CommandParser {
             return parseValuesOrder(line);
         }
         if (family == Family.CONTEXT && prefix.size() > 1
-                && resolvesTo(family, prefix.get(1).value, Keyword.QUERY)) {
-            return parseContextQuery(line);
-        }
-        if (family == Family.CONTEXT && prefix.size() > 1
                 && resolvesTo(family, prefix.get(1).value, Keyword.EXPLAIN)) {
             return parseContextExplain(line);
         }
@@ -423,7 +419,7 @@ public final class CommandParser {
                     Family.CONTEXT, tokens.get(1).value,
                     Keyword.CONNECT, Keyword.DISCONNECT,
                     Keyword.SWITCH, Keyword.VERSION,
-                    Keyword.EXPLAIN, Keyword.QUERY);
+                    Keyword.EXPLAIN);
         } catch (CommandParseException rejected) {
             if (rejected.getReason() == AMBIGUOUS_PREFIX) {
                 throw rejected;
@@ -471,9 +467,6 @@ public final class CommandParser {
             case EXPLAIN:
                 throw error(MISSING_ARGUMENT,
                         "ctx explain requires a KANGER query");
-            case QUERY:
-                throw error(MISSING_ARGUMENT,
-                        "ctx query requires a KANGER query");
             default:
                 throw error(INVALID_GRAMMAR, "Invalid ctx action");
         }
@@ -497,27 +490,6 @@ public final class CommandParser {
         }
         return CommandInvocation.command(
                 CommandIntent.CTX_EXPLAIN,
-                args("query", query), raw);
-    }
-
-    private CommandInvocation parseContextQuery(String raw)
-            throws CommandParseException {
-        List<Token> prefix = tokenize(raw, 2, false);
-        if (prefix.size() < 2) {
-            throw error(MISSING_ARGUMENT,
-                    "ctx query requires a KANGER query");
-        }
-        String query = tailAfter(raw, prefix.get(1).end);
-        if (query.isEmpty()) {
-            throw error(MISSING_ARGUMENT,
-                    "ctx query requires a KANGER query");
-        }
-        if (query.charAt(0) != '?') {
-            throw error(INVALID_ARGUMENT_SHAPE,
-                    "ctx query requires a query beginning with ?");
-        }
-        return CommandInvocation.command(
-                CommandIntent.CTX_QUERY,
                 args("query", query), raw);
     }
 
