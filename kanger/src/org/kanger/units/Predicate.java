@@ -71,6 +71,9 @@ import java.util.Set;
  */
 public class Predicate implements IUnit<Predicate>, IPredicate {
 
+    private static final boolean FRESH_STRING_NAME =
+            Boolean.getBoolean("kanger.experiment.freshPredicateName");
+
     private static final long serialVersionUID = 196402070004L;
 
     private long id = -1;
@@ -133,7 +136,13 @@ public class Predicate implements IUnit<Predicate>, IPredicate {
         if (name == null) {
             name = mind.getTerms().get(nameId);
         }
-        return name.getValue() + "";
+        Object value = name.getValue();
+        // Keep a separate result object while sharing immutable String storage.
+        // Empty concatenation has JDK-specific identity behavior: retain it.
+        if (FRESH_STRING_NAME && value instanceof String && !((String) value).isEmpty()) {
+            return new String((String) value);
+        }
+        return value + "";
     }
 
     /** Sets the stable name reference; it does not change assertion membership. */
