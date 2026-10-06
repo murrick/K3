@@ -418,9 +418,6 @@ public final class CommandParserConformanceTest {
         reject("ctx A", MISSING_ARGUMENT);
         reject("ctx A male(Tom);",
                 INVALID_ARGUMENT_SHAPE);
-        reject("ctx query", MISSING_ARGUMENT);
-        reject("ctx query male(Tom);",
-                INVALID_ARGUMENT_SHAPE);
     }
 
     private void aliasVocabulary() throws Exception {

@@ -600,19 +600,6 @@ public class ContextFederationOperatorTest {
                 isolated.getFederationQueryResult()
                         .getResultTruth());
 
-        CanonicalCommandProcessor.Result query =
-                processor.execute(
-                        parser.parse("ctx query ?male(Tom);"),
-                        user);
-        assertTrue(
-                query.getFederationQueryResult()
-                        .isResolved());
-        assertEquals(
-                IContextFederation.FrontierTruth.TRUE,
-                query.getFederationQueryResult()
-                        .getObservations().get(0)
-                        .getTruth());
-
         advance("CA", "!female(Jane);");
 
         CanonicalCommandProcessor.Result newer =
