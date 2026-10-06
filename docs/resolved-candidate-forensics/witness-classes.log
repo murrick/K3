@@ -1,0 +1,4 @@
+RESOLVED_WITNESS mode=0 reference=retained:root-a shortcut=retained:child-b
+RESOLVED_WITNESS mode=1 reference=retained:root-a shortcut=retained:child-b
+RESOLVED_WITNESS mode=2 reference=retained:root-a shortcut=retained:child-b
+RESOLVED_CANDIDATE_WITNESS_OK scenarios=3 checks=35

@@ -1,0 +1,13 @@
+[
+  "org/kanger/Linker$1.class",
+  "org/kanger/Linker$2.class",
+  "org/kanger/Linker$3.class",
+  "org/kanger/Linker$4.class",
+  "org/kanger/Linker.class",
+  "org/kanger/factory/RuleCandidateIndex.class",
+  "org/kanger/factory/RuleFactory$1.class",
+  "org/kanger/factory/RuleFactory.class",
+  "org/kanger/units/Domain.class",
+  "org/kanger/units/Rule.class",
+  "org/kanger/units/TVariable.class"
+]

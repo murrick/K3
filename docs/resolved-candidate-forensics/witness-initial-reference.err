@@ -1,0 +1,4 @@
+Exception in thread "main" java.lang.AssertionError: final variable context
+	at org.kanger.ResolvedCandidateWitness.check(ResolvedCandidateWitness.java:15)
+	at org.kanger.ResolvedCandidateWitness.run(ResolvedCandidateWitness.java:53)
+	at org.kanger.ResolvedCandidateWitness.main(ResolvedCandidateWitness.java:60)

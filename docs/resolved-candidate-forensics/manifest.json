@@ -1,0 +1,130 @@
+{
+  "docs/resolved-candidate-forensics.md": {
+    "sha256": "f50c27e5f57d77fc02f1b8ed18004b6aa0b44f1b287beb2d7eb0fb740ce56624",
+    "bytes": 9977
+  },
+  "docs/remaining-optimization-directions.md": {
+    "sha256": "c115c406ec236c2de74cb0abe3cddfd40251a37f76c77f0e14722d28af943050",
+    "bytes": 4260
+  },
+  "docs/resolved-candidate-forensics/ResolvedCandidateProfile.java": {
+    "sha256": "947e200afefc73e99fed03d399feebe9e9509e75a8c9039bfcc4422973f50ad9",
+    "bytes": 4863
+  },
+  "docs/resolved-candidate-forensics/ResolvedCandidateProfileRunner.java": {
+    "sha256": "f6099c0bfdf6b967f1aeefa3c37a64393b1c06e1d5656e2da69558489eae177b",
+    "bytes": 6146
+  },
+  "docs/resolved-candidate-forensics/ResolvedCandidateWitness.java": {
+    "sha256": "431a0bcd221c85398f8d449fff194bb287a0e20ae2825b262c1346ef67112ff7",
+    "bytes": 4358
+  },
+  "docs/resolved-candidate-forensics/analyze.py": {
+    "sha256": "4ce683df518382d9b5e094a9900a7f278055d5fdbdac03acca69a838c5cdebd5",
+    "bytes": 4282
+  },
+  "docs/resolved-candidate-forensics/build.py": {
+    "sha256": "8257703df4bcb2f4f812604278819950aa051fefa2dfc21f5c276dabdab287c7",
+    "bytes": 8377
+  },
+  "docs/resolved-candidate-forensics/class-differences.json": {
+    "sha256": "1b72b8800893c4e130f4b33e7785212c69ec3c9b2e7ed95b0213ae0ad9f5a6a1",
+    "bytes": 397
+  },
+  "docs/resolved-candidate-forensics/classes-class-sha256.json": {
+    "sha256": "d7cc218d56639967b5b67fe8863329c5490bdfafd9854d3a9eba25778005e501",
+    "bytes": 77534
+  },
+  "docs/resolved-candidate-forensics/clean.err": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "docs/resolved-candidate-forensics/clean.log.gz": {
+    "sha256": "7d0c005fd3ddb9eeb9d5df1697f392c9197063d1fa86030414db987288b9f5b2",
+    "bytes": 555
+  },
+  "docs/resolved-candidate-forensics/columns.json": {
+    "sha256": "65f36ea9d0be3b15afadb9844ea97f3926d9a0679fa076507b85d3d48c964ae2",
+    "bytes": 669
+  },
+  "docs/resolved-candidate-forensics/expected.json": {
+    "sha256": "dd2cc2dcf68182272588b593fb5efdcdee797ede03a2ab174d3ae66cb6e54d11",
+    "bytes": 605
+  },
+  "docs/resolved-candidate-forensics/instrumentation.patch": {
+    "sha256": "787c96f375a74cc672c939a6d8a23daba0d222557b787c8163d22ea6a6ff3878",
+    "bytes": 4165
+  },
+  "docs/resolved-candidate-forensics/profile-1.err": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "docs/resolved-candidate-forensics/profile-1.log.gz": {
+    "sha256": "fa4388c7ffb06583d85dd1873f6c3192f65b8e8a022a8c08408e938268d641c1",
+    "bytes": 3434
+  },
+  "docs/resolved-candidate-forensics/profile-2.err": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "docs/resolved-candidate-forensics/profile-2.log.gz": {
+    "sha256": "fa4558b355bbb3a8716a5f83304445ad59d6bf9337bdaac300de2ff4d678abf0",
+    "bytes": 3430
+  },
+  "docs/resolved-candidate-forensics/progress.log": {
+    "sha256": "9834fe8cef3355df68d86d20a26b909a7cf961c72415294d28aa5d51267e25e0",
+    "bytes": 98
+  },
+  "docs/resolved-candidate-forensics/reference-class-sha256.json": {
+    "sha256": "b29438ad43304f60cbea82fafd75a78f56bbca904484dbfaa583316a3caff294",
+    "bytes": 77048
+  },
+  "docs/resolved-candidate-forensics/run.py": {
+    "sha256": "fb34e85e97387d9e3e9718c18e0f7b867e09beee6bf5de33c28d3705f997ca77",
+    "bytes": 1444
+  },
+  "docs/resolved-candidate-forensics/sources.txt": {
+    "sha256": "dd585140bcaba1ef6ddebba8efc579e71e1de857ea698dedb7d8238f83a0a427",
+    "bytes": 21250
+  },
+  "docs/resolved-candidate-forensics/summary.json": {
+    "sha256": "ce3b07dbf4330bf1f167d478b8881465714c61bc815390aed7ef0acdbf00b1ff",
+    "bytes": 65555
+  },
+  "docs/resolved-candidate-forensics/witness-class-sha256.json": {
+    "sha256": "f883d9cd5686ca3d9e16c9f7d32da62eba0df33dff593a9950c54594de2a88ed",
+    "bytes": 167
+  },
+  "docs/resolved-candidate-forensics/witness-classes.err": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "docs/resolved-candidate-forensics/witness-classes.log": {
+    "sha256": "9b033c333b7436bf332a23ddfba3c2e7cf833b619da5c5d6249c6b33a38d4885",
+    "bytes": 280
+  },
+  "docs/resolved-candidate-forensics/witness-correction.md": {
+    "sha256": "e788c0b92ccdf8c0a1c8f78a1c5a63877cdb7b4d306dca13c7f41a6210cfad43",
+    "bytes": 497
+  },
+  "docs/resolved-candidate-forensics/witness-initial-reference.err": {
+    "sha256": "0a506f734a701f91e91dda7174607b1fcf1e057d1d1b454003c94a53fac3d0be",
+    "bytes": 313
+  },
+  "docs/resolved-candidate-forensics/witness-initial-reference.log": {
+    "sha256": "e7d63c050d4748d648c1e1fce922bf5160a8accfd14de37865622bd5f1c1883b",
+    "bytes": 76
+  },
+  "docs/resolved-candidate-forensics/witness-reference.err": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "docs/resolved-candidate-forensics/witness-reference.log": {
+    "sha256": "9b033c333b7436bf332a23ddfba3c2e7cf833b619da5c5d6249c6b33a38d4885",
+    "bytes": 280
+  },
+  "docs/resolved-candidate-forensics/witness.py": {
+    "sha256": "0e439c578ef2ffaf1ab08adb6c0ae74d6a422111409927655dacf0666f44e3da",
+    "bytes": 1079
+  }
+}

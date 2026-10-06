@@ -1,0 +1,95 @@
+--- a/kanger/src/org/kanger/Linker.java
++++ b/kanger/src/org/kanger/Linker.java
+@@ -378,0 +379,2 @@
++        org.kanger.ResolvedCandidateProfile.Frame profile = org.kanger.ResolvedCandidateProfile.select();
++        try {
+@@ -379,0 +382,2 @@
++            org.kanger.ResolvedCandidateProfile.add(1, 1);
++            org.kanger.ResolvedCandidateProfile.selected();
+@@ -385,0 +390,2 @@
++            org.kanger.ResolvedCandidateProfile.add(2, 1);
++            org.kanger.ResolvedCandidateProfile.selected();
+@@ -388,0 +395 @@
++        org.kanger.ResolvedCandidateProfile.bucket(candidates.size(), slave);
+@@ -391,0 +399,2 @@
++            org.kanger.ResolvedCandidateProfile.add(9, 1);
++            org.kanger.ResolvedCandidateProfile.selected();
+@@ -397 +406 @@
+-            allowedIds.add(candidate.getId());
++            allowedIds.add(org.kanger.ResolvedCandidateProfile.allowed(candidate.getId()));
+@@ -401 +410 @@
+-            if (allowedIds.contains(candidate.getId())) {
++            if (allowedIds.contains(org.kanger.ResolvedCandidateProfile.bucketId(candidate.getId()))) {
+@@ -403,2 +412,4 @@
+-            }
+-        }
++                org.kanger.ResolvedCandidateProfile.filtered();
++            }
++        }
++        org.kanger.ResolvedCandidateProfile.selected();
+@@ -405,0 +417 @@
++        } finally { org.kanger.ResolvedCandidateProfile.end(profile); }
+@@ -741,0 +754 @@
++                    org.kanger.ResolvedCandidateProfile.add(31, 1);
+@@ -745,0 +759 @@
++                                org.kanger.ResolvedCandidateProfile.add(32, 1);
+@@ -746,0 +761 @@
++                                org.kanger.ResolvedCandidateProfile.add(33, 1);
+--- a/kanger/src/org/kanger/units/Domain.java
++++ b/kanger/src/org/kanger/units/Domain.java
+@@ -561,0 +562 @@
++        org.kanger.ResolvedCandidateProfile.binding(1);
+--- a/kanger/src/org/kanger/units/Rule.java
++++ b/kanger/src/org/kanger/units/Rule.java
+@@ -386,0 +387 @@
++        org.kanger.ResolvedCandidateProfile.binding(0);
+--- a/kanger/src/org/kanger/units/TVariable.java
++++ b/kanger/src/org/kanger/units/TVariable.java
+@@ -323,0 +324 @@
++        org.kanger.ResolvedCandidateProfile.binding(2);
+--- a/kanger/src/org/kanger/factory/RuleFactory.java
++++ b/kanger/src/org/kanger/factory/RuleFactory.java
+@@ -485,0 +486,2 @@
++        org.kanger.ResolvedCandidateProfile.enterCollect();
++        try {
+@@ -490,0 +493 @@
++        } finally { org.kanger.ResolvedCandidateProfile.leaveCollect(); }
+@@ -498,0 +502,4 @@
++        org.kanger.ResolvedCandidateProfile.add(3, 1);
++        if (getClass() == RuleFactory.class) org.kanger.ResolvedCandidateProfile.add(28, 1);
++        boolean completed = false;
++        try {
+@@ -500,0 +508 @@
++        org.kanger.ResolvedCandidateProfile.ids(ids.size());
+@@ -503 +511 @@
+-            IRule rule = get(id);
++            IRule rule = org.kanger.ResolvedCandidateProfile.lookup(this, id, 1);
+@@ -506,2 +514,6 @@
+-            }
+-        }
++                org.kanger.ResolvedCandidateProfile.returned();
++            } else if (rule != null) {
++                org.kanger.ResolvedCandidateProfile.add(7, 1);
++            }
++        }
++        completed = true;
+@@ -508,0 +521 @@
++        } finally { if (!completed) org.kanger.ResolvedCandidateProfile.add(30, 1); }
+--- a/kanger/src/org/kanger/factory/RuleCandidateIndex.java
++++ b/kanger/src/org/kanger/factory/RuleCandidateIndex.java
+@@ -518 +518 @@
+-            Rule candidate = (Rule) activeMind.getRules().get(id);
++            Rule candidate = (Rule) org.kanger.ResolvedCandidateProfile.lookup(activeMind.getRules(), id, 2);
+@@ -539,0 +540 @@
++        org.kanger.ResolvedCandidateProfile.add(14, 1);
+@@ -561,0 +563 @@
++            org.kanger.ResolvedCandidateProfile.add(15, selected.size());
+@@ -604,0 +607 @@
++        org.kanger.ResolvedCandidateProfile.add(16, selected.size());
+@@ -605,0 +609,2 @@
++            org.kanger.ResolvedCandidateProfile.add(17, 1);
++            org.kanger.ResolvedCandidateProfile.add(summary == null ? 19 : 18, 1);
+@@ -633,0 +639 @@
++            int beforeBatch = selected.size();
+@@ -634,0 +641 @@
++            org.kanger.ResolvedCandidateProfile.add(22, beforeBatch - selected.size());
