@@ -341,6 +341,7 @@ final class FrontierContinuationEngine {
                         queryRuleId,
                         frontierTrace,
                         observations,
+                        injections,
                         provisionalHypotheses);
             }
 
@@ -359,6 +360,7 @@ final class FrontierContinuationEngine {
                         queryRuleId,
                         frontierTrace,
                         observations,
+                        injections,
                         provisionalHypotheses);
             }
             if (query.getId() != queryRuleId) {
