@@ -32,13 +32,16 @@ public class FrontierFanOutSemanticLiftTest {
         ContextFixture b =
                 context("B", "!age(Tom,42);");
 
-        ConnectionManager.connect(
-                x.location, a.location);
-        ConnectionManager.connect(
-                x.location, b.location);
+        ConnectionVector working =
+                ConnectionVector.empty()
+                        .with(ConnectionManager.qualifyConnect(
+                                x.location, a.location))
+                        .with(ConnectionManager.qualifyConnect(
+                                x.location, b.location));
 
         OperationSnapshot operation =
-                OperationSnapshot.open(x.location);
+                OperationSnapshot.open(
+                        x.location, working);
         FrontierLiftSession lift = null;
         try {
             FrontierDomain frontier =
@@ -90,11 +93,14 @@ public class FrontierFanOutSemanticLiftTest {
         ContextFixture a =
                 context("A2", "!code(Tom,'42');");
 
-        ConnectionManager.connect(
-                x.location, a.location);
+        ConnectionVector working =
+                ConnectionVector.empty()
+                        .with(ConnectionManager.qualifyConnect(
+                                x.location, a.location));
 
         OperationSnapshot operation =
-                OperationSnapshot.open(x.location);
+                OperationSnapshot.open(
+                        x.location, working);
         FrontierLiftSession lift = null;
         try {
             List<FrontierAnswer> answers =
