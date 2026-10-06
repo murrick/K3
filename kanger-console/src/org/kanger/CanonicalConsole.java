@@ -874,7 +874,80 @@ public final class CanonicalConsole {
                         if (!first) {
                             line.append(", ");
                         }
-                        line.append('
+                        line.append('$')
+                                .append(binding.getKey())
+                                .append(" <- ")
+                                .append(binding.getValue());
+                        first = false;
+                    }
+                }
+                if (!injection.getSupports().isEmpty()) {
+                    line.append("  [");
+                    boolean first = true;
+                    for (IContextFederation.Revision support
+                            : injection.getSupports()) {
+                        if (!first) {
+                            line.append(", ");
+                        }
+                        line.append(
+                                contextLocator(
+                                        snapshot,
+                                        support.getContextId()))
+                                .append('@')
+                                .append(
+                                        support.getRevision());
+                        first = false;
+                    }
+                    line.append(']');
+                }
+                System.out.println(line.toString());
+            }
+
+            System.out.printf(
+                    "  continuation X: %s, waves=%d, evidence=%d%n",
+                    continuation.isResolved()
+                            ? "RESOLVED"
+                            : "UNRESOLVED",
+                    continuation.getWaves(),
+                    continuation.getEvidenceCount());
+        }
+
+        System.out.println(
+                "Final: " + explain.getFinalTruth());
+
+        if (!explain.getValues().isEmpty()) {
+            System.out.println("Values:");
+            for (IContextFederation.ValueRow row
+                    : explain.getValues()) {
+                StringBuilder line =
+                        new StringBuilder("  ");
+                boolean first = true;
+                for (java.util.Map.Entry<String, String> binding
+                        : row.getBindings().entrySet()) {
+                    if (!first) {
+                        line.append(", ");
+                    }
+                    line.append('$')
+                            .append(binding.getKey())
+                            .append(" <- ")
+                            .append(binding.getValue());
+                    first = false;
+                }
+                System.out.println(line.toString());
+            }
+        }
+
+        if (!explain.getSolutions().isEmpty()) {
+            System.out.println("Solutions:");
+            for (String solution
+                    : explain.getSolutions()) {
+                System.out.println(
+                        "  " + solution);
+            }
+        }
+    }
+
+    private static void showContextVersion(
             IContextFederation.VersionHistory history) {
         if (history == null) {
             return;
