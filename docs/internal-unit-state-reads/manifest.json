@@ -12,7 +12,7 @@
     "OFF": 0,
     "ON": 17573710
   },
-  "ci": "queued; cross-JDK validation pending",
+  "ci": "all five workflows / 20 jobs passed on code checkpoint; Java 8/21/26 qualification passed",
   "sha256": {
     "CompactFindSnapshotsRunner-false.err": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "CompactFindSnapshotsRunner-false.log": "ba9a2569019660775bc9655cd86e79abf62801e1c661ed0e6ad45d6cd824c081",
@@ -50,8 +50,35 @@
     "TValueIndexReopenRunner-false.log": "f048d86b1eacbafd6861d74a9217839d71aecb93fe700b4623d7c3eb503d76d4",
     "TValueIndexReopenRunner-true.err": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "TValueIndexReopenRunner-true.log": "f048d86b1eacbafd6861d74a9217839d71aecb93fe700b4623d7c3eb503d76d4",
+    "benchmark/ClosedMapMutationWitness.java": "b5b7963ca40e7d5d7ad13d187e1bed91ffdb5ba91522a9448f6a1f40dfb055b1",
+    "benchmark/analyze.py": "940a7c5dc872acf3af68dca14078cde1b8cf5bb7141c942186e2dfbc25bee411",
+    "benchmark/benchmark-summary.json": "a903a865838dbc476e4281a8f3ce78927b81e0c945456d2bd0468c32279b2766",
+    "benchmark/binding-1-reference.err": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "benchmark/binding-1-reference.log": "a363e450d4d20b85c4b531fe6bf9cd1139885db4641f1485f1bd6672b605f3e5",
+    "benchmark/binding-2-false.err": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "benchmark/binding-2-false.log": "a410ad92862d9aa28403cd32f73eecb10becf5f2be5f4345c7b8446e036e1c17",
+    "benchmark/binding-3-true.err": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "benchmark/binding-3-true.log": "73406fe22c91c20d903a87b1c9c76bed2cf9f9bf900da38cc3c58c0909321561",
+    "benchmark/binding-4-true.err": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "benchmark/binding-4-true.log": "614ab306456f366c36c43530eecae1692150c5ba1cdf240c372e927823cd387f",
+    "benchmark/binding-5-false.err": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "benchmark/binding-5-false.log": "3f56a38eacf54946e1f39374fd96a5622c8d8563683da114694c982aa050116a",
+    "benchmark/binding-6-reference.err": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "benchmark/binding-6-reference.log": "a21d206377a83226cfb5e713de58868f97e9ea65b902de4997fcb792cc4b46cb",
+    "benchmark/build-reference.py": "2c651200556b467701518aafd012cdb6a2acfa541106d6b6889fe309702972ef",
+    "benchmark/class-sha256.json": "ec6907aa2b66183d2be3451d155f0062fe8dc9d88058e61dd3109e688cdc180a",
+    "benchmark/expected.json": "dd2cc2dcf68182272588b593fb5efdcdee797ede03a2ab174d3ae66cb6e54d11",
+    "benchmark/mutation-witness-false.err": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "benchmark/mutation-witness-false.log": "2b5016fd6d60b9b5d3d47754d0effefc069ca036df579bbe76d6a5cc55d6dab6",
+    "benchmark/mutation-witness-true.err": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "benchmark/mutation-witness-true.log": "2b5016fd6d60b9b5d3d47754d0effefc069ca036df579bbe76d6a5cc55d6dab6",
+    "benchmark/progress.err": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "benchmark/progress.log": "b1e5436de6d133189d49f32d844decdf0d581ab7929152dfe0d1794251f5e9c8",
+    "benchmark/run-benchmark.py": "e4be2d34e8d21c1ce6aa04fe0f96219e4e50000354308aad9a72fa22b17a19e4",
+    "benchmark/run-mutation-witness.py": "cde41863ccae31b15b36064b7796cdf18c48b54495facb6f7e7962deddf7f795",
+    "benchmark/summary.txt": "3074c19d5b353bbbf8e3ccac7f7ad061b0726c23be847851e32c4da648319437",
     "build-local.sh": "2880f6d506a62bdb947eea083fb04e423c66744e6e7652f0bf38c938e708b6a3",
-    "ci-status.json": "02a8aa32f3d127af76deedf8aac7bbfeb2139fef5a6325d834d922669fc5aede",
+    "ci-status.json": "bc40a8d9ea74cbf92af3256070bbbf007c2b26c757e3c8d43ac9bea59d4b28bf",
     "guard-profile/DeletionCallerCounters.java": "4d385de9762e861d56758992afcf84482b6088dd2867d5d773aa7ee3b81889cb",
     "guard-profile/DeletionCallerProfileRunner.java": "cd73530642d8b236d6751eff78a34805a54bb882f291b8d281e1ec2d1ba5b755",
     "guard-profile/DeletionVisibilityWitness.java": "c6689c117f371b86b739c12345457481dbd12d41b7661dfcf24a505af17179fb",
@@ -86,5 +113,29 @@
     "qualification-progress.err": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "qualification-progress.log": "1998890264c8002f67e42d7f93675b33fe53873ffeb7be3605c3ab86bdc3222e",
     "qualify.py": "a35b16d2489706aed1d3f15e29210fffbdce6f00a5c90390072de1e6b35e3930"
+  },
+  "performance": {
+    "order": [
+      "clean",
+      "OFF",
+      "ON",
+      "ON",
+      "OFF",
+      "clean"
+    ],
+    "samples_per_jvm": 6,
+    "discard_first": 2,
+    "snapshots_equal": 36,
+    "repeatable_benefit_established": false,
+    "summary": "benchmark/benchmark-summary.json"
+  },
+  "closed_map_mutation_witness": {
+    "scenarios": 3,
+    "checks_per_mode": 24,
+    "modes": [
+      "OFF",
+      "ON"
+    ],
+    "production_collector_modified": false
   }
 }

@@ -1,46 +1,173 @@
 {
-  "observed_at": "2026-10-05T20:33:56.603Z",
+  "observed_at": "2026-10-06T05:26:33.104Z",
   "code_commit": "1b9515c74d7ed49fa2473a93c9f0b913854d3a50",
   "runs": [
     {
       "id": 37369798143,
       "name": "KANGER distribution bundle",
-      "status": "queued",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "head_sha": "1b9515c74d7ed49fa2473a93c9f0b913854d3a50",
       "html_url": "https://github.com/murrick/K3/actions/runs/37369798143"
     },
     {
       "id": 37369798294,
       "name": "KANGER CI",
-      "status": "queued",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "head_sha": "1b9515c74d7ed49fa2473a93c9f0b913854d3a50",
       "html_url": "https://github.com/murrick/K3/actions/runs/37369798294"
     },
     {
       "id": 37369798203,
       "name": "KANGER qualification isolation",
-      "status": "queued",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "head_sha": "1b9515c74d7ed49fa2473a93c9f0b913854d3a50",
       "html_url": "https://github.com/murrick/K3/actions/runs/37369798203"
     },
     {
       "id": 37369798184,
       "name": "KANGER Server",
-      "status": "queued",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "head_sha": "1b9515c74d7ed49fa2473a93c9f0b913854d3a50",
       "html_url": "https://github.com/murrick/K3/actions/runs/37369798184"
     },
     {
       "id": 37369798301,
       "name": "Internal unit state reads qualification",
-      "status": "queued",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "head_sha": "1b9515c74d7ed49fa2473a93c9f0b913854d3a50",
       "html_url": "https://github.com/murrick/K3/actions/runs/37369798301"
+    }
+  ],
+  "jobs": [
+    {
+      "id": 37369798143,
+      "jobs": [
+        {
+          "name": "Build and verify product bundle",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 37369798294,
+      "jobs": [
+        {
+          "name": "Maven Java 21 / TValue off",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 8 / TValue solve-verify",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 8 / TValue on",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 21 / TValue verify",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 21 / TValue solve-verify",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 8 / TValue off",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 8 / TValue solve-on",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 8 / TValue verify",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 21 / TValue solve-on",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Maven Java 21 / TValue on",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 37369798203,
+      "jobs": [
+        {
+          "name": "Production surface excludes qualification",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 37369798184,
+      "jobs": [
+        {
+          "name": "Build on Java 8",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build on Java 21",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 37369798301,
+      "jobs": [
+        {
+          "name": "qualification (21, false)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "qualification (8, true)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "qualification (8, false)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "qualification (26, true)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "qualification (21, true)",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "qualification (26, false)",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
     }
   ]
 }
