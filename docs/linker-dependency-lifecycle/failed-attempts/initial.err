@@ -1,0 +1,4 @@
+Exception in thread "main" java.lang.AssertionError: domain alias effect has no continuation flag or TSolve version change
+	at org.kanger.DependencyLifecycleWitness.require(DependencyLifecycleWitness.java:15)
+	at org.kanger.DependencyLifecycleWitness.excludedAlias(DependencyLifecycleWitness.java:94)
+	at org.kanger.DependencyLifecycleWitness.main(DependencyLifecycleWitness.java:26)

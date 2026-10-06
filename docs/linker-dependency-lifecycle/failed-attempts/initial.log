@@ -1,0 +1,3 @@
+NESTED_TVALUE committed_inner_then_released_outer=[base] action=false transient_current=outer surviving_commit=[base,surviving]
+NESTED_FVALUE committed_inner_then_released_outer=baseline action=false transient_result=4.0 baseline_lookup_restored=true
+CURRENT_STAMP registry_unchanged=true domain_marks_unchanged=true action=false tsolve_version_unchanged=true exclusion=[true,false,true] alias=true

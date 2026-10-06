@@ -1,0 +1,15 @@
+{
+  "base": "e84d1748fd7d5b963cc8f5acc89ecfc4a23c0f2d",
+  "production_source_unchanged": true,
+  "shared_prior_classes_identical": 654,
+  "changed_shared_classes": [],
+  "accepted_jvms": 18,
+  "new_native_checks_per_jvm": 49,
+  "new_witness_complete_rows_equal_modes_and_repeats": true,
+  "existing_dependency_checks_per_mode": 31,
+  "donor_scope_checks_per_mode": 88,
+  "transaction_operations_per_mode": 20,
+  "transaction_full_state_equal_across_modes": true,
+  "all_stderr_empty": true,
+  "scope": "native lifecycle witnesses and source audit; no scheduler or event journal installed, no speedup claim"
+}

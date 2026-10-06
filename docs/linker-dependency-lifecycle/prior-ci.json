@@ -1,0 +1,116 @@
+{
+  "commit": "e84d1748fd7d5b963cc8f5acc89ecfc4a23c0f2d",
+  "primary_matrix_jobs": [
+    {
+      "id": 112453386781,
+      "name": "Maven Java 21 / TValue verify",
+      "status": "completed",
+      "conclusion": "success",
+      "donor_scope_gate": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37517292630/job/112453386781"
+    },
+    {
+      "id": 112453386978,
+      "name": "Maven Java 21 / TValue solve-verify",
+      "status": "completed",
+      "conclusion": "success",
+      "donor_scope_gate": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37517292630/job/112453386978"
+    },
+    {
+      "id": 112453387003,
+      "name": "Maven Java 8 / TValue off",
+      "status": "completed",
+      "conclusion": "success",
+      "donor_scope_gate": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37517292630/job/112453387003"
+    },
+    {
+      "id": 112453387057,
+      "name": "Maven Java 21 / TValue solve-on",
+      "status": "completed",
+      "conclusion": "success",
+      "donor_scope_gate": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37517292630/job/112453387057"
+    },
+    {
+      "id": 112453387084,
+      "name": "Maven Java 8 / TValue on",
+      "status": "completed",
+      "conclusion": "success",
+      "donor_scope_gate": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37517292630/job/112453387084"
+    },
+    {
+      "id": 112453387152,
+      "name": "Maven Java 8 / TValue verify",
+      "status": "completed",
+      "conclusion": "success",
+      "donor_scope_gate": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37517292630/job/112453387152"
+    },
+    {
+      "id": 112453387164,
+      "name": "Maven Java 8 / TValue solve-on",
+      "status": "completed",
+      "conclusion": "success",
+      "donor_scope_gate": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37517292630/job/112453387164"
+    },
+    {
+      "id": 112453387180,
+      "name": "Maven Java 21 / TValue off",
+      "status": "completed",
+      "conclusion": "success",
+      "donor_scope_gate": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37517292630/job/112453387180"
+    },
+    {
+      "id": 112453387188,
+      "name": "Maven Java 8 / TValue solve-verify",
+      "status": "completed",
+      "conclusion": "success",
+      "donor_scope_gate": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37517292630/job/112453387188"
+    },
+    {
+      "id": 112453387191,
+      "name": "Maven Java 21 / TValue on",
+      "status": "completed",
+      "conclusion": "success",
+      "donor_scope_gate": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37517292630/job/112453387191"
+    }
+  ],
+  "workflows": [
+    {
+      "id": 37517292682,
+      "name": "KANGER Server",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37517292682"
+    },
+    {
+      "id": 37517292826,
+      "name": "KANGER distribution bundle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37517292826"
+    },
+    {
+      "id": 37517292673,
+      "name": "KANGER qualification isolation",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37517292673"
+    },
+    {
+      "id": 37517292630,
+      "name": "KANGER CI",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/murrick/K3/actions/runs/37517292630"
+    }
+  ],
+  "scope": "CI belongs to the unchanged production baseline; this evidence branch adds documentation and standalone diagnostic sources only."
+}
