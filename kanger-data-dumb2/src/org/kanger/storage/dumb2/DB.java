@@ -344,6 +344,16 @@ public final class DB implements IData, IContextFederation {
                             connection));
         }
 
+        if (!PairQualification.qualifyComposition(
+                context.getLocation(),
+                sourceRef.getRevision(),
+                prepared)) {
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                    "Declarative source dependencies fail direct multi-context composition qualification for "
+                            + sourceRef);
+        }
+
         sortSourceDependencies(projected);
         return new PreparedSourceDependencyPlan(
                 sourceRef,
@@ -366,15 +376,52 @@ public final class DB implements IData, IContextFederation {
                 new RevisionRef(
                         context.getContextId(),
                         context.getRevision());
+
+        ConnectionVector vector = prepared.vector;
         if (!sourceRef.equals(prepared.source)) {
+            /*
+             * A successful Core compile may publish R+1 before declarative
+             * metadata is installed. Rebind the same exact dependency targets
+             * to the actual source revision; never follow target CURRENT.
+             */
+            vector = ConnectionVector.empty();
+            for (IContextFederation.SourceDependency dependency
+                    : prepared.dependencies) {
+                Path targetLocation =
+                        resolveFederationLocator(
+                                dependency.getLocator());
+                ContextConnection connection =
+                        ConnectionManager.qualifyConnect(
+                                context.getLocation(),
+                                targetLocation,
+                                dependency.getRevision());
+                if (!dependency.getContextId().equals(
+                        connection.getTarget().getContextId())) {
+                    throw new StorageLifecycleException(
+                            StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                            "Declarative dependency Context identity changed at "
+                                    + dependency.getLocator()
+                                    + ": expected "
+                                    + dependency.getContextId()
+                                    + " found "
+                                    + connection.getTarget().getContextId());
+                }
+                vector = vector.with(connection);
+            }
+        }
+
+        if (!PairQualification.qualifyComposition(
+                context.getLocation(),
+                sourceRef.getRevision(),
+                vector)) {
             throw new StorageLifecycleException(
                     StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
-                    "Source Context advanced while compiling declarative dependencies: "
-                            + prepared.source + " -> " + sourceRef);
+                    "Declarative source dependencies fail direct multi-context composition qualification for "
+                            + sourceRef);
         }
 
         for (ContextConnection connection
-                : prepared.vector.getConnections()) {
+                : vector.getConnections()) {
             if (!connection.getCertificate().matches(
                     sourceRef,
                     connection.getTarget(),
@@ -386,7 +433,8 @@ public final class DB implements IData, IContextFederation {
                                 + connection.getTarget());
             }
         }
-        workingConnections = prepared.vector;
+
+        workingConnections = vector;
     }
 
     @Override
