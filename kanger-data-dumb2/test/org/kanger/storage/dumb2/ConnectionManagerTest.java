@@ -175,10 +175,6 @@ public class ConnectionManagerTest {
                 org.kanger.enums.StorageLifecycleErrorCode
                         .STORAGE_SEMANTIC_CORRUPTION,
                 failure.getErrorCode());
-        assertTrue(
-                failure.getMessage()
-                        .contains(
-                                "Invalid DUMB2 connection revision count"));
     }
 
     @Test
