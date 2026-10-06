@@ -1,0 +1,6 @@
+{
+  "reason": "Diagnostic oracle wrongly required only writer-1 rollback; original set_08_02 permits writer-2 rollback with the other exact 493-row result. Native test passed, extra oracle failed. Entire incomplete sequence excluded from reported timings.",
+  "production_changed": false,
+  "failure": "set-3-ON sample 1; exact alternate state independently verified against source writes",
+  "partial_son_log": "son-2-ON.partial.log, redundant incomplete retained log; qualified primary gzip had six samples"
+}

@@ -1,0 +1,13 @@
+son 1 clean {"main_allocated_MB": 4770.833696, "main_cpu_s": 4.7648013625, "mode": "clean", "process_cpu_s": 5.545, "sequence": 1, "wall_s": 4.876079208}
+son 2 ON {"main_allocated_MB": 4374.152296, "main_cpu_s": 4.506298157, "mode": "ON", "process_cpu_s": 5.28, "sequence": 2, "wall_s": 4.5896221685}
+son 3 ON {"main_allocated_MB": 4314.144536, "main_cpu_s": 4.500780327, "mode": "ON", "process_cpu_s": 5.255, "sequence": 3, "wall_s": 4.583965035}
+son 4 clean {"main_allocated_MB": 4897.958724, "main_cpu_s": 4.4723172545, "mode": "clean", "process_cpu_s": 5.06, "sequence": 4, "wall_s": 4.557292964}
+son forward reduction_percent {"main_allocated_MB": 8.31471866924618, "main_cpu_s": 5.425267200737382, "process_cpu_s": 4.779080252479706, "wall_s": 5.874741309165376}
+son reverse reduction_percent {"main_allocated_MB": 11.919540790315574, "main_cpu_s": -0.6364278489268793, "process_cpu_s": -3.8537549407114735, "wall_s": -0.5852612770496535}
+set 1 clean {"mode": "clean", "outcome_counts": {"WRITER_1_ROLLBACK": 6, "WRITER_2_ROLLBACK": 0}, "process_cpu_s": 2.325, "sequence": 1, "wall_s": 0.9177607095, "warm_outcome_counts": {"WRITER_1_ROLLBACK": 4, "WRITER_2_ROLLBACK": 0}}
+set 2 ON {"mode": "ON", "outcome_counts": {"WRITER_1_ROLLBACK": 6, "WRITER_2_ROLLBACK": 0}, "process_cpu_s": 2.315, "sequence": 2, "wall_s": 0.9472414455, "warm_outcome_counts": {"WRITER_1_ROLLBACK": 4, "WRITER_2_ROLLBACK": 0}}
+set 3 ON {"mode": "ON", "outcome_counts": {"WRITER_1_ROLLBACK": 3, "WRITER_2_ROLLBACK": 3}, "process_cpu_s": 3.115, "sequence": 3, "wall_s": 0.9471923575, "warm_outcome_counts": {"WRITER_1_ROLLBACK": 2, "WRITER_2_ROLLBACK": 2}}
+set 4 clean {"mode": "clean", "outcome_counts": {"WRITER_1_ROLLBACK": 5, "WRITER_2_ROLLBACK": 1}, "process_cpu_s": 2.235, "sequence": 4, "wall_s": 0.887239661, "warm_outcome_counts": {"WRITER_1_ROLLBACK": 3, "WRITER_2_ROLLBACK": 1}}
+set forward reduction_percent {"process_cpu_s": 0.43010752688172893, "wall_s": -3.2122464706580534}
+set reverse reduction_percent {"process_cpu_s": -39.37360178970919, "wall_s": -6.757215568162023}
+VERIFIED son_final_snapshots=24 set_exact_493_row_snapshots=24

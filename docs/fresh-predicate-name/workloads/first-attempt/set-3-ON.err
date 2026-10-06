@@ -1,0 +1,4 @@
+Exception in thread "main" java.lang.AssertionError
+	at org.kanger.test.FreshNameWorkloadRunner.check(FreshNameWorkloadRunner.java:20)
+	at org.kanger.test.FreshNameWorkloadRunner.set(FreshNameWorkloadRunner.java:90)
+	at org.kanger.test.FreshNameWorkloadRunner.main(FreshNameWorkloadRunner.java:103)

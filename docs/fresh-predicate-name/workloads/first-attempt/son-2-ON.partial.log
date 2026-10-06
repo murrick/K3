@@ -1,0 +1,15 @@
+SON_SAMPLE 0 wall_ns=6239953732 main_cpu_ns=6066251925 process_cpu_ns=19840000000 main_allocated_bytes=4489293952 raw=18 optimized=6 solutions=0 values=0
+FINAL [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+SON_SAMPLE 1 wall_ns=4479010918 main_cpu_ns=4398751762 process_cpu_ns=5900000000 main_allocated_bytes=4376793512 raw=18 optimized=6 solutions=0 values=0
+FINAL [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+SON_SAMPLE 2 wall_ns=4500507765 main_cpu_ns=4417330138 process_cpu_ns=5570000000 main_allocated_bytes=4375457928 raw=18 optimized=6 solutions=0 values=0
+FINAL [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+SON_SAMPLE 3 wall_ns=4733291944 main_cpu_ns=4648506513 process_cpu_ns=5520000000 main_allocated_bytes=4374868704 raw=18 optimized=6 solutions=0 values=0
+FINAL [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080
+SON_SAMPLE 4 wall_ns=4661768200 main_cpu_ns=4564793707 process_cpu_ns=5040000000 main_allocated_bytes=4374443816 raw=18 optimized=6 solutions=0 values=0
+FINAL [!$x father(x,John);, !$x mother(x,John);, !$x parent(x,John);, !$y child(John,y);, ?$y child(John,y);, ?$y son(John,y);]
+STATS passes=6 rules=1292 rotations=6824 pairs=13281 unifications=3080

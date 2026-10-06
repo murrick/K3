@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/workspace/scratch/1c9c6dd2770c/K3-fresh-name38/docs/fresh-predicate-name/workloads/run.py", line 20, in <module>
+    subprocess.run(command, stdout=out, stderr=error, check=True, timeout=300)
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['java', '-Xmx512m', '-Dkanger.experiment.preserveTValueIndex=true', '-Dkanger.experiment.versionedSolveSync=true', '-Dkanger.experiment.resolvedCauseWeights=true', '-Dkanger.experiment.compactCauseWeights=true', '-Dkanger.experiment.candidateMembershipFilter=true', '-Dkanger.experiment.singleTValueLookup=true', '-Dkanger.experiment.residentBaseComparison=true', '-Dkanger.experiment.compactFindSnapshots=true', '-Dkanger.experiment.freshPredicateName=true', '-Dbench.samples=6', '-Dbench.workload=set', '-cp', '../build/fresh-name-workload-classes:../build/fresh-name-classes:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar', 'org.kanger.test.FreshNameWorkloadRunner']' returned non-zero exit status 1.

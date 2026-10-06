@@ -69,3 +69,37 @@ The prototype preserves a separate String result and has passed local and cross-
 All five workflows / 20 jobs for code checkpoint `049317a427b6ac11edc757a4ce4798039f026e12` completed successfully: distribution, general CI, server, isolation, and dedicated qualification. The dedicated matrix covers Java 8/21/26 × prior eight flags OFF/ON, with this flag tested OFF and ON in each job. It includes the new 52-check boundary runner, regressions, cross-context predicate projections, transactions with equal state files, and concurrency. IDs and observed job statuses are in `fresh-predicate-name/ci-status.json`.
 
 Evidence-only updates use `[skip ci]`; production, qualification and workflows remain identical to the successful code checkpoint.
+
+## Broader workload qualification: decision update
+
+The additional local Java-17 run uses all eight prior flags ON and separate clean → ON → ON → clean sequences for two workloads. Each JVM has six samples, first two excluded. `workloads/build.py` requires every original production class hash to match the earlier measured build. The common diagnostic classpath contains only qualification classes, compiled against the clean reference. Production, qualifications, and workflow sources remain unchanged from the successful CI checkpoint.
+
+For **son**, a single interval contains the ordinary logged query, reading the raw hypothesis count, and immediate optimization. Compilation and final snapshot rendering occur outside it; there is no intermediate raw snapshot rendering. This defines the query-plus-optimization cycle, not application launch, compilation, UI rendering, or the differently shaped earlier separate-phase benchmark. All 24 final texts and linker statistics match the existing oracle; every sample has unknown result, 18 raw / six optimized hypotheses, zero solutions/values.
+
+| Sequence | Mode | Wall s | Main CPU s | Main allocated MB |
+| --- | --- | ---: | ---: | ---: |
+| 1 | clean | 4.876 | 4.765 | 4770.8 |
+| 2 | ON | 4.590 | 4.506 | 4374.2 |
+| 3 | ON | 4.584 | 4.501 | 4314.1 |
+| 4 | clean | 4.557 | 4.472 | 4898.0 |
+
+Main allocation decreases 8.31% / 11.92%. Wall time decreases 5.87% forward but increases 0.59% reverse; main CPU decreases 5.43% / increases 0.64%. This confirms the allocation benefit on this cycle, while elapsed-time improvement is inconsistent. The two clean controls themselves differ noticeably.
+
+For **set_08_02**, the runner invokes the original KangerTest method, preserving its four threads, query streams, commits, final read and stdout. User/storage setup and post-test cleanup are outside the interval; the native method's own workspace reset and result printing remain inside. CPU uses OperatingSystemMXBean process time, including all workers, GC and JVM compilation. Main-thread allocation is deliberately not presented as total allocation for this workload.
+
+The native test permits either conflicting writer to roll back. State A contains groups 2/3/4 with x=0..163 plus 3:1003; state B contains groups 1/3/4 plus 2:7002. Both contain exactly 493 distinct pairs. The runner checks the true query result, 493 solutions and values, no hypotheses, and the full exact pair set against these independently constructed models. It does not force thread ordering.
+
+| Sequence | Mode | Wall s | Process CPU s | Warm outcomes A / B |
+| --- | --- | ---: | ---: | ---: |
+| 1 | clean | 0.918 | 2.325 | 4 / 0 |
+| 2 | ON | 0.947 | 2.315 | 4 / 0 |
+| 3 | ON | 0.947 | 3.115 | 2 / 2 |
+| 4 | clean | 0.887 | 2.235 | 3 / 1 |
+
+Wall time increases 3.21% / 6.76%; process CPU decreases 0.43% forward and increases 39.37% reverse. The reverse pair mixes different rollback outcomes and cannot isolate the constructor's CPU effect. Even the first pair does not show a wall-time benefit. These bounded observations do not establish a universal regression or speedup. All 24 new set samples meet the exact permitted models, with empty stderr.
+
+The first diagnostic attempt mistakenly required only state A. A writer-2 rollback produced state B: the native test passed, but the extra oracle failed. Its source, hashes, complete/partial outputs, and error are retained under `workloads/first-attempt/`; the entire incomplete sequence is excluded from the reported workload medians. The corrected sequence was rebuilt and rerun in full. This is a diagnostic oracle correction, with no production change.
+
+**Updated decision:** allocation reduction is supported on the son cycle; broad elapsed-time benefit is not established and set_08_02 does not show an improvement. The earlier positive separate-phase timing result remains valid for its stated scope, and must not be generalized to ordinary execution. Keep `freshPredicateName` **OFF**, with no develop integration or default enablement on this evidence.
+
+Reproduction: `python docs/fresh-predicate-name/workloads/build.py`, `python docs/fresh-predicate-name/workloads/run.py`, then `python docs/fresh-predicate-name/workloads/analyze.py`. Raw gzip outputs are compressed only after each JVM exits. `workloads/summary.json` retains exact medians, comparisons and both total/warm outcome counts.
