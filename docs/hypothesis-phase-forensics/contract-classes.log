@@ -1,0 +1,5 @@
+COMPLETED_CONTRACT historical-male count=14
+COMPLETED_CONTRACT historical-conjunction count=8
+COMPLETED_CONTRACT console count=1 hypotheses=[!consolepremise(item);]
+COMPLETED_CONTRACT external first=[!seed(item);] second=[!seed(other);]
+COMPLETED_HYPOTHESIS_CONTRACT_OK

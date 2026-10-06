@@ -1,0 +1,1 @@
+The first qualification launch could not locate KangerCompletedHypothesisContractRunner because the baseline source manifest does not compile that runner. No contract test executed. qualify.py now explicitly compiles the unchanged runner for each build before running it. The initial launch error is excluded from qualification.

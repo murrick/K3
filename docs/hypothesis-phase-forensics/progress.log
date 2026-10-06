@@ -1,0 +1,5 @@
+CONTRACT_OK reference
+CONTRACT_OK classes
+DONE clean oracle_snapshots=6
+DONE profile-1 oracle_snapshots=6
+DONE profile-2 oracle_snapshots=6

@@ -1,0 +1,4 @@
+CANDIDATE_ISOLATION fresh=[true, null] reused=[true, true]
+TRUTH_STATES answers=[true, false, null] consistent=[true,true,true]
+COLLISION_GATE consistent=false
+HYPOTHESIS_PHASE_WITNESS_OK checks=30

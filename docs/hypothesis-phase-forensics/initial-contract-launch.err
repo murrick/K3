@@ -1,0 +1,2 @@
+Error: Could not find or load main class org.kanger.KangerCompletedHypothesisContractRunner
+Caused by: java.lang.ClassNotFoundException: org.kanger.KangerCompletedHypothesisContractRunner

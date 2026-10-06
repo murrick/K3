@@ -1,0 +1,146 @@
+{
+  "docs/hypothesis-phase-forensics.md": {
+    "sha256": "07b7611231822ae28cf0ad11e3c48d25a686d7f6e969f0ab3aff1f6d37591961",
+    "bytes": 12117
+  },
+  "docs/remaining-optimization-directions.md": {
+    "sha256": "59df20f8240ccb065813e2acdc640f9ab3d8c7a1078cd1d9d3daddd5365dcbe8",
+    "bytes": 4915
+  },
+  "docs/hypothesis-phase-forensics/HypothesisPhaseProfile.java": {
+    "sha256": "0574569040c19c7c286f4165d9a6fd1d969727611eaee1630a80e79e77d16fbc",
+    "bytes": 6611
+  },
+  "docs/hypothesis-phase-forensics/HypothesisPhaseProfileRunner.java": {
+    "sha256": "0856d031f4870733a5ecc00d66c16c60732e6c86b96585deddc1790c5b4e130c",
+    "bytes": 6140
+  },
+  "docs/hypothesis-phase-forensics/HypothesisPhaseWitness.java": {
+    "sha256": "2b1d087354bc415663f875e6c94cd5433c381a08e1001e8ac2a8311f58319117",
+    "bytes": 3959
+  },
+  "docs/hypothesis-phase-forensics/analyze.py": {
+    "sha256": "6278ac70c9e234a674ac7b6726ddf8c2d01f62f712a870dd40467ade9dab2325",
+    "bytes": 7202
+  },
+  "docs/hypothesis-phase-forensics/build.py": {
+    "sha256": "e962d1ad0e86ec5829c7b2b6079606a43ac80c2df620186eeaa8cde77c58f9ff",
+    "bytes": 8071
+  },
+  "docs/hypothesis-phase-forensics/class-differences.json": {
+    "sha256": "cfb452cd310a0c5040768a1794b90781769331dbf1fe9abcf0a9eaf7b245b181",
+    "bytes": 104
+  },
+  "docs/hypothesis-phase-forensics/classes-class-sha256.json": {
+    "sha256": "ee58acefd0949f96e9370555b9b84af68d5f6c564ad5f25b262883aa525fa705",
+    "bytes": 77648
+  },
+  "docs/hypothesis-phase-forensics/clean.err": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "docs/hypothesis-phase-forensics/clean.log.gz": {
+    "sha256": "d75fd29813705e387eb9c91b091cd606d56b9e2deaa22ab6f7c9a26f4e40373e",
+    "bytes": 559
+  },
+  "docs/hypothesis-phase-forensics/contract-class-sha256.json": {
+    "sha256": "ca7dbd05f8b33343be89141f3c21b17fad72c57651299fe8eb4a0c9adcc2c4b8",
+    "bytes": 167
+  },
+  "docs/hypothesis-phase-forensics/contract-classes.err": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "docs/hypothesis-phase-forensics/contract-classes.log": {
+    "sha256": "49b0eb9628a23c8aeb4e20fbdf8514f8a3d76d29d5f41151939b60df9b5415c8",
+    "bytes": 270
+  },
+  "docs/hypothesis-phase-forensics/contract-reference.err": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "docs/hypothesis-phase-forensics/contract-reference.log": {
+    "sha256": "49b0eb9628a23c8aeb4e20fbdf8514f8a3d76d29d5f41151939b60df9b5415c8",
+    "bytes": 270
+  },
+  "docs/hypothesis-phase-forensics/expected.json": {
+    "sha256": "dd2cc2dcf68182272588b593fb5efdcdee797ede03a2ab174d3ae66cb6e54d11",
+    "bytes": 605
+  },
+  "docs/hypothesis-phase-forensics/initial-contract-launch.err": {
+    "sha256": "3e8cf9fbf1002ecb1cf3505a34c6a79a6c8c2b6fff59102ed3a6f7da55c28e92",
+    "bytes": 188
+  },
+  "docs/hypothesis-phase-forensics/initial-contract-launch.md": {
+    "sha256": "71e94308f17fe61a62b06c80c168039a673ca6335cefbb1a7912d7525c0ff93c",
+    "bytes": 329
+  },
+  "docs/hypothesis-phase-forensics/instrumentation.patch": {
+    "sha256": "66c388070d8dd3cec6f86a1b6444800c14d98373957faf048859e1b62fc6af83",
+    "bytes": 7080
+  },
+  "docs/hypothesis-phase-forensics/profile-1.err": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "docs/hypothesis-phase-forensics/profile-1.log.gz": {
+    "sha256": "e2f7a87f672ae9f32c00bfc9b1fff4fd4863ce461f6c31ea00e25b6bed17a97b",
+    "bytes": 45096
+  },
+  "docs/hypothesis-phase-forensics/profile-2.err": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "docs/hypothesis-phase-forensics/profile-2.log.gz": {
+    "sha256": "c6e87bdad4994ac47837fe93968402f506e204676f8886dec649e847b427d2b6",
+    "bytes": 45326
+  },
+  "docs/hypothesis-phase-forensics/progress.log": {
+    "sha256": "05ea3277bf510f6140cdcb6712dfccaba9f385e2e1181064abb55723a1471478",
+    "bytes": 140
+  },
+  "docs/hypothesis-phase-forensics/qualify.py": {
+    "sha256": "5caecb26d5d4e6def968806bec89f19ecd65d2962cd9afab42f301cc2cabdaea",
+    "bytes": 1075
+  },
+  "docs/hypothesis-phase-forensics/reference-class-sha256.json": {
+    "sha256": "b29438ad43304f60cbea82fafd75a78f56bbca904484dbfaa583316a3caff294",
+    "bytes": 77048
+  },
+  "docs/hypothesis-phase-forensics/run.py": {
+    "sha256": "4282902f04245639244c9b90a51d42500ec17e3b86420c2b29d65c30f337086d",
+    "bytes": 1438
+  },
+  "docs/hypothesis-phase-forensics/sources.txt": {
+    "sha256": "5092c64f300b251d46a6f65cc081cf20736dab703f5441d2b4d1fcd8f128ab6e",
+    "bytes": 21216
+  },
+  "docs/hypothesis-phase-forensics/summary.json": {
+    "sha256": "3e250c1da49ee820a2f08591272a4ecae3e415ca4b3946e9803443682d5dbccc",
+    "bytes": 808921
+  },
+  "docs/hypothesis-phase-forensics/witness-class-sha256.json": {
+    "sha256": "e48fc14a58d3f038cb0a87c00e2082c120f31d6f6c26dd39fce66adca52ac80c",
+    "bytes": 167
+  },
+  "docs/hypothesis-phase-forensics/witness-classes.err": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "docs/hypothesis-phase-forensics/witness-classes.log": {
+    "sha256": "c5d7fbd014b870d4b8b8ae6669d8f1c4b58b12c8df24ad866c4785c0e4fe512a",
+    "bytes": 198
+  },
+  "docs/hypothesis-phase-forensics/witness-reference.err": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "docs/hypothesis-phase-forensics/witness-reference.log": {
+    "sha256": "c5d7fbd014b870d4b8b8ae6669d8f1c4b58b12c8df24ad866c4785c0e4fe512a",
+    "bytes": 198
+  },
+  "docs/hypothesis-phase-forensics/witness.py": {
+    "sha256": "1c6a854327756442c34cda31b4fa3338f3c8bfa0f25d06120f541cd7f5a64dc9",
+    "bytes": 1084
+  }
+}
