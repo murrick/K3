@@ -1,0 +1,5 @@
+NATIVE_TSOLVE_WITNESS unchanged_values=true factory_actions=false decisions=[true,false,true]
+NATIVE_ALIAS_WITNESS unchanged_values=true unchanged_version=true factory_actions=false decisions=[false,true] exposed=true
+NATIVE_EXCLUSION_WITNESS unchanged_rule_and_values=true unchanged_tsolve_version=true factory_actions=false produced=[false,true]
+NATIVE_DONOR_UNIVERSE_WITNESS receiver_unchanged=true item_binding=[false,true]
+FRONTIER_DEPENDENCY_WITNESS_OK checks=31

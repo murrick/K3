@@ -1,0 +1,26 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "date_utc": "2026-10-06",
+  "java": "OpenJDK 17.0.20",
+  "compiler": "ECJ target Java 8",
+  "compiler_sha256": "f7686c4960cf70c2ebc5c500a73a8cfc04541b730c18f1c5c21329889b137f45",
+  "heap": "-Xmx512m",
+  "architecture": "x86_64",
+  "logical_cpus": 9,
+  "cpu_models": [
+    "AMD EPYC 9V74 80-Core Processor"
+  ],
+  "samples_per_census_jvm": 3,
+  "excluded_initial_samples": 2,
+  "serial_jvms": true,
+  "enabled_flags": [
+    "preserveTValueIndex",
+    "versionedSolveSync",
+    "resolvedCauseWeights",
+    "compactCauseWeights",
+    "candidateMembershipFilter",
+    "singleTValueLookup",
+    "residentBaseComparison",
+    "compactFindSnapshots"
+  ]
+}

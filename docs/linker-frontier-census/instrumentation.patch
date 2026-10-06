@@ -1,0 +1,45 @@
+--- a/kanger/src/org/kanger/Linker.java
++++ b/kanger/src/org/kanger/Linker.java
+@@ -449,6 +449,8 @@
+      *                   или превышении flood limit
+      */
+     public void link(Rule rule, boolean logging) throws Exception {
++        Object frontierLink=LinkerFrontierProfile.beginLink(mind,rule);
++        try {
+ 
+         mind.getExcludedDomains().clear();
+         mind.getUsedDomains().clear();
+@@ -551,7 +553,9 @@
+             });
+ 
+ 
++            LinkerFrontierProfile.order(currentPass,"descending");
+             rotator(leftList, causes, logging);
++            LinkerFrontierProfile.order(currentPass,"ascending");
+             rotator(ruleList, causes, logging);
+ 
+ 
+@@ -567,6 +571,7 @@
+             log.add(LogMode.TIMING, String.format("* LINKER Dumped passes: %03d", dumpedPasses));
+             log.add(LogMode.TIMING, String.format("* LINKER Skipped passes: %03d", skippedPasses));
+         }
++        } finally { LinkerFrontierProfile.endLink(frontierLink); }
+     }
+ 
+     private boolean rotator(final Collection<IRule> ruleList, final Map<IRule, Set<Cause>> causes, final boolean logging) throws Exception {
+@@ -576,6 +581,7 @@
+ 
+         for (IRule r : ruleList) {
+ 
++            LinkerFrontierProfile.Mark frontierRule=LinkerFrontierProfile.start(mind,statistics,causes,r);
+             statistics.incrementRuleVisits();
+             mind.getProducedDomains().clear();
+             mind.getDomainSolves().clear();
+@@ -627,6 +633,7 @@
+             if (!wasUsed && ((Rule) r).isUsed(mind)) {
+                 used = true;
+             }
++            LinkerFrontierProfile.end(frontierRule,mind,statistics,causes);
+         }
+ 
+         return used;

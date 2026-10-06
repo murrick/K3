@@ -1,0 +1,4 @@
+Authentication error: User already exists
+	at org.kanger.UserFactory.createUser(UserFactory.java:116)
+	at org.kanger.KangerCompletedHypothesisContractRunner.test(KangerCompletedHypothesisContractRunner.java:50)
+	at org.kanger.KangerCompletedHypothesisContractRunner.main(KangerCompletedHypothesisContractRunner.java:35)

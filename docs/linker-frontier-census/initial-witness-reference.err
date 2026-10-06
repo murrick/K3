@@ -1,0 +1,3 @@
+Exception in thread "main" java.lang.AssertionError: alias changes compatibility despite stable version
+	at org.kanger.FrontierDependencyWitness.check(FrontierDependencyWitness.java:13)
+	at org.kanger.FrontierDependencyWitness.main(FrontierDependencyWitness.java:46)

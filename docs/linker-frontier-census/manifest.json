@@ -1,0 +1,245 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "files": {
+    "docs/linker-frontier-census/ExactCandidateReplayRunner.java": {
+      "sha256": "77c35f53f5ec071eb39c8b1f6fe82848e3539a49b455e6645a73f840bdf02b37",
+      "bytes": 5844
+    },
+    "docs/linker-frontier-census/FrontierCandidateReplayRunner.java": {
+      "sha256": "3d8eb8776d3f44fba6c87423bf277f8b8d509fb21c9a5b07bb807b44805e0a69",
+      "bytes": 5973
+    },
+    "docs/linker-frontier-census/FrontierDependencyWitness.java": {
+      "sha256": "00258cfb263dc331b1cc16e224c60d2c6c2ba9a4b7f9aeda5fdad06526c869e1",
+      "bytes": 7576
+    },
+    "docs/linker-frontier-census/LinkerFrontierProfile.java": {
+      "sha256": "0420ccdc80b6f5ac6554b3f761563faccce077f7a971f13e14c6f064d83537a1",
+      "bytes": 4727
+    },
+    "docs/linker-frontier-census/LinkerFrontierRunner.java": {
+      "sha256": "695e0dbdda8c612290984447d336b589f44108809358a2b8ec6f504a599c81a0",
+      "bytes": 6130
+    },
+    "docs/linker-frontier-census/analysis-summary.log": {
+      "sha256": "3935571195c1fe0f427ba5057b6f74fcb03cd0beb40c7fa53f90afaa8e75272d",
+      "bytes": 18005
+    },
+    "docs/linker-frontier-census/analyze.py": {
+      "sha256": "a9548a4bded4e5af57522bd390bbcbf51acdea9ba6bcff02ffb5da0da26a8ff9",
+      "bytes": 6548
+    },
+    "docs/linker-frontier-census/base-class-sha256.json": {
+      "sha256": "b29438ad43304f60cbea82fafd75a78f56bbca904484dbfaa583316a3caff294",
+      "bytes": 77048
+    },
+    "docs/linker-frontier-census/build.log": {
+      "sha256": "ee14eec532ec1dec48462ff763a32a2d23dfa91aef207bf2cc641a8fec22cb7e",
+      "bytes": 216
+    },
+    "docs/linker-frontier-census/build.py": {
+      "sha256": "f92fd6e0e3ecec02133f9b71544c4e7df7ec3270403e2713a0487d519b1dede0",
+      "bytes": 5192
+    },
+    "docs/linker-frontier-census/candidate-profile-inactive.err": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "docs/linker-frontier-census/candidate-profile-inactive.log.gz": {
+      "sha256": "94ff96ea86cf14fbb8f18acb94107144b501b224e7de651abeaf48c44e37e5d3",
+      "bytes": 911
+    },
+    "docs/linker-frontier-census/candidate-profile.err": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "docs/linker-frontier-census/candidate-profile.log.gz": {
+      "sha256": "06d5ca899ee7c5ce1ceae42e37ce2c6b5cd29603e925b36fd1eb7af3bfd3dafd",
+      "bytes": 45833
+    },
+    "docs/linker-frontier-census/candidate-reference.err": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "docs/linker-frontier-census/candidate-reference.log.gz": {
+      "sha256": "94ff96ea86cf14fbb8f18acb94107144b501b224e7de651abeaf48c44e37e5d3",
+      "bytes": 911
+    },
+    "docs/linker-frontier-census/class-comparison.json": {
+      "sha256": "5470c86464cfb1c8309511b3d51d013ddbb2068454ca5aac91fcec803f4b767b",
+      "bytes": 264
+    },
+    "docs/linker-frontier-census/clean.err": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "docs/linker-frontier-census/clean.log.gz": {
+      "sha256": "4e586c00e42919f9664400b27947f092d31101a90f571746d31be08a4d74cf65",
+      "bytes": 454
+    },
+    "docs/linker-frontier-census/contract-profile.err": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "docs/linker-frontier-census/contract-profile.log.gz": {
+      "sha256": "d777cddfc81f93b223dc1a86268c473fda517fd710d483d806eb7fb2ee950a93",
+      "bytes": 174
+    },
+    "docs/linker-frontier-census/contract-reference.err": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "docs/linker-frontier-census/contract-reference.log.gz": {
+      "sha256": "d777cddfc81f93b223dc1a86268c473fda517fd710d483d806eb7fb2ee950a93",
+      "bytes": 174
+    },
+    "docs/linker-frontier-census/details.json.gz": {
+      "sha256": "4a8286d0f89eeb33749abeb0daa80eedc3330c04997066a4c32c99495f0d7da1",
+      "bytes": 284962
+    },
+    "docs/linker-frontier-census/environment.json": {
+      "sha256": "039749b10dc72ce7592a08531645eae6a9375b2436746b78f19fc58c16a39f6d",
+      "bytes": 707
+    },
+    "docs/linker-frontier-census/expected.json": {
+      "sha256": "dd2cc2dcf68182272588b593fb5efdcdee797ede03a2ab174d3ae66cb6e54d11",
+      "bytes": 605
+    },
+    "docs/linker-frontier-census/initial-contract-profile.err": {
+      "sha256": "39809437167716a62d156af9775c09992709dbcb77f4b3289669f3ca6b0b21e6",
+      "bytes": 320
+    },
+    "docs/linker-frontier-census/initial-contract-profile.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "docs/linker-frontier-census/initial-run-marker-note.md": {
+      "sha256": "8c7c5d157f3ae195a2c721cafa3f269ce618db3978899b267e9afac6435681f5",
+      "bytes": 824
+    },
+    "docs/linker-frontier-census/initial-witness-note.md": {
+      "sha256": "0e5cc6134a8715b363678f29e9df72751da4c5b184f50dbf156117406acdca6b",
+      "bytes": 887
+    },
+    "docs/linker-frontier-census/initial-witness-reference.err": {
+      "sha256": "ac464e43efa4f42787518df9f681f57927060a8c59790118841f80bc79305d5f",
+      "bytes": 267
+    },
+    "docs/linker-frontier-census/initial-witness-reference.log": {
+      "sha256": "c5c4bbe749fa8acf0ac776c5e13a972101372060e61130b3bedf8b1c3cd38bc8",
+      "bytes": 94
+    },
+    "docs/linker-frontier-census/initial-witness-signature-source.java.txt": {
+      "sha256": "251641fbd248821304ea83158f9e1018a34ddb66d0e9cafdb4d982488f9e7d89",
+      "bytes": 5620
+    },
+    "docs/linker-frontier-census/initial-witness-signature.err": {
+      "sha256": "37e657fa52e944426f0d398cd303554c7faa89255020072470eb93f4cd1ca39f",
+      "bytes": 364
+    },
+    "docs/linker-frontier-census/initial-witness-signature.log": {
+      "sha256": "3a88bfaaaa85ed97f2c8bfa56bc33c902d9d0178ed2fd656a9457dd11d68d12a",
+      "bytes": 218
+    },
+    "docs/linker-frontier-census/initial-witness-source.java.txt": {
+      "sha256": "4225689446bf4af396714e1e9962e3b261354996fe8d923cd8ed4b9aad02acb4",
+      "bytes": 5397
+    },
+    "docs/linker-frontier-census/instrumentation.patch": {
+      "sha256": "88e3ee8e93d1c23de94d6c22a5ff27c2a1a616d289a79ef2b826e37177959d6a",
+      "bytes": 1687
+    },
+    "docs/linker-frontier-census/profile-1.err": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "docs/linker-frontier-census/profile-1.log.gz": {
+      "sha256": "33bcf291ae54e6445be7bd2ff159a7e2db9439d11926d0515fb1ee1878efe6f6",
+      "bytes": 125735
+    },
+    "docs/linker-frontier-census/profile-2.err": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "docs/linker-frontier-census/profile-2.log.gz": {
+      "sha256": "8416dada3e18b93dd0f98359effbf9245bac9f16389c82231b345527ed655e07",
+      "bytes": 125765
+    },
+    "docs/linker-frontier-census/profile-census-class-sha256.json": {
+      "sha256": "14b36f12dcf6413a9a66de76cc3e05a3db35280ffdc2cd6c2b88d1a50b837601",
+      "bytes": 78235
+    },
+    "docs/linker-frontier-census/profile-class-sha256.json": {
+      "sha256": "4a2c5b1637a347524f451e7f73b9614c094d48f1193d6b45302eabbe3bd5a8c8",
+      "bytes": 78485
+    },
+    "docs/linker-frontier-census/reference-census-class-sha256.json": {
+      "sha256": "701c64cb8ec2e616005034ad19b47ae58fc85125b24b317edfc341eb6f6c35eb",
+      "bytes": 77538
+    },
+    "docs/linker-frontier-census/reference-class-sha256.json": {
+      "sha256": "5db7c0ec729654fb351290685ae81243bb839a9be173abe2e3fd280b15a5d785",
+      "bytes": 77538
+    },
+    "docs/linker-frontier-census/run-progress.log": {
+      "sha256": "917159477c445daec7cd2b38c5f56aea1cb404085303cb9269b6ca5a278013f5",
+      "bytes": 135
+    },
+    "docs/linker-frontier-census/run.py": {
+      "sha256": "0682cc997fa60f25dc2e8416fa6fa575b09ce301ecea66ae703a7d846fb549d2",
+      "bytes": 2599
+    },
+    "docs/linker-frontier-census/runner-provenance.md": {
+      "sha256": "ee5c1e19eed47fe756bc98582b3d1638d806f352695258cb3680e9e2f03e4c71",
+      "bytes": 913
+    },
+    "docs/linker-frontier-census/son-expected.json": {
+      "sha256": "e9c531c09e397452ea4dd21d474782a89a7ae463c8ee0a76d6fa031e11bb5f7a",
+      "bytes": 5588
+    },
+    "docs/linker-frontier-census/sources.txt": {
+      "sha256": "9e138b36b5cbf32f919e636ba21314c568f250c6f5da34ad5f2068d38f28b8c5",
+      "bytes": 21190
+    },
+    "docs/linker-frontier-census/summary.json": {
+      "sha256": "83b6edaf24b092b389c590b0761bfb7298f25144e4781f179fc6b8ee1c16d195",
+      "bytes": 64317
+    },
+    "docs/linker-frontier-census/witness-census/FrontierDependencyWitness.java": {
+      "sha256": "76e57bcdcc597fce4fb42bcd3b9828b3e181006db24fae8353d7a4f0f4770780",
+      "bytes": 5634
+    },
+    "docs/linker-frontier-census/witness-census-comparison.json": {
+      "sha256": "6c9ea3e1fca7423b649aa83e70aefc45e28371876450e0b18c973d63cc08013c",
+      "bytes": 136
+    },
+    "docs/linker-frontier-census/witness-profile.err": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "docs/linker-frontier-census/witness-profile.log": {
+      "sha256": "7787b98cd1403a6a19123fde144fafc97dd5bcb2f27fb49c4b0905e61e3b4221",
+      "bytes": 469
+    },
+    "docs/linker-frontier-census/witness-progress.log": {
+      "sha256": "4e045a0387235caa12452d7fafef9524b1095b563ef6aa34dfcf91e136b28b3f",
+      "bytes": 60
+    },
+    "docs/linker-frontier-census/witness-reference.err": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "docs/linker-frontier-census/witness-reference.log": {
+      "sha256": "7787b98cd1403a6a19123fde144fafc97dd5bcb2f27fb49c4b0905e61e3b4221",
+      "bytes": 469
+    },
+    "docs/linker-frontier-census/witness.py": {
+      "sha256": "b6344cf196b46a3749217c3379af9375d3e1a596b6c05a365c3ce36eaf3ba27c",
+      "bytes": 1022
+    },
+    "docs/linker-frontier-census.md": {
+      "sha256": "46c6d09c8844201bc4a234d0a28a00fb69bd48698ac73619e6f6c23453b60cf0",
+      "bytes": 11467
+    }
+  }
+}

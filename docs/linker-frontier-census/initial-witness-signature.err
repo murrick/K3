@@ -1,0 +1,4 @@
+Exception in thread "main" java.lang.NoSuchMethodException: org.kanger.Linker.linkDatabase(java.util.List,java.util.Map,java.util.Set)
+	at java.base/java.lang.Class.getDeclaredMethod(Class.java:2677)
+	at org.kanger.FrontierDependencyWitness.method(FrontierDependencyWitness.java:16)
+	at org.kanger.FrontierDependencyWitness.main(FrontierDependencyWitness.java:57)
