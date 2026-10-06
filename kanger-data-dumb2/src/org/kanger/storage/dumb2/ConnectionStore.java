@@ -47,7 +47,13 @@ final class ConnectionStore {
     private static final int VERSION = 3;
     private static final int LEGACY_VERSION = 2;
     private static final int MAX_CONNECTIONS = 10000;
-    private static final int MAX_REVISIONS = 1000000;
+    /*
+     * Smallest possible V3 revision entry: source RevisionId (long) plus an
+     * empty ConnectionVector count (int). Decoder limits are derived from the
+     * actual sidecar byte length rather than imposing a lifetime revision cap.
+     */
+    private static final int MIN_REVISION_ENTRY_BYTES =
+            Long.BYTES + Integer.BYTES;
     private static final int MAX_STRING_BYTES = 1024 * 1024;
 
     private ConnectionStore() {
@@ -291,11 +297,16 @@ final class ConnectionStore {
                         Long.valueOf(source.getRevision()), vector);
             } else {
                 int revisionCount = input.readInt();
+                int maximumRepresentable =
+                        input.available()
+                                / MIN_REVISION_ENTRY_BYTES;
                 if (revisionCount < 1
-                        || revisionCount > MAX_REVISIONS) {
+                        || revisionCount > maximumRepresentable) {
                     throw corruption(
                             "Invalid DUMB2 connection revision count "
-                                    + revisionCount + " at " + path);
+                                    + revisionCount + " for "
+                                    + input.available()
+                                    + " remaining bytes at " + path);
                 }
                 for (int i = 0; i < revisionCount; ++i) {
                     long sourceRevision = input.readLong();
