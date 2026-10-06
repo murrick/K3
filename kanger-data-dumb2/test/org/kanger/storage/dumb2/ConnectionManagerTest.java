@@ -7,9 +7,12 @@ import org.kanger.User;
 import org.kanger.Version;
 import org.kanger.exception.StorageLifecycleException;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.zip.CRC32;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -124,6 +127,58 @@ public class ConnectionManagerTest {
                 org.kanger.enums.StorageLifecycleErrorCode
                         .STORAGE_SEMANTIC_CORRUPTION,
                 failure.getErrorCode());
+    }
+
+    @Test
+    void revisionHistoryCountIsBoundedBySidecarBytesNotPolicyCap()
+            throws Exception {
+        ContextFixture x =
+                context("X-count", "!anchor(X);");
+
+        ByteArrayOutputStream payloadBytes =
+                new ByteArrayOutputStream();
+        try (DataOutputStream output =
+                     new DataOutputStream(payloadBytes)) {
+            output.writeInt(0x4B33434E); // K3CN
+            output.writeInt(3);
+            output.writeLong(
+                    x.contextId.getMostSignificantBits());
+            output.writeLong(
+                    x.contextId.getLeastSignificantBits());
+            output.writeInt(Integer.MAX_VALUE);
+        }
+
+        byte[] payload = payloadBytes.toByteArray();
+        CRC32 crc = new CRC32();
+        crc.update(payload);
+
+        ByteArrayOutputStream encodedBytes =
+                new ByteArrayOutputStream();
+        encodedBytes.write(payload);
+        try (DataOutputStream output =
+                     new DataOutputStream(encodedBytes)) {
+            output.writeInt((int) crc.getValue());
+        }
+        Files.write(
+                ConnectionStore.path(x.location),
+                encodedBytes.toByteArray());
+
+        StorageLifecycleException failure =
+                assertThrows(
+                        StorageLifecycleException.class,
+                        () -> ConnectionStore.read(
+                                x.location,
+                                new RevisionRef(
+                                        x.contextId,
+                                        x.revision)));
+        assertEquals(
+                org.kanger.enums.StorageLifecycleErrorCode
+                        .STORAGE_SEMANTIC_CORRUPTION,
+                failure.getErrorCode());
+        assertTrue(
+                failure.getMessage()
+                        .contains(
+                                "Invalid DUMB2 connection revision count"));
     }
 
     @Test
