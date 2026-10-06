@@ -1,0 +1,2452 @@
+{
+  "code_sha": "3f74a6c1b659c871a99bbd9f1bde7ef8989e8696",
+  "all_workflows_success": true,
+  "job_count": 20,
+  "runs": [
+    {
+      "id": 37444146348,
+      "name": "KANGER qualification isolation",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "3f74a6c1b659c871a99bbd9f1bde7ef8989e8696",
+      "url": "https://github.com/murrick/K3/actions/runs/37444146348",
+      "jobs": [
+        {
+          "id": 112204770253,
+          "name": "Production surface excludes qualification",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Check out repository",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Set up Java 8",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Verify production source roots are clean",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Verify Maven ownership boundaries",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Package production artifact",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Verify production JAR is clean",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Verify qualification module remains executable",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Set up Java 8",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Check out repository",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 37444146373,
+      "name": "KANGER distribution bundle",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "3f74a6c1b659c871a99bbd9f1bde7ef8989e8696",
+      "url": "https://github.com/murrick/K3/actions/runs/37444146373",
+      "jobs": [
+        {
+          "id": 112204770164,
+          "name": "Build and verify product bundle",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Check out source",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Set up Java 21",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Validate distribution scripts",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Build qualified distribution",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Verify distribution archive",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Qualify packaged fresh install",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Qualify packaged same-version force rotation",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Upload qualified distribution",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Set up Java 21",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Check out source",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 37444146353,
+      "name": "KANGER Server",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "3f74a6c1b659c871a99bbd9f1bde7ef8989e8696",
+      "url": "https://github.com/murrick/K3/actions/runs/37444146353",
+      "jobs": [
+        {
+          "id": 112204770423,
+          "name": "Build on Java 8",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Check out source",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Build standalone server JAR",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Verify browser gateway artifact",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Verify distribution shape",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Verify VPS deployment assets",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run authenticated loopback and shutdown smoke",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Upload Java 21 distribution",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Post Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Check out source",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "id": 112204770698,
+          "name": "Build on Java 21",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Check out source",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Build standalone server JAR",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Verify browser gateway artifact",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Verify distribution shape",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Verify VPS deployment assets",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run authenticated loopback and shutdown smoke",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Upload Java 21 distribution",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Check out source",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 37444146540,
+      "name": "Single variable emptiness qualification",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "3f74a6c1b659c871a99bbd9f1bde7ef8989e8696",
+      "url": "https://github.com/murrick/K3/actions/runs/37444146540",
+      "jobs": [
+        {
+          "id": 112204770582,
+          "name": "qualification (8, false)",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-java@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install -DskipTests",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Qualify reference and single variable emptiness",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Print failure logs",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-java@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "id": 112204770813,
+          "name": "qualification (26, false)",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-java@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install -DskipTests",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Qualify reference and single variable emptiness",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Print failure logs",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-java@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "id": 112204770851,
+          "name": "qualification (8, true)",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-java@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install -DskipTests",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Qualify reference and single variable emptiness",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Print failure logs",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-java@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "id": 112204770878,
+          "name": "qualification (21, true)",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-java@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install -DskipTests",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Qualify reference and single variable emptiness",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Print failure logs",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-java@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "id": 112204770949,
+          "name": "qualification (21, false)",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-java@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install -DskipTests",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Qualify reference and single variable emptiness",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Print failure logs",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-java@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "id": 112204770958,
+          "name": "qualification (26, true)",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run actions/setup-java@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Run mvn --batch-mode --no-transfer-progress -pl kanger-qualification -am install -DskipTests",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Qualify reference and single variable emptiness",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Print failure logs",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/setup-java@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 37444146349,
+      "name": "KANGER CI",
+      "status": "completed",
+      "conclusion": "success",
+      "head_sha": "3f74a6c1b659c871a99bbd9f1bde7ef8989e8696",
+      "url": "https://github.com/murrick/K3/actions/runs/37444146349",
+      "jobs": [
+        {
+          "id": 112204771190,
+          "name": "Maven Java 8 / TValue on",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile and run regression corpus",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile DUMB2 module",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation boundaries and reopen",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation guard and verifier fault probe",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Maven module artifact boundaries",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Canonical Console logical-input boundary",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index empty-boundary invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind transaction reservation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue canonical resurrection invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker rule ordering invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "C-variable Rule-scope invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker checkpoint balance invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Storage acquisition atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB close failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB reindex swap atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera empty-root mark invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "FValue action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Rule action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Domain waiter rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory concurrency lock-order invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera frame ownership invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind commit exception atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind rollback failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial mark acquisition invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial commit completion invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "id": 112204771475,
+          "name": "Maven Java 8 / TValue solve-verify",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile and run regression corpus",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile DUMB2 module",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation boundaries and reopen",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation guard and verifier fault probe",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Maven module artifact boundaries",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Canonical Console logical-input boundary",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index empty-boundary invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind transaction reservation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue canonical resurrection invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker rule ordering invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "C-variable Rule-scope invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker checkpoint balance invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Storage acquisition atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB close failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB reindex swap atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera empty-root mark invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "FValue action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Rule action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Domain waiter rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory concurrency lock-order invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera frame ownership invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind commit exception atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind rollback failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial mark acquisition invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial commit completion invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "id": 112204771539,
+          "name": "Maven Java 21 / TValue verify",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile and run regression corpus",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile DUMB2 module",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation boundaries and reopen",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation guard and verifier fault probe",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Maven module artifact boundaries",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Canonical Console logical-input boundary",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index empty-boundary invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind transaction reservation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue canonical resurrection invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker rule ordering invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "C-variable Rule-scope invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker checkpoint balance invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Storage acquisition atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB close failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB reindex swap atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera empty-root mark invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "FValue action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Rule action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Domain waiter rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory concurrency lock-order invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera frame ownership invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind commit exception atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind rollback failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial mark acquisition invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial commit completion invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "id": 112204771555,
+          "name": "Maven Java 21 / TValue on",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile and run regression corpus",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile DUMB2 module",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation boundaries and reopen",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation guard and verifier fault probe",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Maven module artifact boundaries",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Canonical Console logical-input boundary",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index empty-boundary invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind transaction reservation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue canonical resurrection invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker rule ordering invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "C-variable Rule-scope invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker checkpoint balance invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Storage acquisition atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB close failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB reindex swap atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera empty-root mark invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "FValue action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Rule action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Domain waiter rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory concurrency lock-order invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera frame ownership invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind commit exception atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind rollback failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial mark acquisition invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial commit completion invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "id": 112204771557,
+          "name": "Maven Java 8 / TValue verify",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile and run regression corpus",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile DUMB2 module",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation boundaries and reopen",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation guard and verifier fault probe",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Maven module artifact boundaries",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Canonical Console logical-input boundary",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index empty-boundary invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind transaction reservation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue canonical resurrection invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker rule ordering invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "C-variable Rule-scope invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker checkpoint balance invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Storage acquisition atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB close failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB reindex swap atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera empty-root mark invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "FValue action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Rule action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Domain waiter rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory concurrency lock-order invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera frame ownership invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind commit exception atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind rollback failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial mark acquisition invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial commit completion invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "id": 112204771588,
+          "name": "Maven Java 21 / TValue solve-verify",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile and run regression corpus",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile DUMB2 module",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation boundaries and reopen",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation guard and verifier fault probe",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Maven module artifact boundaries",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Canonical Console logical-input boundary",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index empty-boundary invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind transaction reservation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue canonical resurrection invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker rule ordering invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "C-variable Rule-scope invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker checkpoint balance invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Storage acquisition atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB close failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB reindex swap atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera empty-root mark invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "FValue action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Rule action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Domain waiter rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory concurrency lock-order invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera frame ownership invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind commit exception atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind rollback failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial mark acquisition invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial commit completion invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "id": 112204771589,
+          "name": "Maven Java 8 / TValue off",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile and run regression corpus",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile DUMB2 module",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation boundaries and reopen",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation guard and verifier fault probe",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Maven module artifact boundaries",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Canonical Console logical-input boundary",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index empty-boundary invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind transaction reservation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue canonical resurrection invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker rule ordering invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "C-variable Rule-scope invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker checkpoint balance invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Storage acquisition atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB close failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB reindex swap atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera empty-root mark invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "FValue action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Rule action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Domain waiter rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory concurrency lock-order invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera frame ownership invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind commit exception atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind rollback failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial mark acquisition invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial commit completion invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "id": 112204771659,
+          "name": "Maven Java 21 / TValue solve-on",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile and run regression corpus",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile DUMB2 module",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation boundaries and reopen",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation guard and verifier fault probe",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Maven module artifact boundaries",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Canonical Console logical-input boundary",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index empty-boundary invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind transaction reservation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue canonical resurrection invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker rule ordering invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "C-variable Rule-scope invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker checkpoint balance invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Storage acquisition atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB close failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB reindex swap atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera empty-root mark invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "FValue action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Rule action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Domain waiter rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory concurrency lock-order invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera frame ownership invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind commit exception atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind rollback failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial mark acquisition invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial commit completion invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "id": 112204771671,
+          "name": "Maven Java 21 / TValue off",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile and run regression corpus",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile DUMB2 module",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation boundaries and reopen",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation guard and verifier fault probe",
+              "status": "completed",
+              "conclusion": "skipped"
+            },
+            {
+              "name": "Maven module artifact boundaries",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Canonical Console logical-input boundary",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index empty-boundary invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind transaction reservation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue canonical resurrection invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker rule ordering invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "C-variable Rule-scope invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker checkpoint balance invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Storage acquisition atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB close failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB reindex swap atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera empty-root mark invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "FValue action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Rule action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Domain waiter rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory concurrency lock-order invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera frame ownership invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind commit exception atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind rollback failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial mark acquisition invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial commit completion invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "id": 112204771841,
+          "name": "Maven Java 8 / TValue solve-on",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile and run regression corpus",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Compile DUMB2 module",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation boundaries and reopen",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue preservation guard and verifier fault probe",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Maven module artifact boundaries",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Canonical Console logical-input boundary",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index empty-boundary invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Index comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind transaction reservation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue canonical resurrection invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "TValue comparable invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker rule ordering invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "C-variable Rule-scope invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Linker checkpoint balance invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Storage acquisition atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB close failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "DUMB reindex swap atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera empty-root mark invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "FValue action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Rule action rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Domain waiter rollback invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Factory concurrency lock-order invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Escalera frame ownership invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind commit exception atomicity invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind rollback failure isolation invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial mark acquisition invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Mind partial commit completion invariant",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Set up Java",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Post Checkout",
+              "status": "completed",
+              "conclusion": "success"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
