@@ -30,12 +30,15 @@ public class FrontierContinuationEngineTest {
                 "A",
                 "!source(Tom);");
 
-        ConnectionManager.connect(
-                x.location, a.location);
+        ConnectionVector working =
+                ConnectionVector.empty()
+                        .with(ConnectionManager.qualifyConnect(
+                                x.location, a.location));
 
         FrontierContinuationEngine.Result result =
                 FrontierContinuationEngine.execute(
                         x.location,
+                        working,
                         "?target(Tom);");
 
         assertTrue(result.isResolved());
@@ -91,12 +94,15 @@ public class FrontierContinuationEngineTest {
                 "A-false",
                 "!~source(Tom);");
 
-        ConnectionManager.connect(
-                x.location, a.location);
+        ConnectionVector working =
+                ConnectionVector.empty()
+                        .with(ConnectionManager.qualifyConnect(
+                                x.location, a.location));
 
         FrontierContinuationEngine.Result result =
                 FrontierContinuationEngine.execute(
                         x.location,
+                        working,
                         "?source(Tom);");
 
         assertFalse(result.isResolved());
@@ -119,12 +125,15 @@ public class FrontierContinuationEngineTest {
                 "A-negative-frontier",
                 "!~source(Tom);");
 
-        ConnectionManager.connect(
-                x.location, a.location);
+        ConnectionVector working =
+                ConnectionVector.empty()
+                        .with(ConnectionManager.qualifyConnect(
+                                x.location, a.location));
 
         FrontierContinuationEngine.Result result =
                 FrontierContinuationEngine.execute(
                         x.location,
+                        working,
                         "?~source(Tom);");
 
         assertTrue(result.isResolved());
@@ -150,14 +159,17 @@ public class FrontierContinuationEngineTest {
                 "B-conflict",
                 "!~source(Tom);");
 
-        ConnectionManager.connect(
-                x.location, a.location);
-        ConnectionManager.connect(
-                x.location, b.location);
+        ConnectionVector working =
+                ConnectionVector.empty()
+                        .with(ConnectionManager.qualifyConnect(
+                                x.location, a.location))
+                        .with(ConnectionManager.qualifyConnect(
+                                x.location, b.location));
 
         FrontierContinuationEngine.Result result =
                 FrontierContinuationEngine.execute(
                         x.location,
+                        working,
                         "?source(Tom);");
 
         assertFalse(result.isResolved());
@@ -185,12 +197,15 @@ public class FrontierContinuationEngineTest {
                 "A-unknown",
                 "!other(Tom);");
 
-        ConnectionManager.connect(
-                x.location, a.location);
+        ConnectionVector working =
+                ConnectionVector.empty()
+                        .with(ConnectionManager.qualifyConnect(
+                                x.location, a.location));
 
         FrontierContinuationEngine.Result result =
                 FrontierContinuationEngine.execute(
                         x.location,
+                        working,
                         "?source(Tom);");
 
         assertFalse(result.isResolved());
@@ -213,12 +228,15 @@ public class FrontierContinuationEngineTest {
                 "A-null",
                 "!other(Tom);");
 
-        ConnectionManager.connect(
-                x.location, a.location);
+        ConnectionVector working =
+                ConnectionVector.empty()
+                        .with(ConnectionManager.qualifyConnect(
+                                x.location, a.location));
 
         FrontierContinuationEngine.Result result =
                 FrontierContinuationEngine.execute(
                         x.location,
+                        working,
                         "?target(Tom);");
 
         assertFalse(result.isResolved());
