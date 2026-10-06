@@ -1,0 +1,32 @@
+{
+  "base": "1c943d02d39bd33ebd91fabb7c4190112ab49459",
+  "branch": "experiment/3.8.0-current-empty-forensics",
+  "kind": "diagnostic call census; production unchanged",
+  "jdk": "17.0.20",
+  "compiler": "ECJ -1.8",
+  "heap": "512 MB",
+  "all_eight_integrated_flags": "ON",
+  "qualified_snapshots": 18,
+  "instrumented_timing": "excluded",
+  "file_sha256": {
+    "docs/current-empty-forensics/CurrentEmptyCounters.java": "d348a758eeb26f57963ee87bb157adf378e8299e5b0a33ce7218fb6b1182ec1f",
+    "docs/current-empty-forensics/CurrentEmptyProfileRunner.java": "cd55792c2dd424d4f5fb54b98f3faec46a4eecc3ad7e014f85596c99065d7369",
+    "docs/current-empty-forensics/analyze.py": "ed8c9f8407207c994acefdcf88747d89a7294dfe0650b13b0af21344f5c0eb80",
+    "docs/current-empty-forensics/build.py": "153b18b677cdbbed10cef17a41243d98958036c845a51b78dcf5931afe9e1f95",
+    "docs/current-empty-forensics/class-differences.json": "cd701dfaa9f7daccf862afeaf22c30c66307fb3e43760a9687083929bc87d4cb",
+    "docs/current-empty-forensics/class-sha256.json": "44a3fa791d5af9c6658d96d82fe36c32197acad539a7de4606fdafc06cbe111d",
+    "docs/current-empty-forensics/expected.json": "dd2cc2dcf68182272588b593fb5efdcdee797ede03a2ab174d3ae66cb6e54d11",
+    "docs/current-empty-forensics/instrumentation.patch": "46f17d0af396e78c575303ddfaea5cb2b1c0352603ed9a2c8b4d94840b7491ca",
+    "docs/current-empty-forensics/progress.err": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/current-empty-forensics/progress.log": "0cda14084c5524693bad6f0f1bb71cef8c17a7a70b224f020dd76499dfa6fc28",
+    "docs/current-empty-forensics/run-1-reference.err": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/current-empty-forensics/run-1-reference.log.gz": "66b47b21b2ccf28fd65e484753d44c50218813848585988c0863137359737015",
+    "docs/current-empty-forensics/run-2-diagnostic.err": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/current-empty-forensics/run-2-diagnostic.log.gz": "690a1ccf0a60b42d21a5b825c29d4b730bb4e11ccbb18d12f16b977a9eb229b3",
+    "docs/current-empty-forensics/run-3-diagnostic.err": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/current-empty-forensics/run-3-diagnostic.log.gz": "a7a10b3a4d2413fab533edd7f0fcab2d77e7b6b0ee6b6f7e75fcd3a1ec8341d2",
+    "docs/current-empty-forensics/run.py": "c6d0584aea819381e97b53467812141d007798d977dada9429f53c39d81621a9",
+    "docs/current-empty-forensics/sources.txt": "897798b58fa135b3ba1f427c01fb0716d4c58f2292d2afd2815fd02d68d2c752",
+    "docs/current-empty-forensics/summary.json": "5835fa51eadd0b61ec25eaeffa22b0b64993b785816980e397af058858361cf0"
+  }
+}

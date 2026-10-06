@@ -1,0 +1,31 @@
+--- kanger/src/org/kanger/factory/TValueFactory.java	2026-10-06 10:28:24.518419219 +0200
++++ ../build/current-empty-source/TValueFactory.java	2026-10-06 10:29:17.674314800 +0200
+@@ -329,0 +330,2 @@
++        int previous = org.kanger.CurrentEmptyCounters.enterGet();
++        try {
+@@ -333 +335,4 @@
+-        return current.get(tv);
++        TValue result = current.get(tv);
++        org.kanger.CurrentEmptyCounters.mapGet(result == null);
++        return result;
++        } finally { org.kanger.CurrentEmptyCounters.leaveGet(previous); }
+@@ -337 +342,3 @@
+-        return !current.containsKey(tv);
++        boolean present = current.containsKey(tv);
++        org.kanger.CurrentEmptyCounters.contains(this, tv, present);
++        return !present;
+--- kanger/src/org/kanger/units/TVariable.java	2026-10-06 10:28:24.521249266 +0200
++++ ../build/current-empty-source/TVariable.java	2026-10-06 10:29:17.675824009 +0200
+@@ -352,3 +352,9 @@
+-        return active == null
+-                || active.getTValues().isEmpty(this)
+-                || active.getTValues().get(this) == null;
++        boolean previousNative = org.kanger.CurrentEmptyCounters.nativeContext();
++        int previous = org.kanger.CurrentEmptyCounters.enterVariable(this, active);
++        try {
++            boolean result = active == null
++                    || active.getTValues().isEmpty(this)
++                    || active.getTValues().get(this) == null;
++            org.kanger.CurrentEmptyCounters.variableResult(result);
++            return result;
++        } finally { org.kanger.CurrentEmptyCounters.leaveVariable(previous, previousNative); }
