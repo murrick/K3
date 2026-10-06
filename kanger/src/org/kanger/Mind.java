@@ -905,7 +905,6 @@ public class Mind implements IMind {
                 ContextSourceMetadata.parse(src);
         IContextFederation sourceFederation = null;
         IContextFederation.SourceDependencyPlan sourceDependencyPlan = null;
-        IContextFederation.SourceDependencyPlan previousDependencyPlan = null;
 
         if (sourceMetadata.isPresent()) {
             IData data = user.getData();
@@ -920,20 +919,6 @@ public class Mind implements IMind {
                     sourceFederation.prepareSourceDependencies(
                             sourceMetadata.getRequests());
 
-            ArrayList<IContextFederation.SourceDependencyRequest>
-                    previousRequests =
-                    new ArrayList<IContextFederation.SourceDependencyRequest>();
-            for (IContextFederation.SourceDependency dependency
-                    : sourceFederation.sourceDependencies()) {
-                previousRequests.add(
-                        new IContextFederation.SourceDependencyRequest(
-                                dependency.getLocator(),
-                                Long.valueOf(
-                                        dependency.getRevision())));
-            }
-            previousDependencyPlan =
-                    sourceFederation.prepareSourceDependencies(
-                            previousRequests);
         }
 
         src = compilerInput(sourceMetadata.getSource());
@@ -989,25 +974,10 @@ public class Mind implements IMind {
                 if (logging) {
                     m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
                 }
+                tx.commit();
                 if (sourceDependencyPlan != null) {
-                    try {
-                        sourceFederation.installSourceDependencies(
-                                sourceDependencyPlan);
-                        tx.commit();
-                    } catch (Exception | Error failure) {
-                        if (previousDependencyPlan != null) {
-                            try {
-                                sourceFederation.installSourceDependencies(
-                                        previousDependencyPlan);
-                            } catch (Exception restoreFailure) {
-                                failure.addSuppressed(
-                                        restoreFailure);
-                            }
-                        }
-                        throw failure;
-                    }
-                } else {
-                    tx.commit();
+                    sourceFederation.installSourceDependencies(
+                            sourceDependencyPlan);
                 }
                 return true;
             }
