@@ -86,9 +86,9 @@ public class ContextSourceMetadataIntegrationTest {
             }
 
             assertEquals(
-                    x.revision,
+                    x.revision + 1L,
                     session.data.getRevision(),
-                    "source metadata and compile must not publish storage revision");
+                    "Core source compile may publish B, but dependency metadata must not add another revision");
         } finally {
             session.close();
         }
@@ -139,11 +139,11 @@ public class ContextSourceMetadataIntegrationTest {
                     session.data.federationSnapshot()
                             .getConnections().size());
 
-            assertThrows(
-                    Exception.class,
-                    () -> session.mind.compile(
+            assertFalse(
+                    session.mind.compile(
                             "//! ctx dependencies none\n"
-                                    + "!broken(\n"));
+                                    + "!probe(Tom);\n"
+                                    + "!~probe(Tom);\n"));
 
             assertEquals(
                     1,
