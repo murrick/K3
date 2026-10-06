@@ -1,0 +1,88 @@
+package org.kanger;
+import java.util.*;
+import java.lang.reflect.Field;
+import java.nio.file.*;
+import java.nio.charset.StandardCharsets;
+import org.kanger.units.*;
+import org.kanger.interfaces.IRule;
+/** Native authority gates for delayed canonical boundary records. */
+public final class TValueJournalSafetyRunner {
+    private static int checks;
+    private static void require(boolean ok,String msg){if(!ok)throw new AssertionError(msg);checks++;}
+    private static List<Long> ids(Mind m,TVariable v)throws Exception{List<Long> r=new ArrayList<>();m.getTValues().forEach(v,o->{r.add(((TValue)o).getId());return true;});return r;}
+    public static void main(String[] args)throws Exception{
+        TValueStateJournal.begin();
+        try{checkpoints();publication("accept");publication("reject");publication("user-reject");publication("exception");}
+        finally{List<String> rows=TValueStateJournal.finish();Files.write(Paths.get(System.getProperty("journal.path")),rows,StandardCharsets.UTF_8);System.out.println(rows.get(rows.size()-1));}
+        System.out.println("TVALUE_JOURNAL_SAFETY_OK checks="+checks);
+    }
+    private static void checkpoints()throws Exception{
+        Mind m=new Mind(new User());
+        for(String term:new String[]{"a","b","c"})require(m.compileLine("!keep("+term+");",false,null)!=null,"native retained term rule");
+        Rule owner=(Rule)m.compileLine("!@x journal_owner(x);",false,null);require(owner!=null,"native owner");
+        TVariable v=owner.getTree().get(0).get(0).getArguments().getTVariables(m).iterator().next();
+        TValue a=m.getTValues().add(v,m.getTerms().add("a"));v.setCurrent(a);m.getTValues().dropAction();
+        TValueStateJournal.observe(m,"baseline-add");int base=TValueStateJournal.contextChangeCount(m);
+        require(base==1,"one baseline value bucket delta");
+        m.getTValues().mark();TValue b=m.getTValues().add(v,m.getTerms().add("b"));
+        m.getTValues().mark();m.getTValues().add(v,m.getTerms().add("c"));TValueStateJournal.observe(m,"inner-provisional");
+        require(TValueStateJournal.contextChangeCount(m)==base,"no inner provisional publication");
+        m.getTValues().commit();TValueStateJournal.observe(m,"inner-committed-provisional");
+        require(TValueStateJournal.contextChangeCount(m)==base,"inner commit remains provisional to outer");
+        v.setCurrent(b);m.getTValues().release();TValueStateJournal.observe(m,"outer-rollback");
+        require(ids(m,v).equals(Collections.singletonList(a.getId())),"nested additions and enumeration rolled back");
+        require(TValueStateJournal.contextChangeCount(m)==base,"rolled-back additions omitted from journal");
+        require(v.getCurrent()==b&&!m.getTValues().isAction(),"observer does not restore transient projection or action");v.setCurrent(a);
+        m.getTValues().mark();b=m.getTValues().add(v,m.getTerms().add("b"));m.getTValues().mark();TValue c=m.getTValues().add(v,m.getTerms().add("c"));m.getTValues().commit();m.getTValues().commit();
+        TValueStateJournal.observe(m,"outer-commit");require(ids(m,v).equals(Arrays.asList(a.getId(),b.getId(),c.getId())),"native committed enumeration order");
+        require(TValueStateJournal.contextChangeCount(m)==base+1,"one surviving bucket delta for nested commit");
+        require(m.getTValues().add(v,m.getTerms().add("b"))==b,"duplicate canonical identity");TValueStateJournal.observe(m,"duplicate-add");
+        require(TValueStateJournal.contextChangeCount(m)==base+1,"duplicate add emits no delta");
+        b.setDeleted(true,m);TValueStateJournal.observe(m,"logical-delete");require(TValueStateJournal.contextChangeCount(m)==base+2,"logical deletion recorded");
+        require(ids(m,v).contains(b.getId()),"journal does not filter deleted enumeration identities");
+        b.setDeleted(true,m);TValueStateJournal.observe(m,"duplicate-delete");require(TValueStateJournal.contextChangeCount(m)==base+2,"duplicate delete emits no delta");
+        require(m.getTValues().add(v,m.getTerms().add("b"))==b,"resurrection reuses canonical ID");TValueStateJournal.observe(m,"resurrect");
+        require(TValueStateJournal.contextChangeCount(m)==base+3&&!b.isDeleted(m),"resurrection state change recorded");
+        b.setDeleted(true,m);TValueStateJournal.observe(m,"before-pack");m.getTValues().pack();TValueStateJournal.observe(m,"after-pack");
+        require(ids(m,v).equals(Arrays.asList(a.getId(),c.getId())),"physical pack removal retains authoritative order");
+        require(TValueStateJournal.contextChangeCount(m)==base+5,"logical and physical removal distinct deltas");
+        m.getTValues().clear();TValueStateJournal.observe(m,"factory-reset");require(m.getTValues().size()==0&&v.getCurrent()==null,"native reset remains authoritative");
+        require(m.pendingTransactionCount()==0,"checkpoint fixture settled");
+        System.out.println("JOURNAL_CHECKPOINT_CASE nested_rollback=omitted nested_commit=batched duplicate=omitted deleted_enumerated=true resurrection=same_id pack=removed reset=empty current_projection=untouched");
+    }
+    private static void publication(String mode)throws Exception{
+        Mind parent=new Mind(new User());Rule fact=(Rule)parent.compileLine("!keep(a);",false,null);require(fact!=null,"parent base fact");fact.setStored(parent);
+        Rule owner=(Rule)parent.compileLine("!@x journal_publish(x);",false,null);require(owner!=null,"publication owner");
+        TVariable v=owner.getTree().get(0).get(0).getArguments().getTVariables(parent).iterator().next();
+        TValue a=parent.getTValues().add(v,parent.getTerms().add("a"));TValueStateJournal.observe(parent,"parent-baseline");
+        Mind child=new Mind(parent);require(child.compileLine("!keep(b);",false,null)!=null,"child retained term");
+        TValue b=child.getTValues().add(v,child.getTerms().add("b"));TValueStateJournal.observe(child,"child-add");
+        require(ids(parent,v).equals(Collections.singletonList(a.getId())),"child addition invisible in parent");
+        TValueStateJournal.observe(parent,"parent-before-child-settle");int before=TValueStateJournal.contextChangeCount(parent);
+        if(!mode.equals("accept")){
+            if(mode.contains("reject")){Rule bad=(Rule)child.compileLine("!~keep(a);",false,null);require(bad!=null,"direct native contradictory child rule");bad.setStored(child);require(bad.isStored()&&fact.isStored(),"native stored collision operands");}
+            Mind sibling=new Mind(parent);require(sibling.compileLine("!sibling(item);",false,null)!=null,"sibling sequence");
+            require(parent.commit(sibling),"sibling publication forces non-sequenced commit path");
+            before=TValueStateJournal.contextChangeCount(parent);
+            if(mode.equals("exception")){Field field=Mind.class.getDeclaredField("analyzer");field.setAccessible(true);field.set(parent,new FailingAnalyzer(parent));}
+        }
+        boolean accepted=false,failure=false;
+        try{accepted=mode.equals("user-reject")?parent.commitUserTransaction(child):parent.commit(child);}catch(InjectedFailure e){failure=true;}
+        require(accepted==mode.equals("accept")&&failure==mode.equals("exception"),"native settlement outcome "+mode);
+        if(mode.equals("accept")){
+            require(ids(parent,v).equals(Arrays.asList(a.getId(),b.getId())),"accepted child appears in parent order");
+            require(TValueStateJournal.contextChangeCount(parent)==before+1,"accepted child produces one parent bucket delta");
+        }else{
+            require(ids(parent,v).equals(Collections.singletonList(a.getId())),"rejected or failed child canonical effects removed");
+            require(TValueStateJournal.contextChangeCount(parent)==before,"rejected or failed child produces no false parent delta");
+        }
+        if(mode.equals("user-reject")){require(parent.pendingTransactionCount()==1,"user rejection retains live child reservation");TValueStateJournal.observe(child,"live-rejected-child");parent.release(child);}
+        require(parent.pendingTransactionCount()==0,"parent reservation settled "+mode);
+        System.out.println("JOURNAL_PUBLICATION_CASE mode="+mode+" accepted="+accepted+" failure="+failure+" parent_delta="+(mode.equals("accept")?1:0));
+    }
+    private static final class InjectedFailure extends RuntimeException {}
+    private static final class FailingAnalyzer extends Analyzer {
+        FailingAnalyzer(Mind m){super(m);}
+        @Override public boolean checkDatabase(Set<Long> rules,boolean logging){throw new InjectedFailure();}
+    }
+}

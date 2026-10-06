@@ -1,0 +1,273 @@
+{
+  "base": "e636d1957a6841fab4f2c23f6bb399b8cfd1f848",
+  "production_source_unchanged": true,
+  "accepted_jvms": 28,
+  "native_journal_safety_checks_per_mode": 62,
+  "candidate_source_oracles": 4,
+  "sources_per_oracle": 47,
+  "complete_son_snapshots": 9,
+  "all_stderr_empty": true,
+  "native_contract_logs_equal": true,
+  "transaction_full_states_and_work_equal": true,
+  "corpus_semantics_equal": true,
+  "journal_traces": {
+    "journal-off-DependencyLifecycleWitness.trace.gz": {
+      "contexts": 8,
+      "observations": 19,
+      "changes": 3,
+      "resets": 0,
+      "deferred": 0,
+      "retired": 3,
+      "transitions": {
+        "added": 5,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-off-ExactCandidateReplayRunner.trace.gz": {
+      "contexts": 378,
+      "observations": 2966,
+      "changes": 2602,
+      "resets": 3,
+      "deferred": 0,
+      "retired": 375,
+      "transitions": {
+        "added": 2976,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-off-FrontierDependencyWitness.trace.gz": {
+      "contexts": 10,
+      "observations": 30,
+      "changes": 2,
+      "resets": 0,
+      "deferred": 0,
+      "retired": 7,
+      "transitions": {
+        "added": 4,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-off-KangerLinkerDonorScopeSafetyRunner.trace.gz": {
+      "contexts": 96,
+      "observations": 304,
+      "changes": 0,
+      "resets": 0,
+      "deferred": 0,
+      "retired": 88,
+      "transitions": {
+        "added": 0,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-off-LatentSolveSyncTransactionRunner.trace.gz": {
+      "contexts": 94,
+      "observations": 502,
+      "changes": 110,
+      "resets": 0,
+      "deferred": 0,
+      "retired": 93,
+      "transitions": {
+        "added": 156,
+        "removed": 4,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-off-TValueJournalSafetyRunner.trace.gz": {
+      "contexts": 26,
+      "observations": 98,
+      "changes": 15,
+      "resets": 1,
+      "deferred": 2,
+      "retired": 21,
+      "transitions": {
+        "added": 12,
+        "removed": 1,
+        "deleted": 2,
+        "resurrected": 1,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-DependencyLifecycleWitness.trace.gz": {
+      "contexts": 8,
+      "observations": 19,
+      "changes": 3,
+      "resets": 0,
+      "deferred": 0,
+      "retired": 3,
+      "transitions": {
+        "added": 5,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-ExactCandidateReplayRunner.trace.gz": {
+      "contexts": 378,
+      "observations": 2966,
+      "changes": 2602,
+      "resets": 3,
+      "deferred": 0,
+      "retired": 375,
+      "transitions": {
+        "added": 2976,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-FrontierDependencyWitness.trace.gz": {
+      "contexts": 10,
+      "observations": 30,
+      "changes": 2,
+      "resets": 0,
+      "deferred": 0,
+      "retired": 7,
+      "transitions": {
+        "added": 4,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-KangerLinkerDonorScopeSafetyRunner.trace.gz": {
+      "contexts": 96,
+      "observations": 304,
+      "changes": 0,
+      "resets": 0,
+      "deferred": 0,
+      "retired": 88,
+      "transitions": {
+        "added": 0,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-LatentSolveSyncTransactionRunner.trace.gz": {
+      "contexts": 94,
+      "observations": 502,
+      "changes": 110,
+      "resets": 0,
+      "deferred": 0,
+      "retired": 93,
+      "transitions": {
+        "added": 156,
+        "removed": 4,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-LatentSubstitutionCorpusRunner.trace.gz": {
+      "contexts": 1496,
+      "observations": 8620,
+      "changes": 4113,
+      "resets": 126,
+      "deferred": 0,
+      "retired": 1479,
+      "transitions": {
+        "added": 6196,
+        "removed": 3,
+        "deleted": 21,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-SonProfileRunner.trace.gz": {
+      "contexts": 836,
+      "observations": 7503,
+      "changes": 7458,
+      "resets": 1,
+      "deferred": 0,
+      "retired": 835,
+      "transitions": {
+        "added": 8282,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-TValueJournalSafetyRunner.trace.gz": {
+      "contexts": 26,
+      "observations": 98,
+      "changes": 15,
+      "resets": 1,
+      "deferred": 2,
+      "retired": 21,
+      "transitions": {
+        "added": 12,
+        "removed": 1,
+        "deleted": 2,
+        "resurrected": 1,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-repeat-SonProfileRunner.trace.gz": {
+      "contexts": 836,
+      "observations": 7503,
+      "changes": 7458,
+      "resets": 1,
+      "deferred": 0,
+      "retired": 835,
+      "transitions": {
+        "added": 8282,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-verify-TValueJournalSafetyRunner.trace.gz": {
+      "contexts": 26,
+      "observations": 98,
+      "changes": 15,
+      "resets": 1,
+      "deferred": 2,
+      "retired": 21,
+      "transitions": {
+        "added": 12,
+        "removed": 1,
+        "deleted": 2,
+        "resurrected": 1,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    }
+  },
+  "total_replayed_authority_views": 31562,
+  "limitations": "boundary-batched net canonical projection; no mutation-by-mutation causal log, scheduler consumer, runtime speedup or arbitrary-extension/concurrency guarantee"
+}

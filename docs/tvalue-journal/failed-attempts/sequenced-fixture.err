@@ -1,0 +1,4 @@
+Exception in thread "main" java.lang.AssertionError: native settlement outcome reject
+	at org.kanger.TValueJournalSafetyRunner.require(TValueJournalSafetyRunner.java:11)
+	at org.kanger.TValueJournalSafetyRunner.publication(TValueJournalSafetyRunner.java:71)
+	at org.kanger.TValueJournalSafetyRunner.main(TValueJournalSafetyRunner.java:15)
