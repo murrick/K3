@@ -20,6 +20,7 @@ import java.util.List;
 final class ContextSourceMetadata {
 
     private static final String MARKER = "//!";
+    private static final String CONTEXT_PREFIX = "//! ctx ";
 
     private ContextSourceMetadata() {
     }
@@ -57,7 +58,7 @@ final class ContextSourceMetadata {
             }
 
             String trimmed = logical.trim();
-            if (trimmed.startsWith(MARKER)) {
+            if (trimmed.startsWith(CONTEXT_PREFIX)) {
                 present = true;
                 String directive =
                         trimmed.substring(
