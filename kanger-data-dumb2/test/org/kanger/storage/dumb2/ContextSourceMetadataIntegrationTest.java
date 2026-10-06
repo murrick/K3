@@ -165,7 +165,7 @@ public class ContextSourceMetadataIntegrationTest {
             assertThrows(
                     IllegalArgumentException.class,
                     () -> session.mind.compile(
-                            "//! storage drop X\n"
+                            "//! ctx disconnect A\n"
                                     + "!female(Jane);\n"));
         } finally {
             session.close();
