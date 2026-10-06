@@ -30,8 +30,10 @@ public class WriteCandidateQualificationTest {
         ContextFixture a =
                 context("A-success", "!male(Tom);");
 
-        ConnectionManager.connect(
-                x.location, a.location);
+        ConnectionVector working =
+                ConnectionVector.empty()
+                        .with(ConnectionManager.qualifyConnect(
+                                x.location, a.location));
 
         ContextStore owner =
                 ContextStore.open(x.location);
@@ -41,15 +43,15 @@ public class WriteCandidateQualificationTest {
                             owner.getContextId(),
                             owner.getRevision());
             ConnectionVector currentVector =
-                    ConnectionStore.read(
-                            x.location, current);
+                    working;
 
             ContextCandidate candidate =
                     ContextCandidate.of(
                             owner,
                             sealedCandidate(
-                                    owner, x),
-                            x.revision + 1L);
+                                    owner, x, currentVector),
+                            x.revision + 1L,
+                            currentVector);
 
             WriteCandidateQualification.Result result =
                     WriteCandidateQualification.qualify(
@@ -96,10 +98,12 @@ public class WriteCandidateQualificationTest {
         ContextFixture b =
                 context("B-composition", "!~male(Tom);");
 
-        ConnectionManager.connect(
-                x.location, a.location);
-        ConnectionManager.connect(
-                x.location, b.location);
+        ConnectionVector working =
+                ConnectionVector.empty()
+                        .with(ConnectionManager.qualifyConnect(
+                                x.location, a.location))
+                        .with(ConnectionManager.qualifyConnect(
+                                x.location, b.location));
 
         ContextStore owner =
                 ContextStore.open(x.location);
@@ -109,16 +113,16 @@ public class WriteCandidateQualificationTest {
                             owner.getContextId(),
                             owner.getRevision());
             ConnectionVector currentVector =
-                    ConnectionStore.read(
-                            x.location, current);
+                    working;
             assertEquals(2, currentVector.size());
 
             ContextCandidate candidate =
                     ContextCandidate.of(
                             owner,
                             sealedCandidate(
-                                    owner, x),
-                            x.revision + 1L);
+                                    owner, x, currentVector),
+                            x.revision + 1L,
+                            currentVector);
 
             assertThrows(
                     StorageLifecycleException.class,
@@ -135,7 +139,8 @@ public class WriteCandidateQualificationTest {
 
     private Path sealedCandidate(
             ContextStore owner,
-            ContextFixture source) throws Exception {
+            ContextFixture source,
+            ConnectionVector dependencies) throws Exception {
         Path sourceGeneration =
                 ContextStore.generationPath(
                         source.location,
@@ -161,7 +166,9 @@ public class WriteCandidateQualificationTest {
                 candidate,
                 owner.getContextId(),
                 source.revision + 1L,
-                source.revision);
+                source.revision,
+                dependencies,
+                "");
         return candidate;
     }
 
