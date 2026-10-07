@@ -5,6 +5,7 @@
  */
 package org.kanger.storage.dumb2;
 
+import org.kanger.FrontierDemand;
 import org.kanger.SemanticTermSnapshot;
 import org.kanger.enums.DataType;
 import org.kanger.units.Term;
@@ -13,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/** Detached local-only answer produced by one exact foreign Context revision. */
+/** Detached local-only answer addressed to one invocation and exact target. */
 final class FrontierAnswer {
 
     enum Truth {
@@ -23,17 +24,28 @@ final class FrontierAnswer {
     }
 
     private final RevisionRef source;
+    private final FrontierInvocation invocation;
     private final Truth truth;
     private final List<String> variableOrder;
     private final List<List<ValueRef>> values;
     private final List<String> hypotheses;
+    private final List<FrontierDemand> unresolvedFrontiers;
 
     FrontierAnswer(RevisionRef source,
+                   FrontierInvocation invocation,
                    Truth truth,
                    List<String> variableOrder,
                    List<List<ValueRef>> values,
-                   List<String> hypotheses) {
+                   List<String> hypotheses,
+                   List<FrontierDemand> unresolvedFrontiers) {
+        if (source == null || invocation == null || truth == null) {
+            throw new NullPointerException("Frontier answer requires source, invocation and truth");
+        }
+        if (truth != Truth.NULL && !unresolvedFrontiers.isEmpty()) {
+            throw new IllegalArgumentException("A resolved frontier has no unresolved demands");
+        }
         this.source = source;
+        this.invocation = invocation;
         this.truth = truth;
         this.variableOrder = Collections.unmodifiableList(
                 new ArrayList<String>(variableOrder));
@@ -47,6 +59,32 @@ final class FrontierAnswer {
         this.values = Collections.unmodifiableList(copied);
         this.hypotheses = Collections.unmodifiableList(
                 new ArrayList<String>(hypotheses));
+        this.unresolvedFrontiers = Collections.unmodifiableList(
+                new ArrayList<FrontierDemand>(unresolvedFrontiers));
+    }
+
+    FrontierInvocation getInvocation() {
+        return invocation;
+    }
+
+    List<FrontierDemand> getUnresolvedFrontiers() {
+        return unresolvedFrontiers;
+    }
+
+    /** Validate the whole response batch before aggregation or materialization. */
+    static FrontierInvocation requireSameInvocation(List<FrontierAnswer> answers) {
+        FrontierInvocation invocation = null;
+        for (FrontierAnswer answer : answers) {
+            if (answer == null) {
+                throw new NullPointerException("answer");
+            }
+            if (invocation == null) {
+                invocation = answer.getInvocation();
+            } else if (!invocation.sameAddress(answer.getInvocation())) {
+                throw new IllegalArgumentException("Frontier answers belong to different invocations");
+            }
+        }
+        return invocation;
     }
 
     RevisionRef getSource() {

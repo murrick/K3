@@ -27,6 +27,7 @@ final class FrontierAggregate {
         CONFLICT
     }
 
+    private final FrontierInvocation invocation;
     private final Truth truth;
     private final Set<RevisionRef> trueSources;
     private final Set<RevisionRef> falseSources;
@@ -34,11 +35,13 @@ final class FrontierAggregate {
     private final List<ProvisionalHypothesis> hypotheses;
 
     private FrontierAggregate(
+            FrontierInvocation invocation,
             Truth truth,
             Set<RevisionRef> trueSources,
             Set<RevisionRef> falseSources,
             Set<RevisionRef> unknownSources,
             List<ProvisionalHypothesis> hypotheses) {
+        this.invocation = invocation;
         this.truth = truth;
         this.trueSources = immutableSet(trueSources);
         this.falseSources = immutableSet(falseSources);
@@ -52,6 +55,7 @@ final class FrontierAggregate {
         if (answers == null) {
             throw new NullPointerException("answers");
         }
+        FrontierInvocation invocation = FrontierAnswer.requireSameInvocation(answers);
 
         Set<RevisionRef> trueSources =
                 new LinkedHashSet<RevisionRef>();
@@ -112,11 +116,16 @@ final class FrontierAggregate {
         }
 
         return new FrontierAggregate(
+                invocation,
                 truth,
                 trueSources,
                 falseSources,
                 unknownSources,
                 hypotheses);
+    }
+
+    FrontierInvocation getInvocation() {
+        return invocation;
     }
 
     Truth getTruth() {

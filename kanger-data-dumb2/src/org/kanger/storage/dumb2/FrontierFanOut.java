@@ -25,6 +25,15 @@ final class FrontierFanOut {
     static List<FrontierAnswer> execute(
             OperationSnapshot operation,
             final FrontierDomain frontier) throws Exception {
+        return execute(operation, FrontierInvocation.create(frontier));
+    }
+
+    static List<FrontierAnswer> execute(
+            OperationSnapshot operation,
+            final FrontierInvocation invocation) throws Exception {
+        if (invocation == null) {
+            throw new NullPointerException("invocation");
+        }
         List<ContextConnection> connections =
                 operation.getConnections().getConnections();
         if (connections.isEmpty()) {
@@ -50,7 +59,7 @@ final class FrontierFanOut {
                                     throws Exception {
                                 return LocalFrontierExecutor.execute(
                                         connection,
-                                        frontier);
+                                        invocation);
                             }
                         }));
             }

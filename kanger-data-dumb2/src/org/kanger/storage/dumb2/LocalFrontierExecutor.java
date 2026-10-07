@@ -6,6 +6,7 @@
 package org.kanger.storage.dumb2;
 
 import org.kanger.FrontierDomain;
+import org.kanger.CausalFrontierCapture;
 import org.kanger.Mind;
 import org.kanger.User;
 import org.kanger.interfaces.IHypothesis;
@@ -33,24 +34,41 @@ final class LocalFrontierExecutor {
     static FrontierAnswer execute(
             ContextConnection connection,
             FrontierDomain frontier) throws Exception {
+        return execute(connection, FrontierInvocation.create(frontier));
+    }
+
+    static FrontierAnswer execute(
+            ContextConnection connection,
+            FrontierInvocation invocation) throws Exception {
         if (connection == null) {
             throw new NullPointerException("connection");
         }
-        if (frontier == null) {
-            throw new NullPointerException("frontier");
+        if (invocation == null) {
+            throw new NullPointerException("invocation");
         }
 
         RevisionRef target = connection.getTarget();
         return execute(
                 connection.getTargetLocation(),
                 target,
-                frontier);
+                invocation);
     }
 
     static FrontierAnswer execute(
             Path targetLocation,
             RevisionRef target,
             FrontierDomain frontier) throws Exception {
+        return execute(targetLocation, target, FrontierInvocation.create(frontier));
+    }
+
+    static FrontierAnswer execute(
+            Path targetLocation,
+            RevisionRef target,
+            FrontierInvocation invocation) throws Exception {
+        if (invocation == null) {
+            throw new NullPointerException("invocation");
+        }
+        FrontierDomain frontier = invocation.getFrontier();
         User user = new User();
         String logicalName =
                 "frontier-" + target.getContextId().toString();
@@ -78,7 +96,7 @@ final class LocalFrontierExecutor {
 
         Mind mind = Mind.ephemeralChild(root);
         try {
-            Boolean result = mind.queryCanonical(
+            CausalFrontierCapture.Result result = CausalFrontierCapture.query(mind,
                     frontier.getQuerySource(),
                     frontier.projectFixedArguments(mind),
                     false);
@@ -121,10 +139,12 @@ final class LocalFrontierExecutor {
 
             return new FrontierAnswer(
                     target,
-                    FrontierAnswer.truth(result),
+                    invocation,
+                    FrontierAnswer.truth(result.getTruth()),
                     order,
                     rows,
-                    hypotheses);
+                    hypotheses,
+                    result.getDemands());
         } finally {
             mind.getSolutions().clear();
             mind.getValues().clear();

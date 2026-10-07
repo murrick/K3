@@ -24,16 +24,19 @@ final class FrontierLiftSession implements AutoCloseable {
 
     private final SnapshotMindRuntime runtime;
     private final Mind operationMind;
+    private final FrontierInvocation invocation;
     private final List<String> variableOrder;
     private final List<LiftedTuple> tuples;
     private boolean closed;
 
     private FrontierLiftSession(SnapshotMindRuntime runtime,
                                 Mind operationMind,
+                                FrontierInvocation invocation,
                                 List<String> variableOrder,
                                 List<LiftedTuple> tuples) {
         this.runtime = runtime;
         this.operationMind = operationMind;
+        this.invocation = invocation;
         this.variableOrder = Collections.unmodifiableList(
                 new ArrayList<String>(variableOrder));
         this.tuples = Collections.unmodifiableList(
@@ -71,6 +74,7 @@ final class FrontierLiftSession implements AutoCloseable {
                     new FrontierLiftSession(
                             runtime,
                             operationMind,
+                            result.getInvocation(),
                             result.getVariableOrder(),
                             result.getTuples());
             success = true;
@@ -99,6 +103,7 @@ final class FrontierLiftSession implements AutoCloseable {
             throw new NullPointerException("answers");
         }
 
+        FrontierInvocation invocation = FrontierAnswer.requireSameInvocation(answers);
         List<String> order =
                 answers.isEmpty()
                         ? Collections.<String>emptyList()
@@ -163,20 +168,27 @@ final class FrontierLiftSession implements AutoCloseable {
                     tuple.values,
                     tuple.supports));
         }
-        return new LiftResult(order, result);
+        return new LiftResult(invocation, order, result);
     }
 
     static final class LiftResult {
 
+        private final FrontierInvocation invocation;
         private final List<String> variableOrder;
         private final List<LiftedTuple> tuples;
 
-        private LiftResult(List<String> variableOrder,
+        private LiftResult(FrontierInvocation invocation,
+                           List<String> variableOrder,
                            List<LiftedTuple> tuples) {
+            this.invocation = invocation;
             this.variableOrder = Collections.unmodifiableList(
                     new ArrayList<String>(variableOrder));
             this.tuples = Collections.unmodifiableList(
                     new ArrayList<LiftedTuple>(tuples));
+        }
+
+        FrontierInvocation getInvocation() {
+            return invocation;
         }
 
         List<String> getVariableOrder() {
@@ -186,6 +198,11 @@ final class FrontierLiftSession implements AutoCloseable {
         List<LiftedTuple> getTuples() {
             return tuples;
         }
+    }
+
+    FrontierInvocation getInvocation() {
+        requireOpen();
+        return invocation;
     }
 
     Mind getMind() {

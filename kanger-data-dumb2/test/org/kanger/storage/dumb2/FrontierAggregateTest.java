@@ -1,6 +1,10 @@
 package org.kanger.storage.dumb2;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.kanger.FrontierDemand;
+import org.kanger.Mind;
+import org.kanger.User;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,6 +15,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** M3.7 ground truth aggregation and provisional hypothesis provenance. */
 public class FrontierAggregateTest {
+
+    private FrontierInvocation invocation;
+
+    @BeforeEach
+    void prepareInvocation() throws Exception {
+        User user = new User();
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        mind.queryCanonical("?fact(John);", null, false);
+        invocation = FrontierInvocation.create(mind.getFrontierDomains().get(0));
+    }
 
     @Test
     void truePlusUnknownIsTrue() {
@@ -119,20 +134,24 @@ public class FrontierAggregateTest {
         FrontierAnswer one =
                 new FrontierAnswer(
                         a,
+                        invocation,
                         FrontierAnswer.Truth.NULL,
                         Collections.<String>emptyList(),
                         Collections.<java.util.List<FrontierAnswer.ValueRef>>emptyList(),
                         Arrays.asList(
                                 "!maybe(Tom);",
-                                "!maybe(Tom);"));
+                                "!maybe(Tom);"),
+                        Collections.<FrontierDemand>emptyList());
         FrontierAnswer two =
                 new FrontierAnswer(
                         b,
+                        invocation,
                         FrontierAnswer.Truth.NULL,
                         Collections.<String>emptyList(),
                         Collections.<java.util.List<FrontierAnswer.ValueRef>>emptyList(),
                         Collections.singletonList(
-                                "!maybe(Tom);"));
+                                "!maybe(Tom);"),
+                        Collections.<FrontierDemand>emptyList());
 
         FrontierAggregate aggregate =
                 FrontierAggregate.of(
@@ -162,10 +181,12 @@ public class FrontierAggregateTest {
             FrontierAnswer.Truth truth) {
         return new FrontierAnswer(
                 source,
+                invocation,
                 truth,
                 Collections.<String>emptyList(),
                 Collections.<java.util.List<FrontierAnswer.ValueRef>>emptyList(),
-                Collections.<String>emptyList());
+                Collections.<String>emptyList(),
+                Collections.<FrontierDemand>emptyList());
     }
 
     private RevisionRef ref(long revision) {
