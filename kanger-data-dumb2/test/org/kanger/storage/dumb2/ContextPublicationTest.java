@@ -34,6 +34,25 @@ class ContextPublicationTest {
     }
     String description() throws Exception { return data.versionHistory(null).getRevisions().get(0).getDescription(); }
 
+    @Test void sourceCommentsSurviveNestedPublicationAndPinnedAttachment() throws Exception {
+        open(); command("transaction start");
+        assertTrue(mind().compile("/** release header */\n// rule note\n!male(Tom);"));
+        mind().getComments().add(org.kanger.factory.CommentFactory.FOOTER_ID, "// release footer");
+        publish("Commented release");
+        long revision = data.getRevision();
+        assertEquals(0, mind().getTransactionLevel());
+        assertTrue(mind().getSourceCode().contains("release header"));
+        assertTrue(mind().getSourceCode().contains("release footer"));
+        command("use X@" + revision);
+        assertTrue(mind().getSourceCode().contains("release header"));
+        assertTrue(mind().getSourceCode().contains("release footer"));
+        assertTrue(mind().query("?male(Tom);", null, false));
+        command("use Y"); command("ctx connect X");
+        assertEquals(revision, data.federationSnapshot().getConnections().get(0).getPinnedRevision());
+        assertTrue(mind().query("?male(Tom);", null, false));
+        close();
+    }
+
     @Test void automaticDescriptionsAndFreshQueriesDoNotPublish() throws Exception {
         open();
         assertTrue(mind().query("!p(John);",null,false));

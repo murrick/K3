@@ -105,7 +105,7 @@ final class ContextStep extends Sapato {
 
     @Override
     public IStep getNext() {
-        if (record.getNextId() < 0L) {
+        if (record.getNextId() == -1L) {
             return null;
         }
         try {

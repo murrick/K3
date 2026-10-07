@@ -8,6 +8,10 @@ package org.kanger.storage.dumb2;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.kanger.enums.StorageLifecycleErrorCode;
+import org.kanger.Mind;
+import org.kanger.User;
+import org.kanger.factory.CommentFactory;
+import org.kanger.units.Comment;
 import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.internal.IBase;
 import org.kanger.interfaces.internal.IStep;
@@ -123,6 +127,61 @@ public class ContextBaseTest {
                 () -> ContextStore.open(location));
         assertEquals(StorageLifecycleErrorCode.STORAGE_SEMANTIC_CORRUPTION,
                 failure.getErrorCode());
+    }
+
+    @Test
+    void reservedCommentChainSurvivesSnapshotAndKeepsAllocatorNonNegative() throws Exception {
+        Mind mind = new Mind(new User());
+        Path location = root.resolve("reserved-comments");
+        try (ContextStore context = ContextStore.create(location)) {
+            IBase base = context.getBase(CommentFactory.SCHEMA);
+            base.add(step(base, CommentFactory.HEADER_ID, 1,
+                    new Comment(CommentFactory.HEADER_ID, "header", mind), null));
+            assertEquals(1L, context.flush());
+            assertEquals(0L, base.lastId());
+            IStep header = base.get(CommentFactory.HEADER_ID);
+            base.add(step(base, CommentFactory.FOOTER_ID, 2,
+                    new Comment(CommentFactory.FOOTER_ID, "footer", mind), header));
+            assertEquals(2L, context.flush());
+            assertEquals(CommentFactory.FOOTER_ID, base.getRoot().getId());
+            assertEquals(CommentFactory.HEADER_ID, base.getRoot().getNext().getId());
+            assertEquals(CommentFactory.HEADER_ID, base.getTop().getId());
+            assertEquals(0L, base.nextId());
+            try (ContextSnapshot snapshot = ContextSnapshot.open(location, 1L)) {
+                IBase pinned = snapshot.getBase(CommentFactory.SCHEMA);
+                assertEquals(CommentFactory.HEADER_ID, pinned.getRoot().getId());
+                assertEquals(CommentFactory.HEADER_ID, pinned.getTop().getId());
+                assertEquals("header", ((Comment) pinned.getRoot().getData(mind)).getComment());
+            }
+        }
+        try (ContextStore reopened = ContextStore.open(location)) {
+            IBase base = reopened.getBase(CommentFactory.SCHEMA);
+            assertEquals(CommentFactory.FOOTER_ID, base.getRoot().getId());
+            assertEquals("header", ((Comment) base.getRoot().getNext().getData(mind)).getComment());
+            assertEquals(0L, base.nextId());
+        }
+    }
+
+    @Test
+    void reservedCommentAddressesRejectOtherSchemasTypesAndDanglingLinks() throws Exception {
+        Mind mind = new Mind(new User());
+        try (ContextStore context = ContextStore.create(root.resolve("reserved-guards"))) {
+            IBase rules = context.getBase("rules");
+            assertThrows(IllegalArgumentException.class, () -> rules.add(step(rules, -2L, 1,
+                    new Comment(-2L, "header", mind), null)));
+            IBase comments = context.getBase(CommentFactory.SCHEMA);
+            assertThrows(StorageLifecycleException.class,
+                    () -> comments.add(step(comments, -2L, 1, Long.valueOf(1L), null)));
+            assertThrows(IllegalArgumentException.class,
+                    () -> comments.add(step(comments, -1L, 1, Long.valueOf(1L), null)));
+            assertThrows(IllegalArgumentException.class,
+                    () -> comments.add(step(comments, -4L, 1, Long.valueOf(1L), null)));
+            comments.add(step(comments, -2L, 1, new Comment(-2L, "header", mind),
+                    volatileStep(-3L, 2, new Comment(-3L, "missing", mind), null)));
+            assertThrows(StorageLifecycleException.class, context::flush);
+            assertEquals(0L, context.getRevision());
+            comments.clear();
+        }
     }
 
     private static Sapato step(IBase base,

@@ -4,6 +4,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.kanger.Mind;
 import org.kanger.User;
+import org.kanger.factory.CommentFactory;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.internal.IContextFederation;
 
@@ -12,6 +16,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -233,6 +238,65 @@ public class ContextSourceMetadataIntegrationTest {
                                     + "!female(Jane);\n"));
         } finally {
             session.close();
+        }
+    }
+
+    @Test
+    void sourceHeaderAndFooterSurviveCommitQueryAndReopen() throws Exception {
+        Session session = open("commented");
+        try {
+            assertTrue(session.mind.compile(
+                    "/** source header */\n// rule comment\n!male(Tom);\n// source footer\n"));
+            session.mind.getComments().add(CommentFactory.FOOTER_ID, "// source footer");
+            assertTrue(Boolean.TRUE.equals(session.mind.query("!footer_anchor;", null, false)));
+            assertTrue(session.data.getRevision() > 0L);
+            assertTrue(Boolean.TRUE.equals(session.mind.query("?male(Tom);", null, false)));
+            Mind query = Mind.ephemeralChild(session.mind);
+            assertTrue(Boolean.TRUE.equals(query.query("?male(Tom);", null, false)));
+            session.mind.release(query);
+            assertTrue(session.mind.getSourceCode().contains("source header"));
+            assertTrue(session.mind.getSourceCode().contains("source footer"));
+        } finally {
+            session.close();
+        }
+        Session reopened = open("commented");
+        try {
+            assertTrue(reopened.mind.getSourceCode().contains("source header"));
+            assertTrue(reopened.mind.getSourceCode().contains("rule comment"));
+            assertTrue(reopened.mind.getSourceCode().contains("source footer"));
+            assertTrue(Boolean.TRUE.equals(reopened.mind.query("?male(Tom);", null, false)));
+            Mind query = Mind.ephemeralChild(reopened.mind);
+            assertTrue(Boolean.TRUE.equals(query.query("?male(Tom);", null, false)));
+            reopened.mind.release(query);
+        } finally {
+            reopened.close();
+        }
+    }
+
+    @Test
+    void completeNativesSourceCanBeQueriedAndReopened() throws Exception {
+        Path source = Paths.get("natives.k");
+        if (!Files.exists(source)) source = Paths.get("..", "natives.k");
+        Session session = open("natives");
+        try {
+            assertTrue(session.mind.compile(new String(Files.readAllBytes(source), StandardCharsets.UTF_8)));
+            assertTrue(session.data.getRevision() > 0L);
+            Mind query = Mind.ephemeralChild(session.mind);
+            Boolean result = query.query("?male(Tom);", null, false);
+            session.mind.release(query);
+            assertNull(result, "Tom has no proven sex in natives.k");
+            assertTrue(Boolean.TRUE.equals(session.mind.query("?male(John);", null, false)));
+            assertTrue(session.mind.getSourceCode().contains("Базовые правила"));
+        } finally {
+            session.close();
+        }
+        Session reopened = open("natives");
+        try {
+            assertTrue(reopened.mind.getSourceCode().contains("Базовые правила"));
+            assertNull(reopened.mind.query("?male(Tom);", null, false));
+            assertTrue(Boolean.TRUE.equals(reopened.mind.query("?male(John);", null, false)));
+        } finally {
+            reopened.close();
         }
     }
 

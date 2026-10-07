@@ -27,6 +27,18 @@ public class PersistentRecordCodecTest {
     }
 
     @Test
+    void reservedCommentIdsRoundTripButNullAndUnknownNegativeIdsReject() throws Exception {
+        PersistentRecord record = new PersistentRecord(-2L, 1, -3L, 1, new byte[]{1});
+        assertEquals(record, PersistentRecordCodec.decode(PersistentRecordCodec.encode(record)));
+        assertThrows(IllegalArgumentException.class,
+                () -> new PersistentRecord(-1L, 1, -1L, 1, new byte[0]));
+        assertThrows(IllegalArgumentException.class,
+                () -> new PersistentRecord(-4L, 1, -1L, 1, new byte[0]));
+        assertThrows(IllegalArgumentException.class,
+                () -> new PersistentRecord(0L, 1, -4L, 1, new byte[0]));
+    }
+
+    @Test
     void envelopeRejectsDamagedBytes() throws Exception {
         byte[] bytes = PersistentRecordCodec.encode(
                 new PersistentRecord(1L, 2, -1L, 3, new byte[]{4, 5}));
