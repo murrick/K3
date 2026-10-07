@@ -1,0 +1,1 @@
+SAVED_LINK_FAILURE_PHYSICAL rows=[0:0:4:0] witness=present native_endpoints=unresolved reader=pure
