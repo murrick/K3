@@ -82,8 +82,6 @@ final class LocalFrontierExecutor {
             throw new NullPointerException("request");
         }
         request.executionState(target);
-        FrontierInvocation invocation = request.getInvocation();
-        FrontierDomain frontier = invocation.getFrontier();
         User user = new User();
         String logicalName =
                 "frontier-" + target.getContextId().toString();
@@ -109,6 +107,18 @@ final class LocalFrontierExecutor {
                             + target);
         }
 
+        try {
+            return execute(root, target, request);
+        } finally {
+            root = (Mind) root.closeStorage();
+            user.setCurrentMind(root);
+        }
+    }
+
+    /** Local X probe also uses native inference in a discarded child, never its federation provider. */
+    static FrontierAnswer execute(Mind root, RevisionRef target, FrontierRequest request) throws Exception {
+        request.executionState(target);
+        FrontierDomain frontier = request.getInvocation().getFrontier();
         Mind mind = Mind.ephemeralChild(root);
         try {
             for (SuppliedEvidence fact : request.getEvidence()) {
@@ -164,11 +174,7 @@ final class LocalFrontierExecutor {
                     hypotheses,
                     result.getDemands());
         } finally {
-            mind.getSolutions().clear();
-            mind.getValues().clear();
-            root.release(mind);
-            root = (Mind) root.closeStorage();
-            user.setCurrentMind(root);
+            root.discardEphemeral(mind);
         }
     }
 }

@@ -30,7 +30,7 @@ public final class FrontierDemand {
         return parentProjection;
     }
 
-    boolean semanticallyEquivalent(FrontierDemand other) {
+    public boolean semanticallyEquivalent(FrontierDemand other) {
         return parent.semanticallyEquivalent(other.parent)
                 && query.semanticallyEquivalent(other.query)
                 && parentProjection.semanticallyEquivalent(other.parentProjection);

@@ -53,6 +53,22 @@ final class FrontierRequest {
         return new FrontierRequest(blocked.getInvocation(), blocked.getSource(), relevant);
     }
 
+    /** Rebuild from current child proofs, including withdrawal after conflict. */
+    static FrontierRequest forDemands(FrontierInvocation invocation, RevisionRef target,
+                                      List<FrontierDemand> demands, List<SuppliedEvidence> proven) {
+        List<SuppliedEvidence> relevant = new ArrayList<SuppliedEvidence>();
+        for (SuppliedEvidence fact : proven) {
+            for (FrontierDemand demand : demands) {
+                if (fact.matches(demand.getQuery())
+                        && demand.getParentProjection().project(fact.getArguments()) != null) {
+                    SuppliedEvidence.add(relevant, fact);
+                    break;
+                }
+            }
+        }
+        return new FrontierRequest(invocation, target, relevant);
+    }
+
     FrontierInvocation getInvocation() {
         return invocation;
     }

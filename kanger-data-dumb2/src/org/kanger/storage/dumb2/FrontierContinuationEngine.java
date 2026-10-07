@@ -77,6 +77,7 @@ final class FrontierContinuationEngine {
 
             Result result = run(
                     work,
+                    root,
                     operation,
                     querySource,
                     new LinkedList<ITerm>(),
@@ -144,6 +145,7 @@ final class FrontierContinuationEngine {
         try {
             Result result = run(
                     work,
+                    sourceMind,
                     operation,
                     querySource,
                     externals == null
@@ -189,6 +191,7 @@ final class FrontierContinuationEngine {
 
     private static Result run(
             Mind work,
+            Mind localSource,
             OperationSnapshot operation,
             String querySource,
             Queue<ITerm> externals,
@@ -266,9 +269,9 @@ final class FrontierContinuationEngine {
 
             boolean changed = false;
             for (FrontierDomain frontier : frontiers) {
-                List<FrontierAnswer> answers =
-                        FrontierFanOut.execute(
-                                operation, frontier);
+                CausalFrontierScheduler.Result scheduled =
+                        CausalFrontierScheduler.execute(operation, frontier, localSource);
+                List<FrontierAnswer> answers = scheduled.getAnswers();
                 FrontierAggregate aggregate =
                         FrontierAggregate.of(answers);
                 observations.add(
@@ -278,6 +281,24 @@ final class FrontierContinuationEngine {
                                 aggregate));
                 provisionalHypotheses.addAll(
                         aggregate.getHypotheses());
+                if (scheduled.hasRootConflict()
+                        || scheduled.hasConflict() && aggregate.getTruth() == FrontierAggregate.Truth.UNKNOWN) {
+                    for (CausalFrontierScheduler.Conflict conflict : scheduled.getConflicts()) {
+                        if (!conflict.frontier.sameSemanticQuery(frontier)) {
+                            observations.add(new FrontierObservation(waves, conflict.frontier, conflict.aggregate));
+                        }
+                    }
+                    // A causal child contradiction cannot become a donor or a hypothesis.
+                    // Preserve the root witness too when its latest reproof was withdrawn.
+                    if (aggregate.getTruth() != FrontierAggregate.Truth.CONFLICT) {
+                        for (CausalFrontierScheduler.Conflict conflict : scheduled.getConflicts()) {
+                            if (conflict.frontier.sameSemanticQuery(frontier)) {
+                                observations.add(new FrontierObservation(waves, frontier, conflict.aggregate));
+                            }
+                        }
+                    }
+                    continue;
+                }
 
                 /*
                  * Ground TRUE is a factual donor for this exact frontier
@@ -474,11 +495,16 @@ final class FrontierContinuationEngine {
                     Collections.unmodifiableList(
                             new ArrayList<EvidenceInjection>(
                                     evidenceInjections));
-            this.provisionalHypotheses =
-                    Collections.unmodifiableList(
-                            new ArrayList<
-                                    FrontierAggregate.ProvisionalHypothesis>(
-                                    provisionalHypotheses));
+            boolean conflict = false;
+            for (FrontierObservation observation : observations) {
+                if (observation.getAggregate().getTruth() == FrontierAggregate.Truth.CONFLICT) {
+                    conflict = true;
+                    break;
+                }
+            }
+            this.provisionalHypotheses = resolved || conflict
+                    ? Collections.<FrontierAggregate.ProvisionalHypothesis>emptyList()
+                    : Collections.unmodifiableList(new ArrayList<FrontierAggregate.ProvisionalHypothesis>(provisionalHypotheses));
         }
 
         boolean isResolved() {
