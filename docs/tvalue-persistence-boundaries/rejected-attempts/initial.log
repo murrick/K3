@@ -1,0 +1,8 @@
+START 0 clean-on-TValuePersistenceRunner
+DONE 0 clean-on-TValuePersistenceRunner
+START 1 shadow-on-TValuePersistenceRunner
+Traceback (most recent call last):
+  File "/workspace/scratch/1c9c6dd2770c/K3-tvalue-persistence38/docs/tvalue-persistence-boundaries/run.py", line 30, in <module>
+    assert result.returncode==0 and not err and markers[runner] in data.decode(),(label,result.returncode,err.decode()[-1800:],data.decode()[-500:])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('shadow-on-TValuePersistenceRunner', 1, 'Error: Could not find or load main class org.kanger.TValuePersistenceRunner\nCaused by: java.lang.ClassNotFoundException: org.kanger.TValuePersistenceRunner\n', '')

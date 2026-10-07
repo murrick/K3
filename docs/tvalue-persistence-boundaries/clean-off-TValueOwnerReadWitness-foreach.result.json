@@ -1,0 +1,32 @@
+{
+  "index": 26,
+  "build": "clean",
+  "flag": "off",
+  "runner": "TValueOwnerReadWitness",
+  "args": [
+    "foreach"
+  ],
+  "exit_code": 0,
+  "expected_identity_rejection": false,
+  "owner_observation_transparency_qualified": false,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/tvalue-persistence-jvm-eoe539iv",
+    "-Dpersistence.shadow=false",
+    "-Dmetadata.shadow=false",
+    "-Djournal.path=/workspace/scratch/1c9c6dd2770c/K3-tvalue-persistence38/docs/tvalue-persistence-boundaries/clean-off-TValueOwnerReadWitness-foreach.trace",
+    "-Dkanger.experiment.preserveTValueIndex=false",
+    "-Dkanger.experiment.versionedSolveSync=false",
+    "-Dkanger.experiment.resolvedCauseWeights=false",
+    "-Dkanger.experiment.compactCauseWeights=false",
+    "-Dkanger.experiment.candidateMembershipFilter=false",
+    "-Dkanger.experiment.singleTValueLookup=false",
+    "-Dkanger.experiment.residentBaseComparison=false",
+    "-Dkanger.experiment.compactFindSnapshots=false",
+    "-cp",
+    "../build/tvalue-persistence-boundaries-clean:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.TValueOwnerReadWitness",
+    "foreach"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "index": 13,
+  "build": "clean",
+  "flag": "on",
+  "runner": "LatentSolveSyncTransactionRunner",
+  "args": [
+    "/workspace/scratch/1c9c6dd2770c/K3-tvalue-persistence38/docs/tvalue-persistence-boundaries/clean-on-LatentSolveSyncTransactionRunner.state",
+    "/workspace/scratch/1c9c6dd2770c/K3-tvalue-persistence38/docs/tvalue-persistence-boundaries/clean-on-LatentSolveSyncTransactionRunner.work"
+  ],
+  "exit_code": 0,
+  "expected_identity_rejection": false,
+  "owner_observation_transparency_qualified": null,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/tvalue-persistence-jvm-fci0gctp",
+    "-Dpersistence.shadow=false",
+    "-Dmetadata.shadow=false",
+    "-Djournal.path=/workspace/scratch/1c9c6dd2770c/K3-tvalue-persistence38/docs/tvalue-persistence-boundaries/clean-on-LatentSolveSyncTransactionRunner.trace",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-persistence-boundaries-clean:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.LatentSolveSyncTransactionRunner",
+    "/workspace/scratch/1c9c6dd2770c/K3-tvalue-persistence38/docs/tvalue-persistence-boundaries/clean-on-LatentSolveSyncTransactionRunner.state",
+    "/workspace/scratch/1c9c6dd2770c/K3-tvalue-persistence38/docs/tvalue-persistence-boundaries/clean-on-LatentSolveSyncTransactionRunner.work"
+  ]
+}

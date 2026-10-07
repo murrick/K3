@@ -1,0 +1,13 @@
+----------
+1. ERROR in /workspace/scratch/1c9c6dd2770c/K3-tvalue-persistence38/docs/tvalue-persistence-boundaries/TValuePersistenceGapRunner.java (at line 18)
+	if(shadow()){TValueDirtyJournal.observe(m,"identity-mutated-"+mode);boolean rejected=false;try{TValueDirtyJournal.finish();}catch(AssertionError e){rejected=e.getMessage().contains("unsupported registered identity mutation");System.out.println("EXPECTED_ID_REJECTION mode="+mode+" partial="+mode.equals("truncated-apply"));}if(!rejected||t.getId()!=changed||m.getTValues().get(original)!=t)throw new AssertionError("observer rejects without repair");TValueDirtyJournal.begin();TValueDirtyJournal.finish();}
+	   ^^^^^^
+The method shadow() is undefined for the type TValuePersistenceGapRunner
+----------
+1 problem (1 error)
+Traceback (most recent call last):
+  File "/workspace/scratch/1c9c6dd2770c/K3-tvalue-persistence38/docs/tvalue-persistence-boundaries/build.py", line 72, in <module>
+    subprocess.run(['java','-jar','../tooling/ecj.jar','-1.8','-nowarn','-cp','lib/jline-3.13.0.jar','-d',str(classes),'@'+str(path)],check=True,timeout=120)
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['java', '-jar', '../tooling/ecj.jar', '-1.8', '-nowarn', '-cp', 'lib/jline-3.13.0.jar', '-d', '../build/tvalue-persistence-boundaries-clean', '@/workspace/scratch/1c9c6dd2770c/K3-tvalue-persistence38/docs/tvalue-persistence-boundaries/clean-sources.txt']' returned non-zero exit status 255.

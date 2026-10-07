@@ -1,0 +1,7 @@
+{
+  "compiler_failure": "diagnostic GapRunner used a boolean variable as a method; corrected",
+  "initial_executions": 2,
+  "initial_native_clean_fixture_completed": 1,
+  "shadow_startup_failure": "classes absent after incomplete build; ClassNotFoundException",
+  "included_in_qualification": false
+}

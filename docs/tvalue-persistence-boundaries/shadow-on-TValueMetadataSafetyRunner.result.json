@@ -1,0 +1,29 @@
+{
+  "index": 2,
+  "build": "shadow",
+  "flag": "on",
+  "runner": "TValueMetadataSafetyRunner",
+  "args": [],
+  "exit_code": 0,
+  "expected_identity_rejection": false,
+  "owner_observation_transparency_qualified": null,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/tvalue-persistence-jvm-45_unwim",
+    "-Dpersistence.shadow=true",
+    "-Dmetadata.shadow=true",
+    "-Djournal.path=/workspace/scratch/1c9c6dd2770c/K3-tvalue-persistence38/docs/tvalue-persistence-boundaries/shadow-on-TValueMetadataSafetyRunner.trace",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-persistence-boundaries-shadow:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.TValueMetadataSafetyRunner"
+  ]
+}

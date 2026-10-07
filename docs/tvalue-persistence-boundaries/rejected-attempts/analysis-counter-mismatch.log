@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/workspace/scratch/1c9c6dd2770c/K3-tvalue-persistence38/docs/tvalue-persistence-boundaries/analyze.py", line 63, in <module>
+    assert traces[p.name]['transitions']['term_changes']==7,traces[p.name]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'contexts': 4, 'observations': 30, 'changes': 13, 'resets': 0, 'seed_buckets': 0, 'authority_buckets': 20, 'deferred': 1, 'touches': 20, 'bucketReads': 17, 'seeds': 4, 'mapChanges': 4, 'retired': 3, 'transitions': {'added': 1, 'removed': 0, 'deleted': 2, 'resurrected': 2, 'order_changes': 0, 'term_changes': 8}, 'replay_matches_every_authority_view': True}
