@@ -412,8 +412,19 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
      *
      * @return currently published revision; unchanged for a clean Context
      */
+    private ConnectionVector qualifiedWorkingConnections;
+
+    synchronized ConnectionVector getQualifiedWorkingConnections() {
+        return qualifiedWorkingConnections;
+    }
+
     synchronized long flush() throws Exception {
+        return flush(null);
+    }
+
+    synchronized long flush(ConnectionVector working) throws Exception {
         requireOpen();
+        qualifiedWorkingConnections = null;
 
         boolean dirty = false;
         for (ContextBase base : bases.values()) {
@@ -489,6 +500,13 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                     next,
                     currentConnections);
 
+            // Validate session-only pins before CURRENT advances. They are deliberately
+            // excluded from this revision's durable dependency vector.
+            ConnectionVector qualifiedWorking = working == null || working.isEmpty() ? working
+                    : WriteCandidateQualification.qualify(
+                            ContextCandidate.of(this, staging, next, currentConnections),
+                            working).getConnections();
+
             /*
              * A target with no matching visible revision is an orphan left by
              * a failed/crashed publication. The Context lock proves that no
@@ -515,6 +533,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
             }
 
             revision = published;
+            qualifiedWorkingConnections = qualifiedWorking;
             for (ContextBase base : bases.values()) {
                 if (base.isDirty()) {
                     base.markPublished();
@@ -549,10 +568,6 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                 || description == null) {
             throw new NullPointerException();
         }
-        if (revision <= RevisionStore.INITIAL_REVISION) {
-            throw new IllegalStateException(
-                    "DUMB2 topology publication requires a materialized Context revision");
-        }
         for (ContextBase base : bases.values()) {
             if (base.isDirty()) {
                 throw new IllegalStateException(
@@ -573,7 +588,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                             + revision + " actual=" + persisted);
         }
 
-        validatePublishedGeneration();
+        if(revision>RevisionStore.INITIAL_REVISION) validatePublishedGeneration();
 
         ConnectionVector currentConnections =
                 publishedConnections();
@@ -601,13 +616,20 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
         boolean generationInstalled = false;
         try {
-            if (!Files.isDirectory(previous)) {
-                throw corruption(
-                        "DUMB2 Context revision " + revision
-                                + " lost its physical generation at "
-                                + location);
+            if (revision == RevisionStore.INITIAL_REVISION) {
+                Files.createDirectories(staging);
+                for (ContextBase base : bases.values()) {
+                    base.writeSnapshot(staging);
+                }
+            } else {
+                if (!Files.isDirectory(previous)) {
+                    throw corruption(
+                            "DUMB2 Context revision " + revision
+                                    + " lost its physical generation at "
+                                    + location);
+                }
+                copyDirectory(previous, staging);
             }
-            copyDirectory(previous, staging);
 
             RevisionManifestStore.seal(
                     staging,

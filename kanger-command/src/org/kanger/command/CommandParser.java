@@ -419,6 +419,7 @@ public final class CommandParser {
                     Family.CONTEXT, tokens.get(1).value,
                     Keyword.CONNECT, Keyword.DISCONNECT,
                     Keyword.SWITCH, Keyword.VERSION,
+                    Keyword.RULES, Keyword.SAVE,
                     Keyword.EXPLAIN);
         } catch (CommandParseException rejected) {
             if (rejected.getReason() == AMBIGUOUS_PREFIX) {
@@ -427,6 +428,11 @@ public final class CommandParser {
             return parseContextIsolatedQuery(raw);
         }
         switch (keyword) {
+            case SAVE:
+                requireSize(tokens,2);
+                return CommandInvocation.command(CommandIntent.CTX_SAVE,raw);
+            case RULES:
+                return parseContextRules(raw,tokens);
             case CONNECT:
                 requireRequiredArgument(tokens, 3);
                 requireSize(tokens, 3);
@@ -470,6 +476,36 @@ public final class CommandParser {
             default:
                 throw error(INVALID_GRAMMAR, "Invalid ctx action");
         }
+    }
+
+    private CommandInvocation parseContextRules(String raw,List<Token> tokens) throws CommandParseException {
+        Map<String,Object> result=new LinkedHashMap<String,Object>();
+        int i=2;
+        if(i<tokens.size()) {
+            String value=tokens.get(i).value;
+            boolean modifier=java.util.Arrays.asList("all","produced","tree","comment","level")
+                    .contains(value.toLowerCase(java.util.Locale.ROOT));
+            if(!modifier && !value.matches("[-+]?\\d+")) { result.put("locator",value); ++i; }
+        }
+        String selection="PRIMARY";
+        if(i<tokens.size()) {
+            String value=tokens.get(i++).value;
+            Keyword selector=tryResolve(Family.RULE,value,Keyword.ALL,Keyword.PRODUCED,Keyword.TREE,Keyword.COMMENT,Keyword.LEVEL);
+            if(selector==Keyword.LEVEL) throw error(INVALID_GRAMMAR,"Transaction levels belong to X; use rule level [n]");
+            if(selector==Keyword.ALL) selection="ALL";
+            else if(selector==Keyword.PRODUCED) selection="PRODUCED";
+            else if(selector==Keyword.TREE || selector==Keyword.COMMENT) {
+                selection=selector.name();
+                requireRequiredArgument(tokens,i+1);
+                result.put("id",parseNonNegativeLong(tokens.get(i++).value,"rule id"));
+            } else {
+                selection="SHOW";
+                result.put("id",parseNonNegativeLong(value,"rule id"));
+            }
+        }
+        requireSize(tokens,i);
+        result.put("selection",selection);
+        return CommandInvocation.command(CommandIntent.CTX_RULES,result,raw);
     }
 
     private CommandInvocation parseContextExplain(String raw)

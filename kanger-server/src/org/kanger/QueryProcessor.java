@@ -1010,6 +1010,11 @@ public class QueryProcessor implements IReactor<JSONObject> {
         result.put("result", "OK");
         result.put("size", list.size());
         result.put("list", list);
+        if (mind.isStorageUsed() && mind.getUser() instanceof User
+                && ((User) mind.getUser()).getData() instanceof org.kanger.interfaces.internal.IContextFederation) {
+            result.put("context_federation", CanonicalCommandRuntimeReactor.federationSnapshot(
+                    ((org.kanger.interfaces.internal.IContextFederation) ((User) mind.getUser()).getData()).federationSnapshot()));
+        }
         return result;
     }
 

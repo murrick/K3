@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import org.kanger.enums.StorageLifecycleErrorCode;
+import org.kanger.interfaces.internal.IContextFederation;
 import org.kanger.exception.StorageLifecycleException;
 
 /**
@@ -119,6 +120,7 @@ final class UserTransactionStackSnapshot {
         try {
             for (PortableMindLayer state : levels) {
                 Mind child = new Mind(current);
+                child.checkpointUserConnections();
                 boolean applied = false;
                 try {
                     state.apply(current, child);
@@ -187,6 +189,13 @@ final class UserTransactionStackSnapshot {
         Mind root = (Mind) top.getTop();
         UserTransactionStackSnapshot snapshot = capture(top);
         Mind candidate = null;
+        IContextFederation federation = root.isStorageUsed() && ((User) root.getUser()).getData() instanceof IContextFederation
+                ? (IContextFederation) ((User) root.getUser()).getData() : null;
+        Object currentTopology = federation == null || !root.isStorageUsed()
+                ? null : federation.checkpointConnections();
+        Mind first = top;
+        while (first.getNext() != root) first = (Mind) first.getNext();
+        Object initialTopology = first.getConnectionCheckpoint();
 
         try {
             candidate = snapshot.replay(root);
@@ -211,6 +220,8 @@ final class UserTransactionStackSnapshot {
              * triggered by the intermediate releases.
              */
             rollbackToRoot(top);
+            if (currentTopology != null) federation.restoreConnections(currentTopology);
+            candidate.setConnectionCheckpoint(initialTopology);
             TransactionCompatibilityRegistry.markValid(candidate);
             return candidate;
         } catch (Throwable failure) {

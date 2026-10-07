@@ -205,6 +205,11 @@ public final class CanonicalConsole {
             case RULE_PRODUCED:
             case RULE_LEVEL:
             case RULE_TREE:
+                if((invocation.getIntent()==org.kanger.command.CommandIntent.RULE_STATUS
+                        || invocation.getIntent()==org.kanger.command.CommandIntent.RULE_ALL) && mind.isStorageUsed()
+                        && mind.getUser() instanceof org.kanger.User
+                        && ((org.kanger.User)mind.getUser()).getData() instanceof IContextFederation)
+                    showFederation(((IContextFederation)((org.kanger.User)mind.getUser()).getData()).federationSnapshot(),null);
                 Console.showRules(mind, canonical);
                 return same(mind);
             case RULE_COMMENT_GET:
@@ -351,6 +356,8 @@ public final class CanonicalConsole {
                 return same(mind);
 
             case CTX_STATUS:
+            case CTX_RULES:
+            case CTX_SAVE:
             case CTX_CONNECT:
             case CTX_DISCONNECT:
             case CTX_SWITCH:
@@ -372,6 +379,9 @@ public final class CanonicalConsole {
                     System.out.println(federation.getDescription());
                 }
                 if (invocation.getIntent()
+                        == org.kanger.command.CommandIntent.CTX_RULES) {
+                    showContextRules(federation.getContextRules(),String.valueOf(invocation.getArgument("selection")));
+                } else if (invocation.getIntent()
                         == org.kanger.command.CommandIntent.CTX_VERSION) {
                     showContextVersion(
                             federation.getContextVersionHistory());
@@ -1092,12 +1102,31 @@ public final class CanonicalConsole {
         }
         return -1L;
     }
+    private static void showContextRules(java.util.List<IContextFederation.RuleBlock> blocks,String selection) {
+        for(IContextFederation.RuleBlock block:blocks) {
+            System.out.printf("Context %s@%d [%s]%n",block.locator,block.revision.getRevision(),block.working?"live X":"pinned");
+            if(block.rules.isEmpty()) System.out.println("No rules selected");
+            for(IContextFederation.RuleRow rule:block.rules) {
+                System.out.printf("Rule %03d%s: %s%n",rule.id,rule.generated?" G":"",rule.statement);
+                if("COMMENT".equals(selection)) System.out.println(rule.comment);
+                for(java.util.List<String> row:rule.tree) System.out.println(String.join(" ",row));
+            }
+        }
+    }
+
     private static void showFederation(
             IContextFederation.Snapshot snapshot,
             IContextFederation.QueryResult query) {
         System.out.printf("Context %s@%d%n",
                 snapshot.getSourceLocator(),
                 snapshot.getSourceRevision());
+        System.out.println(snapshot.hasWorkingChanges()?"Connections: working changes [not saved; use ctx save]":"Connections: saved");
+        for(IContextFederation.DependencyNotice notice:snapshot.getDependencyNotices()) {
+            System.out.printf("%s@%d declares %s@%d: %s%s%n",notice.owner.getLocator(),notice.owner.getRevision(),
+                    notice.dependency.getLocator(),notice.dependency.getRevision(),notice.getStatus(),
+                    notice.actualRevision==null?" — you may connect it to expand available knowledge":
+                            notice.getStatus().equals("DIFFERENT_REVISION")?" [connected @"+notice.actualRevision+"]":"");
+        }
         if (snapshot.getConnections().isEmpty()) {
             System.out.println("Direct connections: none");
         } else {

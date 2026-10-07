@@ -59,6 +59,40 @@ class CausalExplainProjectionTest {
         for (String internal : Arrays.asList("term_id", "invocation_id", "fingerprint", "cache", "factory", "bucket")) assertFalse(text.contains(internal));
     }
 
+    @Test
+    void operatorProjectionSeparatesWorkingPinsRecommendationsAndContextLocalRuleIds() throws Exception {
+        UUID x = UUID.randomUUID(), a = UUID.randomUUID(), n = UUID.randomUUID();
+        IContextFederation.Snapshot snapshot = new IContextFederation.Snapshot("X", x, 3,
+                Collections.singletonList(connection("A", a, 7)),
+                Collections.<IContextFederation.Connection>emptyList(),
+                Collections.singletonList(new IContextFederation.DependencyNotice(
+                        new IContextFederation.SourceDependency("A", a, 7),
+                        new IContextFederation.SourceDependency("N", n, 9), null)));
+        CanonicalCommandRuntimeReactor reactor = new CanonicalCommandRuntimeReactor(value -> null);
+        Method projection = CanonicalCommandRuntimeReactor.class.getDeclaredMethod("federationSnapshot", IContextFederation.Snapshot.class);
+        projection.setAccessible(true);
+        JSONObject json = (JSONObject) projection.invoke(reactor, snapshot);
+        assertTrue(json.getBoolean("working_changes"));
+        assertEquals(0, json.getJSONArray("published_connections").length());
+        assertEquals(7, json.getJSONArray("connections").getJSONObject(0).getLong("pinned_revision"));
+        JSONObject notice = json.getJSONArray("dependency_recommendations").getJSONObject(0);
+        assertEquals("NOT_CONNECTED", notice.getString("status"));
+        assertEquals(9, notice.getLong("declared_revision"));
+        assertTrue(notice.isNull("connected_revision"));
+        IContextFederation.RuleRow row = new IContextFederation.RuleRow(0, "!fact;", false, "note",
+                Collections.singletonList(Collections.singletonList("fact")));
+        Method rules = CanonicalCommandRuntimeReactor.class.getDeclaredMethod("contextRules", java.util.List.class);
+        rules.setAccessible(true);
+        JSONArray blocks = (JSONArray) rules.invoke(reactor, Arrays.asList(
+                new IContextFederation.RuleBlock("X", new IContextFederation.Revision(x, 3), true, Collections.singletonList(row)),
+                new IContextFederation.RuleBlock("A", new IContextFederation.Revision(a, 7), false, Collections.singletonList(row))));
+        assertTrue(blocks.getJSONObject(0).getBoolean("working"));
+        assertFalse(blocks.getJSONObject(1).getBoolean("working"));
+        assertEquals(a.toString(), blocks.getJSONObject(1).getString("context_id"));
+        assertEquals(0, blocks.getJSONObject(1).getJSONArray("rules").getJSONObject(0).getLong("id"));
+        assertFalse(blocks.toString().contains("level"));
+    }
+
     private IContextFederation.Connection connection(String locator, UUID id, long revision) {
         return new IContextFederation.Connection(locator,id,revision,revision,IContextFederation.PinPolicy.EXACT_REVISION,IContextFederation.CompatibilityStatus.QUALIFIED,"3.8.0");
     }

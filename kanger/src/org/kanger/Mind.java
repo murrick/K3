@@ -181,6 +181,7 @@ public class Mind implements IMind {
     private int floodControlLimit = FLOOD_CONTROL_LIMIT;
     private Rule acceptedRule = null;
     private int transactionCounter = 0;
+    private Object connectionCheckpoint;
 
     /**
      * Experimental query policy that allows hypotheses containing
@@ -258,6 +259,15 @@ public class Mind implements IMind {
             }
         }
     }
+
+    public void checkpointUserConnections() throws Exception {
+        if (isStorageUsed() && user.getData() instanceof IContextFederation) {
+            connectionCheckpoint = ((IContextFederation) user.getData()).checkpointConnections();
+        }
+    }
+
+    Object getConnectionCheckpoint() { return connectionCheckpoint; }
+    void setConnectionCheckpoint(Object checkpoint) { connectionCheckpoint = checkpoint; }
 
     private void init() throws Exception {
         terms = new DictionaryFactory(this);                    // Словарь констант
@@ -602,6 +612,10 @@ public class Mind implements IMind {
             lastLinkerStatistics = ((Mind) m).linker.snapshotStatistics();
             replaceFrontierDomains(((Mind) m).frontierDomains);
 
+            Object checkpoint = ((Mind) m).connectionCheckpoint;
+            if (checkpoint != null && user.getData() instanceof IContextFederation) {
+                ((IContextFederation) user.getData()).restoreConnections(checkpoint);
+            }
             finishTransactionLocked();
         }
     }
@@ -1598,6 +1612,18 @@ public class Mind implements IMind {
         IData data = user.getData();
         return data instanceof IContextFederation && isStorageUsed()
                 && ((IContextFederation) data).hasConnectedContexts();
+    }
+
+    /** Explicit local publisher boundary; queries never invoke this operation. */
+    public long saveContextConnections() throws Exception {
+        synchronized (locker) {
+            if (next!=null || transactionCounter!=0 || user.getCurrentMind()!=this)
+                throw new org.kanger.exception.CommandErrorException("Context save requires the settled current root; commit or roll back active transactions first");
+            IData data=user.getData();
+            if (!(data instanceof IContextFederation))
+                throw new org.kanger.exception.CommandErrorException("Context federation is unavailable");
+            return ((IContextFederation)data).saveConnections(this);
+        }
     }
 
     private Queue<ITerm> queryExternals(Object[] ext) throws Exception {

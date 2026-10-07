@@ -50,6 +50,8 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.STORAGE_DROP
                 || intent == CommandIntent.STORAGE_REINDEX
                 || intent == CommandIntent.CTX_STATUS
+                || intent == CommandIntent.CTX_RULES
+                || intent == CommandIntent.CTX_SAVE
                 || intent == CommandIntent.CTX_CONNECT
                 || intent == CommandIntent.CTX_DISCONNECT
                 || intent == CommandIntent.CTX_SWITCH
@@ -106,6 +108,7 @@ public final class CanonicalCommandProcessor {
 
             case TX_START:
                 mind = new Mind(mind);
+                ((Mind) mind).checkpointUserConnections();
                 TransactionCompatibilityRegistry.markValid((Mind) mind);
                 user.setCurrentMind(mind);
                 return Result.success(mind, "New transaction created");
@@ -180,6 +183,24 @@ public final class CanonicalCommandProcessor {
                 return Result.successFederation(
                         mind, "",
                         federation.federationSnapshot(), null);
+            }
+
+            case CTX_RULES: {
+                IContextFederation federation=contextFederation(user,mind);
+                Object locator=invocation.getArgument("locator");
+                List<IContextFederation.RuleBlock> rules=federation.inspectRules(mind,
+                        locator==null?null:String.valueOf(locator),
+                        IContextFederation.RuleSelection.valueOf(String.valueOf(invocation.getArgument("selection"))),
+                        (Long)invocation.getArgument("id"));
+                return Result.successContextRules(mind,federation.federationSnapshot(),rules);
+            }
+            case CTX_SAVE: {
+                IContextFederation federation=contextFederation(user,mind);
+                if(!(mind instanceof Mind)) throw new org.kanger.exception.CommandErrorException("Context save requires canonical Mind");
+                long before=federation.federationSnapshot().getSourceRevision();
+                long revision=((Mind)mind).saveContextConnections();
+                return Result.successFederation(mind,revision==before?"Context connections already saved"
+                        :"Context connections saved: "+mind.getStorageName()+"@"+revision,federation.federationSnapshot(),null);
             }
 
             case CTX_CONNECT: {
@@ -634,6 +655,7 @@ public final class CanonicalCommandProcessor {
         private final IContextFederation.QueryResult federationQueryResult;
         private final IContextFederation.VersionHistory contextVersionHistory;
         private final IContextFederation.ExplainResult contextExplainResult;
+        private final List<IContextFederation.RuleBlock> contextRules;
 
         private Result(boolean handled,
                        boolean success,
@@ -673,6 +695,14 @@ public final class CanonicalCommandProcessor {
                        IContextFederation.QueryResult federationQueryResult,
                        IContextFederation.VersionHistory contextVersionHistory,
                        IContextFederation.ExplainResult contextExplainResult) {
+            this(handled,success,mind,description,storageStatus,rejection,transactionStatus,
+                    federationSnapshot,federationQueryResult,contextVersionHistory,contextExplainResult,null);
+        }
+
+        private Result(boolean handled,boolean success,IMind mind,String description,StorageStatus storageStatus,
+                       Rejection rejection,TransactionStatus transactionStatus,IContextFederation.Snapshot federationSnapshot,
+                       IContextFederation.QueryResult federationQueryResult,IContextFederation.VersionHistory contextVersionHistory,
+                       IContextFederation.ExplainResult contextExplainResult,List<IContextFederation.RuleBlock> contextRules) {
             this.handled = handled;
             this.success = success;
             this.mind = mind;
@@ -684,6 +714,7 @@ public final class CanonicalCommandProcessor {
             this.federationQueryResult = federationQueryResult;
             this.contextVersionHistory = contextVersionHistory;
             this.contextExplainResult = contextExplainResult;
+            this.contextRules=contextRules;
         }
 
         private static Result unhandled(IMind mind) {
@@ -727,6 +758,10 @@ public final class CanonicalCommandProcessor {
                     contextExplainResult.getContext(),
                     null, null,
                     contextExplainResult);
+        }
+
+        private static Result successContextRules(IMind mind,IContextFederation.Snapshot snapshot,List<IContextFederation.RuleBlock> rules) {
+            return new Result(true,true,mind,"",null,null,null,snapshot,null,null,null,rules);
         }
 
         private static Result successContextVersion(
@@ -795,5 +830,7 @@ public final class CanonicalCommandProcessor {
         public IContextFederation.ExplainResult getContextExplainResult() {
             return contextExplainResult;
         }
+
+        public List<IContextFederation.RuleBlock> getContextRules() { return contextRules; }
     }
 }

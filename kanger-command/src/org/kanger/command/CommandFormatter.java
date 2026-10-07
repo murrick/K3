@@ -113,6 +113,15 @@ public final class CommandFormatter {
 
             case CTX_STATUS:
                 return "ctx";
+            case CTX_SAVE:
+                return "ctx save";
+            case CTX_RULES:
+                String rules="ctx rules";
+                if(invocation.getArgument("locator")!=null) rules+=" "+argument(invocation.getArgument("locator"));
+                String selection=String.valueOf(invocation.getArgument("selection"));
+                if(!"PRIMARY".equals(selection) && !"SHOW".equals(selection)) rules+=" "+selection.toLowerCase(java.util.Locale.ROOT);
+                if(invocation.getArgument("id")!=null) rules+=" "+number(invocation,"id");
+                return rules;
             case CTX_CONNECT:
                 return "ctx connect " + argument(invocation.getArgument("locator"));
             case CTX_DISCONNECT:

@@ -35,17 +35,68 @@ public interface IContextFederation {
         STALE
     }
 
+    enum RuleSelection { PRIMARY, ALL, PRODUCED, SHOW, TREE, COMMENT }
+
+    final class RuleRow {
+        public final long id;
+        public final String statement;
+        public final boolean generated;
+        public final String comment;
+        public final List<List<String>> tree;
+        public RuleRow(long id, String statement, boolean generated,
+                       String comment, List<List<String>> tree) {
+            this.id=id; this.statement=statement;
+            this.generated=generated; this.comment=comment;
+            List<List<String>> copy = new ArrayList<List<String>>();
+            for (List<String> row : tree) copy.add(Collections.unmodifiableList(new ArrayList<String>(row)));
+            this.tree=Collections.unmodifiableList(copy);
+        }
+    }
+
+    final class RuleBlock {
+        public final String locator;
+        public final Revision revision;
+        public final boolean working;
+        public final List<RuleRow> rules;
+        public RuleBlock(String locator, Revision revision, boolean working,
+                         List<RuleRow> rules) {
+            this.locator=locator; this.revision=revision; this.working=working;
+            this.rules=Collections.unmodifiableList(new ArrayList<RuleRow>(rules));
+        }
+    }
+
+    final class DependencyNotice {
+        public final SourceDependency owner, dependency;
+        public final Long actualRevision;
+        public DependencyNotice(SourceDependency owner, SourceDependency dependency, Long actualRevision) {
+            this.owner=owner; this.dependency=dependency; this.actualRevision=actualRevision;
+        }
+        public String getStatus() {
+            return actualRevision==null ? "NOT_CONNECTED"
+                    : actualRevision.longValue()==dependency.getRevision() ? "CONNECTED" : "DIFFERENT_REVISION";
+        }
+    }
+
     final class Snapshot {
 
         private final String sourceLocator;
         private final UUID sourceContextId;
         private final long sourceRevision;
         private final List<Connection> connections;
+        private final List<Connection> publishedConnections;
+        private final List<DependencyNotice> dependencyNotices;
 
         public Snapshot(String sourceLocator,
                         UUID sourceContextId,
                         long sourceRevision,
                         List<Connection> connections) {
+            this(sourceLocator, sourceContextId, sourceRevision, connections, connections,
+                    Collections.<DependencyNotice>emptyList());
+        }
+
+        public Snapshot(String sourceLocator, UUID sourceContextId, long sourceRevision,
+                        List<Connection> connections, List<Connection> publishedConnections,
+                        List<DependencyNotice> dependencyNotices) {
             if (sourceLocator == null || sourceLocator.trim().isEmpty()) {
                 throw new IllegalArgumentException(
                         "sourceLocator must not be blank");
@@ -65,6 +116,8 @@ public interface IContextFederation {
             this.sourceRevision = sourceRevision;
             this.connections = Collections.unmodifiableList(
                     new ArrayList<Connection>(connections));
+            this.publishedConnections=Collections.unmodifiableList(new ArrayList<Connection>(publishedConnections));
+            this.dependencyNotices=Collections.unmodifiableList(new ArrayList<DependencyNotice>(dependencyNotices));
         }
 
         public String getSourceLocator() {
@@ -81,6 +134,16 @@ public interface IContextFederation {
 
         public List<Connection> getConnections() {
             return connections;
+        }
+
+        public List<Connection> getPublishedConnections() { return publishedConnections; }
+        public List<DependencyNotice> getDependencyNotices() { return dependencyNotices; }
+        public boolean hasWorkingChanges() {
+            Map<UUID,Long> published=new LinkedHashMap<UUID,Long>();
+            for (Connection c:publishedConnections) published.put(c.getTargetContextId(),c.getPinnedRevision());
+            Map<UUID,Long> working=new LinkedHashMap<UUID,Long>();
+            for (Connection c:connections) working.put(c.getTargetContextId(),c.getPinnedRevision());
+            return !published.equals(working);
         }
     }
 
@@ -825,6 +888,19 @@ public interface IContextFederation {
             throws Exception;
 
     Snapshot federationSnapshot() throws Exception;
+
+    default List<RuleBlock> inspectRules(IMind source, String locator, RuleSelection selection, Long number) throws Exception {
+        throw new UnsupportedOperationException("Context rules inspection is unavailable");
+    }
+
+    /** Opaque session topology checkpoint for explicit user transaction rollback. */
+    default Object checkpointConnections() throws Exception { return null; }
+
+    default void restoreConnections(Object checkpoint) throws Exception { }
+
+    default long saveConnections(IMind source) throws Exception {
+        throw new UnsupportedOperationException("Context topology publication is unavailable");
+    }
 
     VersionHistory versionHistory(
             String targetLocator) throws Exception;

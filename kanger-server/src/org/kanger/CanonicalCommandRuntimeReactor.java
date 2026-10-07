@@ -111,6 +111,8 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             case STORAGE_DROP:
             case STORAGE_REINDEX:
             case CTX_STATUS:
+            case CTX_RULES:
+            case CTX_SAVE:
             case CTX_CONNECT:
             case CTX_DISCONNECT:
             case CTX_SWITCH:
@@ -242,6 +244,9 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             result.put("context_federation",
                     federationSnapshot(federation));
         }
+        if(outcome.getContextRules()!=null) {
+            result.put("context_rules", contextRules(outcome.getContextRules()));
+        }
         IContextFederation.VersionHistory contextVersion =
                 outcome.getContextVersionHistory();
         if (contextVersion != null) {
@@ -278,8 +283,30 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
         return result;
     }
 
-    private JSONObject federationSnapshot(
+    private JSONArray contextRules(java.util.List<IContextFederation.RuleBlock> views) {
+            JSONArray blocks=new JSONArray();
+            for(IContextFederation.RuleBlock block:views) {
+                JSONArray rules=new JSONArray();
+                for(IContextFederation.RuleRow row:block.rules) rules.put(new JSONObject()
+                        .put("id",row.id).put("statement",row.statement).put("generated",row.generated)
+                        .put("comment",row.comment).put("tree",new JSONArray(row.tree)));
+                blocks.put(new JSONObject().put("locator",block.locator).put("context_id",block.revision.getContextId().toString())
+                        .put("revision",block.revision.getRevision()).put("working",block.working).put("rules",rules));
+            }
+            return blocks;
+    }
+
+    static JSONObject federationSnapshot(
             IContextFederation.Snapshot snapshot) {
+        JSONArray notices=new JSONArray();
+        for(IContextFederation.DependencyNotice notice:snapshot.getDependencyNotices()) notices.put(new JSONObject()
+                .put("owner_locator",notice.owner.getLocator()).put("owner_context_id",notice.owner.getContextId().toString())
+                .put("owner_revision",notice.owner.getRevision()).put("locator",notice.dependency.getLocator())
+                .put("context_id",notice.dependency.getContextId().toString()).put("declared_revision",notice.dependency.getRevision())
+                .put("status",notice.getStatus()).put("connected_revision",notice.actualRevision==null?JSONObject.NULL:notice.actualRevision));
+        JSONArray published=new JSONArray();
+        for(IContextFederation.Connection c:snapshot.getPublishedConnections()) published.put(new JSONObject()
+                .put("locator",c.getLocator()).put("context_id",c.getTargetContextId().toString()).put("pinned_revision",c.getPinnedRevision()));
         JSONArray connections = new JSONArray();
         for (IContextFederation.Connection connection
                 : snapshot.getConnections()) {
@@ -306,7 +333,10 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                         snapshot.getSourceContextId().toString())
                 .put("source_revision",
                         snapshot.getSourceRevision())
-                .put("connections", connections);
+                .put("connections", connections)
+                .put("published_connections",published)
+                .put("working_changes",snapshot.hasWorkingChanges())
+                .put("dependency_recommendations",notices);
     }
 
     private JSONArray causalSteps(IContextFederation.Snapshot snapshot, IContextFederation.QueryResult continuation) {

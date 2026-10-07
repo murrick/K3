@@ -69,6 +69,8 @@ public final class CommandRegistry {
         SQUASH,
         SWITCH,
         VERSION,
+        RULES,
+        SAVE,
         USE,
         CLOSE,
         DROP,
@@ -205,6 +207,8 @@ public final class CommandRegistry {
         keyword(Family.CONTEXT, Keyword.EXPLAIN, "explain");
         keyword(Family.CONTEXT, Keyword.SWITCH, "switch");
         keyword(Family.CONTEXT, Keyword.VERSION, "version");
+        keyword(Family.CONTEXT, Keyword.RULES, "rules");
+        keyword(Family.CONTEXT, Keyword.SAVE, "save");
         keyword(Family.CONTEXT, Keyword.QUERY, "query");
 
         keyword(Family.STATUS, Keyword.CORE, "core");
@@ -308,6 +312,11 @@ public final class CommandRegistry {
         define(CommandIntent.CTX_STATUS, "ctx", "CONTEXT",
                 "Show direct exact-revision Context federation connections.",
                 noArgs(), n++);
+        define(CommandIntent.CTX_RULES, "ctx rules [<locator>] [all|produced|<id>|tree <id>|comment <id>]", "CONTEXT",
+                "Inspect local and exact-pinned direct Context rules. Rule IDs belong to the displayed Context; transaction levels remain local rule level diagnostics.",
+                args("locator", "Optional current or direct connected Context locator."), n++);
+        define(CommandIntent.CTX_SAVE, "ctx save", "CONTEXT",
+                "Qualify and save explicit working connections as a new local Context revision. Requires a settled current root; unchanged topology creates no revision.", noArgs(), n++);
         define(CommandIntent.CTX_CONNECT, "ctx connect <locator>", "CONTEXT",
                 "Qualify and connect one direct Context at its current exact revision.",
                 args("locator", "Context locator or DUMB2 logical storage name."), n++);

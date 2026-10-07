@@ -61,8 +61,7 @@ public final class DB implements IData, IContextFederation {
     /*
      * Session-local topology candidate. Published vectors remain immutable
      * revision state in ConnectionStore; ctx connect/disconnect/switch mutate
-     * only this adapter instance until a future authorized publication boundary
-     * is introduced.
+     * only this adapter instance until the explicit settled-root save boundary.
      */
     private ConnectionVector workingConnections =
             ConnectionVector.empty();
@@ -129,14 +128,12 @@ public final class DB implements IData, IContextFederation {
     public synchronized void flush() throws Exception {
         requireOpen();
         long before = context.getRevision();
-        context.flush();
+        ConnectionVector pending = workingConnections;
+        context.flush(pending);
         if (context.getRevision() != before) {
-            /*
-             * A local semantic publication establishes a new immutable source
-             * revision. A session topology candidate is revision-scoped, so it
-             * is conservatively rebased to that revision's published vector.
-             */
-            workingConnections = publishedConnections();
+            // Ordinary authoring advances X without implicitly saving session topology.
+            // Requalify exact target pins against the new source revision.
+            workingConnections = context.getQualifiedWorkingConnections();
         }
     }
 
@@ -516,14 +513,116 @@ public final class DB implements IData, IContextFederation {
                 connections.add(projectConnection(
                         sourceRef, connection));
             }
+            ArrayList<IContextFederation.Connection> published = new ArrayList<IContextFederation.Connection>();
+            for (ContextConnection c:publishedConnections().getConnections()) {
+                published.add(new IContextFederation.Connection(displayFederationLocator(c.getTargetLocation()),
+                        c.getTarget().getContextId(),c.getTarget().getRevision(),c.getTarget().getRevision(),
+                        IContextFederation.PinPolicy.EXACT_REVISION,
+                        c.getCertificate().matches(sourceRef,c.getTarget(),Version.CORE_VERSION_S)
+                                ?IContextFederation.CompatibilityStatus.QUALIFIED:IContextFederation.CompatibilityStatus.STALE,
+                        c.getCertificate().getSemanticVersion()));
+            }
+            ArrayList<IContextFederation.DependencyNotice> notices = new ArrayList<IContextFederation.DependencyNotice>();
+            for(ContextConnection owner:workingConnections.getConnections()) {
+                ConnectionVector declared=ConnectionStore.read(owner.getTargetLocation(),owner.getTarget());
+                for(ContextConnection dependency:declared.getConnections()) {
+                    ContextConnection actual=workingConnections.find(dependency.getTarget().getContextId());
+                    Long revision=dependency.getTarget().getContextId().equals(sourceRef.getContextId())
+                            ?Long.valueOf(sourceRef.getRevision()):actual==null?null:Long.valueOf(actual.getTarget().getRevision());
+                    notices.add(new IContextFederation.DependencyNotice(projectSourceDependency(owner),
+                            projectSourceDependency(dependency),revision));
+                }
+            }
             return new IContextFederation.Snapshot(
                     storageName,
                     sourceRef.getContextId(),
                     sourceRef.getRevision(),
-                    connections);
+                    connections, published, notices);
         } finally {
             source.close();
         }
+    }
+
+    private static final class TopologyCheckpoint {
+        final java.util.UUID sourceId;
+        final ConnectionVector vector;
+        TopologyCheckpoint(java.util.UUID sourceId, ConnectionVector vector) {
+            this.sourceId = sourceId;
+            this.vector = vector;
+        }
+    }
+
+    @Override
+    public synchronized Object checkpointConnections() throws Exception {
+        requireOpen();
+        return new TopologyCheckpoint(context.getContextId(), workingConnections);
+    }
+
+    @Override
+    public synchronized void restoreConnections(Object checkpoint) throws Exception {
+        requireOpen();
+        TopologyCheckpoint saved = (TopologyCheckpoint) checkpoint;
+        if (!context.getContextId().equals(saved.sourceId)) {
+            throw new IllegalStateException("Cannot restore topology in another Context");
+        }
+        workingConnections = requalifyWorkingConnections(saved.vector);
+    }
+
+    private ConnectionVector requalifyWorkingConnections(ConnectionVector vector) throws Exception {
+        ConnectionVector qualified = ConnectionVector.empty();
+        RevisionRef source = new RevisionRef(context.getContextId(), context.getRevision());
+        for (ContextConnection connection : vector.getConnections()) {
+            ContextConnection current = connection;
+            if (!connection.getCertificate().matches(source, connection.getTarget(), Version.CORE_VERSION_S)) {
+                current = ConnectionManager.qualifyConnect(context.getLocation(),
+                        connection.getTargetLocation(), connection.getTarget().getRevision());
+                if (!connection.getTarget().equals(current.getTarget())) {
+                    throw new StorageLifecycleException(StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                            "Pinned Context identity changed during topology restoration: " + connection.getTarget());
+                }
+            }
+            qualified = qualified.with(current);
+        }
+        return qualified;
+    }
+
+    @Override
+    public synchronized long saveConnections(IMind source) throws Exception {
+        requireOpen();
+        if(source==null || source.getUser()!=user || source!=user.getCurrentMind()
+                || source.getTransactionLevel()!=0)
+            throw new CommandErrorException("Context save requires the current settled root");
+        // Local DUMB2 uses the same exclusively opened writable Context as
+        // ordinary authoring. SMART ownership/ACL publication remains separate.
+        long revision=context.publishTopology(workingConnections,"Save explicit Context connections");
+        workingConnections=publishedConnections();
+        return revision;
+    }
+
+    @Override
+    public synchronized List<IContextFederation.RuleBlock> inspectRules(IMind source,String locator,
+            IContextFederation.RuleSelection selection,Long number) throws Exception {
+        requireOpen();
+        if(!(source instanceof Mind) || source.getUser()!=user)
+            throw new CommandErrorException("Context rules requires the active storage Mind");
+        List<IContextFederation.RuleBlock> result=new ArrayList<IContextFederation.RuleBlock>();
+        Path local=context.getLocation().toAbsolutePath().normalize();
+        boolean addressed=locator!=null;
+        Path selected=addressed?resolveFederationLocator(locator):null;
+        if(!addressed || local.equals(selected)) {
+            result.add(org.kanger.ContextRuleInspection.inspect((Mind)source,storageName,
+                    new IContextFederation.Revision(context.getContextId(),context.getRevision()),true,selection,number));
+        }
+        if(number!=null && !addressed) return Collections.unmodifiableList(result);
+        for(ContextConnection c:workingConnections.getConnections()) {
+            if(addressed && !c.getTargetLocation().toAbsolutePath().normalize().equals(selected)) continue;
+            try(SnapshotMindRuntime runtime=SnapshotMindRuntime.open(c.getTargetLocation(),c.getTarget(),"rules-"+c.getTarget().getContextId())) {
+                result.add(org.kanger.ContextRuleInspection.inspect(runtime.getMind(),displayFederationLocator(c.getTargetLocation()),
+                        projectRevision(c.getTarget()),false,selection,number));
+            }
+        }
+        if(result.isEmpty()) throw new CommandErrorException("No direct Context connection exists for locator " + locator);
+        return Collections.unmodifiableList(result);
     }
 
     @Override

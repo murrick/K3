@@ -57,6 +57,8 @@ public enum CommandIntent {
     STORAGE_REINDEX,
 
     CTX_STATUS,
+    CTX_RULES,
+    CTX_SAVE,
     CTX_CONNECT,
     CTX_DISCONNECT,
     CTX_SWITCH,
