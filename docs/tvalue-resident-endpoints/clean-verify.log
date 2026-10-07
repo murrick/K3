@@ -1,0 +1,2 @@
+RESIDENT_ENDPOINTS_NATIVE pristine=[91, 7, 40] rewired=[7, 40, 91] disk=[91, 7, 40] manifest=unchanged candidate=pure strict_reader=refused promotion=rejected
+RESIDENT_ENDPOINTS_OK checks=51

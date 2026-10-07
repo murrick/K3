@@ -1,0 +1,33 @@
+{
+  "parent": "c4c42b94626549bfcdce7254e77df9a7863b244d",
+  "fresh_JVMs": 6,
+  "native_stdout_identical": true,
+  "topology_candidate_rejected": true,
+  "strict_reader_unchanged": true,
+  "journal_unchanged": true,
+  "production_changed": false,
+  "final_composite_publication_qualified": false,
+  "prior_rejected_concurrent_corpus_still_unqualified": true,
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-clean:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-resident-endpoints-classes",
+    "/workspace/scratch/1c9c6dd2770c/K3-tvalue-resident-endpoints38/docs/tvalue-resident-endpoints/ResidentEndpointsRunner.java"
+  ],
+  "class_sha256": {
+    "org/kanger/ResidentEndpointsRunner.class": "2fdbf7dd8634b677c3bd09489bcc30a2b509b4f49572f2c4f7483554b12271e6"
+  },
+  "prior_reader_class_sha256": {
+    "org/kanger/ResidentPersistentRead$Row.class": "a05949de057a944ba3198b5710e9ec6022b3524570b90e896c4df350cd88df16",
+    "org/kanger/ResidentPersistentRead.class": "144854766f9e8776e0e39232650b692840d503cc49b5a11faff154d081d49530",
+    "org/kanger/ResidentPersistentRunner$TrapSapato.class": "d19b619340daa01078a003cf6115e270425e3f9de8e926d51dce0c08901e6293",
+    "org/kanger/ResidentPersistentRunner$TrapValue.class": "4d0801a4c7c2e07a24830a59f4a5524088964fbb381d3dd32d59298560e23ba3",
+    "org/kanger/ResidentPersistentRunner.class": "cd2baa8b1267bacf14467f8a25260e09931899dfa78ca0dc57d3ee7f7384e2b9"
+  }
+}
