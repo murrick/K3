@@ -82,7 +82,7 @@ Transaction rollback and storage reindex are not routed through this confirmatio
 | Transactions | `transaction`, `transaction start|commit|rollback|squash` | Inspect and manage explicit user transaction levels |
 | Sources | `get [<source>]`, `put <source>`, `delete [<source>]` | List/load/save/delete server-side source files |
 | Storage | `storage`, `storage use|close|drop|reindex ...` | Inspect and manage persistent storage |
-| Context federation | `ctx`, `ctx connect|disconnect|switch|version|explain|query ...`, `ctx <locator> <query...>` | Inspect or mutate working topology, inspect revision history, and run normal-query semantic traces or isolated diagnostics |
+| Context federation | `ctx`, `ctx connect|disconnect|switch|save|rules|version|explain ...`, `ctx <locator> <query...>` | Inspect or mutate working topology, inspect revision history, and run normal-query semantic traces or isolated diagnostics |
 | Status | `status [core [objects|transaction|levels]|storage|session|runtime]` | Cheap canonical product telemetry |
 | Session | `timezone [<zoneId>]`, `help`, `quit` | Inspect or change session timezone, show help, or end the session |
 | Workspace | `erase` | Clear the current workspace through qualified runtime semantics |
@@ -433,6 +433,46 @@ For each connection the projection includes:
 
 A newer target `CURRENT` is informational only. It never moves the existing
 pin automatically.
+
+### `ctx rules [<locator>] [all|produced|<id>|tree <id>|comment <id>]`
+
+Shows native rules in separate Context blocks. Without a locator, collection
+views include live X and all explicitly connected direct Contexts. A named
+foreign Context is inspected at the revision pinned in X; its own dependencies
+are not traversed. `ctx rules X` includes X's current user transaction layer.
+
+The default view selects primary rules. `all` includes primary and generated
+rules, while `produced` selects generated rules only. A numeric ID selects one
+rule; `tree <id>` shows its native tree and `comment <id>` reads its comment.
+IDs are local to the named block. Without a locator, numeric views address X.
+These views are read-only. Comment editing stays on ordinary `rule comment`;
+transaction levels stay on ordinary `rule level [n]` for X. There is no
+`ctx rules level` modifier.
+
+```text
+ctx rules
+ctx rules A all
+ctx rules A tree 12
+ctx rules A comment 12
+```
+
+### `ctx save`
+
+Publishes the explicitly selected working direct connections in a new immutable
+revision of X after qualification. An unchanged vector is a no-op. Save requires
+the current settled root: commit or roll back active transactions first.
+Reopening X restores only saved exact pins. Closing discards unsaved connection
+changes. `ctx` distinguishes working from saved topology and reports unsaved
+changes. Ordinary local authoring retains unsaved session pins and checks their
+compatibility before publication, but does not implicitly save the topology.
+Nested transaction rollback restores the corresponding working topology;
+squash preserves current connections and the original rollback boundary.
+
+A pinned target's published dependencies appear as recommendations, including
+missing dependencies or a different revision already selected in X. They do not
+automatically connect, open dependency targets, or cause cascaded disconnection.
+Missing recommended knowledge limits the proof domain; it is not a storage
+failure. The user decides which additional direct pins to connect and save.
 
 ### `ctx connect <locator>`
 
