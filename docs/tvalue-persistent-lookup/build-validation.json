@@ -1,0 +1,53 @@
+{
+  "parent": "7bb814c706e790c825fb0a69b1e01084c27a8e1e",
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-owner-pure-observation-clean:../build/tvalue-resident-persistent-classes:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-persistent-lookup-classes",
+    "/workspace/scratch/1c9c6dd2770c/K3-tvalue-persistent-lookup38/docs/tvalue-persistent-lookup/ResidentTValueRead.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-tvalue-persistent-lookup38/docs/tvalue-persistent-lookup/PersistentLookupRunner.java"
+  ],
+  "prior_builds": {
+    "clean": {
+      "all_prior_class_hashes_verified": true,
+      "count": 696
+    },
+    "shadow": {
+      "all_prior_class_hashes_verified": true,
+      "count": 696
+    }
+  },
+  "preceding_persistent_helpers_identical": true,
+  "overlay_class_sha256": {
+    "org/kanger/PersistentLookupRunner$TrapMind.class": "345d0400188717fddf66eb915e0a67ac7aa459569bb4ac035a35d1bebcacd3a1",
+    "org/kanger/PersistentLookupRunner.class": "4cd09c567124426c2571d5c01da901fb044bd9e5a23e170f458fa5b985052517",
+    "org/kanger/ResidentTValueRead$Layer.class": "f3db2a61489c79022f113f50b61429a3346c015ee0179e7f902c6f83a159f724",
+    "org/kanger/ResidentTValueRead.class": "57a53dfba1ba3c0e8fb1d757dcbdeee6b2ac5f5c6c2cfc160e831c1a7c8cf7d0"
+  },
+  "changed_preceding_diagnostic_classes": {
+    "org/kanger/ResidentTValueRead.class": {
+      "before": "fae25f912e65ae7f21d4461e82b14201298cb4a8942b66f65a136b87fe9d930f",
+      "after": "57a53dfba1ba3c0e8fb1d757dcbdeee6b2ac5f5c6c2cfc160e831c1a7c8cf7d0"
+    }
+  },
+  "native_source_sha256": {
+    "kanger/src/org/kanger/Mind.java": "8a2d7adca921be94a74ebdd5c50b4f6239b8c4d4afdf79b75e84f6e0b7dea76b",
+    "kanger/src/org/kanger/User.java": "837baae844c879142ef743b6aa6e5a61eb780f1442d15e3d1f3964eebc38e4ac",
+    "kanger/src/org/kanger/factory/TValueFactory.java": "f8a5c5d846ce2dd2f7d9b2818a10181ed38f3619b142f99d5fa498214237a8c5",
+    "kanger/src/org/kanger/storage/Escalera.java": "4216890078b2954a9103f768cbdca24d9289d272bb8f8e3f3f4118678ec39202",
+    "kanger/src/org/kanger/storage/Sapato.java": "d025b701e24d0a08419cc4ff399f8189e641090cfe81cc4a4ab95e8221637da3",
+    "kanger/src/org/kanger/units/TValue.java": "8f5b2d64c7773ecd4c0e2d753ae98e5dc541200c6889a40695f817c2edc1608b",
+    "kanger-data-dumb/src/org/kanger/storage/Base.java": "780fe5295b5e728d75fa8500322d99fd5d8a9f6f581690b1fca09a72205d2ce6",
+    "kanger-data-dumb/src/org/kanger/storage/Data.java": "05bac98461796724fa638e45dab5c2c38154cc5b1a2577ad9263e95c5ee6c6aa",
+    "kanger-data-dumb/src/org/kanger/storage/DB.java": "46f057f78f2cfa4937bffb7fb2cb5739fcfc2959c8ad653ce5e45fa98f4bba55",
+    "kanger-data-dumb/src/org/kanger/storage/IntegrityManifest.java": "d188534dec0264ab5fb0471676f0ec77ae1222c42c5d2ea01fe9e9ce1d4a7f40"
+  },
+  "production_source_changed": false,
+  "native_instrumentation_changed": false
+}

@@ -1,0 +1,1 @@
+All six storage cases passed before public Mind entry validation was added. Retained rather than overwritten. Final matrix also validates exact Mind classes before getTValues can invoke an override; both readers preserve native fixture outputs.

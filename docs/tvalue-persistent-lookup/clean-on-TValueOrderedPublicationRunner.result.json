@@ -1,0 +1,29 @@
+{
+  "index": 50,
+  "build": "clean",
+  "flag": "on",
+  "runner": "TValueOrderedPublicationRunner",
+  "args": [],
+  "exit_code": 0,
+  "expected_closed_boundary_rejection": false,
+  "expected_rematerialization_metadata_rejection": false,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/tvalue-persistent-lookup-jvm-jws4lrab",
+    "-Dpersistence.shadow=false",
+    "-Dmetadata.shadow=false",
+    "-Djournal.path=/workspace/scratch/1c9c6dd2770c/K3-tvalue-persistent-lookup38/docs/tvalue-persistent-lookup/clean-on-TValueOrderedPublicationRunner.trace",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-clean:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.TValueOrderedPublicationRunner"
+  ]
+}

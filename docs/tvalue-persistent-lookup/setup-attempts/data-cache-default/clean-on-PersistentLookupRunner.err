@@ -1,0 +1,3 @@
+Exception in thread "main" java.lang.AssertionError: rewarmed cache with stale native anchor fails closed
+	at org.kanger.PersistentLookupRunner.require(PersistentLookupRunner.java:13)
+	at org.kanger.PersistentLookupRunner.main(PersistentLookupRunner.java:55)
