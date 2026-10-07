@@ -31,6 +31,7 @@ import java.util.Queue;
  */
 public final class CausalFrontierCapture {
     private final Mind owner;
+    private final boolean enumerating;
     private final List<FrontierDemand> demands = new ArrayList<FrontierDemand>();
     private Mind frameMind;
     private Rule frameRule;
@@ -39,28 +40,53 @@ public final class CausalFrontierCapture {
             new IdentityHashMap<Domain, List<FrontierDemand>>();
     private Exception failure;
 
-    private CausalFrontierCapture(Mind owner) {
+    private CausalFrontierCapture(Mind owner, boolean enumerating) {
         this.owner = owner;
+        this.enumerating = enumerating;
+    }
+
+    /** Detached ordinary atomic query shape, captured before inference binds its variables. */
+    public static FrontierDomain describeAtomic(Mind mind, Rule rule) throws Exception {
+        if (rule.getTree().size() != 1 || rule.getTree().get(0).size() != 1) return null;
+        Domain domain = rule.getDomain();
+        if (domain.isSystem(mind) || domain.isCalculated(mind)
+                || "rule(1)".equals(domain.getPredicate(mind).toString(mind))) return null;
+        return FrontierDomain.capture(domain, mind);
     }
 
     public static Result query(Mind owner, String query,
                                Queue<ITerm> externals, boolean logging) throws Exception {
+        return query(owner, query, externals, logging, false);
+    }
+
+    public static Result enumerate(Mind owner, String query,
+            Queue<ITerm> externals, boolean logging) throws Exception {
+        return query(owner, query, externals, logging, true);
+    }
+
+    private static Result query(Mind owner, String query, Queue<ITerm> externals,
+            boolean logging, boolean enumerating) throws Exception {
         if (owner.getCausalFrontierCapture() != null) {
             throw new IllegalStateException("A causal capture is already active");
         }
-        CausalFrontierCapture capture = new CausalFrontierCapture(owner);
+        CausalFrontierCapture capture = new CausalFrontierCapture(owner, enumerating);
         owner.setCausalFrontierCapture(capture);
         try {
             Boolean truth = owner.queryCanonical(query, externals, logging);
             if (capture.failure != null) {
                 throw capture.failure;
             }
-            return new Result(truth, truth == null ? capture.demands
+            return new Result(truth, truth == null || enumerating ? capture.demands
                     : Collections.<FrontierDemand>emptyList());
         } finally {
             owner.setCausalFrontierCapture(null);
             capture.clearFrame();
         }
+    }
+
+    boolean enumerates(Rule query, Mind mind) throws Exception {
+        FrontierDomain shape = enumerating ? describeAtomic(mind, query) : null;
+        return shape != null && !shape.isGround();
     }
 
     void beginLink(Mind mind, Rule rule) {
@@ -111,7 +137,7 @@ public final class CausalFrontierCapture {
             return;
         }
         try {
-            if (!proven) {
+            if (!proven || enumerating) {
                 for (Map.Entry<Domain, List<FrontierDemand>> entry : observed.entrySet()) {
                     if (!entry.getKey().isUsed(mind) && !entry.getKey().isCalculated(mind)) {
                         for (FrontierDemand demand : entry.getValue()) {

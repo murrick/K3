@@ -180,6 +180,102 @@ public class FederatedDefaultQueryTest {
         }
     }
 
+    @Test
+    void localTrueDoesNotTruncateForeignEnumeration() throws Exception {
+        Fixture donor = open("ages");
+        try {
+            assertTrue(donor.mind.compile("!age(John,37); !age(Tom,12); !age(Sarah,4);"));
+        } finally { donor.close(); }
+        Fixture x = open("ages-X");
+        try {
+            x.data.connectContext("ages");
+            assertTrue(x.mind.query("?$x $y age(x,y);", null, false));
+            assertEquals(3, x.mind.getValues().size());
+            assertTrue(x.mind.query("!age(Mary,30);", null, false));
+            long revision = x.data.getRevision();
+            for (int i = 0; i < 2; i++) {
+                assertTrue(x.mind.query("?$x $y age(x,y);", null, false));
+                java.util.Set<String> rows = new java.util.HashSet<>();
+                for (Map<String, ITerm> row : x.mind.getValues())
+                    rows.add(row.get("x") + ":" + row.get("y"));
+                assertEquals(new java.util.HashSet<>(java.util.Arrays.asList(
+                        "John:37.0", "Tom:12.0", "Sarah:4.0", "Mary:30.0")), rows);
+                assertEquals(4, x.mind.getSolutions().size());
+                assertEquals(revision, x.data.getRevision());
+                assertEquals(1, x.data.federationSnapshot().getConnections().size());
+            }
+            assertTrue(x.mind.query("?$z $a age(z,a);", null, false));
+            assertEquals(4, x.mind.getValues().size());
+            assertEquals(4, x.mind.getSolutions().size());
+            assertTrue(x.mind.query("?$y age(Mary,y);", null, false));
+            assertEquals(1, x.mind.getValues().size());
+            x.data.disconnectContext("ages");
+            assertTrue(x.mind.query("?$x $y age(x,y);", null, false));
+            assertEquals(1, x.mind.getValues().size());
+        } finally { x.close(); }
+    }
+
+    @Test
+    void localEnumerationIncludesDelayedForeignRowsAndDeduplicates() throws Exception {
+        Fixture a = open("enum-A");
+        try { assertTrue(a.mind.compile("!@x seed(x) -> p(x); !p(Mary);")); }
+        finally { a.close(); }
+        context("enum-B", "!seed(Tom);");
+        Fixture x = open("enum-X");
+        try {
+            assertTrue(x.mind.query("!p(Mary);", null, false));
+            x.data.connectContext("enum-A"); x.data.connectContext("enum-B");
+            assertTrue(x.mind.query("?$x p(x);", null, false));
+            java.util.Set<String> rows = new java.util.HashSet<>();
+            for (Map<String, ITerm> row : x.mind.getValues()) rows.add(row.get("x").toString());
+            assertEquals(new java.util.HashSet<>(java.util.Arrays.asList("Mary", "Tom")), rows);
+            assertEquals(2, x.mind.getSolutions().size());
+        } finally { x.close(); }
+    }
+
+    @Test
+    void conflictedLocalWorkingRowIsExcludedBesideSafeRows() throws Exception {
+        context("enum-negative", "!~p(John);");
+        context("enum-donor", "!p(Tom);");
+        Fixture x = open("enum-conflict-X");
+        try {
+            assertTrue(x.mind.query("!p(Mary);", null, false));
+            x.data.connectContext("enum-negative"); x.data.connectContext("enum-donor");
+            long revision = x.data.getRevision();
+            Mind tx = new Mind(x.mind); x.user.setCurrentMind(tx);
+            try {
+                assertTrue(tx.query("!p(John);", null, false));
+                assertTrue(tx.query("?$x p(x);", null, false));
+                java.util.Set<String> rows = new java.util.HashSet<>();
+                for (Map<String, ITerm> row : tx.getValues()) rows.add(row.get("x").toString());
+                assertEquals(new java.util.HashSet<>(java.util.Arrays.asList("Mary", "Tom")), rows);
+                assertEquals(2, tx.getSolutions().size());
+                assertFalse(tx.getQueryConflicts().isEmpty());
+                assertEquals(revision, x.data.getRevision());
+            } finally { x.mind.release(tx); x.user.setCurrentMind(x.mind); }
+            x.data.disconnectContext("enum-negative"); x.data.disconnectContext("enum-donor");
+            assertTrue(x.mind.query("?$x p(x);", null, false));
+            assertEquals(1, x.mind.getValues().size());
+        } finally { x.close(); }
+    }
+
+    @Test
+    void entirelyConflictedLocalWorkingRowsDoNotRestoreStaleLocalTrue() throws Exception {
+        context("enum-all-negative", "!~p(John);");
+        Fixture x = open("enum-all-X");
+        try {
+            x.data.connectContext("enum-all-negative");
+            Mind tx = new Mind(x.mind); x.user.setCurrentMind(tx);
+            try {
+                assertTrue(tx.query("!p(John);", null, false));
+                assertNull(tx.query("?$x p(x);", null, false));
+                assertTrue(tx.getValues().isEmpty());
+                assertTrue(tx.getSolutions().isEmpty());
+                assertFalse(tx.getQueryConflicts().isEmpty());
+            } finally { x.mind.release(tx); x.user.setCurrentMind(x.mind); }
+        } finally { x.close(); }
+    }
+
     private void context(
             String name,
             String assertion) throws Exception {

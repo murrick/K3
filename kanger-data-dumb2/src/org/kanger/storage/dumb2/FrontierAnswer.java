@@ -53,10 +53,16 @@ final class FrontierAnswer {
                    List<List<ValueRef>> values,
                    List<String> hypotheses,
                    List<FrontierDemand> unresolvedFrontiers) {
+        this(source, request, truth, variableOrder, values, hypotheses, unresolvedFrontiers, false);
+    }
+
+    FrontierAnswer(RevisionRef source, FrontierRequest request, Truth truth,
+            List<String> variableOrder, List<List<ValueRef>> values, List<String> hypotheses,
+            List<FrontierDemand> unresolvedFrontiers, boolean enumerate) {
         if (source == null || request == null || truth == null) {
             throw new NullPointerException("Frontier answer requires source, invocation and truth");
         }
-        if (truth != Truth.NULL && !unresolvedFrontiers.isEmpty()) {
+        if (!enumerate && truth != Truth.NULL && !unresolvedFrontiers.isEmpty()) {
             throw new IllegalArgumentException("A resolved frontier has no unresolved demands");
         }
         this.source = source;

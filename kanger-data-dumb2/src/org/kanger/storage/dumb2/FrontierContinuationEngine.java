@@ -6,6 +6,12 @@
 package org.kanger.storage.dumb2;
 
 import org.kanger.FrontierDomain;
+import org.kanger.CausalFrontierCapture;
+import org.kanger.interfaces.IRule;
+import org.kanger.stores.ValuesStore;
+import org.kanger.stores.SolutionsStore;
+import org.kanger.primitives.ArgumentsList;
+import java.util.Iterator;
 import org.kanger.Mind;
 import org.kanger.SemanticTermSnapshot;
 import org.kanger.interfaces.internal.IContextFederation;
@@ -160,7 +166,7 @@ final class FrontierContinuationEngine {
 
             Mind settled = work;
             work = null;
-            if (result.isResolved()) {
+            if (result.isResolved() || result.enumerated) {
                 sourceMind.release(settled);
             } else {
                 sourceMind.discardEphemeral(settled);
@@ -219,6 +225,12 @@ final class FrontierContinuationEngine {
             throw new IllegalStateException(
                     "Unable to establish operation-local query Rule: "
                             + querySource);
+        }
+
+        FrontierDomain enumeration = queryPass == QueryPass.CHECKTRUE
+                ? CausalFrontierCapture.describeAtomic(work, query) : null;
+        if (enumeration != null && !enumeration.isGround()) {
+            return enumerate(work, localSource, operation, query, enumeration, queryPass, logging);
         }
 
         long queryRuleId = query.getId();
@@ -406,6 +418,84 @@ final class FrontierContinuationEngine {
                         + MAX_WAVES + " waves");
     }
 
+    private static Result enumerate(Mind work, Mind localSource, OperationSnapshot operation,
+            Rule query, FrontierDomain frontier, QueryPass pass, boolean logging) throws Exception {
+        CausalFrontierScheduler.Result scheduled = CausalFrontierScheduler.enumerate(
+                operation, frontier, localSource, localSource.isExplainQueryActive());
+        List<FrontierObservation> observations = new ArrayList<FrontierObservation>();
+        observations.add(new FrontierObservation(1, frontier, FrontierAggregate.of(scheduled.getAnswers())));
+        for (CausalFrontierScheduler.Conflict conflict : scheduled.getConflicts())
+            observations.add(new FrontierObservation(1, conflict.frontier, conflict.aggregate));
+        FrontierLiftSession.LiftResult lifted = FrontierLiftSession.liftEnumerationInto(work, operation, scheduled.getAnswers());
+        Set<EvidenceKey> evidence = new LinkedHashSet<EvidenceKey>();
+        List<EvidenceInjection> injections = new ArrayList<EvidenceInjection>();
+        List<FrontierDomain> allowed = new ArrayList<FrontierDomain>();
+        for (FrontierLiftSession.LiftedTuple tuple : lifted.getTuples()) {
+            List<SemanticTermSnapshot> values = new ArrayList<SemanticTermSnapshot>();
+            for (ITerm value : tuple.getValues()) values.add(SemanticTermSnapshot.capture(value));
+            allowed.add(frontier.specialize(lifted.getVariableOrder(), values));
+            if (inject(work, frontier, lifted.getVariableOrder(), tuple.getValues(), evidence, true, pass))
+                injections.add(EvidenceInjection.of(frontier, lifted.getVariableOrder(), tuple.getValues(), tuple.getSupports()));
+        }
+        // All donors are now known. The existing native query proves the complete set once.
+        work.setQueryPass(pass);
+        work.link(null, logging);
+        boolean proven = prove(work, query, logging);
+        filterEnumeration(work, frontier, allowed);
+        boolean resolved = proven && !work.getValues().isEmpty();
+        Result result = new Result(resolved, 1, injections.size(), query.getId(),
+                Collections.singletonList(Collections.singletonList(frontier.getPredicateName())),
+                observations, injections, new LinkedHashSet<FrontierAggregate.ProvisionalHypothesis>(), scheduled.getSteps(), true);
+        return result;
+    }
+
+    private static boolean permitted(FrontierDomain specialization, List<FrontierDomain> allowed) {
+        if (specialization == null) return false;
+        for (FrontierDomain row : allowed) if (row.sameSemanticQuery(specialization)) return true;
+        return false;
+    }
+
+    private static boolean permittedSolution(FrontierDomain solution, List<FrontierDomain> allowed) {
+        if (!solution.isGround()) return false;
+        // Native solution Domains retain the proof's opposite polarity.
+        List<SemanticTermSnapshot> actual = solution.semanticArguments(
+                Collections.<String>emptyList(), Collections.<SemanticTermSnapshot>emptyList());
+        for (FrontierDomain row : allowed) {
+            List<SemanticTermSnapshot> expected = row.semanticArguments(
+                    Collections.<String>emptyList(), Collections.<SemanticTermSnapshot>emptyList());
+            if (actual.size() != expected.size()) continue;
+            boolean equal = true;
+            for (int i = 0; i < actual.size(); i++)
+                if (!actual.get(i).semanticallyEquals(expected.get(i))) { equal = false; break; }
+            if (equal) return true;
+        }
+        return false;
+    }
+
+    private static void filterEnumeration(Mind work, FrontierDomain frontier,
+            List<FrontierDomain> allowed) throws Exception {
+        List<Boolean> keep = new ArrayList<Boolean>();
+        for (Map<String, ITerm> row : work.getValues()) {
+            List<String> names = new ArrayList<String>();
+            for (FrontierDomain.VariableState variable : frontier.getVariables())
+                if (!variable.isBound()) names.add(variable.getName());
+            List<SemanticTermSnapshot> values = new ArrayList<SemanticTermSnapshot>();
+            for (String name : names) values.add(SemanticTermSnapshot.capture(row.get(name)));
+            keep.add(permitted(frontier.specialize(names, values), allowed));
+        }
+        Iterator<ArgumentsList> rows = ((ValuesStore) work.getValues()).getRoot().iterator();
+        for (Boolean accepted : keep) { rows.next(); if (!accepted) rows.remove(); }
+        SolutionsStore solutions = (SolutionsStore) work.getSolutions();
+        if (!solutions.isEmpty()) {
+            Iterator<IRule> iterator = solutions.getRoot().iterator();
+            while (iterator.hasNext()) {
+                FrontierDomain solution = CausalFrontierCapture.describeAtomic(work, (Rule) iterator.next());
+                if (solution != null && solution.getPredicateName().equals(frontier.getPredicateName())
+                        && !permittedSolution(solution, allowed)) iterator.remove();
+            }
+        }
+    }
+
     private static boolean prove(
             Mind work,
             Rule query,
@@ -467,6 +557,7 @@ final class FrontierContinuationEngine {
 
         private final List<IContextFederation.CausalStep> causalSteps;
         private final boolean resolved;
+        private final boolean enumerated;
         private final int waves;
         private final int evidenceCount;
         private final long queryRuleId;
@@ -486,6 +577,16 @@ final class FrontierContinuationEngine {
                 List<EvidenceInjection> evidenceInjections,
                 Set<FrontierAggregate.ProvisionalHypothesis>
                         provisionalHypotheses, List<IContextFederation.CausalStep> causalSteps) {
+            this(resolved, waves, evidenceCount, queryRuleId, frontierTrace, observations,
+                    evidenceInjections, provisionalHypotheses, causalSteps, false);
+        }
+
+        private Result(boolean resolved, int waves, int evidenceCount, long queryRuleId,
+                List<List<String>> frontierTrace, List<FrontierObservation> observations,
+                List<EvidenceInjection> evidenceInjections,
+                Set<FrontierAggregate.ProvisionalHypothesis> provisionalHypotheses,
+                List<IContextFederation.CausalStep> causalSteps, boolean enumerated) {
+            this.enumerated = enumerated;
             this.causalSteps = Collections.unmodifiableList(new ArrayList<IContextFederation.CausalStep>(causalSteps));
             this.resolved = resolved;
             this.waves = waves;

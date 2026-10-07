@@ -93,6 +93,16 @@ final class FrontierLiftSession implements AutoCloseable {
             Mind target,
             OperationSnapshot operation,
             List<FrontierAnswer> answers) throws Exception {
+        return liftInto(target, operation, answers, false);
+    }
+
+    static LiftResult liftEnumerationInto(Mind target, OperationSnapshot operation,
+            List<FrontierAnswer> answers) throws Exception {
+        return liftInto(target, operation, answers, true);
+    }
+
+    private static LiftResult liftInto(Mind target, OperationSnapshot operation,
+            List<FrontierAnswer> answers, boolean includeSource) throws Exception {
         if (target == null) {
             throw new NullPointerException("target");
         }
@@ -115,9 +125,8 @@ final class FrontierLiftSession implements AutoCloseable {
             ContextConnection connection =
                     operation.getConnections().find(
                             answer.getSource().getContextId());
-            if (connection == null
-                    || !connection.getTarget()
-                    .equals(answer.getSource())) {
+            if (!(includeSource && operation.getSourceRef().equals(answer.getSource()))
+                    && (connection == null || !connection.getTarget().equals(answer.getSource()))) {
                 throw new IllegalArgumentException(
                         "Frontier answer is not from an exact direct connection: "
                                 + answer.getSource());

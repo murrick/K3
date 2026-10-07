@@ -1837,6 +1837,9 @@ public class Mind implements IMind {
                     line, true, externals);
             setCompliedLine(line);
             if (r != null && !r.isSecond()) {
+                if (causalFrontierCapture != null && causalFrontierCapture.enumerates(r, m)) {
+                    m.link(r, logging);
+                }
                 boolean ar = m.analyze(r, logging);
                 if (ar) {
                     if (logging) {
@@ -1950,13 +1953,13 @@ public class Mind implements IMind {
     }
 
     /**
-     * Extends an otherwise unresolved ordinary query through direct Context
-     * federation while preserving the historical FALSE-then-TRUE KANGER
+     * Extends an ordinary query through direct Context federation, including
+     * locally proven free-variable queries whose rows are still incomplete, while preserving the historical FALSE-then-TRUE KANGER
      * lifecycle.
      *
      * <p>Local inference has already run before this method is entered. The
-     * federation capability therefore receives the live initiating Mind only
-     * for unresolved continuation. Each pass executes in an isolated ephemeral
+     * federation capability receives the live initiating Mind for unresolved
+     * continuation or complete ordinary atomic enumeration. Each pass executes in an isolated ephemeral
      * child; resolved Values/Solutions are published back by the capability,
      * while unresolved passes are discarded without touching the existing
      * local presentation state.</p>
@@ -2233,7 +2236,9 @@ public class Mind implements IMind {
                         if (res == null) {
                             res = queryCheckTrue(line, ext, logging);
                         }
-                        if (res == null) {
+                        if (res == null || (!getValues().isEmpty()
+                                && isStorageUsed() && user.getData() instanceof IContextFederation
+                                && ((IContextFederation) user.getData()).hasConnectedContexts())) {
                             res = continueFederatedQuery(
                                     line, ext, logging);
                         }

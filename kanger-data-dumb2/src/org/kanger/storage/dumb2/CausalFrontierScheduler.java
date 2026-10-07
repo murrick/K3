@@ -35,10 +35,19 @@ final class CausalFrontierScheduler {
     }
 
     static Result execute(OperationSnapshot operation, FrontierDomain frontier, Mind source, boolean trace) throws Exception {
+        return execute(operation, frontier, source, trace, false);
+    }
+
+    static Result enumerate(OperationSnapshot operation, FrontierDomain frontier, Mind source, boolean trace) throws Exception {
+        return execute(operation, frontier, source, trace, true);
+    }
+
+    private static Result execute(OperationSnapshot operation, FrontierDomain frontier,
+            Mind source, boolean trace, final boolean includeSourceAtRoot) throws Exception {
         List<IContextFederation.CausalStep> steps = new ArrayList<IContextFederation.CausalStep>();
         List<ContextConnection> connections = operation.getConnections().getConnections();
         List<Node> nodes = new ArrayList<Node>();
-        Node root = node(nodes, frontier, connections, null, operation.getSourceRef());
+        Node root = node(nodes, frontier, connections, includeSourceAtRoot ? source : null, operation.getSourceRef());
         int calls = 0;
         int waves = 0;
         ExecutorService executor = Executors.newFixedThreadPool(Math.max(1,
@@ -75,7 +84,7 @@ final class CausalFrontierScheduler {
                             pending.add(new Call(target, cached));
                         } else if (target.source != null) {
                             // X is live operation state: never access its shared Mind from workers.
-                            FrontierAnswer answer = LocalFrontierExecutor.execute(target.source, target.ref, request);
+                            FrontierAnswer answer = LocalFrontierExecutor.execute(target.source, target.ref, request, includeSourceAtRoot);
                             pending.add(new Call(target, answer));
                             ++calls;
                         } else {
@@ -83,7 +92,7 @@ final class CausalFrontierScheduler {
                             final FrontierRequest execution = request;
                             Future<FrontierAnswer> future = executor.submit(new Callable<FrontierAnswer>() {
                                 @Override public FrontierAnswer call() throws Exception {
-                                    return LocalFrontierExecutor.execute(connection, execution);
+                                    return LocalFrontierExecutor.execute(connection, execution, includeSourceAtRoot);
                                 }
                             });
                             pending.add(new Call(target, future));

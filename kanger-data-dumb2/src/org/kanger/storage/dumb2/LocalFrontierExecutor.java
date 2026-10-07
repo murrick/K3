@@ -46,6 +46,11 @@ final class LocalFrontierExecutor {
     static FrontierAnswer execute(
             ContextConnection connection,
             FrontierRequest request) throws Exception {
+        return execute(connection, request, false);
+    }
+
+    static FrontierAnswer execute(ContextConnection connection, FrontierRequest request,
+            boolean enumerate) throws Exception {
         if (connection == null) {
             throw new NullPointerException("connection");
         }
@@ -57,7 +62,7 @@ final class LocalFrontierExecutor {
         return execute(
                 connection.getTargetLocation(),
                 target,
-                request);
+                request, enumerate);
     }
 
     static FrontierAnswer execute(
@@ -78,6 +83,11 @@ final class LocalFrontierExecutor {
             Path targetLocation,
             RevisionRef target,
             FrontierRequest request) throws Exception {
+        return execute(targetLocation, target, request, false);
+    }
+
+    private static FrontierAnswer execute(Path targetLocation, RevisionRef target,
+            FrontierRequest request, boolean enumerate) throws Exception {
         if (request == null) {
             throw new NullPointerException("request");
         }
@@ -108,7 +118,7 @@ final class LocalFrontierExecutor {
         }
 
         try {
-            return execute(root, target, request);
+            return execute(root, target, request, enumerate);
         } finally {
             root = (Mind) root.closeStorage();
             user.setCurrentMind(root);
@@ -117,6 +127,11 @@ final class LocalFrontierExecutor {
 
     /** Local X probe also uses native inference in a discarded child, never its federation provider. */
     static FrontierAnswer execute(Mind root, RevisionRef target, FrontierRequest request) throws Exception {
+        return execute(root, target, request, false);
+    }
+
+    static FrontierAnswer execute(Mind root, RevisionRef target, FrontierRequest request,
+            boolean enumerate) throws Exception {
         request.executionState(target);
         FrontierDomain frontier = request.getInvocation().getFrontier();
         Mind mind = Mind.ephemeralChild(root);
@@ -124,10 +139,9 @@ final class LocalFrontierExecutor {
             for (SuppliedEvidence fact : request.getEvidence()) {
                 fact.materialize(mind);
             }
-            CausalFrontierCapture.Result result = CausalFrontierCapture.query(mind,
-                    frontier.getQuerySource(),
-                    frontier.projectFixedArguments(mind),
-                    false);
+            CausalFrontierCapture.Result result = enumerate && !frontier.isGround()
+                    ? CausalFrontierCapture.enumerate(mind, frontier.getQuerySource(), frontier.projectFixedArguments(mind), false)
+                    : CausalFrontierCapture.query(mind, frontier.getQuerySource(), frontier.projectFixedArguments(mind), false);
 
             List<String> order = new ArrayList<String>();
             for (FrontierDomain.VariableState variable
@@ -172,7 +186,7 @@ final class LocalFrontierExecutor {
                     order,
                     rows,
                     hypotheses,
-                    result.getDemands());
+                    result.getDemands(), enumerate);
         } finally {
             root.discardEphemeral(mind);
         }
