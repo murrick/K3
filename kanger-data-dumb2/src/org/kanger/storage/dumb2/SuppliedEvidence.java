@@ -119,6 +119,18 @@ final class SuppliedEvidence {
         return hash;
     }
 
+    String diagnosticStatement() {
+        StringBuilder source = new StringBuilder(negated ? "!~" : "!").append(predicate).append('(');
+        for (int i = 0; i < arguments.size(); ++i) {
+            if (i > 0) source.append(',');
+            String value = arguments.get(i).materialize().toString();
+            if (arguments.get(i).getType() == org.kanger.enums.DataType.STRING) {
+                source.append("'").append(value.replace("'", "''")).append("'");
+            } else source.append(value);
+        }
+        return source.append(");").toString();
+    }
+
     void materialize(Mind target) throws Exception {
         Queue<ITerm> values = new LinkedList<ITerm>();
         StringBuilder source = new StringBuilder(negated ? "!~" : "!");

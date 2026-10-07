@@ -1008,7 +1008,8 @@ public final class DB implements IData, IContextFederation {
                 java.util.Collections
                         .<IContextFederation.ValueRow>emptyList(),
                 injections,
-                hypotheses);
+                hypotheses,
+                result.getCausalSteps());
     }
 
     private IContextFederation.FrontierTruth projectTruth(

@@ -7,6 +7,7 @@ package org.kanger.storage.dumb2;
 import org.kanger.FrontierDemand;
 import org.kanger.FrontierDomain;
 import org.kanger.Mind;
+import org.kanger.interfaces.internal.IContextFederation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,6 +31,11 @@ final class CausalFrontierScheduler {
     }
 
     static Result execute(OperationSnapshot operation, FrontierDomain frontier, Mind source) throws Exception {
+        return execute(operation, frontier, source, false);
+    }
+
+    static Result execute(OperationSnapshot operation, FrontierDomain frontier, Mind source, boolean trace) throws Exception {
+        List<IContextFederation.CausalStep> steps = new ArrayList<IContextFederation.CausalStep>();
         List<ContextConnection> connections = operation.getConnections().getConnections();
         List<Node> nodes = new ArrayList<Node>();
         Node root = node(nodes, frontier, connections, null, operation.getSourceRef());
@@ -86,13 +92,14 @@ final class CausalFrontierScheduler {
                     }
                 }
                 if (pending.isEmpty()) {
-                    return new Result(root.answers(), nodes, waves, calls);
+                    return new Result(root.answers(), nodes, waves, calls, steps);
                 }
                 if (++waves > MAX_WAVES) {
                     throw new IllegalStateException("Causal frontier did not reach a fixed point in " + MAX_WAVES + " waves");
                 }
                 for (Call call : pending) {
                     FrontierAnswer answer = call.answer();
+                    if (trace) steps.add(step(waves, root.invocation.getFrontier().getDiagnosticSource(), answer));
                     call.target.answer = answer;
                     call.target.cache.put(answer.getExecutionState(), answer);
                     for (FrontierDemand demand : answer.getUnresolvedFrontiers()) {
@@ -123,6 +130,42 @@ final class CausalFrontierScheduler {
         } finally {
             executor.shutdownNow();
         }
+    }
+
+    private static IContextFederation.CausalStep step(int wave, String rootQuery, FrontierAnswer answer) {
+        List<IContextFederation.ValueRow> values = new ArrayList<IContextFederation.ValueRow>();
+        if (answer.getTruth() == FrontierAnswer.Truth.TRUE) {
+            for (List<FrontierAnswer.ValueRef> row : answer.getValues()) {
+                Map<String, String> bindings = new LinkedHashMap<String, String>();
+                for (int i = 0; i < row.size(); ++i) bindings.put(answer.getVariableOrder().get(i), row.get(i).getRendered());
+                values.add(new IContextFederation.ValueRow(bindings));
+            }
+        }
+        List<IContextFederation.EvidenceInjection> supplied = new ArrayList<IContextFederation.EvidenceInjection>();
+        for (SuppliedEvidence fact : answer.getRequest().getEvidence()) {
+            List<IContextFederation.Revision> supports = new ArrayList<IContextFederation.Revision>();
+            for (RevisionRef ref : fact.getSupports()) supports.add(revision(ref));
+            supplied.add(new IContextFederation.EvidenceInjection(fact.diagnosticStatement(),
+                    Collections.<String, String>emptyMap(), supports));
+        }
+        List<IContextFederation.CausalDemand> demands = new ArrayList<IContextFederation.CausalDemand>();
+        for (FrontierDemand demand : answer.getUnresolvedFrontiers()) {
+            List<Integer> positions = new ArrayList<Integer>();
+            for (int i = 0; i < demand.getParent().getArgumentCount(); ++i) {
+                positions.add(demand.getParentProjection().getChildPosition(i));
+            }
+            demands.add(new IContextFederation.CausalDemand(demand.getParent().getDiagnosticSource(),
+                    demand.getQuery().getDiagnosticSource(), positions));
+        }
+        IContextFederation.FrontierTruth truth = answer.getTruth() == FrontierAnswer.Truth.NULL
+                ? IContextFederation.FrontierTruth.UNKNOWN
+                : IContextFederation.FrontierTruth.valueOf(answer.getTruth().name());
+        return new IContextFederation.CausalStep(wave, rootQuery, answer.getInvocation().getFrontier().getDiagnosticSource(),
+                revision(answer.getSource()), truth, values, supplied, demands);
+    }
+
+    private static IContextFederation.Revision revision(RevisionRef ref) {
+        return new IContextFederation.Revision(ref.getContextId(), ref.getRevision());
     }
 
     private static Node node(List<Node> nodes, FrontierDomain frontier, List<ContextConnection> connections, Mind source, RevisionRef sourceRef) {
@@ -221,7 +264,9 @@ final class CausalFrontierScheduler {
         private final boolean rootConflict;
         private final int waves;
         private final int calls;
-        Result(List<FrontierAnswer> answers, List<Node> nodes, int waves, int calls) {
+        private final List<IContextFederation.CausalStep> steps;
+        Result(List<FrontierAnswer> answers, List<Node> nodes, int waves, int calls, List<IContextFederation.CausalStep> steps) {
+            this.steps = Collections.unmodifiableList(new ArrayList<IContextFederation.CausalStep>(steps));
             this.answers = Collections.unmodifiableList(new ArrayList<FrontierAnswer>(answers));
             this.rootConflict = nodes.get(0).conflict != null;
             this.nodes = nodes.size(); this.waves = waves; this.calls = calls;
@@ -231,6 +276,7 @@ final class CausalFrontierScheduler {
             }
             this.conflicts = Collections.unmodifiableList(observed);
         }
+        List<IContextFederation.CausalStep> getSteps() { return steps; }
         boolean hasRootConflict() { return rootConflict; }
         boolean hasConflict() { return !conflicts.isEmpty(); }
         List<Conflict> getConflicts() { return conflicts; }

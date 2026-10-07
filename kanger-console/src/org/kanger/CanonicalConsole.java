@@ -878,6 +878,34 @@ public final class CanonicalConsole {
                         snapshot);
             }
 
+            for (IContextFederation.CausalStep step : continuation.getCausalSteps()) {
+                System.out.printf("  causal wave %d  %s@%d  %s => %s%n", step.getWave(),
+                        contextLocator(snapshot, step.getTarget().getContextId()),
+                        step.getTarget().getRevision(), step.getQuery(), step.getTruth());
+                for (IContextFederation.EvidenceInjection fact : step.getSuppliedEvidence()) {
+                    System.out.println("    supplied: " + fact.getStatement());
+                    showRevisionSources("supports", fact.getSupports(), snapshot);
+                }
+                for (IContextFederation.CausalDemand demand : step.getDemands()) {
+                    System.out.println("    needs " + demand.getChildQuery() + " for " + demand.getParentQuery());
+                    StringBuilder mapping = new StringBuilder("    parent arguments <- child arguments: ");
+                    for (int i = 0; i < demand.getParentToChild().size(); ++i) {
+                        if (i > 0) mapping.append(", ");
+                        int child = demand.getParentToChild().get(i);
+                        mapping.append(i + 1).append(" <- ").append(child < 0 ? "local" : Integer.toString(child + 1));
+                    }
+                    System.out.println(mapping.toString());
+                }
+                for (IContextFederation.ValueRow row : step.getValues()) {
+                    StringBuilder bindings = new StringBuilder("    native bindings: ");
+                    for (java.util.Map.Entry<String, String> binding : row.getBindings().entrySet()) {
+                        if (bindings.length() > "    native bindings: ".length()) bindings.append(", ");
+                        bindings.append('$').append(binding.getKey()).append(" <- ").append(binding.getValue());
+                    }
+                    System.out.println(bindings.toString());
+                }
+            }
+
             for (IContextFederation.EvidenceInjection injection
                     : continuation.getEvidenceInjections()) {
                 StringBuilder line =

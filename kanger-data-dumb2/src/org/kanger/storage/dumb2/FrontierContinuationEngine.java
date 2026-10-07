@@ -7,6 +7,8 @@ package org.kanger.storage.dumb2;
 
 import org.kanger.FrontierDomain;
 import org.kanger.Mind;
+import org.kanger.SemanticTermSnapshot;
+import org.kanger.interfaces.internal.IContextFederation;
 import org.kanger.enums.Enums;
 import org.kanger.enums.QueryPass;
 import org.kanger.interfaces.ITerm;
@@ -202,10 +204,14 @@ final class FrontierContinuationEngine {
                         : QueryPass.CHECKTRUE;
         work.setQueryPass(queryPass);
 
+        Queue<ITerm> localExternals = new LinkedList<ITerm>();
+        for (ITerm value : externals) {
+            localExternals.add(work.getTerms().projectSemantic(SemanticTermSnapshot.capture(value).materialize()));
+        }
         Rule query = (Rule) work.compileLine(
                 querySource,
                 true,
-                externals);
+                localExternals);
         if (query == null || query.isSecond()) {
             throw new IllegalStateException(
                     "Unable to establish operation-local query Rule: "
@@ -219,6 +225,7 @@ final class FrontierContinuationEngine {
                 provisionalHypotheses =
                 new LinkedHashSet<
                         FrontierAggregate.ProvisionalHypothesis>();
+        List<IContextFederation.CausalStep> causalSteps = new ArrayList<IContextFederation.CausalStep>();
         List<EvidenceInjection> injections =
                 new ArrayList<EvidenceInjection>();
 
@@ -231,7 +238,7 @@ final class FrontierContinuationEngine {
                     Collections.<List<String>>emptyList(),
                     observations,
                     injections,
-                    provisionalHypotheses);
+                    provisionalHypotheses, causalSteps);
         }
 
         Set<EvidenceKey> evidence =
@@ -254,7 +261,7 @@ final class FrontierContinuationEngine {
                         frontierTrace,
                         observations,
                         injections,
-                        provisionalHypotheses);
+                        provisionalHypotheses, causalSteps);
             }
 
             List<String> predicates =
@@ -270,7 +277,8 @@ final class FrontierContinuationEngine {
             boolean changed = false;
             for (FrontierDomain frontier : frontiers) {
                 CausalFrontierScheduler.Result scheduled =
-                        CausalFrontierScheduler.execute(operation, frontier, localSource);
+                        CausalFrontierScheduler.execute(operation, frontier, localSource, localSource.isExplainQueryActive());
+                causalSteps.addAll(scheduled.getSteps());
                 List<FrontierAnswer> answers = scheduled.getAnswers();
                 FrontierAggregate aggregate =
                         FrontierAggregate.of(answers);
@@ -363,7 +371,7 @@ final class FrontierContinuationEngine {
                         frontierTrace,
                         observations,
                         injections,
-                        provisionalHypotheses);
+                        provisionalHypotheses, causalSteps);
             }
 
             work.setQueryPass(queryPass);
@@ -382,7 +390,7 @@ final class FrontierContinuationEngine {
                         frontierTrace,
                         observations,
                         injections,
-                        provisionalHypotheses);
+                        provisionalHypotheses, causalSteps);
             }
             if (query.getId() != queryRuleId) {
                 throw new AssertionError(
@@ -454,6 +462,7 @@ final class FrontierContinuationEngine {
 
     static final class Result {
 
+        private final List<IContextFederation.CausalStep> causalSteps;
         private final boolean resolved;
         private final int waves;
         private final int evidenceCount;
@@ -473,7 +482,8 @@ final class FrontierContinuationEngine {
                 List<FrontierObservation> observations,
                 List<EvidenceInjection> evidenceInjections,
                 Set<FrontierAggregate.ProvisionalHypothesis>
-                        provisionalHypotheses) {
+                        provisionalHypotheses, List<IContextFederation.CausalStep> causalSteps) {
+            this.causalSteps = Collections.unmodifiableList(new ArrayList<IContextFederation.CausalStep>(causalSteps));
             this.resolved = resolved;
             this.waves = waves;
             this.evidenceCount = evidenceCount;
@@ -506,6 +516,8 @@ final class FrontierContinuationEngine {
                     ? Collections.<FrontierAggregate.ProvisionalHypothesis>emptyList()
                     : Collections.unmodifiableList(new ArrayList<FrontierAggregate.ProvisionalHypothesis>(provisionalHypotheses));
         }
+
+        List<IContextFederation.CausalStep> getCausalSteps() { return causalSteps; }
 
         boolean isResolved() {
             return resolved;

@@ -541,6 +541,48 @@ public interface IContextFederation {
         }
     }
 
+    /** Semantic parent/child relation; positions are zero-based argument positions. */
+    final class CausalDemand {
+        private final String parentQuery;
+        private final String childQuery;
+        private final List<Integer> parentToChild;
+        public CausalDemand(String parentQuery, String childQuery, List<Integer> parentToChild) {
+            this.parentQuery = parentQuery;
+            this.childQuery = childQuery;
+            this.parentToChild = Collections.unmodifiableList(new ArrayList<Integer>(parentToChild));
+        }
+        public String getParentQuery() { return parentQuery; }
+        public String getChildQuery() { return childQuery; }
+        public List<Integer> getParentToChild() { return parentToChild; }
+    }
+
+    /** One local Context response during a causal wave, never a final root Value by itself. */
+    final class CausalStep {
+        private final int wave;
+        private final String query;
+        private final String rootQuery;
+        private final Revision target;
+        private final FrontierTruth truth;
+        private final List<ValueRow> values;
+        private final List<EvidenceInjection> suppliedEvidence;
+        private final List<CausalDemand> demands;
+        public CausalStep(int wave, String rootQuery, String query, Revision target, FrontierTruth truth,
+                          List<ValueRow> values, List<EvidenceInjection> suppliedEvidence, List<CausalDemand> demands) {
+            this.wave = wave; this.rootQuery = rootQuery; this.query = query; this.target = target; this.truth = truth;
+            this.values = Collections.unmodifiableList(new ArrayList<ValueRow>(values));
+            this.suppliedEvidence = Collections.unmodifiableList(new ArrayList<EvidenceInjection>(suppliedEvidence));
+            this.demands = Collections.unmodifiableList(new ArrayList<CausalDemand>(demands));
+        }
+        public int getWave() { return wave; }
+        public String getRootQuery() { return rootQuery; }
+        public String getQuery() { return query; }
+        public Revision getTarget() { return target; }
+        public FrontierTruth getTruth() { return truth; }
+        public List<ValueRow> getValues() { return values; }
+        public List<EvidenceInjection> getSuppliedEvidence() { return suppliedEvidence; }
+        public List<CausalDemand> getDemands() { return demands; }
+    }
+
     final class QueryResult {
 
         private final boolean resolved;
@@ -551,6 +593,7 @@ public interface IContextFederation {
         private final List<ValueRow> values;
         private final List<EvidenceInjection> evidenceInjections;
         private final List<ProvisionalHypothesis> provisionalHypotheses;
+        private final List<CausalStep> causalSteps;
 
         public QueryResult(
                 boolean resolved,
@@ -599,6 +642,14 @@ public interface IContextFederation {
                 List<ValueRow> values,
                 List<EvidenceInjection> evidenceInjections,
                 List<ProvisionalHypothesis> provisionalHypotheses) {
+            this(resolved, resultTruth, waves, evidenceCount, observations, values,
+                    evidenceInjections, provisionalHypotheses, Collections.<CausalStep>emptyList());
+        }
+
+        public QueryResult(boolean resolved, FrontierTruth resultTruth, int waves, int evidenceCount,
+                           List<FrontierObservation> observations, List<ValueRow> values,
+                           List<EvidenceInjection> evidenceInjections, List<ProvisionalHypothesis> provisionalHypotheses,
+                           List<CausalStep> causalSteps) {
             if (resultTruth == null) {
                 throw new NullPointerException("resultTruth");
             }
@@ -612,6 +663,7 @@ public interface IContextFederation {
                     || provisionalHypotheses == null) {
                 throw new NullPointerException();
             }
+            this.causalSteps = Collections.unmodifiableList(new ArrayList<CausalStep>(causalSteps));
             this.resolved = resolved;
             this.resultTruth = resultTruth;
             this.waves = waves;
@@ -630,6 +682,8 @@ public interface IContextFederation {
                             new ArrayList<ProvisionalHypothesis>(
                                     provisionalHypotheses));
         }
+
+        public List<CausalStep> getCausalSteps() { return causalSteps; }
 
         public boolean isResolved() {
             return resolved;

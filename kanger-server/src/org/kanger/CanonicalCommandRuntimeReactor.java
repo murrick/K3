@@ -309,6 +309,30 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                 .put("connections", connections);
     }
 
+    private JSONArray causalSteps(IContextFederation.Snapshot snapshot, IContextFederation.QueryResult continuation) {
+        JSONArray steps = new JSONArray();
+        for (IContextFederation.CausalStep step : continuation.getCausalSteps()) {
+            JSONArray values = new JSONArray();
+            for (IContextFederation.ValueRow row : step.getValues()) values.put(new JSONObject(row.getBindings()));
+            JSONArray supplied = new JSONArray();
+            for (IContextFederation.EvidenceInjection fact : step.getSuppliedEvidence()) {
+                supplied.put(new JSONObject().put("statement", fact.getStatement())
+                        .put("supports", explainSources(snapshot, fact.getSupports())));
+            }
+            JSONArray demands = new JSONArray();
+            for (IContextFederation.CausalDemand demand : step.getDemands()) {
+                demands.put(new JSONObject().put("parent_query", demand.getParentQuery())
+                        .put("child_query", demand.getChildQuery())
+                        .put("parent_to_child", new JSONArray(demand.getParentToChild())));
+            }
+            steps.put(new JSONObject().put("wave", step.getWave()).put("root_query", step.getRootQuery())
+                    .put("query", step.getQuery()).put("truth", step.getTruth().name())
+                    .put("target", explainSources(snapshot, java.util.Collections.singletonList(step.getTarget())).getJSONObject(0))
+                    .put("values", values).put("supplied_evidence", supplied).put("demands", demands));
+        }
+        return steps;
+    }
+
     private JSONObject contextExplain(
             IContextFederation.ExplainResult explain) {
         IContextFederation.Snapshot snapshot =
@@ -393,7 +417,8 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                             .put("observations",
                                     observations)
                             .put("injections",
-                                    injections));
+                                    injections)
+                            .put("causal_steps", causalSteps(snapshot, continuation)));
         }
 
         JSONArray values = new JSONArray();

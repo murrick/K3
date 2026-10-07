@@ -1593,9 +1593,41 @@ public class Mind implements IMind {
         return qualifyCurrentContext(logging).isValid();
     }
 
+    private boolean hasQueryFederation() throws Exception {
+        if (!isStorageUsed()) return false;
+        IData data = user.getData();
+        return data instanceof IContextFederation && isStorageUsed()
+                && ((IContextFederation) data).hasConnectedContexts();
+    }
+
+    private Queue<ITerm> queryExternals(Object[] ext) throws Exception {
+        if (ext == null || ext.length == 0 || !hasQueryFederation()) return convertExternals(ext);
+        Mind parameters = Mind.ephemeralChild(this);
+        try {
+            return parameters.convertExternals(ext);
+        } finally {
+            discardEphemeral(parameters);
+        }
+    }
+
+    private Queue<ITerm> localQueryExternals(Mind target, Queue<ITerm> externals) throws Exception {
+        if (!hasQueryFederation()) return externals;
+        Queue<ITerm> local = new LinkedList<ITerm>();
+        for (ITerm term : externals) local.add(target.getTerms().projectSemantic(SemanticTermSnapshot.capture(term).materialize()));
+        return local;
+    }
+
+    private TechnicalMindTransaction queryTransaction() throws Exception {
+        if (hasQueryFederation()) {
+            // Query-only constants must not publish X or erase its working topology.
+            return TechnicalMindTransaction.beginIsolated(this);
+        }
+        return TechnicalMindTransaction.begin(this);
+    }
+
     public Boolean queryCheckFalse(String line, Object[] ext, boolean logging) throws Exception {
         return queryCheckFalseCanonical(
-                line, convertExternals(ext), logging);
+                line, queryExternals(ext), logging);
     }
 
     private Boolean queryCheckFalseCanonical(
@@ -1603,8 +1635,9 @@ public class Mind implements IMind {
             Queue<ITerm> externals,
             boolean logging) throws Exception {
         Boolean res = null;
-        try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
+        try (TechnicalMindTransaction tx = queryTransaction()) {
             Mind m = tx.mind();
+            externals = localQueryExternals(m, externals);
             m.setQueryPass(QueryPass.CHECKFALSE);
             if (logging) {
                 m.getLog().add(LogMode.ANALYZER, "============= FALSE CHECKING ==============");
@@ -1679,7 +1712,7 @@ public class Mind implements IMind {
 
     public Boolean queryCheckTrue(String line, Object[] ext, boolean logging) throws Exception {
         return queryCheckTrueCanonical(
-                line, convertExternals(ext), logging);
+                line, queryExternals(ext), logging);
     }
 
     private Boolean queryCheckTrueCanonical(
@@ -1687,8 +1720,9 @@ public class Mind implements IMind {
             Queue<ITerm> externals,
             boolean logging) throws Exception {
         Boolean res = null;
-        try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
+        try (TechnicalMindTransaction tx = queryTransaction()) {
             Mind m = tx.mind();
+            externals = localQueryExternals(m, externals);
             m.setQueryPass(QueryPass.CHECKTRUE);
             if (logging) {
                 m.getLog().add(LogMode.ANALYZER, "============= TRUE CHECKING ===============");
@@ -1844,7 +1878,8 @@ public class Mind implements IMind {
             return null;
         }
 
-        Queue<ITerm> externals = convertExternals(ext);
+        Queue<ITerm> externals = queryExternals(ext);
+        boolean conflict = false;
 
         if (!DEBUG_DISABLE_FALSE_CHECK) {
             IContextFederation.QueryResult opposite =
@@ -1853,6 +1888,7 @@ public class Mind implements IMind {
                             invert(line),
                             new LinkedList<ITerm>(externals),
                             logging);
+            conflict = federatedConflict(opposite);
             recordExplainPass(
                     IContextFederation.ExplainPolarity.FALSE_PASS,
                     opposite);
@@ -1890,7 +1926,23 @@ public class Mind implements IMind {
             return true;
         }
 
+        if (conflict || federatedConflict(positive)) {
+            hypothesis.clear();
+            tempHypothesis.clear();
+        }
         return null;
+    }
+
+    private static boolean federatedConflict(IContextFederation.QueryResult result) {
+        for (IContextFederation.FrontierObservation observation : result.getObservations()) {
+            if (observation.getTruth() == IContextFederation.FrontierTruth.CONFLICT) return true;
+        }
+        return false;
+    }
+
+    /** Requests semantic trace capture only for an active ctx explain query. */
+    public boolean isExplainQueryActive() {
+        return activeExplainPasses != null;
     }
 
     public IContextFederation.ExplainResult explainQuery(
