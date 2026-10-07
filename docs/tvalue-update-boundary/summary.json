@@ -1,0 +1,92 @@
+{
+  "parent": "c7319da9c67a0e74169e754e80d00a3e915b6028",
+  "fresh_JVMs": 83,
+  "new_JVMs": 12,
+  "fresh_regression_JVMs": 71,
+  "all_expectations_met": true,
+  "new_partial_native_failure_shadow_JVMs": 3,
+  "native_return_and_partial_failure_preserved": true,
+  "parent_rebind_and_child_memory_mask_qualified": true,
+  "child_generation_reseed_qualified": true,
+  "pending_objects_not_registered_on_failure": true,
+  "all_71_regression_logs_and_33_traces_byte_identical": true,
+  "success_traces": 36,
+  "replayed_authority_views": 9267,
+  "new_trace_replays": {
+    "success-shadow-on.success.trace.gz": {
+      "contexts": 2,
+      "observations": 17,
+      "changes": 6,
+      "resets": 1,
+      "seed_buckets": 3,
+      "authority_buckets": 17,
+      "deferred": 0,
+      "touches": 9,
+      "bucketReads": 7,
+      "seeds": 3,
+      "mapChanges": 0,
+      "retired": 0,
+      "transitions": {
+        "added": 0,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0,
+        "term_changes": 6
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "success-shadow-verify.success.trace.gz": {
+      "contexts": 2,
+      "observations": 17,
+      "changes": 6,
+      "resets": 1,
+      "seed_buckets": 3,
+      "authority_buckets": 17,
+      "deferred": 0,
+      "touches": 9,
+      "bucketReads": 7,
+      "seeds": 3,
+      "mapChanges": 0,
+      "retired": 0,
+      "transitions": {
+        "added": 0,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0,
+        "term_changes": 6
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "success-shadow-off.success.trace.gz": {
+      "contexts": 2,
+      "observations": 17,
+      "changes": 6,
+      "resets": 1,
+      "seed_buckets": 3,
+      "authority_buckets": 17,
+      "deferred": 0,
+      "touches": 9,
+      "bucketReads": 7,
+      "seeds": 3,
+      "mapChanges": 0,
+      "retired": 0,
+      "transitions": {
+        "added": 0,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0,
+        "term_changes": 6
+      },
+      "replay_matches_every_authority_view": true
+    }
+  },
+  "production_changed": false,
+  "known_same_variable_root_factory_update_only": true,
+  "general_persistent_publication_concurrency_or_reentrancy_qualified": false,
+  "frozen_complete_corpus_semantics_equal": false,
+  "prior_rejected_corpus_attempts_retained": 2,
+  "no_consumer_or_performance_claim": true
+}

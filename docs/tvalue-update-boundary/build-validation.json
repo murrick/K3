@@ -1,0 +1,65 @@
+{
+  "parent": "c7319da9c67a0e74169e754e80d00a3e915b6028",
+  "original_update_body_recovered": true,
+  "all_old_journal_methods_recovered": true,
+  "prior_696_classes_each_mode_unchanged": true,
+  "production_changed": false,
+  "builds": {
+    "clean": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-clean:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-update-boundary-clean",
+        "../build/tvalue-update-boundary-clean-source/TValueFactory.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-update-boundary38/docs/tvalue-update-boundary/TValueDirtyJournal.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-update-boundary38/docs/tvalue-update-boundary/UpdateBoundaryRunner.java"
+      ],
+      "source_before_sha256": "f8a5c5d846ce2dd2f7d9b2818a10181ed38f3619b142f99d5fa498214237a8c5",
+      "temporary_source_sha256": "c651ccfaaf6874fafcebcac7eb4a63a89d635353887db0e0962cb3dfc1bbe636",
+      "overlay_class_sha256": {
+        "org/kanger/TValueDirtyJournal.class": "57f14350edf9bd9179ded707abfef2a3c45274ee8ff72764adf77be8b8994e7f",
+        "org/kanger/UpdateBoundaryRunner$FailingValue.class": "9645f0cb057fa59e7a4205d1daeec78415e1bde7b17e2b8d415dda929c5c081f",
+        "org/kanger/UpdateBoundaryRunner.class": "1557265ec08c3d9214bfdd67d18ae96dd52c02031f9e6e3f898245493a9ea4b6",
+        "org/kanger/TValueDirtyJournal$Session.class": "460b7070862af559b19b1108003416d6a1ccbb53803a47f3ae7dc623ec9cfff1",
+        "org/kanger/TValueDirtyJournal$State.class": "986b9b82ac8a4a6d6d92059f8bd3a753ee444c21c61c825f2dfdcdfc636d5f19",
+        "org/kanger/TValueDirtyJournal$UpdateFrame.class": "3ed8617ae5d821d2d168a144b3961e631a2affc2ce3a684f5d0f2ac4528848a3",
+        "org/kanger/TValueDirtyJournal$Work.class": "3d000cc0b15ed91244fae53ce7478569df198e07c557ee11495622e887c28cde",
+        "org/kanger/factory/TValueFactory.class": "566710dfcae014ea64dad78a88c20af24f38927bd9dec1fb200f81812d9ddbef"
+      }
+    },
+    "shadow": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-shadow:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-update-boundary-shadow",
+        "../build/tvalue-update-boundary-shadow-source/TValueFactory.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-update-boundary38/docs/tvalue-update-boundary/TValueDirtyJournal.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-update-boundary38/docs/tvalue-update-boundary/UpdateBoundaryRunner.java"
+      ],
+      "source_before_sha256": "d1c1d394a24a77984477f9184f12257a2ef187ce4414486f4ba39dd05b324d1a",
+      "temporary_source_sha256": "8d625beca260de0682a38c265ee3707bda1b980c21aeec660e2b49a640b3e240",
+      "overlay_class_sha256": {
+        "org/kanger/TValueDirtyJournal.class": "57f14350edf9bd9179ded707abfef2a3c45274ee8ff72764adf77be8b8994e7f",
+        "org/kanger/UpdateBoundaryRunner$FailingValue.class": "9645f0cb057fa59e7a4205d1daeec78415e1bde7b17e2b8d415dda929c5c081f",
+        "org/kanger/UpdateBoundaryRunner.class": "1557265ec08c3d9214bfdd67d18ae96dd52c02031f9e6e3f898245493a9ea4b6",
+        "org/kanger/TValueDirtyJournal$Session.class": "460b7070862af559b19b1108003416d6a1ccbb53803a47f3ae7dc623ec9cfff1",
+        "org/kanger/TValueDirtyJournal$State.class": "986b9b82ac8a4a6d6d92059f8bd3a753ee444c21c61c825f2dfdcdfc636d5f19",
+        "org/kanger/TValueDirtyJournal$UpdateFrame.class": "3ed8617ae5d821d2d168a144b3961e631a2affc2ce3a684f5d0f2ac4528848a3",
+        "org/kanger/TValueDirtyJournal$Work.class": "3d000cc0b15ed91244fae53ce7478569df198e07c557ee11495622e887c28cde",
+        "org/kanger/factory/TValueFactory.class": "787de7021bc036ad4e73df541e87d9c46c5c3fb958256aed294f14d8b7f7b9d6"
+      }
+    }
+  }
+}
