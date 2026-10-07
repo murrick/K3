@@ -1,0 +1,3 @@
+Exception in thread "main" java.lang.AssertionError: expected qualification outcome journal errors [java.lang.AssertionError:materialization requires valid native lookup metadata, java.lang.AssertionError:materialization requires valid native lookup metadata]
+	at org.kanger.StorageTransitionRunner.require(StorageTransitionRunner.java:12)
+	at org.kanger.StorageTransitionRunner.main(StorageTransitionRunner.java:38)

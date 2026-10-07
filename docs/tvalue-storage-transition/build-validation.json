@@ -1,0 +1,20 @@
+{
+  "parent": "8ca65c10e6d1cbe3a1cb4f3d46140ea65fe4b187",
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-shadow:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-storage-transition-classes",
+    "/workspace/scratch/1c9c6dd2770c/K3-tvalue-storage-transition38/docs/tvalue-storage-transition/StorageTransitionRunner.java"
+  ],
+  "only_new_runner": {
+    "org/kanger/StorageTransitionRunner.class": "841ac763d827a8e222c20c4aa44c1c7b0e16d055076930ec5a5cb675d30efdf3"
+  },
+  "all_previous_native_and_hook_classes_unchanged": true,
+  "production_changed": false
+}

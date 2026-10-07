@@ -1,0 +1,6 @@
+Exception in thread "main" java.lang.AssertionError: unsupported resident boundary: unsupported persistent boundary: unresolved endpoints
+	at org.kanger.ResidentTValueRead.unsupported(ResidentTValueRead.java:14)
+	at org.kanger.ResidentTValueRead.layer(ResidentTValueRead.java:62)
+	at org.kanger.ResidentTValueRead.fingerprint(ResidentTValueRead.java:132)
+	at org.kanger.StorageTransitionRunner.observe(StorageTransitionRunner.java:13)
+	at org.kanger.StorageTransitionRunner.main(StorageTransitionRunner.java:23)

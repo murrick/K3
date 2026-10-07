@@ -1,0 +1,1 @@
+First one-record fixture failed before setter: Base endpoints not resolved after update. Corrected native three-record setup resolves root through explicit native getRoot; witness is middle ID, never looked up again. No journal mismatch waived.

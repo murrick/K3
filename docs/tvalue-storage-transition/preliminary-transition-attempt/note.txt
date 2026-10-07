@@ -1,0 +1,1 @@
+Three clean controls passed. First shadow update reached native mutation/finish, but earlier post-Base hook errors rejected transient invalid lookup metadata. The anticipated dirty-projection-only outcome was not supported. Preserve actual error; subsequent reset/publication controls use distinct sessions and do not erase/waive the rejected update session.
