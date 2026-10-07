@@ -1,0 +1,30 @@
+{
+  "index": 22,
+  "build": "shadow",
+  "flag": "on",
+  "runner": "TValueMetadataGapRunner",
+  "args": [
+    "setTVar"
+  ],
+  "exit_code": 0,
+  "expected_observer_rejection": true,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/tvalue-metadata-jvm-9oqvqzxo",
+    "-Dmetadata.shadow=true",
+    "-Djournal.path=/workspace/scratch/1c9c6dd2770c/K3-tvalue-metadata38/docs/tvalue-metadata-observation/shadow-on-TValueMetadataGapRunner-setTVar.trace",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-metadata-observation-shadow:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.TValueMetadataGapRunner",
+    "setTVar"
+  ]
+}

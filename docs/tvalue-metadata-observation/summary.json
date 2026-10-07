@@ -1,0 +1,307 @@
+{
+  "base": "95841a8f856f5cbe1c09e6f5cd71c26172d061e6",
+  "production_sources_and_qualification_and_workflows_unchanged": true,
+  "fresh_jvms": 31,
+  "all_exit_codes_zero_and_stderr_empty": true,
+  "expected_observer_rejections": 6,
+  "metadata_checks_per_flag": 19,
+  "native_metadata_equivalence_flags": [
+    "on",
+    "off",
+    "verify"
+  ],
+  "metadata_gates": [
+    {
+      "flag": "on",
+      "checks": 19,
+      "native_and_shadow_equal": true,
+      "prior_83_assertion_gate_and_trace_identical": true
+    },
+    {
+      "flag": "off",
+      "checks": 19,
+      "native_and_shadow_equal": true,
+      "prior_83_assertion_gate_and_trace_identical": true
+    },
+    {
+      "flag": "verify",
+      "checks": 19,
+      "native_and_shadow_equal": true,
+      "prior_83_assertion_gate_and_trace_identical": true
+    }
+  ],
+  "candidate_source_oracles": 4,
+  "sources_per_oracle": 47,
+  "transaction_full_state_and_work_equal": true,
+  "transaction_operations_per_jvm": 20,
+  "native_commit_exception_gates": 2,
+  "journal_traces": {
+    "shadow-off-ExactCandidateReplayRunner.trace.gz": {
+      "contexts": 378,
+      "observations": 2966,
+      "changes": 2602,
+      "resets": 3,
+      "seed_buckets": 7172,
+      "authority_buckets": 66119,
+      "deferred": 0,
+      "touches": 118873,
+      "bucketReads": 21542,
+      "seeds": 381,
+      "mapChanges": 0,
+      "retired": 375,
+      "transitions": {
+        "added": 2976,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0,
+        "term_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "shadow-off-LatentSolveSyncTransactionRunner.trace.gz": {
+      "contexts": 94,
+      "observations": 502,
+      "changes": 110,
+      "resets": 0,
+      "seed_buckets": 356,
+      "authority_buckets": 2100,
+      "deferred": 0,
+      "touches": 1596,
+      "bucketReads": 352,
+      "seeds": 94,
+      "mapChanges": 0,
+      "retired": 93,
+      "transitions": {
+        "added": 156,
+        "removed": 4,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0,
+        "term_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "shadow-off-TValueDirtyJournalSafetyRunner.trace.gz": {
+      "contexts": 33,
+      "observations": 128,
+      "changes": 25,
+      "resets": 1,
+      "seed_buckets": 20,
+      "authority_buckets": 97,
+      "deferred": 2,
+      "touches": 80,
+      "bucketReads": 46,
+      "seeds": 34,
+      "mapChanges": 13,
+      "retired": 27,
+      "transitions": {
+        "added": 13,
+        "removed": 2,
+        "deleted": 7,
+        "resurrected": 4,
+        "order_changes": 0,
+        "term_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "shadow-off-TValueMetadataSafetyRunner.trace.gz": {
+      "contexts": 5,
+      "observations": 27,
+      "changes": 9,
+      "resets": 0,
+      "seed_buckets": 1,
+      "authority_buckets": 17,
+      "deferred": 1,
+      "touches": 14,
+      "bucketReads": 12,
+      "seeds": 5,
+      "mapChanges": 0,
+      "retired": 4,
+      "transitions": {
+        "added": 1,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0,
+        "term_changes": 8
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "shadow-on-ExactCandidateReplayRunner.trace.gz": {
+      "contexts": 378,
+      "observations": 2966,
+      "changes": 2602,
+      "resets": 3,
+      "seed_buckets": 7172,
+      "authority_buckets": 66119,
+      "deferred": 0,
+      "touches": 118873,
+      "bucketReads": 21542,
+      "seeds": 381,
+      "mapChanges": 0,
+      "retired": 375,
+      "transitions": {
+        "added": 2976,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0,
+        "term_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "shadow-on-LatentSolveSyncTransactionRunner.trace.gz": {
+      "contexts": 94,
+      "observations": 502,
+      "changes": 110,
+      "resets": 0,
+      "seed_buckets": 356,
+      "authority_buckets": 2100,
+      "deferred": 0,
+      "touches": 1596,
+      "bucketReads": 352,
+      "seeds": 94,
+      "mapChanges": 0,
+      "retired": 93,
+      "transitions": {
+        "added": 156,
+        "removed": 4,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0,
+        "term_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "shadow-on-TValueDirtyJournalSafetyRunner.trace.gz": {
+      "contexts": 33,
+      "observations": 128,
+      "changes": 25,
+      "resets": 1,
+      "seed_buckets": 20,
+      "authority_buckets": 97,
+      "deferred": 2,
+      "touches": 80,
+      "bucketReads": 46,
+      "seeds": 34,
+      "mapChanges": 13,
+      "retired": 27,
+      "transitions": {
+        "added": 13,
+        "removed": 2,
+        "deleted": 7,
+        "resurrected": 4,
+        "order_changes": 0,
+        "term_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "shadow-on-TValueMetadataSafetyRunner.trace.gz": {
+      "contexts": 5,
+      "observations": 27,
+      "changes": 9,
+      "resets": 0,
+      "seed_buckets": 1,
+      "authority_buckets": 17,
+      "deferred": 1,
+      "touches": 14,
+      "bucketReads": 12,
+      "seeds": 5,
+      "mapChanges": 0,
+      "retired": 4,
+      "transitions": {
+        "added": 1,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0,
+        "term_changes": 8
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "shadow-verify-TValueDirtyJournalSafetyRunner.trace.gz": {
+      "contexts": 33,
+      "observations": 128,
+      "changes": 25,
+      "resets": 1,
+      "seed_buckets": 20,
+      "authority_buckets": 97,
+      "deferred": 2,
+      "touches": 80,
+      "bucketReads": 46,
+      "seeds": 34,
+      "mapChanges": 13,
+      "retired": 27,
+      "transitions": {
+        "added": 13,
+        "removed": 2,
+        "deleted": 7,
+        "resurrected": 4,
+        "order_changes": 0,
+        "term_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "shadow-verify-TValueMetadataSafetyRunner.trace.gz": {
+      "contexts": 5,
+      "observations": 27,
+      "changes": 9,
+      "resets": 0,
+      "seed_buckets": 1,
+      "authority_buckets": 17,
+      "deferred": 1,
+      "touches": 14,
+      "bucketReads": 12,
+      "seeds": 5,
+      "mapChanges": 0,
+      "retired": 4,
+      "transitions": {
+        "added": 1,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0,
+        "term_changes": 8
+      },
+      "replay_matches_every_authority_view": true
+    }
+  },
+  "total_replayed_authority_views": 7401,
+  "class_comparison": {
+    "prior_clean_classes_identical": 676,
+    "only_changed_prior_clean_helper": "TValueDirtyJournal",
+    "shadow_changed_shared_classes": [
+      "org/kanger/Linker$1.class",
+      "org/kanger/Linker$2.class",
+      "org/kanger/Linker$3.class",
+      "org/kanger/Linker$4.class",
+      "org/kanger/Linker.class",
+      "org/kanger/Mind$1.class",
+      "org/kanger/Mind.class",
+      "org/kanger/factory/TValueFactory.class",
+      "org/kanger/units/TValue.class"
+    ]
+  },
+  "qualified_setters": [
+    "setValue(Term)",
+    "setTVar(same variable ID)",
+    "setPersistentReferences(new TermID, same variable ID)"
+  ],
+  "registered_variable_changes_rejected_after_native_write": true,
+  "unhooked_applyMap_term_change_detected_by_full_oracle": true,
+  "native_hash_index_repair": false,
+  "native_variable_index_repair": false,
+  "frozen_complete_corpus_semantics_equal": false,
+  "prior_rejected_corpus_attempts_retained": 2,
+  "corpus_not_rerun_this_stage": true,
+  "limitations": [
+    "ThreadLocal explicit native Mind/TValueFactory sessions; no arbitrary worker coverage",
+    "object identity registered by successful add hooks and shadow seed/dirty bucket reads; independent full oracle does not seed registration",
+    "only ordered ID/TermID/deletion projection; resident object references, owner IDs, action and query/current projections not journaled",
+    "setId/setMind/setMindId/apply/applyMap and arbitrary extensions outside setter coverage",
+    "variable-changing writes rejected after native execution; no rollback or index repair",
+    "diagnostic full scans and strong references; no production consumer or speedup",
+    "earlier overlapping-preparation corpus remains unqualified"
+  ]
+}

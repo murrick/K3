@@ -1,0 +1,12 @@
+{
+  "base": "95841a8f856f5cbe1c09e6f5cd71c26172d061e6",
+  "temporary_source_sha256": {
+    "shadow": {
+      "Mind.java": "06752f7d6d9432f2b63258a60b658d11e747660c0bd6d1a1606785367c745b0e",
+      "Linker.java": "8d66bc88ce7893165c581db6c6e2a5ad6143db10dcd8a836bab0019d8916974e",
+      "factory/TValueFactory.java": "d1c1d394a24a77984477f9184f12257a2ef187ce4414486f4ba39dd05b324d1a",
+      "units/TValue.java": "78f698651e6e6e127796993779a5d785a597aed19c7197b32db5ed4951a3a2e7"
+    }
+  },
+  "scope": "previous dirty hooks plus post-body wrappers for three TValue payload setters; native bodies byte-identical"
+}
