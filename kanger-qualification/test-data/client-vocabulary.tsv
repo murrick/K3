@@ -36,6 +36,9 @@ REJECT	tree 1	UNKNOWN_KEYWORD	-	-	-	error	yes
 REJECT	drop	MISSING_ARGUMENT	-	-	-	error	yes
 REJECT	reindex	MISSING_ARGUMENT	-	-	-	error	yes
 REJECT	storage use	MISSING_ARGUMENT	-	-	-	error	yes
-REJECT	commit now	EXTRA_ARGUMENT	-	-	-	error	yes
+ACCEPT	commit now	TX_COMMIT	transaction commit now	description	now	OK	yes
+REJECT	commit too many	EXTRA_ARGUMENT	-	-	-	error	yes
+ACCEPT	commit "Shared release"	TX_COMMIT	transaction commit "Shared release"	description	Shared release	OK	yes
+ACCEPT	ctx publish "Shared release"	CTX_PUBLISH	ctx publish "Shared release"	description	Shared release	OK	no
 REJECT	get "unfinished	UNTERMINATED_QUOTE	-	-	-	error	yes
 REJECT	!!eating(Cat, Mouse);	INVALID_GRAMMAR	-	-	-	error	yes

@@ -427,7 +427,11 @@ public final class CommandParserConformanceTest {
         expect("rollback", CommandIntent.TX_ROLLBACK);
         expect("squash", CommandIntent.TX_SQUASH);
         reject("c", AMBIGUOUS_PREFIX);
-        reject("commit now", EXTRA_ARGUMENT);
+        expectArgument("commit now", CommandIntent.TX_COMMIT, "description", "now");
+        expectArgument("commit \"Release candidate\"", CommandIntent.TX_COMMIT, "description", "Release candidate");
+        expectArgument("ctx publish \"Release candidate\"", CommandIntent.CTX_PUBLISH, "description", "Release candidate");
+        reject("commit too many", EXTRA_ARGUMENT);
+        reject("ctx publish too many", EXTRA_ARGUMENT);
 
         expect("use", CommandIntent.STORAGE_STATUS);
         expectArgument("use demo", CommandIntent.STORAGE_USE,
@@ -574,7 +578,7 @@ public final class CommandParserConformanceTest {
                 "help exposes predicate/predicates argument spellings");
         check(help.contains("transaction start  (alias: start)"),
                 "help contains start alias");
-        check(help.contains("transaction commit  (alias: commit)"),
+        check(help.contains("transaction commit [description]  (alias: commit)"),
                 "help contains commit alias");
         check(help.contains("transaction rollback  (alias: rollback)"),
                 "help contains rollback alias");
