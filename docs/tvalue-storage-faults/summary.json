@@ -1,0 +1,99 @@
+{
+  "parent": "79b5fe1da42a523d5f56c8b32101ff32248a0064",
+  "fresh_JVMs": 30,
+  "preliminary_JVM_failures": 0,
+  "all_expectations_met": true,
+  "successful_traces": 3,
+  "authority_views": 9,
+  "denied_failure_prefixes": 12,
+  "fault_points": [
+    "upsert-after-wal",
+    "upsert-after-data",
+    "upsert-after-index",
+    "upsert-after-integrity"
+  ],
+  "factory_update_refuses_all_faults_before_finish_oracle": true,
+  "pending_materialization_not_published_on_failure": true,
+  "physical_reader_admits_old_cache_before_manifest_replacement": true,
+  "disk_payload_changes_before_manifest_replacement_demonstrated": true,
+  "physical_reader_refuses_stale_witness_after_manifest_replacement": true,
+  "standalone_reader_unsettled_write_admission_qualified": false,
+  "recorder_reader_Data_Base_journal_factory_unchanged": true,
+  "native_halt_path_recovered_not_executed": true,
+  "actual_process_crash_recovery_qualified": false,
+  "production_changed": false,
+  "general_IO_relocation_concurrency_reentrancy_or_corruption_qualified": false,
+  "frozen_complete_corpus_semantics_equal": false,
+  "prior_rejected_corpus_attempts_retained": 2,
+  "trace_replays": {
+    "none-shadow-on.success.trace.gz": {
+      "contexts": 1,
+      "observations": 3,
+      "changes": 0,
+      "resets": 0,
+      "seed_buckets": 1,
+      "authority_buckets": 3,
+      "deferred": 0,
+      "touches": 3,
+      "bucketReads": 1,
+      "seeds": 1,
+      "mapChanges": 0,
+      "retired": 0,
+      "transitions": {
+        "added": 0,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0,
+        "term_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "none-shadow-off.success.trace.gz": {
+      "contexts": 1,
+      "observations": 3,
+      "changes": 0,
+      "resets": 0,
+      "seed_buckets": 1,
+      "authority_buckets": 3,
+      "deferred": 0,
+      "touches": 3,
+      "bucketReads": 1,
+      "seeds": 1,
+      "mapChanges": 0,
+      "retired": 0,
+      "transitions": {
+        "added": 0,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0,
+        "term_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "none-shadow-verify.success.trace.gz": {
+      "contexts": 1,
+      "observations": 3,
+      "changes": 0,
+      "resets": 0,
+      "seed_buckets": 1,
+      "authority_buckets": 3,
+      "deferred": 0,
+      "touches": 3,
+      "bucketReads": 1,
+      "seeds": 1,
+      "mapChanges": 0,
+      "retired": 0,
+      "transitions": {
+        "added": 0,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0,
+        "term_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    }
+  }
+}

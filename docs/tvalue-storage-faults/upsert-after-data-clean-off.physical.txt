@@ -1,0 +1,1 @@
+STORAGE_FAULT_PHYSICAL point=upsert-after-data admitted=true rows=[2:0:4:0, 1:0:1:0, 0:0:3:0] error= native_endpoints=unresolved reader=pure

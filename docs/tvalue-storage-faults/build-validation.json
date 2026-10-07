@@ -1,0 +1,50 @@
+{
+  "parent": "79b5fe1da42a523d5f56c8b32101ff32248a0064",
+  "original_native_halt_path_recovered": true,
+  "throw_probe_only": true,
+  "production_changed": false,
+  "builds": {
+    "clean": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-saved-links-clean:../build/tvalue-update-boundary-clean:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-clean:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-storage-faults-clean",
+        "../build/tvalue-storage-faults-source/DumbFaultInjector.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-storage-faults38/docs/tvalue-storage-faults/StorageFaultRunner.java"
+      ],
+      "overlay_class_sha256": {
+        "org/kanger/StorageFaultRunner.class": "f4c8d75e8d5e0c5b5ec537d6197454b64994430c8c902b9b86b21caa3e2a2d7c",
+        "org/kanger/StorageFaultRunner$InjectedStorageFailure.class": "09f3f084d6e98895e76d7c39fde268cf037f2dba8dbcd7a7becae22e08e2e319",
+        "org/kanger/storage/DumbFaultInjector.class": "c12f75ecd0e53634e3c69145a4ae78eef14f9d61e3eb6f61ad357bc04de0058a"
+      },
+      "prior_native_class_count": 696
+    },
+    "shadow": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-saved-links-shadow:../build/tvalue-update-boundary-shadow:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-shadow:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-storage-faults-shadow",
+        "../build/tvalue-storage-faults-source/DumbFaultInjector.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-storage-faults38/docs/tvalue-storage-faults/StorageFaultRunner.java"
+      ],
+      "overlay_class_sha256": {
+        "org/kanger/StorageFaultRunner.class": "f4c8d75e8d5e0c5b5ec537d6197454b64994430c8c902b9b86b21caa3e2a2d7c",
+        "org/kanger/StorageFaultRunner$InjectedStorageFailure.class": "09f3f084d6e98895e76d7c39fde268cf037f2dba8dbcd7a7becae22e08e2e319",
+        "org/kanger/storage/DumbFaultInjector.class": "c12f75ecd0e53634e3c69145a4ae78eef14f9d61e3eb6f61ad357bc04de0058a"
+      },
+      "prior_native_class_count": 696
+    }
+  }
+}

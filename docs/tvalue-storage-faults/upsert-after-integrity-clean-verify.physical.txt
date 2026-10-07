@@ -1,0 +1,1 @@
+STORAGE_FAULT_PHYSICAL point=upsert-after-integrity admitted=false rows=null error=unsupported persistent boundary: stale saved-link witness native_endpoints=unresolved reader=pure
