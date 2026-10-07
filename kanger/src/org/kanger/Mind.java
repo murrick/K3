@@ -2478,6 +2478,9 @@ public class Mind implements IMind {
      */
     private void finalizeTransactionRootLocked(boolean rootQuiescent) throws Exception {
         if (rootQuiescent) {
+            // A pinned generation may retain unused vocabulary. Opening or
+            // querying it is not permission to collect its persistent records.
+            if (isStorageUsed() && user.getData().isReadOnly()) return;
             pack();
             update();
         }

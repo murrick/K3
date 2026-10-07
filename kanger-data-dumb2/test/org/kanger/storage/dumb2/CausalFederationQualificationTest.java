@@ -7,14 +7,21 @@ import org.kanger.Mind;
 import org.kanger.User;
 import org.kanger.command.CommandParser;
 import org.kanger.interfaces.internal.IContextFederation;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.storage.Step;
+import org.kanger.units.Term;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.Base64;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -203,6 +210,63 @@ class CausalFederationQualificationTest {
                 assertEquals(3, x.data.federationSnapshot().getConnections().size());
             }
         }
+    }
+
+    @Test
+    void connectAndRepeatedQueriesAcceptPinnedRevisionsWithUnusedDictionaryRecords() throws Exception {
+        context("A", "!@x p(x) -> q(x);");
+        context("B", "!@x q(x) -> r(x);");
+        context("C", "!p(John);");
+        context("X", "!p(Mary);");
+        // A legal published dictionary may contain vocabulary retained by an
+        // earlier query, even though no durable rule references it anymore.
+        for (String name : Arrays.asList("A", "X")) {
+            try (ContextStore store = ContextStore.open(root.resolve(name))) {
+                IBase dictionary = store.getBase("dictionary");
+                Term unused = new Term("UnusedQueryVocabulary", new Mind(new User()));
+                unused.setId(dictionary.nextId());
+                Step record = new Step();
+                record.setId(unused.getId());
+                record.setHash(unused.getHash());
+                record.setData(unused);
+                record.setNext(dictionary.getRoot());
+                dictionary.add(record);
+                store.flush();
+            }
+        }
+        long pinnedA;
+        Map<String, String> generationBefore;
+        try (ContextSnapshot snapshot = ContextSnapshot.open(root.resolve("A"))) {
+            pinnedA = snapshot.getRevision();
+            generationBefore = generationBytes(snapshot.getGeneration());
+        }
+        try (Fixture x = open("X")) {
+            x.connect("A", "B", "C");
+            long revision = x.data.getRevision();
+            assertEquals(Boolean.TRUE, x.mind.query("?$x r(x);", null, false));
+            assertEquals(set("John", "Mary"), values(x.mind, "x"));
+            x.data.disconnectContext("A");
+            x.connect("A");
+            assertEquals(Boolean.TRUE, x.mind.query("?$x q(x);", null, false));
+            assertEquals(set("John", "Mary"), values(x.mind, "x"));
+            assertEquals(revision, x.data.getRevision());
+            assertEquals(3, x.data.federationSnapshot().getConnections().size());
+        }
+        try (ContextSnapshot snapshot = ContextSnapshot.open(root.resolve("A"))) {
+            assertEquals(pinnedA, snapshot.getRevision());
+            assertEquals(generationBefore, generationBytes(snapshot.getGeneration()));
+        }
+    }
+
+    private Map<String, String> generationBytes(Path generation) throws Exception {
+        Map<String, String> result = new LinkedHashMap<String, String>();
+        try (java.util.stream.Stream<Path> files = Files.walk(generation)) {
+            for (Path file : files.filter(Files::isRegularFile).sorted().collect(Collectors.toList())) {
+                result.put(generation.relativize(file).toString(),
+                        Base64.getEncoder().encodeToString(Files.readAllBytes(file)));
+            }
+        }
+        return result;
     }
 
     @Test

@@ -151,6 +151,11 @@ final class ContextSnapshotData implements IData {
     }
 
     @Override
+    public boolean isReadOnly() {
+        return true;
+    }
+
+    @Override
     public void remove(String name) {
         throw readOnly("remove Context");
     }
