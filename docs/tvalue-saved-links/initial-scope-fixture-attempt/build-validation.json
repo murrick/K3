@@ -1,0 +1,75 @@
+{
+  "parent": "5bd5d7416d79d87a3a7203f3b18f9f4e0b78672e",
+  "native_Data_body_recovered": true,
+  "native_Data_source_sha256": "05bac98461796724fa638e45dab5c2c38154cc5b1a2577ad9263e95c5ee6c6aa",
+  "hook": "org.kanger.RecordedLinks.decoded(this, step, buffer);",
+  "production_changed": false,
+  "builds": {
+    "clean": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-update-boundary-clean:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-clean:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-saved-links-clean",
+        "../build/tvalue-saved-links-source/Data.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-saved-links38/docs/tvalue-saved-links/RecordedLinks.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-saved-links38/docs/tvalue-saved-links/ResidentPersistentRead.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-saved-links38/docs/tvalue-saved-links/PersistentSettlementRunner.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-saved-links38/docs/tvalue-saved-links/SavedLinksRunner.java"
+      ],
+      "prior_native_classes_verified": 696,
+      "overlay_class_sha256": {
+        "org/kanger/RecordedLinks.class": "07929c47154f811355d90b333b7866117d71d157de687ba82cbc148e4fc94bac",
+        "org/kanger/ResidentPersistentRead.class": "845685586d46129ee130cb0b7c3d13fc7df4f50969c14cbacdc7877570083734",
+        "org/kanger/ResidentPersistentRead$Row.class": "a05949de057a944ba3198b5710e9ec6022b3524570b90e896c4df350cd88df16",
+        "org/kanger/RecordedLinks$State.class": "7e31a9ab298d675493abb912f1ae91685118dbcadf4135d6bff7e57095a77126",
+        "org/kanger/PersistentSettlementRunner$InjectedFailure.class": "f8b7e37b6c47072ff14ef4c53c00d51d6648bc66069ffb2ab81508ae75a24683",
+        "org/kanger/SavedLinksRunner.class": "1fc4bca7f9ed00f204c2e5e9f9b9b43b239012b861705034a14686bdad5ec244",
+        "org/kanger/RecordedLinks$Witness.class": "7863b5ef1b2d1af0d2c12e4d96935f1365dde2ad82640d8dc925477bab953802",
+        "org/kanger/PersistentSettlementRunner.class": "3f005a7113510437b1fc3cf8a23fd720563b261cce4d983a8bdd93f849ce8f53",
+        "org/kanger/PersistentSettlementRunner$FailingAnalyzer.class": "7c3a0100d7210d6b9e2d733083a827ac162d1079ec30fc5fdc9daf064d806ce7",
+        "org/kanger/storage/Data$DataOne.class": "7d30743caa287bcfe346a88d6f7a510232f521a74837bdae911207cfae06381c",
+        "org/kanger/storage/Data$1.class": "81d0e8003236f84a00ab19fd0fd15b82b628150002eb3b6a34daed2b42106137",
+        "org/kanger/storage/Data.class": "5907f5a29049bd252d498ee0b711b4403132385e471305fdbe5335b82bf6cc91"
+      }
+    },
+    "shadow": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-update-boundary-shadow:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-shadow:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-saved-links-shadow",
+        "../build/tvalue-saved-links-source/Data.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-saved-links38/docs/tvalue-saved-links/RecordedLinks.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-saved-links38/docs/tvalue-saved-links/ResidentPersistentRead.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-saved-links38/docs/tvalue-saved-links/PersistentSettlementRunner.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-saved-links38/docs/tvalue-saved-links/SavedLinksRunner.java"
+      ],
+      "prior_native_classes_verified": 696,
+      "overlay_class_sha256": {
+        "org/kanger/RecordedLinks.class": "07929c47154f811355d90b333b7866117d71d157de687ba82cbc148e4fc94bac",
+        "org/kanger/ResidentPersistentRead.class": "845685586d46129ee130cb0b7c3d13fc7df4f50969c14cbacdc7877570083734",
+        "org/kanger/ResidentPersistentRead$Row.class": "a05949de057a944ba3198b5710e9ec6022b3524570b90e896c4df350cd88df16",
+        "org/kanger/RecordedLinks$State.class": "7e31a9ab298d675493abb912f1ae91685118dbcadf4135d6bff7e57095a77126",
+        "org/kanger/PersistentSettlementRunner$InjectedFailure.class": "f8b7e37b6c47072ff14ef4c53c00d51d6648bc66069ffb2ab81508ae75a24683",
+        "org/kanger/SavedLinksRunner.class": "1fc4bca7f9ed00f204c2e5e9f9b9b43b239012b861705034a14686bdad5ec244",
+        "org/kanger/RecordedLinks$Witness.class": "7863b5ef1b2d1af0d2c12e4d96935f1365dde2ad82640d8dc925477bab953802",
+        "org/kanger/PersistentSettlementRunner.class": "3f005a7113510437b1fc3cf8a23fd720563b261cce4d983a8bdd93f849ce8f53",
+        "org/kanger/PersistentSettlementRunner$FailingAnalyzer.class": "7c3a0100d7210d6b9e2d733083a827ac162d1079ec30fc5fdc9daf064d806ce7",
+        "org/kanger/storage/Data$DataOne.class": "7d30743caa287bcfe346a88d6f7a510232f521a74837bdae911207cfae06381c",
+        "org/kanger/storage/Data$1.class": "81d0e8003236f84a00ab19fd0fd15b82b628150002eb3b6a34daed2b42106137",
+        "org/kanger/storage/Data.class": "5907f5a29049bd252d498ee0b711b4403132385e471305fdbe5335b82bf6cc91"
+      }
+    }
+  }
+}

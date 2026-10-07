@@ -1,0 +1,9 @@
+Exception in thread "main" java.lang.NullPointerException: Cannot invoke "org.kanger.Mind.isUnitDeleted(org.kanger.interfaces.internal.IUnit)" because "<parameter1>" is null
+	at org.kanger.units.TValue.isDeleted(TValue.java:331)
+	at org.kanger.units.TValue.pack(TValue.java:126)
+	at org.kanger.storage.Sapato.pack(Sapato.java:75)
+	at org.kanger.storage.Data.set(Data.java:329)
+	at org.kanger.storage.Base.add(Base.java:373)
+	at org.kanger.storage.Base.update(Base.java:393)
+	at org.kanger.SavedLinksRunner.run(SavedLinksRunner.java:26)
+	at org.kanger.SavedLinksRunner.main(SavedLinksRunner.java:13)
