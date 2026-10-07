@@ -574,6 +574,7 @@ public final class CanonicalConsole {
     }
 
     private static void setRuleComment(IMind mind, long id, String text) throws Exception {
+        ((Mind)mind).requireWritableContext();
         IRule rule = mind.getRules().get(id);
         if (rule == null) {
             throw new CommandErrorException("Rule not found " + id);

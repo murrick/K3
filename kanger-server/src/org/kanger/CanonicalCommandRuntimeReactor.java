@@ -837,6 +837,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             return error("rule_not_found", "Rule not found " + id);
         }
         if (set) {
+            ((Mind)mind).requireWritableContext();
             Object text = invocation.getArgument("text");
             rule.setComment(text == null ? "" : String.valueOf(text));
         }

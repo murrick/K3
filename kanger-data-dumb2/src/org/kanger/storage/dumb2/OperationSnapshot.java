@@ -80,6 +80,12 @@ final class OperationSnapshot implements AutoCloseable {
         }
     }
 
+    static OperationSnapshot open(Path sourceLocation, long revision, ConnectionVector connections) throws Exception {
+        ContextSnapshot source=ContextSnapshot.open(sourceLocation,revision);
+        try { return openSelected(sourceLocation,source,connections); }
+        catch (Exception | Error failure) { source.close(); throw failure; }
+    }
+
     private static OperationSnapshot openSelected(
             Path sourceLocation,
             ContextSnapshot source,

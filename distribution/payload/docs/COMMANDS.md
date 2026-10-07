@@ -82,7 +82,7 @@ Transaction rollback and storage reindex are not routed through this confirmatio
 | Transactions | `transaction`, `transaction start|commit|rollback|squash` | Inspect and manage explicit user transaction levels |
 | Sources | `get [<source>]`, `put <source>`, `delete [<source>]` | List/load/save/delete server-side source files |
 | Storage | `storage`, `storage use|close|drop|reindex ...` | Inspect and manage persistent storage |
-| Context federation | `ctx`, `ctx connect|disconnect|switch|save|rules|version|explain ...`, `ctx <locator> <query...>` | Inspect or mutate working topology, inspect revision history, and run normal-query semantic traces or isolated diagnostics |
+| Context federation | `ctx`, `ctx connect|disconnect|switch|publish|rules|version|explain ...`, `ctx <locator> <query...>` | Inspect or mutate working topology, inspect revision history, and run normal-query semantic traces or isolated diagnostics |
 | Status | `status [core [objects|transaction|levels]|storage|session|runtime]` | Cheap canonical product telemetry |
 | Session | `timezone [<zoneId>]`, `help`, `quit` | Inspect or change session timezone, show help, or end the session |
 | Workspace | `erase` | Clear the current workspace through qualified runtime semantics |
@@ -824,3 +824,12 @@ For scripts and support procedures:
 - `UI_CONSOLE.md` — Browser UI, workspace panels, operation model, and TECH presentation.
 
 This document defines the KANGER 3.8.0 distribution command surface. If a future release changes command grammar or command lifecycle semantics, the distribution reference for that release must change with it.
+### Exact historical storage (DUMB2)
+
+`use X@7` (or `storage use X@7`) opens immutable revision 7 of X. It never creates a storage named `X@7`. The view uses that revision's published direct connections and remains at the selected revision across queries. `ctx`, `ctx rules`, and `ctx version` expose the exact view; `use X` returns to CURRENT.
+
+Open an exact historical revision from U0. A missing revision or an open user transaction rejects the operation before changing the active storage or stack. Authoring, compilation, rule comment changes, publication, and topology changes are rejected in a historical view.
+
+### Conflicts in free federated queries
+
+Free query candidates are checked independently through native ground queries before becoming evidence. A conflict for John does not remove independently proved Mary from `?$x r(x);`. The result contains Mary and a separate conflict diagnostic with exact supporting source revisions. Conflicted candidates never become evidence; a query with only conflicted candidates reports CONFLICT without a hypothesis.

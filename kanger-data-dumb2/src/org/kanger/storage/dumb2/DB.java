@@ -55,6 +55,8 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
     private IUser user;
     private ContextStore context;
+    private ContextSnapshot historical;
+    private Path historicalLocation;
     private String storageName = "";
     private final Map<String, IBase> bases =
             new LinkedHashMap<String, IBase>();
@@ -77,15 +79,42 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     }
 
     @Override
+    public synchronized void validateStorageOpen(IMind source, String name) throws Exception {
+        if (name==null) return;
+        int at=name.lastIndexOf('@');
+        if (at<=0 || !name.substring(at+1).matches("[0-9]+")) return;
+        if (source!=null && source.getTransactionLevel()>0)
+            throw new CommandErrorException("Opening an immutable revision requires U0; commit or roll back user transactions first");
+        long revision;
+        try { revision=Long.parseLong(name.substring(at+1)); }
+        catch (NumberFormatException malformed) { throw new CommandErrorException("Invalid Context revision: " + name); }
+        try (ContextSnapshot ignored=ContextSnapshot.open(location(name.substring(0,at)),revision)) { }
+    }
+
+    @Override
     public synchronized void use(String name) throws Exception {
         requireInitialized();
         if (name == null || name.trim().isEmpty()) {
             throw new CommandErrorException("DB name expected");
         }
+        validateStorageOpen(user.getCurrentMind(),name);
         if (!isClosed()) {
             close();
         }
 
+        int at=name.lastIndexOf('@');
+        if (at>0 && name.substring(at+1).matches("[0-9]+")) {
+            if (user.getCurrentMind()!=null && user.getCurrentMind().getTransactionLevel()>0)
+                throw new CommandErrorException("Opening an immutable revision requires U0; commit or roll back user transactions first");
+            long revision;
+            try { revision=Long.parseLong(name.substring(at+1)); }
+            catch (NumberFormatException malformed) { throw new CommandErrorException("Invalid Context revision: " + name); }
+            Path selected=location(name.substring(0,at));
+            historical=ContextSnapshot.open(selected,revision);
+            historicalLocation=selected; storageName=name; bases.clear();
+            workingConnections=publishedConnections();
+            return;
+        }
         Path location = location(name);
         boolean hasContext = Files.exists(ContextStore.contextPath(location));
         boolean hasRevision = Files.exists(ContextStore.revisionPath(location));
@@ -106,6 +135,12 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
     @Override
     public synchronized void close() throws Exception {
+        if (historical!=null) {
+            for (IBase base : bases.values()) if (base instanceof SnapshotRuntimeBase) ((SnapshotRuntimeBase)base).close();
+            historical.close(); historical=null; historicalLocation=null;
+            bases.clear(); workingConnections=ConnectionVector.empty(); storageName="";
+            return;
+        }
         if (context == null) {
             bases.clear();
             workingConnections = ConnectionVector.empty();
@@ -128,14 +163,15 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     @Override
     public synchronized void flush() throws Exception {
         requireOpen();
-        long before = context.getRevision();
+        if (isReadOnly()) return;
+        long before = getRevision();
         ConnectionVector pending = workingConnections;
         try {
             context.flush(pending, nextRevisionDescription == null ? "Updated local Context" : nextRevisionDescription);
         } finally {
             nextRevisionDescription = null;
         }
-        if (context.getRevision() != before) {
+        if (getRevision() != before) {
             // Ordinary authoring advances X without implicitly saving session topology.
             // Requalify exact target pins against the new source revision.
             workingConnections = context.getQualifiedWorkingConnections();
@@ -155,6 +191,9 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         } else {
             target = name;
         }
+
+        if (target.matches(".+@[0-9]+"))
+            throw new CommandErrorException("Immutable Context revisions cannot be removed through a storage name");
 
         if (!isClosed() && storageName.equals(target)) {
             close();
@@ -208,27 +247,33 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         if (name == null || name.isEmpty()) {
             return false;
         }
+        int at=name.lastIndexOf('@');
+        if (at>0 && name.substring(at+1).matches("[0-9]+")) {
+            try (ContextSnapshot selected=ContextSnapshot.open(location(name.substring(0,at)),Long.parseLong(name.substring(at+1)))) { return true; }
+            catch (Exception unavailable) { return false; }
+        }
         return storageArtifactsExist(location(name));
     }
 
     @Override
     public synchronized void reindex(IReactor<String> reactor, IMind mind)
             throws Exception {
+        requireWritable();
         requireOpen();
         if (!(mind instanceof Mind)) {
             throw new IllegalArgumentException(
                     "DUMB2 reindex requires org.kanger.Mind");
         }
-        long before = context.getRevision();
+        long before = getRevision();
         context.reindex(reactor, (Mind) mind);
-        if (context.getRevision() != before) {
+        if (getRevision() != before) {
             workingConnections = publishedConnections();
         }
     }
 
     @Override
     public synchronized boolean isClosed() {
-        return context == null || context.isClosed();
+        return historical==null ? context==null || context.isClosed() : historical.isClosed();
     }
 
     @Override
@@ -241,7 +286,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         requireOpen();
         IBase base = bases.get(schema);
         if (base == null) {
-            base = context.getBase(schema);
+            base = historical==null ? context.getBase(schema) : new SnapshotRuntimeBase(historical.getBase(schema));
             bases.put(schema, base);
         }
         return base;
@@ -283,15 +328,25 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
              * observed subset; exists()/use() retain checked diagnostics.
              */
         }
+        if (historical!=null && !result.contains(storageName)) result.add(storageName);
         return result;
     }
 
     public synchronized long getRevision() {
-        return context == null ? -1L : context.getRevision();
+        return historical!=null ? historical.getRevision() : context==null ? -1L : context.getRevision();
     }
 
     synchronized java.util.UUID getContextId() {
-        return context == null ? null : context.getContextId();
+        return historical!=null ? historical.getContextId() : context==null ? null : context.getContextId();
+    }
+
+    @Override public synchronized boolean isReadOnly() { return historical!=null; }
+
+    private String sourceLocator() { return historical==null ? storageName : displayFederationLocator(historicalLocation); }
+
+    private Path activeLocation() { return historical!=null ? historicalLocation : context.getLocation(); }
+    private void requireWritable() throws CommandErrorException {
+        if (isReadOnly()) throw new CommandErrorException("Context " + storageName + " is an immutable revision; open CURRENT for authoring");
     }
 
     @Override
@@ -299,6 +354,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             prepareSourceDependencies(
                     List<IContextFederation.SourceDependencyRequest> requests)
             throws Exception {
+        requireWritable();
         requireOpen();
         if (requests == null) {
             throw new NullPointerException("requests");
@@ -306,8 +362,8 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
         RevisionRef sourceRef =
                 new RevisionRef(
-                        context.getContextId(),
-                        context.getRevision());
+                        getContextId(),
+                        getRevision());
         ConnectionVector prepared =
                 ConnectionVector.empty();
         ArrayList<IContextFederation.SourceDependency> projected =
@@ -325,11 +381,11 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             ContextConnection connection =
                     request.isExact()
                             ? ConnectionManager.qualifyConnect(
-                                    context.getLocation(),
+                                    activeLocation(),
                                     targetLocation,
                                     request.getExactRevision())
                             : ConnectionManager.qualifyConnect(
-                                    context.getLocation(),
+                                    activeLocation(),
                                     targetLocation);
 
             java.util.UUID targetId =
@@ -348,7 +404,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
         PairQualification.CompositionQualification composition =
                 PairQualification.qualifyCompositionState(
-                        context.getLocation(),
+                        activeLocation(),
                         sourceRef.getRevision(),
                         prepared);
         if (!composition.isValid()) {
@@ -370,6 +426,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     public synchronized void installSourceDependencies(
             IContextFederation.SourceDependencyPlan plan)
             throws Exception {
+        requireWritable();
         requireOpen();
         if (!(plan instanceof PreparedSourceDependencyPlan)) {
             throw new IllegalArgumentException(
@@ -379,8 +436,8 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                 (PreparedSourceDependencyPlan) plan;
         RevisionRef sourceRef =
                 new RevisionRef(
-                        context.getContextId(),
-                        context.getRevision());
+                        getContextId(),
+                        getRevision());
 
         ConnectionVector vector = prepared.vector;
         if (!sourceRef.equals(prepared.source)) {
@@ -397,7 +454,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                                 dependency.getLocator());
                 ContextConnection connection =
                         ConnectionManager.qualifyConnect(
-                                context.getLocation(),
+                                activeLocation(),
                                 targetLocation,
                                 dependency.getRevision());
                 if (!dependency.getContextId().equals(
@@ -417,7 +474,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
         PairQualification.CompositionQualification composition =
                 PairQualification.qualifyCompositionState(
-                        context.getLocation(),
+                        activeLocation(),
                         sourceRef.getRevision(),
                         vector);
         if (!composition.isValid()) {
@@ -504,9 +561,9 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             throws Exception {
         requireOpen();
 
-        Path sourceLocation = context.getLocation();
+        Path sourceLocation = activeLocation();
         ContextSnapshot source =
-                ContextSnapshot.open(sourceLocation);
+                ContextSnapshot.open(sourceLocation,getRevision());
         try {
             RevisionRef sourceRef = new RevisionRef(
                     source.getContextId(),
@@ -539,7 +596,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                 }
             }
             return new IContextFederation.Snapshot(
-                    storageName,
+                    sourceLocator(),
                     sourceRef.getContextId(),
                     sourceRef.getRevision(),
                     connections, published, notices);
@@ -550,20 +607,21 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
     @Override
     public synchronized IMind publishContext(IMind source, String description) throws Exception {
+        requireWritable();
         requireOpen();
         if (!(source instanceof Mind) || source.getUser() != user || user.getCurrentMind() != source) {
             throw new CommandErrorException("Publication requires the current canonical Context");
         }
         ((Mind) source).requirePublicationQuiescence();
         description = org.kanger.RevisionDescriptions.validate(description);
-        Path workspace = Files.createTempDirectory(context.getLocation().toAbsolutePath().getParent(), ".publication-");
+        Path workspace = Files.createTempDirectory(activeLocation().toAbsolutePath().getParent(), ".publication-");
         Path candidateLocation = workspace.resolve("candidate");
         DB candidateData = null;
         User candidateUser = null;
         boolean accepted = false;
         Exception primaryFailure = null;
         try {
-            try (ContextSnapshot baseline = ContextSnapshot.open(context.getLocation(), context.getRevision());
+            try (ContextSnapshot baseline = ContextSnapshot.open(activeLocation(), getRevision());
                  ContextStore fork = ContextStore.forkForPublication(baseline, candidateLocation)) {
                 // A private physical copy retains native IDs and local closure; no target is mutated.
             }
@@ -632,14 +690,14 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     @Override
     public synchronized Object checkpointConnections() throws Exception {
         requireOpen();
-        return new TopologyCheckpoint(context.getContextId(), workingConnections);
+        return new TopologyCheckpoint(getContextId(), workingConnections);
     }
 
     @Override
     public synchronized void restoreConnections(Object checkpoint) throws Exception {
         requireOpen();
         TopologyCheckpoint saved = (TopologyCheckpoint) checkpoint;
-        if (!context.getContextId().equals(saved.sourceId)) {
+        if (!getContextId().equals(saved.sourceId)) {
             throw new IllegalStateException("Cannot restore topology in another Context");
         }
         workingConnections = requalifyWorkingConnections(saved.vector);
@@ -647,11 +705,11 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
     private ConnectionVector requalifyWorkingConnections(ConnectionVector vector) throws Exception {
         ConnectionVector qualified = ConnectionVector.empty();
-        RevisionRef source = new RevisionRef(context.getContextId(), context.getRevision());
+        RevisionRef source = new RevisionRef(getContextId(), getRevision());
         for (ContextConnection connection : vector.getConnections()) {
             ContextConnection current = connection;
             if (!connection.getCertificate().matches(source, connection.getTarget(), Version.CORE_VERSION_S)) {
-                current = ConnectionManager.qualifyConnect(context.getLocation(),
+                current = ConnectionManager.qualifyConnect(activeLocation(),
                         connection.getTargetLocation(), connection.getTarget().getRevision());
                 if (!connection.getTarget().equals(current.getTarget())) {
                     throw new StorageLifecycleException(StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
@@ -665,6 +723,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
     @Override
     public synchronized long saveConnections(IMind source) throws Exception {
+        requireWritable();
         requireOpen();
         if(source==null || source.getUser()!=user || source!=user.getCurrentMind()
                 || source.getTransactionLevel()!=0)
@@ -683,12 +742,12 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         if(!(source instanceof Mind) || source.getUser()!=user)
             throw new CommandErrorException("Context rules requires the active storage Mind");
         List<IContextFederation.RuleBlock> result=new ArrayList<IContextFederation.RuleBlock>();
-        Path local=context.getLocation().toAbsolutePath().normalize();
+        Path local=activeLocation().toAbsolutePath().normalize();
         boolean addressed=locator!=null;
         Path selected=addressed?resolveFederationLocator(locator):null;
         if(!addressed || local.equals(selected)) {
-            result.add(org.kanger.ContextRuleInspection.inspect((Mind)source,storageName,
-                    new IContextFederation.Revision(context.getContextId(),context.getRevision()),true,selection,number));
+            result.add(org.kanger.ContextRuleInspection.inspect((Mind)source,sourceLocator(),
+                    new IContextFederation.Revision(getContextId(),getRevision()),!isReadOnly(),selection,number));
         }
         if(number!=null && !addressed) return Collections.unmodifiableList(result);
         for(ContextConnection c:workingConnections.getConnections()) {
@@ -708,12 +767,12 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         requireOpen();
 
         Path sourceLocation =
-                context.getLocation()
+                activeLocation()
                         .toAbsolutePath()
                         .normalize();
         Path selectedLocation = sourceLocation;
-        String selectedLocator = storageName;
-        long pinnedRevision = -1L;
+        String selectedLocator = sourceLocator();
+        long pinnedRevision = historical==null ? -1L : getRevision();
 
         if (targetLocator != null
                 && !targetLocator.trim().isEmpty()) {
@@ -801,22 +860,23 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     @Override
     public synchronized IContextFederation.Connection connectContext(
             String targetLocator) throws Exception {
+        requireWritable();
         requireOpen();
         ContextConnection connection =
                 ConnectionManager.qualifyConnect(
-                        context.getLocation(),
+                        activeLocation(),
                         resolveFederationLocator(targetLocator));
         ConnectionVector candidate =
                 workingConnections.with(connection);
         PairQualification.CompositionQualification before =
                 PairQualification.qualifyCompositionState(
-                        context.getLocation(),
-                        context.getRevision(),
+                        activeLocation(),
+                        getRevision(),
                         workingConnections);
         PairQualification.CompositionQualification after =
                 PairQualification.qualifyCompositionState(
-                        context.getLocation(),
-                        context.getRevision(),
+                        activeLocation(),
+                        getRevision(),
                         candidate);
         if (after.introducesNewCollisionComparedTo(before)) {
             throw new StorageLifecycleException(
@@ -828,14 +888,15 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         workingConnections = candidate;
         return projectConnection(
                 new RevisionRef(
-                        context.getContextId(),
-                        context.getRevision()),
+                        getContextId(),
+                        getRevision()),
                 connection);
     }
 
     @Override
     public synchronized void disconnectContext(
             String targetLocator) throws Exception {
+        requireWritable();
         disconnectContext(
                 connectedContextId(targetLocator));
     }
@@ -843,6 +904,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     @Override
     public synchronized void disconnectContext(
             java.util.UUID targetContextId) throws Exception {
+        requireWritable();
         requireOpen();
         workingConnections =
                 workingConnections.without(targetContextId);
@@ -852,6 +914,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     public synchronized IContextFederation.Connection switchContextRevision(
             String targetLocator,
             long targetRevision) throws Exception {
+        requireWritable();
         return switchContextRevision(
                 connectedContextId(targetLocator),
                 targetRevision);
@@ -861,10 +924,11 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     public synchronized IContextFederation.Connection switchContextRevision(
             java.util.UUID targetContextId,
             long targetRevision) throws Exception {
+        requireWritable();
         requireOpen();
         ContextConnection connection =
                 ConnectionManager.qualifySwitchRevision(
-                        context.getLocation(),
+                        activeLocation(),
                         workingConnections,
                         targetContextId,
                         targetRevision);
@@ -872,8 +936,8 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                 workingConnections.with(connection);
         return projectConnection(
                 new RevisionRef(
-                        context.getContextId(),
-                        context.getRevision()),
+                        getContextId(),
+                        getRevision()),
                 connection);
     }
 
@@ -968,8 +1032,9 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         FrontierContinuationEngine.Result result =
                 FrontierContinuationEngine.execute(
                         (Mind) sourceMind,
-                        context.getLocation(),
+                        activeLocation(),
                         workingConnections,
+                        getRevision(),
                         querySource,
                         externals,
                         logging);
@@ -1000,12 +1065,12 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         Path requested =
                 resolveFederationLocator(targetLocator);
         Path sourceLocation =
-                context.getLocation()
+                activeLocation()
                         .toAbsolutePath().normalize();
         RevisionRef sourceRef =
                 new RevisionRef(
-                        context.getContextId(),
-                        context.getRevision());
+                        getContextId(),
+                        getRevision());
 
         if (sourceLocation.equals(requested)) {
             return projectLocalQuery(
@@ -1120,8 +1185,9 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
         FrontierContinuationEngine.Result result =
                 FrontierContinuationEngine.execute(
-                        context.getLocation(),
+                        activeLocation(),
                         workingConnections,
+                        getRevision(),
                         querySource);
         return projectQueryResult(result);
     }
@@ -1255,6 +1321,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             throw new CommandErrorException(
                     "Context locator expected");
         }
+        if (historical!=null && locator.trim().equals(storageName)) return activeLocation().toAbsolutePath().normalize();
         Path path = Paths.get(locator.trim());
         if (!path.isAbsolute()) {
             path = databaseRoot().resolve(path);
@@ -1330,10 +1397,10 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     private ConnectionVector publishedConnections()
             throws Exception {
         RevisionRef sourceRef = new RevisionRef(
-                context.getContextId(),
-                context.getRevision());
+                getContextId(),
+                getRevision());
         return ConnectionStore.read(
-                context.getLocation(), sourceRef);
+                activeLocation(), sourceRef);
     }
 
     private boolean storageArtifactsExist(Path location) {

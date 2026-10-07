@@ -32,6 +32,52 @@ class CausalFederationQualificationTest {
     @TempDir Path root;
 
     @Test
+    void conflictingJohnDoesNotEraseProvenMaryFromFreeAncestors() throws Exception {
+        context("A", "!@x p(x) -> q(x);", "!~p(John);");
+        context("B", "!@x q(x) -> r(x);"); context("C", "!p(John);");
+        try (Fixture x=open("X")) {
+            assertTrue(x.mind.query("!p(Mary);",null,false)); x.connect("A","B","C");
+            long revision=x.data.getRevision();
+            assertTrue(x.mind.query("?r(Mary);",null,false));
+            assertNull(x.mind.query("?r(Tom);",null,false));
+            IContextFederation.ExplainResult trace=x.mind.explainQuery("?$x r(x);");
+            assertEquals(IContextFederation.FrontierTruth.TRUE, trace.getFinalTruth());
+            assertEquals(set("Mary"),values(trace,"x"));
+            assertTrue(trace.getPasses().stream().flatMap(pass->pass.getContinuation().getObservations().stream())
+                    .anyMatch(observation->observation.getTruth()==IContextFederation.FrontierTruth.CONFLICT
+                            && observation.getQuerySource().contains("John")));
+            assertTrue(steps(trace).stream().flatMap(step->step.getSuppliedEvidence().stream())
+                    .noneMatch(fact->fact.getStatement().contains("John")));
+            for (String predicate : Arrays.asList("r","q","p")) {
+                assertEquals(Boolean.TRUE,x.mind.query("?$x "+predicate+"(x);",null,false));
+                assertEquals(set("Mary"),values(x.mind,"x"));
+            }
+            assertTrue(x.mind.query("?$x r(x);",null,true));
+            assertFalse(x.mind.getQueryConflicts().isEmpty());
+            assertTrue(x.mind.getCurrentLogRecord(org.kanger.enums.LogMode.ANALYZER).getRecord().contains("Conflicting substitution:"));
+            assertNull(x.mind.query("?r(John);",null,true));
+            assertTrue(x.mind.getCurrentLogRecord(org.kanger.enums.LogMode.ANALYZER).getRecord().contains("Result: CONFLICT"));
+            assertTrue(x.mind.query("?r(Mary);",null,false));
+            assertTrue(x.mind.getQueryConflicts().isEmpty());
+            assertEquals(revision,x.data.getRevision());
+            assertEquals(3,x.data.federationSnapshot().getConnections().size());
+        }
+    }
+
+    @Test
+    void conflictingTupleWithinOneDonorKeepsItsOtherRow() throws Exception {
+        context("A", "!@x p(x) -> q(x);", "!~p(John);"); context("B", "!@x q(x) -> r(x);");
+        context("C", "!p(John);", "!p(Mary);");
+        try (Fixture x=open("X")) {
+            assertTrue(x.mind.query("!anchor(Unrelated);",null,false));
+            x.connect("A","B","C");
+            assertEquals(Boolean.TRUE,x.mind.query("?$x r(x);",null,false));
+            assertEquals(set("Mary"),values(x.mind,"x"));
+            assertNull(x.mind.query("?r(John);",null,false));
+        }
+    }
+
+    @Test
     void canonicalExplainShowsEveryNativeAncestorAndMinimalPacketInProofOrder() throws Exception {
         context("A", "!@x p(x) -> q(x);");
         context("B", "!@x q(x) -> r(x);");

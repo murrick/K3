@@ -116,16 +116,30 @@ final class CausalFrontierScheduler {
                         }
                     }
                 }
-                // Once witnessed, a contradiction remains known to this operation.
-                // Withdrawing its donor packet must not turn it back into usable proof.
-                for (Node one : nodes) {
-                    if (one.complete() && one.conflict == null) {
-                        FrontierAggregate aggregate = FrontierAggregate.of(one.answers());
-                        if (aggregate.getTruth() == FrontierAggregate.Truth.CONFLICT) {
-                            one.conflict = aggregate;
+                // Ground contradictions remain known. A free frontier's mixed supports
+                // must instead be checked for each concrete substitution by native proof.
+                for (Node one : new ArrayList<Node>(nodes)) {
+                    if (!one.complete()) continue;
+                    FrontierAggregate aggregate=FrontierAggregate.of(one.rawAnswers());
+                    if (one.invocation.getFrontier().isGround()) {
+                        if (one.conflict==null && aggregate.getTruth()==FrontierAggregate.Truth.CONFLICT)
+                            one.conflict=aggregate;
+                        continue;
+                    }
+                    if (aggregate.getTruth()==FrontierAggregate.Truth.CONFLICT) one.validateRows=true;
+                    if (!one.validateRows) continue;
+                    for (FrontierAnswer answer : one.rawAnswers()) {
+                        if (answer.getTruth()!=FrontierAnswer.Truth.TRUE) continue;
+                        for (List<FrontierAnswer.ValueRef> row : answer.getValues()) {
+                            List<org.kanger.SemanticTermSnapshot> values=new ArrayList<org.kanger.SemanticTermSnapshot>();
+                            for (FrontierAnswer.ValueRef value : row) values.add(value.getSemantic());
+                            FrontierDomain specialized=one.invocation.getFrontier().specialize(answer.getVariableOrder(),values);
+                            Node validation=node(nodes,specialized,connections,source,operation.getSourceRef());
+                            if (!one.rowValidations.contains(validation)) one.rowValidations.add(validation);
                         }
                     }
                 }
+
             }
         } finally {
             executor.shutdownNow();
@@ -182,9 +196,12 @@ final class CausalFrontierScheduler {
     private static final class Node {
         final FrontierInvocation invocation;
         FrontierAggregate conflict;
+        boolean validateRows;
+        final List<Node> rowValidations=new ArrayList<Node>();
         final List<Target> targets = new ArrayList<Target>();
         Node(FrontierDomain frontier, List<ContextConnection> connections, Mind source, RevisionRef sourceRef) {
             invocation = FrontierInvocation.create(frontier);
+            validateRows = !frontier.isGround();
             if (source != null) targets.add(new Target(source, sourceRef));
             for (ContextConnection connection : connections) {
                 targets.add(new Target(connection));
@@ -197,6 +214,32 @@ final class CausalFrontierScheduler {
             return true;
         }
         List<FrontierAnswer> answers() {
+            if (!validateRows) return rawAnswers();
+            List<FrontierAnswer> filtered=new ArrayList<FrontierAnswer>();
+            for (FrontierAnswer answer : rawAnswers()) {
+                List<List<FrontierAnswer.ValueRef>> rows=new ArrayList<List<FrontierAnswer.ValueRef>>();
+                if (answer.getTruth()==FrontierAnswer.Truth.TRUE) {
+                    for (List<FrontierAnswer.ValueRef> row : answer.getValues()) {
+                        List<org.kanger.SemanticTermSnapshot> values=new ArrayList<org.kanger.SemanticTermSnapshot>();
+                        for (FrontierAnswer.ValueRef value : row) values.add(value.getSemantic());
+                        FrontierDomain specialized=invocation.getFrontier().specialize(answer.getVariableOrder(),values);
+                        for (Node validation : rowValidations) {
+                            if (validation.complete() && validation.conflict==null
+                                    && validation.invocation.getFrontier().sameSemanticQuery(specialized)
+                                    && FrontierAggregate.of(validation.rawAnswers()).getTruth()==FrontierAggregate.Truth.TRUE) {
+                                rows.add(row); break;
+                            }
+                        }
+                    }
+                }
+                filtered.add(new FrontierAnswer(answer.getSource(),answer.getRequest(),
+                        rows.isEmpty() ? FrontierAnswer.Truth.NULL : FrontierAnswer.Truth.TRUE,
+                        answer.getVariableOrder(),rows,Collections.<String>emptyList(),
+                        rows.isEmpty() ? answer.getUnresolvedFrontiers() : Collections.<FrontierDemand>emptyList()));
+            }
+            return filtered;
+        }
+        List<FrontierAnswer> rawAnswers() {
             List<FrontierAnswer> answers = new ArrayList<FrontierAnswer>();
             for (Target target : targets) {
                 if (target.answer != null) answers.add(target.answer);

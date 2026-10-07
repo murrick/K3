@@ -57,13 +57,14 @@ final class FrontierContinuationEngine {
             Path sourceLocation,
             ConnectionVector connections,
             String querySource) throws Exception {
-        validateQuerySource(sourceLocation, querySource);
+        return execute(sourceLocation,connections,-1L,querySource);
+    }
 
-        OperationSnapshot operation =
-                connections == null
-                        ? OperationSnapshot.open(sourceLocation)
-                        : OperationSnapshot.open(
-                                sourceLocation, connections);
+    static Result execute(Path sourceLocation, ConnectionVector connections, long revision,
+            String querySource) throws Exception {
+        validateQuerySource(sourceLocation, querySource);
+        OperationSnapshot operation = revision>=0L ? OperationSnapshot.open(sourceLocation,revision,connections)
+                : connections==null ? OperationSnapshot.open(sourceLocation) : OperationSnapshot.open(sourceLocation,connections);
         SnapshotMindRuntime runtime = null;
         Mind root = null;
         Mind work = null;
@@ -133,16 +134,18 @@ final class FrontierContinuationEngine {
             String querySource,
             Queue<ITerm> externals,
             boolean logging) throws Exception {
+        return execute(sourceMind,sourceLocation,connections,-1L,querySource,externals,logging);
+    }
+
+    static Result execute(Mind sourceMind, Path sourceLocation, ConnectionVector connections, long revision,
+            String querySource, Queue<ITerm> externals, boolean logging) throws Exception {
         if (sourceMind == null) {
             throw new NullPointerException("sourceMind");
         }
         validateQuerySource(sourceLocation, querySource);
 
-        OperationSnapshot operation =
-                connections == null
-                        ? OperationSnapshot.open(sourceLocation)
-                        : OperationSnapshot.open(
-                                sourceLocation, connections);
+        OperationSnapshot operation = revision>=0L ? OperationSnapshot.open(sourceLocation,revision,connections)
+                : connections==null ? OperationSnapshot.open(sourceLocation) : OperationSnapshot.open(sourceLocation,connections);
         Mind work = Mind.ephemeralChild(sourceMind);
         try {
             Result result = run(
@@ -289,13 +292,13 @@ final class FrontierContinuationEngine {
                                 aggregate));
                 provisionalHypotheses.addAll(
                         aggregate.getHypotheses());
+                for (CausalFrontierScheduler.Conflict conflict : scheduled.getConflicts()) {
+                    if (!conflict.frontier.sameSemanticQuery(frontier)) {
+                        observations.add(new FrontierObservation(waves, conflict.frontier, conflict.aggregate));
+                    }
+                }
                 if (scheduled.hasRootConflict()
                         || scheduled.hasConflict() && aggregate.getTruth() == FrontierAggregate.Truth.UNKNOWN) {
-                    for (CausalFrontierScheduler.Conflict conflict : scheduled.getConflicts()) {
-                        if (!conflict.frontier.sameSemanticQuery(frontier)) {
-                            observations.add(new FrontierObservation(waves, conflict.frontier, conflict.aggregate));
-                        }
-                    }
                     // A causal child contradiction cannot become a donor or a hypothesis.
                     // Preserve the root witness too when its latest reproof was withdrawn.
                     if (aggregate.getTruth() != FrontierAggregate.Truth.CONFLICT) {
@@ -553,6 +556,7 @@ final class FrontierContinuationEngine {
         }
 
         boolean hasConflict() {
+            if (resolved) return false;
             for (FrontierObservation observation : observations) {
                 if (observation.getAggregate().getTruth()
                         == FrontierAggregate.Truth.CONFLICT) {
@@ -576,7 +580,7 @@ final class FrontierContinuationEngine {
                 FrontierAggregate aggregate) {
             this.wave = wave;
             this.predicateName = frontier.getPredicateName();
-            this.querySource = frontier.getQuerySource();
+            this.querySource = frontier.getDiagnosticSource();
             this.aggregate = aggregate;
         }
 

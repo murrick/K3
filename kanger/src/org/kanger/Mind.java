@@ -173,6 +173,7 @@ public class Mind implements IMind {
     private CausalFrontierCapture causalFrontierCapture;
     private QueryPass queryPass = QueryPass.SILENCE;
     private List<IContextFederation.ExplainPass> activeExplainPasses;
+    private final List<IContextFederation.FrontierObservation> queryConflicts = new ArrayList<>();
     private User user = null;
     private String compliedLine = "";
     //
@@ -264,6 +265,11 @@ public class Mind implements IMind {
                 parent.abortTransactionStart();
             }
         }
+    }
+
+    public void requireWritableContext() throws Exception {
+        if (isStorageUsed() && user.getData().isReadOnly())
+            throw new org.kanger.exception.CommandErrorException("The selected Context revision is read-only");
     }
 
     public void proposeRevisionDescription(String description) throws Exception {
@@ -628,6 +634,7 @@ public class Mind implements IMind {
         compliedLine = child.getCompliedString();
         lastLinkerStatistics = child.linker.snapshotStatistics();
         replaceFrontierDomains(child.frontierDomains);
+        queryConflicts.clear(); queryConflicts.addAll(child.queryConflicts);
     }
 
     private void finishFailedTransactionLocked() {
@@ -675,6 +682,7 @@ public class Mind implements IMind {
             compliedLine = m.getCompliedString();
             lastLinkerStatistics = ((Mind) m).linker.snapshotStatistics();
             replaceFrontierDomains(((Mind) m).frontierDomains);
+            queryConflicts.clear(); queryConflicts.addAll(((Mind) m).queryConflicts);
 
             Object checkpoint = ((Mind) m).connectionCheckpoint;
             if (checkpoint != null && user.getData() instanceof IContextFederation) {
@@ -743,6 +751,7 @@ public class Mind implements IMind {
             queryResult = null;
             querySource = "";
             frontierDomains.clear();
+            queryConflicts.clear();
             queryPass = QueryPass.SILENCE;
             compliedLine = "";
             lastLinkerStatistics = new LinkerStatistics();
@@ -998,6 +1007,7 @@ public class Mind implements IMind {
     }
 
     public boolean compile(String src, Object[] ext, boolean logging) throws Exception {
+        requireWritableContext();
         lastCompileQualification = null;
         ContextSourceMetadata.Parsed sourceMetadata =
                 ContextSourceMetadata.parse(src);
@@ -2114,12 +2124,24 @@ public class Mind implements IMind {
     private void recordExplainPass(
             IContextFederation.ExplainPolarity polarity,
             IContextFederation.QueryResult continuation) {
+        for (IContextFederation.FrontierObservation observation : continuation.getObservations()) {
+            if (observation.getTruth() != IContextFederation.FrontierTruth.CONFLICT) continue;
+            boolean seen=false;
+            for (IContextFederation.FrontierObservation old : queryConflicts)
+                if (old.getQuerySource().equals(observation.getQuerySource())) { seen=true; break; }
+            if (!seen) queryConflicts.add(observation);
+        }
         if (activeExplainPasses != null) {
             activeExplainPasses.add(
                     new IContextFederation.ExplainPass(
                             polarity,
                             continuation));
         }
+    }
+
+    /** Detached conflicts observed by the last query; safe rows remain ordinary Values. */
+    public List<IContextFederation.FrontierObservation> getQueryConflicts() {
+        return Collections.unmodifiableList(new ArrayList<>(queryConflicts));
     }
 
     private IContextFederation.FrontierTruth explainTruth(
@@ -2143,6 +2165,7 @@ public class Mind implements IMind {
     }
 
     public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
+        if (!line.isEmpty() && line.charAt(0)!=Enums.SUC) requireWritableContext();
         this.logging = logging;
         String previousDescription = operationDescription;
         int operation = line.charAt(0);
@@ -2153,6 +2176,7 @@ public class Mind implements IMind {
             Boolean res = null;
             acceptedRule = null;
             frontierDomains.clear();
+            queryConflicts.clear();
 
             getQueryValues().clear();
             getLog().clear();
@@ -2218,6 +2242,12 @@ public class Mind implements IMind {
                     break;
             }
 
+            if (logging && !queryConflicts.isEmpty()) {
+                StringBuilder summary=new StringBuilder("Result: ").append(res==null ? "CONFLICT" : res ? "TRUE" : "FALSE");
+                for (IContextFederation.FrontierObservation conflict : queryConflicts)
+                    summary.append(Enums.LINE_SEPARATOR).append("Conflicting substitution: ").append(conflict.getQuerySource());
+                log.add(LogMode.ANALYZER,summary.toString());
+            }
             if (logging) {
                 log.add(LogMode.TIMING, "* QUERY Processing time \t" + ((System.currentTimeMillis() - queryStart) / 1000.0));
             }

@@ -230,6 +230,24 @@ public final class FrontierDomain {
         return Collections.unmodifiableList(result);
     }
 
+    /** Specializes a concrete candidate tuple for native per-substitution reproof. */
+    public FrontierDomain specialize(List<String> variableOrder, List<SemanticTermSnapshot> tuple) {
+        List<SemanticTermSnapshot> concrete=semanticArguments(variableOrder, tuple);
+        List<ArgumentState> fixed=new ArrayList<ArgumentState>();
+        for (SemanticTermSnapshot value : concrete) fixed.add(ArgumentState.fixed(value));
+        String query=renderQuery(predicateName,negated,fixed,Collections.<VariableState>emptyList());
+        StringBuilder diagnostic=new StringBuilder(negated ? "?~" : "?").append(predicateName).append('(');
+        for (int i=0;i<concrete.size();++i) {
+            if (i>0) diagnostic.append(',');
+            SemanticTermSnapshot value=concrete.get(i);
+            String text=value.materialize().toString();
+            diagnostic.append(value.getType()==org.kanger.enums.DataType.STRING ? "'"+text.replace("'","''")+"'" : text);
+        }
+        diagnostic.append(");");
+        return new FrontierDomain(predicateName,negated,query,diagnostic.toString(),fixed,
+                Collections.<VariableState>emptyList(),true);
+    }
+
     /** Alpha-equivalent query shape for semantic execution-state identity. */
     public boolean sameSemanticQuery(FrontierDomain other) {
         if (other == null || negated != other.negated

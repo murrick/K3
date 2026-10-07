@@ -435,6 +435,10 @@ public class User implements IUser {
             mind = new Mind(this);
         }
 
+        if (data instanceof org.kanger.interfaces.internal.IRevisionPublication) {
+            ((org.kanger.interfaces.internal.IRevisionPublication)data).validateStorageOpen(mind, name);
+        }
+
         if (data.isClosed()) {
             Mind top = (Mind) mind;
             if (top.getTransactionLevel() == 0 && top.isEmptyLevel()) {
