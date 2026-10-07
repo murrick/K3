@@ -1,0 +1,46 @@
+{
+  "parent": "c137746803bc94d0441bc97237301e463a5aa3e8",
+  "only_new_runner": true,
+  "all_prior_runtime_classes_unchanged": true,
+  "production_changed": false,
+  "builds": {
+    "clean": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-update-boundary-clean:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-clean:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-persistent-settlement-clean",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-persistent-settlement38/docs/tvalue-persistent-settlement/PersistentSettlementRunner.java"
+      ],
+      "runner_class_sha256": {
+        "org/kanger/PersistentSettlementRunner$InjectedFailure.class": "f8b7e37b6c47072ff14ef4c53c00d51d6648bc66069ffb2ab81508ae75a24683",
+        "org/kanger/PersistentSettlementRunner.class": "311cb82b7855f9bacc80179ed15c3d0012755642239a2fe63c063f39a82b7e42",
+        "org/kanger/PersistentSettlementRunner$FailingAnalyzer.class": "7c3a0100d7210d6b9e2d733083a827ac162d1079ec30fc5fdc9daf064d806ce7"
+      }
+    },
+    "shadow": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-update-boundary-shadow:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-shadow:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-persistent-settlement-shadow",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-persistent-settlement38/docs/tvalue-persistent-settlement/PersistentSettlementRunner.java"
+      ],
+      "runner_class_sha256": {
+        "org/kanger/PersistentSettlementRunner$InjectedFailure.class": "f8b7e37b6c47072ff14ef4c53c00d51d6648bc66069ffb2ab81508ae75a24683",
+        "org/kanger/PersistentSettlementRunner.class": "311cb82b7855f9bacc80179ed15c3d0012755642239a2fe63c063f39a82b7e42",
+        "org/kanger/PersistentSettlementRunner$FailingAnalyzer.class": "7c3a0100d7210d6b9e2d733083a827ac162d1079ec30fc5fdc9daf064d806ce7"
+      }
+    }
+  }
+}

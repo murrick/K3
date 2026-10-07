@@ -1,0 +1,1 @@
+Six accepted clean/shadow controls passed. First rejected fixture failed before its observed settlement: native compileLine returns null for duplicate !keep(a), already present in root. Corrected fixture keeps a through the accepted child or the divergent sibling, matching the existing memory settlement fixture. No rejection/exception oracle was weakened.
