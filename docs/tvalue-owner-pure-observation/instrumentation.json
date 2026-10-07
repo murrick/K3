@@ -1,0 +1,12 @@
+{
+  "base": "ca2d1b081d5e49cbe98bfe7096abe8eb97d1df22",
+  "temporary_source_sha256": {
+    "shadow": {
+      "Mind.java": "06752f7d6d9432f2b63258a60b658d11e747660c0bd6d1a1606785367c745b0e",
+      "Linker.java": "8d66bc88ce7893165c581db6c6e2a5ad6143db10dcd8a836bab0019d8916974e",
+      "factory/TValueFactory.java": "d1c1d394a24a77984477f9184f12257a2ef187ce4414486f4ba39dd05b324d1a",
+      "units/TValue.java": "aaedac216025b9aaef8539a92841f02f46975621cd9a342625de8a662a5e4170"
+    }
+  },
+  "scope": "unchanged six setters and previous hooks; helper reads resident state without getData(Mind), index initialization or storage; native bodies byte-identical"
+}

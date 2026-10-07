@@ -1,0 +1,28 @@
+{
+  "index": 3,
+  "build": "shadow",
+  "flag": "on",
+  "runner": "TValueDirtyJournalSafetyRunner",
+  "args": [],
+  "exit_code": 0,
+  "expected_closed_boundary_rejection": false,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/tvalue-owner-pure-jvm-71pu3rup",
+    "-Dpersistence.shadow=true",
+    "-Dmetadata.shadow=true",
+    "-Djournal.path=/workspace/scratch/1c9c6dd2770c/K3-tvalue-owner-pure38/docs/tvalue-owner-pure-observation/shadow-on-TValueDirtyJournalSafetyRunner.trace",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-owner-pure-observation-shadow:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.TValueDirtyJournalSafetyRunner"
+  ]
+}

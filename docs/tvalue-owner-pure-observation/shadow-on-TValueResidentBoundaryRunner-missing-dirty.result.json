@@ -1,0 +1,31 @@
+{
+  "index": 22,
+  "build": "shadow",
+  "flag": "on",
+  "runner": "TValueResidentBoundaryRunner",
+  "args": [
+    "missing-dirty"
+  ],
+  "exit_code": 0,
+  "expected_closed_boundary_rejection": true,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/tvalue-owner-pure-jvm-c6eypw8q",
+    "-Dpersistence.shadow=true",
+    "-Dmetadata.shadow=true",
+    "-Djournal.path=/workspace/scratch/1c9c6dd2770c/K3-tvalue-owner-pure38/docs/tvalue-owner-pure-observation/shadow-on-TValueResidentBoundaryRunner-missing-dirty.trace",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-owner-pure-observation-shadow:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.TValueResidentBoundaryRunner",
+    "missing-dirty"
+  ]
+}

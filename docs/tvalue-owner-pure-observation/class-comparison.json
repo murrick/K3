@@ -1,0 +1,16 @@
+{
+  "prior_clean_classes_identical": 682,
+  "changed_prior_clean_helper_family": "TValueDirtyJournal",
+  "shadow_changed_shared_classes": [
+    "org/kanger/Linker$1.class",
+    "org/kanger/Linker$2.class",
+    "org/kanger/Linker$3.class",
+    "org/kanger/Linker$4.class",
+    "org/kanger/Linker.class",
+    "org/kanger/Mind$1.class",
+    "org/kanger/Mind.class",
+    "org/kanger/factory/TValueFactory.class",
+    "org/kanger/units/TValue.class"
+  ],
+  "prior_shadow_classes_except_journal_helper_identical": 682
+}

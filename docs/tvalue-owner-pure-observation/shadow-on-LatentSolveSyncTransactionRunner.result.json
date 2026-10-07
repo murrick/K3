@@ -1,0 +1,34 @@
+{
+  "index": 50,
+  "build": "shadow",
+  "flag": "on",
+  "runner": "LatentSolveSyncTransactionRunner",
+  "args": [
+    "/workspace/scratch/1c9c6dd2770c/K3-tvalue-owner-pure38/docs/tvalue-owner-pure-observation/shadow-on-LatentSolveSyncTransactionRunner.state",
+    "/workspace/scratch/1c9c6dd2770c/K3-tvalue-owner-pure38/docs/tvalue-owner-pure-observation/shadow-on-LatentSolveSyncTransactionRunner.work"
+  ],
+  "exit_code": 0,
+  "expected_closed_boundary_rejection": false,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/tvalue-owner-pure-jvm-s_bgz5hp",
+    "-Dpersistence.shadow=true",
+    "-Dmetadata.shadow=true",
+    "-Djournal.path=/workspace/scratch/1c9c6dd2770c/K3-tvalue-owner-pure38/docs/tvalue-owner-pure-observation/shadow-on-LatentSolveSyncTransactionRunner.trace",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-owner-pure-observation-shadow:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.DirtyJournalRunner",
+    "LatentSolveSyncTransactionRunner",
+    "/workspace/scratch/1c9c6dd2770c/K3-tvalue-owner-pure38/docs/tvalue-owner-pure-observation/shadow-on-LatentSolveSyncTransactionRunner.state",
+    "/workspace/scratch/1c9c6dd2770c/K3-tvalue-owner-pure38/docs/tvalue-owner-pure-observation/shadow-on-LatentSolveSyncTransactionRunner.work"
+  ]
+}

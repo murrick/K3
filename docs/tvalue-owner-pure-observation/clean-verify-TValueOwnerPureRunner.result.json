@@ -1,0 +1,30 @@
+{
+  "index": 10,
+  "build": "clean",
+  "flag": "verify",
+  "runner": "TValueOwnerPureRunner",
+  "args": [],
+  "exit_code": 0,
+  "expected_closed_boundary_rejection": false,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/tvalue-owner-pure-jvm-bw761_rb",
+    "-Dpersistence.shadow=false",
+    "-Dmetadata.shadow=false",
+    "-Djournal.path=/workspace/scratch/1c9c6dd2770c/K3-tvalue-owner-pure38/docs/tvalue-owner-pure-observation/clean-verify-TValueOwnerPureRunner.trace",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-Dkanger.experiment.verifyTValueIndex=true",
+    "-Dkanger.experiment.verifySolveSync=true",
+    "-cp",
+    "../build/tvalue-owner-pure-observation-clean:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.TValueOwnerPureRunner"
+  ]
+}

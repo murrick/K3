@@ -1,0 +1,6 @@
+{
+  "initial_execution": 1,
+  "qualified": false,
+  "cause": "clean build has no mutation/checkpoint hooks; explicitly opening a dirty-journal session across native writes was an invalid control",
+  "correction": "clean fixture invokes only pure full read APIs; shadow fixture invokes the actual hooked journal; full native stdout and field fingerprints are compared"
+}
