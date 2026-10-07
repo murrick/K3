@@ -1,0 +1,2 @@
+Exception in thread "main" java.lang.AssertionError: native release should invalidate lookup metadata
+	at org.kanger.MaterializationScopeRunner.main(MaterializationScopeRunner.java:19)

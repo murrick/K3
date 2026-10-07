@@ -1,0 +1,56 @@
+ROW small 0 compiled=true collision=false answer=true accepted=true source=IXNlZWQoaXRlbSk7
+ROW small 1 compiled=true collision=false answer=false accepted=true source=IX50YXJnZXQoaXRlbSk7
+ROW small 2 compiled=true collision=false answer=null accepted=false source=IXVucmVsYXRlZChpdGVtKTs=
+ACCEPTED small [!seed(item);, !~target(item);]
+CASE_OK small rows=3 accepted=2 raw=1 reservations=0
+ROW external-item 0 compiled=true collision=false answer=true accepted=true source=IXNlZWQoaXRlbSk7
+ROW external-item 1 compiled=true collision=false answer=false accepted=true source=IX50YXJnZXQoaXRlbSk7
+ROW external-item 2 compiled=true collision=false answer=null accepted=false source=IXVucmVsYXRlZChpdGVtKTs=
+ACCEPTED external-item [!seed(item);, !~target(item);]
+CASE_OK external-item rows=3 accepted=2 raw=1 reservations=0
+ROW external-other 0 compiled=true collision=false answer=null accepted=false source=IXNlZWQoaXRlbSk7
+ROW external-other 1 compiled=true collision=false answer=null accepted=false source=IX50YXJnZXQoaXRlbSk7
+ROW external-other 2 compiled=true collision=false answer=null accepted=false source=IXVucmVsYXRlZChpdGVtKTs=
+ACCEPTED external-other []
+CASE_OK external-other rows=3 accepted=0 raw=1 reservations=0
+ROW son 0 compiled=true collision=false answer=null accepted=false source=IW1hbGUoVG9tKTs=
+ROW son 1 compiled=true collision=false answer=null accepted=false source=P3NvbihUb20sTWFyeSk7
+ROW son 2 compiled=true collision=false answer=null accepted=false source=P3NvbihUb20sSm9obik7
+ROW son 3 compiled=true collision=false answer=null accepted=false source=IWZlbWFsZShUb20pOw==
+ROW son 4 compiled=true collision=false answer=null accepted=false source=P2RhdWdodGVyKFRvbSxNYXJ5KTs=
+ROW son 5 compiled=true collision=false answer=null accepted=false source=P2RhdWdodGVyKFRvbSxKb2huKTs=
+ROW son 6 compiled=true collision=false answer=null accepted=false source=P3Nwb3VzZShNYXJ5LEpvaG4pOw==
+ROW son 7 compiled=true collision=false answer=null accepted=false source=P2Rpdm9yY2VkKE1hcnksSm9obik7
+ROW son 8 compiled=true collision=false answer=null accepted=false source=IXNpYmxpbmcoVG9tLFRvbSk7
+ROW son 9 compiled=true collision=false answer=null accepted=false source=IXNpYmxpbmcoU2FyYWgsU2FyYWgpOw==
+ROW son 10 compiled=true collision=false answer=null accepted=false source=P2ZlbWFsZShUb20pOw==
+ROW son 11 compiled=true collision=false answer=null accepted=false source=P21hbGUoVG9tKTs=
+ROW son 12 compiled=true collision=false answer=null accepted=false source=IXNvbihUb20sSm9obik7
+ROW son 13 compiled=true collision=false answer=null accepted=false source=IXNvbihUb20sTWFyeSk7
+ROW son 14 compiled=true collision=false answer=null accepted=false source=IWRhdWdodGVyKFRvbSxKb2huKTs=
+ROW son 15 compiled=true collision=false answer=null accepted=false source=IWRhdWdodGVyKFRvbSxNYXJ5KTs=
+ROW son 16 compiled=true collision=false answer=null accepted=false source=P3Nwb3VzZShKb2huLE1hcnkpOw==
+ROW son 17 compiled=true collision=false answer=null accepted=false source=P2Rpdm9yY2VkKEpvaG4sTWFyeSk7
+ROW son 18 compiled=true collision=false answer=null accepted=false source=ISR5IGRhdWdodGVyKFRvbSx5KTs=
+ROW son 19 compiled=true collision=false answer=null accepted=false source=ISR5IGRhdWdodGVyKFNhcmFoLHkpOw==
+ROW son 20 compiled=true collision=true answer=null accepted=false source=ISR5IGRhdWdodGVyKEpvaG4seSk7
+ROW son 21 compiled=true collision=false answer=null accepted=false source=ISR5IHNvbihUb20seSk7
+ROW son 22 compiled=true collision=false answer=null accepted=false source=ISR4IGRhdWdodGVyKHgsSm9obik7
+ROW son 23 compiled=true collision=false answer=null accepted=false source=ISR4IHNvbih4LEpvaG4pOw==
+ROW son 24 compiled=true collision=false answer=null accepted=false source=ISR4IGZhdGhlcih4LFNhcmFoKTs=
+ROW son 25 compiled=true collision=false answer=null accepted=false source=ISR4IGZhdGhlcih4LFRvbSk7
+ROW son 26 compiled=true collision=false answer=null accepted=false source=ISR4IG1vdGhlcih4LFRvbSk7
+ROW son 27 compiled=true collision=false answer=null accepted=false source=ISR4IG1vdGhlcih4LFNhcmFoKTs=
+ROW son 28 compiled=true collision=false answer=null accepted=false source=ISR5IGNoaWxkKFNhcmFoLHkpOw==
+ROW son 29 compiled=true collision=false answer=null accepted=false source=ISR5IGNoaWxkKFRvbSx5KTs=
+ROW son 30 compiled=true collision=false answer=null accepted=false source=ISR5IGZhdGhlcihKb2huLHkpOw==
+ROW son 31 compiled=true collision=false answer=null accepted=false source=ISR4IGNoaWxkKHgsSm9obik7
+ROW son 32 compiled=true collision=false answer=null accepted=false source=ISR4IHBhcmVudCh4LFNhcmFoKTs=
+ROW son 33 compiled=true collision=false answer=null accepted=false source=ISR4IHBhcmVudCh4LFRvbSk7
+ROW son 34 compiled=true collision=false answer=null accepted=false source=ISR5IHNpYmxpbmcoSm9obix5KTs=
+ROW son 35 compiled=true collision=false answer=false accepted=true source=PyR5IHNvbihKb2huLHkpOw==
+ROW son 36 compiled=true collision=false answer=null accepted=false source=ISR5IHBhcmVudChKb2huLHkpOw==
+ROW son 37 compiled=true collision=false answer=null accepted=false source=ISR4IHNpYmxpbmcoeCxKb2huKTs=
+ROW son 38 compiled=true collision=true answer=null accepted=false source=ISR5IHNvbihNYXJ5LHkpOw==
+ROW son 39 compiled=true collision=true answer=null accepted=false source=ISR5IHNvbihTYXJhaCx5KTs=
+ROW son 40 compiled=true collision=true answer=null accepted=false source=PyR4IHBhcmVudCh4LEpvaG4pOw==

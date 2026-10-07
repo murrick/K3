@@ -1,0 +1,1 @@
+Additional payload proof first clean JVM failed only at fixture restoration assertion: detached old payload is B in clean mode because shadow-only detached setter/restoration is not executed. No hook qualification failure. Corrected expected native payload and explicit fixture restoration.

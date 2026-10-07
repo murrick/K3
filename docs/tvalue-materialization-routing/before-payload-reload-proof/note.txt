@@ -1,0 +1,1 @@
+Six storage cases passed before adding an explicit unflushed-payload reload witness and observable detached-setter touch-count validation. Preserved separately. Native Base hook, journal, reader and memory/scope fixtures are unchanged; only the six storage cases are rerun.

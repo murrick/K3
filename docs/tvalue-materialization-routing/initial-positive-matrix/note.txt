@@ -1,0 +1,1 @@
+Six initial positive storage JVMs passed before adding scope-gate source and baseline-negative replay to the final matrix. Kept as preliminary evidence; the final complete matrix is separately counted. No rejected setup JVMs or qualification failures occurred.

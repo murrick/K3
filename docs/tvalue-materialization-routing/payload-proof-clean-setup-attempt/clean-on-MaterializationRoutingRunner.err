@@ -1,0 +1,3 @@
+Exception in thread "main" java.lang.AssertionError: native replacement write retained without repair
+	at org.kanger.MaterializationRoutingRunner.require(MaterializationRoutingRunner.java:14)
+	at org.kanger.MaterializationRoutingRunner.main(MaterializationRoutingRunner.java:64)

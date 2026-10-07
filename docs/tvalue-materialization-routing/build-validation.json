@@ -1,0 +1,35 @@
+{
+  "parent": "50550406ae1761322d06dcb995e2bd4c00fdb78a",
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-shadow:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-materialization-routing-classes",
+    "../build/tvalue-materialization-routing-source/Base.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-tvalue-materialization38/docs/tvalue-materialization-routing/TValueDirtyJournal.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-tvalue-materialization38/docs/tvalue-materialization-routing/MaterializationRoutingRunner.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-tvalue-materialization38/docs/tvalue-materialization-routing/MaterializationScopeRunner.java"
+  ],
+  "original_Base_get_body_recovered_byte_for_byte": true,
+  "original_journal_methods_recovered_byte_for_byte": true,
+  "native_source_sha256": "780fe5295b5e728d75fa8500322d99fd5d8a9f6f581690b1fca09a72205d2ce6",
+  "temporary_Base_sha256": "9f25cf1929c7179881d4bb29d808804f7221019493de3861739937803232637c",
+  "overlay_class_sha256": {
+    "org/kanger/MaterializationRoutingRunner$TrapMind.class": "c15dab8b6baa8312b8b018c794363d11aa5f71e4c7bce5725d77cadc9630218a",
+    "org/kanger/MaterializationRoutingRunner.class": "129b668054f362c269db6059535088a9693ac86bc3870f3a08d383e4469d1500",
+    "org/kanger/MaterializationScopeRunner.class": "ae3530c336cbe281d39318c1adf345de72012a31fc4ff87dc2bfa7c4efb36800",
+    "org/kanger/TValueDirtyJournal$Session.class": "b0e719ded5cfbe2d99a97a6dac2e0f2a1dbb6ad534ae636358132ca09741bd0e",
+    "org/kanger/TValueDirtyJournal$State.class": "f9106c98df798fc78461ef87bac396ee867eeed78cfb7e8afe0ec4e157a37700",
+    "org/kanger/TValueDirtyJournal$Work.class": "3d000cc0b15ed91244fae53ce7478569df198e07c557ee11495622e887c28cde",
+    "org/kanger/TValueDirtyJournal.class": "07497a5b0eba0bc8df13b273d43740e117eec42d5645521a2b9d65b2d872c490",
+    "org/kanger/storage/Base$StorageIterator.class": "564af8dd5a547bb32bf250ab7ef7f935ff13fc4040db6e5a0de49c71ef88894a",
+    "org/kanger/storage/Base.class": "fef5a0ffb1593312b015ba4442eba466dda68014aa2135265c6a73a345489394"
+  },
+  "prior_696_classes_each_build_unchanged": true,
+  "production_changed": false
+}
