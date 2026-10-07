@@ -13,6 +13,8 @@ import org.kanger.units.Term;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /** Detached local-only answer addressed to one invocation and exact target. */
 final class FrontierAnswer {
@@ -25,6 +27,8 @@ final class FrontierAnswer {
 
     private final RevisionRef source;
     private final FrontierInvocation invocation;
+    private final FrontierRequest request;
+    private final FrontierExecutionState executionState;
     private final Truth truth;
     private final List<String> variableOrder;
     private final List<List<ValueRef>> values;
@@ -38,14 +42,27 @@ final class FrontierAnswer {
                    List<List<ValueRef>> values,
                    List<String> hypotheses,
                    List<FrontierDemand> unresolvedFrontiers) {
-        if (source == null || invocation == null || truth == null) {
+        this(source, FrontierRequest.initial(invocation), truth, variableOrder,
+                values, hypotheses, unresolvedFrontiers);
+    }
+
+    FrontierAnswer(RevisionRef source,
+                   FrontierRequest request,
+                   Truth truth,
+                   List<String> variableOrder,
+                   List<List<ValueRef>> values,
+                   List<String> hypotheses,
+                   List<FrontierDemand> unresolvedFrontiers) {
+        if (source == null || request == null || truth == null) {
             throw new NullPointerException("Frontier answer requires source, invocation and truth");
         }
         if (truth != Truth.NULL && !unresolvedFrontiers.isEmpty()) {
             throw new IllegalArgumentException("A resolved frontier has no unresolved demands");
         }
         this.source = source;
-        this.invocation = invocation;
+        this.request = request;
+        this.invocation = request.getInvocation();
+        this.executionState = request.executionState(source);
         this.truth = truth;
         this.variableOrder = Collections.unmodifiableList(
                 new ArrayList<String>(variableOrder));
@@ -67,6 +84,14 @@ final class FrontierAnswer {
         return invocation;
     }
 
+    FrontierRequest getRequest() {
+        return request;
+    }
+
+    FrontierExecutionState getExecutionState() {
+        return executionState;
+    }
+
     List<FrontierDemand> getUnresolvedFrontiers() {
         return unresolvedFrontiers;
     }
@@ -74,6 +99,8 @@ final class FrontierAnswer {
     /** Validate the whole response batch before aggregation or materialization. */
     static FrontierInvocation requireSameInvocation(List<FrontierAnswer> answers) {
         FrontierInvocation invocation = null;
+        Map<RevisionRef, FrontierExecutionState> states =
+                new LinkedHashMap<RevisionRef, FrontierExecutionState>();
         for (FrontierAnswer answer : answers) {
             if (answer == null) {
                 throw new NullPointerException("answer");
@@ -82,6 +109,10 @@ final class FrontierAnswer {
                 invocation = answer.getInvocation();
             } else if (!invocation.sameAddress(answer.getInvocation())) {
                 throw new IllegalArgumentException("Frontier answers belong to different invocations");
+            }
+            FrontierExecutionState previous = states.put(answer.getSource(), answer.getExecutionState());
+            if (previous != null && !previous.equals(answer.getExecutionState())) {
+                throw new IllegalArgumentException("Frontier batch contains stale and resumed target states");
             }
         }
         return invocation;
@@ -155,6 +186,10 @@ final class FrontierAnswer {
 
         Term materialize() {
             return semantic.materialize();
+        }
+
+        SemanticTermSnapshot getSemantic() {
+            return semantic;
         }
     }
 }

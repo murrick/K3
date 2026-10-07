@@ -198,6 +198,89 @@ public final class FrontierDomain {
         return ground;
     }
 
+    public int getArgumentCount() {
+        return arguments.size();
+    }
+
+    /** Detached full argument vector; preserves fixed values and repeated positions. */
+    public List<SemanticTermSnapshot> semanticArguments(
+            List<String> variableOrder, List<SemanticTermSnapshot> tuple) {
+        List<String> expected = new ArrayList<String>();
+        for (VariableState variable : variables) {
+            if (!variable.isBound()) {
+                expected.add(variable.getName());
+            }
+        }
+        if (!expected.equals(variableOrder) || variableOrder.size() != tuple.size()) {
+            throw new IllegalArgumentException("Frontier tuple does not match declared variable order");
+        }
+        java.util.Map<String, SemanticTermSnapshot> values =
+                new java.util.LinkedHashMap<String, SemanticTermSnapshot>();
+        for (int i = 0; i < tuple.size(); ++i) {
+            if (tuple.get(i) == null) {
+                throw new IllegalArgumentException("Evidence must contain concrete semantic values");
+            }
+            values.put(variableOrder.get(i), tuple.get(i));
+        }
+        List<SemanticTermSnapshot> result = new ArrayList<SemanticTermSnapshot>();
+        for (ArgumentState argument : arguments) {
+            result.add(argument.isVariable() ? values.get(argument.getVariableName())
+                    : argument.getFixedValue());
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    /** Alpha-equivalent query shape for semantic execution-state identity. */
+    public boolean sameSemanticQuery(FrontierDomain other) {
+        if (other == null || negated != other.negated
+                || !predicateName.equals(other.predicateName)
+                || arguments.size() != other.arguments.size()) {
+            return false;
+        }
+        java.util.Map<String, Integer> left = new java.util.LinkedHashMap<String, Integer>();
+        java.util.Map<String, Integer> right = new java.util.LinkedHashMap<String, Integer>();
+        for (int i = 0; i < arguments.size(); ++i) {
+            ArgumentState a = arguments.get(i);
+            ArgumentState b = other.arguments.get(i);
+            if (a.isVariable() != b.isVariable()) {
+                return false;
+            }
+            if (a.isVariable()) {
+                if (variablePosition(left, a.getVariableName())
+                        != variablePosition(right, b.getVariableName())) {
+                    return false;
+                }
+            } else if (!a.getFixedValue().semanticallyEquals(b.getFixedValue())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public int semanticQueryHash() {
+        int hash = 31 * predicateName.hashCode() + (negated ? 1 : 0);
+        java.util.Map<String, Integer> names = new java.util.LinkedHashMap<String, Integer>();
+        for (ArgumentState argument : arguments) {
+            hash = 31 * hash + (argument.isVariable() ? 1 : 0);
+            if (argument.isVariable()) {
+                hash = 31 * hash + variablePosition(names, argument.getVariableName());
+            } else {
+                hash = 31 * hash + argument.getFixedValue().getType().ordinal();
+                hash = 31 * hash + argument.getFixedValue().getHash();
+            }
+        }
+        return hash;
+    }
+
+    private static int variablePosition(java.util.Map<String, Integer> names, String name) {
+        Integer position = names.get(name);
+        if (position == null) {
+            position = names.size();
+            names.put(name, position);
+        }
+        return position;
+    }
+
     /**
      * Query-local semantic equivalence used only to collapse multiple internal
      * KANGER representations of the same unresolved Domain (for example a

@@ -40,18 +40,24 @@ final class LocalFrontierExecutor {
     static FrontierAnswer execute(
             ContextConnection connection,
             FrontierInvocation invocation) throws Exception {
+        return execute(connection, FrontierRequest.initial(invocation));
+    }
+
+    static FrontierAnswer execute(
+            ContextConnection connection,
+            FrontierRequest request) throws Exception {
         if (connection == null) {
             throw new NullPointerException("connection");
         }
-        if (invocation == null) {
-            throw new NullPointerException("invocation");
+        if (request == null) {
+            throw new NullPointerException("request");
         }
 
         RevisionRef target = connection.getTarget();
         return execute(
                 connection.getTargetLocation(),
                 target,
-                invocation);
+                request);
     }
 
     static FrontierAnswer execute(
@@ -65,9 +71,18 @@ final class LocalFrontierExecutor {
             Path targetLocation,
             RevisionRef target,
             FrontierInvocation invocation) throws Exception {
-        if (invocation == null) {
-            throw new NullPointerException("invocation");
+        return execute(targetLocation, target, FrontierRequest.initial(invocation));
+    }
+
+    static FrontierAnswer execute(
+            Path targetLocation,
+            RevisionRef target,
+            FrontierRequest request) throws Exception {
+        if (request == null) {
+            throw new NullPointerException("request");
         }
+        request.executionState(target);
+        FrontierInvocation invocation = request.getInvocation();
         FrontierDomain frontier = invocation.getFrontier();
         User user = new User();
         String logicalName =
@@ -96,6 +111,9 @@ final class LocalFrontierExecutor {
 
         Mind mind = Mind.ephemeralChild(root);
         try {
+            for (SuppliedEvidence fact : request.getEvidence()) {
+                fact.materialize(mind);
+            }
             CausalFrontierCapture.Result result = CausalFrontierCapture.query(mind,
                     frontier.getQuerySource(),
                     frontier.projectFixedArguments(mind),
@@ -139,7 +157,7 @@ final class LocalFrontierExecutor {
 
             return new FrontierAnswer(
                     target,
-                    invocation,
+                    request,
                     FrontierAnswer.truth(result.getTruth()),
                     order,
                     rows,
