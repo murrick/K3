@@ -195,8 +195,8 @@ public class ContextSourceMetadataIntegrationTest {
         context("B-anchor", "!right(Tom);");
         context(
                 "X-anchor",
-                "!~target(Tom); "
-                        + "!@x left(x) && right(x) -> target(x);");
+                "!~target(Tom);",
+                "!@x left(x) && right(x) -> target(x);");
 
         Session session = open("X-anchor");
         try {
@@ -238,7 +238,8 @@ public class ContextSourceMetadataIntegrationTest {
 
     private ContextFixture context(
             String name,
-            String assertion) throws Exception {
+            String assertion,
+            String... additionalAssertions) throws Exception {
         Session session = open(name);
         try {
             assertTrue(Boolean.TRUE.equals(
@@ -246,6 +247,13 @@ public class ContextSourceMetadataIntegrationTest {
                             assertion,
                             null,
                             false)));
+            for (String additionalAssertion : additionalAssertions) {
+                assertTrue(Boolean.TRUE.equals(
+                        session.mind.query(
+                                additionalAssertion,
+                                null,
+                                false)));
+            }
             return new ContextFixture(
                     session.data.getRevision());
         } finally {

@@ -138,8 +138,8 @@ public class WriteCandidateQualificationTest {
         ContextFixture x =
                 context(
                         "X-anchored-composition",
-                        "!~target(Tom); "
-                                + "!@x left(x) && right(x) -> target(x);");
+                        "!~target(Tom);",
+                        "!@x left(x) && right(x) -> target(x);");
         ContextFixture a =
                 context("A-anchored-composition", "!left(Tom);");
         ContextFixture b =
@@ -216,7 +216,8 @@ public class WriteCandidateQualificationTest {
 
     private ContextFixture context(
             String name,
-            String assertion) throws Exception {
+            String assertion,
+            String... additionalAssertions) throws Exception {
         Path databaseDir =
                 root.resolve(name + "-db");
         Files.createDirectories(databaseDir);
@@ -239,6 +240,13 @@ public class WriteCandidateQualificationTest {
                         assertion,
                         null,
                         false)));
+        for (String additionalAssertion : additionalAssertions) {
+            assertTrue(Boolean.TRUE.equals(
+                    mind.query(
+                            additionalAssertion,
+                            null,
+                            false)));
+        }
 
         long revision = data.getRevision();
         java.util.UUID contextId =

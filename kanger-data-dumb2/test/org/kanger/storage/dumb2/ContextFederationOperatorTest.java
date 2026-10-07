@@ -156,8 +156,8 @@ public class ContextFederationOperatorTest {
         context("CXB", "!right(Tom);");
         context(
                 "CXX",
-                "!~target(Tom); "
-                        + "!@x left(x) && right(x) -> target(x);");
+                "!~target(Tom);",
+                "!@x left(x) && right(x) -> target(x);");
 
         User user = new User();
         user.setDatabaseDir(
@@ -711,7 +711,8 @@ public class ContextFederationOperatorTest {
 
     private ContextFixture context(
             String name,
-            String assertion) throws Exception {
+            String assertion,
+            String... additionalAssertions) throws Exception {
         User user = new User();
         user.setDatabaseDir(
                 root.toString() + File.separator);
@@ -724,6 +725,13 @@ public class ContextFederationOperatorTest {
         user.setCurrentMind(mind);
         assertTrue(Boolean.TRUE.equals(
                 mind.query(assertion, null, false)));
+        for (String additionalAssertion : additionalAssertions) {
+            assertTrue(Boolean.TRUE.equals(
+                    mind.query(
+                            additionalAssertion,
+                            null,
+                            false)));
+        }
 
         long revision = data.getRevision();
         java.util.UUID contextId =
