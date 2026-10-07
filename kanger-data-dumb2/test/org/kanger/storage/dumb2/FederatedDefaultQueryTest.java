@@ -103,6 +103,36 @@ public class FederatedDefaultQueryTest {
     }
 
     @Test
+    void compoundQueryUsesForeignAgeAndKeepsCalculatedConditionLocal()
+            throws Exception {
+        context("Age", "!age(Tom,18);");
+
+        Fixture x = open("Xcompound");
+        try {
+            assertTrue(Boolean.TRUE.equals(
+                    x.mind.query(
+                            "!son(Tom,John);",
+                            null,
+                            false)));
+            x.data.connectContext("Age");
+
+            assertTrue(Boolean.TRUE.equals(
+                    x.mind.query(
+                            "?$x $y son(x,John) && age(x,y) && y > 10;",
+                            null,
+                            false)));
+
+            assertEquals(1, x.mind.getValues().size());
+            Map<String, ITerm> row =
+                    x.mind.getValues().iterator().next();
+            assertEquals("Tom", row.get("x").toString());
+            assertEquals("18.0", row.get("y").toString());
+        } finally {
+            x.close();
+        }
+    }
+
+    @Test
     void liveTransactionOverlayCanConsumeForeignEvidence()
             throws Exception {
         context("Alive", "!age(Tom,42);");
