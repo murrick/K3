@@ -1,0 +1,2 @@
+RESIDENT_PERSISTENT_NATIVE order=[91:102:302:-1, 7:101:301:-1, 40:100:300:-1] cold=refused missing=refused LRU=preserved owner=preserved hydration=none native_control=matches callbacks=0
+RESIDENT_PERSISTENT_OK checks=40 rejected=15

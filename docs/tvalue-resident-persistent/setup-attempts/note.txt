@@ -1,0 +1,1 @@
+Initial ECJ compilation rejected wrong import org.kanger.interfaces.IBase (7 unresolved type errors); no JVM ran. Correct package is org.kanger.interfaces.internal.IBase. Not counted in qualified matrix.

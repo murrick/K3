@@ -1,0 +1,22 @@
+{
+  "build": "shadow",
+  "flags": "on",
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/resident-persistent-jvm-lz9ot069",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-shadow:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ResidentPersistentRunner"
+  ],
+  "exit_code": 0,
+  "unchanged_prior_class_count": 696
+}

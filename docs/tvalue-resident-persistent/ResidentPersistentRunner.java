@@ -1,0 +1,66 @@
+package org.kanger;
+import java.lang.reflect.*;
+import java.nio.file.*;
+import java.util.*;
+import org.kanger.interfaces.internal.IStep;
+import org.kanger.interfaces.internal.IBase;
+import org.kanger.storage.*;
+import org.kanger.units.TValue;
+/** Real DUMB write/close/reopen plus resident-only negative boundaries. */
+public final class ResidentPersistentRunner {
+    static int checks,callbacks,rejections;
+    static void require(boolean b,String s){if(!b)throw new AssertionError(s);checks++;}
+    static Object raw(Object o,String n)throws Exception{return ResidentPersistentRead.raw(o,n);}
+    static void put(Object o,Class<?> c,String n,Object v)throws Exception{Field f=c.getDeclaredField(n);f.setAccessible(true);f.set(o,v);}
+    @SuppressWarnings("unchecked") static Map<Long,IStep> cache(Base b)throws Exception{return (Map<Long,IStep>)raw(b,"cache");}
+    static String fingerprint(Base b)throws Exception{
+        List<String> out=new ArrayList<>();
+        for(String n:new String[]{"rootId","topId","cacheSize","cacheHits","cacheMisses","cacheEvictions","readRequestCount","cacheHitCount","cacheMissCount","storageReadCount","writeCount","deleteCount","flushCount"})out.add(n+"="+raw(b,n));
+        for(Map.Entry<Long,IStep> e:cache(b).entrySet()){
+            Object s=e.getValue();out.add("cache="+e.getKey()+":"+System.identityHashCode(s));
+            if(s.getClass()==Sapato.class){Object v=raw(s,"data");out.add("step="+raw(s,"id")+":"+raw(s,"next")+":"+System.identityHashCode(raw(s,"base"))+":"+System.identityHashCode(v));
+                if(v!=null&&v.getClass()==TValue.class)for(String n:new String[]{"id","mindId","tVarId","valueId","mind","value","tVar"}){Object x=raw(v,n);out.add(n+"="+(x instanceof Long?x:System.identityHashCode(x)));}
+            }
+        }
+        Object d=raw(b,"data");for(String n:new String[]{"readCounter","writeCounter","cacheSize","cacheHits","cacheMisses"})out.add("data."+n+"="+raw(d,n));
+        out.add("data.cache="+((Map<?,?>)raw(d,"cache")).keySet());out.add("data.current="+System.identityHashCode(raw(d,"currentOne")));return out.toString();
+    }
+    static void refusal(Base b,String why)throws Exception{String before=fingerprint(b);boolean failed=false;try{ResidentPersistentRead.snapshot(b);}catch(AssertionError e){failed=e.getMessage().startsWith("unsupported persistent boundary:");}require(failed,"required refusal "+why);require(before.equals(fingerprint(b)),"refusal changed state "+why);rejections++;}
+    static class TrapSapato extends Sapato {TrapSapato(IBase b){super(b);}public Object getData(){callbacks++;throw new AssertionError("callback");}public IStep getNext(){callbacks++;throw new AssertionError("callback");}}
+    static class TrapValue extends TValue {public long getId(){callbacks++;throw new AssertionError("callback");}}
+    public static void main(String[] args)throws Exception{
+        User user=(User)UserFactory.createUser("resident-persistent","resident-persistent");Mind owner=new Mind(user);
+        user.setProperty("cache.enable","true");user.setProperty("cache.size","4194304");
+        Path dir=Files.createTempDirectory("resident-persistent-db-");String name=dir.resolve("values").toString();Object locker=new Object();Base base=new Base(name,9,locker,false,user);
+        require(ResidentPersistentRead.snapshot(base).isEmpty(),"empty native base");
+        IStep previous=null;long[] ids={40,7,91};
+        for(int i=0;i<ids.length;i++){TValue v=new TValue(owner);v.setId(ids[i]);v.setPersistentReferences(300+i,100+i);Step s=new Step();s.setId(v.getId());s.setHash(v.getHash());s.setData(v);s.setNext(previous);previous=new Sapato(base,s);base.add(previous);}
+        base.flush();refusal(base,"endpoints invalidated by native writes");base.close();
+        base=new Base(name,9,locker,false,user);refusal(base,"cold reopened cache");
+        base.get(7);base.get(91);refusal(base,"missing oldest resident link");base.get(40);
+        String before=fingerprint(base);List<ResidentPersistentRead.Row> rows=ResidentPersistentRead.snapshot(base);
+        require(rows.toString().equals("[91:102:302:-1, 7:101:301:-1, 40:100:300:-1]"),"physical linked order differs from numeric ID order");
+        require(before.equals(fingerprint(base)),"positive snapshot changed storage/owner/resident state");
+        require(new ArrayList<>(cache(base).keySet()).equals(Arrays.asList(7L,91L,40L)),"snapshot preserved deliberately different LRU order");
+        boolean immutable=false;try{rows.clear();}catch(UnsupportedOperationException e){immutable=true;}require(immutable,"immutable ID rows");
+        List<String> nativeRows=new ArrayList<>();for(IStep s=base.getRoot();s!=null;s=s.getNext()){TValue v=(TValue)s.getData();nativeRows.add(v.getId()+":"+v.getTVarId()+":"+v.getValueId()+":"+v.getMindId());}
+        require(nativeRows.toString().equals(rows.toString()),"actual native persistent traversal projection");require(!before.equals(fingerprint(base)),"native control changes cache counters/order");
+        TValue first=(TValue)cache(base).get(91L).getData();require(first.getMind()==null&&raw(first,"value")==null&&raw(first,"tVar")==null,"decoded references are unhydrated");
+        Mind child=new Mind(owner);first.setMind(child);before=fingerprint(base);ResidentPersistentRead.snapshot(base);require(first.getMind()==child&&before.equals(fingerprint(base)),"preserve attached child owner without hydration");
+        cache(base).get(91L).getData(owner);require(first.getMind()==owner,"explicit native getData(Mind) still rebinds owner");
+        Sapato root=(Sapato)cache(base).get(91L);Object original=raw(root,"data");put(root,Sapato.class,"data",null);refusal(base,"unresolved unit");put(root,Sapato.class,"data",new TrapValue());refusal(base,"custom unit");put(root,Sapato.class,"data",original);
+        Object originalBase=raw(root,"base");put(root,Sapato.class,"base",null);refusal(base,"foreign base");put(root,Sapato.class,"base",originalBase);
+        long next=(Long)raw(root,"next");put(root,Sapato.class,"next",91L);refusal(base,"cycle");put(root,Sapato.class,"next",next);
+        long id=first.getId();put(first,TValue.class,"id",92L);refusal(base,"unit ID alias");put(first,TValue.class,"id",id);
+        cache(base).put(91L,new TrapSapato(base));refusal(base,"custom step");cache(base).put(91L,root);
+        Long tail=(Long)raw(base,"topId");put(base,Base.class,"topId",7L);refusal(base,"tail mismatch");put(base,Base.class,"topId",tail);
+        Object integrity=raw(base,"integrity");Map<?,?> entries=(Map<?,?>)raw(integrity,"entries");Object saved=entries.remove(7L);refusal(base,"integrity universe mismatch");restoreEntry(entries,7L,saved);
+        base.clearCache();refusal(base,"native cache clear");base.close();refusal(base,"closed base");
+        user.setProperty("cache.enable","false");Base disabled=new Base(name,9,new Object(),false,user);disabled.get(91);refusal(disabled,"cache disabled");disabled.close();
+        IBase proxy=(IBase)Proxy.newProxyInstance(IBase.class.getClassLoader(),new Class<?>[]{IBase.class},(p,m,a)->{callbacks++;throw new AssertionError("callback");});boolean refused=false;try{ResidentPersistentRead.snapshot(proxy);}catch(AssertionError e){refused=e.getMessage().contains("base class");}require(refused,"unknown storage rejected before callbacks");rejections++;
+        require(callbacks==0,"zero extension callbacks");owner.release(child);
+        System.out.println("RESIDENT_PERSISTENT_NATIVE order="+rows+" cold=refused missing=refused LRU=preserved owner=preserved hydration=none native_control=matches callbacks="+callbacks);
+        System.out.println("RESIDENT_PERSISTENT_OK checks="+checks+" rejected="+rejections);
+    }
+    @SuppressWarnings({"rawtypes","unchecked"})static void restoreEntry(Map entries,long id,Object value){entries.put(id,value);}
+}

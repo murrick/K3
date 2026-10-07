@@ -1,0 +1,16 @@
+{
+  "parent": "c5551eae10ded5a975043e829360c32daf623881",
+  "fresh_JVMs": 6,
+  "all_native_stdout_identical": true,
+  "zero_extension_callbacks": true,
+  "persistent_factory_journal_still_unsupported": true,
+  "production_changed": false,
+  "prior_rejected_concurrent_corpus_still_unqualified": true,
+  "reader_class_sha256": {
+    "org/kanger/ResidentPersistentRead$Row.class": "a05949de057a944ba3198b5710e9ec6022b3524570b90e896c4df350cd88df16",
+    "org/kanger/ResidentPersistentRead.class": "144854766f9e8776e0e39232650b692840d503cc49b5a11faff154d081d49530",
+    "org/kanger/ResidentPersistentRunner$TrapSapato.class": "d19b619340daa01078a003cf6115e270425e3f9de8e926d51dce0c08901e6293",
+    "org/kanger/ResidentPersistentRunner$TrapValue.class": "4d0801a4c7c2e07a24830a59f4a5524088964fbb381d3dd32d59298560e23ba3",
+    "org/kanger/ResidentPersistentRunner.class": "cd2baa8b1267bacf14467f8a25260e09931899dfa78ca0dc57d3ee7f7384e2b9"
+  }
+}
