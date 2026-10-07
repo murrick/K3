@@ -1,0 +1,16 @@
+{
+  "base": "6c45ebe16fbdc3a05fd5ff573bebc2f33ffb601d",
+  "temporary_source_sha256": {
+    "order": {
+      "Mind.java": "69ef9d8e7f66d6fe1517cdcef0d7ee6acd8d95ad726cd6a976b85ec63c89da9f",
+      "Linker.java": "64a9f8001b4bae4eaab1d51ddbc6ae6d8f769d41dad050811184bb36ae8ea543",
+      "factory/TValueFactory.java": "f8a5c5d846ce2dd2f7d9b2818a10181ed38f3619b142f99d5fa498214237a8c5"
+    },
+    "shadow": {
+      "Mind.java": "8682d9b8b258fb55d59231e1ed0c50c45943d10c0643e053a2599263dcd427c6",
+      "Linker.java": "8d66bc88ce7893165c581db6c6e2a5ad6143db10dcd8a836bab0019d8916974e",
+      "factory/TValueFactory.java": "d1c1d394a24a77984477f9184f12257a2ef187ce4414486f4ba39dd05b324d1a"
+    }
+  },
+  "scope": "diagnostic order wrapper under native monitor; unchanged native bodies; preceding TValue hooks in shadow build only"
+}

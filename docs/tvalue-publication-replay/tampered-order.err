@@ -1,0 +1,21 @@
+Exception in thread "main" java.lang.AssertionError: complete native replay outcome forced-0 order=213 actual=accepted=[false,true,true]
+rules=7
+before=10:?value(1.0,2.0,1002.0); 0 B:deleted=false:stored=true:query=false|3:!value(1.0,0.0,2000.0); 0 B:deleted=false:stored=true:query=false|4:!value(1.0,1.0,2001.0); 0 B:deleted=false:stored=true:query=false|5:!value(1.0,2.0,2002.0); 0 B:deleted=false:stored=true:query=false|6:!value(1.0,0.0,3000.0); 0 B:deleted=false:stored=true:query=false|7:!value(1.0,1.0,3001.0); 0 B:deleted=false:stored=true:query=false|8:!value(1.0,2.0,3002.0); 0 B:deleted=false:stored=true:query=false
+answer=true
+solutions=3:!value(1.0,0.0,2000.0); 0 B|4:!value(1.0,1.0,2001.0); 0 B|5:!value(1.0,2.0,2002.0); 0 B|6:!value(1.0,0.0,3000.0); 0 B|7:!value(1.0,1.0,3001.0); 0 B|8:!value(1.0,2.0,3002.0); 0 B
+values={x=0:0.0, y=11:3000.0}|{x=0:0.0, y=8:2000.0}|{x=3:1.0, y=12:3001.0}|{x=3:1.0, y=9:2001.0}|{x=6:2.0, y=10:2002.0}|{x=6:2.0, y=13:3002.0}
+hypotheses=
+temporary=
+after=10:?value(1.0,2.0,1002.0); 0 B:deleted=false:stored=true:query=false|3:!value(1.0,0.0,2000.0); 0 B:deleted=false:stored=true:query=false|4:!value(1.0,1.0,2001.0); 0 B:deleted=false:stored=true:query=false|5:!value(1.0,2.0,2002.0); 0 B:deleted=false:stored=true:query=false|6:!value(1.0,0.0,3000.0); 0 B:deleted=false:stored=true:query=false|7:!value(1.0,1.0,3001.0); 0 B:deleted=false:stored=true:query=false|8:!value(1.0,2.0,3002.0); 0 B:deleted=false:stored=true:query=false
+reservations=0 expected=accepted=[true,false,true]
+rules=6
+before=0:!value(1.0,0.0,1000.0); 0 B:deleted=false:stored=true:query=false|1:!value(1.0,1.0,1001.0); 0 B:deleted=false:stored=true:query=false|2:!value(1.0,2.0,1002.0); 0 B:deleted=false:stored=true:query=false|6:!value(1.0,0.0,3000.0); 0 B:deleted=false:stored=true:query=false|7:!value(1.0,1.0,3001.0); 0 B:deleted=false:stored=true:query=false|9:!value(1.0,2.0,3002.0); 0 B:deleted=false:stored=true:query=false
+answer=true
+solutions=0:!value(1.0,0.0,1000.0); 0 B|1:!value(1.0,1.0,1001.0); 0 B|2:!value(1.0,2.0,1002.0); 0 B|6:!value(1.0,0.0,3000.0); 0 B|7:!value(1.0,1.0,3001.0); 0 B|9:!value(1.0,2.0,3002.0); 0 B
+values={x=0:0.0, y=11:3000.0}|{x=0:0.0, y=1:1000.0}|{x=3:1.0, y=12:3001.0}|{x=3:1.0, y=5:1001.0}|{x=6:2.0, y=13:3002.0}|{x=6:2.0, y=7:1002.0}
+hypotheses=
+temporary=
+after=0:!value(1.0,0.0,1000.0); 0 B:deleted=false:stored=true:query=false|1:!value(1.0,1.0,1001.0); 0 B:deleted=false:stored=true:query=false|2:!value(1.0,2.0,1002.0); 0 B:deleted=false:stored=true:query=false|6:!value(1.0,0.0,3000.0); 0 B:deleted=false:stored=true:query=false|7:!value(1.0,1.0,3001.0); 0 B:deleted=false:stored=true:query=false|9:!value(1.0,2.0,3002.0); 0 B:deleted=false:stored=true:query=false
+reservations=0
+	at org.kanger.PublicationFixture.require(PublicationFixture.java:20)
+	at org.kanger.CleanPublicationReplayRunner.main(CleanPublicationReplayRunner.java:12)

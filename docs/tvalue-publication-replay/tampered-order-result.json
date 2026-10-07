@@ -1,0 +1,6 @@
+{
+  "exit_code": 1,
+  "expected_rejection": true,
+  "changed_native_publication_order": "123 -> 213",
+  "native_both_branches_have_six_solutions": true
+}

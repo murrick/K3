@@ -1,0 +1,108 @@
+ORDER_ENTER label=forced-0 sequence=1 actor=1 policy=settle
+ORDER_EXIT label=forced-0 sequence=1 actor=1 accepted=true failure=none
+ORDER_ENTER label=forced-0 sequence=2 actor=2 policy=settle
+ORDER_EXIT label=forced-0 sequence=2 actor=2 accepted=false failure=none
+ORDER_ENTER label=forced-0 sequence=3 actor=3 policy=settle
+ORDER_EXIT label=forced-0 sequence=3 actor=3 accepted=true failure=none
+ORDER_ENTER label=forced-1 sequence=1 actor=1 policy=settle
+ORDER_EXIT label=forced-1 sequence=1 actor=1 accepted=true failure=none
+ORDER_ENTER label=forced-1 sequence=2 actor=3 policy=settle
+ORDER_EXIT label=forced-1 sequence=2 actor=3 accepted=true failure=none
+ORDER_ENTER label=forced-1 sequence=3 actor=2 policy=settle
+ORDER_EXIT label=forced-1 sequence=3 actor=2 accepted=false failure=none
+ORDER_ENTER label=forced-2 sequence=1 actor=2 policy=settle
+ORDER_EXIT label=forced-2 sequence=1 actor=2 accepted=true failure=none
+ORDER_ENTER label=forced-2 sequence=2 actor=1 policy=settle
+ORDER_EXIT label=forced-2 sequence=2 actor=1 accepted=false failure=none
+ORDER_ENTER label=forced-2 sequence=3 actor=3 policy=settle
+ORDER_EXIT label=forced-2 sequence=3 actor=3 accepted=true failure=none
+ORDER_ENTER label=forced-3 sequence=1 actor=2 policy=settle
+ORDER_EXIT label=forced-3 sequence=1 actor=2 accepted=true failure=none
+ORDER_ENTER label=forced-3 sequence=2 actor=3 policy=settle
+ORDER_EXIT label=forced-3 sequence=2 actor=3 accepted=true failure=none
+ORDER_ENTER label=forced-3 sequence=3 actor=1 policy=settle
+ORDER_EXIT label=forced-3 sequence=3 actor=1 accepted=false failure=none
+ORDER_ENTER label=forced-4 sequence=1 actor=3 policy=settle
+ORDER_EXIT label=forced-4 sequence=1 actor=3 accepted=true failure=none
+ORDER_ENTER label=forced-4 sequence=2 actor=1 policy=settle
+ORDER_EXIT label=forced-4 sequence=2 actor=1 accepted=true failure=none
+ORDER_ENTER label=forced-4 sequence=3 actor=2 policy=settle
+ORDER_EXIT label=forced-4 sequence=3 actor=2 accepted=false failure=none
+ORDER_ENTER label=forced-5 sequence=1 actor=3 policy=settle
+ORDER_EXIT label=forced-5 sequence=1 actor=3 accepted=true failure=none
+ORDER_ENTER label=forced-5 sequence=2 actor=2 policy=settle
+ORDER_EXIT label=forced-5 sequence=2 actor=2 accepted=true failure=none
+ORDER_ENTER label=forced-5 sequence=3 actor=1 policy=settle
+ORDER_EXIT label=forced-5 sequence=3 actor=1 accepted=false failure=none
+ORDER_ENTER label=race-6 sequence=1 actor=1 policy=settle
+ORDER_EXIT label=race-6 sequence=1 actor=1 accepted=true failure=none
+ORDER_ENTER label=race-6 sequence=2 actor=3 policy=settle
+ORDER_EXIT label=race-6 sequence=2 actor=3 accepted=true failure=none
+ORDER_ENTER label=race-6 sequence=3 actor=2 policy=settle
+ORDER_EXIT label=race-6 sequence=3 actor=2 accepted=false failure=none
+ORDER_ENTER label=race-7 sequence=1 actor=3 policy=settle
+ORDER_EXIT label=race-7 sequence=1 actor=3 accepted=true failure=none
+ORDER_ENTER label=race-7 sequence=2 actor=1 policy=settle
+ORDER_EXIT label=race-7 sequence=2 actor=1 accepted=true failure=none
+ORDER_ENTER label=race-7 sequence=3 actor=2 policy=settle
+ORDER_EXIT label=race-7 sequence=3 actor=2 accepted=false failure=none
+ORDER_ENTER label=race-8 sequence=1 actor=2 policy=settle
+ORDER_EXIT label=race-8 sequence=1 actor=2 accepted=true failure=none
+ORDER_ENTER label=race-8 sequence=2 actor=1 policy=settle
+ORDER_EXIT label=race-8 sequence=2 actor=1 accepted=false failure=none
+ORDER_ENTER label=race-8 sequence=3 actor=3 policy=settle
+ORDER_EXIT label=race-8 sequence=3 actor=3 accepted=true failure=none
+ORDER_ENTER label=race-9 sequence=1 actor=2 policy=settle
+ORDER_EXIT label=race-9 sequence=1 actor=2 accepted=true failure=none
+ORDER_ENTER label=race-9 sequence=2 actor=3 policy=settle
+ORDER_EXIT label=race-9 sequence=2 actor=3 accepted=true failure=none
+ORDER_ENTER label=race-9 sequence=3 actor=1 policy=settle
+ORDER_EXIT label=race-9 sequence=3 actor=1 accepted=false failure=none
+ORDER_ENTER label=race-10 sequence=1 actor=1 policy=settle
+ORDER_EXIT label=race-10 sequence=1 actor=1 accepted=true failure=none
+ORDER_ENTER label=race-10 sequence=2 actor=3 policy=settle
+ORDER_EXIT label=race-10 sequence=2 actor=3 accepted=true failure=none
+ORDER_ENTER label=race-10 sequence=3 actor=2 policy=settle
+ORDER_EXIT label=race-10 sequence=3 actor=2 accepted=false failure=none
+ORDER_ENTER label=race-11 sequence=1 actor=3 policy=settle
+ORDER_EXIT label=race-11 sequence=1 actor=3 accepted=true failure=none
+ORDER_ENTER label=race-11 sequence=2 actor=2 policy=settle
+ORDER_EXIT label=race-11 sequence=2 actor=2 accepted=true failure=none
+ORDER_ENTER label=race-11 sequence=3 actor=1 policy=settle
+ORDER_EXIT label=race-11 sequence=3 actor=1 accepted=false failure=none
+ORDER_ENTER label=race-12 sequence=1 actor=1 policy=settle
+ORDER_EXIT label=race-12 sequence=1 actor=1 accepted=true failure=none
+ORDER_ENTER label=race-12 sequence=2 actor=2 policy=settle
+ORDER_EXIT label=race-12 sequence=2 actor=2 accepted=false failure=none
+ORDER_ENTER label=race-12 sequence=3 actor=3 policy=settle
+ORDER_EXIT label=race-12 sequence=3 actor=3 accepted=true failure=none
+ORDER_ENTER label=race-13 sequence=1 actor=1 policy=settle
+ORDER_EXIT label=race-13 sequence=1 actor=1 accepted=true failure=none
+ORDER_ENTER label=race-13 sequence=2 actor=3 policy=settle
+ORDER_EXIT label=race-13 sequence=2 actor=3 accepted=true failure=none
+ORDER_ENTER label=race-13 sequence=3 actor=2 policy=settle
+ORDER_EXIT label=race-13 sequence=3 actor=2 accepted=false failure=none
+ORDER_ENTER label=race-14 sequence=1 actor=3 policy=settle
+ORDER_EXIT label=race-14 sequence=1 actor=3 accepted=true failure=none
+ORDER_ENTER label=race-14 sequence=2 actor=2 policy=settle
+ORDER_EXIT label=race-14 sequence=2 actor=2 accepted=true failure=none
+ORDER_ENTER label=race-14 sequence=3 actor=1 policy=settle
+ORDER_EXIT label=race-14 sequence=3 actor=1 accepted=false failure=none
+ORDER_ENTER label=race-15 sequence=1 actor=3 policy=settle
+ORDER_EXIT label=race-15 sequence=1 actor=3 accepted=true failure=none
+ORDER_ENTER label=race-15 sequence=2 actor=1 policy=settle
+ORDER_EXIT label=race-15 sequence=2 actor=1 accepted=true failure=none
+ORDER_ENTER label=race-15 sequence=3 actor=2 policy=settle
+ORDER_EXIT label=race-15 sequence=3 actor=2 accepted=false failure=none
+ORDER_ENTER label=race-16 sequence=1 actor=2 policy=settle
+ORDER_EXIT label=race-16 sequence=1 actor=2 accepted=true failure=none
+ORDER_ENTER label=race-16 sequence=2 actor=1 policy=settle
+ORDER_EXIT label=race-16 sequence=2 actor=1 accepted=false failure=none
+ORDER_ENTER label=race-16 sequence=3 actor=3 policy=settle
+ORDER_EXIT label=race-16 sequence=3 actor=3 accepted=true failure=none
+ORDER_ENTER label=race-17 sequence=1 actor=3 policy=settle
+ORDER_EXIT label=race-17 sequence=1 actor=3 accepted=true failure=none
+ORDER_ENTER label=race-17 sequence=2 actor=2 policy=settle
+ORDER_EXIT label=race-17 sequence=2 actor=2 accepted=true failure=none
+ORDER_ENTER label=race-17 sequence=3 actor=1 policy=settle
+ORDER_EXIT label=race-17 sequence=3 actor=1 accepted=false failure=none

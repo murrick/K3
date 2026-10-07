@@ -1,0 +1,30 @@
+{
+  "order": {
+    "Mind.java": {
+      "all_original_code_recovered_byte_for_byte": true,
+      "sha256": "8a2d7adca921be94a74ebdd5c50b4f6239b8c4d4afdf79b75e84f6e0b7dea76b"
+    },
+    "Linker.java": {
+      "all_original_code_recovered_byte_for_byte": true,
+      "sha256": "64a9f8001b4bae4eaab1d51ddbc6ae6d8f769d41dad050811184bb36ae8ea543"
+    },
+    "factory/TValueFactory.java": {
+      "all_original_code_recovered_byte_for_byte": true,
+      "sha256": "f8a5c5d846ce2dd2f7d9b2818a10181ed38f3619b142f99d5fa498214237a8c5"
+    }
+  },
+  "shadow": {
+    "Mind.java": {
+      "all_original_code_recovered_byte_for_byte": true,
+      "sha256": "8a2d7adca921be94a74ebdd5c50b4f6239b8c4d4afdf79b75e84f6e0b7dea76b"
+    },
+    "Linker.java": {
+      "all_original_code_recovered_byte_for_byte": true,
+      "sha256": "64a9f8001b4bae4eaab1d51ddbc6ae6d8f769d41dad050811184bb36ae8ea543"
+    },
+    "factory/TValueFactory.java": {
+      "all_original_code_recovered_byte_for_byte": true,
+      "sha256": "f8a5c5d846ce2dd2f7d9b2818a10181ed38f3619b142f99d5fa498214237a8c5"
+    }
+  }
+}
