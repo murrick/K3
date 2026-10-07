@@ -1,0 +1,30 @@
+Testing: set_08_03
+PROCESS 2 START: 0/0
+PROCESS 3 START: 0/0
+PROCESS 1 START: 0/0
+PROCESS 3 STOP: 3/3
+PROCESS 2 STOP: 4/7
+PROCESS 1 ROLLED BACK
+PROCESS 1 STOP: 4/7
+PROCESSES STOP: 7
+Query: ?$x $y value(1, x, y);
+Result: true
+Solutions (6):
+	Solution 000: !value(1.0,0.0,3000.0); 0 B
+	Solution 002: !value(1.0,0.0,2000.0); 0 B
+	Solution 003: !value(1.0,1.0,3001.0); 0 B
+	Solution 005: !value(1.0,1.0,2001.0); 0 B
+	Solution 006: !value(1.0,2.0,3002.0); 0 B
+	Solution 007: !value(1.0,2.0,2002.0); 0 B
+Values (6):
+	Row 001: x=0.0 y=3000.0
+	Row 002: x=0.0 y=2000.0
+	Row 003: x=1.0 y=3001.0
+	Row 004: x=1.0 y=2001.0
+	Row 005: x=2.0 y=3002.0
+	Row 006: x=2.0 y=2002.0
+----------------------------------------------------
+OK
+====================================================
+Timing: 0.007 sec
+====================================================

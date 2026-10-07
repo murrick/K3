@@ -1,0 +1,7 @@
+JOURNAL_CHECKPOINT_CASE nested_rollback=omitted nested_commit=batched duplicate=omitted deleted_enumerated=true resurrection=same_id pack=removed reset=empty current_projection=untouched
+JOURNAL_PUBLICATION_CASE mode=accept accepted=true failure=false parent_delta=1
+JOURNAL_PUBLICATION_CASE mode=reject accepted=false failure=false parent_delta=0
+JOURNAL_PUBLICATION_CASE mode=user-reject accepted=false failure=false parent_delta=0
+JOURNAL_PUBLICATION_CASE mode=exception accepted=false failure=true parent_delta=0
+DIRTY_JOURNAL_OK contexts=26 observations=98 deferred=2 changes=15 resets=1 touches=70 bucketReads=35 seeds=27 mapChanges=3
+TVALUE_DIRTY_JOURNAL_SAFETY_OK checks=62

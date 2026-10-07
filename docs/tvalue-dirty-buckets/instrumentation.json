@@ -1,0 +1,14 @@
+{
+  "base": "c90c3619ef3b9cf2267af0b618bb60c452516913",
+  "production_source_sha256": {
+    "Mind.java": "8a2d7adca921be94a74ebdd5c50b4f6239b8c4d4afdf79b75e84f6e0b7dea76b",
+    "Linker.java": "64a9f8001b4bae4eaab1d51ddbc6ae6d8f769d41dad050811184bb36ae8ea543",
+    "factory/TValueFactory.java": "f8a5c5d846ce2dd2f7d9b2818a10181ed38f3619b142f99d5fa498214237a8c5"
+  },
+  "temporary_source_sha256": {
+    "Mind.java": "06752f7d6d9432f2b63258a60b658d11e747660c0bd6d1a1606785367c745b0e",
+    "Linker.java": "8d66bc88ce7893165c581db6c6e2a5ad6143db10dcd8a836bab0019d8916974e",
+    "factory/TValueFactory.java": "d1c1d394a24a77984477f9184f12257a2ef187ce4414486f4ba39dd05b324d1a"
+  },
+  "scope": "temporary wrappers/hooks only; original settlement bodies, inference kernels and factory algorithms retained"
+}

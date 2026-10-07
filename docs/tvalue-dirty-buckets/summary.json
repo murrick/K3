@@ -1,0 +1,535 @@
+{
+  "base": "c90c3619ef3b9cf2267af0b618bb60c452516913",
+  "production_source_unchanged": true,
+  "current_matrix_jvms": 35,
+  "additional_corpus_retry_jvms": 1,
+  "completed_jvms": 36,
+  "accepted_oracle_jvms": 34,
+  "native_journal_safety_checks_per_mode": 83,
+  "candidate_source_oracles": 4,
+  "sources_per_oracle": 47,
+  "complete_son_snapshots": 9,
+  "all_stderr_empty": true,
+  "native_contract_logs_equal": true,
+  "transaction_full_states_and_work_equal": true,
+  "frozen_complete_corpus_semantics_equal": false,
+  "nonconcurrent_corpus_semantics_equal": true,
+  "ordered_native_publication_checks_per_jvm": 90,
+  "ordered_native_publications": {
+    "on": [
+      {
+        "order": "123",
+        "accepted": "[true,false,true]",
+        "rules": 6,
+        "payload": "!value(1.0,0.0,1000.0); 0 B|!value(1.0,0.0,3000.0); 0 B|!value(1.0,1.0,1001.0); 0 B|!value(1.0,1.0,3001.0); 0 B|!value(1.0,2.0,1002.0); 0 B|!value(1.0,2.0,3002.0); 0 B"
+      },
+      {
+        "order": "132",
+        "accepted": "[true,false,true]",
+        "rules": 6,
+        "payload": "!value(1.0,0.0,1000.0); 0 B|!value(1.0,0.0,3000.0); 0 B|!value(1.0,1.0,1001.0); 0 B|!value(1.0,1.0,3001.0); 0 B|!value(1.0,2.0,1002.0); 0 B|!value(1.0,2.0,3002.0); 0 B"
+      },
+      {
+        "order": "213",
+        "accepted": "[false,true,true]",
+        "rules": 7,
+        "payload": "!value(1.0,0.0,2000.0); 0 B|!value(1.0,0.0,3000.0); 0 B|!value(1.0,1.0,2001.0); 0 B|!value(1.0,1.0,3001.0); 0 B|!value(1.0,2.0,2002.0); 0 B|!value(1.0,2.0,3002.0); 0 B"
+      },
+      {
+        "order": "231",
+        "accepted": "[false,true,true]",
+        "rules": 7,
+        "payload": "!value(1.0,0.0,2000.0); 0 B|!value(1.0,0.0,3000.0); 0 B|!value(1.0,1.0,2001.0); 0 B|!value(1.0,1.0,3001.0); 0 B|!value(1.0,2.0,2002.0); 0 B|!value(1.0,2.0,3002.0); 0 B"
+      },
+      {
+        "order": "312",
+        "accepted": "[true,false,true]",
+        "rules": 6,
+        "payload": "!value(1.0,0.0,1000.0); 0 B|!value(1.0,0.0,3000.0); 0 B|!value(1.0,1.0,1001.0); 0 B|!value(1.0,1.0,3001.0); 0 B|!value(1.0,2.0,1002.0); 0 B|!value(1.0,2.0,3002.0); 0 B"
+      },
+      {
+        "order": "321",
+        "accepted": "[false,true,true]",
+        "rules": 7,
+        "payload": "!value(1.0,0.0,2000.0); 0 B|!value(1.0,0.0,3000.0); 0 B|!value(1.0,1.0,2001.0); 0 B|!value(1.0,1.0,3001.0); 0 B|!value(1.0,2.0,2002.0); 0 B|!value(1.0,2.0,3002.0); 0 B"
+      }
+    ],
+    "off": [
+      {
+        "order": "123",
+        "accepted": "[true,false,true]",
+        "rules": 6,
+        "payload": "!value(1.0,0.0,1000.0); 0 B|!value(1.0,0.0,3000.0); 0 B|!value(1.0,1.0,1001.0); 0 B|!value(1.0,1.0,3001.0); 0 B|!value(1.0,2.0,1002.0); 0 B|!value(1.0,2.0,3002.0); 0 B"
+      },
+      {
+        "order": "132",
+        "accepted": "[true,false,true]",
+        "rules": 6,
+        "payload": "!value(1.0,0.0,1000.0); 0 B|!value(1.0,0.0,3000.0); 0 B|!value(1.0,1.0,1001.0); 0 B|!value(1.0,1.0,3001.0); 0 B|!value(1.0,2.0,1002.0); 0 B|!value(1.0,2.0,3002.0); 0 B"
+      },
+      {
+        "order": "213",
+        "accepted": "[false,true,true]",
+        "rules": 7,
+        "payload": "!value(1.0,0.0,2000.0); 0 B|!value(1.0,0.0,3000.0); 0 B|!value(1.0,1.0,2001.0); 0 B|!value(1.0,1.0,3001.0); 0 B|!value(1.0,2.0,2002.0); 0 B|!value(1.0,2.0,3002.0); 0 B"
+      },
+      {
+        "order": "231",
+        "accepted": "[false,true,true]",
+        "rules": 7,
+        "payload": "!value(1.0,0.0,2000.0); 0 B|!value(1.0,0.0,3000.0); 0 B|!value(1.0,1.0,2001.0); 0 B|!value(1.0,1.0,3001.0); 0 B|!value(1.0,2.0,2002.0); 0 B|!value(1.0,2.0,3002.0); 0 B"
+      },
+      {
+        "order": "312",
+        "accepted": "[true,false,true]",
+        "rules": 6,
+        "payload": "!value(1.0,0.0,1000.0); 0 B|!value(1.0,0.0,3000.0); 0 B|!value(1.0,1.0,1001.0); 0 B|!value(1.0,1.0,3001.0); 0 B|!value(1.0,2.0,1002.0); 0 B|!value(1.0,2.0,3002.0); 0 B"
+      },
+      {
+        "order": "321",
+        "accepted": "[false,true,true]",
+        "rules": 7,
+        "payload": "!value(1.0,0.0,2000.0); 0 B|!value(1.0,0.0,3000.0); 0 B|!value(1.0,1.0,2001.0); 0 B|!value(1.0,1.0,3001.0); 0 B|!value(1.0,2.0,2002.0); 0 B|!value(1.0,2.0,3002.0); 0 B"
+      }
+    ]
+  },
+  "journal_traces": {
+    "journal-off-DependencyLifecycleWitness.trace.gz": {
+      "contexts": 8,
+      "observations": 19,
+      "changes": 3,
+      "resets": 0,
+      "seed_buckets": 0,
+      "authority_buckets": 3,
+      "deferred": 0,
+      "touches": 7,
+      "bucketReads": 3,
+      "seeds": 8,
+      "mapChanges": 0,
+      "retired": 3,
+      "transitions": {
+        "added": 5,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-off-ExactCandidateReplayRunner.trace.gz": {
+      "contexts": 378,
+      "observations": 2966,
+      "changes": 2602,
+      "resets": 3,
+      "seed_buckets": 7172,
+      "authority_buckets": 66119,
+      "deferred": 0,
+      "touches": 118873,
+      "bucketReads": 21542,
+      "seeds": 381,
+      "mapChanges": 0,
+      "retired": 375,
+      "transitions": {
+        "added": 2976,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-off-FrontierDependencyWitness.trace.gz": {
+      "contexts": 10,
+      "observations": 30,
+      "changes": 2,
+      "resets": 0,
+      "seed_buckets": 0,
+      "authority_buckets": 2,
+      "deferred": 0,
+      "touches": 5,
+      "bucketReads": 2,
+      "seeds": 10,
+      "mapChanges": 0,
+      "retired": 7,
+      "transitions": {
+        "added": 4,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-off-KangerLinkerDonorScopeSafetyRunner.trace.gz": {
+      "contexts": 96,
+      "observations": 304,
+      "changes": 0,
+      "resets": 0,
+      "seed_buckets": 0,
+      "authority_buckets": 0,
+      "deferred": 0,
+      "touches": 12,
+      "bucketReads": 0,
+      "seeds": 96,
+      "mapChanges": 0,
+      "retired": 88,
+      "transitions": {
+        "added": 0,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-off-LatentSolveSyncTransactionRunner.trace.gz": {
+      "contexts": 94,
+      "observations": 502,
+      "changes": 110,
+      "resets": 0,
+      "seed_buckets": 356,
+      "authority_buckets": 2100,
+      "deferred": 0,
+      "touches": 1596,
+      "bucketReads": 352,
+      "seeds": 94,
+      "mapChanges": 0,
+      "retired": 93,
+      "transitions": {
+        "added": 156,
+        "removed": 4,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-off-TValueDirtyJournalSafetyRunner.trace.gz": {
+      "contexts": 33,
+      "observations": 128,
+      "changes": 25,
+      "resets": 1,
+      "seed_buckets": 20,
+      "authority_buckets": 97,
+      "deferred": 2,
+      "touches": 80,
+      "bucketReads": 46,
+      "seeds": 34,
+      "mapChanges": 13,
+      "retired": 27,
+      "transitions": {
+        "added": 13,
+        "removed": 2,
+        "deleted": 7,
+        "resurrected": 4,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-off-TValueOrderedPublicationRunner.trace.gz": {
+      "contexts": 180,
+      "observations": 780,
+      "changes": 12,
+      "resets": 0,
+      "seed_buckets": 0,
+      "authority_buckets": 48,
+      "deferred": 0,
+      "touches": 198,
+      "bucketReads": 24,
+      "seeds": 180,
+      "mapChanges": 0,
+      "retired": 174,
+      "transitions": {
+        "added": 54,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-DependencyLifecycleWitness.trace.gz": {
+      "contexts": 8,
+      "observations": 19,
+      "changes": 3,
+      "resets": 0,
+      "seed_buckets": 0,
+      "authority_buckets": 3,
+      "deferred": 0,
+      "touches": 7,
+      "bucketReads": 3,
+      "seeds": 8,
+      "mapChanges": 0,
+      "retired": 3,
+      "transitions": {
+        "added": 5,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-ExactCandidateReplayRunner.trace.gz": {
+      "contexts": 378,
+      "observations": 2966,
+      "changes": 2602,
+      "resets": 3,
+      "seed_buckets": 7172,
+      "authority_buckets": 66119,
+      "deferred": 0,
+      "touches": 118873,
+      "bucketReads": 21542,
+      "seeds": 381,
+      "mapChanges": 0,
+      "retired": 375,
+      "transitions": {
+        "added": 2976,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-FrontierDependencyWitness.trace.gz": {
+      "contexts": 10,
+      "observations": 30,
+      "changes": 2,
+      "resets": 0,
+      "seed_buckets": 0,
+      "authority_buckets": 2,
+      "deferred": 0,
+      "touches": 5,
+      "bucketReads": 2,
+      "seeds": 10,
+      "mapChanges": 0,
+      "retired": 7,
+      "transitions": {
+        "added": 4,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-KangerLinkerDonorScopeSafetyRunner.trace.gz": {
+      "contexts": 96,
+      "observations": 304,
+      "changes": 0,
+      "resets": 0,
+      "seed_buckets": 0,
+      "authority_buckets": 0,
+      "deferred": 0,
+      "touches": 12,
+      "bucketReads": 0,
+      "seeds": 96,
+      "mapChanges": 0,
+      "retired": 88,
+      "transitions": {
+        "added": 0,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-LatentSolveSyncTransactionRunner.trace.gz": {
+      "contexts": 94,
+      "observations": 502,
+      "changes": 110,
+      "resets": 0,
+      "seed_buckets": 356,
+      "authority_buckets": 2100,
+      "deferred": 0,
+      "touches": 1596,
+      "bucketReads": 352,
+      "seeds": 94,
+      "mapChanges": 0,
+      "retired": 93,
+      "transitions": {
+        "added": 156,
+        "removed": 4,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-LatentSubstitutionCorpusRunner.trace.gz": {
+      "contexts": 1496,
+      "observations": 8620,
+      "changes": 4113,
+      "resets": 126,
+      "seed_buckets": 10307,
+      "authority_buckets": 88192,
+      "deferred": 0,
+      "touches": 146877,
+      "bucketReads": 27439,
+      "seeds": 1622,
+      "mapChanges": 21,
+      "retired": 1479,
+      "transitions": {
+        "added": 6196,
+        "removed": 3,
+        "deleted": 21,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-SonProfileRunner.trace.gz": {
+      "contexts": 836,
+      "observations": 7503,
+      "changes": 7458,
+      "resets": 1,
+      "seed_buckets": 21144,
+      "authority_buckets": 194116,
+      "deferred": 0,
+      "touches": 349947,
+      "bucketReads": 63144,
+      "seeds": 837,
+      "mapChanges": 0,
+      "retired": 835,
+      "transitions": {
+        "added": 8282,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-TValueDirtyJournalSafetyRunner.trace.gz": {
+      "contexts": 33,
+      "observations": 128,
+      "changes": 25,
+      "resets": 1,
+      "seed_buckets": 20,
+      "authority_buckets": 97,
+      "deferred": 2,
+      "touches": 80,
+      "bucketReads": 46,
+      "seeds": 34,
+      "mapChanges": 13,
+      "retired": 27,
+      "transitions": {
+        "added": 13,
+        "removed": 2,
+        "deleted": 7,
+        "resurrected": 4,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-TValueOrderedPublicationRunner.trace.gz": {
+      "contexts": 180,
+      "observations": 780,
+      "changes": 12,
+      "resets": 0,
+      "seed_buckets": 0,
+      "authority_buckets": 48,
+      "deferred": 0,
+      "touches": 198,
+      "bucketReads": 24,
+      "seeds": 180,
+      "mapChanges": 0,
+      "retired": 174,
+      "transitions": {
+        "added": 54,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-on-repeat-SonProfileRunner.trace.gz": {
+      "contexts": 836,
+      "observations": 7503,
+      "changes": 7458,
+      "resets": 1,
+      "seed_buckets": 21144,
+      "authority_buckets": 194116,
+      "deferred": 0,
+      "touches": 349947,
+      "bucketReads": 63144,
+      "seeds": 837,
+      "mapChanges": 0,
+      "retired": 835,
+      "transitions": {
+        "added": 8282,
+        "removed": 0,
+        "deleted": 0,
+        "resurrected": 0,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    },
+    "journal-verify-TValueDirtyJournalSafetyRunner.trace.gz": {
+      "contexts": 33,
+      "observations": 128,
+      "changes": 25,
+      "resets": 1,
+      "seed_buckets": 20,
+      "authority_buckets": 97,
+      "deferred": 2,
+      "touches": 80,
+      "bucketReads": 46,
+      "seeds": 34,
+      "mapChanges": 13,
+      "retired": 27,
+      "transitions": {
+        "added": 13,
+        "removed": 2,
+        "deleted": 7,
+        "resurrected": 4,
+        "order_changes": 0
+      },
+      "replay_matches_every_authority_view": true
+    }
+  },
+  "rejected_corpus_attempts": 2,
+  "archived_corpus_snapshot_replay": {
+    "contexts": 1496,
+    "observations": 8620,
+    "changes": 4113,
+    "resets": 126,
+    "seed_buckets": 10307,
+    "authority_buckets": 88192,
+    "deferred": 0,
+    "touches": 146877,
+    "bucketReads": 27439,
+    "seeds": 1622,
+    "mapChanges": 21,
+    "retired": 1479,
+    "transitions": {
+      "added": 6196,
+      "removed": 3,
+      "deleted": 21,
+      "resurrected": 0,
+      "order_changes": 0
+    },
+    "replay_matches_every_authority_view": true
+  },
+  "prior_complete_trace_streams_equal": [
+    "journal-off-DependencyLifecycleWitness.trace.gz",
+    "journal-off-ExactCandidateReplayRunner.trace.gz",
+    "journal-off-FrontierDependencyWitness.trace.gz",
+    "journal-off-KangerLinkerDonorScopeSafetyRunner.trace.gz",
+    "journal-off-LatentSolveSyncTransactionRunner.trace.gz",
+    "journal-on-DependencyLifecycleWitness.trace.gz",
+    "journal-on-ExactCandidateReplayRunner.trace.gz",
+    "journal-on-FrontierDependencyWitness.trace.gz",
+    "journal-on-KangerLinkerDonorScopeSafetyRunner.trace.gz",
+    "journal-on-LatentSolveSyncTransactionRunner.trace.gz",
+    "journal-on-SonProfileRunner.trace.gz",
+    "journal-on-repeat-SonProfileRunner.trace.gz"
+  ],
+  "unsupported_metadata_gap_detected_jvms": 3,
+  "total_replayed_authority_views": 33212,
+  "randomized_corpus_status": "full frozen equivalence is unqualified when a valid alternate native publication order wins; archived attempts retained",
+  "limitations": "dirty selection with authoritative bucket reads and full snapshot checking; no event-sourced reconstruction or production speedup; boundary-batched net canonical projection; no mutation-by-mutation causal log, scheduler consumer, runtime speedup or arbitrary-extension/concurrency guarantee"
+}

@@ -1,0 +1,6 @@
+{
+  "source": "docs/resident-snapshots-evidence/LatentSubstitutionCorpusRunner-true.log",
+  "history_contains_uninstrumented_native_final_size_7": true,
+  "native_query_solutions": 6,
+  "scope": "prior native optimization-flag build, not this exact baseline; establishes an earlier occurrence, not causal independence of this observer"
+}

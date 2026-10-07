@@ -1,0 +1,235 @@
+BASELINE ctx=1 mind=0 generation=1 invocation=0 reason=constructed view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=constructed view={}
+BASELINE ctx=2 mind=1 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=2 mind=1 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=before-settlement view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=after-settlement view={}
+RETIRE ctx=2 mind=1 generation=2 invocation=0
+BASELINE ctx=3 mind=2 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=3 mind=2 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=before-settlement view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=after-settlement view={}
+RETIRE ctx=3 mind=2 generation=2 invocation=0
+BASELINE ctx=4 mind=3 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=4 mind=3 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=before-settlement view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=after-settlement view={}
+RETIRE ctx=4 mind=3 generation=2 invocation=0
+BASELINE ctx=5 mind=4 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=5 mind=4 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=before-settlement view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=after-settlement view={}
+RETIRE ctx=5 mind=4 generation=2 invocation=0
+TOUCH ctx=1 mind=0 generation=1 invocation=0 reason=add variable=0 value=0 term=1
+CHANGE ctx=1 mind=0 generation=1 invocation=0 reason=baseline-add variable=0 before=[] after=[0:1:0]
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=baseline-add view={0=[0:1:0]}
+TOUCH ctx=1 mind=0 generation=1 invocation=0 reason=add variable=0 value=1 term=4
+TOUCH ctx=1 mind=0 generation=1 invocation=0 reason=add variable=0 value=2 term=6
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=outer-rollback view={0=[0:1:0]}
+TOUCH ctx=1 mind=0 generation=1 invocation=0 reason=add variable=0 value=3 term=4
+TOUCH ctx=1 mind=0 generation=1 invocation=0 reason=add variable=0 value=4 term=6
+CHANGE ctx=1 mind=0 generation=1 invocation=0 reason=outer-commit variable=0 before=[0:1:0] after=[0:1:0,3:4:0,4:6:0]
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=outer-commit view={0=[0:1:0,3:4:0,4:6:0]}
+TOUCH ctx=1 mind=0 generation=1 invocation=0 reason=visibility variable=0 value=3 term=4
+TOUCH ctx=1 mind=0 generation=1 invocation=0 reason=add variable=0 value=3 term=4
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=duplicate-add view={0=[0:1:0,3:4:0,4:6:0]}
+TOUCH ctx=1 mind=0 generation=1 invocation=0 reason=visibility variable=0 value=3 term=4
+MAP_DIRTY ctx=1 mind=0 generation=1 invocation=0 value=3 variable=0
+CHANGE ctx=1 mind=0 generation=1 invocation=0 reason=logical-delete variable=0 before=[0:1:0,3:4:0,4:6:0] after=[0:1:0,3:4:1,4:6:0]
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=logical-delete view={0=[0:1:0,3:4:1,4:6:0]}
+TOUCH ctx=1 mind=0 generation=1 invocation=0 reason=visibility variable=0 value=3 term=4
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=duplicate-delete view={0=[0:1:0,3:4:1,4:6:0]}
+TOUCH ctx=1 mind=0 generation=1 invocation=0 reason=visibility variable=0 value=3 term=4
+TOUCH ctx=1 mind=0 generation=1 invocation=0 reason=add variable=0 value=3 term=4
+MAP_DIRTY ctx=1 mind=0 generation=1 invocation=0 value=3 variable=0
+CHANGE ctx=1 mind=0 generation=1 invocation=0 reason=resurrect variable=0 before=[0:1:0,3:4:1,4:6:0] after=[0:1:0,3:4:0,4:6:0]
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=resurrect view={0=[0:1:0,3:4:0,4:6:0]}
+TOUCH ctx=1 mind=0 generation=1 invocation=0 reason=visibility variable=0 value=3 term=4
+MAP_DIRTY ctx=1 mind=0 generation=1 invocation=0 value=3 variable=0
+CHANGE ctx=1 mind=0 generation=1 invocation=0 reason=before-pack variable=0 before=[0:1:0,3:4:0,4:6:0] after=[0:1:0,3:4:1,4:6:0]
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=before-pack view={0=[0:1:0,3:4:1,4:6:0]}
+TOUCH ctx=1 mind=0 generation=1 invocation=0 reason=remove variable=0 value=3 term=4
+CHANGE ctx=1 mind=0 generation=1 invocation=0 reason=after-pack variable=0 before=[0:1:0,3:4:1,4:6:0] after=[0:1:0,4:6:0]
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=after-pack view={0=[0:1:0,4:6:0]}
+RESET ctx=1 mind=0 generation=2 invocation=0 reason=factory-reset view={}
+VIEW ctx=1 mind=0 generation=2 invocation=0 reason=factory-reset view={}
+BASELINE ctx=6 mind=0 generation=1 invocation=0 reason=constructed view={}
+VIEW ctx=6 mind=0 generation=1 invocation=0 reason=constructed view={}
+TOUCH ctx=6 mind=0 generation=1 invocation=0 reason=add variable=0 value=0 term=1
+CHANGE ctx=6 mind=0 generation=1 invocation=0 reason=parent-baseline variable=0 before=[] after=[0:1:0]
+VIEW ctx=6 mind=0 generation=1 invocation=0 reason=parent-baseline view={0=[0:1:0]}
+BASELINE ctx=7 mind=1 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=7 mind=1 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+BASELINE ctx=8 mind=2 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=8 mind=2 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=7 mind=1 generation=2 invocation=0 reason=before-settlement view={0=[0:1:0]}
+TOUCH ctx=7 mind=1 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=8 mind=2 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+VIEW ctx=7 mind=1 generation=2 invocation=0 reason=after-settlement view={0=[0:1:0]}
+RETIRE ctx=8 mind=2 generation=2 invocation=0
+BASELINE ctx=9 mind=3 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=9 mind=3 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=7 mind=1 generation=2 invocation=0 reason=before-settlement view={0=[0:1:0]}
+TOUCH ctx=7 mind=1 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=9 mind=3 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+VIEW ctx=7 mind=1 generation=2 invocation=0 reason=after-settlement view={0=[0:1:0]}
+RETIRE ctx=9 mind=3 generation=2 invocation=0
+TOUCH ctx=7 mind=1 generation=2 invocation=0 reason=add variable=0 value=1 term=3
+CHANGE ctx=7 mind=1 generation=2 invocation=0 reason=child-add variable=0 before=[0:1:0] after=[0:1:0,1:3:0]
+VIEW ctx=7 mind=1 generation=2 invocation=0 reason=child-add view={0=[0:1:0,1:3:0]}
+VIEW ctx=6 mind=0 generation=1 invocation=0 reason=parent-before-child-settle view={0=[0:1:0]}
+VIEW ctx=6 mind=0 generation=1 invocation=0 reason=before-settlement view={0=[0:1:0]}
+TOUCH ctx=6 mind=0 generation=1 invocation=0 reason=promote variable=0 value=1 term=3
+TOUCH ctx=7 mind=1 generation=2 invocation=0 reason=promote variable=0 value=1 term=3
+TOUCH ctx=6 mind=0 generation=1 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=7 mind=1 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+CHANGE ctx=6 mind=0 generation=1 invocation=0 reason=after-settlement variable=0 before=[0:1:0] after=[0:1:0,1:3:0]
+VIEW ctx=6 mind=0 generation=1 invocation=0 reason=after-settlement view={0=[0:1:0,1:3:0]}
+RETIRE ctx=7 mind=1 generation=2 invocation=0
+BASELINE ctx=10 mind=0 generation=1 invocation=0 reason=constructed view={}
+VIEW ctx=10 mind=0 generation=1 invocation=0 reason=constructed view={}
+TOUCH ctx=10 mind=0 generation=1 invocation=0 reason=add variable=0 value=0 term=1
+CHANGE ctx=10 mind=0 generation=1 invocation=0 reason=parent-baseline variable=0 before=[] after=[0:1:0]
+VIEW ctx=10 mind=0 generation=1 invocation=0 reason=parent-baseline view={0=[0:1:0]}
+BASELINE ctx=11 mind=1 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=11 mind=1 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+BASELINE ctx=12 mind=2 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=12 mind=2 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=11 mind=1 generation=2 invocation=0 reason=before-settlement view={0=[0:1:0]}
+TOUCH ctx=11 mind=1 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=12 mind=2 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+VIEW ctx=11 mind=1 generation=2 invocation=0 reason=after-settlement view={0=[0:1:0]}
+RETIRE ctx=12 mind=2 generation=2 invocation=0
+TOUCH ctx=11 mind=1 generation=2 invocation=0 reason=add variable=0 value=1 term=3
+CHANGE ctx=11 mind=1 generation=2 invocation=0 reason=child-add variable=0 before=[0:1:0] after=[0:1:0,1:3:0]
+VIEW ctx=11 mind=1 generation=2 invocation=0 reason=child-add view={0=[0:1:0,1:3:0]}
+VIEW ctx=10 mind=0 generation=1 invocation=0 reason=parent-before-child-settle view={0=[0:1:0]}
+BASELINE ctx=13 mind=3 generation=2 invocation=0 reason=constructed view={0=[0:1:0,1:3:0]}
+VIEW ctx=13 mind=3 generation=2 invocation=0 reason=constructed view={0=[0:1:0,1:3:0]}
+VIEW ctx=11 mind=1 generation=2 invocation=0 reason=before-settlement view={0=[0:1:0,1:3:0]}
+TOUCH ctx=11 mind=1 generation=2 invocation=0 reason=promote variable=0 value=1 term=3
+TOUCH ctx=13 mind=3 generation=2 invocation=0 reason=promote variable=0 value=1 term=3
+TOUCH ctx=11 mind=1 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=13 mind=3 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+VIEW ctx=11 mind=1 generation=2 invocation=0 reason=after-settlement view={0=[0:1:0,1:3:0]}
+RETIRE ctx=13 mind=3 generation=2 invocation=0
+BASELINE ctx=14 mind=4 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=14 mind=4 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+BASELINE ctx=15 mind=5 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=15 mind=5 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=14 mind=4 generation=2 invocation=0 reason=before-settlement view={0=[0:1:0]}
+TOUCH ctx=14 mind=4 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=15 mind=5 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+VIEW ctx=14 mind=4 generation=2 invocation=0 reason=after-settlement view={0=[0:1:0]}
+RETIRE ctx=15 mind=5 generation=2 invocation=0
+VIEW ctx=10 mind=0 generation=1 invocation=0 reason=before-settlement view={0=[0:1:0]}
+TOUCH ctx=10 mind=0 generation=1 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=11 mind=1 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=14 mind=4 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+VIEW ctx=10 mind=0 generation=1 invocation=0 reason=after-settlement view={0=[0:1:0]}
+RETIRE ctx=14 mind=4 generation=2 invocation=0
+VIEW ctx=10 mind=0 generation=1 invocation=0 reason=before-settlement view={0=[0:1:0]}
+TOUCH ctx=10 mind=0 generation=1 invocation=0 reason=promote variable=0 value=1 term=3
+TOUCH ctx=11 mind=1 generation=2 invocation=0 reason=promote variable=0 value=1 term=3
+TOUCH ctx=10 mind=0 generation=1 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=11 mind=1 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+VIEW ctx=10 mind=0 generation=1 invocation=0 reason=after-settlement view={0=[0:1:0]}
+RETIRE ctx=11 mind=1 generation=2 invocation=0
+BASELINE ctx=16 mind=0 generation=1 invocation=0 reason=constructed view={}
+VIEW ctx=16 mind=0 generation=1 invocation=0 reason=constructed view={}
+TOUCH ctx=16 mind=0 generation=1 invocation=0 reason=add variable=0 value=0 term=1
+CHANGE ctx=16 mind=0 generation=1 invocation=0 reason=parent-baseline variable=0 before=[] after=[0:1:0]
+VIEW ctx=16 mind=0 generation=1 invocation=0 reason=parent-baseline view={0=[0:1:0]}
+BASELINE ctx=17 mind=1 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=17 mind=1 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+BASELINE ctx=18 mind=2 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=18 mind=2 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=17 mind=1 generation=2 invocation=0 reason=before-settlement view={0=[0:1:0]}
+TOUCH ctx=17 mind=1 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=18 mind=2 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+VIEW ctx=17 mind=1 generation=2 invocation=0 reason=after-settlement view={0=[0:1:0]}
+RETIRE ctx=18 mind=2 generation=2 invocation=0
+TOUCH ctx=17 mind=1 generation=2 invocation=0 reason=add variable=0 value=1 term=3
+CHANGE ctx=17 mind=1 generation=2 invocation=0 reason=child-add variable=0 before=[0:1:0] after=[0:1:0,1:3:0]
+VIEW ctx=17 mind=1 generation=2 invocation=0 reason=child-add view={0=[0:1:0,1:3:0]}
+VIEW ctx=16 mind=0 generation=1 invocation=0 reason=parent-before-child-settle view={0=[0:1:0]}
+BASELINE ctx=19 mind=3 generation=2 invocation=0 reason=constructed view={0=[0:1:0,1:3:0]}
+VIEW ctx=19 mind=3 generation=2 invocation=0 reason=constructed view={0=[0:1:0,1:3:0]}
+VIEW ctx=17 mind=1 generation=2 invocation=0 reason=before-settlement view={0=[0:1:0,1:3:0]}
+TOUCH ctx=17 mind=1 generation=2 invocation=0 reason=promote variable=0 value=1 term=3
+TOUCH ctx=19 mind=3 generation=2 invocation=0 reason=promote variable=0 value=1 term=3
+TOUCH ctx=17 mind=1 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=19 mind=3 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+VIEW ctx=17 mind=1 generation=2 invocation=0 reason=after-settlement view={0=[0:1:0,1:3:0]}
+RETIRE ctx=19 mind=3 generation=2 invocation=0
+BASELINE ctx=20 mind=4 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=20 mind=4 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+BASELINE ctx=21 mind=5 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=21 mind=5 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=20 mind=4 generation=2 invocation=0 reason=before-settlement view={0=[0:1:0]}
+TOUCH ctx=20 mind=4 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=21 mind=5 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+VIEW ctx=20 mind=4 generation=2 invocation=0 reason=after-settlement view={0=[0:1:0]}
+RETIRE ctx=21 mind=5 generation=2 invocation=0
+VIEW ctx=16 mind=0 generation=1 invocation=0 reason=before-settlement view={0=[0:1:0]}
+TOUCH ctx=16 mind=0 generation=1 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=17 mind=1 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=20 mind=4 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+VIEW ctx=16 mind=0 generation=1 invocation=0 reason=after-settlement view={0=[0:1:0]}
+RETIRE ctx=20 mind=4 generation=2 invocation=0
+VIEW ctx=16 mind=0 generation=1 invocation=0 reason=before-settlement view={0=[0:1:0]}
+TOUCH ctx=16 mind=0 generation=1 invocation=0 reason=promote variable=0 value=1 term=3
+TOUCH ctx=17 mind=1 generation=2 invocation=0 reason=promote variable=0 value=1 term=3
+TOUCH ctx=16 mind=0 generation=1 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=17 mind=1 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+VIEW ctx=16 mind=0 generation=1 invocation=0 reason=after-settlement view={0=[0:1:0]}
+VIEW ctx=17 mind=1 generation=2 invocation=0 reason=live-rejected-child view={0=[0:1:0,1:3:0]}
+VIEW ctx=16 mind=0 generation=1 invocation=0 reason=before-settlement view={0=[0:1:0]}
+VIEW ctx=16 mind=0 generation=1 invocation=0 reason=after-settlement view={0=[0:1:0]}
+RETIRE ctx=17 mind=1 generation=2 invocation=0
+BASELINE ctx=22 mind=0 generation=1 invocation=0 reason=constructed view={}
+VIEW ctx=22 mind=0 generation=1 invocation=0 reason=constructed view={}
+TOUCH ctx=22 mind=0 generation=1 invocation=0 reason=add variable=0 value=0 term=1
+CHANGE ctx=22 mind=0 generation=1 invocation=0 reason=parent-baseline variable=0 before=[] after=[0:1:0]
+VIEW ctx=22 mind=0 generation=1 invocation=0 reason=parent-baseline view={0=[0:1:0]}
+BASELINE ctx=23 mind=1 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=23 mind=1 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+BASELINE ctx=24 mind=2 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=24 mind=2 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=23 mind=1 generation=2 invocation=0 reason=before-settlement view={0=[0:1:0]}
+TOUCH ctx=23 mind=1 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=24 mind=2 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+VIEW ctx=23 mind=1 generation=2 invocation=0 reason=after-settlement view={0=[0:1:0]}
+RETIRE ctx=24 mind=2 generation=2 invocation=0
+TOUCH ctx=23 mind=1 generation=2 invocation=0 reason=add variable=0 value=1 term=3
+CHANGE ctx=23 mind=1 generation=2 invocation=0 reason=child-add variable=0 before=[0:1:0] after=[0:1:0,1:3:0]
+VIEW ctx=23 mind=1 generation=2 invocation=0 reason=child-add view={0=[0:1:0,1:3:0]}
+VIEW ctx=22 mind=0 generation=1 invocation=0 reason=parent-before-child-settle view={0=[0:1:0]}
+BASELINE ctx=25 mind=3 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=25 mind=3 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+BASELINE ctx=26 mind=4 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=26 mind=4 generation=2 invocation=0 reason=constructed view={0=[0:1:0]}
+VIEW ctx=25 mind=3 generation=2 invocation=0 reason=before-settlement view={0=[0:1:0]}
+TOUCH ctx=25 mind=3 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=26 mind=4 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+VIEW ctx=25 mind=3 generation=2 invocation=0 reason=after-settlement view={0=[0:1:0]}
+RETIRE ctx=26 mind=4 generation=2 invocation=0
+VIEW ctx=22 mind=0 generation=1 invocation=0 reason=before-settlement view={0=[0:1:0]}
+TOUCH ctx=22 mind=0 generation=1 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=23 mind=1 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=25 mind=3 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+VIEW ctx=22 mind=0 generation=1 invocation=0 reason=after-settlement view={0=[0:1:0]}
+RETIRE ctx=25 mind=3 generation=2 invocation=0
+VIEW ctx=22 mind=0 generation=1 invocation=0 reason=before-settlement view={0=[0:1:0]}
+TOUCH ctx=22 mind=0 generation=1 invocation=0 reason=promote variable=0 value=1 term=3
+TOUCH ctx=23 mind=1 generation=2 invocation=0 reason=promote variable=0 value=1 term=3
+TOUCH ctx=22 mind=0 generation=1 invocation=0 reason=promote variable=0 value=0 term=1
+TOUCH ctx=23 mind=1 generation=2 invocation=0 reason=promote variable=0 value=0 term=1
+VIEW ctx=22 mind=0 generation=1 invocation=0 reason=after-settlement view={0=[0:1:0]}
+RETIRE ctx=23 mind=1 generation=2 invocation=0
+VIEW ctx=1 mind=0 generation=2 invocation=0 reason=session-end view={}
+VIEW ctx=6 mind=0 generation=1 invocation=0 reason=session-end view={0=[0:1:0,1:3:0]}
+VIEW ctx=10 mind=0 generation=1 invocation=0 reason=session-end view={0=[0:1:0]}
+VIEW ctx=16 mind=0 generation=1 invocation=0 reason=session-end view={0=[0:1:0]}
+VIEW ctx=22 mind=0 generation=1 invocation=0 reason=session-end view={0=[0:1:0]}
+DIRTY_JOURNAL_OK contexts=26 observations=98 deferred=2 changes=15 resets=1 touches=70 bucketReads=35 seeds=27 mapChanges=3
