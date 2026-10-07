@@ -312,7 +312,23 @@ public final class FrontierDomain {
         return result;
     }
 
-    private static final class ArgumentState {
+    /** Creates a detached child template from native-match positional slots. */
+    static FrontierDomain projected(String predicateName, boolean negated,
+                                    List<ArgumentState> arguments) {
+        List<VariableState> variables = new ArrayList<VariableState>();
+        Set<String> declared = new LinkedHashSet<String>();
+        for (ArgumentState argument : arguments) {
+            if (argument.isVariable() && declared.add(argument.getVariableName())) {
+                variables.add(new VariableState(argument.getVariableName(),
+                        argument.getVariableIndex(), null));
+            }
+        }
+        String source = renderQuery(predicateName, negated, arguments, variables);
+        return new FrontierDomain(predicateName, negated, source, source,
+                arguments, variables, variables.isEmpty());
+    }
+
+    static final class ArgumentState {
 
         private final String variableName;
         private final int variableIndex;

@@ -779,6 +779,12 @@ public class Linker {
                                     }
                                 }
 
+                                if (!blockRight && !blockLeft
+                                        && mind.getCausalFrontierCapture() != null) {
+                                    mind.getCausalFrontierCapture().observePair(
+                                            mind, slave, master, treeMaster);
+                                }
+
                                 if (success) {
                                     for (int i = 0; i < slave.getRange(); ++i) {
 

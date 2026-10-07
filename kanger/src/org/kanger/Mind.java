@@ -170,6 +170,7 @@ public class Mind implements IMind {
     private Boolean queryResult = null;
     private String querySource = "";
     private final List<FrontierDomain> frontierDomains = new ArrayList<>();
+    private CausalFrontierCapture causalFrontierCapture;
     private QueryPass queryPass = QueryPass.SILENCE;
     private List<IContextFederation.ExplainPass> activeExplainPasses;
     private User user = null;
@@ -249,6 +250,7 @@ public class Mind implements IMind {
             debugLevel = root.getDebugLevel();
 
             includeAbstractiveHypothesis = parent.includeAbstractiveHypothesis();
+            causalFrontierCapture = parent.causalFrontierCapture;
             initialized = true;
         } finally {
             if (!initialized) {
@@ -875,11 +877,26 @@ public class Mind implements IMind {
     }
 
     public void link(Rule r, boolean logging) throws Exception {
+        if (causalFrontierCapture != null) {
+            causalFrontierCapture.beginLink(this, r);
+        }
         linker.link(r, logging);
     }
 
     public boolean analyze(Rule rule, boolean logging) throws Exception {
-        return analyzer.analyze(rule, logging);
+        boolean result = analyzer.analyze(rule, logging);
+        if (causalFrontierCapture != null) {
+            causalFrontierCapture.afterAnalyze(this, rule, result);
+        }
+        return result;
+    }
+
+    CausalFrontierCapture getCausalFrontierCapture() {
+        return causalFrontierCapture;
+    }
+
+    void setCausalFrontierCapture(CausalFrontierCapture capture) {
+        causalFrontierCapture = capture;
     }
 
     @Override
