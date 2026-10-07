@@ -32,6 +32,8 @@ class UserTransactionStackSnapshotTest {
             Mind u2 = new Mind(u1);
             assertTrue(Boolean.TRUE.equals(u2.query("!u2_fact;")));
 
+            u1.proposeRevisionDescription("Parent proposal");
+            u2.proposeRevisionDescription("Child proposal");
             UserTransactionStackSnapshot snapshot =
                     UserTransactionStackSnapshot.capture(u2);
             assertEquals(2, snapshot.depth());
@@ -40,6 +42,7 @@ class UserTransactionStackSnapshotTest {
             Mind replayed = snapshot.replay(target.root);
 
             assertEquals(2, replayed.getTransactionLevel());
+            assertEquals("Child proposal", replayed.getProposedRevisionDescription());
             assertTrue(Boolean.TRUE.equals(replayed.query("?target_base;")));
             assertTrue(Boolean.TRUE.equals(replayed.query("?u1_fact;")));
             assertTrue(Boolean.TRUE.equals(replayed.query("?u2_fact;")));
@@ -47,6 +50,7 @@ class UserTransactionStackSnapshotTest {
 
             Mind replayedU1 = (Mind) replayed.getNext();
             replayedU1.release(replayed);
+            assertEquals("Parent proposal", replayedU1.getProposedRevisionDescription());
             assertTrue(Boolean.TRUE.equals(replayedU1.query("?u1_fact;")));
             assertFalse(Boolean.TRUE.equals(replayedU1.query("?u2_fact;")));
 

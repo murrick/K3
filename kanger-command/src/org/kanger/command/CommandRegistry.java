@@ -70,7 +70,7 @@ public final class CommandRegistry {
         SWITCH,
         VERSION,
         RULES,
-        SAVE,
+        PUBLISH,
         USE,
         CLOSE,
         DROP,
@@ -208,7 +208,7 @@ public final class CommandRegistry {
         keyword(Family.CONTEXT, Keyword.SWITCH, "switch");
         keyword(Family.CONTEXT, Keyword.VERSION, "version");
         keyword(Family.CONTEXT, Keyword.RULES, "rules");
-        keyword(Family.CONTEXT, Keyword.SAVE, "save");
+        keyword(Family.CONTEXT, Keyword.PUBLISH, "publish");
         keyword(Family.CONTEXT, Keyword.QUERY, "query");
 
         keyword(Family.STATUS, Keyword.CORE, "core");
@@ -280,9 +280,9 @@ public final class CommandRegistry {
         define(CommandIntent.TX_STATUS, "transaction", "TRANSACTION", "Show current transaction state.", noArgs(), n++);
         define(CommandIntent.TX_START, "transaction start", "TRANSACTION", "Start a child transaction.",
                 noArgs(), aliases("start"), n++);
-        define(CommandIntent.TX_COMMIT, "transaction commit", "TRANSACTION",
+        define(CommandIntent.TX_COMMIT, "transaction commit [description]", "TRANSACTION",
                 "Commit the current transaction or qualified root checkpoint.",
-                noArgs(), aliases("commit"), n++);
+                args("description", "Optional revision description."), aliases("commit"), n++);
         define(CommandIntent.TX_ROLLBACK, "transaction rollback", "TRANSACTION", "Rollback the current child transaction.",
                 noArgs(), aliases("rollback"), n++);
         define(CommandIntent.TX_SQUASH, "transaction squash", "TRANSACTION",
@@ -315,8 +315,8 @@ public final class CommandRegistry {
         define(CommandIntent.CTX_RULES, "ctx rules [<locator>] [all|produced|<id>|tree <id>|comment <id>]", "CONTEXT",
                 "Inspect local and exact-pinned direct Context rules. Rule IDs belong to the displayed Context; transaction levels remain local rule level diagnostics.",
                 args("locator", "Optional current or direct connected Context locator."), n++);
-        define(CommandIntent.CTX_SAVE, "ctx save", "CONTEXT",
-                "Qualify and save explicit working connections as a new local Context revision. Requires a settled current root; unchanged topology creates no revision.", noArgs(), n++);
+        define(CommandIntent.CTX_PUBLISH, "ctx publish [description]", "CONTEXT",
+                "Publish local content and explicit connections as one revision. Collapsing open transactions requires confirmation.", args("description", "Optional publication description."), n++);
         define(CommandIntent.CTX_CONNECT, "ctx connect <locator>", "CONTEXT",
                 "Qualify and connect one direct Context at its current exact revision.",
                 args("locator", "Context locator or DUMB2 logical storage name."), n++);

@@ -51,7 +51,7 @@ import java.util.Queue;
  * Root settlement eventually reaches {@link #flush()}, where
  * {@link ContextStore} publishes one storage-wide revision.</p>
  */
-public final class DB implements IData, IContextFederation {
+public final class DB implements IData, IContextFederation, org.kanger.interfaces.internal.IRevisionPublication {
 
     private IUser user;
     private ContextStore context;
@@ -63,6 +63,7 @@ public final class DB implements IData, IContextFederation {
      * revision state in ConnectionStore; ctx connect/disconnect/switch mutate
      * only this adapter instance until the explicit settled-root save boundary.
      */
+    private String nextRevisionDescription;
     private ConnectionVector workingConnections =
             ConnectionVector.empty();
 
@@ -129,7 +130,11 @@ public final class DB implements IData, IContextFederation {
         requireOpen();
         long before = context.getRevision();
         ConnectionVector pending = workingConnections;
-        context.flush(pending);
+        try {
+            context.flush(pending, nextRevisionDescription == null ? "Updated local Context" : nextRevisionDescription);
+        } finally {
+            nextRevisionDescription = null;
+        }
         if (context.getRevision() != before) {
             // Ordinary authoring advances X without implicitly saving session topology.
             // Requalify exact target pins against the new source revision.
@@ -281,7 +286,7 @@ public final class DB implements IData, IContextFederation {
         return result;
     }
 
-    synchronized long getRevision() {
+    public synchronized long getRevision() {
         return context == null ? -1L : context.getRevision();
     }
 
@@ -541,6 +546,78 @@ public final class DB implements IData, IContextFederation {
         } finally {
             source.close();
         }
+    }
+
+    @Override
+    public synchronized IMind publishContext(IMind source, String description) throws Exception {
+        requireOpen();
+        if (!(source instanceof Mind) || source.getUser() != user || user.getCurrentMind() != source) {
+            throw new CommandErrorException("Publication requires the current canonical Context");
+        }
+        ((Mind) source).requirePublicationQuiescence();
+        description = org.kanger.RevisionDescriptions.validate(description);
+        Path workspace = Files.createTempDirectory(context.getLocation().toAbsolutePath().getParent(), ".publication-");
+        Path candidateLocation = workspace.resolve("candidate");
+        DB candidateData = null;
+        User candidateUser = null;
+        boolean accepted = false;
+        Exception primaryFailure = null;
+        try {
+            try (ContextSnapshot baseline = ContextSnapshot.open(context.getLocation(), context.getRevision());
+                 ContextStore fork = ContextStore.forkForPublication(baseline, candidateLocation)) {
+                // A private physical copy retains native IDs and local closure; no target is mutated.
+            }
+            candidateUser = new User();
+            candidateUser.setDatabaseDir(workspace.toString() + java.io.File.separator);
+            candidateData = new DB();
+            candidateData.init(candidateUser);
+            Mind root = new Mind(candidateUser);
+            candidateUser.setCurrentMind(root);
+            root = (Mind) root.useStorage("candidate");
+            candidateUser.setCurrentMind(root);
+            Mind prepared = Mind.preparePublicationStack((Mind) source, root);
+            candidateUser.setCurrentMind(prepared);
+            if (candidateData.getRevision() == 0L) {
+                candidateData.context.publishGeneration(null, ConnectionVector.empty(), "Prepared publication");
+            }
+            try (ContextSnapshot candidate = ContextSnapshot.open(candidateLocation, candidateData.getRevision())) {
+                for (org.kanger.storage.dumb2.descriptor.TypeDefinition definition
+                        : candidate.snapshotTypeRegistry().definitions()) {
+                    org.kanger.storage.dumb2.descriptor.TypeDefinition actual = context.registerType(
+                            definition.getTypeName(), definition.getDescriptor());
+                    if (actual.getTypeCode() != definition.getTypeCode()) {
+                        throw new CommandErrorException("Publication candidate type mapping changed");
+                    }
+                }
+                context.publishGeneration(candidate.getGeneration(), workingConnections, description);
+            }
+            accepted = true;
+            workingConnections = publishedConnections();
+            return ((User) user).reloadAfterContextPublication(source);
+        } catch (Exception failure) {
+            primaryFailure = accepted ? new org.kanger.exception.TransactionSettlementException(
+                    org.kanger.exception.TransactionSettlementException.Outcome.COMMITTED, failure) : failure;
+            throw primaryFailure;
+        } finally {
+            Exception cleanupFailure = null;
+            try { if (candidateData != null && !candidateData.isClosed()) candidateData.close(); }
+            catch (Exception failure) { cleanupFailure = failure; }
+            try { ContextStore.deleteRecursively(workspace); }
+            catch (Exception failure) {
+                if (cleanupFailure == null) cleanupFailure = failure; else cleanupFailure.addSuppressed(failure);
+            }
+            if (cleanupFailure != null) {
+                if (primaryFailure != null) primaryFailure.addSuppressed(cleanupFailure);
+                else if (accepted) throw new org.kanger.exception.TransactionSettlementException(
+                        org.kanger.exception.TransactionSettlementException.Outcome.COMMITTED, cleanupFailure);
+                else throw cleanupFailure;
+            }
+        }
+    }
+
+    @Override
+    public synchronized void setNextRevisionDescription(String description) throws Exception {
+        nextRevisionDescription = org.kanger.RevisionDescriptions.validate(description);
     }
 
     private static final class TopologyCheckpoint {

@@ -82,7 +82,7 @@ public final class CommandFormatter {
             case TX_START:
                 return "transaction start";
             case TX_COMMIT:
-                return "transaction commit";
+                return optionalArgumentCommand("transaction commit", invocation.getArgument("description"));
             case TX_ROLLBACK:
                 return "transaction rollback";
             case TX_SQUASH:
@@ -113,8 +113,8 @@ public final class CommandFormatter {
 
             case CTX_STATUS:
                 return "ctx";
-            case CTX_SAVE:
-                return "ctx save";
+            case CTX_PUBLISH:
+                return optionalArgumentCommand("ctx publish", invocation.getArgument("description"));
             case CTX_RULES:
                 String rules="ctx rules";
                 if(invocation.getArgument("locator")!=null) rules+=" "+argument(invocation.getArgument("locator"));

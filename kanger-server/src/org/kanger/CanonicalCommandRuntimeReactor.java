@@ -112,7 +112,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             case STORAGE_REINDEX:
             case CTX_STATUS:
             case CTX_RULES:
-            case CTX_SAVE:
+            case CTX_PUBLISH:
             case CTX_CONNECT:
             case CTX_DISCONNECT:
             case CTX_SWITCH:
@@ -184,6 +184,11 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
         }
         CanonicalCommandProcessor.Rejection rejection = outcome.getRejection();
         if (rejection != null) {
+            if ("publication_confirmation_required".equals(rejection.getCode())) {
+                result.put("result", "confirmation_required")
+                        .put(CanonicalCommandIngressReactor.CONFIRMATION_FIELD, new JSONObject()
+                                .put("schema", 1).put("prompt", outcome.getDescription()));
+            }
             result.put("code", rejection.getCode())
                     .put("reason", rejection.getReason());
             JSONObject detail = new JSONObject()

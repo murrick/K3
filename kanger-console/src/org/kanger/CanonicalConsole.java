@@ -282,6 +282,12 @@ public final class CanonicalConsole {
             case TX_COMMIT:
             case TX_ROLLBACK:
             case TX_SQUASH:
+                if (invocation.getIntent() == org.kanger.command.CommandIntent.TX_COMMIT
+                        && mind.getTransactionLevel() == 1 && mind instanceof Mind
+                        && ((Mind) mind).isStorageUsed()
+                        && ((User) mind.getUser()).getData() instanceof org.kanger.interfaces.internal.IRevisionPublication) {
+                    invocation = publicationDescription(invocation, (Mind) mind, input, "Committed transaction");
+                }
                 CanonicalCommandProcessor.Result transaction =
                         COMMAND_PROCESSOR.execute(invocation, mind.getUser());
                 if (!transaction.isHandled()) {
@@ -357,13 +363,30 @@ public final class CanonicalConsole {
 
             case CTX_STATUS:
             case CTX_RULES:
-            case CTX_SAVE:
+            case CTX_PUBLISH:
             case CTX_CONNECT:
             case CTX_DISCONNECT:
             case CTX_SWITCH:
             case CTX_VERSION:
             case CTX_EXPLAIN:
             case CTX_ISOLATED_QUERY:
+                if (invocation.getIntent() == org.kanger.command.CommandIntent.CTX_PUBLISH) {
+                    ((Mind) mind).requirePublicationQuiescence();
+                    invocation = publicationDescription(invocation, (Mind) mind, input,
+                            "Published Context " + mind.getStorageName());
+                    if (mind.getTransactionLevel() > 0) {
+                        showFederation(((org.kanger.interfaces.internal.IContextFederation)
+                                ((User) mind.getUser()).getData()).federationSnapshot(), null);
+                        if (!confirm(input, "Publish U" + mind.getTransactionLevel() + " -> U0: "
+                                + invocation.getArgument("description") + "?")) {
+                            System.out.println("Publication cancelled");
+                            return same(mind);
+                        }
+                        java.util.Map<String,Object> arguments = new java.util.LinkedHashMap<>(invocation.getArguments());
+                        arguments.put("confirmed", Boolean.TRUE);
+                        invocation = CommandInvocation.command(invocation.getIntent(), arguments, invocation.getRaw());
+                    }
+                }
                 CanonicalCommandProcessor.Result federation =
                         COMMAND_PROCESSOR.execute(invocation, mind.getUser());
                 if (!federation.isHandled()
@@ -802,6 +825,19 @@ public final class CanonicalConsole {
         }
     }
 
+    private static CommandInvocation publicationDescription(CommandInvocation invocation, Mind mind,
+            ConsoleLineInput input, String fallback) throws Exception {
+        String explicit=(String) invocation.getArgument("description");
+        String description=mind.resolveRevisionDescription(explicit,fallback);
+        if (explicit == null || explicit.isEmpty()) {
+            String entered=input.readAuxiliary("Revision description [" + description + "] (Enter to use): ");
+            if (entered != null && !entered.trim().isEmpty()) description=mind.resolveRevisionDescription(entered,fallback);
+        }
+        java.util.Map<String,Object> arguments=new java.util.LinkedHashMap<>(invocation.getArguments());
+        arguments.put("description", description);
+        return CommandInvocation.command(invocation.getIntent(), arguments, invocation.getRaw());
+    }
+
     private static void saveSource(IMind mind, String name, ConsoleLineInput input) throws Exception {
         File file = sourceFile(mind, name);
         if (file.exists() && !confirm(input, "Overwrite source file " + name + "?")) {
@@ -1120,7 +1156,7 @@ public final class CanonicalConsole {
         System.out.printf("Context %s@%d%n",
                 snapshot.getSourceLocator(),
                 snapshot.getSourceRevision());
-        System.out.println(snapshot.hasWorkingChanges()?"Connections: working changes [not saved; use ctx save]":"Connections: saved");
+        System.out.println(snapshot.hasWorkingChanges()?"Connections: working changes [not saved; use ctx publish]":"Connections: saved");
         for(IContextFederation.DependencyNotice notice:snapshot.getDependencyNotices()) {
             System.out.printf("%s@%d declares %s@%d: %s%s%n",notice.owner.getLocator(),notice.owner.getRevision(),
                     notice.dependency.getLocator(),notice.dependency.getRevision(),notice.getStatus(),

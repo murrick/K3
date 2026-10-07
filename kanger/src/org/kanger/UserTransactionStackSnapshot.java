@@ -23,6 +23,8 @@ import org.kanger.exception.StorageLifecycleException;
  */
 final class UserTransactionStackSnapshot {
 
+    private final List<String> descriptions;
+    private final List<Long> descriptionOrders;
     private final PortableMindLayer rootLevel;
     private final List<PortableMindLayer> levels;
     private final String sourceStorage;
@@ -32,7 +34,10 @@ final class UserTransactionStackSnapshot {
             PortableMindLayer rootLevel,
             List<PortableMindLayer> levels,
             String sourceStorage,
-            List<TransactionCompatibilityRegistry.Record> compatibilityLevels) {
+            List<TransactionCompatibilityRegistry.Record> compatibilityLevels, List<Mind> lineage) {
+        descriptions = new ArrayList<>();
+        descriptionOrders = new ArrayList<>();
+        for (Mind level : lineage) { descriptions.add(level.proposedDescription); descriptionOrders.add(level.descriptionOrder); }
         this.rootLevel = rootLevel;
         this.levels = Collections.unmodifiableList(levels);
         this.sourceStorage = sourceStorage;
@@ -51,7 +56,7 @@ final class UserTransactionStackSnapshot {
             compatibility.add(TransactionCompatibilityRegistry.capture(lineage.get(i)));
         }
         return new UserTransactionStackSnapshot(
-                null, states, TransactionCompatibilityRegistry.storage(top), compatibility);
+                null, states, TransactionCompatibilityRegistry.storage(top), compatibility, lineage);
     }
 
     static UserTransactionStackSnapshot captureOffline(Mind top) throws Exception {
@@ -67,7 +72,7 @@ final class UserTransactionStackSnapshot {
             compatibility.add(TransactionCompatibilityRegistry.capture(lineage.get(i)));
         }
         return new UserTransactionStackSnapshot(
-                root, states, TransactionCompatibilityRegistry.storage(top), compatibility);
+                root, states, TransactionCompatibilityRegistry.storage(top), compatibility, lineage);
     }
 
     static List<Mind> lineage(Mind top) {
@@ -117,10 +122,15 @@ final class UserTransactionStackSnapshot {
 
     private Mind replayLevels(Mind root) throws Exception {
         Mind current = root;
+        root.proposedDescription=descriptions.get(0);
+        root.descriptionOrder=descriptionOrders.get(0);
+        int descriptionIndex=1;
         try {
             for (PortableMindLayer state : levels) {
                 Mind child = new Mind(current);
                 child.checkpointUserConnections();
+                child.proposedDescription=descriptions.get(descriptionIndex);
+                child.descriptionOrder=descriptionOrders.get(descriptionIndex++);
                 boolean applied = false;
                 try {
                     state.apply(current, child);
@@ -222,6 +232,7 @@ final class UserTransactionStackSnapshot {
             rollbackToRoot(top);
             if (currentTopology != null) federation.restoreConnections(currentTopology);
             candidate.setConnectionCheckpoint(initialTopology);
+            candidate.inheritRevisionDescription(top);
             TransactionCompatibilityRegistry.markValid(candidate);
             return candidate;
         } catch (Throwable failure) {
@@ -240,7 +251,7 @@ final class UserTransactionStackSnapshot {
         }
     }
 
-    private static void requireExplicitSquashTopology(Mind top) {
+    static void requireExplicitSquashTopology(Mind top) {
         Mind current = top;
         if (current.pendingTransactionCount() != 0) {
             throw new IllegalStateException(

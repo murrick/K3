@@ -350,12 +350,13 @@ public final class CommandParser {
         Keyword keyword = CommandRegistry.resolveKeyword(
                 Family.TRANSACTION, tokens.get(1).value,
                 Keyword.START, Keyword.COMMIT, Keyword.ROLLBACK, Keyword.SQUASH);
-        requireSize(tokens, 2);
+        if (keyword != Keyword.COMMIT || tokens.size() != 3) requireSize(tokens, 2);
         switch (keyword) {
             case START:
                 return CommandInvocation.command(CommandIntent.TX_START, raw);
             case COMMIT:
-                return CommandInvocation.command(CommandIntent.TX_COMMIT, raw);
+                return CommandInvocation.command(CommandIntent.TX_COMMIT,
+                        tokens.size() == 3 ? args("description", tokens.get(2).value) : java.util.Collections.<String,Object>emptyMap(), raw);
             case ROLLBACK:
                 return CommandInvocation.command(CommandIntent.TX_ROLLBACK, raw);
             case SQUASH:
@@ -419,7 +420,7 @@ public final class CommandParser {
                     Family.CONTEXT, tokens.get(1).value,
                     Keyword.CONNECT, Keyword.DISCONNECT,
                     Keyword.SWITCH, Keyword.VERSION,
-                    Keyword.RULES, Keyword.SAVE,
+                    Keyword.RULES, Keyword.PUBLISH,
                     Keyword.EXPLAIN);
         } catch (CommandParseException rejected) {
             if (rejected.getReason() == AMBIGUOUS_PREFIX) {
@@ -428,9 +429,10 @@ public final class CommandParser {
             return parseContextIsolatedQuery(raw);
         }
         switch (keyword) {
-            case SAVE:
-                requireSize(tokens,2);
-                return CommandInvocation.command(CommandIntent.CTX_SAVE,raw);
+            case PUBLISH:
+                if (tokens.size() != 2 && tokens.size() != 3) requireSize(tokens,2);
+                return CommandInvocation.command(CommandIntent.CTX_PUBLISH,
+                        tokens.size() == 3 ? args("description", tokens.get(2).value) : java.util.Collections.<String,Object>emptyMap(), raw);
             case RULES:
                 return parseContextRules(raw,tokens);
             case CONNECT:

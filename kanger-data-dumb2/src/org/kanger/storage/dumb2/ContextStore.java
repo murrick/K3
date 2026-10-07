@@ -197,7 +197,15 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
      * source starts the new independent revision lineage at R1; an empty R0
      * snapshot remains R0.</p>
      */
-    static ContextStore fork(ContextSnapshot source, Path target)
+    static ContextStore fork(ContextSnapshot source, Path target) throws Exception {
+        return fork(source, target, true);
+    }
+
+    static ContextStore forkForPublication(ContextSnapshot source, Path target) throws Exception {
+        return fork(source, target, false);
+    }
+
+    private static ContextStore fork(ContextSnapshot source, Path target, boolean inheritDependencies)
             throws Exception {
         Objects.requireNonNull(source, "source");
         if (source.isClosed()) {
@@ -220,10 +228,8 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                 new RevisionRef(
                         source.getContextId(),
                         source.getRevision());
-        ConnectionVector sourceDependencies =
-                ConnectionStore.read(
-                        source.getLocation(),
-                        sourceRef);
+        ConnectionVector sourceDependencies = inheritDependencies
+                ? ConnectionStore.read(source.getLocation(), sourceRef) : ConnectionVector.empty();
 
         boolean manifestCreated = false;
         try {
@@ -423,6 +429,10 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
     }
 
     synchronized long flush(ConnectionVector working) throws Exception {
+        return flush(working, "Updated local Context");
+    }
+
+    synchronized long flush(ConnectionVector working, String description) throws Exception {
         requireOpen();
         qualifiedWorkingConnections = null;
 
@@ -493,7 +503,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
                     next,
                     revision,
                     currentConnections,
-                    "");
+                    description);
 
             qualifyAndStageConnectionTransition(
                     staging,
@@ -560,9 +570,17 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
      * publication-layer concern and must gate callers before this method becomes
      * a user-visible operation.</p>
      */
-    synchronized long publishTopology(
-            ConnectionVector desiredConnections,
-            String description) throws Exception {
+    synchronized long publishTopology(ConnectionVector desiredConnections, String description) throws Exception {
+        return publishGeneration(null, desiredConnections, description, false);
+    }
+
+    synchronized long publishGeneration(Path preparedGeneration,
+            ConnectionVector desiredConnections, String description) throws Exception {
+        return publishGeneration(preparedGeneration, desiredConnections, description, true);
+    }
+
+    private synchronized long publishGeneration(Path preparedGeneration,
+            ConnectionVector desiredConnections, String description, boolean forceRevision) throws Exception {
         requireOpen();
         if (desiredConnections == null
                 || description == null) {
@@ -592,7 +610,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
         ConnectionVector currentConnections =
                 publishedConnections();
-        if (java.util.Arrays.equals(
+        if (!forceRevision && preparedGeneration == null && java.util.Arrays.equals(
                 RevisionManifestStore.dependencyDigest(
                         currentConnections),
                 RevisionManifestStore.dependencyDigest(
@@ -616,7 +634,9 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
 
         boolean generationInstalled = false;
         try {
-            if (revision == RevisionStore.INITIAL_REVISION) {
+            if (preparedGeneration != null) {
+                copyDirectory(preparedGeneration, staging);
+            } else if (revision == RevisionStore.INITIAL_REVISION) {
                 Files.createDirectories(staging);
                 for (ContextBase base : bases.values()) {
                     base.writeSnapshot(staging);
@@ -1226,7 +1246,7 @@ final class ContextStore implements AutoCloseable, PersistentTypeResolver {
         }
     }
 
-    private static void deleteRecursively(Path path) throws IOException {
+    static void deleteRecursively(Path path) throws IOException {
         if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
             return;
         }

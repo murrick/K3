@@ -51,7 +51,7 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.STORAGE_REINDEX
                 || intent == CommandIntent.CTX_STATUS
                 || intent == CommandIntent.CTX_RULES
-                || intent == CommandIntent.CTX_SAVE
+                || intent == CommandIntent.CTX_PUBLISH
                 || intent == CommandIntent.CTX_CONNECT
                 || intent == CommandIntent.CTX_DISCONNECT
                 || intent == CommandIntent.CTX_SWITCH
@@ -114,7 +114,7 @@ public final class CanonicalCommandProcessor {
                 return Result.success(mind, "New transaction created");
 
             case TX_COMMIT:
-                return commit(user, mind);
+                return commit(user, mind, (String) invocation.getArgument("description"));
 
             case TX_ROLLBACK:
                 return rollback(user, mind);
@@ -194,13 +194,25 @@ public final class CanonicalCommandProcessor {
                         (Long)invocation.getArgument("id"));
                 return Result.successContextRules(mind,federation.federationSnapshot(),rules);
             }
-            case CTX_SAVE: {
+            case CTX_PUBLISH: {
                 IContextFederation federation=contextFederation(user,mind);
-                if(!(mind instanceof Mind)) throw new org.kanger.exception.CommandErrorException("Context save requires canonical Mind");
-                long before=federation.federationSnapshot().getSourceRevision();
-                long revision=((Mind)mind).saveContextConnections();
-                return Result.successFederation(mind,revision==before?"Context connections already saved"
-                        :"Context connections saved: "+mind.getStorageName()+"@"+revision,federation.federationSnapshot(),null);
+                if (!(mind instanceof Mind) || !(((User) user).getData() instanceof org.kanger.interfaces.internal.IRevisionPublication))
+                    throw new org.kanger.exception.CommandErrorException("Context publication is unavailable");
+                Mind source=(Mind) mind;
+                source.requirePublicationQuiescence();
+                String description=source.resolveRevisionDescription((String) invocation.getArgument("description"),
+                        "Published Context " + mind.getStorageName());
+                if (mind.getTransactionLevel() > 0 && !Boolean.TRUE.equals(invocation.getArgument("confirmed"))) {
+                    String preview="Publication confirmation required: U" + mind.getTransactionLevel()
+                            + " -> U0; description: " + description;
+                    Rejection rejection=new Rejection("publication_confirmation_required", preview, 0,
+                            mind.getStorageName(), Collections.<CollisionWitness>emptyList(), Collections.<ResolutionAction>emptyList());
+                    return new Result(true,false,mind,preview,null,rejection,null,federation.federationSnapshot(),null);
+                }
+                IMind published=((org.kanger.interfaces.internal.IRevisionPublication) ((User) user).getData()).publishContext(mind,description);
+                IContextFederation.Snapshot snapshot=federation.federationSnapshot();
+                return Result.successFederation(published,"Context published: " + published.getStorageName()
+                        + "@" + snapshot.getSourceRevision() + ": " + description,snapshot,null);
             }
 
             case CTX_CONNECT: {
@@ -337,7 +349,8 @@ public final class CanonicalCommandProcessor {
         return "Session timezone: " + user.getTimeZone();
     }
 
-    private Result commit(IUser user, IMind mind) throws Exception {
+    private Result commit(IUser user, IMind mind, String description) throws Exception {
+        ((Mind) mind).proposeRevisionDescription(description);
         IMind parent = mind.getNext();
         if (parent != null) {
             if (!((Mind) parent).commitUserTransaction(mind)) {

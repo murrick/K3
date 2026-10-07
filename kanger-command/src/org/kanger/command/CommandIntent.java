@@ -58,7 +58,7 @@ public enum CommandIntent {
 
     CTX_STATUS,
     CTX_RULES,
-    CTX_SAVE,
+    CTX_PUBLISH,
     CTX_CONNECT,
     CTX_DISCONNECT,
     CTX_SWITCH,

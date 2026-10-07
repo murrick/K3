@@ -285,10 +285,10 @@ start
 
 A successful start changes the current level from `Un` to `U(n+1)`.
 
-### `transaction commit`
+### `transaction commit [description]`
 
 ```text
-transaction commit
+transaction commit [description]
 commit
 ```
 
@@ -456,23 +456,29 @@ ctx rules A tree 12
 ctx rules A comment 12
 ```
 
-### `ctx save`
+### `ctx publish [description]`
 
-Publishes the explicitly selected working direct connections in a new immutable
-revision of X after qualification. An unchanged vector is a no-op. Save requires
-the current settled root: commit or roll back active transactions first.
-Reopening X restores only saved exact pins. Closing discards unsaved connection
-changes. `ctx` distinguishes working from saved topology and reports unsaved
-changes. Ordinary local authoring retains unsaved session pins and checks their
-compatibility before publication, but does not implicitly save the topology.
-Nested transaction rollback restores the corresponding working topology;
-squash preserves current connections and the original rollback boundary.
+Publishes the full local content and explicitly selected working direct connections
+as one immutable revision. Open user transactions are collapsed to U0 only after
+explicit confirmation. Console previews the description and exact pins; API callers
+pass `confirmed: true` in the dialogue envelope. The complete candidate is qualified
+before the live stack changes. Cancellation or failed qualification preserves all
+user levels, descriptions, working pins and CURRENT.
 
-A pinned target's published dependencies appear as recommendations, including
-missing dependencies or a different revision already selected in X. They do not
-automatically connect, open dependency targets, or cause cascaded disconnection.
-Missing recommended knowledge limits the proof domain; it is not a storage
-failure. The user decides which additional direct pins to connect and save.
+Console asks for an optional description when none is given: Enter accepts the
+pending or automatic proposal. Descriptions are one line, at most 512 Unicode
+characters. Ordinary `commit [description]` moves only to the immediate parent;
+its proposal follows successful commits, the latest explicit proposal wins, and
+rollback drops the child proposal. Squash preserves the latest proposal. Commit
+into U0 publishes one revision, but does not save unsaved working connections.
+Accepted, deleted and restored authoring at U0 gets an automatic operation description.
+Queries and inspection do not publish revisions.
+
+Reopening restores the published exact pins. Unsaved session topology is discarded
+on close. Nested rollback restores its topology boundary. Published dependencies
+of a pinned target are advisory recommendations: they never automatically connect,
+open missing targets, or cause cascaded disconnection. Missing knowledge limits the
+proof domain. `ctx publish` replaces `ctx save` and does not send anything to a server.
 
 ### `ctx connect <locator>`
 

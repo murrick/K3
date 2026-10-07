@@ -17,7 +17,7 @@ class ContextOperatorSurfaceTest {
 
     @Test void canonicalRulesModifiersRoundTripAndKeepContextAUnambiguous() throws Exception {
         for(String line:Arrays.asList("ctx rules","ctx rules A","ctx rules A all","ctx rules produced",
-                "ctx rules A 12","ctx rules A tree 12","ctx rules A comment 12","ctx save")) {
+                "ctx rules A 12","ctx rules A tree 12","ctx rules A comment 12","ctx publish")) {
             CommandInvocation command=parser.parse(line);
             assertEquals(line,new CommandFormatter().format(command));
         }
@@ -48,7 +48,7 @@ class ContextOperatorSurfaceTest {
             assertEquals(2,x.command("ctx rules").getContextRules().size());
             assertTrue(x.command("ctx rules X").getContextRules().get(0).rules.stream().anyMatch(r->r.statement.contains("local")));
             assertThrows(Exception.class,()->x.command("ctx rules Unknown"));
-            assertThrows(Exception.class,()->x.command("ctx save"));
+            assertFalse(x.command("ctx publish").isSuccess());
             x.command("transaction rollback");
             assertEquals(revision,x.data.getRevision());
             assertEquals(1,x.data.federationSnapshot().getConnections().size());
@@ -58,7 +58,7 @@ class ContextOperatorSurfaceTest {
 
     @Test void recommendationsReadPinnedMetadataWithoutOpeningMissingNOrAutoConnectingIt() throws Exception {
         context("N","!p(John);"); context("A","!@x p(x) -> q(x);");
-        try(Fixture a=open("A")) { a.command("ctx connect N"); a.command("ctx save"); }
+        try(Fixture a=open("A")) { a.command("ctx connect N"); a.command("ctx publish"); }
         Files.move(ContextStore.contextPath(root.resolve("N")),root.resolve("unavailable-N.context"));
         try(Fixture x=open("X")) {
             x.command("ctx connect A");
@@ -68,7 +68,7 @@ class ContextOperatorSurfaceTest {
             assertEquals("NOT_CONNECTED",snapshot.getDependencyNotices().get(0).getStatus());
             assertFalse(x.command("ctx rules A").getContextRules().get(0).rules.isEmpty());
             assertNull(((Mind)x.user.getCurrentMind()).query("?q(John);",null,false));
-            x.command("ctx save");
+            x.command("ctx publish");
         }
         try(Fixture x=open("X")) { assertEquals(1,x.data.federationSnapshot().getConnections().size()); }
     }
@@ -80,15 +80,15 @@ class ContextOperatorSurfaceTest {
             assertEquals(0,x.data.getRevision());
             x.command("ctx connect A");
             assertTrue(x.data.federationSnapshot().hasWorkingChanges());
-            x.command("ctx save"); saved=x.data.getRevision();
+            x.command("ctx publish"); saved=x.data.getRevision();
             assertEquals(1,saved); assertFalse(x.data.federationSnapshot().hasWorkingChanges());
-            x.command("ctx save"); assertEquals(saved,x.data.getRevision());
+            x.command("ctx publish"); saved=x.data.getRevision(); assertEquals(2,saved);
             x.command("ctx disconnect A"); assertTrue(x.data.federationSnapshot().hasWorkingChanges());
         }
         try(Fixture x=open("X")) {
             assertEquals(saved,x.data.getRevision());
             assertEquals(1,x.data.federationSnapshot().getConnections().size());
-            x.command("ctx disconnect A"); x.command("ctx save");
+            x.command("ctx disconnect A"); x.command("ctx publish");
         }
         try(Fixture x=open("X")) { assertTrue(x.data.federationSnapshot().getConnections().isEmpty()); }
         try(ContextSnapshot old=ContextSnapshot.open(root.resolve("X"),saved)) {
@@ -98,7 +98,7 @@ class ContextOperatorSurfaceTest {
 
     @Test void differentRecommendedPinIsAdvisoryAndDisconnectDoesNotCascade() throws Exception {
         context("N","!p(John);"); context("A","!@x p(x) -> q(x);");
-        try(Fixture a=open("A")) { a.command("ctx connect N"); a.command("ctx save"); }
+        try(Fixture a=open("A")) { a.command("ctx connect N"); a.command("ctx publish"); }
         context("N","!p(Mary);");
         try(Fixture x=open("X")) {
             x.command("ctx connect N"); x.command("ctx connect A");
@@ -113,7 +113,7 @@ class ContextOperatorSurfaceTest {
         context("A", "!alpha;"); context("B", "!beta;");
         try (Fixture x = open("X")) {
             x.command("ctx connect A");
-            x.command("ctx save");
+            x.command("ctx publish");
             long revision = x.data.getRevision();
             x.command("transaction start");
             x.command("ctx disconnect A");
@@ -149,7 +149,7 @@ class ContextOperatorSurfaceTest {
     @Test void squashKeepsWorkingConnectionsButRollbackRestoresOriginalTopology() throws Exception {
         context("A", "!alpha;"); context("B", "!beta;");
         try (Fixture x = open("X")) {
-            x.command("ctx connect A"); x.command("ctx save");
+            x.command("ctx connect A"); x.command("ctx publish");
             x.command("transaction start");
             x.command("ctx disconnect A"); x.command("ctx connect B");
             x.command("transaction start"); x.command("ctx connect A");

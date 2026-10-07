@@ -29,6 +29,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CanonicalCommandIngressReactorTest {
 
     @Test
+    void publicationPassesOnlyExplicitEnvelopeConsentAndDescription() throws Exception {
+        Capture capture=new Capture();
+        CanonicalCommandIngressReactor reactor=new CanonicalCommandIngressReactor(capture);
+        reactor.run(dialogue("token-1", "ctx publish \"Shared release\""));
+        CommandInvocation first=CanonicalCommandIngressReactor.invocation(capture.packet.get());
+        assertEquals(CommandIntent.CTX_PUBLISH, first.getIntent());
+        assertEquals("Shared release", first.getArgument("description"));
+        assertFalse(Boolean.TRUE.equals(first.getArgument("confirmed")));
+        reactor.run(confirmedDialogue("token-1", "ctx publish \"Shared release\""));
+        assertTrue(Boolean.TRUE.equals(CanonicalCommandIngressReactor.invocation(capture.packet.get()).getArgument("confirmed")));
+    }
+
+    @Test
     void abbreviatedRuleLookupProjectsToQualifiedLegacyQuery() throws Exception {
         Capture capture = new Capture();
         CanonicalCommandIngressReactor reactor = new CanonicalCommandIngressReactor(capture);

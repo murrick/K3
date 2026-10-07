@@ -93,13 +93,18 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
                     "Dialogue line must be a string");
         }
 
-        final CommandInvocation invocation = parser.parse(line);
+        CommandInvocation invocation = parser.parse(line);
 
         String token = envelope.parameters.optString("token", "");
         boolean confirmed = envelope.parameters.optBoolean(CONFIRMED_PARAMETER, false);
         clearParameters(envelope.parameters);
         if (!token.isEmpty()) {
             envelope.parameters.put("token", token);
+        }
+        if (invocation.getIntent() == org.kanger.command.CommandIntent.CTX_PUBLISH && confirmed) {
+            java.util.Map<String,Object> arguments = new java.util.LinkedHashMap<>(invocation.getArguments());
+            arguments.put("confirmed", Boolean.TRUE);
+            invocation = CommandInvocation.command(invocation.getIntent(), arguments, invocation.getRaw());
         }
         packet.put(INVOCATION_MARKER, invocation);
 

@@ -603,6 +603,19 @@ public class User implements IUser {
         }
     }
 
+    /** Reattach the newly accepted immutable generation; old U-levels are no longer current. */
+    public Mind reloadAfterContextPublication(IMind expected) throws Exception {
+        if (getCurrentMind() != expected) throw new IllegalStateException("Publication owner changed");
+        String name = data.getStorageName();
+        data.close();
+        storage.clear();
+        Mind root = new Mind(this);
+        setCurrentMind(root);
+        root = openClosedStorage(root, name);
+        setCurrentMind(root);
+        return root;
+    }
+
     private Mind openClosedStorage(Mind mind, String name) throws Exception {
         if (!data.isClosed()) {
             throw new IllegalStateException(

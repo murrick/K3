@@ -182,6 +182,11 @@ public class Mind implements IMind {
     private Rule acceptedRule = null;
     private int transactionCounter = 0;
     private Object connectionCheckpoint;
+    private String operationDescription;
+    String proposedDescription;
+    long descriptionOrder;
+    private static final java.util.concurrent.atomic.AtomicLong DESCRIPTION_ORDER =
+            new java.util.concurrent.atomic.AtomicLong();
 
     /**
      * Experimental query policy that allows hypotheses containing
@@ -225,6 +230,7 @@ public class Mind implements IMind {
         init();
 
         Mind parent = (Mind) root;
+        operationDescription = parent.operationDescription;
         parent.incTransactionCounter();
         boolean initialized = false;
         try {
@@ -258,6 +264,56 @@ public class Mind implements IMind {
                 parent.abortTransactionStart();
             }
         }
+    }
+
+    public void proposeRevisionDescription(String description) throws Exception {
+        String text = RevisionDescriptions.validate(description);
+        if (text != null && !text.isEmpty()) {
+            proposedDescription = text;
+            descriptionOrder = DESCRIPTION_ORDER.incrementAndGet();
+        }
+    }
+
+    public String getProposedRevisionDescription() {
+        Mind selected = this;
+        for (Mind m = this; m != null; m = (Mind) m.getNext()) {
+            if (m.descriptionOrder > selected.descriptionOrder) selected = m;
+        }
+        return selected.proposedDescription;
+    }
+
+    public String resolveRevisionDescription(String explicit, String fallback) throws Exception {
+        String text = RevisionDescriptions.validate(explicit);
+        if (text != null && !text.isEmpty()) return text;
+        text = getProposedRevisionDescription();
+        return text == null || text.isEmpty() ? RevisionDescriptions.automatic(fallback) : text;
+    }
+
+    void inheritRevisionDescription(Mind source) {
+        for (Mind m = source; m != null; m = (Mind) m.getNext()) {
+            if (m.descriptionOrder > descriptionOrder) {
+                proposedDescription = m.proposedDescription;
+                descriptionOrder = m.descriptionOrder;
+            }
+        }
+    }
+
+    public static Mind preparePublicationStack(Mind source, Mind detachedRoot) throws Exception {
+        UserTransactionStackSnapshot.requireExplicitSquashTopology(source);
+        Mind current = UserTransactionStackSnapshot.capture(source).replayOverBaseline(detachedRoot);
+        current.inheritRevisionDescription(source);
+        while (current.getNext() != null) {
+            Mind parent = (Mind) current.getNext();
+            if (!parent.commitUserTransaction(current)) {
+                throw new org.kanger.exception.CommandErrorException("Publication candidate commit rejected");
+            }
+            current = parent;
+        }
+        return current;
+    }
+
+    public void requirePublicationQuiescence() {
+        UserTransactionStackSnapshot.requireExplicitSquashTopology(this);
     }
 
     public void checkpointUserConnections() throws Exception {
@@ -376,10 +432,18 @@ public class Mind implements IMind {
                     factoriesCompleted = true;
                 }
 
+                inheritRevisionDescription(child);
                 boolean rootQuiescent = finishTransactionReservationLocked();
                 reservationFinished = true;
                 try {
+                    if (rootQuiescent && isStorageUsed()
+                            && user.getData() instanceof org.kanger.interfaces.internal.IRevisionPublication) {
+                        ((org.kanger.interfaces.internal.IRevisionPublication) user.getData())
+                                .setNextRevisionDescription(resolveRevisionDescription(null,
+                                        child.operationDescription == null ? "Committed transaction" : child.operationDescription));
+                    }
                     finalizeTransactionRootLocked(rootQuiescent);
+                    if (rootQuiescent) { proposedDescription = null; descriptionOrder = 0; }
                     copyCommitResult(child);
                 } catch (Throwable finalizationFailure) {
                     throw new TransactionSettlementException(
@@ -693,9 +757,10 @@ public class Mind implements IMind {
     public void pack() throws Exception {
         library.pack();
 
+        // Deleted rule indexes still need their persistent domains while unloading.
+        rules.pack();
         tVars.pack();
         domains.pack();
-        rules.pack();
         comments.pack();
         fValues.pack();
         functions.pack();
@@ -1626,8 +1691,12 @@ public class Mind implements IMind {
         }
     }
 
+    private boolean isolateQueryRuntime() throws Exception {
+        return isStorageUsed() && user.getData() instanceof org.kanger.interfaces.internal.IRevisionPublication;
+    }
+
     private Queue<ITerm> queryExternals(Object[] ext) throws Exception {
-        if (ext == null || ext.length == 0 || !hasQueryFederation()) return convertExternals(ext);
+        if (ext == null || ext.length == 0 || !isolateQueryRuntime()) return convertExternals(ext);
         Mind parameters = Mind.ephemeralChild(this);
         try {
             return parameters.convertExternals(ext);
@@ -1637,14 +1706,14 @@ public class Mind implements IMind {
     }
 
     private Queue<ITerm> localQueryExternals(Mind target, Queue<ITerm> externals) throws Exception {
-        if (!hasQueryFederation()) return externals;
+        if (!isolateQueryRuntime()) return externals;
         Queue<ITerm> local = new LinkedList<ITerm>();
         for (ITerm term : externals) local.add(target.getTerms().projectSemantic(SemanticTermSnapshot.capture(term).materialize()));
         return local;
     }
 
     private TechnicalMindTransaction queryTransaction() throws Exception {
-        if (hasQueryFederation()) {
+        if (isolateQueryRuntime()) {
             // Query-only constants must not publish X or erase its working topology.
             return TechnicalMindTransaction.beginIsolated(this);
         }
@@ -2075,80 +2144,88 @@ public class Mind implements IMind {
 
     public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
         this.logging = logging;
+        String previousDescription = operationDescription;
+        int operation = line.charAt(0);
+        operationDescription = operation == Enums.ANT ? RevisionDescriptions.automatic("Accepted: " + line)
+                : operation == Enums.DEL ? RevisionDescriptions.automatic("Deleted: " + line)
+                : operation == Enums.INS ? RevisionDescriptions.automatic("Restored: " + line) : null;
+        try {
+            Boolean res = null;
+            acceptedRule = null;
+            frontierDomains.clear();
 
-        Boolean res = null;
-        acceptedRule = null;
-        frontierDomains.clear();
+            getQueryValues().clear();
+            getLog().clear();
+            getSolutions().clear();
+            getValues().clear();
+            getHypothesis().clear();
 
-        getQueryValues().clear();
-        getLog().clear();
-        getSolutions().clear();
-        getValues().clear();
-        getHypothesis().clear();
+            long queryStart = System.currentTimeMillis();
 
-        long queryStart = System.currentTimeMillis();
+            int key = line.charAt(0);
+            switch (key) {
 
-        int key = line.charAt(0);
-        switch (key) {
+                case Enums.INS:
+                    res = queryInsert(line, ext, logging);
+                    break;
 
-            case Enums.INS:
-                res = queryInsert(line, ext, logging);
-                break;
+                case Enums.ANT:
+                    res = queryAccept(line, ext, logging);
+                    break;
 
-            case Enums.ANT:
-                res = queryAccept(line, ext, logging);
-                break;
+                case Enums.DEL:
+                    res = queryDelete(line, ext, logging);
+                    break;
 
-            case Enums.DEL:
-                res = queryDelete(line, ext, logging);
-                break;
-
-            case Enums.FOO:
-                try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
-                    Mind m = tx.mind();
-                    IOperation o = Parser.implement(line, m, null);
-                    if (o != null) {
-                        IOperation x = m.getLibrary().add(o);
-                        if (x.getId() == o.getId()) {
-                            m.getLog().add(LogMode.ANALYZER, "Function updated: " + x.toString());
+                case Enums.FOO:
+                    try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
+                        Mind m = tx.mind();
+                        IOperation o = Parser.implement(line, m, null);
+                        if (o != null) {
+                            IOperation x = m.getLibrary().add(o);
+                            if (x.getId() == o.getId()) {
+                                m.getLog().add(LogMode.ANALYZER, "Function updated: " + x.toString());
+                            } else {
+                                m.getLog().add(LogMode.ANALYZER, "New function implemented: " + x.toString());
+                            }
+                            tx.commit();
+                            res = true;
                         } else {
-                            m.getLog().add(LogMode.ANALYZER, "New function implemented: " + x.toString());
+                            m.getLog().add(LogMode.ANALYZER, "Implementation error: " + line);
+                            tx.rollback();
+                            res = false;
                         }
-                        tx.commit();
-                        res = true;
+                    }
+                    break;
+                case Enums.SUC:
+                    hypothesis.clear();
+                    tempHypothesis.clear();
+                    if (line.length() == 1) {
+                        res = queryCheck(logging);
                     } else {
-                        m.getLog().add(LogMode.ANALYZER, "Implementation error: " + line);
-                        tx.rollback();
-                        res = false;
-                    }
-                }
-                break;
-            case Enums.SUC:
-                hypothesis.clear();
-                tempHypothesis.clear();
-                if (line.length() == 1) {
-                    res = queryCheck(logging);
-                } else {
-                    if (!DEBUG_DISABLE_FALSE_CHECK) {
-                        res = queryCheckFalse(line, ext, logging);
-                    }
-                    if (res == null) {
-                        res = queryCheckTrue(line, ext, logging);
-                    }
-                    if (res == null) {
-                        res = continueFederatedQuery(
-                                line, ext, logging);
-                    }
+                        if (!DEBUG_DISABLE_FALSE_CHECK) {
+                            res = queryCheckFalse(line, ext, logging);
+                        }
+                        if (res == null) {
+                            res = queryCheckTrue(line, ext, logging);
+                        }
+                        if (res == null) {
+                            res = continueFederatedQuery(
+                                    line, ext, logging);
+                        }
 
-                }
-                break;
+                    }
+                    break;
+            }
+
+            if (logging) {
+                log.add(LogMode.TIMING, "* QUERY Processing time \t" + ((System.currentTimeMillis() - queryStart) / 1000.0));
+            }
+
+            return res;
+        } finally {
+            operationDescription = previousDescription;
         }
-
-        if (logging) {
-            log.add(LogMode.TIMING, "* QUERY Processing time \t" + ((System.currentTimeMillis() - queryStart) / 1000.0));
-        }
-
-        return res;
     }
 
     private void removeResult(Set<IRule> set, boolean logging) throws Exception {
