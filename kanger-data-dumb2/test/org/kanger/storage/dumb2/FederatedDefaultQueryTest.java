@@ -276,6 +276,32 @@ public class FederatedDefaultQueryTest {
         } finally { x.close(); }
     }
 
+    @Test
+    void federatedFallbackLogsOneFinalPresentationForLocallyProvenCompoundQuery() throws Exception {
+        context("log-donor", "!age(Tom,12);");
+        Fixture x = open("log-X");
+        try {
+            assertTrue(x.mind.compile("!p(Mary); !age(Mary,30);"));
+            x.data.connectContext("log-donor");
+            long revision = x.data.getRevision();
+            for (int i = 0; i < 2; i++) {
+                assertTrue(x.mind.query("?$x $y p(x), age(x,y), y > 10;", null, true));
+                int solutions = 0, values = 0;
+                for (org.kanger.interfaces.ILogEntry entry : x.mind.getLog()) {
+                    if (entry.getType() == org.kanger.enums.LogMode.SOLVES
+                            && entry.getRecord().startsWith("Solutions (")) solutions++;
+                    if (entry.getType() == org.kanger.enums.LogMode.VALUES
+                            && entry.getRecord().startsWith("Values (")) values++;
+                }
+                assertEquals(1, solutions, "one final Solutions block per query");
+                assertEquals(1, values, "one final Values block per query");
+                assertEquals(2, x.mind.getSolutions().size());
+                assertEquals(1, x.mind.getValues().size());
+                assertEquals(revision, x.data.getRevision());
+            }
+        } finally { x.close(); }
+    }
+
     private void context(
             String name,
             String assertion) throws Exception {

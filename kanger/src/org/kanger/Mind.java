@@ -1986,6 +1986,12 @@ public class Mind implements IMind {
             return null;
         }
 
+        // Local checking may already have logged partial result blocks. The
+        // connected pass owns the final presentation; keep its inference trace.
+        if (logging && log.getRoot() != null) {
+            log.getRoot().removeIf(entry -> entry.getType() == LogMode.SOLVES
+                    || entry.getType() == LogMode.VALUES);
+        }
         Queue<ITerm> externals = queryExternals(ext);
         boolean conflict = false;
 
