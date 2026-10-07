@@ -78,6 +78,61 @@ class CausalFederationQualificationTest {
     }
 
     @Test
+    void partialConflictKeepsBothImmediateAndDelayedSafeRowsAcrossConnectionOrders() throws Exception {
+        context("A", "!@x p(x) -> q(x);", "!~p(John);");
+        context("B", "!@x q(x) -> r(x);");
+        context("C", "!p(John);", "!p(Mary);");
+        context("D", "!@x seed(x) -> p(x);"); context("E", "!seed(Tom);");
+        String[][] orders={{"A","B","C","D","E"},{"E","D","C","B","A"},{"C","A","E","B","D"}};
+        for (int i=0;i<orders.length;i++) try (Fixture x=open("X-order-"+i)) {
+            assertTrue(x.mind.query("!anchor(Unrelated);",null,false)); x.connect(orders[i]);
+            long revision=x.data.getRevision();
+            for (int repeat=0;repeat<2;repeat++) {
+                assertEquals(Boolean.TRUE,x.mind.query("?$x r(x);",null,false));
+                assertEquals(set("Mary","Tom"),values(x.mind,"x"));
+            }
+            assertNull(x.mind.query("?r(John);",null,false));
+            assertTrue(x.mind.query("?r(Tom);",null,false));
+            assertEquals(revision,x.data.getRevision());
+        }
+    }
+
+    @Test
+    void partialPairConflictPreservesCorrelationAndRepeatedArgumentConstraint() throws Exception {
+        context("A", "!@a @b pair(a,b) -> middle(b,a);", "!~pair(John,John);");
+        context("B", "!@a @b middle(a,b) -> result(a,b);");
+        context("C", "!pair(John,John);", "!pair(Mary,Mary);", "!pair(Mary,John);");
+        try (Fixture x=open("X-pairs")) {
+            assertTrue(x.mind.query("!anchor(Unrelated);",null,false)); x.connect("C","B","A");
+            IContextFederation.ExplainResult result=explain(x,"?$left $right result(left,right);");
+            assertEquals(IContextFederation.FrontierTruth.TRUE,result.getFinalTruth());
+            assertEquals(set("Mary/Mary","John/Mary"),result.getValues().stream()
+                    .map(row->row.getBindings().get("left")+"/"+row.getBindings().get("right")).collect(Collectors.toSet()));
+            assertTrue(x.mind.query("?$x result(x,x);",null,false));
+            assertEquals(set("Mary"),values(x.mind,"x"));
+            assertNull(x.mind.query("?result(John,John);",null,false));
+        }
+    }
+
+    @Test
+    void delayedNegativeProofWithdrawsJohnWithoutErasingIndependentMary() throws Exception {
+        context("A", "!@x p(x) -> q(x);"); context("B", "!@x q(x) -> r(x);");
+        context("C", "!p(John);", "!p(Mary);");
+        context("D", "!@x seed(x) -> ~p(x);"); context("E", "!seed(John);");
+        try (Fixture x=open("X-late-conflict")) {
+            assertTrue(x.mind.query("!anchor(Unrelated);",null,false)); x.connect("C","A","B","D","E");
+            long revision=x.data.getRevision();
+            IContextFederation.ExplainResult result=explain(x,"?$x r(x);");
+            assertEquals(IContextFederation.FrontierTruth.TRUE,result.getFinalTruth());
+            assertEquals(set("Mary"),values(result,"x"));
+            assertTrue(x.mind.query("?$x r(x);",null,false)); assertEquals(set("Mary"),values(x.mind,"x"));
+            assertNull(x.mind.query("?r(John);",null,false));
+            assertTrue(x.mind.query("?r(Mary);",null,false));
+            assertEquals(revision,x.data.getRevision());
+        }
+    }
+
+    @Test
     void canonicalExplainShowsEveryNativeAncestorAndMinimalPacketInProofOrder() throws Exception {
         context("A", "!@x p(x) -> q(x);");
         context("B", "!@x q(x) -> r(x);");
