@@ -12,6 +12,19 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ContextOpinionsTest {
+    @Test void unresolvedEnumerationAfterOpinionsKeepsFinalResultMessage() throws Exception {
+        create("N", "!@x @y son(x,y) -> male(x);", "!child(Tom,Mary);");
+        create("X", "!anchor(X);");
+        Mind mind = open("X");
+        try {
+            data.connectContext("N");
+            assertNull(mind.query("?male(Tom);", null, true));
+            command("ctx opinions");
+            assertNull(mind.query("?$x son(John,x);", null, true));
+            assertEquals("Result: WHO KNOWS? No Hypothesis.",
+                    mind.getCurrentLogRecord(org.kanger.enums.LogMode.ANALYZER).getRecord());
+        } finally { close(mind); }
+    }
     @TempDir Path directory;
     private User user;
     private DB data;

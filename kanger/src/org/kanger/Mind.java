@@ -2281,6 +2281,12 @@ public class Mind implements IMind {
                 for (IContextFederation.FrontierObservation conflict : queryConflicts)
                     summary.append(Enums.LINE_SEPARATOR).append("Conflicting substitution: ").append(conflict.getQuerySource());
                 log.add(LogMode.ANALYZER,summary.toString());
+            } else if (logging && key == Enums.SUC && line.length() > 1 && res == null) {
+                // An unresolved federated pass can leave a diagnostic entry
+                // after the local result. Publish the final query status last.
+                log.add(LogMode.ANALYZER, hypothesis.isEmpty()
+                        ? "Result: WHO KNOWS? No Hypothesis."
+                        : "Result: WHO KNOWS? Hypothesis found");
             }
             if (logging) {
                 log.add(LogMode.TIMING, "* QUERY Processing time \t" + ((System.currentTimeMillis() - queryStart) / 1000.0));
