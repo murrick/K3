@@ -37,6 +37,33 @@ public class ContextRuntimeLifecycleTest {
     Path root;
 
     @Test
+    void attachedProviderSettlesOfflineTransactionsWithoutCreatingContext() throws Exception {
+        Path databaseDir = root.resolve("offline");
+        Files.createDirectories(databaseDir);
+        User user = new User();
+        user.setDatabaseDir(databaseDir.toString() + File.separator);
+        DB db = new DB();
+        db.init(user);
+        Mind mind = new Mind(user);
+        user.setCurrentMind(mind);
+        assertTrue(Boolean.TRUE.equals(mind.query("!baseline;")));
+        Mind committed = new Mind(mind);
+        assertTrue(Boolean.TRUE.equals(committed.query("!committed;")));
+        assertTrue(mind.commit(committed));
+        Mind discarded = new Mind(mind);
+        assertTrue(Boolean.TRUE.equals(discarded.query("!discarded;")));
+        mind.release(discarded);
+        assertTrue(Boolean.TRUE.equals(mind.query("?baseline;")));
+        assertTrue(Boolean.TRUE.equals(mind.query("?committed;")));
+        assertNull(mind.query("?discarded;"));
+        assertTrue(db.isClosed());
+        try (java.util.stream.Stream<Path> files = Files.list(databaseDir)) {
+            assertEquals(0L, files.count(), "Offline settlement must not create storage");
+        }
+        db.close();
+    }
+
+    @Test
     void rootSettlementOwnsPhysicalPublicationAndRollbackDoesNot() throws Exception {
         Path databaseDir = root.resolve("database");
         Files.createDirectories(databaseDir);

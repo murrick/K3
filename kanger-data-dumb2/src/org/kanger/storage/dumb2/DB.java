@@ -207,7 +207,10 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
     @Override
     public synchronized void flush() throws Exception {
-        requireOpen();
+        requireInitialized();
+        // An attached provider also serves offline Minds. Root settlement and
+        // session logout may flush without any persistent Context being open.
+        if (isClosed()) return;
         if (isReadOnly()) return;
         long before = getRevision();
         ConnectionVector pending = workingConnections;
