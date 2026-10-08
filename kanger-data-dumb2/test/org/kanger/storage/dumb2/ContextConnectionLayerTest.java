@@ -75,6 +75,19 @@ class ContextConnectionLayerTest {
         } finally { close(); }
     }
 
+    @Test void pairValidationDoesNotReplaceConsistencyCheckStatusWithReplayLog() throws Exception {
+        setup();
+        try {
+            assertTrue(mind.query("?", null, true));
+            assertEquals("SUCCESS: No Collisions in Program",
+                    mind.getCurrentLogRecord(org.kanger.enums.LogMode.ANALYZER).getRecord());
+            assertTrue(mind.query("?q(John);", null, false));
+            assertTrue(mind.query("?", null, true));
+            assertEquals("SUCCESS: No Collisions in Program",
+                    mind.getCurrentLogRecord(org.kanger.enums.LogMode.ANALYZER).getRecord());
+        } finally { close(); }
+    }
+
     @Test void editsAreSharedByQueriesOpinionsAndRulesAndSurvivePublication() throws Exception {
         setup();
         long targetRevision = data.federationSnapshot().getConnections().get(0).getPinnedRevision();

@@ -252,7 +252,7 @@ final class PairQualification {
             if (overlay != null) {
                 overlay.getSolutions().clear();
                 overlay.getValues().clear();
-                attached.release(overlay);
+                attached.discardEphemeral(overlay);
             }
         }
     }
@@ -396,7 +396,7 @@ final class PairQualification {
         } finally {
             overlay.getSolutions().clear();
             overlay.getValues().clear();
-            target.release(overlay);
+            target.discardEphemeral(overlay);
         }
     }
 
