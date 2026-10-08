@@ -2293,6 +2293,9 @@ public class Mind implements IMind {
             }
 
             if (line.charAt(0) == Enums.SUC && line.length() > 1 && isStorageUsed()) {
+                if (res == null && user.getData() instanceof IContextFederation
+                        && ((IContextFederation) user.getData()).hasConnectedContexts())
+                    otherOpinionsPossible = true;
                 user.getContextOpinionSession().remember(this, line, opinionParameters);
                 if (logging && otherOpinionsPossible) log.add(LogMode.COMMON, "Other opinions may be available (ctx opinions)");
             }

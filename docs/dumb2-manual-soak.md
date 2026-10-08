@@ -107,16 +107,19 @@ ctx values natives
 
 `ctx opinions` runs live X and explicit direct pins separately. TRUE/FALSE include
 available proofs and values; UNKNOWN includes that source's locally qualified
-hypotheses. UNKNOWN without hypotheses is omitted. Hypotheses are neither
+hypotheses, optimized locally against the original query before projection.
+UNKNOWN without hypotheses is omitted. Hypotheses are neither
 accepted nor qualified in X. This can differ from a federated conclusion using
 facts from other sources.
 
 `ctx values`, `ctx solves` (proof trees), and `ctx when` read the saved collection
 without inference. Selecting one source when collecting replaces the collection
 with that source. Run a new query after authoring, transaction/storage/topology
-changes before collecting again. An optional «Возможно, есть другие мнения» notice
-uses only already observed frontier responses; absence of the notice does not
-mean the source hypotheses agree. `ctx v` retains its history meaning;
+changes before collecting again. The `Other opinions may be available (ctx opinions)`
+notice uses already observed frontier differences and also appears for UNKNOWN
+when direct connections exist. It does not probe sources or promise meaningful
+opinions. Absence of the notice does not mean the source hypotheses agree.
+`ctx v` retains its history meaning;
 `ctx values` selects the saved opinion values.
 
 Java: `mind.collectContextOpinions(null)` returns an immutable map keyed by source

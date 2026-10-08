@@ -1068,7 +1068,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             Queue<ITerm> externals = new LinkedList<>();
             for (org.kanger.SemanticTermSnapshot parameter : parameters)
                 externals.add(work.getTerms().projectSemantic(parameter.materialize()));
-            IContextFederation.QueryResult answer = projectLocalQuery(work, ref, query, externals);
+            IContextFederation.QueryResult answer = projectLocalQuery(work, ref, query, externals, true);
             List<IContextFederation.RuleRow> solutions = new ArrayList<>();
             for (org.kanger.interfaces.IRule solution : work.getSolutions())
                 solutions.add(org.kanger.ContextProofProjection.solution(work, solution));
@@ -1171,7 +1171,14 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
     private IContextFederation.QueryResult projectLocalQuery(Mind mind, RevisionRef source,
             String querySource, Queue<ITerm> externals) throws Exception {
+        return projectLocalQuery(mind, source, querySource, externals, false);
+    }
+
+    private IContextFederation.QueryResult projectLocalQuery(Mind mind, RevisionRef source,
+            String querySource, Queue<ITerm> externals, boolean optimizeHypotheses) throws Exception {
         Boolean answer = mind.queryCanonical(querySource, externals, false);
+        if (answer == null && optimizeHypotheses && !mind.getHypothesis().isEmpty())
+            mind.optimizeHypothesis();
 
         ArrayList<IContextFederation.ValueRow> values =
                 new ArrayList<IContextFederation.ValueRow>();

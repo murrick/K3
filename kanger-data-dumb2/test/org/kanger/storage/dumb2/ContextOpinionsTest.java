@@ -30,6 +30,8 @@ class ContextOpinionsTest {
             Set<String> afterPrevious = opinionHypotheses(command("ctx opinions N").get("N"));
             assertEquals(fresh, afterPrevious);
             assertFalse(fresh.isEmpty());
+            assertTrue(fresh.size() < 18, "Opinion hypotheses must be optimized before projection");
+            assertFalse(fresh.contains("!sibling(Tom,Tom);"));
         } finally { close(mind); }
     }
 
@@ -96,13 +98,13 @@ class ContextOpinionsTest {
         } finally { close(mind); }
     }
 
-    @Test void unknownHypothesesAreLocalAndDoNotNeedAHint() throws Exception {
+    @Test void unknownHypothesesAreLocalAndOfferAnOpinionHint() throws Exception {
         create("A", "!@x p(x) -> r(x);"); create("B", "!@x q(x) -> r(x);"); create("X", "!anchor(X);");
         Mind mind = open("X");
         try {
             data.connectContext("A"); data.connectContext("B");
             assertNull(mind.query("?r(John);", null, false));
-            assertFalse(mind.hasOtherContextOpinions());
+            assertTrue(mind.hasOtherContextOpinions());
             int nativeHypotheses = mind.getHypothesis().size();
             Map<String,IContextFederation.Opinion> opinions = command("ctx opinions");
             assertEquals(2, opinions.size());
