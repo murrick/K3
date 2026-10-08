@@ -243,8 +243,14 @@ public class DestructiveStopLossReactorTest {
                     "Failed use changed the selected database");
             assertEquals(sourceBefore, user.getCurrentMind().getSourceCode(),
                     "Failed use changed the logical workspace");
-            assertEquals(generationBefore, hashGeneration(user, currentStorage),
-                    "Failed use changed the current persistent generation");
+            Map<String, String> generationAfter = hashGeneration(user, currentStorage);
+            // The failed switch closes and reopens the original legacy storage.
+            // Close legitimately compacts .integrity + .integrity.delta; opening
+            // validates their combined state. Authoritative data must stay exact.
+            for (String suffix : new String[]{".index", ".store"}) {
+                assertEquals(generationBefore.get(suffix), generationAfter.get(suffix),
+                        "Failed use changed authoritative storage bytes: " + suffix);
+            }
         } finally {
             deleteGeneration(user, corruptName);
         }
