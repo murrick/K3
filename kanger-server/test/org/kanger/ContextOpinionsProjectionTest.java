@@ -3,7 +3,7 @@ package org.kanger;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.kanger.command.CommandIntent;
-import org.kanger.interfaces.internal.IContextFederation.*;
+import org.kanger.interfaces.IContextResults.*;
 import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 

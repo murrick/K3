@@ -179,10 +179,10 @@ public class Mind implements IMind {
     //
     private boolean otherOpinionsPossible;
     @Override public boolean hasOtherContextOpinions() { return otherOpinionsPossible; }
-    @Override public Map<String, IContextFederation.Opinion> collectContextOpinions(String locator) throws Exception {
+    @Override public Map<String, org.kanger.interfaces.IContextResults.Opinion> collectContextOpinions(String locator) throws Exception {
         return user.getContextOpinionSession().collect(this, locator);
     }
-    @Override public Map<String, IContextFederation.Opinion> getContextOpinions(String locator) throws Exception {
+    @Override public Map<String, org.kanger.interfaces.IContextResults.Opinion> getContextOpinions(String locator) throws Exception {
         return user.getContextOpinionSession().saved(this, locator);
     }
 

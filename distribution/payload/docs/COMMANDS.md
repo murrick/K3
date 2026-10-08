@@ -547,6 +547,29 @@ The projection is deliberately semantic. Storage-local ids, hash buckets,
 factories, caches and other runtime implementation details are not part of this
 surface.
 
+### `ctx opinions [<locator>]`
+
+Collect meaningful isolated opinions for the last ordinary query from live X and
+its exact direct pins, or the selected source. TRUE/FALSE opinions retain their
+Solutions and Values; UNKNOWN opinions contain locally qualified hypotheses only.
+UNKNOWN without hypotheses is omitted. Collection does not change X knowledge,
+connections or revisions. Repeating the same selection reuses the cached result.
+
+### `ctx values [<locator>]`, `ctx solves [<locator>]`, `ctx when [<locator>]`
+
+Read Values, solution proof trees, or hypotheses from the cached opinions without
+running inference. Each result keeps its source context and exact revision.
+A new query or a state change invalidates the collection.
+
+### `ctx ask <locator> <query-or-command...>`
+
+Run an isolated query in the selected live X or exact directly connected context.
+Names matching commands are accepted literally. For a foreign context, !/+/-
+commands change only its private view owned by X. Original target knowledge and
+history remain unchanged. Ordered initialization commands are saved with X's
+connections on publication and replayed when X is reopened. X rollback restores
+the private view with its corresponding transaction layer.
+
 ### `ctx <locator> <query...>`
 
 Runs one isolated local-only KANGER query in the selected Context.

@@ -563,12 +563,12 @@ public interface IMind {
      */
     void optimizeHypothesis() throws Exception;
     /** Explicit source opinions for the last original query, without changing ordinary inference. */
-    default java.util.Map<String, org.kanger.interfaces.internal.IContextFederation.Opinion>
+    default java.util.Map<String, org.kanger.interfaces.IContextResults.Opinion>
             collectContextOpinions(String locator) throws Exception {
         throw new UnsupportedOperationException("Context opinions require the canonical runtime");
     }
     /** Saved views; performs no inference. */
-    default java.util.Map<String, org.kanger.interfaces.internal.IContextFederation.Opinion>
+    default java.util.Map<String, org.kanger.interfaces.IContextResults.Opinion>
             getContextOpinions(String locator) throws Exception {
         throw new UnsupportedOperationException("Context opinions require the canonical runtime");
     }

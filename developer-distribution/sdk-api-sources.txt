@@ -26,3 +26,4 @@ kanger/src/org/kanger/exception/StorageLifecycleException.java
 kanger-bootstrap/src/org/kanger/bootstrap/RuntimeBootstrap.java
 kanger-bootstrap/src/org/kanger/bootstrap/RuntimeBootstrapResult.java
 kanger-bootstrap/src/org/kanger/bootstrap/RuntimeCapability.java
+kanger/src/org/kanger/interfaces/IContextResults.java

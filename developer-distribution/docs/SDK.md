@@ -717,3 +717,7 @@ Use these status meanings when discussing SDK surface:
 For 3.7.0, prefer interfaces and lifecycle paths documented in this guide. Do not build new integrations against `org.kanger.interfaces.internal` or implementation packages that are absent from the curated JavaDoc.
 
 The canonical command/control classes shown in the Assembly model are feature-level API in 3.7.0: usable, documented here, but not promoted into the curated Stable JavaDoc contract.
+
+### Context opinions
+
+`IMind.collectContextOpinions(locator)` returns an immutable `Map<String, IContextResults.Opinion>` for the last ordinary query; pass `null` to collect all directly visible sources. `getContextOpinions(locator)` reads the cached collection. `IContextResults` exposes detached source identities, truth, Values, solution proof trees and assertion-ready hypotheses without storage/runtime objects. UNKNOWN opinions contain hypotheses only. Collection never imports source assumptions into the initiating context.

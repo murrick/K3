@@ -163,6 +163,8 @@ required_api=(
   'org/kanger/ValuesOrder.html'
   'org/kanger/interfaces/IUser.html'
   'org/kanger/interfaces/IMind.html'
+  'org/kanger/interfaces/IContextResults.html'
+  'org/kanger/interfaces/IContextResults.Opinion.html'
   'org/kanger/interfaces/ITerm.html'
   'org/kanger/enums/ArgumentType.html'
   'org/kanger/enums/DataType.html'
