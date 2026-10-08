@@ -178,6 +178,11 @@ public class Mind implements IMind {
     private String compliedLine = "";
     //
     private boolean otherOpinionsPossible;
+    @Override public org.kanger.interfaces.IContextResults.Revision forkContext(String locator) throws Exception {
+        if (!(user.getData() instanceof IContextFederation))
+            throw new org.kanger.exception.CommandErrorException("Context fork is unavailable");
+        return ((IContextFederation) user.getData()).forkContext(this, locator);
+    }
     @Override public boolean hasOtherContextOpinions() { return otherOpinionsPossible; }
     @Override public Map<String, org.kanger.interfaces.IContextResults.Opinion> collectContextOpinions(String locator) throws Exception {
         return user.getContextOpinionSession().collect(this, locator);

@@ -721,3 +721,5 @@ The canonical command/control classes shown in the Assembly model are feature-le
 ### Context opinions
 
 `IMind.collectContextOpinions(locator)` returns an immutable `Map<String, IContextResults.Opinion>` for the last ordinary query; pass `null` to collect all directly visible sources. `getContextOpinions(locator)` reads the cached collection. `IContextResults` exposes detached source identities, truth, Values, solution proof trees and assertion-ready hypotheses without storage/runtime objects. UNKNOWN opinions contain hypotheses only. Collection never imports source assumptions into the initiating context.
+
+`IMind.forkContext(newLocator)` creates an independent copy of the selected published revision and returns its new `IContextResults.Revision`. It leaves the current context selected. DUMB2 requires U0 and published connection state; providers without fork support reject the operation.

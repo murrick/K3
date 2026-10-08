@@ -367,6 +367,7 @@ public final class CanonicalConsole {
             case CTX_WHEN:
             case CTX_STATUS:
             case CTX_RULES:
+            case CTX_FORK:
             case CTX_PUBLISH:
             case CTX_CONNECT:
             case CTX_DISCONNECT:

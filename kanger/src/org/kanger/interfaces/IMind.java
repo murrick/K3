@@ -572,5 +572,9 @@ public interface IMind {
             getContextOpinions(String locator) throws Exception {
         throw new UnsupportedOperationException("Context opinions require the canonical runtime");
     }
+    /** Fork the selected published Context revision into a new independent named Context. */
+    default IContextResults.Revision forkContext(String locator) throws Exception {
+        throw new UnsupportedOperationException("Context fork is unavailable");
+    }
     default boolean hasOtherContextOpinions() { return false; }
 }

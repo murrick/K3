@@ -424,7 +424,7 @@ public final class CommandParser {
                     Family.CONTEXT, tokens.get(1).value,
                     Keyword.CONNECT, Keyword.DISCONNECT,
                     Keyword.SWITCH, Keyword.VERSION,
-                    Keyword.RULES, Keyword.PUBLISH,
+                    Keyword.RULES, Keyword.PUBLISH, Keyword.FORK,
                     Keyword.EXPLAIN, Keyword.OPINIONS, Keyword.VALUES, Keyword.SOLVES, Keyword.WHEN);
         } catch (CommandParseException rejected) {
             if (rejected.getReason() == AMBIGUOUS_PREFIX) {
@@ -443,6 +443,11 @@ public final class CommandParser {
                         : keyword == Keyword.SOLVES ? CommandIntent.CTX_SOLVES : CommandIntent.CTX_WHEN;
                 return CommandInvocation.command(intent, tokens.size() == 3
                         ? args("locator", tokens.get(2).value) : java.util.Collections.<String,Object>emptyMap(), raw);
+            case FORK:
+                requireRequiredArgument(tokens, 3);
+                requireSize(tokens, 3);
+                return CommandInvocation.command(CommandIntent.CTX_FORK,
+                        args("locator", tokens.get(2).value), raw);
             case PUBLISH:
                 if (tokens.size() != 2 && tokens.size() != 3) requireSize(tokens,2);
                 return CommandInvocation.command(CommandIntent.CTX_PUBLISH,

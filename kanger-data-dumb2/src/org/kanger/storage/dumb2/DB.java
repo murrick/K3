@@ -677,6 +677,28 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     }
 
     @Override
+    public synchronized IContextFederation.Revision forkContext(IMind source, String locator) throws Exception {
+        requireOpen();
+        if (!(source instanceof Mind) || source.getUser() != user || user.getCurrentMind() != source)
+            throw new CommandErrorException("Fork requires the current canonical Context");
+        ((Mind) source).requirePublicationQuiescence();
+        if (source.getTransactionLevel() != 0)
+            throw new CommandErrorException("Fork requires U0; commit or publish open transactions first");
+        if (!workingConnections.equals(publishedConnections()))
+            throw new CommandErrorException("Fork requires saved connections; publish the Context first");
+        if (locator == null || locator.trim().isEmpty() || locator.contains("@")
+                || locator.contains("/") || locator.contains("\\") || locator.equals(".") || locator.equals(".."))
+            throw new CommandErrorException("Fork target must be a new Context name without a revision or path");
+        Path target = location(locator);
+        if (storageArtifactsExist(target))
+            throw new CommandErrorException("Fork target already exists: " + locator);
+        try (ContextSnapshot snapshot = ContextSnapshot.open(activeLocation(), getRevision());
+             ContextStore fork = snapshot.fork(target)) {
+            return new IContextFederation.Revision(fork.getContextId(), fork.getRevision());
+        }
+    }
+
+    @Override
     public synchronized IMind publishContext(IMind source, String description) throws Exception {
         requireWritable();
         requireOpen();

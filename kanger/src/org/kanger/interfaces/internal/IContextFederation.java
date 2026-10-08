@@ -26,6 +26,11 @@ import java.util.UUID;
  */
 public interface IContextFederation extends org.kanger.interfaces.IContextResults {
 
+    default Revision forkContext(IMind source, String locator) throws Exception {
+        throw new UnsupportedOperationException("Context fork is unavailable");
+    }
+
+
     enum PinPolicy {
         EXACT_REVISION
     }

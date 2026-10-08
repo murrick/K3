@@ -55,6 +55,7 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.CTX_WHEN
                 || intent == CommandIntent.CTX_STATUS
                 || intent == CommandIntent.CTX_RULES
+                || intent == CommandIntent.CTX_FORK
                 || intent == CommandIntent.CTX_PUBLISH
                 || intent == CommandIntent.CTX_CONNECT
                 || intent == CommandIntent.CTX_DISCONNECT
@@ -296,6 +297,14 @@ public final class CanonicalCommandProcessor {
                 return Result.successContextExplain(
                         mind,
                         explain);
+            }
+
+            case CTX_FORK: {
+                IContextFederation federation = contextFederation(user, mind);
+                String locator = (String) invocation.getArgument("locator");
+                org.kanger.interfaces.IContextResults.Revision fork = mind.forkContext(locator);
+                return Result.successFederation(mind, "Context forked: " + locator + "@" + fork.getRevision(),
+                        federation.federationSnapshot(), null);
             }
 
             case CTX_OPINIONS:

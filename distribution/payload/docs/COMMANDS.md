@@ -547,6 +547,19 @@ The projection is deliberately semantic. Storage-local ids, hash buckets,
 factories, caches and other runtime implementation details are not part of this
 surface.
 
+### `ctx fork <locator>`
+
+Create an independent Context from the selected published revision without switching
+away from the source. `use X@7` followed by `ctx fork Y` forks exactly X revision 7,
+even when X CURRENT is newer. The fork gets a new Context identity, its own revision
+history and the exact source identity/revision as origin. Published direct pins and
+private initialization commands are copied and qualified for the new source.
+The original Context and its connected sources remain unchanged.
+
+Fork requires U0 and saved connections: commit or publish pending work first.
+The target must be a new logical name, without a path or `@revision`; an existing
+Context is rejected before mutation. Open the result explicitly with `use Y`.
+
 ### `ctx opinions [<locator>]`
 
 Collect meaningful isolated opinions for the last ordinary query from live X and

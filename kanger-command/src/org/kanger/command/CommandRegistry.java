@@ -72,6 +72,7 @@ public final class CommandRegistry {
         VERSION,
         RULES,
         PUBLISH,
+        FORK,
         OPINIONS,
         VALUES,
         SOLVES,
@@ -219,6 +220,7 @@ public final class CommandRegistry {
         keyword(Family.CONTEXT, Keyword.VERSION, "version", "v");
         keyword(Family.CONTEXT, Keyword.RULES, "rules");
         keyword(Family.CONTEXT, Keyword.PUBLISH, "publish");
+        keyword(Family.CONTEXT, Keyword.FORK, "fork");
         keyword(Family.CONTEXT, Keyword.QUERY, "query");
 
         keyword(Family.STATUS, Keyword.CORE, "core");
@@ -334,6 +336,9 @@ public final class CommandRegistry {
         define(CommandIntent.CTX_RULES, "ctx rules [<locator>] [all|produced|<id>|tree <id>|comment <id>]", "CONTEXT",
                 "Inspect local and exact-pinned direct Context rules. Rule IDs belong to the displayed Context; transaction levels remain local rule level diagnostics.",
                 args("locator", "Optional current or direct connected Context locator."), n++);
+        define(CommandIntent.CTX_FORK, "ctx fork <locator>", "CONTEXT",
+                "Fork the selected published revision into a new independent Context; requires U0 and saved connections.",
+                args("locator", "New independent Context name."), n++);
         define(CommandIntent.CTX_PUBLISH, "ctx publish [description]", "CONTEXT",
                 "Publish local content and explicit connections as one revision. Collapsing open transactions requires confirmation.", args("description", "Optional publication description."), n++);
         define(CommandIntent.CTX_CONNECT, "ctx connect <locator>", "CONTEXT",

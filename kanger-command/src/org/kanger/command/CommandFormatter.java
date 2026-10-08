@@ -121,6 +121,8 @@ public final class CommandFormatter {
                 return optionalArgumentCommand("ctx when", invocation.getArgument("locator"));
             case CTX_STATUS:
                 return "ctx";
+            case CTX_FORK:
+                return "ctx fork " + argument(invocation.getArgument("locator"));
             case CTX_PUBLISH:
                 return optionalArgumentCommand("ctx publish", invocation.getArgument("description"));
             case CTX_RULES:
