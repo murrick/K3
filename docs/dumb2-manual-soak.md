@@ -99,6 +99,51 @@ The locator after `ask` is literal, including command names such as `opinions`
 or `ask`. The legacy `ctx family ?male(Tom);` shorthand remains supported for
 names that do not collide with Context commands.
 
+### Private connection initialization
+
+`ctx ask N !p(Mary);`, `ctx ask N -p(John);`, and `ctx ask N +p(John);`
+edit a private layer over N's exact pinned revision. They never publish, commit
+to, or change N itself. The commands are native KANGER operations, including
+quantified rules, and their original source is retained in order in X's
+connection vector. Commands targeting live X should be entered normally in X.
+The short diagnostic form remains query-only.
+
+Queries, frontier inference, rules inspection and opinions all use the effective
+layer. Views label modified sources `configured by X`; their conclusions are
+those of X's configured source rather than N's unmodified published artifact.
+Each edit is validated in a private child; a rejected command preserves the
+previous layer and initialization block. Previous commands are not replayed
+for each edit or query. The complete block is replayed once on reopening X.
+
+Initialization is part of X's transaction topology: rollback restores all
+connection changes and initialization commands, while commit retains them.
+Use `ctx publish "description"` to publish X with this environment. Historical
+X remains read-only. Switching N's pin replays and qualifies the block against
+the requested revision; failure leaves the previous pin and layer in place.
+Disconnecting removes that connection and its configuration.
+
+Exported `.k` includes commands immediately after their connection:
+
+```text
+//! ctx connect N@2
+//! ctx init -p(John);
+//! ctx init !p(Mary);
+//! ctx init !@x
+//! ctx init+  p(x) -> q(x);
+```
+
+`ctx init+` continues a multi-line command. These are declarative source
+metadata, not Console commands. Compilation prepares and checks the dependency
+block before installation. Connection format 4 stores the ordered source;
+existing formats 2 and 3 remain readable. Each connection supports up to 4096
+initialization commands.
+
+`ctx solves [N]` expands native rule/donor trees from saved opinions. A donor
+matching a source-local hypothesis is labelled with its source revision and
+the original query (`Hypothesis: N@2`, `Required for: ?...`). It remains an
+assumption, not evidence accepted in X. Server proofs retain the same typed
+source UUID, revision and query metadata.
+
 After a normal query, collect isolated answers for that **entire last query**:
 
 ```text

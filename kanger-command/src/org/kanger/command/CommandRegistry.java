@@ -353,10 +353,10 @@ public final class CommandRegistry {
                 "Execute the normal query path and show its semantic federation trace.",
                 args("query", "KANGER query beginning with ?."), n++);
         define(CommandIntent.CTX_ISOLATED_QUERY,
-                "ctx ask <locator> <query...>", "CONTEXT",
-                "Execute one local-only diagnostic query in X or one exact-pinned direct Context. The short form ctx <locator> <query...> remains available for non-command names.",
+                "ctx ask <locator> <query-or-command...>", "CONTEXT",
+                "Query one Context locally, or apply !/+/- commands to its private connection layer owned by X. The short query form ctx <locator> <query...> remains available for non-command names.",
                 args("locator", "Current Context or direct connected Context locator.",
-                        "query", "KANGER query beginning with ?."), n++);
+                        "query", "Query ?..., or private connection initialization !..., +..., -...."), n++);
         define(CommandIntent.STATUS,
                 "status [core [objects|transaction|levels]|storage|session|runtime]",
                 "STATUS",

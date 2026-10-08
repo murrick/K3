@@ -84,6 +84,27 @@ final class ContextSourceMetadata {
                                     .trim();
                     requests.add(
                             parseDependency(operand));
+                } else if (directive.startsWith("ctx init+ ")) {
+                    if (requests.isEmpty()) throw invalid("ctx init+ requires a preceding initialization command");
+                    int last = requests.size() - 1;
+                    IContextFederation.SourceDependencyRequest dependency = requests.get(last);
+                    List<String> commands = new ArrayList<String>(dependency.getInitialization());
+                    if (commands.isEmpty()) throw invalid("ctx init+ requires a preceding initialization command");
+                    int commandIndex = commands.size() - 1;
+                    commands.set(commandIndex, commands.get(commandIndex) + "\n" + directive.substring("ctx init+ ".length()));
+                    requests.set(last, new IContextFederation.SourceDependencyRequest(dependency.getLocator(),
+                            dependency.isExact() ? dependency.getExactRevision() : null, commands));
+                } else if (directive.startsWith("ctx init ")) {
+                    if (explicitNone || requests.isEmpty()) throw invalid("ctx init requires a preceding connection");
+                    String command = directive.substring("ctx init ".length()).trim();
+                    if (command.isEmpty() || "!+-".indexOf(command.charAt(0)) < 0)
+                        throw invalid("ctx init requires an assertion/addition/deletion command");
+                    int last = requests.size() - 1;
+                    IContextFederation.SourceDependencyRequest dependency = requests.get(last);
+                    List<String> commands = new ArrayList<String>(dependency.getInitialization());
+                    commands.add(command);
+                    requests.set(last, new IContextFederation.SourceDependencyRequest(dependency.getLocator(),
+                            dependency.isExact() ? dependency.getExactRevision() : null, commands));
                 } else {
                     throw invalid(
                             "unsupported metadata directive: "
@@ -131,6 +152,13 @@ final class ContextSourceMetadata {
                     .append(
                             dependency.getRevision())
                     .append(lineSeparator);
+            for (String command : dependency.getInitialization()) {
+                boolean first = true;
+                for (String line : command.split("\r?\n", -1)) {
+                    result.append(first ? "//! ctx init " : "//! ctx init+ ").append(line).append(lineSeparator);
+                    first = false;
+                }
+            }
         }
         return result.toString();
     }

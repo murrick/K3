@@ -112,7 +112,12 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             Path selected=location(name.substring(0,at));
             historical=ContextSnapshot.open(selected,revision);
             historicalLocation=selected; storageName=name; bases.clear();
-            workingConnections=publishedConnections();
+            retiredLayers.addAll(workingConnections.getConnections());
+            workingConnections =publishedConnections();
+            try {
+                for (ContextConnection connection : workingConnections.getConnections())
+                    if (!connection.getInitialization().isEmpty()) connection.layer();
+            } catch (Exception failure) { close(); throw failure; }
             return;
         }
         Path location = location(name);
@@ -130,11 +135,25 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         context = acquired;
         storageName = name;
         bases.clear();
+        retiredLayers.addAll(workingConnections.getConnections());
         workingConnections = publishedConnections();
+        try {
+            for (ContextConnection connection : workingConnections.getConnections())
+                if (!connection.getInitialization().isEmpty()) connection.layer();
+        } catch (Exception failure) { close(); throw failure; }
+    }
+
+    private final java.util.Set<ContextConnection> retiredLayers =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<ContextConnection, Boolean>());
+    private void closeConnectionLayers() throws Exception {
+        retiredLayers.addAll(workingConnections.getConnections());
+        for (ContextConnection connection : retiredLayers) connection.closeLayer();
+        retiredLayers.clear();
     }
 
     @Override
     public synchronized void close() throws Exception {
+        closeConnectionLayers();
         if (historical!=null) {
             for (IBase base : bases.values()) if (base instanceof SnapshotRuntimeBase) ((SnapshotRuntimeBase)base).close();
             historical.close(); historical=null; historicalLocation=null;
@@ -174,6 +193,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         if (getRevision() != before) {
             // Ordinary authoring advances X without implicitly saving session topology.
             // Requalify exact target pins against the new source revision.
+            retiredLayers.addAll(workingConnections.getConnections());
             workingConnections = context.getQualifiedWorkingConnections();
         }
     }
@@ -267,6 +287,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         long before = getRevision();
         context.reindex(reactor, (Mind) mind);
         if (getRevision() != before) {
+            retiredLayers.addAll(workingConnections.getConnections());
             workingConnections = publishedConnections();
         }
     }
@@ -349,6 +370,26 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         if (isReadOnly()) throw new CommandErrorException("Context " + storageName + " is an immutable revision; open CURRENT for authoring");
     }
 
+    private ContextConnection configuredConnection(Path location, long revision, List<String> commands) throws Exception {
+        ContextSnapshot target = revision < 0 ? ContextSnapshot.open(location) : ContextSnapshot.open(location, revision);
+        RevisionRef ref;
+        try { ref = new RevisionRef(target.getContextId(), target.getRevision()); }
+        finally { target.close(); }
+        if (ref.getContextId().equals(getContextId()))
+            throw new CommandErrorException("A Context cannot connect to itself");
+        ContextConnection candidate = new ContextConnection(location, ref,
+                new CompatibilityCertificate(new RevisionRef(getContextId(), getRevision()), ref, Version.CORE_VERSION_S), commands);
+        boolean accepted = false;
+        try {
+            PairQualification.Result pair = PairQualification.qualify(activeLocation(), getRevision(), candidate);
+            if (!pair.isCompatible()) throw new CommandErrorException("Configured source dependency is incompatible with X");
+            ContextConnection qualified = candidate.recertified(pair.getCertificate());
+            retiredLayers.add(qualified);
+            accepted = true;
+            return qualified;
+        } finally { if (!accepted) candidate.closeLayer(); }
+    }
+
     @Override
     public synchronized IContextFederation.SourceDependencyPlan
             prepareSourceDependencies(
@@ -379,7 +420,10 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                     resolveFederationLocator(
                             request.getLocator());
             ContextConnection connection =
-                    request.isExact()
+                    !request.getInitialization().isEmpty()
+                            ? configuredConnection(targetLocation, request.isExact() ? request.getExactRevision() : -1L,
+                                    request.getInitialization())
+                    : request.isExact()
                             ? ConnectionManager.qualifyConnect(
                                     activeLocation(),
                                     targetLocation,
@@ -453,10 +497,9 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                         resolveFederationLocator(
                                 dependency.getLocator());
                 ContextConnection connection =
-                        ConnectionManager.qualifyConnect(
-                                activeLocation(),
-                                targetLocation,
-                                dependency.getRevision());
+                        dependency.getInitialization().isEmpty()
+                                ? ConnectionManager.qualifyConnect(activeLocation(), targetLocation, dependency.getRevision())
+                                : configuredConnection(targetLocation, dependency.getRevision(), dependency.getInitialization());
                 if (!dependency.getContextId().equals(
                         connection.getTarget().getContextId())) {
                     throw new StorageLifecycleException(
@@ -499,6 +542,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             }
         }
 
+        retiredLayers.addAll(workingConnections.getConnections());
         workingConnections = vector;
     }
 
@@ -526,7 +570,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                 connection.getTarget()
                         .getContextId(),
                 connection.getTarget()
-                        .getRevision());
+                        .getRevision(), connection.getInitialization());
     }
 
     private void sortSourceDependencies(
@@ -582,7 +626,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                         IContextFederation.PinPolicy.EXACT_REVISION,
                         c.getCertificate().matches(sourceRef,c.getTarget(),Version.CORE_VERSION_S)
                                 ?IContextFederation.CompatibilityStatus.QUALIFIED:IContextFederation.CompatibilityStatus.STALE,
-                        c.getCertificate().getSemanticVersion()));
+                        c.getCertificate().getSemanticVersion(), c.getInitialization()));
             }
             ArrayList<IContextFederation.DependencyNotice> notices = new ArrayList<IContextFederation.DependencyNotice>();
             for(ContextConnection owner:workingConnections.getConnections()) {
@@ -650,6 +694,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                 context.publishGeneration(candidate.getGeneration(), workingConnections, description);
             }
             accepted = true;
+            retiredLayers.addAll(workingConnections.getConnections());
             workingConnections = publishedConnections();
             return ((User) user).reloadAfterContextPublication(source);
         } catch (Exception failure) {
@@ -700,6 +745,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         if (!getContextId().equals(saved.sourceId)) {
             throw new IllegalStateException("Cannot restore topology in another Context");
         }
+        retiredLayers.addAll(workingConnections.getConnections());
         workingConnections = requalifyWorkingConnections(saved.vector);
     }
 
@@ -709,13 +755,19 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         for (ContextConnection connection : vector.getConnections()) {
             ContextConnection current = connection;
             if (!connection.getCertificate().matches(source, connection.getTarget(), Version.CORE_VERSION_S)) {
-                current = ConnectionManager.qualifyConnect(activeLocation(),
-                        connection.getTargetLocation(), connection.getTarget().getRevision());
+                if (connection.getInitialization().isEmpty()) {
+                    current = ConnectionManager.qualifyConnect(activeLocation(), connection.getTargetLocation(), connection.getTarget().getRevision());
+                } else {
+                    PairQualification.Result pair = PairQualification.qualify(activeLocation(), getRevision(), connection);
+                    if (!pair.isCompatible()) throw new CommandErrorException("Configured connection is incompatible with X");
+                    current = connection.recertified(pair.getCertificate());
+                }
                 if (!connection.getTarget().equals(current.getTarget())) {
                     throw new StorageLifecycleException(StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
                             "Pinned Context identity changed during topology restoration: " + connection.getTarget());
                 }
             }
+            if (current != connection) current = connection.recertified(current.getCertificate());
             qualified = qualified.with(current);
         }
         return qualified;
@@ -731,7 +783,8 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         // Local DUMB2 uses the same exclusively opened writable Context as
         // ordinary authoring. SMART ownership/ACL publication remains separate.
         long revision=context.publishTopology(workingConnections,"Save explicit Context connections");
-        workingConnections=publishedConnections();
+        retiredLayers.addAll(workingConnections.getConnections());
+        workingConnections =publishedConnections();
         return revision;
     }
 
@@ -752,10 +805,10 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         if(number!=null && !addressed) return Collections.unmodifiableList(result);
         for(ContextConnection c:workingConnections.getConnections()) {
             if(addressed && !c.getTargetLocation().toAbsolutePath().normalize().equals(selected)) continue;
-            try(SnapshotMindRuntime runtime=SnapshotMindRuntime.open(c.getTargetLocation(),c.getTarget(),"rules-"+c.getTarget().getContextId())) {
-                result.add(org.kanger.ContextRuleInspection.inspect(runtime.getMind(),displayFederationLocator(c.getTargetLocation()),
-                        projectRevision(c.getTarget()),false,selection,number));
-            }
+            IContextFederation.RuleBlock block = org.kanger.ContextRuleInspection.inspect(c.layer(),
+                    displayFederationLocator(c.getTargetLocation()), projectRevision(c.getTarget()), false, selection, number);
+            result.add(new IContextFederation.RuleBlock(block.locator, block.revision, block.working, block.rules,
+                    !c.getInitialization().isEmpty()));
         }
         if(result.isEmpty()) throw new CommandErrorException("No direct Context connection exists for locator " + locator);
         return Collections.unmodifiableList(result);
@@ -847,10 +900,24 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             String targetLocator) throws Exception {
         requireWritable();
         requireOpen();
-        ContextConnection connection =
-                ConnectionManager.qualifyConnect(
-                        activeLocation(),
-                        resolveFederationLocator(targetLocator));
+        Path location = resolveFederationLocator(targetLocator);
+        ContextConnection previous = null;
+        for (ContextConnection existing : workingConnections.getConnections())
+            if (existing.getTargetLocation().equals(location.toAbsolutePath().normalize())) previous = existing;
+        ContextConnection connection;
+        if (previous != null && !previous.getInitialization().isEmpty()) {
+            ContextSnapshot current = ContextSnapshot.open(location);
+            long revision;
+            try {
+                if (!previous.getTarget().getContextId().equals(current.getContextId()))
+                    throw new CommandErrorException("Connected Context identity changed");
+                revision = current.getRevision();
+            } finally { current.close(); }
+            connection = ConnectionManager.qualifySwitchRevision(activeLocation(), workingConnections,
+                    previous.getTarget().getContextId(), revision);
+        } else {
+            connection = ConnectionManager.qualifyConnect(activeLocation(), location);
+        }
         ConnectionVector candidate =
                 workingConnections.with(connection);
         PairQualification.CompositionQualification before =
@@ -870,6 +937,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                             + connection.getTarget(),
                     after.introducedCollisionsComparedTo(before));
         }
+        retiredLayers.addAll(workingConnections.getConnections());
         workingConnections = candidate;
         ((User) user).getContextOpinionSession().invalidate();
         return projectConnection(
@@ -892,6 +960,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             java.util.UUID targetContextId) throws Exception {
         requireWritable();
         requireOpen();
+        retiredLayers.addAll(workingConnections.getConnections());
         workingConnections =
                 workingConnections.without(targetContextId);
         ((User) user).getContextOpinionSession().invalidate();
@@ -919,6 +988,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                         workingConnections,
                         targetContextId,
                         targetRevision);
+        retiredLayers.addAll(workingConnections.getConnections());
         workingConnections =
                 workingConnections.with(connection);
         ((User) user).getContextOpinionSession().invalidate();
@@ -991,7 +1061,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                 currentRevision,
                 IContextFederation.PinPolicy.EXACT_REVISION,
                 status,
-                certificate.getSemanticVersion());
+                certificate.getSemanticVersion(), connection.getInitialization());
     }
 
     @Override
@@ -1049,13 +1119,10 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         for (ContextConnection connection : workingConnections.getConnections()) {
             if (selected != null && !connection.getTargetLocation().toAbsolutePath().normalize().equals(selected)) continue;
             matched = true;
-            try (SnapshotMindRuntime runtime = SnapshotMindRuntime.open(connection.getTargetLocation(),
-                    connection.getTarget(), "opinion-" + connection.getTarget().getContextId())) {
-                IContextFederation.Opinion opinion = localOpinion(runtime.getMind(),
-                        displayFederationLocator(connection.getTargetLocation()), connection.getTarget(), false,
-                        querySource, parameters);
-                if (opinion.isMeaningful()) result.put(opinion.getLocator(), opinion);
-            }
+            IContextFederation.Opinion opinion = localOpinion(connection.layer(),
+                    displayFederationLocator(connection.getTargetLocation()), connection.getTarget(), false,
+                    querySource, parameters, !connection.getInitialization().isEmpty());
+            if (opinion.isMeaningful()) result.put(opinion.getLocator(), opinion);
         }
         if (!matched) throw new CommandErrorException("No direct Context connection exists for locator " + locator);
         return Collections.unmodifiableMap(result);
@@ -1063,6 +1130,11 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
     private IContextFederation.Opinion localOpinion(Mind root, String locator, RevisionRef ref,
             boolean working, String query, List<org.kanger.SemanticTermSnapshot> parameters) throws Exception {
+        return localOpinion(root, locator, ref, working, query, parameters, false);
+    }
+
+    private IContextFederation.Opinion localOpinion(Mind root, String locator, RevisionRef ref,
+            boolean working, String query, List<org.kanger.SemanticTermSnapshot> parameters, boolean configured) throws Exception {
         Mind work = Mind.ephemeralChild(root);
         try {
             Queue<ITerm> externals = new LinkedList<>();
@@ -1071,9 +1143,43 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             IContextFederation.QueryResult answer = projectLocalQuery(work, ref, query, externals, true);
             List<IContextFederation.RuleRow> solutions = new ArrayList<>();
             for (org.kanger.interfaces.IRule solution : work.getSolutions())
-                solutions.add(org.kanger.ContextProofProjection.solution(work, solution));
-            return new IContextFederation.Opinion(locator, projectRevision(ref), working, answer, solutions);
+                solutions.add(org.kanger.ContextProofProjection.solution(work, solution, projectRevision(ref), query));
+            return new IContextFederation.Opinion(locator, projectRevision(ref), working, answer, solutions, configured);
         } finally { root.discardEphemeral(work); }
+    }
+
+    @Override
+    public synchronized void applyConnectionCommand(IMind sourceMind, String locator, String command) throws Exception {
+        requireWritable(); requireOpen();
+        if (sourceMind != user.getCurrentMind() || sourceMind.getUser() != user)
+            throw new CommandErrorException("Connection editing requires the current X Mind");
+        if (command == null || command.isEmpty() || "!+-".indexOf(command.charAt(0)) < 0)
+            throw new CommandErrorException("Only assertion/addition/deletion commands are allowed in a connection layer");
+        org.kanger.compiler.Token token = org.kanger.enums.Tools.extractLine(command, null);
+        if (token == null || org.kanger.enums.Tools.extractLine(command, token) != null)
+            throw new CommandErrorException("Connection editing requires one complete command");
+        ContextConnection original = connectedContext(resolveFederationLocator(locator), locator);
+        java.util.List<String> commands = new java.util.ArrayList<String>(original.getInitialization());
+        if (commands.size() >= 4096) throw new CommandErrorException("Too many connection initialization commands");
+        commands.add(command);
+        ContextConnection candidate = new ContextConnection(original.getTargetLocation(), original.getTarget(),
+                original.getCertificate(), commands);
+        boolean accepted = false;
+        try {
+            candidate.extendLayer(original, command);
+            ConnectionVector proposed = workingConnections.with(candidate);
+            PairQualification.CompositionQualification before = PairQualification.qualifyCompositionState(
+                    activeLocation(), getRevision(), workingConnections);
+            PairQualification.CompositionQualification after = PairQualification.qualifyCompositionState(
+                    activeLocation(), getRevision(), proposed);
+            if (after.introducesNewCollisionComparedTo(before))
+                throw new CommandErrorException("Context layer introduces a new composition conflict");
+            retiredLayers.add(original);
+            retiredLayers.addAll(workingConnections.getConnections());
+            workingConnections = proposed;
+            ((User) user).getContextOpinionSession().invalidate();
+            accepted = true;
+        } finally { if (!accepted) candidate.closeLayer(); }
     }
 
     @Override
@@ -1119,47 +1225,10 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                 connectedContext(requested, targetLocator);
         RevisionRef targetRef =
                 connection.getTarget();
-        SnapshotMindRuntime runtime =
-                SnapshotMindRuntime.open(
-                        connection.getTargetLocation(),
-                        targetRef,
-                        "isolated-"
-                                + targetRef.getContextId().toString());
-        Mind root = runtime.getMind();
+        Mind root = connection.layer();
         Mind work = Mind.ephemeralChild(root);
-        try {
-            return projectLocalQuery(
-                    work,
-                    targetRef,
-                    querySource);
-        } finally {
-            Throwable failure = null;
-            try {
-                work.getSolutions().clear();
-                work.getValues().clear();
-                root.release(work);
-            } catch (Throwable releaseFailure) {
-                failure = releaseFailure;
-            }
-            try {
-                runtime.close();
-            } catch (Throwable closeFailure) {
-                if (failure == null) {
-                    failure = closeFailure;
-                } else if (closeFailure != failure) {
-                    failure.addSuppressed(closeFailure);
-                }
-            }
-            if (failure != null) {
-                if (failure instanceof Exception) {
-                    throw (Exception) failure;
-                }
-                if (failure instanceof Error) {
-                    throw (Error) failure;
-                }
-                throw new RuntimeException(failure);
-            }
-        }
+        try { return projectLocalQuery(work, targetRef, querySource); }
+        finally { root.discardEphemeral(work); }
     }
 
     private IContextFederation.QueryResult projectLocalQuery(

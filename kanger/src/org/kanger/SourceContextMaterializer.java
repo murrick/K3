@@ -20,7 +20,12 @@ public final class SourceContextMaterializer {
     }
 
     public static String materializeCurrentLevel(IMind mind) throws Exception {
-        return CurrentLevelSourceMaterializer.materialize(mind);
+        String body = CurrentLevelSourceMaterializer.materialize(mind);
+        if (mind.isStorageUsed() && ((User) mind.getUser()).getData() instanceof org.kanger.interfaces.internal.IContextFederation)
+            return ContextSourceMetadata.canonicalHeader(((org.kanger.interfaces.internal.IContextFederation)
+                    ((User) mind.getUser()).getData()).sourceDependencies(), org.kanger.enums.Enums.LINE_SEPARATOR)
+                    + org.kanger.enums.Enums.LINE_SEPARATOR + body;
+        return body;
     }
 
     /** Compatibility entry point retained for existing level-zero callers. */

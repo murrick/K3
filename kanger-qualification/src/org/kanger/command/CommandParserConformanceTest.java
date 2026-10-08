@@ -534,6 +534,9 @@ public final class CommandParserConformanceTest {
                 "ctx \"test context\" ?$x son(John, x);",
                 "ctx ask \"test context\" ?$x son(John, x);");
         expectCanonical("ctx ask opinions ?male(Tom);", "ctx ask opinions ?male(Tom);");
+        expectCanonical("ctx ask opinions -p(John);", "ctx ask opinions -p(John);");
+        expectCanonical("ctx ask ask +p(Mary);", "ctx ask ask +p(Mary);");
+        expectCanonical("ctx ask N !@x p(x) -> q(x);", "ctx ask N !@x p(x) -> q(x);");
         expectCanonical("ctx ask ask ?p(\"two words\");", "ctx ask ask ?p(\"two words\");");
         expectCanonical("g", "get");
         expectCanonical("de", "delete");

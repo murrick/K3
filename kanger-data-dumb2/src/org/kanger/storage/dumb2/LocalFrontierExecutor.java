@@ -59,6 +59,8 @@ final class LocalFrontierExecutor {
         }
 
         RevisionRef target = connection.getTarget();
+        if (!connection.getInitialization().isEmpty())
+            return execute(connection.layer(), target, request, enumerate);
         return execute(
                 connection.getTargetLocation(),
                 target,

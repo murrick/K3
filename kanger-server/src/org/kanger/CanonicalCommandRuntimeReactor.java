@@ -300,7 +300,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             JSONObject view = new JSONObject().put("locator", opinion.getLocator())
                     .put("context_id", opinion.getSource().getContextId().toString())
                     .put("revision", opinion.getSource().getRevision()).put("working", opinion.isWorking())
-                    .put("isolated", true).put("truth", opinion.getResult().getResultTruth().name());
+                    .put("isolated", true).put("configured_by_x", opinion.isConfigured()).put("truth", opinion.getResult().getResultTruth().name());
             if (intent == CommandIntent.CTX_OPINIONS || intent == CommandIntent.CTX_SOLVES) {
                 JSONArray solutions = new JSONArray();
                 for (IContextFederation.RuleRow solution : opinion.getSolutions()) solutions.put(new JSONObject()
@@ -330,6 +330,10 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                 .put("rule_id", cause.ruleId).put("rule", cause.ruleStatement)
                 .put("donor_id", cause.donorId == null ? JSONObject.NULL : cause.donorId)
                 .put("donor", cause.donorStatement).put("cycle", cause.cycle)
+                .put("hypothesis", cause.hypothesis)
+                .put("required_for", cause.requiredFor == null ? JSONObject.NULL : cause.requiredFor)
+                .put("hypothesis_context_id", cause.hypothesisSource == null ? JSONObject.NULL : cause.hypothesisSource.getContextId().toString())
+                .put("hypothesis_revision", cause.hypothesisSource == null ? JSONObject.NULL : cause.hypothesisSource.getRevision())
                 .put("causes", opinionCauses(cause.causes)));
         return result;
     }
@@ -342,7 +346,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                         .put("id",row.id).put("statement",row.statement).put("generated",row.generated)
                         .put("comment",row.comment).put("tree",new JSONArray(row.tree)));
                 blocks.put(new JSONObject().put("locator",block.locator).put("context_id",block.revision.getContextId().toString())
-                        .put("revision",block.revision.getRevision()).put("working",block.working).put("rules",rules));
+                        .put("revision",block.revision.getRevision()).put("working",block.working).put("configured_by_x",block.configured).put("rules",rules));
             }
             return blocks;
     }
@@ -357,7 +361,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                 .put("status",notice.getStatus()).put("connected_revision",notice.actualRevision==null?JSONObject.NULL:notice.actualRevision));
         JSONArray published=new JSONArray();
         for(IContextFederation.Connection c:snapshot.getPublishedConnections()) published.put(new JSONObject()
-                .put("locator",c.getLocator()).put("context_id",c.getTargetContextId().toString()).put("pinned_revision",c.getPinnedRevision()));
+                .put("locator",c.getLocator()).put("context_id",c.getTargetContextId().toString()).put("pinned_revision",c.getPinnedRevision()).put("initialization", new JSONArray(c.getInitialization())));
         JSONArray connections = new JSONArray();
         for (IContextFederation.Connection connection
                 : snapshot.getConnections()) {
@@ -375,6 +379,8 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                             connection.getPinPolicy().name())
                     .put("compatibility",
                             connection.getCompatibilityStatus().name())
+                    .put("initialization", new JSONArray(connection.getInitialization()))
+                    .put("configured_by_x", !connection.getInitialization().isEmpty())
                     .put("semantic_version",
                             connection.getSemanticVersion()));
         }

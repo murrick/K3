@@ -232,6 +232,19 @@ public class Mind implements IMind {
         return new Mind(root, true);
     }
 
+    /** Writable private overlay; settlement never reaches its immutable snapshot parent. */
+    public static Mind contextConnectionLayer(IMind root) throws Exception {
+        Mind layer = new Mind(root, true);
+        layer.connectionLayer = true;
+        return layer;
+    }
+
+    private boolean connectionLayer;
+    private boolean commandNoOp;
+
+    /** Native authoring intent was valid but selected no change. */
+    public boolean wasLastCommandNoOp() { return commandNoOp; }
+
     private Mind(IMind root,
                  boolean isolateCanonicalFactories) throws Exception {
         next = root;
@@ -240,6 +253,7 @@ public class Mind implements IMind {
         init();
 
         Mind parent = (Mind) root;
+        connectionLayer = parent.connectionLayer;
         if (!isolateCanonicalFactories && user.getCurrentMind() == root) user.getContextOpinionSession().invalidate();
         operationDescription = parent.operationDescription;
         parent.incTransactionCounter();
@@ -278,7 +292,7 @@ public class Mind implements IMind {
     }
 
     public void requireWritableContext() throws Exception {
-        if (isStorageUsed() && user.getData().isReadOnly())
+        if (isStorageUsed() && user.getData().isReadOnly() && !connectionLayer)
             throw new org.kanger.exception.CommandErrorException("The selected Context revision is read-only");
     }
 
@@ -1100,11 +1114,12 @@ public class Mind implements IMind {
                 if (logging) {
                     m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
                 }
-                tx.commit();
                 if (sourceDependencyPlan != null) {
+                    m.checkpointUserConnections();
                     sourceFederation.installSourceDependencies(
                             sourceDependencyPlan);
                 }
+                tx.commit();
                 return true;
             }
         }
@@ -1145,6 +1160,7 @@ public class Mind implements IMind {
                 x.setCompliedLine(compliedLine);
                 if (r instanceof Rule && ((Rule) r).isSecond()) {
                     tx.rollback();
+                    commandNoOp = line.charAt(0) == Enums.ANT || line.charAt(0) == Enums.INS;
                     log.add(LogMode.ANALYZER, "WARNING: Rule is duplicated: " + r);
                     r = null;
                 } else if (r instanceof Rule) {
@@ -1476,6 +1492,7 @@ public class Mind implements IMind {
 
 
     public Boolean queryInsert(String line, Object[] ext, boolean logging) throws Exception {
+        commandNoOp = false;
         Boolean res = null;
         try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
             Mind m = tx.mind();
@@ -1528,6 +1545,7 @@ public class Mind implements IMind {
                 if (logging && r != null && r.isSecond()) {
                     m.getLog().add(LogMode.ANALYZER, "Rule already exists: " + r);
                 }
+                commandNoOp = m.commandNoOp || (r != null && r.isSecond());
                 tx.rollback();
             }
 
@@ -1538,6 +1556,7 @@ public class Mind implements IMind {
     }
 
     public Boolean queryAccept(String line, Object[] ext, boolean logging) throws Exception {
+        commandNoOp = false;
         Boolean res = null;
         try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
             Mind m = tx.mind();
@@ -1586,6 +1605,7 @@ public class Mind implements IMind {
                 if (logging && r != null) {
                     m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
                 }
+                commandNoOp = m.commandNoOp || (r != null && r.isSecond());
                 tx.rollback();
             }
 
@@ -1596,6 +1616,7 @@ public class Mind implements IMind {
     }
 
     public Boolean queryDelete(String line, Object[] ext, boolean logging) throws Exception {
+        commandNoOp = false;
         Boolean res = null;
 
         setQueryPass(QueryPass.DELETE);
@@ -1631,6 +1652,7 @@ public class Mind implements IMind {
                 if (set.isEmpty() && logging) {
                     x.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
                 }
+                commandNoOp = set.isEmpty();
                 tx.rollback();
                 if (!set.isEmpty()) {
                     removeResult(set, logging);
@@ -2193,6 +2215,7 @@ public class Mind implements IMind {
     }
 
     public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
+        commandNoOp = false;
         if (!line.isEmpty() && line.charAt(0)!=Enums.SUC) requireWritableContext();
         user.getContextOpinionSession().invalidate();
         Queue<ITerm> opinionParameters = line.charAt(0) == Enums.SUC && isStorageUsed()

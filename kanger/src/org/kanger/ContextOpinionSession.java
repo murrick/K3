@@ -49,7 +49,7 @@ public final class ContextOpinionSession {
                 .append(snapshot.getSourceRevision());
         List<String> pins = new ArrayList<>();
         for (IContextFederation.Connection pin : snapshot.getConnections())
-            pins.add(pin.getTargetContextId() + "@" + pin.getPinnedRevision());
+            pins.add(pin.getTargetContextId() + "@" + pin.getPinnedRevision() + ":" + pin.getInitialization());
         Collections.sort(pins);
         return key.append(pins).toString();
     }

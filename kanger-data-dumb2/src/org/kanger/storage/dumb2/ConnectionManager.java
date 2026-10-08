@@ -283,71 +283,62 @@ final class ConnectionManager {
             return existing;
         }
 
-        PairQualification.Result pair =
-                PairQualification.qualify(
-                        sourceLocation,
-                        sourceRef.getRevision(),
-                        existing.getTargetLocation(),
-                        requestedTarget.getRevision());
-        if (!sourceRef.equals(pair.getLeft())
-                || !requestedTarget.equals(pair.getRight())
-                || !pair.isCompatible()
-                || pair.getCertificate() == null) {
-            throw new StorageLifecycleException(
-                    StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
-                    "Requested Context revision is not compatible: "
-                            + sourceRef + " / " + requestedTarget,
-                    pair.getCollisions());
-        }
-
-        ContextConnection replacement =
-                new ContextConnection(
-                        existing.getTargetLocation(),
-                        requestedTarget,
-                        pair.getCertificate());
-        ConnectionVector candidate =
-                original.with(replacement);
-
-        PairQualification.CompositionQualification originalComposition =
-                PairQualification.qualifyCompositionState(
-                        sourceLocation,
-                        sourceRef.getRevision(),
-                        original);
-        PairQualification.CompositionQualification candidateComposition =
-                PairQualification.qualifyCompositionState(
-                        sourceLocation,
-                        sourceRef.getRevision(),
-                        candidate);
-        if (candidateComposition
-                .introducesNewCollisionComparedTo(
-                        originalComposition)) {
-            java.util.List<ContextQualification.CollisionWitness>
-                    introduced =
-                            candidateComposition
-                                    .introducedCollisionsComparedTo(
-                                            originalComposition);
-            throw new StorageLifecycleException(
-                    StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
-                    "Requested Context revision introduces a new direct multi-context composition conflict: "
-                            + requestedTarget,
-                    introduced);
-        }
-
-        ContextSnapshot current =
-                ContextSnapshot.open(sourceLocation);
+        ContextConnection replacement = new ContextConnection(existing.getTargetLocation(), requestedTarget,
+                new CompatibilityCertificate(sourceRef, requestedTarget, org.kanger.Version.CORE_VERSION_S), existing.getInitialization());
+        boolean accepted = false;
         try {
-            RevisionRef now = new RevisionRef(
-                    current.getContextId(),
-                    current.getRevision());
-            if (!sourceRef.equals(now)) {
-                throw conflict(
-                        "Source Context advanced during revision switch: "
-                                + sourceRef + " -> " + now);
+            PairQualification.Result pair = existing.getInitialization().isEmpty()
+                    ? PairQualification.qualify(sourceLocation, sourceRef.getRevision(), existing.getTargetLocation(), requestedTarget.getRevision())
+                    : PairQualification.qualify(sourceLocation, sourceRef.getRevision(), replacement);
+            if (!pair.isCompatible() || pair.getCertificate() == null)
+                throw new StorageLifecycleException(StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                        "Requested Context revision is not compatible: " + sourceRef + " / " + requestedTarget, pair.getCollisions());
+            replacement = replacement.recertified(pair.getCertificate());
+            ConnectionVector candidate =
+                    original.with(replacement);
+
+            PairQualification.CompositionQualification originalComposition =
+                    PairQualification.qualifyCompositionState(
+                            sourceLocation,
+                            sourceRef.getRevision(),
+                            original);
+            PairQualification.CompositionQualification candidateComposition =
+                    PairQualification.qualifyCompositionState(
+                            sourceLocation,
+                            sourceRef.getRevision(),
+                            candidate);
+            if (candidateComposition
+                    .introducesNewCollisionComparedTo(
+                            originalComposition)) {
+                java.util.List<ContextQualification.CollisionWitness>
+                        introduced =
+                                candidateComposition
+                                        .introducedCollisionsComparedTo(
+                                                originalComposition);
+                throw new StorageLifecycleException(
+                        StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                        "Requested Context revision introduces a new direct multi-context composition conflict: "
+                                + requestedTarget,
+                        introduced);
             }
-            return replacement;
-        } finally {
-            current.close();
-        }
+
+            ContextSnapshot current =
+                    ContextSnapshot.open(sourceLocation);
+            try {
+                RevisionRef now = new RevisionRef(
+                        current.getContextId(),
+                        current.getRevision());
+                if (!sourceRef.equals(now)) {
+                    throw conflict(
+                            "Source Context advanced during revision switch: "
+                                    + sourceRef + " -> " + now);
+                }
+                accepted = true;
+                return replacement;
+            } finally {
+                current.close();
+            }
+        } finally { if (!accepted) replacement.closeLayer(); }
     }
 
     static void disconnect(

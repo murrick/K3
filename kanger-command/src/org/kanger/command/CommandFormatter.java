@@ -152,7 +152,7 @@ public final class CommandFormatter {
                 return "ctx ask "
                         + argument(invocation.getArgument("locator"))
                         + " "
-                        + rawQuery(invocation.getArgument("query"));
+                        + contextOperation(invocation.getArgument("query"));
             case ERASE:
                 return "erase";
             case HELP:
@@ -212,6 +212,13 @@ public final class CommandFormatter {
                     "query must begin with ?");
         }
         return query;
+    }
+
+    private String contextOperation(Object value) {
+        String source = value == null ? "" : String.valueOf(value).trim();
+        if (source.isEmpty() || "?!+-".indexOf(source.charAt(0)) < 0)
+            throw new IllegalArgumentException("ctx ask requires a query or an assertion/addition/deletion command");
+        return source;
     }
 
     private String optionalArgumentCommand(String command, Object value) {

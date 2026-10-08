@@ -314,6 +314,12 @@ public final class CanonicalCommandProcessor {
                         contextFederation(user, mind);
                 String locator = String.valueOf(
                         invocation.getArgument("locator"));
+                String source = String.valueOf(invocation.getArgument("query"));
+                if (!source.startsWith("?")) {
+                    federation.applyConnectionCommand(mind, locator, source);
+                    return Result.successFederation(mind, "Context layer updated: " + locator,
+                            federation.federationSnapshot(), null);
+                }
                 IContextFederation.QueryResult query =
                         federation.executeIsolatedQuery(
                                 mind,

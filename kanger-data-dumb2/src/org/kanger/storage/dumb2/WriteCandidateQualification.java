@@ -41,10 +41,9 @@ final class WriteCandidateQualification {
         for (ContextConnection connection
                 : currentConnections.getConnections()) {
             PairQualification.Result pair =
-                    PairQualification.qualify(
-                            candidate,
-                            connection.getTargetLocation(),
-                            connection.getTarget().getRevision());
+                    connection.getInitialization().isEmpty()
+                            ? PairQualification.qualify(candidate, connection.getTargetLocation(), connection.getTarget().getRevision())
+                            : PairQualification.qualify(candidate, connection);
 
             if (!connection.getTarget().equals(
                     pair.getRight())) {
@@ -64,10 +63,7 @@ final class WriteCandidateQualification {
             }
 
             refreshed = refreshed.with(
-                    new ContextConnection(
-                            connection.getTargetLocation(),
-                            connection.getTarget(),
-                            pair.getCertificate()));
+                    connection.recertified(pair.getCertificate()));
         }
 
         PairQualification.CompositionQualification composition =

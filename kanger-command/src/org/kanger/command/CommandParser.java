@@ -563,9 +563,9 @@ public final class CommandParser {
             throw error(MISSING_ARGUMENT,
                     "ctx diagnostic query requires a KANGER query");
         }
-        if (query.charAt(0) != '?') {
+        if (query.charAt(0) != '?' && !(explicit && "!+-".indexOf(query.charAt(0)) >= 0)) {
             throw error(INVALID_ARGUMENT_SHAPE,
-                    "ctx diagnostic query requires a query beginning with ?");
+                    "ctx ask requires a query or an assertion/addition/deletion command");
         }
         Map<String, Object> arguments =
                 new LinkedHashMap<String, Object>();

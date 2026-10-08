@@ -69,6 +69,18 @@ final class PairQualification {
         }
     }
 
+    static Result qualify(ContextCandidate candidate, ContextConnection connection) throws Exception {
+        AttachedMind left = AttachedMind.open(candidate, "pair-configured-source");
+        try { return qualify(left.mind, left.ref(), connection.layer(), connection.getTarget()); }
+        finally { left.close(); }
+    }
+
+    static Result qualify(Path source, long revision, ContextConnection connection) throws Exception {
+        AttachedMind left = AttachedMind.open(source, revision, "pair-configured-source");
+        try { return qualify(left.mind, left.ref(), connection.layer(), connection.getTarget()); }
+        finally { left.close(); }
+    }
+
     static boolean qualifyLocal(
             ContextCandidate candidate) throws Exception {
         return qualifyLocalState(candidate).isValid();
@@ -182,7 +194,7 @@ final class PairQualification {
                                 + " found " + anchor.ref());
             }
             return qualifyRawCompositionState(
-                    anchor,
+                    first.getInitialization().isEmpty() ? anchor.mind : first.layer(),
                     connections.without(
                             first.getTarget().getContextId()));
         } finally {
@@ -193,10 +205,14 @@ final class PairQualification {
     private static CompositionQualification qualifyRawCompositionState(
             AttachedMind attached,
             ConnectionVector connections) throws Exception {
+        return qualifyRawCompositionState(attached.mind, connections);
+    }
+
+    private static CompositionQualification qualifyRawCompositionState(Mind attached,
+            ConnectionVector connections) throws Exception {
         Mind overlay = null;
         try {
-            overlay =
-                    Mind.ephemeralChild(attached.mind);
+            overlay = Mind.ephemeralChild(attached);
             for (ContextConnection connection
                     : connections.getConnections()) {
                 AttachedMind target =
@@ -213,7 +229,7 @@ final class PairQualification {
                                         + " found " + target.ref());
                     }
                     PortableSource.capture(
-                            target.mind).replay(overlay);
+                            connection.getInitialization().isEmpty() ? target.mind : connection.layer()).replay(overlay);
                 } finally {
                     target.close();
                 }
@@ -228,7 +244,7 @@ final class PairQualification {
             if (overlay != null) {
                 overlay.getSolutions().clear();
                 overlay.getValues().clear();
-                attached.mind.release(overlay);
+                attached.release(overlay);
             }
         }
     }
@@ -321,20 +337,20 @@ final class PairQualification {
     private static Result qualify(
             AttachedMind left,
             AttachedMind right) throws Exception {
-        RevisionRef leftRef = left.ref();
-        RevisionRef rightRef = right.ref();
+        return qualify(left.mind, left.ref(), right.mind, right.ref());
+    }
 
-        PortableSource leftSource =
-                PortableSource.capture(left.mind);
+    private static Result qualify(Mind left, RevisionRef leftRef, Mind right, RevisionRef rightRef) throws Exception {
+        PortableSource leftSource = PortableSource.capture(left);
         PortableSource rightSource =
-                PortableSource.capture(right.mind);
+                PortableSource.capture(right);
 
         ContextQualification leftOverRight =
                 qualifyDirection(
-                        leftSource, right.mind);
+                        leftSource, right);
         ContextQualification rightOverLeft =
                 qualifyDirection(
-                        rightSource, left.mind);
+                        rightSource, left);
 
         if (leftOverRight.isValid()
                 != rightOverLeft.isValid()) {

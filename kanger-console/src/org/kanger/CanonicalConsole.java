@@ -1099,14 +1099,15 @@ public final class CanonicalConsole {
             if (!first) System.out.println();
             first = false;
             System.out.printf("Context %s@%d [%s, isolated opinion]%n", opinion.getLocator(),
-                    opinion.getSource().getRevision(), opinion.isWorking() ? "live X" : "pinned");
+                    opinion.getSource().getRevision(), opinion.isWorking() ? "live X"
+                            : opinion.isConfigured() ? "pinned, configured by X" : "pinned");
             System.out.println("Result: " + opinion.getResult().getResultTruth());
             if (intent == org.kanger.command.CommandIntent.CTX_OPINIONS || intent == org.kanger.command.CommandIntent.CTX_SOLVES) {
                 System.out.println("Solutions (" + opinion.getSolutions().size() + "):");
                 for (IContextFederation.RuleRow solution : opinion.getSolutions()) {
                     System.out.println("  Solution " + solution.id + ": " + solution.statement);
                     if (intent == org.kanger.command.CommandIntent.CTX_SOLVES)
-                        showOpinionCauses(solution.causes, "    ");
+                        showOpinionCauses(solution.causes, "    ", opinion.getLocator());
                 }
             }
             if (intent == org.kanger.command.CommandIntent.CTX_OPINIONS || intent == org.kanger.command.CommandIntent.CTX_VALUES) {
@@ -1121,11 +1122,15 @@ public final class CanonicalConsole {
         }
     }
 
-    private static void showOpinionCauses(List<IContextFederation.ProofCause> causes, String indent) {
+    private static void showOpinionCauses(List<IContextFederation.ProofCause> causes, String indent, String locator) {
         for (IContextFederation.ProofCause cause : causes) {
             System.out.println(indent + "Rule " + cause.ruleId + ": " + cause.ruleStatement);
             System.out.println(indent + "  Donor: " + cause.donorStatement + (cause.cycle ? " [cycle]" : ""));
-            showOpinionCauses(cause.causes, indent + "    ");
+            if (cause.hypothesis) {
+                System.out.println(indent + "    Hypothesis: " + locator + "@" + cause.hypothesisSource.getRevision());
+                System.out.println(indent + "    Required for: " + cause.requiredFor);
+            }
+            showOpinionCauses(cause.causes, indent + "    ", locator);
         }
     }
 
@@ -1137,10 +1142,11 @@ public final class CanonicalConsole {
             return;
         }
         long revision = isolatedRevision(snapshot, locator);
-        System.out.printf(
-                "Context %s%s [isolated]%n",
-                locator,
-                revision < 0 ? "" : "@" + revision);
+        boolean configured = false;
+        for (IContextFederation.Connection connection : snapshot.getConnections())
+            if (connection.getLocator().equals(locator)) configured = !connection.getInitialization().isEmpty();
+        System.out.printf("Context %s%s [%s]%n", locator, revision < 0 ? "" : "@" + revision,
+                configured ? "isolated, configured by X" : "isolated");
         System.out.println("Result: " + query.getResultTruth());
 
         if (!query.getValues().isEmpty()) {
@@ -1191,7 +1197,7 @@ public final class CanonicalConsole {
         for(IContextFederation.RuleBlock block:blocks) {
             if (!first) System.out.println();
             first = false;
-            System.out.printf("Context %s@%d [%s]%n",block.locator,block.revision.getRevision(),block.working?"live X":"pinned");
+            System.out.printf("Context %s@%d [%s]%n",block.locator,block.revision.getRevision(),block.working?"live X":block.configured?"pinned, configured by X":"pinned");
             if(block.rules.isEmpty()) System.out.println("No rules selected");
             for(IContextFederation.RuleRow rule:block.rules) {
                 System.out.printf("Rule %03d%s: %s%n",rule.id,rule.generated?" G":"",rule.statement);
@@ -1231,6 +1237,9 @@ public final class CanonicalConsole {
                                         + connection.getCurrentRevision()
                                         + "]"
                                 : "");
+                if (!connection.getInitialization().isEmpty())
+                    System.out.println("    Configured by X: " + connection.getInitialization().size()
+                            + " initialization command(s)");
             }
         }
 

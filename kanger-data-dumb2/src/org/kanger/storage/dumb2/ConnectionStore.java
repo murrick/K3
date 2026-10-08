@@ -44,7 +44,7 @@ final class ConnectionStore {
 
     static final String CONNECTION_SUFFIX = ".connections";
     private static final int MAGIC = 0x4B33434E; // K3CN
-    private static final int VERSION = 3;
+    private static final int VERSION = 4;
     private static final int LEGACY_VERSION = 2;
     private static final int MAX_CONNECTIONS = 10000;
     /*
@@ -272,7 +272,7 @@ final class ConnectionStore {
             int version = input.readInt();
             if (magic != MAGIC
                     || (version != VERSION
-                    && version != LEGACY_VERSION)) {
+                    && version != 3 && version != LEGACY_VERSION)) {
                 throw new StorageLifecycleException(
                         StorageLifecycleErrorCode.STORAGE_FORMAT_INCOMPATIBLE,
                         "Unsupported DUMB2 connection metadata format at "
@@ -290,7 +290,7 @@ final class ConnectionStore {
             State state = new State(storedSource);
             if (version == LEGACY_VERSION) {
                 ConnectionVector vector =
-                        readVector(input, path);
+                        readVector(input, path, version);
                 RevisionRef source =
                         inferSource(vector, storedSource);
                 state.byRevision.put(
@@ -316,7 +316,7 @@ final class ConnectionStore {
                                         + path);
                     }
                     ConnectionVector vector =
-                            readVector(input, path);
+                            readVector(input, path, version);
                     RevisionRef source =
                             new RevisionRef(
                                     storedSource, sourceRevision);
@@ -350,7 +350,7 @@ final class ConnectionStore {
 
     private static ConnectionVector readVector(
             DataInputStream input,
-            Path path)
+            Path path, int version)
             throws IOException, StorageLifecycleException {
         int count = input.readInt();
         if (count < 0 || count > MAX_CONNECTIONS) {
@@ -375,10 +375,16 @@ final class ConnectionStore {
             CompatibilityCertificate certificate =
                     new CompatibilityCertificate(
                             left, right, semanticVersion);
+            java.util.List<String> initialization = new java.util.ArrayList<String>();
+            if (version >= 4) {
+                int commands = input.readInt();
+                if (commands < 0 || commands > 4096) throw corruption("Invalid initialization command count at " + path);
+                for (int j = 0; j < commands; j++) initialization.add(readString(input, path));
+            }
             result.add(new ContextConnection(
                     Paths.get(locator),
                     target,
-                    certificate));
+                    certificate, initialization));
         }
         return new ConnectionVector(result);
     }
@@ -475,6 +481,8 @@ final class ConnectionStore {
                     output, certificate.getRight());
             writeString(
                     output, certificate.getSemanticVersion());
+            output.writeInt(connection.getInitialization().size());
+            for (String command : connection.getInitialization()) writeString(output, command);
         }
     }
 
