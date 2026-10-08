@@ -2288,7 +2288,7 @@ public class Mind implements IMind {
 
             if (line.charAt(0) == Enums.SUC && line.length() > 1 && isStorageUsed()) {
                 user.getContextOpinionSession().remember(this, line, opinionParameters);
-                if (logging && otherOpinionsPossible) log.add(LogMode.COMMON, "Возможно, есть другие мнения (ctx opinions)");
+                if (logging && otherOpinionsPossible) log.add(LogMode.COMMON, "Other opinions may be available (ctx opinions)");
             }
             return res;
         } finally {

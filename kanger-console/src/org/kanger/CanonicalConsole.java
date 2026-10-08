@@ -561,7 +561,7 @@ public final class CanonicalConsole {
             if (log != null) {
                 System.out.println(log.getRecord());
             }
-            if (mind.hasOtherContextOpinions()) System.out.println("Возможно, есть другие мнения (ctx opinions)");
+            if (mind.hasOtherContextOpinions()) System.out.println("Other opinions may be available (ctx opinions)");
             if (response != null) {
                 Console.showLog(mind, LogMode.SOLVES, null, null);
                 Console.showLog(mind, LogMode.VALUES, null, null);
@@ -1092,7 +1092,10 @@ public final class CanonicalConsole {
     private static void showContextOpinions(java.util.Map<String, IContextFederation.Opinion> opinions,
             org.kanger.command.CommandIntent intent) {
         if (opinions.isEmpty()) System.out.println("No meaningful source opinions");
+        boolean first = true;
         for (IContextFederation.Opinion opinion : opinions.values()) {
+            if (!first) System.out.println();
+            first = false;
             System.out.printf("Context %s@%d [%s, isolated opinion]%n", opinion.getLocator(),
                     opinion.getSource().getRevision(), opinion.isWorking() ? "live X" : "pinned");
             System.out.println("Result: " + opinion.getResult().getResultTruth());
@@ -1182,7 +1185,10 @@ public final class CanonicalConsole {
         return -1L;
     }
     private static void showContextRules(java.util.List<IContextFederation.RuleBlock> blocks,String selection) {
+        boolean first = true;
         for(IContextFederation.RuleBlock block:blocks) {
+            if (!first) System.out.println();
+            first = false;
             System.out.printf("Context %s@%d [%s]%n",block.locator,block.revision.getRevision(),block.working?"live X":"pinned");
             if(block.rules.isEmpty()) System.out.println("No rules selected");
             for(IContextFederation.RuleRow rule:block.rules) {
