@@ -12,6 +12,33 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ContextOpinionsTest {
+    @Test void nativeOpinionsDoNotAccumulateHypothesesFromPreviousQueries() throws Exception {
+        Mind nativeMind = open("N");
+        try {
+            assertTrue(nativeMind.compile(new String(java.nio.file.Files.readAllBytes(
+                    java.nio.file.Paths.get("natives.k")), java.nio.charset.StandardCharsets.UTF_8), null, false));
+        } finally { close(nativeMind); }
+        create("X", "!anchor(X);");
+        Mind mind = open("X");
+        try {
+            data.connectContext("N");
+            assertNull(mind.query("?$x son(John,x);", null, false));
+            Set<String> fresh = opinionHypotheses(command("ctx opinions N").get("N"));
+            assertNull(mind.query("?male(Tom);", null, false));
+            command("ctx opinions N");
+            assertNull(mind.query("?$x son(John,x);", null, false));
+            Set<String> afterPrevious = opinionHypotheses(command("ctx opinions N").get("N"));
+            assertEquals(fresh, afterPrevious);
+            assertFalse(fresh.isEmpty());
+        } finally { close(mind); }
+    }
+
+    private Set<String> opinionHypotheses(IContextFederation.Opinion opinion) {
+        Set<String> statements = new TreeSet<>();
+        for (IContextFederation.ProvisionalHypothesis hypothesis : opinion.getResult().getProvisionalHypotheses())
+            statements.add(hypothesis.getStatement());
+        return statements;
+    }
     @Test void unresolvedEnumerationAfterOpinionsKeepsFinalResultMessage() throws Exception {
         create("N", "!@x @y son(x,y) -> male(x);", "!child(Tom,Mary);");
         create("X", "!anchor(X);");
