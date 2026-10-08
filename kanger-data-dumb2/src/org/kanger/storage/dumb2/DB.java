@@ -179,6 +179,33 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         storageName = "";
     }
 
+    private boolean validatingCommit;
+
+    @Override
+    public synchronized void validateCommit(IMind proposed) throws Exception {
+        if (validatingCommit || isClosed() || isReadOnly() || workingConnections.isEmpty()) return;
+        validatingCommit = true;
+        try {
+            validateEffectiveConnections((Mind) proposed, workingConnections);
+        } finally { validatingCommit = false; }
+    }
+
+    private void validateEffectiveConnections(Mind proposed, ConnectionVector connections) throws Exception {
+        RevisionRef source = new RevisionRef(context.getContextId(), getRevision());
+        for (ContextConnection connection : connections.getConnections()) {
+            PairQualification.Result pair = PairQualification.qualify(proposed, source, connection);
+            if (!pair.isCompatible()) throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                    "Proposed Context pair is not compatible: " + source + " / " + connection.getTarget(),
+                    pair.getCollisions());
+        }
+        PairQualification.CompositionQualification composition =
+                PairQualification.qualifyCompositionState(proposed, connections);
+        if (!composition.isValid()) throw new StorageLifecycleException(
+                StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                "Proposed Context introduces an X-anchored composition conflict", composition.getCollisions());
+    }
+
     @Override
     public synchronized void flush() throws Exception {
         requireOpen();
@@ -1168,6 +1195,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         try {
             candidate.extendLayer(original, command);
             ConnectionVector proposed = workingConnections.with(candidate);
+            validateEffectiveConnections((Mind) sourceMind, proposed);
             PairQualification.CompositionQualification before = PairQualification.qualifyCompositionState(
                     activeLocation(), getRevision(), workingConnections);
             PairQualification.CompositionQualification after = PairQualification.qualifyCompositionState(

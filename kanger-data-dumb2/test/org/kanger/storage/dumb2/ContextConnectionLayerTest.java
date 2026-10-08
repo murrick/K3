@@ -28,6 +28,53 @@ class ContextConnectionLayerTest {
     CanonicalCommandProcessor.Result ask(String command) throws Exception {
         return new CanonicalCommandProcessor().execute(new CommandParser().parse("ctx ask N " + command), user);
     }
+    @Test void incompatibleAuthoringRejectsBeforeSettlementAndLeavesQueriesUsable() throws Exception {
+        open("N");
+        try {
+            mind.query("!male(John);", null, false);
+            mind.query("!@x ~(male(x), female(x));", null, false);
+        } finally { close(); }
+        open("X");
+        try {
+            mind.query("!anchor(X);", null, false); data.connectContext("N");
+            long revision = data.getRevision();
+            Mind root = mind;
+            org.kanger.exception.StorageLifecycleException rejection = assertThrows(
+                    org.kanger.exception.StorageLifecycleException.class,
+                    () -> root.query("!female(John);", null, false));
+            assertEquals("STORAGE_CONTEXT_CONFLICT", rejection.getCode());
+            assertEquals(revision, data.getRevision());
+            assertFalse(mind.getSourceCode().contains("!female(John)"));
+            assertEquals(Boolean.FALSE, mind.query("?female(John);", null, false));
+            assertTrue(mind.queryCheck(false));
+            assertTrue(mind.query("!female(Mary);", null, false));
+        } finally { close(); }
+        open("X");
+        try { assertFalse(mind.getSourceCode().contains("!female(John)"));
+            assertTrue(mind.query("?female(Mary);", null, false)); }
+        finally { close(); }
+    }
+
+    @Test void rejectedExplicitCommitKeepsUserLayerAvailableForRollback() throws Exception {
+        setup();
+        try {
+            long revision = data.getRevision();
+            CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
+            CommandParser parser = new CommandParser();
+            processor.execute(parser.parse("transaction start"), user);
+            Mind child = (Mind) user.getCurrentMind();
+            child.query("!~p(John);", null, false);
+            assertThrows(org.kanger.exception.StorageLifecycleException.class,
+                    () -> processor.execute(parser.parse("commit"), user));
+            assertSame(child, user.getCurrentMind());
+            assertEquals(revision, data.getRevision());
+            processor.execute(parser.parse("rollback"), user);
+            mind = (Mind) user.getCurrentMind();
+            assertTrue(mind.query("?p(John);", null, false));
+            assertFalse(mind.getSourceCode().contains("!~p(John)"));
+        } finally { close(); }
+    }
+
     @Test void editsAreSharedByQueriesOpinionsAndRulesAndSurvivePublication() throws Exception {
         setup();
         long targetRevision = data.federationSnapshot().getConnections().get(0).getPinnedRevision();

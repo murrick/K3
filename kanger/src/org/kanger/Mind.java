@@ -407,6 +407,18 @@ public class Mind implements IMind {
         user.getContextOpinionSession().invalidate();
         synchronized (locker) {
             Mind child = (Mind) m;
+            // The provider must see the proposed child while the parent is still intact.
+            // Publication-time rejection is too late to undo a settled native commit.
+            if (next == null && isStorageUsed()
+                    && !user.getData().isReadOnly()
+                    && user.getData() instanceof org.kanger.interfaces.internal.IRevisionPublication) {
+                try {
+                    ((org.kanger.interfaces.internal.IRevisionPublication) user.getData()).validateCommit(child);
+                } catch (Exception rejection) {
+                    if (settleRejectedChild) release(child);
+                    throw rejection;
+                }
+            }
             boolean sequencedBy = rules.isSequencedBy((RuleFactory) child.getRules());
             boolean[] activeCheckpoints = new boolean[8];
             boolean reservationFinished = false;

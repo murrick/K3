@@ -11,6 +11,8 @@ import org.kanger.interfaces.IMind;
 public interface IRevisionPublication {
     /** Validate an exact revision address before the current transaction stack is rebased. */
     default void validateStorageOpen(IMind source, String name) throws Exception { }
+    /** Reject incompatible proposed live state before native parent settlement. */
+    default void validateCommit(IMind proposed) throws Exception { }
     long getRevision();
     void setNextRevisionDescription(String description) throws Exception;
     IMind publishContext(IMind source, String description) throws Exception;

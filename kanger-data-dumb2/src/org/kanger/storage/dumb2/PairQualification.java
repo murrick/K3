@@ -81,6 +81,14 @@ final class PairQualification {
         finally { left.close(); }
     }
 
+    static Result qualify(Mind source, RevisionRef ref, ContextConnection connection) throws Exception {
+        return qualify(source, ref, connection.layer(), connection.getTarget());
+    }
+
+    static CompositionQualification qualifyCompositionState(Mind source, ConnectionVector connections) throws Exception {
+        return qualifyRawCompositionState(source, connections).relativeTo(qualifyForeignCompositionState(connections));
+    }
+
     static boolean qualifyLocal(
             ContextCandidate candidate) throws Exception {
         return qualifyLocalState(candidate).isValid();

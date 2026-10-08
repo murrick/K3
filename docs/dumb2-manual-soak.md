@@ -203,3 +203,5 @@ Real Console confirms history with storage closed and with another Context
 open, then rejects historical publication without consuming a description or
 advancing CURRENT. The ordinary full-reactor results remain attributed to the
 preceding implementation head.
+
+Pair-rejection smoke: connect a target containing male(John) and ~(male(x),female(x)); accept !female(John) in X. Expect a normal STORAGE_CONTEXT_CONFLICT error with witnesses, no stack trace, unchanged X revision and no female(John) rule. Then run ?female(John), bare ?, a valid assertion and close/reopen. Rejected explicit commit must retain U1 for rollback. In ctx solves B, an unproven donor is marked `[hypothesis, not proven]` with its source-local introducing rule; it is not a foreign proof.
