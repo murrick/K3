@@ -1,0 +1,2 @@
+BASELINE ctx=1 mind=0 generation=0 invocation=0 reason=memory-baseline-before-storage-fault view={0=[0:3:0,1:2:0,2:4:0]}
+VIEW ctx=1 mind=0 generation=0 invocation=0 reason=memory-baseline-before-storage-fault view={0=[0:3:0,1:2:0,2:4:0]}
