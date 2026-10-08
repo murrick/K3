@@ -1192,12 +1192,19 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                     new RevisionRef(getContextId(), getRevision()), !isReadOnly(), querySource, parameters);
             if (opinion.isMeaningful()) result.put(opinion.getLocator(), opinion);
         }
-        for (ContextConnection connection : workingConnections.getConnections()) {
+        // Explicit locators inspect physical members. The default view uses
+        // the same epistemic participants as the main federative query.
+        List<ContextConnection> participants = selected == null
+                ? workingConnections.executionConnections(communeCache) : workingConnections.getConnections();
+        for (ContextConnection connection : participants) {
             if (selected != null && !connection.getTargetLocation().toAbsolutePath().normalize().equals(selected)) continue;
             matched = true;
-            IContextFederation.Opinion opinion = localOpinion(connection.layer(),
-                    displayFederationLocator(connection.getTargetLocation()), connection.getTarget(), false,
-                    querySource, parameters, !connection.getInitialization().isEmpty());
+            CommuneRuntime commune = connection.commune();
+            IContextFederation.Opinion opinion = localOpinion(commune == null ? connection.layer() : commune.mind(),
+                    commune == null ? displayFederationLocator(connection.getTargetLocation())
+                            : "trust " + connection.getTrustGroup(), connection.getTarget(), false,
+                    querySource, parameters, commune == null ? !connection.getInitialization().isEmpty()
+                            : commune.members().stream().anyMatch(member -> !member.getInitialization().isEmpty()));
             if (opinion.isMeaningful()) result.put(opinion.getLocator(), opinion);
         }
         if (!matched) throw new CommandErrorException("No direct Context connection exists for locator " + locator);
@@ -1220,9 +1227,14 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             IContextFederation.QueryResult answer = projectLocalQuery(work, ref, query, externals, true);
             List<IContextFederation.RuleRow> solutions = new ArrayList<>();
             if (answer.isResolved()) for (org.kanger.interfaces.IRule solution : work.getSolutions())
-                solutions.add(org.kanger.ContextProofProjection.solution(work, solution, projectRevision(ref), query));
-            return new IContextFederation.Opinion(locator, projectRevision(ref), working, answer, solutions, configured);
+                solutions.add(org.kanger.ContextProofProjection.solution(work, solution, localOpinionRevision(root, ref), query));
+            return new IContextFederation.Opinion(locator, localOpinionRevision(root, ref), working, answer, solutions, configured);
         } finally { root.discardEphemeral(work); }
+    }
+
+    private IContextFederation.Revision localOpinionRevision(Mind root, RevisionRef ref) {
+        return new IContextFederation.Revision(ref.getContextId(), ref.getRevision(),
+                root.getCommuneName(), root.getCommuneMembers());
     }
 
     @Override
@@ -1346,7 +1358,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         ArrayList<IContextFederation.ProvisionalHypothesis> hypotheses =
                 new ArrayList<IContextFederation.ProvisionalHypothesis>();
         IContextFederation.Revision revision =
-                projectRevision(source);
+                localOpinionRevision(mind, source);
         for (IHypothesis hypothesis : mind.getHypothesis()) {
             hypotheses.add(
                     new IContextFederation.ProvisionalHypothesis(

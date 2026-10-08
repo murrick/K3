@@ -48,12 +48,42 @@ class TrustCommuneIntegrationTest {
                 assertTrue(steps.stream().anyMatch(step -> "own".equals(step.getTarget().getCommune())));
                 assertTrue(steps.stream().filter(step -> step.getTarget().getCommune()!=null)
                         .allMatch(step -> step.getTarget().getCommuneMembers().size()==2));
-                assertTrue(data.executeOpinions(mind, null, "?father(John,Tom);", Collections.emptyList()).containsKey("facts"));
+                assertTrue(data.executeOpinions(mind, "facts", "?father(John,Tom);", Collections.emptyList()).containsKey("facts"));
                 command("ctx close facts");
                 assertEquals(1, data.federationSnapshot().getConnections().size());
                 assertNull(mind.query("?father(John,Tom);", null, false));
             } finally { close(); }
         }
+    }
+
+    @Test void defaultOpinionsUseWholeCommuneAndExplicitMemberStaysIsolated() throws Exception {
+        family();
+        open("X");
+        try {
+            command("ctx connect facts trust own"); command("ctx connect natives trust own");
+            assertEquals(Boolean.FALSE, mind.query("?$x father(Sarah,x);", null, false));
+            assertFalse(mind.hasOtherContextOpinions(), "A decisive commune and an empty X are not competing opinions");
+            Map<String,IContextFederation.Opinion> opinions = user.getContextOpinionSession().collect(mind, null);
+            assertEquals(Collections.singleton("trust own"), opinions.keySet());
+            IContextFederation.Opinion joint = opinions.get("trust own");
+            assertEquals("own", joint.getSource().getCommune());
+            assertEquals(2, joint.getSource().getCommuneMembers().size());
+            assertEquals(IContextFederation.FrontierTruth.FALSE, joint.getResult().getResultTruth());
+            assertTrue(joint.getResult().getProvisionalHypotheses().isEmpty());
+            assertSame(opinions, user.getContextOpinionSession().collect(mind, null));
+            IContextFederation.Opinion isolated = user.getContextOpinionSession().collect(mind, "natives").get("natives");
+            assertNull(isolated.getSource().getCommune());
+            assertEquals(IContextFederation.FrontierTruth.UNKNOWN, isolated.getResult().getResultTruth());
+            assertFalse(isolated.getResult().getProvisionalHypotheses().isEmpty());
+            assertTrue(isolated.getResult().getProvisionalHypotheses().stream()
+                    .allMatch(h -> h.getSource().getCommune() == null));
+            assertNull(mind.query("?male(Tom);", null, false));
+            joint = user.getContextOpinionSession().collect(mind, null).get("trust own");
+            assertEquals(IContextFederation.FrontierTruth.UNKNOWN, joint.getResult().getResultTruth());
+            assertFalse(joint.getResult().getProvisionalHypotheses().isEmpty());
+            assertTrue(joint.getResult().getProvisionalHypotheses().stream()
+                    .allMatch(h -> "own".equals(h.getSource().getCommune())));
+        } finally { close(); }
     }
 
     @Test void negativeCommuneProofDoesNotOverrideAnIndependentPositiveOpinion() throws Exception {
@@ -134,9 +164,11 @@ class TrustCommuneIntegrationTest {
             command("ctx connect positive trust first"); command("ctx connect negative trust second");
             rows("?$x p(x);", "Mary");
             Map<String,IContextFederation.Opinion> opinions = data.executeOpinions(mind, null, "?p(John);", Collections.emptyList());
-            assertEquals(IContextFederation.FrontierTruth.TRUE, opinions.get("positive").getResult().getResultTruth());
-            assertEquals(IContextFederation.FrontierTruth.FALSE, opinions.get("negative").getResult().getResultTruth());
-            assertNull(opinions.get("positive").getSource().getCommune(), "An isolated opinion belongs to its physical Context");
+            assertEquals(IContextFederation.FrontierTruth.TRUE, opinions.get("trust first").getResult().getResultTruth());
+            assertEquals(IContextFederation.FrontierTruth.FALSE, opinions.get("trust second").getResult().getResultTruth());
+            assertEquals("first", opinions.get("trust first").getSource().getCommune());
+            assertNull(data.executeOpinions(mind, "positive", "?p(John);", Collections.emptyList())
+                    .get("positive").getSource().getCommune(), "An explicit isolated opinion belongs to its physical Context");
             command("transaction start");
             command("ctx close positive");
             command("rollback");

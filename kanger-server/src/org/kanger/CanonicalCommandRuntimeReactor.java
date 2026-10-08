@@ -301,7 +301,10 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             JSONObject view = new JSONObject().put("locator", opinion.getLocator())
                     .put("context_id", opinion.getSource().getContextId().toString())
                     .put("revision", opinion.getSource().getRevision()).put("working", opinion.isWorking())
-                    .put("isolated", true).put("configured_by_x", opinion.isConfigured()).put("truth", opinion.getResult().getResultTruth().name());
+                    .put("isolated", true).put("configured_by_x", opinion.isConfigured())
+                    .put("commune", opinion.getSource().getCommune()==null ? JSONObject.NULL : opinion.getSource().getCommune())
+                    .put("commune_members", communeMembers(opinion.getSource().getCommuneMembers()))
+                    .put("truth", opinion.getResult().getResultTruth().name());
             if (intent == CommandIntent.CTX_OPINIONS || intent == CommandIntent.CTX_SOLVES) {
                 JSONArray solutions = new JSONArray();
                 for (IContextFederation.RuleRow solution : opinion.getSolutions()) solutions.put(new JSONObject()

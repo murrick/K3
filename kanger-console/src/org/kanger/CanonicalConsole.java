@@ -412,7 +412,7 @@ public final class CanonicalConsole {
                     System.out.println(federation.getDescription());
                 }
                 if (federation.getContextOpinions() != null) {
-                    showContextOpinions(federation.getContextOpinions(), invocation.getIntent());
+                    showContextOpinions(federation.getContextOpinions(), invocation.getIntent(), federation.getFederationSnapshot());
                 } else if (invocation.getIntent()
                         == org.kanger.command.CommandIntent.CTX_RULES) {
                     showContextRules(federation.getContextRules(),String.valueOf(invocation.getArgument("selection")));
@@ -1118,13 +1118,19 @@ public final class CanonicalConsole {
     }
 
     private static void showContextOpinions(java.util.Map<String, IContextFederation.Opinion> opinions,
-            org.kanger.command.CommandIntent intent) {
+            org.kanger.command.CommandIntent intent, IContextFederation.Snapshot snapshot) {
         if (opinions.isEmpty()) System.out.println("No meaningful source opinions");
         boolean first = true;
         for (IContextFederation.Opinion opinion : opinions.values()) {
             if (!first) System.out.println();
             first = false;
-            System.out.printf("Context %s@%d [%s, isolated opinion]%n", opinion.getLocator(),
+            if (opinion.getSource().getCommune() != null) {
+                System.out.println("Commune " + opinion.getSource().getCommune() + " [joint opinion, "
+                        + (opinion.isConfigured() ? "configured by X" : "pinned") + "]");
+                for (IContextFederation.Revision member : opinion.getSource().getCommuneMembers())
+                    System.out.println("  " + sourceLabel(snapshot, member));
+            }
+            else System.out.printf("Context %s@%d [%s, isolated opinion]%n", opinion.getLocator(),
                     opinion.getSource().getRevision(), opinion.isWorking() ? "live X"
                             : opinion.isConfigured() ? "pinned, configured by X" : "pinned");
             System.out.println("Result: " + opinion.getResult().getResultTruth());

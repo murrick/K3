@@ -2233,11 +2233,17 @@ public class Mind implements IMind {
 
     private void recordExplainPass(
             IContextFederation.ExplainPolarity polarity,
-            IContextFederation.QueryResult continuation) {
+            IContextFederation.QueryResult continuation) throws Exception {
+        java.util.UUID own = ((IContextFederation) user.getData()).federationSnapshot().getSourceContextId();
         for (IContextFederation.FrontierObservation observation : continuation.getObservations()) {
+            boolean commune = observation.getTrueSources().stream().anyMatch(source -> source.getCommune() != null)
+                    || observation.getFalseSources().stream().anyMatch(source -> source.getCommune() != null)
+                    || observation.getUnknownSources().stream().anyMatch(source -> source.getCommune() != null);
+            // An empty local X alongside a decisive commune is not another opinion.
+            boolean unknown = observation.getUnknownSources().stream()
+                    .anyMatch(source -> !commune || !source.getContextId().equals(own));
             int kinds = (observation.getTrueSources().isEmpty() ? 0 : 1)
-                    + (observation.getFalseSources().isEmpty() ? 0 : 1)
-                    + (observation.getUnknownSources().isEmpty() ? 0 : 1);
+                    + (observation.getFalseSources().isEmpty() ? 0 : 1) + (unknown ? 1 : 0);
             if (kinds > 1 || observation.getTruth() == IContextFederation.FrontierTruth.CONFLICT)
                 otherOpinionsPossible = true;
             if (observation.getTruth() != IContextFederation.FrontierTruth.CONFLICT) continue;

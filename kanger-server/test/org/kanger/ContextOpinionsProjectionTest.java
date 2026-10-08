@@ -8,6 +8,24 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ContextOpinionsProjectionTest {
+    @Test void jointOpinionIdentifiesTheCommuneAndAllPinnedMembers() {
+        Revision facts = new Revision(UUID.randomUUID(), 7);
+        Revision rules = new Revision(UUID.randomUUID(), 2);
+        Revision commune = new Revision(facts.getContextId(), 7, "own", Arrays.asList(facts, rules));
+        QueryResult result = new QueryResult(true, FrontierTruth.FALSE, 0, 0,
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+        Opinion opinion = new Opinion("trust own", commune, false, result, Collections.emptyList());
+        JSONObject view = CanonicalCommandRuntimeReactor.contextOpinions(Collections.singletonMap("trust own", opinion),
+                CommandIntent.CTX_OPINIONS).getJSONObject("trust own");
+        assertEquals("own", view.getString("commune"));
+        assertEquals("FALSE", view.getString("truth"));
+        assertEquals(2, view.getJSONArray("commune_members").length());
+        assertEquals(facts.getContextId().toString(), view.getJSONArray("commune_members").getJSONObject(0).getString("context_id"));
+        assertEquals(7, view.getJSONArray("commune_members").getJSONObject(0).getLong("revision"));
+        assertEquals(rules.getContextId().toString(), view.getJSONArray("commune_members").getJSONObject(1).getString("context_id"));
+        assertEquals(0, view.getJSONArray("hypotheses").length());
+    }
+
     @Test void detachedProofPreservesNestedContextOwnership() {
         Revision source = new Revision(UUID.randomUUID(), 1);
         Revision donorSource = new Revision(UUID.randomUUID(), 2);
