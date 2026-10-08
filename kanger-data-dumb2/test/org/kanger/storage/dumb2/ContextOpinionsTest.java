@@ -12,6 +12,21 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ContextOpinionsTest {
+    @Test void negativeExistentialHypothesesRenderAsUniversalAssertions() throws Exception {
+        Mind mind = open("N");
+        try {
+            for (String predicate : new String[] { "son", "child" }) {
+                org.kanger.units.Rule source = (org.kanger.units.Rule)
+                        mind.compileLine("!$y " + predicate + "(John,y);", false, null);
+                org.kanger.primitives.Hypothesis hypothesis =
+                        new org.kanger.primitives.Hypothesis(source, mind);
+                assertEquals("?$y " + predicate + "(John,y);", hypothesis.toString(mind));
+                assertEquals("!@y ~" + predicate + "(John,y);", hypothesis.toAssertionString(mind));
+                hypothesis.setAntc(true);
+                assertEquals("!$y " + predicate + "(John,y);", hypothesis.toAssertionString(mind));
+            }
+        } finally { close(mind); }
+    }
     @Test void explicitAskAddressesContextsNamedLikeCommands() throws Exception {
         create("opinions", "!p(John);");
         create("ask", "!p(Mary);");
@@ -55,6 +70,8 @@ class ContextOpinionsTest {
             Set<String> afterPrevious = opinionHypotheses(command("ctx opinions N").get("N"));
             assertEquals(fresh, afterPrevious);
             assertFalse(fresh.isEmpty());
+            assertTrue(fresh.stream().allMatch(statement -> statement.startsWith("!")),
+                    "Detached opinion hypotheses must be assertion-ready, including universal negatives");
             assertTrue(fresh.size() < 18, "Opinion hypotheses must be optimized before projection");
             assertFalse(fresh.contains("!sibling(Tom,Tom);"));
         } finally { close(mind); }

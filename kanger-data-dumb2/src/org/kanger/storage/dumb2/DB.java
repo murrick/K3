@@ -1302,7 +1302,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             hypotheses.add(
                     new IContextFederation.ProvisionalHypothesis(
                             revision,
-                            ((Hypothesis) hypothesis).toString(mind)));
+                            ((Hypothesis) hypothesis).toAssertionString(mind)));
         }
 
         return new IContextFederation.QueryResult(
