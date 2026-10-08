@@ -1102,7 +1102,7 @@ public final class CanonicalConsole {
                     opinion.getSource().getRevision(), opinion.isWorking() ? "live X"
                             : opinion.isConfigured() ? "pinned, configured by X" : "pinned");
             System.out.println("Result: " + opinion.getResult().getResultTruth());
-            if (intent == org.kanger.command.CommandIntent.CTX_OPINIONS || intent == org.kanger.command.CommandIntent.CTX_SOLVES) {
+            if ((intent == org.kanger.command.CommandIntent.CTX_OPINIONS && opinion.getResult().isResolved()) || intent == org.kanger.command.CommandIntent.CTX_SOLVES) {
                 System.out.println("Solutions (" + opinion.getSolutions().size() + "):");
                 for (IContextFederation.RuleRow solution : opinion.getSolutions()) {
                     System.out.println("  Solution " + solution.id + ": " + solution.statement);
@@ -1110,7 +1110,7 @@ public final class CanonicalConsole {
                         showOpinionCauses(solution.causes, "    ", opinion.getLocator());
                 }
             }
-            if (intent == org.kanger.command.CommandIntent.CTX_OPINIONS || intent == org.kanger.command.CommandIntent.CTX_VALUES) {
+            if ((intent == org.kanger.command.CommandIntent.CTX_OPINIONS && opinion.getResult().isResolved()) || intent == org.kanger.command.CommandIntent.CTX_VALUES) {
                 System.out.println("Values (" + opinion.getResult().getValues().size() + "):");
                 for (IContextFederation.ValueRow row : opinion.getResult().getValues()) System.out.println("  " + row.getBindings());
             }

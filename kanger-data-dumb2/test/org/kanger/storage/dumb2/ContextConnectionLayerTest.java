@@ -140,7 +140,7 @@ class ContextConnectionLayerTest {
             assertTrue(mind.query("?q(Mary);", null, false)); assertNull(mind.query("?q(John);", null, false)); }
         finally { close(); }
     }
-    @Test void hypothesisLeavesRetainTheirBirthplaceAndOriginalQuery() throws Exception {
+    @Test void unknownOpinionContainsHypothesesWithoutConditionalSolutions() throws Exception {
         open("B");
         try { mind.query("!@x q(x) -> r(x);", null, false); } finally { close(); }
         open("X");
@@ -148,10 +148,11 @@ class ContextConnectionLayerTest {
             mind.query("!anchor(X);", null, false); data.connectContext("B");
             assertNull(mind.query("?r(John);", null, false));
             IContextFederation.Opinion opinion = mind.collectContextOpinions("B").get("B");
-            IContextFederation.ProofCause cause = opinion.getSolutions().get(0).causes.get(0);
-            assertTrue(cause.hypothesis);
-            assertEquals(opinion.getSource().getContextId(), cause.hypothesisSource.getContextId());
-            assertEquals("?r(John);", cause.requiredFor);
+            assertEquals(IContextFederation.FrontierTruth.UNKNOWN, opinion.getResult().getResultTruth());
+            assertTrue(opinion.getSolutions().isEmpty());
+            assertTrue(opinion.getResult().getValues().isEmpty());
+            assertEquals(1, opinion.getResult().getProvisionalHypotheses().size());
+            assertEquals("!q(John);", opinion.getResult().getProvisionalHypotheses().get(0).getStatement());
         } finally { close(); }
     }
     @Test void failedRepinPreservesPinnedRevisionAndEffectiveLayer() throws Exception {

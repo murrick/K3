@@ -1169,7 +1169,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                 externals.add(work.getTerms().projectSemantic(parameter.materialize()));
             IContextFederation.QueryResult answer = projectLocalQuery(work, ref, query, externals, true);
             List<IContextFederation.RuleRow> solutions = new ArrayList<>();
-            for (org.kanger.interfaces.IRule solution : work.getSolutions())
+            if (answer.isResolved()) for (org.kanger.interfaces.IRule solution : work.getSolutions())
                 solutions.add(org.kanger.ContextProofProjection.solution(work, solution, projectRevision(ref), query));
             return new IContextFederation.Opinion(locator, projectRevision(ref), working, answer, solutions, configured);
         } finally { root.discardEphemeral(work); }
@@ -1279,7 +1279,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
         ArrayList<IContextFederation.ValueRow> values =
                 new ArrayList<IContextFederation.ValueRow>();
-        for (Map<String, ITerm> row : mind.getValues()) {
+        if (answer != null) for (Map<String, ITerm> row : mind.getValues()) {
             LinkedHashMap<String, String> bindings =
                     new LinkedHashMap<String, String>();
             for (Map.Entry<String, ITerm> binding

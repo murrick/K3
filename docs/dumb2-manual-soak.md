@@ -138,11 +138,12 @@ block before installation. Connection format 4 stores the ordered source;
 existing formats 2 and 3 remain readable. Each connection supports up to 4096
 initialization commands.
 
-`ctx solves [N]` expands native rule/donor trees from saved opinions. A donor
-matching a source-local hypothesis is labelled with its source revision and
-the original query (`Hypothesis: N@2`, `Required for: ?...`). It remains an
-assumption, not evidence accepted in X. Server proofs retain the same typed
-source UUID, revision and query metadata.
+`ctx solves [N]` expands native rule/donor trees only for resolved opinions
+(TRUE or FALSE). UNKNOWN opinions contain only source-local hypotheses; their
+Solutions and Values are empty in the Core/SDK/Server projection. `ctx opinions`
+omits Solutions/Values blocks for UNKNOWN. Dedicated `ctx solves` and `ctx values`
+views return zero elements. Conditional inference artifacts are not answers and
+are not exposed as solutions. Hypotheses remain assumptions local to their source.
 
 After a normal query, collect isolated answers for that **entire last query**:
 
@@ -204,4 +205,4 @@ open, then rejects historical publication without consuming a description or
 advancing CURRENT. The ordinary full-reactor results remain attributed to the
 preceding implementation head.
 
-Pair-rejection smoke: connect a target containing male(John) and ~(male(x),female(x)); accept !female(John) in X. Expect a normal STORAGE_CONTEXT_CONFLICT error with witnesses, no stack trace, unchanged X revision and no female(John) rule. Then run ?female(John), bare ?, a valid assertion and close/reopen. Rejected explicit commit must retain U1 for rollback. In ctx solves B, an unproven donor is marked `[hypothesis, not proven]` with its source-local introducing rule; it is not a foreign proof.
+Pair-rejection smoke: connect a target containing male(John) and ~(male(x),female(x)); accept !female(John) in X. Expect a normal STORAGE_CONTEXT_CONFLICT error with witnesses, no stack trace, unchanged X revision and no female(John) rule. Then run ?female(John), bare ?, a valid assertion and close/reopen. Rejected explicit commit must retain U1 for rollback. For UNKNOWN B, ctx opinions lists its hypotheses only and ctx solves has no solutions.
