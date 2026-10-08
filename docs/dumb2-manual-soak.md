@@ -125,3 +125,26 @@ locator; `mind.getContextOpinions("natives")` reads the saved view.
 commands return `context_opinions`; ordinary query responses include
 `other_opinions_possible`. Sources include Context UUID and exact revision, and
 result payloads survive closure of the isolated runtime.
+
+## Find and open a historical revision
+
+`ctx version N` (or `ctx v N`) reads any existing named Context history without
+opening or connecting it. It also works with no storage open. A connected target
+retains its PINNED marker; an unconnected target only has CURRENT. Missing names
+fail without creating a storage or changing the active Context.
+
+```text
+ctx version N
+use N@7
+```
+
+Historical `use X@8` is immutable even when CURRENT is 10. `ctx publish` rejects
+before asking for a description; it neither overwrites 10 nor creates 11.
+`use X` returns to CURRENT for ordinary authoring and publication.
+
+Qualification for this history follow-up: changed runtime classes compile;
+all 316 DUMB2 tests pass, including two added history/publication regressions.
+Real Console confirms history with storage closed and with another Context
+open, then rejects historical publication without consuming a description or
+advancing CURRENT. The ordinary full-reactor results remain attributed to the
+preceding implementation head.

@@ -943,6 +943,7 @@ public interface IContextFederation {
         throw new UnsupportedOperationException("Context topology publication is unavailable");
     }
 
+    /** DUMB2 named history is read-only and requires neither an open storage nor a direct connection. */
     VersionHistory versionHistory(
             String targetLocator) throws Exception;
 

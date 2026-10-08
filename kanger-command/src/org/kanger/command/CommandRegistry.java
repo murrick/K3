@@ -345,8 +345,8 @@ public final class CommandRegistry {
                 args("locator", "Context locator or DUMB2 logical storage name.",
                         "RevisionId", "Exact target revision."), n++);
         define(CommandIntent.CTX_VERSION, "ctx version [<locator>]", "CONTEXT",
-                "Show immutable revision history and PINNED/CURRENT markers.",
-                args("locator", "Optional current or direct connected Context locator."), n++);
+                "Show immutable revision history of the current or any named Context, without opening or connecting it.",
+                args("locator", "Optional Context locator; a named Context can be inspected while storage is closed."), n++);
         define(CommandIntent.CTX_EXPLAIN, "ctx explain <query...>", "CONTEXT",
                 "Execute the normal query path and show its semantic federation trace.",
                 args("query", "KANGER query beginning with ?."), n++);

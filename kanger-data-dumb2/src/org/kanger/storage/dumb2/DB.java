@@ -764,36 +764,21 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     @Override
     public synchronized IContextFederation.VersionHistory versionHistory(
             String targetLocator) throws Exception {
-        requireOpen();
-
-        Path sourceLocation =
-                activeLocation()
-                        .toAbsolutePath()
-                        .normalize();
-        Path selectedLocation = sourceLocation;
-        String selectedLocator = sourceLocator();
-        long pinnedRevision = historical==null ? -1L : getRevision();
-
-        if (targetLocator != null
-                && !targetLocator.trim().isEmpty()) {
-            Path requested =
-                    resolveFederationLocator(
-                            targetLocator);
-            if (!sourceLocation.equals(requested)) {
-                ContextConnection connection =
-                        connectedContext(
-                                requested,
-                                targetLocator);
-                selectedLocation =
-                        connection.getTargetLocation()
-                                .toAbsolutePath()
-                                .normalize();
-                selectedLocator =
-                        displayFederationLocator(
-                                connection.getTargetLocation());
-                pinnedRevision =
-                        connection.getTarget()
-                                .getRevision();
+        boolean addressed = targetLocator != null && !targetLocator.trim().isEmpty();
+        if (!addressed) requireOpen();
+        Path sourceLocation = isClosed() ? null : activeLocation().toAbsolutePath().normalize();
+        Path selectedLocation = addressed ? resolveFederationLocator(targetLocator) : sourceLocation;
+        String selectedLocator = displayFederationLocator(selectedLocation);
+        long pinnedRevision = -1L;
+        if (selectedLocation.equals(sourceLocation)) {
+            selectedLocator = sourceLocator();
+            pinnedRevision = historical == null ? -1L : getRevision();
+        } else if (!isClosed()) {
+            for (ContextConnection connection : workingConnections.getConnections()) {
+                if (connection.getTargetLocation().toAbsolutePath().normalize().equals(selectedLocation)) {
+                    pinnedRevision = connection.getTarget().getRevision();
+                    break;
+                }
             }
         }
 

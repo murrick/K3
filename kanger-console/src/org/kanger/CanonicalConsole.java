@@ -375,6 +375,7 @@ public final class CanonicalConsole {
             case CTX_EXPLAIN:
             case CTX_ISOLATED_QUERY:
                 if (invocation.getIntent() == org.kanger.command.CommandIntent.CTX_PUBLISH) {
+                    ((Mind) mind).requireWritableContext();
                     ((Mind) mind).requirePublicationQuiescence();
                     invocation = publicationDescription(invocation, (Mind) mind, input,
                             "Published Context " + mind.getStorageName());
@@ -394,7 +395,8 @@ public final class CanonicalConsole {
                 CanonicalCommandProcessor.Result federation =
                         COMMAND_PROCESSOR.execute(invocation, mind.getUser());
                 if (!federation.isHandled()
-                        || federation.getFederationSnapshot() == null) {
+                        || (federation.getFederationSnapshot() == null
+                                && federation.getContextVersionHistory() == null)) {
                     throw new CommandErrorException(
                             "Unsupported canonical intent "
                                     + invocation.getIntent());

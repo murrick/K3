@@ -203,6 +203,7 @@ public final class CanonicalCommandProcessor {
                 if (!(mind instanceof Mind) || !(((User) user).getData() instanceof org.kanger.interfaces.internal.IRevisionPublication))
                     throw new org.kanger.exception.CommandErrorException("Context publication is unavailable");
                 Mind source=(Mind) mind;
+                source.requireWritableContext();
                 source.requirePublicationQuiescence();
                 String description=source.resolveRevisionDescription((String) invocation.getArgument("description"),
                         "Published Context " + mind.getStorageName());
@@ -266,8 +267,9 @@ public final class CanonicalCommandProcessor {
             }
 
             case CTX_VERSION: {
-                IContextFederation federation =
-                        contextFederation(user, mind);
+                if (!(user instanceof User) || !(((User) user).getData() instanceof IContextFederation))
+                    throw new org.kanger.exception.CommandErrorException("Context version history is unavailable");
+                IContextFederation federation = (IContextFederation) ((User) user).getData();
                 Object rawLocator =
                         invocation.getArgument("locator");
                 IContextFederation.VersionHistory versions =
@@ -278,7 +280,7 @@ public final class CanonicalCommandProcessor {
                                                 rawLocator));
                 return Result.successContextVersion(
                         mind,
-                        federation.federationSnapshot(),
+                        mind.isStorageUsed() ? federation.federationSnapshot() : null,
                         versions);
             }
 

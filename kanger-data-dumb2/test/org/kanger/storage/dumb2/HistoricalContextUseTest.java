@@ -42,6 +42,42 @@ class HistoricalContextUseTest {
         assertFalse(Files.exists(directory.resolve("X@"+old))); close();
     }
 
+    @Test void namedHistoryWorksWithoutOpeningOrConnectingTheTarget() throws Exception {
+        initialize(); use("N"); assertTrue(mind().query("!p(Mary);",null,false));
+        long old=data.getRevision(); assertTrue(mind().query("!p(John);",null,false));
+        long current=data.getRevision(); close(); use("X");
+        Mind source=mind(); long sourceRevision=data.getRevision();
+        org.kanger.CanonicalCommandProcessor processor=new org.kanger.CanonicalCommandProcessor();
+        org.kanger.command.CommandParser parser=new org.kanger.command.CommandParser();
+        IContextFederation.VersionHistory history=processor.execute(parser.parse("ctx version N"),user).getContextVersionHistory();
+        assertEquals(current,history.getCurrentRevision()); assertFalse(history.hasPinnedRevision());
+        assertTrue(history.getRevisions().stream().anyMatch(r->r.getRevision()==old));
+        assertSame(source,mind()); assertEquals(sourceRevision,data.getRevision());
+        assertTrue(data.federationSnapshot().getConnections().isEmpty());
+        assertThrows(Exception.class,()->processor.execute(parser.parse("ctx version Missing"),user));
+        assertFalse(Files.exists(directory.resolve("Missing"))); assertSame(source,mind());
+        close();
+        assertTrue(data.isClosed());
+        org.kanger.CanonicalCommandProcessor.Result result=processor.execute(parser.parse("ctx version N"),user);
+        assertEquals(current,result.getContextVersionHistory().getCurrentRevision());
+        assertNull(result.getFederationSnapshot()); assertTrue(data.isClosed());
+        assertThrows(Exception.class,()->processor.execute(parser.parse("ctx version"),user));
+        use("N@"+old); assertEquals(old,data.getRevision()); close();
+    }
+
+    @Test void historicalPublishViaCommandRejectsWithoutAdvancingCurrent() throws Exception {
+        initialize(); use("X"); assertTrue(mind().query("!p(Mary);",null,false));
+        long old=data.getRevision(); assertTrue(mind().query("!p(John);",null,false));
+        long current=data.getRevision(); use("X@"+old); Mind selected=mind();
+        org.kanger.CanonicalCommandProcessor processor=new org.kanger.CanonicalCommandProcessor();
+        org.kanger.command.CommandParser parser=new org.kanger.command.CommandParser();
+        assertThrows(org.kanger.exception.CommandErrorException.class,
+                ()->processor.execute(parser.parse("ctx publish"),user));
+        assertSame(selected,mind()); assertEquals(old,data.getRevision());
+        assertEquals(current,data.versionHistory(null).getCurrentRevision());
+        close(); use("X"); assertEquals(current,data.getRevision()); close();
+    }
+
     @Test void invalidRevisionAndOpenTransactionsPreserveTheActiveStorage() throws Exception {
         initialize(); use("X"); assertTrue(mind().query("!baseline;",null,false));
         Mind original=mind(); long revision=data.getRevision();
