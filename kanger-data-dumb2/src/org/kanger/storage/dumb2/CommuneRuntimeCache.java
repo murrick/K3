@@ -52,7 +52,7 @@ final class CommuneRuntimeCache implements AutoCloseable {
             for (Map.Entry<String, Key> entry : keys.entrySet()) {
                 CommuneRuntime runtime = runtimes.get(entry.getValue());
                 if (runtime == null) {
-                    runtime = CommuneRuntime.prepare(groups.get(entry.getKey()));
+                    runtime = CommuneRuntime.prepare(groups.get(entry.getKey()), entry.getKey());
                     staged.put(entry.getValue(), runtime);
                 }
                 result.put(entry.getKey(), runtime);

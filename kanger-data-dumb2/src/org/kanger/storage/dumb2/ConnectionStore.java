@@ -44,7 +44,7 @@ final class ConnectionStore {
 
     static final String CONNECTION_SUFFIX = ".connections";
     private static final int MAGIC = 0x4B33434E; // K3CN
-    private static final int VERSION = 4;
+    private static final int VERSION = 5;
     private static final int LEGACY_VERSION = 2;
     private static final int MAX_CONNECTIONS = 10000;
     /*
@@ -272,7 +272,7 @@ final class ConnectionStore {
             int version = input.readInt();
             if (magic != MAGIC
                     || (version != VERSION
-                    && version != 3 && version != LEGACY_VERSION)) {
+                    && version != 4 && version != 3 && version != LEGACY_VERSION)) {
                 throw new StorageLifecycleException(
                         StorageLifecycleErrorCode.STORAGE_FORMAT_INCOMPATIBLE,
                         "Unsupported DUMB2 connection metadata format at "
@@ -381,10 +381,11 @@ final class ConnectionStore {
                 if (commands < 0 || commands > 4096) throw corruption("Invalid initialization command count at " + path);
                 for (int j = 0; j < commands; j++) initialization.add(readString(input, path));
             }
+            String trust = version >= 5 && input.readBoolean() ? readString(input, path) : null;
             result.add(new ContextConnection(
                     Paths.get(locator),
                     target,
-                    certificate, initialization));
+                    certificate, initialization, trust));
         }
         return new ConnectionVector(result);
     }
@@ -483,6 +484,8 @@ final class ConnectionStore {
                     output, certificate.getSemanticVersion());
             output.writeInt(connection.getInitialization().size());
             for (String command : connection.getInitialization()) writeString(output, command);
+            output.writeBoolean(connection.getTrustGroup() != null);
+            if (connection.getTrustGroup() != null) writeString(output, connection.getTrustGroup());
         }
     }
 

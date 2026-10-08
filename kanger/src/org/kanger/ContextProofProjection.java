@@ -53,7 +53,9 @@ public final class ContextProofProjection {
             if (key == null) continue;
             IContextFederation.RuleRow row = solution(mind, rule);
             IContextFederation.ProofCause proof = new IContextFederation.ProofCause(row.id, row.statement,
-                    null, "", false, row.causes, false, null, null, source, mind.isContextConnectionLayer());
+                    null, "", false, row.causes, false, null, null,
+                    mind.getCommuneName() == null ? source : null, mind.isContextConnectionLayer(),
+                    mind.getCommuneName(), mind.getCommuneMembers());
             List<IContextFederation.ProofCause> proofs = result.get(key);
             if (proofs == null) { proofs = new ArrayList<>(); result.put(key, proofs); }
             proofs.add(proof);
@@ -65,6 +67,7 @@ public final class ContextProofProjection {
         List<IContextFederation.ProofCause> result = new ArrayList<>();
         String fact = factKey(rule, mind);
         if (fact != null) result.addAll(mind.getContextProofs(fact));
+        result.addAll(mind.getContextRuleOrigins(((Rule) rule).getOrigin()));
         path.add(rule);
         try {
             for (ICause cause : rule.getCauses()) {
@@ -78,12 +81,25 @@ public final class ContextProofProjection {
                         if (donorSource.equals(((org.kanger.primitives.Hypothesis) assumption).toString(mind)))
                             hypothesis = true;
                 }
-                result.add(new IContextFederation.ProofCause(reason == null ? -1 : reason.getId(),
+                IContextFederation.ProofCause nativeCause = new IContextFederation.ProofCause(reason == null ? -1 : reason.getId(),
                         reason == null ? "" : ((Rule) reason).toString(mind), donor == null ? null : donor.getId(),
                         donor == null ? ((Cause) cause).getDonor().toString(mind) : ((Rule) donor).toString(mind),
                         cycle, donor == null || cycle ? Collections.<IContextFederation.ProofCause>emptyList()
                                 : causes(mind, donor, path, source, query), hypothesis,
-                        hypothesis ? source : null, hypothesis ? query : null));
+                        hypothesis ? source : null, hypothesis ? query : null);
+                List<IContextFederation.ProofCause> origins = reason == null ? Collections.emptyList()
+                        : mind.getContextRuleOrigins(((Rule) reason).getOrigin());
+                if (origins.isEmpty()) result.add(nativeCause);
+                else for (IContextFederation.ProofCause origin : origins) {
+                    // The joint factory's rule/donor ids are not member-local ids.
+                    IContextFederation.ProofCause sourcedCause = new IContextFederation.ProofCause(
+                            origin.ruleId, nativeCause.ruleStatement, null, nativeCause.donorStatement,
+                            nativeCause.cycle, nativeCause.causes, nativeCause.hypothesis,
+                            nativeCause.hypothesisSource, nativeCause.requiredFor);
+                    result.add(new IContextFederation.ProofCause(origin.ruleId, origin.ruleStatement,
+                            null, "", false, Collections.singletonList(sourcedCause), false, null, null,
+                            origin.contextSource, origin.configuredByX));
+                }
             }
             return result;
         } finally { path.remove(rule); }

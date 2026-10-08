@@ -17,6 +17,7 @@ import java.util.UUID;
 final class ConnectionVector {
 
     private final List<ContextConnection> connections;
+    private CommuneRuntimeCache runtimeCache;
 
     ConnectionVector(Collection<ContextConnection> source) {
         if (source == null) {
@@ -46,6 +47,38 @@ final class ConnectionVector {
 
     List<ContextConnection> getConnections() {
         return connections;
+    }
+
+    void prepareCommunes(CommuneRuntimeCache cache) throws Exception {
+        cache.prepare(groups());
+        runtimeCache = cache;
+    }
+
+    CommuneRuntimeCache runtimeCache() { return runtimeCache; }
+
+    private Map<String,List<ContextConnection>> groups() {
+        Map<String,List<ContextConnection>> groups = new LinkedHashMap<>();
+        for (ContextConnection c : connections) {
+            if (c.getTrustGroup() != null)
+                groups.computeIfAbsent(c.getTrustGroup(), ignored -> new ArrayList<>()).add(c);
+        }
+        return groups;
+    }
+
+    List<ContextConnection> executionConnections(CommuneRuntimeCache cache) throws Exception {
+        CommuneRuntimeCache.State state = cache.prepare(groups());
+        List<ContextConnection> result = new ArrayList<>();
+        java.util.Set<String> included = new java.util.HashSet<>();
+        for (ContextConnection connection : connections) {
+            String group = connection.getTrustGroup();
+            if (group == null) result.add(connection);
+            else if (included.add(group)) {
+                CommuneRuntime runtime = state.groups().get(group);
+                // Stable physical routing address; all proof sources remain the real members.
+                result.add(runtime.members().get(0).forCommune(runtime));
+            }
+        }
+        return Collections.unmodifiableList(result);
     }
 
     boolean isEmpty() {

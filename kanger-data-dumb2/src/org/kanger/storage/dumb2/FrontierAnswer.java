@@ -28,6 +28,17 @@ final class FrontierAnswer {
     private final Map<String,List<org.kanger.interfaces.internal.IContextFederation.ProofCause>> proofs;
     Map<String,List<org.kanger.interfaces.internal.IContextFederation.ProofCause>> getProofs() { return proofs; }
     private final RevisionRef source;
+    private String commune;
+    private List<org.kanger.interfaces.internal.IContextFederation.Revision> communeMembers = Collections.emptyList();
+    FrontierAnswer fromCommune(String name, List<org.kanger.interfaces.internal.IContextFederation.Revision> members) {
+        commune = name;
+        communeMembers = Collections.unmodifiableList(new ArrayList<>(members));
+        return this;
+    }
+    org.kanger.interfaces.internal.IContextFederation.Revision sourceDescription() {
+        return new org.kanger.interfaces.internal.IContextFederation.Revision(
+                source.getContextId(), source.getRevision(), commune, communeMembers);
+    }
     private final FrontierInvocation invocation;
     private final FrontierRequest request;
     private final FrontierExecutionState executionState;

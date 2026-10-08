@@ -284,7 +284,7 @@ final class ConnectionManager {
         }
 
         ContextConnection replacement = new ContextConnection(existing.getTargetLocation(), requestedTarget,
-                new CompatibilityCertificate(sourceRef, requestedTarget, org.kanger.Version.CORE_VERSION_S), existing.getInitialization());
+                new CompatibilityCertificate(sourceRef, requestedTarget, org.kanger.Version.CORE_VERSION_S), existing.getInitialization(), existing.getTrustGroup());
         boolean accepted = false;
         try {
             PairQualification.Result pair = existing.getInitialization().isEmpty()

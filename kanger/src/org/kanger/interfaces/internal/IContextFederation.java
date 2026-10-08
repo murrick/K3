@@ -135,9 +135,9 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
         public List<DependencyNotice> getDependencyNotices() { return dependencyNotices; }
         public boolean hasWorkingChanges() {
             Map<UUID,String> published=new LinkedHashMap<UUID,String>();
-            for (Connection c:publishedConnections) published.put(c.getTargetContextId(),c.getPinnedRevision() + ":" + c.getInitialization());
+            for (Connection c:publishedConnections) published.put(c.getTargetContextId(),c.getPinnedRevision() + ":" + c.getInitialization() + ":" + c.getTrustGroup());
             Map<UUID,String> working=new LinkedHashMap<UUID,String>();
-            for (Connection c:connections) working.put(c.getTargetContextId(),c.getPinnedRevision() + ":" + c.getInitialization());
+            for (Connection c:connections) working.put(c.getTargetContextId(),c.getPinnedRevision() + ":" + c.getInitialization() + ":" + c.getTrustGroup());
             return !published.equals(working);
         }
     }
@@ -152,6 +152,7 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
         private final CompatibilityStatus compatibilityStatus;
         private final String semanticVersion;
         private final List<String> initialization;
+        private final String trustGroup;
 
         public Connection(String locator,
                           UUID targetContextId,
@@ -166,6 +167,11 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
         public Connection(String locator, UUID targetContextId, long pinnedRevision, long currentRevision,
                           PinPolicy pinPolicy, CompatibilityStatus compatibilityStatus, String semanticVersion,
                           List<String> initialization) {
+            this(locator, targetContextId, pinnedRevision, currentRevision, pinPolicy, compatibilityStatus, semanticVersion, initialization, null);
+        }
+        public Connection(String locator, UUID targetContextId, long pinnedRevision, long currentRevision,
+                          PinPolicy pinPolicy, CompatibilityStatus compatibilityStatus, String semanticVersion,
+                          List<String> initialization, String trustGroup) {
             if (locator == null || locator.trim().isEmpty()) {
                 throw new IllegalArgumentException(
                         "locator must not be blank");
@@ -189,6 +195,7 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
                 throw new IllegalArgumentException(
                         "semanticVersion must not be blank");
             }
+            this.trustGroup = org.kanger.TrustGroups.validate(trustGroup);
             this.initialization = Collections.unmodifiableList(new ArrayList<String>(initialization));
             this.locator = locator;
             this.targetContextId = targetContextId;
@@ -202,6 +209,7 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
         }
 
         public List<String> getInitialization() { return initialization; }
+        public String getTrustGroup() { return trustGroup; }
 
         public String getLocator() {
             return locator;
@@ -336,6 +344,7 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
         private final String locator;
         private final Long exactRevision;
         private final List<String> initialization;
+        private final String trustGroup;
 
         public SourceDependencyRequest(
                 String locator,
@@ -343,6 +352,9 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
             this(locator, exactRevision, Collections.<String>emptyList());
         }
         public SourceDependencyRequest(String locator, Long exactRevision, List<String> initialization) {
+            this(locator, exactRevision, initialization, null);
+        }
+        public SourceDependencyRequest(String locator, Long exactRevision, List<String> initialization, String trustGroup) {
             if (locator == null
                     || locator.trim().isEmpty()) {
                 throw new IllegalArgumentException(
@@ -355,6 +367,7 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
             }
             this.locator = locator.trim();
             this.exactRevision = exactRevision;
+            this.trustGroup = org.kanger.TrustGroups.validate(trustGroup);
             this.initialization = Collections.unmodifiableList(new ArrayList<String>(initialization));
         }
 
@@ -363,6 +376,7 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
         }
 
         public List<String> getInitialization() { return initialization; }
+        public String getTrustGroup() { return trustGroup; }
 
         public boolean isExact() {
             return exactRevision != null;
@@ -383,6 +397,7 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
         private final UUID contextId;
         private final long revision;
         private final List<String> initialization;
+        private final String trustGroup;
 
         public SourceDependency(
                 String locator,
@@ -391,6 +406,9 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
             this(locator, contextId, revision, Collections.<String>emptyList());
         }
         public SourceDependency(String locator, UUID contextId, long revision, List<String> initialization) {
+            this(locator, contextId, revision, initialization, null);
+        }
+        public SourceDependency(String locator, UUID contextId, long revision, List<String> initialization, String trustGroup) {
             if (locator == null
                     || locator.trim().isEmpty()) {
                 throw new IllegalArgumentException(
@@ -406,6 +424,7 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
             this.locator = locator.trim();
             this.contextId = contextId;
             this.revision = revision;
+            this.trustGroup = org.kanger.TrustGroups.validate(trustGroup);
             this.initialization = Collections.unmodifiableList(new ArrayList<String>(initialization));
         }
 
@@ -418,6 +437,7 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
         }
 
         public List<String> getInitialization() { return initialization; }
+        public String getTrustGroup() { return trustGroup; }
 
         public long getRevision() {
             return revision;
@@ -558,6 +578,11 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
 
     Connection connectContext(String targetLocator)
             throws Exception;
+
+    default Connection connectContext(String targetLocator, String trustGroup) throws Exception {
+        if (trustGroup == null) return connectContext(targetLocator);
+        throw new UnsupportedOperationException("Trust communes are unavailable");
+    }
 
     void disconnectContext(String targetLocator)
             throws Exception;

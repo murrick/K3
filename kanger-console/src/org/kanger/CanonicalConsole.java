@@ -941,9 +941,8 @@ public final class CanonicalConsole {
             }
 
             for (IContextFederation.CausalStep step : continuation.getCausalSteps()) {
-                System.out.printf("  causal wave %d  %s@%d  %s => %s%n", step.getWave(),
-                        contextLocator(snapshot, step.getTarget().getContextId()),
-                        step.getTarget().getRevision(), step.getQuery(), step.getTruth());
+                System.out.printf("  causal wave %d  %s  %s => %s%n", step.getWave(),
+                        sourceLabel(snapshot, step.getTarget()), step.getQuery(), step.getTruth());
                 for (IContextFederation.EvidenceInjection fact : step.getSuppliedEvidence()) {
                     System.out.println("    supplied: " + fact.getStatement());
                     showRevisionSources("supports", fact.getSupports(), snapshot);
@@ -1000,13 +999,7 @@ public final class CanonicalConsole {
                         if (!first) {
                             line.append(", ");
                         }
-                        line.append(
-                                contextLocator(
-                                        snapshot,
-                                        support.getContextId()))
-                                .append('@')
-                                .append(
-                                        support.getRevision());
+                        line.append(sourceLabel(snapshot, support));
                         first = false;
                     }
                     line.append(']');
@@ -1157,13 +1150,18 @@ public final class CanonicalConsole {
 
     private static boolean hasContextProof(List<IContextFederation.ProofCause> causes) {
         for (IContextFederation.ProofCause cause : causes)
-            if (cause.contextSource != null || hasContextProof(cause.causes)) return true;
+            if (cause.commune != null || cause.contextSource != null || hasContextProof(cause.causes)) return true;
         return false;
     }
 
     private static void showProofCauses(List<IContextFederation.ProofCause> causes, String indent, IMind mind) throws Exception {
         for (IContextFederation.ProofCause cause : causes) {
-            if (cause.contextSource != null) {
+            if (cause.commune != null) {
+                System.out.println(indent + "Commune " + cause.commune);
+                for (IContextFederation.Revision member : cause.communeMembers)
+                    System.out.println(indent + "  Member: " + member.getContextId() + "@" + member.getRevision());
+                System.out.println(indent + "  Statement: " + cause.ruleStatement);
+            } else if (cause.contextSource != null) {
                 String locator = cause.contextSource.getContextId().toString();
                 if (((User) mind.getUser()).getData() instanceof IContextFederation) {
                     IContextFederation.Snapshot snapshot = ((IContextFederation) ((User) mind.getUser()).getData()).federationSnapshot();
@@ -1298,6 +1296,8 @@ public final class CanonicalConsole {
                                         + connection.getCurrentRevision()
                                         + "]"
                                 : "");
+                if (connection.getTrustGroup() != null)
+                    System.out.println("    Trust commune: " + connection.getTrustGroup());
                 if (!connection.getInitialization().isEmpty())
                     System.out.println("    Configured by X: " + connection.getInitialization().size()
                             + " initialization command(s)");
@@ -1329,11 +1329,7 @@ public final class CanonicalConsole {
             System.out.println("  provisional hypotheses:");
             for (IContextFederation.ProvisionalHypothesis hypothesis
                     : query.getProvisionalHypotheses()) {
-                System.out.printf("    %s@%d  %s%n",
-                        contextLocator(
-                                snapshot,
-                                hypothesis.getSource().getContextId()),
-                        hypothesis.getSource().getRevision(),
+                System.out.printf("    %s  %s%n", sourceLabel(snapshot, hypothesis.getSource()),
                         hypothesis.getStatement());
             }
         }
@@ -1344,11 +1340,17 @@ public final class CanonicalConsole {
             List<IContextFederation.Revision> revisions,
             IContextFederation.Snapshot snapshot) {
         for (IContextFederation.Revision revision : revisions) {
-            System.out.printf("      %s: %s@%d%n",
-                    label,
-                    contextLocator(snapshot, revision.getContextId()),
-                    revision.getRevision());
+            System.out.printf("      %s: %s%n", label, sourceLabel(snapshot, revision));
         }
+    }
+
+    private static String sourceLabel(IContextFederation.Snapshot snapshot, IContextFederation.Revision source) {
+        if (source.getCommune() == null)
+            return contextLocator(snapshot, source.getContextId()) + "@" + source.getRevision();
+        List<String> members = new ArrayList<>();
+        for (IContextFederation.Revision member : source.getCommuneMembers())
+            members.add(contextLocator(snapshot, member.getContextId()) + "@" + member.getRevision());
+        return "commune " + source.getCommune() + " [" + String.join(", ", members) + "]";
     }
 
     private static String contextLocator(

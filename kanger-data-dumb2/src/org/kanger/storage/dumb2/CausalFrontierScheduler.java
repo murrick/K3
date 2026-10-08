@@ -45,7 +45,7 @@ final class CausalFrontierScheduler {
     private static Result execute(OperationSnapshot operation, FrontierDomain frontier,
             Mind source, boolean trace, final boolean includeSourceAtRoot) throws Exception {
         List<IContextFederation.CausalStep> steps = new ArrayList<IContextFederation.CausalStep>();
-        List<ContextConnection> connections = operation.getConnections().getConnections();
+        List<ContextConnection> connections = operation.getExecutionConnections();
         List<Node> nodes = new ArrayList<Node>();
         Node root = node(nodes, frontier, connections, includeSourceAtRoot ? source : null, operation.getSourceRef());
         int calls = 0;
@@ -184,7 +184,7 @@ final class CausalFrontierScheduler {
                 ? IContextFederation.FrontierTruth.UNKNOWN
                 : IContextFederation.FrontierTruth.valueOf(answer.getTruth().name());
         return new IContextFederation.CausalStep(wave, rootQuery, answer.getInvocation().getFrontier().getDiagnosticSource(),
-                revision(answer.getSource()), truth, values, supplied, demands);
+                answer.sourceDescription(), truth, values, supplied, demands);
     }
 
     private static IContextFederation.Revision revision(RevisionRef ref) {

@@ -39,6 +39,8 @@ public interface IContextResults {
     /** Native provenance edge, detached before the owning runtime is closed. */
     final class ProofCause {
         public final Revision contextSource;
+        public final String commune;
+        public final List<Revision> communeMembers;
         public final boolean configuredByX;
         public final boolean hypothesis;
         public final Revision hypothesisSource;
@@ -65,6 +67,15 @@ public interface IContextResults {
         public ProofCause(long ruleId, String ruleStatement, Long donorId, String donorStatement,
                           boolean cycle, List<ProofCause> causes, boolean hypothesis, Revision source,
                           String requiredFor, Revision contextSource, boolean configuredByX) {
+            this(ruleId, ruleStatement, donorId, donorStatement, cycle, causes, hypothesis, source,
+                    requiredFor, contextSource, configuredByX, null, Collections.<Revision>emptyList());
+        }
+        public ProofCause(long ruleId, String ruleStatement, Long donorId, String donorStatement,
+                          boolean cycle, List<ProofCause> causes, boolean hypothesis, Revision source,
+                          String requiredFor, Revision contextSource, boolean configuredByX,
+                          String commune, List<Revision> communeMembers) {
+            this.commune = commune;
+            this.communeMembers = Collections.unmodifiableList(new ArrayList<>(communeMembers));
             this.contextSource = contextSource;
             this.configuredByX = configuredByX;
             this.ruleId = ruleId; this.ruleStatement = ruleStatement; this.donorId = donorId;
@@ -111,8 +122,16 @@ public interface IContextResults {
 
         private final UUID contextId;
         private final long revision;
+        private final String commune;
+        private final List<Revision> communeMembers;
 
         public Revision(UUID contextId, long revision) {
+            this(contextId, revision, null, Collections.<Revision>emptyList());
+        }
+        /** For a joint source, contextId/revision are its stable routing member, not sole authorship. */
+        public Revision(UUID contextId, long revision, String commune, List<Revision> members) {
+            this.commune = commune;
+            this.communeMembers = Collections.unmodifiableList(new ArrayList<>(members));
             if (contextId == null) {
                 throw new NullPointerException("contextId");
             }
@@ -123,6 +142,9 @@ public interface IContextResults {
             this.contextId = contextId;
             this.revision = revision;
         }
+
+        public String getCommune() { return commune; }
+        public List<Revision> getCommuneMembers() { return communeMembers; }
 
         public UUID getContextId() {
             return contextId;

@@ -133,7 +133,9 @@ public final class CommandFormatter {
                 if(invocation.getArgument("id")!=null) rules+=" "+number(invocation,"id");
                 return rules;
             case CTX_CONNECT:
-                return "ctx connect " + argument(invocation.getArgument("locator"));
+                return "ctx connect " + argument(invocation.getArgument("locator"))
+                        + (invocation.getArgument("trustGroup") == null ? ""
+                        : " trust " + argument(invocation.getArgument("trustGroup")));
             case CTX_DISCONNECT:
                 return "ctx disconnect " + argument(invocation.getArgument("locator"));
             case CTX_SWITCH:

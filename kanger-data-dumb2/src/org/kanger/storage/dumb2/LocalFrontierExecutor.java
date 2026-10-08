@@ -21,10 +21,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Executes one frontier query against exactly one foreign Context revision.
+ * Executes one frontier query against one independent revision or a prepared
+ * trust commune. Commune knowledge is local to X, with all exact pins retained.
  *
  * <p>This class intentionally attaches the target snapshot directly and never
- * opens that target's ConnectionVector. Therefore federation cannot recurse:
+ * opens that target's own ConnectionVector. Therefore federation cannot recurse:
  * X may ask A, but this execution cannot cause A to ask B.</p>
  */
 final class LocalFrontierExecutor {
@@ -60,6 +61,8 @@ final class LocalFrontierExecutor {
         }
 
         RevisionRef target = connection.getTarget();
+        if (connection.commune() != null)
+            return execute(connection.commune().mind(), target, request, enumerate);
         if (!connection.getInitialization().isEmpty())
             return execute(connection.layer(), target, request, enumerate);
         return execute(
@@ -205,7 +208,7 @@ final class LocalFrontierExecutor {
                     order,
                     rows,
                     hypotheses,
-                    result.getDemands(), enumerate, proofs);
+                    result.getDemands(), enumerate, proofs).fromCommune(mind.getCommuneName(), mind.getCommuneMembers());
         } finally {
             root.discardEphemeral(mind);
         }

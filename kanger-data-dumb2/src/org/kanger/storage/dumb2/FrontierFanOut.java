@@ -35,7 +35,7 @@ final class FrontierFanOut {
             throw new NullPointerException("invocation");
         }
         List<ContextConnection> connections =
-                operation.getConnections().getConnections();
+                operation.getExecutionConnections();
         if (connections.isEmpty()) {
             return Collections.emptyList();
         }

@@ -226,13 +226,14 @@ public final class CanonicalCommandProcessor {
                         contextFederation(user, mind);
                 IContextFederation.Connection connection =
                         federation.connectContext(String.valueOf(
-                                invocation.getArgument("locator")));
+                                invocation.getArgument("locator")), (String) invocation.getArgument("trustGroup"));
                 return Result.successFederation(
                         mind,
                         "Context connected: "
                                 + connection.getLocator()
                                 + "@"
-                                + connection.getPinnedRevision(),
+                                + connection.getPinnedRevision()
+                                + (connection.getTrustGroup() == null ? "" : " [trust " + connection.getTrustGroup() + "]"),
                         federation.federationSnapshot(), null);
             }
 

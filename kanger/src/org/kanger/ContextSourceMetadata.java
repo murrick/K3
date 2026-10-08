@@ -93,7 +93,7 @@ final class ContextSourceMetadata {
                     int commandIndex = commands.size() - 1;
                     commands.set(commandIndex, commands.get(commandIndex) + "\n" + directive.substring("ctx init+ ".length()));
                     requests.set(last, new IContextFederation.SourceDependencyRequest(dependency.getLocator(),
-                            dependency.isExact() ? dependency.getExactRevision() : null, commands));
+                            dependency.isExact() ? dependency.getExactRevision() : null, commands, dependency.getTrustGroup()));
                 } else if (directive.startsWith("ctx init ")) {
                     if (explicitNone || requests.isEmpty()) throw invalid("ctx init requires a preceding connection");
                     String command = directive.substring("ctx init ".length()).trim();
@@ -104,7 +104,7 @@ final class ContextSourceMetadata {
                     List<String> commands = new ArrayList<String>(dependency.getInitialization());
                     commands.add(command);
                     requests.set(last, new IContextFederation.SourceDependencyRequest(dependency.getLocator(),
-                            dependency.isExact() ? dependency.getExactRevision() : null, commands));
+                            dependency.isExact() ? dependency.getExactRevision() : null, commands, dependency.getTrustGroup()));
                 } else {
                     throw invalid(
                             "unsupported metadata directive: "
@@ -150,8 +150,9 @@ final class ContextSourceMetadata {
                                     dependency.getLocator()))
                     .append('@')
                     .append(
-                            dependency.getRevision())
-                    .append(lineSeparator);
+                            dependency.getRevision());
+            if (dependency.getTrustGroup() != null) result.append(" trust ").append(quoteLocator(dependency.getTrustGroup()));
+            result.append(lineSeparator);
             for (String command : dependency.getInitialization()) {
                 boolean first = true;
                 for (String line : command.split("\r?\n", -1)) {
@@ -170,6 +171,19 @@ final class ContextSourceMetadata {
                     "ctx connect requires a Context locator");
         }
 
+        String trustGroup = null;
+        boolean quoted = false, escaped = false;
+        for (int i = 0; i < operand.length(); i++) {
+            char c = operand.charAt(i);
+            if (escaped) { escaped = false; continue; }
+            if (quoted && c == '\\') { escaped = true; continue; }
+            if (c == '"') { quoted = !quoted; continue; }
+            if (!quoted && operand.startsWith(" trust ", i)) {
+                trustGroup = TrustGroups.validate(unquoteLocator(operand.substring(i + 7).trim()));
+                operand = operand.substring(0, i).trim();
+                break;
+            }
+        }
         int at = operand.lastIndexOf('@');
         Long revision = null;
         String locator = operand;
@@ -196,7 +210,7 @@ final class ContextSourceMetadata {
         locator = unquoteLocator(locator);
         return new IContextFederation.SourceDependencyRequest(
                 locator,
-                revision);
+                revision, Collections.<String>emptyList(), trustGroup);
     }
 
     private static boolean digits(String value) {

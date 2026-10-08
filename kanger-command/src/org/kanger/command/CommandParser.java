@@ -422,7 +422,7 @@ public final class CommandParser {
         try {
             keyword = CommandRegistry.resolveKeyword(
                     Family.CONTEXT, tokens.get(1).value,
-                    Keyword.CONNECT, Keyword.DISCONNECT,
+                    Keyword.CONNECT, Keyword.DISCONNECT, Keyword.CLOSE,
                     Keyword.SWITCH, Keyword.VERSION,
                     Keyword.RULES, Keyword.PUBLISH, Keyword.FORK,
                     Keyword.EXPLAIN, Keyword.OPINIONS, Keyword.VALUES, Keyword.SOLVES, Keyword.WHEN);
@@ -456,10 +456,18 @@ public final class CommandParser {
                 return parseContextRules(raw,tokens);
             case CONNECT:
                 requireRequiredArgument(tokens, 3);
+                if (tokens.size() == 5 && "trust".equalsIgnoreCase(tokens.get(3).value)) {
+                    Map<String,Object> connection = new LinkedHashMap<String,Object>();
+                    connection.put("locator", tokens.get(2).value);
+                    try { connection.put("trustGroup", org.kanger.TrustGroups.validate(tokens.get(4).value)); }
+                    catch (IllegalArgumentException invalid) { throw error(INVALID_ARGUMENT_SHAPE, invalid.getMessage()); }
+                    return CommandInvocation.command(CommandIntent.CTX_CONNECT, connection, raw);
+                }
                 requireSize(tokens, 3);
                 return CommandInvocation.command(
                         CommandIntent.CTX_CONNECT,
                         args("locator", tokens.get(2).value), raw);
+            case CLOSE:
             case DISCONNECT:
                 requireRequiredArgument(tokens, 3);
                 requireSize(tokens, 3);

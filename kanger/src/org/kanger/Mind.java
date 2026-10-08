@@ -245,6 +245,24 @@ public class Mind implements IMind {
     }
 
     private final Map<String, List<IContextFederation.ProofCause>> contextProofs = new LinkedHashMap<>();
+    private final Map<String,List<IContextFederation.ProofCause>> contextRuleOrigins = new LinkedHashMap<>();
+    private String communeName;
+    private List<IContextFederation.Revision> communeMembers = Collections.emptyList();
+
+    public void configureCommuneProvenance(String name, List<IContextFederation.Revision> members) {
+        communeName = name;
+        communeMembers = Collections.unmodifiableList(new ArrayList<>(members));
+    }
+    public String getCommuneName() { return communeName; }
+    public List<IContextFederation.Revision> getCommuneMembers() { return communeMembers; }
+    public void addContextRuleOrigin(String origin, IContextFederation.ProofCause proof) {
+        contextRuleOrigins.computeIfAbsent(origin, ignored -> new ArrayList<>()).add(proof);
+    }
+    public List<IContextFederation.ProofCause> getContextRuleOrigins(String origin) {
+        List<IContextFederation.ProofCause> proofs = contextRuleOrigins.get(origin);
+        return proofs == null ? Collections.emptyList() : Collections.unmodifiableList(proofs);
+    }
+
 
     public boolean isContextConnectionLayer() { return connectionLayer; }
 
@@ -282,6 +300,10 @@ public class Mind implements IMind {
         Mind parent = (Mind) root;
         connectionLayer = parent.connectionLayer;
         contextProofs.putAll(parent.contextProofs);
+        for (Map.Entry<String,List<IContextFederation.ProofCause>> entry : parent.contextRuleOrigins.entrySet())
+            contextRuleOrigins.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+        communeName = parent.communeName;
+        communeMembers = parent.communeMembers;
         if (!isolateCanonicalFactories && user.getCurrentMind() == root) user.getContextOpinionSession().invalidate();
         operationDescription = parent.operationDescription;
         parent.incTransactionCounter();

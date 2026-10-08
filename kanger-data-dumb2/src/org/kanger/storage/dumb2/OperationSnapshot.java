@@ -25,6 +25,8 @@ final class OperationSnapshot implements AutoCloseable {
     private final ConnectionVector connections;
     private final Map<UUID, ContextSnapshot> targets;
     private boolean closed;
+    private java.util.List<ContextConnection> executionConnections;
+    private CommuneRuntimeCache ownedCache;
 
     private OperationSnapshot(Path sourceLocation,
                               ContextSnapshot source,
@@ -124,8 +126,19 @@ final class OperationSnapshot implements AutoCloseable {
                 }
                 targets.put(targetRef.getContextId(), target);
             }
-            return new OperationSnapshot(
-                    sourceLocation, source, vector, targets);
+            OperationSnapshot operation = new OperationSnapshot(sourceLocation, source, vector, targets);
+            CommuneRuntimeCache cache = vector.runtimeCache();
+            if (cache == null) operation.ownedCache = cache = new CommuneRuntimeCache();
+            try { operation.executionConnections = vector.executionConnections(cache); }
+            catch (Exception failure) {
+                if (operation.ownedCache != null) {
+                    try { operation.ownedCache.close(); } catch (Exception cleanup) { failure.addSuppressed(cleanup); }
+                    for (ContextConnection connection : vector.getConnections())
+                        try { connection.closeLayer(); } catch (Exception cleanup) { failure.addSuppressed(cleanup); }
+                }
+                throw failure;
+            }
+            return operation;
         } catch (Exception failure) {
             for (ContextSnapshot target : targets.values()) {
                 target.close();
@@ -159,13 +172,18 @@ final class OperationSnapshot implements AutoCloseable {
         return connections;
     }
 
+    java.util.List<ContextConnection> getExecutionConnections() {
+        requireOpen();
+        return executionConnections;
+    }
+
     ContextSnapshot getTarget(UUID contextId) {
         requireOpen();
         return targets.get(contextId);
     }
 
     @Override
-    public void close() {
+    public void close() throws Exception {
         if (closed) {
             return;
         }
@@ -174,6 +192,16 @@ final class OperationSnapshot implements AutoCloseable {
         }
         source.close();
         closed = true;
+        if (ownedCache != null) {
+            Exception failure = null;
+            try { ownedCache.close(); } catch (Exception cleanup) { failure = cleanup; }
+            for (ContextConnection connection : connections.getConnections()) {
+                try { connection.closeLayer(); } catch (Exception cleanup) {
+                    if (failure == null) failure = cleanup; else failure.addSuppressed(cleanup);
+                }
+            }
+            if (failure != null) throw failure;
+        }
     }
 
     private void requireOpen() {

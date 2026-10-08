@@ -33,6 +33,10 @@ final class CommuneRuntime implements AutoCloseable {
     }
 
     static CommuneRuntime prepare(List<ContextConnection> members) throws Exception {
+        return prepare(members, null);
+    }
+
+    static CommuneRuntime prepare(List<ContextConnection> members, String group) throws Exception {
         if (members == null || members.isEmpty())
             throw new IllegalArgumentException("A commune requires at least one member");
         List<ContextConnection> ordered = new ArrayList<>(members);
@@ -50,8 +54,25 @@ final class CommuneRuntime implements AutoCloseable {
         try {
             // Replay all authoritative knowledge before qualifying or asking
             // anything. Member-local generated productions are not imported.
-            for (ContextConnection member : ordered)
-                PairQualification.PortableSource.capture(member.layer()).replay(layer);
+            List<org.kanger.interfaces.internal.IContextFederation.Revision> pins = new ArrayList<>();
+            for (ContextConnection member : ordered) {
+                Mind source = member.layer();
+                PairQualification.PortableSource.capture(source).replay(layer);
+                org.kanger.interfaces.internal.IContextFederation.Revision pin =
+                        new org.kanger.interfaces.internal.IContextFederation.Revision(
+                                member.getTarget().getContextId(), member.getTarget().getRevision());
+                pins.add(pin);
+                for (org.kanger.interfaces.IRule candidate : source.getRules()) {
+                    org.kanger.units.Rule rule = (org.kanger.units.Rule) candidate;
+                    if (rule.isGenerated() || rule.isDeleted(source)) continue;
+                    layer.addContextRuleOrigin(rule.getOrigin(),
+                            new org.kanger.interfaces.internal.IContextFederation.ProofCause(
+                                    rule.getId(), rule.toString(source), null, "", false,
+                                    Collections.emptyList(), false, null, null, pin,
+                                    !member.getInitialization().isEmpty()));
+                }
+            }
+            layer.configureCommuneProvenance(group, pins);
             ContextQualification qualification = ContextQualification.inspect(layer, false);
             if (!qualification.isValid())
                 throw new CommandErrorException("Trust commune contains incompatible knowledge");

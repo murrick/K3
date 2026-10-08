@@ -21,6 +21,8 @@ final class ContextConnection {
     private final RevisionRef target;
     private final CompatibilityCertificate certificate;
     private final java.util.List<String> initialization;
+    private final String trustGroup;
+    private CommuneRuntime commune;
     private ConnectionRuntime runtime;
 
     ContextConnection(Path targetLocation,
@@ -31,6 +33,12 @@ final class ContextConnection {
 
     ContextConnection(Path targetLocation, RevisionRef target, CompatibilityCertificate certificate,
                       java.util.List<String> initialization) {
+        this(targetLocation, target, certificate, initialization, null);
+    }
+
+    ContextConnection(Path targetLocation, RevisionRef target, CompatibilityCertificate certificate,
+                      java.util.List<String> initialization, String trustGroup) {
+        this.trustGroup = org.kanger.TrustGroups.validate(trustGroup);
         if (targetLocation == null || targetLocation.getFileName() == null) {
             throw new IllegalArgumentException(
                     "target Context location must have a final path component");
@@ -71,6 +79,18 @@ final class ContextConnection {
     }
 
     java.util.List<String> getInitialization() { return initialization; }
+    String getTrustGroup() { return trustGroup; }
+    CommuneRuntime commune() { return commune; }
+    ContextConnection withTrustGroup(String group) {
+        ContextConnection copy = new ContextConnection(targetLocation, target, certificate, initialization, group);
+        copy.runtime = runtime;
+        return copy;
+    }
+    ContextConnection forCommune(CommuneRuntime joint) {
+        ContextConnection copy = withTrustGroup(trustGroup);
+        copy.commune = joint;
+        return copy;
+    }
     synchronized org.kanger.Mind layer() throws Exception {
         if (runtime == null || runtime.closed) runtime = new ConnectionRuntime(this);
         return runtime.mind;
@@ -79,7 +99,7 @@ final class ContextConnection {
         if (runtime != null) { runtime.close(); runtime = null; }
     }
     ContextConnection recertified(CompatibilityCertificate certificate) {
-        ContextConnection copy = new ContextConnection(targetLocation, target, certificate, initialization);
+        ContextConnection copy = new ContextConnection(targetLocation, target, certificate, initialization, trustGroup);
         copy.runtime = runtime;
         return copy;
     }
@@ -99,13 +119,14 @@ final class ContextConnection {
         ContextConnection connection = (ContextConnection) other;
         return targetLocation.equals(connection.targetLocation)
                 && target.equals(connection.target)
+                && Objects.equals(trustGroup, connection.trustGroup)
                 && initialization.equals(connection.initialization)
                 && certificate.equals(connection.certificate);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(targetLocation, target, certificate, initialization);
+        return Objects.hash(targetLocation, target, certificate, initialization, trustGroup);
     }
 
     @Override

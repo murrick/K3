@@ -209,6 +209,7 @@ public final class CommandRegistry {
         keyword(Family.STORAGE, Keyword.REINDEX, "reindex");
 
         keyword(Family.CONTEXT, Keyword.CONNECT, "connect");
+        keyword(Family.CONTEXT, Keyword.CLOSE, "close");
         keyword(Family.CONTEXT, Keyword.DISCONNECT, "disconnect");
         keyword(Family.CONTEXT, Keyword.EXPLAIN, "explain");
         keyword(Family.CONTEXT, Keyword.ASK, "ask");
@@ -341,11 +342,12 @@ public final class CommandRegistry {
                 args("locator", "New independent Context name."), n++);
         define(CommandIntent.CTX_PUBLISH, "ctx publish [description]", "CONTEXT",
                 "Publish local content and explicit connections as one revision. Collapsing open transactions requires confirmation.", args("description", "Optional publication description."), n++);
-        define(CommandIntent.CTX_CONNECT, "ctx connect <locator>", "CONTEXT",
-                "Qualify and connect one direct Context at its current exact revision.",
-                args("locator", "Context locator or DUMB2 logical storage name."), n++);
+        define(CommandIntent.CTX_CONNECT, "ctx connect <locator> [trust <group>]", "CONTEXT",
+                "Qualify and connect one exact revision, optionally joining a local trust commune.",
+                args("locator", "Context locator or DUMB2 logical storage name.",
+                        "trustGroup", "Optional local symbolic commune name."), n++);
         define(CommandIntent.CTX_DISCONNECT, "ctx disconnect <locator>", "CONTEXT",
-                "Disconnect one direct Context by locator.",
+                "Disconnect one direct Context by locator (ctx close is an alias).",
                 args("locator", "Context locator or DUMB2 logical storage name."), n++);
         define(CommandIntent.CTX_SWITCH, "ctx switch <locator> <RevisionId>", "CONTEXT",
                 "Deliberately requalify and repin one direct Context to an exact revision.",
