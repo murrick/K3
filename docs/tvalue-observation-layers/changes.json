@@ -1,0 +1,49 @@
+{
+  "prior_profiled_journal_recovered": true,
+  "replacements": [
+    [
+      "private static String bucket(Mind mind,long id,Map<Long,Long> metadata)throws Exception{",
+      "private static String bucket(Mind mind,long id,Map<Long,Long> metadata,ObservationLayers frame)throws Exception{"
+    ],
+    [
+      "ResidentTValueRead.bucket(mind,id)",
+      "frame.bucket(id)"
+    ],
+    [
+      "private static SortedMap<Long,String> capture(Mind mind,Map<Long,Long> metadata)throws Exception{",
+      "private static SortedMap<Long,String> capture(Mind mind,Map<Long,Long> metadata,ObservationLayers frame)throws Exception{"
+    ],
+    [
+      "ResidentTValueRead.values(factory(mind))",
+      "frame.values()"
+    ],
+    [
+      "bucket(mind,id,metadata)",
+      "bucket(mind,id,metadata,frame)"
+    ],
+    [
+      "        SortedMap<Long,Boolean> marks=visibility(st.mind);",
+      "        SortedMap<Long,Boolean> marks;\n        SortedMap<Long,String> next;\n        try(ObservationLayers frame=new ObservationLayers(st.mind)){\n        marks=visibility(st.mind);"
+    ],
+    [
+      "        SortedMap<Long,String> next;\n        if(!st.initialized",
+      "        if(!st.initialized"
+    ],
+    [
+      "capture(st.mind,st.variableByValue)",
+      "capture(st.mind,st.variableByValue,frame)"
+    ],
+    [
+      "bucket(st.mind,id,st.variableByValue)",
+      "bucket(st.mind,id,st.variableByValue,frame)"
+    ],
+    [
+      "        // A separate full native scan",
+      "        }\n        // A separate full native scan"
+    ],
+    [
+      "capture(st.mind,null)",
+      "capture(st.mind,null,null)"
+    ]
+  ]
+}

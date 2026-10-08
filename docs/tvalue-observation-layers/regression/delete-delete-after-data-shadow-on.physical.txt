@@ -1,0 +1,1 @@
+DELETE_FLUSH_NATIVE operation=delete point=delete-after-data exception=InjectedMutationFailure indexed_head=false manifest_head=true cached_head=false pending_WAL=true physical=refused active_checks=3

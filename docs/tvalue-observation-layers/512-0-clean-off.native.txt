@@ -1,0 +1,1 @@
+COST_NATIVE size=512 updates=48 variables=512 final_term=a

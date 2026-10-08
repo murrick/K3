@@ -1,0 +1,3 @@
+Exception in thread "main" java.lang.AssertionError: fresh frame sees native addition
+	at org.kanger.ObservationLayersRunner.require(ObservationLayersRunner.java:6)
+	at org.kanger.ObservationLayersRunner.main(ObservationLayersRunner.java:11)

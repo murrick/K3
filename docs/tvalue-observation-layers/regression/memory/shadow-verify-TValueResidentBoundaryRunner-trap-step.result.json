@@ -1,0 +1,33 @@
+{
+  "index": 35,
+  "build": "shadow",
+  "flag": "verify",
+  "runner": "TValueResidentBoundaryRunner",
+  "args": [
+    "trap-step"
+  ],
+  "exit_code": 0,
+  "expected_closed_boundary_rejection": true,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/tvalue-owner-pure-jvm-64jas8tc",
+    "-Dpersistence.shadow=true",
+    "-Dmetadata.shadow=true",
+    "-Djournal.path=/workspace/scratch/1c9c6dd2770c/K3-tvalue-observation-layers38/docs/tvalue-observation-layers/regression/memory/shadow-verify-TValueResidentBoundaryRunner-trap-step.trace",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-Dkanger.experiment.verifyTValueIndex=true",
+    "-Dkanger.experiment.verifySolveSync=true",
+    "-cp",
+    "../build/tvalue-observation-layers-shadow:../build/tvalue-journal-cost-shadow:../build/tvalue-reindex-boundary-shadow:../build/tvalue-clear-close-guard-shadow:../build/tvalue-delete-flush-guard-shadow:../build/tvalue-write-guard-shadow:../build/tvalue-saved-links-shadow:../build/tvalue-update-boundary-shadow:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-shadow:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.TValueResidentBoundaryRunner",
+    "trap-step"
+  ]
+}
