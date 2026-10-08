@@ -193,7 +193,10 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                     int weight = 0;
                     for (IArgument a : getArguments()) {
                         for (IArgument b : ((Cause) c).getDonor().getArguments()) {
-                            if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
+                            if (!a.isEmpty(mind) && !b.isEmpty(mind) && (a.getValue(mind).getId() == b.getValue(mind).getId()
+                        || (a.getValue(mind).isCVariable() && b.getValue(mind).isCVariable()
+                        && (((Term) a.getValue(mind)).getParentId(mind) == b.getValue(mind).getId()
+                        || a.getValue(mind).getId() == ((Term) b.getValue(mind)).getParentId(mind))))) {
                                 ++weight;
                                 break;
                             }
@@ -305,28 +308,17 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
         if (arguments.size() != o.getArguments().size()) {
             return false;
         }
-        for (int i = 0; i < arguments.size(); ++i) {
-            if (arguments.get(i).isEmpty(mind) || o.getArguments().get(i).isEmpty(mind)) {
-                return false;
-            } else if (arguments.get(i).getValue(mind).isCVariable() && o.getArguments().get(i).getValue(mind).isCVariable()
-                    && arguments.get(i).getValue(mind).getId() != o.getArguments().get(i).getId()
-                    && ((Term) arguments.get(i).getValue(mind)).getParentId(mind) != o.getArguments().get(i).getValue(mind).getId()
-                    && arguments.get(i).getValue(mind).getId() != ((Term) o.getArguments().get(i).getValue(mind)).getParentId(mind)) {
-                return false;
-            } else if (arguments.get(i).getValue(mind).getId() != o.getArguments().get(i).getValue(mind).getId()) {
-                return false;
-            } else if (!((Term) arguments.get(i).getValue(mind)).equalsTo((Term) o.getArguments().get(i).getValue(mind))) {
-                return false;
-            }
-        }
-        return true;
+        return arguments.equalsBase(mind, o.getArguments());
     }
 
     public int getOverlaps(IList arg) throws Exception {
         Set<Long> ids = new HashSet<>();
         for (IArgument a : arguments) {
             for (IArgument b : arg) {
-                if (!a.isEmpty(mind) && !b.isEmpty(mind) && a.getValue(mind).getId() == b.getValue(mind).getId()) {
+                if (!a.isEmpty(mind) && !b.isEmpty(mind) && (a.getValue(mind).getId() == b.getValue(mind).getId()
+                        || (a.getValue(mind).isCVariable() && b.getValue(mind).isCVariable()
+                        && (((Term) a.getValue(mind)).getParentId(mind) == b.getValue(mind).getId()
+                        || a.getValue(mind).getId() == ((Term) b.getValue(mind)).getParentId(mind))))) {
                     ids.add(a.getValue(mind).getId());
                 }
             }

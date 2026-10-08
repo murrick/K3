@@ -180,9 +180,29 @@ public final class KangerCompletedTest extends KangerTest {
         }
         System.out.printf("Hypothesis optimize timing: %.3f sec%n", optimizeSeconds);
 
-        require(mind.getHypothesis().size() == 6,
-                "Expected 6 completed hypotheses for ?$x son(John,x);");
-        System.out.println("Completed hypothesis showcase: son(John,x) -> 6 OK");
+        require(mind.getHypothesis().size() == 7,
+                "Expected 7 completed hypotheses for ?$x son(John,x);");
+        require(sources().contains("!$y son(John,y);"),
+                "Direct existential hypothesis must survive optimization");
+        // Exercise the same assertion representation used by when accept.
+        java.util.List<IHypothesis> approved = new java.util.ArrayList<>();
+        for (IHypothesis h : mind.getHypothesis()) approved.add(h);
+        for (IHypothesis h : approved) {
+            Mind candidate = new Mind(mind);
+            try {
+                String assertion = ((Hypothesis) h).toAssertionString(candidate);
+                require(Boolean.TRUE.equals(candidate.queryAccept(assertion, null, false)),
+                        "Hypothesis approval rejected: " + assertion);
+                require(Boolean.TRUE.equals(candidate.queryCheck(false)),
+                        "Hypothesis approval is inconsistent: " + assertion);
+                Boolean answer = candidate.query("?$x son(John,x);", null, false);
+                require(answer != null && answer == h.isAntc(),
+                        "Hypothesis approval has unexpected result: " + assertion + " -> " + answer);
+            } finally {
+                mind.release(candidate);
+            }
+        }
+        System.out.println("Completed hypothesis showcase: son(John,x) -> 7 OK");
         System.out.println("====================================================");
     }
 

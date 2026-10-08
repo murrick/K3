@@ -209,7 +209,7 @@ public class HypothesisStore implements IFactory<IHypothesis> {
                 Mind m = new Mind(mind);
                 try {
                     Rule r = (Rule) m.compileLine(
-                            ((Hypothesis) h).toString(m), false, null);
+                            ((Hypothesis) h).toAssertionString(m), false, null);
                     if (r == null) {
                         continue;
                     }
