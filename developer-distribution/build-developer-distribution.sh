@@ -82,7 +82,7 @@ copy_one "${RUNTIME_LIB}" 'kanger-core-*.jar' 'kanger-core.jar'
 copy_one "${RUNTIME_LIB}" 'kanger-bootstrap-*.jar' 'kanger-bootstrap.jar'
 copy_one "${RUNTIME_LIB}" 'jline-*.jar' 'jline.jar'
 copy_one "${RUNTIME_MODULES}" 'kanger-udf-*.jar' 'kanger-udf.jar'
-copy_one "${RUNTIME_MODULES}" 'kanger-data-dumb-*.jar' 'kanger-data-dumb.jar'
+copy_one "${RUNTIME_MODULES}" 'kanger-data-dumb2-*.jar' 'kanger-data-dumb2.jar'
 
 examples=(
   BasicQuery.java

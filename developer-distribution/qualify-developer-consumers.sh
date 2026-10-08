@@ -42,7 +42,7 @@ VERSION="$(tr -d '[:space:]' < "${BUNDLE_DIR}/VERSION")"
 REPOSITORY="${BUNDLE_DIR}/repository"
 [[ -d "${REPOSITORY}/org/kanger" ]] || fail "Bundled Maven repository is missing"
 
-for artifact in kanger-command kanger-core kanger-bootstrap kanger-udf kanger-data-dumb kanger-sdk; do
+for artifact in kanger-command kanger-core kanger-bootstrap kanger-udf kanger-data-dumb2 kanger-sdk; do
   base="${REPOSITORY}/org/kanger/${artifact}/${VERSION}/${artifact}-${VERSION}"
   [[ -f "${base}.pom" ]] || fail "Canonical SDK POM missing: ${base}.pom"
   [[ -f "${base}.jar" ]] || fail "Canonical SDK JAR missing: ${base}.jar"
@@ -77,7 +77,7 @@ mvn --batch-mode --no-transfer-progress \
 # The aggregate embedding SDK intentionally excludes the infrastructure command
 # feature. Core, Bootstrap and the bundled providers must resolve; Command must
 # remain available in the repository only for consumers that choose it explicitly.
-for artifact in kanger-core kanger-bootstrap kanger-udf kanger-data-dumb kanger-sdk; do
+for artifact in kanger-core kanger-bootstrap kanger-udf kanger-data-dumb2 kanger-sdk; do
   bundled="${REPOSITORY}/org/kanger/${artifact}/${VERSION}"
   resolved="${MAVEN_REPO}/org/kanger/${artifact}/${VERSION}"
   for extension in pom jar; do

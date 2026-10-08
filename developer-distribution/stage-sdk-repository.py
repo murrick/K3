@@ -88,7 +88,7 @@ def stage_sdk_artifact(bundle: Path, version: str) -> None:
             "kanger-sdk",
             version,
             "KANGER Developer SDK",
-            ["kanger-core", "kanger-bootstrap", "kanger-udf", "kanger-data-dumb"],
+            ["kanger-core", "kanger-bootstrap", "kanger-udf", "kanger-data-dumb2"],
         ),
         encoding="utf-8",
     )
@@ -275,7 +275,7 @@ def main() -> None:
         ("kanger-command", "kanger-command.jar", "KANGER canonical command feature", ["kanger-core"]),
         ("kanger-bootstrap", "kanger-bootstrap.jar", "KANGER runtime bootstrap", ["kanger-core"]),
         ("kanger-udf", "kanger-udf.jar", "KANGER UDF feature", ["kanger-core", ("kanger-bootstrap", True)]),
-        ("kanger-data-dumb", "kanger-data-dumb.jar", "KANGER DUMB storage feature", ["kanger-core", ("kanger-bootstrap", True)]),
+        ("kanger-data-dumb2", "kanger-data-dumb2.jar", "KANGER DUMB2 storage feature", ["kanger-core", ("kanger-bootstrap", True)]),
     ]
 
     for artifact in artifacts:

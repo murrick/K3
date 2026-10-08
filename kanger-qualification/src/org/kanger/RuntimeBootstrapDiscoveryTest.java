@@ -18,12 +18,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class RuntimeBootstrapDiscoveryTest {
 
     @Test
+    public void explicitLegacyStorageSelectionIsPreserved() throws Exception {
+        User user = new User();
+        user.setProperty(RuntimeBootstrap.STORAGE_MODULE_PROPERTY, "dumb");
+        RuntimeBootstrapResult result = RuntimeBootstrap.ensureCapabilities(user, RuntimeCapability.STORAGE);
+        assertEquals("DUMB data model", result.getDescription(RuntimeCapability.STORAGE));
+        assertEquals("org.kanger.storage.DB", user.getData().getClass().getName());
+    }
+
+    @Test
     public void discoversAttachesAndPreservesRuntimeModules() throws Exception {
         User user = new User();
 
         RuntimeBootstrapResult first = RuntimeBootstrap.ensure(user);
         assertTrue(first.loaded(RuntimeCapability.STORAGE));
-        assertEquals("DUMB data model",
+        assertEquals("DUMB 2.0 data model",
                 first.getDescription(RuntimeCapability.STORAGE));
         assertTrue(first.loaded(RuntimeCapability.UDF));
         assertEquals("Rhino JavaScript UDF",

@@ -4,13 +4,7 @@ import org.kanger.bootstrap.RuntimeCapability;
 import org.kanger.bootstrap.RuntimeModule;
 import org.kanger.interfaces.IUser;
 
-/**
- * ServiceLoader adapter exposing DUMB 2.0 for explicit manual-soak runtimes.
- *
- * <p>The normal Console/Server runtime layout still contains only the stable
- * DUMB provider. DUMB2 is selected by launchers that deliberately place this
- * module, and not kanger-data-dumb, on the runtime classpath.</p>
- */
+/** ServiceLoader adapter for the default DUMB2 Context storage provider. */
 public final class Dumb2RuntimeModule implements RuntimeModule {
 
     @Override

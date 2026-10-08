@@ -26,10 +26,10 @@ Read the diagram as a dependency rule: optional features depend on Core; Core do
 
 - `kanger-core` — the necessary and sufficient KANGER inference engine as a Java library. It owns `User`, `Mind`, compile/query/inference semantics, transactions, result inspection, and the Core lifecycle contracts. It does not require Command, Storage, UDF, Bootstrap, Console, Server, or UI.
 - `kanger-command` — optional canonical infrastructure-control language and transport-neutral command processing over Core. It depends on `kanger-core`; Core does not depend on it.
-- `kanger-data-dumb` — optional DUMB storage provider. It can be attached directly to a `User`; Bootstrap integration is optional.
+- `kanger-data-dumb2` — optional DUMB2 storage provider. It can be attached directly to a `User`; Bootstrap integration is optional.
 - `kanger-udf` — optional UDF provider. It can be attached directly to a `User`; Bootstrap integration is optional.
 - `kanger-bootstrap` — optional discovery/composition helper. It discovers and attaches available capabilities through Java `ServiceLoader`. It does not own Storage or UDF and is not required by Core.
-- `kanger-sdk` — convenience Maven/Gradle coordinate containing Core + Bootstrap + bundled UDF + bundled DUMB storage. It intentionally does **not** depend on `kanger-command`.
+- `kanger-sdk` — convenience Maven/Gradle coordinate containing Core + Bootstrap + bundled UDF + bundled DUMB2 storage. It intentionally does **not** depend on `kanger-command`.
 - Console — a delivery adapter above the feature boundary. It explicitly uses the command feature and the runtime capabilities required by the Console experience.
 
 The Developer archive ships all of these JARs so a developer can choose an assembly. Presence in `lib/` does not imply that every JAR is mandatory for Core.
@@ -41,7 +41,7 @@ Inference only
     kanger-core
 
 Inference + persistence
-    kanger-core + kanger-data-dumb
+    kanger-core + kanger-data-dumb2
 
 Inference + UDF
     kanger-core + kanger-udf
@@ -53,7 +53,7 @@ Custom canonical command/control adapter
     kanger-command + kanger-core + selected runtime features
 
 Convenience embedded SDK
-    kanger-sdk = core + bootstrap + bundled UDF + bundled DUMB storage
+    kanger-sdk = core + bootstrap + bundled UDF + bundled DUMB2 storage
 ```
 
 ### Core-only startup
@@ -74,13 +74,13 @@ An application may attach concrete runtime providers itself and omit Bootstrap c
 ```java
 IUser user = new User();
 
-new org.kanger.storage.DB().init(user);
+new org.kanger.storage.dumb2.DB().init(user);
 new org.kanger.udf.UDF().init(user);
 
 IMind mind = new Mind(user);
 ```
 
-This is a valid explicit composition path. It deliberately couples the application to provider implementation classes, so `org.kanger.storage.DB` and `org.kanger.udf.UDF` are not part of the curated Stable SDK surface.
+This is a valid explicit composition path. It deliberately couples the application to provider implementation classes, so `org.kanger.storage.dumb2.DB` and `org.kanger.udf.UDF` are not part of the curated Stable SDK surface.
 
 Use this path when the embedding application intentionally owns provider selection and initialization.
 
@@ -487,7 +487,7 @@ Direct provider attachment:
 
 ```java
 IUser user = new User();
-new org.kanger.storage.DB().init(user);
+new org.kanger.storage.dumb2.DB().init(user);
 IMind mind = new Mind(user);
 ```
 
@@ -645,15 +645,15 @@ Other selectable feature coordinates are:
 
 ```text
 org.kanger:kanger-bootstrap:3.7.0
-org.kanger:kanger-data-dumb:3.7.0
+org.kanger:kanger-data-dumb2:3.7.0
 org.kanger:kanger-udf:3.7.0
 ```
 
-`kanger-data-dumb` and `kanger-udf` keep Bootstrap integration available, but Bootstrap is optional for consumers. Direct provider attachment therefore does not force `kanger-bootstrap` into the consumer dependency graph.
+`kanger-data-dumb2` and `kanger-udf` keep Bootstrap integration available, but Bootstrap is optional for consumers. Direct provider attachment therefore does not force `kanger-bootstrap` into the consumer dependency graph.
 
 A complete convenience-SDK consumer project is shipped as `../examples/maven/`. Its repository URL points to the bundle-local `../../repository` directory.
 
-The `kanger-sdk` convenience artifact resolves Core + Bootstrap + bundled UDF + bundled DUMB storage. It intentionally does not resolve `kanger-command`.
+The `kanger-sdk` convenience artifact resolves Core + Bootstrap + bundled UDF + bundled DUMB2 storage. It intentionally does not resolve `kanger-command`.
 
 ### 12.2 Gradle
 
@@ -723,3 +723,6 @@ The canonical command/control classes shown in the Assembly model are feature-le
 `IMind.collectContextOpinions(locator)` returns an immutable `Map<String, IContextResults.Opinion>` for the last ordinary query; pass `null` to collect all directly visible sources. `getContextOpinions(locator)` reads the cached collection. `IContextResults` exposes detached source identities, truth, Values, solution proof trees and assertion-ready hypotheses without storage/runtime objects. UNKNOWN opinions contain hypotheses only. Collection never imports source assumptions into the initiating context.
 
 `IMind.forkContext(newLocator)` creates an independent copy of the selected published revision and returns its new `IContextResults.Revision`. It leaves the current context selected. DUMB2 requires U0 and published connection state; providers without fork support reject the operation.
+
+
+DUMB2 is the default storage provider in the standard 3.8.0 delivery. Legacy DUMB remains available separately as `org.kanger:kanger-data-dumb` for old databases. In a custom assembly containing both providers, set `runtime.storage.module=dumb` for explicit legacy selection; otherwise DUMB2 is selected. Existing legacy data is not converted automatically.

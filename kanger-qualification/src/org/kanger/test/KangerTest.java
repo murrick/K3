@@ -2791,8 +2791,26 @@ public class KangerTest {
         mind.query("?$x $y value(1, x, y);");
 
         showResult(true);
-        if (mind.getSolutions().size() != COUNT * 3 + 1) {
-            fail("Expected " + (COUNT * 3 + 1) + " solves");
+        // Concurrent primary assertions can retain different TERM/TVALUE
+        // structures for the same ground fact. Compare semantic answers,
+        // rather than the scheduling-dependent number of proof objects.
+        Set<List<String>> proven = new HashSet<>();
+        for (IRule solution : mind.getSolutions()) {
+            if (!solution.isAntc() || solution.getPredicate().getRange() != 3
+                    || !"value".equals(solution.getPredicate().getName(mind))
+                    || !"1.0".equals(solution.getArguments().get(0).getValue(mind).toString())) {
+                fail("Unexpected solution for value(1,x,y)");
+            }
+            proven.add(Arrays.asList(solution.getArguments().get(1).getValue(mind).toString(),
+                    solution.getArguments().get(2).getValue(mind).toString()));
+        }
+        Set<List<String>> rows = new HashSet<>();
+        for (Map<String, ITerm> row : mind.getValues()) {
+            rows.add(Arrays.asList(row.get("x").toString(), row.get("y").toString()));
+        }
+        if (proven.size() != COUNT * 3 + 1 || mind.getValues().size() != COUNT * 3 + 1
+                || !proven.equals(rows)) {
+            fail("Expected " + (COUNT * 3 + 1) + " unique proven rows matching Values");
         }
 
         System.out.println("OK");

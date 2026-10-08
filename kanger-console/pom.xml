@@ -44,7 +44,7 @@
         </dependency>
         <dependency>
             <groupId>org.kanger</groupId>
-            <artifactId>kanger-data-dumb</artifactId>
+            <artifactId>kanger-data-dumb2</artifactId>
             <version>${project.version}</version>
             <scope>runtime</scope>
             <optional>true</optional>
@@ -197,13 +197,13 @@
 
                                 <resourcecount property="kanger.console.runtime.storage.count">
                                     <fileset dir="${project.build.directory}/runtime/modules"
-                                             includes="kanger-data-dumb-*.jar"/>
+                                             includes="kanger-data-dumb2-*.jar"/>
                                 </resourcecount>
                                 <condition property="kanger.console.runtime.storage.present">
                                     <equals arg1="${kanger.console.runtime.storage.count}" arg2="1"/>
                                 </condition>
                                 <fail unless="kanger.console.runtime.storage.present"
-                                      message="Expected exactly one DUMB Console runtime module"/>
+                                      message="Expected exactly one DUMB2 Console runtime module"/>
 
                                 <resourcecount property="kanger.console.runtime.core.count">
                                     <fileset dir="${project.build.directory}/runtime/lib"
@@ -227,7 +227,7 @@
 
                                 <resourcecount property="kanger.console.runtime.provider.leak.count">
                                     <fileset dir="${project.build.directory}/runtime/lib"
-                                             includes="kanger-udf-*.jar,kanger-data-dumb-*.jar"/>
+                                             includes="kanger-udf-*.jar,kanger-data-dumb2-*.jar"/>
                                 </resourcecount>
                                 <condition property="kanger.console.runtime.providers.isolated">
                                     <equals arg1="${kanger.console.runtime.provider.leak.count}" arg2="0"/>
@@ -284,7 +284,7 @@
                         <goals><goal>copy-dependencies</goal></goals>
                         <configuration>
                             <includeScope>runtime</includeScope>
-                            <excludeArtifactIds>kanger-udf,kanger-data-dumb</excludeArtifactIds>
+                            <excludeArtifactIds>kanger-udf,kanger-data-dumb2</excludeArtifactIds>
                             <outputDirectory>${project.build.directory}/runtime/lib</outputDirectory>
                         </configuration>
                     </execution>
@@ -294,7 +294,7 @@
                         <goals><goal>copy-dependencies</goal></goals>
                         <configuration>
                             <includeScope>runtime</includeScope>
-                            <includeArtifactIds>kanger-udf,kanger-data-dumb</includeArtifactIds>
+                            <includeArtifactIds>kanger-udf,kanger-data-dumb2</includeArtifactIds>
                             <excludeTransitive>true</excludeTransitive>
                             <outputDirectory>${project.build.directory}/runtime/modules</outputDirectory>
                         </configuration>

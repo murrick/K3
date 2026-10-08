@@ -51,19 +51,19 @@ validate_bundle_layout() {
 
   shopt -s nullglob
   udf_modules=("${BUNDLE_ROOT}"/server/modules/kanger-udf-*.jar)
-  storage_modules=("${BUNDLE_ROOT}"/server/modules/kanger-data-dumb-*.jar)
+  storage_modules=("${BUNDLE_ROOT}"/server/modules/kanger-data-dumb2-*.jar)
   core_libraries=("${BUNDLE_ROOT}"/server/lib/kanger-core-*.jar)
   bootstrap_libraries=("${BUNDLE_ROOT}"/server/lib/kanger-bootstrap-*.jar)
   leaked_udf=("${BUNDLE_ROOT}"/server/lib/kanger-udf-*.jar)
-  leaked_storage=("${BUNDLE_ROOT}"/server/lib/kanger-data-dumb-*.jar)
+  leaked_storage=("${BUNDLE_ROOT}"/server/lib/kanger-data-dumb2-*.jar)
   shopt -u nullglob
 
   [[ "${#udf_modules[@]}" -eq 1 ]] || fail "Distribution must contain exactly one UDF runtime module"
-  [[ "${#storage_modules[@]}" -eq 1 ]] || fail "Distribution must contain exactly one DUMB storage runtime module"
+  [[ "${#storage_modules[@]}" -eq 1 ]] || fail "Distribution must contain exactly one DUMB2 storage runtime module"
   [[ "${#core_libraries[@]}" -eq 1 ]] || fail "Distribution must contain exactly one Core runtime library"
   [[ "${#bootstrap_libraries[@]}" -eq 1 ]] || fail "Distribution must contain exactly one bootstrap runtime library"
   [[ "${#leaked_udf[@]}" -eq 0 ]] || fail "UDF provider leaked into server/lib"
-  [[ "${#leaked_storage[@]}" -eq 0 ]] || fail "DUMB storage provider leaked into server/lib"
+  [[ "${#leaked_storage[@]}" -eq 0 ]] || fail "DUMB2 storage provider leaked into server/lib"
 
   PRODUCT="$(release_property product)"
   VERSION="$(release_property version)"
