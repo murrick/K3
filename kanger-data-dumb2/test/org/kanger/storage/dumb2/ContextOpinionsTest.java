@@ -33,8 +33,15 @@ class ContextOpinionsTest {
     @Test void nativeOpinionsDoNotAccumulateHypothesesFromPreviousQueries() throws Exception {
         Mind nativeMind = open("N");
         try {
-            assertTrue(nativeMind.compile(new String(java.nio.file.Files.readAllBytes(
-                    java.nio.file.Paths.get("natives.k")), java.nio.charset.StandardCharsets.UTF_8), null, false));
+            try (java.io.InputStream input = ContextOpinionsTest.class.getResourceAsStream("natives.k")) {
+                assertNotNull(input, "Packaged natives test fixture");
+                java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+                byte[] buffer = new byte[4096];
+                int count;
+                while ((count = input.read(buffer)) != -1) bytes.write(buffer, 0, count);
+                assertTrue(nativeMind.compile(new String(bytes.toByteArray(),
+                        java.nio.charset.StandardCharsets.UTF_8), null, false));
+            }
         } finally { close(nativeMind); }
         create("X", "!anchor(X);");
         Mind mind = open("X");
