@@ -1175,7 +1175,7 @@ public final class CanonicalConsole {
                 System.out.println(indent + "  Statement: " + cause.ruleStatement);
             } else {
                 System.out.println(indent + "Rule " + cause.ruleId + ": " + cause.ruleStatement);
-                System.out.println(indent + "  Donor: " + cause.donorStatement + (cause.cycle ? " [cycle]" : ""));
+                System.out.println(indent + "Donor: " + cause.donorStatement + (cause.cycle ? " [cycle]" : ""));
             }
             showProofCauses(cause.causes, indent + "    ", mind);
         }
@@ -1184,7 +1184,7 @@ public final class CanonicalConsole {
     private static void showOpinionCauses(List<IContextFederation.ProofCause> causes, String indent, String locator) {
         for (IContextFederation.ProofCause cause : causes) {
             System.out.println(indent + "Rule " + cause.ruleId + ": " + cause.ruleStatement);
-            System.out.println(indent + "  Donor: " + cause.donorStatement + (cause.cycle ? " [cycle]" : cause.hypothesis ? " [hypothesis, not proven]" : ""));
+            System.out.println(indent + "Donor: " + cause.donorStatement + (cause.cycle ? " [cycle]" : cause.hypothesis ? " [hypothesis, not proven]" : ""));
             if (cause.hypothesis) {
                 System.out.println(indent + "    Hypothesis: " + locator + "@" + cause.hypothesisSource.getRevision());
                 System.out.println(indent + "    Introduced by: " + locator + "@" + cause.hypothesisSource.getRevision() + " Rule " + cause.ruleId);
