@@ -220,7 +220,7 @@ final class FrontierContinuationEngine {
         Rule query = (Rule) work.compileLine(
                 querySource,
                 true,
-                localExternals);
+                new LinkedList<ITerm>(localExternals));
         if (query == null || query.isSecond()) {
             throw new IllegalStateException(
                     "Unable to establish operation-local query Rule: "
@@ -254,6 +254,37 @@ final class FrontierContinuationEngine {
                     observations,
                     injections,
                     provisionalHypotheses, causalSteps);
+        }
+
+        // A complete commune-native FALSE for an existential atomic query is a
+        // proof of the whole opposite pass, not a tuple. Do not invent a
+        // witness or reconstruct it from an empty Values collection.
+        if (queryPass == QueryPass.CHECKFALSE && operation.getExecutionConnections().stream()
+                .anyMatch(connection -> connection.commune() != null)) {
+            Mind descriptor = Mind.ephemeralChild(work);
+            FrontierDomain existential;
+            try {
+                descriptor.setQueryPass(QueryPass.CHECKTRUE);
+                Rule positive = (Rule) descriptor.compileLine("?" + querySource.substring(1),
+                        true, new LinkedList<ITerm>(localExternals));
+                existential = positive == null ? null : CausalFrontierCapture.describeAtomic(descriptor, positive);
+            } finally { work.discardEphemeral(descriptor); }
+            if (existential != null && !existential.isGround()) {
+                CausalFrontierScheduler.Result scheduled = CausalFrontierScheduler.enumerate(
+                        operation, existential, localSource, localSource.isExplainQueryActive());
+                FrontierAggregate aggregate = scheduled.getRootAggregate();
+                observations.add(new FrontierObservation(1, existential, aggregate));
+                for (CausalFrontierScheduler.Conflict one : scheduled.getConflicts())
+                    observations.add(new FrontierObservation(1, one.frontier, one.aggregate));
+                causalSteps.addAll(scheduled.getSteps());
+                if (!scheduled.hasConflict() && aggregate.getTruth() == FrontierAggregate.Truth.FALSE) {
+                    work.getSolutions().clear();
+                    work.getValues().clear();
+                    return new Result(true, 1, 0, queryRuleId,
+                            Collections.singletonList(Collections.singletonList(existential.getPredicateName())),
+                            observations, injections, provisionalHypotheses, causalSteps);
+                }
+            }
         }
 
         Set<EvidenceKey> evidence =

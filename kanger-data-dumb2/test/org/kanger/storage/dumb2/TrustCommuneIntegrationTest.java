@@ -18,7 +18,7 @@ class TrustCommuneIntegrationTest {
     private final CommandParser parser = new CommandParser();
     private final CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
 
-    @Test void fullFamilyQueriesUseOneJointSourceInBothConnectionOrders() throws Exception {
+    @Test void fullFamilyQueriesPreservePositiveAndNegativeAnswersInBothConnectionOrders() throws Exception {
         family();
         for (String[] order : Arrays.asList(new String[]{"facts", "natives"}, new String[]{"natives", "facts"})) {
             open("X");
@@ -36,6 +36,12 @@ class TrustCommuneIntegrationTest {
                     assertTrue(commune, "Joint answers must identify their commune");
                     assertEquals(2, sources.size(), "Both facts and rules must retain their real proof sources");
                 }
+                assertEquals(Boolean.FALSE, mind.query("?$x mother(John,x);", null, false));
+                assertEquals(Boolean.FALSE, mind.query("?mother(John,Mary);", null, false));
+                long revision = data.getRevision();
+                assertEquals(Boolean.FALSE, mind.query("?$x mother(?,x);", new Object[]{"John"}, false));
+                assertEquals(revision, data.getRevision());
+                assertNull(mind.query("?$x unknownRelation(John,x);", null, false));
                 IContextFederation.ExplainResult diagnosis = mind.explainQuery("?$x father(John,x);");
                 List<IContextFederation.CausalStep> steps = new ArrayList<>();
                 diagnosis.getPasses().forEach(pass -> steps.addAll(pass.getContinuation().getCausalSteps()));
@@ -48,6 +54,24 @@ class TrustCommuneIntegrationTest {
                 assertNull(mind.query("?father(John,Tom);", null, false));
             } finally { close(); }
         }
+    }
+
+    @Test void negativeCommuneProofDoesNotOverrideAnIndependentPositiveOpinion() throws Exception {
+        family();
+        create("opposing", "!mother(John,Tom);");
+        open("X");
+        try {
+            command("ctx connect facts trust own"); command("ctx connect natives trust own");
+            assertEquals(Boolean.FALSE, mind.query("?$x mother(John,x);", null, false));
+            assertTrue(mind.getValues().isEmpty());
+            assertTrue(mind.getSolutions().isEmpty());
+            command("ctx connect opposing");
+            assertEquals(IContextFederation.FrontierTruth.CONFLICT,
+                    mind.explainQuery("?$x mother(John,x);").getFinalTruth());
+            command("ctx close opposing");
+            assertEquals(Boolean.FALSE, mind.query("?$x mother(John,x);", null, false));
+            rows("?$x father(John,x);", "Tom", "Sarah");
+        } finally { close(); }
     }
 
     @Test void privateEditsAndNestedRollbackRestoreReadyCommuneStates() throws Exception {

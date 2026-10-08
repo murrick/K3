@@ -242,9 +242,11 @@ final class CausalFrontierScheduler {
                     }
                 }
                 filtered.add(new FrontierAnswer(answer.getSource(),answer.getRequest(),
-                        rows.isEmpty() ? FrontierAnswer.Truth.NULL : FrontierAnswer.Truth.TRUE,
+                        answer.getTruth()==FrontierAnswer.Truth.FALSE ? FrontierAnswer.Truth.FALSE
+                                : rows.isEmpty() ? FrontierAnswer.Truth.NULL : FrontierAnswer.Truth.TRUE,
                         answer.getVariableOrder(),rows,Collections.<String>emptyList(),
-                        rows.isEmpty() ? answer.getUnresolvedFrontiers() : Collections.<FrontierDemand>emptyList(), false, answer.getProofs()));
+                        rows.isEmpty() ? answer.getUnresolvedFrontiers() : Collections.<FrontierDemand>emptyList(), false, answer.getProofs()).fromCommune(
+                        answer.sourceDescription().getCommune(), answer.sourceDescription().getCommuneMembers()));
             }
             return filtered;
         }
@@ -314,6 +316,7 @@ final class CausalFrontierScheduler {
         private final int nodes;
         private final List<Conflict> conflicts;
         private final boolean rootConflict;
+        private final FrontierAggregate rootAggregate;
         private final int waves;
         private final int calls;
         private final List<IContextFederation.CausalStep> steps;
@@ -321,6 +324,7 @@ final class CausalFrontierScheduler {
             this.steps = Collections.unmodifiableList(new ArrayList<IContextFederation.CausalStep>(steps));
             this.answers = Collections.unmodifiableList(new ArrayList<FrontierAnswer>(answers));
             this.rootConflict = nodes.get(0).conflict != null;
+            this.rootAggregate = FrontierAggregate.of(nodes.get(0).rawAnswers());
             this.nodes = nodes.size(); this.waves = waves; this.calls = calls;
             List<Conflict> observed = new ArrayList<Conflict>();
             for (Node node : nodes) {
@@ -330,6 +334,7 @@ final class CausalFrontierScheduler {
         }
         List<IContextFederation.CausalStep> getSteps() { return steps; }
         boolean hasRootConflict() { return rootConflict; }
+        FrontierAggregate getRootAggregate() { return rootAggregate; }
         boolean hasConflict() { return !conflicts.isEmpty(); }
         List<Conflict> getConflicts() { return conflicts; }
         List<FrontierAnswer> getAnswers() { return answers; }
