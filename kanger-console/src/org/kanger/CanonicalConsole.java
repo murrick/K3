@@ -392,8 +392,11 @@ public final class CanonicalConsole {
                         invocation = CommandInvocation.command(invocation.getIntent(), arguments, invocation.getRaw());
                     }
                 }
-                CanonicalCommandProcessor.Result federation =
-                        COMMAND_PROCESSOR.execute(invocation, mind.getUser());
+                CanonicalCommandProcessor.Result federation;
+                try (OpinionProgress opinionProgress = invocation.getIntent() == org.kanger.command.CommandIntent.CTX_OPINIONS
+                        ? new OpinionProgress() : null) {
+                    federation = COMMAND_PROCESSOR.execute(invocation, mind.getUser());
+                }
                 if (!federation.isHandled()
                         || (federation.getFederationSnapshot() == null
                                 && federation.getContextVersionHistory() == null)) {
@@ -1088,6 +1091,33 @@ public final class CanonicalConsole {
                     revision.getRevision(),
                     revision.getDescription(),
                     markers.toString());
+        }
+    }
+
+    /** Console-only liveness indicator; never starts inference on another thread. */
+    private static final class OpinionProgress implements AutoCloseable {
+        private final java.util.Timer timer = new java.util.Timer("context-opinions-progress", true);
+        private final java.io.PrintStream output = System.out;
+        private boolean closed;
+        private boolean displayed;
+
+        OpinionProgress() {
+            timer.schedule(new java.util.TimerTask() {
+                @Override public void run() { tick(); }
+            }, 500L, 10000L);
+        }
+
+        private synchronized void tick() {
+            if (closed) return;
+            output.print(displayed ? "." : "Collecting context opinions...");
+            displayed = true;
+            output.flush();
+        }
+
+        @Override public synchronized void close() {
+            closed = true;
+            timer.cancel();
+            if (displayed) { output.println(); output.flush(); }
         }
     }
 

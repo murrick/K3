@@ -206,3 +206,5 @@ advancing CURRENT. The ordinary full-reactor results remain attributed to the
 preceding implementation head.
 
 Pair-rejection smoke: connect a target containing male(John) and ~(male(x),female(x)); accept !female(John) in X. Expect a normal STORAGE_CONTEXT_CONFLICT error with witnesses, no stack trace, unchanged X revision and no female(John) rule. Then run ?female(John), bare ?, a valid assertion and close/reopen. Rejected explicit commit must retain U1 for rollback. For UNKNOWN B, ctx opinions lists its hypotheses only and ctx solves has no solutions.
+
+Console ctx opinions progress: fast/cached collections remain silent. After 500 ms, a running collection prints `Collecting context opinions...`, then adds a dot every 10 seconds. Completion or failure closes the line before the result/error. Inference remains on the command thread; the daemon timer only prints progress.
