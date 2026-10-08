@@ -64,6 +64,7 @@ public final class CommandRegistry {
         CONNECT,
         DISCONNECT,
         EXPLAIN,
+        ASK,
         QUERY,
         ROLLBACK,
         SQUASH,
@@ -209,6 +210,7 @@ public final class CommandRegistry {
         keyword(Family.CONTEXT, Keyword.CONNECT, "connect");
         keyword(Family.CONTEXT, Keyword.DISCONNECT, "disconnect");
         keyword(Family.CONTEXT, Keyword.EXPLAIN, "explain");
+        keyword(Family.CONTEXT, Keyword.ASK, "ask");
         keyword(Family.CONTEXT, Keyword.OPINIONS, "opinions");
         keyword(Family.CONTEXT, Keyword.VALUES, "values");
         keyword(Family.CONTEXT, Keyword.SOLVES, "solves");
@@ -351,8 +353,8 @@ public final class CommandRegistry {
                 "Execute the normal query path and show its semantic federation trace.",
                 args("query", "KANGER query beginning with ?."), n++);
         define(CommandIntent.CTX_ISOLATED_QUERY,
-                "ctx <locator> <query...>", "CONTEXT",
-                "Execute one local-only diagnostic query in X or one exact-pinned direct Context.",
+                "ctx ask <locator> <query...>", "CONTEXT",
+                "Execute one local-only diagnostic query in X or one exact-pinned direct Context. The short form ctx <locator> <query...> remains available for non-command names.",
                 args("locator", "Current Context or direct connected Context locator.",
                         "query", "KANGER query beginning with ?."), n++);
         define(CommandIntent.STATUS,

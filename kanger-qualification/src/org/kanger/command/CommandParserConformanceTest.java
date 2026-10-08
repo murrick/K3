@@ -374,6 +374,12 @@ public final class CommandParserConformanceTest {
 
         CommandInvocation isolated =
                 parser.parse("ctx A ?male(Tom);");
+        for (String name : new String[] {"opinions", "opinion", "ask", "version"}) {
+            CommandInvocation ask = parser.parse("ctx ask " + name + " ?male(Tom);");
+            check(ask.getIntent() == CommandIntent.CTX_ISOLATED_QUERY, "explicit ask intent");
+            check(name.equals(ask.getArgument("locator")), "literal ask locator");
+            check("?male(Tom);".equals(ask.getArgument("query")), "explicit ask query");
+        }
         check(isolated.getIntent()
                         == CommandIntent.CTX_ISOLATED_QUERY,
                 "ctx isolated query intent");
@@ -523,10 +529,12 @@ public final class CommandParserConformanceTest {
                 "ctx explain ?$x son(John, x);");
         expectCanonical(
                 "ctx A ?male(Tom);",
-                "ctx A ?male(Tom);");
+                "ctx ask A ?male(Tom);");
         expectCanonical(
                 "ctx \"test context\" ?$x son(John, x);",
-                "ctx \"test context\" ?$x son(John, x);");
+                "ctx ask \"test context\" ?$x son(John, x);");
+        expectCanonical("ctx ask opinions ?male(Tom);", "ctx ask opinions ?male(Tom);");
+        expectCanonical("ctx ask ask ?p(\"two words\");", "ctx ask ask ?p(\"two words\");");
         expectCanonical("g", "get");
         expectCanonical("de", "delete");
         expectCanonical("g foo", "get foo.k");

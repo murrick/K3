@@ -149,7 +149,7 @@ public final class CommandFormatter {
                 return "ctx explain "
                         + rawQuery(invocation.getArgument("query"));
             case CTX_ISOLATED_QUERY:
-                return "ctx "
+                return "ctx ask "
                         + argument(invocation.getArgument("locator"))
                         + " "
                         + rawQuery(invocation.getArgument("query"));

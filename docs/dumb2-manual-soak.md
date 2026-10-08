@@ -94,6 +94,11 @@ production default, release branch, deployment, or server cutover.
 
 ## Source opinions
 
+Use `ctx ask family ?male(Tom);` for an isolated diagnostic query.
+The locator after `ask` is literal, including command names such as `opinions`
+or `ask`. The legacy `ctx family ?male(Tom);` shorthand remains supported for
+names that do not collide with Context commands.
+
 After a normal query, collect isolated answers for that **entire last query**:
 
 ```text

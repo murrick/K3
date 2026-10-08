@@ -63,6 +63,10 @@ public final class CommandParser {
             return parseValuesOrder(line);
         }
         if (family == Family.CONTEXT && prefix.size() > 1
+                && "ask".equalsIgnoreCase(prefix.get(1).value)) {
+            return parseContextIsolatedQuery(line, true);
+        }
+        if (family == Family.CONTEXT && prefix.size() > 1
                 && resolvesTo(family, prefix.get(1).value, Keyword.EXPLAIN)) {
             return parseContextExplain(line);
         }
@@ -543,12 +547,18 @@ public final class CommandParser {
 
     private CommandInvocation parseContextIsolatedQuery(String raw)
             throws CommandParseException {
-        List<Token> prefix = tokenize(raw, 2, false);
-        if (prefix.size() < 2) {
+        return parseContextIsolatedQuery(raw, false);
+    }
+
+    private CommandInvocation parseContextIsolatedQuery(String raw, boolean explicit)
+            throws CommandParseException {
+        int locatorIndex = explicit ? 2 : 1;
+        List<Token> prefix = tokenize(raw, locatorIndex + 1, false);
+        if (prefix.size() <= locatorIndex) {
             throw error(MISSING_ARGUMENT,
                     "ctx diagnostic query requires a Context locator");
         }
-        String query = tailAfter(raw, prefix.get(1).end);
+        String query = tailAfter(raw, prefix.get(locatorIndex).end);
         if (query.isEmpty()) {
             throw error(MISSING_ARGUMENT,
                     "ctx diagnostic query requires a KANGER query");
@@ -559,7 +569,7 @@ public final class CommandParser {
         }
         Map<String, Object> arguments =
                 new LinkedHashMap<String, Object>();
-        arguments.put("locator", prefix.get(1).value);
+        arguments.put("locator", prefix.get(locatorIndex).value);
         arguments.put("query", query);
         return CommandInvocation.command(
                 CommandIntent.CTX_ISOLATED_QUERY,

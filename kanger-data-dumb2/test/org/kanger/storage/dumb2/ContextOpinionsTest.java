@@ -12,6 +12,24 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ContextOpinionsTest {
+    @Test void explicitAskAddressesContextsNamedLikeCommands() throws Exception {
+        create("opinions", "!p(John);");
+        create("ask", "!p(Mary);");
+        create("X", "!anchor(X);");
+        Mind mind = open("X");
+        try {
+            data.connectContext("opinions"); data.connectContext("ask");
+            CanonicalCommandProcessor processor = new CanonicalCommandProcessor();
+            CommandParser parser = new CommandParser();
+            long revision = data.getRevision();
+            for (String source : new String[] {"ctx ask opinions ?p(John);", "ctx ask ask ?p(Mary);"}) {
+                assertEquals(IContextFederation.FrontierTruth.TRUE,
+                        processor.execute(parser.parse(source), user).getFederationQueryResult().getResultTruth());
+            }
+            assertEquals(revision, data.getRevision());
+            assertEquals(2, data.federationSnapshot().getConnections().size());
+        } finally { close(mind); }
+    }
     @Test void nativeOpinionsDoNotAccumulateHypothesesFromPreviousQueries() throws Exception {
         Mind nativeMind = open("N");
         try {
