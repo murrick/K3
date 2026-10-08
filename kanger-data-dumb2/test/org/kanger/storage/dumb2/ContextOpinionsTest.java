@@ -108,6 +108,7 @@ class ContextOpinionsTest {
             assertTrue(mind.hasOtherContextOpinions());
             int rules = mind.getRules().size(); int solves = mind.getSolutions().size();
             Map<String,IContextFederation.Opinion> opinions = command("ctx opinions");
+            assertSame(opinions, command("ctx opinions"), "Repeated collection must reuse detached results");
             assertEquals(new HashSet<>(Arrays.asList("A", "B")), opinions.keySet());
             assertEquals(IContextFederation.FrontierTruth.TRUE, opinions.get("A").getResult().getResultTruth());
             assertEquals(IContextFederation.FrontierTruth.FALSE, opinions.get("B").getResult().getResultTruth());

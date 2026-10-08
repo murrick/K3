@@ -22,11 +22,13 @@ public final class ContextOpinionSession {
     private String state;
     private IMind owner;
     private Map<String, IContextFederation.Opinion> opinions;
+    private String collectedLocator;
     private boolean collecting;
 
     public void invalidate() {
         if (collecting) return;
         query = null; parameters = null; state = null; owner = null; opinions = null;
+        collectedLocator = null;
     }
 
     public void remember(Mind mind, String source, Queue<ITerm> externals) throws Exception {
@@ -38,6 +40,7 @@ public final class ContextOpinionSession {
         owner = mind.getUser().getCurrentMind();
         state = state(mind);
         opinions = null;
+        collectedLocator = null;
     }
 
     private String state(Mind mind) throws Exception {
@@ -62,11 +65,13 @@ public final class ContextOpinionSession {
 
     public Map<String, IContextFederation.Opinion> collect(Mind mind, String locator) throws Exception {
         requireCurrent(mind);
+        if (opinions != null && java.util.Objects.equals(locator, collectedLocator)) return opinions;
         collecting = true;
         try {
             Map<String, IContextFederation.Opinion> result = ((IContextFederation) ((User) mind.getUser()).getData())
                     .executeOpinions(mind, locator, query, parameters);
             opinions = Collections.unmodifiableMap(new LinkedHashMap<>(result));
+            collectedLocator = locator;
             return opinions;
         } finally { collecting = false; }
     }

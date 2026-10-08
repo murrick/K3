@@ -118,7 +118,9 @@ accepted nor qualified in X. This can differ from a federated conclusion using
 facts from other sources.
 
 `ctx values`, `ctx solves` (proof trees), and `ctx when` read the saved collection
-without inference. Selecting one source when collecting replaces the collection
+without inference. Repeating `ctx opinions` with the same source selection reuses
+the saved optimized collection, including an empty result. Selecting a different
+source when collecting replaces the collection
 with that source. Run a new query after authoring, transaction/storage/topology
 changes before collecting again. The `Other opinions may be available (ctx opinions)`
 notice uses already observed frontier differences and also appears for UNKNOWN
