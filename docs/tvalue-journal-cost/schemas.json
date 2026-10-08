@@ -1,0 +1,24 @@
+{
+  "wall.csv": [
+    "update",
+    "setter_ns",
+    "observe_wall_ns"
+  ],
+  "phases.csv": [
+    "reason",
+    "baseline_or_reset",
+    "dirty_buckets_at_entry",
+    "projection_ns",
+    "oracle_capture_ns",
+    "equality_validation_ns",
+    "trace_reporting_ns",
+    "sum_phase_ns"
+  ],
+  "profile_log_cost_in_phase_sum": false,
+  "profile_log_cost_in_observe_wall": true,
+  "warmup_or_seed_updates_in_update_medians": false,
+  "per_JVM_medians": "48 update samples per JVM, excluding baseline/session-end",
+  "aggregate_ratios": "median of three per-repetition ratios of per-JVM medians; ratio of reported aggregate phase medians need not equal reported aggregate ratio",
+  "clean_observation": "full authority capture only, no journal projection or trace construction",
+  "shadow_observation": "projection, full authority capture, equality validation, trace construction, profiling; no work disabled"
+}

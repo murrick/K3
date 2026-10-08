@@ -1,0 +1,15 @@
+{
+  "java": "openjdk version \"17.0.20\" 2026-07-21\nOpenJDK Runtime Environment (build 17.0.20+8-1-24.04-Ubuntu)\nOpenJDK 64-Bit Server VM (build 17.0.20+8-1-24.04-Ubuntu, mixed mode, sharing)\n",
+  "python": "3.12.14",
+  "os": "Linux-6.18.44-x86_64-with-glibc2.39",
+  "machine": "x86_64",
+  "heap": "512m",
+  "target": "Java 8 bytecode via ECJ 3.33.0",
+  "warmup_updates": 16,
+  "measured_updates": 48,
+  "fresh_repetitions": 3,
+  "timing_clock": "System.nanoTime",
+  "execution_order": "size, repetition, clean/shadow, ON/OFF/VERIFY; not randomized",
+  "parallel_benchmark_JVMs": false,
+  "no_timer_or_GC_cost_subtracted": true
+}

@@ -1,0 +1,1 @@
+DELETE_FLUSH_NATIVE operation=delete point=none exception=none indexed_head=false manifest_head=false cached_head=false pending_WAL=true physical=admitted active_checks=4

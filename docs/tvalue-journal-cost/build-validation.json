@@ -1,0 +1,56 @@
+{
+  "parent": "c8d4fa5adc17b206e97c90e25487bb869a591956",
+  "original_journal_source_recovered": true,
+  "oracle_never_disabled": true,
+  "production_changed": false,
+  "builds": {
+    "clean": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-reindex-boundary-clean:../build/tvalue-clear-close-guard-clean:../build/tvalue-delete-flush-guard-clean:../build/tvalue-write-guard-clean:../build/tvalue-saved-links-clean:../build/tvalue-update-boundary-clean:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-clean:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-journal-cost-clean",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-journal-cost38/docs/tvalue-journal-cost/TValueDirtyJournal.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-journal-cost38/docs/tvalue-journal-cost/JournalCostRunner.java"
+      ],
+      "prior_native_classes_verified": 696,
+      "overlay_class_sha256": {
+        "org/kanger/JournalCostRunner.class": "a145df06033b6e18d34a4820eec62a8e79281d01eee1b5dc67f11deeb1ccb7cc",
+        "org/kanger/TValueDirtyJournal$UpdateFrame.class": "01e12228b03084648249c106cbade419dee1296c92d2381a6820edaa3825e7ce",
+        "org/kanger/TValueDirtyJournal$Work.class": "3d000cc0b15ed91244fae53ce7478569df198e07c557ee11495622e887c28cde",
+        "org/kanger/TValueDirtyJournal$State.class": "23aaf6300373b8afdfefdc0cba6128c2cfce21b02bd6244606023d4f26654af7",
+        "org/kanger/TValueDirtyJournal$Session.class": "e4c95f509472cec8b61b8da3a4787bf988311add95dafbcaf154684f776a363c",
+        "org/kanger/TValueDirtyJournal.class": "e4778d11972c497d7307accb9d342242d0b8af66524e01dde4f31814b73da23f"
+      }
+    },
+    "shadow": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-reindex-boundary-shadow:../build/tvalue-clear-close-guard-shadow:../build/tvalue-delete-flush-guard-shadow:../build/tvalue-write-guard-shadow:../build/tvalue-saved-links-shadow:../build/tvalue-update-boundary-shadow:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-shadow:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-journal-cost-shadow",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-journal-cost38/docs/tvalue-journal-cost/TValueDirtyJournal.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-journal-cost38/docs/tvalue-journal-cost/JournalCostRunner.java"
+      ],
+      "prior_native_classes_verified": 696,
+      "overlay_class_sha256": {
+        "org/kanger/JournalCostRunner.class": "a145df06033b6e18d34a4820eec62a8e79281d01eee1b5dc67f11deeb1ccb7cc",
+        "org/kanger/TValueDirtyJournal$UpdateFrame.class": "01e12228b03084648249c106cbade419dee1296c92d2381a6820edaa3825e7ce",
+        "org/kanger/TValueDirtyJournal$Work.class": "3d000cc0b15ed91244fae53ce7478569df198e07c557ee11495622e887c28cde",
+        "org/kanger/TValueDirtyJournal$State.class": "23aaf6300373b8afdfefdc0cba6128c2cfce21b02bd6244606023d4f26654af7",
+        "org/kanger/TValueDirtyJournal$Session.class": "e4c95f509472cec8b61b8da3a4787bf988311add95dafbcaf154684f776a363c",
+        "org/kanger/TValueDirtyJournal.class": "e4778d11972c497d7307accb9d342242d0b8af66524e01dde4f31814b73da23f"
+      }
+    }
+  }
+}

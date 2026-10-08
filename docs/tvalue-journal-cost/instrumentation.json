@@ -1,0 +1,29 @@
+{
+  "original_journal_source_recovered": true,
+  "replacements": [
+    [
+      "        UpdateFrame update;",
+      "        UpdateFrame update;\n        final List<String> cost=new ArrayList<>();"
+    ],
+    [
+      "    private static final ThreadLocal<Session> CURRENT=new ThreadLocal<>();",
+      "    private static final ThreadLocal<Session> CURRENT=new ThreadLocal<>();\n    private static final boolean COST=Boolean.getBoolean(\"journal.cost.enabled\");\n    public static List<String> profile(){return Collections.unmodifiableList(CURRENT.get().cost);}"
+    ],
+    [
+      "        SortedMap<Long,Boolean> marks=visibility(st.mind);",
+      "        long costStart=COST?System.nanoTime():0;boolean costSeed=!st.initialized||st.reset;int costDirty=st.dirty.size();\n        SortedMap<Long,Boolean> marks=visibility(st.mind);"
+    ],
+    [
+      "        SortedMap<Long,String> authority=capture(st.mind,null);",
+      "        long costProjected=COST?System.nanoTime():0;\n        SortedMap<Long,String> authority=capture(st.mind,null);\n        long costCaptured=COST?System.nanoTime():0;"
+    ],
+    [
+      "        s.observations++;",
+      "        long costChecked=COST?System.nanoTime():0;\n        s.observations++;"
+    ],
+    [
+      "        st.view=next;st.visibility=marks;st.dirty.clear();s.rows.add(\"VIEW \"+scope(st)+\" reason=\"+reason+\" view=\"+encode(authority));",
+      "        st.view=next;st.visibility=marks;st.dirty.clear();s.rows.add(\"VIEW \"+scope(st)+\" reason=\"+reason+\" view=\"+encode(authority));\n        if(COST){long end=System.nanoTime();s.cost.add(reason+\",\"+costSeed+\",\"+costDirty+\",\"+(costProjected-costStart)+\",\"+(costCaptured-costProjected)+\",\"+(costChecked-costCaptured)+\",\"+(end-costChecked)+\",\"+(end-costStart));}"
+    ]
+  ]
+}
