@@ -624,6 +624,10 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
             boolean logging) throws Exception;
 
     /** Explicit full-query opinions from live X and exact direct pins; never traverses dependencies. */
+    /** Local whole-query proofs from epistemic participants, without exporting abstract witnesses. */
+    default Boolean continueWholeQuery(IMind sourceMind, String querySource,
+            Queue<ITerm> externals, boolean logging) throws Exception { return null; }
+
     default Map<String, Opinion> executeOpinions(IMind sourceMind, String locator, String querySource,
             List<org.kanger.SemanticTermSnapshot> parameters) throws Exception {
         throw new UnsupportedOperationException("Context opinions are not supported by this provider");

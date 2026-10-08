@@ -1,0 +1,57 @@
+package org.kanger.storage.dumb2;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.util.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.kanger.*;
+import org.kanger.command.*;
+import org.kanger.interfaces.internal.IContextFederation;
+import static org.junit.jupiter.api.Assertions.*;
+
+class CommuneQuantifiedAnswerTest {
+    @TempDir Path directory;
+    User user; DB data; Mind mind;
+    void open(String name) throws Exception {
+        user = new User(); user.setDatabaseDir(directory + File.separator);
+        data = new DB(); data.init(user); mind = new Mind(user); user.setCurrentMind(mind);
+        mind = (Mind) mind.useStorage(name); user.setCurrentMind(mind);
+    }
+    void close() throws Exception { user.setCurrentMind(mind.closeStorage()); }
+
+    private void create(String name, String source) throws Exception {
+        open(name);
+        try { assertTrue(mind.compile(source)); } finally { close(); }
+    }
+    private void connect(String name) throws Exception {
+        new CanonicalCommandProcessor().execute(new CommandParser().parse(
+                "ctx connect " + name + " trust own"), user);
+    }
+    @Test void abstractTruthAndMixedQuantifierCounterexampleMatchCommuneOpinion() throws Exception {
+        create("natives", "!@x $y parent(y,x); !@x ~parent(x,x); !@x (male(x) || female(x)) && ~(male(x) && female(x)); !@x @y daughter(x,y) -> female(x), child(x,y); !@x @y son(x,y) -> male(x), child(x,y); !@x @y father(x,y) -> male(x), parent(x,y); !@x @y mother(x,y) -> female(x), parent(x,y); !@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y)); !@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y)); !@x @y ~(parent(x,y), parent(y,x)); !@x @y ($z parent(z,x) && parent(z,y)) && x != y -> sibling(x,y); !@x @y ~(sibling(x,y), parent(x,y)); !@x @y sibling(x,y) -> sibling(y,x); !@x @y ($z parent(x,z), parent(y,z)), x != y -> spouse(x,y) || divorced(x,y);");
+        create("facts", "!father(John, Tom); !daughter(Sarah, John); !mother(Mary,Sarah); !child(Tom,Mary); !age(John, 37); !age(Tom, 12); !age(Sarah, 4);");
+        int index = 0;
+        for (String[] order : Arrays.asList(new String[]{"natives", "facts"},
+                new String[]{"facts", "natives"})) {
+            open("X" + index++);
+            try {
+                for (String name : order) connect(name);
+                long revision = data.getRevision();
+                assertEquals(Boolean.TRUE, mind.query("?$x parent(x,John);", null, false));
+                assertTrue(mind.getValues().isEmpty());
+                assertTrue(mind.getSolutions().isEmpty());
+                assertEquals(IContextFederation.FrontierTruth.TRUE,
+                        mind.collectContextOpinions(null).get("trust own").getResult().getResultTruth());
+                assertEquals(Boolean.FALSE, mind.query("?$x @y parent(x,y);", null, false));
+                assertFalse(mind.getValues().isEmpty());
+                assertTrue(mind.getValues().getValues("y").stream()
+                        .anyMatch(v -> "Tom".equals(v.toString()) || "John".equals(v.toString())));
+                assertEquals(IContextFederation.FrontierTruth.FALSE,
+                        mind.collectContextOpinions(null).get("trust own").getResult().getResultTruth());
+                assertNull(mind.query("?$x missingRelation(x,John);", null, false));
+                assertEquals(revision, data.getRevision());
+            } finally { close(); }
+        }
+    }
+}

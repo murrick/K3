@@ -1176,6 +1176,66 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     }
 
     @Override
+    public synchronized Boolean continueWholeQuery(IMind sourceMind, String querySource,
+            Queue<ITerm> externals, boolean logging) throws Exception {
+        requireOpen();
+        List<ContextConnection> participants = workingConnections.executionConnections(communeCache);
+        if (participants.stream().noneMatch(c -> c.commune() != null)) return null;
+        List<Mind> roots = new ArrayList<>();
+        roots.add((Mind) sourceMind);
+        for (ContextConnection connection : participants)
+            roots.add(connection.commune() == null ? connection.layer() : connection.commune().mind());
+        Boolean answer = null;
+        List<Map<String, org.kanger.SemanticTermSnapshot>> rows = new ArrayList<>();
+        for (Mind root : roots) {
+            Mind candidate = Mind.ephemeralChild(root);
+            try {
+                Queue<ITerm> parameters = new LinkedList<>();
+                for (ITerm parameter : externals) parameters.add(candidate.getTerms().projectSemantic(
+                        org.kanger.SemanticTermSnapshot.capture(parameter).materialize()));
+                Boolean local = candidate.queryCanonical(querySource, parameters, false);
+                if (local == null) continue;
+                // Whole proofs from independent participants must agree.
+                if (answer != null && !answer.equals(local)) return null;
+                answer = local;
+                for (Map<String, ITerm> row : candidate.getValues()) {
+                    Map<String, org.kanger.SemanticTermSnapshot> detached = new LinkedHashMap<>();
+                    for (Map.Entry<String, ITerm> value : row.entrySet())
+                        detached.put(value.getKey(), org.kanger.SemanticTermSnapshot.capture(value.getValue()));
+                    rows.add(detached);
+                }
+            } finally { root.discardEphemeral(candidate); }
+        }
+        if (answer == null) return null;
+        Mind source = (Mind) sourceMind;
+        Mind presentation = Mind.ephemeralChild(source);
+        try {
+            presentation.setQueryPass(answer ? org.kanger.enums.QueryPass.CHECKTRUE
+                    : org.kanger.enums.QueryPass.CHECKFALSE);
+            Queue<ITerm> parameters = new LinkedList<>();
+            for (ITerm parameter : externals) parameters.add(presentation.getTerms().projectSemantic(
+                    org.kanger.SemanticTermSnapshot.capture(parameter).materialize()));
+            org.kanger.interfaces.IRule query = (org.kanger.interfaces.IRule) presentation.compileLine(
+                    answer ? querySource : "!" + querySource.substring(1), true, parameters);
+            presentation.getValues().clear();
+            presentation.getSolutions().clear();
+            for (Map<String, org.kanger.SemanticTermSnapshot> row : rows) {
+                List<org.kanger.units.TValue> values = new ArrayList<>();
+                for (org.kanger.units.TVariable variable : presentation.getTVars()) {
+                    org.kanger.SemanticTermSnapshot value = row.get(variable.getName(presentation).toString());
+                    if (variable.getRuleId() == query.getId() && value != null)
+                        values.add(presentation.getTValues().add(variable,
+                                presentation.getTerms().projectSemantic(value.materialize())));
+                }
+                presentation.getValues().add(values);
+            }
+            source.release(presentation);
+            presentation = null;
+        } finally { if (presentation != null) source.discardEphemeral(presentation); }
+        return answer;
+    }
+
+    @Override
     public synchronized Map<String, IContextFederation.Opinion> executeOpinions(IMind sourceMind,
             String locator, String querySource, List<org.kanger.SemanticTermSnapshot> parameters) throws Exception {
         requireOpen();

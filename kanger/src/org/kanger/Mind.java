@@ -2141,6 +2141,20 @@ public class Mind implements IMind {
             return true;
         }
 
+        if (!conflict && !federatedConflict(positive)) {
+            Boolean whole = federation.continueWholeQuery(this, line,
+                    new LinkedList<ITerm>(externals), logging);
+            if (whole != null) {
+                hypothesis.clear();
+                tempHypothesis.clear();
+                if (logging) {
+                    log.add(LogMode.ANALYZER, "Result: " + (whole ? "TRUE" : "FALSE"));
+                    logResult(this);
+                }
+                return whole;
+            }
+        }
+
         if (conflict || federatedConflict(positive)) {
             hypothesis.clear();
             tempHypothesis.clear();
