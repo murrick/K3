@@ -88,6 +88,47 @@ class ContextConnectionLayerTest {
         } finally { close(); }
     }
 
+    @Test void federatedSolutionsRetainDetachedProofThroughEveryContext() throws Exception {
+        open("A"); try { mind.query("!@x p(x) -> q(x);", null, false); } finally { close(); }
+        open("B"); try { mind.query("!@x q(x) -> r(x);", null, false); } finally { close(); }
+        open("C"); try { mind.query("!p(John);", null, false); } finally { close(); }
+        open("X");
+        try {
+            mind.query("!p(Mary);", null, false);
+            data.connectContext("A"); data.connectContext("B"); data.connectContext("C");
+            assertTrue(mind.query("?$x r(x);", null, false));
+            assertEquals(2, mind.getValues().size());
+            for (org.kanger.interfaces.IRule rule : mind.getSolutions()) {
+                IContextFederation.RuleRow proof = ContextProofProjection.solution(mind, rule);
+                assertFalse(proof.causes.isEmpty(), proof.statement);
+                java.util.Set<java.util.UUID> contexts = new java.util.HashSet<>();
+                java.util.List<String> statements = new java.util.ArrayList<>();
+                collectProof(proof.causes, contexts, statements);
+                assertTrue(statements.stream().anyMatch(v -> v.contains("p(x) -> q(x)")), statements.toString());
+                assertTrue(statements.stream().anyMatch(v -> v.contains("q(x) -> r(x)")), statements.toString());
+                assertEquals(3, contexts.size(), statements.toString());
+                java.util.UUID donor = data.federationSnapshot().getSourceContextId();
+                if (proof.statement.contains("John"))
+                    for (IContextFederation.Connection connection : data.federationSnapshot().getConnections())
+                        if (connection.getLocator().equals("C")) donor = connection.getTargetContextId();
+                assertTrue(contexts.contains(donor), statements.toString());
+                assertTrue(statements.stream().anyMatch(v -> v.contains(proof.statement.contains("Mary")
+                        ? "!p(Mary);" : "!p(John);")), statements.toString());
+            }
+            String oldFact = ContextProofProjection.factKey(mind.getSolutions().iterator().next(), mind);
+            assertNull(mind.query("?r(Nobody);", null, false));
+            assertTrue(mind.getContextProofs(oldFact).isEmpty());
+        } finally { close(); }
+    }
+    private void collectProof(java.util.List<IContextFederation.ProofCause> proofs,
+            java.util.Set<java.util.UUID> contexts, java.util.List<String> statements) {
+        for (IContextFederation.ProofCause proof : proofs) {
+            if (proof.contextSource != null) contexts.add(proof.contextSource.getContextId());
+            statements.add(proof.ruleStatement);
+            collectProof(proof.causes, contexts, statements);
+        }
+    }
+
     @Test void editsAreSharedByQueriesOpinionsAndRulesAndSurvivePublication() throws Exception {
         setup();
         long targetRevision = data.federationSnapshot().getConnections().get(0).getPinnedRevision();

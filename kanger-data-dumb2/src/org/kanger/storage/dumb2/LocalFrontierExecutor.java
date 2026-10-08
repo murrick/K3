@@ -16,6 +16,7 @@ import org.kanger.units.Term;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -137,6 +138,7 @@ final class LocalFrontierExecutor {
         request.executionState(target);
         FrontierDomain frontier = request.getInvocation().getFrontier();
         Mind mind = Mind.ephemeralChild(root);
+        mind.clearContextProofs();
         try {
             for (SuppliedEvidence fact : request.getEvidence()) {
                 fact.materialize(mind);
@@ -181,6 +183,21 @@ final class LocalFrontierExecutor {
                         ((Hypothesis) hypothesis).toString(mind));
             }
 
+            Map<String,List<org.kanger.interfaces.internal.IContextFederation.ProofCause>> proofs =
+                    Boolean.TRUE.equals(result.getTruth()) ? org.kanger.ContextProofProjection.captureFacts(mind,
+                            new org.kanger.interfaces.internal.IContextFederation.Revision(target.getContextId(), target.getRevision()))
+                            : new java.util.LinkedHashMap<String,List<org.kanger.interfaces.internal.IContextFederation.ProofCause>>();
+            java.util.Set<String> provenFacts = new java.util.HashSet<>();
+            if (frontier.isGround()) {
+                provenFacts.add(org.kanger.ContextProofProjection.factKey(frontier.getPredicateName(), !frontier.isNegated(),
+                        frontier.semanticArguments(Collections.<String>emptyList(), Collections.<org.kanger.SemanticTermSnapshot>emptyList())));
+            } else for (List<FrontierAnswer.ValueRef> row : rows) {
+                List<org.kanger.SemanticTermSnapshot> arguments = new ArrayList<>();
+                for (FrontierAnswer.ValueRef value : row) arguments.add(value.getSemantic());
+                provenFacts.add(org.kanger.ContextProofProjection.factKey(frontier.getPredicateName(), !frontier.isNegated(),
+                        frontier.semanticArguments(order, arguments)));
+            }
+            proofs.keySet().retainAll(provenFacts);
             return new FrontierAnswer(
                     target,
                     request,
@@ -188,7 +205,7 @@ final class LocalFrontierExecutor {
                     order,
                     rows,
                     hypotheses,
-                    result.getDemands(), enumerate);
+                    result.getDemands(), enumerate, proofs);
         } finally {
             root.discardEphemeral(mind);
         }

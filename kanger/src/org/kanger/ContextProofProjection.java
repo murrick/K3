@@ -27,9 +27,44 @@ public final class ContextProofProjection {
         return new IContextFederation.RuleRow(rule.getId(), ((Rule) rule).toString(mind),
                 rule.isGenerated(), rule.getComment(), Collections.<List<String>>emptyList(), causes(mind, rule, path, source, query));
     }
+    /** Semantic fact address; includes type and value, never foreign factory ids. */
+    public static String factKey(IRule rule, Mind mind) throws Exception {
+        List<SemanticTermSnapshot> values = new ArrayList<>();
+        for (org.kanger.interfaces.IArgument argument : rule.getArguments()) {
+            org.kanger.interfaces.ITerm value = argument.getValue(mind);
+            if (value == null || value.isCVariable()) return null;
+            values.add(SemanticTermSnapshot.capture(value));
+        }
+        return factKey(rule.getPredicate().getName(mind), rule.isAntc(), values);
+    }
+    public static String factKey(String predicate, boolean positive, List<SemanticTermSnapshot> arguments) {
+        StringBuilder key = new StringBuilder(positive ? "+" : "-").append(predicate.length()).append(':').append(predicate);
+        for (SemanticTermSnapshot argument : arguments) {
+            String value = argument.materialize().toString();
+            key.append('|').append(argument.getType()).append(':').append(value.length()).append(':').append(value);
+        }
+        return key.toString();
+    }
+    public static java.util.Map<String,List<IContextFederation.ProofCause>> captureFacts(Mind mind,
+            IContextFederation.Revision source) throws Exception {
+        java.util.Map<String,List<IContextFederation.ProofCause>> result = new java.util.LinkedHashMap<>();
+        for (IRule rule : mind.getSolutions()) {
+            String key = factKey(rule, mind);
+            if (key == null) continue;
+            IContextFederation.RuleRow row = solution(mind, rule);
+            IContextFederation.ProofCause proof = new IContextFederation.ProofCause(row.id, row.statement,
+                    null, "", false, row.causes, false, null, null, source, mind.isContextConnectionLayer());
+            List<IContextFederation.ProofCause> proofs = result.get(key);
+            if (proofs == null) { proofs = new ArrayList<>(); result.put(key, proofs); }
+            proofs.add(proof);
+        }
+        return result;
+    }
     private static List<IContextFederation.ProofCause> causes(Mind mind, IRule rule, Set<IRule> path,
             IContextFederation.Revision source, String query) throws Exception {
         List<IContextFederation.ProofCause> result = new ArrayList<>();
+        String fact = factKey(rule, mind);
+        if (fact != null) result.addAll(mind.getContextProofs(fact));
         path.add(rule);
         try {
             for (ICause cause : rule.getCauses()) {

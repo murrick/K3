@@ -1163,6 +1163,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     private IContextFederation.Opinion localOpinion(Mind root, String locator, RevisionRef ref,
             boolean working, String query, List<org.kanger.SemanticTermSnapshot> parameters, boolean configured) throws Exception {
         Mind work = Mind.ephemeralChild(root);
+        work.clearContextProofs();
         try {
             Queue<ITerm> externals = new LinkedList<>();
             for (org.kanger.SemanticTermSnapshot parameter : parameters)

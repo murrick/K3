@@ -327,6 +327,9 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
     private static JSONArray opinionCauses(List<IContextFederation.ProofCause> causes) {
         JSONArray result = new JSONArray();
         for (IContextFederation.ProofCause cause : causes) result.put(new JSONObject()
+                .put("configured_by_x", cause.configuredByX)
+                .put("context_id", cause.contextSource == null ? JSONObject.NULL : cause.contextSource.getContextId().toString())
+                .put("context_revision", cause.contextSource == null ? JSONObject.NULL : cause.contextSource.getRevision())
                 .put("rule_id", cause.ruleId).put("rule", cause.ruleStatement)
                 .put("donor_id", cause.donorId == null ? JSONObject.NULL : cause.donorId)
                 .put("donor", cause.donorStatement).put("cycle", cause.cycle)
@@ -1021,6 +1024,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
         JSONObject projected = new JSONObject(((Rule) selected).createMap(mind));
         if (tree) {
             projected.put("causes", recurseCauses(selected, mind));
+            projected.put("context_proof", opinionCauses(org.kanger.ContextProofProjection.solution((Mind) mind, selected).causes));
         }
         return ok()
                 .put("size", 1)

@@ -8,22 +8,28 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ContextOpinionsProjectionTest {
-    @Test void hypotheticalDonorOriginSurvivesTransport() {
+    @Test void detachedProofPreservesNestedContextOwnership() {
         Revision source = new Revision(UUID.randomUUID(), 1);
-        ProofCause cause = new ProofCause(0, "!@x q(x) -> r(x);", null, "!q(John);", false,
-                Collections.emptyList(), true, source, "?r(John);");
-        RuleRow solution = new RuleRow(8, "!r(John);", true, "", Collections.emptyList(), Collections.singletonList(cause));
-        QueryResult unknown = new QueryResult(false, FrontierTruth.UNKNOWN, 0, 0, Collections.emptyList(),
-                Collections.emptyList(), Collections.singletonList(new ProvisionalHypothesis(source, "!q(John);")));
-        Opinion opinion = new Opinion("B", source, false, unknown, Collections.singletonList(solution), true);
+        Revision donorSource = new Revision(UUID.randomUUID(), 2);
+        ProofCause donor = new ProofCause(3, "!q(John);", null, "", false,
+                Collections.emptyList(), false, null, null, donorSource, true);
+        ProofCause proof = new ProofCause(8, "!r(John);", null, "", false,
+                Collections.singletonList(donor), false, null, null, source);
+        RuleRow solution = new RuleRow(12, "!r(John);", true, "", Collections.emptyList(), Collections.singletonList(proof));
+        QueryResult resolved = new QueryResult(true, FrontierTruth.TRUE, 0, 0, Collections.emptyList(),
+                Collections.emptyList(), Collections.emptyList());
+        Opinion opinion = new Opinion("B", source, false, resolved, Collections.singletonList(solution), true);
         JSONObject view = CanonicalCommandRuntimeReactor.contextOpinions(Collections.singletonMap("B", opinion),
                 CommandIntent.CTX_SOLVES).getJSONObject("B");
         assertTrue(view.getBoolean("configured_by_x"));
-        JSONObject donor = view.getJSONArray("solutions").getJSONObject(0).getJSONArray("causes").getJSONObject(0);
-        assertTrue(donor.getBoolean("hypothesis"));
-        assertEquals(source.getContextId().toString(), donor.getString("hypothesis_context_id"));
-        assertEquals(1, donor.getLong("hypothesis_revision"));
-        assertEquals("?r(John);", donor.getString("required_for"));
+        JSONObject root = view.getJSONArray("solutions").getJSONObject(0).getJSONArray("causes").getJSONObject(0);
+        assertEquals(source.getContextId().toString(), root.getString("context_id"));
+        assertEquals(1, root.getLong("context_revision"));
+        JSONObject nested = root.getJSONArray("causes").getJSONObject(0);
+        assertEquals(donorSource.getContextId().toString(), nested.getString("context_id"));
+        assertEquals(2, nested.getLong("context_revision"));
+        assertTrue(nested.getBoolean("configured_by_x"));
+        assertEquals("!q(John);", nested.getString("rule"));
     }
     @Test void sourceAttributionLocalHypothesesAndSavedViewSelectionSurviveTransport() {
         Revision source = new Revision(UUID.randomUUID(), 7);

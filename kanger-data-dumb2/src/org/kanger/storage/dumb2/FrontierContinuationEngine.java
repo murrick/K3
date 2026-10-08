@@ -339,7 +339,7 @@ final class FrontierContinuationEngine {
                                 Collections.<ITerm>emptyList(),
                                 evidence,
                                 true,
-                                queryPass)) {
+                                queryPass, answers)) {
                     ++evidenceCount;
                     changed = true;
                     injections.add(
@@ -364,7 +364,7 @@ final class FrontierContinuationEngine {
                             tuple.getValues(),
                             evidence,
                             true,
-                            queryPass)) {
+                            queryPass, answers)) {
                         ++evidenceCount;
                         changed = true;
                         injections.add(
@@ -434,7 +434,7 @@ final class FrontierContinuationEngine {
             List<SemanticTermSnapshot> values = new ArrayList<SemanticTermSnapshot>();
             for (ITerm value : tuple.getValues()) values.add(SemanticTermSnapshot.capture(value));
             allowed.add(frontier.specialize(lifted.getVariableOrder(), values));
-            if (inject(work, frontier, lifted.getVariableOrder(), tuple.getValues(), evidence, true, pass))
+            if (inject(work, frontier, lifted.getVariableOrder(), tuple.getValues(), evidence, true, pass, scheduled.getAnswers()))
                 injections.add(EvidenceInjection.of(frontier, lifted.getVariableOrder(), tuple.getValues(), tuple.getSupports()));
         }
         // All donors are now known. The existing native query proves the complete set once.
@@ -515,7 +515,7 @@ final class FrontierContinuationEngine {
             List<ITerm> values,
             Set<EvidenceKey> evidence,
             boolean truth,
-            QueryPass queryPass) throws Exception {
+            QueryPass queryPass, List<FrontierAnswer> answers) throws Exception {
         Queue<ITerm> arguments =
                 frontier.evidenceArguments(
                         work,
@@ -538,6 +538,11 @@ final class FrontierContinuationEngine {
                 new LinkedList<ITerm>(arguments));
         work.setQueryPass(queryPass);
 
+        if (assertion != null) {
+            String fact = org.kanger.ContextProofProjection.factKey(assertion, work);
+            for (FrontierAnswer answer : answers) if (answer.getTruth() == FrontierAnswer.Truth.TRUE)
+                work.addContextProofs(fact, answer.getProofs().get(fact));
+        }
         if (assertion == null || assertion.isSecond()) {
             return false;
         }

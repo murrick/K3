@@ -25,6 +25,8 @@ final class FrontierAnswer {
         NULL
     }
 
+    private final Map<String,List<org.kanger.interfaces.internal.IContextFederation.ProofCause>> proofs;
+    Map<String,List<org.kanger.interfaces.internal.IContextFederation.ProofCause>> getProofs() { return proofs; }
     private final RevisionRef source;
     private final FrontierInvocation invocation;
     private final FrontierRequest request;
@@ -59,6 +61,17 @@ final class FrontierAnswer {
     FrontierAnswer(RevisionRef source, FrontierRequest request, Truth truth,
             List<String> variableOrder, List<List<ValueRef>> values, List<String> hypotheses,
             List<FrontierDemand> unresolvedFrontiers, boolean enumerate) {
+        this(source, request, truth, variableOrder, values, hypotheses, unresolvedFrontiers, enumerate,
+                Collections.<String,List<org.kanger.interfaces.internal.IContextFederation.ProofCause>>emptyMap());
+    }
+    FrontierAnswer(RevisionRef source, FrontierRequest request, Truth truth,
+            List<String> variableOrder, List<List<ValueRef>> values, List<String> hypotheses,
+            List<FrontierDemand> unresolvedFrontiers, boolean enumerate,
+            Map<String,List<org.kanger.interfaces.internal.IContextFederation.ProofCause>> proofs) {
+        Map<String,List<org.kanger.interfaces.internal.IContextFederation.ProofCause>> detached = new LinkedHashMap<>();
+        for (Map.Entry<String,List<org.kanger.interfaces.internal.IContextFederation.ProofCause>> entry : proofs.entrySet())
+            detached.put(entry.getKey(), Collections.unmodifiableList(new ArrayList<>(entry.getValue())));
+        this.proofs = Collections.unmodifiableMap(detached);
         if (source == null || request == null || truth == null) {
             throw new NullPointerException("Frontier answer requires source, invocation and truth");
         }

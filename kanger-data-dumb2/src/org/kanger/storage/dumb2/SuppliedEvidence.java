@@ -22,6 +22,7 @@ import java.util.Set;
 
 /** A concrete detached fact obtained only from a decisive TRUE child batch. */
 final class SuppliedEvidence {
+    private final List<org.kanger.interfaces.internal.IContextFederation.ProofCause> proofs;
     private final String predicate;
     private final boolean negated;
     private final List<SemanticTermSnapshot> arguments;
@@ -34,10 +35,25 @@ final class SuppliedEvidence {
 
     private SuppliedEvidence(String predicate, boolean negated,
                              List<SemanticTermSnapshot> arguments, Set<RevisionRef> supports) {
+        this(predicate, negated, arguments, supports,
+                Collections.<org.kanger.interfaces.internal.IContextFederation.ProofCause>emptyList());
+    }
+    private SuppliedEvidence(String predicate, boolean negated, List<SemanticTermSnapshot> arguments,
+            Set<RevisionRef> supports, List<org.kanger.interfaces.internal.IContextFederation.ProofCause> proofs) {
+        this.proofs = Collections.unmodifiableList(new ArrayList<>(proofs));
         this.predicate = predicate;
         this.negated = negated;
         this.arguments = Collections.unmodifiableList(new ArrayList<SemanticTermSnapshot>(arguments));
         this.supports = Collections.unmodifiableSet(new LinkedHashSet<RevisionRef>(supports));
+    }
+
+    private static SuppliedEvidence fromAnswer(FrontierDomain frontier, List<SemanticTermSnapshot> arguments,
+            FrontierAnswer answer) {
+        String key = org.kanger.ContextProofProjection.factKey(frontier.getPredicateName(), !frontier.isNegated(), arguments);
+        List<org.kanger.interfaces.internal.IContextFederation.ProofCause> proofs = answer.getProofs().get(key);
+        return new SuppliedEvidence(frontier.getPredicateName(), frontier.isNegated(), arguments,
+                Collections.singleton(answer.getSource()), proofs == null
+                        ? Collections.<org.kanger.interfaces.internal.IContextFederation.ProofCause>emptyList() : proofs);
     }
 
     static List<SuppliedEvidence> fromAnswers(List<FrontierAnswer> answers) {
@@ -52,18 +68,18 @@ final class SuppliedEvidence {
                 continue;
             }
             if (frontier.isGround()) {
-                add(facts, new SuppliedEvidence(frontier, frontier.semanticArguments(
+                add(facts, fromAnswer(frontier, frontier.semanticArguments(
                         Collections.<String>emptyList(), Collections.<SemanticTermSnapshot>emptyList()),
-                        Collections.singleton(answer.getSource())));
+                        answer));
             } else {
                 for (List<FrontierAnswer.ValueRef> row : answer.getValues()) {
                     List<SemanticTermSnapshot> values = new ArrayList<SemanticTermSnapshot>();
                     for (FrontierAnswer.ValueRef value : row) {
                         values.add(value.getSemantic());
                     }
-                    add(facts, new SuppliedEvidence(frontier,
+                    add(facts, fromAnswer(frontier,
                             frontier.semanticArguments(answer.getVariableOrder(), values),
-                            Collections.singleton(answer.getSource())));
+                            answer));
                 }
             }
         }
@@ -76,8 +92,11 @@ final class SuppliedEvidence {
             if (previous.sameFact(candidate)) {
                 Set<RevisionRef> supports = new LinkedHashSet<RevisionRef>(previous.supports);
                 supports.addAll(candidate.supports);
+                List<org.kanger.interfaces.internal.IContextFederation.ProofCause> proofs = new ArrayList<>(previous.proofs);
+                for (org.kanger.interfaces.internal.IContextFederation.ProofCause proof : candidate.proofs)
+                    if (!proofs.contains(proof)) proofs.add(proof);
                 facts.set(i, new SuppliedEvidence(previous.predicate, previous.negated,
-                        previous.arguments, supports));
+                        previous.arguments, supports, proofs));
                 return;
             }
         }
@@ -149,6 +168,7 @@ final class SuppliedEvidence {
             // This is a donor fact inside an isolated operation, not an
             // independent authoritative ACCEPT against generated query demand.
             Rule rule = (Rule) target.compileLine(source.toString(), false, values);
+            target.addContextProofs(org.kanger.ContextProofProjection.factKey(predicate, !negated, arguments), proofs);
             if (rule != null) {
                 // Follow the native indexed donor-seed saturation boundary.
                 // A null result here is an already existing concrete fact.

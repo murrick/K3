@@ -244,7 +244,7 @@ final class CausalFrontierScheduler {
                 filtered.add(new FrontierAnswer(answer.getSource(),answer.getRequest(),
                         rows.isEmpty() ? FrontierAnswer.Truth.NULL : FrontierAnswer.Truth.TRUE,
                         answer.getVariableOrder(),rows,Collections.<String>emptyList(),
-                        rows.isEmpty() ? answer.getUnresolvedFrontiers() : Collections.<FrontierDemand>emptyList()));
+                        rows.isEmpty() ? answer.getUnresolvedFrontiers() : Collections.<FrontierDemand>emptyList(), false, answer.getProofs()));
             }
             return filtered;
         }

@@ -239,6 +239,28 @@ public class Mind implements IMind {
         return layer;
     }
 
+    private final Map<String, List<IContextFederation.ProofCause>> contextProofs = new LinkedHashMap<>();
+
+    public boolean isContextConnectionLayer() { return connectionLayer; }
+
+    public void clearContextProofs() { contextProofs.clear(); }
+
+    public List<IContextFederation.ProofCause> getContextProofs(String fact) {
+        List<IContextFederation.ProofCause> proofs = contextProofs.get(fact);
+        return proofs == null ? Collections.<IContextFederation.ProofCause>emptyList() : proofs;
+    }
+
+    public void addContextProofs(String fact, List<IContextFederation.ProofCause> proofs) {
+        if (fact == null || proofs == null || proofs.isEmpty()) return;
+        List<IContextFederation.ProofCause> merged = new ArrayList<>(getContextProofs(fact));
+        for (IContextFederation.ProofCause proof : proofs) if (!merged.contains(proof)) merged.add(proof);
+        contextProofs.put(fact, Collections.unmodifiableList(merged));
+    }
+
+    private void copyContextProofs(Mind child) {
+        contextProofs.clear(); contextProofs.putAll(child.contextProofs);
+    }
+
     private boolean connectionLayer;
     private boolean commandNoOp;
 
@@ -254,6 +276,7 @@ public class Mind implements IMind {
 
         Mind parent = (Mind) root;
         connectionLayer = parent.connectionLayer;
+        contextProofs.putAll(parent.contextProofs);
         if (!isolateCanonicalFactories && user.getCurrentMind() == root) user.getContextOpinionSession().invalidate();
         operationDescription = parent.operationDescription;
         parent.incTransactionCounter();
@@ -666,6 +689,7 @@ public class Mind implements IMind {
     }
 
     private void copyCommitResult(Mind child) throws Exception {
+        copyContextProofs(child);
         log.commit(child.getLog());
         queryResult = child.getQueryResult();
         compliedLine = child.getCompliedString();
@@ -712,6 +736,7 @@ public class Mind implements IMind {
     public void release(IMind m) throws Exception {
         synchronized (locker) {
 
+            copyContextProofs((Mind) m);
             log.commit((LogStore) m.getLog());
             solves.commit((SolutionsStore) m.getSolutions());
             values.commit((ValuesStore) m.getValues());
@@ -776,6 +801,7 @@ public class Mind implements IMind {
             excludedDomains.clear();
             calculatedDomains.clear();
             producedDomains.clear();
+            contextProofs.clear();
             domainCauses.clear();
             domainSolves.clear();
             queryValues.clear();
@@ -2227,6 +2253,7 @@ public class Mind implements IMind {
     }
 
     public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
+        contextProofs.clear();
         commandNoOp = false;
         if (!line.isEmpty() && line.charAt(0)!=Enums.SUC) requireWritableContext();
         user.getContextOpinionSession().invalidate();

@@ -61,6 +61,8 @@ public interface IContextFederation {
 
     /** Native provenance edge, detached before the owning runtime is closed. */
     final class ProofCause {
+        public final Revision contextSource;
+        public final boolean configuredByX;
         public final boolean hypothesis;
         public final Revision hypothesisSource;
         public final String requiredFor;
@@ -75,6 +77,19 @@ public interface IContextFederation {
         }
         public ProofCause(long ruleId, String ruleStatement, Long donorId, String donorStatement,
                           boolean cycle, List<ProofCause> causes, boolean hypothesis, Revision source, String requiredFor) {
+            this(ruleId, ruleStatement, donorId, donorStatement, cycle, causes, hypothesis, source, requiredFor, null);
+        }
+        public ProofCause(long ruleId, String ruleStatement, Long donorId, String donorStatement,
+                          boolean cycle, List<ProofCause> causes, boolean hypothesis, Revision source,
+                          String requiredFor, Revision contextSource) {
+            this(ruleId, ruleStatement, donorId, donorStatement, cycle, causes, hypothesis, source,
+                    requiredFor, contextSource, false);
+        }
+        public ProofCause(long ruleId, String ruleStatement, Long donorId, String donorStatement,
+                          boolean cycle, List<ProofCause> causes, boolean hypothesis, Revision source,
+                          String requiredFor, Revision contextSource, boolean configuredByX) {
+            this.contextSource = contextSource;
+            this.configuredByX = configuredByX;
             this.ruleId = ruleId; this.ruleStatement = ruleStatement; this.donorId = donorId;
             this.donorStatement = donorStatement; this.cycle = cycle;
             this.causes = Collections.unmodifiableList(new ArrayList<ProofCause>(causes));

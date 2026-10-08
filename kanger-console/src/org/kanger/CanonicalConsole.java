@@ -674,8 +674,10 @@ public final class CanonicalConsole {
             if (id < 0 || rule.getId() == id) {
                 found = true;
                 System.out.printf("Solution %03d: %s%n", rule.getId(), rule.toString());
-                if (tree && !rule.getCauses().isEmpty()) {
-                    Console.showCauses(mind, rule.getCauses(), 0);
+                if (tree) {
+                    List<IContextFederation.ProofCause> proof = org.kanger.ContextProofProjection.solution((Mind) mind, rule).causes;
+                    if (hasContextProof(proof)) showProofCauses(proof, "  ", mind);
+                    else if (!rule.getCauses().isEmpty()) Console.showCauses(mind, rule.getCauses(), 0);
                     System.out.println();
                 }
                 if (id >= 0) {
@@ -1149,6 +1151,33 @@ public final class CanonicalConsole {
                 for (IContextFederation.ProvisionalHypothesis hypothesis : opinion.getResult().getProvisionalHypotheses())
                     System.out.println("  " + hypothesis.getStatement());
             }
+        }
+    }
+
+    private static boolean hasContextProof(List<IContextFederation.ProofCause> causes) {
+        for (IContextFederation.ProofCause cause : causes)
+            if (cause.contextSource != null || hasContextProof(cause.causes)) return true;
+        return false;
+    }
+
+    private static void showProofCauses(List<IContextFederation.ProofCause> causes, String indent, IMind mind) throws Exception {
+        for (IContextFederation.ProofCause cause : causes) {
+            if (cause.contextSource != null) {
+                String locator = cause.contextSource.getContextId().toString();
+                if (((User) mind.getUser()).getData() instanceof IContextFederation) {
+                    IContextFederation.Snapshot snapshot = ((IContextFederation) ((User) mind.getUser()).getData()).federationSnapshot();
+                    if (snapshot.getSourceContextId().equals(cause.contextSource.getContextId())) locator = snapshot.getSourceLocator();
+                    for (IContextFederation.Connection connection : snapshot.getConnections())
+                        if (connection.getTargetContextId().equals(cause.contextSource.getContextId())) locator = connection.getLocator();
+                }
+                System.out.println(indent + "Context " + locator + "@" + cause.contextSource.getRevision()
+                        + (cause.configuredByX ? " [configured by X]" : ""));
+                System.out.println(indent + "  Statement: " + cause.ruleStatement);
+            } else {
+                System.out.println(indent + "Rule " + cause.ruleId + ": " + cause.ruleStatement);
+                System.out.println(indent + "  Donor: " + cause.donorStatement + (cause.cycle ? " [cycle]" : ""));
+            }
+            showProofCauses(cause.causes, indent + "    ", mind);
         }
     }
 
