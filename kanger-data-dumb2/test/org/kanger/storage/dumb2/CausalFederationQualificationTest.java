@@ -404,6 +404,77 @@ class CausalFederationQualificationTest {
     private IContextFederation.ExplainResult explain(Fixture x, String query) throws Exception {
         return new CanonicalCommandProcessor().execute(new CommandParser().parse("ctx explain " + query), x.user).getContextExplainResult();
     }
+    @Test
+    void conflictingCorrelatedTupleDoesNotEraseSafePermutationOrRepeatedArgument() throws Exception {
+        context("A", "!@x @y edge(x,y) -> reach(y,x);");
+        context("B", "!@x @y reach(x,y) -> answer(y,x);");
+        context("C", "!edge(Mary,John);", "!edge(John,Mary);", "!edge(Tom,Tom);");
+        context("D", "!~edge(John,Mary);");
+        String[][] orders = {{"A","B","C","D"}, {"D","C","B","A"}, {"C","A","D","B"}};
+        for (int i=0;i<orders.length;i++) try (Fixture x=open("paired-"+i)) {
+            x.mind.query("!anchor(X);",null,false); x.connect(orders[i]);
+            long revision=x.data.getRevision();
+            for (int repeat=0;repeat<3;repeat++) {
+                assertTrue(x.mind.query("?$x $y answer(x,y);",null,false));
+                Set<String> rows=new LinkedHashSet<>();
+                x.mind.getValues().forEach(row -> rows.add(row.get("x").toString()+"/"+row.get("y").toString()));
+                assertEquals(set("Mary/John","Tom/Tom"),rows);
+                assertTrue(x.mind.query("?$z answer(z,z);",null,false));
+                assertEquals(set("Tom"),values(x.mind,"z"));
+                assertNull(x.mind.query("?answer(John,Mary);",null,false));
+                assertTrue(x.mind.query("?answer(Mary,John);",null,false));
+            }
+            assertEquals(revision,x.data.getRevision());
+            assertEquals(4,x.data.federationSnapshot().getConnections().size());
+        }
+    }
+
+    @Test
+    void seededForeignCycleLosesAllAnswersWhenItsOnlySeedDisconnects() throws Exception {
+        context("A", "!@x p(x) -> q(x);", "!@x q(x) -> p(x);");
+        context("B", "!@x q(x) -> r(x);"); context("C", "!p(Tom);");
+        try (Fixture x=open("X-cycle")) {
+            x.mind.query("!anchor(X);",null,false); x.connect("B","A","C");
+            long revision=x.data.getRevision();
+            for(int repeat=0;repeat<3;repeat++) {
+                assertTrue(x.mind.query("?$x r(x);",null,false)); assertEquals(set("Tom"),values(x.mind,"x"));
+                x.data.disconnectContext("C");
+                assertNull(x.mind.query("?$x r(x);",null,false)); assertTrue(x.mind.getSolutions().isEmpty());
+                assertTrue(x.mind.getValues().isEmpty());
+                assertNull(x.mind.query("?r(Tom);",null,false));
+                x.data.connectContext("C");
+            }
+            assertTrue(x.mind.query("?r(Tom);",null,false));
+            assertEquals(revision,x.data.getRevision());
+            assertFalse(x.mind.getSourceCode().contains("!r(Tom)"));
+        }
+    }
+
+    @Test
+    void privateMaskTemporarilyResolvesConflictAndRollbackRestoresSafeRows() throws Exception {
+        context("A", "!@x p(x) -> q(x);", "!~p(John);");
+        context("B", "!@x q(x) -> r(x);"); context("C", "!p(John);");
+        try (Fixture x=open("X-mask")) {
+            x.mind.query("!p(Mary);",null,false); x.connect("A","B","C");
+            long revision=x.data.getRevision();
+            CanonicalCommandProcessor processor=new CanonicalCommandProcessor();
+            CommandParser parser=new CommandParser();
+            for(int repeat=0;repeat<3;repeat++) {
+                assertTrue(x.mind.query("?$x r(x);",null,false)); assertEquals(set("Mary"),values(x.mind,"x"));
+                processor.execute(parser.parse("transaction start"),x.user);
+                Mind child=(Mind)x.user.getCurrentMind();
+                processor.execute(parser.parse("ctx ask A -~p(John);"),x.user);
+                assertTrue(child.query("?$x r(x);",null,false)); assertEquals(set("Mary","John"),values(child,"x"));
+                processor.execute(parser.parse("transaction rollback"),x.user);
+                x.mind=(Mind)x.user.getCurrentMind();
+                assertTrue(x.mind.query("?$x r(x);",null,false)); assertEquals(set("Mary"),values(x.mind,"x"));
+                assertTrue(x.data.federationSnapshot().getConnections().get(0).getInitialization().isEmpty());
+            }
+            assertEquals(revision,x.data.getRevision());
+        }
+        try(Fixture a=open("A")) { assertEquals(Boolean.FALSE,a.mind.query("?p(John);",null,false)); }
+    }
+
     private void context(String name, String... statements) throws Exception {
         try (Fixture fixture = open(name)) {
             for (String statement : statements) assertEquals(Boolean.TRUE, fixture.mind.query(statement, null, false));
