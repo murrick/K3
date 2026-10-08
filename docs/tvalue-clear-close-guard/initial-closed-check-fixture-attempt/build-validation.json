@@ -1,0 +1,69 @@
+{
+  "parent": "f6ac32d2e86129d39b646e09a39d8a19889f7d4f",
+  "original_clear_close_bodies_recovered": true,
+  "prior_delete_flush_upsert_get_wrappers_unchanged": true,
+  "native_halt_path_recovered": true,
+  "production_changed": false,
+  "builds": {
+    "clean": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-delete-flush-guard-clean:../build/tvalue-write-guard-clean:../build/tvalue-saved-links-clean:../build/tvalue-update-boundary-clean:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-clean:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-clear-close-guard-clean",
+        "../build/tvalue-clear-close-guard-source/Base.java",
+        "../build/tvalue-clear-close-guard-source/DumbFaultInjector.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-clear-close-guard38/docs/tvalue-clear-close-guard/RecordedLinks.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-clear-close-guard38/docs/tvalue-clear-close-guard/ClearCloseRunner.java"
+      ],
+      "prior_native_classes_verified": 696,
+      "overlay_class_sha256": {
+        "org/kanger/RecordedLinks.class": "11d9c476e121d11af67d890e85b0462d4c9ba5441f183140dd18aaa918bbb0c9",
+        "org/kanger/ClearCloseRunner.class": "645c24c66156b02a68e64971dd6817506d03fc3c29c73c56a1c9464af75496aa",
+        "org/kanger/RecordedLinks$WriteFrame.class": "a23493424f4483753ce9ae8ff8a6c6b9cdc8e71071929c4e98748aa9c65ccd90",
+        "org/kanger/RecordedLinks$Gate.class": "892b49bbb42f75ccad183afc0abced5680175e0286f2295bdef774e09858c675",
+        "org/kanger/RecordedLinks$State.class": "44eed9e71faa1bfbe3334e118534b9ef086ca5f2c58e5301888535810e76d709",
+        "org/kanger/ClearCloseRunner$InjectedBoundaryFailure.class": "17b0ef23ede3415ac8f8b64bcc1197dc7a35961e8afafcf12c95f49611f24cd5",
+        "org/kanger/RecordedLinks$Witness.class": "2fd0da5138d5258838a81b4cef48a127602cea28252f497e5fc16ff97c5998a1",
+        "org/kanger/storage/Base$StorageIterator.class": "ce6624cfb469fd5eaf7aa08d81043b307562bcf35421d8bdd14961cfe79aae79",
+        "org/kanger/storage/DumbFaultInjector.class": "3c2b0d7096b01df39d56a3aa0aecb63f88786c02b5d917f14776e816e9dc1976",
+        "org/kanger/storage/Base.class": "8110208eeb2e947ab8799f039338b744b33543d3f9458197949d7c41aa819f00"
+      }
+    },
+    "shadow": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-delete-flush-guard-shadow:../build/tvalue-write-guard-shadow:../build/tvalue-saved-links-shadow:../build/tvalue-update-boundary-shadow:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-shadow:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-clear-close-guard-shadow",
+        "../build/tvalue-clear-close-guard-source/Base.java",
+        "../build/tvalue-clear-close-guard-source/DumbFaultInjector.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-clear-close-guard38/docs/tvalue-clear-close-guard/RecordedLinks.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-clear-close-guard38/docs/tvalue-clear-close-guard/ClearCloseRunner.java"
+      ],
+      "prior_native_classes_verified": 696,
+      "overlay_class_sha256": {
+        "org/kanger/RecordedLinks.class": "11d9c476e121d11af67d890e85b0462d4c9ba5441f183140dd18aaa918bbb0c9",
+        "org/kanger/ClearCloseRunner.class": "645c24c66156b02a68e64971dd6817506d03fc3c29c73c56a1c9464af75496aa",
+        "org/kanger/RecordedLinks$WriteFrame.class": "a23493424f4483753ce9ae8ff8a6c6b9cdc8e71071929c4e98748aa9c65ccd90",
+        "org/kanger/RecordedLinks$Gate.class": "892b49bbb42f75ccad183afc0abced5680175e0286f2295bdef774e09858c675",
+        "org/kanger/RecordedLinks$State.class": "44eed9e71faa1bfbe3334e118534b9ef086ca5f2c58e5301888535810e76d709",
+        "org/kanger/ClearCloseRunner$InjectedBoundaryFailure.class": "17b0ef23ede3415ac8f8b64bcc1197dc7a35961e8afafcf12c95f49611f24cd5",
+        "org/kanger/RecordedLinks$Witness.class": "2fd0da5138d5258838a81b4cef48a127602cea28252f497e5fc16ff97c5998a1",
+        "org/kanger/storage/Base$StorageIterator.class": "ce6624cfb469fd5eaf7aa08d81043b307562bcf35421d8bdd14961cfe79aae79",
+        "org/kanger/storage/DumbFaultInjector.class": "3c2b0d7096b01df39d56a3aa0aecb63f88786c02b5d917f14776e816e9dc1976",
+        "org/kanger/storage/Base.class": "8110208eeb2e947ab8799f039338b744b33543d3f9458197949d7c41aa819f00"
+      }
+    }
+  }
+}

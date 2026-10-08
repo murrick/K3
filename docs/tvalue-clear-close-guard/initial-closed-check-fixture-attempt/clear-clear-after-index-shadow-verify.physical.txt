@@ -1,0 +1,1 @@
+CLEAR_CLOSE_NATIVE operation=clear point=clear-after-index exception=InjectedBoundaryFailure manifest=3 cached=3 closed=false pending_WAL=false flushes=1 active_checks=6

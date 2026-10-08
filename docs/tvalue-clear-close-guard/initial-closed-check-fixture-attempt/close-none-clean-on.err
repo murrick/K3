@@ -1,0 +1,4 @@
+Exception in thread "main" java.lang.AssertionError: native outcome
+	at org.kanger.ClearCloseRunner.require(ClearCloseRunner.java:12)
+	at org.kanger.ClearCloseRunner.run(ClearCloseRunner.java:29)
+	at org.kanger.ClearCloseRunner.main(ClearCloseRunner.java:22)

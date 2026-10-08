@@ -1,0 +1,1 @@
+CLEAR_CLOSE_NATIVE operation=close point=close-after-compact exception=IOException manifest=3 cached=3 closed=false pending_WAL=false flushes=1 active_checks=5

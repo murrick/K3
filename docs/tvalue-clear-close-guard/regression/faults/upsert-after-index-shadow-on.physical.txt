@@ -1,0 +1,1 @@
+STORAGE_FAULT_PHYSICAL point=upsert-after-index admitted=false rows=null error=unsupported persistent boundary: failed native upsert native_endpoints=unresolved reader=pure

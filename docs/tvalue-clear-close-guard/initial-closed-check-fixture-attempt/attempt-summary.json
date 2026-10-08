@@ -1,0 +1,6 @@
+{
+  "JVMs": 97,
+  "passed": 96,
+  "failed": 1,
+  "reason": "fixture expected active guard after data.close; reader earlier closed-data check remains unchanged"
+}
