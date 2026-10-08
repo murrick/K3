@@ -1,0 +1,1 @@
+DB_REINDEX_NATIVE stop=2 exception=InjectedDBCopyFailure copied=2 published=original source_closed=false target_closed=true authoritative_rows=3

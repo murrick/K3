@@ -1,0 +1,25 @@
+{
+  "stop": 2,
+  "build": "clean",
+  "flag": "on",
+  "exit_code": 0,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/reindex-soi5ool6",
+    "-Dpersistence.shadow=false",
+    "-Djournal.path=/workspace/scratch/1c9c6dd2770c/K3-tvalue-reindex-boundary38/docs/tvalue-reindex-boundary/2-clean-on",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-reindex-boundary-clean:../build/tvalue-clear-close-guard-clean:../build/tvalue-delete-flush-guard-clean:../build/tvalue-write-guard-clean:../build/tvalue-saved-links-clean:../build/tvalue-update-boundary-clean:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-clean:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ReindexRunner",
+    "2"
+  ]
+}

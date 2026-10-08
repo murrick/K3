@@ -1,0 +1,57 @@
+{
+  "parent": "c64805f7535dcc384439e935605fea1e1075784e",
+  "native_reindex_body_recovered": true,
+  "production_changed": false,
+  "builds": {
+    "clean": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-clear-close-guard-clean:../build/tvalue-delete-flush-guard-clean:../build/tvalue-write-guard-clean:../build/tvalue-saved-links-clean:../build/tvalue-update-boundary-clean:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-clean:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-reindex-boundary-clean",
+        "../build/tvalue-reindex-boundary-source/Base.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-reindex-boundary38/docs/tvalue-reindex-boundary/ReindexRunner.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-reindex-boundary38/docs/tvalue-reindex-boundary/DBReindexRunner.java"
+      ],
+      "prior_native_classes_verified": 696,
+      "overlay_class_sha256": {
+        "org/kanger/ReindexRunner.class": "fe97bd8e8bb12e82c97617c111c22d4316394b0c259b6e2ca288879ff9f1584e",
+        "org/kanger/ReindexRunner$InjectedCopyFailure.class": "523a5b0f9e21e2695c6a0f4003a6fe8ced4b5abececa7bd24991f637abd37230",
+        "org/kanger/DBReindexRunner.class": "0de25cae17000ba780e07056e72066d83ed242ed2fa1d08ddc7e4d695a52faf4",
+        "org/kanger/DBReindexRunner$InjectedDBCopyFailure.class": "37fed8a3410350b961884c053e65d5aec999a6b1e82e3bb83c490547d77c1b70",
+        "org/kanger/storage/Base$StorageIterator.class": "d4e07e73920d445192635e8a9f74fc87f0327556a043096deb45c2fd7f256f85",
+        "org/kanger/storage/Base.class": "ed93bc4f464a24354cb3c51002c24a4bd0aa3beb41a934b403b4d05fc6a1882e"
+      }
+    },
+    "shadow": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-clear-close-guard-shadow:../build/tvalue-delete-flush-guard-shadow:../build/tvalue-write-guard-shadow:../build/tvalue-saved-links-shadow:../build/tvalue-update-boundary-shadow:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-shadow:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-reindex-boundary-shadow",
+        "../build/tvalue-reindex-boundary-source/Base.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-reindex-boundary38/docs/tvalue-reindex-boundary/ReindexRunner.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-reindex-boundary38/docs/tvalue-reindex-boundary/DBReindexRunner.java"
+      ],
+      "prior_native_classes_verified": 696,
+      "overlay_class_sha256": {
+        "org/kanger/ReindexRunner.class": "fe97bd8e8bb12e82c97617c111c22d4316394b0c259b6e2ca288879ff9f1584e",
+        "org/kanger/ReindexRunner$InjectedCopyFailure.class": "523a5b0f9e21e2695c6a0f4003a6fe8ced4b5abececa7bd24991f637abd37230",
+        "org/kanger/DBReindexRunner.class": "0de25cae17000ba780e07056e72066d83ed242ed2fa1d08ddc7e4d695a52faf4",
+        "org/kanger/DBReindexRunner$InjectedDBCopyFailure.class": "37fed8a3410350b961884c053e65d5aec999a6b1e82e3bb83c490547d77c1b70",
+        "org/kanger/storage/Base$StorageIterator.class": "d4e07e73920d445192635e8a9f74fc87f0327556a043096deb45c2fd7f256f85",
+        "org/kanger/storage/Base.class": "ed93bc4f464a24354cb3c51002c24a4bd0aa3beb41a934b403b4d05fc6a1882e"
+      }
+    }
+  }
+}

@@ -1,0 +1,4 @@
+Exception in thread "main" java.lang.AssertionError: native DB outcome
+	at org.kanger.DBReindexRunner.require(DBReindexRunner.java:11)
+	at org.kanger.DBReindexRunner.run(DBReindexRunner.java:23)
+	at org.kanger.DBReindexRunner.main(DBReindexRunner.java:17)

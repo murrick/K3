@@ -1,0 +1,1 @@
+REINDEX_NATIVE stop=0 exception=none source=3 target=3 physical=admitted whole_copy=returned

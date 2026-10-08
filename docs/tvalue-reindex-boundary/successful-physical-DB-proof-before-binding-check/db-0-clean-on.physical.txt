@@ -1,0 +1,1 @@
+DB_REINDEX_NATIVE stop=0 exception=none copied=3 published=new source_closed=true target_closed=true authoritative_rows=3

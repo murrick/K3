@@ -1,0 +1,1 @@
+REINDEX_NATIVE stop=3 exception=InjectedCopyFailure source=3 target=3 physical=admitted whole_copy=failed

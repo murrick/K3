@@ -1,0 +1,51 @@
+{
+  "parent": "c64805f7535dcc384439e935605fea1e1075784e",
+  "native_reindex_body_recovered": true,
+  "production_changed": false,
+  "builds": {
+    "clean": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-clear-close-guard-clean:../build/tvalue-delete-flush-guard-clean:../build/tvalue-write-guard-clean:../build/tvalue-saved-links-clean:../build/tvalue-update-boundary-clean:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-clean:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-reindex-boundary-clean",
+        "../build/tvalue-reindex-boundary-source/Base.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-reindex-boundary38/docs/tvalue-reindex-boundary/ReindexRunner.java"
+      ],
+      "prior_native_classes_verified": 696,
+      "overlay_class_sha256": {
+        "org/kanger/ReindexRunner.class": "fe97bd8e8bb12e82c97617c111c22d4316394b0c259b6e2ca288879ff9f1584e",
+        "org/kanger/ReindexRunner$InjectedCopyFailure.class": "523a5b0f9e21e2695c6a0f4003a6fe8ced4b5abececa7bd24991f637abd37230",
+        "org/kanger/storage/Base$StorageIterator.class": "78ced1130c01f5673e9ef6e98bcf9aed6350766163ae094c7cb62dc731c09f5b",
+        "org/kanger/storage/Base.class": "05f19df2b86391f66b64f165b5df91e8753bc49a575c74f37f05fab5199a222c"
+      }
+    },
+    "shadow": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-clear-close-guard-shadow:../build/tvalue-delete-flush-guard-shadow:../build/tvalue-write-guard-shadow:../build/tvalue-saved-links-shadow:../build/tvalue-update-boundary-shadow:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-shadow:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-reindex-boundary-shadow",
+        "../build/tvalue-reindex-boundary-source/Base.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-reindex-boundary38/docs/tvalue-reindex-boundary/ReindexRunner.java"
+      ],
+      "prior_native_classes_verified": 696,
+      "overlay_class_sha256": {
+        "org/kanger/ReindexRunner.class": "fe97bd8e8bb12e82c97617c111c22d4316394b0c259b6e2ca288879ff9f1584e",
+        "org/kanger/ReindexRunner$InjectedCopyFailure.class": "523a5b0f9e21e2695c6a0f4003a6fe8ced4b5abececa7bd24991f637abd37230",
+        "org/kanger/storage/Base$StorageIterator.class": "78ced1130c01f5673e9ef6e98bcf9aed6350766163ae094c7cb62dc731c09f5b",
+        "org/kanger/storage/Base.class": "05f19df2b86391f66b64f165b5df91e8753bc49a575c74f37f05fab5199a222c"
+      }
+    }
+  }
+}

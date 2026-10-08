@@ -1,0 +1,1 @@
+One additional debugging JVM reused the existing db-0-clean-on command and its user.home. It failed before fixture setup with Authentication error: User already exists at UserFactory.java:116. This startup-only attempt is excluded from qualification. The next diagnostic used a fresh home and its complete command and output are archived in diagnostic-fresh-home.*.

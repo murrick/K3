@@ -1,0 +1,1 @@
+CLEAR_CLOSE_NATIVE operation=clear point=none exception=none manifest=0 cached=0 closed=false pending_WAL=false flushes=2 active_checks=14

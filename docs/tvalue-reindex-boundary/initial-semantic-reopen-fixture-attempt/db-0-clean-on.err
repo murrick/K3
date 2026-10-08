@@ -1,0 +1,17 @@
+Exception in thread "main" org.kanger.exception.TransactionSettlementException: Transaction settled as COMMITTED but post-settlement finalization failed: java.lang.NullPointerException: Cannot invoke "org.kanger.interfaces.ITerm.getId()" because the return value of "org.kanger.units.TValue.getValue(org.kanger.Mind)" is null
+	at org.kanger.Mind.commit(Mind.java:341)
+	at org.kanger.Mind.commit(Mind.java:262)
+	at org.kanger.TechnicalMindTransaction.commit(TechnicalMindTransaction.java:65)
+	at org.kanger.Mind.qualifyCurrentContext(Mind.java:1455)
+	at org.kanger.Mind.queryCheck(Mind.java:1465)
+	at org.kanger.User.openClosedStorage(User.java:664)
+	at org.kanger.User.use(User.java:442)
+	at org.kanger.Mind.useStorage(Mind.java:1961)
+	at org.kanger.DBReindexRunner.run(DBReindexRunner.java:24)
+	at org.kanger.DBReindexRunner.main(DBReindexRunner.java:17)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.kanger.interfaces.ITerm.getId()" because the return value of "org.kanger.units.TValue.getValue(org.kanger.Mind)" is null
+	at org.kanger.factory.TValueFactory.pack(TValueFactory.java:378)
+	at org.kanger.Mind.pack(Mind.java:632)
+	at org.kanger.Mind.finalizeTransactionRootLocked(Mind.java:2030)
+	at org.kanger.Mind.commit(Mind.java:338)
+	... 9 more
