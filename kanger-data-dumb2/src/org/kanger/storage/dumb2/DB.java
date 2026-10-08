@@ -886,6 +886,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                     after.introducedCollisionsComparedTo(before));
         }
         workingConnections = candidate;
+        ((User) user).getContextOpinionSession().invalidate();
         return projectConnection(
                 new RevisionRef(
                         getContextId(),
@@ -908,6 +909,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         requireOpen();
         workingConnections =
                 workingConnections.without(targetContextId);
+        ((User) user).getContextOpinionSession().invalidate();
     }
 
     @Override
@@ -934,6 +936,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                         targetRevision);
         workingConnections =
                 workingConnections.with(connection);
+        ((User) user).getContextOpinionSession().invalidate();
         return projectConnection(
                 new RevisionRef(
                         getContextId(),
@@ -1042,11 +1045,59 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     }
 
     @Override
+    public synchronized Map<String, IContextFederation.Opinion> executeOpinions(IMind sourceMind,
+            String locator, String querySource, List<org.kanger.SemanticTermSnapshot> parameters) throws Exception {
+        requireOpen();
+        if (!(sourceMind instanceof Mind) || sourceMind.getUser() != user || user.getCurrentMind() != sourceMind)
+            throw new CommandErrorException("Context opinions requires the active storage Mind");
+        if (querySource == null || querySource.length() < 2 || querySource.charAt(0) != '?')
+            throw new CommandErrorException("Context opinions requires a full original query");
+        Path selected = locator == null ? null : resolveFederationLocator(locator);
+        Map<String, IContextFederation.Opinion> result = new LinkedHashMap<>();
+        boolean matched = false;
+        if (selected == null || activeLocation().toAbsolutePath().normalize().equals(selected)) {
+            matched = true;
+            IContextFederation.Opinion opinion = localOpinion((Mind) sourceMind, sourceLocator(),
+                    new RevisionRef(getContextId(), getRevision()), !isReadOnly(), querySource, parameters);
+            if (opinion.isMeaningful()) result.put(opinion.getLocator(), opinion);
+        }
+        for (ContextConnection connection : workingConnections.getConnections()) {
+            if (selected != null && !connection.getTargetLocation().toAbsolutePath().normalize().equals(selected)) continue;
+            matched = true;
+            try (SnapshotMindRuntime runtime = SnapshotMindRuntime.open(connection.getTargetLocation(),
+                    connection.getTarget(), "opinion-" + connection.getTarget().getContextId())) {
+                IContextFederation.Opinion opinion = localOpinion(runtime.getMind(),
+                        displayFederationLocator(connection.getTargetLocation()), connection.getTarget(), false,
+                        querySource, parameters);
+                if (opinion.isMeaningful()) result.put(opinion.getLocator(), opinion);
+            }
+        }
+        if (!matched) throw new CommandErrorException("No direct Context connection exists for locator " + locator);
+        return Collections.unmodifiableMap(result);
+    }
+
+    private IContextFederation.Opinion localOpinion(Mind root, String locator, RevisionRef ref,
+            boolean working, String query, List<org.kanger.SemanticTermSnapshot> parameters) throws Exception {
+        Mind work = Mind.ephemeralChild(root);
+        try {
+            Queue<ITerm> externals = new LinkedList<>();
+            for (org.kanger.SemanticTermSnapshot parameter : parameters)
+                externals.add(work.getTerms().projectSemantic(parameter.materialize()));
+            IContextFederation.QueryResult answer = projectLocalQuery(work, ref, query, externals);
+            List<IContextFederation.RuleRow> solutions = new ArrayList<>();
+            for (org.kanger.interfaces.IRule solution : work.getSolutions())
+                solutions.add(org.kanger.ContextProofProjection.solution(work, solution));
+            return new IContextFederation.Opinion(locator, projectRevision(ref), working, answer, solutions);
+        } finally { root.discardEphemeral(work); }
+    }
+
+    @Override
     public synchronized IContextFederation.QueryResult executeIsolatedQuery(
             IMind sourceMind,
             String targetLocator,
             String querySource) throws Exception {
         requireOpen();
+        ((User) user).getContextOpinionSession().invalidate();
         if (!(sourceMind instanceof Mind)) {
             throw new IllegalArgumentException(
                     "Isolated Context query requires org.kanger.Mind");
@@ -1130,11 +1181,12 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             Mind mind,
             RevisionRef source,
             String querySource) throws Exception {
-        Boolean answer =
-                mind.queryCanonical(
-                        querySource,
-                        new LinkedList<ITerm>(),
-                        false);
+        return projectLocalQuery(mind, source, querySource, new LinkedList<ITerm>());
+    }
+
+    private IContextFederation.QueryResult projectLocalQuery(Mind mind, RevisionRef source,
+            String querySource, Queue<ITerm> externals) throws Exception {
+        Boolean answer = mind.queryCanonical(querySource, externals, false);
 
         ArrayList<IContextFederation.ValueRow> values =
                 new ArrayList<IContextFederation.ValueRow>();

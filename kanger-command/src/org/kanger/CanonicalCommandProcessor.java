@@ -49,6 +49,10 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.STORAGE_CLOSE
                 || intent == CommandIntent.STORAGE_DROP
                 || intent == CommandIntent.STORAGE_REINDEX
+                || intent == CommandIntent.CTX_OPINIONS
+                || intent == CommandIntent.CTX_VALUES
+                || intent == CommandIntent.CTX_SOLVES
+                || intent == CommandIntent.CTX_WHEN
                 || intent == CommandIntent.CTX_STATUS
                 || intent == CommandIntent.CTX_RULES
                 || intent == CommandIntent.CTX_PUBLISH
@@ -290,6 +294,17 @@ public final class CanonicalCommandProcessor {
                 return Result.successContextExplain(
                         mind,
                         explain);
+            }
+
+            case CTX_OPINIONS:
+            case CTX_VALUES:
+            case CTX_SOLVES:
+            case CTX_WHEN: {
+                IContextFederation federation = contextFederation(user, mind);
+                String locator = (String) invocation.getArgument("locator");
+                java.util.Map<String, IContextFederation.Opinion> opinions = invocation.getIntent() == CommandIntent.CTX_OPINIONS
+                        ? mind.collectContextOpinions(locator) : mind.getContextOpinions(locator);
+                return Result.successContextOpinions(mind, federation.federationSnapshot(), opinions);
             }
 
             case CTX_ISOLATED_QUERY: {
@@ -669,6 +684,7 @@ public final class CanonicalCommandProcessor {
         private final IContextFederation.VersionHistory contextVersionHistory;
         private final IContextFederation.ExplainResult contextExplainResult;
         private final List<IContextFederation.RuleBlock> contextRules;
+        private final java.util.Map<String, IContextFederation.Opinion> contextOpinions;
 
         private Result(boolean handled,
                        boolean success,
@@ -716,6 +732,16 @@ public final class CanonicalCommandProcessor {
                        Rejection rejection,TransactionStatus transactionStatus,IContextFederation.Snapshot federationSnapshot,
                        IContextFederation.QueryResult federationQueryResult,IContextFederation.VersionHistory contextVersionHistory,
                        IContextFederation.ExplainResult contextExplainResult,List<IContextFederation.RuleBlock> contextRules) {
+            this(handled, success, mind, description, storageStatus, rejection, transactionStatus,
+                    federationSnapshot, federationQueryResult, contextVersionHistory, contextExplainResult, contextRules, null);
+        }
+
+        private Result(boolean handled, boolean success, IMind mind, String description, StorageStatus storageStatus,
+                Rejection rejection, TransactionStatus transactionStatus, IContextFederation.Snapshot federationSnapshot,
+                IContextFederation.QueryResult federationQueryResult, IContextFederation.VersionHistory contextVersionHistory,
+                IContextFederation.ExplainResult contextExplainResult, List<IContextFederation.RuleBlock> contextRules,
+                java.util.Map<String, IContextFederation.Opinion> contextOpinions) {
+            this.contextOpinions = contextOpinions;
             this.handled = handled;
             this.success = success;
             this.mind = mind;
@@ -772,6 +798,12 @@ public final class CanonicalCommandProcessor {
                     null, null,
                     contextExplainResult);
         }
+
+        private static Result successContextOpinions(IMind mind, IContextFederation.Snapshot snapshot,
+                java.util.Map<String, IContextFederation.Opinion> opinions) {
+            return new Result(true, true, mind, "", null, null, null, snapshot, null, null, null, null, opinions);
+        }
+        public java.util.Map<String, IContextFederation.Opinion> getContextOpinions() { return contextOpinions; }
 
         private static Result successContextRules(IMind mind,IContextFederation.Snapshot snapshot,List<IContextFederation.RuleBlock> rules) {
             return new Result(true,true,mind,"",null,null,null,snapshot,null,null,null,rules);

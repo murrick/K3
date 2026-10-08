@@ -177,6 +177,15 @@ public class Mind implements IMind {
     private User user = null;
     private String compliedLine = "";
     //
+    private boolean otherOpinionsPossible;
+    @Override public boolean hasOtherContextOpinions() { return otherOpinionsPossible; }
+    @Override public Map<String, IContextFederation.Opinion> collectContextOpinions(String locator) throws Exception {
+        return user.getContextOpinionSession().collect(this, locator);
+    }
+    @Override public Map<String, IContextFederation.Opinion> getContextOpinions(String locator) throws Exception {
+        return user.getContextOpinionSession().saved(this, locator);
+    }
+
     private boolean logging = true;
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS);
     private int floodControlLimit = FLOOD_CONTROL_LIMIT;
@@ -231,6 +240,7 @@ public class Mind implements IMind {
         init();
 
         Mind parent = (Mind) root;
+        if (!isolateCanonicalFactories && user.getCurrentMind() == root) user.getContextOpinionSession().invalidate();
         operationDescription = parent.operationDescription;
         parent.incTransactionCounter();
         boolean initialized = false;
@@ -380,6 +390,7 @@ public class Mind implements IMind {
     }
 
     private boolean commit(IMind m, boolean settleRejectedChild) throws Exception {
+        user.getContextOpinionSession().invalidate();
         synchronized (locker) {
             Mind child = (Mind) m;
             boolean sequencedBy = rules.isSequencedBy((RuleFactory) child.getRules());
@@ -635,6 +646,7 @@ public class Mind implements IMind {
         lastLinkerStatistics = child.linker.snapshotStatistics();
         replaceFrontierDomains(child.frontierDomains);
         queryConflicts.clear(); queryConflicts.addAll(child.queryConflicts);
+        otherOpinionsPossible = child.otherOpinionsPossible;
     }
 
     private void finishFailedTransactionLocked() {
@@ -683,6 +695,7 @@ public class Mind implements IMind {
             lastLinkerStatistics = ((Mind) m).linker.snapshotStatistics();
             replaceFrontierDomains(((Mind) m).frontierDomains);
             queryConflicts.clear(); queryConflicts.addAll(((Mind) m).queryConflicts);
+            otherOpinionsPossible = ((Mind) m).otherOpinionsPossible;
 
             Object checkpoint = ((Mind) m).connectionCheckpoint;
             if (checkpoint != null && user.getData() instanceof IContextFederation) {
@@ -1007,6 +1020,7 @@ public class Mind implements IMind {
     }
 
     public boolean compile(String src, Object[] ext, boolean logging) throws Exception {
+        user.getContextOpinionSession().invalidate();
         requireWritableContext();
         lastCompileQualification = null;
         ContextSourceMetadata.Parsed sourceMetadata =
@@ -2134,6 +2148,11 @@ public class Mind implements IMind {
             IContextFederation.ExplainPolarity polarity,
             IContextFederation.QueryResult continuation) {
         for (IContextFederation.FrontierObservation observation : continuation.getObservations()) {
+            int kinds = (observation.getTrueSources().isEmpty() ? 0 : 1)
+                    + (observation.getFalseSources().isEmpty() ? 0 : 1)
+                    + (observation.getUnknownSources().isEmpty() ? 0 : 1);
+            if (kinds > 1 || observation.getTruth() == IContextFederation.FrontierTruth.CONFLICT)
+                otherOpinionsPossible = true;
             if (observation.getTruth() != IContextFederation.FrontierTruth.CONFLICT) continue;
             boolean seen=false;
             for (IContextFederation.FrontierObservation old : queryConflicts)
@@ -2175,6 +2194,9 @@ public class Mind implements IMind {
 
     public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
         if (!line.isEmpty() && line.charAt(0)!=Enums.SUC) requireWritableContext();
+        user.getContextOpinionSession().invalidate();
+        Queue<ITerm> opinionParameters = line.charAt(0) == Enums.SUC && isStorageUsed()
+                && user.getData() instanceof IContextFederation ? queryExternals(ext) : new LinkedList<ITerm>();
         this.logging = logging;
         String previousDescription = operationDescription;
         int operation = line.charAt(0);
@@ -2186,6 +2208,7 @@ public class Mind implements IMind {
             acceptedRule = null;
             frontierDomains.clear();
             queryConflicts.clear();
+            otherOpinionsPossible = false;
 
             getQueryValues().clear();
             getLog().clear();
@@ -2263,6 +2286,10 @@ public class Mind implements IMind {
                 log.add(LogMode.TIMING, "* QUERY Processing time \t" + ((System.currentTimeMillis() - queryStart) / 1000.0));
             }
 
+            if (line.charAt(0) == Enums.SUC && line.length() > 1 && isStorageUsed()) {
+                user.getContextOpinionSession().remember(this, line, opinionParameters);
+                if (logging && otherOpinionsPossible) log.add(LogMode.COMMON, "Возможно, есть другие мнения (ctx opinions)");
+            }
             return res;
         } finally {
             operationDescription = previousDescription;
@@ -2568,6 +2595,7 @@ public class Mind implements IMind {
 
     @Override
     public IMind clearWorkspace() throws Exception {
+        user.getContextOpinionSession().invalidate();
         return user.clear(this);
     }
 

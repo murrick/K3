@@ -401,6 +401,7 @@ public class QueryProcessor implements IReactor<JSONObject> {
                 conflicts.put(new JSONObject().put("query",conflict.getQuerySource())
                         .put("positive_sources",positive).put("negative_sources",negative));
             }
+            result.put("other_opinions_possible",mind.hasOtherContextOpinions());
             result.put("query_conflicts",conflicts);
             result.put("query_truth",res==null ? conflicts.length()==0 ? "UNKNOWN" : "CONFLICT" : res ? "TRUE" : "FALSE");
         }

@@ -56,6 +56,10 @@ public enum CommandIntent {
     STORAGE_DROP,
     STORAGE_REINDEX,
 
+    CTX_OPINIONS,
+    CTX_VALUES,
+    CTX_SOLVES,
+    CTX_WHEN,
     CTX_STATUS,
     CTX_RULES,
     CTX_PUBLISH,

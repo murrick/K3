@@ -421,7 +421,7 @@ public final class CommandParser {
                     Keyword.CONNECT, Keyword.DISCONNECT,
                     Keyword.SWITCH, Keyword.VERSION,
                     Keyword.RULES, Keyword.PUBLISH,
-                    Keyword.EXPLAIN);
+                    Keyword.EXPLAIN, Keyword.OPINIONS, Keyword.VALUES, Keyword.SOLVES, Keyword.WHEN);
         } catch (CommandParseException rejected) {
             if (rejected.getReason() == AMBIGUOUS_PREFIX) {
                 throw rejected;
@@ -429,6 +429,16 @@ public final class CommandParser {
             return parseContextIsolatedQuery(raw);
         }
         switch (keyword) {
+            case OPINIONS:
+            case VALUES:
+            case SOLVES:
+            case WHEN:
+                if (tokens.size() != 2 && tokens.size() != 3) requireSize(tokens, 3);
+                CommandIntent intent = keyword == Keyword.OPINIONS ? CommandIntent.CTX_OPINIONS
+                        : keyword == Keyword.VALUES ? CommandIntent.CTX_VALUES
+                        : keyword == Keyword.SOLVES ? CommandIntent.CTX_SOLVES : CommandIntent.CTX_WHEN;
+                return CommandInvocation.command(intent, tokens.size() == 3
+                        ? args("locator", tokens.get(2).value) : java.util.Collections.<String,Object>emptyMap(), raw);
             case PUBLISH:
                 if (tokens.size() != 2 && tokens.size() != 3) requireSize(tokens,2);
                 return CommandInvocation.command(CommandIntent.CTX_PUBLISH,

@@ -102,6 +102,9 @@ public class User implements IUser {
     private Map<String, IBase> storage = new HashMap<>();
     private Map<String, Long> counters = new HashMap<>();
     private long lastId = 0L;
+    private final ContextOpinionSession contextOpinionSession = new ContextOpinionSession();
+    public ContextOpinionSession getContextOpinionSession() { return contextOpinionSession; }
+
     private IMind currentMind = null;
     private volatile String timeZone = java.time.ZoneId.systemDefault().getId();
 
@@ -316,6 +319,7 @@ public class User implements IUser {
      */
     @Override
     public IMind close(IMind mind) throws Exception {
+        contextOpinionSession.invalidate();
         if (isClosed()) {
             return mind;
         }
@@ -881,6 +885,7 @@ public class User implements IUser {
 
     @Override
     public void setCurrentMind(IMind currentMind) {
+        if (this.currentMind != currentMind) contextOpinionSession.invalidate();
         this.currentMind = currentMind;
     }
 

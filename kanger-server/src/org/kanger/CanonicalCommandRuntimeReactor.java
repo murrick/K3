@@ -110,6 +110,10 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             case STORAGE_CLOSE:
             case STORAGE_DROP:
             case STORAGE_REINDEX:
+            case CTX_OPINIONS:
+            case CTX_VALUES:
+            case CTX_SOLVES:
+            case CTX_WHEN:
             case CTX_STATUS:
             case CTX_RULES:
             case CTX_PUBLISH:
@@ -249,6 +253,8 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             result.put("context_federation",
                     federationSnapshot(federation));
         }
+        if (outcome.getContextOpinions() != null)
+            result.put("context_opinions", contextOpinions(outcome.getContextOpinions(), invocation.getIntent()));
         if(outcome.getContextRules()!=null) {
             result.put("context_rules", contextRules(outcome.getContextRules()));
         }
@@ -285,6 +291,46 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                         federationQuery(federationQuery));
             }
         }
+        return result;
+    }
+
+    static JSONObject contextOpinions(Map<String, IContextFederation.Opinion> sources, CommandIntent intent) {
+        JSONObject opinions = new JSONObject();
+        for (IContextFederation.Opinion opinion : sources.values()) {
+            JSONObject view = new JSONObject().put("locator", opinion.getLocator())
+                    .put("context_id", opinion.getSource().getContextId().toString())
+                    .put("revision", opinion.getSource().getRevision()).put("working", opinion.isWorking())
+                    .put("isolated", true).put("truth", opinion.getResult().getResultTruth().name());
+            if (intent == CommandIntent.CTX_OPINIONS || intent == CommandIntent.CTX_SOLVES) {
+                JSONArray solutions = new JSONArray();
+                for (IContextFederation.RuleRow solution : opinion.getSolutions()) solutions.put(new JSONObject()
+                        .put("id", solution.id).put("statement", solution.statement).put("causes", opinionCauses(solution.causes)));
+                view.put("solutions", solutions);
+            }
+            if (intent == CommandIntent.CTX_OPINIONS || intent == CommandIntent.CTX_VALUES) {
+                JSONArray values = new JSONArray();
+                for (IContextFederation.ValueRow row : opinion.getResult().getValues()) values.put(new JSONObject(row.getBindings()));
+                view.put("values", values);
+            }
+            if (intent == CommandIntent.CTX_OPINIONS || intent == CommandIntent.CTX_WHEN) {
+                JSONArray hypotheses = new JSONArray();
+                for (IContextFederation.ProvisionalHypothesis hypothesis : opinion.getResult().getProvisionalHypotheses())
+                    hypotheses.put(hypothesis.getStatement());
+                view.put("hypotheses", hypotheses);
+            }
+            opinions.put(opinion.getLocator(), view);
+        }
+        return opinions;
+    }
+
+
+    private static JSONArray opinionCauses(List<IContextFederation.ProofCause> causes) {
+        JSONArray result = new JSONArray();
+        for (IContextFederation.ProofCause cause : causes) result.put(new JSONObject()
+                .put("rule_id", cause.ruleId).put("rule", cause.ruleStatement)
+                .put("donor_id", cause.donorId == null ? JSONObject.NULL : cause.donorId)
+                .put("donor", cause.donorStatement).put("cycle", cause.cycle)
+                .put("causes", opinionCauses(cause.causes)));
         return result;
     }
 

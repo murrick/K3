@@ -325,6 +325,7 @@ public class Rule implements IUnit<IRule>, IRule {
     @Override
     public void setComment(String comment) throws Exception {
         mind.getComments().add(id, comment);
+        ((org.kanger.User) mind.getUser()).getContextOpinionSession().invalidate();
     }
 
     @Override

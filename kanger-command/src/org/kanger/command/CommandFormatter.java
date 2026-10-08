@@ -111,6 +111,14 @@ public final class CommandFormatter {
             case STORAGE_REINDEX:
                 return "storage reindex " + argument(invocation.getArgument("name"));
 
+            case CTX_OPINIONS:
+                return optionalArgumentCommand("ctx opinions", invocation.getArgument("locator"));
+            case CTX_VALUES:
+                return optionalArgumentCommand("ctx values", invocation.getArgument("locator"));
+            case CTX_SOLVES:
+                return optionalArgumentCommand("ctx solves", invocation.getArgument("locator"));
+            case CTX_WHEN:
+                return optionalArgumentCommand("ctx when", invocation.getArgument("locator"));
             case CTX_STATUS:
                 return "ctx";
             case CTX_PUBLISH:

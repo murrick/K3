@@ -71,6 +71,10 @@ public final class CommandRegistry {
         VERSION,
         RULES,
         PUBLISH,
+        OPINIONS,
+        VALUES,
+        SOLVES,
+        WHEN,
         USE,
         CLOSE,
         DROP,
@@ -205,8 +209,12 @@ public final class CommandRegistry {
         keyword(Family.CONTEXT, Keyword.CONNECT, "connect");
         keyword(Family.CONTEXT, Keyword.DISCONNECT, "disconnect");
         keyword(Family.CONTEXT, Keyword.EXPLAIN, "explain");
+        keyword(Family.CONTEXT, Keyword.OPINIONS, "opinions");
+        keyword(Family.CONTEXT, Keyword.VALUES, "values");
+        keyword(Family.CONTEXT, Keyword.SOLVES, "solves");
+        keyword(Family.CONTEXT, Keyword.WHEN, "when");
         keyword(Family.CONTEXT, Keyword.SWITCH, "switch");
-        keyword(Family.CONTEXT, Keyword.VERSION, "version");
+        keyword(Family.CONTEXT, Keyword.VERSION, "version", "v");
         keyword(Family.CONTEXT, Keyword.RULES, "rules");
         keyword(Family.CONTEXT, Keyword.PUBLISH, "publish");
         keyword(Family.CONTEXT, Keyword.QUERY, "query");
@@ -309,6 +317,15 @@ public final class CommandRegistry {
         define(CommandIntent.STORAGE_REINDEX, "storage reindex <name>", "STORAGE", "Reindex one explicitly named storage.",
                 args("name", "Storage logical name."), aliases("reindex <name>"), n++);
 
+        define(CommandIntent.CTX_OPINIONS, "ctx opinions [<locator>]", "CONTEXT",
+                "Collect local-only opinions of the full last query in live X and exact direct pins.",
+                args("locator", "Optional source Context."), n++);
+        define(CommandIntent.CTX_VALUES, "ctx values [<locator>]", "CONTEXT",
+                "Show saved source Values without executing a query.", args("locator", "Optional source Context."), n++);
+        define(CommandIntent.CTX_SOLVES, "ctx solves [<locator>]", "CONTEXT",
+                "Show saved source Solutions and proof trees without executing a query.", args("locator", "Optional source Context."), n++);
+        define(CommandIntent.CTX_WHEN, "ctx when [<locator>]", "CONTEXT",
+                "Show saved locally qualified source Hypotheses without accepting them.", args("locator", "Optional source Context."), n++);
         define(CommandIntent.CTX_STATUS, "ctx", "CONTEXT",
                 "Show direct exact-revision Context federation connections.",
                 noArgs(), n++);

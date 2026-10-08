@@ -91,3 +91,37 @@ server process restart.
 Normal Console and Server builds still stage the stable
 `kanger-data-dumb` provider only. This manual-soak slice does not change the
 production default, release branch, deployment, or server cutover.
+
+## Source opinions
+
+After a normal query, collect isolated answers for that **entire last query**:
+
+```text
+?male(Tom);
+ctx opinions
+ctx opinions natives
+ctx when natives
+ctx solves natives
+ctx values natives
+```
+
+`ctx opinions` runs live X and explicit direct pins separately. TRUE/FALSE include
+available proofs and values; UNKNOWN includes that source's locally qualified
+hypotheses. UNKNOWN without hypotheses is omitted. Hypotheses are neither
+accepted nor qualified in X. This can differ from a federated conclusion using
+facts from other sources.
+
+`ctx values`, `ctx solves` (proof trees), and `ctx when` read the saved collection
+without inference. Selecting one source when collecting replaces the collection
+with that source. Run a new query after authoring, transaction/storage/topology
+changes before collecting again. An optional «Возможно, есть другие мнения» notice
+uses only already observed frontier responses; absence of the notice does not
+mean the source hypotheses agree. `ctx v` retains its history meaning;
+`ctx values` selects the saved opinion values.
+
+Java: `mind.collectContextOpinions(null)` returns an immutable map keyed by source
+locator; `mind.getContextOpinions("natives")` reads the saved view.
+`mind.hasOtherContextOpinions()` reports the optional hint. Canonical Server
+commands return `context_opinions`; ordinary query responses include
+`other_opinions_possible`. Sources include Context UUID and exact revision, and
+result payloads survive closure of the isolated runtime.

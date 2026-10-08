@@ -361,6 +361,10 @@ public final class CanonicalConsole {
                 }
                 return same(mind);
 
+            case CTX_OPINIONS:
+            case CTX_VALUES:
+            case CTX_SOLVES:
+            case CTX_WHEN:
             case CTX_STATUS:
             case CTX_RULES:
             case CTX_PUBLISH:
@@ -401,7 +405,9 @@ public final class CanonicalConsole {
                                 != org.kanger.command.CommandIntent.CTX_STATUS) {
                     System.out.println(federation.getDescription());
                 }
-                if (invocation.getIntent()
+                if (federation.getContextOpinions() != null) {
+                    showContextOpinions(federation.getContextOpinions(), invocation.getIntent());
+                } else if (invocation.getIntent()
                         == org.kanger.command.CommandIntent.CTX_RULES) {
                     showContextRules(federation.getContextRules(),String.valueOf(invocation.getArgument("selection")));
                 } else if (invocation.getIntent()
@@ -555,6 +561,7 @@ public final class CanonicalConsole {
             if (log != null) {
                 System.out.println(log.getRecord());
             }
+            if (mind.hasOtherContextOpinions()) System.out.println("Возможно, есть другие мнения (ctx opinions)");
             if (response != null) {
                 Console.showLog(mind, LogMode.SOLVES, null, null);
                 Console.showLog(mind, LogMode.VALUES, null, null);
@@ -1079,6 +1086,41 @@ public final class CanonicalConsole {
                     revision.getRevision(),
                     revision.getDescription(),
                     markers.toString());
+        }
+    }
+
+    private static void showContextOpinions(java.util.Map<String, IContextFederation.Opinion> opinions,
+            org.kanger.command.CommandIntent intent) {
+        if (opinions.isEmpty()) System.out.println("No meaningful source opinions");
+        for (IContextFederation.Opinion opinion : opinions.values()) {
+            System.out.printf("Context %s@%d [%s, isolated opinion]%n", opinion.getLocator(),
+                    opinion.getSource().getRevision(), opinion.isWorking() ? "live X" : "pinned");
+            System.out.println("Result: " + opinion.getResult().getResultTruth());
+            if (intent == org.kanger.command.CommandIntent.CTX_OPINIONS || intent == org.kanger.command.CommandIntent.CTX_SOLVES) {
+                System.out.println("Solutions (" + opinion.getSolutions().size() + "):");
+                for (IContextFederation.RuleRow solution : opinion.getSolutions()) {
+                    System.out.println("  Solution " + solution.id + ": " + solution.statement);
+                    if (intent == org.kanger.command.CommandIntent.CTX_SOLVES)
+                        showOpinionCauses(solution.causes, "    ");
+                }
+            }
+            if (intent == org.kanger.command.CommandIntent.CTX_OPINIONS || intent == org.kanger.command.CommandIntent.CTX_VALUES) {
+                System.out.println("Values (" + opinion.getResult().getValues().size() + "):");
+                for (IContextFederation.ValueRow row : opinion.getResult().getValues()) System.out.println("  " + row.getBindings());
+            }
+            if (intent == org.kanger.command.CommandIntent.CTX_OPINIONS || intent == org.kanger.command.CommandIntent.CTX_WHEN) {
+                System.out.println("Hypotheses (" + opinion.getResult().getProvisionalHypotheses().size() + "):");
+                for (IContextFederation.ProvisionalHypothesis hypothesis : opinion.getResult().getProvisionalHypotheses())
+                    System.out.println("  " + hypothesis.getStatement());
+            }
+        }
+    }
+
+    private static void showOpinionCauses(List<IContextFederation.ProofCause> causes, String indent) {
+        for (IContextFederation.ProofCause cause : causes) {
+            System.out.println(indent + "Rule " + cause.ruleId + ": " + cause.ruleStatement);
+            System.out.println(indent + "  Donor: " + cause.donorStatement + (cause.cycle ? " [cycle]" : ""));
+            showOpinionCauses(cause.causes, indent + "    ");
         }
     }
 

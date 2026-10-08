@@ -43,13 +43,34 @@ public interface IContextFederation {
         public final boolean generated;
         public final String comment;
         public final List<List<String>> tree;
+        public final List<ProofCause> causes;
         public RuleRow(long id, String statement, boolean generated,
                        String comment, List<List<String>> tree) {
+            this(id, statement, generated, comment, tree, Collections.<ProofCause>emptyList());
+        }
+        public RuleRow(long id, String statement, boolean generated, String comment,
+                       List<List<String>> tree, List<ProofCause> causes) {
+            this.causes = Collections.unmodifiableList(new ArrayList<ProofCause>(causes));
             this.id=id; this.statement=statement;
             this.generated=generated; this.comment=comment;
             List<List<String>> copy = new ArrayList<List<String>>();
             for (List<String> row : tree) copy.add(Collections.unmodifiableList(new ArrayList<String>(row)));
             this.tree=Collections.unmodifiableList(copy);
+        }
+    }
+
+    /** Native provenance edge, detached before the owning runtime is closed. */
+    final class ProofCause {
+        public final long ruleId;
+        public final String ruleStatement, donorStatement;
+        public final Long donorId;
+        public final boolean cycle;
+        public final List<ProofCause> causes;
+        public ProofCause(long ruleId, String ruleStatement, Long donorId, String donorStatement,
+                          boolean cycle, List<ProofCause> causes) {
+            this.ruleId = ruleId; this.ruleStatement = ruleStatement; this.donorId = donorId;
+            this.donorStatement = donorStatement; this.cycle = cycle;
+            this.causes = Collections.unmodifiableList(new ArrayList<ProofCause>(causes));
         }
     }
 
@@ -63,6 +84,26 @@ public interface IContextFederation {
             this.locator=locator; this.revision=revision; this.working=working;
             this.rules=Collections.unmodifiableList(new ArrayList<RuleRow>(rules));
         }
+    }
+
+    /** One full-query, local-only opinion. All payloads are detached from its runtime. */
+    final class Opinion {
+        private final String locator;
+        private final Revision source;
+        private final boolean working;
+        private final QueryResult result;
+        private final List<RuleRow> solutions;
+        public Opinion(String locator, Revision source, boolean working, QueryResult result, List<RuleRow> solutions) {
+            this.locator = locator; this.source = source; this.working = working; this.result = result;
+            this.solutions = Collections.unmodifiableList(new ArrayList<RuleRow>(solutions));
+        }
+        public String getLocator() { return locator; }
+        public Revision getSource() { return source; }
+        public boolean isWorking() { return working; }
+        public QueryResult getResult() { return result; }
+        public List<RuleRow> getSolutions() { return solutions; }
+        public boolean isMeaningful() { return result.getResultTruth() != FrontierTruth.UNKNOWN
+                || !result.getProvisionalHypotheses().isEmpty(); }
     }
 
     final class DependencyNotice {
@@ -948,6 +989,12 @@ public interface IContextFederation {
             String querySource,
             Queue<ITerm> externals,
             boolean logging) throws Exception;
+
+    /** Explicit full-query opinions from live X and exact direct pins; never traverses dependencies. */
+    default Map<String, Opinion> executeOpinions(IMind sourceMind, String locator, String querySource,
+            List<org.kanger.SemanticTermSnapshot> parameters) throws Exception {
+        throw new UnsupportedOperationException("Context opinions are not supported by this provider");
+    }
 
     /**
      * Executes one local-only diagnostic query against X or one explicitly

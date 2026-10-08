@@ -404,6 +404,19 @@ public final class CommandParserConformanceTest {
                         explain.getArgument("query")),
                 "ctx explain preserves KANGER source");
 
+        expect("ctx opinions", CommandIntent.CTX_OPINIONS);
+        expectArgument("ctx op A", CommandIntent.CTX_OPINIONS, "locator", "A");
+        expect("ctx values", CommandIntent.CTX_VALUES);
+        expect("ctx solves", CommandIntent.CTX_SOLVES);
+        expect("ctx when", CommandIntent.CTX_WHEN);
+        for (String command : new String[]{"opinions", "values", "solves", "when"}) {
+            expectCanonical("ctx " + command, "ctx " + command);
+            expectCanonical("ctx " + command + " A", "ctx " + command + " A");
+            reject("ctx " + command + " A extra", EXTRA_ARGUMENT);
+        }
+        reject("ctx s", AMBIGUOUS_PREFIX);
+        expectCanonical("ctx v", "ctx version");
+
         reject("ctx connect", MISSING_ARGUMENT);
         reject("ctx disconnect", MISSING_ARGUMENT);
         reject("ctx switch A",
