@@ -1,0 +1,1 @@
+WRITE_GUARD_SERIALIZATION physical=refused reason=failed-native-upsert native_endpoints=unresolved reader=pure

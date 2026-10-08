@@ -1,0 +1,69 @@
+{
+  "parent": "82cf4a2cad984d62bea22187031c4b6701085828",
+  "original_delete_flush_bodies_recovered": true,
+  "prior_upsert_and_get_wrappers_unchanged": true,
+  "native_halt_path_recovered": true,
+  "production_changed": false,
+  "builds": {
+    "clean": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-write-guard-clean:../build/tvalue-saved-links-clean:../build/tvalue-update-boundary-clean:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-clean:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-delete-flush-guard-clean",
+        "../build/tvalue-delete-flush-guard-source/Base.java",
+        "../build/tvalue-delete-flush-guard-source/DumbFaultInjector.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-delete-flush-guard38/docs/tvalue-delete-flush-guard/RecordedLinks.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-delete-flush-guard38/docs/tvalue-delete-flush-guard/DeleteFlushRunner.java"
+      ],
+      "prior_native_classes_verified": 696,
+      "overlay_class_sha256": {
+        "org/kanger/DeleteFlushRunner$InjectedMutationFailure.class": "76c2282ab52ee840100f10ee376feae688bdc1908bde03ac8f03e8e4118faa0e",
+        "org/kanger/RecordedLinks.class": "cb7c0d64b945480329eda24e2ffc835dee132f5cc7d6881e71c77716f003b87f",
+        "org/kanger/RecordedLinks$WriteFrame.class": "a23493424f4483753ce9ae8ff8a6c6b9cdc8e71071929c4e98748aa9c65ccd90",
+        "org/kanger/RecordedLinks$Gate.class": "892b49bbb42f75ccad183afc0abced5680175e0286f2295bdef774e09858c675",
+        "org/kanger/RecordedLinks$State.class": "44eed9e71faa1bfbe3334e118534b9ef086ca5f2c58e5301888535810e76d709",
+        "org/kanger/RecordedLinks$Witness.class": "bcd8a54cd568b2c116b74ea1d9517e50a617affa8e3c7b4f525d113b3e9d522e",
+        "org/kanger/DeleteFlushRunner.class": "6469b078b44deb021704558a824bc0cae5d62ced02745129bf8552129b02866e",
+        "org/kanger/storage/Base$StorageIterator.class": "9df4344229af4ef32985a905961b8127daaf55e7f7557bb3240aee18ca68f9ea",
+        "org/kanger/storage/DumbFaultInjector.class": "e643d5b45e23bcaf248a664b96ee2ed60c6861e5ab3772fde423c36efb7b262c",
+        "org/kanger/storage/Base.class": "9a378260ddbe952f6fe45ff24a36c30c65217459649bfaa73b9e493f7380d629"
+      }
+    },
+    "shadow": {
+      "command": [
+        "java",
+        "-jar",
+        "../tooling/ecj.jar",
+        "-1.8",
+        "-nowarn",
+        "-cp",
+        "../build/tvalue-write-guard-shadow:../build/tvalue-saved-links-shadow:../build/tvalue-update-boundary-shadow:../build/tvalue-materialization-routing-classes:../build/tvalue-persistent-lookup-classes:../build/tvalue-resident-persistent-classes:../build/tvalue-owner-pure-observation-shadow:lib/jline-3.13.0.jar",
+        "-d",
+        "../build/tvalue-delete-flush-guard-shadow",
+        "../build/tvalue-delete-flush-guard-source/Base.java",
+        "../build/tvalue-delete-flush-guard-source/DumbFaultInjector.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-delete-flush-guard38/docs/tvalue-delete-flush-guard/RecordedLinks.java",
+        "/workspace/scratch/1c9c6dd2770c/K3-tvalue-delete-flush-guard38/docs/tvalue-delete-flush-guard/DeleteFlushRunner.java"
+      ],
+      "prior_native_classes_verified": 696,
+      "overlay_class_sha256": {
+        "org/kanger/DeleteFlushRunner$InjectedMutationFailure.class": "76c2282ab52ee840100f10ee376feae688bdc1908bde03ac8f03e8e4118faa0e",
+        "org/kanger/RecordedLinks.class": "cb7c0d64b945480329eda24e2ffc835dee132f5cc7d6881e71c77716f003b87f",
+        "org/kanger/RecordedLinks$WriteFrame.class": "a23493424f4483753ce9ae8ff8a6c6b9cdc8e71071929c4e98748aa9c65ccd90",
+        "org/kanger/RecordedLinks$Gate.class": "892b49bbb42f75ccad183afc0abced5680175e0286f2295bdef774e09858c675",
+        "org/kanger/RecordedLinks$State.class": "44eed9e71faa1bfbe3334e118534b9ef086ca5f2c58e5301888535810e76d709",
+        "org/kanger/RecordedLinks$Witness.class": "bcd8a54cd568b2c116b74ea1d9517e50a617affa8e3c7b4f525d113b3e9d522e",
+        "org/kanger/DeleteFlushRunner.class": "6469b078b44deb021704558a824bc0cae5d62ced02745129bf8552129b02866e",
+        "org/kanger/storage/Base$StorageIterator.class": "9df4344229af4ef32985a905961b8127daaf55e7f7557bb3240aee18ca68f9ea",
+        "org/kanger/storage/DumbFaultInjector.class": "e643d5b45e23bcaf248a664b96ee2ed60c6861e5ab3772fde423c36efb7b262c",
+        "org/kanger/storage/Base.class": "9a378260ddbe952f6fe45ff24a36c30c65217459649bfaa73b9e493f7380d629"
+      }
+    }
+  }
+}
