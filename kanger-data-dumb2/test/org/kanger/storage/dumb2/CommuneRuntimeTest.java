@@ -88,6 +88,72 @@ class CommuneRuntimeTest {
         } finally { runtime.mind().discardEphemeral(work); }
     }
 
+    @Test void checkpointsReusePreparedStatesAcrossNestedChangesAndQueries() throws Exception {
+        create("A", "!@x p(x) -> q(x);"); create("B", "!p(John);"); create("X", "!anchor(X);");
+        ContextConnection a = connection("A"), b = connection("B");
+        ContextConnection mary = new ContextConnection(b.getTargetLocation(), b.getTarget(),
+                b.getCertificate(), Arrays.asList("-p(John);", "!p(Mary);"));
+        ContextConnection tom = new ContextConnection(b.getTargetLocation(), b.getTarget(),
+                b.getCertificate(), Arrays.asList("-p(John);", "!p(Tom);"));
+        CommuneRuntime original;
+        try (CommuneRuntimeCache cache = new CommuneRuntimeCache()) {
+            CommuneRuntimeCache.State u0 = cache.prepare(group(a, b));
+            CommuneRuntimeCache.State u1 = cache.prepare(group(a, mary));
+            CommuneRuntimeCache.State u2 = cache.prepare(group(a, tom));
+            original = u0.groups().get("own");
+            assertNotSame(original, u1.groups().get("own"));
+            assertRows(u2.groups().get("own"), "Tom");
+            // Restoring either checkpoint needs no preparation or source replay.
+            assertRows(u1.groups().get("own"), "Mary");
+            assertRows(original, "John");
+            for (int i = 0; i < 3; i++) {
+                assertSame(original, cache.prepare(group(b, a)).groups().get("own"));
+                assertRows(original, "John");
+            }
+            assertTrue(cache.prepare(Collections.emptyMap()).groups().isEmpty());
+            assertSame(original, cache.prepare(group(a, b)).groups().get("own"));
+            assertThrows(UnsupportedOperationException.class, () -> u0.groups().clear());
+        } finally { a.closeLayer(); b.closeLayer(); mary.closeLayer(); tom.closeLayer(); }
+        assertThrows(IllegalStateException.class, original::mind);
+    }
+
+    @Test void sourceRecertificationKeepsTheSameComputedKnowledge() throws Exception {
+        create("A", "!p(John);"); create("X", "!anchor(X);");
+        ContextConnection a = connection("A");
+        CompatibilityCertificate old = a.getCertificate();
+        RevisionRef source = old.getLeft().equals(a.getTarget()) ? old.getRight() : old.getLeft();
+        ContextConnection recertified = a.recertified(new CompatibilityCertificate(a.getTarget(),
+                new RevisionRef(source.getContextId(), source.getRevision() + 1), old.getSemanticVersion()));
+        try (CommuneRuntimeCache cache = new CommuneRuntimeCache()) {
+            CommuneRuntime first = cache.prepare(group(a)).groups().get("own");
+            assertSame(first, cache.prepare(group(recertified)).groups().get("own"));
+        } finally { a.closeLayer(); recertified.closeLayer(); }
+    }
+
+    @Test void failedMultiGroupCandidateLeavesAcceptedRuntimeUsable() throws Exception {
+        create("A", "!p(John);"); create("B", "!~p(John);"); create("X", "!anchor(X);");
+        ContextConnection a = connection("A"), b = connection("B");
+        try (CommuneRuntimeCache cache = new CommuneRuntimeCache()) {
+            CommuneRuntime accepted = cache.prepare(group(a)).groups().get("own");
+            Map<String,List<ContextConnection>> candidate = new LinkedHashMap<>();
+            candidate.put("other", Collections.singletonList(b));
+            candidate.put("own", Arrays.asList(a,b));
+            assertThrows(IllegalArgumentException.class, () -> cache.prepare(candidate));
+            candidate.put("other", Collections.singletonList(a));
+            candidate.put("own", Collections.singletonList(b));
+            assertEquals(2, cache.prepare(candidate).groups().size(), "Separate communes may disagree");
+            assertThrows(CommandErrorException.class, () -> cache.prepare(group(a,b)));
+            assertSame(accepted, cache.prepare(group(a)).groups().get("own"));
+            Mind work = Mind.ephemeralChild(accepted.mind());
+            try { assertTrue(work.queryCanonical("?p(John);", new LinkedList<>(), false)); }
+            finally { accepted.mind().discardEphemeral(work); }
+        } finally { a.closeLayer(); b.closeLayer(); }
+    }
+
+    private Map<String,List<ContextConnection>> group(ContextConnection... members) {
+        return Collections.singletonMap("own", Arrays.asList(members));
+    }
+
     private ContextConnection connection(String name) throws Exception {
         return ConnectionManager.qualifyConnect(directory.resolve("X"), directory.resolve(name));
     }
