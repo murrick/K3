@@ -25,6 +25,8 @@
 
 package org.kanger;
 
+import org.kanger.factory.RuleFactory;
+
 import org.kanger.enums.ArgumentType;
 import org.kanger.enums.DataType;
 import org.kanger.enums.Enums;
@@ -1227,10 +1229,12 @@ public class Linker {
                         ((Rule) x).getDomain().setCalculated(mind);
                     }
                     if (d.getCauses(mind) != null) {
+                        x = ((RuleFactory) mind.getRules()).editInference(x);
                         x.getCauses().clear();
                         x.getCauses().addAll(d.getCauses(mind));
                     }
                     if (d.getSolves(mind) != null) {
+                        x = ((RuleFactory) mind.getRules()).editInference(x);
                         ((Rule) x).getSolves().clear();
                         ((Rule) x).getSolves().addAll(d.getSolves(mind));
                     }

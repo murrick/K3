@@ -177,6 +177,15 @@ public class RuleFactory implements IFactory<IRule> {
     private volatile boolean action = false;
     private final Stack<Boolean> actionStack = new Stack<>();
     private final Object metadataLock = new Object();
+    private final Map<Long, Rule> inferenceViews = new HashMap<>();
+    private final Stack<Map<Long, Rule>> inferenceViewStack = new Stack<>();
+
+    /** Replace, rather than mutate, metadata inherited from a parent/checkpoint. */
+    public Rule editInference(IRule rule) throws Exception {
+        Rule view = get(rule.getId()).copyInferenceView(mind);
+        inferenceViews.put(rule.getId(), view);
+        return view;
+    }
 
     private static final class DomainKey {
         private final long predicateId;
@@ -569,6 +578,9 @@ public class RuleFactory implements IFactory<IRule> {
                 list.add(((IUnit) s).getId());
             }
         }
+        for (Map.Entry<Long, Rule> entry : base.inferenceViews.entrySet()) {
+            inferenceViews.put(entry.getKey(), entry.getValue().copyInferenceView(mind));
+        }
         mergeDomainIndex(base);
         action = action || base.isAction();
         return list;
@@ -682,6 +694,12 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     private Rule effectiveView(Rule rule) throws Exception {
+        if (rule != null && !isPromoted(rule.getId())) {
+            for (IMind current = mind; current != null; current = current.getNext()) {
+                Rule view = ((RuleFactory) current.getRules()).inferenceViews.get(rule.getId());
+                if (view != null) return view;
+            }
+        }
         if (rule == null || !isPromoted(rule.getId())) {
             return rule;
         }
@@ -748,6 +766,8 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public void clear() throws Exception {
+        inferenceViews.clear();
+        inferenceViewStack.clear();
         synchronized (metadataLock) {
             primaryPromotions.clear();
             promotionViews.clear();
@@ -765,6 +785,7 @@ public class RuleFactory implements IFactory<IRule> {
 
     public void mark() throws Exception {
         cache.mark();
+        inferenceViewStack.push(new HashMap<>(inferenceViews));
         ensureDomainIndex();
         synchronized (metadataLock) {
             domainIndexStack.push(copyDomainIndexLocked());
@@ -776,6 +797,7 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public void commit() throws Exception {
+        if (!inferenceViewStack.isEmpty()) inferenceViewStack.pop();
         cache.commit();
         synchronized (metadataLock) {
             if (!domainIndexStack.isEmpty()) {
@@ -795,6 +817,10 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public void release() throws Exception {
+        if (!inferenceViewStack.isEmpty()) {
+            inferenceViews.clear();
+            inferenceViews.putAll(inferenceViewStack.pop());
+        }
         cache.release();
         synchronized (metadataLock) {
             if (!domainIndexStack.isEmpty()) {
@@ -1003,6 +1029,18 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public void pack() throws Exception {
+        if (mind.getNext() == null) {
+            for (Map.Entry<Long, Rule> entry : inferenceViews.entrySet()) {
+                Rule raw = getRaw(entry.getKey());
+                if (raw == null || raw.isDeleted(mind) || isPromoted(raw.getId())) continue;
+                raw.getCauses().clear();
+                raw.getCauses().addAll(entry.getValue().getCauses());
+                raw.getSolves().clear();
+                raw.getSolves().addAll(entry.getValue().getSolves());
+                appliedPromotions.add(raw.getId());
+            }
+            inferenceViews.clear();
+        }
         applyPromotions();
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {

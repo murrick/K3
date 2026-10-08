@@ -78,6 +78,29 @@ public class Rule implements IUnit<IRule>, IRule {
         tree.add(t);
     }
 
+    /** Transaction-local metadata view; structural domains remain canonical. */
+    public Rule copyInferenceView(Mind context) throws Exception {
+        Rule copy = new Rule(context);
+        copy.id = id;
+        copy.mindId = mindId;
+        copy.originId = originId;
+        copy.varIndex = varIndex;
+        copy.query = query;
+        copy.generated = generated;
+        copy.stored = stored;
+        copy.substitutable = substitutable;
+        copy.abstractive = abstractive;
+        copy.second = second;
+        copy.tree.clear();
+        for (List<Domain> branch : getTree()) copy.tree.add(new ArrayList<>(branch));
+        copy.causes.addAll(causes);
+        copy.solves.addAll(solves);
+        copy.predicates.addAll(predicates);
+        copy.terms.addAll(terms);
+        copy.persistentTermIndexComplete = persistentTermIndexComplete;
+        return copy;
+    }
+
     public ByteBuffer pack() {
         ByteBuffer packet = new ByteBuffer()
                 .putLong(id)

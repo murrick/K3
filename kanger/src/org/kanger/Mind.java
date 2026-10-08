@@ -2415,6 +2415,39 @@ public class Mind implements IMind {
             }
 
             m.link(null, logging);
+            // Ground provenance in surviving inputs. A cycle of productions
+            // cannot keep itself alive after its last external donor is removed.
+            Set<Long> grounded = new HashSet<>();
+            for (IRule candidate : m.getRules()) {
+                if (!candidate.isDeleted(m) && (!candidate.isGenerated()
+                        || candidate.getCauses().isEmpty())) grounded.add(candidate.getId());
+            }
+            boolean changed;
+            do {
+                changed = false;
+                for (IRule candidate : m.getRules()) {
+                    if (candidate.isDeleted(m) || grounded.contains(candidate.getId())) continue;
+                    for (org.kanger.interfaces.ICause cause : candidate.getCauses()) {
+                        IRule source = cause.getRule(m);
+                        IRule donor = cause.getDonor(m);
+                        if (source != null && donor != null && !source.isDeleted(m)
+                                && !donor.isDeleted(m) && grounded.contains(source.getId())
+                                && grounded.contains(donor.getId())) {
+                            changed |= grounded.add(candidate.getId());
+                            break;
+                        }
+                    }
+                }
+            } while (changed);
+            for (IRule candidate : m.getRules()) {
+                if (candidate.isDeleted(m) || !candidate.isGenerated()) continue;
+                if (!grounded.contains(candidate.getId())) {
+                    ((Rule) candidate).setDeleted(true, m);
+                    set.add(candidate);
+                } else if (!candidate.getCauses().isEmpty()) {
+                    ((RuleFactory) m.getRules()).editInference(candidate).packCauses(m);
+                }
+            }
             Boolean ar = m.analyze(null, logging);
 
             Set<IRule> success = new HashSet<>();
