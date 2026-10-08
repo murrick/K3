@@ -1033,11 +1033,15 @@ public class RuleFactory implements IFactory<IRule> {
             for (Map.Entry<Long, Rule> entry : inferenceViews.entrySet()) {
                 Rule raw = getRaw(entry.getKey());
                 if (raw == null || raw.isDeleted(mind) || isPromoted(raw.getId())) continue;
+                Rule view = entry.getValue();
+                // Solves are transient and are rebuilt after reopening storage.
+                // Only changed persistent provenance needs a storage update.
+                boolean causesChanged = !raw.getCauses().equals(view.getCauses());
                 raw.getCauses().clear();
                 raw.getCauses().addAll(entry.getValue().getCauses());
                 raw.getSolves().clear();
                 raw.getSolves().addAll(entry.getValue().getSolves());
-                appliedPromotions.add(raw.getId());
+                if (causesChanged) appliedPromotions.add(raw.getId());
             }
             inferenceViews.clear();
         }

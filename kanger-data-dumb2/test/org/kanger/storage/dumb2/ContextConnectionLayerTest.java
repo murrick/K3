@@ -129,6 +129,25 @@ class ContextConnectionLayerTest {
         }
     }
 
+    @Test void reopeningAndQueryingProductionsDoesNotPublishRevision() throws Exception {
+        open("N");
+        long revision;
+        try {
+            assertTrue(mind.query("!p(John);", null, false));
+            assertTrue(mind.query("!@x p(x) -> q(x);", null, false));
+            revision = data.getRevision();
+        } finally { close(); }
+        open("N");
+        try {
+            assertEquals(revision, data.getRevision());
+            assertTrue(mind.query("?q(John);", null, false));
+            assertEquals(revision, data.getRevision());
+        } finally { close(); }
+        open("N");
+        try { assertEquals(revision, data.getRevision()); }
+        finally { close(); }
+    }
+
     @Test void editsAreSharedByQueriesOpinionsAndRulesAndSurvivePublication() throws Exception {
         setup();
         long targetRevision = data.federationSnapshot().getConnections().get(0).getPinnedRevision();
