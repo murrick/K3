@@ -12,4 +12,9 @@ class ContextLongSessionTest {
     void publicationsAndHistoricalForksRetainPinnedValuesAsCurrentAdvances() throws Exception {
         ContextPinnedSessionProbe.main(new String[] { "20" });
     }
+
+    @Test
+    void squashRebaseAndRejectedPublicationsPreserveRollbackAndReclaimLayers() throws Exception {
+        ContextStackSessionProbe.main(new String[] { "10" });
+    }
 }
