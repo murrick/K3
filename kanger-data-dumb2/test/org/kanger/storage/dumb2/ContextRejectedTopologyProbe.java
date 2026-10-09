@@ -56,7 +56,26 @@ public final class ContextRejectedTopologyProbe {
                 require(ContextLongSessionProbe.communes(data) == 1, "failed join retained commune " + cycle);
             }
             require(Boolean.TRUE.equals(mind.query("?q(John);", null, false)), "join rejection lost answer");
-            new CanonicalCommandProcessor().execute(new CommandParser().parse("ctx ask N !p(Mary);"), user);
+            for (int cycle = 1; cycle <= cycles; cycle++) {
+                new CanonicalCommandProcessor().execute(new CommandParser().parse("ctx ask N !p(Mary);"), user);
+                require(ContextLongSessionProbe.retained(data) == 0, "private edit retained old layer " + cycle);
+                require(ContextLongSessionProbe.communes(data) == 1, "private edit retained old commune " + cycle);
+            }
+            require(data.federationSnapshot().getConnections().get(0).getInitialization().size() == cycles,
+                    "collection erased initialization intent");
+            for (int cycle = 1; cycle <= cycles; cycle++) {
+                boolean rejected = false;
+                try {
+                    new CanonicalCommandProcessor().execute(new CommandParser().parse("ctx ask N !~p(Mary);"), user);
+                } catch (org.kanger.exception.CommandErrorException | org.kanger.exception.StorageLifecycleException expected) {
+                    rejected = true;
+                }
+                require(rejected, "conflicting private edit accepted");
+                require(ContextLongSessionProbe.retained(data) == 0, "failed private edit retained layer " + cycle);
+                require(ContextLongSessionProbe.communes(data) == 1, "failed private edit retained commune " + cycle);
+            }
+            require(data.federationSnapshot().getConnections().get(0).getInitialization().size() == cycles,
+                    "rejection changed initialization intent");
             require(Boolean.TRUE.equals(mind.query("?q(Mary);", null, false)), "private initialization");
             User writer = new User(); writer.setDatabaseDir(directory + File.separator);
             DB targetData = new DB(); targetData.init(writer); writer.setCurrentMind(new Mind(writer));

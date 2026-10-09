@@ -1391,6 +1391,10 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             activateConnections(proposed);
             ((User) user).getContextOpinionSession().invalidate();
             accepted = true;
+            collectAfterTopologyChange();
+        } catch (Exception rejection) {
+            collectAfterRejectedTopologyChange(rejection);
+            throw rejection;
         } finally { if (!accepted) candidate.closeLayer(); }
     }
 
