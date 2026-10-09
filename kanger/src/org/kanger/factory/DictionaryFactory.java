@@ -450,8 +450,18 @@ public class DictionaryFactory implements IFactory<ITerm> {
         return valueTermIds;
     }
 
+    private void retainCVariableNames(Set<Long> referenced) throws Exception {
+        java.util.ArrayDeque<Long> pending = new java.util.ArrayDeque<>(referenced);
+        while (!pending.isEmpty()) {
+            Term term = get(pending.removeFirst());
+            if (term != null && term.isCVariable() && term.getNameId() >= 0
+                    && referenced.add(term.getNameId())) pending.addLast(term.getNameId());
+        }
+    }
+
     public synchronized void pack() throws Exception {
         Set<Long> currentRuleTerms = collectDynamicRuleTerms();
+        retainCVariableNames(currentRuleTerms);
 
         if (!fullPackRequired) {
             for (long termId : previousRuleTerms) {
@@ -507,11 +517,13 @@ public class DictionaryFactory implements IFactory<ITerm> {
             boolean found;
             if (solutionTermIds == null) {
                 solutionTermIds = collectSolutionTermIds();
+                retainCVariableNames(solutionTermIds);
             }
             found = solutionTermIds.contains(termId);
             if (!found) {
                 if (hypothesisTermIds == null) {
                     hypothesisTermIds = collectHypothesisTermIds();
+                    retainCVariableNames(hypothesisTermIds);
                 }
                 found = hypothesisTermIds.contains(termId);
             }

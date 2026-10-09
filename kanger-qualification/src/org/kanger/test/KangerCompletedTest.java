@@ -132,6 +132,12 @@ public final class KangerCompletedTest extends KangerTest {
                 + "!parent(John,Tom); !parent(Mary,Sarah);"
                 + "!@x (male(x) || female(x)) && ~(male(x) && female(x));"
                 + "!male(John); !female(Mary); !female(Sarah);"), "Values fixture rejected");
+        for (Object one : ((Mind) mind).getTerms()) {
+            org.kanger.units.Term term = (org.kanger.units.Term) one;
+            if (term.isCVariable() && !term.isDeleted(mind))
+                require(term.getName((Mind) mind) != null,
+                        "Live C-variable lost its source name: " + term.getId());
+        }
         require(Boolean.FALSE.equals(((Mind) mind).query("?$x @y parent(x,y);", null, false)),
                 "irreflexivity must refute an all-parent query");
         require(mind.getValues().isEmpty(), "abstract proof exported a concrete rotation value");

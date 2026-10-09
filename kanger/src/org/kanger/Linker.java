@@ -599,25 +599,19 @@ public class Linker {
 
                 rotateVariables(tvars, tvars, new IReactor() {
                     @Override
-                    public Object run(Object o) {
+                    public Object run(Object o) throws Exception {
                         statistics.incrementTerminalRotations();
                         boolean result = false;
-                        try {
-                            if (linkDomains(t, selectDomainCandidates(t, domainIndex), causes, logging)) {
-                                result = true;
-                            }
-                            statistics.incrementFunctionEvaluations();
-                            if (calcFunctions(t, causes, logging)) {
-                                result = true;
-                            }
-                            statistics.incrementDatabaseEvaluations();
-                            if (linkDatabase(t, causes, tvars, logging)) {
-                                result = true;
-                            }
-                        } catch (Exception e) {
-                            System.err.println(new Date());
-                            e.printStackTrace(System.err);
-                            result = false;
+                        if (linkDomains(t, selectDomainCandidates(t, domainIndex), causes, logging)) {
+                            result = true;
+                        }
+                        statistics.incrementFunctionEvaluations();
+                        if (calcFunctions(t, causes, logging)) {
+                            result = true;
+                        }
+                        statistics.incrementDatabaseEvaluations();
+                        if (linkDatabase(t, causes, tvars, logging)) {
+                            result = true;
                         }
 
                         return result;

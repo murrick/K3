@@ -272,6 +272,11 @@ public final class KangerC3BindingTest {
             require(loaded != null, "Persisted Function is missing after reopen");
             require(loaded.getBinding() == FunctionBinding.UDF_DYNAMIC,
                     "Persisted binding changed after reopen: " + loaded.getBinding());
+            Operation restored = ((Mind) mind).getLibrary().find("c3_persist(1)");
+            require(restored != null && restored.getProc() != null,
+                    "Persisted UDF executor was not restored");
+            requireTrue("!c3_persist_source(value);", "Reopened source fact was rejected");
+            requireTrue("?c3_persist_result(10);", "Reopened UDF did not execute its persistent script");
         } finally {
             if (mind.isStorageUsed()) {
                 mind = mind.closeStorage();
