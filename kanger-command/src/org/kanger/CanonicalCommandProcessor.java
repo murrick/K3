@@ -38,6 +38,7 @@ public final class CanonicalCommandProcessor {
         }
         CommandIntent intent = invocation.getIntent();
         return intent == CommandIntent.STATUS
+                || intent == CommandIntent.OPTIONS
                 || intent == CommandIntent.TIMEZONE
                 || intent == CommandIntent.TX_STATUS
                 || intent == CommandIntent.TX_START
@@ -95,6 +96,9 @@ public final class CanonicalCommandProcessor {
         switch (invocation.getIntent()) {
             case STATUS:
                 return canonicalStatus(invocation, user, mind);
+
+            case OPTIONS:
+                return Result.success(mind, sessionOptions(invocation, mind));
 
             case TIMEZONE:
                 Object zoneId = invocation.getArgument("zoneId");
@@ -376,6 +380,44 @@ public final class CanonicalCommandProcessor {
                 snapshot,
                 section == null ? null : String.valueOf(section),
                 subsection == null ? null : String.valueOf(subsection)));
+    }
+
+    private String sessionOptions(CommandInvocation invocation, IMind mind) {
+        String option = (String) invocation.getArgument("option");
+        String value = (String) invocation.getArgument("value");
+        if ("help".equals(option)) {
+            return "options [debug|values|log] [yes|no]\n"
+                    + "options timezone [<zoneId>]\noptions optimize [yes|no]\n"
+                    + "options <optimization> [yes|no]\nOptimizations: "
+                    + String.join(", ", OptimizationOptions.names());
+        }
+        if (value != null) {
+            boolean enabled = "yes".equals(value);
+            if ("optimize".equals(option)) OptimizationOptions.setAll(mind, enabled);
+            else if ("debug".equals(option)) mind.setDebugLevel((mind.getDebugLevel() & ~0xFF)
+                    | (enabled ? Enums.DEBUG_LEVEL_DEBUG : Enums.DEBUG_LEVEL_QUIET));
+            else if ("values".equals(option) || "log".equals(option)) {
+                int flag = "values".equals(option) ? Enums.DEBUG_OPTION_VALUES : Enums.DEBUG_OPTION_RTLOGS;
+                mind.setDebugLevel(enabled ? mind.getDebugLevel() | flag : mind.getDebugLevel() & ~flag);
+            } else OptimizationOptions.set(mind, option, enabled);
+        }
+        StringBuilder out = new StringBuilder();
+        if (option == null || "debug".equals(option)) appendOption(out, "debug", (mind.getDebugLevel() & 0xFF) == Enums.DEBUG_LEVEL_DEBUG);
+        if (option == null || "values".equals(option)) appendOption(out, "values", (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0);
+        if (option == null || "log".equals(option)) appendOption(out, "log", (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) != 0);
+        if (option == null) out.append("timezone: ").append(mind.getUser().getTimeZone()).append('\n');
+        if (option == null || "optimize".equals(option)) {
+            java.util.Collection<Boolean> states = OptimizationOptions.snapshot(mind).values();
+            out.append("optimize: ").append(states.contains(Boolean.FALSE) ? (states.contains(Boolean.TRUE) ? "mixed" : "no") : "yes").append('\n');
+        }
+        for (java.util.Map.Entry<String, Boolean> entry : OptimizationOptions.snapshot(mind).entrySet()) {
+            if (option == null || "optimize".equals(option) || entry.getKey().equals(option)) appendOption(out, entry.getKey(), entry.getValue());
+        }
+        return out.toString().trim();
+    }
+
+    private void appendOption(StringBuilder out, String name, boolean enabled) {
+        out.append(name).append(": ").append(enabled ? "yes" : "no").append('\n');
     }
 
     private String timezoneStatus(IUser user) {

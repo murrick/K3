@@ -42,6 +42,7 @@ public final class CommandRegistry {
         STATUS,
         STORAGE,
         TIMEZONE,
+        OPTIONS,
         TRANSACTION,
         VALUES,
         WHEN
@@ -175,6 +176,7 @@ public final class CommandRegistry {
         family(Family.STATUS, "status");
         family(Family.STORAGE, "storage");
         family(Family.TIMEZONE, "timezone");
+        family(Family.OPTIONS, "options");
         family(Family.TRANSACTION, "transaction");
         family(Family.VALUES, "values");
         family(Family.WHEN, "when");
@@ -371,7 +373,11 @@ public final class CommandRegistry {
                 args("section", "Optional status section.",
                         "subsection", "Optional core subsection."), n++);
 
-        define(CommandIntent.TIMEZONE, "timezone [<zoneId>]", "SYSTEM / SESSION",
+        define(CommandIntent.OPTIONS, "options [help|debug|values|log|timezone|optimize|<optimization>] [<value>]", "SYSTEM / SESSION",
+                "Show or change session options; optimize yes/no switches all acceleration paths.",
+                args("option", "Setting name, or help. Individual optimization names appear in options.",
+                        "value", "yes/no for switches; IANA zone id for timezone."), n++);
+        define(CommandIntent.TIMEZONE, "options timezone [<zoneId>]", "SYSTEM / SESSION",
                 "Show or set the time zone of the current session.",
                 args("zoneId", "Optional IANA time-zone id."), n++);
         define(CommandIntent.ERASE, "erase", "SYSTEM / SESSION", "Clear the current workspace using qualified runtime semantics.",

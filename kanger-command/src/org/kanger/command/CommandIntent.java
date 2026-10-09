@@ -73,6 +73,7 @@ public enum CommandIntent {
 
     STATUS,
     TIMEZONE,
+    OPTIONS,
     ERASE,
     HELP,
     QUIT

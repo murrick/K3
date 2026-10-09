@@ -44,6 +44,18 @@ public final class CommandParserConformanceTest {
         contextFamily();
         aliasVocabulary();
         systemFamily();
+        expect("opt", CommandIntent.OPTIONS);
+        expectArgument("opt optimize no", CommandIntent.OPTIONS, "value", "no");
+        expectArgument("opt timezone Europe/Moscow", CommandIntent.TIMEZONE, "zoneId", "Europe/Moscow");
+        expectCanonical("opt deb y", "options debug yes");
+        expectCanonical("opt time Europe/Moscow", "options timezone Europe/Moscow");
+        reject("options status no", CommandParseException.Reason.UNKNOWN_KEYWORD);
+        reject("opt optimize maybe", CommandParseException.Reason.UNKNOWN_KEYWORD);
+        reject("opt optimize \"\"", CommandParseException.Reason.UNKNOWN_KEYWORD);
+        reject("options help extra", CommandParseException.Reason.EXTRA_ARGUMENT);
+        reject("opt c yes", CommandParseException.Reason.AMBIGUOUS_PREFIX);
+
+
         canonicalEcho();
         helpRegistry();
         sharedClientVocabulary();
@@ -503,8 +515,8 @@ public final class CommandParserConformanceTest {
         expectCanonical("w a 0", "when accept 0");
         expectCanonical("tr st", "transaction start");
         expectCanonical("tr sq", "transaction squash");
-        expectCanonical("ti", "timezone");
-        expectCanonical("ti Europe/Brussels", "timezone Europe/Brussels");
+        expectCanonical("ti", "options timezone");
+        expectCanonical("ti Europe/Brussels", "options timezone Europe/Brussels");
         expectCanonical("star", "transaction start");
         expectCanonical("stat", "status");
         expectCanonical("co", "transaction commit");

@@ -420,12 +420,9 @@ public class Escalera implements ICache {
         return root == null;
     }
 
-    private static final boolean COMPACT_FIND_SNAPSHOTS =
-            Boolean.parseBoolean(System.getProperty("kanger.experiment.compactFindSnapshots", "true"));
-
     /** Internal read-only iteration snapshot; public find retains mutable ownership. */
     public static Iterable<Long> findCandidates(ICache cache, int hash) throws Exception {
-        if (!COMPACT_FIND_SNAPSHOTS || cache.getClass() != Escalera.class) {
+        if (cache.getClass() != Escalera.class || !org.kanger.OptimizationOptions.enabled(((Escalera) cache).mind, "compactFindSnapshots")) {
             return cache.find(hash);
         }
         Escalera owner = (Escalera) cache;
@@ -483,7 +480,7 @@ public class Escalera implements ICache {
         Checkpoint checkpoint = stack.pop();
         IStep restored = checkpoint.root;
         boolean preserve = "tvalues".equals(schema)
-                && Boolean.parseBoolean(System.getProperty("kanger.experiment.preserveTValueIndex", "true"))
+                && org.kanger.OptimizationOptions.enabled(mind, "preserveTValueIndex")
                 && indexValid && indexedRoot == root && root == restored && mutation == checkpoint.mutation;
         root = restored;
         if (preserve) {

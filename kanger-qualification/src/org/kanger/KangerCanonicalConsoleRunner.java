@@ -64,7 +64,15 @@ public final class KangerCanonicalConsoleRunner {
                 + "sto u " + storageName + "\n"
                 + "tr\n"
                 + "tr st\n"
-                + "options test 01_01\n"
+                + "opt timezone Europe/Moscow\n"
+                + "opt optimize no\n"
+                + "opt singleTValueLookup yes\n"
+                + "opt optimize\n"
+                + "opt optimize yes\n"
+                + "opt deb no\n"
+                + "opt deb yes\n"
+                + "options help\n"
+                + "opt test 01_01\n"
                 + "!consolecommitted;\n"
                 + "tr c\n"
                 + "?consolecommitted;\n"
@@ -113,6 +121,12 @@ public final class KangerCanonicalConsoleRunner {
         String out = stdout.toString("UTF-8");
         String err = stderr.toString("UTF-8");
 
+        require(out.contains("Session timezone: Europe/Moscow"), "options timezone did not execute");
+        require(out.contains("optimize: mixed"), "individual optimization did not override all-off");
+        require(out.contains("versionedSolveSync: no"), "all-off did not reach optimization settings");
+        require(out.contains("optimize: yes"), "all-on did not restore optimizations");
+        require(out.contains("debug: no"), "options debug did not execute");
+        require(out.contains("options <optimization>"), "options help did not execute");
         require(out.contains("consoleconvergence"),
                 "Core line did not reach canonical Console execution");
         require(out.contains("Hypothesis list (1)"),

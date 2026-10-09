@@ -264,6 +264,7 @@ public final class CanonicalConsole {
                 return same(mind);
 
             case STATUS:
+            case OPTIONS:
             case TIMEZONE:
                 CanonicalCommandProcessor.Result status =
                         COMMAND_PROCESSOR.execute(invocation, mind.getUser());
@@ -1492,7 +1493,7 @@ public final class CanonicalConsole {
     private static boolean isHiddenTestCommand(String line) {
         String[] parts = line.trim().split("\\s+");
         return parts.length >= 2
-                && "options".equalsIgnoreCase(parts[0])
+                && ("options".equalsIgnoreCase(parts[0]) || "opt".equalsIgnoreCase(parts[0]))
                 && "test".equalsIgnoreCase(parts[1]);
     }
 

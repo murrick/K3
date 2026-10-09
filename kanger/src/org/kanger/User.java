@@ -93,6 +93,10 @@ import java.util.*;
  * @see IUser
  */
 public class User implements IUser {
+    private final OptimizationOptions.Session optimizationOptions = new OptimizationOptions.Session();
+
+    OptimizationOptions.Session optimizationOptions() { return optimizationOptions; }
+
 
     private long id = -1L;
     private final Object locker = new Object();

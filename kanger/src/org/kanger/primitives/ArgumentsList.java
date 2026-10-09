@@ -44,9 +44,6 @@ import java.util.*;
  */
 public class ArgumentsList extends ArrayList<IArgument> implements IList {
 
-    /** Enabled by default; false selects the reference path at JVM startup. */
-    private static final boolean RESIDENT_BASE_COMPARISON =
-            Boolean.parseBoolean(System.getProperty("kanger.experiment.residentBaseComparison", "true"));
 
     private Mind mind = null;
 
@@ -164,7 +161,7 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
                 arg = (ArgumentsList) o;
             }
             if (arg != null && arg.size() == size()) {
-                boolean residentPath = RESIDENT_BASE_COMPARISON
+                boolean residentPath = org.kanger.OptimizationOptions.enabled(mind, "residentBaseComparison")
                         && getClass() == ArgumentsList.class && arg.getClass() == ArgumentsList.class;
                 int i = 0;
                 try {

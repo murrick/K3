@@ -89,8 +89,6 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     private long nameId = -1;
     private long ruleId = -1;
 
-    /** Enabled by default; false selects the reference path at JVM startup. */
-    private static final boolean SINGLE_LOOKUP = Boolean.parseBoolean(System.getProperty("kanger.experiment.singleTValueLookup", "true"));
 
     /** Stable owner/default context for this transaction-owned object. */
     private Mind mind = null;
@@ -195,7 +193,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
      */
     public ITerm getValue() throws Exception {
         Mind active = activeMind();
-        if (SINGLE_LOOKUP
+        if (org.kanger.OptimizationOptions.enabled(active, "singleTValueLookup")
                 && getClass() == TVariable.class && active != null && active.getClass() == Mind.class
                 && active.getTValues().getClass() == org.kanger.factory.TValueFactory.class) {
             TValue value = active.getTValues().get(this);
@@ -211,7 +209,7 @@ public class TVariable implements Comparable<Object>, IUnit<TVariable> {
     /** @return current TValue projection in the active Mind, or {@code null} */
     public TValue getCurrent() {
         Mind active = activeMind();
-        if (SINGLE_LOOKUP
+        if (org.kanger.OptimizationOptions.enabled(active, "singleTValueLookup")
                 && getClass() == TVariable.class && active != null && active.getClass() == Mind.class
                 && active.getTValues().getClass() == org.kanger.factory.TValueFactory.class) {
             TValue value = active.getTValues().get(this);

@@ -103,6 +103,8 @@ public final class CommandParser {
                 return parseContext(line, tokens);
             case STATUS:
                 return parseStatus(line, tokens);
+            case OPTIONS:
+                return parseOptions(line, tokens);
             case TIMEZONE:
                 return parseOptionalSingleArgument(
                         line, tokens, CommandIntent.TIMEZONE, "zoneId");
@@ -115,6 +117,39 @@ public final class CommandParser {
             default:
                 throw error(UNKNOWN_KEYWORD, "Unknown command family");
         }
+    }
+
+    private CommandInvocation parseOptions(String raw, List<Token> tokens) throws CommandParseException {
+        if (tokens.size() > 3) throw error(EXTRA_ARGUMENT, "Unexpected extra argument");
+        Map<String, Object> arguments = new LinkedHashMap<>();
+        if (tokens.size() == 1) return CommandInvocation.command(CommandIntent.OPTIONS, arguments, raw);
+        List<String> names = new ArrayList<>();
+        Collections.addAll(names, "help", "debug", "values", "log", "timezone", "optimize");
+        Collections.addAll(names, org.kanger.OptimizationOptions.names());
+        String probe = tokens.get(1).value.toLowerCase(java.util.Locale.ROOT);
+        String selected = null;
+        for (String name : names) if (name.equalsIgnoreCase(probe)) { selected = name; break; }
+        if (selected == null) for (String name : names) {
+            if (name.toLowerCase(java.util.Locale.ROOT).startsWith(probe)) {
+                if (selected != null) throw error(AMBIGUOUS_PREFIX, "Ambiguous option " + probe);
+                selected = name;
+            }
+        }
+        if (selected == null) throw error(UNKNOWN_KEYWORD, "Unknown option " + probe);
+        if ("help".equals(selected)) requireSize(tokens, 2);
+        if ("timezone".equals(selected)) {
+            arguments.put("zoneId", tokens.size() == 3 ? tokens.get(2).value : "");
+            return CommandInvocation.command(CommandIntent.TIMEZONE, arguments, raw);
+        }
+        arguments.put("option", selected);
+        if (tokens.size() == 3) {
+            String value = tokens.get(2).value.toLowerCase(java.util.Locale.ROOT);
+            if (!value.isEmpty() && "yes".startsWith(value)) value = "yes";
+            else if (!value.isEmpty() && "no".startsWith(value)) value = "no";
+            else throw error(UNKNOWN_KEYWORD, "Expected yes or no");
+            arguments.put("value", value);
+        }
+        return CommandInvocation.command(CommandIntent.OPTIONS, arguments, raw);
     }
 
     private CommandInvocation parseRule(String raw, List<Token> tokens)
