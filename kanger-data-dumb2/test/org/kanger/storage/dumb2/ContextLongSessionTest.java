@@ -22,4 +22,9 @@ class ContextLongSessionTest {
     void topologyOnlyCyclesReclaimLayersWithoutInvalidatingLiveCheckpoints() throws Exception {
         ContextTopologySessionProbe.main(new String[] { "40" });
     }
+
+    @Test
+    void rejectedJoinsAndRepinsReclaimCandidatesAndPreserveWorkingAnswers() throws Exception {
+        ContextRejectedTopologyProbe.main(new String[] { "20" });
+    }
 }

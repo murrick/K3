@@ -195,6 +195,14 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         collectConnectionState();
     }
 
+    private void collectAfterRejectedTopologyChange(Exception rejection) {
+        try {
+            collectAfterTopologyChange();
+        } catch (Exception cleanup) {
+            rejection.addSuppressed(cleanup);
+        }
+    }
+
     @Override
     public synchronized void close() throws Exception {
         closeConnectionLayers();
@@ -1041,34 +1049,39 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
         connection = connection.withTrustGroup(trustGroup);
         retiredLayers.add(connection);
-        ConnectionVector candidate = workingConnections.with(connection);
-        candidate.prepareCommunes(communeCache);
-        PairQualification.CompositionQualification before =
-                PairQualification.qualifyCompositionState(
-                        activeLocation(),
-                        getRevision(),
-                        workingConnections);
-        PairQualification.CompositionQualification after =
-                PairQualification.qualifyCompositionState(
-                        activeLocation(),
-                        getRevision(),
-                        candidate);
-        if (after.introducesNewCollisionComparedTo(before)) {
-            throw new StorageLifecycleException(
-                    StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
-                    "Context connection introduces a new X-anchored composition conflict: "
-                            + connection.getTarget(),
-                    after.introducedCollisionsComparedTo(before));
+        try {
+            ConnectionVector candidate = workingConnections.with(connection);
+            candidate.prepareCommunes(communeCache);
+            PairQualification.CompositionQualification before =
+                    PairQualification.qualifyCompositionState(
+                            activeLocation(),
+                            getRevision(),
+                            workingConnections);
+            PairQualification.CompositionQualification after =
+                    PairQualification.qualifyCompositionState(
+                            activeLocation(),
+                            getRevision(),
+                            candidate);
+            if (after.introducesNewCollisionComparedTo(before)) {
+                throw new StorageLifecycleException(
+                        StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                        "Context connection introduces a new X-anchored composition conflict: "
+                                + connection.getTarget(),
+                        after.introducedCollisionsComparedTo(before));
+            }
+            retiredLayers.addAll(workingConnections.getConnections());
+            activateConnections(candidate);
+            ((User) user).getContextOpinionSession().invalidate();
+            collectAfterTopologyChange();
+            return projectConnection(
+                    new RevisionRef(
+                            getContextId(),
+                            getRevision()),
+                    connection);
+        } catch (Exception rejection) {
+            collectAfterRejectedTopologyChange(rejection);
+            throw rejection;
         }
-        retiredLayers.addAll(workingConnections.getConnections());
-        activateConnections(candidate);
-        ((User) user).getContextOpinionSession().invalidate();
-        collectAfterTopologyChange();
-        return projectConnection(
-                new RevisionRef(
-                        getContextId(),
-                        getRevision()),
-                connection);
     }
 
     @Override
