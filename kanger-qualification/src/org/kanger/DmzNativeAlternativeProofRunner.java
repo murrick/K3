@@ -45,12 +45,20 @@ public final class DmzNativeAlternativeProofRunner {
                 }
                 TerminalSupportCapture.Checkpoint stateOnly = applications.checkpoint(branch.mind());
                 DmzCollisionProofGuard baseline = DmzCollisionProofGuard.beforeOperation(applications, branch.mind());
+                DmzUnaryProofCoverage coverage = DmzUnaryProofCoverage.beforeOperation(applications, branch.mind(), 10000);
+                DmzUnaryProofCoverage bounded = DmzUnaryProofCoverage.beforeOperation(applications, branch.mind(), 1);
                 require(!branch.mind().compile("!anchor(Trigger);", null, false), "conflicting operation rejected");
                 require(!collisions.snapshot().isEmpty(), "native collision events");
                 for (CollisionProofCapture.Conflict event : collisions.snapshot()) {
                     DmzProvisionalCollisionProof proof = DmzProvisionalCollisionProof.build(event, 1000, 100);
                     require(!proof.truncated && proof.rootsAvailable, "bounded roots available");
                     require(baseline.isCurrent(proof, branch.mind()), "rejected operation proof matches unchanged pre-operation state");
+                    DmzUnaryProofCoverage.Result audited = coverage.audit(proof, branch.mind());
+                    require(audited.covered && audited.expectedSteps >= 3 && !audited.complete,
+                            "finite unary unit-step alternatives covered: " + audited.gaps);
+                    DmzUnaryProofCoverage.Result shortAudit = bounded.audit(proof, branch.mind());
+                    require(shortAudit.truncated && !shortAudit.covered,
+                            "coverage budget exhaustion cannot certify fragment");
                     DmzCollisionProofGuard after = DmzCollisionProofGuard.beforeOperation(applications, branch.mind());
                     require(!after.isCurrent(proof, branch.mind()), "post-event checkpoint cannot retroactively bind old proof");
                     require(!baseline.isCurrent(proof, q), "proof guard cannot cross target branch");
