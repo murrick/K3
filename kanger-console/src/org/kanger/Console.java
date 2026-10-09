@@ -1335,9 +1335,7 @@ public class Console {
 
     private static void showRule(IMind activeMind, IMind stateMind, IRule r, boolean tree) throws Exception {
         System.out.printf("%sRule %03d%s: %s\n",
-                (tree ? " --- " : "")
-                        + ((activeMind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0
-                        ? String.format("%03d ", ((Rule) r).getMindId()) : ""),
+                (tree ? " --- " : ""),
                 r.getId(),
                 (activeMind.getDebugLevel() & Enums.DEBUG_OPTION_STATUS) != 0
                         && (r.isGenerated() || r.isQuery() || r.isStored() || r.isDeleted(stateMind))
