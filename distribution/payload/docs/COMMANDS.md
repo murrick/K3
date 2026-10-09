@@ -84,7 +84,7 @@ Transaction rollback and storage reindex are not routed through this confirmatio
 | Storage | `storage`, `storage use|close|drop|reindex ...` | Inspect and manage persistent storage |
 | Context federation | `ctx`, `ctx connect|disconnect|switch|publish|rules|version|explain ...`, `ctx <locator> <query...>` | Inspect or mutate working topology, inspect revision history, and run normal-query semantic traces or isolated diagnostics |
 | Status | `status [core [objects|transaction|levels]|storage|session|runtime]` | Cheap canonical product telemetry |
-| Session | `timezone [<zoneId>]`, `help`, `quit` | Inspect or change session timezone, show help, or end the session |
+| Session | `options`, `options timezone [<zoneId>]`, `options optimize ...`, `help`, `quit` | Inspect or change session settings and optimizations, show help, or end the session |
 | Workspace | `erase` | Clear the current workspace through qualified runtime semantics |
 
 ---
@@ -480,11 +480,30 @@ of a pinned target are advisory recommendations: they never automatically connec
 open missing targets, or cause cascaded disconnection. Missing knowledge limits the
 proof domain. `ctx publish` replaces `ctx save` and does not send anything to a server.
 
-### `ctx connect <locator>`
+### `ctx connect <locator> [trust <group>]`
 
 Qualifies the current Context against the target at its current exact revision
 and adds that exact pin to the **session working topology** only if qualification
 succeeds.
+
+An explicit `trust <group>` places the pin in a named trust commune. Members of
+one commune contribute their rules, facts and private connection initialization
+to one jointly qualified native working layer. This allows a rule in one Context
+to use a fact from another member, for example:
+
+```text
+ctx connect natives trust own
+ctx connect facts trust own
+```
+
+Independent connections keep their autonomous opinions. Changing commune members
+prepares and qualifies a replacement joint layer before installing it. Transaction
+rollback restores the previous membership and working state. Publication saves the
+exact pins and trust configuration; the joint derived productions do not overwrite
+the published members. In `ctx rules all`, Console shows the commune's technical
+layer once, with its members named below the header. Inspect an individual member
+explicitly with `ctx rules natives all` when needed.
+
 
 The already published source revision is immutable: `ctx connect` does not
 rewrite its ConnectionVector and does not publish a new source revision. For
@@ -777,16 +796,56 @@ The Browser TECH panel formats some of these raw values for readability (KiB/MiB
 
 ---
 
-## 13. Session time zone
+## 13. Session options
 
-### `timezone [<zoneId>]`
+### `options [help|debug|values|log|timezone|optimize [<optimization>]] [<value>]`
 
 ```text
-timezone
-timezone Europe/Vienna
+options
+opt help
+opt debug no
+opt values yes
+opt log no
+opt optimize no
+opt optimize yes
+opt optimize singleTValueLookup no
 ```
 
-Without an argument, shows the current session time zone. With an IANA time-zone id, changes the time zone of the current session immediately. The setting belongs to the current User/session runtime context; it does not change the JVM default or server-wide configuration.
+`options` (shortened to `opt`) shows the current session settings. A switch without
+`yes` or `no` reports its state. `debug`, `values` and `log` control debug rendering,
+variable/function values in logs, and runtime analysis logging respectively.
+Canonical `status` remains a separate read-only command.
+
+`opt optimize yes/no` switches all eight qualified acceleration paths together.
+An individual setting belongs under `optimize`; the aggregate reports `mixed`
+when some switches are enabled and others disabled. The list is indented under
+the group heading. These settings apply immediately to the current User/session,
+including child transactions and subsequent storage switches, without changing
+other sessions or JVM properties. Existing `kanger.experiment.*` properties remain
+defaults until overridden. Verification and profiling properties are unaffected.
+
+| Optimization | Purpose |
+| --- | --- |
+| versionedSolveSync | Reuse unchanged solve synchronization |
+| residentBaseComparison | Compare resident arguments without repeated lookup |
+| singleTValueLookup | Resolve a variable's current value with one lookup |
+| resolvedCauseWeights | Reuse resolved argument IDs for cause weights |
+| compactCauseWeights | Use compact primitive IDs for cause weights |
+| candidateMembershipFilter | Filter rule candidates by argument membership |
+| compactFindSnapshots | Use compact candidate snapshots |
+| preserveTValueIndex | Retain an unchanged TValue index across release |
+
+### `options timezone [<zoneId>]`
+
+```text
+opt timezone
+opt timezone Europe/Moscow
+```
+
+Without an argument, shows the current session time zone. With an IANA time-zone
+id, changes it immediately. It does not change the JVM default or server-wide
+configuration. The previous standalone `timezone [<zoneId>]` spelling remains
+accepted for compatibility and formats canonically as `options timezone`.
 
 ---
 
