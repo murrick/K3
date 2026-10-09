@@ -124,10 +124,6 @@ public class Compiller {
                 : FunctionBinding.UDF_DYNAMIC;
     }
 
-    private boolean isPredicate(Leaf root) {
-        return mind.getCalculator().getPredicates().getSysOps().containsKey(root.getValue() + "(" + root.getRange() + ")");
-    }
-
     public IRule compileLine(Leaf root, boolean antc, String orig, boolean query, Queue<ITerm> externals) throws Exception {
 
         QueryReplayContext.observeCompilation(mind, orig, query, externals);

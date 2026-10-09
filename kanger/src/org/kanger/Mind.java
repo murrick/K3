@@ -1782,13 +1782,6 @@ public class Mind implements IMind {
         return qualifyCurrentContext(logging).isValid();
     }
 
-    private boolean hasQueryFederation() throws Exception {
-        if (!isStorageUsed()) return false;
-        IData data = user.getData();
-        return data instanceof IContextFederation && isStorageUsed()
-                && ((IContextFederation) data).hasConnectedContexts();
-    }
-
     /** Explicit local publisher boundary; queries never invoke this operation. */
     public long saveContextConnections() throws Exception {
         synchronized (locker) {
