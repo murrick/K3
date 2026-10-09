@@ -270,7 +270,7 @@ public class Compiller {
     private void parseArgs(ArgumentsList arg, Leaf root, int level, Map<String, Argument> replacements, Queue<ITerm> externals) throws Exception {
         if (root == null) {
             return;
-        } else if (isFunction(root)) {
+        } else if (isFunction(root) && !"_set".equals(root.getValue())) {
             ArgumentsList arguments = new ArgumentsList();
             parseArgs(arguments, root.getLeft(), level + 1, replacements, externals);
             parseArgs(arguments, root.getRight(), level + 1, replacements, externals);
