@@ -147,6 +147,7 @@ final class TerminalSupportCapture implements AutoCloseable {
     private static final class Frame {
         final int parent;
         final boolean knownBoundary;
+        long sequence;
         Outcome outcome = Outcome.PENDING;
         Frame(int parent, boolean knownBoundary) { this.parent = parent; this.knownBoundary = knownBoundary; }
     }
@@ -163,7 +164,14 @@ final class TerminalSupportCapture implements AutoCloseable {
         if (capture == null) return;
         Integer index = capture.identities.get(child);
         Frame frame = index == null ? null : capture.frames.get(index);
-        if (frame != null) frame.outcome = outcome;
+        if (frame != null) {
+            frame.outcome = outcome;
+            if (outcome == Outcome.COMMITTED) {
+                Long previous = capture.sequences.get(frame.parent);
+                frame.sequence = previous == null ? 1L : previous + 1L;
+                capture.sequences.put(frame.parent, frame.sequence);
+            }
+        }
     }
 
     /** Historical technical commit acceptance, not current revision validity. */
@@ -195,6 +203,47 @@ final class TerminalSupportCapture implements AutoCloseable {
         return pending ? Outcome.PENDING : Outcome.COMMITTED;
     }
 
+    static final class Checkpoint {
+        final java.util.UUID scope;
+        final int target;
+        final long sequence;
+        final String state;
+        final DmzObservedProofGraph graph;
+        Checkpoint(java.util.UUID scope, int target, long sequence, String state, DmzObservedProofGraph graph) {
+            this.scope = scope; this.target = target; this.sequence = sequence; this.state = state; this.graph = graph;
+        }
+    }
+
+    Checkpoint checkpoint(Mind target) throws Exception {
+        requireActive();
+        int index = identity(target);
+        Long sequence = sequences.get(index);
+        if (sequence == null) throw new IllegalStateException("No observed commit into target");
+        List<Application> current = new ArrayList<Application>();
+        for (Application application : applications) {
+            if (outcome(application.mind) != Outcome.COMMITTED) continue;
+            Frame frame = frames.get(application.mind);
+            while (frame != null && frame.parent != index) frame = frames.get(frame.parent);
+            if (frame != null && frame.sequence == sequence) current.add(application);
+        }
+        return new Checkpoint(scopeId, index, sequence, DmzObservationStateFingerprint.capture(target),
+                DmzObservedProofGraph.build(current));
+    }
+
+    boolean isCurrent(Checkpoint checkpoint, Mind target) throws Exception {
+        if (closed || Thread.currentThread() != owner || ACTIVE.get() != this || checkpoint == null)
+            return false;
+        Integer index = identities.get(target);
+        return scopeId.equals(checkpoint.scope) && index != null && index == checkpoint.target
+                && Long.valueOf(checkpoint.sequence).equals(sequences.get(index))
+                && checkpoint.state.equals(DmzObservationStateFingerprint.capture(target));
+    }
+
+    private void requireActive() {
+        if (closed || Thread.currentThread() != owner || ACTIVE.get() != this)
+            throw new IllegalStateException("Active capture scope required");
+    }
+
     private final TerminalSupportCapture previous;
     private final Thread owner;
     private Mind boundary;
@@ -202,6 +251,8 @@ final class TerminalSupportCapture implements AutoCloseable {
     private final List<Application> applications = new ArrayList<Application>();
     private final List<String> applicationGaps = new ArrayList<String>();
     private final List<Match> matches = new ArrayList<Match>();
+    private final java.util.UUID scopeId = java.util.UUID.randomUUID();
+    private final Map<Integer, Long> sequences = new java.util.HashMap<Integer, Long>();
     private final Map<Integer, Frame> frames = new java.util.HashMap<Integer, Frame>();
     private final Map<Object, Integer> identities = new IdentityHashMap<Object, Integer>();
     private boolean closed;
