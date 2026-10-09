@@ -355,7 +355,9 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                         .put("id",row.id).put("statement",row.statement).put("generated",row.generated)
                         .put("comment",row.comment).put("tree",new JSONArray(row.tree)));
                 blocks.put(new JSONObject().put("locator",block.locator).put("context_id",block.revision.getContextId().toString())
-                        .put("revision",block.revision.getRevision()).put("working",block.working).put("configured_by_x",block.configured).put("rules",rules));
+                        .put("revision",block.revision.getRevision()).put("working",block.working).put("configured_by_x",block.configured)
+                        .put("commune",block.revision.getCommune()==null ? JSONObject.NULL : block.revision.getCommune())
+                        .put("commune_members",communeMembers(block.revision.getCommuneMembers())).put("rules",rules));
             }
             return blocks;
     }

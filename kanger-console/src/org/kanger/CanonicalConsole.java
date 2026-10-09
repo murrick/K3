@@ -415,7 +415,7 @@ public final class CanonicalConsole {
                     showContextOpinions(federation.getContextOpinions(), invocation.getIntent(), federation.getFederationSnapshot());
                 } else if (invocation.getIntent()
                         == org.kanger.command.CommandIntent.CTX_RULES) {
-                    showContextRules(federation.getContextRules(),String.valueOf(invocation.getArgument("selection")));
+                    showContextRules(federation.getContextRules(),String.valueOf(invocation.getArgument("selection")), federation.getFederationSnapshot());
                 } else if (invocation.getIntent()
                         == org.kanger.command.CommandIntent.CTX_VERSION) {
                     showContextVersion(
@@ -1257,12 +1257,17 @@ public final class CanonicalConsole {
         }
         return -1L;
     }
-    private static void showContextRules(java.util.List<IContextFederation.RuleBlock> blocks,String selection) {
+    private static void showContextRules(java.util.List<IContextFederation.RuleBlock> blocks,String selection, IContextFederation.Snapshot snapshot) {
         boolean first = true;
         for(IContextFederation.RuleBlock block:blocks) {
             if (!first) System.out.println();
             first = false;
-            System.out.printf("Context %s@%d [%s]%n",block.locator,block.revision.getRevision(),block.working?"live X":block.configured?"pinned, configured by X":"pinned");
+            if (block.revision.getCommune() != null) {
+                System.out.println("Commune " + block.revision.getCommune() + " [technical layer"
+                        + (block.configured ? ", configured by X" : "") + "]");
+                for (IContextFederation.Revision member : block.revision.getCommuneMembers())
+                    System.out.println("  " + sourceLabel(snapshot, member));
+            } else System.out.printf("Context %s@%d [%s]%n",block.locator,block.revision.getRevision(),block.working?"live X":block.configured?"pinned, configured by X":"pinned");
             if(block.rules.isEmpty()) System.out.println("No rules selected");
             for(IContextFederation.RuleRow rule:block.rules) {
                 System.out.printf("Rule %03d%s: %s%n",rule.id,rule.generated?" G":"",rule.statement);

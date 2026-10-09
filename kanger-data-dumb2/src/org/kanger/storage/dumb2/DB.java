@@ -879,6 +879,18 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             result.add(new IContextFederation.RuleBlock(block.locator, block.revision, block.working, block.rules,
                     !c.getInitialization().isEmpty()));
         }
+        if (!addressed && (selection == IContextFederation.RuleSelection.ALL
+                || selection == IContextFederation.RuleSelection.PRODUCED)) {
+            for (ContextConnection participant : workingConnections.executionConnections(communeCache)) {
+                CommuneRuntime commune = participant.commune();
+                if (commune == null) continue;
+                IContextFederation.RuleBlock block = org.kanger.ContextRuleInspection.inspect(commune.mind(),
+                        "trust " + participant.getTrustGroup(), localOpinionRevision(commune.mind(), participant.getTarget()),
+                        false, selection, null);
+                result.add(new IContextFederation.RuleBlock(block.locator, block.revision, false, block.rules,
+                        commune.members().stream().anyMatch(member -> !member.getInitialization().isEmpty())));
+            }
+        }
         if(result.isEmpty()) throw new CommandErrorException("No direct Context connection exists for locator " + locator);
         return Collections.unmodifiableList(result);
     }

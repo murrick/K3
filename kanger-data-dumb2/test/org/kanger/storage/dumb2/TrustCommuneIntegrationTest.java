@@ -56,6 +56,77 @@ class TrustCommuneIntegrationTest {
         }
     }
 
+    @Test void workingProductionsAreInspectedSeparatelyAndNeverChangePinnedMembers() throws Exception {
+        family();
+        open("natives");
+        RevisionRef nativePin = new RevisionRef(data.getContextId(), data.getRevision());
+        Map<String,String> originalFiles = pinnedFiles("natives", nativePin);
+        List<String> before;
+        try { before = pinnedRules("natives", nativePin); } finally { close(); }
+        open("X");
+        try {
+            command("ctx connect facts trust own"); command("ctx connect natives trust own");
+            rows("?$x father(John,x);", "Tom", "Sarah");
+            IContextFederation.RuleBlock joint = jointRules();
+            assertEquals(2, joint.revision.getCommuneMembers().size());
+            assertTrue(joint.rules.stream().anyMatch(rule -> rule.generated));
+            assertTrue(joint.rules.stream().anyMatch(rule -> rule.generated && rule.statement.startsWith("!father(John,Sarah)")));
+            assertTrue(joint.rules.stream().anyMatch(rule -> rule.generated && rule.statement.startsWith("!male(John)")));
+            assertEquals(before, pinnedRules("natives", nativePin));
+            assertEquals(originalFiles, pinnedFiles("natives", nativePin));
+            command("transaction start"); command("ctx close facts");
+            assertEquals(1, jointRules().revision.getCommuneMembers().size());
+            assertFalse(jointRules().rules.stream().anyMatch(rule -> rule.statement.contains("John")));
+            command("rollback");
+            assertEquals(2, jointRules().revision.getCommuneMembers().size());
+            assertEquals(joint.rules.stream().map(rule -> rule.id + ":" + rule.statement).collect(java.util.stream.Collectors.toList()),
+                    jointRules().rules.stream().map(rule -> rule.id + ":" + rule.statement).collect(java.util.stream.Collectors.toList()));
+            assertEquals(before, pinnedRules("natives", nativePin));
+            assertEquals(originalFiles, pinnedFiles("natives", nativePin));
+            command("transaction start"); command("ctx ask facts -daughter(Sarah,John);");
+            assertTrue(jointRules().configured);
+            command("rollback");
+            assertFalse(jointRules().configured);
+            assertEquals(before, pinnedRules("natives", nativePin));
+            assertEquals(originalFiles, pinnedFiles("natives", nativePin));
+        } finally { close(); }
+        mind = (Mind) user.getCurrentMind().useStorage("natives");
+        user.setCurrentMind(mind);
+        try {
+            assertEquals(nativePin.getRevision(), data.getRevision());
+            assertEquals(before, pinnedRules("natives", nativePin));
+            assertEquals(originalFiles, pinnedFiles("natives", nativePin));
+            assertTrue(data.inspectRules(mind, null, IContextFederation.RuleSelection.ALL, null).get(0).rules.stream()
+                    .noneMatch(rule -> rule.statement.contains("John")));
+        } finally { close(); }
+    }
+
+    private IContextFederation.RuleBlock jointRules() throws Exception {
+        return data.inspectRules(mind, null, IContextFederation.RuleSelection.ALL, null).stream()
+                .filter(block -> "own".equals(block.revision.getCommune())).findFirst().get();
+    }
+
+    private Map<String,String> pinnedFiles(String name, RevisionRef pin) throws Exception {
+        Path generation = ContextStore.generationPath(directory.resolve(name), pin.getRevision());
+        Map<String,String> files = new TreeMap<>();
+        try (java.util.stream.Stream<Path> paths = java.nio.file.Files.walk(generation)) {
+            for (Path path : (Iterable<Path>) paths.filter(java.nio.file.Files::isRegularFile)::iterator)
+                files.put(generation.relativize(path).toString(), Base64.getEncoder().encodeToString(
+                        java.security.MessageDigest.getInstance("SHA-256").digest(java.nio.file.Files.readAllBytes(path))));
+        }
+        return files;
+    }
+
+    private List<String> pinnedRules(String name, RevisionRef pin) throws Exception {
+        try (SnapshotMindRuntime snapshot = SnapshotMindRuntime.open(directory.resolve(name), pin, "check-pin")) {
+            List<String> rules = new ArrayList<>();
+            for (org.kanger.interfaces.IRule rule : snapshot.getMind().getRules())
+                if (!rule.isDeleted(snapshot.getMind()))
+                    rules.add(rule.getId() + ":" + rule.isGenerated() + ":" + rule.toString(snapshot.getMind()));
+            return rules;
+        }
+    }
+
     @Test void defaultOpinionsUseWholeCommuneAndExplicitMemberStaysIsolated() throws Exception {
         family();
         open("X");
