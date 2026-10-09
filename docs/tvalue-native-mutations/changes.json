@@ -1,0 +1,76 @@
+{
+  "Mind.java": [
+    {
+      "old": "        init();\n    }",
+      "new": "        init();\n        MutationJournalHooks.constructed(this);\n    }"
+    },
+    {
+      "old": "            if (!initialized) {\n                parent.abortTransactionStart();\n            }\n        }\n    }",
+      "new": "            if (!initialized) {\n                parent.abortTransactionStart();\n            }\n        }\n        MutationJournalHooks.constructed(this);\n    }"
+    },
+    {
+      "old": "    private boolean commit(IMind m, boolean settleRejectedChild) throws Exception {",
+      "new": "    private boolean commit(IMind m, boolean settleRejectedChild) throws Exception {\n        int before = pendingTransactionCount();\n        MutationJournalHooks.beginSettlement(this);\n        try { return journalCommitBody(m,settleRejectedChild); }\n        finally {\n            MutationJournalHooks.endSettlement(this);\n            if(pendingTransactionCount() < before) MutationJournalHooks.retire((Mind)m);\n        }\n    }\n\n    private boolean journalCommitBody(IMind m, boolean settleRejectedChild) throws Exception {"
+    },
+    {
+      "old": "    public void release(IMind m) throws Exception {",
+      "new": "    public void release(IMind m) throws Exception {\n        int before = pendingTransactionCount();\n        MutationJournalHooks.beginSettlement(this);\n        try { journalReleaseBody(m); }\n        finally {\n            MutationJournalHooks.endSettlement(this);\n            if(pendingTransactionCount() < before) MutationJournalHooks.retire((Mind)m);\n        }\n    }\n\n    private void journalReleaseBody(IMind m) throws Exception {"
+    },
+    {
+      "old": "    public void setUnitDeleted(IUnit unit, boolean on) {",
+      "new": "    public void setUnitDeleted(IUnit unit, boolean on) {\n        journalSetUnitDeletedBody(unit,on);\n        if(unit instanceof org.kanger.units.TValue)MutationJournalHooks.touch(this,(org.kanger.units.TValue)unit,\"visibility\");\n    }\n\n    private void journalSetUnitDeletedBody(IUnit unit, boolean on) {"
+    }
+  ],
+  "factory/TValueFactory.java": [
+    {
+      "old": "            indexInitialized = base != null;\n        }\n    }",
+      "new": "            indexInitialized = base != null;\n        }\n        org.kanger.MutationJournalHooks.reset(mind);\n    }"
+    },
+    {
+      "old": "        return cache.mark();",
+      "new": "        long journalMark=cache.mark();\n        org.kanger.MutationJournalHooks.mark(mind);\n        return journalMark;"
+    },
+    {
+      "old": "    public long commit() throws Exception {\n        long result = cache.commit();\n        synchronized (indexLock) {\n            if (!additionsStack.isEmpty()) {\n                List<TValue> additions = additionsStack.pop();\n                if (!additionsStack.isEmpty()) {\n                    additionsStack.peek().addAll(additions);\n                }\n            }\n            if (!actionStack.isEmpty()) {\n                actionStack.pop();\n            }\n        }\n        return result;\n    }\n\n",
+      "new": "    public long commit() throws Exception {\n        long result = cache.commit();\n        synchronized (indexLock) {\n            if (!additionsStack.isEmpty()) {\n                List<TValue> additions = additionsStack.pop();\n                if (!additionsStack.isEmpty()) {\n                    additionsStack.peek().addAll(additions);\n                }\n            }\n            if (!actionStack.isEmpty()) {\n                actionStack.pop();\n            }\n        }\n        org.kanger.MutationJournalHooks.complete(mind);\n        return result;\n    }\n\n"
+    },
+    {
+      "old": "    public long release() throws Exception {\n        long result = cache.release();\n        List<TValue> additions = null;\n        synchronized (indexLock) {\n            if (!additionsStack.isEmpty()) {\n                additions = additionsStack.pop();\n            }\n            if (!actionStack.isEmpty()) {\n                action = actionStack.pop();\n            }\n        }\n        if (additions != null) {\n            for (int i = additions.size() - 1; i >= 0; --i) {\n                unindex(additions.get(i));\n            }\n        }\n        return result;\n    }\n\n",
+      "new": "    public long release() throws Exception {\n        long result = cache.release();\n        List<TValue> additions = null;\n        synchronized (indexLock) {\n            if (!additionsStack.isEmpty()) {\n                additions = additionsStack.pop();\n            }\n            if (!actionStack.isEmpty()) {\n                action = actionStack.pop();\n            }\n        }\n        if (additions != null) {\n            for (int i = additions.size() - 1; i >= 0; --i) {\n                unindex(additions.get(i));\n            }\n        }\n        org.kanger.MutationJournalHooks.complete(mind);\n        return result;\n    }\n\n"
+    },
+    {
+      "old": "    public synchronized TValue add(TVariable tv, ITerm o) throws Exception {\n        TValue t = find(tv, o);\n        if (t == null) {\n            t = new TValue(tv, o, mind);\n            t.setTVar(tv);\n            t.setId(((User) mind.getUser()).nextId(SCHEMA));\n            t.setMindId(mind.getId());\n            cache.add(t);\n            index(t);\n            synchronized (indexLock) {\n                if (!additionsStack.isEmpty()) {\n                    additionsStack.peek().add(t);\n                }\n            }\n            if (top == null) {\n                top = cache.getRoot();\n            }\n            action = true;\n            tv.incFloodControl(o);\n        } else {\n            t.setDeleted(false, mind);\n        }\n        return t;\n    }\n\n",
+      "new": "    public synchronized TValue add(TVariable tv, ITerm o) throws Exception {\n        TValue t = find(tv, o);\n        if (t == null) {\n            t = new TValue(tv, o, mind);\n            t.setTVar(tv);\n            t.setId(((User) mind.getUser()).nextId(SCHEMA));\n            t.setMindId(mind.getId());\n            cache.add(t);\n            index(t);\n            synchronized (indexLock) {\n                if (!additionsStack.isEmpty()) {\n                    additionsStack.peek().add(t);\n                }\n            }\n            if (top == null) {\n                top = cache.getRoot();\n            }\n            action = true;\n            tv.incFloodControl(o);\n        } else {\n            t.setDeleted(false, mind);\n        }\n        org.kanger.MutationJournalHooks.touch(mind,t,\"add\");\n        return t;\n    }\n\n"
+    },
+    {
+      "old": "            cache.delete(((IUnit) o).getId());",
+      "new": "            cache.delete(((IUnit) o).getId());\n            org.kanger.MutationJournalHooks.touch(mind,(TValue)o,\"remove\");"
+    },
+    {
+      "old": "        action = action || base.isAction();",
+      "new": "        action = action || base.isAction();\n        org.kanger.MutationJournalHooks.promoted(mind,base);"
+    },
+    {
+      "old": "    public void clear() throws Exception {",
+      "new": "    public void clear() throws Exception {\n        Object token=org.kanger.MutationJournalHooks.beforeClear(mind,this);\n        try { journalClearBody(); }\n        finally { org.kanger.MutationJournalHooks.afterClear(mind,token); }\n    }\n\n    private void journalClearBody() throws Exception {"
+    }
+  ],
+  "units/TValue.java": [
+    {
+      "old": "    public void setValue(Term value) {",
+      "new": "    public void setValue(Term value) {\n        long oldId=getId(),oldVariable=getTVarId(),oldTerm=getValueId();\n        try { journalsetValueBody(value); }\n        finally { org.kanger.MutationJournalHooks.metadata(this,oldId,oldVariable,oldTerm,\"setValue\"); }\n    }\n\n    private void journalsetValueBody(Term value) {"
+    },
+    {
+      "old": "    public void setId(long id) {",
+      "new": "    public void setId(long id) {\n        long oldId=getId(),oldVariable=getTVarId(),oldTerm=getValueId();\n        try { journalsetIdBody(id); }\n        finally { org.kanger.MutationJournalHooks.metadata(this,oldId,oldVariable,oldTerm,\"setId\"); }\n    }\n\n    private void journalsetIdBody(long id) {"
+    },
+    {
+      "old": "    public void setTVar(TVariable tVar) {",
+      "new": "    public void setTVar(TVariable tVar) {\n        long oldId=getId(),oldVariable=getTVarId(),oldTerm=getValueId();\n        try { journalsetTVarBody(tVar); }\n        finally { org.kanger.MutationJournalHooks.metadata(this,oldId,oldVariable,oldTerm,\"setTVar\"); }\n    }\n\n    private void journalsetTVarBody(TVariable tVar) {"
+    },
+    {
+      "old": "    public void setMindId(long mindId) {",
+      "new": "    public void setMindId(long mindId) {\n        long oldId=getId(),oldVariable=getTVarId(),oldTerm=getValueId();\n        try { journalsetMindIdBody(mindId); }\n        finally { org.kanger.MutationJournalHooks.metadata(this,oldId,oldVariable,oldTerm,\"setMindId\"); }\n    }\n\n    private void journalsetMindIdBody(long mindId) {"
+    }
+  ]
+}

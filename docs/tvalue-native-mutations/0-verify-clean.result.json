@@ -1,0 +1,29 @@
+{
+  "repetition": 0,
+  "selected": 0,
+  "flag": "verify",
+  "mode": "clean",
+  "exit_code": 0,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/native-hooks-7tdwnlqf",
+    "-Dresult.path=/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-native-mutations/0-verify-clean",
+    "-Dnative.hooks=false",
+    "-Djournal.cost.enabled=true",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-Dkanger.experiment.verifyTValueIndex=true",
+    "-Dkanger.experiment.verifySolveSync=true",
+    "-cp",
+    "../build/tvalue-native-mutations-clean:../K3-smart-native/kanger/resources:../K3-smart-native/kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.AutoMutationRunner",
+    "0"
+  ]
+}
