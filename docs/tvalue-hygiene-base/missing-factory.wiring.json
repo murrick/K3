@@ -1,0 +1,9 @@
+{
+  "exit_code": 0,
+  "command": [
+    "java",
+    "-cp",
+    "../build/tvalue-hygiene-base-tests:../build/tvalue-hygiene-base.jar:../build/tvalue-hygiene-base-missing-factory:../build/tvalue-hygiene-base-hooked:lib/jline-3.13.0.jar",
+    "org.kanger.VanillaConsumerRunner"
+  ]
+}

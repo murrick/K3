@@ -1,0 +1,220 @@
+{
+  "old_native_head": "5d5f6aff271f1abf371fbde55d637744c53f0bc3",
+  "new_native_head": "2422f7f6d9e1af7608203b1566df64b5f29fe344",
+  "files_changed": [
+    {
+      "status": "M",
+      "path": ".github/workflows/kanger-qualification-isolation.yml",
+      "new_sha256": "3d27338478977d9880192e2c0f932d8f163c7f4a43b84964d5d6ef87e757617b"
+    },
+    {
+      "status": "A",
+      "path": "docs/architecture/3.8.0-follow-up-plan-2026-10-09.md",
+      "new_sha256": "7bd790334bfc1815a76fdb12ddee73bdc0dec64c29dffcbc4d88e9b1c3be3692"
+    },
+    {
+      "status": "M",
+      "path": "kanger-console/src/org/kanger/CanonicalConsole.java",
+      "new_sha256": "42d1c90a1e1f0f7380aa04ab21a25621bd7e41e3cd79f6a29464432a46520d66"
+    },
+    {
+      "status": "A",
+      "path": "kanger-console/src/org/kanger/ConsoleContextView.java",
+      "new_sha256": "ce38cfb36a93252602c41e95e8b649f5ba844b1ea8f313fd13d0c1d88de01e85"
+    },
+    {
+      "status": "A",
+      "path": "kanger-console/src/org/kanger/ConsoleSources.java",
+      "new_sha256": "ea1b07ca6d6011d9089876fbfd9aecea25438baff98877304ebbf56dae79aba6"
+    },
+    {
+      "status": "A",
+      "path": "kanger-console/src/org/kanger/ConsoleTestCommand.java",
+      "new_sha256": "c629356f517c2ba725559d372b4061cd5e9d7445f539a9c54accb4c158241844"
+    },
+    {
+      "status": "M",
+      "path": "kanger-data-dumb2/src/org/kanger/storage/dumb2/CommuneRuntimeCache.java",
+      "new_sha256": "bee2fe0e80b87ac986a1a4a982e3328b993081edc8ca11085f5e3caaa2ec50b0"
+    },
+    {
+      "status": "M",
+      "path": "kanger-data-dumb2/src/org/kanger/storage/dumb2/ConnectionVector.java",
+      "new_sha256": "7561486a3a1956a1d917c343c2c1f8703ee4e7551b1d1ff58f8ae7224d7b59f6"
+    },
+    {
+      "status": "M",
+      "path": "kanger-data-dumb2/src/org/kanger/storage/dumb2/ContextConnection.java",
+      "new_sha256": "57a08e638ba1de90a3e470d79280ab2607f9728a2deb98c5a0d7ed2ff6ea34f9"
+    },
+    {
+      "status": "M",
+      "path": "kanger-data-dumb2/src/org/kanger/storage/dumb2/DB.java",
+      "new_sha256": "d6d961479d2b4be2837f796e95bcf17e9fa15ec7cb3688b6ce14c78fffbfae46"
+    },
+    {
+      "status": "A",
+      "path": "kanger-data-dumb2/test/org/kanger/storage/dumb2/ContextLongSessionProbe.java",
+      "new_sha256": "a53c49da963969f16f0c8cdbe14954d7df681040732732b77898d2783fb292e1"
+    },
+    {
+      "status": "A",
+      "path": "kanger-data-dumb2/test/org/kanger/storage/dumb2/ContextLongSessionTest.java",
+      "new_sha256": "18872ea9f66e040df7894bb4f4ff7fe8a3d6ef49a676599bbbd9a47cf70a7d60"
+    },
+    {
+      "status": "A",
+      "path": "kanger-data-dumb2/test/org/kanger/storage/dumb2/ContextPinnedSessionProbe.java",
+      "new_sha256": "d8e12be6576f8fe53a3813f348863db812a3f2fa250f3a65024204ca0bfa7065"
+    },
+    {
+      "status": "A",
+      "path": "kanger-data-dumb2/test/org/kanger/storage/dumb2/ContextRejectedTopologyProbe.java",
+      "new_sha256": "8a6752d933f15f77594301857aa558325c6b6f474eee7c22d1494c27711ce5f5"
+    },
+    {
+      "status": "A",
+      "path": "kanger-data-dumb2/test/org/kanger/storage/dumb2/ContextStackSessionProbe.java",
+      "new_sha256": "6055803102423efec62ea1b53ef3c1947280332bbb4c38429bd15c15fc14ca64"
+    },
+    {
+      "status": "A",
+      "path": "kanger-data-dumb2/test/org/kanger/storage/dumb2/ContextTopologySessionProbe.java",
+      "new_sha256": "2aaa1b8cec8f66a0a01793e6d9ae2de9f2e5d3b4df84fde95dd9e608b8b65a85"
+    },
+    {
+      "status": "M",
+      "path": "kanger-qualification/src/org/kanger/KangerCanonicalConsoleLifecycleConvergenceRunner.java",
+      "new_sha256": "2ee36e0fdd5e19e85efebc3ecc649f920d3587a441578cbc61eb8358f5ff427a"
+    },
+    {
+      "status": "M",
+      "path": "kanger-qualification/src/org/kanger/StorageRootCollisionReopenTest.java",
+      "new_sha256": "a415ebdd3021bb4a33039cf628e4e9aaa9344c733cadba647c0d18cb3d7ca6bd"
+    },
+    {
+      "status": "A",
+      "path": "kanger/src/org/kanger/ContextProvenance.java",
+      "new_sha256": "d4aa5b07cf5f439f25fb3b9fb036f70b4e37e7c76f10556359a0c20b0ae03fd4"
+    },
+    {
+      "status": "A",
+      "path": "kanger/src/org/kanger/ContextQueryExplanation.java",
+      "new_sha256": "eca55e8686761944da07040ca1be9eb69453ae3f26aa93fe6b34e07d30778cf0"
+    },
+    {
+      "status": "M",
+      "path": "kanger/src/org/kanger/Mind.java",
+      "new_sha256": "0d7d749d0e6b453bc77fd39af3584e45a49756787d327f80ceb1e960ccc8a7ce"
+    },
+    {
+      "status": "M",
+      "path": "kanger/src/org/kanger/compiler/Compiller.java",
+      "new_sha256": "d4aac3119ca6ff924b39a87ae144bc9bf815fdbdb4b6a39487801baa75faca77"
+    },
+    {
+      "status": "M",
+      "path": "kanger/src/org/kanger/interfaces/internal/IContextFederation.java",
+      "new_sha256": "26a067c1551cf8aefce4dcb5fefc44538a4b3a172bad8ab5e652ef9bc226fef4"
+    }
+  ],
+  "all_observer_anchors_match_without_adaptation": {
+    "Mind.java": [
+      {
+        "old_sha256": "eaf68be80aded137738c4ccb3cf9b9592c503a14d8488b94d427b7d12da09395",
+        "unique_anchor": true
+      },
+      {
+        "old_sha256": "cfb4c7c53f0a80311779ed76a93590e3ad6d60a779d91b838d704ec4baaddd70",
+        "unique_anchor": true
+      },
+      {
+        "old_sha256": "1d47a7e7ee6c5a302236593b2ffe43b0b579b2d7cff359aae0491de126d6a3af",
+        "unique_anchor": true
+      },
+      {
+        "old_sha256": "bf7fdc95000e288e5771d62f1768ddb30cdaf996693387b432d726198dfea9ef",
+        "unique_anchor": true
+      },
+      {
+        "old_sha256": "0cadbcefa6d2fbda999364dc242ddbfaa7894444fe3bfe05304a438e82b0e057",
+        "unique_anchor": true
+      },
+      {
+        "old_sha256": "c643b7193afd6426627ecbb733bd60aec1a1f057975a69cc939064cd67f62f8a",
+        "unique_anchor": true
+      }
+    ],
+    "factory/TValueFactory.java": [
+      {
+        "old_sha256": "c4b0aff40b3eff935d24261ea277aa8d973f8baa84a779a90213a2bbdecf54b9",
+        "unique_anchor": true
+      },
+      {
+        "old_sha256": "e232053645c6a2b67ed0427e7aa549ba9aeeca9ed2276106d52b89fa96bafecf",
+        "unique_anchor": true
+      },
+      {
+        "old_sha256": "eebc5ba76e1635165c76a3b85e679034d0a4e0eb467da0e9a73d4e25164d9d4f",
+        "unique_anchor": true
+      },
+      {
+        "old_sha256": "6b59fbfcb03ad7f758dc982a0af3555bdd013a22bbb9685f1fb52cb58932ba94",
+        "unique_anchor": true
+      },
+      {
+        "old_sha256": "0970046bc0204260406cbcaf21a08d6bd7fe1e7aed97ae970e2774f61f55587e",
+        "unique_anchor": true
+      },
+      {
+        "old_sha256": "c899f3cb89fe90409fee75dfadc4e70fac6be8b868853d4421d742ecb9683690",
+        "unique_anchor": true
+      },
+      {
+        "old_sha256": "dd2aca715b2487c61c0f1649baf62ef6abdd3cc01128421bbd36fda84692ea87",
+        "unique_anchor": true
+      },
+      {
+        "old_sha256": "5b89c77c810c22ba9dd3a5d3912977c99a1b5e898a5385069d0b30e515963863",
+        "unique_anchor": true
+      },
+      {
+        "old_sha256": "02bfe815c8241731c0feff077e2b983ce9b8250433d10f00b0b82eaf1a547e9b",
+        "unique_anchor": true
+      }
+    ],
+    "units/TValue.java": [
+      {
+        "old_sha256": "8a40f7f30c22e2c7a6ed84fb8ca1e017da6e817cc94dcc67dd3ce80fe35b0327",
+        "unique_anchor": true
+      },
+      {
+        "old_sha256": "f740da65f59da4d38b45733be7f1a6f80f36854ee71b046f6c4ffede6499a5f9",
+        "unique_anchor": true
+      },
+      {
+        "old_sha256": "f130c96f7b371f238f84bc9544d11815762150f6eae8d015f71857c10f32e343",
+        "unique_anchor": true
+      },
+      {
+        "old_sha256": "dc19f8f68457f1ae81d854c646d8f8a2852d7db054d8f3e4bf9ca432ac453116",
+        "unique_anchor": true
+      },
+      {
+        "old_sha256": "6dca4ac847ff4cd969e4edb281fda216966c74b9e7df26815093f3e72b439da6",
+        "unique_anchor": true
+      }
+    ]
+  },
+  "added_native_compile_dependencies": [
+    "../K3-observer-native/kanger-console/src/org/kanger/ConsoleContextView.java",
+    "../K3-observer-native/kanger-console/src/org/kanger/ConsoleSources.java",
+    "../K3-observer-native/kanger-console/src/org/kanger/ConsoleTestCommand.java",
+    "../K3-observer-native/kanger/src/org/kanger/ContextProvenance.java",
+    "../K3-observer-native/kanger/src/org/kanger/ContextQueryExplanation.java"
+  ],
+  "native_compile_sources": 392,
+  "changed_backend_outside_qualification": "kanger-data-dumb2",
+  "semantic_change_requiring_separate_storage_qualification": "root-quiescent connection-state reclamation",
+  "TValueFactory_and_TValue_sources_unchanged": true
+}

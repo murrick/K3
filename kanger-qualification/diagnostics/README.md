@@ -1,5 +1,10 @@
 # TValue diagnostic source set
 
+## Selected native base after hygiene
+
+The bounded observer qualification now targets native `2422f7f6d9e1af7608203b1566df64b5f29fe344`. See [the fresh-base report](../../docs/tvalue-hygiene-base.md) and its `build.py`, `run.py`, `wiring.py`, `cost_smoke.py` and `analyze.py`. Keep a clean `../K3-observer-native` checkout on that exact commit. The diagnostic implementation is unchanged; all 34 requalification JVMs preserve the previous native controls and checked traces. Earlier build commands below preserve their original `5d5f6aff` binding. Old timing figures do not qualify the new base.
+
+
 ## Current observer/session experiment
 
 The current implementation adds explicit observer attachment, exclusive thread-owned consumer sessions and mandatory `NO_INSTRUMENTATION` refusal. See [the observer/session report](../../docs/tvalue-observer-session.md). Runtime API sources are isolated in `runtime/`; they are compiled only into generated qualification runtimes. Production sources and defaults are unchanged.
