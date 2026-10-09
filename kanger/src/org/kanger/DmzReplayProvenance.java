@@ -161,6 +161,21 @@ public final class DmzReplayProvenance implements AutoCloseable {
         capture.bindings.add(new Binding(index, rule.getId(), capture.input, duplicate));
     }
     public List<Binding> snapshot() { return Collections.unmodifiableList(new ArrayList<Binding>(bindings)); }
+    /** Historical accepted occurrences visible through this Mind ancestry, keyed by native ID. */
+    List<Binding> sources(Mind mind, long nativeRule) {
+        if (closed || Thread.currentThread() != owner || ACTIVE.get() != this)
+            throw new IllegalStateException("Source resolution requires active owning journal");
+        java.util.Set<Integer> visible = new java.util.HashSet<Integer>();
+        for (Mind level = mind; level != null; level = (Mind) level.getNext()) {
+            Integer index = targets.get(level);
+            if (index != null) visible.add(index);
+        }
+        List<Binding> result = new ArrayList<Binding>();
+        for (Binding binding : bindings)
+            if (binding.nativeRule == nativeRule && visible.contains(binding.target)
+                    && outcome(binding.target) == Outcome.ACCEPTED) result.add(binding);
+        return Collections.unmodifiableList(result);
+    }
     @Override public void close() {
         if (closed) return;
         if (Thread.currentThread() != owner || ACTIVE.get() != this)

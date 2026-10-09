@@ -374,6 +374,37 @@ final class TerminalSupportCapture implements AutoCloseable {
         return Collections.unmodifiableList(new ArrayList<Application>(applications));
     }
 
+    /** Detached exact-ID source alternatives; generated supports require upstream proof resolution. */
+    static final class ApplicationSources {
+        final Application application;
+        final List<DmzReplayProvenance.Binding> ruleSources;
+        final List<List<DmzReplayProvenance.Binding>> supportSources;
+        ApplicationSources(Application application, List<DmzReplayProvenance.Binding> ruleSources,
+                List<List<DmzReplayProvenance.Binding>> supportSources) {
+            this.application = application; this.ruleSources = ruleSources;
+            this.supportSources = Collections.unmodifiableList(supportSources);
+        }
+    }
+    List<ApplicationSources> sourceSnapshot(DmzReplayProvenance journal) {
+        if (closed || Thread.currentThread() != owner || ACTIVE.get() != this)
+            throw new IllegalStateException("Source resolution requires active support scope");
+        Map<Integer, Object> objects = new java.util.HashMap<Integer, Object>();
+        for (Map.Entry<Object, Integer> entry : identities.entrySet()) objects.put(entry.getValue(), entry.getKey());
+        List<ApplicationSources> result = new ArrayList<ApplicationSources>();
+        for (Application application : settlementSnapshot().accepted) {
+            Mind mind = (Mind) objects.get(application.mind);
+            IRule rule = (IRule) objects.get(application.rule);
+            List<List<DmzReplayProvenance.Binding>> supports = new ArrayList<List<DmzReplayProvenance.Binding>>();
+            for (Support support : application.supports) {
+                IRule evidence = (IRule) objects.get(support.evidence);
+                supports.add(support.primary ? journal.sources(mind, evidence.getId())
+                        : Collections.<DmzReplayProvenance.Binding>emptyList());
+            }
+            result.add(new ApplicationSources(application, journal.sources(mind, rule.getId()), supports));
+        }
+        return Collections.unmodifiableList(result);
+    }
+
     List<String> applicationGapSnapshot() {
         return Collections.unmodifiableList(new ArrayList<String>(applicationGaps));
     }
