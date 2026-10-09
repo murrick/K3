@@ -1,0 +1,63 @@
+package org.kanger;
+import java.util.*;
+import java.lang.reflect.*;
+import java.nio.file.*;
+import org.kanger.units.*;
+import org.kanger.interfaces.internal.ICache;
+import org.kanger.exception.TransactionSettlementException;
+/** Full native Mind settlement; unchanged diagnostics bridged outside native calls. */
+public final class MindSettlementRunner {
+ static int checks,controls;static final List<String> outcomes=new ArrayList<>();
+ static void require(boolean b,String reason){if(!b)throw new AssertionError(reason);checks++;}
+ static Field field(Class<?> type,String name)throws Exception{for(Class<?> c=type;c!=null;c=c.getSuperclass())try{Field f=c.getDeclaredField(name);f.setAccessible(true);return f;}catch(NoSuchFieldException e){}throw new NoSuchFieldException(name);}
+ static void observe(Mind m,String reason)throws Exception{AuthorityContextRunner.observe(m,reason);}
+ static void retire(Mind m){BeforeAuthorityJournal.retire(m);StreamAuthorityJournal.retire(m);}
+ static void notify(Mind m,TValue v,String reason){BeforeAuthorityJournal.touch(m,v,reason);StreamAuthorityJournal.touch(m,v,reason);}
+ static void beginSettlement(Mind m){BeforeAuthorityJournal.beginSettlement(m);StreamAuthorityJournal.beginSettlement(m);}
+ static void endSettlement(Mind m){BeforeAuthorityJournal.endSettlement(m);StreamAuthorityJournal.endSettlement(m);}
+ static Rule compile(Mind m,String line)throws Exception{Rule r=(Rule)m.compileLine(line,false,null);require(r!=null,"native compile "+line);return r;}
+ static void control(Mind m,TVariable variable,List<TValue> expected,String reason)throws Exception{
+  List<TValue> actual=new ArrayList<>();m.getTValues().forEach(variable,o->{actual.add((TValue)o);return true;});require(actual.size()==expected.size(),"native enumeration size "+reason);for(int i=0;i<expected.size();i++){require(actual.get(i)==expected.get(i),"native exact reference/order "+reason);require(m.getTValues().get(expected.get(i).getId())==expected.get(i),"native canonical lookup "+reason);}
+  String before=ResidentTValueRead.fingerprint(m);List<TValue> read=ResidentTValueRead.bucket(m,variable.getId());require(read.size()==actual.size(),"reader/native size");for(int i=0;i<read.size();i++)require(read.get(i)==actual.get(i),"reader/native identity");SortedMap<Long,String> nativeView=new TreeMap<>();if(!actual.isEmpty())nativeView.put(variable.getId(),ResidentTValueRead.encode(m,actual));require(nativeView.equals(ResidentTValueRead.authority(m))&&nativeView.equals(StreamAuthorityRead.authority(m)),"full native authority "+reason);require(before.equals(ResidentTValueRead.fingerprint(m)),"all observer reads pure");controls++;
+ }
+ static void checkpoints(Mind m)throws Exception{
+  Object[] factories={m.getFunctions(),m.getFValues(),m.getTVars(),m.getTValues(),m.getDomains(),m.getRules(),m.getComments(),m.getLibrary()};for(Object factory:factories){Object cache=field(factory.getClass(),"cache").get(factory);require(((Stack<?>)field(cache.getClass(),"stack").get(cache)).isEmpty(),"composite native cache checkpoint closed");for(Class<?> c=factory.getClass();c!=null;c=c.getSuperclass())for(Field f:c.getDeclaredFields())if(Stack.class.isAssignableFrom(f.getType())){f.setAccessible(true);require(((Stack<?>)f.get(factory)).isEmpty(),"auxiliary native checkpoint closed "+f.getName());}}
+ }
+ static final class InjectedFailure extends RuntimeException {InjectedFailure(String stage){super(stage);}}
+ static final class FailingAnalyzer extends Analyzer {FailingAnalyzer(Mind m){super(m);}@Override public boolean checkDatabase(Set<Long> rules,boolean logging){throw new InjectedFailure("analyzer");}}
+ static final class SuccessfulAnalyzer extends Analyzer {SuccessfulAnalyzer(Mind m){super(m);}@Override public boolean checkDatabase(Set<Long> rules,boolean logging){return false;}}
+ static ICache failing(ICache delegate,String operation){return (ICache)Proxy.newProxyInstance(ICache.class.getClassLoader(),new Class<?>[]{ICache.class},(proxy,method,args)->{if(method.getName().equals(operation)&&method.getParameterTypes().length==0)throw new InjectedFailure(operation);try{return method.invoke(delegate,args);}catch(InvocationTargetException e){throw e.getCause();}});}
+ static void runCase(User u,String mode,int rep,boolean gap)throws Exception{
+  Mind parent=new Mind(u);String aName="a"+rep,bName="b"+rep;Rule owner=new Rule(parent);parent.getRules().register(owner);TVariable variable=parent.getTVars().createTVar(owner,parent.getTerms().add("x"));TValue a=parent.getTValues().add(variable,parent.getTerms().add(aName));control(parent,variable,Collections.singletonList(a),"initial");observe(parent,mode+"-parent-baseline");
+  Mind child=new Mind(parent);compile(child,"!keep("+bName+");");TValue b=child.getTValues().add(variable,child.getTerms().add(bName));control(child,variable,Arrays.asList(a,b),"child-added");observe(child,mode+"-child-baseline");
+  boolean reject=mode.equals("reject")||mode.equals("user-reject")||mode.equals("post-reject");if(!reject)compile(child,"!keep("+aName+");");if(reject){Rule bad=compile(child,"!~keep("+aName+");");bad.setStored(child);}
+  if(!mode.equals("accept")){
+   Mind sibling=new Mind(parent);Rule fact=compile(sibling,"!keep("+aName+");");fact.setStored(sibling);require(parent.commit(sibling),"native sibling commit");require(!parent.getRules().isSequencedBy(child.getRules()),"native non-sequenced branch reached");require(parent.pendingTransactionCount()==1,"sibling consumed exactly one reservation");
+  }
+  control(parent,variable,Collections.singletonList(a),"before-settlement");observe(parent,mode+"-before");Field analyzer=field(Mind.class,"analyzer");Object oldAnalyzer=analyzer.get(parent);Field cacheField=null;Object cacheFactory=null;ICache oldCache=null;
+  if(mode.equals("analyzer-exception"))analyzer.set(parent,new FailingAnalyzer(parent));
+  if(mode.equals("completion-exception")){analyzer.set(parent,new SuccessfulAnalyzer(parent));cacheFactory=parent.getTVars();cacheField=field(cacheFactory.getClass(),"cache");oldCache=(ICache)cacheField.get(cacheFactory);cacheField.set(cacheFactory,failing(oldCache,"commit"));}
+  if(mode.startsWith("post-")){cacheFactory=parent.getFValues();cacheField=field(cacheFactory.getClass(),"cache");oldCache=(ICache)cacheField.get(cacheFactory);cacheField.set(cacheFactory,failing(oldCache,"update"));}
+  beginSettlement(parent);observe(parent,mode+"-deferred");boolean accepted=false;Throwable failure=null;
+  try{accepted=mode.equals("user-reject")?parent.commitUserTransaction(child):parent.commit(child);}catch(Throwable e){failure=e;}finally{analyzer.set(parent,oldAnalyzer);if(cacheField!=null)cacheField.set(cacheFactory,oldCache);}
+  boolean applied=mode.equals("accept")||mode.equals("post-commit");require(accepted==mode.equals("accept"),"native return outcome "+mode);
+  if(mode.equals("analyzer-exception")||mode.equals("completion-exception"))require(failure instanceof InjectedFailure,"native pre-settlement injected failure");
+  else if(mode.startsWith("post-")){require(failure instanceof TransactionSettlementException,"native post-settlement classification");TransactionSettlementException e=(TransactionSettlementException)failure;require(e.isSemanticApplied()==applied&&e.isReservationConsumed(),"irreversible outcome classification");require(e.getOutcome()==(applied?TransactionSettlementException.Outcome.COMMITTED:TransactionSettlementException.Outcome.REJECTED),"exact settlement outcome");require(e.getCause() instanceof InjectedFailure,"post-settlement fault actually injected");}
+  else require(failure==null,"normal settlement no exception");
+  require(parent.pendingTransactionCount()==(mode.equals("user-reject")?1:0),"exact reservation outcome");checkpoints(parent);control(parent,variable,applied?Arrays.asList(a,b):Collections.singletonList(a),"settled");require(parent.getTValues().get(b.getId())==(applied?b:null),"committed versus rolled-back canonical membership");
+  if(!gap){notify(parent,a,"settlement-return");notify(parent,b,"settlement-return");}endSettlement(parent);
+  if(mode.equals("user-reject")){observe(child,"live-user-rejected-child");parent.release(child);require(parent.pendingTransactionCount()==0,"explicit rejected-user rollback consumes reservation");control(parent,variable,Collections.singletonList(a),"user-rollback");observe(parent,"user-rejected-rollback");}
+  retire(child);if(!gap)observe(parent,mode+"-final");outcomes.add("SETTLEMENT_CASE mode="+mode+" gap="+gap+" accepted="+accepted+" applied="+applied+" reservation="+parent.pendingTransactionCount()+" failure="+(failure==null?"none":failure instanceof TransactionSettlementException?"settled-"+((TransactionSettlementException)failure).getOutcome():failure.getMessage()));
+ }
+ static String finishOld(){try{BeforeAuthorityJournal.finish();return null;}catch(AssertionError e){return e.getMessage();}}
+ static String finishNew(){try{StreamAuthorityJournal.finish();return null;}catch(AssertionError e){return e.getMessage();}}
+ public static void main(String[] args)throws Exception{
+  int rep=Integer.parseInt(args[0]);User u=(User)UserFactory.createUser("mind-settlement","mind-settlement");AuthorityContextRunner.begin();for(String mode:new String[]{"accept","reject","user-reject","analyzer-exception","completion-exception","post-commit","post-reject"})runCase(u,mode,rep,false);
+  List<String> old=BeforeAuthorityJournal.finish(),fresh=StreamAuthorityJournal.finish();require(old.equals(fresh),"complete native settlement traces equal");String target=System.getProperty("result.path");Files.write(Paths.get(target+".old.trace"),old);Files.write(Paths.get(target+".memo.trace"),fresh);List<String> errors=new ArrayList<>();
+  for(int mode=0;mode<3;mode++){
+   AuthorityContextRunner.begin();if(mode<2)runCase(u,mode==0?"accept":"post-commit",rep,true);else{Mind m=new Mind(u);observe(m,"negative-baseline");beginSettlement(m);retire(m);endSettlement(m);retire(m);}
+   String a=finishOld(),b=finishNew();require(a!=null&&a.equals(b),"both journals refuse same missing boundary");require(a.contains(mode<2?"dirty projection mismatch ctx=1":"retired unfinished context"),"expected negative settlement gap");errors.add("mode="+mode+" "+a);
+  }
+  Files.write(Paths.get(target+".negative-errors.txt"),errors);Files.write(Paths.get(target+".outcomes.txt"),outcomes);System.out.println("MIND_SETTLEMENT_OK repetition="+rep+" modes=7 negative=3 controls="+controls+" checks="+checks);
+ }
+}

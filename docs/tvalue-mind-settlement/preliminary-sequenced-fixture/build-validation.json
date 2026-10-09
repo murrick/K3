@@ -1,0 +1,27 @@
+{
+  "parent": "f2d16aa77fd151cfdc6c73c676eb603f4888f433",
+  "develop_head": "5d5f6aff271f1abf371fbde55d637744c53f0bc3",
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-smart-base:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-mind-settlement",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-mind-settlement/MindSettlementRunner.java"
+  ],
+  "native_dependency_classes_verified": 730,
+  "source_sha256": {
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-mind-settlement/MindSettlementRunner.java": "e3536aae24e9b24adf90890b63ef31b7d65ea5f0295467df25badbf8def91acb"
+  },
+  "class_sha256": {
+    "org/kanger/MindSettlementRunner.class": "9d67ca2e042a8e29898f637c868e63a6ac39ab426c179938121ab769dc7c6151",
+    "org/kanger/MindSettlementRunner$SuccessfulAnalyzer.class": "d4e90d6eaf3297d43e84978966156fa1e6b9c4489280c64f6bc813f5d39e64ae",
+    "org/kanger/MindSettlementRunner$InjectedFailure.class": "d6c72e5493491176d59f4ea08364d00aa17205b810fea96d79d5aefa977723b7",
+    "org/kanger/MindSettlementRunner$FailingAnalyzer.class": "9f5dd1e69e7c83f65b36be1b8dfcd4e920fd8d476c6e956f4e242a7614a219ab"
+  },
+  "diagnostic_implementation_unchanged": true
+}

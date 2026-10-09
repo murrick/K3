@@ -1,0 +1,1 @@
+Excluded fixture: rules added in parent before child construction keep the RuleFactory top/bottom anchor sequenced even after sibling promotion. Native branch assertion refused it. Final fixture uses registered owner without parent rule insertion, then sibling publishes stored keep(a), matching the retained native rejection safety fixture.

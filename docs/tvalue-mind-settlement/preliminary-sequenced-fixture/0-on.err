@@ -1,0 +1,4 @@
+Exception in thread "main" java.lang.AssertionError: native non-sequenced branch reached
+	at org.kanger.MindSettlementRunner.require(MindSettlementRunner.java:11)
+	at org.kanger.MindSettlementRunner.runCase(MindSettlementRunner.java:35)
+	at org.kanger.MindSettlementRunner.main(MindSettlementRunner.java:55)
