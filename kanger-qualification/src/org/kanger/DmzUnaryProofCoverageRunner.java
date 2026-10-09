@@ -14,6 +14,7 @@ public final class DmzUnaryProofCoverageRunner {
     public static void main(String[] args) throws Exception {
         System.setProperty("user.home", Files.createTempDirectory("dmz-unit-coverage-").toString());
         run("ordinary"); run("long-chain"); run("unseeded-cycle"); run("conjunction"); run("variables"); run("set"); run("anonymous"); run("mixed-pins");
+        sharedPremise(false); sharedPremise(true);
         System.out.println("DMZ_UNARY_PROOF_COVERAGE_PASS checks=" + checks);
     }
     private static void run(String mode) throws Exception {
@@ -98,6 +99,54 @@ public final class DmzUnaryProofCoverageRunner {
                             : mode.equals("anonymous") ? "missing-baseline-source:" : "inconsistent-context-revisions";
                     require(!result.supported && !result.covered && has(result, reason),
                             "unsupported baseline fails closed for its actual boundary: " + mode + " " + result.gaps);
+                }
+            }
+        }
+    }
+    /** Opposite consequences of two general rules share one unchanged primary fact. */
+    private static void sharedPremise(boolean reverse) throws Exception {
+        User user = new User(); new UDF().init(user);
+        Mind q = new Mind(user); user.setCurrentMind(q);
+        IContextResults.Revision a = new IContextResults.Revision(UUID.randomUUID(), 1);
+        IContextResults.Revision b = new IContextResults.Revision(UUID.randomUUID(), 1);
+        IContextResults.Revision fact = new IContextResults.Revision(UUID.randomUUID(), 1);
+        try (DmzReplayProvenance journal = DmzReplayProvenance.begin()) {
+            replay(q, reverse ? b : a, 10, reverse ? "!@x a(x) -> ~b(x);" : "!@x a(x) -> b(x);");
+            replay(q, reverse ? a : b, 10, reverse ? "!@x a(x) -> b(x);" : "!@x a(x) -> ~b(x);");
+            try (TerminalSupportCapture applications = TerminalSupportCapture.begin(q);
+                    CollisionProofCapture collisions = CollisionProofCapture.begin()) {
+                require(q.compile("!anchor(Trigger);", null, false), "general rules alone accepted");
+                require(collisions.snapshot().isEmpty(), "no concrete collision without shared premise");
+                for (org.kanger.interfaces.IRule rule : q.getRules())
+                    require(!q.getRules().isGenerated(rule), "fixture does not materialize a general resolvent");
+                // The unrelated anchor is outside replay; do not include it in the audited baseline.
+            }
+        }
+        q = new Mind(user); user.setCurrentMind(q);
+        try (DmzReplayProvenance journal = DmzReplayProvenance.begin()) {
+            replay(q, reverse ? b : a, 10, reverse ? "!@x a(x) -> ~b(x);" : "!@x a(x) -> b(x);");
+            replay(q, reverse ? a : b, 10, reverse ? "!@x a(x) -> b(x);" : "!@x a(x) -> ~b(x);");
+            replay(q, fact, 11, "!a(John);");
+            try (TerminalSupportCapture applications = TerminalSupportCapture.begin(q);
+                    CollisionProofCapture collisions = CollisionProofCapture.begin()) {
+                DmzUnaryProofCoverage coverage = DmzUnaryProofCoverage.beforeOperation(applications, q, 10000);
+                require(!q.compile("!anchor(Trigger);", null, false), "shared fact activates conflicting productions");
+                require(!collisions.snapshot().isEmpty(), "shared-premise event captured");
+                DmzProvisionalCollisionProof proof = DmzProvisionalCollisionProof.build(collisions.snapshot().get(0), 1000, 100);
+                DmzUnaryProofCoverage.Result result = coverage.audit(proof, q);
+                require(result.current && result.covered && !result.complete && result.expectedSteps == 2,
+                        "both concrete applications audited, without general completeness claim: " + result.gaps);
+                require(!proof.combinations.isEmpty(), "shared-premise witness pair available");
+                for (DmzWitnessConflicts.Combination pair : proof.combinations) {
+                    require(pair.policy == DmzWitnessConflicts.Policy.SYMMETRIC_ALTERNATIVES,
+                            "shared external fact does not prioritize either production");
+                    require(pair.left.step >= 0 && pair.right.step >= 0 && pair.left.source != pair.right.source,
+                            "opposite consequences retain distinct production occurrences");
+                    require(pair.left.premises.size() == 1 && pair.right.premises.size() == 1
+                            && pair.left.premises.get(0).source == pair.right.premises.get(0).source
+                            && pair.left.premises.get(0).source.context.equals(fact.getContextId()),
+                            "same primary occurrence retained on both sides");
+                    require(pair.matches(pair.right, pair.left), "combination remains symmetric with shared premise");
                 }
             }
         }
