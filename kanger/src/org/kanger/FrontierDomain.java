@@ -89,7 +89,7 @@ public final class FrontierDomain {
                                         variable.getIndex(),
                                         null));
                     }
-                } else if (current.getValue(mind).isCVariable()) {
+                } else if (!SemanticTermSnapshot.isOrdinaryValue(current.getValue(mind))) {
                     /*
                      * A C-variable is an operation-local existential
                      * descriptor, not a concrete cross-Context value.
@@ -115,7 +115,7 @@ public final class FrontierDomain {
             }
 
             ITerm value = argument.getValue(mind);
-            if (value == null || value.isCVariable()) {
+            if (!SemanticTermSnapshot.isOrdinaryValue(value)) {
                 return null;
             }
             arguments.add(

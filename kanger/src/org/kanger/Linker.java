@@ -1025,7 +1025,8 @@ public class Linker {
                         boolean success = true;
                         for (int i = 0; i < d.getRange(); ++i) {
                             if (master.get(i).getType() == ArgumentType.TVARIABLE) {
-                            } else if (master.get(i).getValue(mind).getId() == d.get(i).getValue(mind).getId()) {
+                            } else if (master.get(i).getValue(mind) != null
+                                    && master.get(i).getValue(mind).getId() == d.get(i).getValue(mind).getId()) {
                             } else {
                                 success = false;
                                 break;

@@ -28,6 +28,24 @@ class CommuneQuantifiedAnswerTest {
         new CanonicalCommandProcessor().execute(new CommandParser().parse(
                 "ctx connect " + name + " trust own"), user);
     }
+    @Test void structuredAbstractSetStaysLocalAndDoesNotPoisonTheTransaction() throws Exception {
+        create("facts", "!father(John,Tom); !mother(Mary,Tom);");
+        open("family");
+        try {
+            connect("facts");
+            new CanonicalCommandProcessor().execute(new CommandParser().parse("start"), user);
+            mind = (Mind) user.getCurrentMind();
+            assertEquals(Boolean.TRUE, mind.query("!@x @y @z father(x,z), mother(y,z) -> family([x,y,z]);"));
+            // Unbound structured arguments must remain local, including during the false pass.
+            assertDoesNotThrow(() -> mind.query("?$x $y $z family([x,y,z]);"));
+            assertEquals(Boolean.TRUE, mind.query("?$x $y $z father(x,z), mother(y,z), family([x,y,z]);"));
+            assertEquals(1, mind.getValues().size());
+            Map<String,org.kanger.interfaces.ITerm> row = mind.getValues().iterator().next();
+            assertEquals("John", row.get("x").toString());
+            assertEquals("Mary", row.get("y").toString());
+            assertEquals("Tom", row.get("z").toString());
+        } finally { close(); }
+    }
     @Test void abstractTruthAndMixedQuantifierCounterexampleMatchCommuneOpinion() throws Exception {
         create("natives", "!@x $y parent(y,x); !@x ~parent(x,x); !@x (male(x) || female(x)) && ~(male(x) && female(x)); !@x @y daughter(x,y) -> female(x), child(x,y); !@x @y son(x,y) -> male(x), child(x,y); !@x @y father(x,y) -> male(x), parent(x,y); !@x @y mother(x,y) -> female(x), parent(x,y); !@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y)); !@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y)); !@x @y ~(parent(x,y), parent(y,x)); !@x @y ($z parent(z,x) && parent(z,y)) && x != y -> sibling(x,y); !@x @y ~(sibling(x,y), parent(x,y)); !@x @y sibling(x,y) -> sibling(y,x); !@x @y ($z parent(x,z), parent(y,z)), x != y -> spouse(x,y) || divorced(x,y);");
         create("facts", "!father(John, Tom); !daughter(Sarah, John); !mother(Mary,Sarah); !child(Tom,Mary); !age(John, 37); !age(Tom, 12); !age(Sarah, 4);");

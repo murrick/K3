@@ -44,6 +44,26 @@ public final class SemanticTermSnapshot {
                         new ArrayList<SemanticTermSnapshot>(members));
     }
 
+    /** Whether a value, including its nested members, can cross Context boundaries. */
+    public static boolean isOrdinaryValue(ITerm value) throws Exception {
+        if (!(value instanceof Term) || value.isCVariable()) return false;
+        Term term = (Term) value;
+        switch (term.getType()) {
+            case SET:
+                for (ITerm member : term.semanticMembers())
+                    if (!isOrdinaryValue(member)) return false;
+                return true;
+            case INTERVAL:
+                for (ITerm member : castMembers(term.getValue()))
+                    if (!isOrdinaryValue(member)) return false;
+                return true;
+            case TERM:
+                return term.getValue() instanceof ITerm && isOrdinaryValue((ITerm) term.getValue());
+            default:
+                return true;
+        }
+    }
+
     public static SemanticTermSnapshot capture(ITerm value)
             throws Exception {
         if (!(value instanceof Term)) {
