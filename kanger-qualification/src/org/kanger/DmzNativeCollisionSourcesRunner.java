@@ -39,6 +39,7 @@ public final class DmzNativeCollisionSourcesRunner {
                             positive ? DmzReplayProvenance.Authority.TARGET_Q : DmzReplayProvenance.Authority.EXTERNAL,
                             positive ? "!a(John);" : "!b(John);");
                 }
+                DmzCollisionProofGuard baseline = DmzCollisionProofGuard.beforeOperation(supportCapture, outer.mind());
                 require(!outer.mind().compile("!anchor(Trigger);", null, false), "native conflicting operation rejected");
                 detached = capture.snapshot();
                 require(!detached.isEmpty(), "event captured before rollback");
@@ -53,6 +54,7 @@ public final class DmzNativeCollisionSourcesRunner {
                             "bounded one-step and recursive collisions join witnesses");
                     require(!proof.complete, "provisional graph cannot certify completeness");
                     require(proof.rootsAvailable, "both collision roots have source-backed derivations");
+                    require(baseline.isCurrent(proof, outer.mind()), "direct and recursive Q proof matches its pre-operation baseline");
                     for (DmzWitnessConflicts.Combination combination : proof.combinations)
                         require(combination.policy == DmzWitnessConflicts.Policy.KEEP_LEFT_Q
                                 || combination.policy == DmzWitnessConflicts.Policy.KEEP_RIGHT_Q,
@@ -110,6 +112,8 @@ public final class DmzNativeCollisionSourcesRunner {
                 require(pendingFact && acceptedRule, "event distinguishes pending facts and accepted productions");
                 require(supportCapture.settlementSnapshot().accepted.size() == priorAccepted, "rejected operation cannot promote provisional proofs");
                 outer.rollback();
+                require(!baseline.isCurrent(DmzProvisionalCollisionProof.build(detached.get(0), 1000, 100), outer.mind()),
+                        "outer settlement invalidates provisional source baseline");
                 require(journal.settlementSnapshot().discarded == 2, "outer rollback discards both fact occurrences");
             }
         }

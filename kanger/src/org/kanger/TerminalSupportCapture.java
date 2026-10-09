@@ -157,16 +157,19 @@ final class TerminalSupportCapture implements AutoCloseable {
     private static final class Frame {
         final int parent;
         final boolean knownBoundary;
+        final long opened;
         long sequence;
         Outcome outcome = Outcome.PENDING;
-        Frame(int parent, boolean knownBoundary) { this.parent = parent; this.knownBoundary = knownBoundary; }
+        Frame(int parent, boolean knownBoundary, long opened) {
+            this.parent = parent; this.knownBoundary = knownBoundary; this.opened = opened;
+        }
     }
 
     static void transactionOpened(Mind parent, Mind child) {
         TerminalSupportCapture capture = ACTIVE.get();
         if (capture != null)
             capture.frames.put(capture.identity(child), new Frame(capture.identity(parent), capture.boundary == parent
-                    || (capture.boundary == null && parent.getNext() == null)));
+                    || (capture.boundary == null && parent.getNext() == null), ++capture.openedFrames));
     }
 
     static void transactionSettled(Mind child, Outcome outcome) {
@@ -217,10 +220,12 @@ final class TerminalSupportCapture implements AutoCloseable {
         final java.util.UUID scope;
         final int target;
         final long sequence;
+        final long opened;
         final String state;
         final DmzObservedProofGraph graph;
-        Checkpoint(java.util.UUID scope, int target, long sequence, String state, DmzObservedProofGraph graph) {
-            this.scope = scope; this.target = target; this.sequence = sequence; this.state = state; this.graph = graph;
+        Checkpoint(java.util.UUID scope, int target, long sequence, long opened, String state, DmzObservedProofGraph graph) {
+            this.scope = scope; this.target = target; this.sequence = sequence; this.opened = opened;
+            this.state = state; this.graph = graph;
         }
     }
 
@@ -236,16 +241,36 @@ final class TerminalSupportCapture implements AutoCloseable {
             while (frame != null && frame.parent != index) frame = frames.get(frame.parent);
             if (frame != null && frame.sequence == sequence) current.add(application);
         }
-        return new Checkpoint(scopeId, index, sequence, DmzObservationStateFingerprint.capture(target),
+        return new Checkpoint(scopeId, index, sequence, openedFrames, DmzObservationStateFingerprint.capture(target),
                 DmzObservedProofGraph.build(current));
+    }
+
+    /** State-only baseline may precede the first observed commit in a prepared branch. */
+    Checkpoint baselineCheckpoint(Mind target) throws Exception {
+        requireActive();
+        int index = identity(target);
+        Long sequence = sequences.get(index);
+        return new Checkpoint(scopeId, index, sequence == null ? 0L : sequence, openedFrames,
+                DmzObservationStateFingerprint.capture(target),
+                DmzObservedProofGraph.build(Collections.<Application>emptyList()));
+    }
+
+    /** The event must come from a later operation directly on this checkpoint target. */
+    boolean follows(Checkpoint checkpoint, CollisionObservations event) {
+        if (closed || Thread.currentThread() != owner || ACTIVE.get() != this || checkpoint == null
+                || !scopeId.equals(checkpoint.scope) || !scopeId.equals(event.scope)) return false;
+        Frame operation = frames.get(event.operation);
+        return operation != null && operation.knownBoundary && operation.parent == checkpoint.target
+                && operation.opened > checkpoint.opened;
     }
 
     boolean isCurrent(Checkpoint checkpoint, Mind target) throws Exception {
         if (closed || Thread.currentThread() != owner || ACTIVE.get() != this || checkpoint == null)
             return false;
         Integer index = identities.get(target);
+        Long sequence = index == null ? null : sequences.get(index);
         return scopeId.equals(checkpoint.scope) && index != null && index == checkpoint.target
-                && Long.valueOf(checkpoint.sequence).equals(sequences.get(index))
+                && checkpoint.sequence == (sequence == null ? 0L : sequence.longValue())
                 && checkpoint.state.equals(DmzObservationStateFingerprint.capture(target));
     }
 
@@ -262,6 +287,7 @@ final class TerminalSupportCapture implements AutoCloseable {
     private final List<String> applicationGaps = new ArrayList<String>();
     private final List<Match> matches = new ArrayList<Match>();
     private final java.util.UUID scopeId = java.util.UUID.randomUUID();
+    private long openedFrames;
     private final Map<Integer, Long> sequences = new java.util.HashMap<Integer, Long>();
     private final Map<Integer, Frame> frames = new java.util.HashMap<Integer, Frame>();
     private final Map<Object, Integer> identities = new IdentityHashMap<Object, Integer>();

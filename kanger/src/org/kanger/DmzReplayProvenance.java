@@ -183,6 +183,10 @@ public final class DmzReplayProvenance implements AutoCloseable {
     }
     /** Detached event-time metadata, including pending inputs; never accepted implicitly. */
     static List<SourceObservation> observedSources(Mind mind, long nativeRule) {
+        return visibleSources(mind, nativeRule);
+    }
+
+    private static List<SourceObservation> visibleSources(Mind mind, Long nativeRule) {
         DmzReplayProvenance capture = ACTIVE.get();
         if (capture == null) return Collections.emptyList();
         java.util.Set<Integer> visible = new java.util.HashSet<Integer>();
@@ -192,9 +196,43 @@ public final class DmzReplayProvenance implements AutoCloseable {
         }
         List<SourceObservation> result = new ArrayList<SourceObservation>();
         for (Binding binding : capture.bindings)
-            if (binding.nativeRule == nativeRule && visible.contains(binding.target))
+            if ((nativeRule == null || binding.nativeRule == nativeRule.longValue()) && visible.contains(binding.target))
                 result.add(new SourceObservation(binding, capture.outcome(binding.target)));
         return Collections.unmodifiableList(result);
+    }
+
+    /** Scope-local provenance guard; pending inputs remain pending. */
+    static final class SourceCheckpoint {
+        private final DmzReplayProvenance owner;
+        private final List<SourceObservation> sources;
+        private final java.util.Set<Long> liveRules = new java.util.HashSet<Long>();
+        private SourceCheckpoint(DmzReplayProvenance owner, Mind target) {
+            this.owner = owner; sources = visibleSources(target, null);
+            for (org.kanger.interfaces.IRule rule : target.getRules())
+                if (!rule.isDeleted(target)) liveRules.add(rule.getId());
+        }
+        boolean contains(Binding binding) {
+            if (!liveRules.contains(binding.nativeRule)) return false;
+            for (SourceObservation source : sources)
+                if (source.binding == binding && (source.outcome == Outcome.ACCEPTED || source.outcome == Outcome.PENDING))
+                    return true;
+            return false;
+        }
+        boolean isCurrent(Mind target) {
+            if (owner.closed || Thread.currentThread() != owner.owner || ACTIVE.get() != owner) return false;
+            List<SourceObservation> current = visibleSources(target, null);
+            if (sources.size() != current.size()) return false;
+            for (int i = 0; i < sources.size(); ++i)
+                if (sources.get(i).binding != current.get(i).binding || sources.get(i).outcome != current.get(i).outcome)
+                    return false;
+            return true;
+        }
+    }
+    static SourceCheckpoint sourceCheckpoint(Mind target) {
+        DmzReplayProvenance owner = ACTIVE.get();
+        if (owner == null || owner.closed || Thread.currentThread() != owner.owner)
+            throw new IllegalStateException("Active owning replay journal required");
+        return new SourceCheckpoint(owner, target);
     }
     @Override public void close() {
         if (closed) return;
