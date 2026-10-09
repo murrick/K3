@@ -1,0 +1,16 @@
+[
+  {
+    "original": "docs/tvalue-journal-cost/TValueDirtyJournal.java",
+    "copy": "docs/tvalue-journal-paired/PriorLayerJournal.java",
+    "old_name": "TValueDirtyJournal",
+    "new_name": "PriorLayerJournal",
+    "original_sha256": "2ece070abfd5ed35358c1d2928ee6814d3391ecc7e9d1ddd5226519005347cad"
+  },
+  {
+    "original": "docs/tvalue-observation-layers/TValueDirtyJournal.java",
+    "copy": "docs/tvalue-journal-paired/MemoLayerJournal.java",
+    "old_name": "TValueDirtyJournal",
+    "new_name": "MemoLayerJournal",
+    "original_sha256": "c698d3fe3e4bdd1365e61aad83a0018b81027235f81ce4f459a6b9b9a133b681"
+  }
+]

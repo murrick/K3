@@ -1,0 +1,40 @@
+{
+  "parent": "ada5483103193fb646e87ae1c456ed043ee5dd8f",
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-layer-cost:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-journal-paired",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-journal-paired/PriorLayerJournal.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-journal-paired/MemoLayerJournal.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-journal-paired/PairedJournalRunner.java"
+  ],
+  "prior_runtime_class_hashes_verified": 662,
+  "journal_source_recovered_by_class_rename_only": true,
+  "full_oracle_unchanged_in_both": true,
+  "class_sha256": {
+    "org/kanger/MemoLayerJournal.class": "d8e5bc9ff535c7c8ba29af589f584388ae72411d532f40e4a9bda92f8817743a",
+    "org/kanger/PriorLayerJournal$Session.class": "fc975676f384a45cd2e96c743de16c7e63dae111fc40d2c1a25436c026b685bc",
+    "org/kanger/PriorLayerJournal.class": "3697f59c2176be2f58614afebd903b51cdf5a36708495141526f6e494a41cbde",
+    "org/kanger/MemoLayerJournal$State.class": "1e4502938531f00f71427139783a124011bb47f744f4901aae1b084c17283823",
+    "org/kanger/MemoLayerJournal$UpdateFrame.class": "3134750448f494ece8e3937218ead39dec5560df37b5a9b65550f3e494ac3398",
+    "org/kanger/PriorLayerJournal$UpdateFrame.class": "f97652264345858b6f281956f40cfa2fb196b429bfc2f1e1c36ded6b92bfc698",
+    "org/kanger/MemoLayerJournal$Work.class": "e58443e148f480c696206b2b25823c123c5aea0074b5f2a84c9c0eda2d23d852",
+    "org/kanger/MemoLayerJournal$Session.class": "b6b626735e6ab50b070f4a14b09e60074834b6f5ed38490fde6fec9865415ed6",
+    "org/kanger/PriorLayerJournal$Work.class": "27653dac12c16c5508d8f9ee5b9ddc20688f4719d52d4b63d000a1c3f16e71dd",
+    "org/kanger/PairedJournalRunner.class": "5c78df016ada6bfdace19e5e1ff980ab8fe4bc036f8508defdeae9d0af7c6a21",
+    "org/kanger/PriorLayerJournal$State.class": "6c2f4cc776ae7f7dd73b47a8750c0f8e79639076c875e709f436b1477d4c903c"
+  },
+  "source_sha256": {
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-journal-paired/PriorLayerJournal.java": "7f83530c83dfe742b1f380bb008b8a6d4ef1777f943468cfa33d7f1a03d63568",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-journal-paired/MemoLayerJournal.java": "6e8d8c20669ab366fbba979eb535fd647e6a65e57fa523541f0328ce96598fce",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-journal-paired/PairedJournalRunner.java": "47fcfb47c573bab2f0c415b2d56199869d7f5f5f05f15a6a264dfeedbb27384a"
+  },
+  "native_clean_runtime": "tvalue-layer-cost",
+  "native_setter_metadata_bridge": "explicit after native setter returns; no instrumented native class or engine hooks"
+}
