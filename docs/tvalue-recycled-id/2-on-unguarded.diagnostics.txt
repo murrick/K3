@@ -1,0 +1,9 @@
+CASE root-clear-v2 aliases=[] journal=journal errors [java.lang.AssertionError:dirty projection mismatch ctx=7 reason=root-clear-v2-replacement shadow={1=[4:6:0];2=[0:1:0]} authority={1=[4:6:0]}, java.lang.AssertionError:dirty projection mismatch ctx=8 reason=root-clear-v2-replacement shadow={1=[4:6:0,5:8:0];2=[0:1:0]} authority={1=[4:6:0,5:8:0]}, java.lang.AssertionError:dirty projection mismatch ctx=7 reason=session-end shadow={1=[4:6:0];2=[0:1:0]} authority={1=[4:6:0]}, java.lang.AssertionError:dirty projection mismatch ctx=8 reason=session-end shadow={1=[4:6:0,5:8:0];2=[0:1:0]} authority={1=[4:6:0,5:8:0]}] gate=ordinary
+CASE root-clear-v0 aliases=[] journal=accepted gate=ordinary
+CASE root-clear-v1 aliases=[] journal=accepted gate=ordinary
+CASE child-clear-v2 aliases=[] journal=accepted gate=ordinary
+CASE child-clear-v0 aliases=[] journal=accepted gate=ordinary
+CASE child-clear-v1 aliases=[] journal=accepted gate=ordinary
+CASE pack-v2 aliases=[] journal=accepted gate=ordinary
+CASE pack-v0 aliases=[] journal=accepted gate=ordinary
+CASE pack-v1 aliases=[] journal=accepted gate=ordinary

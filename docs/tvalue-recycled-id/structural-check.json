@@ -1,0 +1,17 @@
+{
+  "Mind.java": {
+    "original_sha256": "ca9f570bc9b5a90d7283d35fc29908b9dd97e81ec71b5fa30ad51924d616da0d",
+    "instrumented_sha256": "1eca3301e15771cfc135ab4401c4515b90be427f23aca5e4eccda187ba260da7",
+    "original_code_recovered_byte_for_byte": true
+  },
+  "factory/TValueFactory.java": {
+    "original_sha256": "f8a5c5d846ce2dd2f7d9b2818a10181ed38f3619b142f99d5fa498214237a8c5",
+    "instrumented_sha256": "c7e324c441545f630a4bae7d8587c8729122bff3a7ec612d3195defda1f37033",
+    "original_code_recovered_byte_for_byte": true
+  },
+  "units/TValue.java": {
+    "original_sha256": "8f5b2d64c7773ecd4c0e2d753ae98e5dc541200c6889a40695f817c2edc1608b",
+    "instrumented_sha256": "8f5ef3e9715a603652c8ac9bceb8f4fc5ba121369a96371e43fcc50a209e413c",
+    "original_code_recovered_byte_for_byte": true
+  }
+}

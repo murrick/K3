@@ -1,0 +1,9 @@
+CASE root-clear-v1 aliases=[unsupported recycled TValue identity ownerLevel=0 descendantLevel=1 id=0 oldVariable=0 newVariable=1, unsupported recycled TValue identity ownerLevel=0 descendantLevel=2 id=0 oldVariable=0 newVariable=1] journal=accepted gate=refused-recycled-identity
+CASE root-clear-v2 aliases=[unsupported recycled TValue identity ownerLevel=0 descendantLevel=1 id=0 oldVariable=0 newVariable=2, unsupported recycled TValue identity ownerLevel=0 descendantLevel=2 id=0 oldVariable=0 newVariable=2] journal=journal errors [java.lang.AssertionError:dirty projection mismatch ctx=7 reason=root-clear-v2-replacement shadow={1=[4:6:0];2=[0:1:0]} authority={1=[4:6:0]}, java.lang.AssertionError:dirty projection mismatch ctx=8 reason=root-clear-v2-replacement shadow={1=[4:6:0,5:8:0];2=[0:1:0]} authority={1=[4:6:0,5:8:0]}, java.lang.AssertionError:dirty projection mismatch ctx=7 reason=session-end shadow={1=[4:6:0];2=[0:1:0]} authority={1=[4:6:0]}, java.lang.AssertionError:dirty projection mismatch ctx=8 reason=session-end shadow={1=[4:6:0,5:8:0];2=[0:1:0]} authority={1=[4:6:0,5:8:0]}] gate=refused-recycled-identity
+CASE root-clear-v0 aliases=[unsupported recycled TValue identity ownerLevel=0 descendantLevel=1 id=0 oldVariable=0 newVariable=0, unsupported recycled TValue identity ownerLevel=0 descendantLevel=2 id=0 oldVariable=0 newVariable=0] journal=accepted gate=refused-recycled-identity
+CASE child-clear-v1 aliases=[] journal=accepted gate=ordinary
+CASE child-clear-v2 aliases=[] journal=accepted gate=ordinary
+CASE child-clear-v0 aliases=[] journal=accepted gate=ordinary
+CASE pack-v1 aliases=[] journal=accepted gate=ordinary
+CASE pack-v2 aliases=[] journal=accepted gate=ordinary
+CASE pack-v0 aliases=[] journal=accepted gate=ordinary
