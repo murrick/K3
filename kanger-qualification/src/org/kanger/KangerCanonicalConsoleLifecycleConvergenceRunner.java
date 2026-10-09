@@ -29,7 +29,7 @@ import java.nio.file.Files;
  *
  * <p>Canonical storage-use semantics are exercised through the same shared
  * {@link CanonicalCommandProcessor} used by interactive adapters. Reflection is
- * retained only for Console-local presentation/source/Core helpers that have
+ * retained only for Console-local presentation/Core helpers that have
  * not yet converged into the shared command boundary.</p>
  */
 public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
@@ -66,8 +66,6 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
 
             Method erase = privateMethod(
                     CanonicalConsole.class, "erase", IMind.class, ConsoleLineInput.class);
-            Method loadSource = privateMethod(
-                    CanonicalConsole.class, "loadSource", IMind.class, String.class);
             Method processCore = privateMethod(
                     CanonicalConsole.class, "processCore", String.class, IMind.class);
 
@@ -179,7 +177,7 @@ public final class KangerCanonicalConsoleLifecycleConvergenceRunner {
             File sourceFile = new File(user.getSourceDir(), sourceName);
             Files.write(sourceFile.toPath(),
                     "!consolegetdelta;\n".getBytes(StandardCharsets.UTF_8));
-            IMind loaded = (IMind) invoke(loadSource, getLevel, sourceName);
+            IMind loaded = ConsoleSources.loadSource(getLevel, sourceName, text -> { });
             require(loaded == getLevel,
                     "Console get replaced the current explicit Mind");
             require(loaded.getTransactionLevel() == 1,
