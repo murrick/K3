@@ -1412,29 +1412,6 @@ public final class CanonicalConsole {
                 + (status.isUsed() ? current : "none"));
     }
 
-    private static void showStorage(IMind mind) throws Exception {
-        List<String> names = new ArrayList<String>();
-        for (String name : mind.getStoragesList()) {
-            names.add(name);
-        }
-        Collections.sort(names);
-        if (names.isEmpty()) {
-            System.out.println("No storages available");
-        } else {
-            System.out.println("Storages available:");
-            String current = mind.isStorageUsed() ? mind.getStorageName() : null;
-            for (String name : names) {
-                System.out.printf("\t%s%s%n", name,
-                        current != null && current.equals(name) ? "  [current]" : "");
-            }
-        }
-        if (mind.isStorageUsed()) {
-            System.out.println("Current storage: " + mind.getStorageName());
-        } else {
-            System.out.println("Current storage: none");
-        }
-    }
-
     private static IMind erase(IMind mind, ConsoleLineInput input) throws Exception {
         String prompt = "Erase workspace?";
         if (mind.isStorageUsed()) {
