@@ -1,0 +1,1 @@
+Excluded preliminary fixture: final root.release(sibling) reaches root quiescence and native pack removes fixture values without active Rule term support. Both journals catch missing root-pack notification. Final fixture explicitly models and notifies that boundary; diagnostic implementation is unchanged.

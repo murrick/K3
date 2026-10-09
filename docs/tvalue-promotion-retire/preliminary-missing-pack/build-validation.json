@@ -1,0 +1,25 @@
+{
+  "parent": "383145d2a6bb2e3d3fe37b8371b4edf03e7942ea",
+  "develop_head": "5d5f6aff271f1abf371fbde55d637744c53f0bc3",
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-smart-base:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-promotion-retire",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-promotion-retire/PromotionRetireRunner.java"
+  ],
+  "native_dependency_classes_verified": 730,
+  "source_sha256": {
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-promotion-retire/PromotionRetireRunner.java": "ae8ff86bd144c9b05e6b4c7ac17f0bc6c6013a6e898f751ff472e4d092bd9847"
+  },
+  "class_sha256": {
+    "org/kanger/PromotionRetireRunner.class": "c3e187e26efa9e892c1a10619185c6122bdde8785e4f954699d81f23a64eb19c",
+    "org/kanger/PromotionRetireRunner$Model.class": "d15e9c74b03617a37771a0addaab474256c0d6b9c876f3fdb9e56863f969f30d"
+  },
+  "diagnostic_implementation_unchanged": true
+}
