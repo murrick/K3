@@ -32,12 +32,17 @@ final class CollisionProofCapture implements AutoCloseable {
         final String origin;
         final String domain;
         final boolean generated;
+        final long nativeRule;
+        final TerminalSupportCapture.Ground ground;
+        final List<DmzReplayProvenance.SourceObservation> sources;
         final List<Edge> causes;
 
-        Node(String origin, String domain, boolean generated, List<Edge> causes) {
+        Node(String origin, String domain, boolean generated, List<Edge> causes, long nativeRule,
+                TerminalSupportCapture.Ground ground, List<DmzReplayProvenance.SourceObservation> sources) {
             this.origin = origin;
             this.domain = domain;
             this.generated = generated;
+            this.nativeRule = nativeRule; this.ground = ground; this.sources = sources;
             this.causes = Collections.unmodifiableList(new ArrayList<Edge>(causes));
         }
     }
@@ -103,8 +108,16 @@ final class CollisionProofCapture implements AutoCloseable {
                 edges.add(new Edge(visit(cause.getRule(mind)), visit(cause.getDonor(mind))));
             }
             String origin = rule.getOrigin();
+            TerminalSupportCapture.Ground ground = null;
+            Rule nativeRule = (Rule) rule;
+            if (!rule.isQuery() && nativeRule.getTree().size() == 1 && nativeRule.getTree().get(0).size() == 1) {
+                org.kanger.units.Domain domain = nativeRule.getDomain();
+                ground = TerminalSupportCapture.Ground.capture(new org.kanger.primitives.Solve(domain.getPredicate(),
+                        domain.isAntc(), domain.getArguments().convertBase(mind)), mind);
+            }
             nodes.set(index, new Node(origin == null ? "" : origin,
-                    ((Rule) rule).getDomain().toString(mind), rule.isGenerated(), edges));
+                    nativeRule.getDomain().toString(mind), rule.isGenerated(), edges, rule.getId(), ground,
+                    DmzReplayProvenance.observedSources(mind, rule.getId())));
             return index;
         }
     }

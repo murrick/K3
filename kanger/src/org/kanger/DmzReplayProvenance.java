@@ -176,6 +176,26 @@ public final class DmzReplayProvenance implements AutoCloseable {
                     && outcome(binding.target) == Outcome.ACCEPTED) result.add(binding);
         return Collections.unmodifiableList(result);
     }
+    static final class SourceObservation {
+        final Binding binding;
+        final Outcome outcome;
+        SourceObservation(Binding binding, Outcome outcome) { this.binding = binding; this.outcome = outcome; }
+    }
+    /** Detached event-time metadata, including pending inputs; never accepted implicitly. */
+    static List<SourceObservation> observedSources(Mind mind, long nativeRule) {
+        DmzReplayProvenance capture = ACTIVE.get();
+        if (capture == null) return Collections.emptyList();
+        java.util.Set<Integer> visible = new java.util.HashSet<Integer>();
+        for (Mind level = mind; level != null; level = (Mind) level.getNext()) {
+            Integer index = capture.targets.get(level);
+            if (index != null) visible.add(index);
+        }
+        List<SourceObservation> result = new ArrayList<SourceObservation>();
+        for (Binding binding : capture.bindings)
+            if (binding.nativeRule == nativeRule && visible.contains(binding.target))
+                result.add(new SourceObservation(binding, capture.outcome(binding.target)));
+        return Collections.unmodifiableList(result);
+    }
     @Override public void close() {
         if (closed) return;
         if (Thread.currentThread() != owner || ACTIVE.get() != this)
