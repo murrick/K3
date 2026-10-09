@@ -8,6 +8,10 @@ Reproduce the current stage with `build_observer.py`, followed by `docs/tvalue-o
 
 The implementation has nine diagnostic classes, two runtime API classes and six fixture/helper classes (the two new drivers are explicitly listed in `build_observer.py`). `open()` returns an `AutoCloseable` owner; `begin()`/`finish()` remain compatible. All sessions are bounded and single-threaded. Callback failure taints export and preserves native behavior. Abandonment drops journals and captured references. Both authority journals remain active.
 
+## Observer cost experiment
+
+[The cost report](../../docs/tvalue-observer-cost.md) measures clean, disabled and attached modes on the unchanged observer/session patch. Its additional `ObserverCostRunner` is compiled separately by `docs/tvalue-observer-cost/build.py`; run `run.py`, `analyze.py` and `manifest.py` in that directory from the repository root. The current observer build remains the prerequisite.
+
 ## Frozen source-relocation stage
 
 The remainder describes the previous stage at commit `3a37a7b6509f7c3335b4b6d00b18f19ed28f9b1e`. Its build/hash assertions require that exact checkout; use the current commands above for the observer stage.

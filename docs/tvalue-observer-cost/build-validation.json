@@ -1,0 +1,25 @@
+{
+  "parent": "51b28d5de50822f47aca376664375efda380b7c3",
+  "native_head": "5d5f6aff271f1abf371fbde55d637744c53f0bc3",
+  "observer_build_manifest_sha256": "f52abcf36eb32636714bb49185f3e4d4d0ca6bcbf16959a8bdf2a1f97f2225c1",
+  "observer_runtime_and_module_hashes_verified": true,
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-observer-session-clean:../build/tvalue-observer-session.jar:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-observer-cost-tests",
+    "kanger-qualification/diagnostics/test/org/kanger/ObserverCostRunner.java"
+  ],
+  "source_sha256": {
+    "kanger-qualification/diagnostics/test/org/kanger/ObserverCostRunner.java": "acf86d325bfc9195900f627a0ee389355387ec9c4159df9a0fe2a1ab48c58b76"
+  },
+  "compiler_sha256": "f7686c4960cf70c2ebc5c500a73a8cfc04541b730c18f1c5c21329889b137f45",
+  "class_sha256": {
+    "org/kanger/ObserverCostRunner.class": "50dca1e75914835609f3b25ee26d930b600a0365a7e79e1bbf3124787a513424"
+  }
+}

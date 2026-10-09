@@ -1,0 +1,28 @@
+{
+  "size": 128,
+  "repetition": 2,
+  "flag": "on",
+  "mode": "disabled",
+  "exit_code": 0,
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx512m",
+    "-Duser.home=/tmp/observer-cost-_lpu46ag",
+    "-Dresult.path=/workspace/scratch/f2027705cd02/K3/docs/tvalue-observer-cost/128-2-on-disabled",
+    "-Djournal.cost.enabled=false",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-observer-cost-tests:../build/tvalue-observer-session.jar:../build/tvalue-observer-session-hooked:../K3-smart-native/kanger/resources:../K3-smart-native/kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ObserverCostRunner",
+    "disabled",
+    "128"
+  ]
+}
