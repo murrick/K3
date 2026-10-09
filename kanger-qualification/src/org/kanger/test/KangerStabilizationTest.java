@@ -157,6 +157,20 @@ public final class KangerStabilizationTest {
         require(((Term) first).equalsTo((Term) reordered), "SET structural equality is inconsistent");
     }
 
+    public void set_s5a_03_dynamic_set_members() throws Exception {
+        resetWorkspace();
+        require(Boolean.TRUE.equals(mind.query("!@x @y @z father(x,z), mother(y,z) -> family([x,y,z]);")),
+                "Dynamic SET rule was not accepted");
+        mind.query("!father(John,Tom);");
+        mind.query("!mother(Mary,Tom);");
+        mind.query("!father(John,Sarah);");
+        mind.query("!mother(Mary,Sarah);");
+        require(Boolean.TRUE.equals(mind.query("?family([John,Mary,Tom]);")), "First family SET was not derived");
+        require(Boolean.TRUE.equals(mind.query("?family([Sarah,Mary,John]);")), "Second family SET was not derived");
+        require(Boolean.TRUE.equals(mind.query("?$s family(s);")), "Dynamic SET values were not returned");
+        require(mind.getValues().size() == 2, "Dynamic SET retained values from a different substitution");
+    }
+
     public void set_s5a_04_alpha_equivalent_rule_identity() throws Exception {
         resetWorkspace();
 
