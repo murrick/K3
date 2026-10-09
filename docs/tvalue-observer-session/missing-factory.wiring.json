@@ -1,0 +1,9 @@
+{
+  "exit_code": 0,
+  "command": [
+    "java",
+    "-cp",
+    "../build/tvalue-observer-session-tests:../build/tvalue-observer-session.jar:../build/tvalue-observer-session-missing-factory:../build/tvalue-observer-session-hooked:lib/jline-3.13.0.jar",
+    "org.kanger.VanillaConsumerRunner"
+  ]
+}

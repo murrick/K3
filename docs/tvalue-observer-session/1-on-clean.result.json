@@ -1,0 +1,27 @@
+{
+  "repetition": 1,
+  "flag": "on",
+  "mode": "clean",
+  "driver": "org.kanger.ConsumerRunner",
+  "exit_code": 0,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/observer-session-5owqb4fw",
+    "-Dresult.path=/workspace/scratch/f2027705cd02/K3/docs/tvalue-observer-session/1-on-clean",
+    "-Dnative.hooks=false",
+    "-Djournal.cost.enabled=true",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-observer-session-tests:../build/tvalue-observer-session.jar:../build/tvalue-observer-session-clean:../K3-smart-native/kanger/resources:../K3-smart-native/kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ConsumerRunner",
+    "1"
+  ]
+}

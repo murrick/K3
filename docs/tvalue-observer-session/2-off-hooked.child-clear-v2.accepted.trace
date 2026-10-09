@@ -1,0 +1,75 @@
+BASELINE ctx=1 mind=0 generation=1 invocation=0 reason=constructed view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=constructed view={}
+BASELINE ctx=2 mind=1 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=2 mind=1 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=before-settlement view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=after-settlement view={}
+RETIRE ctx=2 mind=1 generation=2 invocation=0
+BASELINE ctx=3 mind=2 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=3 mind=2 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=before-settlement view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=after-settlement view={}
+RETIRE ctx=3 mind=2 generation=2 invocation=0
+BASELINE ctx=4 mind=3 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=4 mind=3 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=before-settlement view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=after-settlement view={}
+RETIRE ctx=4 mind=3 generation=2 invocation=0
+BASELINE ctx=5 mind=4 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=5 mind=4 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=before-settlement view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=after-settlement view={}
+RETIRE ctx=5 mind=4 generation=2 invocation=0
+BASELINE ctx=6 mind=5 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=6 mind=5 generation=2 invocation=0 reason=constructed view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=before-settlement view={}
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=after-settlement view={}
+RETIRE ctx=6 mind=5 generation=2 invocation=0
+TOUCH ctx=1 mind=0 generation=1 invocation=0 reason=add variable=0 value=0 term=1
+TOUCH ctx=1 mind=0 generation=1 invocation=0 reason=add variable=0 value=1 term=4
+TOUCH ctx=1 mind=0 generation=1 invocation=0 reason=add variable=1 value=2 term=1
+TOUCH ctx=1 mind=0 generation=1 invocation=0 reason=add variable=1 value=3 term=4
+BASELINE ctx=7 mind=6 generation=2 invocation=0 reason=constructed view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0]}
+VIEW ctx=7 mind=6 generation=2 invocation=0 reason=constructed view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0]}
+TOUCH ctx=7 mind=6 generation=2 invocation=0 reason=add variable=1 value=4 term=6
+BASELINE ctx=8 mind=7 generation=2 invocation=0 reason=constructed view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0,4:6:0]}
+VIEW ctx=8 mind=7 generation=2 invocation=0 reason=constructed view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0,4:6:0]}
+TOUCH ctx=8 mind=7 generation=2 invocation=0 reason=add variable=1 value=5 term=8
+CHANGE ctx=1 mind=0 generation=1 invocation=0 reason=child-clear-v2-baseline variable=0 before=[] after=[0:1:0,1:4:0]
+CHANGE ctx=1 mind=0 generation=1 invocation=0 reason=child-clear-v2-baseline variable=1 before=[] after=[2:1:0,3:4:0]
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=child-clear-v2-baseline view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0]}
+CHANGE ctx=7 mind=6 generation=2 invocation=0 reason=child-clear-v2-baseline variable=1 before=[2:1:0,3:4:0] after=[2:1:0,3:4:0,4:6:0]
+VIEW ctx=7 mind=6 generation=2 invocation=0 reason=child-clear-v2-baseline view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0,4:6:0]}
+CHANGE ctx=8 mind=7 generation=2 invocation=0 reason=child-clear-v2-baseline variable=1 before=[2:1:0,3:4:0,4:6:0] after=[2:1:0,3:4:0,4:6:0,5:8:0]
+VIEW ctx=8 mind=7 generation=2 invocation=0 reason=child-clear-v2-baseline view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0,4:6:0,5:8:0]}
+TOUCH ctx=7 mind=6 generation=3 invocation=0 reason=clear-removed-route variable=1 value=4 term=6
+TOUCH ctx=8 mind=7 generation=2 invocation=0 reason=clear-removed-route variable=1 value=4 term=6
+TOUCH ctx=7 mind=6 generation=3 invocation=0 reason=clear-removed-route variable=1 value=3 term=4
+TOUCH ctx=8 mind=7 generation=2 invocation=0 reason=clear-removed-route variable=1 value=3 term=4
+TOUCH ctx=7 mind=6 generation=3 invocation=0 reason=clear-removed-route variable=1 value=2 term=1
+TOUCH ctx=8 mind=7 generation=2 invocation=0 reason=clear-removed-route variable=1 value=2 term=1
+TOUCH ctx=7 mind=6 generation=3 invocation=0 reason=clear-removed-route variable=0 value=1 term=4
+TOUCH ctx=8 mind=7 generation=2 invocation=0 reason=clear-removed-route variable=0 value=1 term=4
+TOUCH ctx=7 mind=6 generation=3 invocation=0 reason=clear-removed-route variable=0 value=0 term=1
+TOUCH ctx=8 mind=7 generation=2 invocation=0 reason=clear-removed-route variable=0 value=0 term=1
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=child-clear-v2-cleared view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0]}
+RESET ctx=7 mind=6 generation=3 invocation=0 reason=child-clear-v2-cleared view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0]}
+VIEW ctx=7 mind=6 generation=3 invocation=0 reason=child-clear-v2-cleared view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0]}
+CHANGE ctx=8 mind=7 generation=2 invocation=0 reason=child-clear-v2-cleared variable=1 before=[2:1:0,3:4:0,4:6:0,5:8:0] after=[2:1:0,3:4:0,5:8:0]
+VIEW ctx=8 mind=7 generation=2 invocation=0 reason=child-clear-v2-cleared view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0,5:8:0]}
+TOUCH ctx=7 mind=6 generation=3 invocation=0 reason=add variable=2 value=6 term=10
+TOUCH ctx=8 mind=7 generation=2 invocation=0 reason=add variable=2 value=6 term=10
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=child-clear-v2-replacement view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0]}
+CHANGE ctx=7 mind=6 generation=3 invocation=0 reason=child-clear-v2-replacement variable=2 before=[] after=[6:10:0]
+VIEW ctx=7 mind=6 generation=3 invocation=0 reason=child-clear-v2-replacement view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0];2=[6:10:0]}
+VIEW ctx=8 mind=7 generation=2 invocation=0 reason=child-clear-v2-replacement view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0,5:8:0]}
+BASELINE ctx=9 mind=8 generation=2 invocation=0 reason=constructed view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0];2=[6:10:0]}
+VIEW ctx=9 mind=8 generation=2 invocation=0 reason=constructed view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0];2=[6:10:0]}
+VIEW ctx=9 mind=8 generation=2 invocation=0 reason=child-clear-v2-fresh view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0];2=[6:10:0]}
+VIEW ctx=7 mind=6 generation=3 invocation=0 reason=before-settlement view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0];2=[6:10:0]}
+VIEW ctx=7 mind=6 generation=3 invocation=0 reason=after-settlement view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0];2=[6:10:0]}
+RETIRE ctx=9 mind=8 generation=2 invocation=0
+VIEW ctx=1 mind=0 generation=1 invocation=0 reason=session-end view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0]}
+VIEW ctx=7 mind=6 generation=3 invocation=0 reason=session-end view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0];2=[6:10:0]}
+VIEW ctx=8 mind=7 generation=2 invocation=0 reason=session-end view={0=[0:1:0,1:4:0];1=[2:1:0,3:4:0,5:8:0]}
+DIRTY_JOURNAL_OK contexts=9 observations=34 deferred=6 changes=6 resets=1 touches=18 bucketReads=8 seeds=10 mapChanges=0

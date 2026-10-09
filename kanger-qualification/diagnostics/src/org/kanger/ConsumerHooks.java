@@ -7,8 +7,8 @@ public final class ConsumerHooks {
  public static boolean suppressPromotion,suppressMetadata,suppressRemove,suppressResetFanout;public static final List<String> errors=new ArrayList<>();static boolean active; static final List<Mind> contexts=new ArrayList<>(); public static final List<String> aliases=new ArrayList<>();
  public static final SortedMap<String,Integer> counts=new TreeMap<>();
  static boolean event(String name){if(!active)return false;counts.put(name,counts.getOrDefault(name,0)+1);return true;}
- public static void begin(){BeforeAuthorityJournal.begin();StreamAuthorityJournal.begin();contexts.clear();aliases.clear();errors.clear();active=true;}
- public static void stop(){active=false;suppressPromotion=false;suppressMetadata=false;suppressRemove=false;suppressResetFanout=false;}
+ static void begin(){BeforeAuthorityJournal.begin();StreamAuthorityJournal.begin();contexts.clear();aliases.clear();errors.clear();active=true;}
+ static void stop(){active=false;contexts.clear();aliases.clear();errors.clear();counts.clear();suppressPromotion=false;suppressMetadata=false;suppressRemove=false;suppressResetFanout=false;}
  public static void constructed(Mind m){if(event("constructed")){contexts.add(m);BeforeAuthorityJournal.constructed(m);StreamAuthorityJournal.constructed(m);}}
  public static void reset(Mind m){if(event("reset")){BeforeAuthorityJournal.reset(m);StreamAuthorityJournal.reset(m);}}
  public static void mark(Mind m){if(event("mark")){BeforeAuthorityJournal.mark(m);StreamAuthorityJournal.mark(m);}}
@@ -22,5 +22,19 @@ public final class ConsumerHooks {
  static void checkAlias(Mind owner,TValue value){try{for(Mind target:new ArrayList<>(contexts)){boolean dependent=false;for(Mind m=target;m!=null;m=(Mind)m.getNext())if(m==owner)dependent=true;if(!dependent||target==owner)continue;String before=ResidentTValueRead.fingerprint(target);TValue old=ResidentTValueRead.layer(target.getTValues()).byId.get(value.getId());if(!before.equals(ResidentTValueRead.fingerprint(target)))throw new AssertionError("alias probe impure");if(old!=null&&old!=value)aliases.add("unsupported recycled TValue identity ownerLevel="+owner.getTransactionLevel()+" descendantLevel="+target.getTransactionLevel()+" id="+value.getId()+" oldVariable="+old.getTVarId()+" newVariable="+value.getTVarId());}}catch(Throwable e){errors.add(e.toString());}}
  public static Object beforeClear(Mind m,TValueFactory f){if(!event("beforeClear"))return null;try{String before=ResidentTValueRead.fingerprint(m);List<TValue> values=ResidentTValueRead.values(f);if(!before.equals(ResidentTValueRead.fingerprint(m)))throw new AssertionError("clear capture impure");return values;}catch(Throwable e){errors.add(e.toString());return null;}}
  @SuppressWarnings("unchecked") public static void afterClear(Mind m,Object token){if(!event("clear-fanout")||suppressResetFanout||token==null)return;for(TValue v:(List<TValue>)token)touch(m,v,"clear-removed-route");}
-}
 
+ static final TValueObserver OBSERVER=new TValueObserver(){
+  public void constructed(Mind m){ConsumerHooks.constructed(m);}
+  public void reset(Mind m){ConsumerHooks.reset(m);}
+  public void mark(Mind m){ConsumerHooks.mark(m);}
+  public void complete(Mind m){ConsumerHooks.complete(m);}
+  public void touch(Mind m,TValue v,String reason){ConsumerHooks.touch(m,v,reason);}
+  public void promoted(Mind m,TValueFactory f){ConsumerHooks.promoted(m,f);}
+  public void metadata(TValue v,long id,long variable,long term,String reason){ConsumerHooks.metadata(v,id,variable,term,reason);}
+  public void beginSettlement(Mind m){ConsumerHooks.beginSettlement(m);}
+  public void endSettlement(Mind m){ConsumerHooks.endSettlement(m);}
+  public void retire(Mind m){ConsumerHooks.retire(m);}
+  public Object beforeClear(Mind m,TValueFactory f){return ConsumerHooks.beforeClear(m,f);}
+  public void afterClear(Mind m,Object token){ConsumerHooks.afterClear(m,token);}
+ };
+}

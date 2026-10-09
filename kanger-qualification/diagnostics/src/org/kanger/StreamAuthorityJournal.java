@@ -55,6 +55,7 @@ public final class StreamAuthorityJournal {
         SortedMap<Long,Boolean> visibility=new TreeMap<>();
         State(Mind m,int c){mind=m;context=c;}
     }
+    static void discard(){CURRENT.remove();}
     public static void begin(){if(CURRENT.get()!=null)throw new AssertionError("nested journal session");CURRENT.set(new Session());}
     private interface Work {void run(Session s,State state)throws Exception;}
     private static void safely(Mind mind,Work work){

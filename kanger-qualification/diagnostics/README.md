@@ -1,5 +1,18 @@
 # TValue diagnostic source set
 
+## Current observer/session experiment
+
+The current implementation adds explicit observer attachment, exclusive thread-owned consumer sessions and mandatory `NO_INSTRUMENTATION` refusal. See [the observer/session report](../../docs/tvalue-observer-session.md). Runtime API sources are isolated in `runtime/`; they are compiled only into generated qualification runtimes. Production sources and defaults are unchanged.
+
+Reproduce the current stage with `build_observer.py`, followed by `docs/tvalue-observer-session/run.py`, `wiring.py` and `analyze.py`, from the repository root. Use Java 17, ECJ 3.33 at `../tooling/ecj.jar`, the bundled jline jar, and a clean native checkout at `../K3-smart-native` pinned to `5d5f6aff271f1abf371fbde55d637744c53f0bc3`.
+
+The implementation has nine diagnostic classes, two runtime API classes and six fixture/helper classes (the two new drivers are explicitly listed in `build_observer.py`). `open()` returns an `AutoCloseable` owner; `begin()`/`finish()` remain compatible. All sessions are bounded and single-threaded. Callback failure taints export and preserves native behavior. Abandonment drops journals and captured references. Both authority journals remain active.
+
+## Frozen source-relocation stage
+
+The remainder describes the previous stage at commit `3a37a7b6509f7c3335b4b6d00b18f19ed28f9b1e`. Its build/hash assertions require that exact checkout; use the current commands above for the observer stage.
+
+
 This source set isolates the qualified TValue diagnostic consumer and its bounded resident readers from experiment documents. It is deliberately outside `kanger-qualification/src`, the module's normal Maven test source directory. No reactor, Maven profile, production dependency or default is changed.
 
 `src/` contains nine diagnostic classes. `test/` contains four executable fixture/helper classes. `sources.txt` and `test-sources.txt` are explicit source lists. Their Java contents are byte-identical to the recorded experiment sources; old documents remain frozen evidence, not the implementation location for this source set.
