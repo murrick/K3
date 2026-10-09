@@ -1,0 +1,15 @@
+{
+  "original": "docs/tvalue-journal-paired/MemoLayerJournal.java",
+  "original_sha256": "6e8d8c20669ab366fbba979eb535fd647e6a65e57fa523541f0328ce96598fce",
+  "replacements": [
+    [
+      "    private static String encode(SortedMap<Long,String> view){List<String> rows=new ArrayList<>();for(Map.Entry<Long,String> e:view.entrySet())rows.add(e.getKey()+\"=\"+e.getValue());return \"{\"+String.join(\";\",rows)+\"}\";}",
+      "    private static String encode(SortedMap<Long,String> view){StringBuilder text=new StringBuilder(\"{\");boolean first=true;for(Map.Entry<Long,String> e:view.entrySet()){if(!first)text.append(';');first=false;text.append(e.getKey()).append('=').append(e.getValue());}return text.append('}').toString();}\n    /** Private native journal views use natural-order TreeMaps. */\n    private static List<Long> changedKeys(SortedMap<Long,String> before,SortedMap<Long,String> after){\n        List<Long> changed=new ArrayList<>();Iterator<Map.Entry<Long,String>> left=before.entrySet().iterator(),right=after.entrySet().iterator();\n        Map.Entry<Long,String> a=left.hasNext()?left.next():null,b=right.hasNext()?right.next():null;\n        while(a!=null||b!=null){\n            Long id;String old,value;\n            if(b==null||(a!=null&&a.getKey()<b.getKey())){id=a.getKey();old=a.getValue();value=\"[]\";a=left.hasNext()?left.next():null;}\n            else if(a==null||b.getKey()<a.getKey()){id=b.getKey();old=\"[]\";value=b.getValue();b=right.hasNext()?right.next():null;}\n            else{id=a.getKey();old=a.getValue();value=b.getValue();a=left.hasNext()?left.next():null;b=right.hasNext()?right.next():null;}\n            if(!old.equals(value))changed.add(id);\n        }\n        return changed;\n    }"
+    ],
+    [
+      "            SortedSet<Long> ids=new TreeSet<>(st.view.keySet());ids.addAll(next.keySet());\n            for(long id:ids){",
+      "            for(long id:changedKeys(st.view,next)){"
+    ]
+  ],
+  "scope": "encode and reporting key enumeration only; candidate projection, full oracle and equality unchanged"
+}

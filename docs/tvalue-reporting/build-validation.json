@@ -1,0 +1,44 @@
+{
+  "parent": "06360fbd7b2920a1b926bd5e704015f5523823f6",
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-layer-cost:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-reporting",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-reporting/BeforeReportJournal.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-reporting/StreamReportJournal.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-reporting/ReportCostRunner.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-reporting/ReportScopeRunner.java"
+  ],
+  "prior_runtime_class_hashes_verified": 662,
+  "prior_journal_source_recovered": true,
+  "runner_recovered_by_class_rename_only": true,
+  "full_oracle_unchanged_in_both": true,
+  "class_sha256": {
+    "org/kanger/StreamReportJournal.class": "a09599f9f51f1b74ddbf6072b515549cf5e25780a6004e0632edc03fd0a6631b",
+    "org/kanger/StreamReportJournal$Work.class": "8db19304ea73ba3d068222f8447f023c566784e45a6260e1eab0dcf371b7f528",
+    "org/kanger/BeforeReportJournal.class": "2c565a4a5f5fc4f5d15b6294d822e6ea51caba904f9fb3a52a4caed208d9a306",
+    "org/kanger/StreamReportJournal$UpdateFrame.class": "044ed59fde465c550ccd8a260399cb84d6d1502eb3dc2f661d8088059fffe009",
+    "org/kanger/BeforeReportJournal$Work.class": "00c67f0acb295cd4ced2103616ba398156130bbdb1f81a6dbecb8dd4552bf95f",
+    "org/kanger/StreamReportJournal$State.class": "c0048937e6e21f760c0fcee45e39974a88bd0b27a78222d416db635696dcf452",
+    "org/kanger/BeforeReportJournal$State.class": "7dde546121d44eb1fe7a52c0252543635a5b554b4bbaf29a30d27a7eb4c2c682",
+    "org/kanger/BeforeReportJournal$Session.class": "3af86b747a10b1583a9d13a73d032e981b35f127bb42d60aaa2a797da2328c38",
+    "org/kanger/StreamReportJournal$Session.class": "4182e6c69615281da86d84acb56375f518cadfd59f7ccfc189a75f1bbb1a3f4d",
+    "org/kanger/ReportScopeRunner.class": "04fcf77683ea38bdca6c8ccd92d4a152f42d9275db4b90d33127b75b5d16641e",
+    "org/kanger/ReportCostRunner.class": "2d1790cc377fd214491f4a03823c430b1a0ce1fb551a942098e7dcd6af1a4c54",
+    "org/kanger/BeforeReportJournal$UpdateFrame.class": "ce2c958bbfdacc5b5e572e6a06697f602b6a4d32f939da14309160be5cbd49c2"
+  },
+  "source_sha256": {
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-reporting/BeforeReportJournal.java": "87d4791ec3d403cc2a2702742e524ee72ce1d61cd837251cdb98d558f653caf6",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-reporting/StreamReportJournal.java": "20170e252c632dfdde30f320d5bd65f1d5005f01a0cf3ecb472a75faac3917de",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-reporting/ReportCostRunner.java": "869c0b840ab79a865b4343f70b440442bfebd317d479389891ba40a620cd1ed7",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-reporting/ReportScopeRunner.java": "74bc8e00b5594910a495fe405033fd22d41c8b1886dd316facd9c342ca1d5553"
+  },
+  "native_clean_runtime": "tvalue-layer-cost",
+  "native_setter_metadata_bridge": "explicit after native setter returns; no instrumented native class or engine hooks"
+}
