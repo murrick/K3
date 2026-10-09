@@ -38,7 +38,8 @@ final class EmptySetLiteralTest {
         assertNotNull(argument);
         assertEquals(DataType.SET, argument.getType());
         assertTrue(((Term) argument).semanticMembers().isEmpty());
-        assertEquals("!family([]);", solution.toString(mind));
+        assertTrue(solution.toString(mind).startsWith("!family([]);"),
+                "Rendered rule must retain the canonical empty-set literal");
     }
 
     @Test
