@@ -45,7 +45,23 @@ public final class DmzPinnedReplayRunner {
                 require(work.queryCanonical("?family([]);", new LinkedList<>(), false), "empty set survives persistent replay");
             } finally { runtime.mind().discardEphemeral(work); }
             require(journal.snapshot().size() == 6, "queries add no replay bindings");
+            require(journal.settlementSnapshot().accepted.isEmpty()
+                    && journal.settlementSnapshot().untracked == 6,
+                    "untracked runtime layer is not a global acceptance certificate");
         } finally { a.closeLayer(); b.closeLayer(); }
+        create(directory, "C", "!p(John);");
+        create(directory, "D", "!~p(John);");
+        ContextConnection c = ConnectionManager.qualifyConnect(directory.resolve("Q"), directory.resolve("C"));
+        ContextConnection d = ConnectionManager.qualifyConnect(directory.resolve("Q"), directory.resolve("D"));
+        try (DmzReplayProvenance journal = DmzReplayProvenance.begin()) {
+            boolean rejected = false;
+            try (CommuneRuntime candidate = CommuneRuntime.prepare(Arrays.asList(c, d))) {
+                throw new AssertionError("contradictory runtime accepted");
+            } catch (org.kanger.exception.CommandErrorException expected) { rejected = true; }
+            require(rejected, "whole provider preparation rejected");
+            require(!journal.snapshot().isEmpty(), "failed preparation retains raw diagnostics");
+            require(journal.settlementSnapshot().accepted.isEmpty(), "failed provider preparation cannot certify replay");
+        } finally { c.closeLayer(); d.closeLayer(); }
         System.out.println("DMZ_PINNED_REPLAY_PASS checks=" + checks);
     }
     private static void create(Path directory, String name, String source) throws Exception {

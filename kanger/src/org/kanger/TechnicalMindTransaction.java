@@ -55,6 +55,7 @@ final class TechnicalMindTransaction implements AutoCloseable {
         this.parent = parent;
         this.child = isolated ? Mind.ephemeralChild(parent) : new Mind(parent);
         TerminalSupportCapture.transactionOpened(parent, child);
+        DmzReplayProvenance.transactionOpened(parent, child);
     }
 
     static TechnicalMindTransaction begin(Mind parent) throws Exception {
@@ -73,10 +74,12 @@ final class TechnicalMindTransaction implements AutoCloseable {
         beginSettlement();
         try {
             boolean committed = parent.commit(child);
+            DmzReplayProvenance.transactionSettled(child, committed);
             TerminalSupportCapture.transactionSettled(child, committed
                     ? TerminalSupportCapture.Outcome.COMMITTED : TerminalSupportCapture.Outcome.ROLLED_BACK);
             return committed;
         } catch (Exception failure) {
+            DmzReplayProvenance.transactionSettled(child, false);
             TerminalSupportCapture.transactionSettled(child, TerminalSupportCapture.Outcome.FAILED);
             throw failure;
         }
@@ -86,8 +89,10 @@ final class TechnicalMindTransaction implements AutoCloseable {
         beginSettlement();
         try {
             parent.release(child);
+            DmzReplayProvenance.transactionSettled(child, false);
             TerminalSupportCapture.transactionSettled(child, TerminalSupportCapture.Outcome.ROLLED_BACK);
         } catch (Exception failure) {
+            DmzReplayProvenance.transactionSettled(child, false);
             TerminalSupportCapture.transactionSettled(child, TerminalSupportCapture.Outcome.FAILED);
             throw failure;
         }
