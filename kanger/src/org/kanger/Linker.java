@@ -1147,6 +1147,7 @@ public class Linker {
             if (candidates.size() == 1) {
                 for (Domain d : candidates) {
                     TerminalSupportCapture.record(mind, d, causes.get(d.getRule()));
+                    TerminalSupportCapture.recordApplication(mind, d, tree, tvars);
                     occurs = true;
                     if (!d.isStored(mind) && (d.setCauses(causes.get(d.getRule()), mind) || !calculated.isEmpty() || !excluded.isEmpty())) {
                         boolean term = false;

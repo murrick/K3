@@ -16,6 +16,9 @@ public final class DmzTerminalSupportCaptureRunner {
         characterizeBindingGroups();
         premiseBindings();
         hiddenJoinBindings();
+        applications(false);
+        applications(true);
+        unsupportedApplications();
         System.out.println("DMZ_TERMINAL_SUPPORT_CAPTURE_PASS checks=" + checks);
     }
 
@@ -183,6 +186,73 @@ public final class DmzTerminalSupportCaptureRunner {
         require(Boolean.TRUE.equals(q.query("?male(John);", null, false)), "join John proven");
         require(Boolean.TRUE.equals(q.query("?male(Mary);", null, false)), "join Mary proven");
         System.out.println("DMZ_HIDDEN_JOIN_BINDINGS_PASS matches=" + matches.size());
+    }
+
+    private static void applications(boolean reverse) throws Exception {
+        Mind q = root();
+        String join = "!@x @y (a(x,y) && c(y)) -> male(x);";
+        String alternative = "!@x b(x) -> male(x);";
+        String facts = reverse ? "!c(Two); !a(Mary,Two); !b(John); !c(One); !a(John,One);"
+                : "!a(John,One); !c(One); !b(John); !a(Mary,Two); !c(Two);";
+        List<TerminalSupportCapture.Application> applications;
+        try (TerminalSupportCapture capture = TerminalSupportCapture.begin()) {
+            require(q.compile((reverse ? alternative + join : join + alternative) + facts,
+                    null, false), "application program");
+            applications = capture.applicationSnapshot();
+        }
+        boolean johnJoin = false, maryJoin = false, johnAlternative = false;
+        int joinRule = -1, alternativeRule = -1;
+        for (TerminalSupportCapture.Application application : applications) {
+            if (!application.conclusion.equals("!male(John);")
+                    && !application.conclusion.equals("!male(Mary);")) continue;
+            java.util.Set<String> donors = new java.util.HashSet<String>();
+            for (TerminalSupportCapture.Support support : application.supports) donors.add(support.donor);
+            if (application.ruleOrigin.equals(join)) {
+                joinRule = application.rule;
+                require(application.bindings.size() == 2, "complete binding retains hidden y");
+                require(application.supports.size() == 2 && donors.size() == 2, "two AND premises");
+                if (application.conclusion.equals("!male(John);")) {
+                    require(donors.contains("!a(John,One);") && donors.contains("!c(One);"), "John AND support exact");
+                    johnJoin = true;
+                } else {
+                    require(donors.contains("!a(Mary,Two);") && donors.contains("!c(Two);"), "Mary AND support exact");
+                    maryJoin = true;
+                }
+            } else if (application.ruleOrigin.equals(alternative)) {
+                alternativeRule = application.rule;
+                require(application.conclusion.equals("!male(John);"), "alternative belongs to John");
+                require(application.supports.size() == 1 && donors.contains("!b(John);"), "OR alternative separate");
+                johnAlternative = true;
+            } else throw new AssertionError("unexpected target application");
+            try { application.supports.clear(); throw new AssertionError("mutable application"); }
+            catch (UnsupportedOperationException expected) { ++checks; }
+            try { application.bindings.clear(); throw new AssertionError("mutable binding vector"); }
+            catch (UnsupportedOperationException expected) { ++checks; }
+        }
+        require(johnJoin && maryJoin && johnAlternative, "all three complete bounded supports");
+        require(joinRule != alternativeRule, "alternative rule identities separate");
+        require(Boolean.TRUE.equals(q.query("?male(John);", null, false)), "application John truth");
+        require(Boolean.TRUE.equals(q.query("?male(Mary);", null, false)), "application Mary truth");
+        System.out.println("DMZ_BOUND_APPLICATIONS_PASS reverse=" + reverse + " events=" + applications.size());
+    }
+
+    private static void unsupportedApplications() throws Exception {
+        Mind q = root();
+        try (TerminalSupportCapture capture = TerminalSupportCapture.begin()) {
+            require(q.compile("!@x (a(x) && c(x)) -> male(x); !a(John);", null, false), "missing premise program");
+            for (TerminalSupportCapture.Application application : capture.applicationSnapshot())
+                require(!"!male(John);".equals(application.conclusion), "missing premise never certified");
+            require(q.query("?male(John);", null, false) == null, "missing premise native unknown");
+        }
+        q = root();
+        try (TerminalSupportCapture capture = TerminalSupportCapture.begin()) {
+            require(q.compile("!@x a(x) -> male(x+1); !a(1);", null, false), "function program");
+            for (TerminalSupportCapture.Application application : capture.applicationSnapshot())
+                require(!"!male(2);".equals(application.conclusion), "function excluded from bounded surface");
+            require(capture.applicationGapSnapshot().contains("unsupported-argument"), "unsupported function records gap");
+            require(Boolean.TRUE.equals(q.query("?male(2);", null, false)), "function still works natively");
+        }
+        System.out.println("DMZ_APPLICATION_FAIL_CLOSED_PASS");
     }
 
     private static void require(boolean condition, String message) {
