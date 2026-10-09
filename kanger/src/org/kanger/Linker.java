@@ -160,6 +160,7 @@ public class Linker {
     private int skippedPasses = 0;
     private final LinkerStatistics statistics = new LinkerStatistics();
     private int currentPass = 0;
+    private final List<List<TValue>> pendingSetSolves = new ArrayList<>();
 
     /**
      * Query-local tuple index used only while Linker rotates substitutions.
@@ -459,6 +460,7 @@ public class Linker {
         mind.getFloodControl().clear();
 
         mind.ruleSolvesInternal().clear(); // clearSolveIndex resets this invocation's version baseline.
+        pendingSetSolves.clear();
         clearSolveIndex();
 
         int passCounter = 0;
@@ -602,6 +604,16 @@ public class Linker {
                     public Object run(Object o) throws Exception {
                         statistics.incrementTerminalRotations();
                         boolean result = false;
+                        for (Domain domain : t) {
+                            for (Function function : domain.getArguments().getFunctions(mind)) {
+                                if (function.getBinding() == org.kanger.enums.FunctionBinding.INFRASTRUCTURE
+                                        && "_set".equals(function.getName(mind).getValue())
+                                        && function.isCalculable() && function.isEmpty(mind)) {
+                                    function.clear();
+                                    result |= mind.getCalculator().calculate(function, logging);
+                                }
+                            }
+                        }
                         if (linkDomains(t, selectDomainCandidates(t, domainIndex), causes, logging)) {
                             result = true;
                         }
@@ -617,6 +629,8 @@ public class Linker {
                         return result;
                     }
                 });
+                for (List<TValue> tuple : pendingSetSolves) mind.addTSolve(tuple);
+                pendingSetSolves.clear();
             }
 
             updateDatabase(logging);
@@ -746,6 +760,11 @@ public class Linker {
                                 TValue[] substMaster = new TValue[master.getRange()];
                                 TValue[] substSlave = new TValue[slave.getRange()];
 
+                                for (int i = 0; i < master.getRange(); ++i) {
+                                    result |= seedSetMembers(master.get(i), slave.get(i));
+                                    result |= seedSetMembers(slave.get(i), master.get(i));
+                                }
+
                                 mind.getTValues().mark();
                                 mind.getFValues().mark();
 
@@ -779,6 +798,17 @@ public class Linker {
                                         && mind.getCausalFrontierCapture() != null) {
                                     mind.getCausalFrontierCapture().observePair(
                                             mind, slave, master, treeMaster);
+                                }
+
+                                if (!blockRight && !blockLeft) {
+                                    TValue[] nestedMaster = matchingSetValues(master, slave);
+                                    TValue[] nestedSlave = matchingSetValues(slave, master);
+                                    if (nestedMaster.length > 0)
+                                        operationEffects |= markExcluded(true, nestedMaster, master, slave,
+                                                causes, null, operationId, logging);
+                                    if (nestedSlave.length > 0)
+                                        operationEffects |= markExcluded(true, nestedSlave, slave, master,
+                                                causes, null, operationId, logging);
                                 }
 
                                 if (success) {
@@ -911,6 +941,54 @@ public class Linker {
         return result;
     }
 
+    /** Capture a tuple only after the entire predicate matches ordinary evidence. */
+    private TValue[] matchingSetValues(Domain pattern, Domain evidence) throws Exception {
+        List<TValue> values = new ArrayList<>();
+        for (int i = 0; i < pattern.getRange(); ++i) {
+            ITerm left = pattern.get(i).getValue(mind);
+            ITerm right = evidence.get(i).getValue(mind);
+            if (left == null || right == null || left.getId() != right.getId())
+                return new TValue[0];
+            if (pattern.get(i).getType() != ArgumentType.FUNCTION) continue;
+            Function function = (Function) pattern.get(i).getObject(mind);
+            if (function.getBinding() != org.kanger.enums.FunctionBinding.INFRASTRUCTURE
+                    || !"_set".equals(function.getName(mind).getValue())) continue;
+            for (TVariable variable : function.getArguments().getTVariables(mind)) {
+                TValue current = variable.getCurrent();
+                if (current == null || !SemanticTermSnapshot.isOrdinaryValue(current.getValue(mind)))
+                    return new TValue[0];
+                if (!values.contains(current)) values.add(current);
+            }
+        }
+        return values.toArray(new TValue[values.size()]);
+    }
+
+    /** SET positions are unordered: each variable can initially take any member. */
+    private boolean seedSetMembers(org.kanger.interfaces.IArgument pattern,
+            org.kanger.interfaces.IArgument evidence) throws Exception {
+        if (pattern.getType() != ArgumentType.FUNCTION) return false;
+        Function function = (Function) pattern.getObject(mind);
+        if (function.getBinding() != org.kanger.enums.FunctionBinding.INFRASTRUCTURE
+                || !"_set".equals(function.getName(mind).getValue())) return false;
+        ITerm value = evidence.getValue(mind);
+        if (value == null || value.getType() != DataType.SET
+                || !SemanticTermSnapshot.isOrdinaryValue(value)) return false;
+        boolean changed = false;
+        for (int i = 0; i < function.getRange(); ++i) {
+            org.kanger.interfaces.IArgument member = function.getArguments().get(i);
+            if (member.getType() != ArgumentType.TVARIABLE) continue;
+            TVariable variable = (TVariable) member.getObject(mind);
+            for (ITerm candidate : ((Term) value).semanticMembers()) {
+                if (mind.getTValues().find(variable, candidate) == null) {
+                    mind.getTValues().add(variable, candidate);
+                    statistics.incrementNewTValues();
+                    changed = true;
+                }
+            }
+        }
+        return changed;
+    }
+
     private int markExcluded(boolean result, TValue[] subst, Domain master, Domain slave, Map<IRule, Set<Cause>> causes, Map<Solve, List<DeferredSolveCandidate>> variants, long operationId, boolean logging) throws Exception {
         IRule r = null;
         boolean occurrs = false;
@@ -918,7 +996,7 @@ public class Linker {
 
 
         List<TValue> list = new ArrayList<>();
-        for (int i = 0; i < slave.getRange(); ++i) {
+        for (int i = 0; i < subst.length; ++i) {
             if (subst[i] != null) {
                 if (subst[i] instanceof Collection) {
                     list.addAll((Collection<TValue>) subst[i]);
@@ -948,10 +1026,13 @@ public class Linker {
             }
 
             master.setExcluded(slave.getArguments(), mind);
-            if (!variants.containsKey(master)) {
-                variants.put(master, new ArrayList<>());
+            if (variants == null) {
+                // Enumerate every SET permutation before these tuples constrain rotations.
+                pendingSetSolves.add(new ArrayList<TValue>(list));
+            } else {
+                if (!variants.containsKey(master)) variants.put(master, new ArrayList<>());
+                variants.get(master).add(new DeferredSolveCandidate(operationId, subst));
             }
-            variants.get(master).add(new DeferredSolveCandidate(operationId, subst));
             effects |= LinkerStatistics.EFFECT_DEFERRED_SOLVE_CANDIDATE;
 
             if (occurrs && result && logging) {

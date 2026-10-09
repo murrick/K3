@@ -164,6 +164,35 @@ public class Analyzer {
             }
         }
 
+        // Several substitutions can produce the same unordered SET record.
+        // Recover their correlated tuples rather than the record's last solve stamp.
+        if (result && rule != null && rule.isQuery() && rule.getTree().size() == 1
+                && rule.getTree().get(0).size() == 1) {
+            Domain domain = rule.getTree().get(0).get(0);
+            boolean setPattern = false;
+            for (org.kanger.units.Function function : domain.getArguments().getFunctions(mind)) {
+                if (function.getBinding() == org.kanger.enums.FunctionBinding.INFRASTRUCTURE
+                        && "_set".equals(function.getName(mind).getValue())) setPattern = true;
+            }
+            if (setPattern) {
+                List<TVariable> variables = domain.getArguments().getTVariables(mind);
+                for (List<org.kanger.units.TSolve> group : mind.ruleSolvesInternal().values()) {
+                    for (org.kanger.units.TSolve solve : group) {
+                        List<TValue> row = solve.getSolve();
+                        if (row.size() != variables.size() || row.isEmpty()) continue;
+                        Set<TVariable> bound = new HashSet<>();
+                        for (TValue value : row) {
+                            TVariable variable = value.getTVar(mind);
+                            if (variable.getRuleId() == rule.getId()
+                                    && SemanticTermSnapshot.isOrdinaryValue(value.getValue(mind)))
+                                bound.add(variable);
+                        }
+                        if (bound.containsAll(variables)) mind.getValues().add(row);
+                    }
+                }
+            }
+        }
+
         if (logging) {
             log.add(LogMode.TIMING, "* Analyzing time \t" + ((System.currentTimeMillis() - start) / 1000.0) + " sec");
         }

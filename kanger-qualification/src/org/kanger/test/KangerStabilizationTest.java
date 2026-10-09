@@ -169,6 +169,20 @@ public final class KangerStabilizationTest {
         require(Boolean.TRUE.equals(mind.query("?family([Sarah,Mary,John]);")), "Second family SET was not derived");
         require(Boolean.TRUE.equals(mind.query("?$s family(s);")), "Dynamic SET values were not returned");
         require(mind.getValues().size() == 2, "Dynamic SET retained values from a different substitution");
+        require(Boolean.TRUE.equals(mind.query("?$x $y $z family([x,y,z]);")), "SET pattern did not bind variables");
+        require(mind.getValues().size() == 12, "SET pattern lost permutations or mixed different families");
+        for (Map<String,ITerm> row : mind.getValues()) {
+            Set<String> members = new LinkedHashSet<>();
+            for (ITerm value : row.values()) members.add(value.toString());
+            require(members.equals(new LinkedHashSet<>(Arrays.asList("John", "Mary", "Tom")))
+                    || members.equals(new LinkedHashSet<>(Arrays.asList("John", "Mary", "Sarah"))),
+                    "SET pattern produced an unsupported tuple: " + row);
+        }
+        require(Boolean.TRUE.equals(mind.query("?$x family([John,Mary,x]);")), "SET pattern with constants failed");
+        require(rows("x").equals(new LinkedHashSet<>(Arrays.asList("x=Tom", "x=Sarah"))),
+                "SET pattern ignored its fixed members");
+        require(mind.query("?$x family([John,Absent,x]);") == null, "SET pattern invented missing membership");
+        require(mind.getValues().isEmpty(), "Unmatched SET pattern leaked candidate bindings");
     }
 
     public void set_s5a_04_alpha_equivalent_rule_identity() throws Exception {

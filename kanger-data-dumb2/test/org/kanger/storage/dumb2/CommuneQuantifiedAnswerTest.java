@@ -46,6 +46,26 @@ class CommuneQuantifiedAnswerTest {
             assertEquals("Tom", row.get("z").toString());
         } finally { close(); }
     }
+    @Test void communeEnumeratesUnorderedSetPatternBindings() throws Exception {
+        create("natives", "!@x @y @z father(x,z), mother(y,z) -> family([x,y,z]);");
+        create("facts", "!father(John,Tom); !mother(Mary,Tom); !father(John,Sarah); !mother(Mary,Sarah);");
+        open("family");
+        try {
+            connect("natives"); connect("facts");
+            assertEquals(Boolean.TRUE, mind.query("?$x $y $z family([x,y,z]);"));
+            assertEquals(12, mind.getValues().size());
+            for (Map<String,org.kanger.interfaces.ITerm> row : mind.getValues()) {
+                Set<String> members = new HashSet<>();
+                for (org.kanger.interfaces.ITerm value : row.values()) members.add(value.toString());
+                assertTrue(members.equals(new HashSet<>(Arrays.asList("John", "Mary", "Tom")))
+                        || members.equals(new HashSet<>(Arrays.asList("John", "Mary", "Sarah"))));
+            }
+            assertEquals(Boolean.TRUE, mind.query("?$x family([John,Mary,x]);"));
+            assertEquals(new HashSet<>(Arrays.asList("Tom", "Sarah")),
+                    mind.getValues().getValues("x").stream().map(Object::toString)
+                            .collect(java.util.stream.Collectors.toSet()));
+        } finally { close(); }
+    }
     @Test void abstractTruthAndMixedQuantifierCounterexampleMatchCommuneOpinion() throws Exception {
         create("natives", "!@x $y parent(y,x); !@x ~parent(x,x); !@x (male(x) || female(x)) && ~(male(x) && female(x)); !@x @y daughter(x,y) -> female(x), child(x,y); !@x @y son(x,y) -> male(x), child(x,y); !@x @y father(x,y) -> male(x), parent(x,y); !@x @y mother(x,y) -> female(x), parent(x,y); !@x @y child(x,y) -> parent(y,x), (male(x) -> son(x,y)), (female(x) -> daughter(x,y)); !@x @y parent(x,y) -> child(y,x), (male(x) -> father(x,y)), (female(x) -> mother(x,y)); !@x @y ~(parent(x,y), parent(y,x)); !@x @y ($z parent(z,x) && parent(z,y)) && x != y -> sibling(x,y); !@x @y ~(sibling(x,y), parent(x,y)); !@x @y sibling(x,y) -> sibling(y,x); !@x @y ($z parent(x,z), parent(y,z)), x != y -> spouse(x,y) || divorced(x,y);");
         create("facts", "!father(John, Tom); !daughter(Sarah, John); !mother(Mary,Sarah); !child(Tom,Mary); !age(John, 37); !age(Tom, 12); !age(Sarah, 4);");
