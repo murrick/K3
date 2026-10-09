@@ -1,0 +1,25 @@
+{
+  "parent": "96e84c16384641f90c9fa7c638e05ebec2cc1cb9",
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-authority-stream:../build/tvalue-layer-cost:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-authority-contexts",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-authority-contexts/AuthorityContextRunner.java"
+  ],
+  "native_classes_verified": 662,
+  "accepted_diagnostic_classes_verified": 13,
+  "implementation_unchanged": true,
+  "source_sha256": {
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-authority-contexts/AuthorityContextRunner.java": "b710220a7016c985b01684b3ef95baf5f55638b28b0d2b0a8ccefc6775a937e5"
+  },
+  "class_sha256": {
+    "org/kanger/AuthorityContextRunner$Fixture.class": "a1c7d00759f7cb4fb85abb6ad6b1e70e7566b488c9943a6092c6a58d5a84426b",
+    "org/kanger/AuthorityContextRunner.class": "10b6e521c7205670f76cb15e914572a81af71280e325f218ec1af784a60b3563"
+  }
+}

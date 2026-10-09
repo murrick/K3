@@ -1,0 +1,27 @@
+{
+  "seed": 24301,
+  "repetition": 0,
+  "flag": "verify",
+  "exit_code": 0,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/layer-cost-k964q7u9",
+    "-Dresult.path=/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-authority-contexts/0-verify",
+    "-Djournal.cost.enabled=true",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-Dkanger.experiment.verifyTValueIndex=true",
+    "-Dkanger.experiment.verifySolveSync=true",
+    "-cp",
+    "../build/tvalue-authority-contexts:../build/tvalue-authority-stream:../build/tvalue-layer-cost:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.AuthorityContextRunner",
+    "24301"
+  ]
+}
