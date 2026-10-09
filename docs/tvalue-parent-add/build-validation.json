@@ -1,0 +1,26 @@
+{
+  "parent": "a35f8caabc556a110e5255ae2922428e2eab0968",
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-authority-contexts:../build/tvalue-authority-stream:../build/tvalue-layer-cost:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-parent-add",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-parent-add/ParentAddRunner.java"
+  ],
+  "native_classes_verified": 662,
+  "accepted_diagnostic_classes_verified": 13,
+  "implementation_unchanged": true,
+  "source_sha256": {
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-parent-add/ParentAddRunner.java": "4fb79be1bf9697cc020e4536f4dcc297b2474d5577a56b3013c655e8ad37113c"
+  },
+  "class_sha256": {
+    "org/kanger/ParentAddRunner$Context.class": "ce5a5fd352914cc8466560daf294149ba7a1bf54f725e4e2a210e2ab45cda9e5",
+    "org/kanger/ParentAddRunner.class": "3b006e9c2fb8f880eaca80d094ec94d9dc22a2629ae28e41f100b7371eb58220",
+    "org/kanger/ParentAddRunner$Model.class": "2c68471181fea6e9ab95d6c2a6591b4bc0945944e6332bc1551f25b4b94fdb39"
+  }
+}
