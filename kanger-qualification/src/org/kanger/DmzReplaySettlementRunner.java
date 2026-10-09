@@ -10,7 +10,7 @@ public final class DmzReplaySettlementRunner {
     private static int checks;
     public static void main(String[] args) throws Exception {
         System.setProperty("user.home", Files.createTempDirectory("dmz-replay-settle-").toString());
-        nested(true); nested(false); late(); automatic(); explicit();
+        nested(true); nested(false); late(); automatic(); explicit(); preparation(true); preparation(false);
         System.out.println("DMZ_REPLAY_SETTLEMENT_PASS checks=" + checks);
     }
     private static Mind root() throws Exception {
@@ -63,5 +63,24 @@ public final class DmzReplaySettlementRunner {
     }
     private static void require(boolean condition, String message) {
         ++checks; if (!condition) throw new AssertionError(message);
+    }
+    private static void preparation(boolean accept) throws Exception {
+        Mind layer = root();
+        try (DmzReplayProvenance journal = DmzReplayProvenance.begin()) {
+            DmzReplayProvenance.Settlement pending;
+            try (DmzReplayProvenance.Preparation preparation = DmzReplayProvenance.preparation(layer)) {
+                replay(layer);
+                pending = journal.settlementSnapshot();
+                require(pending.pending == 1 && pending.accepted.isEmpty(), "preparation waits for qualification");
+                if (accept) {
+                    preparation.accept();
+                    try { preparation.accept(); throw new AssertionError("double accept"); }
+                    catch (IllegalStateException expected) { ++checks; }
+                }
+            }
+            DmzReplayProvenance.Settlement settled = journal.settlementSnapshot();
+            require(accept ? settled.accepted.size() == 1 : settled.discarded == 1, "provider settlement controls replay");
+            require(pending.pending == 1, "provider pending snapshot detached");
+        }
     }
 }

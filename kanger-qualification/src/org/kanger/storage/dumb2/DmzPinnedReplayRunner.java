@@ -45,9 +45,9 @@ public final class DmzPinnedReplayRunner {
                 require(work.queryCanonical("?family([]);", new LinkedList<>(), false), "empty set survives persistent replay");
             } finally { runtime.mind().discardEphemeral(work); }
             require(journal.snapshot().size() == 6, "queries add no replay bindings");
-            require(journal.settlementSnapshot().accepted.isEmpty()
-                    && journal.settlementSnapshot().untracked == 6,
-                    "untracked runtime layer is not a global acceptance certificate");
+            require(journal.settlementSnapshot().accepted.size() == 6
+                    && journal.settlementSnapshot().untracked == 0,
+                    "successful provider preparation accepts layer-local bindings");
         } finally { a.closeLayer(); b.closeLayer(); }
         create(directory, "C", "!p(John);");
         create(directory, "D", "!~p(John);");
@@ -61,6 +61,8 @@ public final class DmzPinnedReplayRunner {
             require(rejected, "whole provider preparation rejected");
             require(!journal.snapshot().isEmpty(), "failed preparation retains raw diagnostics");
             require(journal.settlementSnapshot().accepted.isEmpty(), "failed provider preparation cannot certify replay");
+            require(journal.settlementSnapshot().discarded == journal.snapshot().size(),
+                    "failed preparation discards every replay binding");
         } finally { c.closeLayer(); d.closeLayer(); }
         System.out.println("DMZ_PINNED_REPLAY_PASS checks=" + checks);
     }

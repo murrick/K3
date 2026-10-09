@@ -58,6 +58,39 @@ public final class DmzReplayProvenance implements AutoCloseable {
         Outcome outcome = Outcome.PENDING;
         Frame(int parent, boolean boundary) { this.parent = parent; this.boundary = boundary; }
     }
+    /** Provider-owned preparation boundary; acceptance is local to the prepared layer. */
+    public static final class Preparation implements AutoCloseable {
+        private final DmzReplayProvenance capture;
+        private final Frame frame;
+        private boolean settled;
+        private Preparation(DmzReplayProvenance capture, Frame frame) {
+            this.capture = capture; this.frame = frame;
+        }
+        private void check() {
+            if (capture != null && (Thread.currentThread() != capture.owner || ACTIVE.get() != capture || capture.closed))
+                throw new IllegalStateException("Preparation must settle in its owning journal scope");
+        }
+        public void accept() {
+            check();
+            if (settled) throw new IllegalStateException("Preparation already settled");
+            settled = true;
+            if (frame != null) frame.outcome = Outcome.ACCEPTED;
+        }
+        @Override public void close() {
+            check();
+            if (!settled) { settled = true; if (frame != null) frame.outcome = Outcome.DISCARDED; }
+        }
+    }
+    public static Preparation preparation(Mind layer) {
+        DmzReplayProvenance capture = ACTIVE.get();
+        if (capture == null) return new Preparation(null, null);
+        if (layer == null) throw new IllegalArgumentException("Preparation layer required");
+        int index = capture.identity(layer);
+        if (capture.frames.containsKey(index)) throw new IllegalStateException("Layer already has observed lifecycle");
+        Frame frame = new Frame(-1, true);
+        capture.frames.put(index, frame);
+        return new Preparation(capture, frame);
+    }
     private int identity(Mind mind) {
         Integer index = targets.get(mind);
         if (index == null) { index = targets.size(); targets.put(mind, index); }

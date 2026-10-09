@@ -51,7 +51,8 @@ final class CommuneRuntime implements AutoCloseable {
         Mind layer = Mind.contextConnectionLayer(root);
         user.setCurrentMind(layer);
         boolean accepted = false;
-        try {
+        try (org.kanger.DmzReplayProvenance.Preparation preparation =
+                org.kanger.DmzReplayProvenance.preparation(layer)) {
             // Replay all authoritative knowledge before qualifying or asking
             // anything. Member-local generated productions are not imported.
             List<org.kanger.interfaces.internal.IContextFederation.Revision> pins = new ArrayList<>();
@@ -78,6 +79,7 @@ final class CommuneRuntime implements AutoCloseable {
                 throw new CommandErrorException("Trust commune contains incompatible knowledge");
             layer.link(null, false);
             CommuneRuntime runtime = new CommuneRuntime(user, root, layer, ordered);
+            preparation.accept();
             accepted = true;
             return runtime;
         } finally {
