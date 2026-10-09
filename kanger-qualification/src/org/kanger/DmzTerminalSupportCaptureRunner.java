@@ -14,6 +14,8 @@ public final class DmzTerminalSupportCaptureRunner {
         alternatives();
         conjunction();
         characterizeBindingGroups();
+        premiseBindings();
+        hiddenJoinBindings();
         System.out.println("DMZ_TERMINAL_SUPPORT_CAPTURE_PASS checks=" + checks);
     }
 
@@ -119,6 +121,68 @@ public final class DmzTerminalSupportCaptureRunner {
         require(john && mary, "both tuple candidates observed");
         require(mixed, "raw accumulated causes expose foreign tuple donors; uncertified");
         System.out.println("DMZ_OPEN_REQUIREMENT terminal_binding_certified=false mixed_donor_groups=" + mixed);
+    }
+
+    private static void premiseBindings() throws Exception {
+        Mind q = root();
+        List<TerminalSupportCapture.Match> matches;
+        try (TerminalSupportCapture capture = TerminalSupportCapture.begin()) {
+            require(q.compile("!@x (a(x) && c(x)) -> male(x); "
+                    + "!a(John); !c(John); !a(Mary); !c(Mary);", null, false), "premise program");
+            matches = capture.matchSnapshot();
+        }
+        boolean john = false, mary = false;
+        for (TerminalSupportCapture.Match match : matches) {
+            if (!match.ruleOrigin.equals("!@x (a(x) && c(x)) -> male(x);")) continue;
+            String expected = null;
+            if (match.donor.equals("!a(John);") || match.donor.equals("!c(John);")) expected = "John";
+            if (match.donor.equals("!a(Mary);") || match.donor.equals("!c(Mary);")) expected = "Mary";
+            if (expected == null) continue;
+            require(match.bindings.size() == 1, "one partial binding for unary premise");
+            TerminalSupportCapture.Binding binding = match.bindings.get(0);
+            require(expected.equals(binding.rendering), "binding belongs to donor tuple");
+            require(binding.value != null, "detached semantic binding");
+            john |= expected.equals("John"); mary |= expected.equals("Mary");
+            try { match.bindings.clear(); throw new AssertionError("mutable bindings"); }
+            catch (UnsupportedOperationException expectedFailure) { ++checks; }
+        }
+        require(john && mary, "both separated premise bindings captured");
+        require(Boolean.TRUE.equals(q.query("?male(John);", null, false)), "John truth unchanged");
+        require(Boolean.TRUE.equals(q.query("?male(Mary);", null, false)), "Mary truth unchanged");
+        System.out.println("DMZ_PREMISE_BINDINGS_PASS matches=" + matches.size());
+    }
+
+    private static void hiddenJoinBindings() throws Exception {
+        Mind q = root();
+        String origin = "!@x @y (a(x,y) && c(y)) -> male(x);";
+        List<TerminalSupportCapture.Match> matches;
+        try (TerminalSupportCapture capture = TerminalSupportCapture.begin()) {
+            require(q.compile(origin + " !a(John,One); !c(One); !a(Mary,Two); !c(Two);",
+                    null, false), "hidden join program");
+            matches = capture.matchSnapshot();
+        }
+        boolean one = false, two = false;
+        int premiseOne = -1, premiseTwo = -1, variableOne = -1, variableTwo = -1;
+        for (TerminalSupportCapture.Match match : matches) {
+            if (!origin.equals(match.ruleOrigin)) continue;
+            if (!"!c(One);".equals(match.donor) && !"!c(Two);".equals(match.donor)) continue;
+            require(match.bindings.size() == 1, "join premise has one partial binding");
+            TerminalSupportCapture.Binding binding = match.bindings.get(0);
+            require("y".equals(binding.name), "hidden join variable retained");
+            if ("!c(One);".equals(match.donor)) {
+                require("One".equals(binding.rendering), "One join isolated");
+                one = true; premiseOne = match.premise; variableOne = binding.variable;
+            } else {
+                require("Two".equals(binding.rendering), "Two join isolated");
+                two = true; premiseTwo = match.premise; variableTwo = binding.variable;
+            }
+        }
+        require(one && two, "both hidden join substitutions retained");
+        require(premiseOne == premiseTwo, "same premise across substitutions");
+        require(variableOne == variableTwo, "same scoped variable across substitutions");
+        require(Boolean.TRUE.equals(q.query("?male(John);", null, false)), "join John proven");
+        require(Boolean.TRUE.equals(q.query("?male(Mary);", null, false)), "join Mary proven");
+        System.out.println("DMZ_HIDDEN_JOIN_BINDINGS_PASS matches=" + matches.size());
     }
 
     private static void require(boolean condition, String message) {

@@ -5,6 +5,10 @@ import org.kanger.interfaces.IRule;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Solve;
 import org.kanger.units.Domain;
+import org.kanger.units.TValue;
+import org.kanger.units.TVariable;
+import java.util.IdentityHashMap;
+import java.util.Map;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,10 +39,70 @@ final class TerminalSupportCapture implements AutoCloseable {
         }
     }
 
+    /** Partial substitution observed at one premise match, not a complete application. */
+    static final class Binding {
+        final int variable;
+        final String name;
+        final String rendering;
+        final SemanticTermSnapshot value;
+        Binding(int variable, String name, String rendering, SemanticTermSnapshot value) {
+            this.variable = variable;
+            this.name = name;
+            this.rendering = rendering;
+            this.value = value;
+        }
+    }
+
+    static final class Match {
+        final int premise;
+        final String ruleOrigin;
+        final String donor;
+        final boolean result;
+        final List<Binding> bindings;
+        Match(int premise, String ruleOrigin, String donor, boolean result, List<Binding> bindings) {
+            this.premise = premise;
+            this.ruleOrigin = ruleOrigin;
+            this.donor = donor;
+            this.result = result;
+            this.bindings = Collections.unmodifiableList(new ArrayList<Binding>(bindings));
+        }
+    }
+
     private final TerminalSupportCapture previous;
     private final Thread owner;
     private final List<Event> events = new ArrayList<Event>();
+    private final List<Match> matches = new ArrayList<Match>();
+    private final Map<Object, Integer> identities = new IdentityHashMap<Object, Integer>();
     private boolean closed;
+
+    private int identity(Object object) {
+        Integer index = identities.get(object);
+        if (index == null) { index = identities.size(); identities.put(object, index); }
+        return index;
+    }
+
+    static void recordMatch(Mind mind, Domain premise, Domain donor,
+            List<TValue> substitution, boolean result) throws Exception {
+        TerminalSupportCapture capture = ACTIVE.get();
+        if (capture == null) return;
+        List<Binding> bindings = new ArrayList<Binding>();
+        for (TValue candidate : substitution) {
+            TVariable variable = candidate.getTVar(mind);
+            if (!SemanticTermSnapshot.isOrdinaryValue(candidate.getValue(mind))) return;
+            bindings.add(new Binding(capture.identity(variable), variable.getName(mind).toString(),
+                    candidate.getValue(mind).toString(), SemanticTermSnapshot.capture(candidate.getValue(mind))));
+        }
+        if (bindings.isEmpty()) return;
+        IRule rule = premise.getRule();
+        capture.matches.add(new Match(capture.identity(premise),
+                rule == null || rule.getOrigin() == null ? "" : rule.getOrigin(),
+                new Solve(donor.getPredicate(), donor.isAntc(),
+                        donor.getArguments().convertBase(mind)).toString(mind), result, bindings));
+    }
+
+    List<Match> matchSnapshot() {
+        return Collections.unmodifiableList(new ArrayList<Match>(matches));
+    }
 
     private TerminalSupportCapture() {
         owner = Thread.currentThread();
@@ -70,6 +134,7 @@ final class TerminalSupportCapture implements AutoCloseable {
             throw new IllegalStateException("Terminal capture must close on owner thread in stack order");
         }
         closed = true;
+        identities.clear();
         if (previous == null) ACTIVE.remove(); else ACTIVE.set(previous);
     }
 }

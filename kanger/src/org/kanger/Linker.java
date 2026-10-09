@@ -1016,6 +1016,7 @@ public class Linker {
         if (r != null) {
 
             if (occurrs) {
+                TerminalSupportCapture.recordMatch(mind, master, slave, list, result);
                 Cause s = new Cause(master, slave, mind);
                 if (!causes.containsKey(r)) {
                     causes.put(r, new HashSet<>());
