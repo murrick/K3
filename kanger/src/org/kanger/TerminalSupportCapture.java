@@ -57,7 +57,7 @@ final class TerminalSupportCapture implements AutoCloseable {
         }
     }
 
-    private static final class Ground {
+    static final class Ground {
         final String predicate;
         final boolean sign;
         final List<SemanticTermSnapshot> arguments;
@@ -105,8 +105,11 @@ final class TerminalSupportCapture implements AutoCloseable {
         final int premise;
         final int evidence;
         final String donor;
-        Support(int premise, int evidence, String donor) {
+        final Ground ground;
+        final boolean primary;
+        Support(int premise, int evidence, String donor, Ground ground, boolean primary) {
             this.premise = premise; this.evidence = evidence; this.donor = donor;
+            this.ground = ground; this.primary = primary;
         }
     }
 
@@ -116,11 +119,13 @@ final class TerminalSupportCapture implements AutoCloseable {
         final int rule;
         final String ruleOrigin;
         final String conclusion;
+        final Ground ground;
         final List<Binding> bindings;
         final List<Support> supports;
-        Application(int mind, int rule, String origin, String conclusion,
+        Application(int mind, int rule, String origin, String conclusion, Ground ground,
                 List<Binding> bindings, List<Support> supports) {
             this.mind = mind; this.rule = rule; this.ruleOrigin = origin; this.conclusion = conclusion;
+            this.ground = ground;
             this.bindings = Collections.unmodifiableList(new ArrayList<Binding>(bindings));
             this.supports = Collections.unmodifiableList(new ArrayList<Support>(supports));
         }
@@ -227,11 +232,13 @@ final class TerminalSupportCapture implements AutoCloseable {
                 if (compatible) { witnessed = true; break; }
             }
             if (!witnessed) return "missing-compatible-premise-match";
-            supports.add(new Support(identity(premise), identity(evidence), donor));
+            supports.add(new Support(identity(premise), identity(evidence), donor, ground,
+                    !mind.getRules().isGenerated(evidence)));
         }
+        Solve result = new Solve(conclusion.getPredicate(), conclusion.isAntc(),
+                conclusion.getArguments().convertBase(mind));
         applications.add(new Application(identity(mind), identity(rule), rule.getOrigin(),
-                new Solve(conclusion.getPredicate(), conclusion.isAntc(),
-                        conclusion.getArguments().convertBase(mind)).toString(mind), bindings, supports));
+                result.toString(mind), Ground.capture(result, mind), bindings, supports));
         return null;
     }
 

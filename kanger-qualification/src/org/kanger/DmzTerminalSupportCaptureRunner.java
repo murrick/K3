@@ -248,7 +248,7 @@ public final class DmzTerminalSupportCaptureRunner {
         try (TerminalSupportCapture capture = TerminalSupportCapture.begin()) {
             require(q.compile("!@x a(x) -> male(x+1); !a(1);", null, false), "function program");
             for (TerminalSupportCapture.Application application : capture.applicationSnapshot())
-                require(!"!male(2);".equals(application.conclusion), "function excluded from bounded surface");
+                require(!"!male(2.0);".equals(application.conclusion), "function excluded from bounded surface");
             require(capture.applicationGapSnapshot().contains("unsupported-argument"), "unsupported function records gap");
             require(Boolean.TRUE.equals(q.query("?male(2);", null, false)), "function still works natively");
         }
