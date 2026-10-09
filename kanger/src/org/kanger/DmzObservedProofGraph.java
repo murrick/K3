@@ -10,11 +10,12 @@ final class DmzObservedProofGraph {
     static final class Node {
         final int mind;
         final String atom;
+        final TerminalSupportCapture.Ground ground;
         final boolean primary;
         final boolean grounded;
         final List<Integer> alternatives;
         Node(MutableNode node) {
-            mind = node.mind; atom = node.atom; primary = node.primary; grounded = node.grounded;
+            mind = node.mind; atom = node.atom; ground = node.ground; primary = node.primary; grounded = node.grounded;
             alternatives = immutable(node.alternatives);
         }
     }

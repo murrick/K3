@@ -12,11 +12,12 @@ import java.util.UUID;
 /** Bounded acyclic witnesses of the observed graph, never a completeness certificate. */
 final class DmzProofWitnesses {
     static final class Witness {
+        final DmzSourcedProofGraph graph;
         final int node, step; // step -1 denotes a primary source occurrence
         final DmzReplayProvenance.Binding source;
         final List<Witness> premises;
-        Witness(int node, int step, DmzReplayProvenance.Binding source, List<Witness> premises) {
-            this.node = node; this.step = step; this.source = source;
+        Witness(DmzSourcedProofGraph graph, int node, int step, DmzReplayProvenance.Binding source, List<Witness> premises) {
+            this.graph = graph; this.node = node; this.step = step; this.source = source;
             this.premises = Collections.unmodifiableList(new ArrayList<Witness>(premises));
         }
     }
@@ -66,7 +67,7 @@ final class DmzProofWitnesses {
                         for (DmzReplayProvenance.Binding source : graph.steps.get(i).primarySources.get(p))
                             if (seen.add(source)) {
                                 if (!budget.take()) return result;
-                                result.add(new Witness(node, -1, source, Collections.<Witness>emptyList()));
+                                result.add(new Witness(graph, node, -1, source, Collections.<Witness>emptyList()));
                             }
             }
             for (int index : graph.observed.nodes.get(node).alternatives) {
@@ -81,31 +82,31 @@ final class DmzProofWitnesses {
                     choices.add(alternatives);
                 }
                 if (ready) for (DmzReplayProvenance.Binding source : sourced.ruleSources) {
-                    combine(node, index, source, choices, 0, new ArrayList<Witness>(), result, budget);
+                    combine(graph, node, index, source, choices, 0, new ArrayList<Witness>(), result, budget);
                     if (budget.truncated) return result;
                 }
             }
             return result;
         } finally { path.remove(node); }
     }
-    private static void combine(int node, int step, DmzReplayProvenance.Binding source,
+    private static void combine(DmzSourcedProofGraph graph, int node, int step, DmzReplayProvenance.Binding source,
             List<List<Witness>> choices, int slot, List<Witness> selected, List<Witness> result, Budget budget) {
         if (!budget.advance()) return;
         if (slot == choices.size()) {
             Map<UUID, Long> revisions = new HashMap<UUID, Long>();
             revisions.put(source.context, source.revision);
             for (Witness premise : selected) if (!compatible(premise, revisions)) return;
-            if (budget.take()) result.add(new Witness(node, step, source, selected));
+            if (budget.take()) result.add(new Witness(graph, node, step, source, selected));
             return;
         }
         for (Witness candidate : choices.get(slot)) {
             selected.add(candidate);
-            combine(node, step, source, choices, slot + 1, selected, result, budget);
+            combine(graph, node, step, source, choices, slot + 1, selected, result, budget);
             selected.remove(selected.size() - 1);
             if (budget.truncated) return;
         }
     }
-    private static boolean compatible(Witness witness, Map<UUID, Long> revisions) {
+    static boolean compatible(Witness witness, Map<UUID, Long> revisions) {
         Long previous = revisions.put(witness.source.context, witness.source.revision);
         if (previous != null && previous.longValue() != witness.source.revision) return false;
         for (Witness premise : witness.premises) if (!compatible(premise, revisions)) return false;
