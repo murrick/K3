@@ -1,0 +1,26 @@
+{
+  "size": 512,
+  "buckets": 8,
+  "repetition": 0,
+  "flag": "on",
+  "exit_code": 0,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/layer-cost-1a33cr03",
+    "-Dresult.path=/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-layer-cost/512-8-0-on",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-layer-cost:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.LayerCostRunner",
+    "512",
+    "8"
+  ]
+}
