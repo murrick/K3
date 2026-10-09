@@ -1,0 +1,15 @@
+{
+  "original": "docs/tvalue-reporting/StreamReportJournal.java",
+  "original_sha256": "20170e252c632dfdde30f320d5bd65f1d5005f01a0cf3ecb472a75faac3917de",
+  "replacements": [
+    [
+      "if(!next.equals(authority))",
+      "if(!sameView(next,authority))"
+    ],
+    [
+      "    private static boolean dependsOn(Mind candidate,Mind owner)",
+      "    /** Exact equality for private natural-order journal views, without tree lookups. */\n    private static boolean sameView(SortedMap<Long,String> left,SortedMap<Long,String> right){\n        if(left.size()!=right.size())return false;\n        Iterator<Map.Entry<Long,String>> a=left.entrySet().iterator(),b=right.entrySet().iterator();\n        while(a.hasNext()){\n            Map.Entry<Long,String> x=a.next(),y=b.next();\n            if(!x.getKey().equals(y.getKey())||!Objects.equals(x.getValue(),y.getValue()))return false;\n        }\n        return true;\n    }\n    private static boolean dependsOn(Mind candidate,Mind owner)"
+    ]
+  ],
+  "scope": "exact comparison only; full authority and projection/reporting unchanged"
+}

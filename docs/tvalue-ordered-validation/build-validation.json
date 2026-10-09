@@ -1,0 +1,44 @@
+{
+  "parent": "24770ae402c41ea43dce0cc7309245dc9396fdfd",
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-layer-cost:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-ordered-validation",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-ordered-validation/BeforeValidationJournal.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-ordered-validation/OrderedValidationJournal.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-ordered-validation/ValidationCostRunner.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-ordered-validation/ValidationScopeRunner.java"
+  ],
+  "prior_runtime_class_hashes_verified": 662,
+  "prior_journal_source_recovered": true,
+  "runner_recovered_by_class_rename_only": true,
+  "full_oracle_unchanged_in_both": true,
+  "class_sha256": {
+    "org/kanger/OrderedValidationJournal$Session.class": "8558b13afe95990140f2abc36e5200f116308ca315b2e73f3d128da5db9a5547",
+    "org/kanger/BeforeValidationJournal$Session.class": "e17ca87cb5960e68eebcb88e669e09eb5f2015b69db0a7ea3bde9697e3b0f226",
+    "org/kanger/BeforeValidationJournal$UpdateFrame.class": "42f4536c5e642c6fd1f5516d0a87755d54c1c469f0c94e346321329cb64bb41f",
+    "org/kanger/BeforeValidationJournal.class": "a7f7a150aaa9cb315cafa0662ff222ce708a08d519d4354eafe916e5e9f5e7c9",
+    "org/kanger/OrderedValidationJournal$State.class": "128a6bf1c0052d6e80d75d6647856ebf69bc8bad78bb8162d097e0a2c688af5e",
+    "org/kanger/OrderedValidationJournal$UpdateFrame.class": "1d0b2da2defd63e6e484cc14355a93bc0f4704cfa0a0c6dc04caf4b0d6fd0690",
+    "org/kanger/BeforeValidationJournal$Work.class": "37b4e15d8164111b795033ba79b64fef7d8c15ddf02310b7a27767c2931e55de",
+    "org/kanger/BeforeValidationJournal$State.class": "0612c5e03eb1577859e118a216a271d2d00ce38a014e4936a7cd5359a22e0612",
+    "org/kanger/OrderedValidationJournal$Work.class": "4a2020c87b4b624d518b9ebf0af731eb00f1cbee787f66389b8ee34f86ee2ec6",
+    "org/kanger/OrderedValidationJournal.class": "c7d65f67e983ec24109f9c7af64b0fc730f272609a568c922bfe3ee62db3e4ab",
+    "org/kanger/ValidationCostRunner.class": "7446fe79192a3c592b7882a56bda491da00ce52b92fd190b01f228c88564fd86",
+    "org/kanger/ValidationScopeRunner.class": "dc906da2df2f80e0968e90e08553bf622a49a47387ca34d54ab0e055092a4272"
+  },
+  "source_sha256": {
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-ordered-validation/BeforeValidationJournal.java": "f273edf6cd9fcfcba08152378d559a8bd7ede438bfe7914d5e7ae32e4fb347b9",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-ordered-validation/OrderedValidationJournal.java": "4ffe57652d094f9f1766195923e829da20997dae03afcd9ddee4cb1af24b7118",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-ordered-validation/ValidationCostRunner.java": "f3d1ff2e8454687302f19005f499425ace20d4588be3a9311801c33a2dcdcfb1",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-ordered-validation/ValidationScopeRunner.java": "9c9b2385824a5a9f6830cf3ba7d19685021696acc472608f022f678696668fec"
+  },
+  "native_clean_runtime": "tvalue-layer-cost",
+  "native_setter_metadata_bridge": "explicit after native setter returns; no instrumented native class or engine hooks"
+}

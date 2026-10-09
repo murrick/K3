@@ -1,0 +1,27 @@
+{
+  "size": 32,
+  "buckets": 1,
+  "repetition": 0,
+  "flag": "on",
+  "exit_code": 0,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/layer-cost-m82_o8i5",
+    "-Dresult.path=/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-ordered-validation/32-1-0-on",
+    "-Djournal.cost.enabled=true",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-ordered-validation:../build/tvalue-layer-cost:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ValidationCostRunner",
+    "32",
+    "1"
+  ]
+}
