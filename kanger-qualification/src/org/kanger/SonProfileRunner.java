@@ -51,7 +51,8 @@ public final class SonProfileRunner {
             if (sampler != null) { sampler.join(); sampler.report(i, "optimize"); }
             long allocatedBytes = allocation == null ? -1 : allocation.getThreadAllocatedBytes(Thread.currentThread().getId()) - allocatedBefore;
             List<String> optimized = texts(mind);
-            if (result != null || optimized.size() != 6) throw new AssertionError("Unexpected result");
+            if (result != null || optimized.size() != 7) throw new AssertionError("Unexpected result: result=" + result
+                    + " raw=" + raw.size() + " optimized=" + optimized.size() + " hypotheses=" + optimized);
             System.out.println("SAMPLE " + i + " query_ns=" + queryNs + " optimize_ns=" + optimizeNs
                     + " optimize_cpu_ns=" + cpuNs + " optimize_allocated_bytes=" + allocatedBytes + " raw=" + raw.size() + " optimized=" + optimized.size()
                     + " solutions=" + mind.getSolutions().size() + " values=" + mind.getValues().size());

@@ -48,7 +48,7 @@ for mode in ['defaults', 'on', 'off']:
             raw = re.findall(r'^RAW .*$', content, re.M)
             optimized = re.findall(r'^OPTIMIZED .*$', content, re.M)
             assert len(raw) == len(optimized) == 2, log
-            assert len(re.findall(r'raw=18 optimized=6 solutions=0 values=0', content)) == 2, log
+            assert len(re.findall(r'raw=18 optimized=7 solutions=0 values=0', content)) == 2, log
             snapshots.append((raw, optimized))
         print('PASS', mode, runner, flush=True)
 states = [(output / (mode + '.state')).read_bytes() for mode in ['defaults', 'on', 'off']]
