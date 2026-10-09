@@ -131,12 +131,78 @@ final class TerminalSupportCapture implements AutoCloseable {
         }
     }
 
+    enum Outcome { PENDING, COMMITTED, ROLLED_BACK, FAILED, UNTRACKED }
+
+    static final class SettlementSnapshot {
+        final List<Application> accepted;
+        final int pending;
+        final int discarded;
+        final int untracked;
+        SettlementSnapshot(List<Application> accepted, int pending, int discarded, int untracked) {
+            this.accepted = Collections.unmodifiableList(new ArrayList<Application>(accepted));
+            this.pending = pending; this.discarded = discarded; this.untracked = untracked;
+        }
+    }
+
+    private static final class Frame {
+        final int parent;
+        final boolean knownBoundary;
+        Outcome outcome = Outcome.PENDING;
+        Frame(int parent, boolean knownBoundary) { this.parent = parent; this.knownBoundary = knownBoundary; }
+    }
+
+    static void transactionOpened(Mind parent, Mind child) {
+        TerminalSupportCapture capture = ACTIVE.get();
+        if (capture != null)
+            capture.frames.put(capture.identity(child), new Frame(capture.identity(parent), capture.boundary == parent
+                    || (capture.boundary == null && parent.getNext() == null)));
+    }
+
+    static void transactionSettled(Mind child, Outcome outcome) {
+        TerminalSupportCapture capture = ACTIVE.get();
+        if (capture == null) return;
+        Integer index = capture.identities.get(child);
+        Frame frame = index == null ? null : capture.frames.get(index);
+        if (frame != null) frame.outcome = outcome;
+    }
+
+    /** Historical technical commit acceptance, not current revision validity. */
+    SettlementSnapshot settlementSnapshot() {
+        List<Application> accepted = new ArrayList<Application>();
+        int pending = 0, discarded = 0, untracked = 0;
+        for (Application application : applications) {
+            Outcome outcome = outcome(application.mind);
+            if (outcome == Outcome.COMMITTED) accepted.add(application);
+            else if (outcome == Outcome.PENDING) ++pending;
+            else if (outcome == Outcome.UNTRACKED) ++untracked;
+            else ++discarded;
+        }
+        return new SettlementSnapshot(accepted, pending, discarded, untracked);
+    }
+
+    private Outcome outcome(int mind) {
+        Frame frame = frames.get(mind);
+        if (frame == null) return Outcome.UNTRACKED;
+        boolean pending = false;
+        while (frame != null) {
+            if (frame.outcome == Outcome.ROLLED_BACK || frame.outcome == Outcome.FAILED)
+                return frame.outcome;
+            pending |= frame.outcome == Outcome.PENDING;
+            Frame ancestor = frames.get(frame.parent);
+            if (ancestor == null && !frame.knownBoundary) return Outcome.UNTRACKED;
+            frame = ancestor;
+        }
+        return pending ? Outcome.PENDING : Outcome.COMMITTED;
+    }
+
     private final TerminalSupportCapture previous;
     private final Thread owner;
+    private Mind boundary;
     private final List<Event> events = new ArrayList<Event>();
     private final List<Application> applications = new ArrayList<Application>();
     private final List<String> applicationGaps = new ArrayList<String>();
     private final List<Match> matches = new ArrayList<Match>();
+    private final Map<Integer, Frame> frames = new java.util.HashMap<Integer, Frame>();
     private final Map<Object, Integer> identities = new IdentityHashMap<Object, Integer>();
     private boolean closed;
 
@@ -250,13 +316,19 @@ final class TerminalSupportCapture implements AutoCloseable {
         return Collections.unmodifiableList(new ArrayList<String>(applicationGaps));
     }
 
-    private TerminalSupportCapture() {
+    private TerminalSupportCapture(Mind boundary) {
+        this.boundary = boundary;
         owner = Thread.currentThread();
         previous = ACTIVE.get();
         ACTIVE.set(this);
     }
 
-    static TerminalSupportCapture begin() { return new TerminalSupportCapture(); }
+    static TerminalSupportCapture begin() { return new TerminalSupportCapture(null); }
+
+    static TerminalSupportCapture begin(Mind operationBoundary) {
+        if (operationBoundary == null) throw new IllegalArgumentException("Operation boundary required");
+        return new TerminalSupportCapture(operationBoundary);
+    }
 
     static void record(Mind mind, Domain domain, Collection<Cause> causes) throws Exception {
         TerminalSupportCapture capture = ACTIVE.get();
@@ -281,6 +353,7 @@ final class TerminalSupportCapture implements AutoCloseable {
         }
         closed = true;
         identities.clear();
+        boundary = null;
         if (previous == null) ACTIVE.remove(); else ACTIVE.set(previous);
     }
 }

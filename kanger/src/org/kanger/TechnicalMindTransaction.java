@@ -54,6 +54,7 @@ final class TechnicalMindTransaction implements AutoCloseable {
         }
         this.parent = parent;
         this.child = isolated ? Mind.ephemeralChild(parent) : new Mind(parent);
+        TerminalSupportCapture.transactionOpened(parent, child);
     }
 
     static TechnicalMindTransaction begin(Mind parent) throws Exception {
@@ -70,12 +71,26 @@ final class TechnicalMindTransaction implements AutoCloseable {
 
     boolean commit() throws Exception {
         beginSettlement();
-        return parent.commit(child);
+        try {
+            boolean committed = parent.commit(child);
+            TerminalSupportCapture.transactionSettled(child, committed
+                    ? TerminalSupportCapture.Outcome.COMMITTED : TerminalSupportCapture.Outcome.ROLLED_BACK);
+            return committed;
+        } catch (Exception failure) {
+            TerminalSupportCapture.transactionSettled(child, TerminalSupportCapture.Outcome.FAILED);
+            throw failure;
+        }
     }
 
     void rollback() throws Exception {
         beginSettlement();
-        parent.release(child);
+        try {
+            parent.release(child);
+            TerminalSupportCapture.transactionSettled(child, TerminalSupportCapture.Outcome.ROLLED_BACK);
+        } catch (Exception failure) {
+            TerminalSupportCapture.transactionSettled(child, TerminalSupportCapture.Outcome.FAILED);
+            throw failure;
+        }
     }
 
     private void beginSettlement() {
@@ -88,8 +103,7 @@ final class TechnicalMindTransaction implements AutoCloseable {
     @Override
     public void close() throws Exception {
         if (!settlementStarted) {
-            settlementStarted = true;
-            parent.release(child);
+            rollback();
         }
     }
 }
