@@ -243,44 +243,30 @@ public class Mind implements IMind {
         return layer;
     }
 
-    private final Map<String, List<IContextFederation.ProofCause>> contextProofs = new LinkedHashMap<>();
-    private final Map<String,List<IContextFederation.ProofCause>> contextRuleOrigins = new LinkedHashMap<>();
-    private String communeName;
-    private List<IContextFederation.Revision> communeMembers = Collections.emptyList();
+    private final ContextProvenance contextProvenance = new ContextProvenance();
 
     public void configureCommuneProvenance(String name, List<IContextFederation.Revision> members) {
-        communeName = name;
-        communeMembers = Collections.unmodifiableList(new ArrayList<>(members));
+        contextProvenance.configureCommuneProvenance(name, members);
     }
-    public String getCommuneName() { return communeName; }
-    public List<IContextFederation.Revision> getCommuneMembers() { return communeMembers; }
+
+    public String getCommuneName() { return contextProvenance.getCommuneName(); }
+    public List<IContextFederation.Revision> getCommuneMembers() { return contextProvenance.getCommuneMembers(); }
     public void addContextRuleOrigin(String origin, IContextFederation.ProofCause proof) {
-        contextRuleOrigins.computeIfAbsent(origin, ignored -> new ArrayList<>()).add(proof);
+        contextProvenance.addContextRuleOrigin(origin, proof);
     }
     public List<IContextFederation.ProofCause> getContextRuleOrigins(String origin) {
-        List<IContextFederation.ProofCause> proofs = contextRuleOrigins.get(origin);
-        return proofs == null ? Collections.emptyList() : Collections.unmodifiableList(proofs);
+        return contextProvenance.getContextRuleOrigins(origin);
     }
-
-
     public boolean isContextConnectionLayer() { return connectionLayer; }
-
-    public void clearContextProofs() { contextProofs.clear(); }
-
+    public void clearContextProofs() { contextProvenance.clearContextProofs(); }
     public List<IContextFederation.ProofCause> getContextProofs(String fact) {
-        List<IContextFederation.ProofCause> proofs = contextProofs.get(fact);
-        return proofs == null ? Collections.<IContextFederation.ProofCause>emptyList() : proofs;
+        return contextProvenance.getContextProofs(fact);
     }
-
     public void addContextProofs(String fact, List<IContextFederation.ProofCause> proofs) {
-        if (fact == null || proofs == null || proofs.isEmpty()) return;
-        List<IContextFederation.ProofCause> merged = new ArrayList<>(getContextProofs(fact));
-        for (IContextFederation.ProofCause proof : proofs) if (!merged.contains(proof)) merged.add(proof);
-        contextProofs.put(fact, Collections.unmodifiableList(merged));
+        contextProvenance.addContextProofs(fact, proofs);
     }
-
     private void copyContextProofs(Mind child) {
-        contextProofs.clear(); contextProofs.putAll(child.contextProofs);
+        contextProvenance.replaceProofsFrom(child.contextProvenance);
     }
 
     private boolean connectionLayer;
@@ -298,11 +284,7 @@ public class Mind implements IMind {
 
         Mind parent = (Mind) root;
         connectionLayer = parent.connectionLayer;
-        contextProofs.putAll(parent.contextProofs);
-        for (Map.Entry<String,List<IContextFederation.ProofCause>> entry : parent.contextRuleOrigins.entrySet())
-            contextRuleOrigins.put(entry.getKey(), new ArrayList<>(entry.getValue()));
-        communeName = parent.communeName;
-        communeMembers = parent.communeMembers;
+        contextProvenance.inheritFrom(parent.contextProvenance);
         if (!isolateCanonicalFactories && user.getCurrentMind() == root) user.getContextOpinionSession().invalidate();
         operationDescription = parent.operationDescription;
         parent.incTransactionCounter();
@@ -827,7 +809,7 @@ public class Mind implements IMind {
             excludedDomains.clear();
             calculatedDomains.clear();
             producedDomains.clear();
-            contextProofs.clear();
+            contextProvenance.clearContextProofs();
             domainCauses.clear();
             domainSolves.clear();
             queryValues.clear();
@@ -2285,7 +2267,7 @@ public class Mind implements IMind {
     }
 
     public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
-        contextProofs.clear();
+        contextProvenance.clearContextProofs();
         commandNoOp = false;
         if (!line.isEmpty() && line.charAt(0)!=Enums.SUC) requireWritableContext();
         user.getContextOpinionSession().invalidate();
