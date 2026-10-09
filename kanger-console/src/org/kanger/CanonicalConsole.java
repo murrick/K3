@@ -1260,6 +1260,22 @@ public final class CanonicalConsole {
     private static void showContextRules(java.util.List<IContextFederation.RuleBlock> blocks,String selection, IContextFederation.Snapshot snapshot) {
         boolean first = true;
         for(IContextFederation.RuleBlock block:blocks) {
+            if (block.revision.getCommune() == null
+                    && !block.revision.getContextId().equals(snapshot.getSourceContextId())) {
+                boolean represented = false;
+                for (IContextFederation.RuleBlock layer : blocks) {
+                    if (layer.revision.getCommune() == null) continue;
+                    for (IContextFederation.Revision member : layer.revision.getCommuneMembers()) {
+                        if (member.getContextId().equals(block.revision.getContextId())
+                                && member.getRevision() == block.revision.getRevision()) {
+                            represented = true;
+                            break;
+                        }
+                    }
+                    if (represented) break;
+                }
+                if (represented) continue;
+            }
             if (!first) System.out.println();
             first = false;
             if (block.revision.getCommune() != null) {
