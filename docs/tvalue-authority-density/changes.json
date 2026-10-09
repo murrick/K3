@@ -1,0 +1,23 @@
+{
+  "original": "docs/tvalue-authority-stream/AuthorityCostRunner.java",
+  "replacements": [
+    [
+      "int size=Integer.parseInt(args[0]),dirty=Integer.parseInt(args[1]);",
+      "int size=Integer.parseInt(args[0]),dirty=Integer.parseInt(args[1]),width=Integer.parseInt(args[2]);require(width>0,\"positive bucket width\");"
+    ],
+    [
+      "if(i<dirty)edited.add(value);}",
+      "if(i<dirty)edited.add(value);for(int j=1;j<width;j++)mind.getTValues().add(variable,(Term)mind.getTerms().add(\"extra-\"+j));}"
+    ],
+    [
+      "for(TVariable variable:variables)mind.getTValues().forEach(variable,o->true);",
+      "for(TVariable variable:variables){List<TValue> actual=new ArrayList<>();mind.getTValues().forEach(variable,o->{actual.add((TValue)o);return true;});require(actual.size()==width,\"native bucket width\");String before=ResidentTValueRead.fingerprint(mind);List<TValue> resident=ResidentTValueRead.bucket(mind,variable.getId());require(before.equals(ResidentTValueRead.fingerprint(mind)),\"native bucket control read pure\");require(actual.size()==resident.size(),\"native/qualified bucket size\");for(int i=0;i<actual.size();i++)require(actual.get(i)==resident.get(i),\"native/qualified canonical reference and order\");}require(ResidentTValueRead.values(mind.getTValues()).size()==size*width,\"native total value count\");"
+    ],
+    [
+      "\" dirty=\"+dirty+\" pairs=64 checks=\"",
+      "\" dirty=\"+dirty+\" width=\"+width+\" pairs=64 checks=\""
+    ]
+  ],
+  "protocol_unchanged": true,
+  "implementation_changes": false
+}

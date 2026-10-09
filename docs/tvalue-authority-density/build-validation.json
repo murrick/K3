@@ -1,0 +1,25 @@
+{
+  "parent": "9880a9b1e914ed94ab1d0932d26d0b53f89190ed",
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-authority-stream:../build/tvalue-layer-cost:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-authority-density",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-authority-density/DensityCostRunner.java"
+  ],
+  "native_classes_verified": 662,
+  "accepted_diagnostic_classes_verified": 13,
+  "runner_recovered_except_declared_fixture_changes": true,
+  "implementation_unchanged": true,
+  "source_sha256": {
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-authority-density/DensityCostRunner.java": "ca0fddeae773ef904792e95a663b6d831404ad44f991659cf76abe9d0a0ba06a"
+  },
+  "class_sha256": {
+    "org/kanger/DensityCostRunner.class": "2c60c6ab5e6c4d66f1887f4af9aa067c23625008e206a51cf73164c7abb9fc0a"
+  }
+}

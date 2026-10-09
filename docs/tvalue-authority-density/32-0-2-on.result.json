@@ -1,0 +1,30 @@
+{
+  "size": 32,
+  "width": 32,
+  "native_values": 1024,
+  "buckets": 0,
+  "repetition": 2,
+  "flag": "on",
+  "exit_code": 0,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/layer-cost-9s3rvn2l",
+    "-Dresult.path=/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-authority-density/32-0-2-on",
+    "-Djournal.cost.enabled=true",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-authority-density:../build/tvalue-authority-stream:../build/tvalue-layer-cost:kanger/resources:kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.DensityCostRunner",
+    "32",
+    "0",
+    "32"
+  ]
+}

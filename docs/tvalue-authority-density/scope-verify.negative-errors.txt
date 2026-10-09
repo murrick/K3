@@ -1,0 +1,3 @@
+mode=0 journal errors [java.lang.AssertionError:dirty projection mismatch ctx=1 reason=missing-event shadow={3=[1:6:0]} authority={3=[1:7:0]}, java.lang.AssertionError:dirty projection mismatch ctx=1 reason=session-end shadow={3=[1:6:0]} authority={3=[1:7:0]}]
+mode=1 journal errors [java.lang.AssertionError:dirty projection mismatch ctx=1 reason=missing-event shadow={4=[2:9:0]} authority={4=[2:9:0,3:10:0]}, java.lang.AssertionError:dirty projection mismatch ctx=1 reason=session-end shadow={4=[2:9:0]} authority={4=[2:9:0,3:10:0]}]
+mode=2 journal errors [java.lang.AssertionError:dirty projection mismatch ctx=1 reason=missing-event shadow={5=[4:12:0]} authority={}, java.lang.AssertionError:dirty projection mismatch ctx=1 reason=session-end shadow={5=[4:12:0]} authority={}]
