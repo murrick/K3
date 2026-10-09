@@ -53,14 +53,15 @@ final class IsolatedKangerTestRuntime {
             user.setDatabaseDir(directory(databases));
             new UDF().init(user);
 
+            // Offline tests still contain explicit storage lifecycle cases.
+            // Load a private backend without opening it until a test asks to.
+            org.kanger.interfaces.internal.IData storage = storageClass == null
+                    ? new DB()
+                    : (org.kanger.interfaces.internal.IData) Class.forName(storageClass)
+                            .getDeclaredConstructor().newInstance();
+            storage.init(user);
             mind = new Mind(user);
-            if (storageClass != null) {
-                org.kanger.interfaces.internal.IData storage =
-                        (org.kanger.interfaces.internal.IData) Class.forName(storageClass)
-                                .getDeclaredConstructor().newInstance();
-                storage.init(user);
-                mind = mind.useStorage(DATABASE_NAME);
-            }
+            if (storageClass != null) mind = mind.useStorage(DATABASE_NAME);
             mind = mind.clearWorkspace();
             user.setCurrentMind(mind);
 

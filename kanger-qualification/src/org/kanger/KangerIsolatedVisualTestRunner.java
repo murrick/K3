@@ -57,6 +57,13 @@ public final class KangerIsolatedVisualTestRunner {
         assertWorkingContext(user, expectedUser, expectedMind,
                 expectedStorage, expectedLevel, "offline");
 
+        require(IsolatedKangerTestRuntime.run("s5a_05", false),
+                "offline storage-id reopen test failed");
+        require(IsolatedKangerTestRuntime.run("c3_05", false),
+                "offline UDF reopen test failed");
+        assertWorkingContext(user, expectedUser, expectedMind,
+                expectedStorage, expectedLevel, "offline storage tests");
+
         require(IsolatedKangerTestRuntime.run("01_01", true),
                 "isolated database visual test failed");
         assertWorkingContext(user, expectedUser, expectedMind,
