@@ -49,10 +49,14 @@ public final class DmzNativeCollisionSourcesRunner {
                     for (TerminalSupportCapture.ProvisionalApplication application : conflict.observations.applications)
                         require(!prior.contains(application.application), "prior operation observations excluded");
                     DmzProvisionalCollisionProof proof = DmzProvisionalCollisionProof.build(conflict, 1000, 100);
-                    require(!proof.truncated && (recursive ? proof.combinations.isEmpty() : !proof.combinations.isEmpty()),
-                            "recursive missing terminal fails closed; bounded one-step collision joins witnesses");
+                    require(!proof.truncated && !proof.combinations.isEmpty(),
+                            "bounded one-step and recursive collisions join witnesses");
                     require(!proof.complete, "provisional graph cannot certify completeness");
-                    require(proof.rootsAvailable != recursive, "root availability exposes missing terminal step");
+                    require(proof.rootsAvailable, "both collision roots have source-backed derivations");
+                    for (DmzWitnessConflicts.Combination combination : proof.combinations)
+                        require(combination.policy == DmzWitnessConflicts.Policy.KEEP_LEFT_Q
+                                || combination.policy == DmzWitnessConflicts.Policy.KEEP_RIGHT_Q,
+                                "recursive and direct proof pairs retain Q priority");
 
                     require(conflict.observations.captureActive, "provisional capture explicitly active");
                     require(!conflict.observations.applications.isEmpty(), "native event retains bounded applications");
@@ -72,8 +76,23 @@ public final class DmzNativeCollisionSourcesRunner {
                         observedLeft |= left.ground.equivalent(application.application.ground);
                         observedRight |= right.ground.equivalent(application.application.ground);
                     }
-                    require(recursive ? !(observedLeft && observedRight) : observedLeft && observedRight,
-                            "recursive terminal coverage gap remains explicit");
+                    require(observedLeft && observedRight, "both terminal applications captured before rollback");
+                    if (recursive) {
+                        boolean terminal = false;
+                        for (TerminalSupportCapture.ProvisionalApplication application : conflict.observations.applications) {
+                            if (!"male".equals(application.application.ground.predicate)
+                                    || !application.application.ground.sign) continue;
+                            for (DmzReplayProvenance.SourceObservation source : application.ruleSources)
+                                if (source.binding.sourceRule == 12 && source.binding.context.equals(a.getContextId())) {
+                                    require(application.application.supports.size() == 1
+                                            && "middle".equals(application.application.supports.get(0).ground.predicate)
+                                            && !application.application.supports.get(0).primary,
+                                            "recursive terminal depends on generated middle, never a primary attribution");
+                                    terminal = true;
+                                }
+                        }
+                        require(terminal, "recursive terminal retains exact production source");
+                    }
                     for (CollisionProofCapture.Graph graph : new CollisionProofCapture.Graph[] {conflict.left, conflict.right})
                         for (CollisionProofCapture.Node node : graph.nodes) {
                             if (node.generated) require(node.sources.isEmpty(), "generated node not assigned primary replay authorship");

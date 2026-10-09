@@ -1174,6 +1174,10 @@ public class Linker {
             } else if (!excluded.isEmpty() && candidates.isEmpty() && stored.isEmpty()) {
                 occurs = true;
                 for (Domain d : excluded) {
+                    // Opposite stored conclusions can close every literal before a
+                    // recursive production is materialized. Retain its qualified
+                    // application while bindings and excluded premises are live.
+                    TerminalSupportCapture.recordApplication(mind, d, tree, tvars);
                     if (!d.isStored(mind) && d.setCauses(causes.get(d.getRule()), mind)) {
                         result = true;
                         d.setProduced(mind);
