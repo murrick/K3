@@ -52,6 +52,12 @@
         </dependency>
         <dependency>
             <groupId>org.kanger</groupId>
+            <artifactId>kanger-data-dumb2</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.kanger</groupId>
             <artifactId>kanger-console</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>

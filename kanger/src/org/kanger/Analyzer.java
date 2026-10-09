@@ -243,22 +243,10 @@ public class Analyzer {
                         } else if (((Rule) q).getDomain().isQuery(mind) && ((Rule) q).getDomain().getArguments().getCVariables(mind).isEmpty()) {
                             mind.getSolutions().add(p);
                             mind.getValues().add(((Rule) q).getSolves());
-                        } else {
-                            List<TValue> vList = new ArrayList<>();
-                            for (TVariable t : mind.getTVars()) {
-                                if (t.isQuery(mind)) {
-                                    if (!t.isEmpty()) {
-                                        vList.add(t.getCurrent());
-                                    } else {
-                                        vList.clear();
-                                        break;
-                                    }
-                                }
-                            }
-                            if (!vList.isEmpty()) {
-                                mind.getValues().add(vList);
-                            }
+
                         }
+                        // Abstract collisions establish truth without a concrete tuple.
+                        // Do not export current TVars from unrelated dictionary rotations.
 
                         if (logging) {
                             log.add(LogMode.ANALYZER, "Database coincidence: ");

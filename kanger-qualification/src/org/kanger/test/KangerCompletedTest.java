@@ -126,6 +126,23 @@ public final class KangerCompletedTest extends KangerTest {
         return fails.isEmpty();
     }
 
+    public void set_09_01() throws Exception {
+        mind = mind.clearWorkspace();
+        require(mind.compile("!@x $y parent(y,x); !@x ~parent(x,x);"
+                + "!parent(John,Tom); !parent(Mary,Sarah);"
+                + "!@x (male(x) || female(x)) && ~(male(x) && female(x));"
+                + "!male(John); !female(Mary); !female(Sarah);"), "Values fixture rejected");
+        require(Boolean.FALSE.equals(((Mind) mind).query("?$x @y parent(x,y);", null, false)),
+                "irreflexivity must refute an all-parent query");
+        require(mind.getValues().isEmpty(), "abstract proof exported a concrete rotation value");
+        require(Boolean.FALSE.equals(((Mind) mind).query("?@x male(x);", null, false)),
+                "female witnesses must refute universal male query");
+        Set<String> actual = new LinkedHashSet<>();
+        for (org.kanger.interfaces.ITerm value : ((Mind) mind).getValues().getValues("x")) actual.add(value.toString());
+        require(actual.equals(new LinkedHashSet<>(java.util.Arrays.asList("Mary", "Sarah"))),
+                "concrete negative proof values were lost: " + actual);
+    }
+
     @Override
     public void set_06_07() throws Exception {
         super.set_06_07();

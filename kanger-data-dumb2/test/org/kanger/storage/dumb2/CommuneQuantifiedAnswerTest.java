@@ -44,11 +44,15 @@ class CommuneQuantifiedAnswerTest {
                 assertEquals(IContextFederation.FrontierTruth.TRUE,
                         mind.collectContextOpinions(null).get("trust own").getResult().getResultTruth());
                 assertEquals(Boolean.FALSE, mind.query("?$x @y parent(x,y);", null, false));
-                assertFalse(mind.getValues().isEmpty());
-                assertTrue(mind.getValues().getValues("y").stream()
-                        .anyMatch(v -> "Tom".equals(v.toString()) || "John".equals(v.toString())));
-                assertEquals(IContextFederation.FrontierTruth.FALSE,
-                        mind.collectContextOpinions(null).get("trust own").getResult().getResultTruth());
+                assertTrue(mind.getValues().isEmpty());
+                IContextFederation.QueryResult opinion = mind.collectContextOpinions(null)
+                        .get("trust own").getResult();
+                assertEquals(IContextFederation.FrontierTruth.FALSE, opinion.getResultTruth());
+                assertTrue(opinion.getValues().isEmpty());
+                assertEquals(Boolean.FALSE, mind.query("?@x male(x);", null, false));
+                assertEquals(new HashSet<>(Arrays.asList("Mary", "Sarah")),
+                        mind.getValues().getValues("x").stream().map(Object::toString)
+                                .collect(java.util.stream.Collectors.toSet()));
                 assertNull(mind.query("?$x missingRelation(x,John);", null, false));
                 assertEquals(revision, data.getRevision());
             } finally { close(); }

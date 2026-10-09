@@ -1525,9 +1525,11 @@ public final class CanonicalConsole {
             }
 
             java.lang.reflect.Method run =
-                    runtime.getDeclaredMethod("run", String.class, boolean.class);
+                    runtime.getDeclaredMethod("run", String.class, String.class);
             run.setAccessible(true);
-            Object result = run.invoke(null, prefix, mind.isStorageUsed());
+            String storageClass = mind.isStorageUsed()
+                    ? ((User) mind.getUser()).getData().getClass().getName() : null;
+            Object result = run.invoke(null, prefix, storageClass);
             if (!(result instanceof Boolean) || !((Boolean) result).booleanValue()) {
                 throw new CommandErrorException("KANGER test failed");
             }

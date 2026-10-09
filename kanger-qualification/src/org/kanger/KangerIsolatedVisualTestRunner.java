@@ -62,6 +62,11 @@ public final class KangerIsolatedVisualTestRunner {
         assertWorkingContext(user, expectedUser, expectedMind,
                 expectedStorage, expectedLevel, "database");
 
+        require(IsolatedKangerTestRuntime.run("09", "org.kanger.storage.dumb2.DB"),
+                "isolated SMART regression failed");
+        assertWorkingContext(user, expectedUser, expectedMind,
+                expectedStorage, expectedLevel, "SMART");
+
         require(Boolean.TRUE.equals(working.query("?visualtesttransaction;")),
                 "working transaction content changed during visual tests");
         require(Boolean.TRUE.equals(root.query("?visualtestroot;")),
