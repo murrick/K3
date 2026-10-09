@@ -118,9 +118,9 @@ public class HypothesisStore implements IFactory<IHypothesis> {
             return null;
         }
         for (IHypothesis h : root) {
-            if (h.getPredicate().getId() == pred.getId()
+            if (((Predicate) h.getPredicate()).equalsTo(pred)
                     && (antc == null || h.isAntc() == antc)
-                    && ((ArgumentsList) h.getArguments()).equalsBase(mind, arg)) {
+                    && equalsBase(h.getArguments(), arg)) {
                 return h;
             }
         }
@@ -132,7 +132,7 @@ public class HypothesisStore implements IFactory<IHypothesis> {
             return null;
         }
         for (IHypothesis h : root) {
-            if (h.getPredicate().getId() == hy.getPredicate().getId()
+            if (((Predicate) h.getPredicate()).equalsTo((Predicate) hy.getPredicate())
                     && h.isAntc() == hy.isAntc()
                     && equalsBase(hy.getArguments(), h.getArguments())) {
                 return h;
@@ -144,7 +144,7 @@ public class HypothesisStore implements IFactory<IHypothesis> {
     private boolean equalsBase(IList a, IList b) throws Exception {
         if (a.size() == b.size()) {
             for (int i = 0; i < a.size(); ++i) {
-                if (a.get(i).getValue(mind).getId() == b.get(i).getValue(mind).getId()
+                if (a.get(i).getValue(mind).equalsTo(b.get(i).getValue(mind))
                         || (a.get(i).getValue(mind).isCVariable() && b.get(i).getValue(mind).isCVariable())) {
                 } else {
                     return false;

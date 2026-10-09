@@ -234,7 +234,8 @@ public class RuleFactory implements IFactory<IRule> {
     private final Set<Long> primaryPromotions = new HashSet<>();
     private final Map<Long, Rule> promotionViews = new HashMap<>();
     private final Stack<Set<Long>> promotionStack = new Stack<>();
-    private final Set<Long> appliedPromotions = new HashSet<>();
+    // Retain the changed instances: storage reads may hydrate a fresh Rule per lookup.
+    private final Map<Long, Rule> appliedRuleUpdates = new HashMap<>();
 
     public RuleFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -267,7 +268,7 @@ public class RuleFactory implements IFactory<IRule> {
             primaryPromotions.clear();
             promotionViews.clear();
             promotionStack.clear();
-            appliedPromotions.clear();
+            appliedRuleUpdates.clear();
             candidateIndex.clear();
         }
     }
@@ -588,13 +589,14 @@ public class RuleFactory implements IFactory<IRule> {
 
     public void update() throws Exception {
         cache.update();
-        Set<Long> applied;
+        Map<Long, Rule> applied;
         synchronized (metadataLock) {
-            applied = new HashSet<>(appliedPromotions);
+            applied = new HashMap<>(appliedRuleUpdates);
         }
         if (connection != null && !applied.isEmpty()) {
-            for (long id : applied) {
-                Rule rule = getRaw(id);
+            for (Map.Entry<Long, Rule> entry : applied.entrySet()) {
+                long id = entry.getKey();
+                Rule rule = entry.getValue();
                 IStep step = connection.get(id);
                 if (rule != null && step != null) {
                     step.setData(rule);
@@ -603,7 +605,7 @@ public class RuleFactory implements IFactory<IRule> {
             }
         }
         synchronized (metadataLock) {
-            appliedPromotions.clear();
+            appliedRuleUpdates.clear();
         }
     }
 
@@ -772,7 +774,7 @@ public class RuleFactory implements IFactory<IRule> {
             primaryPromotions.clear();
             promotionViews.clear();
             promotionStack.clear();
-            appliedPromotions.clear();
+            appliedRuleUpdates.clear();
             actionStack.clear();
         }
         if (mind.getNext() != null) {
@@ -1018,7 +1020,7 @@ public class RuleFactory implements IFactory<IRule> {
                 rule.setSecond(false);
                 rule.getCauses().clear();
                 synchronized (metadataLock) {
-                    appliedPromotions.add(id);
+                    appliedRuleUpdates.put(id, rule);
                 }
             }
         }
@@ -1041,7 +1043,7 @@ public class RuleFactory implements IFactory<IRule> {
                 raw.getCauses().addAll(entry.getValue().getCauses());
                 raw.getSolves().clear();
                 raw.getSolves().addAll(entry.getValue().getSolves());
-                if (causesChanged) appliedPromotions.add(raw.getId());
+                if (causesChanged) appliedRuleUpdates.put(raw.getId(), raw);
             }
             inferenceViews.clear();
         }
