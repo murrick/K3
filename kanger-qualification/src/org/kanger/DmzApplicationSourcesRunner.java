@@ -14,6 +14,7 @@ public final class DmzApplicationSourcesRunner {
         for (boolean reverse : new boolean[] {false, true}) run(reverse);
         generated();
         topology(true); topology(false);
+        revisions();
         System.out.println("DMZ_APPLICATION_SOURCES_PASS checks=" + checks);
     }
     private static Mind root() throws Exception {
@@ -45,6 +46,14 @@ public final class DmzApplicationSourcesRunner {
             DmzSourcedProofGraph graph = DmzSourcedProofGraph.build(detached);
             for (DmzSourcedProofGraph.Step step : graph.steps)
                 require(step.available && step.ruleSources.size() == 3, "source alternatives reach graph step");
+            int target = graph.observed.steps.get(0).conclusion;
+            DmzProofWitnesses.Result witnesses = DmzProofWitnesses.enumerate(graph, target, 1000);
+            require(!witnesses.truncated && witnesses.witnesses.size() == 9,
+                    "three rule sources times three premise sources remain nine concrete alternatives");
+            for (DmzProofWitnesses.Witness witness : witnesses.witnesses)
+                require(witness.premises.size() == 1 && witness.premises.get(0).step == -1,
+                        "witness retains selected primary input");
+            require(DmzProofWitnesses.enumerate(graph, target, 1).truncated, "bounded result explicitly incomplete");
             for (TerminalSupportCapture.ApplicationSources sources : detached) {
                 require(sources.ruleSources.size() == 3, "three canonical production occurrences");
                 require(sources.supportSources.size() == 1 && sources.supportSources.get(0).size() == 3,
@@ -97,6 +106,10 @@ public final class DmzApplicationSourcesRunner {
             for (int i = 0; i < graph.observed.nodes.size(); ++i)
                 if ("!adult(John);".equals(graph.observed.nodes.get(i).atom)) {
                     adult = true; require(graph.available.get(i), "source availability reaches recursive consequence");
+                    DmzProofWitnesses.Result witnesses = DmzProofWitnesses.enumerate(graph, i, 1000);
+                    require(!witnesses.truncated && witnesses.witnesses.size() == 1, "recursive concrete witness");
+                    require(witnesses.witnesses.get(0).premises.get(0).step >= 0,
+                            "generated input retains upstream application");
                 }
             require(adult, "recursive graph contains target");
             List<TerminalSupportCapture.ApplicationSources> incomplete = new java.util.ArrayList<>();
@@ -133,8 +146,27 @@ public final class DmzApplicationSourcesRunner {
             DmzSourcedProofGraph missing = DmzSourcedProofGraph.build(reduced);
             for (DmzSourcedProofGraph.Step step : missing.steps)
                 require(!step.available, cycle ? "unattributed cycle has no seed" : "AND needs every input source");
+            for (int i = 0; i < missing.observed.nodes.size(); ++i)
+                if (!missing.available.get(i)) require(DmzProofWitnesses.enumerate(missing, i, 1000).witnesses.isEmpty(),
+                        "unavailable conclusion has no concrete witness");
             try { missing.available.clear(); throw new AssertionError("mutable availability"); }
             catch (UnsupportedOperationException expected) { ++checks; }
+        }
+    }
+    private static void revisions() throws Exception {
+        Mind q = root(); UUID context = UUID.randomUUID();
+        try (DmzReplayProvenance journal = DmzReplayProvenance.begin();
+                TerminalSupportCapture capture = TerminalSupportCapture.begin()) {
+            DmzReplayProvenance.replayRule(q, new IContextResults.Revision(context, 1), 1,
+                    DmzReplayProvenance.Authority.EXTERNAL, "!@x a(x) -> male(x);");
+            DmzReplayProvenance.replayRule(q, new IContextResults.Revision(context, 2), 2,
+                    DmzReplayProvenance.Authority.EXTERNAL, "!a(John);");
+            require(q.compile("!anchor(Trigger);", null, false), "mixed fixture revisions inference");
+            DmzSourcedProofGraph graph = DmzSourcedProofGraph.build(capture.sourceSnapshot(journal));
+            require(!graph.steps.isEmpty(), "mixed fixture observed");
+            for (DmzObservedProofGraph.Step step : graph.observed.steps)
+                require(DmzProofWitnesses.enumerate(graph, step.conclusion, 1000).witnesses.isEmpty(),
+                        "one witness cannot mix two revisions of the same context");
         }
     }
 }
