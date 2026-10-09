@@ -17,4 +17,9 @@ class ContextLongSessionTest {
     void squashRebaseAndRejectedPublicationsPreserveRollbackAndReclaimLayers() throws Exception {
         ContextStackSessionProbe.main(new String[] { "10" });
     }
+
+    @Test
+    void topologyOnlyCyclesReclaimLayersWithoutInvalidatingLiveCheckpoints() throws Exception {
+        ContextTopologySessionProbe.main(new String[] { "40" });
+    }
 }

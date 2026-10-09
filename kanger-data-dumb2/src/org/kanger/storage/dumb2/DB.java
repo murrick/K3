@@ -182,6 +182,19 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    private void collectAfterTopologyChange() throws Exception {
+        IMind current = user.getCurrentMind();
+        if (!(current instanceof Mind) || current.getTransactionLevel() != 0) return;
+        try {
+            // U0 can still own hidden children. Use the existing reservation
+            // guard rather than inferring quiescence from the visible level.
+            ((Mind) current).requirePublicationQuiescence();
+        } catch (IllegalStateException liveChildren) {
+            return;
+        }
+        collectConnectionState();
+    }
+
     @Override
     public synchronized void close() throws Exception {
         closeConnectionLayers();
@@ -1050,6 +1063,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         retiredLayers.addAll(workingConnections.getConnections());
         activateConnections(candidate);
         ((User) user).getContextOpinionSession().invalidate();
+        collectAfterTopologyChange();
         return projectConnection(
                 new RevisionRef(
                         getContextId(),
@@ -1073,6 +1087,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         retiredLayers.addAll(workingConnections.getConnections());
         activateConnections(workingConnections.without(targetContextId));
         ((User) user).getContextOpinionSession().invalidate();
+        collectAfterTopologyChange();
     }
 
     @Override
@@ -1101,6 +1116,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         retiredLayers.addAll(workingConnections.getConnections());
         activateConnections(workingConnections.with(connection));
         ((User) user).getContextOpinionSession().invalidate();
+        collectAfterTopologyChange();
         return projectConnection(
                 new RevisionRef(
                         getContextId(),
