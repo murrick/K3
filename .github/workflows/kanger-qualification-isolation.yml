@@ -48,7 +48,7 @@ jobs:
           fi
           hidden_hook_files="$(grep -R -l -E 'IsolatedKangerTestRuntime|options[[:space:]]+test' \
               kanger-console/src || true)"
-          if [ "$hidden_hook_files" != "kanger-console/src/org/kanger/CanonicalConsole.java" ]; then
+          if [ "$hidden_hook_files" != "kanger-console/src/org/kanger/ConsoleTestCommand.java" ]; then
             echo 'Hidden Console test hook escaped its single adapter boundary:'
             printf '%s\n' "$hidden_hook_files"
             exit 1

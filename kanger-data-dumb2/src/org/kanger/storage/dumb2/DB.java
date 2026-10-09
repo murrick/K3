@@ -162,6 +162,48 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     }
 
     @Override
+    public synchronized void collectConnectionState() throws Exception {
+        requireOpen();
+        // Mind calls this only at root quiescence. Nested rollback checkpoints
+        // therefore retain every layer until the last child has settled.
+        java.util.Set<ContextConnection> active = java.util.Collections.newSetFromMap(
+                new java.util.IdentityHashMap<ContextConnection, Boolean>());
+        active.addAll(workingConnections.getConnections());
+        active.addAll(workingConnections.retainCommunes(communeCache));
+        java.util.Set<ConnectionRuntime> live = java.util.Collections.newSetFromMap(
+                new java.util.IdentityHashMap<ConnectionRuntime, Boolean>());
+        for (ContextConnection connection : active)
+            if (connection.runtime() != null) live.add(connection.runtime());
+        java.util.Iterator<ContextConnection> iterator = retiredLayers.iterator();
+        while (iterator.hasNext()) {
+            ContextConnection connection = iterator.next();
+            if (!active.contains(connection)) connection.retireLayer(live);
+            iterator.remove();
+        }
+    }
+
+    private void collectAfterTopologyChange() throws Exception {
+        IMind current = user.getCurrentMind();
+        if (!(current instanceof Mind) || current.getTransactionLevel() != 0) return;
+        try {
+            // U0 can still own hidden children. Use the existing reservation
+            // guard rather than inferring quiescence from the visible level.
+            ((Mind) current).requirePublicationQuiescence();
+        } catch (IllegalStateException liveChildren) {
+            return;
+        }
+        collectConnectionState();
+    }
+
+    private void collectAfterRejectedTopologyChange(Exception rejection) {
+        try {
+            collectAfterTopologyChange();
+        } catch (Exception cleanup) {
+            rejection.addSuppressed(cleanup);
+        }
+    }
+
+    @Override
     public synchronized void close() throws Exception {
         closeConnectionLayers();
         if (historical!=null) {
@@ -1007,33 +1049,39 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
         connection = connection.withTrustGroup(trustGroup);
         retiredLayers.add(connection);
-        ConnectionVector candidate = workingConnections.with(connection);
-        candidate.prepareCommunes(communeCache);
-        PairQualification.CompositionQualification before =
-                PairQualification.qualifyCompositionState(
-                        activeLocation(),
-                        getRevision(),
-                        workingConnections);
-        PairQualification.CompositionQualification after =
-                PairQualification.qualifyCompositionState(
-                        activeLocation(),
-                        getRevision(),
-                        candidate);
-        if (after.introducesNewCollisionComparedTo(before)) {
-            throw new StorageLifecycleException(
-                    StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
-                    "Context connection introduces a new X-anchored composition conflict: "
-                            + connection.getTarget(),
-                    after.introducedCollisionsComparedTo(before));
+        try {
+            ConnectionVector candidate = workingConnections.with(connection);
+            candidate.prepareCommunes(communeCache);
+            PairQualification.CompositionQualification before =
+                    PairQualification.qualifyCompositionState(
+                            activeLocation(),
+                            getRevision(),
+                            workingConnections);
+            PairQualification.CompositionQualification after =
+                    PairQualification.qualifyCompositionState(
+                            activeLocation(),
+                            getRevision(),
+                            candidate);
+            if (after.introducesNewCollisionComparedTo(before)) {
+                throw new StorageLifecycleException(
+                        StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                        "Context connection introduces a new X-anchored composition conflict: "
+                                + connection.getTarget(),
+                        after.introducedCollisionsComparedTo(before));
+            }
+            retiredLayers.addAll(workingConnections.getConnections());
+            activateConnections(candidate);
+            ((User) user).getContextOpinionSession().invalidate();
+            collectAfterTopologyChange();
+            return projectConnection(
+                    new RevisionRef(
+                            getContextId(),
+                            getRevision()),
+                    connection);
+        } catch (Exception rejection) {
+            collectAfterRejectedTopologyChange(rejection);
+            throw rejection;
         }
-        retiredLayers.addAll(workingConnections.getConnections());
-        activateConnections(candidate);
-        ((User) user).getContextOpinionSession().invalidate();
-        return projectConnection(
-                new RevisionRef(
-                        getContextId(),
-                        getRevision()),
-                connection);
     }
 
     @Override
@@ -1052,6 +1100,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         retiredLayers.addAll(workingConnections.getConnections());
         activateConnections(workingConnections.without(targetContextId));
         ((User) user).getContextOpinionSession().invalidate();
+        collectAfterTopologyChange();
     }
 
     @Override
@@ -1080,6 +1129,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         retiredLayers.addAll(workingConnections.getConnections());
         activateConnections(workingConnections.with(connection));
         ((User) user).getContextOpinionSession().invalidate();
+        collectAfterTopologyChange();
         return projectConnection(
                 new RevisionRef(
                         getContextId(),
@@ -1341,6 +1391,10 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             activateConnections(proposed);
             ((User) user).getContextOpinionSession().invalidate();
             accepted = true;
+            collectAfterTopologyChange();
+        } catch (Exception rejection) {
+            collectAfterRejectedTopologyChange(rejection);
+            throw rejection;
         } finally { if (!accepted) candidate.closeLayer(); }
     }
 

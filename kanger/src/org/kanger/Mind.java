@@ -112,7 +112,6 @@ import java.util.*;
  */
 public class Mind implements IMind {
 
-    private static final boolean DEBUG_DISABLE_FALSE_CHECK = false;
     private static final int FLOOD_CONTROL_LIMIT = 10000;
 
     private final Object locker = new Object();
@@ -244,44 +243,30 @@ public class Mind implements IMind {
         return layer;
     }
 
-    private final Map<String, List<IContextFederation.ProofCause>> contextProofs = new LinkedHashMap<>();
-    private final Map<String,List<IContextFederation.ProofCause>> contextRuleOrigins = new LinkedHashMap<>();
-    private String communeName;
-    private List<IContextFederation.Revision> communeMembers = Collections.emptyList();
+    private final ContextProvenance contextProvenance = new ContextProvenance();
 
     public void configureCommuneProvenance(String name, List<IContextFederation.Revision> members) {
-        communeName = name;
-        communeMembers = Collections.unmodifiableList(new ArrayList<>(members));
+        contextProvenance.configureCommuneProvenance(name, members);
     }
-    public String getCommuneName() { return communeName; }
-    public List<IContextFederation.Revision> getCommuneMembers() { return communeMembers; }
+
+    public String getCommuneName() { return contextProvenance.getCommuneName(); }
+    public List<IContextFederation.Revision> getCommuneMembers() { return contextProvenance.getCommuneMembers(); }
     public void addContextRuleOrigin(String origin, IContextFederation.ProofCause proof) {
-        contextRuleOrigins.computeIfAbsent(origin, ignored -> new ArrayList<>()).add(proof);
+        contextProvenance.addContextRuleOrigin(origin, proof);
     }
     public List<IContextFederation.ProofCause> getContextRuleOrigins(String origin) {
-        List<IContextFederation.ProofCause> proofs = contextRuleOrigins.get(origin);
-        return proofs == null ? Collections.emptyList() : Collections.unmodifiableList(proofs);
+        return contextProvenance.getContextRuleOrigins(origin);
     }
-
-
     public boolean isContextConnectionLayer() { return connectionLayer; }
-
-    public void clearContextProofs() { contextProofs.clear(); }
-
+    public void clearContextProofs() { contextProvenance.clearContextProofs(); }
     public List<IContextFederation.ProofCause> getContextProofs(String fact) {
-        List<IContextFederation.ProofCause> proofs = contextProofs.get(fact);
-        return proofs == null ? Collections.<IContextFederation.ProofCause>emptyList() : proofs;
+        return contextProvenance.getContextProofs(fact);
     }
-
     public void addContextProofs(String fact, List<IContextFederation.ProofCause> proofs) {
-        if (fact == null || proofs == null || proofs.isEmpty()) return;
-        List<IContextFederation.ProofCause> merged = new ArrayList<>(getContextProofs(fact));
-        for (IContextFederation.ProofCause proof : proofs) if (!merged.contains(proof)) merged.add(proof);
-        contextProofs.put(fact, Collections.unmodifiableList(merged));
+        contextProvenance.addContextProofs(fact, proofs);
     }
-
     private void copyContextProofs(Mind child) {
-        contextProofs.clear(); contextProofs.putAll(child.contextProofs);
+        contextProvenance.replaceProofsFrom(child.contextProvenance);
     }
 
     private boolean connectionLayer;
@@ -299,11 +284,7 @@ public class Mind implements IMind {
 
         Mind parent = (Mind) root;
         connectionLayer = parent.connectionLayer;
-        contextProofs.putAll(parent.contextProofs);
-        for (Map.Entry<String,List<IContextFederation.ProofCause>> entry : parent.contextRuleOrigins.entrySet())
-            contextRuleOrigins.put(entry.getKey(), new ArrayList<>(entry.getValue()));
-        communeName = parent.communeName;
-        communeMembers = parent.communeMembers;
+        contextProvenance.inheritFrom(parent.contextProvenance);
         if (!isolateCanonicalFactories && user.getCurrentMind() == root) user.getContextOpinionSession().invalidate();
         operationDescription = parent.operationDescription;
         parent.incTransactionCounter();
@@ -828,7 +809,7 @@ public class Mind implements IMind {
             excludedDomains.clear();
             calculatedDomains.clear();
             producedDomains.clear();
-            contextProofs.clear();
+            contextProvenance.clearContextProofs();
             domainCauses.clear();
             domainSolves.clear();
             queryValues.clear();
@@ -1783,13 +1764,6 @@ public class Mind implements IMind {
         return qualifyCurrentContext(logging).isValid();
     }
 
-    private boolean hasQueryFederation() throws Exception {
-        if (!isStorageUsed()) return false;
-        IData data = user.getData();
-        return data instanceof IContextFederation && isStorageUsed()
-                && ((IContextFederation) data).hasConnectedContexts();
-    }
-
     /** Explicit local publisher boundary; queries never invoke this operation. */
     public long saveContextConnections() throws Exception {
         synchronized (locker) {
@@ -2036,13 +2010,10 @@ public class Mind implements IMind {
                         ? new LinkedList<ITerm>()
                         : new LinkedList<ITerm>(externals);
 
-        Boolean result = null;
-        if (!DEBUG_DISABLE_FALSE_CHECK) {
-            result = queryCheckFalseCanonical(
-                    line,
-                    new LinkedList<ITerm>(source),
-                    logging);
-        }
+        Boolean result = queryCheckFalseCanonical(
+                line,
+                new LinkedList<ITerm>(source),
+                logging);
         if (result == null) {
             result = queryCheckTrueCanonical(
                     line,
@@ -2094,30 +2065,26 @@ public class Mind implements IMind {
                     || entry.getType() == LogMode.VALUES);
         }
         Queue<ITerm> externals = queryExternals(ext);
-        boolean conflict = false;
-
-        if (!DEBUG_DISABLE_FALSE_CHECK) {
-            IContextFederation.QueryResult opposite =
-                    federation.continueFederatedQuery(
-                            this,
-                            invert(line),
-                            new LinkedList<ITerm>(externals),
-                            logging);
-            conflict = federatedConflict(opposite);
-            recordExplainPass(
-                    IContextFederation.ExplainPolarity.FALSE_PASS,
-                    opposite);
-            if (opposite.isResolved()) {
-                hypothesis.clear();
-                tempHypothesis.clear();
-                if (logging) {
-                    log.add(
-                            LogMode.ANALYZER,
-                            "Result: FALSE");
-                    logResult(this);
-                }
-                return false;
+        IContextFederation.QueryResult opposite =
+                federation.continueFederatedQuery(
+                        this,
+                        invert(line),
+                        new LinkedList<ITerm>(externals),
+                        logging);
+        boolean conflict = federatedConflict(opposite);
+        recordExplainPass(
+                IContextFederation.ExplainPolarity.FALSE_PASS,
+                opposite);
+        if (opposite.isResolved()) {
+            hypothesis.clear();
+            tempHypothesis.clear();
+            if (logging) {
+                log.add(
+                        LogMode.ANALYZER,
+                        "Result: FALSE");
+                logResult(this);
             }
+            return false;
         }
 
         IContextFederation.QueryResult positive =
@@ -2200,46 +2167,7 @@ public class Mind implements IMind {
         try {
             Boolean answer =
                     query(line, null, false);
-            IContextFederation.FrontierTruth finalTruth =
-                    explainTruth(answer, passes);
-            IContextFederation.FrontierTruth localTruth =
-                    passes.isEmpty()
-                            ? finalTruth
-                            : IContextFederation.FrontierTruth.UNKNOWN;
-
-            ArrayList<IContextFederation.ValueRow> values =
-                    new ArrayList<IContextFederation.ValueRow>();
-            for (Map<String, ITerm> row : getValues()) {
-                LinkedHashMap<String, String> bindings =
-                        new LinkedHashMap<String, String>();
-                for (Map.Entry<String, ITerm> binding
-                        : row.entrySet()) {
-                    ITerm value = binding.getValue();
-                    bindings.put(
-                            binding.getKey(),
-                            value == null
-                                    ? ""
-                                    : value.toString());
-                }
-                values.add(
-                        new IContextFederation.ValueRow(
-                                bindings));
-            }
-
-            ArrayList<String> solutions =
-                    new ArrayList<String>();
-            for (IRule solution : getSolutions()) {
-                solutions.add(
-                        ((Rule) solution).toString(this));
-            }
-
-            return new IContextFederation.ExplainResult(
-                    federation.federationSnapshot(),
-                    localTruth,
-                    finalTruth,
-                    passes,
-                    values,
-                    solutions);
+            return ContextQueryExplanation.capture(this, federation, answer, passes);
         } finally {
             activeExplainPasses = null;
         }
@@ -2279,28 +2207,8 @@ public class Mind implements IMind {
         return Collections.unmodifiableList(new ArrayList<>(queryConflicts));
     }
 
-    private IContextFederation.FrontierTruth explainTruth(
-            Boolean answer,
-            List<IContextFederation.ExplainPass> passes) {
-        if (answer != null) {
-            return answer.booleanValue()
-                    ? IContextFederation.FrontierTruth.TRUE
-                    : IContextFederation.FrontierTruth.FALSE;
-        }
-        for (IContextFederation.ExplainPass pass : passes) {
-            for (IContextFederation.FrontierObservation observation
-                    : pass.getContinuation().getObservations()) {
-                if (observation.getTruth()
-                        == IContextFederation.FrontierTruth.CONFLICT) {
-                    return IContextFederation.FrontierTruth.CONFLICT;
-                }
-            }
-        }
-        return IContextFederation.FrontierTruth.UNKNOWN;
-    }
-
     public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
-        contextProofs.clear();
+        contextProvenance.clearContextProofs();
         commandNoOp = false;
         if (!line.isEmpty() && line.charAt(0)!=Enums.SUC) requireWritableContext();
         user.getContextOpinionSession().invalidate();
@@ -2368,9 +2276,7 @@ public class Mind implements IMind {
                     if (line.length() == 1) {
                         res = queryCheck(logging);
                     } else {
-                        if (!DEBUG_DISABLE_FALSE_CHECK) {
-                            res = queryCheckFalse(line, ext, logging);
-                        }
+                        res = queryCheckFalse(line, ext, logging);
                         if (res == null) {
                             res = queryCheckTrue(line, ext, logging);
                         }
@@ -2803,9 +2709,13 @@ public class Mind implements IMind {
         if (rootQuiescent) {
             // A pinned generation may retain unused vocabulary. Opening or
             // querying it is not permission to collect its persistent records.
-            if (isStorageUsed() && user.getData().isReadOnly()) return;
-            pack();
-            update();
+            if (!(isStorageUsed() && user.getData().isReadOnly())) {
+                pack();
+                update();
+            }
+            if (isStorageUsed() && user.getData() instanceof IContextFederation) {
+                ((IContextFederation) user.getData()).collectConnectionState();
+            }
         }
     }
 

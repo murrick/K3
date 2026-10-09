@@ -566,6 +566,9 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
 
     default void restoreConnections(Object checkpoint) throws Exception { }
 
+    /** Release computed connection state once the root has no child reservations. */
+    default void collectConnectionState() throws Exception { }
+
     default long saveConnections(IMind source) throws Exception {
         throw new UnsupportedOperationException("Context topology publication is unavailable");
     }

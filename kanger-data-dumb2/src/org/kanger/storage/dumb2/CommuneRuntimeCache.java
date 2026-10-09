@@ -12,8 +12,9 @@ import java.util.*;
  * are deliberately not a knowledge address: recertifying X does not change
  * a commune's pinned rules or private initialization commands.
  *
- * <p>The owner closes this cache when its Context session closes. Retaining
- * previous states until then keeps nested transaction checkpoints usable.
+ * <p>The owner retains previous states while root child reservations are live,
+ * then prunes them to the current vector at root quiescence. This keeps nested
+ * transaction checkpoints usable without retaining settled states indefinitely.
  * This class owns joint runtimes, not the member connection layers.</p>
  */
 final class CommuneRuntimeCache implements AutoCloseable {
@@ -80,6 +81,25 @@ final class CommuneRuntimeCache implements AutoCloseable {
         runtimes.clear();
         closed = true;
         if (failure != null) throw failure;
+    }
+
+    /** Called only after all root child reservations have settled. */
+    synchronized Collection<ContextConnection> retain(
+            Map<String, ? extends List<ContextConnection>> groups) throws Exception {
+        Set<Key> live = new HashSet<>();
+        for (Map.Entry<String, ? extends List<ContextConnection>> entry : groups.entrySet())
+            live.add(new Key(entry.getKey(), entry.getValue()));
+        List<ContextConnection> members = new ArrayList<>();
+        Iterator<Map.Entry<Key, CommuneRuntime>> iterator = runtimes.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Key, CommuneRuntime> entry = iterator.next();
+            if (live.contains(entry.getKey())) members.addAll(entry.getValue().members());
+            else {
+                entry.getValue().close();
+                iterator.remove();
+            }
+        }
+        return members;
     }
 
     private static final class Key {
