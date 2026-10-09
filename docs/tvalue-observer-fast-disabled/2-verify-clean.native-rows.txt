@@ -1,0 +1,99 @@
+VIEW stage=root-clear-v2-baseline level=0 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=root-clear-v2-baseline level=1 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6] fullMatchesNative=true
+VIEW stage=root-clear-v2-baseline level=2 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+VIEW stage=root-clear-v2-cleared level=0 native={} full={} refs=[] fullMatchesNative=true
+VIEW stage=root-clear-v2-cleared level=1 native={1=[4:6:0]} full={1=[4:6:0]} refs=[1=local:4:1:6] fullMatchesNative=true
+VIEW stage=root-clear-v2-cleared level=2 native={1=[4:6:0,5:8:0]} full={1=[4:6:0,5:8:0]} refs=[1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+ID case=root-clear-v2 owner=new:0:2:10 child=old:0:0:1 grand=old:0:0:1
+VIEW stage=root-clear-v2-replacement level=0 native={2=[0:10:0]} full={2=[0:10:0]} refs=[2=new:0:2:10] fullMatchesNative=true
+VIEW stage=root-clear-v2-replacement level=1 native={1=[4:6:0], 2=[0:1:0]} full={1=[4:6:0]} refs=[1=local:4:1:6, 2=old:0:0:1] fullMatchesNative=false
+VIEW stage=root-clear-v2-replacement level=2 native={1=[4:6:0,5:8:0], 2=[0:1:0]} full={1=[4:6:0,5:8:0]} refs=[1=local:4:1:6, 1=deep:5:1:8, 2=old:0:0:1] fullMatchesNative=false
+VIEW stage=root-clear-v2-fresh level=1 native={2=[0:10:0]} full={2=[0:10:0]} refs=[2=new:0:2:10] fullMatchesNative=true
+VIEW stage=root-clear-v0-baseline level=0 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=root-clear-v0-baseline level=1 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6] fullMatchesNative=true
+VIEW stage=root-clear-v0-baseline level=2 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+VIEW stage=root-clear-v0-cleared level=0 native={} full={} refs=[] fullMatchesNative=true
+VIEW stage=root-clear-v0-cleared level=1 native={1=[4:6:0]} full={1=[4:6:0]} refs=[1=local:4:1:6] fullMatchesNative=true
+VIEW stage=root-clear-v0-cleared level=2 native={1=[4:6:0,5:8:0]} full={1=[4:6:0,5:8:0]} refs=[1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+ID case=root-clear-v0 owner=new:0:0:10 child=old:0:0:1 grand=old:0:0:1
+VIEW stage=root-clear-v0-replacement level=0 native={0=[0:10:0]} full={0=[0:10:0]} refs=[0=new:0:0:10] fullMatchesNative=true
+VIEW stage=root-clear-v0-replacement level=1 native={0=[0:1:0], 1=[4:6:0]} full={0=[0:1:0], 1=[4:6:0]} refs=[0=old:0:0:1, 1=local:4:1:6] fullMatchesNative=true
+VIEW stage=root-clear-v0-replacement level=2 native={0=[0:1:0], 1=[4:6:0,5:8:0]} full={0=[0:1:0], 1=[4:6:0,5:8:0]} refs=[0=old:0:0:1, 1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+VIEW stage=root-clear-v0-fresh level=1 native={0=[0:10:0]} full={0=[0:10:0]} refs=[0=new:0:0:10] fullMatchesNative=true
+VIEW stage=root-clear-v1-baseline level=0 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=root-clear-v1-baseline level=1 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6] fullMatchesNative=true
+VIEW stage=root-clear-v1-baseline level=2 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+VIEW stage=root-clear-v1-cleared level=0 native={} full={} refs=[] fullMatchesNative=true
+VIEW stage=root-clear-v1-cleared level=1 native={1=[4:6:0]} full={1=[4:6:0]} refs=[1=local:4:1:6] fullMatchesNative=true
+VIEW stage=root-clear-v1-cleared level=2 native={1=[4:6:0,5:8:0]} full={1=[4:6:0,5:8:0]} refs=[1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+ID case=root-clear-v1 owner=new:0:1:10 child=old:0:0:1 grand=old:0:0:1
+VIEW stage=root-clear-v1-replacement level=0 native={1=[0:10:0]} full={1=[0:10:0]} refs=[1=new:0:1:10] fullMatchesNative=true
+VIEW stage=root-clear-v1-replacement level=1 native={1=[0:1:0,4:6:0]} full={1=[0:1:0,4:6:0]} refs=[1=old:0:0:1, 1=local:4:1:6] fullMatchesNative=true
+VIEW stage=root-clear-v1-replacement level=2 native={1=[0:1:0,4:6:0,5:8:0]} full={1=[0:1:0,4:6:0,5:8:0]} refs=[1=old:0:0:1, 1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+VIEW stage=root-clear-v1-fresh level=1 native={1=[0:10:0]} full={1=[0:10:0]} refs=[1=new:0:1:10] fullMatchesNative=true
+VIEW stage=child-clear-v2-baseline level=0 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=child-clear-v2-baseline level=1 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6] fullMatchesNative=true
+VIEW stage=child-clear-v2-baseline level=2 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+VIEW stage=child-clear-v2-cleared level=0 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=child-clear-v2-cleared level=1 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=child-clear-v2-cleared level=2 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,5:8:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,5:8:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=deep:5:1:8] fullMatchesNative=true
+ID case=child-clear-v2 owner=new:6:2:10 child=new:6:2:10 grand=null
+VIEW stage=child-clear-v2-replacement level=0 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=child-clear-v2-replacement level=1 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0], 2=[6:10:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0], 2=[6:10:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 2=new:6:2:10] fullMatchesNative=true
+VIEW stage=child-clear-v2-replacement level=2 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,5:8:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,5:8:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=deep:5:1:8] fullMatchesNative=true
+VIEW stage=child-clear-v2-fresh level=2 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0], 2=[6:10:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0], 2=[6:10:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 2=new:6:2:10] fullMatchesNative=true
+VIEW stage=child-clear-v0-baseline level=0 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=child-clear-v0-baseline level=1 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6] fullMatchesNative=true
+VIEW stage=child-clear-v0-baseline level=2 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+VIEW stage=child-clear-v0-cleared level=0 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=child-clear-v0-cleared level=1 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=child-clear-v0-cleared level=2 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,5:8:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,5:8:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=deep:5:1:8] fullMatchesNative=true
+ID case=child-clear-v0 owner=new:6:0:10 child=new:6:0:10 grand=null
+VIEW stage=child-clear-v0-replacement level=0 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=child-clear-v0-replacement level=1 native={0=[0:1:0,1:4:0,6:10:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0,6:10:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 0=new:6:0:10, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=child-clear-v0-replacement level=2 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,5:8:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,5:8:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=deep:5:1:8] fullMatchesNative=true
+VIEW stage=child-clear-v0-fresh level=2 native={0=[0:1:0,1:4:0,6:10:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0,6:10:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 0=new:6:0:10, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=child-clear-v1-baseline level=0 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=child-clear-v1-baseline level=1 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6] fullMatchesNative=true
+VIEW stage=child-clear-v1-baseline level=2 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+VIEW stage=child-clear-v1-cleared level=0 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=child-clear-v1-cleared level=1 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=child-clear-v1-cleared level=2 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,5:8:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,5:8:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=deep:5:1:8] fullMatchesNative=true
+ID case=child-clear-v1 owner=new:6:1:10 child=new:6:1:10 grand=null
+VIEW stage=child-clear-v1-replacement level=0 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=child-clear-v1-replacement level=1 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,6:10:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,6:10:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=new:6:1:10] fullMatchesNative=true
+VIEW stage=child-clear-v1-replacement level=2 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,5:8:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,5:8:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=deep:5:1:8] fullMatchesNative=true
+VIEW stage=child-clear-v1-fresh level=2 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,6:10:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,6:10:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=new:6:1:10] fullMatchesNative=true
+VIEW stage=pack-v2-baseline level=0 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=pack-v2-baseline level=1 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6] fullMatchesNative=true
+VIEW stage=pack-v2-baseline level=2 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+VIEW stage=pack-v2-cleared level=0 native={0=[1:4:0], 1=[2:1:0,3:4:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=pack-v2-cleared level=1 native={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6] fullMatchesNative=true
+VIEW stage=pack-v2-cleared level=2 native={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+ID case=pack-v2 owner=new:6:2:10 child=null grand=null
+VIEW stage=pack-v2-replacement level=0 native={0=[1:4:0], 1=[2:1:0,3:4:0], 2=[6:10:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0], 2=[6:10:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 2=new:6:2:10] fullMatchesNative=true
+VIEW stage=pack-v2-replacement level=1 native={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6] fullMatchesNative=true
+VIEW stage=pack-v2-replacement level=2 native={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+VIEW stage=pack-v2-fresh level=1 native={0=[1:4:0], 1=[2:1:0,3:4:0], 2=[6:10:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0], 2=[6:10:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 2=new:6:2:10] fullMatchesNative=true
+VIEW stage=pack-v0-baseline level=0 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=pack-v0-baseline level=1 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6] fullMatchesNative=true
+VIEW stage=pack-v0-baseline level=2 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+VIEW stage=pack-v0-cleared level=0 native={0=[1:4:0], 1=[2:1:0,3:4:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=pack-v0-cleared level=1 native={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6] fullMatchesNative=true
+VIEW stage=pack-v0-cleared level=2 native={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+ID case=pack-v0 owner=new:6:0:10 child=null grand=null
+VIEW stage=pack-v0-replacement level=0 native={0=[1:4:0,6:10:0], 1=[2:1:0,3:4:0]} full={0=[1:4:0,6:10:0], 1=[2:1:0,3:4:0]} refs=[0=old:1:0:4, 0=new:6:0:10, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=pack-v0-replacement level=1 native={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6] fullMatchesNative=true
+VIEW stage=pack-v0-replacement level=2 native={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+VIEW stage=pack-v0-fresh level=1 native={0=[1:4:0,6:10:0], 1=[2:1:0,3:4:0]} full={0=[1:4:0,6:10:0], 1=[2:1:0,3:4:0]} refs=[0=old:1:0:4, 0=new:6:0:10, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=pack-v1-baseline level=0 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=pack-v1-baseline level=1 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6] fullMatchesNative=true
+VIEW stage=pack-v1-baseline level=2 native={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} full={0=[0:1:0,1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} refs=[0=old:0:0:1, 0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+VIEW stage=pack-v1-cleared level=0 native={0=[1:4:0], 1=[2:1:0,3:4:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4] fullMatchesNative=true
+VIEW stage=pack-v1-cleared level=1 native={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6] fullMatchesNative=true
+VIEW stage=pack-v1-cleared level=2 native={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+ID case=pack-v1 owner=new:6:1:10 child=null grand=null
+VIEW stage=pack-v1-replacement level=0 native={0=[1:4:0], 1=[2:1:0,3:4:0,6:10:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0,6:10:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=new:6:1:10] fullMatchesNative=true
+VIEW stage=pack-v1-replacement level=1 native={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6] fullMatchesNative=true
+VIEW stage=pack-v1-replacement level=2 native={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0,4:6:0,5:8:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=local:4:1:6, 1=deep:5:1:8] fullMatchesNative=true
+VIEW stage=pack-v1-fresh level=1 native={0=[1:4:0], 1=[2:1:0,3:4:0,6:10:0]} full={0=[1:4:0], 1=[2:1:0,3:4:0,6:10:0]} refs=[0=old:1:0:4, 1=old:2:1:1, 1=old:3:1:4, 1=new:6:1:10] fullMatchesNative=true

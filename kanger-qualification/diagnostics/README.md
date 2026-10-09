@@ -1,15 +1,19 @@
 # TValue diagnostic source set
 
+## Current fast disabled bridge experiment
+
+The current bridge checks a volatile attachment before creating callbacks or entering dispatch. See [the fast disabled report](../../docs/tvalue-observer-fast-disabled.md). Reproduce with its `build.py`, `run.py`, `wiring.py`, `qualify.py`, `cost.py`, `cost_analyze.py` and `manifest.py` on pinned native `2422f7f6`. The previous bridge is preserved as a byte-identical control. Earlier scripts below require their frozen stage checkout.
+
 ## Selected native base after hygiene
 
-The bounded observer qualification now targets native `2422f7f6d9e1af7608203b1566df64b5f29fe344`. See [the fresh-base report](../../docs/tvalue-hygiene-base.md) and its `build.py`, `run.py`, `wiring.py`, `cost_smoke.py` and `analyze.py`. Keep a clean `../K3-observer-native` checkout on that exact commit. The diagnostic implementation is unchanged; all 34 requalification JVMs preserve the previous native controls and checked traces. Earlier build commands below preserve their original `5d5f6aff` binding. Old timing figures do not qualify the new base.
+The bounded observer qualification now targets native `2422f7f6d9e1af7608203b1566df64b5f29fe344`. See [the fresh-base report](../../docs/tvalue-hygiene-base.md) and its `build.py`, `run.py`, `wiring.py`, `cost_smoke.py` and `analyze.py`. Keep a clean `../K3-observer-native` checkout on that exact commit. At that frozen stage the diagnostic implementation was unchanged; all 34 requalification JVMs preserve the previous native controls and checked traces. Earlier build commands below preserve their original `5d5f6aff` binding. Old timing figures do not qualify the new base.
 
 
 ## Current observer/session experiment
 
 The current implementation adds explicit observer attachment, exclusive thread-owned consumer sessions and mandatory `NO_INSTRUMENTATION` refusal. See [the observer/session report](../../docs/tvalue-observer-session.md). Runtime API sources are isolated in `runtime/`; they are compiled only into generated qualification runtimes. Production sources and defaults are unchanged.
 
-Reproduce the current stage with `build_observer.py`, followed by `docs/tvalue-observer-session/run.py`, `wiring.py` and `analyze.py`, from the repository root. Use Java 17, ECJ 3.33 at `../tooling/ecj.jar`, the bundled jline jar, and a clean native checkout at `../K3-smart-native` pinned to `5d5f6aff271f1abf371fbde55d637744c53f0bc3`.
+Reproduce that frozen stage with `build_observer.py`, followed by `docs/tvalue-observer-session/run.py`, `wiring.py` and `analyze.py`, from the repository root. Use Java 17, ECJ 3.33 at `../tooling/ecj.jar`, the bundled jline jar, and a clean native checkout at `../K3-smart-native` pinned to `5d5f6aff271f1abf371fbde55d637744c53f0bc3`.
 
 The implementation has nine diagnostic classes, two runtime API classes and six fixture/helper classes (the two new drivers are explicitly listed in `build_observer.py`). `open()` returns an `AutoCloseable` owner; `begin()`/`finish()` remain compatible. All sessions are bounded and single-threaded. Callback failure taints export and preserves native behavior. Abandonment drops journals and captured references. Both authority journals remain active.
 

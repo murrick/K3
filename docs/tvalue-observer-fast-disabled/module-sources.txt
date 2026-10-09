@@ -1,0 +1,9 @@
+kanger-qualification/diagnostics/src/org/kanger/BeforeAuthorityJournal.java
+kanger-qualification/diagnostics/src/org/kanger/ConsumerHooks.java
+kanger-qualification/diagnostics/src/org/kanger/ObservationLayers.java
+kanger-qualification/diagnostics/src/org/kanger/QualifiedJournalConsumer.java
+kanger-qualification/diagnostics/src/org/kanger/RecordedLinks.java
+kanger-qualification/diagnostics/src/org/kanger/ResidentPersistentRead.java
+kanger-qualification/diagnostics/src/org/kanger/ResidentTValueRead.java
+kanger-qualification/diagnostics/src/org/kanger/StreamAuthorityJournal.java
+kanger-qualification/diagnostics/src/org/kanger/StreamAuthorityRead.java

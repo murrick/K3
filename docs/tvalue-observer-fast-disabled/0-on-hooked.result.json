@@ -1,0 +1,27 @@
+{
+  "repetition": 0,
+  "flag": "on",
+  "mode": "hooked",
+  "driver": "org.kanger.ConsumerRunner",
+  "exit_code": 0,
+  "command": [
+    "java",
+    "-Xmx512m",
+    "-Duser.home=/tmp/observer-session-9g8zmfmh",
+    "-Dresult.path=/workspace/scratch/f2027705cd02/K3/docs/tvalue-observer-fast-disabled/0-on-hooked",
+    "-Dnative.hooks=true",
+    "-Djournal.cost.enabled=true",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-observer-fast-disabled-tests:../build/tvalue-observer-fast-disabled.jar:../build/tvalue-observer-fast-disabled-hooked:../K3-observer-native/kanger/resources:../K3-observer-native/kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ConsumerRunner",
+    "0"
+  ]
+}

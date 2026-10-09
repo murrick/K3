@@ -1,0 +1,9 @@
+{
+  "exit_code": 0,
+  "command": [
+    "java",
+    "-cp",
+    "../build/tvalue-observer-fast-disabled-tests:../build/tvalue-observer-fast-disabled.jar:../build/tvalue-observer-fast-disabled-missing-factory:../build/tvalue-observer-fast-disabled-hooked:lib/jline-3.13.0.jar",
+    "org.kanger.VanillaConsumerRunner"
+  ]
+}

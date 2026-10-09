@@ -1,0 +1,28 @@
+{
+  "size": 128,
+  "repetition": 4,
+  "flag": "on",
+  "mode": "fast-attached",
+  "exit_code": 0,
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx512m",
+    "-Duser.home=/tmp/observer-cost-d1_xr9x9",
+    "-Dresult.path=/workspace/scratch/f2027705cd02/K3/docs/tvalue-observer-fast-disabled/cost/128-4-on-fast-attached",
+    "-Djournal.cost.enabled=false",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-observer-fast-disabled-cost-tests:../build/tvalue-observer-fast-disabled.jar:../build/tvalue-observer-fast-disabled-hooked:../K3-observer-native/kanger/resources:../K3-observer-native/kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ObserverCostRunner",
+    "attached",
+    "128"
+  ]
+}
