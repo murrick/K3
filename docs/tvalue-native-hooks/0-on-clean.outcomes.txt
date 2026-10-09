@@ -1,0 +1,7 @@
+SETTLEMENT_CASE mode=accept gap=false accepted=true applied=true reservation=0 failure=none
+SETTLEMENT_CASE mode=reject gap=false accepted=false applied=false reservation=0 failure=none
+SETTLEMENT_CASE mode=user-reject gap=false accepted=false applied=false reservation=0 failure=none
+SETTLEMENT_CASE mode=analyzer-exception gap=false accepted=false applied=false reservation=0 failure=analyzer
+SETTLEMENT_CASE mode=completion-exception gap=false accepted=false applied=false reservation=0 failure=commit
+SETTLEMENT_CASE mode=post-commit gap=false accepted=false applied=true reservation=0 failure=settled-COMMITTED
+SETTLEMENT_CASE mode=post-reject gap=false accepted=false applied=false reservation=0 failure=settled-REJECTED
