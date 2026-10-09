@@ -1,0 +1,50 @@
+{
+  "parent": "148910a3707e81332ab3ab9e8f811423368cd492",
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-layer-cost:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-authority-stream",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-authority-stream/BeforeAuthorityJournal.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-authority-stream/StreamAuthorityJournal.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-authority-stream/StreamAuthorityRead.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-authority-stream/AuthorityCostRunner.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-authority-stream/AuthorityScopeRunner.java"
+  ],
+  "prior_runtime_class_hashes_verified": 662,
+  "prior_journal_source_recovered": true,
+  "full_authority_method_recovered_except_declared_serialization_edit": true,
+  "raw_reader_source_unchanged_and_shared": true,
+  "runner_recovered_by_class_rename_only": true,
+  "scope_source_recovered_except_declared_extra_controls": true,
+  "full_oracle_fresh_and_independent_in_both": true,
+  "class_sha256": {
+    "org/kanger/BeforeAuthorityJournal$State.class": "020c8195905cf5ff32f2a937911f1e1a0c340eb13476c7e386a5567a67d13f5c",
+    "org/kanger/BeforeAuthorityJournal$Work.class": "b936dd31bdca36c48b065883f19bd91c8411d7e5353a065c9c8b8d05c557575f",
+    "org/kanger/StreamAuthorityJournal$Work.class": "a9561671bcf23d9af98da92a3c768054dc85fa43630007a3638e45a661a69054",
+    "org/kanger/StreamAuthorityJournal$UpdateFrame.class": "a46b5ed2a5dc0d5c905601ad85b2b8f2e198645c3f39b47a243223557f30c00c",
+    "org/kanger/BeforeAuthorityJournal$UpdateFrame.class": "9345dfb30f541f98999f7d3fdf8ee56ef125fa6af5a97df12e70f0182655ad0d",
+    "org/kanger/StreamAuthorityJournal$Session.class": "f1ed0d3222e53ea2bee188ad4c3f11603fb20420e2abc3991c1803a69fb7db7c",
+    "org/kanger/StreamAuthorityJournal$State.class": "2aaa17a75977fd13fc787b48cc08a0360ba06f726fe943934f41909cae5bc8af",
+    "org/kanger/BeforeAuthorityJournal$Session.class": "0419da35157780d62dcd94ed81d0a341feb8373d5c6d24d6d3ece4dc2583bb4c",
+    "org/kanger/StreamAuthorityRead.class": "c1351a3588ba1862d06769feb984abd0f5dc4820718290f96c6ea781a12c0d48",
+    "org/kanger/AuthorityScopeRunner.class": "2215392c69e00f0f0a6a9b685bf90e14aee34661a90d86ee7cb451e26e27ba77",
+    "org/kanger/AuthorityCostRunner.class": "f9d83c2e5a5b559519615719a56d4ebf28d424a50f41afd7f4d7fcaa4f34cbb8",
+    "org/kanger/StreamAuthorityJournal.class": "3bbbaf79a97d9837640accd60bd2805fb94a046869ebd33f49dc22d57b008e0c",
+    "org/kanger/BeforeAuthorityJournal.class": "28c638d16197556f050b9745bf1b1413ef015a8649f511fe6797d97050905f80"
+  },
+  "source_sha256": {
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-authority-stream/BeforeAuthorityJournal.java": "8ce51de87941b1d3e7b3e76a33f7d4d6641f8213fa15be84785aa15178b0c134",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-authority-stream/StreamAuthorityJournal.java": "ad646aaaf322658cd5e924dfab9df255644d971ed5869cc22146d7f1cdafd145",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-authority-stream/StreamAuthorityRead.java": "9641859e5ec75f0652fe60470aa55b04e84db7c7ef74f961502615bd6fa45931",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-authority-stream/AuthorityCostRunner.java": "76dc15f888afba8bc62680148b9ffe8f0ed6f8bca287f86aba0899bb37d8dbc3",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-authority-stream/AuthorityScopeRunner.java": "89bb94837e415b6cbaafe83e7fcc879d3cdfde8549d97cb78a28ca7e606401de"
+  },
+  "native_clean_runtime": "tvalue-layer-cost",
+  "native_setter_metadata_bridge": "explicit after native setter returns; no instrumented native class or engine hooks"
+}

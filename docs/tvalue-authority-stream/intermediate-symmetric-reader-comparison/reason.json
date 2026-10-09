@@ -1,0 +1,8 @@
+{
+  "executed_JVMs": 57,
+  "timing_JVMs": 54,
+  "scope_JVMs": 3,
+  "correctness_failures": 0,
+  "included_in_final_performance_metrics": false,
+  "reason": "Symmetric cloned full readers confirm serialization improvement in that controlled model, but cloning validated read primitives is unnecessary. Final implementation shares unchanged ResidentTValueRead raw validation/layer primitives with the exact accepted control journal; both full authorities still freshly extract all layers independently of projection frames. Rerun all timing and scope JVMs sequentially."
+}

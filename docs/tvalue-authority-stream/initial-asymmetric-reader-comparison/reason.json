@@ -1,0 +1,8 @@
+{
+  "executed_JVMs": 57,
+  "timing_JVMs": 54,
+  "scope_JVMs": 3,
+  "correctness_failures": 0,
+  "included_in_final_performance_metrics": false,
+  "reason": "Initial control oracle used ResidentTValueRead, also called by native fingerprints and both candidate projections; candidate full-reader clone had no equivalent additional calls. Class-specific warmup and JIT profiles differed. Replace control oracle with an exact renamed full-reader clone; each clone is then called once per observation. Rerun all timing and scope JVMs sequentially."
+}

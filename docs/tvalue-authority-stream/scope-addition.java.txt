@@ -1,0 +1,29 @@
+ static void authorityPair(Mind m,String why)throws Exception{
+  String before=ResidentTValueRead.fingerprint(m);SortedMap<Long,String> old=ResidentTValueRead.authority(m);
+  require(before.equals(ResidentTValueRead.fingerprint(m)),"legacy authority pure "+why);
+  SortedMap<Long,String> fresh=StreamAuthorityRead.authority(m);require(old.equals(fresh),"full authority equivalent "+why);
+  require(before.equals(ResidentTValueRead.fingerprint(m)),"stream authority pure "+why);
+ }
+ static void authorityControls()throws Exception{
+  User u=(User)UserFactory.createUser("authority-controls","authority-controls");Mind root=new Mind(u);authorityPair(root,"empty");
+  List<TVariable> variables=new ArrayList<>();for(int i=0;i<3;i++)variables.add(variable(root,"route-"+i));
+  List<TValue> values=new ArrayList<>();Map<Long,TValue> byId=new HashMap<>();
+  for(int i=0;i<24;i++){TValue v=root.getTValues().add(variables.get(i%3),(Term)root.getTerms().add("term-"+i));values.add(v);byId.put(v.getId(),v);}
+  authorityPair(root,"multi-value-before-forEach");for(TVariable v:variables)root.getTValues().forEach(v,o->true);authorityPair(root,"initialized-native-indices");
+  Random random=new Random(0x5eed);List<Long> pool=new ArrayList<>(byId.keySet());pool.add(Long.MIN_VALUE);pool.add(Long.MAX_VALUE);
+  for(int i=0;i<1028;i++){
+   Collections.shuffle(pool,random);LinkedHashSet<Long> ids=new LinkedHashSet<>();
+   if(i>0)for(long id:pool)if(random.nextBoolean())ids.add(id);
+   if(i==1){ids.clear();ids.add(Long.MIN_VALUE);ids.add(Long.MAX_VALUE);}
+   List<TValue> selected=new ArrayList<>();for(long id:ids){TValue v=byId.get(id);if(v!=null)selected.add(v);}
+   LinkedHashSet<Long> idsBefore=new LinkedHashSet<>(ids);Map<Long,TValue> mapBefore=new HashMap<>(byId);
+   String expected=selected.isEmpty()?null:ResidentTValueRead.encode(root,selected);
+   require(Objects.equals(expected,StreamAuthorityRead.encodeRoutes(root,ids,byId)),"same ordered resident intersection and complete encoding");
+   require(ids.equals(idsBefore)&&byId.equals(mapBefore),"serializer inputs unchanged");
+  }
+  Mind child=new Mind(root);authorityPair(child,"inherited-before-forEach");for(TVariable v:variables)child.getTValues().forEach(v,o->true);authorityPair(child,"inherited-native-indices");
+  TValue local=child.getTValues().add(variables.get(0),(Term)child.getTerms().add("child-term"));authorityPair(child,"parent-and-child-route-order");
+  child.setUnitDeleted(values.get(0),true);authorityPair(child,"inherited-value-deleted");child.setUnitDeleted(values.get(0),false);authorityPair(child,"inherited-value-restored");
+  local.setValue((Term)child.getTerms().add("child-rewritten"));authorityPair(child,"local-term-rewrite");root.release(child);
+  root.getTValues().clear();authorityPair(root,"cleared");System.out.println("AUTHORITY_CONTROLS_OK routeCases=1028 nativeStates=10");
+ }

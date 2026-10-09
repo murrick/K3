@@ -1,0 +1,24 @@
+{
+  "journal_original": "docs/tvalue-idle-projection/IdleProjectionJournal.java",
+  "journal_replacements": [
+    [
+      "if(metadata==null)return ResidentTValueRead.authority(mind);",
+      "if(metadata==null)return StreamAuthorityRead.authority(mind);"
+    ]
+  ],
+  "reader_original": "docs/tvalue-persistent-lookup/ResidentTValueRead.java",
+  "reader_replacements": [
+    [
+      "for(long variable:variables){List<TValue> values=new ArrayList<>();for(long id:merged.getOrDefault(variable,new LinkedHashSet<>())){TValue v=target.byId.get(id);if(v!=null)values.add(v);}if(!values.isEmpty())result.put(variable,encode(mind,values));}",
+      "for(long variable:variables){LinkedHashSet<Long> ids=merged.get(variable);if(ids==null)continue;String text=encodeRoutes(mind,ids,target.byId);if(text!=null)result.put(variable,text);}"
+    ],
+    [
+      "    /** Independent full projection algorithm:",
+      "    /** Fresh authority serialization only; null denotes no resident routed value. */\n    static String encodeRoutes(Mind mind,LinkedHashSet<Long> ids,Map<Long,TValue> byId){\n        StringBuilder text=new StringBuilder(\"[\");boolean first=true;\n        for(long id:ids){TValue v=byId.get(id);if(v==null)continue;if(!first)text.append(',');first=false;\n            text.append(v.getId()).append(':').append(v.getValueId()).append(':').append(v.isDeleted(mind)?1:0);\n        }\n        return first?null:text.append(']').toString();\n    }\n    /** Independent full projection algorithm:"
+    ]
+  ],
+  "reader_mode": "shared unchanged raw primitives; copied full-authority method with declared serialization replacement",
+  "reader_header": "package org.kanger;\nimport java.util.*;\nimport org.kanger.units.TValue;\nimport org.kanger.factory.TValueFactory;\nimport static org.kanger.ResidentTValueRead.*;\n/** Fresh full oracle using the unchanged qualified raw reader; no projection-frame reuse. */\npublic final class StreamAuthorityRead {\n",
+  "reader_method_start": "    /** Independent full projection algorithm:",
+  "reader_method_end": "    /** Fixture fingerprint"
+}
