@@ -17,6 +17,11 @@ final class DmzObservationStateFingerprint {
         for (IRule candidate : mind.getRules()) {
             if (!candidate.isDeleted(mind)) {
                 Rule rule = (Rule) candidate;
+                DmzSourceCandidates candidates = DmzSourceCandidates.capture(mind, rule.getOrigin());
+                rows.add("attribution:" + rule.getId() + ":" + candidates.status + ":" + candidates.unsupported);
+                for (DmzSourceCandidates.Source source : candidates.sources)
+                    rows.add("source:" + rule.getId() + ":" + source.context + ":" + source.revision
+                            + ":" + source.rule + ":" + source.configured);
                 rows.add("rule:" + rule.getId() + ":" + mind.getRules().isGenerated(rule)
                         + ":" + digest(rule.pack().getBuffer()) + ":" + rule.toString(mind));
             }

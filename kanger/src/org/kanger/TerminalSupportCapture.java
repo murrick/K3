@@ -107,9 +107,13 @@ final class TerminalSupportCapture implements AutoCloseable {
         final String donor;
         final Ground ground;
         final boolean primary;
+        final DmzSourceCandidates sourceCandidates;
         Support(int premise, int evidence, String donor, Ground ground, boolean primary) {
+            this(premise, evidence, donor, ground, primary, DmzSourceCandidates.unknown());
+        }
+        Support(int premise, int evidence, String donor, Ground ground, boolean primary, DmzSourceCandidates candidates) {
             this.premise = premise; this.evidence = evidence; this.donor = donor;
-            this.ground = ground; this.primary = primary;
+            this.ground = ground; this.primary = primary; this.sourceCandidates = candidates;
         }
     }
 
@@ -122,8 +126,14 @@ final class TerminalSupportCapture implements AutoCloseable {
         final Ground ground;
         final List<Binding> bindings;
         final List<Support> supports;
+        final DmzSourceCandidates sourceCandidates;
         Application(int mind, int rule, String origin, String conclusion, Ground ground,
                 List<Binding> bindings, List<Support> supports) {
+            this(mind, rule, origin, conclusion, ground, bindings, supports, DmzSourceCandidates.unknown());
+        }
+        Application(int mind, int rule, String origin, String conclusion, Ground ground,
+                List<Binding> bindings, List<Support> supports, DmzSourceCandidates candidates) {
+            this.sourceCandidates = candidates;
             this.mind = mind; this.rule = rule; this.ruleOrigin = origin; this.conclusion = conclusion;
             this.ground = ground;
             this.bindings = Collections.unmodifiableList(new ArrayList<Binding>(bindings));
@@ -350,12 +360,13 @@ final class TerminalSupportCapture implements AutoCloseable {
             }
             if (!witnessed) return "missing-compatible-premise-match";
             supports.add(new Support(identity(premise), identity(evidence), donor, ground,
-                    !mind.getRules().isGenerated(evidence)));
+                    !mind.getRules().isGenerated(evidence), DmzSourceCandidates.capture(mind, evidence.getOrigin())));
         }
         Solve result = new Solve(conclusion.getPredicate(), conclusion.isAntc(),
                 conclusion.getArguments().convertBase(mind));
         applications.add(new Application(identity(mind), identity(rule), rule.getOrigin(),
-                result.toString(mind), Ground.capture(result, mind), bindings, supports));
+                result.toString(mind), Ground.capture(result, mind), bindings, supports,
+                DmzSourceCandidates.capture(mind, rule.getOrigin())));
         return null;
     }
 
