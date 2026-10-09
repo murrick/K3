@@ -5,7 +5,12 @@
  */
 package org.kanger.exception;
 
+import org.kanger.ContextQualification;
 import org.kanger.enums.StorageLifecycleErrorCode;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Rejection of a physical-storage lifecycle operation by the Core contract.
@@ -18,14 +23,29 @@ import org.kanger.enums.StorageLifecycleErrorCode;
 public class StorageLifecycleException extends RuntimeErrorException {
 
     private final StorageLifecycleErrorCode code;
+    private final List<ContextQualification.CollisionWitness> collisions;
 
     public StorageLifecycleException(StorageLifecycleErrorCode code,
                                      String message) {
+        this(code, message,
+                Collections.<ContextQualification.CollisionWitness>emptyList());
+    }
+
+    public StorageLifecycleException(
+            StorageLifecycleErrorCode code,
+            String message,
+            List<ContextQualification.CollisionWitness> collisions) {
         super(message);
         if (code == null) {
             throw new IllegalArgumentException("Storage lifecycle code is required");
         }
+        if (collisions == null) {
+            throw new NullPointerException("collisions");
+        }
         this.code = code;
+        this.collisions = Collections.unmodifiableList(
+                new ArrayList<ContextQualification.CollisionWitness>(
+                        collisions));
     }
 
     public StorageLifecycleErrorCode getErrorCode() {
@@ -38,5 +58,9 @@ public class StorageLifecycleException extends RuntimeErrorException {
 
     public String getRequiredAction() {
         return code.getRequiredAction();
+    }
+
+    public List<ContextQualification.CollisionWitness> getCollisions() {
+        return collisions;
     }
 }

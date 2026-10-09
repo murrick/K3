@@ -62,6 +62,14 @@ public final class CommandParser {
                 && resolvesTo(family, prefix.get(1).value, Keyword.ORDER)) {
             return parseValuesOrder(line);
         }
+        if (family == Family.CONTEXT && prefix.size() > 1
+                && "ask".equalsIgnoreCase(prefix.get(1).value)) {
+            return parseContextIsolatedQuery(line, true);
+        }
+        if (family == Family.CONTEXT && prefix.size() > 1
+                && resolvesTo(family, prefix.get(1).value, Keyword.EXPLAIN)) {
+            return parseContextExplain(line);
+        }
 
         List<Token> tokens = tokenize(line, Integer.MAX_VALUE, true);
         switch (family) {
@@ -91,8 +99,12 @@ public final class CommandParser {
                         line, tokens, CommandIntent.SOURCE_DELETE, "source");
             case STORAGE:
                 return parseStorage(line, tokens);
+            case CONTEXT:
+                return parseContext(line, tokens);
             case STATUS:
                 return parseStatus(line, tokens);
+            case OPTIONS:
+                return parseOptions(line, tokens);
             case TIMEZONE:
                 return parseOptionalSingleArgument(
                         line, tokens, CommandIntent.TIMEZONE, "zoneId");
@@ -105,6 +117,57 @@ public final class CommandParser {
             default:
                 throw error(UNKNOWN_KEYWORD, "Unknown command family");
         }
+    }
+
+    private CommandInvocation parseOptions(String raw, List<Token> tokens) throws CommandParseException {
+        Map<String, Object> arguments = new LinkedHashMap<>();
+        if (tokens.size() == 1) return CommandInvocation.command(CommandIntent.OPTIONS, arguments, raw);
+        String selected = resolveOption(tokens.get(1).value,
+                new String[] {"help", "debug", "values", "log", "timezone", "optimize"});
+        if ("help".equals(selected)) requireSize(tokens, 2);
+        if (!"optimize".equals(selected) && tokens.size() > 3) throw error(EXTRA_ARGUMENT, "Unexpected extra argument");
+        if ("timezone".equals(selected)) {
+            arguments.put("zoneId", tokens.size() == 3 ? tokens.get(2).value : "");
+            return CommandInvocation.command(CommandIntent.TIMEZONE, arguments, raw);
+        }
+        arguments.put("option", selected);
+        int valueIndex = 2;
+        if ("optimize".equals(selected) && tokens.size() > 2) {
+            String third = tokens.get(2).value;
+            if (optionBoolean(third) == null) {
+                arguments.put("optimization", resolveOption(third, org.kanger.OptimizationOptions.names()));
+                valueIndex = 3;
+            }
+        }
+        if (tokens.size() > valueIndex + 1) throw error(EXTRA_ARGUMENT, "Unexpected extra argument");
+        if (tokens.size() > valueIndex) {
+            String value = optionBoolean(tokens.get(valueIndex).value);
+            if (value == null) throw error(UNKNOWN_KEYWORD, "Expected yes or no");
+            arguments.put("value", value);
+        }
+        return CommandInvocation.command(CommandIntent.OPTIONS, arguments, raw);
+    }
+
+    private String optionBoolean(String token) {
+        String value = token.toLowerCase(java.util.Locale.ROOT);
+        if (!value.isEmpty() && "yes".startsWith(value)) return "yes";
+        if (!value.isEmpty() && "no".startsWith(value)) return "no";
+        return null;
+    }
+
+    private String resolveOption(String token, String[] names) throws CommandParseException {
+        String probe = token.toLowerCase(java.util.Locale.ROOT);
+        if (probe.isEmpty()) throw error(UNKNOWN_KEYWORD, "Empty option");
+        String selected = null;
+        for (String name : names) if (name.equalsIgnoreCase(probe)) return name;
+        for (String name : names) {
+            if (name.toLowerCase(java.util.Locale.ROOT).startsWith(probe)) {
+                if (selected != null) throw error(AMBIGUOUS_PREFIX, "Ambiguous option " + probe);
+                selected = name;
+            }
+        }
+        if (selected == null) throw error(UNKNOWN_KEYWORD, "Unknown option " + probe);
+        return selected;
     }
 
     private CommandInvocation parseRule(String raw, List<Token> tokens)
@@ -344,12 +407,13 @@ public final class CommandParser {
         Keyword keyword = CommandRegistry.resolveKeyword(
                 Family.TRANSACTION, tokens.get(1).value,
                 Keyword.START, Keyword.COMMIT, Keyword.ROLLBACK, Keyword.SQUASH);
-        requireSize(tokens, 2);
+        if (keyword != Keyword.COMMIT || tokens.size() != 3) requireSize(tokens, 2);
         switch (keyword) {
             case START:
                 return CommandInvocation.command(CommandIntent.TX_START, raw);
             case COMMIT:
-                return CommandInvocation.command(CommandIntent.TX_COMMIT, raw);
+                return CommandInvocation.command(CommandIntent.TX_COMMIT,
+                        tokens.size() == 3 ? args("description", tokens.get(2).value) : java.util.Collections.<String,Object>emptyMap(), raw);
             case ROLLBACK:
                 return CommandInvocation.command(CommandIntent.TX_ROLLBACK, raw);
             case SQUASH:
@@ -400,6 +464,183 @@ public final class CommandParser {
             default:
                 throw error(INVALID_GRAMMAR, "Invalid storage action");
         }
+    }
+
+    private CommandInvocation parseContext(String raw, List<Token> tokens)
+            throws CommandParseException {
+        if (tokens.size() == 1) {
+            return CommandInvocation.command(CommandIntent.CTX_STATUS, raw);
+        }
+        Keyword keyword;
+        try {
+            keyword = CommandRegistry.resolveKeyword(
+                    Family.CONTEXT, tokens.get(1).value,
+                    Keyword.CONNECT, Keyword.DISCONNECT, Keyword.CLOSE,
+                    Keyword.SWITCH, Keyword.VERSION,
+                    Keyword.RULES, Keyword.PUBLISH, Keyword.FORK,
+                    Keyword.EXPLAIN, Keyword.OPINIONS, Keyword.VALUES, Keyword.SOLVES, Keyword.WHEN);
+        } catch (CommandParseException rejected) {
+            if (rejected.getReason() == AMBIGUOUS_PREFIX) {
+                throw rejected;
+            }
+            return parseContextIsolatedQuery(raw);
+        }
+        switch (keyword) {
+            case OPINIONS:
+            case VALUES:
+            case SOLVES:
+            case WHEN:
+                if (tokens.size() != 2 && tokens.size() != 3) requireSize(tokens, 3);
+                CommandIntent intent = keyword == Keyword.OPINIONS ? CommandIntent.CTX_OPINIONS
+                        : keyword == Keyword.VALUES ? CommandIntent.CTX_VALUES
+                        : keyword == Keyword.SOLVES ? CommandIntent.CTX_SOLVES : CommandIntent.CTX_WHEN;
+                return CommandInvocation.command(intent, tokens.size() == 3
+                        ? args("locator", tokens.get(2).value) : java.util.Collections.<String,Object>emptyMap(), raw);
+            case FORK:
+                requireRequiredArgument(tokens, 3);
+                requireSize(tokens, 3);
+                return CommandInvocation.command(CommandIntent.CTX_FORK,
+                        args("locator", tokens.get(2).value), raw);
+            case PUBLISH:
+                if (tokens.size() != 2 && tokens.size() != 3) requireSize(tokens,2);
+                return CommandInvocation.command(CommandIntent.CTX_PUBLISH,
+                        tokens.size() == 3 ? args("description", tokens.get(2).value) : java.util.Collections.<String,Object>emptyMap(), raw);
+            case RULES:
+                return parseContextRules(raw,tokens);
+            case CONNECT:
+                requireRequiredArgument(tokens, 3);
+                if (tokens.size() == 5 && "trust".equalsIgnoreCase(tokens.get(3).value)) {
+                    Map<String,Object> connection = new LinkedHashMap<String,Object>();
+                    connection.put("locator", tokens.get(2).value);
+                    try { connection.put("trustGroup", org.kanger.TrustGroups.validate(tokens.get(4).value)); }
+                    catch (IllegalArgumentException invalid) { throw error(INVALID_ARGUMENT_SHAPE, invalid.getMessage()); }
+                    return CommandInvocation.command(CommandIntent.CTX_CONNECT, connection, raw);
+                }
+                requireSize(tokens, 3);
+                return CommandInvocation.command(
+                        CommandIntent.CTX_CONNECT,
+                        args("locator", tokens.get(2).value), raw);
+            case CLOSE:
+            case DISCONNECT:
+                requireRequiredArgument(tokens, 3);
+                requireSize(tokens, 3);
+                return CommandInvocation.command(
+                        CommandIntent.CTX_DISCONNECT,
+                        args("locator", tokens.get(2).value), raw);
+            case SWITCH:
+                requireRequiredArgument(tokens, 3);
+                requireRequiredArgument(tokens, 4);
+                requireSize(tokens, 4);
+                Map<String, Object> arguments =
+                        new LinkedHashMap<String, Object>();
+                arguments.put("locator", tokens.get(2).value);
+                arguments.put("RevisionId",
+                        parseNonNegativeLong(
+                                tokens.get(3).value,
+                                "RevisionId"));
+                return CommandInvocation.command(
+                        CommandIntent.CTX_SWITCH,
+                        arguments, raw);
+            case VERSION:
+                if (tokens.size() == 2) {
+                    return CommandInvocation.command(
+                            CommandIntent.CTX_VERSION,
+                            raw);
+                }
+                requireSize(tokens, 3);
+                return CommandInvocation.command(
+                        CommandIntent.CTX_VERSION,
+                        args("locator", tokens.get(2).value),
+                        raw);
+            case EXPLAIN:
+                throw error(MISSING_ARGUMENT,
+                        "ctx explain requires a KANGER query");
+            default:
+                throw error(INVALID_GRAMMAR, "Invalid ctx action");
+        }
+    }
+
+    private CommandInvocation parseContextRules(String raw,List<Token> tokens) throws CommandParseException {
+        Map<String,Object> result=new LinkedHashMap<String,Object>();
+        int i=2;
+        if(i<tokens.size()) {
+            String value=tokens.get(i).value;
+            boolean modifier=java.util.Arrays.asList("all","produced","tree","comment","level")
+                    .contains(value.toLowerCase(java.util.Locale.ROOT));
+            if(!modifier && !value.matches("[-+]?\\d+")) { result.put("locator",value); ++i; }
+        }
+        String selection="PRIMARY";
+        if(i<tokens.size()) {
+            String value=tokens.get(i++).value;
+            Keyword selector=tryResolve(Family.RULE,value,Keyword.ALL,Keyword.PRODUCED,Keyword.TREE,Keyword.COMMENT,Keyword.LEVEL);
+            if(selector==Keyword.LEVEL) throw error(INVALID_GRAMMAR,"Transaction levels belong to X; use rule level [n]");
+            if(selector==Keyword.ALL) selection="ALL";
+            else if(selector==Keyword.PRODUCED) selection="PRODUCED";
+            else if(selector==Keyword.TREE || selector==Keyword.COMMENT) {
+                selection=selector.name();
+                requireRequiredArgument(tokens,i+1);
+                result.put("id",parseNonNegativeLong(tokens.get(i++).value,"rule id"));
+            } else {
+                selection="SHOW";
+                result.put("id",parseNonNegativeLong(value,"rule id"));
+            }
+        }
+        requireSize(tokens,i);
+        result.put("selection",selection);
+        return CommandInvocation.command(CommandIntent.CTX_RULES,result,raw);
+    }
+
+    private CommandInvocation parseContextExplain(String raw)
+            throws CommandParseException {
+        List<Token> prefix = tokenize(raw, 2, false);
+        if (prefix.size() < 2) {
+            throw error(MISSING_ARGUMENT,
+                    "ctx explain requires a KANGER query");
+        }
+        String query = tailAfter(raw, prefix.get(1).end);
+        if (query.isEmpty()) {
+            throw error(MISSING_ARGUMENT,
+                    "ctx explain requires a KANGER query");
+        }
+        if (query.charAt(0) != '?') {
+            throw error(INVALID_ARGUMENT_SHAPE,
+                    "ctx explain requires a query beginning with ?");
+        }
+        return CommandInvocation.command(
+                CommandIntent.CTX_EXPLAIN,
+                args("query", query), raw);
+    }
+
+    private CommandInvocation parseContextIsolatedQuery(String raw)
+            throws CommandParseException {
+        return parseContextIsolatedQuery(raw, false);
+    }
+
+    private CommandInvocation parseContextIsolatedQuery(String raw, boolean explicit)
+            throws CommandParseException {
+        int locatorIndex = explicit ? 2 : 1;
+        List<Token> prefix = tokenize(raw, locatorIndex + 1, false);
+        if (prefix.size() <= locatorIndex) {
+            throw error(MISSING_ARGUMENT,
+                    "ctx diagnostic query requires a Context locator");
+        }
+        String query = tailAfter(raw, prefix.get(locatorIndex).end);
+        if (query.isEmpty()) {
+            throw error(MISSING_ARGUMENT,
+                    "ctx diagnostic query requires a KANGER query");
+        }
+        if (query.charAt(0) != '?' && !(explicit && "!+-".indexOf(query.charAt(0)) >= 0)) {
+            throw error(INVALID_ARGUMENT_SHAPE,
+                    "ctx ask requires a query or an assertion/addition/deletion command");
+        }
+        Map<String, Object> arguments =
+                new LinkedHashMap<String, Object>();
+        arguments.put("locator", prefix.get(locatorIndex).value);
+        arguments.put("query", query);
+        return CommandInvocation.command(
+                CommandIntent.CTX_ISOLATED_QUERY,
+                arguments,
+                raw);
     }
 
     private CommandInvocation parseStatus(String raw, List<Token> tokens)

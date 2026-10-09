@@ -28,6 +28,7 @@ public final class CommandRegistry {
 
     public enum Family {
         BASE,
+        CONTEXT,
         DELETE,
         ERASE,
         FUNCTION,
@@ -41,6 +42,7 @@ public final class CommandRegistry {
         STATUS,
         STORAGE,
         TIMEZONE,
+        OPTIONS,
         TRANSACTION,
         VALUES,
         WHEN
@@ -60,8 +62,22 @@ public final class CommandRegistry {
         ACCEPT,
         START,
         COMMIT,
+        CONNECT,
+        DISCONNECT,
+        EXPLAIN,
+        ASK,
+        QUERY,
         ROLLBACK,
         SQUASH,
+        SWITCH,
+        VERSION,
+        RULES,
+        PUBLISH,
+        FORK,
+        OPINIONS,
+        VALUES,
+        SOLVES,
+        WHEN,
         USE,
         CLOSE,
         DROP,
@@ -146,6 +162,7 @@ public final class CommandRegistry {
 
     static {
         family(Family.BASE, "base");
+        family(Family.CONTEXT, "ctx");
         family(Family.DELETE, "delete");
         family(Family.ERASE, "erase");
         family(Family.FUNCTION, "function", "functions");
@@ -159,6 +176,7 @@ public final class CommandRegistry {
         family(Family.STATUS, "status");
         family(Family.STORAGE, "storage");
         family(Family.TIMEZONE, "timezone");
+        family(Family.OPTIONS, "options");
         family(Family.TRANSACTION, "transaction");
         family(Family.VALUES, "values");
         family(Family.WHEN, "when");
@@ -191,6 +209,22 @@ public final class CommandRegistry {
         keyword(Family.STORAGE, Keyword.CLOSE, "close");
         keyword(Family.STORAGE, Keyword.DROP, "drop");
         keyword(Family.STORAGE, Keyword.REINDEX, "reindex");
+
+        keyword(Family.CONTEXT, Keyword.CONNECT, "connect");
+        keyword(Family.CONTEXT, Keyword.CLOSE, "close");
+        keyword(Family.CONTEXT, Keyword.DISCONNECT, "disconnect");
+        keyword(Family.CONTEXT, Keyword.EXPLAIN, "explain");
+        keyword(Family.CONTEXT, Keyword.ASK, "ask");
+        keyword(Family.CONTEXT, Keyword.OPINIONS, "opinions");
+        keyword(Family.CONTEXT, Keyword.VALUES, "values");
+        keyword(Family.CONTEXT, Keyword.SOLVES, "solves");
+        keyword(Family.CONTEXT, Keyword.WHEN, "when");
+        keyword(Family.CONTEXT, Keyword.SWITCH, "switch");
+        keyword(Family.CONTEXT, Keyword.VERSION, "version", "v");
+        keyword(Family.CONTEXT, Keyword.RULES, "rules");
+        keyword(Family.CONTEXT, Keyword.PUBLISH, "publish");
+        keyword(Family.CONTEXT, Keyword.FORK, "fork");
+        keyword(Family.CONTEXT, Keyword.QUERY, "query");
 
         keyword(Family.STATUS, Keyword.CORE, "core");
         keyword(Family.STATUS, Keyword.OBJECTS, "objects");
@@ -261,9 +295,9 @@ public final class CommandRegistry {
         define(CommandIntent.TX_STATUS, "transaction", "TRANSACTION", "Show current transaction state.", noArgs(), n++);
         define(CommandIntent.TX_START, "transaction start", "TRANSACTION", "Start a child transaction.",
                 noArgs(), aliases("start"), n++);
-        define(CommandIntent.TX_COMMIT, "transaction commit", "TRANSACTION",
+        define(CommandIntent.TX_COMMIT, "transaction commit [description]", "TRANSACTION",
                 "Commit the current transaction or qualified root checkpoint.",
-                noArgs(), aliases("commit"), n++);
+                args("description", "Optional revision description."), aliases("commit"), n++);
         define(CommandIntent.TX_ROLLBACK, "transaction rollback", "TRANSACTION", "Rollback the current child transaction.",
                 noArgs(), aliases("rollback"), n++);
         define(CommandIntent.TX_SQUASH, "transaction squash", "TRANSACTION",
@@ -290,6 +324,48 @@ public final class CommandRegistry {
         define(CommandIntent.STORAGE_REINDEX, "storage reindex <name>", "STORAGE", "Reindex one explicitly named storage.",
                 args("name", "Storage logical name."), aliases("reindex <name>"), n++);
 
+        define(CommandIntent.CTX_OPINIONS, "ctx opinions [<locator>]", "CONTEXT",
+                "Collect local-only opinions of the full last query in live X and exact direct pins.",
+                args("locator", "Optional source Context."), n++);
+        define(CommandIntent.CTX_VALUES, "ctx values [<locator>]", "CONTEXT",
+                "Show saved source Values without executing a query.", args("locator", "Optional source Context."), n++);
+        define(CommandIntent.CTX_SOLVES, "ctx solves [<locator>]", "CONTEXT",
+                "Show saved source Solutions and proof trees without executing a query.", args("locator", "Optional source Context."), n++);
+        define(CommandIntent.CTX_WHEN, "ctx when [<locator>]", "CONTEXT",
+                "Show saved locally qualified source Hypotheses without accepting them.", args("locator", "Optional source Context."), n++);
+        define(CommandIntent.CTX_STATUS, "ctx", "CONTEXT",
+                "Show direct exact-revision Context federation connections.",
+                noArgs(), n++);
+        define(CommandIntent.CTX_RULES, "ctx rules [<locator>] [all|produced|<id>|tree <id>|comment <id>]", "CONTEXT",
+                "Inspect local and exact-pinned direct Context rules. Rule IDs belong to the displayed Context; transaction levels remain local rule level diagnostics.",
+                args("locator", "Optional current or direct connected Context locator."), n++);
+        define(CommandIntent.CTX_FORK, "ctx fork <locator>", "CONTEXT",
+                "Fork the selected published revision into a new independent Context; requires U0 and saved connections.",
+                args("locator", "New independent Context name."), n++);
+        define(CommandIntent.CTX_PUBLISH, "ctx publish [description]", "CONTEXT",
+                "Publish local content and explicit connections as one revision. Collapsing open transactions requires confirmation.", args("description", "Optional publication description."), n++);
+        define(CommandIntent.CTX_CONNECT, "ctx connect <locator> [trust <group>]", "CONTEXT",
+                "Qualify and connect one exact revision, optionally joining a local trust commune.",
+                args("locator", "Context locator or DUMB2 logical storage name.",
+                        "trustGroup", "Optional local symbolic commune name."), n++);
+        define(CommandIntent.CTX_DISCONNECT, "ctx disconnect <locator>", "CONTEXT",
+                "Disconnect one direct Context by locator (ctx close is an alias).",
+                args("locator", "Context locator or DUMB2 logical storage name."), n++);
+        define(CommandIntent.CTX_SWITCH, "ctx switch <locator> <RevisionId>", "CONTEXT",
+                "Deliberately requalify and repin one direct Context to an exact revision.",
+                args("locator", "Context locator or DUMB2 logical storage name.",
+                        "RevisionId", "Exact target revision."), n++);
+        define(CommandIntent.CTX_VERSION, "ctx version [<locator>]", "CONTEXT",
+                "Show immutable revision history of the current or any named Context, without opening or connecting it.",
+                args("locator", "Optional Context locator; a named Context can be inspected while storage is closed."), n++);
+        define(CommandIntent.CTX_EXPLAIN, "ctx explain <query...>", "CONTEXT",
+                "Execute the normal query path and show its semantic federation trace.",
+                args("query", "KANGER query beginning with ?."), n++);
+        define(CommandIntent.CTX_ISOLATED_QUERY,
+                "ctx ask <locator> <query-or-command...>", "CONTEXT",
+                "Query one Context locally, or apply !/+/- commands to its private connection layer owned by X. The short query form ctx <locator> <query...> remains available for non-command names.",
+                args("locator", "Current Context or direct connected Context locator.",
+                        "query", "Query ?..., or private connection initialization !..., +..., -...."), n++);
         define(CommandIntent.STATUS,
                 "status [core [objects|transaction|levels]|storage|session|runtime]",
                 "STATUS",
@@ -297,7 +373,11 @@ public final class CommandRegistry {
                 args("section", "Optional status section.",
                         "subsection", "Optional core subsection."), n++);
 
-        define(CommandIntent.TIMEZONE, "timezone [<zoneId>]", "SYSTEM / SESSION",
+        define(CommandIntent.OPTIONS, "options [help|debug|values|log|timezone|optimize [<optimization>]] [<value>]", "SYSTEM / SESSION",
+                "Show or change session options; optimize yes/no switches all acceleration paths.",
+                args("option", "Setting name, or help. Individual switches are grouped under optimize.",
+                        "value", "yes/no for switches; IANA zone id for timezone."), n++);
+        define(CommandIntent.TIMEZONE, "options timezone [<zoneId>]", "SYSTEM / SESSION",
                 "Show or set the time zone of the current session.",
                 args("zoneId", "Optional IANA time-zone id."), n++);
         define(CommandIntent.ERASE, "erase", "SYSTEM / SESSION", "Clear the current workspace using qualified runtime semantics.",

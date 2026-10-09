@@ -29,6 +29,7 @@ public final class KangerIsolatedVisualTestRunner {
     }
 
     public static boolean test() throws Exception {
+        testWithoutLegacyBackend();
         String suffix = Long.toString(System.nanoTime());
         String userName = "autotest-isolated-visual-" + suffix;
         String storageName = "isolated_visual_live_" + suffix;
@@ -57,10 +58,22 @@ public final class KangerIsolatedVisualTestRunner {
         assertWorkingContext(user, expectedUser, expectedMind,
                 expectedStorage, expectedLevel, "offline");
 
+        require(IsolatedKangerTestRuntime.run("s5a_05", false),
+                "offline storage-id reopen test failed");
+        require(IsolatedKangerTestRuntime.run("c3_05", false),
+                "offline UDF reopen test failed");
+        assertWorkingContext(user, expectedUser, expectedMind,
+                expectedStorage, expectedLevel, "offline storage tests");
+
         require(IsolatedKangerTestRuntime.run("01_01", true),
                 "isolated database visual test failed");
         assertWorkingContext(user, expectedUser, expectedMind,
                 expectedStorage, expectedLevel, "database");
+
+        require(IsolatedKangerTestRuntime.run("09", "org.kanger.storage.dumb2.DB"),
+                "isolated SMART regression failed");
+        assertWorkingContext(user, expectedUser, expectedMind,
+                expectedStorage, expectedLevel, "SMART");
 
         require(Boolean.TRUE.equals(working.query("?visualtesttransaction;")),
                 "working transaction content changed during visual tests");
@@ -73,6 +86,27 @@ public final class KangerIsolatedVisualTestRunner {
 
         System.out.println("Isolated visual test context qualification passed");
         return true;
+    }
+
+    private static void testWithoutLegacyBackend() throws Exception {
+        java.util.List<java.net.URL> urls = new java.util.ArrayList<>();
+        for (String entry : System.getProperty("java.class.path").split(java.io.File.pathSeparator))
+            urls.add(new java.io.File(entry).toURI().toURL());
+        try (java.net.URLClassLoader loader = new java.net.URLClassLoader(
+                urls.toArray(new java.net.URL[urls.size()]), ClassLoader.getSystemClassLoader().getParent()) {
+            @Override protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+                if ("org.kanger.storage.DB".equals(name)) throw new ClassNotFoundException(name);
+                return super.loadClass(name, resolve);
+            }
+        }) {
+            Class<?> runtime = Class.forName("org.kanger.IsolatedKangerTestRuntime", true, loader);
+            java.lang.reflect.Method run = runtime.getDeclaredMethod("run", String.class, String.class);
+            run.setAccessible(true);
+            require(Boolean.TRUE.equals(run.invoke(null, "s5a_05", null)),
+                    "Offline visual tests required the absent legacy backend");
+            require(Boolean.TRUE.equals(run.invoke(null, "09", "org.kanger.storage.dumb2.DB")),
+                    "SMART visual tests required the absent legacy backend");
+        }
     }
 
     private static void assertWorkingContext(IUser user,

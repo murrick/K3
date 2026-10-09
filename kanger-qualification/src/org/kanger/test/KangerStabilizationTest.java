@@ -157,6 +157,70 @@ public final class KangerStabilizationTest {
         require(((Term) first).equalsTo((Term) reordered), "SET structural equality is inconsistent");
     }
 
+    public void set_s5a_03_dynamic_set_members() throws Exception {
+        resetWorkspace();
+        require(Boolean.TRUE.equals(mind.query("!@x @y @z father(x,z), mother(y,z) -> family([x,y,z]);")),
+                "Dynamic SET rule was not accepted");
+        mind.query("!father(John,Tom);");
+        mind.query("!mother(Mary,Tom);");
+        mind.query("!father(John,Sarah);");
+        mind.query("!mother(Mary,Sarah);");
+        require(Boolean.TRUE.equals(mind.query("?family([John,Mary,Tom]);")), "First family SET was not derived");
+        require(Boolean.TRUE.equals(mind.query("?family([Sarah,Mary,John]);")), "Second family SET was not derived");
+        require(Boolean.TRUE.equals(mind.query("?$s family(s);")), "Dynamic SET values were not returned");
+        require(mind.getValues().size() == 2, "Dynamic SET retained values from a different substitution");
+        require(Boolean.TRUE.equals(mind.query("?$x $y $z family([x,y,z]);")), "SET pattern did not bind variables");
+        require(mind.getValues().size() == 12, "SET pattern lost permutations or mixed different families");
+        for (Map<String,ITerm> row : mind.getValues()) {
+            Set<String> members = new LinkedHashSet<>();
+            for (ITerm value : row.values()) members.add(value.toString());
+            require(members.equals(new LinkedHashSet<>(Arrays.asList("John", "Mary", "Tom")))
+                    || members.equals(new LinkedHashSet<>(Arrays.asList("John", "Mary", "Sarah"))),
+                    "SET pattern produced an unsupported tuple: " + row);
+        }
+        require(Boolean.TRUE.equals(mind.query("?$x family([John,Mary,x]);")), "SET pattern with constants failed");
+        require(rows("x").equals(new LinkedHashSet<>(Arrays.asList("x=Tom", "x=Sarah"))),
+                "SET pattern ignored its fixed members");
+        require(mind.query("?$x family([John,Absent,x]);") == null, "SET pattern invented missing membership");
+        require(mind.getValues().isEmpty(), "Unmatched SET pattern leaked candidate bindings");
+    }
+
+    public void set_s5a_03_detached_hypothesis_identity() throws Exception {
+        resetWorkspace();
+        Mind foreign = new Mind(new org.kanger.User());
+        foreign.getTerms().add("padding");
+        org.kanger.primitives.Hypothesis detached = new org.kanger.primitives.Hypothesis();
+        detached.setAntc(true);
+        detached.setPredicate(foreign.getPredicates().add(foreign.getTerms().add("detached"), 1));
+        detached.getArguments().add(new org.kanger.primitives.Argument(foreign.getTerms().add("value")));
+        ((Mind) mind).getHypothesis().add(detached);
+
+        org.kanger.primitives.Hypothesis expected = new org.kanger.primitives.Hypothesis();
+        expected.setAntc(true);
+        expected.setPredicate(((Mind) mind).getPredicates().add(((Mind) mind).getTerms().add("detached"), 1));
+        expected.getArguments().add(new org.kanger.primitives.Argument(((Mind) mind).getTerms().add("value")));
+        require(((Mind) mind).getHypothesis().contains(expected), "Detached hypothesis lost semantic identity");
+        expected.setAntc(false);
+        require(!((Mind) mind).getHypothesis().contains(expected), "Hypothesis comparison ignored polarity");
+        expected.setAntc(true);
+        expected.getArguments().clear();
+        expected.getArguments().add(new org.kanger.primitives.Argument(((Mind) mind).getTerms().add("other")));
+        require(!((Mind) mind).getHypothesis().contains(expected), "Hypothesis comparison confused different values");
+        foreign.query("!detached(value);");
+        IRule proof = foreign.getAcceptedRule();
+        ((org.kanger.stores.SolutionsStore) mind.getSolutions()).add(proof);
+        org.kanger.units.Domain statement = new org.kanger.units.Domain((Mind) mind);
+        statement.setPredicate((org.kanger.units.Predicate) expected.getPredicate());
+        statement.setAntc(proof.isAntc());
+        statement.getArguments().add(new org.kanger.primitives.Argument(((Mind) mind).getTerms().add("value")));
+        require(((org.kanger.stores.SolutionsStore) mind.getSolutions()).contains(statement),
+                "Detached solution lost semantic identity");
+        statement.getArguments().clear();
+        statement.getArguments().add(new org.kanger.primitives.Argument(((Mind) mind).getTerms().add("other")));
+        require(!((org.kanger.stores.SolutionsStore) mind.getSolutions()).contains(statement),
+                "Solution comparison confused different values");
+    }
+
     public void set_s5a_04_alpha_equivalent_rule_identity() throws Exception {
         resetWorkspace();
 

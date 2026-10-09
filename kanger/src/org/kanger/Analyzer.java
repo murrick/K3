@@ -31,6 +31,7 @@ import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IRule;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.stores.LogStore;
+import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 import org.kanger.units.TValue;
 import org.kanger.units.TVariable;
@@ -111,6 +112,7 @@ public class Analyzer {
     public boolean analyze(Rule rule, boolean logging) throws Exception {
         boolean result = false;
         collisions.clear();
+        mind.clearFrontierDomains();
 
         long start = System.currentTimeMillis();
 
@@ -159,6 +161,35 @@ public class Analyzer {
 
             if (occurs && logging) {
                 log.add(LogMode.ANALYZER, "===========================================");
+            }
+        }
+
+        // Several substitutions can produce the same unordered SET record.
+        // Recover their correlated tuples rather than the record's last solve stamp.
+        if (result && rule != null && rule.isQuery() && rule.getTree().size() == 1
+                && rule.getTree().get(0).size() == 1) {
+            Domain domain = rule.getTree().get(0).get(0);
+            boolean setPattern = false;
+            for (org.kanger.units.Function function : domain.getArguments().getFunctions(mind)) {
+                if (function.getBinding() == org.kanger.enums.FunctionBinding.INFRASTRUCTURE
+                        && "_set".equals(function.getName(mind).getValue())) setPattern = true;
+            }
+            if (setPattern) {
+                List<TVariable> variables = domain.getArguments().getTVariables(mind);
+                for (List<org.kanger.units.TSolve> group : mind.ruleSolvesInternal().values()) {
+                    for (org.kanger.units.TSolve solve : group) {
+                        List<TValue> row = solve.getSolve();
+                        if (row.size() != variables.size() || row.isEmpty()) continue;
+                        Set<TVariable> bound = new HashSet<>();
+                        for (TValue value : row) {
+                            TVariable variable = value.getTVar(mind);
+                            if (variable.getRuleId() == rule.getId()
+                                    && SemanticTermSnapshot.isOrdinaryValue(value.getValue(mind)))
+                                bound.add(variable);
+                        }
+                        if (bound.containsAll(variables)) mind.getValues().add(row);
+                    }
+                }
             }
         }
 
@@ -241,22 +272,10 @@ public class Analyzer {
                         } else if (((Rule) q).getDomain().isQuery(mind) && ((Rule) q).getDomain().getArguments().getCVariables(mind).isEmpty()) {
                             mind.getSolutions().add(p);
                             mind.getValues().add(((Rule) q).getSolves());
-                        } else {
-                            List<TValue> vList = new ArrayList<>();
-                            for (TVariable t : mind.getTVars()) {
-                                if (t.isQuery(mind)) {
-                                    if (!t.isEmpty()) {
-                                        vList.add(t.getCurrent());
-                                    } else {
-                                        vList.clear();
-                                        break;
-                                    }
-                                }
-                            }
-                            if (!vList.isEmpty()) {
-                                mind.getValues().add(vList);
-                            }
+
                         }
+                        // Abstract collisions establish truth without a concrete tuple.
+                        // Do not export current TVars from unrelated dictionary rotations.
 
                         if (logging) {
                             log.add(LogMode.ANALYZER, "Database coincidence: ");
@@ -314,6 +333,74 @@ public class Analyzer {
             }
         }
 
+        List<FrontierDomain> frontier =
+                new ArrayList<FrontierDomain>();
+
+        /*
+         * Historical stored-query orphans remain the first frontier source.
+         * They include ground ordinary queries such as ?male(Tom).
+         */
+        for (Rule unresolved : orfans) {
+            addFrontier(
+                    unresolved.getDomain(),
+                    frontier);
+        }
+
+        /*
+         * A query Domain containing an unbound TVariable may remain part of a
+         * non-stored query Rule. Such a Rule is intentionally skipped by the
+         * historical checkDatabase loop above, even though the Domain itself
+         * is unresolved and externally answerable. Expose that Domain without
+         * changing Analyzer truth/hypothesis semantics.
+         */
+        for (IRule candidate : mind.getRules()) {
+            Rule query = (Rule) candidate;
+            if (query.isDeleted(mind)
+                    || query.isStored()
+                    || !query.isQuery()) {
+                continue;
+            }
+            for (List<Domain> branch : query.getTree()) {
+                for (Domain domain : branch) {
+                    if (domain.isQuery(mind)
+                            && !domain.isUsed(mind)
+                            && !domain.isCalculated(mind)) {
+                        addFrontier(
+                                domain,
+                                frontier);
+                    }
+                }
+            }
+        }
+
+        /*
+         * Linker may materialize a single demanded premise as a generated
+         * stored succedent Rule. That Rule intentionally no longer carries the
+         * historical query flag, but its operation-local mindId identifies it
+         * as demand produced by this saturation rather than inherited durable
+         * knowledge.
+         */
+        for (IRule candidate : mind.getRules()) {
+            Rule generated = (Rule) candidate;
+            if (generated.isDeleted(mind)
+                    || !generated.isStored()
+                    || !generated.isGenerated()
+                    || generated.getMindId() != mind.getId()) {
+                continue;
+            }
+            Domain domain = generated.getDomain();
+            if (!domain.isAntc()
+                    && domain.isComplete()
+                    && !domain.isUsed(mind)
+                    && !domain.isCalculated(mind)) {
+                addFrontier(
+                        domain,
+                        frontier);
+            }
+        }
+
+        mind.replaceFrontierDomains(frontier);
+
         // Контроль закрытия всех веток запроса
         if (!orfans.isEmpty() && !calculated) {
             result = false;
@@ -325,5 +412,34 @@ public class Analyzer {
             }
         }
         return result;
+    }
+
+    private void addFrontier(
+            Domain domain,
+            List<FrontierDomain> frontier) throws Exception {
+        if (!isExternalizable(domain)) {
+            return;
+        }
+        FrontierDomain descriptor =
+                FrontierDomain.capture(domain, mind);
+        if (descriptor == null) {
+            return;
+        }
+        for (FrontierDomain existing : frontier) {
+            if (existing.semanticallyEquivalent(
+                    descriptor)) {
+                return;
+            }
+        }
+        frontier.add(descriptor);
+    }
+
+    private boolean isExternalizable(Domain domain)
+            throws Exception {
+        if (domain.getPredicate(mind).isSystem(mind)) {
+            return false;
+        }
+        return !"rule(1)".equals(
+                domain.getPredicate(mind).toString(mind));
     }
 }

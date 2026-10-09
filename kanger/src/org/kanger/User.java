@@ -93,6 +93,10 @@ import java.util.*;
  * @see IUser
  */
 public class User implements IUser {
+    private final OptimizationOptions.Session optimizationOptions = new OptimizationOptions.Session();
+
+    OptimizationOptions.Session optimizationOptions() { return optimizationOptions; }
+
 
     private long id = -1L;
     private final Object locker = new Object();
@@ -102,6 +106,9 @@ public class User implements IUser {
     private Map<String, IBase> storage = new HashMap<>();
     private Map<String, Long> counters = new HashMap<>();
     private long lastId = 0L;
+    private final ContextOpinionSession contextOpinionSession = new ContextOpinionSession();
+    public ContextOpinionSession getContextOpinionSession() { return contextOpinionSession; }
+
     private IMind currentMind = null;
     private volatile String timeZone = java.time.ZoneId.systemDefault().getId();
 
@@ -316,6 +323,7 @@ public class User implements IUser {
      */
     @Override
     public IMind close(IMind mind) throws Exception {
+        contextOpinionSession.invalidate();
         if (isClosed()) {
             return mind;
         }
@@ -433,6 +441,10 @@ public class User implements IUser {
 
         if (mind == null) {
             mind = new Mind(this);
+        }
+
+        if (data instanceof org.kanger.interfaces.internal.IRevisionPublication) {
+            ((org.kanger.interfaces.internal.IRevisionPublication)data).validateStorageOpen(mind, name);
         }
 
         if (data.isClosed()) {
@@ -601,6 +613,19 @@ public class User implements IUser {
             current = parent;
             --level;
         }
+    }
+
+    /** Reattach the newly accepted immutable generation; old U-levels are no longer current. */
+    public Mind reloadAfterContextPublication(IMind expected) throws Exception {
+        if (getCurrentMind() != expected) throw new IllegalStateException("Publication owner changed");
+        String name = data.getStorageName();
+        data.close();
+        storage.clear();
+        Mind root = new Mind(this);
+        setCurrentMind(root);
+        root = openClosedStorage(root, name);
+        setCurrentMind(root);
+        return root;
     }
 
     private Mind openClosedStorage(Mind mind, String name) throws Exception {
@@ -864,6 +889,7 @@ public class User implements IUser {
 
     @Override
     public void setCurrentMind(IMind currentMind) {
+        if (this.currentMind != currentMind) contextOpinionSession.invalidate();
         this.currentMind = currentMind;
     }
 

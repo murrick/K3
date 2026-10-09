@@ -45,7 +45,9 @@ final class NestedCurrentLevelSourceReplacement {
         }
         String boundaryRejection = DeclarativeSourceBoundary.rejection(exactSource);
         if (boundaryRejection != null) {
-            return new Outcome(false, boundaryRejection, current);
+            return new Outcome(
+                    false, boundaryRejection, current,
+                    java.util.Collections.<ContextQualification.CollisionWitness>emptyList());
         }
 
         Mind parent = (Mind) current.getNext();
@@ -60,15 +62,20 @@ final class NestedCurrentLevelSourceReplacement {
                     : candidate.compile(exactSource == null ? "" : exactSource);
             String description = analyzerDescription(candidate);
             if (!Boolean.TRUE.equals(compiled)) {
+                List<ContextQualification.CollisionWitness> collisions =
+                        compileCollisions(candidate);
                 parent.release(candidate);
                 candidateReservationOpen = false;
-                return new Outcome(false, description, current);
+                return new Outcome(
+                        false, description, current, collisions);
             }
 
             parent.release(current);
             user.setCurrentMind(candidate);
             candidateReservationOpen = false;
-            return new Outcome(true, description, candidate);
+            return new Outcome(
+                    true, description, candidate,
+                    java.util.Collections.<ContextQualification.CollisionWitness>emptyList());
         } catch (Throwable failure) {
             if (candidateReservationOpen) {
                 try {
@@ -84,6 +91,15 @@ final class NestedCurrentLevelSourceReplacement {
         }
     }
 
+    private static List<ContextQualification.CollisionWitness>
+            compileCollisions(Mind mind) {
+        ContextQualification qualification =
+                mind.getLastCompileQualification();
+        return qualification == null
+                ? java.util.Collections.<ContextQualification.CollisionWitness>emptyList()
+                : qualification.getCollisions();
+    }
+
     private static String analyzerDescription(Mind mind) throws Exception {
         if (mind.getCurrentLogRecord(LogMode.ANALYZER) == null) {
             return "";
@@ -96,11 +112,19 @@ final class NestedCurrentLevelSourceReplacement {
         private final boolean accepted;
         private final String description;
         private final Mind mind;
+        private final List<ContextQualification.CollisionWitness> collisions;
 
-        private Outcome(boolean accepted, String description, Mind mind) {
+        private Outcome(
+                boolean accepted,
+                String description,
+                Mind mind,
+                List<ContextQualification.CollisionWitness> collisions) {
             this.accepted = accepted;
             this.description = description == null ? "" : description;
             this.mind = mind;
+            this.collisions = java.util.Collections.unmodifiableList(
+                    new ArrayList<ContextQualification.CollisionWitness>(
+                            collisions));
         }
 
         boolean isAccepted() {
@@ -113,6 +137,10 @@ final class NestedCurrentLevelSourceReplacement {
 
         Mind getMind() {
             return mind;
+        }
+
+        List<ContextQualification.CollisionWitness> getCollisions() {
+            return collisions;
         }
     }
 

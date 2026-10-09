@@ -209,14 +209,14 @@ log "qualifying canonical reactor build"
 
 shopt -s nullglob
 udf_modules=("${SERVER_RUNTIME_MODULES}"/kanger-udf-*.jar)
-storage_modules=("${SERVER_RUNTIME_MODULES}"/kanger-data-dumb-*.jar)
+storage_modules=("${SERVER_RUNTIME_MODULES}"/kanger-data-dumb2-*.jar)
 leaked_udf=("${SERVER_RUNTIME_LIB}"/kanger-udf-*.jar)
-leaked_storage=("${SERVER_RUNTIME_LIB}"/kanger-data-dumb-*.jar)
+leaked_storage=("${SERVER_RUNTIME_LIB}"/kanger-data-dumb2-*.jar)
 shopt -u nullglob
 [[ "${#udf_modules[@]}" -eq 1 ]] || fail "Expected exactly one UDF runtime module"
-[[ "${#storage_modules[@]}" -eq 1 ]] || fail "Expected exactly one DUMB storage runtime module"
+[[ "${#storage_modules[@]}" -eq 1 ]] || fail "Expected exactly one DUMB2 storage runtime module"
 [[ "${#leaked_udf[@]}" -eq 0 ]] || fail "UDF provider leaked into runtime/lib"
-[[ "${#leaked_storage[@]}" -eq 0 ]] || fail "DUMB storage provider leaked into runtime/lib"
+[[ "${#leaked_storage[@]}" -eq 0 ]] || fail "DUMB2 storage provider leaked into runtime/lib"
 
 jar tf "${SERVER_THIN_JAR}" | grep -qx 'org/kanger/build.properties' \
   || fail "Thin Server artifact does not contain org/kanger/build.properties"

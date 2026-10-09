@@ -82,7 +82,7 @@ copy_one "${RUNTIME_LIB}" 'kanger-core-*.jar' 'kanger-core.jar'
 copy_one "${RUNTIME_LIB}" 'kanger-bootstrap-*.jar' 'kanger-bootstrap.jar'
 copy_one "${RUNTIME_LIB}" 'jline-*.jar' 'jline.jar'
 copy_one "${RUNTIME_MODULES}" 'kanger-udf-*.jar' 'kanger-udf.jar'
-copy_one "${RUNTIME_MODULES}" 'kanger-data-dumb-*.jar' 'kanger-data-dumb.jar'
+copy_one "${RUNTIME_MODULES}" 'kanger-data-dumb2-*.jar' 'kanger-data-dumb2.jar'
 
 examples=(
   BasicQuery.java
@@ -163,6 +163,8 @@ required_api=(
   'org/kanger/ValuesOrder.html'
   'org/kanger/interfaces/IUser.html'
   'org/kanger/interfaces/IMind.html'
+  'org/kanger/interfaces/IContextResults.html'
+  'org/kanger/interfaces/IContextResults.Opinion.html'
   'org/kanger/interfaces/ITerm.html'
   'org/kanger/enums/ArgumentType.html'
   'org/kanger/enums/DataType.html'

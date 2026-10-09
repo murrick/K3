@@ -34,6 +34,8 @@ import org.kanger.enums.*;
 import org.kanger.factory.*;
 import org.kanger.exception.TransactionSettlementException;
 import org.kanger.interfaces.*;
+import org.kanger.interfaces.internal.IContextFederation;
+import org.kanger.interfaces.internal.IData;
 import org.kanger.interfaces.internal.IUnit;
 import org.kanger.primitives.ArgumentsList;
 import org.kanger.primitives.Hypothesis;
@@ -162,19 +164,44 @@ public class Mind implements IMind {
     private Compiller compiler = null;                                   // Компилятор
     private Linker linker = null;                                         // Линкер
     private LinkerStatistics lastLinkerStatistics = new LinkerStatistics();
+    private ContextQualification lastCompileQualification = null;
 
     private boolean changed = false;
     private Boolean queryResult = null;
     private String querySource = "";
+    private final List<FrontierDomain> frontierDomains = new ArrayList<>();
+    private CausalFrontierCapture causalFrontierCapture;
     private QueryPass queryPass = QueryPass.SILENCE;
+    private List<IContextFederation.ExplainPass> activeExplainPasses;
+    private final List<IContextFederation.FrontierObservation> queryConflicts = new ArrayList<>();
     private User user = null;
     private String compliedLine = "";
     //
+    private boolean otherOpinionsPossible;
+    @Override public org.kanger.interfaces.IContextResults.Revision forkContext(String locator) throws Exception {
+        if (!(user.getData() instanceof IContextFederation))
+            throw new org.kanger.exception.CommandErrorException("Context fork is unavailable");
+        return ((IContextFederation) user.getData()).forkContext(this, locator);
+    }
+    @Override public boolean hasOtherContextOpinions() { return otherOpinionsPossible; }
+    @Override public Map<String, org.kanger.interfaces.IContextResults.Opinion> collectContextOpinions(String locator) throws Exception {
+        return user.getContextOpinionSession().collect(this, locator);
+    }
+    @Override public Map<String, org.kanger.interfaces.IContextResults.Opinion> getContextOpinions(String locator) throws Exception {
+        return user.getContextOpinionSession().saved(this, locator);
+    }
+
     private boolean logging = true;
     private int debugLevel = Enums.DEBUG_LEVEL_DEBUG | (Enums.DEBUG_OPTION_VALUES | Enums.DEBUG_OPTION_STATUS);
     private int floodControlLimit = FLOOD_CONTROL_LIMIT;
     private Rule acceptedRule = null;
     private int transactionCounter = 0;
+    private Object connectionCheckpoint;
+    private String operationDescription;
+    String proposedDescription;
+    long descriptionOrder;
+    private static final java.util.concurrent.atomic.AtomicLong DESCRIPTION_ORDER =
+            new java.util.concurrent.atomic.AtomicLong();
 
     /**
      * Experimental query policy that allows hypotheses containing
@@ -192,17 +219,105 @@ public class Mind implements IMind {
     }
 
     public Mind(IMind root) throws Exception {
+        this(root, false);
+    }
+
+    /**
+     * Creates a technical child whose canonical Term/Predicate additions are
+     * confined to child overlays instead of the historically shared parent
+     * factories.
+     *
+     * <p>This is the operation boundary used by federation: foreign query
+     * constants, projected values and ephemeral evidence may participate in
+     * ordinary compiler/linker/analyzer semantics, but they must disappear
+     * when the child is released and must never reach a read-only Context
+     * snapshot root.</p>
+     */
+    public static Mind ephemeralChild(IMind root) throws Exception {
+        return new Mind(root, true);
+    }
+
+    /** Writable private overlay; settlement never reaches its immutable snapshot parent. */
+    public static Mind contextConnectionLayer(IMind root) throws Exception {
+        Mind layer = new Mind(root, true);
+        layer.connectionLayer = true;
+        return layer;
+    }
+
+    private final Map<String, List<IContextFederation.ProofCause>> contextProofs = new LinkedHashMap<>();
+    private final Map<String,List<IContextFederation.ProofCause>> contextRuleOrigins = new LinkedHashMap<>();
+    private String communeName;
+    private List<IContextFederation.Revision> communeMembers = Collections.emptyList();
+
+    public void configureCommuneProvenance(String name, List<IContextFederation.Revision> members) {
+        communeName = name;
+        communeMembers = Collections.unmodifiableList(new ArrayList<>(members));
+    }
+    public String getCommuneName() { return communeName; }
+    public List<IContextFederation.Revision> getCommuneMembers() { return communeMembers; }
+    public void addContextRuleOrigin(String origin, IContextFederation.ProofCause proof) {
+        contextRuleOrigins.computeIfAbsent(origin, ignored -> new ArrayList<>()).add(proof);
+    }
+    public List<IContextFederation.ProofCause> getContextRuleOrigins(String origin) {
+        List<IContextFederation.ProofCause> proofs = contextRuleOrigins.get(origin);
+        return proofs == null ? Collections.emptyList() : Collections.unmodifiableList(proofs);
+    }
+
+
+    public boolean isContextConnectionLayer() { return connectionLayer; }
+
+    public void clearContextProofs() { contextProofs.clear(); }
+
+    public List<IContextFederation.ProofCause> getContextProofs(String fact) {
+        List<IContextFederation.ProofCause> proofs = contextProofs.get(fact);
+        return proofs == null ? Collections.<IContextFederation.ProofCause>emptyList() : proofs;
+    }
+
+    public void addContextProofs(String fact, List<IContextFederation.ProofCause> proofs) {
+        if (fact == null || proofs == null || proofs.isEmpty()) return;
+        List<IContextFederation.ProofCause> merged = new ArrayList<>(getContextProofs(fact));
+        for (IContextFederation.ProofCause proof : proofs) if (!merged.contains(proof)) merged.add(proof);
+        contextProofs.put(fact, Collections.unmodifiableList(merged));
+    }
+
+    private void copyContextProofs(Mind child) {
+        contextProofs.clear(); contextProofs.putAll(child.contextProofs);
+    }
+
+    private boolean connectionLayer;
+    private boolean commandNoOp;
+
+    /** Native authoring intent was valid but selected no change. */
+    public boolean wasLastCommandNoOp() { return commandNoOp; }
+
+    private Mind(IMind root,
+                 boolean isolateCanonicalFactories) throws Exception {
         next = root;
         user = (User) root.getUser();
         id = user.nextId(); //root.getId() + 1;
         init();
 
         Mind parent = (Mind) root;
+        connectionLayer = parent.connectionLayer;
+        contextProofs.putAll(parent.contextProofs);
+        for (Map.Entry<String,List<IContextFederation.ProofCause>> entry : parent.contextRuleOrigins.entrySet())
+            contextRuleOrigins.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+        communeName = parent.communeName;
+        communeMembers = parent.communeMembers;
+        if (!isolateCanonicalFactories && user.getCurrentMind() == root) user.getContextOpinionSession().invalidate();
+        operationDescription = parent.operationDescription;
         parent.incTransactionCounter();
         boolean initialized = false;
         try {
-            terms = (DictionaryFactory) root.getTerms();
-            predicates = (PredicateFactory) root.getPredicates();
+            if (isolateCanonicalFactories) {
+                terms.transaction(
+                        (DictionaryFactory) root.getTerms());
+                predicates.transaction(
+                        (PredicateFactory) root.getPredicates());
+            } else {
+                terms = (DictionaryFactory) root.getTerms();
+                predicates = (PredicateFactory) root.getPredicates();
+            }
 
             library.transaction((LibraryFactory) root.getLibrary());
 
@@ -217,6 +332,7 @@ public class Mind implements IMind {
             debugLevel = root.getDebugLevel();
 
             includeAbstractiveHypothesis = parent.includeAbstractiveHypothesis();
+            causalFrontierCapture = parent.causalFrontierCapture;
             initialized = true;
         } finally {
             if (!initialized) {
@@ -224,6 +340,70 @@ public class Mind implements IMind {
             }
         }
     }
+
+    public void requireWritableContext() throws Exception {
+        if (isStorageUsed() && user.getData().isReadOnly() && !connectionLayer)
+            throw new org.kanger.exception.CommandErrorException("The selected Context revision is read-only");
+    }
+
+    public void proposeRevisionDescription(String description) throws Exception {
+        String text = RevisionDescriptions.validate(description);
+        if (text != null && !text.isEmpty()) {
+            proposedDescription = text;
+            descriptionOrder = DESCRIPTION_ORDER.incrementAndGet();
+        }
+    }
+
+    public String getProposedRevisionDescription() {
+        Mind selected = this;
+        for (Mind m = this; m != null; m = (Mind) m.getNext()) {
+            if (m.descriptionOrder > selected.descriptionOrder) selected = m;
+        }
+        return selected.proposedDescription;
+    }
+
+    public String resolveRevisionDescription(String explicit, String fallback) throws Exception {
+        String text = RevisionDescriptions.validate(explicit);
+        if (text != null && !text.isEmpty()) return text;
+        text = getProposedRevisionDescription();
+        return text == null || text.isEmpty() ? RevisionDescriptions.automatic(fallback) : text;
+    }
+
+    void inheritRevisionDescription(Mind source) {
+        for (Mind m = source; m != null; m = (Mind) m.getNext()) {
+            if (m.descriptionOrder > descriptionOrder) {
+                proposedDescription = m.proposedDescription;
+                descriptionOrder = m.descriptionOrder;
+            }
+        }
+    }
+
+    public static Mind preparePublicationStack(Mind source, Mind detachedRoot) throws Exception {
+        UserTransactionStackSnapshot.requireExplicitSquashTopology(source);
+        Mind current = UserTransactionStackSnapshot.capture(source).replayOverBaseline(detachedRoot);
+        current.inheritRevisionDescription(source);
+        while (current.getNext() != null) {
+            Mind parent = (Mind) current.getNext();
+            if (!parent.commitUserTransaction(current)) {
+                throw new org.kanger.exception.CommandErrorException("Publication candidate commit rejected");
+            }
+            current = parent;
+        }
+        return current;
+    }
+
+    public void requirePublicationQuiescence() {
+        UserTransactionStackSnapshot.requireExplicitSquashTopology(this);
+    }
+
+    public void checkpointUserConnections() throws Exception {
+        if (isStorageUsed() && user.getData() instanceof IContextFederation) {
+            connectionCheckpoint = ((IContextFederation) user.getData()).checkpointConnections();
+        }
+    }
+
+    Object getConnectionCheckpoint() { return connectionCheckpoint; }
+    void setConnectionCheckpoint(Object checkpoint) { connectionCheckpoint = checkpoint; }
 
     private void init() throws Exception {
         terms = new DictionaryFactory(this);                    // Словарь констант
@@ -274,8 +454,21 @@ public class Mind implements IMind {
     }
 
     private boolean commit(IMind m, boolean settleRejectedChild) throws Exception {
+        user.getContextOpinionSession().invalidate();
         synchronized (locker) {
             Mind child = (Mind) m;
+            // The provider must see the proposed child while the parent is still intact.
+            // Publication-time rejection is too late to undo a settled native commit.
+            if (next == null && isStorageUsed()
+                    && !user.getData().isReadOnly()
+                    && user.getData() instanceof org.kanger.interfaces.internal.IRevisionPublication) {
+                try {
+                    ((org.kanger.interfaces.internal.IRevisionPublication) user.getData()).validateCommit(child);
+                } catch (Exception rejection) {
+                    if (settleRejectedChild) release(child);
+                    throw rejection;
+                }
+            }
             boolean sequencedBy = rules.isSequencedBy((RuleFactory) child.getRules());
             boolean[] activeCheckpoints = new boolean[8];
             boolean reservationFinished = false;
@@ -332,10 +525,18 @@ public class Mind implements IMind {
                     factoriesCompleted = true;
                 }
 
+                inheritRevisionDescription(child);
                 boolean rootQuiescent = finishTransactionReservationLocked();
                 reservationFinished = true;
                 try {
+                    if (rootQuiescent && isStorageUsed()
+                            && user.getData() instanceof org.kanger.interfaces.internal.IRevisionPublication) {
+                        ((org.kanger.interfaces.internal.IRevisionPublication) user.getData())
+                                .setNextRevisionDescription(resolveRevisionDescription(null,
+                                        child.operationDescription == null ? "Committed transaction" : child.operationDescription));
+                    }
                     finalizeTransactionRootLocked(rootQuiescent);
+                    if (rootQuiescent) { proposedDescription = null; descriptionOrder = 0; }
                     copyCommitResult(child);
                 } catch (Throwable finalizationFailure) {
                     throw new TransactionSettlementException(
@@ -515,10 +716,14 @@ public class Mind implements IMind {
     }
 
     private void copyCommitResult(Mind child) throws Exception {
+        copyContextProofs(child);
         log.commit(child.getLog());
         queryResult = child.getQueryResult();
         compliedLine = child.getCompliedString();
         lastLinkerStatistics = child.linker.snapshotStatistics();
+        replaceFrontierDomains(child.frontierDomains);
+        queryConflicts.clear(); queryConflicts.addAll(child.queryConflicts);
+        otherOpinionsPossible = child.otherOpinionsPossible;
     }
 
     private void finishFailedTransactionLocked() {
@@ -558,6 +763,7 @@ public class Mind implements IMind {
     public void release(IMind m) throws Exception {
         synchronized (locker) {
 
+            copyContextProofs((Mind) m);
             log.commit((LogStore) m.getLog());
             solves.commit((SolutionsStore) m.getSolutions());
             values.commit((ValuesStore) m.getValues());
@@ -565,7 +771,34 @@ public class Mind implements IMind {
             queryResult = m.getQueryResult();
             compliedLine = m.getCompliedString();
             lastLinkerStatistics = ((Mind) m).linker.snapshotStatistics();
+            replaceFrontierDomains(((Mind) m).frontierDomains);
+            queryConflicts.clear(); queryConflicts.addAll(((Mind) m).queryConflicts);
+            otherOpinionsPossible = ((Mind) m).otherOpinionsPossible;
 
+            Object checkpoint = ((Mind) m).connectionCheckpoint;
+            if (checkpoint != null && user.getData() instanceof IContextFederation) {
+                ((IContextFederation) user.getData()).restoreConnections(checkpoint);
+            }
+            finishTransactionLocked();
+        }
+    }
+
+    /**
+     * Settles an {@link #ephemeralChild(IMind)} without publishing any of its
+     * presentation state.
+     *
+     * <p>The child factories are operation-local overlays and are deliberately
+     * discarded. This is the federation no-result boundary: an unresolved
+     * foreign pass must not erase the caller's existing local query
+     * Values/Solutions/logs while still consuming exactly one transaction
+     * reservation.</p>
+     */
+    public void discardEphemeral(IMind m) throws Exception {
+        if (m == null) {
+            throw new IllegalArgumentException(
+                    "ephemeral Mind must not be null");
+        }
+        synchronized (locker) {
             finishTransactionLocked();
         }
     }
@@ -595,6 +828,7 @@ public class Mind implements IMind {
             excludedDomains.clear();
             calculatedDomains.clear();
             producedDomains.clear();
+            contextProofs.clear();
             domainCauses.clear();
             domainSolves.clear();
             queryValues.clear();
@@ -608,6 +842,8 @@ public class Mind implements IMind {
             acceptedRule = null;
             queryResult = null;
             querySource = "";
+            frontierDomains.clear();
+            queryConflicts.clear();
             queryPass = QueryPass.SILENCE;
             compliedLine = "";
             lastLinkerStatistics = new LinkerStatistics();
@@ -622,9 +858,10 @@ public class Mind implements IMind {
     public void pack() throws Exception {
         library.pack();
 
+        // Deleted rule indexes still need their persistent domains while unloading.
+        rules.pack();
         tVars.pack();
         domains.pack();
-        rules.pack();
         comments.pack();
         fValues.pack();
         functions.pack();
@@ -820,11 +1057,26 @@ public class Mind implements IMind {
     }
 
     public void link(Rule r, boolean logging) throws Exception {
+        if (causalFrontierCapture != null) {
+            causalFrontierCapture.beginLink(this, r);
+        }
         linker.link(r, logging);
     }
 
     public boolean analyze(Rule rule, boolean logging) throws Exception {
-        return analyzer.analyze(rule, logging);
+        boolean result = analyzer.analyze(rule, logging);
+        if (causalFrontierCapture != null) {
+            causalFrontierCapture.afterAnalyze(this, rule, result);
+        }
+        return result;
+    }
+
+    CausalFrontierCapture getCausalFrontierCapture() {
+        return causalFrontierCapture;
+    }
+
+    void setCausalFrontierCapture(CausalFrontierCapture capture) {
+        causalFrontierCapture = capture;
     }
 
     @Override
@@ -847,7 +1099,30 @@ public class Mind implements IMind {
     }
 
     public boolean compile(String src, Object[] ext, boolean logging) throws Exception {
-        src = compilerInput(src);
+        user.getContextOpinionSession().invalidate();
+        requireWritableContext();
+        lastCompileQualification = null;
+        ContextSourceMetadata.Parsed sourceMetadata =
+                ContextSourceMetadata.parse(src);
+        IContextFederation sourceFederation = null;
+        IContextFederation.SourceDependencyPlan sourceDependencyPlan = null;
+
+        if (sourceMetadata.isPresent()) {
+            IData data = user.getData();
+            if (!isStorageUsed()
+                    || !(data instanceof IContextFederation)) {
+                throw new IllegalStateException(
+                        "Context dependency metadata requires an active Context federation storage");
+            }
+            sourceFederation =
+                    (IContextFederation) data;
+            sourceDependencyPlan =
+                    sourceFederation.prepareSourceDependencies(
+                            sourceMetadata.getRequests());
+
+        }
+
+        src = compilerInput(sourceMetadata.getSource());
         this.logging = logging;
 
         getQueryValues().clear();
@@ -889,6 +1164,10 @@ public class Mind implements IMind {
 
             m.link(null, logging);
             Boolean ar = m.analyze(null, logging);
+            lastCompileQualification =
+                    new ContextQualification(
+                            !Boolean.TRUE.equals(ar),
+                            m.analyzer.getCollisionWitnesses());
 
             if (ar) {
                 if (logging) {
@@ -899,6 +1178,11 @@ public class Mind implements IMind {
             } else {
                 if (logging) {
                     m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
+                }
+                if (sourceDependencyPlan != null) {
+                    m.checkpointUserConnections();
+                    sourceFederation.installSourceDependencies(
+                            sourceDependencyPlan);
                 }
                 tx.commit();
                 return true;
@@ -941,6 +1225,7 @@ public class Mind implements IMind {
                 x.setCompliedLine(compliedLine);
                 if (r instanceof Rule && ((Rule) r).isSecond()) {
                     tx.rollback();
+                    commandNoOp = line.charAt(0) == Enums.ANT || line.charAt(0) == Enums.INS;
                     log.add(LogMode.ANALYZER, "WARNING: Rule is duplicated: " + r);
                     r = null;
                 } else if (r instanceof Rule) {
@@ -1187,6 +1472,28 @@ public class Mind implements IMind {
         return querySource;
     }
 
+    /**
+     * Returns the unresolved ordinary query Domains captured by the most
+     * recent Analyzer pass. The returned objects are immutable operation-local
+     * descriptors; an empty list preserves the historical single-Context path.
+     */
+    public List<FrontierDomain> getFrontierDomains() {
+        return Collections.unmodifiableList(
+                new ArrayList<FrontierDomain>(frontierDomains));
+    }
+
+    void clearFrontierDomains() {
+        frontierDomains.clear();
+    }
+
+    void replaceFrontierDomains(
+            Collection<FrontierDomain> frontier) {
+        frontierDomains.clear();
+        if (frontier != null) {
+            frontierDomains.addAll(frontier);
+        }
+    }
+
     @Override
     public Boolean getQueryResult() {
         return queryResult;
@@ -1250,6 +1557,7 @@ public class Mind implements IMind {
 
 
     public Boolean queryInsert(String line, Object[] ext, boolean logging) throws Exception {
+        commandNoOp = false;
         Boolean res = null;
         try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
             Mind m = tx.mind();
@@ -1262,7 +1570,8 @@ public class Mind implements IMind {
             line = invert(line);
 
             setCompliedLine(line);
-            Rule r = (Rule) m.compileLine(line, true, convertExternals(ext));
+            Rule r = (Rule) m.compileLine(
+                    line, true, convertExternals(ext));
             if (r != null && !r.isSecond()) {
 
                 m.link(r, logging);
@@ -1301,6 +1610,7 @@ public class Mind implements IMind {
                 if (logging && r != null && r.isSecond()) {
                     m.getLog().add(LogMode.ANALYZER, "Rule already exists: " + r);
                 }
+                commandNoOp = m.commandNoOp || (r != null && r.isSecond());
                 tx.rollback();
             }
 
@@ -1311,6 +1621,7 @@ public class Mind implements IMind {
     }
 
     public Boolean queryAccept(String line, Object[] ext, boolean logging) throws Exception {
+        commandNoOp = false;
         Boolean res = null;
         try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
             Mind m = tx.mind();
@@ -1359,6 +1670,7 @@ public class Mind implements IMind {
                 if (logging && r != null) {
                     m.getLog().add(LogMode.ANALYZER, "WARNING: Right is duplicated: " + r);
                 }
+                commandNoOp = m.commandNoOp || (r != null && r.isSecond());
                 tx.rollback();
             }
 
@@ -1369,6 +1681,7 @@ public class Mind implements IMind {
     }
 
     public Boolean queryDelete(String line, Object[] ext, boolean logging) throws Exception {
+        commandNoOp = false;
         Boolean res = null;
 
         setQueryPass(QueryPass.DELETE);
@@ -1404,6 +1717,7 @@ public class Mind implements IMind {
                 if (set.isEmpty() && logging) {
                     x.getLog().add(LogMode.ANALYZER, "WARNING: No candidates to delete");
                 }
+                commandNoOp = set.isEmpty();
                 tx.rollback();
                 if (!set.isEmpty()) {
                     removeResult(set, logging);
@@ -1461,20 +1775,82 @@ public class Mind implements IMind {
         return result;
     }
 
+    public ContextQualification getLastCompileQualification() {
+        return lastCompileQualification;
+    }
+
     public Boolean queryCheck(boolean logging) throws Exception {
         return qualifyCurrentContext(logging).isValid();
     }
 
+    private boolean hasQueryFederation() throws Exception {
+        if (!isStorageUsed()) return false;
+        IData data = user.getData();
+        return data instanceof IContextFederation && isStorageUsed()
+                && ((IContextFederation) data).hasConnectedContexts();
+    }
+
+    /** Explicit local publisher boundary; queries never invoke this operation. */
+    public long saveContextConnections() throws Exception {
+        synchronized (locker) {
+            if (next!=null || transactionCounter!=0 || user.getCurrentMind()!=this)
+                throw new org.kanger.exception.CommandErrorException("Context save requires the settled current root; commit or roll back active transactions first");
+            IData data=user.getData();
+            if (!(data instanceof IContextFederation))
+                throw new org.kanger.exception.CommandErrorException("Context federation is unavailable");
+            return ((IContextFederation)data).saveConnections(this);
+        }
+    }
+
+    private boolean isolateQueryRuntime() throws Exception {
+        return isStorageUsed() && user.getData() instanceof org.kanger.interfaces.internal.IRevisionPublication;
+    }
+
+    private Queue<ITerm> queryExternals(Object[] ext) throws Exception {
+        if (ext == null || ext.length == 0 || !isolateQueryRuntime()) return convertExternals(ext);
+        Mind parameters = Mind.ephemeralChild(this);
+        try {
+            return parameters.convertExternals(ext);
+        } finally {
+            discardEphemeral(parameters);
+        }
+    }
+
+    private Queue<ITerm> localQueryExternals(Mind target, Queue<ITerm> externals) throws Exception {
+        if (!isolateQueryRuntime()) return externals;
+        Queue<ITerm> local = new LinkedList<ITerm>();
+        for (ITerm term : externals) local.add(target.getTerms().projectSemantic(SemanticTermSnapshot.capture(term).materialize()));
+        return local;
+    }
+
+    private TechnicalMindTransaction queryTransaction() throws Exception {
+        if (isolateQueryRuntime()) {
+            // Query-only constants must not publish X or erase its working topology.
+            return TechnicalMindTransaction.beginIsolated(this);
+        }
+        return TechnicalMindTransaction.begin(this);
+    }
+
     public Boolean queryCheckFalse(String line, Object[] ext, boolean logging) throws Exception {
+        return queryCheckFalseCanonical(
+                line, queryExternals(ext), logging);
+    }
+
+    private Boolean queryCheckFalseCanonical(
+            String line,
+            Queue<ITerm> externals,
+            boolean logging) throws Exception {
         Boolean res = null;
-        try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
+        try (TechnicalMindTransaction tx = queryTransaction()) {
             Mind m = tx.mind();
+            externals = localQueryExternals(m, externals);
             m.setQueryPass(QueryPass.CHECKFALSE);
             if (logging) {
                 m.getLog().add(LogMode.ANALYZER, "============= FALSE CHECKING ==============");
             }
 
-            Rule r = (Rule) m.compileLine(invert(line), true, convertExternals(ext));
+            Rule r = (Rule) m.compileLine(
+                    invert(line), true, externals);
             setCompliedLine(line);
             if (r != null && !r.isSecond()) {
                 boolean ar = m.analyze(r, logging);
@@ -1541,17 +1917,30 @@ public class Mind implements IMind {
     }
 
     public Boolean queryCheckTrue(String line, Object[] ext, boolean logging) throws Exception {
+        return queryCheckTrueCanonical(
+                line, queryExternals(ext), logging);
+    }
+
+    private Boolean queryCheckTrueCanonical(
+            String line,
+            Queue<ITerm> externals,
+            boolean logging) throws Exception {
         Boolean res = null;
-        try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
+        try (TechnicalMindTransaction tx = queryTransaction()) {
             Mind m = tx.mind();
+            externals = localQueryExternals(m, externals);
             m.setQueryPass(QueryPass.CHECKTRUE);
             if (logging) {
                 m.getLog().add(LogMode.ANALYZER, "============= TRUE CHECKING ===============");
             }
 
-            Rule r = (Rule) m.compileLine(line, true, convertExternals(ext));
+            Rule r = (Rule) m.compileLine(
+                    line, true, externals);
             setCompliedLine(line);
             if (r != null && !r.isSecond()) {
+                if (causalFrontierCapture != null && causalFrontierCapture.enumerates(r, m)) {
+                    m.link(r, logging);
+                }
                 boolean ar = m.analyze(r, logging);
                 if (ar) {
                     if (logging) {
@@ -1612,77 +2001,417 @@ public class Mind implements IMind {
         }
     }
 
-    public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
-        this.logging = logging;
+    /**
+     * Executes a query whose external parameters are already canonical Terms
+     * of this Mind. This avoids value re-parsing at cross-Context runtime
+     * boundaries while preserving the historical FALSE-then-TRUE query
+     * lifecycle.
+     */
+    public Boolean queryCanonical(
+            String line,
+            Queue<ITerm> externals,
+            boolean logging) throws Exception {
+        if (line == null || line.isEmpty()
+                || line.charAt(0) != Enums.SUC) {
+            throw new IllegalArgumentException(
+                    "Canonical query requires a query source");
+        }
 
-        Boolean res = null;
+        this.logging = logging;
+        querySource = line;
+        queryPass = QueryPass.SILENCE;
         acceptedRule = null;
+        frontierDomains.clear();
 
         getQueryValues().clear();
         getLog().clear();
         getSolutions().clear();
         getValues().clear();
         getHypothesis().clear();
+        hypothesis.clear();
+        tempHypothesis.clear();
 
-        long queryStart = System.currentTimeMillis();
+        Queue<ITerm> source =
+                externals == null
+                        ? new LinkedList<ITerm>()
+                        : new LinkedList<ITerm>(externals);
 
-        int key = line.charAt(0);
-        switch (key) {
+        Boolean result = null;
+        if (!DEBUG_DISABLE_FALSE_CHECK) {
+            result = queryCheckFalseCanonical(
+                    line,
+                    new LinkedList<ITerm>(source),
+                    logging);
+        }
+        if (result == null) {
+            result = queryCheckTrueCanonical(
+                    line,
+                    new LinkedList<ITerm>(source),
+                    logging);
+        }
+        queryResult = result;
+        return result;
+    }
 
-            case Enums.INS:
-                res = queryInsert(line, ext, logging);
-                break;
+    /**
+     * Extends an ordinary query through direct Context federation, including
+     * locally proven free-variable queries whose rows are still incomplete, while preserving the historical FALSE-then-TRUE KANGER
+     * lifecycle.
+     *
+     * <p>Local inference has already run before this method is entered. The
+     * federation capability receives the live initiating Mind for unresolved
+     * continuation or complete ordinary atomic enumeration. Each pass executes in an isolated ephemeral
+     * child; resolved Values/Solutions are published back by the capability,
+     * while unresolved passes are discarded without touching the existing
+     * local presentation state.</p>
+     */
+    private Boolean continueFederatedQuery(
+            String line,
+            Object[] ext,
+            boolean logging) throws Exception {
+        if (!isStorageUsed()
+                || line == null
+                || line.length() <= 1
+                || line.charAt(0) != Enums.SUC) {
+            return null;
+        }
 
-            case Enums.ANT:
-                res = queryAccept(line, ext, logging);
-                break;
+        IData data = user.getData();
+        if (!(data instanceof IContextFederation)) {
+            return null;
+        }
 
-            case Enums.DEL:
-                res = queryDelete(line, ext, logging);
-                break;
+        IContextFederation federation =
+                (IContextFederation) data;
+        if (!federation.hasConnectedContexts()) {
+            return null;
+        }
 
-            case Enums.FOO:
-                try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
-                    Mind m = tx.mind();
-                    IOperation o = Parser.implement(line, m, null);
-                    if (o != null) {
-                        IOperation x = m.getLibrary().add(o);
-                        if (x.getId() == o.getId()) {
-                            m.getLog().add(LogMode.ANALYZER, "Function updated: " + x.toString());
-                        } else {
-                            m.getLog().add(LogMode.ANALYZER, "New function implemented: " + x.toString());
-                        }
-                        tx.commit();
-                        res = true;
-                    } else {
-                        m.getLog().add(LogMode.ANALYZER, "Implementation error: " + line);
-                        tx.rollback();
-                        res = false;
-                    }
-                }
-                break;
-            case Enums.SUC:
+        // Local checking may already have logged partial result blocks. The
+        // connected pass owns the final presentation; keep its inference trace.
+        if (logging && log.getRoot() != null) {
+            log.getRoot().removeIf(entry -> entry.getType() == LogMode.SOLVES
+                    || entry.getType() == LogMode.VALUES);
+        }
+        Queue<ITerm> externals = queryExternals(ext);
+        boolean conflict = false;
+
+        if (!DEBUG_DISABLE_FALSE_CHECK) {
+            IContextFederation.QueryResult opposite =
+                    federation.continueFederatedQuery(
+                            this,
+                            invert(line),
+                            new LinkedList<ITerm>(externals),
+                            logging);
+            conflict = federatedConflict(opposite);
+            recordExplainPass(
+                    IContextFederation.ExplainPolarity.FALSE_PASS,
+                    opposite);
+            if (opposite.isResolved()) {
                 hypothesis.clear();
                 tempHypothesis.clear();
-                if (line.length() == 1) {
-                    res = queryCheck(logging);
-                } else {
-                    if (!DEBUG_DISABLE_FALSE_CHECK) {
-                        res = queryCheckFalse(line, ext, logging);
-                    }
-                    if (res == null) {
-                        res = queryCheckTrue(line, ext, logging);
-                    }
-
+                if (logging) {
+                    log.add(
+                            LogMode.ANALYZER,
+                            "Result: FALSE");
+                    logResult(this);
                 }
-                break;
+                return false;
+            }
         }
 
-        if (logging) {
-            log.add(LogMode.TIMING, "* QUERY Processing time \t" + ((System.currentTimeMillis() - queryStart) / 1000.0));
+        IContextFederation.QueryResult positive =
+                federation.continueFederatedQuery(
+                        this,
+                        line,
+                        new LinkedList<ITerm>(externals),
+                        logging);
+        recordExplainPass(
+                IContextFederation.ExplainPolarity.TRUE_PASS,
+                positive);
+        if (positive.isResolved()) {
+            hypothesis.clear();
+            tempHypothesis.clear();
+            if (logging) {
+                log.add(
+                        LogMode.ANALYZER,
+                        "Result: TRUE");
+                logResult(this);
+            }
+            return true;
         }
 
-        return res;
+        if (!conflict && !federatedConflict(positive)) {
+            Boolean whole = federation.continueWholeQuery(this, line,
+                    new LinkedList<ITerm>(externals), logging);
+            if (whole != null) {
+                hypothesis.clear();
+                tempHypothesis.clear();
+                if (logging) {
+                    log.add(LogMode.ANALYZER, "Result: " + (whole ? "TRUE" : "FALSE"));
+                    logResult(this);
+                }
+                return whole;
+            }
+        }
+
+        if (conflict || federatedConflict(positive)) {
+            hypothesis.clear();
+            tempHypothesis.clear();
+        }
+        return null;
+    }
+
+    private static boolean federatedConflict(IContextFederation.QueryResult result) {
+        for (IContextFederation.FrontierObservation observation : result.getObservations()) {
+            if (observation.getTruth() == IContextFederation.FrontierTruth.CONFLICT) return true;
+        }
+        return false;
+    }
+
+    /** Requests semantic trace capture only for an active ctx explain query. */
+    public boolean isExplainQueryActive() {
+        return activeExplainPasses != null;
+    }
+
+    public IContextFederation.ExplainResult explainQuery(
+            String line) throws Exception {
+        if (line == null
+                || line.isEmpty()
+                || line.charAt(0) != Enums.SUC) {
+            throw new IllegalArgumentException(
+                    "Context explain requires a KANGER query beginning with ?");
+        }
+        if (!isStorageUsed()
+                || !(user.getData() instanceof IContextFederation)) {
+            throw new IllegalStateException(
+                    "Context explain requires an active Context federation storage");
+        }
+        if (activeExplainPasses != null) {
+            throw new IllegalStateException(
+                    "Nested Context explain is not supported");
+        }
+
+        IContextFederation federation =
+                (IContextFederation) user.getData();
+        ArrayList<IContextFederation.ExplainPass> passes =
+                new ArrayList<IContextFederation.ExplainPass>();
+        activeExplainPasses = passes;
+        try {
+            Boolean answer =
+                    query(line, null, false);
+            IContextFederation.FrontierTruth finalTruth =
+                    explainTruth(answer, passes);
+            IContextFederation.FrontierTruth localTruth =
+                    passes.isEmpty()
+                            ? finalTruth
+                            : IContextFederation.FrontierTruth.UNKNOWN;
+
+            ArrayList<IContextFederation.ValueRow> values =
+                    new ArrayList<IContextFederation.ValueRow>();
+            for (Map<String, ITerm> row : getValues()) {
+                LinkedHashMap<String, String> bindings =
+                        new LinkedHashMap<String, String>();
+                for (Map.Entry<String, ITerm> binding
+                        : row.entrySet()) {
+                    ITerm value = binding.getValue();
+                    bindings.put(
+                            binding.getKey(),
+                            value == null
+                                    ? ""
+                                    : value.toString());
+                }
+                values.add(
+                        new IContextFederation.ValueRow(
+                                bindings));
+            }
+
+            ArrayList<String> solutions =
+                    new ArrayList<String>();
+            for (IRule solution : getSolutions()) {
+                solutions.add(
+                        ((Rule) solution).toString(this));
+            }
+
+            return new IContextFederation.ExplainResult(
+                    federation.federationSnapshot(),
+                    localTruth,
+                    finalTruth,
+                    passes,
+                    values,
+                    solutions);
+        } finally {
+            activeExplainPasses = null;
+        }
+    }
+
+    private void recordExplainPass(
+            IContextFederation.ExplainPolarity polarity,
+            IContextFederation.QueryResult continuation) throws Exception {
+        java.util.UUID own = ((IContextFederation) user.getData()).federationSnapshot().getSourceContextId();
+        for (IContextFederation.FrontierObservation observation : continuation.getObservations()) {
+            boolean commune = observation.getTrueSources().stream().anyMatch(source -> source.getCommune() != null)
+                    || observation.getFalseSources().stream().anyMatch(source -> source.getCommune() != null)
+                    || observation.getUnknownSources().stream().anyMatch(source -> source.getCommune() != null);
+            // An empty local X alongside a decisive commune is not another opinion.
+            boolean unknown = observation.getUnknownSources().stream()
+                    .anyMatch(source -> !commune || !source.getContextId().equals(own));
+            int kinds = (observation.getTrueSources().isEmpty() ? 0 : 1)
+                    + (observation.getFalseSources().isEmpty() ? 0 : 1) + (unknown ? 1 : 0);
+            if (kinds > 1 || observation.getTruth() == IContextFederation.FrontierTruth.CONFLICT)
+                otherOpinionsPossible = true;
+            if (observation.getTruth() != IContextFederation.FrontierTruth.CONFLICT) continue;
+            boolean seen=false;
+            for (IContextFederation.FrontierObservation old : queryConflicts)
+                if (old.getQuerySource().equals(observation.getQuerySource())) { seen=true; break; }
+            if (!seen) queryConflicts.add(observation);
+        }
+        if (activeExplainPasses != null) {
+            activeExplainPasses.add(
+                    new IContextFederation.ExplainPass(
+                            polarity,
+                            continuation));
+        }
+    }
+
+    /** Detached conflicts observed by the last query; safe rows remain ordinary Values. */
+    public List<IContextFederation.FrontierObservation> getQueryConflicts() {
+        return Collections.unmodifiableList(new ArrayList<>(queryConflicts));
+    }
+
+    private IContextFederation.FrontierTruth explainTruth(
+            Boolean answer,
+            List<IContextFederation.ExplainPass> passes) {
+        if (answer != null) {
+            return answer.booleanValue()
+                    ? IContextFederation.FrontierTruth.TRUE
+                    : IContextFederation.FrontierTruth.FALSE;
+        }
+        for (IContextFederation.ExplainPass pass : passes) {
+            for (IContextFederation.FrontierObservation observation
+                    : pass.getContinuation().getObservations()) {
+                if (observation.getTruth()
+                        == IContextFederation.FrontierTruth.CONFLICT) {
+                    return IContextFederation.FrontierTruth.CONFLICT;
+                }
+            }
+        }
+        return IContextFederation.FrontierTruth.UNKNOWN;
+    }
+
+    public Boolean query(String line, Object[] ext, boolean logging) throws Exception {
+        contextProofs.clear();
+        commandNoOp = false;
+        if (!line.isEmpty() && line.charAt(0)!=Enums.SUC) requireWritableContext();
+        user.getContextOpinionSession().invalidate();
+        Queue<ITerm> opinionParameters = line.charAt(0) == Enums.SUC && isStorageUsed()
+                && user.getData() instanceof IContextFederation ? queryExternals(ext) : new LinkedList<ITerm>();
+        this.logging = logging;
+        String previousDescription = operationDescription;
+        int operation = line.charAt(0);
+        operationDescription = operation == Enums.ANT ? RevisionDescriptions.automatic("Accepted: " + line)
+                : operation == Enums.DEL ? RevisionDescriptions.automatic("Deleted: " + line)
+                : operation == Enums.INS ? RevisionDescriptions.automatic("Restored: " + line) : null;
+        try {
+            Boolean res = null;
+            acceptedRule = null;
+            frontierDomains.clear();
+            queryConflicts.clear();
+            otherOpinionsPossible = false;
+
+            getQueryValues().clear();
+            getLog().clear();
+            getSolutions().clear();
+            getValues().clear();
+            getHypothesis().clear();
+
+            long queryStart = System.currentTimeMillis();
+
+            int key = line.charAt(0);
+            switch (key) {
+
+                case Enums.INS:
+                    res = queryInsert(line, ext, logging);
+                    break;
+
+                case Enums.ANT:
+                    res = queryAccept(line, ext, logging);
+                    break;
+
+                case Enums.DEL:
+                    res = queryDelete(line, ext, logging);
+                    break;
+
+                case Enums.FOO:
+                    try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
+                        Mind m = tx.mind();
+                        IOperation o = Parser.implement(line, m, null);
+                        if (o != null) {
+                            IOperation x = m.getLibrary().add(o);
+                            if (x.getId() == o.getId()) {
+                                m.getLog().add(LogMode.ANALYZER, "Function updated: " + x.toString());
+                            } else {
+                                m.getLog().add(LogMode.ANALYZER, "New function implemented: " + x.toString());
+                            }
+                            tx.commit();
+                            res = true;
+                        } else {
+                            m.getLog().add(LogMode.ANALYZER, "Implementation error: " + line);
+                            tx.rollback();
+                            res = false;
+                        }
+                    }
+                    break;
+                case Enums.SUC:
+                    hypothesis.clear();
+                    tempHypothesis.clear();
+                    if (line.length() == 1) {
+                        res = queryCheck(logging);
+                    } else {
+                        if (!DEBUG_DISABLE_FALSE_CHECK) {
+                            res = queryCheckFalse(line, ext, logging);
+                        }
+                        if (res == null) {
+                            res = queryCheckTrue(line, ext, logging);
+                        }
+                        if (res == null || (!getValues().isEmpty()
+                                && isStorageUsed() && user.getData() instanceof IContextFederation
+                                && ((IContextFederation) user.getData()).hasConnectedContexts())) {
+                            res = continueFederatedQuery(
+                                    line, ext, logging);
+                        }
+
+                    }
+                    break;
+            }
+
+            if (logging && !queryConflicts.isEmpty()) {
+                StringBuilder summary=new StringBuilder("Result: ").append(res==null ? "CONFLICT" : res ? "TRUE" : "FALSE");
+                for (IContextFederation.FrontierObservation conflict : queryConflicts)
+                    summary.append(Enums.LINE_SEPARATOR).append("Conflicting substitution: ").append(conflict.getQuerySource());
+                log.add(LogMode.ANALYZER,summary.toString());
+            } else if (logging && key == Enums.SUC && line.length() > 1 && res == null) {
+                // An unresolved federated pass can leave a diagnostic entry
+                // after the local result. Publish the final query status last.
+                log.add(LogMode.ANALYZER, hypothesis.isEmpty()
+                        ? "Result: WHO KNOWS? No Hypothesis."
+                        : "Result: WHO KNOWS? Hypothesis found");
+            }
+            if (logging) {
+                log.add(LogMode.TIMING, "* QUERY Processing time \t" + ((System.currentTimeMillis() - queryStart) / 1000.0));
+            }
+
+            if (line.charAt(0) == Enums.SUC && line.length() > 1 && isStorageUsed()) {
+                if (res == null && user.getData() instanceof IContextFederation
+                        && ((IContextFederation) user.getData()).hasConnectedContexts())
+                    otherOpinionsPossible = true;
+                user.getContextOpinionSession().remember(this, line, opinionParameters);
+                if (logging && otherOpinionsPossible) log.add(LogMode.COMMON, "Other opinions may be available (ctx opinions)");
+            }
+            return res;
+        } finally {
+            operationDescription = previousDescription;
+        }
     }
 
     private void removeResult(Set<IRule> set, boolean logging) throws Exception {
@@ -1700,6 +2429,39 @@ public class Mind implements IMind {
             }
 
             m.link(null, logging);
+            // Ground provenance in surviving inputs. A cycle of productions
+            // cannot keep itself alive after its last external donor is removed.
+            Set<Long> grounded = new HashSet<>();
+            for (IRule candidate : m.getRules()) {
+                if (!candidate.isDeleted(m) && (!candidate.isGenerated()
+                        || candidate.getCauses().isEmpty())) grounded.add(candidate.getId());
+            }
+            boolean changed;
+            do {
+                changed = false;
+                for (IRule candidate : m.getRules()) {
+                    if (candidate.isDeleted(m) || grounded.contains(candidate.getId())) continue;
+                    for (org.kanger.interfaces.ICause cause : candidate.getCauses()) {
+                        IRule source = cause.getRule(m);
+                        IRule donor = cause.getDonor(m);
+                        if (source != null && donor != null && !source.isDeleted(m)
+                                && !donor.isDeleted(m) && grounded.contains(source.getId())
+                                && grounded.contains(donor.getId())) {
+                            changed |= grounded.add(candidate.getId());
+                            break;
+                        }
+                    }
+                }
+            } while (changed);
+            for (IRule candidate : m.getRules()) {
+                if (candidate.isDeleted(m) || !candidate.isGenerated()) continue;
+                if (!grounded.contains(candidate.getId())) {
+                    ((Rule) candidate).setDeleted(true, m);
+                    set.add(candidate);
+                } else if (!candidate.getCauses().isEmpty()) {
+                    ((RuleFactory) m.getRules()).editInference(candidate).packCauses(m);
+                }
+            }
             Boolean ar = m.analyze(null, logging);
 
             Set<IRule> success = new HashSet<>();
@@ -1813,6 +2575,17 @@ public class Mind implements IMind {
 
     public String getSourceCode() throws Exception {
         String str = "";
+        IData sourceData = user.getData();
+        if (isStorageUsed()
+                && sourceData instanceof IContextFederation) {
+            IContextFederation federation =
+                    (IContextFederation) sourceData;
+            str += ContextSourceMetadata.canonicalHeader(
+                    federation.sourceDependencies(),
+                    Enums.LINE_SEPARATOR);
+            str += Enums.LINE_SEPARATOR;
+        }
+
         SortedMap<Long, IRule> map = new TreeMap<>();
         for (IRule r : getRules()) {
             if (!r.isGenerated()) {
@@ -1973,6 +2746,7 @@ public class Mind implements IMind {
 
     @Override
     public IMind clearWorkspace() throws Exception {
+        user.getContextOpinionSession().invalidate();
         return user.clear(this);
     }
 
@@ -2027,6 +2801,9 @@ public class Mind implements IMind {
      */
     private void finalizeTransactionRootLocked(boolean rootQuiescent) throws Exception {
         if (rootQuiescent) {
+            // A pinned generation may retain unused vocabulary. Opening or
+            // querying it is not permission to collect its persistent records.
+            if (isStorageUsed() && user.getData().isReadOnly()) return;
             pack();
             update();
         }

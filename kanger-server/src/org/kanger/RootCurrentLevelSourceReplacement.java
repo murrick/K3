@@ -14,6 +14,7 @@ import org.kanger.units.Operation;
 import org.kanger.units.Rule;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /** Atomically replaces the source-representable declarative projection of U0. */
@@ -33,7 +34,9 @@ final class RootCurrentLevelSourceReplacement {
         }
         String boundaryRejection = DeclarativeSourceBoundary.rejection(exactSource);
         if (boundaryRejection != null) {
-            return new Outcome(false, boundaryRejection, root);
+            return new Outcome(
+                    false, boundaryRejection, root,
+                    Collections.<ContextQualification.CollisionWitness>emptyList());
         }
 
         try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(root)) {
@@ -45,16 +48,23 @@ final class RootCurrentLevelSourceReplacement {
                     : work.compile(exactSource == null ? "" : exactSource);
             String description = analyzerDescription(work);
             if (!Boolean.TRUE.equals(compiled)) {
+                List<ContextQualification.CollisionWitness> collisions =
+                        compileCollisions(work);
                 tx.rollback();
-                return new Outcome(false, description, root);
+                return new Outcome(
+                        false, description, root, collisions);
             }
 
             boolean committed = tx.commit();
             if (!committed) {
-                return new Outcome(false, description, root);
+                return new Outcome(
+                        false, description, root,
+                        Collections.<ContextQualification.CollisionWitness>emptyList());
             }
             user.setCurrentMind(root);
-            return new Outcome(true, description, root);
+            return new Outcome(
+                    true, description, root,
+                    Collections.<ContextQualification.CollisionWitness>emptyList());
         }
     }
 
@@ -92,6 +102,15 @@ final class RootCurrentLevelSourceReplacement {
         }
     }
 
+    private static List<ContextQualification.CollisionWitness>
+            compileCollisions(Mind mind) {
+        ContextQualification qualification =
+                mind.getLastCompileQualification();
+        return qualification == null
+                ? Collections.<ContextQualification.CollisionWitness>emptyList()
+                : qualification.getCollisions();
+    }
+
     private static String analyzerDescription(Mind mind) throws Exception {
         if (mind.getCurrentLogRecord(LogMode.ANALYZER) == null) {
             return "";
@@ -104,11 +123,19 @@ final class RootCurrentLevelSourceReplacement {
         private final boolean accepted;
         private final String description;
         private final Mind mind;
+        private final List<ContextQualification.CollisionWitness> collisions;
 
-        private Outcome(boolean accepted, String description, Mind mind) {
+        private Outcome(
+                boolean accepted,
+                String description,
+                Mind mind,
+                List<ContextQualification.CollisionWitness> collisions) {
             this.accepted = accepted;
             this.description = description == null ? "" : description;
             this.mind = mind;
+            this.collisions = Collections.unmodifiableList(
+                    new ArrayList<ContextQualification.CollisionWitness>(
+                            collisions));
         }
 
         boolean isAccepted() {
@@ -121,6 +148,10 @@ final class RootCurrentLevelSourceReplacement {
 
         Mind getMind() {
             return mind;
+        }
+
+        List<ContextQualification.CollisionWitness> getCollisions() {
+            return collisions;
         }
     }
 }

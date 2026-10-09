@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Objects;
 
 /** Runtime-only semantic qualification result; never persisted or replayed. */
-final class ContextQualification {
+public final class ContextQualification {
 
-    static final class CollisionWitness {
+    public static final class CollisionWitness {
         private final String left;
         private final String right;
 
@@ -22,11 +22,11 @@ final class ContextQualification {
             this.right = right == null ? "" : right;
         }
 
-        String getLeft() {
+        public String getLeft() {
             return left;
         }
 
-        String getRight() {
+        public String getRight() {
             return right;
         }
 
@@ -57,11 +57,24 @@ final class ContextQualification {
                 new ArrayList<CollisionWitness>(collisions));
     }
 
-    boolean isValid() {
+    /**
+     * Internal detached qualification view for storage/federation gates.
+     * The returned witnesses contain diagnostic statements only; no runtime
+     * rule or local object identity is exposed.
+     */
+    public static ContextQualification inspect(
+            Mind mind, boolean logging) throws Exception {
+        if (mind == null) {
+            throw new NullPointerException("mind");
+        }
+        return mind.qualifyCurrentContext(logging);
+    }
+
+    public boolean isValid() {
         return valid;
     }
 
-    List<CollisionWitness> getCollisions() {
+    public List<CollisionWitness> getCollisions() {
         return collisions;
     }
 }

@@ -82,7 +82,7 @@ public final class CommandFormatter {
             case TX_START:
                 return "transaction start";
             case TX_COMMIT:
-                return "transaction commit";
+                return optionalArgumentCommand("transaction commit", invocation.getArgument("description"));
             case TX_ROLLBACK:
                 return "transaction rollback";
             case TX_SQUASH:
@@ -98,7 +98,11 @@ public final class CommandFormatter {
             case STATUS:
                 return formatStatus(invocation);
             case TIMEZONE:
-                return optionalArgumentCommand("timezone", invocation.getArgument("zoneId"));
+                return optionalArgumentCommand("options timezone", invocation.getArgument("zoneId"));
+            case OPTIONS:
+                String option = optionalArgumentCommand("options", invocation.getArgument("option"));
+                option = optionalArgumentCommand(option, invocation.getArgument("optimization"));
+                return optionalArgumentCommand(option, invocation.getArgument("value"));
 
             case STORAGE_STATUS:
                 return "storage";
@@ -111,6 +115,52 @@ public final class CommandFormatter {
             case STORAGE_REINDEX:
                 return "storage reindex " + argument(invocation.getArgument("name"));
 
+            case CTX_OPINIONS:
+                return optionalArgumentCommand("ctx opinions", invocation.getArgument("locator"));
+            case CTX_VALUES:
+                return optionalArgumentCommand("ctx values", invocation.getArgument("locator"));
+            case CTX_SOLVES:
+                return optionalArgumentCommand("ctx solves", invocation.getArgument("locator"));
+            case CTX_WHEN:
+                return optionalArgumentCommand("ctx when", invocation.getArgument("locator"));
+            case CTX_STATUS:
+                return "ctx";
+            case CTX_FORK:
+                return "ctx fork " + argument(invocation.getArgument("locator"));
+            case CTX_PUBLISH:
+                return optionalArgumentCommand("ctx publish", invocation.getArgument("description"));
+            case CTX_RULES:
+                String rules="ctx rules";
+                if(invocation.getArgument("locator")!=null) rules+=" "+argument(invocation.getArgument("locator"));
+                String selection=String.valueOf(invocation.getArgument("selection"));
+                if(!"PRIMARY".equals(selection) && !"SHOW".equals(selection)) rules+=" "+selection.toLowerCase(java.util.Locale.ROOT);
+                if(invocation.getArgument("id")!=null) rules+=" "+number(invocation,"id");
+                return rules;
+            case CTX_CONNECT:
+                return "ctx connect " + argument(invocation.getArgument("locator"))
+                        + (invocation.getArgument("trustGroup") == null ? ""
+                        : " trust " + argument(invocation.getArgument("trustGroup")));
+            case CTX_DISCONNECT:
+                return "ctx disconnect " + argument(invocation.getArgument("locator"));
+            case CTX_SWITCH:
+                return "ctx switch "
+                        + argument(invocation.getArgument("locator"))
+                        + " " + number(invocation, "RevisionId");
+            case CTX_VERSION:
+                Object versionLocator =
+                        invocation.getArgument("locator");
+                return versionLocator == null
+                        ? "ctx version"
+                        : "ctx version "
+                                + argument(versionLocator);
+            case CTX_EXPLAIN:
+                return "ctx explain "
+                        + rawQuery(invocation.getArgument("query"));
+            case CTX_ISOLATED_QUERY:
+                return "ctx ask "
+                        + argument(invocation.getArgument("locator"))
+                        + " "
+                        + contextOperation(invocation.getArgument("query"));
             case ERASE:
                 return "erase";
             case HELP:
@@ -158,6 +208,25 @@ public final class CommandFormatter {
                             ? "desc" : "asc");
         }
         return out.toString();
+    }
+
+    private String rawQuery(Object value) {
+        if (value == null) {
+            throw new IllegalArgumentException("query must not be null");
+        }
+        String query = String.valueOf(value).trim();
+        if (query.isEmpty() || query.charAt(0) != '?') {
+            throw new IllegalArgumentException(
+                    "query must begin with ?");
+        }
+        return query;
+    }
+
+    private String contextOperation(Object value) {
+        String source = value == null ? "" : String.valueOf(value).trim();
+        if (source.isEmpty() || "?!+-".indexOf(source.charAt(0)) < 0)
+            throw new IllegalArgumentException("ctx ask requires a query or an assertion/addition/deletion command");
+        return source;
     }
 
     private String optionalArgumentCommand(String command, Object value) {

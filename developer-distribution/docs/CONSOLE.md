@@ -267,3 +267,6 @@ This guide intentionally excludes:
 - server installation scripts.
 
 For embedded Java usage read [`SDK.md`](SDK.md). For exact Java types and methods use the generated [`api/index.html`](api/index.html) reference.
+
+
+DUMB2 is the default storage provider in the standard 3.8.0 delivery. Legacy DUMB remains available separately as `org.kanger:kanger-data-dumb` for old databases. In a custom assembly containing both providers, set `runtime.storage.module=dumb` for explicit legacy selection; otherwise DUMB2 is selected. Existing legacy data is not converted automatically.

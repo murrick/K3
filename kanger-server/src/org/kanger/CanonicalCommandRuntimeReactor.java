@@ -23,6 +23,7 @@ import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IContextFederation;
 import org.kanger.primitives.Cause;
 import org.kanger.primitives.Hypothesis;
 import org.kanger.units.Predicate;
@@ -98,6 +99,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
         JSONObject result;
         switch (invocation.getIntent()) {
             case STATUS:
+            case OPTIONS:
             case TIMEZONE:
             case TX_STATUS:
             case TX_START:
@@ -109,6 +111,20 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             case STORAGE_CLOSE:
             case STORAGE_DROP:
             case STORAGE_REINDEX:
+            case CTX_OPINIONS:
+            case CTX_VALUES:
+            case CTX_SOLVES:
+            case CTX_WHEN:
+            case CTX_STATUS:
+            case CTX_RULES:
+            case CTX_FORK:
+            case CTX_PUBLISH:
+            case CTX_CONNECT:
+            case CTX_DISCONNECT:
+            case CTX_SWITCH:
+            case CTX_VERSION:
+            case CTX_EXPLAIN:
+            case CTX_ISOLATED_QUERY:
                 result = executeShared(invocation, user);
                 break;
             case HELP:
@@ -174,6 +190,11 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
         }
         CanonicalCommandProcessor.Rejection rejection = outcome.getRejection();
         if (rejection != null) {
+            if ("publication_confirmation_required".equals(rejection.getCode())) {
+                result.put("result", "confirmation_required")
+                        .put(CanonicalCommandIngressReactor.CONFIRMATION_FIELD, new JSONObject()
+                                .put("schema", 1).put("prompt", outcome.getDescription()));
+            }
             result.put("code", rejection.getCode())
                     .put("reason", rejection.getReason());
             JSONObject detail = new JSONObject()
@@ -228,7 +249,480 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                 result.put("name", storage.getCurrent());
             }
         }
+        IContextFederation.Snapshot federation =
+                outcome.getFederationSnapshot();
+        if (federation != null) {
+            result.put("context_federation",
+                    federationSnapshot(federation));
+        }
+        if (outcome.getContextOpinions() != null)
+            result.put("context_opinions", contextOpinions(outcome.getContextOpinions(), invocation.getIntent()));
+        if(outcome.getContextRules()!=null) {
+            result.put("context_rules", contextRules(outcome.getContextRules()));
+        }
+        IContextFederation.VersionHistory contextVersion =
+                outcome.getContextVersionHistory();
+        if (contextVersion != null) {
+            result.put(
+                    "context_version",
+                    contextVersion(contextVersion));
+        }
+
+        IContextFederation.ExplainResult contextExplain =
+                outcome.getContextExplainResult();
+        if (contextExplain != null) {
+            result.put(
+                    "context_explain",
+                    contextExplain(contextExplain));
+        }
+
+        IContextFederation.QueryResult federationQuery =
+                outcome.getFederationQueryResult();
+        if (federationQuery != null) {
+            if (invocation.getIntent()
+                    == CommandIntent.CTX_ISOLATED_QUERY) {
+                result.put(
+                        "context_query",
+                        contextQuery(
+                                federationQuery,
+                                String.valueOf(
+                                        invocation.getArgument(
+                                                "locator"))));
+            } else {
+                result.put("federation_query",
+                        federationQuery(federationQuery));
+            }
+        }
         return result;
+    }
+
+    static JSONObject contextOpinions(Map<String, IContextFederation.Opinion> sources, CommandIntent intent) {
+        JSONObject opinions = new JSONObject();
+        for (IContextFederation.Opinion opinion : sources.values()) {
+            JSONObject view = new JSONObject().put("locator", opinion.getLocator())
+                    .put("context_id", opinion.getSource().getContextId().toString())
+                    .put("revision", opinion.getSource().getRevision()).put("working", opinion.isWorking())
+                    .put("isolated", true).put("configured_by_x", opinion.isConfigured())
+                    .put("commune", opinion.getSource().getCommune()==null ? JSONObject.NULL : opinion.getSource().getCommune())
+                    .put("commune_members", communeMembers(opinion.getSource().getCommuneMembers()))
+                    .put("truth", opinion.getResult().getResultTruth().name());
+            if (intent == CommandIntent.CTX_OPINIONS || intent == CommandIntent.CTX_SOLVES) {
+                JSONArray solutions = new JSONArray();
+                for (IContextFederation.RuleRow solution : opinion.getSolutions()) solutions.put(new JSONObject()
+                        .put("id", solution.id).put("statement", solution.statement).put("causes", opinionCauses(solution.causes)));
+                view.put("solutions", solutions);
+            }
+            if (intent == CommandIntent.CTX_OPINIONS || intent == CommandIntent.CTX_VALUES) {
+                JSONArray values = new JSONArray();
+                for (IContextFederation.ValueRow row : opinion.getResult().getValues()) values.put(new JSONObject(row.getBindings()));
+                view.put("values", values);
+            }
+            if (intent == CommandIntent.CTX_OPINIONS || intent == CommandIntent.CTX_WHEN) {
+                JSONArray hypotheses = new JSONArray();
+                for (IContextFederation.ProvisionalHypothesis hypothesis : opinion.getResult().getProvisionalHypotheses())
+                    hypotheses.put(hypothesis.getStatement());
+                view.put("hypotheses", hypotheses);
+            }
+            opinions.put(opinion.getLocator(), view);
+        }
+        return opinions;
+    }
+
+
+    private static JSONArray opinionCauses(List<IContextFederation.ProofCause> causes) {
+        JSONArray result = new JSONArray();
+        for (IContextFederation.ProofCause cause : causes) result.put(new JSONObject()
+                .put("commune", cause.commune == null ? JSONObject.NULL : cause.commune)
+                .put("commune_members", communeMembers(cause.communeMembers))
+                .put("configured_by_x", cause.configuredByX)
+                .put("context_id", cause.contextSource == null ? JSONObject.NULL : cause.contextSource.getContextId().toString())
+                .put("context_revision", cause.contextSource == null ? JSONObject.NULL : cause.contextSource.getRevision())
+                .put("rule_id", cause.ruleId).put("rule", cause.ruleStatement)
+                .put("donor_id", cause.donorId == null ? JSONObject.NULL : cause.donorId)
+                .put("donor", cause.donorStatement).put("cycle", cause.cycle)
+                .put("hypothesis", cause.hypothesis)
+                .put("required_for", cause.requiredFor == null ? JSONObject.NULL : cause.requiredFor)
+                .put("hypothesis_context_id", cause.hypothesisSource == null ? JSONObject.NULL : cause.hypothesisSource.getContextId().toString())
+                .put("hypothesis_revision", cause.hypothesisSource == null ? JSONObject.NULL : cause.hypothesisSource.getRevision())
+                .put("causes", opinionCauses(cause.causes)));
+        return result;
+    }
+
+    private JSONArray contextRules(java.util.List<IContextFederation.RuleBlock> views) {
+            JSONArray blocks=new JSONArray();
+            for(IContextFederation.RuleBlock block:views) {
+                JSONArray rules=new JSONArray();
+                for(IContextFederation.RuleRow row:block.rules) rules.put(new JSONObject()
+                        .put("id",row.id).put("statement",row.statement).put("generated",row.generated)
+                        .put("comment",row.comment).put("tree",new JSONArray(row.tree)));
+                blocks.put(new JSONObject().put("locator",block.locator).put("context_id",block.revision.getContextId().toString())
+                        .put("revision",block.revision.getRevision()).put("working",block.working).put("configured_by_x",block.configured)
+                        .put("commune",block.revision.getCommune()==null ? JSONObject.NULL : block.revision.getCommune())
+                        .put("commune_members",communeMembers(block.revision.getCommuneMembers())).put("rules",rules));
+            }
+            return blocks;
+    }
+
+    private static JSONArray communeMembers(List<IContextFederation.Revision> members) {
+        JSONArray result = new JSONArray();
+        for (IContextFederation.Revision member : members) result.put(new JSONObject()
+                .put("context_id", member.getContextId().toString()).put("revision", member.getRevision()));
+        return result;
+    }
+
+    static JSONObject federationSnapshot(
+            IContextFederation.Snapshot snapshot) {
+        JSONArray notices=new JSONArray();
+        for(IContextFederation.DependencyNotice notice:snapshot.getDependencyNotices()) notices.put(new JSONObject()
+                .put("owner_locator",notice.owner.getLocator()).put("owner_context_id",notice.owner.getContextId().toString())
+                .put("owner_revision",notice.owner.getRevision()).put("locator",notice.dependency.getLocator())
+                .put("context_id",notice.dependency.getContextId().toString()).put("declared_revision",notice.dependency.getRevision())
+                .put("status",notice.getStatus()).put("connected_revision",notice.actualRevision==null?JSONObject.NULL:notice.actualRevision));
+        JSONArray published=new JSONArray();
+        for(IContextFederation.Connection c:snapshot.getPublishedConnections()) published.put(new JSONObject()
+                .put("locator",c.getLocator()).put("context_id",c.getTargetContextId().toString()).put("pinned_revision",c.getPinnedRevision()).put("initialization", new JSONArray(c.getInitialization())).put("trust_group", c.getTrustGroup()==null?JSONObject.NULL:c.getTrustGroup()));
+        JSONArray connections = new JSONArray();
+        for (IContextFederation.Connection connection
+                : snapshot.getConnections()) {
+            connections.put(new JSONObject()
+                    .put("locator", connection.getLocator())
+                    .put("context_id",
+                            connection.getTargetContextId().toString())
+                    .put("pinned_revision",
+                            connection.getPinnedRevision())
+                    .put("current_revision",
+                            connection.getCurrentRevision())
+                    .put("newer_revision",
+                            connection.hasNewerRevision())
+                    .put("pin_policy",
+                            connection.getPinPolicy().name())
+                    .put("compatibility",
+                            connection.getCompatibilityStatus().name())
+                    .put("initialization", new JSONArray(connection.getInitialization()))
+                    .put("trust_group", connection.getTrustGroup()==null?JSONObject.NULL:connection.getTrustGroup())
+                    .put("configured_by_x", !connection.getInitialization().isEmpty())
+                    .put("semantic_version",
+                            connection.getSemanticVersion()));
+        }
+        return new JSONObject()
+                .put("schema", 1)
+                .put("source_context_id",
+                        snapshot.getSourceContextId().toString())
+                .put("source_revision",
+                        snapshot.getSourceRevision())
+                .put("connections", connections)
+                .put("published_connections",published)
+                .put("working_changes",snapshot.hasWorkingChanges())
+                .put("dependency_recommendations",notices);
+    }
+
+    private JSONArray causalSteps(IContextFederation.Snapshot snapshot, IContextFederation.QueryResult continuation) {
+        JSONArray steps = new JSONArray();
+        for (IContextFederation.CausalStep step : continuation.getCausalSteps()) {
+            JSONArray values = new JSONArray();
+            for (IContextFederation.ValueRow row : step.getValues()) values.put(new JSONObject(row.getBindings()));
+            JSONArray supplied = new JSONArray();
+            for (IContextFederation.EvidenceInjection fact : step.getSuppliedEvidence()) {
+                supplied.put(new JSONObject().put("statement", fact.getStatement())
+                        .put("supports", explainSources(snapshot, fact.getSupports())));
+            }
+            JSONArray demands = new JSONArray();
+            for (IContextFederation.CausalDemand demand : step.getDemands()) {
+                demands.put(new JSONObject().put("parent_query", demand.getParentQuery())
+                        .put("child_query", demand.getChildQuery())
+                        .put("parent_to_child", new JSONArray(demand.getParentToChild())));
+            }
+            steps.put(new JSONObject().put("wave", step.getWave()).put("root_query", step.getRootQuery())
+                    .put("query", step.getQuery()).put("truth", step.getTruth().name())
+                    .put("target", explainSources(snapshot, java.util.Collections.singletonList(step.getTarget())).getJSONObject(0))
+                    .put("values", values).put("supplied_evidence", supplied).put("demands", demands));
+        }
+        return steps;
+    }
+
+    private JSONObject contextExplain(
+            IContextFederation.ExplainResult explain) {
+        IContextFederation.Snapshot snapshot =
+                explain.getContext();
+
+        JSONArray pins = new JSONArray();
+        for (IContextFederation.Connection connection
+                : snapshot.getConnections()) {
+            pins.put(
+                    new JSONObject()
+                            .put("locator",
+                                    connection.getLocator())
+                            .put("revision",
+                                    connection.getPinnedRevision()));
+        }
+
+        JSONArray passes = new JSONArray();
+        for (IContextFederation.ExplainPass pass
+                : explain.getPasses()) {
+            IContextFederation.QueryResult continuation =
+                    pass.getContinuation();
+
+            JSONArray observations = new JSONArray();
+            for (IContextFederation.FrontierObservation observation
+                    : continuation.getObservations()) {
+                observations.put(
+                        new JSONObject()
+                                .put("wave",
+                                        observation.getWave())
+                                .put("query",
+                                        observation.getQuerySource())
+                                .put("truth",
+                                        observation.getTruth().name())
+                                .put("true_sources",
+                                        explainSources(
+                                                snapshot,
+                                                observation.getTrueSources()))
+                                .put("false_sources",
+                                        explainSources(
+                                                snapshot,
+                                                observation.getFalseSources()))
+                                .put("unknown_sources",
+                                        explainSources(
+                                                snapshot,
+                                                observation.getUnknownSources())));
+            }
+
+            JSONArray injections = new JSONArray();
+            for (IContextFederation.EvidenceInjection injection
+                    : continuation.getEvidenceInjections()) {
+                JSONObject substitutions =
+                        new JSONObject();
+                for (Map.Entry<String, String> binding
+                        : injection.getSubstitutions()
+                                .entrySet()) {
+                    substitutions.put(
+                            binding.getKey(),
+                            binding.getValue());
+                }
+                injections.put(
+                        new JSONObject()
+                                .put("statement",
+                                        injection.getStatement())
+                                .put("substitutions",
+                                        substitutions)
+                                .put("supports",
+                                        explainSources(
+                                                snapshot,
+                                                injection.getSupports())));
+            }
+
+            passes.put(
+                    new JSONObject()
+                            .put("polarity",
+                                    pass.getPolarity().name())
+                            .put("resolved",
+                                    continuation.isResolved())
+                            .put("waves",
+                                    continuation.getWaves())
+                            .put("evidence_count",
+                                    continuation.getEvidenceCount())
+                            .put("observations",
+                                    observations)
+                            .put("injections",
+                                    injections)
+                            .put("causal_steps", causalSteps(snapshot, continuation)));
+        }
+
+        JSONArray values = new JSONArray();
+        for (IContextFederation.ValueRow row
+                : explain.getValues()) {
+            JSONObject bindings = new JSONObject();
+            for (Map.Entry<String, String> binding
+                    : row.getBindings().entrySet()) {
+                bindings.put(
+                        binding.getKey(),
+                        binding.getValue());
+            }
+            values.put(bindings);
+        }
+
+        JSONArray solutions = new JSONArray();
+        for (String solution : explain.getSolutions()) {
+            solutions.put(solution);
+        }
+
+        return new JSONObject()
+                .put("schema", 1)
+                .put("source",
+                        new JSONObject()
+                                .put("locator",
+                                        snapshot.getSourceLocator())
+                                .put("revision",
+                                        snapshot.getSourceRevision()))
+                .put("pins", pins)
+                .put("local_truth",
+                        explain.getLocalTruth().name())
+                .put("passes", passes)
+                .put("final_truth",
+                        explain.getFinalTruth().name())
+                .put("values", values)
+                .put("solutions", solutions);
+    }
+
+    private JSONArray explainSources(
+            IContextFederation.Snapshot snapshot,
+            java.util.List<IContextFederation.Revision> revisions) {
+        JSONArray result = new JSONArray();
+        for (IContextFederation.Revision revision
+                : revisions) {
+            result.put(
+                    new JSONObject()
+                            .put("locator",
+                                    explainLocator(
+                                            snapshot,
+                                            revision.getContextId()))
+                            .put("revision",
+                                    revision.getRevision()));
+        }
+        return result;
+    }
+
+    private String explainLocator(
+            IContextFederation.Snapshot snapshot,
+            java.util.UUID contextId) {
+        if (snapshot.getSourceContextId()
+                .equals(contextId)) {
+            return snapshot.getSourceLocator();
+        }
+        for (IContextFederation.Connection connection
+                : snapshot.getConnections()) {
+            if (connection.getTargetContextId()
+                    .equals(contextId)) {
+                return connection.getLocator();
+            }
+        }
+        return "<unknown-context>";
+    }
+
+    private JSONObject contextVersion(
+            IContextFederation.VersionHistory history) {
+        JSONArray revisions = new JSONArray();
+        for (IContextFederation.RevisionVersion revision
+                : history.getRevisions()) {
+            JSONObject row = new JSONObject()
+                    .put("revision",
+                            revision.getRevision())
+                    .put("description",
+                            revision.getDescription())
+                    .put("current",
+                            revision.getRevision()
+                                    == history.getCurrentRevision());
+            if (history.hasPinnedRevision()) {
+                row.put(
+                        "pinned",
+                        revision.getRevision()
+                                == history.getPinnedRevision());
+            } else {
+                row.put("pinned", false);
+            }
+            revisions.put(row);
+        }
+
+        JSONObject result = new JSONObject()
+                .put("schema", 1)
+                .put("locator", history.getLocator())
+                .put("context_id",
+                        history.getContextId().toString())
+                .put("current_revision",
+                        history.getCurrentRevision())
+                .put("revisions", revisions);
+        if (history.hasPinnedRevision()) {
+            result.put(
+                    "pinned_revision",
+                    history.getPinnedRevision());
+        }
+        return result;
+    }
+
+    private JSONObject contextQuery(
+            IContextFederation.QueryResult query,
+            String locator) {
+        JSONArray values = new JSONArray();
+        for (IContextFederation.ValueRow row
+                : query.getValues()) {
+            JSONObject one = new JSONObject();
+            for (Map.Entry<String, String> binding
+                    : row.getBindings().entrySet()) {
+                one.put(
+                        binding.getKey(),
+                        binding.getValue());
+            }
+            values.put(one);
+        }
+
+        JSONArray hypotheses = new JSONArray();
+        for (IContextFederation.ProvisionalHypothesis hypothesis
+                : query.getProvisionalHypotheses()) {
+            hypotheses.put(new JSONObject()
+                    .put("source", revision(hypothesis.getSource()))
+                    .put("statement", hypothesis.getStatement()));
+        }
+
+        return new JSONObject()
+                .put("schema", 1)
+                .put("locator", locator)
+                .put("resolved", query.isResolved())
+                .put("truth", query.getResultTruth().name())
+                .put("values", values)
+                .put("provisional_hypotheses", hypotheses);
+    }
+
+    private JSONObject federationQuery(
+            IContextFederation.QueryResult query) {
+        JSONArray observations = new JSONArray();
+        for (IContextFederation.FrontierObservation observation
+                : query.getObservations()) {
+            observations.put(new JSONObject()
+                    .put("wave", observation.getWave())
+                    .put("query", observation.getQuerySource())
+                    .put("truth", observation.getTruth().name())
+                    .put("true_sources",
+                            revisions(observation.getTrueSources()))
+                    .put("false_sources",
+                            revisions(observation.getFalseSources()))
+                    .put("unknown_sources",
+                            revisions(observation.getUnknownSources())));
+        }
+
+        JSONArray hypotheses = new JSONArray();
+        for (IContextFederation.ProvisionalHypothesis hypothesis
+                : query.getProvisionalHypotheses()) {
+            hypotheses.put(new JSONObject()
+                    .put("source", revision(hypothesis.getSource()))
+                    .put("statement", hypothesis.getStatement()));
+        }
+
+        return new JSONObject()
+                .put("schema", 1)
+                .put("resolved", query.isResolved())
+                .put("waves", query.getWaves())
+                .put("evidence_count", query.getEvidenceCount())
+                .put("observations", observations)
+                .put("provisional_hypotheses", hypotheses);
+    }
+
+    private JSONArray revisions(
+            List<IContextFederation.Revision> revisions) {
+        JSONArray result = new JSONArray();
+        for (IContextFederation.Revision revision : revisions) {
+            result.put(revision(revision));
+        }
+        return result;
+    }
+
+    private JSONObject revision(
+            IContextFederation.Revision revision) {
+        return new JSONObject()
+                .put("context_id",
+                        revision.getContextId().toString())
+                .put("revision", revision.getRevision())
+                .put("commune", revision.getCommune()==null?JSONObject.NULL:revision.getCommune())
+                .put("commune_members", communeMembers(revision.getCommuneMembers()));
     }
 
     private JSONObject statusSnapshot(CanonicalStatusSnapshot snapshot) {
@@ -417,6 +911,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             return error("rule_not_found", "Rule not found " + id);
         }
         if (set) {
+            ((Mind)mind).requireWritableContext();
             Object text = invocation.getArgument("text");
             rule.setComment(text == null ? "" : String.valueOf(text));
         }
@@ -548,6 +1043,7 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
         JSONObject projected = new JSONObject(((Rule) selected).createMap(mind));
         if (tree) {
             projected.put("causes", recurseCauses(selected, mind));
+            projected.put("context_proof", opinionCauses(org.kanger.ContextProofProjection.solution((Mind) mind, selected).causes));
         }
         return ok()
                 .put("size", 1)

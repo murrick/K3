@@ -27,7 +27,7 @@ jobs:
         run: python3 docs/optimization-defaults/qualify.py --output "$RUNNER_TEMP/optimization-defaults"
       - name: Print failure logs
         if: failure()
-        run: tail -100 "$RUNNER_TEMP/optimization-defaults/"*.log
+        run: tail -n 100 -- "$RUNNER_TEMP/optimization-defaults/"*.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:

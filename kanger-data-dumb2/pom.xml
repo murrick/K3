@@ -15,12 +15,7 @@
     <packaging>jar</packaging>
 
     <name>KANGER DUMB 2.0 storage plugin</name>
-    <description>
-        DUMB 2.0 semantic storage module. The stable DUMB backend remains in
-        kanger-data-dumb as the default executable reference implementation.
-        DUMB 2.0 is exposed as an explicit RuntimeBootstrap provider for isolated
-        manual-soak launchers without replacing the default production provider.
-    </description>
+    <description>DUMB2 is the default semantic Context storage provider. The legacy DUMB provider remains available separately for explicit compatibility use.</description>
 
     <properties>
         <junit.jupiter.version>5.10.3</junit.jupiter.version>
@@ -37,6 +32,12 @@
             <artifactId>kanger-bootstrap</artifactId>
             <version>${project.version}</version>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.kanger</groupId>
+            <artifactId>kanger-command</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>

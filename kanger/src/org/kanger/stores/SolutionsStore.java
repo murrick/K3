@@ -71,12 +71,26 @@ public class SolutionsStore implements IFactory<IRule> {
     public boolean contains(Domain d) throws Exception {
         if (!isEmpty()) {
             for (IRule r : root) {
-                if (!r.isDeleted(mind) && ((Rule) r).getDomain().equalsBase(d) && r.isAntc() == d.isAntc()) {
+                if (!r.isDeleted(mind) && sameStatement(((Rule) r).getDomain(), d) && r.isAntc() == d.isAntc()) {
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    /** Detached query results retain semantic values, not caller-local dictionary IDs. */
+    private boolean sameStatement(Domain left, Domain right) throws Exception {
+        if (!left.getPredicate(mind).equalsTo(right.getPredicate(mind))
+                || left.getRange() != right.getRange()) return false;
+        for (int i = 0; i < left.getRange(); ++i) {
+            org.kanger.interfaces.ITerm a = left.get(i).getValue(mind);
+            org.kanger.interfaces.ITerm b = right.get(i).getValue(mind);
+            if (a == null || b == null) return false;
+            if (a.isCVariable() || b.isCVariable()) return left.equalsBase(right);
+            if (!a.equalsTo(b)) return false;
+        }
+        return true;
     }
 
     public Rule get(int index) {

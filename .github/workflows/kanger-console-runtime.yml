@@ -9,6 +9,7 @@ on:
       - 'kanger-bootstrap/**'
       - 'kanger-udf/**'
       - 'kanger-data-dumb/**'
+      - 'kanger-data-dumb2/**'
       - 'kanger-console/**'
       - '.github/workflows/kanger-console-runtime.yml'
   pull_request:
@@ -19,6 +20,7 @@ on:
       - 'kanger-bootstrap/**'
       - 'kanger-udf/**'
       - 'kanger-data-dumb/**'
+      - 'kanger-data-dumb2/**'
       - 'kanger-console/**'
       - '.github/workflows/kanger-console-runtime.yml'
   workflow_dispatch:
@@ -62,7 +64,7 @@ jobs:
           target='kanger-console/target'
           thin="$(find "$target" -maxdepth 1 -type f -name '*-thin.jar' -print -quit)"
           udf="$(find "$target/runtime/modules" -maxdepth 1 -type f -name 'kanger-udf-*.jar' -print -quit)"
-          storage="$(find "$target/runtime/modules" -maxdepth 1 -type f -name 'kanger-data-dumb-*.jar' -print -quit)"
+          storage="$(find "$target/runtime/modules" -maxdepth 1 -type f -name 'kanger-data-dumb2-*.jar' -print -quit)"
 
           test -n "$thin" && test -f "$thin"
           test -n "$udf" && test -f "$udf"

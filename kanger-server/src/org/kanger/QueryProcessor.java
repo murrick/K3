@@ -25,6 +25,7 @@
 
 package org.kanger;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.kanger.bootstrap.RuntimeBootstrap;
@@ -388,6 +389,21 @@ public class QueryProcessor implements IReactor<JSONObject> {
             result.put("response", "unknown");
         } else {
             result.put("response", res ? "yes" : "no");
+        }
+        if (mind instanceof Mind) {
+            JSONArray conflicts=new JSONArray();
+            for (org.kanger.interfaces.internal.IContextFederation.FrontierObservation conflict : ((Mind) mind).getQueryConflicts()) {
+                JSONArray positive=new JSONArray(), negative=new JSONArray();
+                for (org.kanger.interfaces.internal.IContextFederation.Revision source : conflict.getTrueSources())
+                    positive.put(new JSONObject().put("context_id",source.getContextId().toString()).put("revision",source.getRevision()));
+                for (org.kanger.interfaces.internal.IContextFederation.Revision source : conflict.getFalseSources())
+                    negative.put(new JSONObject().put("context_id",source.getContextId().toString()).put("revision",source.getRevision()));
+                conflicts.put(new JSONObject().put("query",conflict.getQuerySource())
+                        .put("positive_sources",positive).put("negative_sources",negative));
+            }
+            result.put("other_opinions_possible",mind.hasOtherContextOpinions());
+            result.put("query_conflicts",conflicts);
+            result.put("query_truth",res==null ? conflicts.length()==0 ? "UNKNOWN" : "CONFLICT" : res ? "TRUE" : "FALSE");
         }
         result.put("results", mind.getValues().size());
         result.put("solutions", mind.getSolutions().size());
@@ -1010,6 +1026,11 @@ public class QueryProcessor implements IReactor<JSONObject> {
         result.put("result", "OK");
         result.put("size", list.size());
         result.put("list", list);
+        if (mind.isStorageUsed() && mind.getUser() instanceof User
+                && ((User) mind.getUser()).getData() instanceof org.kanger.interfaces.internal.IContextFederation) {
+            result.put("context_federation", CanonicalCommandRuntimeReactor.federationSnapshot(
+                    ((org.kanger.interfaces.internal.IContextFederation) ((User) mind.getUser()).getData()).federationSnapshot()));
+        }
         return result;
     }
 

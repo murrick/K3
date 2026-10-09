@@ -41,8 +41,28 @@ public final class CommandParserConformanceTest {
         transactionFamily();
         sourceFamily();
         storageFamily();
+        contextFamily();
         aliasVocabulary();
         systemFamily();
+        expect("opt", CommandIntent.OPTIONS);
+        expectArgument("opt optimize singleTValueLookup no", CommandIntent.OPTIONS, "optimization", "singleTValueLookup");
+        expectCanonical("opt opt single n", "options optimize singleTValueLookup no");
+        expectCanonical("opt optimize single", "options optimize singleTValueLookup");
+        reject("opt singleTValueLookup no", CommandParseException.Reason.UNKNOWN_KEYWORD);
+        reject("opt optimize yes extra", CommandParseException.Reason.EXTRA_ARGUMENT);
+        reject("opt optimize single yes extra", CommandParseException.Reason.EXTRA_ARGUMENT);
+
+        expectArgument("opt optimize no", CommandIntent.OPTIONS, "value", "no");
+        expectArgument("opt timezone Europe/Moscow", CommandIntent.TIMEZONE, "zoneId", "Europe/Moscow");
+        expectCanonical("opt deb y", "options debug yes");
+        expectCanonical("opt time Europe/Moscow", "options timezone Europe/Moscow");
+        reject("options status no", CommandParseException.Reason.UNKNOWN_KEYWORD);
+        reject("opt optimize maybe", CommandParseException.Reason.UNKNOWN_KEYWORD);
+        reject("opt optimize \"\"", CommandParseException.Reason.UNKNOWN_KEYWORD);
+        reject("options help extra", CommandParseException.Reason.EXTRA_ARGUMENT);
+        reject("opt optimize c yes", CommandParseException.Reason.AMBIGUOUS_PREFIX);
+
+
         canonicalEcho();
         helpRegistry();
         sharedClientVocabulary();
@@ -87,6 +107,7 @@ public final class CommandParserConformanceTest {
         reject("c", AMBIGUOUS_PREFIX);
         expect("co", CommandIntent.TX_COMMIT);
         expect("cl", CommandIntent.STORAGE_CLOSE);
+        expect("ct", CommandIntent.CTX_STATUS);
         reject("d", AMBIGUOUS_PREFIX);
         expect("de", CommandIntent.SOURCE_DELETE);
         expect("de foo.k", CommandIntent.SOURCE_DELETE);
@@ -328,6 +349,115 @@ public final class CommandParserConformanceTest {
         reject("storage close foo", EXTRA_ARGUMENT);
     }
 
+    private void contextFamily() throws Exception {
+        expect("ctx", CommandIntent.CTX_STATUS);
+        expect("ct", CommandIntent.CTX_STATUS);
+        expectArgument("ctx connect A", CommandIntent.CTX_CONNECT,
+                "locator", "A");
+        expectArgument("ctx connect \"test context\"",
+                CommandIntent.CTX_CONNECT,
+                "locator", "test context");
+        expectArgument("ctx disconnect A",
+                CommandIntent.CTX_DISCONNECT,
+                "locator", "A");
+        expectArgument("ctx disconnect \"test context\"",
+                CommandIntent.CTX_DISCONNECT,
+                "locator", "test context");
+
+        CommandInvocation switched =
+                parser.parse("ctx switch A 7");
+        check(switched.getIntent() == CommandIntent.CTX_SWITCH,
+                "ctx switch intent");
+        check("A".equals(switched.getArgument("locator")),
+                "ctx switch locator");
+        check(Long.valueOf(7L).equals(
+                        switched.getArgument("RevisionId")),
+                "ctx switch RevisionId");
+
+        CommandInvocation version =
+                parser.parse("ctx version");
+        check(version.getIntent()
+                        == CommandIntent.CTX_VERSION,
+                "ctx version intent");
+        check(version.getArgument("locator") == null,
+                "ctx version current Context");
+
+        CommandInvocation versionA =
+                parser.parse("ctx version A");
+        check(versionA.getIntent()
+                        == CommandIntent.CTX_VERSION,
+                "ctx version locator intent");
+        check("A".equals(
+                        versionA.getArgument("locator")),
+                "ctx version locator");
+
+        CommandInvocation isolated =
+                parser.parse("ctx A ?male(Tom);");
+        for (String name : new String[] {"opinions", "opinion", "ask", "version"}) {
+            CommandInvocation ask = parser.parse("ctx ask " + name + " ?male(Tom);");
+            check(ask.getIntent() == CommandIntent.CTX_ISOLATED_QUERY, "explicit ask intent");
+            check(name.equals(ask.getArgument("locator")), "literal ask locator");
+            check("?male(Tom);".equals(ask.getArgument("query")), "explicit ask query");
+        }
+        check(isolated.getIntent()
+                        == CommandIntent.CTX_ISOLATED_QUERY,
+                "ctx isolated query intent");
+        check("A".equals(
+                        isolated.getArgument("locator")),
+                "ctx isolated query locator");
+        check("?male(Tom);".equals(
+                        isolated.getArgument("query")),
+                "ctx isolated query source");
+
+        CommandInvocation quotedIsolated =
+                parser.parse(
+                        "ctx \"test context\" ?$x son(John, x);");
+        check(quotedIsolated.getIntent()
+                        == CommandIntent.CTX_ISOLATED_QUERY,
+                "quoted ctx isolated query intent");
+        check("test context".equals(
+                        quotedIsolated.getArgument("locator")),
+                "quoted ctx isolated query locator");
+
+        CommandInvocation explain =
+                parser.parse(
+                        "ctx explain ?$x son(John, x);");
+        check(explain.getIntent()
+                        == CommandIntent.CTX_EXPLAIN,
+                "ctx explain intent");
+        check("?$x son(John, x);".equals(
+                        explain.getArgument("query")),
+                "ctx explain preserves KANGER source");
+
+        expect("ctx opinions", CommandIntent.CTX_OPINIONS);
+        expectArgument("ctx op A", CommandIntent.CTX_OPINIONS, "locator", "A");
+        expect("ctx values", CommandIntent.CTX_VALUES);
+        expect("ctx solves", CommandIntent.CTX_SOLVES);
+        expect("ctx when", CommandIntent.CTX_WHEN);
+        for (String command : new String[]{"opinions", "values", "solves", "when"}) {
+            expectCanonical("ctx " + command, "ctx " + command);
+            expectCanonical("ctx " + command + " A", "ctx " + command + " A");
+            reject("ctx " + command + " A extra", EXTRA_ARGUMENT);
+        }
+        reject("ctx s", AMBIGUOUS_PREFIX);
+        expectCanonical("ctx v", "ctx version");
+
+        reject("ctx connect", MISSING_ARGUMENT);
+        reject("ctx disconnect", MISSING_ARGUMENT);
+        reject("ctx switch A",
+                MISSING_ARGUMENT);
+        reject("ctx switch A -1",
+                INVALID_ARGUMENT_SHAPE);
+        reject("ctx version A extra",
+                EXTRA_ARGUMENT);
+        reject("ctx explain", MISSING_ARGUMENT);
+        reject("ctx explain male(Tom);",
+                INVALID_ARGUMENT_SHAPE);
+        reject("ctx A", MISSING_ARGUMENT);
+        reject("ctx A male(Tom);",
+                INVALID_ARGUMENT_SHAPE);
+    }
+
     private void aliasVocabulary() throws Exception {
         expect("start", CommandIntent.TX_START);
         expect("commit", CommandIntent.TX_COMMIT);
@@ -335,7 +465,11 @@ public final class CommandParserConformanceTest {
         expect("rollback", CommandIntent.TX_ROLLBACK);
         expect("squash", CommandIntent.TX_SQUASH);
         reject("c", AMBIGUOUS_PREFIX);
-        reject("commit now", EXTRA_ARGUMENT);
+        expectArgument("commit now", CommandIntent.TX_COMMIT, "description", "now");
+        expectArgument("commit \"Release candidate\"", CommandIntent.TX_COMMIT, "description", "Release candidate");
+        expectArgument("ctx publish \"Release candidate\"", CommandIntent.CTX_PUBLISH, "description", "Release candidate");
+        reject("commit too many", EXTRA_ARGUMENT);
+        reject("ctx publish too many", EXTRA_ARGUMENT);
 
         expect("use", CommandIntent.STORAGE_STATUS);
         expectArgument("use demo", CommandIntent.STORAGE_USE,
@@ -388,8 +522,8 @@ public final class CommandParserConformanceTest {
         expectCanonical("w a 0", "when accept 0");
         expectCanonical("tr st", "transaction start");
         expectCanonical("tr sq", "transaction squash");
-        expectCanonical("ti", "timezone");
-        expectCanonical("ti Europe/Brussels", "timezone Europe/Brussels");
+        expectCanonical("ti", "options timezone");
+        expectCanonical("ti Europe/Brussels", "options timezone Europe/Brussels");
         expectCanonical("star", "transaction start");
         expectCanonical("stat", "status");
         expectCanonical("co", "transaction commit");
@@ -403,6 +537,26 @@ public final class CommandParserConformanceTest {
         expectCanonical("cl", "storage close");
         expectCanonical("dr demo", "storage drop demo");
         expectCanonical("re demo", "storage reindex demo");
+        expectCanonical("ct", "ctx");
+        expectCanonical("ctx connect A", "ctx connect A");
+        expectCanonical("ctx disconnect B", "ctx disconnect B");
+        expectCanonical("ctx switch A 1", "ctx switch A 1");
+        expectCanonical("ctx version", "ctx version");
+        expectCanonical("ctx version A", "ctx version A");
+        expectCanonical(
+                "ctx explain ?$x son(John, x);",
+                "ctx explain ?$x son(John, x);");
+        expectCanonical(
+                "ctx A ?male(Tom);",
+                "ctx ask A ?male(Tom);");
+        expectCanonical(
+                "ctx \"test context\" ?$x son(John, x);",
+                "ctx ask \"test context\" ?$x son(John, x);");
+        expectCanonical("ctx ask opinions ?male(Tom);", "ctx ask opinions ?male(Tom);");
+        expectCanonical("ctx ask opinions -p(John);", "ctx ask opinions -p(John);");
+        expectCanonical("ctx ask ask +p(Mary);", "ctx ask ask +p(Mary);");
+        expectCanonical("ctx ask N !@x p(x) -> q(x);", "ctx ask N !@x p(x) -> q(x);");
+        expectCanonical("ctx ask ask ?p(\"two words\");", "ctx ask ask ?p(\"two words\");");
         expectCanonical("g", "get");
         expectCanonical("de", "delete");
         expectCanonical("g foo", "get foo.k");
@@ -467,7 +621,7 @@ public final class CommandParserConformanceTest {
                 "help exposes predicate/predicates argument spellings");
         check(help.contains("transaction start  (alias: start)"),
                 "help contains start alias");
-        check(help.contains("transaction commit  (alias: commit)"),
+        check(help.contains("transaction commit [description]  (alias: commit)"),
                 "help contains commit alias");
         check(help.contains("transaction rollback  (alias: rollback)"),
                 "help contains rollback alias");
@@ -483,6 +637,18 @@ public final class CommandParserConformanceTest {
                 "help contains drop alias");
         check(help.contains("storage reindex <name>  (alias: reindex <name>)"),
                 "help contains reindex alias");
+        check(help.contains("ctx connect <locator>"),
+                "help contains Context connect syntax");
+        check(help.contains("ctx disconnect <locator>"),
+                "help contains Context disconnect syntax");
+        check(help.contains("ctx switch <locator> <RevisionId>"),
+                "help contains Context revision switch syntax");
+        check(help.contains("ctx version [<locator>]"),
+                "help contains Context revision history syntax");
+        check(help.contains("ctx explain <query...>"),
+                "help contains Context explain syntax");
+        check(help.contains("ctx <locator> <query...>"),
+                "help contains isolated Context query syntax");
     }
 
     private void expect(String source, CommandIntent intent) throws Exception {

@@ -287,7 +287,19 @@ public class Compiller {
             ArgumentsList arguments = new ArgumentsList();
             parseArgs(arguments, root.getLeft(), level + 1, replacements, externals);
             parseArgs(arguments, root.getRight(), level + 1, replacements, externals);
-            arg.add(new Argument(mind.getTerms().add(arguments)));
+            boolean dynamic = false;
+            for (org.kanger.interfaces.IArgument member : arguments) {
+                if (member.getType() != org.kanger.enums.ArgumentType.TERM) {
+                    dynamic = true;
+                    break;
+                }
+            }
+            if (dynamic) {
+                arg.add(new Argument(mind.getFunctions().add(mind.getTerms().add("_set"),
+                        arguments, FunctionBinding.INFRASTRUCTURE)));
+            } else {
+                arg.add(new Argument(mind.getTerms().add(arguments)));
+            }
         } else if (",".equals(root.getValue())) {
             parseArgs(arg, root.getLeft(), level + 1, replacements, externals);
             parseArgs(arg, root.getRight(), level + 1, replacements, externals);

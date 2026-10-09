@@ -103,7 +103,14 @@ public final class OperationAdapter implements KangerUnitAdapter<Operation> {
             throw new IOException("SYSOP parameter count " + params.size()
                     + " does not match range=" + range);
 
-        Operation result = new Operation(mind);
+        Operation result;
+        try {
+            result = ((org.kanger.User) mind.getUser()).getUdf();
+            result.setMind(mind);
+        } catch (org.kanger.exception.RuntimeErrorException unavailable) {
+            // Structural inspection also works without a loaded UDF plugin.
+            result = new Operation(mind);
+        }
         result.setId(id);
         result.setMindId(mindId);
         result.setMode(mode);

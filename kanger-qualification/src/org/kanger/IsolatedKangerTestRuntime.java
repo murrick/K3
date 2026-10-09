@@ -6,8 +6,11 @@
 package org.kanger;
 
 import org.kanger.interfaces.IMind;
-import org.kanger.storage.DB;
 import org.kanger.test.KangerVisualTestHarness;
+import org.kanger.test.KangerStabilizationTest;
+import org.kanger.test.KangerC1PromotionTest;
+import org.kanger.test.KangerC4IntervalTest;
+import org.kanger.test.KangerC3BindingTest;
 import org.kanger.udf.UDF;
 
 import java.io.File;
@@ -19,7 +22,7 @@ import java.nio.file.Path;
  *
  * <p>The live Console user, Mind, transaction stack and storage are never
  * borrowed by visual tests. Every invocation owns a fresh User and root Mind;
- * database mode additionally owns a private DUMB database rooted below a
+ * database mode additionally owns a private database of the selected backend below a
  * temporary directory. The complete directory is retired after the run.</p>
  */
 final class IsolatedKangerTestRuntime {
@@ -30,6 +33,22 @@ final class IsolatedKangerTestRuntime {
     }
 
     static boolean run(String prefix, boolean database) throws Exception {
+        return run(prefix, database ? availableStorageClass() : null);
+    }
+
+    private static String availableStorageClass() throws ClassNotFoundException {
+        for (String candidate : new String[]{"org.kanger.storage.dumb2.DB", "org.kanger.storage.DB"}) {
+            try {
+                Class.forName(candidate, false, IsolatedKangerTestRuntime.class.getClassLoader());
+                return candidate;
+            } catch (ClassNotFoundException absent) {
+                // The Console distribution can contain only one optional backend.
+            }
+        }
+        throw new ClassNotFoundException("No storage backend is available for isolated lifecycle tests");
+    }
+
+    static boolean run(String prefix, String storageClass) throws Exception {
         Path root = Files.createTempDirectory("kanger-visual-test-");
         User user = new User();
         IMind mind = null;
@@ -45,17 +64,27 @@ final class IsolatedKangerTestRuntime {
             user.setDatabaseDir(directory(databases));
             new UDF().init(user);
 
+            // Offline tests still contain explicit storage lifecycle cases.
+            // Load a private backend without opening it until a test asks to.
+            org.kanger.interfaces.internal.IData storage =
+                    (org.kanger.interfaces.internal.IData) Class.forName(
+                            storageClass == null ? availableStorageClass() : storageClass)
+                            .getDeclaredConstructor().newInstance();
+            storage.init(user);
             mind = new Mind(user);
-            if (database) {
-                new DB().init(user);
-                mind = mind.useStorage(DATABASE_NAME);
-            }
+            if (storageClass != null) mind = mind.useStorage(DATABASE_NAME);
             mind = mind.clearWorkspace();
             user.setCurrentMind(mind);
 
             System.out.println("Visual test runtime: isolated "
-                    + (database ? "database" : "offline"));
-            return KangerVisualTestHarness.test(mind, "set_" + prefix);
+                    + (storageClass == null ? "offline" : "database (" + storageClass + ")"));
+            String selected = prefix.startsWith("set_") ? prefix : "set_" + prefix;
+            boolean success = KangerVisualTestHarness.test(mind, selected);
+            success &= KangerStabilizationTest.test(user.getCurrentMind().clearWorkspace(), selected);
+            success &= KangerC1PromotionTest.test(user.getCurrentMind().clearWorkspace(), selected);
+            success &= KangerC4IntervalTest.test(user.getCurrentMind().clearWorkspace(), selected);
+            success &= KangerC3BindingTest.test(user.getCurrentMind().clearWorkspace(), selected);
+            return success;
         } catch (Throwable error) {
             failure = error;
             throw error;

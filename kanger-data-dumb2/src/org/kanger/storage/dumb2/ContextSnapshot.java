@@ -40,23 +40,36 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
     private final UUID contextId;
     private final long revision;
     private final ContextManifestStore.Origin origin;
+    private final long revisionManifestBaseline;
     private final TypeRegistry typeRegistry;
+    /*
+     * Non-null only for an unpublished candidate. Published snapshots resolve
+     * their exact dependency vector from ConnectionStore by RevisionId.
+     */
+    private final ConnectionVector candidateDependencies;
     private final Map<String, ContextBase> bases =
             new LinkedHashMap<String, ContextBase>();
 
     private boolean closed;
 
     private ContextSnapshot(Path location,
+                            Path generation,
                             UUID contextId,
                             long revision,
                             ContextManifestStore.Origin origin,
-                            TypeRegistry typeRegistry) {
+                            long revisionManifestBaseline,
+                            TypeRegistry typeRegistry,
+                            ConnectionVector candidateDependencies) {
         this.location = location;
+        this.generation = generation;
         this.contextId = contextId;
         this.revision = revision;
         this.origin = origin;
+        this.revisionManifestBaseline =
+                revisionManifestBaseline;
         this.typeRegistry = typeRegistry;
-        this.generation = ContextStore.generationPath(location, revision);
+        this.candidateDependencies =
+                candidateDependencies;
     }
 
     /**
@@ -70,6 +83,131 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
      */
     static ContextSnapshot open(Path location)
             throws IOException, StorageLifecycleException {
+        Path revisionPath = requireContextMetadata(location);
+        long revision = RevisionStore.read(revisionPath);
+        return open(location, revision);
+    }
+
+    /**
+     * Opens one exact already-published Context revision.
+     *
+     * <p>This is the storage primitive used by pinned M3 connections. A later
+     * publication may advance CURRENT, but an operation that selected revision
+     * {@code R} continues to read the immutable generation for {@code R}.</p>
+     */
+    static ContextSnapshot open(Path location, long revision)
+            throws IOException, StorageLifecycleException {
+        if (revision < RevisionStore.INITIAL_REVISION) {
+            throw new IllegalArgumentException(
+                    "DUMB2 Context revision must be non-negative");
+        }
+
+        Path revisionPath = requireContextMetadata(location);
+        long currentRevision = RevisionStore.read(revisionPath);
+        if (revision > currentRevision) {
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_NOT_FOUND,
+                    "DUMB2 Context revision " + revision
+                            + " is not published at " + location
+                            + " (current " + currentRevision + ")");
+        }
+
+        Path contextPath = ContextStore.contextPath(location);
+        ContextManifestStore.Manifest manifest =
+                ContextManifestStore.read(contextPath);
+
+        if (revision > RevisionStore.INITIAL_REVISION
+                && !Files.isDirectory(
+                ContextStore.generationPath(location, revision))) {
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_NOT_FOUND,
+                    "DUMB2 Context revision " + revision
+                            + " is not retained at " + location);
+        }
+
+        ContextSnapshot snapshot = new ContextSnapshot(
+                location,
+                ContextStore.generationPath(location, revision),
+                manifest.getContextId(),
+                revision,
+                manifest.getOrigin(),
+                manifest.getRevisionManifestBaseline(),
+                copyRegistry(manifest.getTypeRegistry()),
+                null);
+        try {
+            snapshot.validatePublishedGeneration();
+            return snapshot;
+        } catch (IOException | StorageLifecycleException
+                 | RuntimeException | Error failure) {
+            snapshot.closeQuietly();
+            throw failure;
+        }
+    }
+
+    static ContextSnapshot openCandidate(
+            Path location,
+            Path generation,
+            UUID contextId,
+            long revision,
+            ContextManifestStore.Origin origin,
+            TypeRegistry typeRegistry) throws Exception {
+        return openCandidate(
+                location,
+                generation,
+                contextId,
+                revision,
+                origin,
+                typeRegistry,
+                ConnectionVector.empty());
+    }
+
+    static ContextSnapshot openCandidate(
+            Path location,
+            Path generation,
+            UUID contextId,
+            long revision,
+            ContextManifestStore.Origin origin,
+            TypeRegistry typeRegistry,
+            ConnectionVector dependencies) throws Exception {
+        if (location == null
+                || generation == null
+                || contextId == null
+                || typeRegistry == null
+                || dependencies == null) {
+            throw new NullPointerException();
+        }
+        if (revision <= RevisionStore.INITIAL_REVISION) {
+            throw new IllegalArgumentException(
+                    "candidate revision must be positive");
+        }
+        if (!Files.isDirectory(generation)) {
+            throw new StorageLifecycleException(
+                    StorageLifecycleErrorCode.STORAGE_NOT_FOUND,
+                    "DUMB2 candidate generation does not exist: "
+                            + generation);
+        }
+
+        ContextSnapshot snapshot = new ContextSnapshot(
+                location.toAbsolutePath().normalize(),
+                generation.toAbsolutePath().normalize(),
+                contextId,
+                revision,
+                origin,
+                ContextManifestStore.NEW_CONTEXT_REVISION_MANIFEST_BASELINE,
+                copyRegistry(typeRegistry),
+                dependencies);
+        try {
+            snapshot.validatePublishedGeneration();
+            return snapshot;
+        } catch (IOException | StorageLifecycleException
+                 | RuntimeException | Error failure) {
+            snapshot.closeQuietly();
+            throw failure;
+        }
+    }
+
+    private static Path requireContextMetadata(Path location)
+            throws StorageLifecycleException {
         if (location == null || location.getFileName() == null) {
             throw new IllegalArgumentException(
                     "DUMB2 Context location must have a final path component");
@@ -90,32 +228,7 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
                     + ": both " + ContextStore.CONTEXT_SUFFIX + " and "
                     + ContextStore.REVISION_SUFFIX + " sidecars are required");
         }
-
-        long revision = RevisionStore.read(revisionPath);
-        ContextManifestStore.Manifest manifest =
-                ContextManifestStore.read(contextPath);
-
-        if (revision > RevisionStore.INITIAL_REVISION
-                && !Files.isDirectory(
-                ContextStore.generationPath(location, revision))) {
-            throw corruption("DUMB2 Context revision " + revision
-                    + " has no physical generation at " + location);
-        }
-
-        ContextSnapshot snapshot = new ContextSnapshot(
-                location,
-                manifest.getContextId(),
-                revision,
-                manifest.getOrigin(),
-                copyRegistry(manifest.getTypeRegistry()));
-        try {
-            snapshot.validatePublishedGeneration();
-            return snapshot;
-        } catch (IOException | StorageLifecycleException
-                 | RuntimeException | Error failure) {
-            snapshot.closeQuietly();
-            throw failure;
-        }
+        return revisionPath;
     }
 
     UUID getContextId() {
@@ -192,9 +305,20 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
         try (DirectoryStream<Path> stream =
                      Files.newDirectoryStream(generation)) {
             for (Path child : stream) {
+                String file =
+                        child.getFileName().toString();
+                if (RevisionManifestStore.FILE_NAME.equals(file)) {
+                    if (!Files.isRegularFile(
+                            child, LinkOption.NOFOLLOW_LINKS)) {
+                        throw corruption(
+                                "Invalid DUMB2 revision manifest entry "
+                                        + child);
+                    }
+                    continue;
+                }
                 if (!Files.isRegularFile(
                         child, LinkOption.NOFOLLOW_LINKS)
-                        || !child.getFileName().toString().endsWith(".base")) {
+                        || !file.endsWith(".base")) {
                     throw corruption(
                             "Unexpected entry in published DUMB2 generation "
                                     + child);
@@ -234,6 +358,38 @@ final class ContextSnapshot implements AutoCloseable, PersistentTypeResolver {
             throw corruption(
                     "Published DUMB2 revision " + revision
                             + " contains no schema snapshots at " + generation);
+        }
+
+        boolean sealed =
+                RevisionManifestStore.exists(generation);
+        if (revision >= revisionManifestBaseline
+                && !sealed) {
+            throw corruption(
+                    "Published DUMB2 revision " + revision
+                            + " requires a revision manifest at "
+                            + generation);
+        }
+        if (sealed) {
+            RevisionManifestStore.Manifest revisionManifest =
+                    RevisionManifestStore.validate(
+                            generation,
+                            contextId,
+                            revision,
+                            revision - 1L);
+            if (revisionManifest.hasDependencyDigest()) {
+                ConnectionVector dependencies =
+                        candidateDependencies != null
+                                ? candidateDependencies
+                                : ConnectionStore.read(
+                                        location,
+                                        new RevisionRef(
+                                                contextId,
+                                                revision));
+                RevisionManifestStore.validateDependencyVector(
+                        revisionManifest,
+                        dependencies,
+                        generation);
+            }
         }
     }
 

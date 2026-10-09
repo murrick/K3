@@ -48,10 +48,10 @@ The modules shipped in the Developer Distribution have these roles:
 
 - `kanger-core` — the necessary and sufficient KANGER inference engine as a Java library: `User`, `Mind`, compiler/query/inference semantics, transactions, result inspection, and the lifecycle contracts used by optional capabilities. It does **not** require Command, Storage, UDF, Bootstrap, Console, Server, or UI.
 - `kanger-command` — optional canonical infrastructure-control language and transport-neutral command processing over Core. It depends on `kanger-core`; Core does not depend on it.
-- `kanger-data-dumb` — optional DUMB storage provider. It can be attached explicitly to a `User`; its Bootstrap integration is optional.
+- `kanger-data-dumb2` — optional DUMB2 storage provider. It can be attached explicitly to a `User`; its Bootstrap integration is optional.
 - `kanger-udf` — optional UDF provider. It can be attached explicitly to a `User`; its Bootstrap integration is optional.
 - `kanger-bootstrap` — optional discovery/composition helper. It discovers and attaches available capabilities through `ServiceLoader`; it does not own Storage or UDF and is not required by Core.
-- `kanger-sdk` — convenience Maven/Gradle coordinate containing the normal embedded runtime set: Core + Bootstrap + bundled UDF + bundled DUMB storage. It intentionally does **not** pull `kanger-command`; add the command feature only when your application actually needs the canonical command/control layer.
+- `kanger-sdk` — convenience Maven/Gradle coordinate containing the normal embedded runtime set: Core + Bootstrap + bundled UDF + bundled DUMB2 storage. It intentionally does **not** pull `kanger-command`; add the command feature only when your application actually needs the canonical command/control layer.
 - Console — a delivery adapter above these features. It explicitly uses the command feature and the runtime capabilities needed by the local Console experience.
 
 All of these JARs are present in the unpacked Developer Distribution so a developer can choose the desired assembly. Presence in `lib/` does not mean that every module is a mandatory dependency of Core.
@@ -63,7 +63,7 @@ Inference engine only
     kanger-core
 
 Inference + persistence
-    kanger-core + kanger-data-dumb
+    kanger-core + kanger-data-dumb2
 
 Inference + UDF
     kanger-core + kanger-udf
@@ -75,7 +75,7 @@ Custom command/control application
     kanger-command + kanger-core + any selected runtime features
 
 Bundled convenience SDK
-    kanger-sdk = core + bootstrap + bundled UDF + bundled DUMB storage
+    kanger-sdk = core + bootstrap + bundled UDF + bundled DUMB2 storage
 ```
 
 See [`docs/SDK.md`](docs/SDK.md) for concrete Maven/Gradle coordinates and Java examples for each path.
@@ -236,3 +236,6 @@ Ready consumer projects are in `examples/maven/` and `examples/gradle/`. They re
 For a narrower assembly, depend directly on the individual artifact you need, for example `org.kanger:kanger-core:3.7.0` for the inference engine alone or `org.kanger:kanger-command:3.7.0` when building a custom canonical command/control adapter.
 
 Plain Java/classpath remains the normative contract; Maven and Gradle are adapters over the same SDK artifacts.
+
+
+DUMB2 is the default storage provider in the standard 3.8.0 delivery. Legacy DUMB remains available separately as `org.kanger:kanger-data-dumb` for old databases. In a custom assembly containing both providers, set `runtime.storage.module=dumb` for explicit legacy selection; otherwise DUMB2 is selected. Existing legacy data is not converted automatically.

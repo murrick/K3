@@ -135,6 +135,15 @@ public interface IData {
     void flush() throws Exception;
 
     /**
+     * Whether the attached generation is immutable. Read-only runtime roots
+     * must not run persistent garbage collection or publication at settlement.
+     * Physical mutation guards remain the responsibility of the provider.
+     */
+    default boolean isReadOnly() {
+        return false;
+    }
+
+    /**
      * Уничтожает storage generation с указанным именем согласно реализации.
      *
      * <p>Это destructive physical operation, не transaction rollback и не

@@ -37,6 +37,8 @@ final class ContextSnapshotData implements IData {
 
     private final Path location;
     private final String logicalName;
+    private final Long exactRevision;
+    private final ContextCandidate candidate;
     private final Map<String, SnapshotRuntimeBase> bases =
             new LinkedHashMap<String, SnapshotRuntimeBase>();
 
@@ -44,14 +46,48 @@ final class ContextSnapshotData implements IData {
     private ContextSnapshot snapshot;
 
     ContextSnapshotData(Path location, String logicalName) {
+        this(location, logicalName, null, null);
+    }
+
+    ContextSnapshotData(Path location,
+                        String logicalName,
+                        Long exactRevision) {
+        this(location, logicalName, exactRevision, null);
+    }
+
+    ContextSnapshotData(ContextCandidate candidate,
+                        String logicalName) {
+        this(candidate.getLocation(),
+                logicalName,
+                null,
+                candidate);
+    }
+
+    private ContextSnapshotData(Path location,
+                                String logicalName,
+                                Long exactRevision,
+                                ContextCandidate candidate) {
         if (location == null) {
             throw new NullPointerException("location");
         }
         if (logicalName == null || logicalName.trim().isEmpty()) {
             throw new IllegalArgumentException("logicalName must not be blank");
         }
+        if (exactRevision != null
+                && exactRevision.longValue()
+                < RevisionStore.INITIAL_REVISION) {
+            throw new IllegalArgumentException(
+                    "exactRevision must be non-negative");
+        }
+        if (exactRevision != null
+                && candidate != null) {
+            throw new IllegalArgumentException(
+                    "exact published revision and candidate are mutually exclusive");
+        }
         this.location = location;
         this.logicalName = logicalName;
+        this.exactRevision = exactRevision;
+        this.candidate = candidate;
     }
 
     @Override
@@ -78,7 +114,16 @@ final class ContextSnapshotData implements IData {
             close();
         }
 
-        ContextSnapshot acquired = ContextSnapshot.open(location);
+        ContextSnapshot acquired;
+        if (candidate != null) {
+            acquired = candidate.openSnapshot();
+        } else {
+            acquired = exactRevision == null
+                    ? ContextSnapshot.open(location)
+                    : ContextSnapshot.open(
+                            location,
+                            exactRevision.longValue());
+        }
         snapshot = acquired;
         bases.clear();
     }
@@ -106,6 +151,11 @@ final class ContextSnapshotData implements IData {
     }
 
     @Override
+    public boolean isReadOnly() {
+        return true;
+    }
+
+    @Override
     public void remove(String name) {
         throw readOnly("remove Context");
     }
@@ -114,6 +164,10 @@ final class ContextSnapshotData implements IData {
     public synchronized boolean exists(String name) {
         if (!logicalName.equals(name)) {
             return false;
+        }
+        if (candidate != null) {
+            return Files.isDirectory(
+                    candidate.getGeneration());
         }
         return Files.isRegularFile(ContextStore.contextPath(location))
                 && Files.isRegularFile(ContextStore.revisionPath(location));

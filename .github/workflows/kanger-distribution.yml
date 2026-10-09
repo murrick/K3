@@ -125,12 +125,12 @@ jobs:
           fi
 
           udf_modules="$(grep -Ec "^${root}/server/modules/kanger-udf-[^/]+[.]jar$" <<<"${listing}" || true)"
-          storage_modules="$(grep -Ec "^${root}/server/modules/kanger-data-dumb-[^/]+[.]jar$" <<<"${listing}" || true)"
+          storage_modules="$(grep -Ec "^${root}/server/modules/kanger-data-dumb2-[^/]+[.]jar$" <<<"${listing}" || true)"
           test "${udf_modules}" -eq 1
           test "${storage_modules}" -eq 1
           grep -Eq "^${root}/server/lib/kanger-core-[^/]+[.]jar$" <<<"${listing}"
           grep -Eq "^${root}/server/lib/kanger-bootstrap-[^/]+[.]jar$" <<<"${listing}"
-          if grep -Eq "^${root}/server/lib/kanger-(udf|data-dumb)-[^/]+[.]jar$" <<<"${listing}"; then
+          if grep -Eq "^${root}/server/lib/kanger-(udf|data-dumb2)-[^/]+[.]jar$" <<<"${listing}"; then
             echo 'runtime provider leaked into server/lib' >&2
             exit 1
           fi
@@ -236,10 +236,10 @@ jobs:
           sudo test -f "${canonical}/ui/config.js"
 
           [[ "$(sudo find "${canonical}/server/modules" -maxdepth 1 -type f -name 'kanger-udf-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
-          [[ "$(sudo find "${canonical}/server/modules" -maxdepth 1 -type f -name 'kanger-data-dumb-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
+          [[ "$(sudo find "${canonical}/server/modules" -maxdepth 1 -type f -name 'kanger-data-dumb2-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
           [[ "$(sudo find "${canonical}/server/lib" -maxdepth 1 -type f -name 'kanger-core-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
           [[ "$(sudo find "${canonical}/server/lib" -maxdepth 1 -type f -name 'kanger-bootstrap-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
-          [[ "$(sudo find "${canonical}/server/lib" -maxdepth 1 -type f \( -name 'kanger-udf-*.jar' -o -name 'kanger-data-dumb-*.jar' \) -printf '.\n' | wc -l)" -eq 0 ]]
+          [[ "$(sudo find "${canonical}/server/lib" -maxdepth 1 -type f \( -name 'kanger-udf-*.jar' -o -name 'kanger-data-dumb2-*.jar' \) -printf '.\n' | wc -l)" -eq 0 ]]
 
           java_bin="$(readlink -f "$(command -v java)")"
           sudo grep -Fqx 'WorkingDirectory=/opt/kanger/current' "${unit_file}"
@@ -293,10 +293,10 @@ jobs:
             sudo test -f "${release_dir}/server/kanger-server-thin.jar"
             sudo test -x "${release_dir}/bin/kanger-admin"
             [[ "$(sudo find "${release_dir}/server/modules" -maxdepth 1 -type f -name 'kanger-udf-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
-            [[ "$(sudo find "${release_dir}/server/modules" -maxdepth 1 -type f -name 'kanger-data-dumb-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
+            [[ "$(sudo find "${release_dir}/server/modules" -maxdepth 1 -type f -name 'kanger-data-dumb2-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
             [[ "$(sudo find "${release_dir}/server/lib" -maxdepth 1 -type f -name 'kanger-core-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
             [[ "$(sudo find "${release_dir}/server/lib" -maxdepth 1 -type f -name 'kanger-bootstrap-*.jar' -printf '.\n' | wc -l)" -eq 1 ]]
-            [[ "$(sudo find "${release_dir}/server/lib" -maxdepth 1 -type f \( -name 'kanger-udf-*.jar' -o -name 'kanger-data-dumb-*.jar' \) -printf '.\n' | wc -l)" -eq 0 ]]
+            [[ "$(sudo find "${release_dir}/server/lib" -maxdepth 1 -type f \( -name 'kanger-udf-*.jar' -o -name 'kanger-data-dumb2-*.jar' \) -printf '.\n' | wc -l)" -eq 0 ]]
           }
 
           assert_thin_unit() {

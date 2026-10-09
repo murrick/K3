@@ -15,7 +15,8 @@ import java.util.ServiceLoader;
  *
  * <p>Classpath absence is a supported state. A single provider for a missing
  * capability is attached automatically. If multiple providers are present,
- * selection must be explicit in the user configuration.</p>
+ * selection must be explicit in the user configuration, except that DUMB2 is
+ * preferred when the available storage providers are DUMB and DUMB2.</p>
  */
 public final class RuntimeBootstrap {
 
@@ -137,6 +138,16 @@ public final class RuntimeBootstrap {
             throw new RuntimeErrorException(
                     "Configured " + capability + " runtime module '" + requested
                             + "' was not found; discovered: " + ids(candidates));
+        }
+
+        if (capability == RuntimeCapability.STORAGE) {
+            RuntimeModule defaultStorage = null;
+            boolean knownStorageSet = true;
+            for (RuntimeModule candidate : candidates) {
+                if ("dumb2".equalsIgnoreCase(candidate.getId())) defaultStorage = candidate;
+                else if (!"dumb".equalsIgnoreCase(candidate.getId())) knownStorageSet = false;
+            }
+            if (knownStorageSet && defaultStorage != null) return defaultStorage;
         }
 
         if (candidates.size() == 1) {

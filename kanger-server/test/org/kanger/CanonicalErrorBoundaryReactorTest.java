@@ -15,6 +15,8 @@ import org.kanger.exception.StorageLifecycleException;
 import org.kanger.exception.TransactionSettlementException;
 import org.kanger.interfaces.IReactor;
 
+import java.util.Collections;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -42,6 +44,34 @@ class CanonicalErrorBoundaryReactorTest {
         assertFalse(diagnostic.getBoolean("retryable"));
         assertEquals("retain", diagnostic.getString("session_action"));
         assertEquals("confirmed", diagnostic.getString("operation_outcome"));
+    }
+
+    @Test
+    void storageQualificationFailureCarriesCollisionWitnesses() throws Exception {
+        ContextQualification.CollisionWitness witness =
+                new ContextQualification.CollisionWitness(
+                        "!male(Tom);",
+                        "!~male(Tom);");
+        CanonicalErrorBoundaryReactor boundary =
+                new CanonicalErrorBoundaryReactor(
+                        throwing(new StorageLifecycleException(
+                                StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                                "Context pair is not compatible",
+                                Collections.singletonList(witness))));
+
+        JSONObject response = response(boundary);
+        assertEquals("STORAGE_CONTEXT_CONFLICT",
+                response.getString("code"));
+        assertEquals(1,
+                response.getJSONArray("collisions").length());
+        assertEquals("!male(Tom);",
+                response.getJSONArray("collisions")
+                        .getJSONObject(0)
+                        .getString("left"));
+        assertEquals("!~male(Tom);",
+                response.getJSONArray("collisions")
+                        .getJSONObject(0)
+                        .getString("right"));
     }
 
     @Test

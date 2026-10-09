@@ -7,6 +7,7 @@ package org.kanger;
 
 import org.junit.jupiter.api.Test;
 import org.kanger.command.CommandParser;
+import org.kanger.exception.CommandErrorException;
 import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.IUser;
 import org.kanger.storage.DB;
@@ -277,6 +278,35 @@ class CanonicalCommandProcessorTest {
             assertFalse(rejected.isSuccess());
             assertSame(fixture.root, rejected.getMind());
             assertSame(fixture.root, fixture.user.getCurrentMind());
+        } finally {
+            fixture.close();
+        }
+    }
+
+    @Test
+    void ctxCapabilityIsOptionalAndDoesNotChangeStableDumb()
+            throws Exception {
+        Fixture fixture = fixture("ctx-optional");
+        try {
+            fixture.root = (Mind) fixture.root.useStorage(
+                    "canonical-ctx-stable");
+            fixture.user.setCurrentMind(fixture.root);
+
+            CanonicalCommandProcessor processor =
+                    new CanonicalCommandProcessor();
+            CommandParser parser = new CommandParser();
+
+            CommandErrorException rejected = assertThrows(
+                    CommandErrorException.class,
+                    () -> processor.execute(
+                            parser.parse("ctx"),
+                            fixture.user));
+
+            assertTrue(rejected.toString().contains(
+                    "does not support Context federation"));
+            assertSame(
+                    fixture.root,
+                    fixture.user.getCurrentMind());
         } finally {
             fixture.close();
         }

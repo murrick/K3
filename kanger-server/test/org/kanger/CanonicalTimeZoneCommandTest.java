@@ -32,12 +32,12 @@ class CanonicalTimeZoneCommandTest {
         CommandInvocation show = parser.parse("timezone");
         assertEquals(CommandIntent.TIMEZONE, show.getIntent());
         assertEquals("", show.getArgument("zoneId"));
-        assertEquals("timezone", formatter.format(show));
+        assertEquals("options timezone", formatter.format(show));
 
         CommandInvocation set = parser.parse("timezone Asia/Tokyo");
         assertEquals(CommandIntent.TIMEZONE, set.getIntent());
         assertEquals("Asia/Tokyo", set.getArgument("zoneId"));
-        assertEquals("timezone Asia/Tokyo", formatter.format(set));
+        assertEquals("options timezone Asia/Tokyo", formatter.format(set));
     }
 
     @Test

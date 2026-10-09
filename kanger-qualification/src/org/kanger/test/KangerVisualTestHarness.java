@@ -34,10 +34,10 @@ public final class KangerVisualTestHarness {
         List<String> fails = new ArrayList<String>();
         Map<String, Double> timings = new TreeMap<String, Double>();
 
-        KangerTest test = new KangerTest(mind);
+        KangerTest test = new KangerCompletedTest(mind);
         test.setUp();
 
-        for (Method method : KangerTest.class.getDeclaredMethods()) {
+        for (Method method : KangerCompletedTest.class.getMethods()) {
             if (method.getName().startsWith(prefix)) {
                 timings.put(method.getName(), 0.0);
             }
@@ -55,7 +55,7 @@ public final class KangerVisualTestHarness {
                     System.out.println(Diagnostics.snapshot(test.mind,
                             "before " + name));
                 }
-                Method method = KangerTest.class.getDeclaredMethod(name);
+                Method method = KangerCompletedTest.class.getMethod(name);
                 method.setAccessible(true);
                 try (Diagnostics.Watchdog watchdog = Diagnostics.watch(name, test.mind)) {
                     method.invoke(test);

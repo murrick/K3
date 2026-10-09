@@ -10,8 +10,8 @@ ACCEPT	stat	STATUS	status	-	-	OK	yes
 ACCEPT	sto	STORAGE_STATUS	storage	-	-	OK	yes
 ACCEPT	sq	TX_SQUASH	transaction squash	-	-	OK	yes
 ACCEPT	tr	TX_STATUS	transaction	-	-	OK	yes
-ACCEPT	ti	TIMEZONE	timezone	-	-	OK	yes
-ACCEPT	ti Europe/Brussels	TIMEZONE	timezone Europe/Brussels	zoneId	Europe/Brussels	OK	yes
+ACCEPT	ti	TIMEZONE	options timezone	-	-	OK	yes
+ACCEPT	ti Europe/Brussels	TIMEZONE	options timezone Europe/Brussels	zoneId	Europe/Brussels	OK	yes
 ACCEPT	pr	BASE_PREDICATES	base predicates	-	-	OK	yes
 ACCEPT	predicate	BASE_PREDICATES	base predicates	-	-	OK	yes
 ACCEPT	predicates father	BASE_PREDICATE	base predicate father	predicate	father	OK	yes
@@ -36,6 +36,9 @@ REJECT	tree 1	UNKNOWN_KEYWORD	-	-	-	error	yes
 REJECT	drop	MISSING_ARGUMENT	-	-	-	error	yes
 REJECT	reindex	MISSING_ARGUMENT	-	-	-	error	yes
 REJECT	storage use	MISSING_ARGUMENT	-	-	-	error	yes
-REJECT	commit now	EXTRA_ARGUMENT	-	-	-	error	yes
+ACCEPT	commit now	TX_COMMIT	transaction commit now	description	now	OK	yes
+REJECT	commit too many	EXTRA_ARGUMENT	-	-	-	error	yes
+ACCEPT	commit "Shared release"	TX_COMMIT	transaction commit "Shared release"	description	Shared release	OK	yes
+ACCEPT	ctx publish "Shared release"	CTX_PUBLISH	ctx publish "Shared release"	description	Shared release	OK	no
 REJECT	get "unfinished	UNTERMINATED_QUOTE	-	-	-	error	yes
 REJECT	!!eating(Cat, Mouse);	INVALID_GRAMMAR	-	-	-	error	yes

@@ -45,15 +45,23 @@ final class TechnicalMindTransaction implements AutoCloseable {
     private boolean settlementStarted;
 
     private TechnicalMindTransaction(Mind parent) throws Exception {
+        this(parent, false);
+    }
+
+    private TechnicalMindTransaction(Mind parent, boolean isolated) throws Exception {
         if (parent == null) {
             throw new IllegalArgumentException("Technical Mind transaction requires a parent");
         }
         this.parent = parent;
-        this.child = new Mind(parent);
+        this.child = isolated ? Mind.ephemeralChild(parent) : new Mind(parent);
     }
 
     static TechnicalMindTransaction begin(Mind parent) throws Exception {
         return new TechnicalMindTransaction(parent);
+    }
+
+    static TechnicalMindTransaction beginIsolated(Mind parent) throws Exception {
+        return new TechnicalMindTransaction(parent, true);
     }
 
     Mind mind() {

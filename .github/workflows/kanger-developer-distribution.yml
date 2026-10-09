@@ -11,6 +11,7 @@ on:
       - 'kanger-bootstrap/**'
       - 'kanger-udf/**'
       - 'kanger-data-dumb/**'
+      - 'kanger-data-dumb2/**'
       - 'kanger-console/**'
       - '.github/workflows/kanger-developer-distribution.yml'
   pull_request:
@@ -23,6 +24,7 @@ on:
       - 'kanger-bootstrap/**'
       - 'kanger-udf/**'
       - 'kanger-data-dumb/**'
+      - 'kanger-data-dumb2/**'
       - 'kanger-console/**'
       - '.github/workflows/kanger-developer-distribution.yml'
   workflow_dispatch:

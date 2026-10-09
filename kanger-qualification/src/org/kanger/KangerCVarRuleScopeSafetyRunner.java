@@ -156,6 +156,17 @@ public final class KangerCVarRuleScopeSafetyRunner {
         new DB().init(user);
         Mind mind = (Mind) new Mind(user).clearWorkspace();
 
+        require(mind.compile("!@x ~a(x,x);"), "abstract prohibition fixture rejected");
+        require(Boolean.FALSE.equals(mind.query("?$x a(x,x);", null, false)),
+                "universal prohibition must refute an abstract witness");
+        require(Boolean.TRUE.equals(mind.query("?@x ~a(x,x);", null, false)),
+                "universal prohibition must prove its quantified query");
+        mind = (Mind) mind.clearWorkspace();
+        require(mind.compile("!$y witness(John,y);"), "existential fixture rejected");
+        require(Boolean.TRUE.equals(mind.query("?$x witness(John,x);", null, false)),
+                "stored existential witness must prove existential query");
+        require(mind.getValues().isEmpty(), "abstract witness must not escape into Values");
+        mind = (Mind) mind.clearWorkspace();
         mind.compile("!@x ~a(x,x); !@x @y b(x,y) -> a(x,y);");
         require(Boolean.FALSE.equals(mind.query("?$x b(x,x);", null, false)),
                 "CHECKFALSE must preserve transient C-variable projections");

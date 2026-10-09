@@ -177,6 +177,15 @@ public class RuleFactory implements IFactory<IRule> {
     private volatile boolean action = false;
     private final Stack<Boolean> actionStack = new Stack<>();
     private final Object metadataLock = new Object();
+    private final Map<Long, Rule> inferenceViews = new HashMap<>();
+    private final Stack<Map<Long, Rule>> inferenceViewStack = new Stack<>();
+
+    /** Replace, rather than mutate, metadata inherited from a parent/checkpoint. */
+    public Rule editInference(IRule rule) throws Exception {
+        Rule view = get(rule.getId()).copyInferenceView(mind);
+        inferenceViews.put(rule.getId(), view);
+        return view;
+    }
 
     private static final class DomainKey {
         private final long predicateId;
@@ -225,7 +234,8 @@ public class RuleFactory implements IFactory<IRule> {
     private final Set<Long> primaryPromotions = new HashSet<>();
     private final Map<Long, Rule> promotionViews = new HashMap<>();
     private final Stack<Set<Long>> promotionStack = new Stack<>();
-    private final Set<Long> appliedPromotions = new HashSet<>();
+    // Retain the changed instances: storage reads may hydrate a fresh Rule per lookup.
+    private final Map<Long, Rule> appliedRuleUpdates = new HashMap<>();
 
     public RuleFactory(Mind mind) throws Exception {
         this.mind = mind;
@@ -258,7 +268,7 @@ public class RuleFactory implements IFactory<IRule> {
             primaryPromotions.clear();
             promotionViews.clear();
             promotionStack.clear();
-            appliedPromotions.clear();
+            appliedRuleUpdates.clear();
             candidateIndex.clear();
         }
     }
@@ -569,6 +579,9 @@ public class RuleFactory implements IFactory<IRule> {
                 list.add(((IUnit) s).getId());
             }
         }
+        for (Map.Entry<Long, Rule> entry : base.inferenceViews.entrySet()) {
+            inferenceViews.put(entry.getKey(), entry.getValue().copyInferenceView(mind));
+        }
         mergeDomainIndex(base);
         action = action || base.isAction();
         return list;
@@ -576,13 +589,14 @@ public class RuleFactory implements IFactory<IRule> {
 
     public void update() throws Exception {
         cache.update();
-        Set<Long> applied;
+        Map<Long, Rule> applied;
         synchronized (metadataLock) {
-            applied = new HashSet<>(appliedPromotions);
+            applied = new HashMap<>(appliedRuleUpdates);
         }
         if (connection != null && !applied.isEmpty()) {
-            for (long id : applied) {
-                Rule rule = getRaw(id);
+            for (Map.Entry<Long, Rule> entry : applied.entrySet()) {
+                long id = entry.getKey();
+                Rule rule = entry.getValue();
                 IStep step = connection.get(id);
                 if (rule != null && step != null) {
                     step.setData(rule);
@@ -591,7 +605,7 @@ public class RuleFactory implements IFactory<IRule> {
             }
         }
         synchronized (metadataLock) {
-            appliedPromotions.clear();
+            appliedRuleUpdates.clear();
         }
     }
 
@@ -682,6 +696,12 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     private Rule effectiveView(Rule rule) throws Exception {
+        if (rule != null && !isPromoted(rule.getId())) {
+            for (IMind current = mind; current != null; current = current.getNext()) {
+                Rule view = ((RuleFactory) current.getRules()).inferenceViews.get(rule.getId());
+                if (view != null) return view;
+            }
+        }
         if (rule == null || !isPromoted(rule.getId())) {
             return rule;
         }
@@ -748,11 +768,13 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public void clear() throws Exception {
+        inferenceViews.clear();
+        inferenceViewStack.clear();
         synchronized (metadataLock) {
             primaryPromotions.clear();
             promotionViews.clear();
             promotionStack.clear();
-            appliedPromotions.clear();
+            appliedRuleUpdates.clear();
             actionStack.clear();
         }
         if (mind.getNext() != null) {
@@ -765,6 +787,7 @@ public class RuleFactory implements IFactory<IRule> {
 
     public void mark() throws Exception {
         cache.mark();
+        inferenceViewStack.push(new HashMap<>(inferenceViews));
         ensureDomainIndex();
         synchronized (metadataLock) {
             domainIndexStack.push(copyDomainIndexLocked());
@@ -776,6 +799,7 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public void commit() throws Exception {
+        if (!inferenceViewStack.isEmpty()) inferenceViewStack.pop();
         cache.commit();
         synchronized (metadataLock) {
             if (!domainIndexStack.isEmpty()) {
@@ -795,6 +819,10 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public void release() throws Exception {
+        if (!inferenceViewStack.isEmpty()) {
+            inferenceViews.clear();
+            inferenceViews.putAll(inferenceViewStack.pop());
+        }
         cache.release();
         synchronized (metadataLock) {
             if (!domainIndexStack.isEmpty()) {
@@ -992,7 +1020,7 @@ public class RuleFactory implements IFactory<IRule> {
                 rule.setSecond(false);
                 rule.getCauses().clear();
                 synchronized (metadataLock) {
-                    appliedPromotions.add(id);
+                    appliedRuleUpdates.put(id, rule);
                 }
             }
         }
@@ -1003,6 +1031,22 @@ public class RuleFactory implements IFactory<IRule> {
     }
 
     public void pack() throws Exception {
+        if (mind.getNext() == null) {
+            for (Map.Entry<Long, Rule> entry : inferenceViews.entrySet()) {
+                Rule raw = getRaw(entry.getKey());
+                if (raw == null || raw.isDeleted(mind) || isPromoted(raw.getId())) continue;
+                Rule view = entry.getValue();
+                // Solves are transient and are rebuilt after reopening storage.
+                // Only changed persistent provenance needs a storage update.
+                boolean causesChanged = !raw.getCauses().equals(view.getCauses());
+                raw.getCauses().clear();
+                raw.getCauses().addAll(entry.getValue().getCauses());
+                raw.getSolves().clear();
+                raw.getSolves().addAll(entry.getValue().getSolves());
+                if (causesChanged) appliedRuleUpdates.put(raw.getId(), raw);
+            }
+            inferenceViews.clear();
+        }
         applyPromotions();
         List<Object> toDelete = new ArrayList<>();
         for (Object o : cache) {

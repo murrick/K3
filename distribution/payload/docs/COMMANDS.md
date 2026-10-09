@@ -82,8 +82,9 @@ Transaction rollback and storage reindex are not routed through this confirmatio
 | Transactions | `transaction`, `transaction start|commit|rollback|squash` | Inspect and manage explicit user transaction levels |
 | Sources | `get [<source>]`, `put <source>`, `delete [<source>]` | List/load/save/delete server-side source files |
 | Storage | `storage`, `storage use|close|drop|reindex ...` | Inspect and manage persistent storage |
+| Context federation | `ctx`, `ctx connect|disconnect|switch|publish|rules|version|explain ...`, `ctx <locator> <query...>` | Inspect or mutate working topology, inspect revision history, and run normal-query semantic traces or isolated diagnostics |
 | Status | `status [core [objects|transaction|levels]|storage|session|runtime]` | Cheap canonical product telemetry |
-| Session | `timezone [<zoneId>]`, `help`, `quit` | Inspect or change session timezone, show help, or end the session |
+| Session | `options`, `options timezone [<zoneId>]`, `options optimize ...`, `help`, `quit` | Inspect or change session settings and optimizations, show help, or end the session |
 | Workspace | `erase` | Clear the current workspace through qualified runtime semantics |
 
 ---
@@ -284,10 +285,10 @@ start
 
 A successful start changes the current level from `Un` to `U(n+1)`.
 
-### `transaction commit`
+### `transaction commit [description]`
 
 ```text
-transaction commit
+transaction commit [description]
 commit
 ```
 
@@ -404,6 +405,228 @@ storage reindex natives
 ```
 
 Rebuilds the explicitly named storage using the storage lifecycle. It requires a legal/quiescent transaction topology. Reindex is not protected by the generic confirmation dialogue, so treat it as an explicit administrative data-maintenance command.
+
+---
+
+## 11A. Context federation (`ctx`)
+
+The `ctx` family is the first operator-visible projection of exact-revision
+Context federation. It is available only when the active storage backend
+implements the Context federation capability; the default/stable DUMB provider
+is unchanged.
+
+### `ctx`
+
+Shows the current Context identity/revision and its direct connections.
+
+The Console projection uses human-readable Context locators/storage names.
+Internal `ContextId` UUIDs remain authoritative identity in the semantic
+model and structured API, but are not required for normal operator work.
+
+For each connection the projection includes:
+
+- target locator/storage name;
+- exact pinned `RevisionId`;
+- pin policy `EXACT_REVISION`;
+- compatibility/certificate state;
+- target `CURRENT` revision when it differs from the pin.
+
+A newer target `CURRENT` is informational only. It never moves the existing
+pin automatically.
+
+### `ctx rules [<locator>] [all|produced|<id>|tree <id>|comment <id>]`
+
+Shows native rules in separate Context blocks. Without a locator, collection
+views include live X and all explicitly connected direct Contexts. A named
+foreign Context is inspected at the revision pinned in X; its own dependencies
+are not traversed. `ctx rules X` includes X's current user transaction layer.
+
+The default view selects primary rules. `all` includes primary and generated
+rules, while `produced` selects generated rules only. A numeric ID selects one
+rule; `tree <id>` shows its native tree and `comment <id>` reads its comment.
+IDs are local to the named block. Without a locator, numeric views address X.
+These views are read-only. Comment editing stays on ordinary `rule comment`;
+transaction levels stay on ordinary `rule level [n]` for X. There is no
+`ctx rules level` modifier.
+
+```text
+ctx rules
+ctx rules A all
+ctx rules A tree 12
+ctx rules A comment 12
+```
+
+### `ctx publish [description]`
+
+Publishes the full local content and explicitly selected working direct connections
+as one immutable revision. Open user transactions are collapsed to U0 only after
+explicit confirmation. Console previews the description and exact pins; API callers
+pass `confirmed: true` in the dialogue envelope. The complete candidate is qualified
+before the live stack changes. Cancellation or failed qualification preserves all
+user levels, descriptions, working pins and CURRENT.
+
+Console asks for an optional description when none is given: Enter accepts the
+pending or automatic proposal. Descriptions are one line, at most 512 Unicode
+characters. Ordinary `commit [description]` moves only to the immediate parent;
+its proposal follows successful commits, the latest explicit proposal wins, and
+rollback drops the child proposal. Squash preserves the latest proposal. Commit
+into U0 publishes one revision, but does not save unsaved working connections.
+Accepted, deleted and restored authoring at U0 gets an automatic operation description.
+Queries and inspection do not publish revisions.
+
+Reopening restores the published exact pins. Unsaved session topology is discarded
+on close. Nested rollback restores its topology boundary. Published dependencies
+of a pinned target are advisory recommendations: they never automatically connect,
+open missing targets, or cause cascaded disconnection. Missing knowledge limits the
+proof domain. `ctx publish` replaces `ctx save` and does not send anything to a server.
+
+### `ctx connect <locator> [trust <group>]`
+
+Qualifies the current Context against the target at its current exact revision
+and adds that exact pin to the **session working topology** only if qualification
+succeeds.
+
+An explicit `trust <group>` places the pin in a named trust commune. Members of
+one commune contribute their rules, facts and private connection initialization
+to one jointly qualified native working layer. This allows a rule in one Context
+to use a fact from another member, for example:
+
+```text
+ctx connect natives trust own
+ctx connect facts trust own
+```
+
+Independent connections keep their autonomous opinions. Changing commune members
+prepares and qualifies a replacement joint layer before installing it. Transaction
+rollback restores the previous membership and working state. Publication saves the
+exact pins and trust configuration; the joint derived productions do not overwrite
+the published members. In `ctx rules all`, Console shows the commune's technical
+layer once, with its members named below the header. Inspect an individual member
+explicitly with `ctx rules natives all` when needed.
+
+
+The already published source revision is immutable: `ctx connect` does not
+rewrite its ConnectionVector and does not publish a new source revision. For
+local DUMB2 operation, a logical storage name may be used as the locator.
+
+### `ctx disconnect <locator>`
+
+Removes one direct connection from the session working topology. The published
+source revision remains unchanged. Disconnecting does not rewrite local
+knowledge and does not require cleanup of previously queried foreign evidence
+because such evidence is operation-local.
+
+### `ctx switch <locator> <RevisionId>`
+
+Deliberately attempts to repin one existing working connection to the requested
+exact target revision. The requested target is pair-qualified against the
+source Context. Direct-composition collision witnesses are then compared before
+and after the proposed repin: any newly introduced composition conflict rejects
+the switch.
+
+An already-existing conflict between autonomous direct Contexts does not freeze
+an unrelated working repin; such foreign truth conflicts remain observable as
+`CONFLICT` through the ordinary federated query path (and can be traced with
+`ctx explain`). Existing conflicts may disappear, but a repin may not add a
+new collision witness. If qualification fails, the old
+working pin remains authoritative. There is no `FOLLOW_HEAD` mode.
+
+Durable topology publication is a separate revision/publication boundary; these
+operator commands do not bypass that boundary.
+
+### `ctx version [<locator>]`
+
+Shows immutable revision history. Without a locator it shows the initiating
+Context. With a locator it accepts that Context itself or one direct working
+connection.
+
+For a connected Context the projection shows both the exact `PINNED` revision
+and its informational `CURRENT` revision. Revision descriptions come from the
+immutable revision manifest. The command is read-only: it does not notify,
+follow HEAD, switch pins or publish anything.
+
+### `ctx explain <query...>`
+
+Runs the **normal `Mind.query()` path** and adds a semantic trace around that
+same execution. It is not a second query engine.
+
+The trace reports the initiating Context, exact working pins, the local result,
+the historical FALSE/TRUE federation passes actually entered, frontier waves,
+per-Context `TRUE`/`FALSE`/`UNKNOWN`/`CONFLICT` observations, semantic
+lift substitutions, evidence injected into the initiating operation, subsequent
+continuation in X, and final Values/Solutions.
+
+Example:
+
+```text
+ctx explain ?$x son(John, x);
+```
+
+The projection is deliberately semantic. Storage-local ids, hash buckets,
+factories, caches and other runtime implementation details are not part of this
+surface.
+
+### `ctx fork <locator>`
+
+Create an independent Context from the selected published revision without switching
+away from the source. `use X@7` followed by `ctx fork Y` forks exactly X revision 7,
+even when X CURRENT is newer. The fork gets a new Context identity, its own revision
+history and the exact source identity/revision as origin. Published direct pins and
+private initialization commands are copied and qualified for the new source.
+The original Context and its connected sources remain unchanged.
+
+Fork requires U0 and saved connections: commit or publish pending work first.
+The target must be a new logical name, without a path or `@revision`; an existing
+Context is rejected before mutation. Open the result explicitly with `use Y`.
+
+### `ctx opinions [<locator>]`
+
+Collect meaningful isolated opinions for the last ordinary query from live X and
+its exact direct pins, or the selected source. TRUE/FALSE opinions retain their
+Solutions and Values; UNKNOWN opinions contain locally qualified hypotheses only.
+UNKNOWN without hypotheses is omitted. Collection does not change X knowledge,
+connections or revisions. Repeating the same selection reuses the cached result.
+
+### `ctx values [<locator>]`, `ctx solves [<locator>]`, `ctx when [<locator>]`
+
+Read Values, solution proof trees, or hypotheses from the cached opinions without
+running inference. Each result keeps its source context and exact revision.
+A new query or a state change invalidates the collection.
+
+### `ctx ask <locator> <query-or-command...>`
+
+Run an isolated query in the selected live X or exact directly connected context.
+Names matching commands are accepted literally. For a foreign context, !/+/-
+commands change only its private view owned by X. Original target knowledge and
+history remain unchanged. Ordered initialization commands are saved with X's
+connections on publication and replayed when X is reopened. X rollback restores
+the private view with its corresponding transaction layer.
+
+### `ctx <locator> <query...>`
+
+Runs one isolated local-only KANGER query in the selected Context.
+The locator may name the initiating Context itself or one of its explicit direct
+connections. A foreign locator is resolved only through the initiating
+Context's exact-pinned ConnectionVector; there is no global lookup, implicit
+connect, or recursive traversal of the target Context's own connections.
+
+Examples:
+
+```text
+ctx X ?male(Tom);
+ctx A ?$x son(John, x);
+```
+
+The projection reports the selected exact revision, final truth, user-readable
+Values and provisional hypotheses. The query is diagnostic: it does not mutate
+the initiating Context or publish foreign state.
+
+Ordinary bare `?...` is the canonical query surface: with no direct
+connections it preserves historical local-only behavior; with a non-empty
+ConnectionVector it continues unresolved FALSE/TRUE passes through exact-pinned
+direct Contexts. Use `ctx explain ?...` when the same normal federated query
+needs a semantic trace. Foreign evidence remains operation-local and is not
+published into the source Context.
 
 ---
 
@@ -573,16 +796,56 @@ The Browser TECH panel formats some of these raw values for readability (KiB/MiB
 
 ---
 
-## 13. Session time zone
+## 13. Session options
 
-### `timezone [<zoneId>]`
+### `options [help|debug|values|log|timezone|optimize [<optimization>]] [<value>]`
 
 ```text
-timezone
-timezone Europe/Vienna
+options
+opt help
+opt debug no
+opt values yes
+opt log no
+opt optimize no
+opt optimize yes
+opt optimize singleTValueLookup no
 ```
 
-Without an argument, shows the current session time zone. With an IANA time-zone id, changes the time zone of the current session immediately. The setting belongs to the current User/session runtime context; it does not change the JVM default or server-wide configuration.
+`options` (shortened to `opt`) shows the current session settings. A switch without
+`yes` or `no` reports its state. `debug`, `values` and `log` control debug rendering,
+variable/function values in logs, and runtime analysis logging respectively.
+Canonical `status` remains a separate read-only command.
+
+`opt optimize yes/no` switches all eight qualified acceleration paths together.
+An individual setting belongs under `optimize`; the aggregate reports `mixed`
+when some switches are enabled and others disabled. The list is indented under
+the group heading. These settings apply immediately to the current User/session,
+including child transactions and subsequent storage switches, without changing
+other sessions or JVM properties. Existing `kanger.experiment.*` properties remain
+defaults until overridden. Verification and profiling properties are unaffected.
+
+| Optimization | Purpose |
+| --- | --- |
+| versionedSolveSync | Reuse unchanged solve synchronization |
+| residentBaseComparison | Compare resident arguments without repeated lookup |
+| singleTValueLookup | Resolve a variable's current value with one lookup |
+| resolvedCauseWeights | Reuse resolved argument IDs for cause weights |
+| compactCauseWeights | Use compact primitive IDs for cause weights |
+| candidateMembershipFilter | Filter rule candidates by argument membership |
+| compactFindSnapshots | Use compact candidate snapshots |
+| preserveTValueIndex | Retain an unchanged TValue index across release |
+
+### `options timezone [<zoneId>]`
+
+```text
+opt timezone
+opt timezone Europe/Moscow
+```
+
+Without an argument, shows the current session time zone. With an IANA time-zone
+id, changes it immediately. It does not change the JVM default or server-wide
+configuration. The previous standalone `timezone [<zoneId>]` spelling remains
+accepted for compatibility and formats canonically as `options timezone`.
 
 ---
 
@@ -656,3 +919,12 @@ For scripts and support procedures:
 - `UI_CONSOLE.md` — Browser UI, workspace panels, operation model, and TECH presentation.
 
 This document defines the KANGER 3.8.0 distribution command surface. If a future release changes command grammar or command lifecycle semantics, the distribution reference for that release must change with it.
+### Exact historical storage (DUMB2)
+
+`use X@7` (or `storage use X@7`) opens immutable revision 7 of X. It never creates a storage named `X@7`. The view uses that revision's published direct connections and remains at the selected revision across queries. `ctx`, `ctx rules`, and `ctx version` expose the exact view; `use X` returns to CURRENT.
+
+Open an exact historical revision from U0. A missing revision or an open user transaction rejects the operation before changing the active storage or stack. Authoring, compilation, rule comment changes, publication, and topology changes are rejected in a historical view.
+
+### Conflicts in free federated queries
+
+Free query candidates are checked independently through native ground queries before becoming evidence. A conflict for John does not remove independently proved Mary from `?$x r(x);`. The result contains Mary and a separate conflict diagnostic with exact supporting source revisions. Conflicted candidates never become evidence; a query with only conflicted candidates reports CONFLICT without a hypothesis.

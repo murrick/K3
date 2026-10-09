@@ -11,6 +11,8 @@ import org.kanger.enums.Enums;
 import org.kanger.interfaces.IMind;
 import org.kanger.interfaces.IReactor;
 import org.kanger.interfaces.IUser;
+import org.kanger.interfaces.internal.IContextFederation;
+import org.kanger.interfaces.internal.IData;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +38,7 @@ public final class CanonicalCommandProcessor {
         }
         CommandIntent intent = invocation.getIntent();
         return intent == CommandIntent.STATUS
+                || intent == CommandIntent.OPTIONS
                 || intent == CommandIntent.TIMEZONE
                 || intent == CommandIntent.TX_STATUS
                 || intent == CommandIntent.TX_START
@@ -46,7 +49,21 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.STORAGE_USE
                 || intent == CommandIntent.STORAGE_CLOSE
                 || intent == CommandIntent.STORAGE_DROP
-                || intent == CommandIntent.STORAGE_REINDEX;
+                || intent == CommandIntent.STORAGE_REINDEX
+                || intent == CommandIntent.CTX_OPINIONS
+                || intent == CommandIntent.CTX_VALUES
+                || intent == CommandIntent.CTX_SOLVES
+                || intent == CommandIntent.CTX_WHEN
+                || intent == CommandIntent.CTX_STATUS
+                || intent == CommandIntent.CTX_RULES
+                || intent == CommandIntent.CTX_FORK
+                || intent == CommandIntent.CTX_PUBLISH
+                || intent == CommandIntent.CTX_CONNECT
+                || intent == CommandIntent.CTX_DISCONNECT
+                || intent == CommandIntent.CTX_SWITCH
+                || intent == CommandIntent.CTX_VERSION
+                || intent == CommandIntent.CTX_EXPLAIN
+                || intent == CommandIntent.CTX_ISOLATED_QUERY;
     }
 
     public Result execute(CommandInvocation invocation, IUser user) throws Exception {
@@ -80,6 +97,9 @@ public final class CanonicalCommandProcessor {
             case STATUS:
                 return canonicalStatus(invocation, user, mind);
 
+            case OPTIONS:
+                return Result.success(mind, sessionOptions(invocation, mind));
+
             case TIMEZONE:
                 Object zoneId = invocation.getArgument("zoneId");
                 if (zoneId != null && !String.valueOf(zoneId).isEmpty()) {
@@ -97,12 +117,13 @@ public final class CanonicalCommandProcessor {
 
             case TX_START:
                 mind = new Mind(mind);
+                ((Mind) mind).checkpointUserConnections();
                 TransactionCompatibilityRegistry.markValid((Mind) mind);
                 user.setCurrentMind(mind);
                 return Result.success(mind, "New transaction created");
 
             case TX_COMMIT:
-                return commit(user, mind);
+                return commit(user, mind, (String) invocation.getArgument("description"));
 
             case TX_ROLLBACK:
                 return rollback(user, mind);
@@ -165,9 +186,188 @@ public final class CanonicalCommandProcessor {
                         "Database reindexed",
                         storageStatus(mind));
 
+            case CTX_STATUS: {
+                IContextFederation federation =
+                        contextFederation(user, mind);
+                return Result.successFederation(
+                        mind, "",
+                        federation.federationSnapshot(), null);
+            }
+
+            case CTX_RULES: {
+                IContextFederation federation=contextFederation(user,mind);
+                Object locator=invocation.getArgument("locator");
+                List<IContextFederation.RuleBlock> rules=federation.inspectRules(mind,
+                        locator==null?null:String.valueOf(locator),
+                        IContextFederation.RuleSelection.valueOf(String.valueOf(invocation.getArgument("selection"))),
+                        (Long)invocation.getArgument("id"));
+                return Result.successContextRules(mind,federation.federationSnapshot(),rules);
+            }
+            case CTX_PUBLISH: {
+                IContextFederation federation=contextFederation(user,mind);
+                if (!(mind instanceof Mind) || !(((User) user).getData() instanceof org.kanger.interfaces.internal.IRevisionPublication))
+                    throw new org.kanger.exception.CommandErrorException("Context publication is unavailable");
+                Mind source=(Mind) mind;
+                source.requireWritableContext();
+                source.requirePublicationQuiescence();
+                String description=source.resolveRevisionDescription((String) invocation.getArgument("description"),
+                        "Published Context " + mind.getStorageName());
+                if (mind.getTransactionLevel() > 0 && !Boolean.TRUE.equals(invocation.getArgument("confirmed"))) {
+                    String preview="Publication confirmation required: U" + mind.getTransactionLevel()
+                            + " -> U0; description: " + description;
+                    Rejection rejection=new Rejection("publication_confirmation_required", preview, 0,
+                            mind.getStorageName(), Collections.<CollisionWitness>emptyList(), Collections.<ResolutionAction>emptyList());
+                    return new Result(true,false,mind,preview,null,rejection,null,federation.federationSnapshot(),null);
+                }
+                IMind published=((org.kanger.interfaces.internal.IRevisionPublication) ((User) user).getData()).publishContext(mind,description);
+                IContextFederation.Snapshot snapshot=federation.federationSnapshot();
+                return Result.successFederation(published,"Context published: " + published.getStorageName()
+                        + "@" + snapshot.getSourceRevision() + ": " + description,snapshot,null);
+            }
+
+            case CTX_CONNECT: {
+                IContextFederation federation =
+                        contextFederation(user, mind);
+                IContextFederation.Connection connection =
+                        federation.connectContext(String.valueOf(
+                                invocation.getArgument("locator")), (String) invocation.getArgument("trustGroup"));
+                return Result.successFederation(
+                        mind,
+                        "Context connected: "
+                                + connection.getLocator()
+                                + "@"
+                                + connection.getPinnedRevision()
+                                + (connection.getTrustGroup() == null ? "" : " [trust " + connection.getTrustGroup() + "]"),
+                        federation.federationSnapshot(), null);
+            }
+
+            case CTX_DISCONNECT: {
+                IContextFederation federation =
+                        contextFederation(user, mind);
+                String locator = String.valueOf(
+                        invocation.getArgument("locator"));
+                federation.disconnectContext(locator);
+                return Result.successFederation(
+                        mind,
+                        "Context disconnected: " + locator,
+                        federation.federationSnapshot(), null);
+            }
+
+            case CTX_SWITCH: {
+                IContextFederation federation =
+                        contextFederation(user, mind);
+                String locator = String.valueOf(
+                        invocation.getArgument("locator"));
+                long revision = ((Number) invocation.getArgument(
+                        "RevisionId")).longValue();
+                IContextFederation.Connection connection =
+                        federation.switchContextRevision(
+                                locator, revision);
+                return Result.successFederation(
+                        mind,
+                        "Context pin switched: "
+                                + connection.getLocator()
+                                + "@"
+                                + connection.getPinnedRevision(),
+                        federation.federationSnapshot(), null);
+            }
+
+            case CTX_VERSION: {
+                if (!(user instanceof User) || !(((User) user).getData() instanceof IContextFederation))
+                    throw new org.kanger.exception.CommandErrorException("Context version history is unavailable");
+                IContextFederation federation = (IContextFederation) ((User) user).getData();
+                Object rawLocator =
+                        invocation.getArgument("locator");
+                IContextFederation.VersionHistory versions =
+                        federation.versionHistory(
+                                rawLocator == null
+                                        ? null
+                                        : String.valueOf(
+                                                rawLocator));
+                return Result.successContextVersion(
+                        mind,
+                        mind.isStorageUsed() ? federation.federationSnapshot() : null,
+                        versions);
+            }
+
+            case CTX_EXPLAIN: {
+                if (!(mind instanceof Mind)) {
+                    throw new org.kanger.exception.CommandErrorException(
+                            "Context explain requires the canonical Mind runtime");
+                }
+                IContextFederation.ExplainResult explain =
+                        ((Mind) mind).explainQuery(
+                                String.valueOf(
+                                        invocation.getArgument("query")));
+                return Result.successContextExplain(
+                        mind,
+                        explain);
+            }
+
+            case CTX_FORK: {
+                IContextFederation federation = contextFederation(user, mind);
+                String locator = (String) invocation.getArgument("locator");
+                org.kanger.interfaces.IContextResults.Revision fork = mind.forkContext(locator);
+                return Result.successFederation(mind, "Context forked: " + locator + "@" + fork.getRevision(),
+                        federation.federationSnapshot(), null);
+            }
+
+            case CTX_OPINIONS:
+            case CTX_VALUES:
+            case CTX_SOLVES:
+            case CTX_WHEN: {
+                IContextFederation federation = contextFederation(user, mind);
+                String locator = (String) invocation.getArgument("locator");
+                java.util.Map<String, IContextFederation.Opinion> opinions = invocation.getIntent() == CommandIntent.CTX_OPINIONS
+                        ? mind.collectContextOpinions(locator) : mind.getContextOpinions(locator);
+                return Result.successContextOpinions(mind, federation.federationSnapshot(), opinions);
+            }
+
+            case CTX_ISOLATED_QUERY: {
+                IContextFederation federation =
+                        contextFederation(user, mind);
+                String locator = String.valueOf(
+                        invocation.getArgument("locator"));
+                String source = String.valueOf(invocation.getArgument("query"));
+                if (!source.startsWith("?")) {
+                    federation.applyConnectionCommand(mind, locator, source);
+                    return Result.successFederation(mind, "Context layer updated: " + locator,
+                            federation.federationSnapshot(), null);
+                }
+                IContextFederation.QueryResult query =
+                        federation.executeIsolatedQuery(
+                                mind,
+                                locator,
+                                String.valueOf(
+                                        invocation.getArgument("query")));
+                return Result.successFederation(
+                        mind,
+                        "Context query: " + locator,
+                        federation.federationSnapshot(),
+                        query);
+            }
+
             default:
                 return Result.unhandled(mind);
         }
+    }
+
+    private IContextFederation contextFederation(
+            IUser user, IMind mind) throws Exception {
+        if (!mind.isStorageUsed()) {
+            throw new org.kanger.exception.CommandErrorException(
+                    "No storage is open");
+        }
+        if (!(user instanceof User)) {
+            throw new org.kanger.exception.CommandErrorException(
+                    "Context federation requires the canonical User runtime");
+        }
+        IData data = ((User) user).getData();
+        if (!(data instanceof IContextFederation)) {
+            throw new org.kanger.exception.CommandErrorException(
+                    "Current storage does not support Context federation");
+        }
+        return (IContextFederation) data;
     }
 
     private Result canonicalStatus(CommandInvocation invocation,
@@ -182,11 +382,57 @@ public final class CanonicalCommandProcessor {
                 subsection == null ? null : String.valueOf(subsection)));
     }
 
+    private String sessionOptions(CommandInvocation invocation, IMind mind) {
+        String option = (String) invocation.getArgument("option");
+        String value = (String) invocation.getArgument("value");
+        String optimization = (String) invocation.getArgument("optimization");
+        if ("help".equals(option)) {
+            return "options [debug|values|log] [yes|no]\n"
+                    + "options timezone [<zoneId>]\noptions optimize [yes|no]\n"
+                    + "options optimize <optimization> [yes|no]\nOptimizations: "
+                    + String.join(", ", OptimizationOptions.names());
+        }
+        if (value != null) {
+            boolean enabled = "yes".equals(value);
+            if ("optimize".equals(option)) {
+                if (optimization == null) OptimizationOptions.setAll(mind, enabled);
+                else OptimizationOptions.set(mind, optimization, enabled);
+            }
+            else if ("debug".equals(option)) mind.setDebugLevel((mind.getDebugLevel() & ~0xFF)
+                    | (enabled ? Enums.DEBUG_LEVEL_DEBUG : Enums.DEBUG_LEVEL_QUIET));
+            else if ("values".equals(option) || "log".equals(option)) {
+                int flag = "values".equals(option) ? Enums.DEBUG_OPTION_VALUES : Enums.DEBUG_OPTION_RTLOGS;
+                mind.setDebugLevel(enabled ? mind.getDebugLevel() | flag : mind.getDebugLevel() & ~flag);
+            } else OptimizationOptions.set(mind, option, enabled);
+        }
+        StringBuilder out = new StringBuilder();
+        if (option == null || "debug".equals(option)) appendOption(out, "debug", (mind.getDebugLevel() & 0xFF) == Enums.DEBUG_LEVEL_DEBUG);
+        if (option == null || "values".equals(option)) appendOption(out, "values", (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0);
+        if (option == null || "log".equals(option)) appendOption(out, "log", (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) != 0);
+        if (option == null) out.append("timezone: ").append(mind.getUser().getTimeZone()).append('\n');
+        if (option == null || ("optimize".equals(option) && optimization == null)) {
+            java.util.Collection<Boolean> states = OptimizationOptions.snapshot(mind).values();
+            out.append("optimize: ").append(states.contains(Boolean.FALSE) ? (states.contains(Boolean.TRUE) ? "mixed" : "no") : "yes").append('\n');
+        }
+        for (java.util.Map.Entry<String, Boolean> entry : OptimizationOptions.snapshot(mind).entrySet()) {
+            if (option == null || "optimize".equals(option)) {
+                if (optimization == null) appendOption(out, "  " + entry.getKey(), entry.getValue());
+                else if (entry.getKey().equals(optimization)) appendOption(out, "optimize " + entry.getKey(), entry.getValue());
+            }
+        }
+        return out.toString().trim();
+    }
+
+    private void appendOption(StringBuilder out, String name, boolean enabled) {
+        out.append(name).append(": ").append(enabled ? "yes" : "no").append('\n');
+    }
+
     private String timezoneStatus(IUser user) {
         return "Session timezone: " + user.getTimeZone();
     }
 
-    private Result commit(IUser user, IMind mind) throws Exception {
+    private Result commit(IUser user, IMind mind, String description) throws Exception {
+        ((Mind) mind).proposeRevisionDescription(description);
         IMind parent = mind.getNext();
         if (parent != null) {
             if (!((Mind) parent).commitUserTransaction(mind)) {
@@ -500,6 +746,12 @@ public final class CanonicalCommandProcessor {
         private final StorageStatus storageStatus;
         private final Rejection rejection;
         private final TransactionStatus transactionStatus;
+        private final IContextFederation.Snapshot federationSnapshot;
+        private final IContextFederation.QueryResult federationQueryResult;
+        private final IContextFederation.VersionHistory contextVersionHistory;
+        private final IContextFederation.ExplainResult contextExplainResult;
+        private final List<IContextFederation.RuleBlock> contextRules;
+        private final java.util.Map<String, IContextFederation.Opinion> contextOpinions;
 
         private Result(boolean handled,
                        boolean success,
@@ -508,6 +760,55 @@ public final class CanonicalCommandProcessor {
                        StorageStatus storageStatus,
                        Rejection rejection,
                        TransactionStatus transactionStatus) {
+            this(handled, success, mind, description,
+                    storageStatus, rejection, transactionStatus,
+                    null, null, null, null);
+        }
+
+        private Result(boolean handled,
+                       boolean success,
+                       IMind mind,
+                       String description,
+                       StorageStatus storageStatus,
+                       Rejection rejection,
+                       TransactionStatus transactionStatus,
+                       IContextFederation.Snapshot federationSnapshot,
+                       IContextFederation.QueryResult federationQueryResult) {
+            this(handled, success, mind, description,
+                    storageStatus, rejection, transactionStatus,
+                    federationSnapshot, federationQueryResult,
+                    null, null);
+        }
+
+        private Result(boolean handled,
+                       boolean success,
+                       IMind mind,
+                       String description,
+                       StorageStatus storageStatus,
+                       Rejection rejection,
+                       TransactionStatus transactionStatus,
+                       IContextFederation.Snapshot federationSnapshot,
+                       IContextFederation.QueryResult federationQueryResult,
+                       IContextFederation.VersionHistory contextVersionHistory,
+                       IContextFederation.ExplainResult contextExplainResult) {
+            this(handled,success,mind,description,storageStatus,rejection,transactionStatus,
+                    federationSnapshot,federationQueryResult,contextVersionHistory,contextExplainResult,null);
+        }
+
+        private Result(boolean handled,boolean success,IMind mind,String description,StorageStatus storageStatus,
+                       Rejection rejection,TransactionStatus transactionStatus,IContextFederation.Snapshot federationSnapshot,
+                       IContextFederation.QueryResult federationQueryResult,IContextFederation.VersionHistory contextVersionHistory,
+                       IContextFederation.ExplainResult contextExplainResult,List<IContextFederation.RuleBlock> contextRules) {
+            this(handled, success, mind, description, storageStatus, rejection, transactionStatus,
+                    federationSnapshot, federationQueryResult, contextVersionHistory, contextExplainResult, contextRules, null);
+        }
+
+        private Result(boolean handled, boolean success, IMind mind, String description, StorageStatus storageStatus,
+                Rejection rejection, TransactionStatus transactionStatus, IContextFederation.Snapshot federationSnapshot,
+                IContextFederation.QueryResult federationQueryResult, IContextFederation.VersionHistory contextVersionHistory,
+                IContextFederation.ExplainResult contextExplainResult, List<IContextFederation.RuleBlock> contextRules,
+                java.util.Map<String, IContextFederation.Opinion> contextOpinions) {
+            this.contextOpinions = contextOpinions;
             this.handled = handled;
             this.success = success;
             this.mind = mind;
@@ -515,6 +816,11 @@ public final class CanonicalCommandProcessor {
             this.storageStatus = storageStatus;
             this.rejection = rejection;
             this.transactionStatus = transactionStatus;
+            this.federationSnapshot = federationSnapshot;
+            this.federationQueryResult = federationQueryResult;
+            this.contextVersionHistory = contextVersionHistory;
+            this.contextExplainResult = contextExplainResult;
+            this.contextRules=contextRules;
         }
 
         private static Result unhandled(IMind mind) {
@@ -536,6 +842,49 @@ public final class CanonicalCommandProcessor {
                                                  TransactionStatus transactionStatus) {
             return new Result(true, true, mind, description, null, null,
                     transactionStatus);
+        }
+
+        private static Result successFederation(
+                IMind mind,
+                String description,
+                IContextFederation.Snapshot federationSnapshot,
+                IContextFederation.QueryResult federationQueryResult) {
+            return new Result(
+                    true, true, mind, description,
+                    null, null, null,
+                    federationSnapshot, federationQueryResult);
+        }
+
+        private static Result successContextExplain(
+                IMind mind,
+                IContextFederation.ExplainResult contextExplainResult) {
+            return new Result(
+                    true, true, mind, "",
+                    null, null, null,
+                    contextExplainResult.getContext(),
+                    null, null,
+                    contextExplainResult);
+        }
+
+        private static Result successContextOpinions(IMind mind, IContextFederation.Snapshot snapshot,
+                java.util.Map<String, IContextFederation.Opinion> opinions) {
+            return new Result(true, true, mind, "", null, null, null, snapshot, null, null, null, null, opinions);
+        }
+        public java.util.Map<String, IContextFederation.Opinion> getContextOpinions() { return contextOpinions; }
+
+        private static Result successContextRules(IMind mind,IContextFederation.Snapshot snapshot,List<IContextFederation.RuleBlock> rules) {
+            return new Result(true,true,mind,"",null,null,null,snapshot,null,null,null,rules);
+        }
+
+        private static Result successContextVersion(
+                IMind mind,
+                IContextFederation.Snapshot federationSnapshot,
+                IContextFederation.VersionHistory contextVersionHistory) {
+            return new Result(
+                    true, true, mind, "",
+                    null, null, null,
+                    federationSnapshot, null,
+                    contextVersionHistory, null);
         }
 
         private static Result rejected(IMind mind, String description) {
@@ -577,5 +926,23 @@ public final class CanonicalCommandProcessor {
         public TransactionStatus getTransactionStatus() {
             return transactionStatus;
         }
+
+        public IContextFederation.Snapshot getFederationSnapshot() {
+            return federationSnapshot;
+        }
+
+        public IContextFederation.QueryResult getFederationQueryResult() {
+            return federationQueryResult;
+        }
+
+        public IContextFederation.VersionHistory getContextVersionHistory() {
+            return contextVersionHistory;
+        }
+
+        public IContextFederation.ExplainResult getContextExplainResult() {
+            return contextExplainResult;
+        }
+
+        public List<IContextFederation.RuleBlock> getContextRules() { return contextRules; }
     }
 }

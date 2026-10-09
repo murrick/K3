@@ -6,6 +6,9 @@
 package org.kanger.storage.dumb2;
 
 import org.kanger.Mind;
+import org.kanger.factory.CommentFactory;
+import org.kanger.storage.dumb2.adapter.CommentAdapter;
+import org.kanger.storage.dumb2.descriptor.TypeDefinition;
 import org.kanger.enums.StorageLifecycleErrorCode;
 import org.kanger.exception.StorageLifecycleException;
 import org.kanger.interfaces.IMind;
@@ -194,7 +197,7 @@ final class ContextBase implements IBase {
         records.putAll(image);
         nextId = records.isEmpty()
                 ? 0L
-                : records.lastKey().longValue() + 1L;
+                : Math.max(0L, records.lastKey().longValue() + 1L);
         dirty = false;
     }
 
@@ -297,7 +300,7 @@ final class ContextBase implements IBase {
             for (int i = 0; i < count; ++i) {
                 long id = input.readLong();
                 int length = input.readInt();
-                if (id < 0L || length <= 0 || length > input.available()) {
+                if (!validSchemaId(id) || length <= 0 || length > input.available()) {
                     throw corruption("Invalid DUMB2 schema record at " + path);
                 }
                 byte[] packed = new byte[length];
@@ -353,9 +356,9 @@ final class ContextBase implements IBase {
     }
 
     private void put(IStep one) throws Exception {
-        if (one == null || one.getId() < 0L) {
+        if (one == null || !validSchemaId(one.getId())) {
             throw new IllegalArgumentException(
-                    "DUMB2 persistent step must have a non-negative id");
+                    "DUMB2 persistent step id is invalid for schema " + schema);
         }
 
         final long nextId = one.getNextId();
@@ -390,6 +393,7 @@ final class ContextBase implements IBase {
             throw corruption("DUMB2 packed record envelope differs from step state");
         }
 
+        validateRecordAddress(record);
         records.put(Long.valueOf(one.getId()), packed);
         this.nextId = Math.max(this.nextId, one.getId() + 1L);
         dirty = true;
@@ -477,7 +481,7 @@ final class ContextBase implements IBase {
     public synchronized IStep getRoot() {
         try {
             long root = resolveEndpoints()[0];
-            return root < 0L ? null : get(root);
+            return root == -1L ? null : get(root);
         } catch (Exception failure) {
             throw new IllegalStateException("Cannot resolve DUMB2 schema root " + schema, failure);
         }
@@ -487,9 +491,28 @@ final class ContextBase implements IBase {
     public synchronized IStep getTop() {
         try {
             long top = resolveEndpoints()[1];
-            return top < 0L ? null : get(top);
+            return top == -1L ? null : get(top);
         } catch (Exception failure) {
             throw new IllegalStateException("Cannot resolve DUMB2 schema top " + schema, failure);
+        }
+    }
+
+    private boolean validSchemaId(long id) {
+        return id >= 0L || (CommentFactory.SCHEMA.equals(schema)
+                && PersistentRecord.isRecordId(id));
+    }
+
+    private void validateRecordAddress(PersistentRecord record) throws Exception {
+        if (!validSchemaId(record.getId())
+                || (record.getNextId() != -1L && !validSchemaId(record.getNextId()))) {
+            throw corruption("DUMB2 reserved comment address outside comments schema " + schema);
+        }
+        if (record.getId() < 0L) {
+            TypeDefinition type = typeResolver.resolveType(record.getTypeCode());
+            if (!CommentAdapter.TYPE_NAME.equals(type.getTypeName())
+                    || !CommentAdapter.INSTANCE.getDescriptor().equals(type.getDescriptor())) {
+                throw corruption("DUMB2 reserved comment address requires COMMENT payload");
+            }
         }
     }
 
@@ -510,8 +533,9 @@ final class ContextBase implements IBase {
             if (record.getId() != entry.getKey().longValue()) {
                 throw corruption("DUMB2 schema key/id mismatch in " + schema);
             }
+            validateRecordAddress(record);
             nextById.put(entry.getKey(), Long.valueOf(record.getNextId()));
-            if (record.getNextId() >= 0L) {
+            if (record.getNextId() != -1L) {
                 Long next = Long.valueOf(record.getNextId());
                 if (!image.containsKey(next)) {
                     throw corruption("DUMB2 schema " + schema
@@ -541,13 +565,13 @@ final class ContextBase implements IBase {
         Set<Long> visited = new HashSet<Long>();
         Long current = root;
         Long top = null;
-        while (current != null && current.longValue() >= 0L) {
+        while (current != null) {
             if (!visited.add(current)) {
                 throw corruption("DUMB2 schema " + schema + " contains a cycle");
             }
             top = current;
             Long next = nextById.get(current);
-            current = next == null || next.longValue() < 0L ? null : next;
+            current = next == null || next.longValue() == -1L ? null : next;
         }
         if (visited.size() != image.size()) {
             throw corruption("DUMB2 schema " + schema + " contains disconnected records");

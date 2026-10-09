@@ -1,6 +1,7 @@
 package org.kanger.storage.dumb2;
 
 import java.util.Arrays;
+import org.kanger.factory.CommentFactory;
 
 /**
  * Generic DUMB 2.0 persistent record envelope.
@@ -18,11 +19,11 @@ final class PersistentRecord {
     private final byte[] payload;
 
     PersistentRecord(long id, int hash, long nextId, int typeCode, byte[] payload) {
-        if (id < 0L) {
-            throw new IllegalArgumentException("record id must be non-negative");
+        if (!isRecordId(id)) {
+            throw new IllegalArgumentException("record id must be non-negative or a reserved source comment id");
         }
-        if (nextId < -1L) {
-            throw new IllegalArgumentException("nextId must be -1 or non-negative");
+        if (nextId != -1L && !isRecordId(nextId)) {
+            throw new IllegalArgumentException("nextId must be -1 or a valid record id");
         }
         if (typeCode <= 0) {
             throw new IllegalArgumentException("typeCode must be positive");
@@ -35,6 +36,13 @@ final class PersistentRecord {
         this.nextId = nextId;
         this.typeCode = typeCode;
         this.payload = payload.clone();
+    }
+
+    // Core uses -2/-3 for source header/footer; -1 alone is the null link.
+    static boolean isRecordId(long id) {
+        return id >= 0L
+                || id == CommentFactory.HEADER_ID
+                || id == CommentFactory.FOOTER_ID;
     }
 
     long getId() {
