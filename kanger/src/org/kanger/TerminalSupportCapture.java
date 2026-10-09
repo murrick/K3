@@ -408,6 +408,65 @@ final class TerminalSupportCapture implements AutoCloseable {
     List<String> applicationGapSnapshot() {
         return Collections.unmodifiableList(new ArrayList<String>(applicationGaps));
     }
+    static final class ProvisionalApplication {
+        final Application application;
+        final Outcome outcome;
+        final List<DmzReplayProvenance.SourceObservation> ruleSources;
+        final List<List<DmzReplayProvenance.SourceObservation>> supportSources;
+        ProvisionalApplication(Application application, Outcome outcome,
+                List<DmzReplayProvenance.SourceObservation> ruleSources,
+                List<List<DmzReplayProvenance.SourceObservation>> supportSources) {
+            this.application = application; this.outcome = outcome; this.ruleSources = ruleSources;
+            this.supportSources = Collections.unmodifiableList(supportSources);
+        }
+    }
+    static final class CollisionObservations {
+        final List<ProvisionalApplication> applications;
+        final List<String> gaps;
+        final boolean captureActive;
+        CollisionObservations(List<ProvisionalApplication> applications, List<String> gaps, boolean active) {
+            this.applications = Collections.unmodifiableList(applications);
+            this.gaps = Collections.unmodifiableList(new ArrayList<String>(gaps)); captureActive = active;
+        }
+    }
+    /** Event-time provisional surface; settlementSnapshot remains acceptance-only. */
+    static CollisionObservations collisionObservations(Mind eventMind) {
+        TerminalSupportCapture capture = ACTIVE.get();
+        if (capture == null) return new CollisionObservations(new ArrayList<ProvisionalApplication>(),
+                Collections.<String>emptyList(), false);
+        Map<Integer, Object> objects = new java.util.HashMap<Integer, Object>();
+        for (Map.Entry<Object, Integer> entry : capture.identities.entrySet()) objects.put(entry.getValue(), entry.getKey());
+        java.util.Set<Integer> visible = new java.util.HashSet<Integer>();
+        for (Mind level = eventMind; level != null; level = (Mind) level.getNext()) {
+            Integer index = capture.identities.get(level);
+            if (index != null) visible.add(index);
+        }
+        List<ProvisionalApplication> result = new ArrayList<ProvisionalApplication>();
+        for (Application application : capture.applications) {
+            int level = application.mind;
+            boolean related = visible.contains(level);
+            Frame frame = capture.frames.get(level);
+            while (!related && frame != null) {
+                level = frame.parent; related = visible.contains(level);
+                frame = capture.frames.get(level);
+            }
+            if (!related) continue;
+            Outcome outcome = capture.outcome(application.mind);
+            if (outcome != Outcome.PENDING && outcome != Outcome.COMMITTED) continue;
+            Mind mind = (Mind) objects.get(application.mind);
+            IRule rule = (IRule) objects.get(application.rule);
+            List<List<DmzReplayProvenance.SourceObservation>> supports =
+                    new ArrayList<List<DmzReplayProvenance.SourceObservation>>();
+            for (Support support : application.supports) {
+                IRule evidence = (IRule) objects.get(support.evidence);
+                supports.add(support.primary ? DmzReplayProvenance.observedSources(mind, evidence.getId())
+                        : Collections.<DmzReplayProvenance.SourceObservation>emptyList());
+            }
+            result.add(new ProvisionalApplication(application, outcome,
+                    DmzReplayProvenance.observedSources(mind, rule.getId()), supports));
+        }
+        return new CollisionObservations(result, capture.applicationGaps, true);
+    }
 
     private TerminalSupportCapture(Mind boundary) {
         this.boundary = boundary;

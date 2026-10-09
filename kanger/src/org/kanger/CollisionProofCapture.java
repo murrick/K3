@@ -59,7 +59,10 @@ final class CollisionProofCapture implements AutoCloseable {
     static final class Conflict {
         final Graph left;
         final Graph right;
-        Conflict(Graph left, Graph right) { this.left = left; this.right = right; }
+        final TerminalSupportCapture.CollisionObservations observations;
+        Conflict(Graph left, Graph right, TerminalSupportCapture.CollisionObservations observations) {
+            this.left = left; this.right = right; this.observations = observations;
+        }
     }
 
     private final CollisionProofCapture previous;
@@ -78,7 +81,8 @@ final class CollisionProofCapture implements AutoCloseable {
     static void record(Mind mind, Rule left, Rule right) throws Exception {
         CollisionProofCapture capture = ACTIVE.get();
         if (capture == null) return;
-        capture.conflicts.add(new Conflict(build(mind, left), build(mind, right)));
+        capture.conflicts.add(new Conflict(build(mind, left), build(mind, right),
+                TerminalSupportCapture.collisionObservations(mind)));
     }
 
     List<Conflict> snapshot() {
