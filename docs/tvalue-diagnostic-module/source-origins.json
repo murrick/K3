@@ -1,0 +1,15 @@
+{
+  "kanger-qualification/diagnostics/src/org/kanger/ResidentTValueRead.java": "docs/tvalue-persistent-lookup/ResidentTValueRead.java",
+  "kanger-qualification/diagnostics/src/org/kanger/ResidentPersistentRead.java": "docs/tvalue-write-guard/ResidentPersistentRead.java",
+  "kanger-qualification/diagnostics/src/org/kanger/RecordedLinks.java": "docs/tvalue-clear-close-guard/RecordedLinks.java",
+  "kanger-qualification/diagnostics/src/org/kanger/ObservationLayers.java": "docs/tvalue-observation-layers/ObservationLayers.java",
+  "kanger-qualification/diagnostics/src/org/kanger/BeforeAuthorityJournal.java": "docs/tvalue-authority-stream/BeforeAuthorityJournal.java",
+  "kanger-qualification/diagnostics/src/org/kanger/StreamAuthorityJournal.java": "docs/tvalue-authority-stream/StreamAuthorityJournal.java",
+  "kanger-qualification/diagnostics/src/org/kanger/StreamAuthorityRead.java": "docs/tvalue-authority-stream/StreamAuthorityRead.java",
+  "kanger-qualification/diagnostics/test/org/kanger/AuthorityScopeRunner.java": "docs/tvalue-authority-stream/AuthorityScopeRunner.java",
+  "kanger-qualification/diagnostics/test/org/kanger/AuthorityContextRunner.java": "docs/tvalue-authority-contexts/AuthorityContextRunner.java",
+  "kanger-qualification/diagnostics/test/org/kanger/ParentAddRunner.java": "docs/tvalue-parent-add/ParentAddRunner.java",
+  "kanger-qualification/diagnostics/src/org/kanger/ConsumerHooks.java": "docs/tvalue-consumer-gate/ConsumerHooks.java",
+  "kanger-qualification/diagnostics/src/org/kanger/QualifiedJournalConsumer.java": "docs/tvalue-consumer-gate/QualifiedJournalConsumer.java",
+  "kanger-qualification/diagnostics/test/org/kanger/ConsumerRunner.java": "docs/tvalue-consumer-gate/ConsumerRunner.java"
+}
