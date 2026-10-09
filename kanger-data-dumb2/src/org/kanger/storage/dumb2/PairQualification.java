@@ -471,6 +471,7 @@ final class PairQualification {
 
         private final List<String> rules =
                 new ArrayList<String>();
+        private final List<Long> ruleIds = new ArrayList<Long>();
         private final List<String> operations =
                 new ArrayList<String>();
 
@@ -484,6 +485,7 @@ final class PairQualification {
                         && !rule.isDeleted(source)) {
                     result.rules.add(
                             rule.getOrigin());
+                    result.ruleIds.add(rule.getId());
                 }
             }
             for (IOperation operation
@@ -494,6 +496,13 @@ final class PairQualification {
                 }
             }
             return result;
+        }
+
+        void replay(Mind target, org.kanger.interfaces.IContextResults.Revision source) throws Exception {
+            for (String operation : operations) target.query(operation, null, false);
+            for (int i = 0; i < rules.size(); ++i)
+                org.kanger.DmzReplayProvenance.replayRule(target, source, ruleIds.get(i),
+                        org.kanger.DmzReplayProvenance.Authority.EXTERNAL, rules.get(i));
         }
 
         void replay(Mind target) throws Exception {

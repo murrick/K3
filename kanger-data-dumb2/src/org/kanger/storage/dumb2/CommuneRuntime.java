@@ -57,10 +57,10 @@ final class CommuneRuntime implements AutoCloseable {
             List<org.kanger.interfaces.internal.IContextFederation.Revision> pins = new ArrayList<>();
             for (ContextConnection member : ordered) {
                 Mind source = member.layer();
-                PairQualification.PortableSource.capture(source).replay(layer);
                 org.kanger.interfaces.internal.IContextFederation.Revision pin =
                         new org.kanger.interfaces.internal.IContextFederation.Revision(
                                 member.getTarget().getContextId(), member.getTarget().getRevision());
+                PairQualification.PortableSource.capture(source).replay(layer, pin);
                 pins.add(pin);
                 for (org.kanger.interfaces.IRule candidate : source.getRules()) {
                     org.kanger.units.Rule rule = (org.kanger.units.Rule) candidate;

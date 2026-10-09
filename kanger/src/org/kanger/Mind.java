@@ -1206,11 +1206,12 @@ public class Mind implements IMind {
                 x.setCompliedLine(compliedLine);
                 if (r instanceof Rule && ((Rule) r).isSecond()) {
                     tx.rollback();
+                    DmzReplayProvenance.compiled(this, (Rule) r, true);
                     commandNoOp = line.charAt(0) == Enums.ANT || line.charAt(0) == Enums.INS;
                     log.add(LogMode.ANALYZER, "WARNING: Rule is duplicated: " + r);
                     r = null;
                 } else if (r instanceof Rule) {
-                    tx.commit();
+                    if (tx.commit()) DmzReplayProvenance.compiled(this, (Rule) r, false);
                     log.add(LogMode.ANALYZER, "Compiled: " + ((Rule) r).getOrigin());
                     log.add(LogMode.ANALYZER, (Rule) r);
                     for (IRule rx : rules) {
