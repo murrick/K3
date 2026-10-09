@@ -1,0 +1,44 @@
+{
+  "parent": "d53b040ae14d135ebebb314ca19910534efac21e",
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-layer-cost:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-idle-projection",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-idle-projection/BeforeIdleJournal.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-idle-projection/IdleProjectionJournal.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-idle-projection/IdleCostRunner.java",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-idle-projection/IdleScopeRunner.java"
+  ],
+  "prior_runtime_class_hashes_verified": 662,
+  "prior_journal_source_recovered": true,
+  "runner_recovered_by_class_rename_only": true,
+  "full_oracle_unchanged_in_both": true,
+  "class_sha256": {
+    "org/kanger/IdleProjectionJournal$UpdateFrame.class": "5440cb5c4cf15aef880c547d99103cd673c05b04a00d63cd92e99dda52e4e6aa",
+    "org/kanger/IdleProjectionJournal.class": "19fadff34d87afefeee96c4975d6548e115cd309b4d43b24f63883251e775207",
+    "org/kanger/BeforeIdleJournal$State.class": "53d2e10909a004d8dfa1f7983c4b98cb5e8c054f1a4c426d89db6d303408b52a",
+    "org/kanger/BeforeIdleJournal.class": "3130ce2d8f068b625d11207f5700254c01f8ddcdfa60fc77bdac3895cbdb7581",
+    "org/kanger/IdleProjectionJournal$State.class": "0422a71da3db643486165dcb5f5cbec55b7f560ca1d82aa7627cfb573d1c9f0b",
+    "org/kanger/BeforeIdleJournal$Session.class": "a8aedf188cd90cea657b42e9d5918203c521c7d877e1a135861d9346e6e71d27",
+    "org/kanger/IdleCostRunner.class": "63bc897c601e1c07fed606229d058f8d843d43b63e4f3955733293e3b8cef7e3",
+    "org/kanger/BeforeIdleJournal$Work.class": "be65a23dff48296d5ac9a99cf2e24812a20542448e06e9774b8be0b155ec70e5",
+    "org/kanger/IdleScopeRunner.class": "d50cfcd910afd4efe901bdb6972177fa4e9328c5e23cd6680e3f6ea8ea8c66d9",
+    "org/kanger/BeforeIdleJournal$UpdateFrame.class": "1808393c0127a618f3f61e85c2476d7db2d7dc31f2f829506f02173aec80fde8",
+    "org/kanger/IdleProjectionJournal$Work.class": "20ab2ab00bccd8850007590af2a6a887dd6bfd007d1d254e7053abfde662e7f9",
+    "org/kanger/IdleProjectionJournal$Session.class": "c8e48fe63d62381c597b7aa89b467ca663c4c1247d7ccdbeba5da59179b9bc65"
+  },
+  "source_sha256": {
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-idle-projection/BeforeIdleJournal.java": "5f836d0f68373b78af272d011291dc6aa7a135e31ecbfc319816a71dbb24590c",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-idle-projection/IdleProjectionJournal.java": "e80f7f3751e7c512065089d872f0d5a9e1a0237e86a9e7fdad61e89dd0e41500",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-idle-projection/IdleCostRunner.java": "dc8dd402e1e74f921ea78e3efe02977f01c55b0d0edf75742a785f03b19ace24",
+    "/workspace/scratch/1c9c6dd2770c/K3-observation-recovery/docs/tvalue-idle-projection/IdleScopeRunner.java": "37acff51aa0bdcd21663354c5485eb0bfd2b4e03c01c26390b0adcc4b6c9d4d8"
+  },
+  "native_clean_runtime": "tvalue-layer-cost",
+  "native_setter_metadata_bridge": "explicit after native setter returns; no instrumented native class or engine hooks"
+}

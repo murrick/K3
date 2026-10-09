@@ -1,0 +1,9 @@
+{
+  "original": "docs/tvalue-reporting/StreamReportJournal.java",
+  "replacements": [
+    [
+      "next=new TreeMap<>(st.view);",
+      "next=st.dirty.isEmpty()?st.view:new TreeMap<>(st.view);"
+    ]
+  ]
+}
