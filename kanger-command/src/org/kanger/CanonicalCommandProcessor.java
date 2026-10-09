@@ -385,15 +385,19 @@ public final class CanonicalCommandProcessor {
     private String sessionOptions(CommandInvocation invocation, IMind mind) {
         String option = (String) invocation.getArgument("option");
         String value = (String) invocation.getArgument("value");
+        String optimization = (String) invocation.getArgument("optimization");
         if ("help".equals(option)) {
             return "options [debug|values|log] [yes|no]\n"
                     + "options timezone [<zoneId>]\noptions optimize [yes|no]\n"
-                    + "options <optimization> [yes|no]\nOptimizations: "
+                    + "options optimize <optimization> [yes|no]\nOptimizations: "
                     + String.join(", ", OptimizationOptions.names());
         }
         if (value != null) {
             boolean enabled = "yes".equals(value);
-            if ("optimize".equals(option)) OptimizationOptions.setAll(mind, enabled);
+            if ("optimize".equals(option)) {
+                if (optimization == null) OptimizationOptions.setAll(mind, enabled);
+                else OptimizationOptions.set(mind, optimization, enabled);
+            }
             else if ("debug".equals(option)) mind.setDebugLevel((mind.getDebugLevel() & ~0xFF)
                     | (enabled ? Enums.DEBUG_LEVEL_DEBUG : Enums.DEBUG_LEVEL_QUIET));
             else if ("values".equals(option) || "log".equals(option)) {
@@ -406,12 +410,15 @@ public final class CanonicalCommandProcessor {
         if (option == null || "values".equals(option)) appendOption(out, "values", (mind.getDebugLevel() & Enums.DEBUG_OPTION_VALUES) != 0);
         if (option == null || "log".equals(option)) appendOption(out, "log", (mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) != 0);
         if (option == null) out.append("timezone: ").append(mind.getUser().getTimeZone()).append('\n');
-        if (option == null || "optimize".equals(option)) {
+        if (option == null || ("optimize".equals(option) && optimization == null)) {
             java.util.Collection<Boolean> states = OptimizationOptions.snapshot(mind).values();
             out.append("optimize: ").append(states.contains(Boolean.FALSE) ? (states.contains(Boolean.TRUE) ? "mixed" : "no") : "yes").append('\n');
         }
         for (java.util.Map.Entry<String, Boolean> entry : OptimizationOptions.snapshot(mind).entrySet()) {
-            if (option == null || "optimize".equals(option) || entry.getKey().equals(option)) appendOption(out, entry.getKey(), entry.getValue());
+            if (option == null || "optimize".equals(option)) {
+                if (optimization == null) appendOption(out, "  " + entry.getKey(), entry.getValue());
+                else if (entry.getKey().equals(optimization)) appendOption(out, "optimize " + entry.getKey(), entry.getValue());
+            }
         }
         return out.toString().trim();
     }

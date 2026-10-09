@@ -120,36 +120,54 @@ public final class CommandParser {
     }
 
     private CommandInvocation parseOptions(String raw, List<Token> tokens) throws CommandParseException {
-        if (tokens.size() > 3) throw error(EXTRA_ARGUMENT, "Unexpected extra argument");
         Map<String, Object> arguments = new LinkedHashMap<>();
         if (tokens.size() == 1) return CommandInvocation.command(CommandIntent.OPTIONS, arguments, raw);
-        List<String> names = new ArrayList<>();
-        Collections.addAll(names, "help", "debug", "values", "log", "timezone", "optimize");
-        Collections.addAll(names, org.kanger.OptimizationOptions.names());
-        String probe = tokens.get(1).value.toLowerCase(java.util.Locale.ROOT);
+        String selected = resolveOption(tokens.get(1).value,
+                new String[] {"help", "debug", "values", "log", "timezone", "optimize"});
+        if ("help".equals(selected)) requireSize(tokens, 2);
+        if (!"optimize".equals(selected) && tokens.size() > 3) throw error(EXTRA_ARGUMENT, "Unexpected extra argument");
+        if ("timezone".equals(selected)) {
+            arguments.put("zoneId", tokens.size() == 3 ? tokens.get(2).value : "");
+            return CommandInvocation.command(CommandIntent.TIMEZONE, arguments, raw);
+        }
+        arguments.put("option", selected);
+        int valueIndex = 2;
+        if ("optimize".equals(selected) && tokens.size() > 2) {
+            String third = tokens.get(2).value;
+            if (optionBoolean(third) == null) {
+                arguments.put("optimization", resolveOption(third, org.kanger.OptimizationOptions.names()));
+                valueIndex = 3;
+            }
+        }
+        if (tokens.size() > valueIndex + 1) throw error(EXTRA_ARGUMENT, "Unexpected extra argument");
+        if (tokens.size() > valueIndex) {
+            String value = optionBoolean(tokens.get(valueIndex).value);
+            if (value == null) throw error(UNKNOWN_KEYWORD, "Expected yes or no");
+            arguments.put("value", value);
+        }
+        return CommandInvocation.command(CommandIntent.OPTIONS, arguments, raw);
+    }
+
+    private String optionBoolean(String token) {
+        String value = token.toLowerCase(java.util.Locale.ROOT);
+        if (!value.isEmpty() && "yes".startsWith(value)) return "yes";
+        if (!value.isEmpty() && "no".startsWith(value)) return "no";
+        return null;
+    }
+
+    private String resolveOption(String token, String[] names) throws CommandParseException {
+        String probe = token.toLowerCase(java.util.Locale.ROOT);
+        if (probe.isEmpty()) throw error(UNKNOWN_KEYWORD, "Empty option");
         String selected = null;
-        for (String name : names) if (name.equalsIgnoreCase(probe)) { selected = name; break; }
-        if (selected == null) for (String name : names) {
+        for (String name : names) if (name.equalsIgnoreCase(probe)) return name;
+        for (String name : names) {
             if (name.toLowerCase(java.util.Locale.ROOT).startsWith(probe)) {
                 if (selected != null) throw error(AMBIGUOUS_PREFIX, "Ambiguous option " + probe);
                 selected = name;
             }
         }
         if (selected == null) throw error(UNKNOWN_KEYWORD, "Unknown option " + probe);
-        if ("help".equals(selected)) requireSize(tokens, 2);
-        if ("timezone".equals(selected)) {
-            arguments.put("zoneId", tokens.size() == 3 ? tokens.get(2).value : "");
-            return CommandInvocation.command(CommandIntent.TIMEZONE, arguments, raw);
-        }
-        arguments.put("option", selected);
-        if (tokens.size() == 3) {
-            String value = tokens.get(2).value.toLowerCase(java.util.Locale.ROOT);
-            if (!value.isEmpty() && "yes".startsWith(value)) value = "yes";
-            else if (!value.isEmpty() && "no".startsWith(value)) value = "no";
-            else throw error(UNKNOWN_KEYWORD, "Expected yes or no");
-            arguments.put("value", value);
-        }
-        return CommandInvocation.command(CommandIntent.OPTIONS, arguments, raw);
+        return selected;
     }
 
     private CommandInvocation parseRule(String raw, List<Token> tokens)

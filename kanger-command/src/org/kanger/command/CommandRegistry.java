@@ -373,9 +373,9 @@ public final class CommandRegistry {
                 args("section", "Optional status section.",
                         "subsection", "Optional core subsection."), n++);
 
-        define(CommandIntent.OPTIONS, "options [help|debug|values|log|timezone|optimize|<optimization>] [<value>]", "SYSTEM / SESSION",
+        define(CommandIntent.OPTIONS, "options [help|debug|values|log|timezone|optimize [<optimization>]] [<value>]", "SYSTEM / SESSION",
                 "Show or change session options; optimize yes/no switches all acceleration paths.",
-                args("option", "Setting name, or help. Individual optimization names appear in options.",
+                args("option", "Setting name, or help. Individual switches are grouped under optimize.",
                         "value", "yes/no for switches; IANA zone id for timezone."), n++);
         define(CommandIntent.TIMEZONE, "options timezone [<zoneId>]", "SYSTEM / SESSION",
                 "Show or set the time zone of the current session.",

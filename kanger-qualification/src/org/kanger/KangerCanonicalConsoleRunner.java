@@ -66,7 +66,7 @@ public final class KangerCanonicalConsoleRunner {
                 + "tr st\n"
                 + "opt timezone Europe/Moscow\n"
                 + "opt optimize no\n"
-                + "opt singleTValueLookup yes\n"
+                + "opt optimize singleTValueLookup yes\n"
                 + "opt optimize\n"
                 + "opt optimize yes\n"
                 + "opt deb no\n"
@@ -126,7 +126,7 @@ public final class KangerCanonicalConsoleRunner {
         require(out.contains("versionedSolveSync: no"), "all-off did not reach optimization settings");
         require(out.contains("optimize: yes"), "all-on did not restore optimizations");
         require(out.contains("debug: no"), "options debug did not execute");
-        require(out.contains("options <optimization>"), "options help did not execute");
+        require(out.contains("options optimize <optimization>"), "options help did not execute");
         require(out.contains("consoleconvergence"),
                 "Core line did not reach canonical Console execution");
         require(out.contains("Hypothesis list (1)"),

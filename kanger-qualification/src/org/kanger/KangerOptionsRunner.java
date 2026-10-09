@@ -51,7 +51,7 @@ public final class KangerOptionsRunner {
                 System.out.println("Options logical parity PASS: " + state);
             }
             processor.execute(parser.parse("opt optimize no"), user);
-            processor.execute(parser.parse("opt singleTValueLookup yes"), user);
+            processor.execute(parser.parse("opt optimize singleTValueLookup yes"), user);
             String report = processor.execute(parser.parse("options optimize"), user).getDescription();
             require(report.contains("optimize: mixed"), "mixed state missing");
             require(!processor.execute(parser.parse("options help"), user).getDescription().contains("test"), "developer hook leaked into help");

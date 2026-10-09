@@ -101,6 +101,7 @@ public final class CommandFormatter {
                 return optionalArgumentCommand("options timezone", invocation.getArgument("zoneId"));
             case OPTIONS:
                 String option = optionalArgumentCommand("options", invocation.getArgument("option"));
+                option = optionalArgumentCommand(option, invocation.getArgument("optimization"));
                 return optionalArgumentCommand(option, invocation.getArgument("value"));
 
             case STORAGE_STATUS:

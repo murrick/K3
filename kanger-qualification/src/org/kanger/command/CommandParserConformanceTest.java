@@ -45,6 +45,13 @@ public final class CommandParserConformanceTest {
         aliasVocabulary();
         systemFamily();
         expect("opt", CommandIntent.OPTIONS);
+        expectArgument("opt optimize singleTValueLookup no", CommandIntent.OPTIONS, "optimization", "singleTValueLookup");
+        expectCanonical("opt opt single n", "options optimize singleTValueLookup no");
+        expectCanonical("opt optimize single", "options optimize singleTValueLookup");
+        reject("opt singleTValueLookup no", CommandParseException.Reason.UNKNOWN_KEYWORD);
+        reject("opt optimize yes extra", CommandParseException.Reason.EXTRA_ARGUMENT);
+        reject("opt optimize single yes extra", CommandParseException.Reason.EXTRA_ARGUMENT);
+
         expectArgument("opt optimize no", CommandIntent.OPTIONS, "value", "no");
         expectArgument("opt timezone Europe/Moscow", CommandIntent.TIMEZONE, "zoneId", "Europe/Moscow");
         expectCanonical("opt deb y", "options debug yes");
@@ -53,7 +60,7 @@ public final class CommandParserConformanceTest {
         reject("opt optimize maybe", CommandParseException.Reason.UNKNOWN_KEYWORD);
         reject("opt optimize \"\"", CommandParseException.Reason.UNKNOWN_KEYWORD);
         reject("options help extra", CommandParseException.Reason.EXTRA_ARGUMENT);
-        reject("opt c yes", CommandParseException.Reason.AMBIGUOUS_PREFIX);
+        reject("opt optimize c yes", CommandParseException.Reason.AMBIGUOUS_PREFIX);
 
 
         canonicalEcho();
