@@ -6,7 +6,6 @@
 package org.kanger;
 
 import org.kanger.interfaces.IMind;
-import org.kanger.storage.DB;
 import org.kanger.test.KangerVisualTestHarness;
 import org.kanger.test.KangerStabilizationTest;
 import org.kanger.test.KangerC1PromotionTest;
@@ -34,7 +33,19 @@ final class IsolatedKangerTestRuntime {
     }
 
     static boolean run(String prefix, boolean database) throws Exception {
-        return run(prefix, database ? DB.class.getName() : null);
+        return run(prefix, database ? availableStorageClass() : null);
+    }
+
+    private static String availableStorageClass() throws ClassNotFoundException {
+        for (String candidate : new String[]{"org.kanger.storage.dumb2.DB", "org.kanger.storage.DB"}) {
+            try {
+                Class.forName(candidate, false, IsolatedKangerTestRuntime.class.getClassLoader());
+                return candidate;
+            } catch (ClassNotFoundException absent) {
+                // The Console distribution can contain only one optional backend.
+            }
+        }
+        throw new ClassNotFoundException("No storage backend is available for isolated lifecycle tests");
     }
 
     static boolean run(String prefix, String storageClass) throws Exception {
@@ -55,9 +66,9 @@ final class IsolatedKangerTestRuntime {
 
             // Offline tests still contain explicit storage lifecycle cases.
             // Load a private backend without opening it until a test asks to.
-            org.kanger.interfaces.internal.IData storage = storageClass == null
-                    ? new DB()
-                    : (org.kanger.interfaces.internal.IData) Class.forName(storageClass)
+            org.kanger.interfaces.internal.IData storage =
+                    (org.kanger.interfaces.internal.IData) Class.forName(
+                            storageClass == null ? availableStorageClass() : storageClass)
                             .getDeclaredConstructor().newInstance();
             storage.init(user);
             mind = new Mind(user);
