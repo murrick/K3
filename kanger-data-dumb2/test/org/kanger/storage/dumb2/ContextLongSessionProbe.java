@@ -14,13 +14,13 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
+import java.util.Map;
 
 /**
  * Standalone diagnostic for equivalent connection/rollback cycles.
  * Run with the module test classpath; the optional argument is the cycle count.
  * Reflection measures session ownership without changing runtime state.
- * Retention is reported separately from the semantic assertions: bounded
- * live-session retention remains an open qualification item.
+ * Includes nested commit/rollback and checks reclamation at root quiescence.
  */
 public final class ContextLongSessionProbe {
     private ContextLongSessionProbe() { }
@@ -33,6 +33,14 @@ public final class ContextLongSessionProbe {
         Field field = DB.class.getDeclaredField("retiredLayers");
         field.setAccessible(true);
         return ((Set<?>) field.get(data)).size();
+    }
+
+    private static int communes(DB data) throws Exception {
+        Field cache = DB.class.getDeclaredField("communeCache");
+        cache.setAccessible(true);
+        Field runtimes = CommuneRuntimeCache.class.getDeclaredField("runtimes");
+        runtimes.setAccessible(true);
+        return ((Map<?, ?>) runtimes.get(cache.get(data))).size();
     }
 
     public static void main(String[] args) throws Exception {
@@ -62,7 +70,7 @@ public final class ContextLongSessionProbe {
         try {
             require(Boolean.TRUE.equals(mind.query("!anchor(X);", null, false)), "anchor");
             for (int cycle = 1; cycle <= cycles; cycle++) {
-                data.connectContext("N");
+                data.connectContext("N", cycle % 2 == 0 ? "own" : null);
                 require(Boolean.TRUE.equals(mind.query("?$x q(x);", null, false)),
                         "connected query " + cycle);
                 require(mind.getValues().size() == 1, "connected Values " + cycle);
@@ -71,10 +79,24 @@ public final class ContextLongSessionProbe {
                 processor.execute(parser.parse("ctx ask N !p(Tom);"), user);
                 require(Boolean.TRUE.equals(child.query("?q(Tom);", null, false)),
                         "child query " + cycle);
+                processor.execute(parser.parse("transaction start"), user);
+                Mind inner = (Mind) user.getCurrentMind();
+                processor.execute(parser.parse("ctx ask N !p(Mary);"), user);
+                require(Boolean.TRUE.equals(inner.query("?q(Mary);", null, false)),
+                        "inner query " + cycle);
+                boolean committed = cycle % 2 == 0;
+                processor.execute(parser.parse(committed ? "commit" : "rollback"), user);
+                child = (Mind) user.getCurrentMind();
+                require(Boolean.TRUE.equals(child.query("?q(Tom);", null, false)),
+                        "outer checkpoint lost Tom " + cycle);
+                require(committed == Boolean.TRUE.equals(child.query("?q(Mary);", null, false)),
+                        "inner settlement lost its semantics " + cycle);
                 processor.execute(parser.parse("rollback"), user);
                 mind = (Mind) user.getCurrentMind();
                 require(mind.query("?q(Tom);", null, false) == null,
                         "Tom survived rollback " + cycle);
+                require(mind.query("?q(Mary);", null, false) == null,
+                        "Mary survived outer rollback " + cycle);
                 require(Boolean.TRUE.equals(mind.query("?$x q(x);", null, false)),
                         "root query " + cycle);
                 require(mind.getValues().size() == 1, "root Values " + cycle);
@@ -83,6 +105,8 @@ public final class ContextLongSessionProbe {
                 data.disconnectContext("N");
                 require(mind.query("?q(John);", null, false) == null,
                         "John survived disconnect " + cycle);
+                require(retained(data) == 0, "retired layers survived root settlement " + cycle);
+                require(communes(data) == 0, "communes survived disconnect " + cycle);
                 if (cycle == 1 || cycle % 10 == 0 || cycle == cycles) {
                     System.out.println("CYCLE " + cycle + " rootRules=" + baseline
                             + " retiredLayers=" + retained(data));

@@ -162,6 +162,27 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     }
 
     @Override
+    public synchronized void collectConnectionState() throws Exception {
+        requireOpen();
+        // Mind calls this only at root quiescence. Nested rollback checkpoints
+        // therefore retain every layer until the last child has settled.
+        java.util.Set<ContextConnection> active = java.util.Collections.newSetFromMap(
+                new java.util.IdentityHashMap<ContextConnection, Boolean>());
+        active.addAll(workingConnections.getConnections());
+        active.addAll(workingConnections.retainCommunes(communeCache));
+        java.util.Set<ConnectionRuntime> live = java.util.Collections.newSetFromMap(
+                new java.util.IdentityHashMap<ConnectionRuntime, Boolean>());
+        for (ContextConnection connection : active)
+            if (connection.runtime() != null) live.add(connection.runtime());
+        java.util.Iterator<ContextConnection> iterator = retiredLayers.iterator();
+        while (iterator.hasNext()) {
+            ContextConnection connection = iterator.next();
+            if (!active.contains(connection)) connection.retireLayer(live);
+            iterator.remove();
+        }
+    }
+
+    @Override
     public synchronized void close() throws Exception {
         closeConnectionLayers();
         if (historical!=null) {

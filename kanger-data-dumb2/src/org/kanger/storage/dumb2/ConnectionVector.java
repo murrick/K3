@@ -56,6 +56,10 @@ final class ConnectionVector {
 
     CommuneRuntimeCache runtimeCache() { return runtimeCache; }
 
+    Collection<ContextConnection> retainCommunes(CommuneRuntimeCache cache) throws Exception {
+        return cache.retain(groups());
+    }
+
     private Map<String,List<ContextConnection>> groups() {
         Map<String,List<ContextConnection>> groups = new LinkedHashMap<>();
         for (ContextConnection c : connections) {

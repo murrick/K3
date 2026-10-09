@@ -98,6 +98,11 @@ final class ContextConnection {
     synchronized void closeLayer() throws Exception {
         if (runtime != null) { runtime.close(); runtime = null; }
     }
+    synchronized ConnectionRuntime runtime() { return runtime; }
+    synchronized void retireLayer(java.util.Set<ConnectionRuntime> live) throws Exception {
+        if (runtime != null && !live.contains(runtime)) runtime.close();
+        runtime = null;
+    }
     ContextConnection recertified(CompatibilityCertificate certificate) {
         ContextConnection copy = new ContextConnection(targetLocation, target, certificate, initialization, trustGroup);
         copy.runtime = runtime;

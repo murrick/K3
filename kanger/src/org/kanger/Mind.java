@@ -2709,9 +2709,13 @@ public class Mind implements IMind {
         if (rootQuiescent) {
             // A pinned generation may retain unused vocabulary. Opening or
             // querying it is not permission to collect its persistent records.
-            if (isStorageUsed() && user.getData().isReadOnly()) return;
-            pack();
-            update();
+            if (!(isStorageUsed() && user.getData().isReadOnly())) {
+                pack();
+                update();
+            }
+            if (isStorageUsed() && user.getData() instanceof IContextFederation) {
+                ((IContextFederation) user.getData()).collectConnectionState();
+            }
         }
     }
 
