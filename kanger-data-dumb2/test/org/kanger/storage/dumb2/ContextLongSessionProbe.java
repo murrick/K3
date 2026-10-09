@@ -29,13 +29,13 @@ public final class ContextLongSessionProbe {
         if (!value) throw new AssertionError(message);
     }
 
-    private static int retained(DB data) throws Exception {
+    static int retained(DB data) throws Exception {
         Field field = DB.class.getDeclaredField("retiredLayers");
         field.setAccessible(true);
         return ((Set<?>) field.get(data)).size();
     }
 
-    private static int communes(DB data) throws Exception {
+    static int communes(DB data) throws Exception {
         Field cache = DB.class.getDeclaredField("communeCache");
         cache.setAccessible(true);
         Field runtimes = CommuneRuntimeCache.class.getDeclaredField("runtimes");
