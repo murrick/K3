@@ -112,7 +112,6 @@ import java.util.*;
  */
 public class Mind implements IMind {
 
-    private static final boolean DEBUG_DISABLE_FALSE_CHECK = false;
     private static final int FLOOD_CONTROL_LIMIT = 10000;
 
     private final Object locker = new Object();
@@ -2036,13 +2035,10 @@ public class Mind implements IMind {
                         ? new LinkedList<ITerm>()
                         : new LinkedList<ITerm>(externals);
 
-        Boolean result = null;
-        if (!DEBUG_DISABLE_FALSE_CHECK) {
-            result = queryCheckFalseCanonical(
-                    line,
-                    new LinkedList<ITerm>(source),
-                    logging);
-        }
+        Boolean result = queryCheckFalseCanonical(
+                line,
+                new LinkedList<ITerm>(source),
+                logging);
         if (result == null) {
             result = queryCheckTrueCanonical(
                     line,
@@ -2094,30 +2090,26 @@ public class Mind implements IMind {
                     || entry.getType() == LogMode.VALUES);
         }
         Queue<ITerm> externals = queryExternals(ext);
-        boolean conflict = false;
-
-        if (!DEBUG_DISABLE_FALSE_CHECK) {
-            IContextFederation.QueryResult opposite =
-                    federation.continueFederatedQuery(
-                            this,
-                            invert(line),
-                            new LinkedList<ITerm>(externals),
-                            logging);
-            conflict = federatedConflict(opposite);
-            recordExplainPass(
-                    IContextFederation.ExplainPolarity.FALSE_PASS,
-                    opposite);
-            if (opposite.isResolved()) {
-                hypothesis.clear();
-                tempHypothesis.clear();
-                if (logging) {
-                    log.add(
-                            LogMode.ANALYZER,
-                            "Result: FALSE");
-                    logResult(this);
-                }
-                return false;
+        IContextFederation.QueryResult opposite =
+                federation.continueFederatedQuery(
+                        this,
+                        invert(line),
+                        new LinkedList<ITerm>(externals),
+                        logging);
+        boolean conflict = federatedConflict(opposite);
+        recordExplainPass(
+                IContextFederation.ExplainPolarity.FALSE_PASS,
+                opposite);
+        if (opposite.isResolved()) {
+            hypothesis.clear();
+            tempHypothesis.clear();
+            if (logging) {
+                log.add(
+                        LogMode.ANALYZER,
+                        "Result: FALSE");
+                logResult(this);
             }
+            return false;
         }
 
         IContextFederation.QueryResult positive =
@@ -2368,9 +2360,7 @@ public class Mind implements IMind {
                     if (line.length() == 1) {
                         res = queryCheck(logging);
                     } else {
-                        if (!DEBUG_DISABLE_FALSE_CHECK) {
-                            res = queryCheckFalse(line, ext, logging);
-                        }
+                        res = queryCheckFalse(line, ext, logging);
                         if (res == null) {
                             res = queryCheckTrue(line, ext, logging);
                         }
