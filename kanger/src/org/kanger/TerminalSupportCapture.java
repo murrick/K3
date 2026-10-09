@@ -424,16 +424,18 @@ final class TerminalSupportCapture implements AutoCloseable {
         final List<ProvisionalApplication> applications;
         final List<String> gaps;
         final boolean captureActive;
-        CollisionObservations(List<ProvisionalApplication> applications, List<String> gaps, boolean active) {
+        final java.util.UUID scope;
+        final int operation;
+        CollisionObservations(List<ProvisionalApplication> applications, List<String> gaps, boolean active, java.util.UUID scope, int operation) {
             this.applications = Collections.unmodifiableList(applications);
-            this.gaps = Collections.unmodifiableList(new ArrayList<String>(gaps)); captureActive = active;
+            this.gaps = Collections.unmodifiableList(new ArrayList<String>(gaps)); captureActive = active; this.scope = scope; this.operation = operation;
         }
     }
     /** Event-time provisional surface; settlementSnapshot remains acceptance-only. */
     static CollisionObservations collisionObservations(Mind eventMind) {
         TerminalSupportCapture capture = ACTIVE.get();
         if (capture == null) return new CollisionObservations(new ArrayList<ProvisionalApplication>(),
-                Collections.<String>emptyList(), false);
+                Collections.<String>emptyList(), false, null, -1);
         Map<Integer, Object> objects = new java.util.HashMap<Integer, Object>();
         for (Map.Entry<Object, Integer> entry : capture.identities.entrySet()) objects.put(entry.getValue(), entry.getKey());
         java.util.Set<Integer> visible = new java.util.HashSet<Integer>();
@@ -441,6 +443,8 @@ final class TerminalSupportCapture implements AutoCloseable {
             Integer index = capture.identities.get(level);
             if (index != null) visible.add(index);
         }
+        Integer eventIndex = capture.identities.get(eventMind);
+        int operation = eventIndex == null ? -1 : capture.operation(eventIndex);
         List<ProvisionalApplication> result = new ArrayList<ProvisionalApplication>();
         for (Application application : capture.applications) {
             int level = application.mind;
@@ -450,7 +454,7 @@ final class TerminalSupportCapture implements AutoCloseable {
                 level = frame.parent; related = visible.contains(level);
                 frame = capture.frames.get(level);
             }
-            if (!related) continue;
+            if (!related || operation < 0 || capture.operation(application.mind) != operation) continue;
             Outcome outcome = capture.outcome(application.mind);
             if (outcome != Outcome.PENDING && outcome != Outcome.COMMITTED) continue;
             Mind mind = (Mind) objects.get(application.mind);
@@ -465,7 +469,16 @@ final class TerminalSupportCapture implements AutoCloseable {
             result.add(new ProvisionalApplication(application, outcome,
                     DmzReplayProvenance.observedSources(mind, rule.getId()), supports));
         }
-        return new CollisionObservations(result, capture.applicationGaps, true);
+        return new CollisionObservations(result, capture.applicationGaps, true, capture.scopeId, operation);
+    }
+
+    private int operation(int mind) {
+        Frame frame = frames.get(mind);
+        while (frame != null) {
+            if (frame.knownBoundary) return mind;
+            mind = frame.parent; frame = frames.get(mind);
+        }
+        return -1;
     }
 
     private TerminalSupportCapture(Mind boundary) {

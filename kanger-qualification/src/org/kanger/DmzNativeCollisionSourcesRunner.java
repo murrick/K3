@@ -11,10 +11,10 @@ public final class DmzNativeCollisionSourcesRunner {
     private static int checks;
     public static void main(String[] args) throws Exception {
         System.setProperty("user.home", Files.createTempDirectory("dmz-native-collision-").toString());
-        run(false); run(true);
+        run(false, false); run(true, false); run(false, true); run(true, true);
         System.out.println("DMZ_NATIVE_COLLISION_SOURCES_PASS checks=" + checks);
     }
-    private static void run(boolean reverse) throws Exception {
+    private static void run(boolean reverse, boolean recursive) throws Exception {
         User user = new User(); new UDF().init(user);
         Mind q = new Mind(user); user.setCurrentMind(q);
         IContextResults.Revision a = new IContextResults.Revision(UUID.randomUUID(), 1);
@@ -22,12 +22,17 @@ public final class DmzNativeCollisionSourcesRunner {
         List<CollisionProofCapture.Conflict> detached;
         try (DmzReplayProvenance journal = DmzReplayProvenance.begin()) {
             DmzReplayProvenance.replayRule(q, a, 10, DmzReplayProvenance.Authority.TARGET_Q,
-                    "!@x a(x) -> male(x);");
+                    recursive ? "!@x a(x) -> middle(x);" : "!@x a(x) -> male(x);");
+            if (recursive) DmzReplayProvenance.replayRule(q, a, 12, DmzReplayProvenance.Authority.TARGET_Q,
+                    "!@x middle(x) -> male(x);");
             DmzReplayProvenance.replayRule(q, b, 20, DmzReplayProvenance.Authority.EXTERNAL,
                     "!@x b(x) -> ~male(x);");
             try (TechnicalMindTransaction outer = TechnicalMindTransaction.begin(q);
                     CollisionProofCapture capture = CollisionProofCapture.begin();
                     TerminalSupportCapture supportCapture = TerminalSupportCapture.begin(outer.mind())) {
+                require(outer.mind().compile("!@x z(x) -> aside(x); !z(Mary);", null, false), "prior operation");
+                List<TerminalSupportCapture.Application> prior = supportCapture.applicationSnapshot();
+                int priorAccepted = supportCapture.settlementSnapshot().accepted.size();
                 for (int visit = 0; visit < 2; ++visit) {
                     boolean positive = reverse ? visit == 1 : visit == 0;
                     DmzReplayProvenance.replayRule(outer.mind(), positive ? a : b, positive ? 11 : 21,
@@ -39,12 +44,23 @@ public final class DmzNativeCollisionSourcesRunner {
                 require(!detached.isEmpty(), "event captured before rollback");
                 boolean pendingFact = false, acceptedRule = false;
                 for (CollisionProofCapture.Conflict conflict : detached) {
+                    require(conflict.observations.operation >= 0 && conflict.observations.scope != null,
+                            "event has explicit operation ownership");
+                    for (TerminalSupportCapture.ProvisionalApplication application : conflict.observations.applications)
+                        require(!prior.contains(application.application), "prior operation observations excluded");
+                    DmzProvisionalCollisionProof proof = DmzProvisionalCollisionProof.build(conflict, 1000, 100);
+                    require(!proof.truncated && (recursive ? proof.combinations.isEmpty() : !proof.combinations.isEmpty()),
+                            "recursive missing terminal fails closed; bounded one-step collision joins witnesses");
+                    require(!proof.complete, "provisional graph cannot certify completeness");
+                    require(proof.rootsAvailable != recursive, "root availability exposes missing terminal step");
+
                     require(conflict.observations.captureActive, "provisional capture explicitly active");
                     require(!conflict.observations.applications.isEmpty(), "native event retains bounded applications");
                     for (TerminalSupportCapture.ProvisionalApplication application : conflict.observations.applications) {
                         require(application.outcome == TerminalSupportCapture.Outcome.PENDING,
                                 "event application is provisional, never accepted before operation settlement");
-                        require(!application.ruleSources.isEmpty(), "event application rule source retained");
+                        if ("male".equals(application.application.ground.predicate))
+                            require(!application.ruleSources.isEmpty(), "event application rule source retained");
                     }
                     CollisionProofCapture.Node left = conflict.left.nodes.get(conflict.left.root);
                     CollisionProofCapture.Node right = conflict.right.nodes.get(conflict.right.root);
@@ -56,7 +72,8 @@ public final class DmzNativeCollisionSourcesRunner {
                         observedLeft |= left.ground.equivalent(application.application.ground);
                         observedRight |= right.ground.equivalent(application.application.ground);
                     }
-                    require(observedLeft && observedRight, "both native roots have provisional bounded applications");
+                    require(recursive ? !(observedLeft && observedRight) : observedLeft && observedRight,
+                            "recursive terminal coverage gap remains explicit");
                     for (CollisionProofCapture.Graph graph : new CollisionProofCapture.Graph[] {conflict.left, conflict.right})
                         for (CollisionProofCapture.Node node : graph.nodes) {
                             if (node.generated) require(node.sources.isEmpty(), "generated node not assigned primary replay authorship");
@@ -72,7 +89,7 @@ public final class DmzNativeCollisionSourcesRunner {
                         }
                 }
                 require(pendingFact && acceptedRule, "event distinguishes pending facts and accepted productions");
-                require(supportCapture.settlementSnapshot().accepted.isEmpty(), "rejected operation cannot promote provisional proofs");
+                require(supportCapture.settlementSnapshot().accepted.size() == priorAccepted, "rejected operation cannot promote provisional proofs");
                 outer.rollback();
                 require(journal.settlementSnapshot().discarded == 2, "outer rollback discards both fact occurrences");
             }
