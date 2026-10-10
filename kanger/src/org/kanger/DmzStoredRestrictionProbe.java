@@ -20,9 +20,14 @@ final class DmzStoredRestrictionProbe {
     }
     final List<Node> nodes;
     final boolean eligible, truncated;
+    final DmzSourcedProofGraph graph;
     final boolean complete = false;
     private DmzStoredRestrictionProbe(List<Node> nodes, boolean eligible, boolean truncated) {
+        this(nodes, eligible, truncated, null);
+    }
+    private DmzStoredRestrictionProbe(List<Node> nodes, boolean eligible, boolean truncated, DmzSourcedProofGraph graph) {
         this.nodes = Collections.unmodifiableList(nodes); this.eligible = eligible; this.truncated = truncated;
+        this.graph = graph;
     }
     static DmzStoredRestrictionProbe project(DmzAcceptanceProofGuard guard, DmzStoredProof proof,
             DmzProofWitnesses.Witness blocked, Mind target, int budget) throws Exception {
@@ -46,7 +51,8 @@ final class DmzStoredRestrictionProbe {
                 if (contains(witness, blocked)) ++removed; else retained.add(witness);
             nodes.add(new Node(index, retained, removed));
         }
-        return new DmzStoredRestrictionProbe(nodes, true, false);
+        return new DmzStoredRestrictionProbe(nodes, true, false,
+                proof.graph.restrict(Collections.singletonList(DmzProofWitnesses.NoGood.from(blocked))));
     }
     private static boolean contains(DmzProofWitnesses.Witness witness, DmzProofWitnesses.Witness blocked) {
         if (same(witness, blocked)) return true;

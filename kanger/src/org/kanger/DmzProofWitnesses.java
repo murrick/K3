@@ -11,6 +11,43 @@ import java.util.UUID;
 
 /** Bounded acyclic witnesses of the observed graph, never a completeness certificate. */
 final class DmzProofWitnesses {
+    /** Detached exact unit-chain no-good, portable across graph indices in the same source scope. */
+    static final class NoGood {
+        private final Witness selected;
+        final int depth;
+        private NoGood(Witness selected, int depth) { this.selected = selected; this.depth = depth; }
+        static NoGood from(Witness witness) {
+            if (witness == null || witness.step < 0 || witness.source.authority != DmzReplayProvenance.Authority.EXTERNAL)
+                throw new IllegalArgumentException("External derived unit witness required");
+            Witness current = witness;
+            int depth = 0;
+            while (current.step >= 0) {
+                if (++depth >= 256 || current.premises.size() != 1)
+                    throw new IllegalArgumentException("Bounded unit witness chain required");
+                current = current.premises.get(0);
+            }
+            if (!current.premises.isEmpty() || !compatible(witness, new HashMap<UUID, Long>()))
+                throw new IllegalArgumentException("Coherent primary-terminated witness required");
+            return new NoGood(witness, depth + 1);
+        }
+        boolean matches(DmzSourcedProofGraph graph, int node, int step,
+                DmzReplayProvenance.Binding source, List<Witness> premises) {
+            return matches(selected, graph, node, step, source, premises);
+        }
+        private static boolean matches(Witness expected, DmzSourcedProofGraph graph, int node, int step,
+                DmzReplayProvenance.Binding source, List<Witness> premises) {
+            if (expected.source != source || (expected.step < 0) != (step < 0)
+                    || expected.premises.size() != premises.size()
+                    || !expected.graph.observed.nodes.get(expected.node).ground.equivalent(graph.observed.nodes.get(node).ground))
+                return false;
+            for (int i = 0; i < premises.size(); ++i) {
+                Witness actual = premises.get(i);
+                if (!matches(expected.premises.get(i), actual.graph, actual.node, actual.step, actual.source, actual.premises))
+                    return false;
+            }
+            return true;
+        }
+    }
     static final class Witness {
         final DmzSourcedProofGraph graph;
         final int node, step; // step -1 denotes a primary source occurrence
@@ -37,7 +74,10 @@ final class DmzProofWitnesses {
         boolean truncated;
         Budget(int limit) { this.limit = limit; }
         boolean advance() {
-            if (++work > 32L * limit) { truncated = true; return false; }
+            return advance(1);
+        }
+        boolean advance(int amount) {
+            if ((work += amount) > 32L * limit) { truncated = true; return false; }
             return true;
         }
         boolean take() {
@@ -96,6 +136,10 @@ final class DmzProofWitnesses {
             if (selected.size() == 1 && selected.get(0).step < 0
                     && TerminalSupportCapture.SourcePair.excludes(graph.steps.get(step).excludedPairs,
                             source, selected.get(0).source)) return;
+            for (NoGood noGood : graph.noGoods) {
+                if (!budget.advance(noGood.depth)) return;
+                if (noGood.matches(graph, node, step, source, selected)) return;
+            }
             Map<UUID, Long> revisions = new HashMap<UUID, Long>();
             revisions.put(source.context, source.revision);
             for (Witness premise : selected) if (!compatible(premise, revisions)) return;

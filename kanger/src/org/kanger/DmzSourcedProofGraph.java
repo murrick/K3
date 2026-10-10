@@ -21,10 +21,25 @@ final class DmzSourcedProofGraph {
     final DmzObservedProofGraph observed;
     final List<Step> steps;
     final List<Boolean> available;
+    final List<DmzProofWitnesses.NoGood> noGoods;
     private DmzSourcedProofGraph(DmzObservedProofGraph observed, List<Step> steps, List<Boolean> available) {
+        this(observed, steps, available, Collections.<DmzProofWitnesses.NoGood>emptyList());
+    }
+    private DmzSourcedProofGraph(DmzObservedProofGraph observed, List<Step> steps, List<Boolean> available,
+            List<DmzProofWitnesses.NoGood> noGoods) {
         this.observed = observed;
         this.steps = Collections.unmodifiableList(steps);
         this.available = Collections.unmodifiableList(available);
+        this.noGoods = Collections.unmodifiableList(new ArrayList<DmzProofWitnesses.NoGood>(noGoods));
+    }
+    /** A detached branch view; observed reachability and accepted source records remain historical. */
+    DmzSourcedProofGraph restrict(List<DmzProofWitnesses.NoGood> additional) {
+        if (additional == null || additional.contains(null)) throw new IllegalArgumentException("Exact no-goods required");
+        List<DmzProofWitnesses.NoGood> combined = new ArrayList<DmzProofWitnesses.NoGood>(noGoods);
+        if ((long) combined.size() + additional.size() > 10000L)
+            throw new IllegalArgumentException("Detached no-good count exceeds budget");
+        combined.addAll(additional);
+        return new DmzSourcedProofGraph(observed, steps, available, combined);
     }
     static DmzSourcedProofGraph build(List<TerminalSupportCapture.ApplicationSources> associations) {
         List<TerminalSupportCapture.Application> applications = new ArrayList<TerminalSupportCapture.Application>();
