@@ -294,6 +294,22 @@ public final class DmzNativeRecursiveContinuationRunner {
                 try { overlay.assessCandidate("!source(555);", 1); }
                 catch (IllegalStateException expected) { assessmentBounded = expected.getMessage().contains("Classification inventory unavailable"); }
                 require(assessmentBounded, "bounded combined assessment refuses unavailable evidence");
+                DmzReplayProvenance.Settlement beforeValidation = journal.settlementSnapshot();
+                invalidEvaluation(overlay, null, 116, "!~source(1);", "?source(1);", 10000, 10000);
+                invalidEvaluation(overlay, fact, -1, "!~source(1);", "?source(1);", 10000, 10000);
+                invalidEvaluation(overlay, fact, 116, "!~source(1);", "!source(1);", 10000, 10000);
+                invalidEvaluation(overlay, fact, 116, "!source([1]);", "?source(1);", 10000, 10000);
+                invalidEvaluation(overlay, fact, 116, "!~source(1);", "?source(1);", 0, 10000);
+                invalidEvaluation(overlay, fact, 116, "!~source(1);", "?source(1);", 10000, 0);
+                invalidEvaluation(overlay, fact, 116, "!~source(1);", "?source(1);", 10001, 10000);
+                invalidEvaluation(overlay, fact, 116, "!~source(1);", "?source(1);", 10000, 10001);
+                boolean evaluationBounded = false;
+                try { overlay.evaluateCandidate(fact, 116, "!source(560);", "?source(560);", 1, 10000); }
+                catch (IllegalStateException expected) { evaluationBounded = expected.getMessage().contains("Classification inventory unavailable"); }
+                require(evaluationBounded, "evaluation evidence budget fails at read-only preflight");
+                require(journal.settlementSnapshot().pending == beforeValidation.pending
+                        && journal.settlementSnapshot().discarded == beforeValidation.discarded,
+                        "invalid and evidence-limited evaluation imports no source or transaction");
                 DmzReplayProvenance.Settlement beforeDeferred = journal.settlementSnapshot();
                 DmzStoredRetractionTransaction.CandidateEvaluation deferred = overlay.evaluateCandidate(fact, 111,
                         "!negativeSeed(9);", "?negativeResult(9);", 10000, 10000);
@@ -307,6 +323,16 @@ public final class DmzNativeRecursiveContinuationRunner {
                 require(journal.settlementSnapshot().pending == beforeDeferred.pending
                         && journal.settlementSnapshot().discarded == beforeDeferred.discarded,
                         "deferred candidate and primary reuse import no proposed source");
+                DmzStoredRetractionTransaction.CandidateEvaluation negativeReusable = overlay.evaluateCandidate(
+                        new IContextResults.Revision(fact.getContextId(), 2), 117,
+                        "!~negativePrimary(7);", "?~negativePrimary(7);", 10000, 10000);
+                require(negativeReusable.status == DmzStoredRetractionTransaction.CandidateStatus.REUSED_PRIMARY
+                        && negativeReusable.query.candidateMode == DmzStoredRetractionTransaction.QueryResult.CandidateMode.EXISTING_PRIMARY
+                        && Boolean.TRUE.equals(negativeReusable.query.value),
+                        "negative primary reuse ignores unimported proposed source revision");
+                require(journal.settlementSnapshot().pending == beforeDeferred.pending
+                        && journal.settlementSnapshot().discarded == beforeDeferred.discarded,
+                        "negative repeat imports neither new revision nor alias");
                 DmzStoredRetractionTransaction.CandidateEvaluation evaluatedFresh = overlay.evaluateCandidate(fact, 113,
                         "!source(556);", signed(negative, "?derived(556);"), 10000, 10000);
                 require(evaluatedFresh.status == DmzStoredRetractionTransaction.CandidateStatus.PROBED_NEW_INPUT
@@ -314,6 +340,18 @@ public final class DmzNativeRecursiveContinuationRunner {
                         && Boolean.TRUE.equals(evaluatedFresh.query.value), "valid fresh candidate still probes after rejection");
                 require(overlay.queryContinuation(signed(negative, "?derived(556);")) == null,
                         "evaluated fresh candidate fully rolls back");
+                DmzStoredRetractionTransaction.CandidateEvaluation negativeEvaluated = overlay.evaluateCandidate(fact, 118,
+                        "!~negativeSeed(557);", "?negativeResult(557);", 10000, 10000);
+                require(negativeEvaluated.status == DmzStoredRetractionTransaction.CandidateStatus.PROBED_NEW_INPUT
+                        && Boolean.TRUE.equals(negativeEvaluated.query.value), "fresh signed evaluated input proves consequence");
+                require(overlay.queryContinuation("?negativeResult(557);") == null,
+                        "evaluated negative consequence disappears after rollback");
+                DmzStoredRetractionTransaction.CandidateEvaluation evaluatedUnknown = overlay.evaluateCandidate(fact, 119,
+                        "!~negativeSeed(558);", signed(negative, "?derived(559);"), 10000, 10000);
+                require(evaluatedUnknown.status == DmzStoredRetractionTransaction.CandidateStatus.PROBED_NEW_INPUT
+                        && evaluatedUnknown.query != null && evaluatedUnknown.query.value == null
+                        && !evaluatedUnknown.query.hypotheses.isEmpty(),
+                        "executed unknown query snapshot differs from absence of rejected query");
                 Boolean positiveRepeat = overlay.accept(fact, 102, DmzReplayProvenance.Authority.EXTERNAL, "!source(1);");
                 Boolean negativeRepeat = overlay.accept(fact, 103, DmzReplayProvenance.Authority.EXTERNAL, "!~negativePrimary(7);");
                 require(positiveRepeat == null && negativeRepeat == null,
@@ -374,15 +412,17 @@ public final class DmzNativeRecursiveContinuationRunner {
                             signed(negative, "?derived(66);"), 1);
                     else if (failureMode == 4) overlay.evaluateCandidate(fact, 74, "!~negativeSeed(66);",
                             signed(negative, "?derived(66);"), 10000, 1);
-                    else if (failureMode == 3) overlay.probeCandidate(
+                    else if (failureMode == 3) overlay.evaluateCandidate(
                             new IContextResults.Revision(fact.getContextId(), 2), 71, "!~negativeSeed(66);",
-                            signed(negative, "?derived(66);"), 10000);
+                            signed(negative, "?derived(66);"), 10000, 10000);
                     else overlay.accept(new IContextResults.Revision(fact.getContextId(), 2), 31,
                             DmzReplayProvenance.Authority.EXTERNAL, "!~negativeIndependent(3);");
                 } catch (IllegalStateException expected) {
                     auditRejected = true;
                     if (failureMode >= 5) require(expected.getMessage().contains("Candidate was not accepted in isolated probe"),
                             "opposite signed live parent fact fails at native acceptance, not duplicate lookup or query audit");
+                    if (failureMode == 3) require(expected.getMessage().contains("inventory unavailable"),
+                            "evaluated incoherent revision fails after native candidate admission at query audit");
                     if (failureMode == 4) require(expected.getMessage().contains("primary lookup budget exceeded"),
                             "candidate fails at the separately bounded primary lookup");
                     if (failureMode == 1 || failureMode == 2) require(expected.getMessage().contains("inventory unavailable"),
@@ -444,6 +484,13 @@ public final class DmzNativeRecursiveContinuationRunner {
                         "Q derived root and downstream signs survive rejected candidate");
             }
         }
+    }
+    private static void invalidEvaluation(DmzStoredRetractionTransaction overlay, IContextResults.Revision source,
+            long label, String candidate, String query, int auditBudget, int lookupBudget) throws Exception {
+        boolean invalid = false;
+        try { overlay.evaluateCandidate(source, label, candidate, query, auditBudget, lookupBudget); }
+        catch (IllegalArgumentException expected) { invalid = true; }
+        require(invalid, "invalid evaluation parameters fail before recoverable classification");
     }
     private static void authorityStaleness(boolean sourceOnly) throws Exception {
         User user = new User(); new UDF().init(user); Mind q = new Mind(user); user.setCurrentMind(q);
