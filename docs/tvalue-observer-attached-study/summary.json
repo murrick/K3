@@ -1,0 +1,96 @@
+{
+  "JVMs": 50,
+  "wiring_refusal_JVMs": 4,
+  "cost_JVMs": 40,
+  "qualification_JVMs": 6,
+  "batches": 2560,
+  "cost_trace_replays": 80,
+  "prior_accepted_traces_identical": 21,
+  "native_controls_identical": true,
+  "native_head": "2422f7f6d9e1af7608203b1566df64b5f29fe344",
+  "metrics": [
+    {
+      "size": 32,
+      "workload": "setter",
+      "slow_ns": 1832.5043640136719,
+      "slow_bytes": 1763.3427734375,
+      "fast_ns": 2127.9346618652344,
+      "fast_bytes": 1739.3427734375,
+      "direct_ns": 2242.2423400878906,
+      "direct_bytes": 1764.04248046875,
+      "fast_slow_paired_ratio": 1.1996132261153591,
+      "fast_ratio_range": [
+        0.6220288541195266,
+        1.4781563778009983
+      ],
+      "direct_slow_paired_ratio": 1.1660113273679458,
+      "direct_ratio_range": [
+        0.729162345758547,
+        2.3246194878174475
+      ]
+    },
+    {
+      "size": 32,
+      "workload": "export",
+      "slow_ns": 1149710.09375,
+      "slow_bytes": 785039.5,
+      "fast_ns": 1276752.140625,
+      "fast_bytes": 785248.0,
+      "direct_ns": 931936.40625,
+      "direct_bytes": 790560.0,
+      "fast_slow_paired_ratio": 1.0343681794465884,
+      "fast_ratio_range": [
+        0.8099627982257301,
+        1.7642364765926772
+      ],
+      "direct_slow_paired_ratio": 0.8030701175005093,
+      "direct_ratio_range": [
+        0.6177304498774973,
+        0.9331654687366141
+      ]
+    },
+    {
+      "size": 128,
+      "workload": "setter",
+      "slow_ns": 2979.1666564941406,
+      "slow_bytes": 1731.3427734375,
+      "fast_ns": 2182.4278259277344,
+      "fast_bytes": 1739.3427734375,
+      "direct_ns": 2641.8702697753906,
+      "direct_bytes": 1723.3427734375,
+      "fast_slow_paired_ratio": 0.8348932612286284,
+      "fast_ratio_range": [
+        0.4613102505675024,
+        1.2317356565667
+      ],
+      "direct_slow_paired_ratio": 0.892755616976781,
+      "direct_ratio_range": [
+        0.5699146866116419,
+        1.3954683634780438
+      ]
+    },
+    {
+      "size": 128,
+      "workload": "export",
+      "slow_ns": 3602369.84375,
+      "slow_bytes": 2662472.0,
+      "fast_ns": 2741145.6875,
+      "fast_bytes": 2670992.0,
+      "direct_ns": 3339966.984375,
+      "direct_bytes": 2669608.0,
+      "fast_slow_paired_ratio": 0.7971798274839681,
+      "fast_ratio_range": [
+        0.6523009861302466,
+        1.0073817156374376
+      ],
+      "direct_slow_paired_ratio": 0.9268932403881536,
+      "direct_ratio_range": [
+        0.6735811906180385,
+        1.7630450945481908
+      ]
+    }
+  ],
+  "production_changed": false,
+  "direct_variant_adopted": false,
+  "causality_established": false
+}

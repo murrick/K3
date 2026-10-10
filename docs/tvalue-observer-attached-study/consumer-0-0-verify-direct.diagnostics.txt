@@ -1,0 +1,12 @@
+REFUSE case=root-clear-v0 code=RECYCLED_ID aliases=2 journalRejected=false outputRows=0
+REFUSE case=root-clear-v1 code=RECYCLED_ID aliases=2 journalRejected=false outputRows=0
+REFUSE case=root-clear-v2 code=RECYCLED_ID aliases=2 journalRejected=true outputRows=0
+ACCEPT case=child-clear-v0 rows=75
+ACCEPT case=child-clear-v1 rows=75
+ACCEPT case=child-clear-v2 rows=75
+ACCEPT case=pack-v0 rows=76
+ACCEPT case=pack-v1 rows=76
+ACCEPT case=pack-v2 rows=76
+NEGATIVE code=FULL_AUTHORITY_MISMATCH outputRows=0
+NEGATIVE code=ADAPTER_FAILURE outputRows=0
+NEGATIVE code=NO_SESSION outputRows=0

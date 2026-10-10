@@ -1,0 +1,722 @@
+[
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "off",
+    "mode": "direct",
+    "workload": "setter",
+    "ns": 2383.8422241210938,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "off",
+    "mode": "direct",
+    "workload": "export",
+    "ns": 2104667.78125,
+    "bytes": 2671472.0
+  },
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "setter",
+    "ns": 1762.1046752929688,
+    "bytes": 1803.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "export",
+    "ns": 1889588.03125,
+    "bytes": 2666352.0
+  },
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "setter",
+    "ns": 2161.8104248046875,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "export",
+    "ns": 2274423.8125,
+    "bytes": 2667024.0
+  },
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "setter",
+    "ns": 1755.0928344726562,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "export",
+    "ns": 2805286.21875,
+    "bytes": 2658784.0
+  },
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "verify",
+    "mode": "direct",
+    "workload": "setter",
+    "ns": 2748.6385498046875,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "verify",
+    "mode": "direct",
+    "workload": "export",
+    "ns": 3673127.03125,
+    "bytes": 2667360.0
+  },
+  {
+    "size": 128,
+    "repetition": 1,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "setter",
+    "ns": 1877.3211059570312,
+    "bytes": 1707.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 1,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "export",
+    "ns": 4793440.5,
+    "bytes": 2678032.0
+  },
+  {
+    "size": 128,
+    "repetition": 1,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "setter",
+    "ns": 2119.3297729492188,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 1,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "export",
+    "ns": 1799059.78125,
+    "bytes": 2678048.0
+  },
+  {
+    "size": 128,
+    "repetition": 1,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "setter",
+    "ns": 1998.0128173828125,
+    "bytes": 1723.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 1,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "export",
+    "ns": 2718841.6875,
+    "bytes": 2665440.0
+  },
+  {
+    "size": 128,
+    "repetition": 2,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "setter",
+    "ns": 2671.1109008789062,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 2,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "export",
+    "ns": 3521190.375,
+    "bytes": 2671072.0
+  },
+  {
+    "size": 128,
+    "repetition": 2,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "setter",
+    "ns": 1923.2232055664062,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 2,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "export",
+    "ns": 2839492.15625,
+    "bytes": 2675694.0
+  },
+  {
+    "size": 128,
+    "repetition": 2,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "setter",
+    "ns": 3157.65087890625,
+    "bytes": 1707.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 2,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "export",
+    "ns": 3623668.03125,
+    "bytes": 2654064.0
+  },
+  {
+    "size": 128,
+    "repetition": 3,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "setter",
+    "ns": 2826.33984375,
+    "bytes": 1819.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 3,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "export",
+    "ns": 2979297.34375,
+    "bytes": 2685326.0
+  },
+  {
+    "size": 128,
+    "repetition": 3,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "setter",
+    "ns": 2287.7451171875,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 3,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "export",
+    "ns": 2642799.21875,
+    "bytes": 2670912.0
+  },
+  {
+    "size": 128,
+    "repetition": 3,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "setter",
+    "ns": 4959.233215332031,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 3,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "export",
+    "ns": 4051502.71875,
+    "bytes": 2659504.0
+  },
+  {
+    "size": 128,
+    "repetition": 4,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "setter",
+    "ns": 3908.2637329101562,
+    "bytes": 1707.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 4,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "export",
+    "ns": 3158743.59375,
+    "bytes": 2665792.0
+  },
+  {
+    "size": 128,
+    "repetition": 4,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "setter",
+    "ns": 2981.912109375,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 4,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "export",
+    "ns": 3240009.4375,
+    "bytes": 2671072.0
+  },
+  {
+    "size": 128,
+    "repetition": 4,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "setter",
+    "ns": 2800.6824340820312,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 4,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "export",
+    "ns": 3581071.65625,
+    "bytes": 2671072.0
+  },
+  {
+    "size": 128,
+    "repetition": 5,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "setter",
+    "ns": 2612.629638671875,
+    "bytes": 1707.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 5,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "export",
+    "ns": 4630719.5,
+    "bytes": 2668144.0
+  },
+  {
+    "size": 128,
+    "repetition": 5,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "setter",
+    "ns": 2203.0452270507812,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 5,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "export",
+    "ns": 3770922.4375,
+    "bytes": 2670912.0
+  },
+  {
+    "size": 128,
+    "repetition": 5,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "setter",
+    "ns": 3724.5824584960938,
+    "bytes": 1707.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 5,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "export",
+    "ns": 3743290.53125,
+    "bytes": 2665792.0
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "off",
+    "mode": "direct",
+    "workload": "setter",
+    "ns": 1547.3806762695312,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "off",
+    "mode": "direct",
+    "workload": "export",
+    "ns": 786114.46875,
+    "bytes": 791680.0
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "setter",
+    "ns": 1616.8557739257812,
+    "bytes": 1803.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "export",
+    "ns": 539974.34375,
+    "bytes": 790448.0
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "setter",
+    "ns": 1379.2963256835938,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "export",
+    "ns": 1542165.25,
+    "bytes": 784816.0
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "setter",
+    "ns": 2217.4153442382812,
+    "bytes": 1819.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "export",
+    "ns": 874126.15625,
+    "bytes": 793216.0
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "verify",
+    "mode": "direct",
+    "workload": "setter",
+    "ns": 1697.4325561523438,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "verify",
+    "mode": "direct",
+    "workload": "export",
+    "ns": 1171844.53125,
+    "bytes": 782864.0
+  },
+  {
+    "size": 32,
+    "repetition": 1,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "setter",
+    "ns": 3352.2216186523438,
+    "bytes": 1819.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 1,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "export",
+    "ns": 1330816.5625,
+    "bytes": 787537.25
+  },
+  {
+    "size": 32,
+    "repetition": 1,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "setter",
+    "ns": 2131.5780029296875,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 1,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "export",
+    "ns": 1241693.21875,
+    "bytes": 782008.0
+  },
+  {
+    "size": 32,
+    "repetition": 1,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "setter",
+    "ns": 1442.0517578125,
+    "bytes": 1787.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 1,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "export",
+    "ns": 1533025.0,
+    "bytes": 781989.0
+  },
+  {
+    "size": 32,
+    "repetition": 2,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "setter",
+    "ns": 2253.176513671875,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 2,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "export",
+    "ns": 984076.90625,
+    "bytes": 790672.0
+  },
+  {
+    "size": 32,
+    "repetition": 2,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "setter",
+    "ns": 2124.2913208007812,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 2,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "export",
+    "ns": 1041119.6875,
+    "bytes": 785745.0
+  },
+  {
+    "size": 32,
+    "repetition": 2,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "setter",
+    "ns": 1599.0307006835938,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 2,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "export",
+    "ns": 1054557.78125,
+    "bytes": 782687.0
+  },
+  {
+    "size": 32,
+    "repetition": 3,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "setter",
+    "ns": 2231.3081665039062,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 3,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "export",
+    "ns": 1116770.59375,
+    "bytes": 790672.0
+  },
+  {
+    "size": 32,
+    "repetition": 3,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "setter",
+    "ns": 2531.6965942382812,
+    "bytes": 1819.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 3,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "export",
+    "ns": 1311811.0625,
+    "bytes": 810944.0
+  },
+  {
+    "size": 32,
+    "repetition": 3,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "setter",
+    "ns": 2017.1600952148438,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 3,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "export",
+    "ns": 1315966.5625,
+    "bytes": 791608.0
+  },
+  {
+    "size": 32,
+    "repetition": 4,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "setter",
+    "ns": 2583.6675415039062,
+    "bytes": 1788.7421875
+  },
+  {
+    "size": 32,
+    "repetition": 4,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "export",
+    "ns": 879795.90625,
+    "bytes": 792008.0
+  },
+  {
+    "size": 32,
+    "repetition": 4,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "setter",
+    "ns": 2216.728515625,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 4,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "export",
+    "ns": 1907369.5,
+    "bytes": 781217.0
+  },
+  {
+    "size": 32,
+    "repetition": 4,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "setter",
+    "ns": 2191.744140625,
+    "bytes": 1787.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 4,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "export",
+    "ns": 1161433.25,
+    "bytes": 787392.0
+  },
+  {
+    "size": 32,
+    "repetition": 5,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "setter",
+    "ns": 1900.306640625,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 5,
+    "flag": "on",
+    "mode": "direct",
+    "workload": "export",
+    "ns": 780612.375,
+    "bytes": 787632.0
+  },
+  {
+    "size": 32,
+    "repetition": 5,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "setter",
+    "ns": 1885.3807373046875,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 5,
+    "flag": "on",
+    "mode": "fast",
+    "workload": "export",
+    "ns": 1219801.5,
+    "bytes": 785680.0
+  },
+  {
+    "size": 32,
+    "repetition": 5,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "setter",
+    "ns": 1647.8486328125,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 5,
+    "flag": "on",
+    "mode": "slow",
+    "workload": "export",
+    "ns": 1137986.9375,
+    "bytes": 782144.0
+  }
+]
