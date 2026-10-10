@@ -488,6 +488,23 @@ final class TerminalSupportCapture implements AutoCloseable {
         return Collections.unmodifiableList(result);
     }
 
+    Outcome storedOutcome(Materialization stored) {
+        requireActive();
+        if (!materializations.contains(stored)) throw new IllegalArgumentException("Stored result belongs to another scope");
+        return outcome(stored.mind);
+    }
+
+    /** Historical accepted inputs for precisely this stored result's inference Mind/operation. */
+    List<ApplicationSources> storedSources(Materialization stored, DmzReplayProvenance journal) {
+        if (storedOutcome(stored) != Outcome.COMMITTED || stored.operation < 0)
+            return Collections.emptyList();
+        List<ApplicationSources> result = new ArrayList<ApplicationSources>();
+        for (ApplicationSources sources : sourceSnapshot(journal))
+            if (sources.application.mind == stored.mind && operation(sources.application.mind) == stored.operation)
+                result.add(sources);
+        return Collections.unmodifiableList(result);
+    }
+
     List<String> applicationGapSnapshot() {
         return Collections.unmodifiableList(new ArrayList<String>(applicationGaps));
     }
