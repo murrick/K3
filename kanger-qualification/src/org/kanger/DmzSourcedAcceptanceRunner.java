@@ -72,6 +72,9 @@ public final class DmzSourcedAcceptanceRunner {
                         require(input.isCurrent(proof, witness, q) == !nested,
                                 "pre-input ticket certifies only its exact immediate committed target");
                     require(!input.isCurrent(proof, null, q), "missing witness rejected");
+                    DmzUnaryStateDelta.Result delta = input.auditDelta(proof, proof.witnesses.get(0), q);
+                    require(delta.matched == !nested && !delta.complete,
+                            "independent unary state delta matches only exact committed boundary: " + delta.gaps);
                     boolean reused = false;
                     try { input.accept(fact, 20, DmzReplayProvenance.Authority.EXTERNAL, "!source(2);"); }
                     catch (IllegalStateException expected) { reused = true; }

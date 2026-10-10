@@ -14,6 +14,7 @@ final class DmzAcceptanceProofGuard {
     private final Mind target;
     private final TerminalSupportCapture.Checkpoint before;
     private final DmzReplayProvenance.SourceCheckpoint baselineSources;
+    private final DmzUnaryStateDelta delta;
     private TerminalSupportCapture.Checkpoint after;
     private DmzReplayProvenance.SourceCheckpoint afterSources;
     private final List<DmzReplayProvenance.Binding> incoming = new ArrayList<DmzReplayProvenance.Binding>();
@@ -24,6 +25,7 @@ final class DmzAcceptanceProofGuard {
         this.capture = capture; this.journal = journal; this.target = target;
         before = capture.baselineCheckpoint(target);
         baselineSources = DmzReplayProvenance.sourceCheckpoint(target);
+        delta = DmzUnaryStateDelta.beforeInput(target, 10000);
         // Also verifies that this journal owns the active source boundary.
         journal.requireActiveJournal();
     }
@@ -65,5 +67,12 @@ final class DmzAcceptanceProofGuard {
         if (!baselineSources.contains(witness.source) && !incoming.contains(witness.source)) return false;
         for (DmzProofWitnesses.Witness premise : witness.premises) if (!contains(premise)) return false;
         return true;
+    }
+
+    DmzUnaryStateDelta.Result auditDelta(DmzStoredProof proof,
+            DmzProofWitnesses.Witness witness, Mind candidate) throws Exception {
+        if (!isCurrent(proof, witness, candidate)) return new DmzUnaryStateDelta.Result(false, false,
+                java.util.Collections.singletonList("input-proof-boundary-not-current"));
+        return delta.audit(candidate, incoming.get(0).nativeRule);
     }
 }
