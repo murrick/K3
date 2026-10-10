@@ -77,6 +77,16 @@ public final class DmzStoredRestrictionProbeRunner {
                     } else require(overlay.hasLiveRule(rule.getId()), "native primary rule preserved");
                 }
                 require(state.equals(DmzObservationStateFingerprint.capture(q)), "native child tombstones leave parent unchanged");
+                Boolean rootAnswer = overlay.query("?derived(1);");
+                require(alternative ? Boolean.TRUE.equals(rootAnswer) : rootAnswer == null,
+                        "query cannot bypass excluded direct route; independent proof survives");
+                Boolean tailAnswer = overlay.query("?tail(1);");
+                require(alternative ? Boolean.TRUE.equals(tailAnswer) : tailAnswer == null,
+                        "dependent query respects selected derivation restriction");
+                Boolean negative = overlay.query("?~derived(1);");
+                require(alternative ? Boolean.FALSE.equals(negative) : negative == null,
+                        "blocked proof means unknown, never asserted opposite opinion");
+                if (!alternative) require(overlay.queryDeniedCount() > 0, "native query pair veto exercised");
                 require(Boolean.TRUE.equals(overlay.accept(fact, 21, DmzReplayProvenance.Authority.EXTERNAL,
                         "!source(2);")), "native continuation accepts another substitution");
                 require(overlay.hasLiveRule(stored.nativeRule) == alternative,
@@ -91,6 +101,8 @@ public final class DmzStoredRestrictionProbeRunner {
                             && materialization.operation != stored.operation && overlay.hasLiveRule(materialization.nativeRule)) ++fresh;
                 }
                 require(fresh >= 2, "different substitution still produces result and downstream continuation");
+                require(Boolean.TRUE.equals(overlay.query("?derived(2);"))
+                        && Boolean.TRUE.equals(overlay.query("?tail(2);")), "other substitution queries unaffected");
                 boolean unsupported = false;
                 try { overlay.accept(fact, 22, DmzReplayProvenance.Authority.EXTERNAL, "?derived(1);"); }
                 catch (IllegalArgumentException expected) { unsupported = true; }
@@ -100,6 +112,7 @@ public final class DmzStoredRestrictionProbeRunner {
             boolean closed = false;
             try { overlay.hasLiveRule(stored.nativeRule); } catch (IllegalStateException expected) { closed = true; }
             require(closed, "closed native overlay unreadable");
+            require(Boolean.TRUE.equals(q.query("?derived(1);", null, false)), "closed restriction cannot affect parent queries");
             DmzStoredRestrictionProbe small = DmzStoredRestrictionProbe.project(guard, proof, blocked, q, 1);
             require(!small.eligible && small.truncated && small.nodes.isEmpty(), "budget exhaustion exposes no usable partial branch");
             DmzStoredProof other = DmzStoredProof.build(capture, journal, stored, 1000);

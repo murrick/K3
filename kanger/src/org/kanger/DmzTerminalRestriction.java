@@ -17,6 +17,7 @@ final class DmzTerminalRestriction implements AutoCloseable {
     private final DmzProofWitnesses.Witness blocked;
     private boolean closed;
     private int denied;
+    private int queryDenied;
     private DmzTerminalRestriction(Mind boundary, DmzProofWitnesses.Witness blocked) {
         this.boundary = boundary; this.blocked = blocked; previous = ACTIVE.get(); ACTIVE.set(this);
     }
@@ -66,6 +67,33 @@ final class DmzTerminalRestriction implements AutoCloseable {
         }
         return false;
     }
+    static boolean deniesQueryPair(Mind mind, Domain left, Domain right) throws Exception {
+        DmzTerminalRestriction active = ACTIVE.get();
+        if (active == null) return false;
+        if (mind.getQueryPass() != org.kanger.enums.QueryPass.CHECKFALSE
+                && mind.getQueryPass() != org.kanger.enums.QueryPass.CHECKTRUE) return false;
+        for (DmzTerminalRestriction restriction = active; restriction != null; restriction = restriction.previous)
+            if (restriction.queryPair(mind, left, right) || restriction.queryPair(mind, right, left)) {
+                ++restriction.queryDenied; return true;
+            }
+        return false;
+    }
+    private boolean queryPair(Mind mind, Domain production, Domain opposite) throws Exception {
+        boolean local = false;
+        for (Mind current = mind; current != null; current = (Mind) current.getNext()) if (current == boundary) { local = true; break; }
+        if (!local || production.getRule() == null || production.getRule().getId() != blocked.source.nativeRule) return false;
+        TerminalSupportCapture.Ground expected = blocked.graph.observed.nodes.get(blocked.node).ground;
+        if (!production.getPredicate().getName(mind).equals(expected.predicate) || production.isAntc() != expected.sign) return false;
+        TerminalSupportCapture.Ground candidate = TerminalSupportCapture.Ground.capture(new Solve(opposite.getPredicate(),
+                !opposite.isAntc(), opposite.getArguments().convertBase(mind)), mind);
+        if (!expected.equivalent(candidate)) return false;
+        requireUnique(mind, blocked.source); requireUnique(mind, blocked.premises.get(0).source);
+        // The originally selected primary support must still exist; a query assumption is not a substitute.
+        for (IRule rule : mind.getRules()) if (rule.getId() == blocked.premises.get(0).source.nativeRule
+                && !rule.isDeleted(mind) && !mind.getRules().isGenerated(rule)) return true;
+        return false;
+    }
+    int queryDeniedCount() { return queryDenied; }
     int deniedCount() { return denied; }
     @Override public void close() {
         if (closed) return;

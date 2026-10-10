@@ -9,7 +9,7 @@ import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 
 /** Rollback-only native overlay with a narrowly qualified direct unit-application veto.
- * Query/hypothesis continuation and commit remain unavailable.
+ * Only unary integer-fact acceptance/queries are qualified; commit remains unavailable.
  */
 final class DmzStoredRetractionTransaction implements AutoCloseable {
     private final TechnicalMindTransaction transaction;
@@ -65,6 +65,12 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         return DmzReplayProvenance.acceptRule(transaction.mind(), source, sourceRule, authority, statement);
     }
     int deniedCount() { return restriction.deniedCount(); }
+    Boolean query(String statement) throws Exception {
+        if (closed || statement == null || !statement.matches("\\?~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
+            throw new IllegalArgumentException("Only open unary integer-fact queries are qualified");
+        return transaction.mind().query(statement, null, false);
+    }
+    int queryDeniedCount() { return restriction.queryDeniedCount(); }
     @Override public void close() throws Exception {
         if (!closed) { restriction.close(); closed = true; transaction.close(); }
     }

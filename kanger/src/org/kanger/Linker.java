@@ -754,6 +754,7 @@ public class Linker {
                         for (Domain master : treeMaster) {
                             statistics.incrementDomainPairs();
                             if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
+                                if (DmzTerminalRestriction.deniesQueryPair(mind, master, slave)) continue;
                                 long operationId = statistics.incrementUnificationAttempts(
                                         currentPass == 1, rule.isQuery(), rule.isGenerated());
                                 int operationEffects = 0;
