@@ -470,6 +470,18 @@ public final class DmzNativeRecursiveContinuationRunner {
                             try { receipt.conflicts.clear(); }
                             catch (UnsupportedOperationException expected) { immutableReceipt = true; }
                             require(immutableReceipt, "detached conflict evidence cannot be mutated");
+                            boolean wrongReplaySource = false;
+                            try { cut.replayConflict(receipt, fact, 151, receiptCandidate, receiptQuery, 10000, 10000); }
+                            catch (IllegalArgumentException expected) { wrongReplaySource = true; }
+                            require(wrongReplaySource && projected.isCurrent(), "replay refuses a different candidate source label before admission");
+                            boolean replayBudget = false;
+                            try { cut.replayConflict(receipt, fact, 150, receiptCandidate, receiptQuery, 10000, 1); }
+                            catch (IllegalStateException expected) { replayBudget = true; }
+                            require(replayBudget && projected.isCurrent(), "bounded replay recognition refuses incomplete evidence");
+                            DmzStoredRetractionTransaction.ConsequenceAuditFailure replayed = cut.replayConflict(
+                                    receipt, fact, 150, receiptCandidate, receiptQuery, 10000, 10000);
+                            require(replayed != receipt && replayed.conflicts.size() == receipt.conflicts.size() && projected.isCurrent(),
+                                    "live replay recognizes both complete witness sides under a fresh candidate binding then rolls back");
                         }
                         require(!Boolean.TRUE.equals(cut.query(receiptQuery, 10000).value) && projected.isCurrent(),
                                 "candidate and consequences roll back without importing support into the choice");

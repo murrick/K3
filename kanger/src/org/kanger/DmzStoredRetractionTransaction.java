@@ -286,11 +286,13 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
     }
     static final class ConsequenceAuditFailure extends IllegalStateException {
         private static final long serialVersionUID = 1L;
+        private final Object replayOwner;
         final ConsequenceConflictKind kind;
         final List<ConsequenceConflict> conflicts;
-        private ConsequenceAuditFailure(ConsequenceConflictKind kind, List<ConsequenceConflict> conflicts) {
+        private ConsequenceAuditFailure(Object replayOwner, ConsequenceConflictKind kind, List<ConsequenceConflict> conflicts) {
             super(kind == ConsequenceConflictKind.AUTHORITY ? "Candidate consequences conflict with pinned Q"
                     : "Candidate consequences require further branching");
+            this.replayOwner = replayOwner;
             this.kind = kind;
             this.conflicts = java.util.Collections.unmodifiableList(new ArrayList<ConsequenceConflict>(conflicts));
         }
@@ -314,6 +316,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         private final DmzStoredRetractionTransaction owner;
         private final TechnicalMindTransaction transaction;
         private final int budget;
+        private final Object replayOwner = new Object();
         private boolean closed;
         private NativeSupportChoice(DmzStoredRetractionTransaction owner, SymmetricProjection projection,
                 SupportChoice choice, TechnicalMindTransaction transaction, int budget, int hiddenRules) {
@@ -455,7 +458,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                     if (!current.isCurrent(probe) || !authority.isCurrent(owner.authorityTarget) || !projection.isCurrent())
                         throw new IllegalStateException("Candidate consequence boundary changed");
                     owner.requireAuthorityCurrent();
-                    throw new ConsequenceAuditFailure(ConsequenceConflictKind.AUTHORITY,
+                    throw new ConsequenceAuditFailure(replayOwner, ConsequenceConflictKind.AUTHORITY,
                             java.util.Collections.singletonList(conflict));
                 }
                 if (!local.witnesses.isEmpty() && node.ground.sign)
@@ -466,7 +469,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             if (!current.isCurrent(probe) || !authority.isCurrent(owner.authorityTarget) || !projection.isCurrent())
                 throw new IllegalStateException("Candidate consequence boundary changed");
             owner.requireAuthorityCurrent();
-            if (!internal.isEmpty()) throw new ConsequenceAuditFailure(ConsequenceConflictKind.INTERNAL, internal);
+            if (!internal.isEmpty()) throw new ConsequenceAuditFailure(replayOwner, ConsequenceConflictKind.INTERNAL, internal);
         }
         /** Exact receipt candidate only; native input, consequences and query always roll back. */
         QueryResult probeCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
@@ -475,6 +478,24 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         }
         QueryResult probeCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
                 String candidate, String queryStatement, int auditBudget, int consequenceBudget) throws Exception {
+            return probeCandidate(source, sourceRule, candidate, queryStatement, auditBudget, consequenceBudget, null, 10000);
+        }
+        /** Recognize historical chains while the replay is live; always rolls back and never applies cuts. */
+        ConsequenceAuditFailure replayConflict(ConsequenceAuditFailure prior,
+                org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+                String candidate, String queryStatement, int auditBudget, int recognitionBudget) throws Exception {
+            if (prior == null || prior.replayOwner != replayOwner || prior.kind != ConsequenceConflictKind.INTERNAL)
+                throw new IllegalArgumentException("Owned internal conflict evidence required");
+            if (recognitionBudget < 1 || recognitionBudget > 10000)
+                throw new IllegalArgumentException("Bounded replay recognition required");
+            candidateBinding(prior, source, sourceRule, new int[] { recognitionBudget });
+            try { probeCandidate(source, sourceRule, candidate, queryStatement, auditBudget, auditBudget, prior, recognitionBudget); }
+            catch (ConsequenceAuditFailure recognized) { return recognized; }
+            throw new IllegalStateException("Historical conflict disappeared during replay");
+        }
+        private QueryResult probeCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+                String candidate, String queryStatement, int auditBudget, int consequenceBudget,
+                ConsequenceAuditFailure prior, int recognitionBudget) throws Exception {
             if (closed) throw new IllegalStateException("Native support choice closed");
             if (consequenceBudget < 1 || consequenceBudget > 10000)
                 throw new IllegalArgumentException("Bounded consequence audit required");
@@ -517,7 +538,11 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                     if (classifyCurrent(probe.mind(), candidate, auditBudget, true,
                             DmzTerminalRestriction.activeNoGoods(probe.mind())) != InputKind.EXISTING_PRIMARY)
                         throw new IllegalStateException("Candidate lacks an unconflicted current primary support");
-                    auditConsequences(probe.mind(), consequenceBudget);
+                    try { auditConsequences(probe.mind(), consequenceBudget); }
+                    catch (ConsequenceAuditFailure fresh) {
+                        if (prior != null) recognizeReplay(prior, fresh, source, sourceRule, recognitionBudget);
+                        throw fresh;
+                    }
                     QueryResult snapshot = querySnapshot(probe.mind().query(queryStatement, null, false), probe.mind());
                     result = new QueryResult(snapshot.value, snapshot.hypotheses, snapshot.hypothesisAssertions,
                             QueryResult.CandidateMode.NEW_INPUT);
@@ -530,6 +555,76 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                     close(); throw new IllegalStateException("Native support choice candidate boundary changed");
                 }
             }
+        }
+        private DmzReplayProvenance.Binding candidateBinding(ConsequenceAuditFailure packet,
+                org.kanger.interfaces.IContextResults.Revision source, long label, int[] work) {
+            if (source == null) throw new IllegalArgumentException("Replay source required");
+            java.util.Set<DmzReplayProvenance.Binding> found = java.util.Collections.newSetFromMap(
+                    new java.util.IdentityHashMap<DmzReplayProvenance.Binding, Boolean>());
+            for (ConsequenceConflict conflict : packet.conflicts) {
+                for (ConflictSupport support : conflict.supporting) findCandidate(support.witness, support.pending, source, label, found, work);
+                for (ConflictSupport support : conflict.opposing) findCandidate(support.witness, support.pending, source, label, found, work);
+            }
+            if (found.size() != 1) throw new IllegalArgumentException("Unique exact pending replay candidate source required");
+            return found.iterator().next();
+        }
+        private void findCandidate(DmzProofWitnesses.Witness witness, List<DmzReplayProvenance.Binding> pending,
+                org.kanger.interfaces.IContextResults.Revision source, long label,
+                java.util.Set<DmzReplayProvenance.Binding> found, int[] work) {
+            projectionWork(work);
+            DmzReplayProvenance.Binding binding = witness.source;
+            if (witness.step == -1 && projection.evidence.candidate.equivalent(witness.graph.observed.nodes.get(witness.node).ground)
+                    && binding.context.equals(source.getContextId()) && binding.revision == source.getRevision()
+                    && binding.sourceRule == label && binding.authority == DmzReplayProvenance.Authority.EXTERNAL
+                    && pending.contains(binding)) found.add(binding);
+            for (DmzProofWitnesses.Witness premise : witness.premises) findCandidate(premise, pending, source, label, found, work);
+        }
+        private boolean sameReplayWitness(DmzProofWitnesses.Witness old, DmzProofWitnesses.Witness live,
+                DmzReplayProvenance.Binding oldCandidate, DmzReplayProvenance.Binding liveCandidate, int[] work) {
+            projectionWork(work);
+            if ((old.source == oldCandidate ? live.source != liveCandidate : old.source != live.source)
+                    || (old.step == -1) != (live.step == -1) || old.premises.size() != live.premises.size()
+                    || !old.graph.observed.nodes.get(old.node).ground.equivalent(live.graph.observed.nodes.get(live.node).ground)) return false;
+            for (int i = 0; i < old.premises.size(); ++i)
+                if (!sameReplayWitness(old.premises.get(i), live.premises.get(i), oldCandidate, liveCandidate, work)) return false;
+            return true;
+        }
+        private void recognizeSupports(List<ConflictSupport> old, List<ConflictSupport> live,
+                DmzReplayProvenance.Binding oldCandidate, DmzReplayProvenance.Binding liveCandidate, int[] work) {
+            if (old.size() != live.size()) throw new IllegalStateException("Replay support alternatives changed");
+            boolean[] used = new boolean[live.size()];
+            for (ConflictSupport support : old) {
+                boolean matched = false;
+                for (int i = 0; i < live.size(); ++i) if (!used[i]
+                        && sameReplayWitness(support.witness, live.get(i).witness, oldCandidate, liveCandidate, work)) {
+                    used[i] = true; matched = true; break;
+                }
+                if (!matched) throw new IllegalStateException("Replay exact witness not recognized");
+            }
+        }
+        private void recognizeReplay(ConsequenceAuditFailure old, ConsequenceAuditFailure live,
+                org.kanger.interfaces.IContextResults.Revision source, long label, int limit) throws Exception {
+            if (live.kind != ConsequenceConflictKind.INTERNAL || live.conflicts.size() != old.conflicts.size())
+                throw new IllegalStateException("Replay conflict boundary changed");
+            int[] work = { limit };
+            DmzReplayProvenance.Binding before = candidateBinding(old, source, label, work);
+            DmzReplayProvenance.Binding after = candidateBinding(live, source, label, work);
+            if (before == after) throw new IllegalStateException("Fresh replay candidate binding required");
+            boolean[] used = new boolean[live.conflicts.size()];
+            for (ConsequenceConflict conflict : old.conflicts) {
+                boolean matched = false;
+                for (int i = 0; i < live.conflicts.size(); ++i) {
+                    projectionWork(work);
+                    ConsequenceConflict current = live.conflicts.get(i);
+                    if (!used[i] && conflict.ground.equivalent(current.ground)) {
+                        recognizeSupports(conflict.supporting, current.supporting, before, after, work);
+                        recognizeSupports(conflict.opposing, current.opposing, before, after, work);
+                        used[i] = true; matched = true; break;
+                    }
+                }
+                if (!matched) throw new IllegalStateException("Replay conflict ground not recognized");
+            }
+            if (!projection.isCurrent()) throw new IllegalStateException("Replay boundary changed");
         }
         public void close() throws Exception {
             if (closed) return;
