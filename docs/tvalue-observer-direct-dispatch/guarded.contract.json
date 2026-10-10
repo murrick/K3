@@ -1,0 +1,9 @@
+{
+  "command": [
+    "java",
+    "-cp",
+    "../build/tvalue-observer-direct-dispatch-contract:../build/tvalue-observer-direct-dispatch-guarded:lib/jline-3.13.0.jar",
+    "org.kanger.ObserverDispatchRunner"
+  ],
+  "exit_code": 0
+}

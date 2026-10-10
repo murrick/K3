@@ -1,0 +1,6 @@
+kanger-qualification/diagnostics/test/org/kanger/AuthorityContextRunner.java
+kanger-qualification/diagnostics/test/org/kanger/AuthorityScopeRunner.java
+kanger-qualification/diagnostics/test/org/kanger/ConsumerRunner.java
+kanger-qualification/diagnostics/test/org/kanger/ParentAddRunner.java
+kanger-qualification/diagnostics/test/org/kanger/ObserverSessionRunner.java
+kanger-qualification/diagnostics/test/org/kanger/VanillaConsumerRunner.java

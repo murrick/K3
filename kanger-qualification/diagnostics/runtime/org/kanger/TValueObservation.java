@@ -25,23 +25,106 @@ public final class TValueObservation {
         current=new Attachment(observer); return current;
     }
     public static synchronized boolean attached() { return current!=null; }
-    private interface Callback { Object call(TValueObserver observer); }
-    private static synchronized Object dispatch(Callback callback) {
-        Attachment a=current; if(a==null)return null;
-        if(Thread.currentThread()!=a.owner) { a.failed=true; return null; }
-        try { return callback.call(a.observer); }
-        catch(Throwable failure) { a.failed=true; return null; }
+    /** Called only while holding TValueObservation.class. */
+    private static Attachment ownedAttachment() {
+        Attachment a=current;
+        if(a!=null && Thread.currentThread()!=a.owner) { a.failed=true; return null; }
+        return a;
     }
-    public static void constructed(Mind m) { if(current==null)return; dispatch(o -> { o.constructed(m); return null; }); }
-    public static void reset(Mind m) { if(current==null)return; dispatch(o -> { o.reset(m); return null; }); }
-    public static void mark(Mind m) { if(current==null)return; dispatch(o -> { o.mark(m); return null; }); }
-    public static void complete(Mind m) { if(current==null)return; dispatch(o -> { o.complete(m); return null; }); }
-    public static void touch(Mind m,TValue v,String reason) { if(current==null)return; dispatch(o -> { o.touch(m,v,reason); return null; }); }
-    public static void promoted(Mind m,TValueFactory f) { if(current==null)return; dispatch(o -> { o.promoted(m,f); return null; }); }
-    public static void metadata(TValue v,long id,long variable,long term,String reason) { if(current==null)return; dispatch(o -> { o.metadata(v,id,variable,term,reason); return null; }); }
-    public static void beginSettlement(Mind m) { if(current==null)return; dispatch(o -> { o.beginSettlement(m); return null; }); }
-    public static void endSettlement(Mind m) { if(current==null)return; dispatch(o -> { o.endSettlement(m); return null; }); }
-    public static void retire(Mind m) { if(current==null)return; dispatch(o -> { o.retire(m); return null; }); }
-    public static Object beforeClear(Mind m,TValueFactory f) { if(current==null)return null; return dispatch(o -> o.beforeClear(m,f)); }
-    public static void afterClear(Mind m,Object token) { if(current==null)return; dispatch(o -> { o.afterClear(m,token); return null; }); }
+    public static void constructed(Mind m) {
+        if(current==null)return;
+        synchronized(TValueObservation.class) {
+            Attachment a=ownedAttachment(); if(a==null)return;
+            try { a.observer.constructed(m); }
+            catch(Throwable failure) { a.failed=true; }
+        }
+    }
+    public static void reset(Mind m) {
+        if(current==null)return;
+        synchronized(TValueObservation.class) {
+            Attachment a=ownedAttachment(); if(a==null)return;
+            try { a.observer.reset(m); }
+            catch(Throwable failure) { a.failed=true; }
+        }
+    }
+    public static void mark(Mind m) {
+        if(current==null)return;
+        synchronized(TValueObservation.class) {
+            Attachment a=ownedAttachment(); if(a==null)return;
+            try { a.observer.mark(m); }
+            catch(Throwable failure) { a.failed=true; }
+        }
+    }
+    public static void complete(Mind m) {
+        if(current==null)return;
+        synchronized(TValueObservation.class) {
+            Attachment a=ownedAttachment(); if(a==null)return;
+            try { a.observer.complete(m); }
+            catch(Throwable failure) { a.failed=true; }
+        }
+    }
+    public static void touch(Mind m,TValue v,String reason) {
+        if(current==null)return;
+        synchronized(TValueObservation.class) {
+            Attachment a=ownedAttachment(); if(a==null)return;
+            try { a.observer.touch(m,v,reason); }
+            catch(Throwable failure) { a.failed=true; }
+        }
+    }
+    public static void promoted(Mind m,TValueFactory f) {
+        if(current==null)return;
+        synchronized(TValueObservation.class) {
+            Attachment a=ownedAttachment(); if(a==null)return;
+            try { a.observer.promoted(m,f); }
+            catch(Throwable failure) { a.failed=true; }
+        }
+    }
+    public static void metadata(TValue v,long id,long variable,long term,String reason) {
+        if(current==null)return;
+        synchronized(TValueObservation.class) {
+            Attachment a=ownedAttachment(); if(a==null)return;
+            try { a.observer.metadata(v,id,variable,term,reason); }
+            catch(Throwable failure) { a.failed=true; }
+        }
+    }
+    public static void beginSettlement(Mind m) {
+        if(current==null)return;
+        synchronized(TValueObservation.class) {
+            Attachment a=ownedAttachment(); if(a==null)return;
+            try { a.observer.beginSettlement(m); }
+            catch(Throwable failure) { a.failed=true; }
+        }
+    }
+    public static void endSettlement(Mind m) {
+        if(current==null)return;
+        synchronized(TValueObservation.class) {
+            Attachment a=ownedAttachment(); if(a==null)return;
+            try { a.observer.endSettlement(m); }
+            catch(Throwable failure) { a.failed=true; }
+        }
+    }
+    public static void retire(Mind m) {
+        if(current==null)return;
+        synchronized(TValueObservation.class) {
+            Attachment a=ownedAttachment(); if(a==null)return;
+            try { a.observer.retire(m); }
+            catch(Throwable failure) { a.failed=true; }
+        }
+    }
+    public static Object beforeClear(Mind m,TValueFactory f) {
+        if(current==null)return null;
+        synchronized(TValueObservation.class) {
+            Attachment a=ownedAttachment(); if(a==null)return null;
+            try { return a.observer.beforeClear(m,f); }
+            catch(Throwable failure) { a.failed=true; return null; }
+        }
+    }
+    public static void afterClear(Mind m,Object token) {
+        if(current==null)return;
+        synchronized(TValueObservation.class) {
+            Attachment a=ownedAttachment(); if(a==null)return;
+            try { a.observer.afterClear(m,token); }
+            catch(Throwable failure) { a.failed=true; }
+        }
+    }
 }

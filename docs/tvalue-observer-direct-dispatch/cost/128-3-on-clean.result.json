@@ -1,0 +1,28 @@
+{
+  "size": 128,
+  "repetition": 3,
+  "flag": "on",
+  "mode": "clean",
+  "exit_code": 0,
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx512m",
+    "-Duser.home=/tmp/observer-cost-sq91hd0a",
+    "-Dresult.path=/workspace/scratch/f2027705cd02/K3/docs/tvalue-observer-direct-dispatch/cost/128-3-on-clean",
+    "-Djournal.cost.enabled=false",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-observer-direct-dispatch-cost-tests:../build/tvalue-observer-direct-dispatch.jar:../build/tvalue-observer-direct-dispatch-clean:../K3-observer-native/kanger/resources:../K3-observer-native/kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ObserverCostRunner",
+    "clean",
+    "128"
+  ]
+}

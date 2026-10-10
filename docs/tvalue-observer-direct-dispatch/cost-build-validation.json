@@ -1,0 +1,20 @@
+{
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-observer-direct-dispatch-clean:../build/tvalue-observer-direct-dispatch.jar:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-observer-direct-dispatch-cost-tests",
+    "kanger-qualification/diagnostics/test/org/kanger/ObserverCostRunner.java"
+  ],
+  "source_sha256": {
+    "kanger-qualification/diagnostics/test/org/kanger/ObserverCostRunner.java": "acf86d325bfc9195900f627a0ee389355387ec9c4159df9a0fe2a1ab48c58b76"
+  },
+  "class_sha256": {
+    "org/kanger/ObserverCostRunner.class": "50dca1e75914835609f3b25ee26d930b600a0365a7e79e1bbf3124787a513424"
+  }
+}

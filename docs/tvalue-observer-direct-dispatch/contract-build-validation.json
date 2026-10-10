@@ -1,0 +1,20 @@
+{
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-observer-direct-dispatch-hooked:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-observer-direct-dispatch-contract",
+    "docs/tvalue-observer-direct-dispatch/test/org/kanger/ObserverDispatchRunner.java"
+  ],
+  "source_sha256": {
+    "docs/tvalue-observer-direct-dispatch/test/org/kanger/ObserverDispatchRunner.java": "cc5212b770d92175b305777320ab1bc03248d01f095c2b74f4bc927eafe0edf3"
+  },
+  "class_sha256": {
+    "org/kanger/ObserverDispatchRunner.class": "62e6e2a6a998b1b2ebecf30cda29bf2dec007b3585b24b11b73b3433dca1723b"
+  }
+}

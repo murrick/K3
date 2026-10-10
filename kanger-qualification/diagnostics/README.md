@@ -1,8 +1,12 @@
 # TValue diagnostic source set
 
-## Current fast disabled bridge experiment
+## Current direct dispatch experiment
 
-The current bridge checks a volatile attachment before creating callbacks or entering dispatch. See [the fast disabled report](../../docs/tvalue-observer-fast-disabled.md). Reproduce with its `build.py`, `run.py`, `wiring.py`, `qualify.py`, `cost.py`, `cost_analyze.py` and `manifest.py` on pinned native `2422f7f6`. The previous bridge is preserved as a byte-identical control. Earlier scripts below require their frozen stage checkout.
+The current qualification bridge keeps the volatile disabled guard and synchronized owner checks, and calls each observer method directly without a callback lambda. See [the direct dispatch report](../../docs/tvalue-observer-direct-dispatch.md). Its `build.py`, `run.py`, `wiring.py`, `contract.py`, `qualify.py`, `cost.py`, `cost_analyze.py` and `manifest.py` reproduce the stage on native `2422f7f6`. Two frozen controls and the unchanged cost fixture are independently rebuilt. Correctness is qualified, but attached timing is mixed; the preceding guarded bridge remains the performance reference. Earlier stages below require their original checkouts.
+
+## Frozen fast disabled bridge experiment
+
+That stage checks a volatile attachment before creating callbacks or entering dispatch. See [the fast disabled report](../../docs/tvalue-observer-fast-disabled.md). Reproduce with its `build.py`, `run.py`, `wiring.py`, `qualify.py`, `cost.py`, `cost_analyze.py` and `manifest.py` on pinned native `2422f7f6`. The previous bridge is preserved as a byte-identical control. Earlier scripts below require their frozen stage checkout.
 
 ## Selected native base after hygiene
 

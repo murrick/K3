@@ -1,0 +1,9 @@
+{
+  "exit_code": 0,
+  "command": [
+    "java",
+    "-cp",
+    "../build/tvalue-observer-direct-dispatch-tests:../build/tvalue-observer-direct-dispatch.jar:../build/tvalue-observer-direct-dispatch-missing-mind:../build/tvalue-observer-direct-dispatch-hooked:lib/jline-3.13.0.jar",
+    "org.kanger.VanillaConsumerRunner"
+  ]
+}
