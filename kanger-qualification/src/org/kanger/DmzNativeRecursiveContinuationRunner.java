@@ -482,6 +482,35 @@ public final class DmzNativeRecursiveContinuationRunner {
                                     receipt, fact, 150, receiptCandidate, receiptQuery, 10000, 10000);
                             require(replayed != receipt && replayed.conflicts.size() == receipt.conflicts.size() && projected.isCurrent(),
                                     "live replay recognizes both complete witness sides under a fresh candidate binding then rolls back");
+                            boolean projectionLimit = false;
+                            try { cut.projectReplayConflict(receipt, 0, fact, 150, receiptCandidate, receiptQuery, 10000, 10000, 1); }
+                            catch (IllegalStateException expected) { projectionLimit = true; }
+                            require(projectionLimit && projected.isCurrent(), "live replay projection refuses incomplete inventory and rolls back");
+                            DmzStoredRetractionTransaction.ReplaySymmetricProjection symmetric = cut.projectReplayConflict(
+                                    receipt, 0, fact, 150, receiptCandidate, receiptQuery, 10000, 10000, 10000);
+                            DmzStoredRetractionTransaction.ConsequenceConflict selected = symmetric.evidence.conflicts.get(symmetric.conflictIndex);
+                            boolean positiveRoot = false, negativeRoot = false, unaffected = false;
+                            TerminalSupportCapture.Ground oppositeRoot = new TerminalSupportCapture.Ground(selected.ground.predicate,
+                                    !selected.ground.sign, selected.ground.arguments);
+                            for (DmzStoredRetractionTransaction.ReplayProjectedGround ground : symmetric.grounds) {
+                                require(ground.keepSupporting <= ground.before && ground.keepOpposing <= ground.before,
+                                        "symmetric live projection only removes exact witness combinations");
+                                if (selected.ground.equivalent(ground.ground)) {
+                                    require(ground.before > 0 && ground.keepOpposing == 0, "opposing choice cuts every supporting conflict-root witness");
+                                    positiveRoot = true;
+                                }
+                                if (oppositeRoot.equivalent(ground.ground)) {
+                                    require(ground.before > 0 && ground.keepSupporting == 0, "supporting choice cuts every opposing conflict-root witness");
+                                    negativeRoot = true;
+                                }
+                                if (ground.before > 0 && ground.keepSupporting == ground.before && ground.keepOpposing == ground.before) unaffected = true;
+                            }
+                            require(positiveRoot && negativeRoot && unaffected && projected.isCurrent(),
+                                    "both root cuts and independent support counts survive as a detached projection after rollback");
+                            boolean immutableProjection = false;
+                            try { symmetric.grounds.clear(); }
+                            catch (UnsupportedOperationException expected) { immutableProjection = true; }
+                            require(immutableProjection, "historical symmetric replay projection is immutable");
                         }
                         require(!Boolean.TRUE.equals(cut.query(receiptQuery, 10000).value) && projected.isCurrent(),
                                 "candidate and consequences roll back without importing support into the choice");
