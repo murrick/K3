@@ -75,6 +75,9 @@ public final class DmzSourcedAcceptanceRunner {
                     DmzUnaryStateDelta.Result delta = input.auditDelta(proof, proof.witnesses.get(0), q);
                     require(delta.matched == !nested && !delta.complete,
                             "independent unary state delta matches only exact committed boundary: " + delta.gaps);
+                    DmzUnaryStateDelta.Result routes = input.auditRoutes(proof, proof.witnesses.get(0), q);
+                    require(routes.matched == !nested && !routes.complete,
+                            "independent stored unit routes covered: " + routes.gaps);
                     boolean reused = false;
                     try { input.accept(fact, 20, DmzReplayProvenance.Authority.EXTERNAL, "!source(2);"); }
                     catch (IllegalStateException expected) { reused = true; }

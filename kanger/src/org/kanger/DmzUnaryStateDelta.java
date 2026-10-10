@@ -41,11 +41,14 @@ final class DmzUnaryStateDelta {
         }
     }
     private static final class Clause {
+        long rule;
         final String[] names = new String[2];
         final boolean[] signs = new boolean[2];
     }
     private final Mind target;
     private final Map<Long, Row> baseline = new HashMap<Long, Row>();
+    private final Map<Long, List<DmzReplayProvenance.Binding>> sources = new HashMap<Long, List<DmzReplayProvenance.Binding>>();
+    private final Map<Long, TerminalSupportCapture.Ground> primary = new HashMap<Long, TerminalSupportCapture.Ground>();
     private final List<TerminalSupportCapture.Ground> facts = new ArrayList<TerminalSupportCapture.Ground>();
     private final List<Clause> clauses = new ArrayList<Clause>();
     private final List<String> gaps = new ArrayList<String>();
@@ -60,15 +63,22 @@ final class DmzUnaryStateDelta {
             if (candidate.isDeleted(target)) continue;
             Rule rule = (Rule) candidate;
             baseline.put(rule.getId(), new Row(rule, target));
+            List<DmzReplayProvenance.Binding> bindings = new ArrayList<DmzReplayProvenance.Binding>();
+            for (DmzReplayProvenance.SourceObservation source : DmzReplayProvenance.observedSources(target, rule.getId())) {
+                if (!take()) break;
+                if (source.outcome == DmzReplayProvenance.Outcome.ACCEPTED || source.outcome == DmzReplayProvenance.Outcome.PENDING)
+                    bindings.add(source.binding);
+            }
+            sources.put(rule.getId(), bindings);
             if (rule.isQuery() || rule.getTree().size() != 1 || target.getRules().isGenerated(rule)) {
                 gaps.add("unsupported-baseline-rule"); continue;
             }
             List<Domain> row = rule.getTree().get(0);
             if (row.size() == 1) {
                 TerminalSupportCapture.Ground fact = atom(rule, target);
-                if (fact == null) gaps.add("unsupported-baseline-fact"); else add(facts, fact);
+                if (fact == null) gaps.add("unsupported-baseline-fact"); else { add(facts, fact); primary.put(rule.getId(), fact); }
             } else if (row.size() == 2) {
-                Clause clause = new Clause(); long variable = -1; boolean valid = true;
+                Clause clause = new Clause(); clause.rule = rule.getId(); long variable = -1; boolean valid = true;
                 for (int i = 0; i < 2; ++i) {
                     Domain literal = row.get(i);
                     if (!ordinary(literal, target)) { valid = false; break; }
@@ -126,6 +136,89 @@ final class DmzUnaryStateDelta {
         return new Result(true, false, errors);
     }
     private boolean take() { if (work >= limit) { truncated = true; return false; } ++work; return true; }
+    /** Checks every relevant unit edge and primary occurrence, independent of witness count. */
+    Result auditRoutes(Mind candidate, DmzReplayProvenance.Binding incoming,
+            DmzSourcedProofGraph graph, int root) throws Exception {
+        Result state = audit(candidate, incoming.nativeRule);
+        if (!state.matched) return state;
+        List<String> errors = new ArrayList<String>();
+        if (graph == null || root < 0 || root >= graph.observed.nodes.size()) {
+            errors.add("missing-route-root"); return new Result(false, false, errors);
+        }
+        Map<Long, TerminalSupportCapture.Ground> seeds = new HashMap<Long, TerminalSupportCapture.Ground>(primary);
+        Map<Long, List<DmzReplayProvenance.Binding>> expectedSources = new HashMap<Long, List<DmzReplayProvenance.Binding>>(sources);
+        Rule input = null;
+        for (IRule rule : candidate.getRules()) if (rule.getId() == incoming.nativeRule && !rule.isDeleted(candidate)) input = (Rule) rule;
+        seeds.put(incoming.nativeRule, atom(input, candidate));
+        expectedSources.put(incoming.nativeRule, Collections.singletonList(incoming));
+        for (List<DmzReplayProvenance.Binding> bindings : expectedSources.values())
+            if (bindings.isEmpty()) errors.add("missing-inventory-source");
+        Map<java.util.UUID, Long> pins = new HashMap<java.util.UUID, Long>();
+        for (List<DmzReplayProvenance.Binding> bindings : expectedSources.values())
+            for (DmzReplayProvenance.Binding binding : bindings) {
+                Long previous = pins.put(binding.context, binding.revision);
+                if (previous != null && previous.longValue() != binding.revision) errors.add("inconsistent-context-revisions");
+            }
+        List<TerminalSupportCapture.Ground> closure = new ArrayList<TerminalSupportCapture.Ground>();
+        for (TerminalSupportCapture.Ground seed : seeds.values()) add(closure, seed);
+        List<UnitEdge> edges = new ArrayList<UnitEdge>();
+        int remaining = limit - work;
+        boolean changed;
+        do {
+            changed = false;
+            List<TerminalSupportCapture.Ground> known = new ArrayList<TerminalSupportCapture.Ground>(closure);
+            for (Clause clause : clauses) for (TerminalSupportCapture.Ground fact : known) for (int slot = 0; slot < 2; ++slot) {
+                if (--remaining < 0) return new Result(true, true, errors);
+                if (!fact.predicate.equals(clause.names[1-slot]) || fact.sign == clause.signs[1-slot]) continue;
+                TerminalSupportCapture.Ground conclusion = new TerminalSupportCapture.Ground(clause.names[slot], clause.signs[slot], fact.arguments);
+                changed |= add(closure, conclusion);
+                boolean found = false;
+                for (UnitEdge edge : edges) found |= edge.rule == clause.rule && edge.premise.equivalent(fact) && edge.conclusion.equivalent(conclusion);
+                if (!found) edges.add(new UnitEdge(clause.rule, fact, conclusion));
+            }
+        } while (changed);
+        List<TerminalSupportCapture.Ground> relevant = new ArrayList<TerminalSupportCapture.Ground>();
+        add(relevant, graph.observed.nodes.get(root).ground);
+        if (!has(closure, relevant.get(0))) errors.add("route-root-outside-closure");
+        do {
+            changed = false;
+            for (UnitEdge edge : edges) {
+                if (--remaining < 0) return new Result(true, true, errors);
+                if (has(relevant, edge.conclusion)) changed |= add(relevant, edge.premise);
+            }
+        } while (changed);
+        for (UnitEdge edge : edges) if (has(relevant, edge.conclusion)) {
+            boolean found = false;
+            for (int i = 0; i < graph.observed.steps.size(); ++i) {
+                if (--remaining < 0) return new Result(true, true, errors);
+                DmzObservedProofGraph.Step step = graph.observed.steps.get(i);
+                if (step.premises.size() == 1 && step.application.ground.equivalent(edge.conclusion)
+                        && graph.observed.nodes.get(step.premises.get(0)).ground.equivalent(edge.premise)
+                        && graph.steps.get(i).ruleSources.containsAll(expectedSources.get(edge.rule))) found = true;
+            }
+            if (!found) errors.add("missing-unit-route:" + edge.rule + ":" + edge.conclusion.predicate);
+        }
+        for (Map.Entry<Long, TerminalSupportCapture.Ground> seed : seeds.entrySet()) if (has(relevant, seed.getValue())) {
+            List<DmzReplayProvenance.Binding> observed = new ArrayList<DmzReplayProvenance.Binding>();
+            for (int i = 0; i < graph.observed.steps.size(); ++i) {
+                DmzObservedProofGraph.Step step = graph.observed.steps.get(i);
+                for (int p = 0; p < step.premises.size(); ++p) {
+                    if (--remaining < 0) return new Result(true, true, errors);
+                    if (step.application.supports.get(p).primary && graph.observed.nodes.get(step.premises.get(p)).ground.equivalent(seed.getValue()))
+                        observed.addAll(graph.steps.get(i).primarySources.get(p));
+                }
+            }
+            if (!observed.containsAll(expectedSources.get(seed.getKey()))) errors.add("missing-primary-route-source:" + seed.getKey());
+        }
+        return new Result(!errors.contains("missing-inventory-source") && !errors.contains("inconsistent-context-revisions"), false, errors);
+    }
+    private static final class UnitEdge {
+        final long rule;
+        final TerminalSupportCapture.Ground premise, conclusion;
+        UnitEdge(long rule, TerminalSupportCapture.Ground premise, TerminalSupportCapture.Ground conclusion) {
+            this.rule = rule; this.premise = premise; this.conclusion = conclusion;
+        }
+    }
     private static boolean ordinary(Domain literal, Mind mind) throws Exception {
         return !literal.isSystem(mind) && !literal.isCalculated(mind) && !literal.isQuery(mind) && literal.getArguments().size() == 1;
     }
