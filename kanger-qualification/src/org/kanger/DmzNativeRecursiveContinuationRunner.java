@@ -17,6 +17,7 @@ public final class DmzNativeRecursiveContinuationRunner {
                     for (boolean negative : new boolean[] {false, true})
                         for (int failureMode : new int[] {0, 1, 2, 3, 4, 5, 6, 7, 8})
                             run(alternative, duplicate, primaryDuplicate, negative, failureMode);
+        authorityStaleness(false); authorityStaleness(true);
         System.out.println("DMZ_NATIVE_RECURSIVE_CONTINUATION_PASS checks=" + checks);
     }
     private static void run(boolean alternative, boolean duplicate, boolean primaryDuplicate, boolean negative, int failureMode) throws Exception {
@@ -93,6 +94,11 @@ public final class DmzNativeRecursiveContinuationRunner {
                         == (original > 1 ? DmzStoredRetractionTransaction.InputKind.CONFLICT
                                 : DmzStoredRetractionTransaction.InputKind.FRESH),
                         "removed last support does not become a current conflict proof");
+                require(overlay.classifyAuthorityInput("!" + (negative ? "~" : "") + "derived(1);", 10000)
+                        == DmzStoredRetractionTransaction.InputKind.SUPPORTED_DERIVED
+                        && overlay.classifyAuthorityInput("!" + (negative ? "" : "~") + "derived(1);", 10000)
+                        == DmzStoredRetractionTransaction.InputKind.CONFLICT,
+                        "Q authority remains supported and conflicting independently of branch last-support removal");
                 boolean invalidBudget = false;
                 try { overlay.queryContinuation(signed(negative, "?derived(1);"), 0); }
                 catch (IllegalArgumentException expected) { invalidBudget = true; }
@@ -249,6 +255,11 @@ public final class DmzNativeRecursiveContinuationRunner {
                 try { overlay.classifyInput("!source(555);", 1); }
                 catch (IllegalStateException expected) { classificationBounded = expected.getMessage().contains("Classification inventory unavailable"); }
                 require(classificationBounded, "classification fails closed on unavailable bounded inventory");
+                require(overlay.classifyAuthorityInput("!source(1);", 10000) == DmzStoredRetractionTransaction.InputKind.EXISTING_PRIMARY
+                        && overlay.classifyAuthorityInput("!~negativePrimary(7);", 10000) == DmzStoredRetractionTransaction.InputKind.EXISTING_PRIMARY,
+                        "authority identifies both settled primary signs");
+                require(overlay.classifyAuthorityInput("!~negativeSeed(9);", 10000) == DmzStoredRetractionTransaction.InputKind.FRESH,
+                        "pending branch input is absent from Q authority");
                 Boolean positiveRepeat = overlay.accept(fact, 102, DmzReplayProvenance.Authority.EXTERNAL, "!source(1);");
                 Boolean negativeRepeat = overlay.accept(fact, 103, DmzReplayProvenance.Authority.EXTERNAL, "!~negativePrimary(7);");
                 require(positiveRepeat == null && negativeRepeat == null,
@@ -272,6 +283,9 @@ public final class DmzNativeRecursiveContinuationRunner {
                 require(overlay.classifyInput("!" + (negative ? "~" : "") + "derived(1);", 10000)
                         == DmzStoredRetractionTransaction.InputKind.EXISTING_PRIMARY,
                         "classification changes after actual explicit primary admission");
+                require(overlay.classifyAuthorityInput("!" + (negative ? "~" : "") + "derived(1);", 10000)
+                        == DmzStoredRetractionTransaction.InputKind.SUPPORTED_DERIVED,
+                        "new branch primary cannot relabel Q derived proof");
                 boolean auditRejected = false;
                 try {
                     if (failureMode == 7 || failureMode == 8) {
@@ -328,6 +342,10 @@ public final class DmzNativeRecursiveContinuationRunner {
             try { overlay.classifyInput("!source(1);", 10000); }
             catch (IllegalStateException expected) { closedClassification = true; }
             require(closedClassification, "closed branch rejects classification reuse");
+            boolean closedAuthority = false;
+            try { overlay.classifyAuthorityInput("!source(1);", 10000); }
+            catch (IllegalStateException expected) { closedAuthority = true; }
+            require(closedAuthority, "closed branch rejects authority classification");
             boolean closedProbe = false;
             try { overlay.probeCandidate(fact, 72, "!source(5);", signed(negative, "?derived(5);"), 10000); }
             catch (IllegalStateException expected) { closedProbe = true; }
@@ -344,6 +362,32 @@ public final class DmzNativeRecursiveContinuationRunner {
                         && Boolean.FALSE.equals(q.query(signed(!negative, "?derived(1);"), null, false))
                         && Boolean.FALSE.equals(q.query(signed(!negative, "?tail(1);"), null, false)),
                         "Q derived root and downstream signs survive rejected candidate");
+            }
+        }
+    }
+    private static void authorityStaleness(boolean sourceOnly) throws Exception {
+        User user = new User(); new UDF().init(user); Mind q = new Mind(user); user.setCurrentMind(q);
+        IContextResults.Revision source = new IContextResults.Revision(UUID.randomUUID(), 1);
+        try (DmzReplayProvenance journal = DmzReplayProvenance.begin(); TerminalSupportCapture capture = TerminalSupportCapture.begin(q)) {
+            accept(q, source, 1, "!@x source(x) -> derived(x);");
+            DmzAcceptanceProofGuard guard = DmzAcceptanceProofGuard.beforeInput(capture, journal, q);
+            require(Boolean.TRUE.equals(guard.accept(source, 2, DmzReplayProvenance.Authority.EXTERNAL, "!source(1);")), "stale fixture input");
+            DmzStoredProof proof = DmzStoredProof.build(capture, journal, stored(capture, "derived", null), 10000);
+            try (DmzStoredRetractionTransaction overlay = DmzStoredRetractionTransaction.beginContinuation(guard, proof, proof.witnesses.get(0), q, 10000)) {
+                require(overlay.classifyAuthorityInput("!~derived(1);", 10000) == DmzStoredRetractionTransaction.InputKind.CONFLICT,
+                        "authority valid before external change");
+                String before = DmzObservationStateFingerprint.capture(q);
+                if (sourceOnly) DmzReplayProvenance.replayRule(q, source, 3, DmzReplayProvenance.Authority.EXTERNAL,
+                        "!@x source(x) -> derived(x);");
+                else accept(q, source, 4, "!source(2);");
+                if (sourceOnly) require(before.equals(DmzObservationStateFingerprint.capture(q)),
+                        "source-only authority mutation leaves native fingerprint unchanged");
+                String changed = DmzObservationStateFingerprint.capture(q);
+                boolean stale = false;
+                try { overlay.classifyAuthorityInput("!~derived(1);", 10000); }
+                catch (IllegalStateException expected) { stale = expected.getMessage().contains("Pinned Q authority boundary changed"); }
+                require(stale, "changed authority rejected, sourceOnly=" + sourceOnly);
+                require(changed.equals(DmzObservationStateFingerprint.capture(q)), "classification refusal preserves changed Q");
             }
         }
     }

@@ -16,13 +16,20 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
     private final DmzTerminalRestriction restriction;
     private final boolean continuationOnly;
     private final List<Rule> retracted;
+    private final Mind authorityTarget;
+    private final String authorityState;
+    private final DmzReplayProvenance.SourceCheckpoint authoritySources;
     private int cacheAdmissions;
     private boolean closed;
     private DmzStoredRetractionTransaction(TechnicalMindTransaction transaction, DmzTerminalRestriction restriction,
-            boolean continuationOnly, List<Rule> retracted) {
+            boolean continuationOnly, List<Rule> retracted, Mind authorityTarget,
+            String authorityState, DmzReplayProvenance.SourceCheckpoint authoritySources) {
         this.transaction = transaction; this.restriction = restriction;
         this.continuationOnly = continuationOnly;
         this.retracted = new ArrayList<Rule>(retracted);
+        this.authorityTarget = authorityTarget;
+        this.authorityState = authorityState;
+        this.authoritySources = authoritySources;
     }
     static DmzStoredRetractionTransaction begin(DmzAcceptanceProofGuard guard, DmzStoredProof proof,
             DmzProofWitnesses.Witness blocked, Mind target, int budget) throws Exception {
@@ -57,12 +64,14 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         }
         // Revalidate immediately before opening the native child overlay.
         if (!guard.isCurrent(proof, blocked, target)) throw new IllegalStateException("Restriction boundary changed");
+        String authorityState = DmzObservationStateFingerprint.capture(target);
+        DmzReplayProvenance.SourceCheckpoint authoritySources = DmzReplayProvenance.sourceCheckpoint(target);
         TechnicalMindTransaction transaction = TechnicalMindTransaction.beginIsolated(target);
         try {
             for (Rule rule : removed) rule.setDeleted(true, transaction.mind());
             return new DmzStoredRetractionTransaction(transaction, continuationOnly
                     ? DmzTerminalRestriction.beginContinuation(transaction.mind(), blocked)
-                    : DmzTerminalRestriction.begin(transaction.mind(), blocked), continuationOnly, removed);
+                    : DmzTerminalRestriction.begin(transaction.mind(), blocked), continuationOnly, removed, target, authorityState, authoritySources);
         } catch (Exception failure) {
             transaction.close(); throw failure;
         }
@@ -95,8 +104,30 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 || !statement.matches("!~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
             throw new IllegalArgumentException("Only signed unary integer continuation classification is qualified");
         if (budget < 1 || budget > 10000) throw new IllegalArgumentException("Classification budget must be between 1 and 10000");
-        Mind child = transaction.mind();
-        DmzCurrentUnaryProofInventory inventory = DmzCurrentUnaryProofInventory.capture(child, budget, true);
+        return classifyCurrent(transaction.mind(), statement, budget, true,
+                DmzTerminalRestriction.activeNoGoods(transaction.mind()));
+    }
+    /** Settled Q proof diagnostic at the pinned authority boundary, independent of branch no-goods. */
+    InputKind classifyAuthorityInput(String statement, int budget) throws Exception {
+        if (closed) throw new IllegalStateException("Retraction overlay closed");
+        if (!continuationOnly || statement == null
+                || !statement.matches("!~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
+            throw new IllegalArgumentException("Only signed unary integer authority classification is qualified");
+        if (budget < 1 || budget > 10000) throw new IllegalArgumentException("Classification budget must be between 1 and 10000");
+        requireAuthorityCurrent();
+        InputKind result = classifyCurrent(authorityTarget, statement, budget, false,
+                java.util.Collections.<DmzProofWitnesses.NoGood>emptyList());
+        requireAuthorityCurrent();
+        return result;
+    }
+    private void requireAuthorityCurrent() throws Exception {
+        if (!authorityState.equals(DmzObservationStateFingerprint.capture(authorityTarget))
+                || !authoritySources.isCurrent(authorityTarget))
+            throw new IllegalStateException("Pinned Q authority boundary changed");
+    }
+    private static InputKind classifyCurrent(Mind child, String statement, int budget, boolean allowPending,
+            List<DmzProofWitnesses.NoGood> noGoods) throws Exception {
+        DmzCurrentUnaryProofInventory inventory = DmzCurrentUnaryProofInventory.capture(child, budget, allowPending);
         if (!inventory.eligible) throw new IllegalStateException("Classification inventory unavailable: " + inventory.gaps);
         int open = statement.indexOf('(');
         boolean positive = !statement.startsWith("!~");
@@ -110,8 +141,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             if (!ground.predicate.equals(predicate) || ground.arguments.size() != 1) continue;
             Object actual = ground.arguments.get(0).materialize().getValue();
             if (!(actual instanceof Number) || value.compareTo(new java.math.BigDecimal(actual.toString())) != 0) continue;
-            DmzCurrentUnaryProofInventory.Proofs proofs = inventory.proofs(ground,
-                    DmzTerminalRestriction.activeNoGoods(child), budget);
+            DmzCurrentUnaryProofInventory.Proofs proofs = inventory.proofs(ground, noGoods, budget);
             if (proofs.truncated) throw new IllegalStateException("Classification witness budget exceeded");
             if (proofs.witnesses.isEmpty()) continue;
             if (ground.sign == positive) {
