@@ -6,7 +6,7 @@ import java.util.UUID;
 import org.kanger.interfaces.IContextResults;
 import org.kanger.udf.UDF;
 
-/** Native positive-input continuation and isolated signed recursive query qualification. */
+/** Native signed-input continuation and isolated signed recursive query qualification. */
 public final class DmzNativeRecursiveContinuationRunner {
     private static int checks;
     public static void main(String[] args) throws Exception {
@@ -32,6 +32,7 @@ public final class DmzNativeRecursiveContinuationRunner {
             accept(q, rules, 13, negative ? "!@x middle(x) -> ~derived(x);" : "!@x middle(x) -> derived(x);");
             accept(q, rules, 14, negative ? "!@x ~derived(x) -> ~tail(x);" : "!@x derived(x) -> tail(x);");
             accept(q, rules, 16, "!@x independent(x) -> middle(x);");
+            accept(q, rules, 98, "!@x ~negativeIndependent(x) -> middle(x);");
             accept(q, rules, 80, "!@x ~negativeSeed(x) -> negativeResult(x);");
             accept(q, fact, 81, "!~negativePrimary(7);");
             if (duplicate) DmzReplayProvenance.replayRule(q, rules, 15,
@@ -173,10 +174,6 @@ public final class DmzNativeRecursiveContinuationRunner {
                 require(java.util.Objects.equals(overlay.queryContinuation(signed(!negative, "?derived(1);")),
                         original > 1 ? Boolean.FALSE : null), "negative query distinguishes refutation from missing proof");
                 require(overlay.queryContinuation(signed(!negative, "?derived(99);")) == null, "absent negative query remains unknown");
-                boolean negativeRefused = false;
-                try { overlay.accept(fact, 30, DmzReplayProvenance.Authority.EXTERNAL, "!~derived(1);"); }
-                catch (IllegalArgumentException expected) { negativeRefused = true; }
-                require(negativeRefused, "negative continuation remains outside qualification");
                 require(Boolean.TRUE.equals(overlay.accept(fact, 21, DmzReplayProvenance.Authority.EXTERNAL, "!source(2);")), "native other substitution continues");
                 require(overlay.inventoryCheckCount() > 0, "real terminal resolution consults current inventory");
                 require(overlay.hasLiveRule(stored.nativeRule) == (original > 1), "blocked old ground cannot rematerialize through old chain");
@@ -194,7 +191,7 @@ public final class DmzNativeRecursiveContinuationRunner {
                         "known query does not reuse earlier unknown hypotheses");
                 require(java.util.Objects.equals(overlay.queryContinuation(signed(negative, "?derived(1);")), original > 1 ? Boolean.TRUE : null),
                         "pending unrelated fact cannot authorize blocked ground");
-                require(Boolean.TRUE.equals(overlay.accept(fact, 22, DmzReplayProvenance.Authority.EXTERNAL, "!independent(1);")), "new independent native branch input accepted");
+                require(Boolean.TRUE.equals(overlay.accept(fact, 22, DmzReplayProvenance.Authority.EXTERNAL, "!~negativeIndependent(1);")), "new negative independent native branch input accepted");
                 require(overlay.hasLiveGround(root) && overlay.hasLiveGround(tailGround),
                         "new independent support restores native result and downstream continuation");
                 if (original == 1) require(overlay.cacheAdmissionCount() > 0,
@@ -216,6 +213,16 @@ public final class DmzNativeRecursiveContinuationRunner {
                     if (application.application.ground.equivalent(root) && !application.noGoods.isEmpty()) ++receipts;
                 require(receipts > 0, "new native application associations freeze the recursive no-good");
                 require(state.equals(DmzObservationStateFingerprint.capture(q)), "continuation remains isolated from Q");
+                require(Boolean.TRUE.equals(overlay.accept(fact, 100, DmzReplayProvenance.Authority.EXTERNAL,
+                        "!~negativeSeed(9);")), "direct negative input accepted");
+                require(Boolean.TRUE.equals(overlay.queryContinuation("?negativeResult(9);"))
+                        && Boolean.FALSE.equals(overlay.queryContinuation("?~negativeResult(9);")),
+                        "direct negative input supports and refutes signed consequence queries");
+                require(Boolean.TRUE.equals(overlay.accept(fact, 101, DmzReplayProvenance.Authority.EXTERNAL,
+                        "!independent(1);")), "additional positive independent support accepted");
+                count(overlay, root, original - 1 + 3 * (duplicate ? 2 : 1), true);
+                require(overlay.hasLiveGround(root) && overlay.hasLiveGround(tailGround),
+                        "signed independent supports retain native root and downstream cache");
                 boolean auditRejected = false;
                 try {
                     if (failureMode == 7 || failureMode == 8) {
@@ -236,7 +243,7 @@ public final class DmzNativeRecursiveContinuationRunner {
                             new IContextResults.Revision(fact.getContextId(), 2), 71, "!~negativeSeed(66);",
                             signed(negative, "?derived(66);"), 10000);
                     else overlay.accept(new IContextResults.Revision(fact.getContextId(), 2), 31,
-                            DmzReplayProvenance.Authority.EXTERNAL, "!independent(3);");
+                            DmzReplayProvenance.Authority.EXTERNAL, "!~negativeIndependent(3);");
                 } catch (IllegalStateException expected) {
                     auditRejected = true;
                     if (failureMode >= 5) require(expected.getMessage().contains("Candidate was not accepted in isolated probe"),

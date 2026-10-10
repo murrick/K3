@@ -92,8 +92,6 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         if (closed) throw new IllegalStateException("Retraction overlay closed");
         if (statement == null || !statement.matches("!~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
             throw new IllegalArgumentException("Only explicit unary integer-fact continuation is qualified");
-        if (continuationOnly && statement.startsWith("!~"))
-            throw new IllegalArgumentException("Recursive continuation currently qualifies positive facts only");
         try {
             Boolean accepted = DmzReplayProvenance.acceptRule(transaction.mind(), source, sourceRule, authority, statement);
             if (continuationOnly && Boolean.TRUE.equals(accepted)) reconcileCache();
