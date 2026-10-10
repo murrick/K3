@@ -511,6 +511,41 @@ public final class DmzNativeRecursiveContinuationRunner {
                             try { symmetric.grounds.clear(); }
                             catch (UnsupportedOperationException expected) { immutableProjection = true; }
                             require(immutableProjection, "historical symmetric replay projection is immutable");
+                            boolean applicationLimit = false;
+                            try { cut.inspectReplayChoices(receipt, 0, fact, 150, receiptCandidate, receiptQuery, 10000, 10000, 10000, 1); }
+                            catch (DmzStoredRetractionTransaction.SupportChoiceBudgetFailure expected) { applicationLimit = true; }
+                            require(applicationLimit && projected.isCurrent(), "replay child application budget failure rolls back before retry");
+                            if (!alternative && !duplicate && !primaryDuplicate && !negative && failureMode == 0) {
+                                boolean partialReplayMask = false;
+                                for (int partialBudget : new int[] { 2, 3, 4, 6, 8, 12, 16, 24, 32, 64, 128 }) {
+                                    try { cut.inspectReplayChoices(receipt, 0, fact, 150, receiptCandidate, receiptQuery,
+                                            10000, 10000, 10000, partialBudget); }
+                                    catch (DmzStoredRetractionTransaction.SupportChoiceBudgetFailure expected) {
+                                        if (expected.hiddenRules > 0) { partialReplayMask = true; break; }
+                                    } catch (IllegalStateException expected) { /* bounded inspection failure also rolls back */ }
+                                }
+                                require(partialReplayMask && projected.isCurrent(),
+                                        "failure after partial native replay masking restores the parent before full retry");
+                            }
+                            DmzStoredRetractionTransaction.ReplaySymmetricProjection applied = cut.inspectReplayChoices(
+                                    receipt, 0, fact, 150, receiptCandidate, receiptQuery, 10000, 10000, 10000, 10000);
+                            require(applied.applications.size() == 2 && projected.isCurrent(), "both isolated replay choices return only after rollback");
+                            require(applied.applications.get(0).hiddenRules + applied.applications.get(1).hiddenRules > 0,
+                                    "symmetric native application includes a materialized occurrence loss");
+                            for (DmzStoredRetractionTransaction.ReplayAppliedChoice childChoice : applied.applications) {
+                                require(childChoice.hiddenRules >= 0 && childChoice.grounds.size() == applied.grounds.size(),
+                                        "each replay child inspects every ground even when rejected consequences have no materialized atom");
+                                for (int i = 0; i < applied.grounds.size(); ++i) {
+                                    DmzStoredRetractionTransaction.ReplayProjectedGround row = applied.grounds.get(i);
+                                    DmzStoredRetractionTransaction.ReplayAppliedGround observed = childChoice.grounds.get(i);
+                                    int expected = childChoice.side == DmzStoredRetractionTransaction.ReplaySide.SUPPORTING
+                                            ? row.keepSupporting : row.keepOpposing;
+                                    require(row.ground.equivalent(observed.ground) && observed.proofs == expected,
+                                            "native child inventory agrees with every symmetric projected proof count");
+                                    if (row.before > 0 && expected == 0) require(!observed.visible,
+                                            "native last-support losses are hidden in the selected child only");
+                                }
+                            }
                         }
                         require(!Boolean.TRUE.equals(cut.query(receiptQuery, 10000).value) && projected.isCurrent(),
                                 "candidate and consequences roll back without importing support into the choice");
