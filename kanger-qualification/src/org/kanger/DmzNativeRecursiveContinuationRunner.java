@@ -223,6 +223,26 @@ public final class DmzNativeRecursiveContinuationRunner {
                 count(overlay, root, original - 1 + 3 * (duplicate ? 2 : 1), true);
                 require(overlay.hasLiveGround(root) && overlay.hasLiveGround(tailGround),
                         "signed independent supports retain native root and downstream cache");
+                Boolean positiveRepeat = overlay.accept(fact, 102, DmzReplayProvenance.Authority.EXTERNAL, "!source(1);");
+                Boolean negativeRepeat = overlay.accept(fact, 103, DmzReplayProvenance.Authority.EXTERNAL, "!~negativePrimary(7);");
+                require(positiveRepeat == null && negativeRepeat == null,
+                        "direct primary duplicates return null: " + positiveRepeat + "/" + negativeRepeat);
+                count(overlay, root, original - 1 + 3 * (duplicate ? 2 : 1), true);
+                Boolean positiveConflict = overlay.accept(fact, 104, DmzReplayProvenance.Authority.EXTERNAL, "!~source(1);");
+                Boolean negativeConflict = overlay.accept(fact, 105, DmzReplayProvenance.Authority.EXTERNAL, "!negativePrimary(7);");
+                Boolean generatedConflict = overlay.accept(fact, 106, DmzReplayProvenance.Authority.EXTERNAL,
+                        "!" + (negative ? "" : "~") + "derived(1);");
+                require(positiveConflict == null && negativeConflict == null
+                        && generatedConflict == null, "direct conflicts return null");
+                count(overlay, root, original - 1 + 3 * (duplicate ? 2 : 1), true);
+                require(Boolean.TRUE.equals(overlay.queryContinuation(signed(negative, "?derived(1);")))
+                        && Boolean.FALSE.equals(overlay.queryContinuation(signed(!negative, "?derived(1);"))),
+                        "direct rejection keeps branch usable and original sign authoritative");
+                require(Boolean.TRUE.equals(overlay.accept(fact, 107, DmzReplayProvenance.Authority.EXTERNAL,
+                        "!" + (negative ? "~" : "") + "derived(1);")),
+                        "same-sign generated input adds explicit primary support");
+                count(overlay, root, original - 1 + 3 * (duplicate ? 2 : 1) + 1, true);
+                count(overlay, tailGround, original - 1 + 3 * (duplicate ? 2 : 1) + 1, true);
                 boolean auditRejected = false;
                 try {
                     if (failureMode == 7 || failureMode == 8) {
