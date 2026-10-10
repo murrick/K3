@@ -353,6 +353,9 @@ public final class DmzNativeRecursiveContinuationRunner {
                             require(kept.proofs(ground.ground, 10000).witnesses.size() == ground.keepExisting,
                                     "existing child current proofs preserve projected support multiplicity");
                         }
+                        require(Boolean.TRUE.equals(kept.query(projected == alternativeProjection
+                                ? (negative ? "?~derived(2);" : "?derived(2);") : "?negativeResult(9);", 10000).value),
+                                "existing choice audited query preserves its supported opinion");
                     } finally { kept.close(); }
                     DmzStoredRetractionTransaction.NativeSupportChoice cut = overlay.beginSupportChoice(projected,
                             DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, 10000);
@@ -370,6 +373,28 @@ public final class DmzNativeRecursiveContinuationRunner {
                         catch (IllegalStateException expected) { proofBudgetRefused = true; }
                         require(proofBudgetRefused && projected.isCurrent(), "bounded proof refusal preserves open child and parent");
                         cut.proofs(projected.evidence.candidate, 10000);
+                        if (projected == primaryProjection) {
+                            boolean primaryGateRefused = false;
+                            try { cut.query("?negativeResult(9);", 10000); }
+                            catch (IllegalStateException expected) { primaryGateRefused = expected.getMessage().contains("Primary support cut"); }
+                            require(primaryGateRefused, "primary-cut native queries remain closed before their gate is qualified");
+                        } else {
+                            String lost = projected == derivedProjection ? "?negativeResult(9);"
+                                    : (negative ? "?~derived(2);" : "?derived(2);");
+                            String downstream = projected == derivedProjection ? "?negativeTail(9);"
+                                    : (negative ? "?~tail(2);" : "?tail(2);");
+                            require(!Boolean.TRUE.equals(cut.query(lost, 10000).value),
+                                    "native query cannot reconstruct exact excluded derived support");
+                            require(!Boolean.TRUE.equals(cut.query(downstream, 10000).value),
+                                    "native query cannot reconstruct downstream excluded chain");
+                            require(Boolean.TRUE.equals(cut.query("?middle(1);", 10000).value),
+                                    "native choice query retains independently supported ground");
+                            boolean queryBudgetRefused = false;
+                            try { cut.query(lost, 1); }
+                            catch (IllegalStateException expected) { queryBudgetRefused = true; }
+                            require(queryBudgetRefused && !Boolean.TRUE.equals(cut.query(lost, 10000).value),
+                                    "query audit refusal unwinds temporary gates and permits subsequent audited query");
+                        }
                         require(projected.isCurrent(), "child masks leave parent evidence current");
                     } finally { cut.close(); }
                     cut.close();
@@ -381,6 +406,10 @@ public final class DmzNativeRecursiveContinuationRunner {
                     try { cut.proofs(projected.evidence.candidate, 10000); }
                     catch (IllegalStateException expected) { closedProofs = true; }
                     require(closedProofs, "settled support choice refuses current proof reuse");
+                    boolean closedQuery = false;
+                    try { cut.query("?middle(1);", 10000); }
+                    catch (IllegalStateException expected) { closedQuery = true; }
+                    require(closedQuery, "settled support choice refuses native query reuse");
                     require(projected.isCurrent(), "choice rollback preserves parent projection");
                 }
                 boolean partialChoiceFailure = false;
@@ -705,6 +734,10 @@ public final class DmzNativeRecursiveContinuationRunner {
                     try { held.proofs(evidence.candidate, 10000); }
                     catch (IllegalStateException expected) { staleProofs = expected.getMessage().contains("boundary changed"); }
                     require(staleProofs, "open native choice refuses proof reconstruction after Q mutation");
+                    boolean staleQuery = false;
+                    try { held.query("?derived(9);", 10000); }
+                    catch (IllegalStateException expected) { staleQuery = expected.getMessage().contains("boundary changed"); }
+                    require(staleQuery, "open native choice refuses query after Q mutation");
                     held.close();
                     require(changed.equals(DmzObservationStateFingerprint.capture(q)),
                             "closing stale choice preserves externally changed Q");

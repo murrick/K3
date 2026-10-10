@@ -16,6 +16,7 @@ final class DmzTerminalRestriction implements AutoCloseable {
     private final Mind boundary;
     private final DmzProofWitnesses.Witness blocked;
     private final boolean recursive;
+    private final boolean pendingSources;
     private final DmzProofWitnesses.NoGood noGood;
     private int inventoryChecks;
     private boolean closed;
@@ -49,7 +50,11 @@ final class DmzTerminalRestriction implements AutoCloseable {
         this(boundary, blocked, false);
     }
     private DmzTerminalRestriction(Mind boundary, DmzProofWitnesses.Witness blocked, boolean recursive) {
+        this(boundary, blocked, recursive, false);
+    }
+    private DmzTerminalRestriction(Mind boundary, DmzProofWitnesses.Witness blocked, boolean recursive, boolean pendingSources) {
         this.boundary = boundary; this.blocked = blocked;
+        this.pendingSources = pendingSources;
         this.recursive = recursive; noGood = DmzProofWitnesses.NoGood.from(blocked);
         previous = ACTIVE.get(); ACTIVE.set(this);
     }
@@ -112,7 +117,7 @@ final class DmzTerminalRestriction implements AutoCloseable {
         List<TerminalSupportCapture.SourcePair> result = new ArrayList<TerminalSupportCapture.SourcePair>();
         for (DmzTerminalRestriction restriction = ACTIVE.get(); restriction != null; restriction = restriction.previous) {
             DmzProofWitnesses.Witness witness = restriction.blocked;
-            if (witness.premises.get(0).step < 0 && restriction.local(mind) && rule == witness.source.nativeRule
+            if (!restriction.pendingSources && witness.premises.get(0).step < 0 && restriction.local(mind) && rule == witness.source.nativeRule
                     && evidence == witness.premises.get(0).source.nativeRule
                     && conclusion.equivalent(witness.graph.observed.nodes.get(witness.node).ground)
                     && premise.equivalent(witness.graph.observed.nodes.get(witness.premises.get(0).node).ground)) {
@@ -144,6 +149,21 @@ final class DmzTerminalRestriction implements AutoCloseable {
     }
     static DmzTerminalRestriction beginContinuation(Mind boundary, DmzProofWitnesses.Witness blocked) {
         return new DmzTerminalRestriction(boundary, blocked, true);
+    }
+    /** Exact derived-chain gate for a caller-pinned rollback-only pending support choice. */
+    static DmzTerminalRestriction beginPendingChoice(Mind boundary, DmzProofWitnesses.Witness blocked) {
+        DmzProofWitnesses.NoGood.from(blocked);
+        for (DmzProofWitnesses.Witness current = blocked; ; current = current.premises.get(0)) {
+            requireObserved(boundary, current.source);
+            if (current.step < 0) break;
+        }
+        return new DmzTerminalRestriction(boundary, blocked, true, true);
+    }
+    private static void requireObserved(Mind mind, DmzReplayProvenance.Binding binding) {
+        for (DmzReplayProvenance.SourceObservation source : DmzReplayProvenance.observedSources(mind, binding.nativeRule))
+            if (source.binding == binding && (source.outcome == DmzReplayProvenance.Outcome.ACCEPTED
+                    || source.outcome == DmzReplayProvenance.Outcome.PENDING)) return;
+        throw new IllegalStateException("Exact current support occurrence required");
     }
     private boolean noCurrentAlternative(Mind mind) throws Exception { return noCurrentAlternative(mind, 10000); }
     private boolean noCurrentAlternative(Mind mind, int budget) throws Exception {
@@ -178,7 +198,8 @@ final class DmzTerminalRestriction implements AutoCloseable {
                 conclusion.isAntc(), conclusion.getArguments().convertBase(mind)), mind);
         if (!expected.equivalent(actual)) return false;
         if (tree.size() != 2) throw new IllegalStateException("Restricted application changed shape");
-        requireAccepted(mind, blocked.source);
+        if (pendingSources) requireObserved(mind, blocked.source);
+        else requireAccepted(mind, blocked.source);
         if (!recursive) requireAccepted(mind, blocked.premises.get(0).source);
         for (Domain premise : tree) if (premise != conclusion) {
             if (!premise.isExcluded(mind)) throw new IllegalStateException("Restricted premise must be satisfied");

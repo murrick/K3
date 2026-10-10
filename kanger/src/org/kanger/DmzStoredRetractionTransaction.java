@@ -327,6 +327,41 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 throw new IllegalStateException("Native support choice boundary changed");
             return new DmzCurrentUnaryProofInventory.Proofs(kept, false, raw.provisional);
         }
+        /** Rollback-only signed unary query; primary-cut query gates remain unqualified. */
+        QueryResult query(String statement, int auditBudget) throws Exception {
+            if (closed) throw new IllegalStateException("Native support choice closed");
+            if (statement == null || !statement.matches("\\?~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
+                throw new IllegalArgumentException("Only signed unary integer choice queries are qualified");
+            if (auditBudget < 1 || auditBudget > 10000) throw new IllegalArgumentException("Bounded query audit required");
+            if (!projection.isCurrent()) throw new IllegalStateException("Native support choice boundary changed");
+            if (choice == SupportChoice.KEEP_CANDIDATE)
+                for (ConflictSupport cut : projection.candidateSideCuts)
+                    if (cut.witness.step < 0) throw new IllegalStateException("Primary support cut query gate not qualified");
+            Mind child = transaction.mind();
+            String state = DmzObservationStateFingerprint.capture(child);
+            List<String> hypotheses = hypothesisText(child);
+            List<DmzTerminalRestriction> gates = new ArrayList<DmzTerminalRestriction>();
+            try {
+                if (choice == SupportChoice.KEEP_CANDIDATE)
+                    for (ConflictSupport cut : projection.candidateSideCuts)
+                        gates.add(DmzTerminalRestriction.beginPendingChoice(child, cut.witness));
+                QueryResult result;
+                try (DmzTerminalRestriction.QueryScope audit = DmzTerminalRestriction.prepareQuery(child, auditBudget);
+                        TechnicalMindTransaction query = TechnicalMindTransaction.beginIsolated(child)) {
+                    result = querySnapshot(query.mind().query(statement, null, false), query.mind());
+                }
+                if (!state.equals(DmzObservationStateFingerprint.capture(child)) || !hypotheses.equals(hypothesisText(child))
+                        || !projection.isCurrent()) throw new IllegalStateException("Native support choice query boundary changed");
+                return result;
+            } finally {
+                for (int i = gates.size() - 1; i >= 0; --i) gates.get(i).close();
+                if (!state.equals(DmzObservationStateFingerprint.capture(child)) || !hypotheses.equals(hypothesisText(child))
+                        || !projection.isCurrent()) {
+                    close();
+                    throw new IllegalStateException("Native support choice query boundary changed");
+                }
+            }
+        }
         public void close() throws Exception {
             if (closed) return;
             Mind parent = owner.transaction.mind();
