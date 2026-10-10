@@ -54,6 +54,24 @@ public final class DmzStoredRestrictionProbeRunner {
             }
             require(checked == 2, "root and downstream continuation checked");
             require(state.equals(DmzObservationStateFingerprint.capture(q)), "projection does not mutate native state");
+            DmzStoredRetractionTransaction overlay = DmzStoredRetractionTransaction.begin(guard, proof, blocked, q, 10000);
+            try {
+                for (org.kanger.interfaces.IRule candidate : q.getRules()) {
+                    org.kanger.units.Rule rule = (org.kanger.units.Rule) candidate;
+                    if (candidate.isDeleted(q)) continue;
+                    if (q.getRules().isGenerated(rule)) {
+                        String predicate = rule.getDomain().getPredicate().getName(q);
+                        if (predicate.equals("derived") || predicate.equals("tail"))
+                            require(overlay.hasLiveRule(rule.getId()) == alternative,
+                                    "native overlay retracts last-dependent atom and preserves independent " + predicate);
+                    } else require(overlay.hasLiveRule(rule.getId()), "native primary rule preserved");
+                }
+                require(state.equals(DmzObservationStateFingerprint.capture(q)), "native child tombstones leave parent unchanged");
+            } finally { overlay.close(); }
+            require(state.equals(DmzObservationStateFingerprint.capture(q)), "rollback restores unchanged parent");
+            boolean closed = false;
+            try { overlay.hasLiveRule(stored.nativeRule); } catch (IllegalStateException expected) { closed = true; }
+            require(closed, "closed native overlay unreadable");
             DmzStoredRestrictionProbe small = DmzStoredRestrictionProbe.project(guard, proof, blocked, q, 1);
             require(!small.eligible && small.truncated && small.nodes.isEmpty(), "budget exhaustion exposes no usable partial branch");
             DmzStoredProof other = DmzStoredProof.build(capture, journal, stored, 1000);

@@ -82,4 +82,11 @@ final class DmzAcceptanceProofGuard {
                 java.util.Collections.singletonList("input-proof-boundary-not-current"));
         return delta.auditRoutes(candidate, incoming.get(0), proof.graph, proof.root);
     }
+
+    DmzUnaryStateDelta.Result auditNodeRoutes(DmzStoredProof proof,
+            DmzProofWitnesses.Witness witness, Mind candidate, int node) throws Exception {
+        if (!isCurrent(proof, witness, candidate)) return new DmzUnaryStateDelta.Result(false, false,
+                java.util.Collections.singletonList("input-proof-boundary-not-current"));
+        return delta.auditRoutes(candidate, incoming.get(0), proof.graph, node);
+    }
 }

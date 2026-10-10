@@ -34,6 +34,8 @@ final class DmzStoredRestrictionProbe {
         List<Node> nodes = new ArrayList<Node>();
         int remaining = budget;
         for (int index = 0; index < proof.graph.observed.nodes.size(); ++index) {
+            DmzUnaryStateDelta.Result coverage = guard.auditNodeRoutes(proof, blocked, target, index);
+            if (!coverage.matched) return new DmzStoredRestrictionProbe(Collections.<Node>emptyList(), false, coverage.truncated);
             if (remaining <= 0) return new DmzStoredRestrictionProbe(Collections.<Node>emptyList(), false, true);
             DmzProofWitnesses.Result result = DmzProofWitnesses.enumerate(proof.graph, index, remaining);
             if (result.truncated) return new DmzStoredRestrictionProbe(Collections.<Node>emptyList(), false, true);
