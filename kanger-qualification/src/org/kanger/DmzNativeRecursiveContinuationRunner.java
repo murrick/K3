@@ -15,7 +15,7 @@ public final class DmzNativeRecursiveContinuationRunner {
             for (boolean duplicate : new boolean[] {false, true})
                 for (boolean primaryDuplicate : new boolean[] {false, true})
                     for (boolean negative : new boolean[] {false, true})
-                        for (int failureMode : new int[] {0, 1, 2, 3, 4})
+                        for (int failureMode : new int[] {0, 1, 2, 3})
                             run(alternative, duplicate, primaryDuplicate, negative, failureMode);
         System.out.println("DMZ_NATIVE_RECURSIVE_CONTINUATION_PASS checks=" + checks);
     }
@@ -95,6 +95,14 @@ public final class DmzNativeRecursiveContinuationRunner {
                         signed(negative, "?derived(99);"), 10000).value == null, "unrelated candidate cannot answer the query");
                 require(java.util.Objects.equals(overlay.queryContinuation(signed(negative, "?derived(1);")),
                         original > 1 ? Boolean.TRUE : null), "candidate probes preserve the exact old restriction");
+                DmzStoredRetractionTransaction.QueryResult duplicateCandidate = overlay.probeCandidate(fact, 73,
+                        "!source(1);", signed(negative, "?derived(1);"), 10000);
+                require(duplicateCandidate.candidateMode == DmzStoredRetractionTransaction.QueryResult.CandidateMode.EXISTING_PRIMARY,
+                        "primary duplicate explicitly reports no new input");
+                require(java.util.Objects.equals(duplicateCandidate.value, original > 1 ? Boolean.TRUE : null),
+                        "primary duplicate cannot manufacture an alternative to the blocked chain");
+                require(candidateResult.candidateMode == DmzStoredRetractionTransaction.QueryResult.CandidateMode.NEW_INPUT,
+                        "fresh candidate reports conditional new input");
                 require(Boolean.TRUE.equals(overlay.probeCandidate(fact, 64, "!middle(1);",
                         signed(negative, "?derived(1);"), 10000).value),
                         "explicit primary occurrence of cached generated support authorizes the same ground");
@@ -163,8 +171,6 @@ public final class DmzNativeRecursiveContinuationRunner {
                     if (failureMode == 1) overlay.queryContinuation(signed(negative, "?derived(1);"), 1);
                     else if (failureMode == 2) overlay.probeCandidate(fact, 70, "!source(66);",
                             signed(negative, "?derived(66);"), 1);
-                    else if (failureMode == 4) overlay.probeCandidate(fact, 73, "!source(1);",
-                            signed(negative, "?derived(1);"), 10000);
                     else if (failureMode == 3) overlay.probeCandidate(
                             new IContextResults.Revision(fact.getContextId(), 2), 71, "!source(66);",
                             signed(negative, "?derived(66);"), 10000);
@@ -172,8 +178,6 @@ public final class DmzNativeRecursiveContinuationRunner {
                             DmzReplayProvenance.Authority.EXTERNAL, "!independent(3);");
                 } catch (IllegalStateException expected) {
                     auditRejected = true;
-                    if (failureMode == 4) require(expected.getMessage().contains("Candidate was not accepted"),
-                            "duplicate primary candidate fails at native acceptance");
                     if (failureMode == 1 || failureMode == 2) require(expected.getMessage().contains("inventory unavailable"),
                             "query fails at the bounded inventory audit");
                 }

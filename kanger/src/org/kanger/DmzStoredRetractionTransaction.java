@@ -137,11 +137,17 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
     int queryDeniedCount() { return restriction.queryDeniedCount(); }
     /** Detached diagnostic hypotheses, never accepted proof inputs. */
     static final class QueryResult {
+        enum CandidateMode { NONE, NEW_INPUT, EXISTING_PRIMARY }
+        final CandidateMode candidateMode;
         final Boolean value;
         final List<String> hypotheses;
         final List<String> hypothesisAssertions;
         private QueryResult(Boolean value, List<String> hypotheses, List<String> assertions) {
+            this(value, hypotheses, assertions, CandidateMode.NONE);
+        }
+        private QueryResult(Boolean value, List<String> hypotheses, List<String> assertions, CandidateMode mode) {
             this.value = value;
+            this.candidateMode = mode;
             this.hypotheses = java.util.Collections.unmodifiableList(new ArrayList<String>(hypotheses));
             this.hypothesisAssertions = java.util.Collections.unmodifiableList(new ArrayList<String>(assertions));
         }
@@ -181,24 +187,47 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         if (queryStatement == null || !queryStatement.matches("\\?~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
             throw new IllegalArgumentException("Only signed unary integer candidate queries are qualified");
         if (auditBudget < 1 || auditBudget > 10000) throw new IllegalArgumentException("Query audit budget must be between 1 and 10000");
+        if (source == null || sourceRule < 0 || source.getCommune() != null || !source.getCommuneMembers().isEmpty())
+            throw new IllegalArgumentException("Exact atomic candidate source required");
         Mind child = transaction.mind();
         String state = DmzObservationStateFingerprint.capture(child);
         List<String> hypotheses = hypothesisText(child);
         try {
             QueryResult result;
             try (TechnicalMindTransaction probe = TechnicalMindTransaction.beginIsolated(child)) {
-                if (!Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(probe.mind(), source, sourceRule,
-                        DmzReplayProvenance.Authority.EXTERNAL, candidate)))
+                QueryResult.CandidateMode mode = existingPrimary(child, candidate)
+                        ? QueryResult.CandidateMode.EXISTING_PRIMARY : QueryResult.CandidateMode.NEW_INPUT;
+                if (mode == QueryResult.CandidateMode.NEW_INPUT
+                        && !Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(probe.mind(), source, sourceRule,
+                                DmzReplayProvenance.Authority.EXTERNAL, candidate)))
                     throw new IllegalStateException("Candidate was not accepted in isolated probe");
                 try (DmzTerminalRestriction.QueryScope audit = DmzTerminalRestriction.prepareQuery(probe.mind(), auditBudget)) {
                     Boolean value = probe.mind().query(queryStatement, null, false);
-                    result = querySnapshot(value, probe.mind());
+                    QueryResult snapshot = querySnapshot(value, probe.mind());
+                    result = new QueryResult(snapshot.value, snapshot.hypotheses, snapshot.hypothesisAssertions, mode);
                 }
             }
             if (!state.equals(DmzObservationStateFingerprint.capture(child)) || !hypotheses.equals(hypothesisText(child)))
                 throw new IllegalStateException("Candidate probe changed its branch boundary");
             return result;
         } catch (Exception failure) { close(); throw failure; }
+    }
+    private static boolean existingPrimary(Mind mind, String statement) throws Exception {
+        int open = statement.indexOf('(');
+        String predicate = statement.substring(1, open);
+        java.math.BigDecimal value = new java.math.BigDecimal(statement.substring(open + 1, statement.length() - 2));
+        for (IRule candidate : mind.getRules()) {
+            if (candidate.isDeleted(mind) || candidate.isQuery() || mind.getRules().isGenerated(candidate)) continue;
+            Rule rule = (Rule) candidate;
+            if (rule.getTree().size() != 1 || rule.getTree().get(0).size() != 1) continue;
+            Domain literal = rule.getDomain();
+            if (!literal.isAntc() || !literal.getPredicate().getName(mind).equals(predicate)
+                    || literal.getArguments().size() != 1) continue;
+            org.kanger.interfaces.ITerm term = literal.getArguments().get(0).getValue(mind);
+            Object actual = term == null ? null : term.getValue();
+            if (actual instanceof Number && value.compareTo(new java.math.BigDecimal(actual.toString())) == 0) return true;
+        }
+        return false;
     }
     private static QueryResult querySnapshot(Boolean value, Mind mind) throws Exception {
         List<String> assertions = new ArrayList<String>();
