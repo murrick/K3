@@ -1146,6 +1146,7 @@ public class Linker {
 
             if (candidates.size() == 1) {
                 for (Domain d : candidates) {
+                    if (DmzTerminalRestriction.denies(mind, d, tree)) continue;
                     TerminalSupportCapture.record(mind, d, causes.get(d.getRule()));
                     TerminalSupportCapture.recordApplication(mind, d, tree, tvars);
                     occurs = true;
@@ -1174,6 +1175,7 @@ public class Linker {
             } else if (!excluded.isEmpty() && candidates.isEmpty() && stored.isEmpty()) {
                 occurs = true;
                 for (Domain d : excluded) {
+                    if (DmzTerminalRestriction.denies(mind, d, tree)) continue;
                     // Opposite stored conclusions can close every literal before a
                     // recursive production is materialized. Retain its qualified
                     // application while bindings and excluded premises are live.

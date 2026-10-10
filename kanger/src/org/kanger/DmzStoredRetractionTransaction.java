@@ -8,17 +8,21 @@ import org.kanger.primitives.Solve;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 
-/** Rollback-only native overlay for a checked stored-witness projection.
- * No continuation inference or commit: terminal application enforcement is not installed.
+/** Rollback-only native overlay with a narrowly qualified direct unit-application veto.
+ * Query/hypothesis continuation and commit remain unavailable.
  */
 final class DmzStoredRetractionTransaction implements AutoCloseable {
     private final TechnicalMindTransaction transaction;
+    private final DmzTerminalRestriction restriction;
     private boolean closed;
-    private DmzStoredRetractionTransaction(TechnicalMindTransaction transaction) { this.transaction = transaction; }
+    private DmzStoredRetractionTransaction(TechnicalMindTransaction transaction, DmzTerminalRestriction restriction) {
+        this.transaction = transaction; this.restriction = restriction;
+    }
     static DmzStoredRetractionTransaction begin(DmzAcceptanceProofGuard guard, DmzStoredProof proof,
             DmzProofWitnesses.Witness blocked, Mind target, int budget) throws Exception {
         DmzStoredRestrictionProbe projection = DmzStoredRestrictionProbe.project(guard, proof, blocked, target, budget);
         if (!projection.eligible) throw new IllegalStateException("Current fully audited restriction projection required");
+        DmzTerminalRestriction.validate(blocked, target);
         List<Rule> removed = new ArrayList<Rule>();
         for (DmzStoredRestrictionProbe.Node node : projection.nodes) if (node.retracted()) {
             TerminalSupportCapture.Ground expected = proof.graph.observed.nodes.get(node.index).ground;
@@ -41,7 +45,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         TechnicalMindTransaction transaction = TechnicalMindTransaction.beginIsolated(target);
         try {
             for (Rule rule : removed) rule.setDeleted(true, transaction.mind());
-            return new DmzStoredRetractionTransaction(transaction);
+            return new DmzStoredRetractionTransaction(transaction, DmzTerminalRestriction.begin(transaction.mind(), blocked));
         } catch (Exception failure) {
             transaction.close(); throw failure;
         }
@@ -53,7 +57,15 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         for (IRule rule : child.getRules()) if (rule.getId() == nativeRule && !rule.isDeleted(child)) return true;
         return false;
     }
+    Boolean accept(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+            DmzReplayProvenance.Authority authority, String statement) throws Exception {
+        if (closed) throw new IllegalStateException("Retraction overlay closed");
+        if (statement == null || !statement.matches("!~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
+            throw new IllegalArgumentException("Only explicit unary integer-fact continuation is qualified");
+        return DmzReplayProvenance.acceptRule(transaction.mind(), source, sourceRule, authority, statement);
+    }
+    int deniedCount() { return restriction.deniedCount(); }
     @Override public void close() throws Exception {
-        if (!closed) { closed = true; transaction.close(); }
+        if (!closed) { restriction.close(); closed = true; transaction.close(); }
     }
 }

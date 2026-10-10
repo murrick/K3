@@ -10,10 +10,10 @@ public final class DmzStoredRestrictionProbeRunner {
     private static int checks;
     public static void main(String[] args) throws Exception {
         System.setProperty("user.home", Files.createTempDirectory("dmz-restrict-probe-").toString());
-        run(false, false); run(true, false); run(false, true);
+        run(false, false, false); run(true, false, false); run(false, true, false); run(false, false, true);
         System.out.println("DMZ_STORED_RESTRICTION_PROBE_PASS checks=" + checks);
     }
-    private static void run(boolean alternative, boolean authoritative) throws Exception {
+    private static void run(boolean alternative, boolean authoritative, boolean duplicate) throws Exception {
         User user = new User(); new UDF().init(user); Mind q = new Mind(user); user.setCurrentMind(q);
         IContextResults.Revision rules = new IContextResults.Revision(UUID.randomUUID(), 1);
         IContextResults.Revision fact = new IContextResults.Revision(UUID.randomUUID(), 1);
@@ -26,6 +26,8 @@ public final class DmzStoredRestrictionProbeRunner {
                 accept(q, rules, 12, "!@x source(x) -> middle(x);");
                 accept(q, rules, 13, "!@x middle(x) -> derived(x);");
             }
+            if (duplicate) DmzReplayProvenance.replayRule(q, rules, 14,
+                    DmzReplayProvenance.Authority.EXTERNAL, "!@x source(x) -> derived(x);");
             DmzAcceptanceProofGuard guard = DmzAcceptanceProofGuard.beforeInput(capture, journal, q);
             require(Boolean.TRUE.equals(guard.accept(fact, 20, DmzReplayProvenance.Authority.EXTERNAL, "!source(1);")), "native input");
             TerminalSupportCapture.Materialization stored = null;
@@ -42,6 +44,14 @@ public final class DmzStoredRestrictionProbeRunner {
                 return;
             }
             require(projected.eligible && !projected.truncated && !projected.complete, "bounded projection eligible");
+            if (duplicate) {
+                boolean refused = false;
+                try { DmzStoredRetractionTransaction.begin(guard, proof, blocked, q, 10000); }
+                catch (IllegalStateException expected) { refused = true; }
+                require(refused, "canonical source alternatives cannot be globally vetoed");
+                require(state.equals(DmzObservationStateFingerprint.capture(q)), "unsupported source alternative leaves parent unchanged");
+                return;
+            }
             int checked = 0;
             for (DmzStoredRestrictionProbe.Node node : projected.nodes) {
                 String predicate = proof.graph.observed.nodes.get(node.index).ground.predicate;
@@ -67,6 +77,24 @@ public final class DmzStoredRestrictionProbeRunner {
                     } else require(overlay.hasLiveRule(rule.getId()), "native primary rule preserved");
                 }
                 require(state.equals(DmzObservationStateFingerprint.capture(q)), "native child tombstones leave parent unchanged");
+                require(Boolean.TRUE.equals(overlay.accept(fact, 21, DmzReplayProvenance.Authority.EXTERNAL,
+                        "!source(2);")), "native continuation accepts another substitution");
+                require(overlay.hasLiveRule(stored.nativeRule) == alternative,
+                        "continued acceptance cannot restore blocked substitution");
+                require(overlay.deniedCount() > 0, "terminal veto exercised by real native continuation");
+                int fresh = 0;
+                for (TerminalSupportCapture.StoredObservation observation : capture.storedSnapshot()) {
+                    TerminalSupportCapture.Materialization materialization = observation.materialization;
+                    TerminalSupportCapture.Ground ground = materialization.causes.nodes.get(materialization.causes.root).ground;
+                    if ((ground.predicate.equals("derived") || ground.predicate.equals("tail"))
+                            && !ground.arguments.get(0).semanticallyEquals(proof.graph.observed.nodes.get(proof.root).ground.arguments.get(0))
+                            && materialization.operation != stored.operation && overlay.hasLiveRule(materialization.nativeRule)) ++fresh;
+                }
+                require(fresh >= 2, "different substitution still produces result and downstream continuation");
+                boolean unsupported = false;
+                try { overlay.accept(fact, 22, DmzReplayProvenance.Authority.EXTERNAL, "?derived(1);"); }
+                catch (IllegalArgumentException expected) { unsupported = true; }
+                require(unsupported, "hypothesis/query path cannot bypass qualification boundary");
             } finally { overlay.close(); }
             require(state.equals(DmzObservationStateFingerprint.capture(q)), "rollback restores unchanged parent");
             boolean closed = false;
