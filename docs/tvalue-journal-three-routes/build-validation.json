@@ -1,0 +1,80 @@
+{
+  "commands": [
+    [
+      "java",
+      "-jar",
+      "../tooling/ecj.jar",
+      "-1.8",
+      "-nowarn",
+      "-cp",
+      "../build/tvalue-observer-fast-disabled-clean:lib/jline-3.13.0.jar",
+      "-d",
+      "../build/tvalue-journal-three-routes-module",
+      "@kanger-qualification/diagnostics/sources.txt"
+    ],
+    [
+      "java",
+      "-jar",
+      "../tooling/ecj.jar",
+      "-1.8",
+      "-nowarn",
+      "-cp",
+      "../build/tvalue-observer-fast-disabled-clean:lib/jline-3.13.0.jar:../build/tvalue-journal-three-routes.jar:../build/tvalue-observer-fast-disabled-cost-tests",
+      "-d",
+      "../build/tvalue-journal-three-routes-tests",
+      "/workspace/scratch/fe58fcae83c2/K3/docs/tvalue-journal-three-routes/RouteOrderRunner.java",
+      "/workspace/scratch/fe58fcae83c2/K3/docs/tvalue-journal-three-routes/GateDisagreementRunner.java"
+    ]
+  ],
+  "compiler_sha256": "f7686c4960cf70c2ebc5c500a73a8cfc04541b730c18f1c5c21329889b137f45",
+  "source_sha256": {
+    "kanger-qualification/diagnostics/src/org/kanger/BeforeAuthorityJournal.java": "2953ada096dd2901df8ac705a95083763679087911e08853da1c4c51cf1969d9",
+    "kanger-qualification/diagnostics/src/org/kanger/ConsumerHooks.java": "0a59d9bc9dab55c7da8dcccaf5d23f6eaf8223ed0e85922ea0dd41ebae63580f",
+    "kanger-qualification/diagnostics/src/org/kanger/ObservationLayers.java": "de34cee51960c606008a5ba5ecc4c807b4e68bb69ad02de1c2c5ddb30fdfb983",
+    "kanger-qualification/diagnostics/src/org/kanger/QualifiedJournalConsumer.java": "020227b18a95bc63c5a83a3ffb96ecaedcd4a89deacb645ea1c03f6d6881171b",
+    "kanger-qualification/diagnostics/src/org/kanger/RecordedLinks.java": "d66db3dfcf31acecb4fb02b3d9ad3ab457af3c3424a26bec1a5584c6e91fa7d1",
+    "kanger-qualification/diagnostics/src/org/kanger/ResidentPersistentRead.java": "96db19c65936623a9886addbed7c353deb2cb5238c38a9b3f479685d6aa48b40",
+    "kanger-qualification/diagnostics/src/org/kanger/ResidentTValueRead.java": "39aeadef4d511d55c172f68a770c27d088a79e973c5db43aa8632c6eee9c8772",
+    "kanger-qualification/diagnostics/src/org/kanger/StreamAuthorityJournal.java": "48b0ce8f6571a47053eb222e6fc04f8fcb4c302cdc04c51f2ff450f0445da6d0",
+    "kanger-qualification/diagnostics/src/org/kanger/StreamAuthorityRead.java": "9641859e5ec75f0652fe60470aa55b04e84db7c7ef74f961502615bd6fa45931"
+  },
+  "class_sha256": {
+    "org/kanger/ResidentPersistentRead.class": "6b3457c8795d9240feba43bab322e415953b4313d7f4a8b0ebdfafbfdd6cb2c4",
+    "org/kanger/RecordedLinks$Gate.class": "892b49bbb42f75ccad183afc0abced5680175e0286f2295bdef774e09858c675",
+    "org/kanger/BeforeAuthorityJournal$UpdateFrame.class": "9345dfb30f541f98999f7d3fdf8ee56ef125fa6af5a97df12e70f0182655ad0d",
+    "org/kanger/StreamAuthorityJournal$UpdateFrame.class": "a46b5ed2a5dc0d5c905601ad85b2b8f2e198645c3f39b47a243223557f30c00c",
+    "org/kanger/StreamAuthorityJournal$Work.class": "a9561671bcf23d9af98da92a3c768054dc85fa43630007a3638e45a661a69054",
+    "org/kanger/ResidentPersistentRead$Row.class": "a05949de057a944ba3198b5710e9ec6022b3524570b90e896c4df350cd88df16",
+    "org/kanger/StreamAuthorityJournal$State.class": "2aaa17a75977fd13fc787b48cc08a0360ba06f726fe943934f41909cae5bc8af",
+    "org/kanger/StreamAuthorityJournal$Session.class": "f1ed0d3222e53ea2bee188ad4c3f11603fb20420e2abc3991c1803a69fb7db7c",
+    "org/kanger/RecordedLinks$WriteFrame.class": "a23493424f4483753ce9ae8ff8a6c6b9cdc8e71071929c4e98748aa9c65ccd90",
+    "org/kanger/RecordedLinks.class": "11d9c476e121d11af67d890e85b0462d4c9ba5441f183140dd18aaa918bbb0c9",
+    "org/kanger/BeforeAuthorityJournal$State.class": "020c8195905cf5ff32f2a937911f1e1a0c340eb13476c7e386a5567a67d13f5c",
+    "org/kanger/ObservationLayers.class": "63dc90d7c980fa52c817b7840f46821c6b577bb51dfbbf8b9c97ee15646e6fc2",
+    "org/kanger/ResidentTValueRead$Layer.class": "f3db2a61489c79022f113f50b61429a3346c015ee0179e7f902c6f83a159f724",
+    "org/kanger/BeforeAuthorityJournal.class": "aacb13b4a4eb22d5fa83ba75bf1572133b4af08181b11fd8310b94c3ba3a7d87",
+    "org/kanger/ResidentTValueRead.class": "57a53dfba1ba3c0e8fb1d757dcbdeee6b2ac5f5c6c2cfc160e831c1a7c8cf7d0",
+    "org/kanger/QualifiedJournalConsumer.class": "04d1c513bcab84a7dcc7973bb7efad343f0cde890e3a7642aa35c727d50ef9f4",
+    "org/kanger/ConsumerHooks.class": "4558fbfdcc3e2a7f11e00bb810c50e77648d12b2bd75ad9d0f6b1827ca9b3a96",
+    "org/kanger/RecordedLinks$State.class": "44eed9e71faa1bfbe3334e118534b9ef086ca5f2c58e5301888535810e76d709",
+    "org/kanger/QualifiedJournalConsumer$Session.class": "b75620c5a9c10adaaabfc2533ed8f220e5393807d2e69254ba490744f06f63b9",
+    "org/kanger/ConsumerHooks$1.class": "94f19b433e18b53d6c6eda1b11c4027e749a84fcf210128ac90b607bede6f91e",
+    "org/kanger/QualifiedJournalConsumer$Refusal.class": "e3fb00485fe6bbfd52c8d093c93ca2c2ba23b4b9173a8d5c3822093e12f6bf46",
+    "org/kanger/BeforeAuthorityJournal$Session.class": "0419da35157780d62dcd94ed81d0a341feb8373d5c6d24d6d3ece4dc2583bb4c",
+    "org/kanger/StreamAuthorityRead.class": "c1351a3588ba1862d06769feb984abd0f5dc4820718290f96c6ea781a12c0d48",
+    "org/kanger/StreamAuthorityJournal.class": "259978158cea2cc65553e046a95af0540d091f572a65963e10846ee2032b1d8e",
+    "org/kanger/BeforeAuthorityJournal$Work.class": "b936dd31bdca36c48b065883f19bd91c8411d7e5353a065c9c8b8d05c557575f",
+    "org/kanger/RecordedLinks$Witness.class": "2fd0da5138d5258838a81b4cef48a127602cea28252f497e5fc16ff97c5998a1"
+  },
+  "changed_classes": [
+    "org/kanger/BeforeAuthorityJournal.class",
+    "org/kanger/StreamAuthorityJournal.class"
+  ],
+  "jar_sha256": "18736b139b9481252491d59381ca1449e8aa91c106e4ae2cb2861e8c5f1c8846",
+  "route_fixture_source_sha256": "6b5ec8b9b3fc0c04f27167d938237b0734675c8ff8a99435095128ee4000fe88",
+  "gate_fixture_source_sha256": "c01d9d45963b43a6df25556a9f4e9561c2150424a9f81bb0b0c12a54b0f6d8f7",
+  "route_fixture_class_sha256": {
+    "org/kanger/GateDisagreementRunner.class": "69d814ff33bd069af707a4153359d595fb4279bbf1b7ffecce61fee2bf5adb97",
+    "org/kanger/RouteOrderRunner.class": "ca076c46b50dcd1e1f1b5cdcc751c90fdbb55a3070865d5c182766cb8539f2ef"
+  }
+}

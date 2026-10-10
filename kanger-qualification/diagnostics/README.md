@@ -1,5 +1,9 @@
 # TValue diagnostic source set
 
+## Current three-route allocation experiment
+
+The metadata callbacks now sort and deduplicate three primitive route IDs without a temporary list/TreeSet. Both journals and full authority export gates remain active. See [the three-route report](../../docs/tvalue-journal-three-routes.md) for qualification, allocation measurements and reproduction using a frozen parent control checkout. Earlier build scripts below require their frozen source checkout; the current diagnostic sources intentionally differ in the two journal classes.
+
 ## Current fast disabled bridge experiment
 
 The current bridge checks a volatile attachment before creating callbacks or entering dispatch. See [the fast disabled report](../../docs/tvalue-observer-fast-disabled.md). Reproduce with its `build.py`, `run.py`, `wiring.py`, `qualify.py`, `cost.py`, `cost_analyze.py` and `manifest.py` on pinned native `2422f7f6`. The previous bridge is preserved as a byte-identical control. Earlier scripts below require their frozen stage checkout.

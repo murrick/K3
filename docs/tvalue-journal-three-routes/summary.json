@@ -1,0 +1,81 @@
+{
+  "native_head": "2422f7f6d9e1af7608203b1566df64b5f29fe344",
+  "JVMs": 49,
+  "consumer_JVMs": 9,
+  "owner_JVMs": 3,
+  "route_order_JVMs": 2,
+  "route_probe_cases": 100,
+  "cost_JVMs": 28,
+  "wiring_JVMs": 4,
+  "disagreement_gate_JVMs": 3,
+  "cost_measured_batches": 1792,
+  "prior_accepted_traces_identical": 63,
+  "cost_trace_replays_identical": 56,
+  "native_controls_identical": true,
+  "signed_route_order_and_deduplication_identical": true,
+  "JOURNAL_DISAGREEMENT_fault_injected_and_recovers": true,
+  "both_full_authority_journals_enabled": true,
+  "production_changed": false,
+  "metrics": [
+    {
+      "size": 32,
+      "workload": "setter",
+      "baseline_ns": 689.6997375488281,
+      "baseline_bytes": 1739.3427734375,
+      "candidate_ns": 536.013671875,
+      "candidate_bytes": 1339.3427734375,
+      "paired_candidate_baseline_ratio": 0.7779122949560617,
+      "ratio_range": [
+        0.6443681202021082,
+        1.0253862153927953
+      ],
+      "paired_saved_bytes": 400.0
+    },
+    {
+      "size": 32,
+      "workload": "export",
+      "baseline_ns": 504007.03125,
+      "baseline_bytes": 785989.75,
+      "candidate_ns": 511549.65625,
+      "candidate_bytes": 775840.0,
+      "paired_candidate_baseline_ratio": 1.0336685485593566,
+      "ratio_range": [
+        0.671513029040611,
+        1.1359578043394534
+      ],
+      "paired_saved_bytes": 10270.25
+    },
+    {
+      "size": 128,
+      "workload": "setter",
+      "baseline_ns": 832.2639465332031,
+      "baseline_bytes": 1739.3427734375,
+      "candidate_ns": 715.6102905273438,
+      "candidate_bytes": 1339.3427734375,
+      "paired_candidate_baseline_ratio": 0.8827548481560237,
+      "ratio_range": [
+        0.5229471355443142,
+        1.2598796224808124
+      ],
+      "paired_saved_bytes": 400.0
+    },
+    {
+      "size": 128,
+      "workload": "export",
+      "baseline_ns": 1028300.90625,
+      "baseline_bytes": 2666744.0,
+      "candidate_ns": 974897.0,
+      "candidate_bytes": 2665200.0,
+      "paired_candidate_baseline_ratio": 0.9753435396146424,
+      "ratio_range": [
+        0.8361205124256399,
+        1.0868695001610902
+      ],
+      "paired_saved_bytes": 1608.0
+    }
+  ],
+  "SMART_qualified": false,
+  "full_inference_corpus_qualified": false,
+  "native_recycled_ID_repaired": false,
+  "exclusive_host_or_end_to_end_speedup_claimed": false
+}

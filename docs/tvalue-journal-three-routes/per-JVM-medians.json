@@ -1,0 +1,506 @@
+[
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "off",
+    "module": "candidate",
+    "workload": "setter",
+    "ns": 765.3790893554688,
+    "bytes": 1339.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "off",
+    "module": "candidate",
+    "workload": "export",
+    "ns": 998732.25,
+    "bytes": 2665072.0
+  },
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "setter",
+    "ns": 955.73681640625,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "export",
+    "ns": 1126407.28125,
+    "bytes": 2670912.0
+  },
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "setter",
+    "ns": 718.1675415039062,
+    "bytes": 1339.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "export",
+    "ns": 1224257.71875,
+    "bytes": 2665200.0
+  },
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "verify",
+    "module": "candidate",
+    "workload": "setter",
+    "ns": 711.4557495117188,
+    "bytes": 1339.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 0,
+    "flag": "verify",
+    "module": "candidate",
+    "workload": "export",
+    "ns": 911460.5625,
+    "bytes": 2664800.0
+  },
+  {
+    "size": 128,
+    "repetition": 1,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "setter",
+    "ns": 594.0884399414062,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 1,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "export",
+    "ns": 1192975.53125,
+    "bytes": 2666464.0
+  },
+  {
+    "size": 128,
+    "repetition": 1,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "setter",
+    "ns": 748.4799194335938,
+    "bytes": 1339.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 1,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "export",
+    "ns": 997471.3125,
+    "bytes": 2665072.0
+  },
+  {
+    "size": 128,
+    "repetition": 2,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "setter",
+    "ns": 988.712158203125,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 2,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "export",
+    "ns": 871086.53125,
+    "bytes": 2666464.0
+  },
+  {
+    "size": 128,
+    "repetition": 2,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "setter",
+    "ns": 757.935546875,
+    "bytes": 1339.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 2,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "export",
+    "ns": 838968.1875,
+    "bytes": 2680544.0
+  },
+  {
+    "size": 128,
+    "repetition": 3,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "setter",
+    "ns": 713.8232421875,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 3,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "export",
+    "ns": 930194.53125,
+    "bytes": 2666464.0
+  },
+  {
+    "size": 128,
+    "repetition": 3,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "setter",
+    "ns": 713.0530395507812,
+    "bytes": 1339.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 3,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "export",
+    "ns": 952322.6875,
+    "bytes": 2665232.0
+  },
+  {
+    "size": 128,
+    "repetition": 4,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "setter",
+    "ns": 950.7046508789062,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 4,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "export",
+    "ns": 1183304.59375,
+    "bytes": 2667024.0
+  },
+  {
+    "size": 128,
+    "repetition": 4,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "setter",
+    "ns": 497.16827392578125,
+    "bytes": 1339.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 4,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "export",
+    "ns": 1085610.90625,
+    "bytes": 2665200.0
+  },
+  {
+    "size": 128,
+    "repetition": 5,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "setter",
+    "ns": 563.074462890625,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 5,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "export",
+    "ns": 864075.4375,
+    "bytes": 2671472.0
+  },
+  {
+    "size": 128,
+    "repetition": 5,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "setter",
+    "ns": 707.71240234375,
+    "bytes": 1339.3427734375
+  },
+  {
+    "size": 128,
+    "repetition": 5,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "export",
+    "ns": 853325.1875,
+    "bytes": 2664512.0
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "off",
+    "module": "candidate",
+    "workload": "setter",
+    "ns": 739.8818359375,
+    "bytes": 1339.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "off",
+    "module": "candidate",
+    "workload": "export",
+    "ns": 445250.75,
+    "bytes": 779700.0
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "setter",
+    "ns": 636.0162353515625,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "export",
+    "ns": 387889.65625,
+    "bytes": 786624.0
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "setter",
+    "ns": 452.7122802734375,
+    "bytes": 1339.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "export",
+    "ns": 376649.625,
+    "bytes": 776064.0
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "verify",
+    "module": "candidate",
+    "workload": "setter",
+    "ns": 571.0869750976562,
+    "bytes": 1339.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 0,
+    "flag": "verify",
+    "module": "candidate",
+    "workload": "export",
+    "ns": 490849.0625,
+    "bytes": 775942.5
+  },
+  {
+    "size": 32,
+    "repetition": 1,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "setter",
+    "ns": 891.5426025390625,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 1,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "export",
+    "ns": 520647.65625,
+    "bytes": 783663.25
+  },
+  {
+    "size": 32,
+    "repetition": 1,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "setter",
+    "ns": 703.3196411132812,
+    "bytes": 1339.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 1,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "export",
+    "ns": 550720.09375,
+    "bytes": 775616.0
+  },
+  {
+    "size": 32,
+    "repetition": 2,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "setter",
+    "ns": 681.4188232421875,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 2,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "export",
+    "ns": 527310.21875,
+    "bytes": 785416.0
+  },
+  {
+    "size": 32,
+    "repetition": 2,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "setter",
+    "ns": 698.7174682617188,
+    "bytes": 1339.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 2,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "export",
+    "ns": 547704.96875,
+    "bytes": 775063.0
+  },
+  {
+    "size": 32,
+    "repetition": 3,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "setter",
+    "ns": 601.0313720703125,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 3,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "export",
+    "ns": 452665.03125,
+    "bytes": 786563.5
+  },
+  {
+    "size": 32,
+    "repetition": 3,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "setter",
+    "ns": 476.34771728515625,
+    "bytes": 1339.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 3,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "export",
+    "ns": 514208.375,
+    "bytes": 776376.0
+  },
+  {
+    "size": 32,
+    "repetition": 4,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "setter",
+    "ns": 697.9806518554688,
+    "bytes": 1723.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 4,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "export",
+    "ns": 494712.40625,
+    "bytes": 787120.5
+  },
+  {
+    "size": 32,
+    "repetition": 4,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "setter",
+    "ns": 535.3128662109375,
+    "bytes": 1339.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 4,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "export",
+    "ns": 508890.9375,
+    "bytes": 775560.0
+  },
+  {
+    "size": 32,
+    "repetition": 5,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "setter",
+    "ns": 832.9314575195312,
+    "bytes": 1739.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 5,
+    "flag": "on",
+    "module": "baseline",
+    "workload": "export",
+    "ns": 513301.65625,
+    "bytes": 782005.25
+  },
+  {
+    "size": 32,
+    "repetition": 5,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "setter",
+    "ns": 536.7144775390625,
+    "bytes": 1339.3427734375
+  },
+  {
+    "size": 32,
+    "repetition": 5,
+    "flag": "on",
+    "module": "candidate",
+    "workload": "export",
+    "ns": 344688.75,
+    "bytes": 780693.0
+  }
+]

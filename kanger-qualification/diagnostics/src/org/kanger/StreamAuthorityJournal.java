@@ -155,15 +155,24 @@ public final class StreamAuthorityJournal {
             List<State> states=new ArrayList<>(s.states.values());states.sort(Comparator.comparingInt(st->st.context));
             for(State st:states)if(!st.retired&&st.observed.containsKey(value)){
                 long route=st.observed.get(value);
-                for(long variable:new TreeSet<>(Arrays.asList(route,oldVariable,value.getTVarId()))){
-                    st.dirty.add(variable);s.touches++;
-                    s.rows.add("TOUCH "+scope(st)+" reason="+reason+" variable="+variable+" value="+value.getId()+" term="+value.getValueId());
-                }
+                // Preserve the natural signed-long order and uniqueness of three routes
+                // without allocating a temporary list, tree, entries and iterator.
+                long first=route,second=oldVariable,third=value.getTVarId(),swap;
+                if(first>second){swap=first;first=second;second=swap;}
+                if(second>third){swap=second;second=third;third=swap;}
+                if(first>second){swap=first;first=second;second=swap;}
+                metadataTouch(s,st,value,reason,first);
+                if(second!=first)metadataTouch(s,st,value,reason,second);
+                if(third!=second)metadataTouch(s,st,value,reason,third);
                 st.variableByValue.put(value.getId(),value.getTVarId());
                 if(oldId!=value.getId()||oldVariable!=value.getTVarId())
                     s.errors.add("unsupported registered identity mutation reason="+reason+" old="+oldId+":"+oldVariable+" new="+value.getId()+":"+value.getTVarId());
             }
         }catch(Throwable e){s.errors.add(e.getClass().getName()+":"+e.getMessage());}
+    }
+    private static void metadataTouch(Session s,State st,TValue value,String reason,long variable){
+        st.dirty.add(variable);s.touches++;
+        s.rows.add("TOUCH "+scope(st)+" reason="+reason+" variable="+variable+" value="+value.getId()+" term="+value.getValueId());
     }
     /** Post-successful native Base.get only. No snapshot, hydration, LRU
      * access, owner write, factory repair or authority registration. */
