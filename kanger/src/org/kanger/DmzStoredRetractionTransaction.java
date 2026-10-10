@@ -301,12 +301,26 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             this.ground = ground; this.proofs = proofs; this.visible = visible;
         }
     }
+    enum ReplayQueryDisposition { NOT_REQUESTED, QUERIED, NEEDS_BRANCHING, DECLINED_BY_Q }
+    private static final class ReplayQueryRequest {
+        final String statement;
+        final int budget;
+        ReplayQueryRequest(String statement, int budget) { this.statement = statement; this.budget = budget; }
+    }
     static final class ReplayAppliedChoice {
         final ReplaySide side;
         final int hiddenRules;
         final List<ReplayAppliedGround> grounds;
+        final ReplayQueryDisposition disposition;
+        final QueryResult query;
+        final ConsequenceAuditFailure conflict;
         private ReplayAppliedChoice(ReplaySide side, int hiddenRules, List<ReplayAppliedGround> grounds) {
+            this(side, hiddenRules, grounds, ReplayQueryDisposition.NOT_REQUESTED, null, null);
+        }
+        private ReplayAppliedChoice(ReplaySide side, int hiddenRules, List<ReplayAppliedGround> grounds,
+                ReplayQueryDisposition disposition, QueryResult query, ConsequenceAuditFailure conflict) {
             this.side = side; this.hiddenRules = hiddenRules;
+            this.disposition = disposition; this.query = query; this.conflict = conflict;
             this.grounds = java.util.Collections.unmodifiableList(new ArrayList<ReplayAppliedGround>(grounds));
         }
     }
@@ -519,7 +533,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         }
         QueryResult probeCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
                 String candidate, String queryStatement, int auditBudget, int consequenceBudget) throws Exception {
-            return probeCandidate(source, sourceRule, candidate, queryStatement, auditBudget, consequenceBudget, null, 10000, -1, 10000, null, 0);
+            return probeCandidate(source, sourceRule, candidate, queryStatement, auditBudget, consequenceBudget, null, 10000, -1, 10000, null, 0, null);
         }
         /** Recognize historical chains while the replay is live; always rolls back and never applies cuts. */
         ConsequenceAuditFailure replayConflict(ConsequenceAuditFailure prior,
@@ -530,7 +544,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             if (recognitionBudget < 1 || recognitionBudget > 10000)
                 throw new IllegalArgumentException("Bounded replay recognition required");
             candidateBinding(prior, source, sourceRule, new int[] { recognitionBudget });
-            try { probeCandidate(source, sourceRule, candidate, queryStatement, auditBudget, auditBudget, prior, recognitionBudget, -1, 10000, null, 0); }
+            try { probeCandidate(source, sourceRule, candidate, queryStatement, auditBudget, auditBudget, prior, recognitionBudget, -1, 10000, null, 0, null); }
             catch (ConsequenceAuditFailure recognized) { return recognized; }
             throw new IllegalStateException("Historical conflict disappeared during replay");
         }
@@ -553,6 +567,23 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
                 String candidate, String queryStatement, int auditBudget, int recognitionBudget,
                 int projectionBudget, int applicationBudget) throws Exception {
+            return projectReplayConflict(prior, conflictIndex, source, sourceRule, candidate, queryStatement,
+                    auditBudget, recognitionBudget, projectionBudget, applicationBudget, null);
+        }
+        ReplaySymmetricProjection queryReplayChoices(ConsequenceAuditFailure prior, int conflictIndex,
+                org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+                String candidate, String queryStatement, int auditBudget, int recognitionBudget,
+                int projectionBudget, int applicationBudget, int queryBudget) throws Exception {
+            if (applicationBudget < 1 || applicationBudget > 10000 || queryBudget < 1 || queryBudget > 10000)
+                throw new IllegalArgumentException("Bounded replay application and query required");
+            return projectReplayConflict(prior, conflictIndex, source, sourceRule, candidate, queryStatement,
+                    auditBudget, recognitionBudget, projectionBudget, applicationBudget,
+                    new ReplayQueryRequest(queryStatement, queryBudget));
+        }
+        private ReplaySymmetricProjection projectReplayConflict(ConsequenceAuditFailure prior, int conflictIndex,
+                org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+                String candidate, String queryStatement, int auditBudget, int recognitionBudget,
+                int projectionBudget, int applicationBudget, ReplayQueryRequest query) throws Exception {
             if (prior == null || prior.replayOwner != replayOwner || prior.kind != ConsequenceConflictKind.INTERNAL
                     || conflictIndex < 0 || conflictIndex >= prior.conflicts.size())
                 throw new IllegalArgumentException("Owned internal conflict selection required");
@@ -561,7 +592,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             candidateBinding(prior, source, sourceRule, new int[] { recognitionBudget });
             ReplaySymmetricProjection[] result = new ReplaySymmetricProjection[1];
             try { probeCandidate(source, sourceRule, candidate, queryStatement, auditBudget, auditBudget,
-                    prior, recognitionBudget, conflictIndex, projectionBudget, result, applicationBudget); }
+                    prior, recognitionBudget, conflictIndex, projectionBudget, result, applicationBudget, query); }
             catch (ConsequenceAuditFailure recognized) {
                 if (result[0] == null || result[0].evidence != recognized)
                     throw new IllegalStateException("Complete live replay projection required");
@@ -572,7 +603,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         private QueryResult probeCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
                 String candidate, String queryStatement, int auditBudget, int consequenceBudget,
                 ConsequenceAuditFailure prior, int recognitionBudget, int conflictIndex, int projectionBudget,
-                ReplaySymmetricProjection[] projectionResult, int applicationBudget) throws Exception {
+                ReplaySymmetricProjection[] projectionResult, int applicationBudget, ReplayQueryRequest query) throws Exception {
             if (closed) throw new IllegalStateException("Native support choice closed");
             if (consequenceBudget < 1 || consequenceBudget > 10000)
                 throw new IllegalArgumentException("Bounded consequence audit required");
@@ -627,8 +658,8 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                             ReplaySymmetricProjection liveProjection = projectLiveConflict(probe.mind(), fresh, liveIndex, projectionBudget);
                             if (applicationBudget > 0) {
                                 List<ReplayAppliedChoice> applications = new ArrayList<ReplayAppliedChoice>();
-                                applications.add(applyReplayChoice(probe.mind(), liveProjection, ReplaySide.SUPPORTING, applicationBudget, projectionBudget));
-                                applications.add(applyReplayChoice(probe.mind(), liveProjection, ReplaySide.OPPOSING, applicationBudget, projectionBudget));
+                                applications.add(applyReplayChoice(probe.mind(), liveProjection, ReplaySide.SUPPORTING, applicationBudget, projectionBudget, query));
+                                applications.add(applyReplayChoice(probe.mind(), liveProjection, ReplaySide.OPPOSING, applicationBudget, projectionBudget, query));
                                 liveProjection = new ReplaySymmetricProjection(fresh, liveIndex, liveProjection.grounds, applications);
                             }
                             projectionResult[0] = liveProjection;
@@ -650,7 +681,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         }
         /** Scoped native masks and exact pending gates; inspection only, no query/input/commit. */
         private ReplayAppliedChoice applyReplayChoice(Mind parent, ReplaySymmetricProjection projected,
-                ReplaySide side, int limit, int inspectionLimit) throws Exception {
+                ReplaySide side, int limit, int inspectionLimit, ReplayQueryRequest request) throws Exception {
             String state = DmzObservationStateFingerprint.capture(parent);
             List<String> hypotheses = hypothesisText(parent);
             DmzReplayProvenance.SourceCheckpoint sources = DmzReplayProvenance.sourceCheckpoint(parent);
@@ -721,7 +752,29 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 }
                 if (!inventory.isCurrent(child.mind()) || !projection.isCurrent())
                     throw new IllegalStateException("Replay child inspection boundary changed");
-                return new ReplayAppliedChoice(side, hidden, result);
+                if (request == null) return new ReplayAppliedChoice(side, hidden, result);
+                ConsequenceAuditFailure remaining = null;
+                try { auditConsequences(child.mind(), request.budget); }
+                catch (ConsequenceAuditFailure conflictEvidence) { remaining = conflictEvidence; }
+                if (remaining != null) return new ReplayAppliedChoice(side, hidden, result,
+                        remaining.kind == ConsequenceConflictKind.AUTHORITY ? ReplayQueryDisposition.DECLINED_BY_Q
+                                : ReplayQueryDisposition.NEEDS_BRANCHING, null, remaining);
+                Mind branch = child.mind();
+                String queryState = DmzObservationStateFingerprint.capture(branch);
+                List<String> queryHypotheses = hypothesisText(branch);
+                DmzReplayProvenance.SourceCheckpoint querySources = DmzReplayProvenance.sourceCheckpoint(branch);
+                QueryResult snapshot;
+                try (DmzTerminalRestriction.QueryScope audit = DmzTerminalRestriction.prepareChildQuery(branch, request.budget);
+                        TechnicalMindTransaction queryProbe = TechnicalMindTransaction.beginIsolated(branch)) {
+                    snapshot = querySnapshot(queryProbe.mind().query(request.statement, null, false), queryProbe.mind());
+                } finally {
+                    if (!queryState.equals(DmzObservationStateFingerprint.capture(branch))
+                            || !queryHypotheses.equals(hypothesisText(branch)) || !querySources.isCurrent(branch)
+                            || !inventory.isCurrent(branch) || !projection.isCurrent())
+                        throw new IllegalStateException("Replay child query rollback changed boundary");
+                    owner.requireAuthorityCurrent();
+                }
+                return new ReplayAppliedChoice(side, hidden, result, ReplayQueryDisposition.QUERIED, snapshot, null);
             } finally {
                 for (int i = gates.size() - 1; i >= 0; --i) gates.get(i).close();
                 if (!state.equals(DmzObservationStateFingerprint.capture(parent)) || !hypotheses.equals(hypothesisText(parent))

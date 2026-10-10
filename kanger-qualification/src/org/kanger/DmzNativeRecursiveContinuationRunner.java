@@ -530,6 +530,52 @@ public final class DmzNativeRecursiveContinuationRunner {
                             DmzStoredRetractionTransaction.ReplaySymmetricProjection applied = cut.inspectReplayChoices(
                                     receipt, 0, fact, 150, receiptCandidate, receiptQuery, 10000, 10000, 10000, 10000);
                             require(applied.applications.size() == 2 && projected.isCurrent(), "both isolated replay choices return only after rollback");
+                            boolean queryLimit = false;
+                            try { cut.queryReplayChoices(receipt, 0, fact, 150, receiptCandidate, receiptQuery,
+                                    10000, 10000, 10000, 10000, 1); }
+                            catch (IllegalStateException expected) { queryLimit = true; }
+                            require(queryLimit && projected.isCurrent(), "bounded child consequence/query audit fails and rolls back after masking");
+                            DmzStoredRetractionTransaction.ReplaySymmetricProjection queried = cut.queryReplayChoices(
+                                    receipt, 0, fact, 150, receiptCandidate, receiptQuery, 10000, 10000, 10000, 10000, 10000);
+                            boolean executedQuery = false;
+                            for (DmzStoredRetractionTransaction.ReplayAppliedChoice childChoice : queried.applications) {
+                                if (childChoice.disposition == DmzStoredRetractionTransaction.ReplayQueryDisposition.QUERIED) {
+                                    require(childChoice.query != null && childChoice.conflict == null,
+                                            "consistent scoped child returns an isolated native query snapshot");
+                                    executedQuery = true;
+                                } else {
+                                    require(childChoice.disposition == DmzStoredRetractionTransaction.ReplayQueryDisposition.NEEDS_BRANCHING
+                                            && childChoice.query == null && childChoice.conflict != null
+                                            && !childChoice.conflict.conflicts.isEmpty(),
+                                            "unresolved child conflicts defer inference with exact fresh witness evidence");
+                                }
+                            }
+                            require(executedQuery && projected.isCurrent(), "at least one symmetric child queries and both roll back without retaining candidate");
+                            if (failureMode == 0) {
+                                TerminalSupportCapture.Ground queryRoot = queried.evidence.conflicts.get(queried.conflictIndex).ground;
+                                for (boolean positiveRootQuery : new boolean[] { true, false }) {
+                                    String rootQuery = "?" + (positiveRootQuery ? "" : "~") + queryRoot.predicate + "("
+                                            + new java.math.BigDecimal(queryRoot.arguments.get(0).materialize().getValue().toString()).toBigIntegerExact() + ");";
+                                    DmzStoredRetractionTransaction.ReplaySymmetricProjection rootResult = cut.queryReplayChoices(
+                                            receipt, 0, fact, 150, receiptCandidate, rootQuery, 10000, 10000, 10000, 10000, 10000);
+                                    for (DmzStoredRetractionTransaction.ReplayAppliedChoice childChoice : rootResult.applications)
+                                        if (childChoice.disposition == DmzStoredRetractionTransaction.ReplayQueryDisposition.QUERIED
+                                                && (positiveRootQuery ? childChoice.side == DmzStoredRetractionTransaction.ReplaySide.OPPOSING
+                                                        : childChoice.side == DmzStoredRetractionTransaction.ReplaySide.SUPPORTING))
+                                            require(childChoice.query == null || !Boolean.TRUE.equals(childChoice.query.value),
+                                                    "native query cannot resurrect the rejected conflict root in its scoped child");
+                                }
+                                DmzStoredRetractionTransaction.ReplaySymmetricProjection independentResult = cut.queryReplayChoices(
+                                        receipt, 0, fact, 150, receiptCandidate, "?middle(1);", 10000, 10000, 10000, 10000, 10000);
+                                boolean independentQueried = false;
+                                for (DmzStoredRetractionTransaction.ReplayAppliedChoice childChoice : independentResult.applications)
+                                    if (childChoice.disposition == DmzStoredRetractionTransaction.ReplayQueryDisposition.QUERIED) {
+                                        require(childChoice.query != null && Boolean.TRUE.equals(childChoice.query.value),
+                                                "unrelated native support remains true under nested replay query restrictions");
+                                        independentQueried = true;
+                                    }
+                                require(independentQueried && projected.isCurrent(), "independent query and repeated opposite-root queries preserve the parent choice");
+                            }
                             require(applied.applications.get(0).hiddenRules + applied.applications.get(1).hiddenRules > 0,
                                     "symmetric native application includes a materialized occurrence loss");
                             for (DmzStoredRetractionTransaction.ReplayAppliedChoice childChoice : applied.applications) {

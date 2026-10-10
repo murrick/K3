@@ -28,12 +28,14 @@ final class DmzTerminalRestriction implements AutoCloseable {
         private final List<DmzTerminalRestriction> restrictions = new ArrayList<DmzTerminalRestriction>();
         private final List<Boolean> previousDecisions = new ArrayList<Boolean>();
         private boolean closed;
-        private QueryScope(Mind mind, int budget) throws Exception {
+        private QueryScope(Mind mind, int budget) throws Exception { this(mind, budget, false); }
+        private QueryScope(Mind mind, int budget, boolean nested) throws Exception {
             try {
                 for (DmzTerminalRestriction r = ACTIVE.get(); r != null; r = r.previous)
                     if (r.recursive && r.local(mind)) {
-                        if (r.queryDecision != null) throw new IllegalStateException("Recursive query audit already active");
+                        if (r.queryDecision != null && !nested) throw new IllegalStateException("Recursive query audit already active");
                         boolean decision = r.noCurrentAlternative(mind, budget);
+                        if (nested && Boolean.TRUE.equals(r.queryDecision)) decision = true;
                         restrictions.add(r); previousDecisions.add(r.queryDecision);
                         r.queryDecision = decision;
                     }
@@ -47,6 +49,8 @@ final class DmzTerminalRestriction implements AutoCloseable {
         }
     }
     static QueryScope prepareQuery(Mind mind, int budget) throws Exception { return new QueryScope(mind, budget); }
+    /** Nested replay query can strengthen frozen admission decisions, then restores them exactly. */
+    static QueryScope prepareChildQuery(Mind mind, int budget) throws Exception { return new QueryScope(mind, budget, true); }
     private DmzTerminalRestriction(Mind boundary, DmzProofWitnesses.Witness blocked) {
         this(boundary, blocked, false);
     }
