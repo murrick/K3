@@ -552,6 +552,14 @@ public final class DmzNativeRecursiveContinuationRunner {
                             }
                             require(executedQuery && projected.isCurrent(), "at least one symmetric child queries and both roll back without retaining candidate");
                             if (failureMode == 0) {
+                                for (DmzStoredRetractionTransaction.ReplayAppliedChoice childChoice : queried.applications) {
+                                    DmzStoredRetractionTransaction.ReplayPath path = cut.recordReplayPath(queried, childChoice.side);
+                                    DmzStoredRetractionTransaction.ReplaySymmetricProjection restored = cut.replayPath(path,
+                                            fact, 150, receiptCandidate, receiptQuery, 10000, 10000, 10000, 10000, 10000);
+                                    require(restored.applications.size() == 1 && restored.applications.get(0).side == childChoice.side
+                                            && restored.applications.get(0).disposition == childChoice.disposition && projected.isCurrent(),
+                                            "signed alias matrix restores only the selected historical replay path");
+                                }
                                 TerminalSupportCapture.Ground queryRoot = queried.evidence.conflicts.get(queried.conflictIndex).ground;
                                 for (boolean positiveRootQuery : new boolean[] { true, false }) {
                                     String rootQuery = "?" + (positiveRootQuery ? "" : "~") + queryRoot.predicate + "("
@@ -1017,6 +1025,13 @@ public final class DmzNativeRecursiveContinuationRunner {
                 require(projection.isCurrent(), "closing sibling transaction preserves original projection");
                 try (DmzStoredRetractionTransaction.NativeSupportChoice held = overlay.beginSupportChoice(projection,
                         DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, 10000)) {
+                    DmzStoredRetractionTransaction.ConsequenceAuditFailure pathPacket = null;
+                    try { held.probeCandidate(source, 150, "!~derived(9);", "?source(1);", 10000); }
+                    catch (DmzStoredRetractionTransaction.ConsequenceAuditFailure expected) { pathPacket = expected; }
+                    require(pathPacket != null, "authority fixture captures a replay path before Q mutation");
+                    DmzStoredRetractionTransaction.ReplaySymmetricProjection pathResult = held.queryReplayChoices(pathPacket, 0,
+                            source, 150, "!~derived(9);", "?source(1);", 10000, 10000, 10000, 10000, 10000);
+                    DmzStoredRetractionTransaction.ReplayPath path = held.recordReplayPath(pathResult, pathResult.applications.get(0).side);
                     String before = DmzObservationStateFingerprint.capture(q);
                     if (sourceOnly) DmzReplayProvenance.replayRule(q, source, 3, DmzReplayProvenance.Authority.EXTERNAL,
                             "!@x source(x) -> derived(x);");
@@ -1024,6 +1039,10 @@ public final class DmzNativeRecursiveContinuationRunner {
                     if (sourceOnly) require(before.equals(DmzObservationStateFingerprint.capture(q)),
                             "source-only authority mutation leaves native fingerprint unchanged");
                     String changed = DmzObservationStateFingerprint.capture(q);
+                    boolean stalePath = false;
+                    try { held.replayPath(path, source, 150, "!~derived(9);", "?source(1);", 10000, 10000, 10000, 10000, 10000); }
+                    catch (IllegalStateException expected) { stalePath = expected.getMessage().contains("boundary changed"); }
+                    require(stalePath, "historical path refuses native or source-only Q pin changes before admission");
                     boolean stale = false;
                     try { overlay.classifyAuthorityInput("!~derived(1);", 10000); }
                     catch (IllegalStateException expected) { stale = expected.getMessage().contains("Pinned Q authority boundary changed"); }

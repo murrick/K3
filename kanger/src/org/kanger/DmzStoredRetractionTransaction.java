@@ -302,10 +302,38 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         }
     }
     enum ReplayQueryDisposition { NOT_REQUESTED, QUERIED, NEEDS_BRANCHING, DECLINED_BY_Q }
+    static final class ReplayPathStep {
+        final TerminalSupportCapture.Ground conflict;
+        final ReplaySide side;
+        final List<ReplayAppliedGround> grounds;
+        private ReplayPathStep(TerminalSupportCapture.Ground conflict, ReplayAppliedChoice result) {
+            this.conflict = conflict; side = result.side; grounds = result.grounds;
+        }
+    }
+    /** One qualified historical choice; no Mind, retained transaction or enforcement permission. */
+    static final class ReplayPath {
+        private final Object replayOwner;
+        final ConsequenceAuditFailure root, remaining;
+        final ReplayQueryDisposition disposition;
+        final List<ReplayPathStep> steps;
+        private ReplayPath(Object replayOwner, ConsequenceAuditFailure root, ReplayPathStep step, ReplayAppliedChoice result) {
+            this.replayOwner = replayOwner; this.root = root; remaining = result.conflict; disposition = result.disposition;
+            steps = java.util.Collections.singletonList(step);
+        }
+    }
     private static final class ReplayQueryRequest {
         final String statement;
         final int budget;
-        ReplayQueryRequest(String statement, int budget) { this.statement = statement; this.budget = budget; }
+        final ReplayPath path;
+        final org.kanger.interfaces.IContextResults.Revision source;
+        final long sourceRule;
+        final int recognitionBudget;
+        ReplayQueryRequest(String statement, int budget) { this(statement, budget, null, null, -1, 0); }
+        ReplayQueryRequest(String statement, int budget, ReplayPath path,
+                org.kanger.interfaces.IContextResults.Revision source, long sourceRule, int recognitionBudget) {
+            this.statement = statement; this.budget = budget; this.path = path;
+            this.source = source; this.sourceRule = sourceRule; this.recognitionBudget = recognitionBudget;
+        }
     }
     static final class ReplayAppliedChoice {
         final ReplaySide side;
@@ -580,6 +608,42 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                     auditBudget, recognitionBudget, projectionBudget, applicationBudget,
                     new ReplayQueryRequest(queryStatement, queryBudget));
         }
+        ReplayPath recordReplayPath(ReplaySymmetricProjection result, ReplaySide side) throws Exception {
+            if (closed) throw new IllegalStateException("Native support choice closed");
+            if (result == null || result.evidence.replayOwner != replayOwner || side == null)
+                throw new IllegalArgumentException("Owned replay result and explicit side required");
+            if (!projection.isCurrent()) throw new IllegalStateException("Replay path boundary changed");
+            for (ReplayAppliedChoice application : result.applications) if (application.side == side) {
+                if (application.disposition != ReplayQueryDisposition.QUERIED
+                        && application.disposition != ReplayQueryDisposition.NEEDS_BRANCHING)
+                    throw new IllegalArgumentException("Queried or internally deferred replay choice required");
+                return new ReplayPath(replayOwner, result.evidence,
+                        new ReplayPathStep(result.evidence.conflicts.get(result.conflictIndex).ground, application), application);
+            }
+            throw new IllegalArgumentException("Applied replay side required");
+        }
+        ReplaySymmetricProjection replayPath(ReplayPath path,
+                org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+                String candidate, String queryStatement, int auditBudget, int recognitionBudget,
+                int projectionBudget, int applicationBudget, int queryBudget) throws Exception {
+            if (closed) throw new IllegalStateException("Native support choice closed");
+            if (path == null || path.replayOwner != replayOwner || path.steps.size() != 1)
+                throw new IllegalArgumentException("Owned one-choice replay path required");
+            if (applicationBudget < 1 || applicationBudget > 10000 || queryBudget < 1 || queryBudget > 10000
+                    || recognitionBudget < 1 || recognitionBudget > 10000)
+                throw new IllegalArgumentException("Bounded replay path work required");
+            if (!projection.isCurrent()) throw new IllegalStateException("Replay path boundary changed");
+            int index = -1;
+            int[] work = { recognitionBudget };
+            for (int i = 0; i < path.root.conflicts.size(); ++i) {
+                projectionWork(work);
+                if (path.steps.get(0).conflict.equivalent(path.root.conflicts.get(i).ground)) index = i;
+            }
+            if (index < 0) throw new IllegalStateException("Replay path root conflict missing");
+            return projectReplayConflict(path.root, index, source, sourceRule, candidate, queryStatement,
+                    auditBudget, recognitionBudget, projectionBudget, applicationBudget,
+                    new ReplayQueryRequest(queryStatement, queryBudget, path, source, sourceRule, recognitionBudget));
+        }
         private ReplaySymmetricProjection projectReplayConflict(ConsequenceAuditFailure prior, int conflictIndex,
                 org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
                 String candidate, String queryStatement, int auditBudget, int recognitionBudget,
@@ -658,8 +722,12 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                             ReplaySymmetricProjection liveProjection = projectLiveConflict(probe.mind(), fresh, liveIndex, projectionBudget);
                             if (applicationBudget > 0) {
                                 List<ReplayAppliedChoice> applications = new ArrayList<ReplayAppliedChoice>();
-                                applications.add(applyReplayChoice(probe.mind(), liveProjection, ReplaySide.SUPPORTING, applicationBudget, projectionBudget, query));
-                                applications.add(applyReplayChoice(probe.mind(), liveProjection, ReplaySide.OPPOSING, applicationBudget, projectionBudget, query));
+                                if (query != null && query.path != null) applications.add(applyReplayChoice(probe.mind(), liveProjection,
+                                        query.path.steps.get(0).side, applicationBudget, projectionBudget, query));
+                                else {
+                                    applications.add(applyReplayChoice(probe.mind(), liveProjection, ReplaySide.SUPPORTING, applicationBudget, projectionBudget, query));
+                                    applications.add(applyReplayChoice(probe.mind(), liveProjection, ReplaySide.OPPOSING, applicationBudget, projectionBudget, query));
+                                }
                                 liveProjection = new ReplaySymmetricProjection(fresh, liveIndex, liveProjection.grounds, applications);
                             }
                             projectionResult[0] = liveProjection;
@@ -756,6 +824,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 ConsequenceAuditFailure remaining = null;
                 try { auditConsequences(child.mind(), request.budget); }
                 catch (ConsequenceAuditFailure conflictEvidence) { remaining = conflictEvidence; }
+                if (request.path != null) recognizePathTerminal(request, result, remaining);
                 if (remaining != null) return new ReplayAppliedChoice(side, hidden, result,
                         remaining.kind == ConsequenceConflictKind.AUTHORITY ? ReplayQueryDisposition.DECLINED_BY_Q
                                 : ReplayQueryDisposition.NEEDS_BRANCHING, null, remaining);
@@ -782,6 +851,31 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                     throw new IllegalStateException("Replay child rollback changed boundary");
                 owner.requireAuthorityCurrent();
             }
+        }
+        private void recognizePathTerminal(ReplayQueryRequest request, List<ReplayAppliedGround> live,
+                ConsequenceAuditFailure remaining) throws Exception {
+            ReplayPath path = request.path;
+            List<ReplayAppliedGround> historical = path.steps.get(0).grounds;
+            if (historical.size() != live.size()) throw new IllegalStateException("Replay path ground coverage changed");
+            int[] work = { request.recognitionBudget };
+            boolean[] used = new boolean[live.size()];
+            for (ReplayAppliedGround old : historical) {
+                boolean found = false;
+                for (int i = 0; i < live.size(); ++i) {
+                    projectionWork(work);
+                    ReplayAppliedGround current = live.get(i);
+                    if (!used[i] && old.ground.equivalent(current.ground)) {
+                        if (old.proofs != current.proofs || old.visible != current.visible)
+                            throw new IllegalStateException("Replay path child support or visibility changed");
+                        used[i] = true; found = true; break;
+                    }
+                }
+                if (!found) throw new IllegalStateException("Replay path child ground missing");
+            }
+            if (path.disposition == ReplayQueryDisposition.NEEDS_BRANCHING) {
+                if (remaining == null) throw new IllegalStateException("Replay path remaining conflict disappeared");
+                recognizeReplay(path.remaining, remaining, request.source, request.sourceRule, request.recognitionBudget);
+            } else if (remaining != null) throw new IllegalStateException("Replay path gained a remaining conflict");
         }
         private ReplaySymmetricProjection projectLiveConflict(Mind probe, ConsequenceAuditFailure evidence,
                 int index, int limit) throws Exception {

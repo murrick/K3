@@ -67,7 +67,47 @@ public final class DmzReplayQueryCascadeRunner {
                         }
                     }
                     require(deferred && queried && projection.isCurrent(), "deferred and queried siblings roll back to current parent evidence");
+                    DmzStoredRetractionTransaction.ReplayPath deferredPath = null;
+                    for (DmzStoredRetractionTransaction.ReplayAppliedChoice child : result.applications) {
+                        DmzStoredRetractionTransaction.ReplayPath path = choice.recordReplayPath(result, child.side);
+                        require(path.steps.size() == 1 && path.steps.get(0).side == child.side && path.disposition == child.disposition,
+                                "historical path preserves selected conflict, side and terminal disposition");
+                        boolean immutable = false;
+                        try { path.steps.clear(); } catch (UnsupportedOperationException expected) { immutable = true; }
+                        require(immutable, "path step list is immutable");
+                        boolean wrongLabel = false;
+                        try { choice.replayPath(path, source, 151, candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000); }
+                        catch (IllegalArgumentException expected) { wrongLabel = true; }
+                        require(wrongLabel && projection.isCurrent(), "path replay refuses another candidate label before admission");
+                        boolean budgetFailure = false;
+                        try { choice.replayPath(path, source, 150, candidate, "?source(1);", 10000, 10000, 10000, 10000, 1); }
+                        catch (IllegalStateException expected) { budgetFailure = true; }
+                        require(budgetFailure && projection.isCurrent(), "path child audit failure rolls back and permits retry");
+                        DmzStoredRetractionTransaction.ReplaySymmetricProjection repeated = choice.replayPath(
+                                path, source, 150, candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000);
+                        require(repeated.applications.size() == 1 && repeated.applications.get(0).side == child.side
+                                && repeated.applications.get(0).disposition == child.disposition && projection.isCurrent(),
+                                "fresh replay restores exactly the selected child and its checked terminal state");
+                        if (child.disposition == DmzStoredRetractionTransaction.ReplayQueryDisposition.NEEDS_BRANCHING) {
+                            require(repeated.applications.get(0).conflict != path.remaining,
+                                    "remaining conflict witnesses are recognized live under a fresh candidate binding");
+                            deferredPath = path;
+                        } else require(Boolean.TRUE.equals(repeated.applications.get(0).query.value), "queried path preserves independent native truth");
+                    }
+                    require(deferredPath != null, "deferred path available after rollback");
                     require(!Boolean.TRUE.equals(choice.query("?" + candidate.substring(1), 10000).value), "candidate not retained after siblings");
+                    choice.close();
+                    boolean closedReplay = false;
+                    try { choice.replayPath(deferredPath, source, 150, candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000); }
+                    catch (IllegalStateException expected) { closedReplay = true; }
+                    require(closedReplay && projection.isCurrent(), "closed native choice refuses historical path replay");
+                    try (DmzStoredRetractionTransaction.NativeSupportChoice foreign = overlay.beginSupportChoice(projection,
+                            DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, 10000)) {
+                        boolean wrongOwner = false;
+                        try { foreign.replayPath(deferredPath, source, 150, candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000); }
+                        catch (IllegalArgumentException expected) { wrongOwner = true; }
+                        require(wrongOwner && projection.isCurrent(), "identical candidate source does not transfer a path to another choice");
+                    }
                 }
             }
             require(qState.equals(DmzObservationStateFingerprint.capture(q)), "Q native state restored");
