@@ -358,6 +358,10 @@ public final class DmzNativeRecursiveContinuationRunner {
                         require(Boolean.TRUE.equals(kept.query(projected == alternativeProjection
                                 ? (negative ? "?~derived(2);" : "?derived(2);") : "?negativeResult(9);", 10000).value),
                                 "existing choice audited query preserves its supported opinion");
+                        boolean keptAdmissionRefused = false;
+                        try { kept.probeCandidate(fact, 150, "!negativeSeed(9);", "?negativeSeed(9);", 10000); }
+                        catch (IllegalStateException expected) { keptAdmissionRefused = expected.getMessage().contains("candidate support choice"); }
+                        require(keptAdmissionRefused, "existing opinion cannot admit its conflicting receipt candidate");
                     } finally { kept.close(); }
                     DmzStoredRetractionTransaction.NativeSupportChoice cut = overlay.beginSupportChoice(projected,
                             DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, 10000);
@@ -406,6 +410,31 @@ public final class DmzNativeRecursiveContinuationRunner {
                             require(queryBudgetRefused && !Boolean.TRUE.equals(cut.query(lost, 10000).value),
                                     "query audit refusal unwinds temporary gates and permits subsequent audited query");
                         }
+                        String receiptCandidate = projected == primaryProjection ? "!negativeSeed(9);"
+                                : projected == derivedProjection ? "!~negativeResult(9);"
+                                : (negative ? "!derived(2);" : "!~derived(2);");
+                        String receiptQuery = "?" + receiptCandidate.substring(1);
+                        boolean wrongCandidateRefused = false;
+                        try { cut.probeCandidate(fact, 150, "!negativeSeed(66);", receiptQuery, 10000); }
+                        catch (IllegalArgumentException expected) { wrongCandidateRefused = true; }
+                        require(wrongCandidateRefused && projected.isCurrent(), "choice refuses inputs outside its exact conflict receipt");
+                        boolean candidateBudgetRefused = false;
+                        try { cut.probeCandidate(fact, 150, receiptCandidate, receiptQuery, 1); }
+                        catch (IllegalStateException expected) { candidateBudgetRefused = true; }
+                        require(candidateBudgetRefused && projected.isCurrent(), "candidate preflight budget refusal preserves choice");
+                        boolean candidateRevisionRefused = false;
+                        try { cut.probeCandidate(new IContextResults.Revision(fact.getContextId(), 2), 150,
+                                receiptCandidate, receiptQuery, 10000); }
+                        catch (IllegalStateException expected) { candidateRevisionRefused = expected.getMessage().contains("inventory unavailable"); }
+                        require(candidateRevisionRefused && projected.isCurrent(),
+                                "post-input incoherent revision refusal rolls back candidate sources and native consequences");
+                        DmzStoredRetractionTransaction.QueryResult admitted = cut.probeCandidate(fact, 150,
+                                receiptCandidate, receiptQuery, 10000);
+                        require(Boolean.TRUE.equals(admitted.value)
+                                && admitted.candidateMode == DmzStoredRetractionTransaction.QueryResult.CandidateMode.NEW_INPUT,
+                                "exact receipt candidate is conditionally accepted under native gates");
+                        require(!Boolean.TRUE.equals(cut.query(receiptQuery, 10000).value) && projected.isCurrent(),
+                                "candidate and consequences roll back without importing support into the choice");
                         require(projected.isCurrent(), "child masks leave parent evidence current");
                     } finally { cut.close(); }
                     cut.close();
@@ -421,6 +450,10 @@ public final class DmzNativeRecursiveContinuationRunner {
                     try { cut.query("?middle(1);", 10000); }
                     catch (IllegalStateException expected) { closedQuery = true; }
                     require(closedQuery, "settled support choice refuses native query reuse");
+                    boolean closedAdmission = false;
+                    try { cut.probeCandidate(fact, 150, "!negativeSeed(9);", "?negativeSeed(9);", 10000); }
+                    catch (IllegalStateException expected) { closedAdmission = true; }
+                    require(closedAdmission, "settled support choice refuses candidate admission");
                     require(projected.isCurrent(), "choice rollback preserves parent projection");
                 }
                 boolean partialChoiceFailure = false;
@@ -732,6 +765,12 @@ public final class DmzNativeRecursiveContinuationRunner {
                         }
                         require(projection.isCurrent(), "isolated query rollback keeps parent receipt current");
                     }
+                    String candidate = negative ? "!isolatedPending(9);" : "!~isolatedPending(9);";
+                    String query = "?" + candidate.substring(1);
+                    require(Boolean.TRUE.equals(cut.probeCandidate(source, 6, candidate, query, 10000).value),
+                            "both signed isolated primary candidates are conditionally admitted");
+                    require(cut.query(query, 10000).value == null && projection.isCurrent(),
+                            "isolated candidate input and provenance roll back completely");
                 }
                 require(Boolean.TRUE.equals(overlay.queryContinuation(signed(negative, "?isolatedPending(9);"))),
                         "closing isolated cut restores parent primary opinion");
@@ -795,6 +834,10 @@ public final class DmzNativeRecursiveContinuationRunner {
                     try { held.query("?derived(9);", 10000); }
                     catch (IllegalStateException expected) { staleQuery = expected.getMessage().contains("boundary changed"); }
                     require(staleQuery, "open native choice refuses query after Q mutation");
+                    boolean staleAdmission = false;
+                    try { held.probeCandidate(source, 6, "!~derived(9);", "?~derived(9);", 10000); }
+                    catch (IllegalStateException expected) { staleAdmission = expected.getMessage().contains("boundary changed"); }
+                    require(staleAdmission, "native or source-only Q mutation prevents candidate admission");
                     held.close();
                     require(changed.equals(DmzObservationStateFingerprint.capture(q)),
                             "closing stale choice preserves externally changed Q");

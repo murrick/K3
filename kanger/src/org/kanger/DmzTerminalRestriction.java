@@ -17,6 +17,7 @@ final class DmzTerminalRestriction implements AutoCloseable {
     private final DmzProofWitnesses.Witness blocked;
     private final boolean recursive;
     private final boolean pendingSources;
+    private final boolean admission;
     private final DmzProofWitnesses.NoGood noGood;
     private int inventoryChecks;
     private boolean closed;
@@ -53,7 +54,12 @@ final class DmzTerminalRestriction implements AutoCloseable {
         this(boundary, blocked, recursive, false);
     }
     private DmzTerminalRestriction(Mind boundary, DmzProofWitnesses.Witness blocked, boolean recursive, boolean pendingSources) {
+        this(boundary, blocked, recursive, pendingSources, false);
+    }
+    private DmzTerminalRestriction(Mind boundary, DmzProofWitnesses.Witness blocked, boolean recursive,
+            boolean pendingSources, boolean admission) {
         this.boundary = boundary; this.blocked = blocked;
+        this.admission = admission;
         this.pendingSources = pendingSources;
         this.recursive = recursive; noGood = DmzProofWitnesses.NoGood.from(blocked);
         previous = ACTIVE.get(); ACTIVE.set(this);
@@ -152,12 +158,18 @@ final class DmzTerminalRestriction implements AutoCloseable {
     }
     /** Exact derived-chain gate for a caller-pinned rollback-only pending support choice. */
     static DmzTerminalRestriction beginPendingChoice(Mind boundary, DmzProofWitnesses.Witness blocked) {
+        return beginPendingChoice(boundary, blocked, false);
+    }
+    static DmzTerminalRestriction beginPendingAdmission(Mind boundary, DmzProofWitnesses.Witness blocked) {
+        return beginPendingChoice(boundary, blocked, true);
+    }
+    private static DmzTerminalRestriction beginPendingChoice(Mind boundary, DmzProofWitnesses.Witness blocked, boolean admission) {
         DmzProofWitnesses.NoGood.from(blocked);
         for (DmzProofWitnesses.Witness current = blocked; ; current = current.premises.get(0)) {
             requireObserved(boundary, current.source);
             if (current.step < 0) break;
         }
-        return new DmzTerminalRestriction(boundary, blocked, true, true);
+        return new DmzTerminalRestriction(boundary, blocked, true, true, admission);
     }
     private static void requireObserved(Mind mind, DmzReplayProvenance.Binding binding) {
         for (DmzReplayProvenance.SourceObservation source : DmzReplayProvenance.observedSources(mind, binding.nativeRule))
@@ -216,10 +228,11 @@ final class DmzTerminalRestriction implements AutoCloseable {
     static boolean deniesQueryPair(Mind mind, Domain left, Domain right) throws Exception {
         DmzTerminalRestriction active = ACTIVE.get();
         if (active == null) return false;
-        if (mind.getQueryPass() != org.kanger.enums.QueryPass.CHECKFALSE
+        boolean accepting = mind.getQueryPass() == org.kanger.enums.QueryPass.ACCEPT;
+        if (!accepting && mind.getQueryPass() != org.kanger.enums.QueryPass.CHECKFALSE
                 && mind.getQueryPass() != org.kanger.enums.QueryPass.CHECKTRUE) return false;
         for (DmzTerminalRestriction restriction = active; restriction != null; restriction = restriction.previous)
-            if (restriction.queryPair(mind, left, right) || restriction.queryPair(mind, right, left)) {
+            if ((!accepting || restriction.admission) && (restriction.queryPair(mind, left, right) || restriction.queryPair(mind, right, left))) {
                 ++restriction.queryDenied; return true;
             }
         return false;

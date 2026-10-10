@@ -390,6 +390,62 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 }
             }
         }
+        /** Exact receipt candidate only; native input, consequences and query always roll back. */
+        QueryResult probeCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+                String candidate, String queryStatement, int auditBudget) throws Exception {
+            if (closed) throw new IllegalStateException("Native support choice closed");
+            owner.validateCandidate(source, sourceRule, candidate, queryStatement, auditBudget, auditBudget);
+            if (!projection.isCurrent()) throw new IllegalStateException("Native support choice boundary changed");
+            if (choice != SupportChoice.KEEP_CANDIDATE)
+                throw new IllegalStateException("Candidate admission requires candidate support choice");
+            int open = candidate.indexOf('(');
+            boolean sign = !candidate.startsWith("!~");
+            String predicate = candidate.substring(sign ? 1 : 2, open);
+            Object expected = projection.evidence.candidate.arguments.get(0).materialize().getValue();
+            if (sign != projection.evidence.candidate.sign || !predicate.equals(projection.evidence.candidate.predicate)
+                    || !(expected instanceof Number) || new java.math.BigDecimal(candidate.substring(open + 1, candidate.length() - 2))
+                            .compareTo(new java.math.BigDecimal(expected.toString())) != 0)
+                throw new IllegalArgumentException("Exact conflict receipt candidate required");
+            InputKind authority = owner.classifyAuthorityInput(candidate, auditBudget);
+            if (authority == InputKind.CONFLICT || authority == InputKind.INCONSISTENT)
+                throw new IllegalStateException("Candidate conflicts with pinned Q");
+            List<DmzProofWitnesses.Witness> cuts = queryCuts(auditBudget);
+            Mind child = transaction.mind();
+            String state = DmzObservationStateFingerprint.capture(child);
+            DmzReplayProvenance.SourceCheckpoint sources = DmzReplayProvenance.sourceCheckpoint(child);
+            List<String> hypotheses = hypothesisText(child);
+            List<DmzTerminalRestriction> gates = new ArrayList<DmzTerminalRestriction>();
+            try {
+                for (DmzProofWitnesses.Witness cut : cuts) gates.add(DmzTerminalRestriction.beginPendingAdmission(child, cut));
+                QueryResult result;
+                try (DmzTerminalRestriction.QueryScope audit = DmzTerminalRestriction.prepareQuery(child, auditBudget);
+                        TechnicalMindTransaction probe = TechnicalMindTransaction.beginIsolated(child)) {
+                    InputKind input = classifyCurrent(probe.mind(), candidate, auditBudget, true,
+                            DmzTerminalRestriction.activeNoGoods(probe.mind()));
+                    if (input == InputKind.CONFLICT || input == InputKind.INCONSISTENT)
+                        throw new IllegalStateException("Candidate retains an unexcluded branch conflict");
+                    if (input != InputKind.FRESH) throw new IllegalStateException("Fresh receipt candidate required");
+                    if (!Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(probe.mind(), source, sourceRule,
+                            DmzReplayProvenance.Authority.EXTERNAL, candidate)))
+                        throw new IllegalStateException("Support choice candidate was not accepted: " + candidate);
+                    DmzCurrentUnaryProofInventory inventory = DmzCurrentUnaryProofInventory.capture(probe.mind(), auditBudget, true);
+                    if (!inventory.eligible) throw new IllegalStateException("Candidate continuation inventory unavailable");
+                    if (classifyCurrent(probe.mind(), candidate, auditBudget, true,
+                            DmzTerminalRestriction.activeNoGoods(probe.mind())) != InputKind.EXISTING_PRIMARY)
+                        throw new IllegalStateException("Candidate lacks an unconflicted current primary support");
+                    QueryResult snapshot = querySnapshot(probe.mind().query(queryStatement, null, false), probe.mind());
+                    result = new QueryResult(snapshot.value, snapshot.hypotheses, snapshot.hypothesisAssertions,
+                            QueryResult.CandidateMode.NEW_INPUT);
+                }
+                return result;
+            } finally {
+                for (int i = gates.size() - 1; i >= 0; --i) gates.get(i).close();
+                if (!state.equals(DmzObservationStateFingerprint.capture(child)) || !hypotheses.equals(hypothesisText(child))
+                        || !sources.isCurrent(child) || !projection.isCurrent()) {
+                    close(); throw new IllegalStateException("Native support choice candidate boundary changed");
+                }
+            }
+        }
         public void close() throws Exception {
             if (closed) return;
             Mind parent = owner.transaction.mind();
