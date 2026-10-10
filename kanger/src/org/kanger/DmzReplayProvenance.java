@@ -33,6 +33,7 @@ public final class DmzReplayProvenance implements AutoCloseable {
     private final Thread owner = Thread.currentThread();
     private final Map<Mind, Integer> targets = new IdentityHashMap<Mind, Integer>();
     private final List<Binding> bindings = new ArrayList<Binding>();
+    private final Map<Binding, Integer> acceptedTargets = new IdentityHashMap<Binding, Integer>();
     private Mind boundary;
     private final Map<Integer, Frame> frames = new java.util.HashMap<Integer, Frame>();
     private Input input;
@@ -107,7 +108,11 @@ public final class DmzReplayProvenance implements AutoCloseable {
         if (capture == null) return;
         Integer index = capture.targets.get(child);
         Frame frame = index == null ? null : capture.frames.get(index);
-        if (frame != null) frame.outcome = committed ? Outcome.ACCEPTED : Outcome.DISCARDED;
+        if (frame != null) {
+            frame.outcome = committed ? Outcome.ACCEPTED : Outcome.DISCARDED;
+            if (committed) for (Map.Entry<Binding, Integer> entry : capture.acceptedTargets.entrySet())
+                if (entry.getValue().equals(index)) entry.setValue(frame.parent);
+        }
     }
     public Settlement settlementSnapshot() {
         List<Binding> accepted = new ArrayList<Binding>();
@@ -139,7 +144,7 @@ public final class DmzReplayProvenance implements AutoCloseable {
             Authority authority, String statement) throws Exception {
         DmzReplayProvenance capture = ACTIVE.get();
         if (capture == null) { target.compileLine(statement, false, new LinkedList<ITerm>()); return; }
-        if (source == null || authority == null || sourceRule < 0 || source.getCommune() != null
+        if (target == null || source == null || authority == null || sourceRule < 0 || source.getCommune() != null
                 || !source.getCommuneMembers().isEmpty())
             throw new IllegalArgumentException("Exact atomic source handle required");
         Input previous = capture.input;
@@ -148,9 +153,32 @@ public final class DmzReplayProvenance implements AutoCloseable {
         finally { capture.input = previous; }
     }
 
+    /** Explicitly sourced native acceptance; binds the primary input before analysis/linking.
+     * No generated result is labelled. This alone is not a pre-operation certificate.
+     */
+    public static Boolean acceptRule(Mind target, IContextResults.Revision source, long sourceRule,
+            Authority authority, String statement) throws Exception {
+        if (source == null || authority == null || sourceRule < 0 || source.getCommune() != null
+                || !source.getCommuneMembers().isEmpty() || statement == null || !statement.startsWith("!"))
+            throw new IllegalArgumentException("Exact atomic source and acceptance statement required");
+        DmzReplayProvenance capture = ACTIVE.get();
+        if (capture == null) return target.query(statement, null, false);
+        Input previous = capture.input;
+        Input accepted = new Input(source, sourceRule, authority, target, true);
+        capture.input = accepted;
+        try {
+            Boolean result = target.query(statement, null, false);
+            if (Boolean.TRUE.equals(result)) for (Binding binding : accepted.bound)
+                capture.acceptedTargets.put(binding, capture.identity(target));
+            return result;
+        } finally { capture.input = previous; }
+    }
+
     static void compiled(Mind target, Rule rule, boolean duplicate) {
         DmzReplayProvenance capture = ACTIVE.get();
-        if (capture == null || capture.input == null || capture.input.target != target || rule.isQuery()) return;
+        if (capture == null || capture.input == null || rule.isQuery()) return;
+        if (capture.input.target != target
+                && (!capture.input.acceptance || target.getNext() != capture.input.target)) return;
         Integer index = capture.identity(target);
         // Direct replay to a declared/root boundary is already locally settled.
         if (!capture.frames.containsKey(index) && (target == capture.boundary
@@ -158,7 +186,9 @@ public final class DmzReplayProvenance implements AutoCloseable {
             Frame frame = new Frame(-1, true); frame.outcome = Outcome.ACCEPTED;
             capture.frames.put(index, frame);
         }
-        capture.bindings.add(new Binding(index, rule.getId(), capture.input, duplicate));
+        Binding binding = new Binding(index, rule.getId(), capture.input, duplicate);
+        capture.bindings.add(binding);
+        if (capture.input.acceptance) capture.input.bound.add(binding);
     }
     public List<Binding> snapshot() { return Collections.unmodifiableList(new ArrayList<Binding>(bindings)); }
     /** Historical accepted occurrences visible through this Mind ancestry, keyed by native ID. */
@@ -172,10 +202,15 @@ public final class DmzReplayProvenance implements AutoCloseable {
         }
         List<Binding> result = new ArrayList<Binding>();
         for (Binding binding : bindings)
-            if (binding.nativeRule == nativeRule && visible.contains(binding.target)
+            if (binding.nativeRule == nativeRule && visibleBinding(binding, visible)
                     && outcome(binding.target) == Outcome.ACCEPTED) result.add(binding);
         return Collections.unmodifiableList(result);
     }
+    private boolean visibleBinding(Binding binding, java.util.Set<Integer> visible) {
+        Integer accepted = acceptedTargets.get(binding);
+        return visible.contains(binding.target) || accepted != null && visible.contains(accepted);
+    }
+
     static final class SourceObservation {
         final Binding binding;
         final Outcome outcome;
@@ -196,7 +231,7 @@ public final class DmzReplayProvenance implements AutoCloseable {
         }
         List<SourceObservation> result = new ArrayList<SourceObservation>();
         for (Binding binding : capture.bindings)
-            if ((nativeRule == null || binding.nativeRule == nativeRule.longValue()) && visible.contains(binding.target))
+            if ((nativeRule == null || binding.nativeRule == nativeRule.longValue()) && capture.visibleBinding(binding, visible))
                 result.add(new SourceObservation(binding, capture.outcome(binding.target)));
         return Collections.unmodifiableList(result);
     }
@@ -238,7 +273,7 @@ public final class DmzReplayProvenance implements AutoCloseable {
         if (closed) return;
         if (Thread.currentThread() != owner || ACTIVE.get() != this)
             throw new IllegalStateException("Replay capture must close on owner thread in stack order");
-        closed = true; input = null; boundary = null; targets.clear(); frames.clear();
+        closed = true; input = null; boundary = null; targets.clear(); frames.clear(); acceptedTargets.clear();
         if (previous == null) ACTIVE.remove(); else ACTIVE.set(previous);
     }
     private static final class Input {
@@ -246,8 +281,14 @@ public final class DmzReplayProvenance implements AutoCloseable {
         final long rule;
         final Authority authority;
         final Mind target;
+        final boolean acceptance;
+        final List<Binding> bound = new ArrayList<Binding>();
         Input(IContextResults.Revision source, long rule, Authority authority, Mind target) {
+            this(source, rule, authority, target, false);
+        }
+        Input(IContextResults.Revision source, long rule, Authority authority, Mind target, boolean acceptance) {
             this.source = source; this.rule = rule; this.authority = authority; this.target = target;
+            this.acceptance = acceptance;
         }
     }
 }
