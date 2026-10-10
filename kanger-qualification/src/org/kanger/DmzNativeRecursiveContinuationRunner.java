@@ -341,6 +341,49 @@ public final class DmzNativeRecursiveContinuationRunner {
                 count(overlay, root, original - 1 + 3 * (duplicate ? 2 : 1), true);
                 require(Boolean.TRUE.equals(overlay.queryContinuation("?negativeTail(9);")),
                         "projection does not remove live native downstream facts");
+                for (DmzStoredRetractionTransaction.SymmetricProjection projected : new DmzStoredRetractionTransaction.SymmetricProjection[] {
+                        primaryProjection, derivedProjection, alternativeProjection}) {
+                    DmzStoredRetractionTransaction.NativeSupportChoice kept = overlay.beginSupportChoice(projected,
+                            DmzStoredRetractionTransaction.SupportChoice.KEEP_EXISTING, 10000);
+                    try {
+                        require(kept.hiddenRules == 0, "existing choice hides no native input or cache");
+                        for (DmzStoredRetractionTransaction.ProjectedGround ground : projected.grounds)
+                            require(kept.hasLiveGround(ground.ground) == overlay.hasLiveGround(ground.ground),
+                                    "existing choice preserves every live native ground");
+                    } finally { kept.close(); }
+                    DmzStoredRetractionTransaction.NativeSupportChoice cut = overlay.beginSupportChoice(projected,
+                            DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, 10000);
+                    try {
+                        require(cut.hiddenRules > 0, "candidate choice applies native last-support visibility loss");
+                        for (DmzStoredRetractionTransaction.ProjectedGround ground : projected.grounds)
+                            require(cut.hasLiveGround(ground.ground) == (overlay.hasLiveGround(ground.ground) && !ground.losesLastSupport()),
+                                    "native child visibility matches exact projected loss while preserving independent grounds");
+                        require(projected.isCurrent(), "child masks leave parent evidence current");
+                    } finally { cut.close(); }
+                    cut.close();
+                    boolean cutClosed = false;
+                    try { cut.hasLiveGround(projected.evidence.candidate); }
+                    catch (IllegalStateException expected) { cutClosed = true; }
+                    require(cutClosed, "settled support choice refuses inspection reuse");
+                    require(projected.isCurrent(), "choice rollback preserves parent projection");
+                }
+                boolean partialChoiceFailure = false;
+                for (int partialBudget : new int[] {16, 32, 64, 128}) {
+                    try (DmzStoredRetractionTransaction.NativeSupportChoice partial = overlay.beginSupportChoice(primaryProjection,
+                            DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, partialBudget)) { }
+                    catch (DmzStoredRetractionTransaction.SupportChoiceBudgetFailure expected) {
+                        if (expected.hiddenRules > 0) { partialChoiceFailure = true; break; }
+                    }
+                }
+                require(partialChoiceFailure && primaryProjection.isCurrent()
+                        && Boolean.TRUE.equals(overlay.queryContinuation("?negativeTail(9);")),
+                        "budget failure after real child masking restores complete parent state");
+                boolean choiceBounded = false;
+                try { overlay.beginSupportChoice(primaryProjection, DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, 1); }
+                catch (IllegalStateException expected) { choiceBounded = expected.getMessage().contains("application budget exceeded"); }
+                require(choiceBounded && primaryProjection.isCurrent(), "application budget failure rolls back child without closing outer branch");
+                require(Boolean.TRUE.equals(overlay.queryContinuation("?negativeTail(9);")),
+                        "all support choice rollbacks restore parent query result");
                 boolean projectionBounded = false;
                 try { overlay.projectSymmetric(primaryConflict, 1); }
                 catch (IllegalStateException expected) { projectionBounded = expected.getMessage().contains("inventory unavailable"); }
@@ -453,6 +496,10 @@ public final class DmzNativeRecursiveContinuationRunner {
                 try { overlay.projectSymmetric(primaryConflict, 10000); }
                 catch (IllegalStateException expected) { staleProjection = expected.getMessage().contains("Current conflict evidence required"); }
                 require(staleProjection, "stale evidence cannot generate a new symmetric projection");
+                boolean staleChoice = false;
+                try { overlay.beginSupportChoice(primaryProjection, DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, 10000); }
+                catch (IllegalStateException expected) { staleChoice = expected.getMessage().contains("Current symmetric projection required"); }
+                require(staleChoice, "stale projection cannot open native support choice");
                 require(!primaryConflict.isCurrent() && !derivedConflict.isCurrent() && !alternativeConflict.isCurrent(),
                         "new native branch primary invalidates all prior conflict receipts");
                 require(derivedConflict.supports.size() == 1 && derivedSupport.pending.get(0).sourceRule == 100,
@@ -613,34 +660,52 @@ public final class DmzNativeRecursiveContinuationRunner {
                     try { sibling.projectSymmetric(evidence, 10000); }
                     catch (IllegalArgumentException expected) { wrongOwner = true; }
                     require(wrongOwner, "sibling transaction cannot project another branch's receipt");
+                    boolean wrongChoiceOwner = false;
+                    try { sibling.beginSupportChoice(projection, DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, 10000); }
+                    catch (IllegalArgumentException expected) { wrongChoiceOwner = true; }
+                    require(wrongChoiceOwner, "sibling cannot apply another branch's native support choice");
                 }
                 require(projection.isCurrent(), "closing sibling transaction preserves original projection");
-                String before = DmzObservationStateFingerprint.capture(q);
-                if (sourceOnly) DmzReplayProvenance.replayRule(q, source, 3, DmzReplayProvenance.Authority.EXTERNAL,
-                        "!@x source(x) -> derived(x);");
-                else accept(q, source, 4, "!source(2);");
-                if (sourceOnly) require(before.equals(DmzObservationStateFingerprint.capture(q)),
-                        "source-only authority mutation leaves native fingerprint unchanged");
-                String changed = DmzObservationStateFingerprint.capture(q);
-                boolean stale = false;
-                try { overlay.classifyAuthorityInput("!~derived(1);", 10000); }
-                catch (IllegalStateException expected) { stale = expected.getMessage().contains("Pinned Q authority boundary changed"); }
-                require(stale, "changed authority rejected, sourceOnly=" + sourceOnly);
-                require(!evidence.isCurrent(), "native or source-only Q change invalidates conflict evidence");
-                require(!projection.isCurrent(), "Q native or source-only mutation invalidates projection");
-                boolean staleProjection = false;
-                try { overlay.projectSymmetric(evidence, 10000); }
-                catch (IllegalStateException expected) { staleProjection = expected.getMessage().contains("Current conflict evidence required"); }
-                require(staleProjection, "changed Q prevents fresh projection from old receipt");
-                boolean assessmentStale = false;
-                try { overlay.assessCandidate("!~derived(1);", 10000); }
-                catch (IllegalStateException expected) { assessmentStale = expected.getMessage().contains("Pinned Q authority boundary changed"); }
-                require(assessmentStale, "combined assessment rejects stale Q authority");
-                boolean evaluationStale = false;
-                try { overlay.evaluateCandidate(source, 8, "!~derived(1);", "?derived(1);", 10000, 10000); }
-                catch (IllegalStateException expected) { evaluationStale = expected.getMessage().contains("Pinned Q authority boundary changed"); }
-                require(evaluationStale, "candidate evaluation refuses stale Q authority without classifying rejection");
-                require(changed.equals(DmzObservationStateFingerprint.capture(q)), "classification refusal preserves changed Q");
+                try (DmzStoredRetractionTransaction.NativeSupportChoice held = overlay.beginSupportChoice(projection,
+                        DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, 10000)) {
+                    String before = DmzObservationStateFingerprint.capture(q);
+                    if (sourceOnly) DmzReplayProvenance.replayRule(q, source, 3, DmzReplayProvenance.Authority.EXTERNAL,
+                            "!@x source(x) -> derived(x);");
+                    else accept(q, source, 4, "!source(2);");
+                    if (sourceOnly) require(before.equals(DmzObservationStateFingerprint.capture(q)),
+                            "source-only authority mutation leaves native fingerprint unchanged");
+                    String changed = DmzObservationStateFingerprint.capture(q);
+                    boolean stale = false;
+                    try { overlay.classifyAuthorityInput("!~derived(1);", 10000); }
+                    catch (IllegalStateException expected) { stale = expected.getMessage().contains("Pinned Q authority boundary changed"); }
+                    require(stale, "changed authority rejected, sourceOnly=" + sourceOnly);
+                    require(!evidence.isCurrent(), "native or source-only Q change invalidates conflict evidence");
+                    require(!projection.isCurrent(), "Q native or source-only mutation invalidates projection");
+                    boolean heldStale = false;
+                    try { held.hasLiveGround(evidence.candidate); }
+                    catch (IllegalStateException expected) { heldStale = expected.getMessage().contains("boundary changed"); }
+                    require(heldStale, "open native choice refuses inspection after Q mutation");
+                    held.close();
+                    require(changed.equals(DmzObservationStateFingerprint.capture(q)),
+                            "closing stale choice preserves externally changed Q");
+                    boolean staleNativeChoice = false;
+                    try { overlay.beginSupportChoice(projection, DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, 10000); }
+                    catch (IllegalStateException expected) { staleNativeChoice = expected.getMessage().contains("Current symmetric projection required"); }
+                    require(staleNativeChoice, "changed Q prevents new native support choice");
+                    boolean staleProjection = false;
+                    try { overlay.projectSymmetric(evidence, 10000); }
+                    catch (IllegalStateException expected) { staleProjection = expected.getMessage().contains("Current conflict evidence required"); }
+                    require(staleProjection, "changed Q prevents fresh projection from old receipt");
+                    boolean assessmentStale = false;
+                    try { overlay.assessCandidate("!~derived(1);", 10000); }
+                    catch (IllegalStateException expected) { assessmentStale = expected.getMessage().contains("Pinned Q authority boundary changed"); }
+                    require(assessmentStale, "combined assessment rejects stale Q authority");
+                    boolean evaluationStale = false;
+                    try { overlay.evaluateCandidate(source, 8, "!~derived(1);", "?derived(1);", 10000, 10000); }
+                    catch (IllegalStateException expected) { evaluationStale = expected.getMessage().contains("Pinned Q authority boundary changed"); }
+                    require(evaluationStale, "candidate evaluation refuses stale Q authority without classifying rejection");
+                    require(changed.equals(DmzObservationStateFingerprint.capture(q)), "classification refusal preserves changed Q");
+                }
             }
         }
     }

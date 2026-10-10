@@ -264,6 +264,93 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         if (!inventory.isCurrent(child) || !evidence.isCurrent()) throw new IllegalStateException("Symmetric projection boundary changed");
         return new SymmetricProjection(evidence, grounds);
     }
+    enum SupportChoice { KEEP_EXISTING, KEEP_CANDIDATE }
+    static final class SupportChoiceBudgetFailure extends IllegalStateException {
+        final int hiddenRules;
+        private SupportChoiceBudgetFailure(String phase, int hiddenRules) {
+            super("Native support choice " + phase + " budget exceeded"); this.hiddenRules = hiddenRules;
+        }
+    }
+    /** Inspection-only child: no inference, candidate admission, commit or raw Mind access. */
+    static final class NativeSupportChoice implements AutoCloseable {
+        final SupportChoice choice;
+        final SymmetricProjection projection;
+        final int hiddenRules;
+        private final DmzStoredRetractionTransaction owner;
+        private final TechnicalMindTransaction transaction;
+        private final int budget;
+        private boolean closed;
+        private NativeSupportChoice(DmzStoredRetractionTransaction owner, SymmetricProjection projection,
+                SupportChoice choice, TechnicalMindTransaction transaction, int budget, int hiddenRules) {
+            this.owner = owner; this.projection = projection; this.choice = choice;
+            this.transaction = transaction; this.budget = budget; this.hiddenRules = hiddenRules;
+        }
+        boolean hasLiveGround(TerminalSupportCapture.Ground expected) throws Exception {
+            if (closed) throw new IllegalStateException("Native support choice closed");
+            if (!projection.isCurrent()) throw new IllegalStateException("Native support choice boundary changed");
+            int remaining = budget;
+            Mind child = transaction.mind();
+            for (IRule item : child.getRules()) {
+                if (remaining-- == 0) throw new IllegalStateException("Native support choice inspection budget exceeded");
+                if (item.isDeleted(child) || item.isQuery()) continue;
+                Rule rule = (Rule) item;
+                if (rule.getTree().size() != 1 || rule.getTree().get(0).size() != 1) continue;
+                Domain literal = rule.getTree().get(0).get(0);
+                TerminalSupportCapture.Ground ground = TerminalSupportCapture.Ground.capture(new Solve(literal.getPredicate(),
+                        literal.isAntc(), literal.getArguments().convertBase(child)), child);
+                if (expected.equivalent(ground)) return true;
+            }
+            return false;
+        }
+        public void close() throws Exception {
+            if (closed) return;
+            Mind parent = owner.transaction.mind();
+            String state = DmzObservationStateFingerprint.capture(parent);
+            List<String> hypotheses = hypothesisText(parent);
+            closed = true;
+            transaction.close();
+            if (!state.equals(DmzObservationStateFingerprint.capture(parent)) || !hypotheses.equals(hypothesisText(parent)))
+                throw new IllegalStateException("Support choice rollback changed parent boundary");
+        }
+    }
+    /** Apply only projected last-support visibility losses; exact cut enforcement is not yet an inference API. */
+    NativeSupportChoice beginSupportChoice(SymmetricProjection projection, SupportChoice choice, int budget) throws Exception {
+        if (closed) throw new IllegalStateException("Retraction overlay closed");
+        if (projection == null || projection.evidence.owner != this || choice == null)
+            throw new IllegalArgumentException("Owned symmetric projection and explicit choice required");
+        if (budget < 1 || budget > 10000) throw new IllegalArgumentException("Support choice budget must be between 1 and 10000");
+        if (!projection.isCurrent()) throw new IllegalStateException("Current symmetric projection required");
+        Mind parent = transaction.mind();
+        TechnicalMindTransaction child = TechnicalMindTransaction.beginIsolated(parent);
+        try {
+            int remaining = budget, hidden = 0;
+            if (choice == SupportChoice.KEEP_CANDIDATE) for (ProjectedGround projected : projection.grounds) {
+                if (!projected.losesLastSupport()) continue;
+                for (IRule item : child.mind().getRules()) {
+                    if (remaining-- == 0) throw new SupportChoiceBudgetFailure("application", hidden);
+                    if (item.isDeleted(child.mind()) || item.isQuery()) continue;
+                    Rule rule = (Rule) item;
+                    if (rule.getTree().size() != 1 || rule.getTree().get(0).size() != 1) continue;
+                    Domain literal = rule.getTree().get(0).get(0);
+                    TerminalSupportCapture.Ground ground = TerminalSupportCapture.Ground.capture(new Solve(literal.getPredicate(),
+                            literal.isAntc(), literal.getArguments().convertBase(child.mind())), child.mind());
+                    if (!projected.ground.equivalent(ground)) continue;
+                    boolean pending = false;
+                    for (DmzReplayProvenance.SourceObservation source : DmzReplayProvenance.observedSources(parent, item.getId())) {
+                        if (remaining-- == 0) throw new SupportChoiceBudgetFailure("source", hidden);
+                        if (source.outcome == DmzReplayProvenance.Outcome.ACCEPTED)
+                            throw new IllegalStateException("Accepted primary occurrence cannot be hidden");
+                        if (source.outcome == DmzReplayProvenance.Outcome.PENDING) pending = true;
+                    }
+                    if (!parent.getRules().isGenerated(item) && !pending)
+                        throw new IllegalStateException("Exact pending primary or generated cache required");
+                    rule.setDeleted(true, child.mind()); ++hidden;
+                }
+            }
+            if (!projection.isCurrent()) throw new IllegalStateException("Support choice application boundary changed");
+            return new NativeSupportChoice(this, projection, choice, child, budget, hidden);
+        } catch (Exception failure) { child.close(); throw failure; }
+    }
     private static void projectionWork(int[] work) {
         if (work[0]-- == 0) throw new IllegalStateException("Symmetric projection traversal budget exceeded");
     }
