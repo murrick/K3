@@ -272,6 +272,41 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         }
     }
     /** Inspection-only child: no inference, candidate admission, commit or raw Mind access. */
+    enum ConsequenceConflictKind { AUTHORITY, INTERNAL }
+    /** Detached witness alternatives, not a permission to apply cuts after the probe rolls back. */
+    static final class ConsequenceConflict {
+        final TerminalSupportCapture.Ground ground;
+        final List<ConflictSupport> supporting, opposing;
+        private ConsequenceConflict(TerminalSupportCapture.Ground ground,
+                List<ConflictSupport> supporting, List<ConflictSupport> opposing) {
+            this.ground = ground;
+            this.supporting = java.util.Collections.unmodifiableList(new ArrayList<ConflictSupport>(supporting));
+            this.opposing = java.util.Collections.unmodifiableList(new ArrayList<ConflictSupport>(opposing));
+        }
+    }
+    static final class ConsequenceAuditFailure extends IllegalStateException {
+        private static final long serialVersionUID = 1L;
+        final ConsequenceConflictKind kind;
+        final List<ConsequenceConflict> conflicts;
+        private ConsequenceAuditFailure(ConsequenceConflictKind kind, List<ConsequenceConflict> conflicts) {
+            super(kind == ConsequenceConflictKind.AUTHORITY ? "Candidate consequences conflict with pinned Q"
+                    : "Candidate consequences require further branching");
+            this.kind = kind;
+            this.conflicts = java.util.Collections.unmodifiableList(new ArrayList<ConsequenceConflict>(conflicts));
+        }
+    }
+    private static List<ConflictSupport> snapshotConflictSupports(Mind target,
+            List<DmzProofWitnesses.Witness> witnesses, int[] sourceBudget) throws Exception {
+        List<ConflictSupport> result = new ArrayList<ConflictSupport>();
+        for (DmzProofWitnesses.Witness witness : witnesses) {
+            List<DmzReplayProvenance.Binding> accepted = new ArrayList<DmzReplayProvenance.Binding>();
+            List<DmzReplayProvenance.Binding> pending = new ArrayList<DmzReplayProvenance.Binding>();
+            collectConflictSources(target, witness, accepted, pending,
+                    java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<DmzReplayProvenance.Binding, Boolean>()), sourceBudget);
+            result.add(new ConflictSupport(witness, accepted, pending));
+        }
+        return result;
+    }
     static final class NativeSupportChoice implements AutoCloseable {
         final SupportChoice choice;
         final SymmetricProjection projection;
@@ -399,7 +434,8 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 throw new IllegalStateException("Candidate consequence inventory unavailable");
             List<DmzProofWitnesses.NoGood> exclusions = DmzTerminalRestriction.activeNoGoods(probe);
             int[] work = {consequenceBudget};
-            String branchConflict = null;
+            int[] sourceBudget = {consequenceBudget};
+            List<ConsequenceConflict> internal = new ArrayList<ConsequenceConflict>();
             for (DmzObservedProofGraph.Node node : current.graph.observed.nodes) {
                 projectionWork(work);
                 DmzCurrentUnaryProofInventory.Proofs supported = current.proofs(node.ground, exclusions, consequenceBudget);
@@ -412,15 +448,25 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 DmzCurrentUnaryProofInventory.Proofs q = authority.proofs(opposite,
                         java.util.Collections.<DmzProofWitnesses.NoGood>emptyList(), consequenceBudget);
                 if (local.truncated || q.truncated) throw new IllegalStateException("Candidate consequence proof budget exceeded");
-                if (!q.witnesses.isEmpty()) throw new IllegalStateException("Candidate consequences conflict with pinned Q");
-                if (!local.witnesses.isEmpty() && branchConflict == null)
-                    branchConflict = node.ground.predicate + "/" + node.ground.sign;
+                if (!q.witnesses.isEmpty()) {
+                    ConsequenceConflict conflict = new ConsequenceConflict(node.ground,
+                            snapshotConflictSupports(probe, supported.witnesses, sourceBudget),
+                            snapshotConflictSupports(owner.authorityTarget, q.witnesses, sourceBudget));
+                    if (!current.isCurrent(probe) || !authority.isCurrent(owner.authorityTarget) || !projection.isCurrent())
+                        throw new IllegalStateException("Candidate consequence boundary changed");
+                    owner.requireAuthorityCurrent();
+                    throw new ConsequenceAuditFailure(ConsequenceConflictKind.AUTHORITY,
+                            java.util.Collections.singletonList(conflict));
+                }
+                if (!local.witnesses.isEmpty() && node.ground.sign)
+                    internal.add(new ConsequenceConflict(node.ground,
+                            snapshotConflictSupports(probe, supported.witnesses, sourceBudget),
+                            snapshotConflictSupports(probe, local.witnesses, sourceBudget)));
             }
             if (!current.isCurrent(probe) || !authority.isCurrent(owner.authorityTarget) || !projection.isCurrent())
                 throw new IllegalStateException("Candidate consequence boundary changed");
             owner.requireAuthorityCurrent();
-            if (branchConflict != null)
-                throw new IllegalStateException("Candidate consequences require further branching: " + branchConflict);
+            if (!internal.isEmpty()) throw new ConsequenceAuditFailure(ConsequenceConflictKind.INTERNAL, internal);
         }
         /** Exact receipt candidate only; native input, consequences and query always roll back. */
         QueryResult probeCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,

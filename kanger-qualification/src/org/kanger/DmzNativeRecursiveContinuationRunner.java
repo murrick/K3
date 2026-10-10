@@ -441,13 +441,35 @@ public final class DmzNativeRecursiveContinuationRunner {
                                     && admitted.candidateMode == DmzStoredRetractionTransaction.QueryResult.CandidateMode.NEW_INPUT,
                                     "primary receipt candidate passes full consequence audit before conditional query");
                         } else {
-                            boolean furtherBranching = false;
+                            DmzStoredRetractionTransaction.ConsequenceAuditFailure receipt = null;
                             try { cut.probeCandidate(fact, 150, receiptCandidate, receiptQuery, 10000); }
-                            catch (IllegalStateException expected) {
-                                furtherBranching = expected.getMessage().contains("consequences require further branching");
-                                if (!furtherBranching) throw expected;
+                            catch (DmzStoredRetractionTransaction.ConsequenceAuditFailure expected) { receipt = expected; }
+                            require(receipt != null && receipt.kind == DmzStoredRetractionTransaction.ConsequenceConflictKind.INTERNAL,
+                                    "contrapositive consequences return exact detached further-branching evidence");
+                            boolean candidateSource = false;
+                            for (DmzStoredRetractionTransaction.ConsequenceConflict conflict : receipt.conflicts) {
+                                require(conflict.ground.sign && !conflict.supporting.isEmpty() && !conflict.opposing.isEmpty(),
+                                        "new internal conflict preserves all alternatives once per signed ground pair");
+                                TerminalSupportCapture.Ground opposite = new TerminalSupportCapture.Ground(conflict.ground.predicate,
+                                        !conflict.ground.sign, conflict.ground.arguments);
+                                for (DmzStoredRetractionTransaction.ConflictSupport support : conflict.supporting)
+                                    require(conflict.ground.equivalent(support.witness.graph.observed.nodes.get(support.witness.node).ground),
+                                            "supporting witness retains typed ground and exact premise tree after rollback");
+                                for (DmzStoredRetractionTransaction.ConflictSupport support : conflict.opposing)
+                                    require(opposite.equivalent(support.witness.graph.observed.nodes.get(support.witness.node).ground),
+                                            "opposing witness retains opposite sign with the same typed arguments");
+                                for (DmzStoredRetractionTransaction.ConflictSupport support : conflict.supporting)
+                                    for (DmzReplayProvenance.Binding binding : support.pending)
+                                        if (binding.sourceRule == 150 && binding.context.equals(fact.getContextId())) candidateSource = true;
+                                for (DmzStoredRetractionTransaction.ConflictSupport support : conflict.opposing)
+                                    for (DmzReplayProvenance.Binding binding : support.pending)
+                                        if (binding.sourceRule == 150 && binding.context.equals(fact.getContextId())) candidateSource = true;
                             }
-                            require(furtherBranching, "contrapositive consequence conflicts require further exact branching before an opinion");
+                            require(candidateSource && projected.isCurrent(), "rolled-back candidate identity remains in detached conflicting chain evidence");
+                            boolean immutableReceipt = false;
+                            try { receipt.conflicts.clear(); }
+                            catch (UnsupportedOperationException expected) { immutableReceipt = true; }
+                            require(immutableReceipt, "detached conflict evidence cannot be mutated");
                         }
                         require(!Boolean.TRUE.equals(cut.query(receiptQuery, 10000).value) && projected.isCurrent(),
                                 "candidate and consequences roll back without importing support into the choice");
@@ -772,8 +794,16 @@ public final class DmzNativeRecursiveContinuationRunner {
                     boolean rejected = false;
                     try { audit.invoke(cut, nativeClosure.mind(), 10000); }
                     catch (java.lang.reflect.InvocationTargetException expected) {
-                        if (!(expected.getCause() instanceof IllegalStateException)
-                                || !expected.getCause().getMessage().contains("consequences conflict with pinned Q")) throw expected;
+                        if (!(expected.getCause() instanceof DmzStoredRetractionTransaction.ConsequenceAuditFailure)) throw expected;
+                        DmzStoredRetractionTransaction.ConsequenceAuditFailure receipt =
+                                (DmzStoredRetractionTransaction.ConsequenceAuditFailure) expected.getCause();
+                        require(receipt.kind == DmzStoredRetractionTransaction.ConsequenceConflictKind.AUTHORITY
+                                && receipt.conflicts.size() == 1, "Q refusal retains typed authority evidence");
+                        for (DmzStoredRetractionTransaction.ConflictSupport support : receipt.conflicts.get(0).opposing)
+                            require(!support.accepted.isEmpty() && support.pending.isEmpty(),
+                                    "Q evidence retains settled sources without importing branch exclusions");
+                        for (DmzStoredRetractionTransaction.ConflictSupport support : receipt.conflicts.get(0).supporting)
+                            require(!support.pending.isEmpty(), "native trial consequence retains pending sources in detached evidence");
                         rejected = true;
                     }
                     require(rejected && projection.isCurrent(), "post-input auditor refuses native derived consequence opposing settled Q");
