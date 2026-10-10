@@ -15,11 +15,11 @@ public final class DmzNativeRecursiveContinuationRunner {
             for (boolean duplicate : new boolean[] {false, true})
                 for (boolean primaryDuplicate : new boolean[] {false, true})
                     for (boolean negative : new boolean[] {false, true})
-                        for (boolean queryFailure : new boolean[] {false, true})
-                            run(alternative, duplicate, primaryDuplicate, negative, queryFailure);
+                        for (int failureMode : new int[] {0, 1, 2, 3, 4})
+                            run(alternative, duplicate, primaryDuplicate, negative, failureMode);
         System.out.println("DMZ_NATIVE_RECURSIVE_CONTINUATION_PASS checks=" + checks);
     }
-    private static void run(boolean alternative, boolean duplicate, boolean primaryDuplicate, boolean negative, boolean queryFailure) throws Exception {
+    private static void run(boolean alternative, boolean duplicate, boolean primaryDuplicate, boolean negative, int failureMode) throws Exception {
         User user = new User(); new UDF().init(user); Mind q = new Mind(user); user.setCurrentMind(q);
         IContextResults.Revision rules = new IContextResults.Revision(UUID.randomUUID(), 1);
         IContextResults.Revision fact = new IContextResults.Revision(UUID.randomUUID(), 1);
@@ -95,6 +95,15 @@ public final class DmzNativeRecursiveContinuationRunner {
                         signed(negative, "?derived(99);"), 10000).value == null, "unrelated candidate cannot answer the query");
                 require(java.util.Objects.equals(overlay.queryContinuation(signed(negative, "?derived(1);")),
                         original > 1 ? Boolean.TRUE : null), "candidate probes preserve the exact old restriction");
+                require(Boolean.TRUE.equals(overlay.probeCandidate(fact, 64, "!middle(1);",
+                        signed(negative, "?derived(1);"), 10000).value),
+                        "explicit primary occurrence of cached generated support authorizes the same ground");
+                require(java.util.Objects.equals(overlay.queryContinuation(signed(negative, "?derived(1);")),
+                        original > 1 ? Boolean.TRUE : null), "same-ground candidate aliases disappear after probe rollback");
+                boolean candidateRefused = false;
+                try { overlay.probeCandidate(fact, 65, "!~middle(1);", signed(negative, "?derived(1);"), 10000); }
+                catch (IllegalArgumentException expected) { candidateRefused = true; }
+                require(candidateRefused, "negative candidate rejected before probe opens");
                 if (negative) require(Boolean.FALSE.equals(overlay.probeCandidate(fact, 62, "!tail(99);",
                         signed(negative, "?derived(99);"), 10000).value),
                         "opposite downstream candidate refutes the signed query rather than supporting it");
@@ -151,15 +160,24 @@ public final class DmzNativeRecursiveContinuationRunner {
                 require(state.equals(DmzObservationStateFingerprint.capture(q)), "continuation remains isolated from Q");
                 boolean auditRejected = false;
                 try {
-                    if (queryFailure) overlay.queryContinuation(signed(negative, "?derived(1);"), 1);
+                    if (failureMode == 1) overlay.queryContinuation(signed(negative, "?derived(1);"), 1);
+                    else if (failureMode == 2) overlay.probeCandidate(fact, 70, "!source(66);",
+                            signed(negative, "?derived(66);"), 1);
+                    else if (failureMode == 4) overlay.probeCandidate(fact, 73, "!source(1);",
+                            signed(negative, "?derived(1);"), 10000);
+                    else if (failureMode == 3) overlay.probeCandidate(
+                            new IContextResults.Revision(fact.getContextId(), 2), 71, "!source(66);",
+                            signed(negative, "?derived(66);"), 10000);
                     else overlay.accept(new IContextResults.Revision(fact.getContextId(), 2), 31,
                             DmzReplayProvenance.Authority.EXTERNAL, "!independent(3);");
                 } catch (IllegalStateException expected) {
                     auditRejected = true;
-                    if (queryFailure) require(expected.getMessage().contains("inventory unavailable"),
+                    if (failureMode == 4) require(expected.getMessage().contains("Candidate was not accepted"),
+                            "duplicate primary candidate fails at native acceptance");
+                    if (failureMode == 1 || failureMode == 2) require(expected.getMessage().contains("inventory unavailable"),
                             "query fails at the bounded inventory audit");
                 }
-                require(auditRejected, queryFailure ? "query audit budget exhaustion closes continuation" : "inconsistent source revision closes continuation");
+                require(auditRejected, "audit failure closes continuation, mode=" + failureMode);
                 boolean failureClosed = false;
                 try { overlay.proofs(root, 10000); }
                 catch (IllegalStateException expected) { failureClosed = true; }
@@ -181,6 +199,10 @@ public final class DmzNativeRecursiveContinuationRunner {
             try { overlay.queryContinuation(signed(negative, "?derived(1);")); }
             catch (IllegalStateException expected) { closedQuery = true; }
             require(closedQuery, "closed branch query API rejects reuse");
+            boolean closedProbe = false;
+            try { overlay.probeCandidate(fact, 72, "!source(5);", signed(negative, "?derived(5);"), 10000); }
+            catch (IllegalStateException expected) { closedProbe = true; }
+            require(closedProbe, "closed branch candidate probe rejects reuse");
             require(Boolean.TRUE.equals(q.query(signed(negative, "?derived(1);"), null, false)), "parent query unaffected after scope closes");
         }
     }
