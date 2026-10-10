@@ -7,7 +7,7 @@ import org.kanger.interfaces.IRule;
 import org.kanger.primitives.Solve;
 import org.kanger.units.Domain;
 
-/** Opt-in transaction-local unit restriction; recursive mode qualifies forward continuation only.
+/** Opt-in transaction-local unit restriction with explicitly audited positive queries.
  */
 final class DmzTerminalRestriction implements AutoCloseable {
     private static final ThreadLocal<DmzTerminalRestriction> ACTIVE = new ThreadLocal<DmzTerminalRestriction>();
@@ -21,6 +21,30 @@ final class DmzTerminalRestriction implements AutoCloseable {
     private boolean closed;
     private int denied;
     private int queryDenied;
+    private Boolean queryDecision;
+    static final class QueryScope implements AutoCloseable {
+        private final List<DmzTerminalRestriction> restrictions = new ArrayList<DmzTerminalRestriction>();
+        private final List<Boolean> previousDecisions = new ArrayList<Boolean>();
+        private boolean closed;
+        private QueryScope(Mind mind) throws Exception {
+            try {
+                for (DmzTerminalRestriction r = ACTIVE.get(); r != null; r = r.previous)
+                    if (r.recursive && r.local(mind)) {
+                        if (r.queryDecision != null) throw new IllegalStateException("Recursive query audit already active");
+                        boolean decision = r.noCurrentAlternative(mind);
+                        restrictions.add(r); previousDecisions.add(r.queryDecision);
+                        r.queryDecision = decision;
+                    }
+            } catch (Exception failure) { close(); throw failure; }
+        }
+        public void close() {
+            if (closed) return;
+            for (int i = restrictions.size() - 1; i >= 0; --i)
+                restrictions.get(i).queryDecision = previousDecisions.get(i);
+            closed = true;
+        }
+    }
+    static QueryScope prepareQuery(Mind mind) throws Exception { return new QueryScope(mind); }
     private DmzTerminalRestriction(Mind boundary, DmzProofWitnesses.Witness blocked) {
         this(boundary, blocked, false);
     }
@@ -122,6 +146,7 @@ final class DmzTerminalRestriction implements AutoCloseable {
         return new DmzTerminalRestriction(boundary, blocked, true);
     }
     private boolean noCurrentAlternative(Mind mind) throws Exception {
+        if (queryDecision != null) return queryDecision;
         ++inventoryChecks;
         DmzCurrentUnaryProofInventory inventory = DmzCurrentUnaryProofInventory.capture(mind, 10000, true);
         if (!inventory.eligible) throw new IllegalStateException("Current continuation inventory unavailable: " + inventory.gaps);
@@ -172,7 +197,7 @@ final class DmzTerminalRestriction implements AutoCloseable {
         if (mind.getQueryPass() != org.kanger.enums.QueryPass.CHECKFALSE
                 && mind.getQueryPass() != org.kanger.enums.QueryPass.CHECKTRUE) return false;
         for (DmzTerminalRestriction restriction = active; restriction != null; restriction = restriction.previous)
-            if (!restriction.recursive && (restriction.queryPair(mind, left, right) || restriction.queryPair(mind, right, left))) {
+            if (restriction.queryPair(mind, left, right) || restriction.queryPair(mind, right, left)) {
                 ++restriction.queryDenied; return true;
             }
         return false;
@@ -186,6 +211,10 @@ final class DmzTerminalRestriction implements AutoCloseable {
         TerminalSupportCapture.Ground candidate = TerminalSupportCapture.Ground.capture(new Solve(opposite.getPredicate(),
                 !opposite.isAntc(), opposite.getArguments().convertBase(mind)), mind);
         if (!expected.equivalent(candidate)) return false;
+        if (recursive) {
+            if (queryDecision == null) throw new IllegalStateException("Recursive query requires a pre-query proof audit");
+            return queryDecision;
+        }
         requireAccepted(mind, blocked.source); requireAccepted(mind, blocked.premises.get(0).source);
         // The originally selected primary support must still exist; a query assumption is not a substitute.
         for (IRule rule : mind.getRules()) if (rule.getId() == blocked.premises.get(0).source.nativeRule

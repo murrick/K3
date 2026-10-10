@@ -8,8 +8,8 @@ import org.kanger.primitives.Solve;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 
-/** Rollback-only native overlay with a narrowly qualified direct unit-application veto.
- * Only unary integer-fact acceptance/queries are qualified; commit remains unavailable.
+/** Rollback-only native overlay with narrowly qualified unit-application restrictions.
+ * Recursive continuation and its separate query entry point qualify positive unary integer facts.
  */
 final class DmzStoredRetractionTransaction implements AutoCloseable {
     private final TechnicalMindTransaction transaction;
@@ -135,6 +135,23 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         return transaction.mind().query(statement, null, false);
     }
     int queryDeniedCount() { return restriction.queryDeniedCount(); }
+    Boolean queryContinuation(String statement) throws Exception {
+        if (closed) throw new IllegalStateException("Retraction overlay closed");
+        if (!continuationOnly || statement == null || !statement.matches("\\?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
+            throw new IllegalArgumentException("Only positive unary integer continuation queries are qualified");
+        Mind child = transaction.mind();
+        String state = DmzObservationStateFingerprint.capture(child);
+        try {
+            Boolean result;
+            try (DmzTerminalRestriction.QueryScope audit = DmzTerminalRestriction.prepareQuery(child);
+                TechnicalMindTransaction query = TechnicalMindTransaction.beginIsolated(child)) {
+                result = query.mind().query(statement, null, false);
+            }
+            if (!state.equals(DmzObservationStateFingerprint.capture(child)))
+                throw new IllegalStateException("Continuation query changed its branch boundary");
+            return result;
+        } catch (Exception failure) { close(); throw failure; }
+    }
     @Override public void close() throws Exception {
         if (!closed) { restriction.close(); closed = true; transaction.close(); }
     }

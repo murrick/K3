@@ -6,7 +6,7 @@ import java.util.UUID;
 import org.kanger.interfaces.IContextResults;
 import org.kanger.udf.UDF;
 
-/** Native forward continuation qualification; recursive queries remain unavailable. */
+/** Native positive unary continuation and isolated recursive query qualification. */
 public final class DmzNativeRecursiveContinuationRunner {
     private static int checks;
     public static void main(String[] args) throws Exception {
@@ -52,9 +52,22 @@ public final class DmzNativeRecursiveContinuationRunner {
                         && overlay.hasLiveRule(tail.nativeRule) == (original > 1), "native last-support retraction or retained alternative");
                 count(overlay, root, original - 1, false);
                 count(overlay, tailGround, original - 1, false);
+                require(Boolean.TRUE.equals(overlay.queryContinuation("?derived(1);")) == (original > 1),
+                        "recursive native query respects exact chain restriction");
+                require(Boolean.TRUE.equals(overlay.queryContinuation("?tail(1);")) == (original > 1),
+                        "downstream native query respects exact chain restriction");
+                require(Boolean.TRUE.equals(overlay.queryContinuation("?derived(1);")) == (original > 1),
+                        "repeated query uses a fresh audit");
+                require(!Boolean.TRUE.equals(overlay.queryContinuation("?derived(99);")), "absent substitution remains unknown");
+                if (original == 1) require(overlay.queryDeniedCount() > 0, "native recursive query pair veto exercised");
+                count(overlay, root, original - 1, false);
                 boolean queryRefused = false;
                 try { overlay.query("?derived(1);"); } catch (IllegalArgumentException expected) { queryRefused = true; }
-                require(queryRefused, "recursive query path remains unavailable");
+                require(queryRefused, "legacy query entry point remains unavailable in continuation mode");
+                boolean negativeQueryRefused = false;
+                try { overlay.queryContinuation("?~derived(1);"); }
+                catch (IllegalArgumentException expected) { negativeQueryRefused = true; }
+                require(negativeQueryRefused, "negative recursive queries remain outside qualification");
                 boolean negativeRefused = false;
                 try { overlay.accept(fact, 30, DmzReplayProvenance.Authority.EXTERNAL, "!~derived(1);"); }
                 catch (IllegalArgumentException expected) { negativeRefused = true; }
@@ -68,6 +81,9 @@ public final class DmzNativeRecursiveContinuationRunner {
                 require(overlay.hasLiveRule(fresh.nativeRule), "native fresh derived result stored");
                 count(overlay, fresh.causes.nodes.get(fresh.causes.root).ground,
                         (alternative ? 2 : 1) * (duplicate ? 2 : 1), true);
+                require(Boolean.TRUE.equals(overlay.queryContinuation("?derived(2);")), "pending fresh substitution query succeeds");
+                require(Boolean.TRUE.equals(overlay.queryContinuation("?derived(1);")) == (original > 1),
+                        "pending unrelated fact cannot authorize blocked ground");
                 require(Boolean.TRUE.equals(overlay.accept(fact, 22, DmzReplayProvenance.Authority.EXTERNAL, "!independent(1);")), "new independent native branch input accepted");
                 require(overlay.hasLiveGround(root) && overlay.hasLiveGround(tailGround),
                         "new independent support restores native result and downstream continuation");
@@ -75,6 +91,10 @@ public final class DmzNativeRecursiveContinuationRunner {
                         "current allowed proof readmits the retracted native cache");
                 count(overlay, root, original - 1 + (duplicate ? 2 : 1), true);
                 count(overlay, tailGround, original - 1 + (duplicate ? 2 : 1), true);
+                require(Boolean.TRUE.equals(overlay.queryContinuation("?derived(1);"))
+                        && Boolean.TRUE.equals(overlay.queryContinuation("?tail(1);")),
+                        "pending independent route authorizes root and downstream queries");
+                count(overlay, root, original - 1 + (duplicate ? 2 : 1), true);
                 require(Boolean.TRUE.equals(overlay.accept(fact, 26, DmzReplayProvenance.Authority.EXTERNAL, "!middle(1);")),
                         "explicit primary alias of cached middle accepted");
                 count(overlay, root, original - 1 + 2 * (duplicate ? 2 : 1), true);
@@ -104,6 +124,10 @@ public final class DmzNativeRecursiveContinuationRunner {
             boolean closed = false;
             try { overlay.proofs(root, 10000); } catch (IllegalStateException expected) { closed = true; }
             require(closed, "closed branch proof API rejects reuse");
+            boolean closedQuery = false;
+            try { overlay.queryContinuation("?derived(1);"); }
+            catch (IllegalStateException expected) { closedQuery = true; }
+            require(closedQuery, "closed branch query API rejects reuse");
             require(Boolean.TRUE.equals(q.query("?derived(1);", null, false)), "parent query unaffected after scope closes");
         }
     }
