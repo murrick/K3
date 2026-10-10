@@ -49,6 +49,7 @@ public final class DmzNativeRecursiveContinuationRunner {
             TerminalSupportCapture.Ground tailGround = tail.causes.nodes.get(tail.causes.root).ground;
             int original = (alternative ? 2 : 1) * (duplicate ? 2 : 1) * (primaryDuplicate ? 2 : 1);
             String state = DmzObservationStateFingerprint.capture(q);
+            String parentHypotheses = hypothesisText(q);
             DmzStoredRetractionTransaction overlay = DmzStoredRetractionTransaction.beginContinuation(guard, proof, blocked, q, 10000);
             try {
                 require(overlay.hasLiveRule(stored.nativeRule) == (original > 1)
@@ -66,6 +67,15 @@ public final class DmzNativeRecursiveContinuationRunner {
                 require(java.util.Objects.equals(overlay.queryContinuation(signed(negative, "?derived(1);")), original > 1 ? Boolean.TRUE : null),
                         "repeated query uses a fresh audit");
                 require(!Boolean.TRUE.equals(overlay.queryContinuation(signed(negative, "?derived(99);"))), "absent substitution remains unknown");
+                DmzStoredRetractionTransaction.QueryResult unknown = overlay.queryContinuationResult(
+                        signed(negative, "?derived(99);"), 10000);
+                require(unknown.value == null && !unknown.hypotheses.isEmpty(),
+                        "unknown native query produces detached diagnostic hypotheses");
+                boolean immutable = false;
+                try { unknown.hypotheses.clear(); } catch (UnsupportedOperationException expected) { immutable = true; }
+                require(immutable, "detached hypothesis list is immutable");
+                require(parentHypotheses.equals(hypothesisText(q)), "query hypotheses cannot escape to Q");
+                String hypotheses = unknown.hypotheses.toString();
                 if (original == 1) require(overlay.queryDeniedCount() > 0, "native recursive query pair veto exercised");
                 count(overlay, root, original - 1, false);
                 boolean queryRefused = false;
@@ -87,7 +97,12 @@ public final class DmzNativeRecursiveContinuationRunner {
                 require(overlay.hasLiveRule(fresh.nativeRule), "native fresh derived result stored");
                 count(overlay, fresh.causes.nodes.get(fresh.causes.root).ground,
                         (alternative ? 2 : 1) * (duplicate ? 2 : 1), true);
+                require(hypotheses.equals(unknown.hypotheses.toString()), "later inputs cannot change detached hypotheses");
                 require(Boolean.TRUE.equals(overlay.queryContinuation(signed(negative, "?derived(2);"))), "pending fresh substitution query succeeds");
+                DmzStoredRetractionTransaction.QueryResult known = overlay.queryContinuationResult(
+                        signed(negative, "?derived(2);"), 10000);
+                require(Boolean.TRUE.equals(known.value) && known.hypotheses.isEmpty(),
+                        "known query does not reuse earlier unknown hypotheses");
                 require(java.util.Objects.equals(overlay.queryContinuation(signed(negative, "?derived(1);")), original > 1 ? Boolean.TRUE : null),
                         "pending unrelated fact cannot authorize blocked ground");
                 require(Boolean.TRUE.equals(overlay.accept(fact, 22, DmzReplayProvenance.Authority.EXTERNAL, "!independent(1);")), "new independent native branch input accepted");
@@ -133,8 +148,10 @@ public final class DmzNativeRecursiveContinuationRunner {
                 require(inputClosed, "failed audit branch cannot accept another input");
                 require(state.equals(DmzObservationStateFingerprint.capture(q)),
                         "audit failure rolls back all previous successful branch inputs");
+                require(hypotheses.equals(unknown.hypotheses.toString()), "detached hypotheses survive branch rollback");
             } finally { overlay.close(); }
             require(state.equals(DmzObservationStateFingerprint.capture(q)), "recursive continuation fully rolls back");
+            require(parentHypotheses.equals(hypothesisText(q)), "rollback preserves Q hypothesis store");
             boolean closed = false;
             try { overlay.proofs(root, 10000); } catch (IllegalStateException expected) { closed = true; }
             require(closed, "closed branch proof API rejects reuse");
@@ -157,6 +174,12 @@ public final class DmzNativeRecursiveContinuationRunner {
     }
     private static String signed(boolean negative, String query) {
         return negative ? "?~" + query.substring(1) : query;
+    }
+    private static String hypothesisText(Mind mind) throws Exception {
+        java.util.List<String> result = new java.util.ArrayList<String>();
+        for (org.kanger.interfaces.IHypothesis hypothesis : mind.getHypothesis())
+            result.add(((org.kanger.primitives.Hypothesis) hypothesis).toString(mind));
+        return result.toString();
     }
     private static void count(DmzStoredRetractionTransaction overlay, TerminalSupportCapture.Ground ground,
             int expected, boolean provisional) throws Exception {

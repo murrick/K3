@@ -135,24 +135,46 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         return transaction.mind().query(statement, null, false);
     }
     int queryDeniedCount() { return restriction.queryDeniedCount(); }
+    /** Detached diagnostic hypotheses, never accepted proof inputs. */
+    static final class QueryResult {
+        final Boolean value;
+        final List<String> hypotheses;
+        private QueryResult(Boolean value, List<String> hypotheses) {
+            this.value = value;
+            this.hypotheses = java.util.Collections.unmodifiableList(new ArrayList<String>(hypotheses));
+        }
+    }
     Boolean queryContinuation(String statement) throws Exception { return queryContinuation(statement, 10000); }
     Boolean queryContinuation(String statement, int auditBudget) throws Exception {
+        return queryContinuationResult(statement, auditBudget).value;
+    }
+    QueryResult queryContinuationResult(String statement, int auditBudget) throws Exception {
         if (closed) throw new IllegalStateException("Retraction overlay closed");
         if (!continuationOnly || statement == null || !statement.matches("\\?~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
             throw new IllegalArgumentException("Only signed unary integer continuation queries are qualified");
         if (auditBudget < 1 || auditBudget > 10000) throw new IllegalArgumentException("Query audit budget must be between 1 and 10000");
         Mind child = transaction.mind();
         String state = DmzObservationStateFingerprint.capture(child);
+        List<String> previousHypotheses = hypothesisText(child);
         try {
-            Boolean result;
+            QueryResult result;
             try (DmzTerminalRestriction.QueryScope audit = DmzTerminalRestriction.prepareQuery(child, auditBudget);
                 TechnicalMindTransaction query = TechnicalMindTransaction.beginIsolated(child)) {
-                result = query.mind().query(statement, null, false);
+                Boolean value = query.mind().query(statement, null, false);
+                result = new QueryResult(value, hypothesisText(query.mind()));
             }
             if (!state.equals(DmzObservationStateFingerprint.capture(child)))
                 throw new IllegalStateException("Continuation query changed its branch boundary");
+            if (!previousHypotheses.equals(hypothesisText(child)))
+                throw new IllegalStateException("Continuation query changed branch hypotheses");
             return result;
         } catch (Exception failure) { close(); throw failure; }
+    }
+    private static List<String> hypothesisText(Mind mind) throws Exception {
+        List<String> result = new ArrayList<String>();
+        for (org.kanger.interfaces.IHypothesis hypothesis : mind.getHypothesis())
+            result.add(((org.kanger.primitives.Hypothesis) hypothesis).toString(mind));
+        return result;
     }
     @Override public void close() throws Exception {
         if (!closed) { restriction.close(); closed = true; transaction.close(); }
