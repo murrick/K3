@@ -303,14 +303,15 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
     }
     enum ReplayQueryDisposition { NOT_REQUESTED, QUERIED, NEEDS_BRANCHING, DECLINED_BY_Q }
     static final class ReplayPathStep {
+        final ConsequenceAuditFailure evidence;
         final TerminalSupportCapture.Ground conflict;
         final ReplaySide side;
         final List<ReplayAppliedGround> grounds;
-        private ReplayPathStep(TerminalSupportCapture.Ground conflict, ReplayAppliedChoice result) {
-            this.conflict = conflict; side = result.side; grounds = result.grounds;
+        private ReplayPathStep(ConsequenceAuditFailure evidence, TerminalSupportCapture.Ground conflict, ReplayAppliedChoice result) {
+            this.evidence = evidence; this.conflict = conflict; side = result.side; grounds = result.grounds;
         }
     }
-    /** One qualified historical choice; no Mind, retained transaction or enforcement permission. */
+    /** Detached historical choices; no Mind, retained transaction or enforcement permission. */
     static final class ReplayPath {
         private final Object replayOwner;
         final ConsequenceAuditFailure root, remaining;
@@ -320,8 +321,29 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             this.replayOwner = replayOwner; this.root = root; remaining = result.conflict; disposition = result.disposition;
             steps = java.util.Collections.singletonList(step);
         }
+        private ReplayPath(Object replayOwner, ConsequenceAuditFailure root, List<ReplayPathStep> steps, ReplayAppliedChoice result) {
+            this.replayOwner = replayOwner; this.root = root; remaining = result.conflict; disposition = result.disposition;
+            this.steps = java.util.Collections.unmodifiableList(new ArrayList<ReplayPathStep>(steps));
+        }
+    }
+    static final class ReplayPathExtension {
+        final List<ReplayPath> paths;
+        final List<ReplayAppliedChoice> applications;
+        private ReplayPathExtension(List<ReplayPath> paths, List<ReplayAppliedChoice> applications) {
+            this.paths = java.util.Collections.unmodifiableList(new ArrayList<ReplayPath>(paths));
+            this.applications = java.util.Collections.unmodifiableList(new ArrayList<ReplayAppliedChoice>(applications));
+        }
+    }
+    private static final class ReplayExtensionRequest {
+        final TerminalSupportCapture.Ground conflict;
+        final int projectionBudget, applicationBudget;
+        ReplayPathExtension result;
+        ReplayExtensionRequest(TerminalSupportCapture.Ground conflict, int projectionBudget, int applicationBudget) {
+            this.conflict = conflict; this.projectionBudget = projectionBudget; this.applicationBudget = applicationBudget;
+        }
     }
     private static final class ReplayQueryRequest {
+        ReplayExtensionRequest extension;
         final String statement;
         final int budget;
         final ReplayPath path;
@@ -591,6 +613,34 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             return projectReplayConflict(prior, conflictIndex, source, sourceRule, candidate, queryStatement,
                     auditBudget, recognitionBudget, projectionBudget, applicationBudget);
         }
+        ReplayPathExtension extendReplayPath(ReplayPath path, int nextConflict,
+                org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+                String candidate, String queryStatement, int auditBudget, int recognitionBudget,
+                int projectionBudget, int applicationBudget, int queryBudget, int nextApplicationBudget) throws Exception {
+            if (closed) throw new IllegalStateException("Native support choice closed");
+            if (path == null || path.replayOwner != replayOwner || path.steps.size() != 1
+                    || path.disposition != ReplayQueryDisposition.NEEDS_BRANCHING || path.remaining == null
+                    || nextConflict < 0 || nextConflict >= path.remaining.conflicts.size())
+                throw new IllegalArgumentException("Owned deferred one-choice path and next conflict required");
+            if (applicationBudget < 1 || applicationBudget > 10000 || queryBudget < 1 || queryBudget > 10000
+                    || nextApplicationBudget < 1 || nextApplicationBudget > 10000)
+                throw new IllegalArgumentException("Bounded nested replay work required");
+            if (!projection.isCurrent()) throw new IllegalStateException("Replay path boundary changed");
+            int rootIndex = -1;
+            int[] work = { recognitionBudget };
+            for (int i = 0; i < path.root.conflicts.size(); ++i) {
+                projectionWork(work);
+                if (path.steps.get(0).conflict.equivalent(path.root.conflicts.get(i).ground)) rootIndex = i;
+            }
+            if (rootIndex < 0) throw new IllegalStateException("Replay path root conflict missing");
+            ReplayQueryRequest request = new ReplayQueryRequest(queryStatement, queryBudget, path, source, sourceRule, recognitionBudget);
+            request.extension = new ReplayExtensionRequest(path.remaining.conflicts.get(nextConflict).ground,
+                    projectionBudget, nextApplicationBudget);
+            projectReplayConflict(path.root, rootIndex, source, sourceRule, candidate, queryStatement,
+                    auditBudget, recognitionBudget, projectionBudget, applicationBudget, request);
+            if (request.extension.result == null) throw new IllegalStateException("Complete nested replay required");
+            return request.extension.result;
+        }
         private ReplaySymmetricProjection projectReplayConflict(ConsequenceAuditFailure prior, int conflictIndex,
                 org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
                 String candidate, String queryStatement, int auditBudget, int recognitionBudget,
@@ -618,7 +668,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                         && application.disposition != ReplayQueryDisposition.NEEDS_BRANCHING)
                     throw new IllegalArgumentException("Queried or internally deferred replay choice required");
                 return new ReplayPath(replayOwner, result.evidence,
-                        new ReplayPathStep(result.evidence.conflicts.get(result.conflictIndex).ground, application), application);
+                        new ReplayPathStep(result.evidence, result.evidence.conflicts.get(result.conflictIndex).ground, application), application);
             }
             throw new IllegalArgumentException("Applied replay side required");
         }
@@ -825,6 +875,34 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 try { auditConsequences(child.mind(), request.budget); }
                 catch (ConsequenceAuditFailure conflictEvidence) { remaining = conflictEvidence; }
                 if (request.path != null) recognizePathTerminal(request, result, remaining);
+                if (request.extension != null) {
+                    if (remaining == null || remaining.kind != ConsequenceConflictKind.INTERNAL)
+                        throw new IllegalStateException("Internal live conflict required for extension");
+                    int nextIndex = -1;
+                    int[] nextWork = { request.recognitionBudget };
+                    for (int i = 0; i < remaining.conflicts.size(); ++i) {
+                        projectionWork(nextWork);
+                        if (request.extension.conflict.equivalent(remaining.conflicts.get(i).ground)) nextIndex = i;
+                    }
+                    if (nextIndex < 0) throw new IllegalStateException("Nested replay conflict missing");
+                    ReplaySymmetricProjection next = projectLiveConflict(child.mind(), remaining, nextIndex,
+                            request.extension.projectionBudget);
+                    ReplayAppliedChoice prefix = new ReplayAppliedChoice(side, hidden, result,
+                            ReplayQueryDisposition.NEEDS_BRANCHING, null, remaining);
+                    List<ReplayAppliedChoice> applications = new ArrayList<ReplayAppliedChoice>();
+                    List<ReplayPath> paths = new ArrayList<ReplayPath>();
+                    for (ReplaySide nextSide : ReplaySide.values()) {
+                        ReplayAppliedChoice applied = applyReplayChoice(child.mind(), next, nextSide,
+                                request.extension.applicationBudget, request.extension.projectionBudget,
+                                new ReplayQueryRequest(request.statement, request.budget));
+                        applications.add(applied);
+                        List<ReplayPathStep> steps = new ArrayList<ReplayPathStep>();
+                        steps.add(new ReplayPathStep(projected.evidence, conflict.ground, prefix));
+                        steps.add(new ReplayPathStep(remaining, remaining.conflicts.get(nextIndex).ground, applied));
+                        paths.add(new ReplayPath(replayOwner, projected.evidence, steps, applied));
+                    }
+                    request.extension.result = new ReplayPathExtension(paths, applications);
+                }
                 if (remaining != null) return new ReplayAppliedChoice(side, hidden, result,
                         remaining.kind == ConsequenceConflictKind.AUTHORITY ? ReplayQueryDisposition.DECLINED_BY_Q
                                 : ReplayQueryDisposition.NEEDS_BRANCHING, null, remaining);

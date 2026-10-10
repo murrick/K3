@@ -95,6 +95,46 @@ public final class DmzReplayQueryCascadeRunner {
                         } else require(Boolean.TRUE.equals(repeated.applications.get(0).query.value), "queried path preserves independent native truth");
                     }
                     require(deferredPath != null, "deferred path available after rollback");
+                    int nextIndex = -1;
+                    for (int i = 0; i < deferredPath.remaining.conflicts.size(); ++i)
+                        if (deferredPath.remaining.conflicts.get(i).ground.predicate.equals("source")) nextIndex = i;
+                    require(nextIndex >= 0, "next source conflict selected");
+                    boolean nestedBudget = false;
+                    try { choice.extendReplayPath(deferredPath, nextIndex, source, 150, candidate, "?source(1);",
+                            10000, 10000, 10000, 10000, 10000, 1); }
+                    catch (DmzStoredRetractionTransaction.SupportChoiceBudgetFailure expected) { nestedBudget = true; }
+                    require(nestedBudget && projection.isCurrent(), "second-level mask budget rolls back restored prefix");
+                    String[] queries = { "?source(1);", "?middle(2);", "?source(2);", "?~source(2);" };
+                    for (String statement : queries) {
+                        DmzStoredRetractionTransaction.ReplayPathExtension extension = choice.extendReplayPath(
+                                deferredPath, nextIndex, source, 150, candidate, statement,
+                                10000, 10000, 10000, 10000, 10000, 10000);
+                        require(extension.paths.size() == 2 && extension.applications.size() == 2 && projection.isCurrent(),
+                                "both second choices complete and roll back");
+                        for (int i = 0; i < 2; ++i) {
+                            DmzStoredRetractionTransaction.ReplayPath path = extension.paths.get(i);
+                            DmzStoredRetractionTransaction.ReplayAppliedChoice applied = extension.applications.get(i);
+                            require(path.steps.size() == 2 && path.steps.get(0).side == deferredPath.steps.get(0).side
+                                    && path.steps.get(1).side == applied.side
+                                    && path.steps.get(1).conflict.predicate.equals("source")
+                                    && path.steps.get(0).evidence == path.root
+                                    && path.steps.get(1).evidence != deferredPath.remaining, "two-step path retains ordered choices");
+                            require(applied.disposition == DmzStoredRetractionTransaction.ReplayQueryDisposition.QUERIED
+                                    && applied.query != null && applied.conflict == null, "second conflict resolves before query");
+                            if (statement.equals("?source(1);")) require(Boolean.TRUE.equals(applied.query.value), "independent Q truth survives both choices");
+                            if (statement.equals("?middle(2);")) require(!Boolean.TRUE.equals(applied.query.value), "first cut cannot resurrect in either grandchild");
+                            if (statement.equals("?source(2);") && applied.side == DmzStoredRetractionTransaction.ReplaySide.OPPOSING)
+                                require(!Boolean.TRUE.equals(applied.query.value), "second cut rejects positive source root");
+                            if (statement.equals("?~source(2);") && applied.side == DmzStoredRetractionTransaction.ReplaySide.SUPPORTING)
+                                require(!Boolean.TRUE.equals(applied.query.value), "second cut rejects negative source root");
+                            boolean immutable = false;
+                            try { path.steps.clear(); } catch (UnsupportedOperationException expected) { immutable = true; }
+                            require(immutable, "two-step descriptor immutable");
+                        }
+                    }
+                    require(choice.replayPath(deferredPath, source, 150, candidate, "?source(1);",
+                            10000, 10000, 10000, 10000, 10000).applications.size() == 1,
+                            "nested extensions preserve reusable historical prefix");
                     require(!Boolean.TRUE.equals(choice.query("?" + candidate.substring(1), 10000).value), "candidate not retained after siblings");
                     choice.close();
                     boolean closedReplay = false;
