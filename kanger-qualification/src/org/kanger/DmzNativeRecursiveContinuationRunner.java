@@ -85,6 +85,14 @@ public final class DmzNativeRecursiveContinuationRunner {
                         && overlay.hasLiveRule(tail.nativeRule) == (original > 1), "native last-support retraction or retained alternative");
                 count(overlay, root, original - 1, false);
                 count(overlay, tailGround, original - 1, false);
+                require(overlay.classifyInput("!" + (negative ? "~" : "") + "derived(1);", 10000)
+                        == (original > 1 ? DmzStoredRetractionTransaction.InputKind.SUPPORTED_DERIVED
+                                : DmzStoredRetractionTransaction.InputKind.FRESH),
+                        "classification uses surviving current proofs rather than historical cache");
+                require(overlay.classifyInput("!" + (negative ? "" : "~") + "derived(1);", 10000)
+                        == (original > 1 ? DmzStoredRetractionTransaction.InputKind.CONFLICT
+                                : DmzStoredRetractionTransaction.InputKind.FRESH),
+                        "removed last support does not become a current conflict proof");
                 boolean invalidBudget = false;
                 try { overlay.queryContinuation(signed(negative, "?derived(1);"), 0); }
                 catch (IllegalArgumentException expected) { invalidBudget = true; }
@@ -223,6 +231,24 @@ public final class DmzNativeRecursiveContinuationRunner {
                 count(overlay, root, original - 1 + 3 * (duplicate ? 2 : 1), true);
                 require(overlay.hasLiveGround(root) && overlay.hasLiveGround(tailGround),
                         "signed independent supports retain native root and downstream cache");
+                require(overlay.classifyInput("!source(1);", 10000) == DmzStoredRetractionTransaction.InputKind.EXISTING_PRIMARY
+                        && overlay.classifyInput("!~negativePrimary(7);", 10000) == DmzStoredRetractionTransaction.InputKind.EXISTING_PRIMARY,
+                        "classification distinguishes signed primary repeats");
+                require(overlay.classifyInput("!~source(1);", 10000) == DmzStoredRetractionTransaction.InputKind.CONFLICT
+                        && overlay.classifyInput("!negativePrimary(7);", 10000) == DmzStoredRetractionTransaction.InputKind.CONFLICT,
+                        "classification identifies opposite signed primary proofs");
+                require(overlay.classifyInput("!" + (negative ? "~" : "") + "derived(1);", 10000)
+                        == DmzStoredRetractionTransaction.InputKind.SUPPORTED_DERIVED,
+                        "generated supported target is distinct from primary repeat");
+                require(overlay.classifyInput("!" + (negative ? "" : "~") + "derived(1);", 10000)
+                        == DmzStoredRetractionTransaction.InputKind.CONFLICT,
+                        "classification identifies opposite derived proof");
+                require(overlay.classifyInput("!source(555);", 10000) == DmzStoredRetractionTransaction.InputKind.FRESH,
+                        "absent ground classification is fresh");
+                boolean classificationBounded = false;
+                try { overlay.classifyInput("!source(555);", 1); }
+                catch (IllegalStateException expected) { classificationBounded = expected.getMessage().contains("Classification inventory unavailable"); }
+                require(classificationBounded, "classification fails closed on unavailable bounded inventory");
                 Boolean positiveRepeat = overlay.accept(fact, 102, DmzReplayProvenance.Authority.EXTERNAL, "!source(1);");
                 Boolean negativeRepeat = overlay.accept(fact, 103, DmzReplayProvenance.Authority.EXTERNAL, "!~negativePrimary(7);");
                 require(positiveRepeat == null && negativeRepeat == null,
@@ -243,6 +269,9 @@ public final class DmzNativeRecursiveContinuationRunner {
                         "same-sign generated input adds explicit primary support");
                 count(overlay, root, original - 1 + 3 * (duplicate ? 2 : 1) + 1, true);
                 count(overlay, tailGround, original - 1 + 3 * (duplicate ? 2 : 1) + 1, true);
+                require(overlay.classifyInput("!" + (negative ? "~" : "") + "derived(1);", 10000)
+                        == DmzStoredRetractionTransaction.InputKind.EXISTING_PRIMARY,
+                        "classification changes after actual explicit primary admission");
                 boolean auditRejected = false;
                 try {
                     if (failureMode == 7 || failureMode == 8) {
@@ -295,6 +324,10 @@ public final class DmzNativeRecursiveContinuationRunner {
             try { overlay.queryContinuation(signed(negative, "?derived(1);")); }
             catch (IllegalStateException expected) { closedQuery = true; }
             require(closedQuery, "closed branch query API rejects reuse");
+            boolean closedClassification = false;
+            try { overlay.classifyInput("!source(1);", 10000); }
+            catch (IllegalStateException expected) { closedClassification = true; }
+            require(closedClassification, "closed branch rejects classification reuse");
             boolean closedProbe = false;
             try { overlay.probeCandidate(fact, 72, "!source(5);", signed(negative, "?derived(5);"), 10000); }
             catch (IllegalStateException expected) { closedProbe = true; }

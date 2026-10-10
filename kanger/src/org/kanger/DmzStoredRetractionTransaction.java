@@ -9,7 +9,7 @@ import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 
 /** Rollback-only native overlay with narrowly qualified unit-application restrictions.
- * Recursive continuation accepts positive unary integer facts; its separate query entry point accepts either sign.
+ * Recursive continuation accepts signed unary integer facts and queries.
  */
 final class DmzStoredRetractionTransaction implements AutoCloseable {
     private final TechnicalMindTransaction transaction;
@@ -86,6 +86,42 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                     literal.isAntc(), literal.getArguments().convertBase(child)), child))) return true;
         }
         return false;
+    }
+    enum InputKind { FRESH, EXISTING_PRIMARY, SUPPORTED_DERIVED, CONFLICT, INCONSISTENT }
+    /** Read-only current-proof diagnostic; never an admission or durable permission. */
+    InputKind classifyInput(String statement, int budget) throws Exception {
+        if (closed) throw new IllegalStateException("Retraction overlay closed");
+        if (!continuationOnly || statement == null
+                || !statement.matches("!~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
+            throw new IllegalArgumentException("Only signed unary integer continuation classification is qualified");
+        if (budget < 1 || budget > 10000) throw new IllegalArgumentException("Classification budget must be between 1 and 10000");
+        Mind child = transaction.mind();
+        DmzCurrentUnaryProofInventory inventory = DmzCurrentUnaryProofInventory.capture(child, budget, true);
+        if (!inventory.eligible) throw new IllegalStateException("Classification inventory unavailable: " + inventory.gaps);
+        int open = statement.indexOf('(');
+        boolean positive = !statement.startsWith("!~");
+        String predicate = statement.substring(positive ? 1 : 2, open);
+        java.math.BigDecimal value = new java.math.BigDecimal(statement.substring(open + 1, statement.length() - 2));
+        boolean same = false, opposite = false, primary = false;
+        int remaining = budget;
+        for (DmzObservedProofGraph.Node node : inventory.graph.observed.nodes) {
+            if (remaining-- == 0) throw new IllegalStateException("Classification ground scan budget exceeded");
+            TerminalSupportCapture.Ground ground = node.ground;
+            if (!ground.predicate.equals(predicate) || ground.arguments.size() != 1) continue;
+            Object actual = ground.arguments.get(0).materialize().getValue();
+            if (!(actual instanceof Number) || value.compareTo(new java.math.BigDecimal(actual.toString())) != 0) continue;
+            DmzCurrentUnaryProofInventory.Proofs proofs = inventory.proofs(ground,
+                    DmzTerminalRestriction.activeNoGoods(child), budget);
+            if (proofs.truncated) throw new IllegalStateException("Classification witness budget exceeded");
+            if (proofs.witnesses.isEmpty()) continue;
+            if (ground.sign == positive) {
+                same = true;
+                for (DmzProofWitnesses.Witness witness : proofs.witnesses) if (witness.step == -1) primary = true;
+            } else opposite = true;
+        }
+        if (!inventory.isCurrent(child)) throw new IllegalStateException("Classification boundary changed");
+        return same && opposite ? InputKind.INCONSISTENT : opposite ? InputKind.CONFLICT
+                : primary ? InputKind.EXISTING_PRIMARY : same ? InputKind.SUPPORTED_DERIVED : InputKind.FRESH;
     }
     Boolean accept(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
             DmzReplayProvenance.Authority authority, String statement) throws Exception {
