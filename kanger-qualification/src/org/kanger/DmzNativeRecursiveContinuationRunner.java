@@ -18,6 +18,7 @@ public final class DmzNativeRecursiveContinuationRunner {
                         for (int failureMode : new int[] {0, 1, 2, 3, 4, 5, 6, 7, 8})
                             run(alternative, duplicate, primaryDuplicate, negative, failureMode);
         authorityStaleness(false); authorityStaleness(true);
+        consequenceConflict(false); consequenceConflict(true);
         isolatedPrimaryCut(false, false); isolatedPrimaryCut(true, false);
         isolatedPrimaryCut(false, true); isolatedPrimaryCut(true, true);
         System.out.println("DMZ_NATIVE_RECURSIVE_CONTINUATION_PASS checks=" + checks);
@@ -428,11 +429,26 @@ public final class DmzNativeRecursiveContinuationRunner {
                         catch (IllegalStateException expected) { candidateRevisionRefused = expected.getMessage().contains("inventory unavailable"); }
                         require(candidateRevisionRefused && projected.isCurrent(),
                                 "post-input incoherent revision refusal rolls back candidate sources and native consequences");
-                        DmzStoredRetractionTransaction.QueryResult admitted = cut.probeCandidate(fact, 150,
-                                receiptCandidate, receiptQuery, 10000);
-                        require(Boolean.TRUE.equals(admitted.value)
-                                && admitted.candidateMode == DmzStoredRetractionTransaction.QueryResult.CandidateMode.NEW_INPUT,
-                                "exact receipt candidate is conditionally accepted under native gates");
+                        boolean consequenceBudgetRefused = false;
+                        try { cut.probeCandidate(fact, 150, receiptCandidate, receiptQuery, 10000, 1); }
+                        catch (IllegalStateException expected) { consequenceBudgetRefused = expected.getMessage().contains("consequence inventory unavailable"); }
+                        require(consequenceBudgetRefused && projected.isCurrent(),
+                                "post-input consequence budget refusal rolls back candidate and keeps choice usable");
+                        if (projected == primaryProjection) {
+                            DmzStoredRetractionTransaction.QueryResult admitted = cut.probeCandidate(fact, 150,
+                                    receiptCandidate, receiptQuery, 10000);
+                            require(Boolean.TRUE.equals(admitted.value)
+                                    && admitted.candidateMode == DmzStoredRetractionTransaction.QueryResult.CandidateMode.NEW_INPUT,
+                                    "primary receipt candidate passes full consequence audit before conditional query");
+                        } else {
+                            boolean furtherBranching = false;
+                            try { cut.probeCandidate(fact, 150, receiptCandidate, receiptQuery, 10000); }
+                            catch (IllegalStateException expected) {
+                                furtherBranching = expected.getMessage().contains("consequences require further branching");
+                                if (!furtherBranching) throw expected;
+                            }
+                            require(furtherBranching, "contrapositive consequence conflicts require further exact branching before an opinion");
+                        }
                         require(!Boolean.TRUE.equals(cut.query(receiptQuery, 10000).value) && projected.isCurrent(),
                                 "candidate and consequences roll back without importing support into the choice");
                         require(projected.isCurrent(), "child masks leave parent evidence current");
@@ -725,6 +741,46 @@ public final class DmzNativeRecursiveContinuationRunner {
         try { overlay.evaluateCandidate(source, label, candidate, query, auditBudget, lookupBudget); }
         catch (IllegalArgumentException expected) { invalid = true; }
         require(invalid, "invalid evaluation parameters fail before recoverable classification");
+    }
+    /** Direct native inventory boundary fixture: candidate probes exercise the same audit before returning. */
+    private static void consequenceConflict(boolean negative) throws Exception {
+        User user = new User(); new UDF().init(user); Mind q = new Mind(user); user.setCurrentMind(q);
+        IContextResults.Revision source = new IContextResults.Revision(UUID.randomUUID(), 1);
+        try (DmzReplayProvenance journal = DmzReplayProvenance.begin(); TerminalSupportCapture capture = TerminalSupportCapture.begin(q)) {
+            accept(q, source, 1, negative ? "!@x source(x) -> ~derived(x);" : "!@x source(x) -> derived(x);");
+            DmzAcceptanceProofGuard guard = DmzAcceptanceProofGuard.beforeInput(capture, journal, q);
+            require(Boolean.TRUE.equals(guard.accept(source, 2, DmzReplayProvenance.Authority.EXTERNAL, "!source(1);")),
+                    "Q consequence fixture authoritative derived support");
+            DmzStoredProof proof = DmzStoredProof.build(capture, journal, stored(capture, "derived", null), 10000);
+            String qState = DmzObservationStateFingerprint.capture(q);
+            try (DmzStoredRetractionTransaction overlay = DmzStoredRetractionTransaction.beginContinuation(
+                    guard, proof, proof.witnesses.get(0), q, 10000)) {
+                require(Boolean.TRUE.equals(overlay.accept(source, 3, DmzReplayProvenance.Authority.EXTERNAL,
+                        "!isolatedPending(9);")), "Q consequence fixture pending primary");
+                DmzStoredRetractionTransaction.ConflictEvidence evidence = overlay.conflictEvidence("!~isolatedPending(9);", 10000);
+                DmzStoredRetractionTransaction.SymmetricProjection projection = overlay.projectSymmetric(evidence, 10000);
+                try (DmzStoredRetractionTransaction.NativeSupportChoice cut = overlay.beginSupportChoice(projection,
+                        DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, 10000);
+                        TechnicalMindTransaction nativeClosure = TechnicalMindTransaction.beginIsolated(new Mind(user))) {
+                    require(Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(nativeClosure.mind(), source, 4,
+                            DmzReplayProvenance.Authority.EXTERNAL, negative ? "!@x seed(x) -> derived(x);" : "!@x seed(x) -> ~derived(x);")),
+                            "consequence fixture pending native unit production");
+                    require(Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(nativeClosure.mind(), source, 5,
+                            DmzReplayProvenance.Authority.EXTERNAL, "!seed(1);")), "consequence fixture native forward materialization");
+                    java.lang.reflect.Method audit = cut.getClass().getDeclaredMethod("auditConsequences", Mind.class, int.class);
+                    audit.setAccessible(true);
+                    boolean rejected = false;
+                    try { audit.invoke(cut, nativeClosure.mind(), 10000); }
+                    catch (java.lang.reflect.InvocationTargetException expected) {
+                        if (!(expected.getCause() instanceof IllegalStateException)
+                                || !expected.getCause().getMessage().contains("consequences conflict with pinned Q")) throw expected;
+                        rejected = true;
+                    }
+                    require(rejected && projection.isCurrent(), "post-input auditor refuses native derived consequence opposing settled Q");
+                }
+            }
+            require(qState.equals(DmzObservationStateFingerprint.capture(q)), "Q consequence audit preserves Q native state");
+        }
     }
     private static void isolatedPrimaryCut(boolean negative, boolean connected) throws Exception {
         User user = new User(); new UDF().init(user); Mind q = new Mind(user); user.setCurrentMind(q);

@@ -390,10 +390,48 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 }
             }
         }
+        /** Audit every supported current ground, including inherited inputs; Q keeps its own settled proofs. */
+        private void auditConsequences(Mind probe, int consequenceBudget) throws Exception {
+            owner.requireAuthorityCurrent();
+            DmzCurrentUnaryProofInventory current = DmzCurrentUnaryProofInventory.capture(probe, consequenceBudget, true);
+            DmzCurrentUnaryProofInventory authority = DmzCurrentUnaryProofInventory.capture(owner.authorityTarget, consequenceBudget);
+            if (!current.eligible || !authority.eligible)
+                throw new IllegalStateException("Candidate consequence inventory unavailable");
+            List<DmzProofWitnesses.NoGood> exclusions = DmzTerminalRestriction.activeNoGoods(probe);
+            int[] work = {consequenceBudget};
+            String branchConflict = null;
+            for (DmzObservedProofGraph.Node node : current.graph.observed.nodes) {
+                projectionWork(work);
+                DmzCurrentUnaryProofInventory.Proofs supported = current.proofs(node.ground, exclusions, consequenceBudget);
+                if (supported.truncated) throw new IllegalStateException("Candidate consequence proof budget exceeded");
+                if (supported.witnesses.isEmpty()) continue;
+                for (DmzProofWitnesses.Witness witness : supported.witnesses) projectionWork(work);
+                TerminalSupportCapture.Ground opposite = new TerminalSupportCapture.Ground(node.ground.predicate,
+                        !node.ground.sign, node.ground.arguments);
+                DmzCurrentUnaryProofInventory.Proofs local = current.proofs(opposite, exclusions, consequenceBudget);
+                DmzCurrentUnaryProofInventory.Proofs q = authority.proofs(opposite,
+                        java.util.Collections.<DmzProofWitnesses.NoGood>emptyList(), consequenceBudget);
+                if (local.truncated || q.truncated) throw new IllegalStateException("Candidate consequence proof budget exceeded");
+                if (!q.witnesses.isEmpty()) throw new IllegalStateException("Candidate consequences conflict with pinned Q");
+                if (!local.witnesses.isEmpty() && branchConflict == null)
+                    branchConflict = node.ground.predicate + "/" + node.ground.sign;
+            }
+            if (!current.isCurrent(probe) || !authority.isCurrent(owner.authorityTarget) || !projection.isCurrent())
+                throw new IllegalStateException("Candidate consequence boundary changed");
+            owner.requireAuthorityCurrent();
+            if (branchConflict != null)
+                throw new IllegalStateException("Candidate consequences require further branching: " + branchConflict);
+        }
         /** Exact receipt candidate only; native input, consequences and query always roll back. */
         QueryResult probeCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
                 String candidate, String queryStatement, int auditBudget) throws Exception {
+            return probeCandidate(source, sourceRule, candidate, queryStatement, auditBudget, auditBudget);
+        }
+        QueryResult probeCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+                String candidate, String queryStatement, int auditBudget, int consequenceBudget) throws Exception {
             if (closed) throw new IllegalStateException("Native support choice closed");
+            if (consequenceBudget < 1 || consequenceBudget > 10000)
+                throw new IllegalArgumentException("Bounded consequence audit required");
             owner.validateCandidate(source, sourceRule, candidate, queryStatement, auditBudget, auditBudget);
             if (!projection.isCurrent()) throw new IllegalStateException("Native support choice boundary changed");
             if (choice != SupportChoice.KEEP_CANDIDATE)
@@ -433,6 +471,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                     if (classifyCurrent(probe.mind(), candidate, auditBudget, true,
                             DmzTerminalRestriction.activeNoGoods(probe.mind())) != InputKind.EXISTING_PRIMARY)
                         throw new IllegalStateException("Candidate lacks an unconflicted current primary support");
+                    auditConsequences(probe.mind(), consequenceBudget);
                     QueryResult snapshot = querySnapshot(probe.mind().query(queryStatement, null, false), probe.mind());
                     result = new QueryResult(snapshot.value, snapshot.hypotheses, snapshot.hypothesisAssertions,
                             QueryResult.CandidateMode.NEW_INPUT);
