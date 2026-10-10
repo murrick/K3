@@ -15,7 +15,7 @@ public final class DmzNativeRecursiveContinuationRunner {
             for (boolean duplicate : new boolean[] {false, true})
                 for (boolean primaryDuplicate : new boolean[] {false, true})
                     for (boolean negative : new boolean[] {false, true})
-                        for (int failureMode : new int[] {0, 1, 2, 3, 4})
+                        for (int failureMode : new int[] {0, 1, 2, 3, 4, 5, 6})
                             run(alternative, duplicate, primaryDuplicate, negative, failureMode);
         System.out.println("DMZ_NATIVE_RECURSIVE_CONTINUATION_PASS checks=" + checks);
     }
@@ -188,7 +188,9 @@ public final class DmzNativeRecursiveContinuationRunner {
                 require(state.equals(DmzObservationStateFingerprint.capture(q)), "continuation remains isolated from Q");
                 boolean auditRejected = false;
                 try {
-                    if (failureMode == 1) overlay.queryContinuation(signed(negative, "?derived(1);"), 1);
+                    if (failureMode == 5) overlay.probeCandidate(fact, 86, "!~source(1);", "?~source(1);", 10000);
+                    else if (failureMode == 6) overlay.probeCandidate(fact, 87, "!negativePrimary(7);", "?negativePrimary(7);", 10000);
+                    else if (failureMode == 1) overlay.queryContinuation(signed(negative, "?derived(1);"), 1);
                     else if (failureMode == 2) overlay.probeCandidate(fact, 70, "!~negativeSeed(66);",
                             signed(negative, "?derived(66);"), 1);
                     else if (failureMode == 4) overlay.probeCandidate(fact, 74, "!~negativeSeed(66);",
@@ -200,6 +202,8 @@ public final class DmzNativeRecursiveContinuationRunner {
                             DmzReplayProvenance.Authority.EXTERNAL, "!independent(3);");
                 } catch (IllegalStateException expected) {
                     auditRejected = true;
+                    if (failureMode == 5 || failureMode == 6) require(expected.getMessage().contains("Candidate was not accepted in isolated probe"),
+                            "opposite signed parent primary fails at native acceptance, not duplicate lookup or query audit");
                     if (failureMode == 4) require(expected.getMessage().contains("primary lookup budget exceeded"),
                             "candidate fails at the separately bounded primary lookup");
                     if (failureMode == 1 || failureMode == 2) require(expected.getMessage().contains("inventory unavailable"),
@@ -232,6 +236,14 @@ public final class DmzNativeRecursiveContinuationRunner {
             catch (IllegalStateException expected) { closedProbe = true; }
             require(closedProbe, "closed branch candidate probe rejects reuse");
             require(Boolean.TRUE.equals(q.query(signed(negative, "?derived(1);"), null, false)), "parent query unaffected after scope closes");
+            if (failureMode == 5 || failureMode == 6) {
+                require(Boolean.TRUE.equals(q.query("?source(1);", null, false))
+                        && Boolean.FALSE.equals(q.query("?~source(1);", null, false)),
+                        "positive Q primary keeps its authority after rejected candidate");
+                require(Boolean.TRUE.equals(q.query("?~negativePrimary(7);", null, false))
+                        && Boolean.FALSE.equals(q.query("?negativePrimary(7);", null, false)),
+                        "negative Q primary keeps its authority after rejected candidate");
+            }
         }
     }
     private static TerminalSupportCapture.Materialization stored(TerminalSupportCapture capture, String predicate,
