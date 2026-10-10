@@ -158,33 +158,55 @@ final class TerminalSupportCapture implements AutoCloseable {
     static final class Materialization {
         final int mind;
         final long nativeRule;
+        final int operation, producer;
         final boolean generated;
         final CollisionProofCapture.Graph causes;
-        Materialization(int mind, long nativeRule, boolean generated, CollisionProofCapture.Graph causes) {
-            this.mind = mind; this.nativeRule = nativeRule; this.generated = generated; this.causes = causes;
+        Materialization(int mind, long nativeRule, int operation, int producer, boolean generated,
+                CollisionProofCapture.Graph causes) {
+            this.mind = mind; this.nativeRule = nativeRule; this.operation = operation; this.producer = producer;
+            this.generated = generated; this.causes = causes;
         }
     }
 
     static final class StoredObservation {
         final Materialization materialization;
         final Outcome outcome;
-        StoredObservation(Materialization materialization, Outcome outcome) {
+        final List<Application> routes;
+        StoredObservation(Materialization materialization, Outcome outcome, List<Application> routes) {
             this.materialization = materialization; this.outcome = outcome;
+            this.routes = Collections.unmodifiableList(new ArrayList<Application>(routes));
+        }
+        /** Same originating production, not proof of the exact storage-time substitution. */
+        boolean fromProducer(Application route) {
+            return routes.contains(route) && route.rule == materialization.producer;
         }
     }
 
     /** Includes pending/discarded occurrences explicitly; acceptance is historical only. */
     List<StoredObservation> storedSnapshot() {
         List<StoredObservation> result = new ArrayList<StoredObservation>();
-        for (Materialization stored : materializations)
-            result.add(new StoredObservation(stored, outcome(stored.mind)));
+        for (Materialization stored : materializations) {
+            List<Application> routes = new ArrayList<Application>();
+            for (Application application : applications)
+                if (matchesStored(stored, application, operation(application.mind))) routes.add(application);
+            result.add(new StoredObservation(stored, outcome(stored.mind), routes));
+        }
         return Collections.unmodifiableList(result);
     }
 
-    static void recordStored(Mind mind, IRule rule) throws Exception {
+    /** Same concrete atom in exactly this observed Mind and technical operation. */
+    static boolean matchesStored(Materialization stored, Application application, int operation) {
+        Ground ground = stored.causes.nodes.get(stored.causes.root).ground;
+        return stored.operation >= 0 && operation == stored.operation && application.mind == stored.mind
+                && ground != null && ground.equivalent(application.ground);
+    }
+
+    static void recordStored(Mind mind, Domain producer, IRule rule) throws Exception {
         TerminalSupportCapture capture = ACTIVE.get();
         if (capture == null) return;
-        capture.materializations.add(new Materialization(capture.identity(mind), rule.getId(),
+        int index = capture.identity(mind);
+        capture.materializations.add(new Materialization(index, rule.getId(), capture.operation(index),
+                producer.getRule() == null ? -1 : capture.identity(producer.getRule()),
                 mind.getRules().isGenerated(rule), CollisionProofCapture.build(mind, rule)));
     }
 

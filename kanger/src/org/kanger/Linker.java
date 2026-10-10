@@ -1321,7 +1321,7 @@ public class Linker {
                         ((Rule) x).getSolves().clear();
                         ((Rule) x).getSolves().addAll(d.getSolves(mind));
                     }
-                    TerminalSupportCapture.recordStored(mind, x);
+                    TerminalSupportCapture.recordStored(mind, d, x);
                 }
             }
         }

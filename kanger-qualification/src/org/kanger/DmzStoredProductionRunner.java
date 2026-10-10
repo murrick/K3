@@ -14,7 +14,7 @@ public final class DmzStoredProductionRunner {
     public static void main(String[] args) throws Exception {
         System.setProperty("user.home", Files.createTempDirectory("dmz-stored-production-").toString());
         run(false, true, false); run(true, true, false); run(true, false, false); run(false, true, true);
-        queryBoundary();
+        queryBoundary(); alternatives(); siblingOperations();
         System.out.println("DMZ_STORED_PRODUCTION_PASS checks=" + checks);
     }
     private static void run(boolean recursive, boolean commit, boolean existing) throws Exception {
@@ -57,6 +57,28 @@ public final class DmzStoredProductionRunner {
                         CollisionProofCapture.Node root = item.materialization.causes.nodes.get(item.materialization.causes.root);
                         require(root.nativeRule == item.materialization.nativeRule && root.generated == item.materialization.generated,
                                 "stored identity and generated status agree");
+                        require(!item.routes.isEmpty(), "stored result joins observed applications");
+                        boolean producer = false;
+                        for (TerminalSupportCapture.Application route : item.routes) {
+                            producer |= item.fromProducer(route);
+                            require(route.mind == item.materialization.mind && root.ground.equivalent(route.ground),
+                                    "same native inference Mind and typed ground conclusion");
+                            require(!TerminalSupportCapture.matchesStored(item.materialization, route, -1)
+                                    && !TerminalSupportCapture.matchesStored(item.materialization, route, item.materialization.operation + 1),
+                                    "unknown or different operation cannot join");
+                            TerminalSupportCapture.Application wrongMind = new TerminalSupportCapture.Application(
+                                    route.mind + 100000, route.rule, route.ruleOrigin, route.conclusion, route.ground,
+                                    route.bindings, route.supports);
+                            require(!TerminalSupportCapture.matchesStored(item.materialization, wrongMind, item.materialization.operation),
+                                    "same atom in sibling Mind cannot join");
+                            TerminalSupportCapture.Ground opposite = new TerminalSupportCapture.Ground(
+                                    route.ground.predicate, !route.ground.sign, route.ground.arguments);
+                            TerminalSupportCapture.Application wrongSign = new TerminalSupportCapture.Application(
+                                    route.mind, route.rule, route.ruleOrigin, route.conclusion, opposite, route.bindings, route.supports);
+                            require(!TerminalSupportCapture.matchesStored(item.materialization, wrongSign, item.materialization.operation),
+                                    "same rendering with opposite typed sign cannot join");
+                        }
+                        require(producer, "stored originating production has an observed application");
                         if (root.ground == null || !root.ground.predicate.equals("derived")) continue;
                         derived = true;
                         require(root.generated, "new stored consequence is generated");
@@ -100,6 +122,72 @@ public final class DmzStoredProductionRunner {
                 for (TerminalSupportCapture.StoredObservation item : capture.storedSnapshot())
                     require(item.outcome == TerminalSupportCapture.Outcome.ROLLED_BACK,
                             "query-local stored result is not a durable accepted write: " + item.outcome);
+            }
+        }
+    }
+    private static void alternatives() throws Exception {
+        User user = new User(); new UDF().init(user);
+        Mind q = new Mind(user); user.setCurrentMind(q);
+        IContextResults.Revision pin = new IContextResults.Revision(UUID.randomUUID(), 1);
+        try (DmzReplayProvenance journal = DmzReplayProvenance.begin()) {
+            replay(q, pin, 10, "!@x source(x) -> derived(x);");
+            replay(q, pin, 11, "!@x source(x) -> middle(x);");
+            replay(q, pin, 12, "!@x middle(x) -> derived(x);");
+            try (TerminalSupportCapture capture = TerminalSupportCapture.begin(q);
+                    TechnicalMindTransaction outer = TechnicalMindTransaction.begin(q)) {
+                require(Boolean.TRUE.equals(outer.mind().query("!source(1);", null, false)), "alternative routes inference");
+                boolean joined = false;
+                for (TerminalSupportCapture.StoredObservation item : capture.storedSnapshot()) {
+                    CollisionProofCapture.Node root = item.materialization.causes.nodes.get(item.materialization.causes.root);
+                    if (root.ground == null || !root.ground.predicate.equals("derived")) continue;
+                    java.util.Set<Integer> productions = new java.util.HashSet<Integer>();
+                    boolean directProducer = false;
+                    for (TerminalSupportCapture.Application route : item.routes) {
+                        productions.add(route.rule); directProducer |= item.fromProducer(route);
+                    }
+                    require(productions.size() == 2 && directProducer,
+                            "stored native identity retains direct and recursive routes, including later suppressed result");
+                    joined = true;
+                }
+                require(joined, "alternative stored result present");
+                require(outer.commit(), "alternative routes commit");
+                for (TerminalSupportCapture.StoredObservation item : capture.storedSnapshot())
+                    require(item.outcome == TerminalSupportCapture.Outcome.COMMITTED, "joined routes share stored settlement");
+            }
+        }
+    }
+    private static void siblingOperations() throws Exception {
+        User user = new User(); new UDF().init(user);
+        Mind q = new Mind(user); user.setCurrentMind(q);
+        IContextResults.Revision pin = new IContextResults.Revision(UUID.randomUUID(), 1);
+        try (DmzReplayProvenance journal = DmzReplayProvenance.begin()) {
+            replay(q, pin, 10, "!@x source(x) -> derived(x);");
+            try (TerminalSupportCapture capture = TerminalSupportCapture.begin(q)) {
+                List<TerminalSupportCapture.StoredObservation> before;
+                try (TechnicalMindTransaction first = TechnicalMindTransaction.begin(q)) {
+                    require(Boolean.TRUE.equals(first.mind().query("!source(1);", null, false)), "first sibling inference");
+                    before = capture.storedSnapshot();
+                    require(!before.isEmpty() && !before.get(0).routes.isEmpty(), "first sibling routes observed");
+                    first.rollback();
+                }
+                try (TechnicalMindTransaction second = TechnicalMindTransaction.begin(q)) {
+                    require(Boolean.TRUE.equals(second.mind().query("!source(1);", null, false)), "same atom in second sibling");
+                    require(second.commit(), "second sibling commits");
+                }
+                boolean committed = false, discarded = false;
+                for (TerminalSupportCapture.StoredObservation item : capture.storedSnapshot()) {
+                    require(!item.routes.isEmpty(), "each sibling retains its own routes");
+                    for (TerminalSupportCapture.Application route : item.routes)
+                        require(route.mind == item.materialization.mind, "identical atom does not merge sibling routes");
+                    if (item.outcome == TerminalSupportCapture.Outcome.COMMITTED) {
+                        committed = true;
+                        for (TerminalSupportCapture.Application route : before.get(0).routes)
+                            require(!item.routes.contains(route), "rolled-back route cannot enter committed result");
+                    } else if (item.outcome == TerminalSupportCapture.Outcome.ROLLED_BACK) discarded = true;
+                }
+                require(committed && discarded, "both sibling settlements retained independently");
+                require(before.get(0).outcome == TerminalSupportCapture.Outcome.PENDING,
+                        "previous detached snapshot is immutable historical observation");
             }
         }
     }
