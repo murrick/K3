@@ -55,6 +55,27 @@ public final class DmzNativeRecursiveContinuationRunner {
             require(!q.getHypothesis().isEmpty(), "parent hypothesis store is populated before branch opens");
             String state = DmzObservationStateFingerprint.capture(q);
             String parentHypotheses = hypothesisText(q);
+            if (negative) {
+                try (TechnicalMindTransaction admission = TechnicalMindTransaction.beginIsolated(q)) {
+                    require(Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(admission.mind(), fact, 96,
+                            DmzReplayProvenance.Authority.EXTERNAL, "!~derived(1);")),
+                            "explicit negative primary accepted over generated negative target");
+                    DmzCurrentUnaryProofInventory.Proofs admitted = DmzCurrentUnaryProofInventory.capture(
+                            admission.mind(), 10000, true).proofs(root, java.util.Collections.emptyList(), 10000);
+                    require(!admitted.truncated && admitted.provisional && admitted.witnesses.size() == original + 1,
+                            "negative primary adds exactly one support beside generated paths");
+                    boolean primary = false;
+                    for (DmzProofWitnesses.Witness witness : admitted.witnesses)
+                        if (witness.source.sourceRule == 96 && witness.premises.isEmpty()) primary = true;
+                    require(primary, "new negative support is a distinct primary source witness");
+                }
+                DmzCurrentUnaryProofInventory.Proofs restored = DmzCurrentUnaryProofInventory.capture(q, 10000)
+                        .proofs(root, java.util.Collections.emptyList(), 10000);
+                require(!restored.truncated && !restored.provisional && restored.witnesses.size() == original,
+                        "negative primary support disappears after isolated admission rollback");
+                require(state.equals(DmzObservationStateFingerprint.capture(q)) && parentHypotheses.equals(hypothesisText(q)),
+                        "negative admission preserves Q native and hypothesis boundary");
+            }
             require(guard.auditRoutes(proof, blocked, q).matched,
                     "pre-branch route audit: " + guard.auditRoutes(proof, blocked, q).gaps);
             DmzStoredRetractionTransaction overlay = DmzStoredRetractionTransaction.beginContinuation(guard, proof, blocked, q, 10000);
@@ -116,6 +137,15 @@ public final class DmzNativeRecursiveContinuationRunner {
                         "explicit primary occurrence of cached generated support authorizes the same ground");
                 require(java.util.Objects.equals(overlay.queryContinuation(signed(negative, "?derived(1);")),
                         original > 1 ? Boolean.TRUE : null), "same-ground candidate aliases disappear after probe rollback");
+                if (negative) {
+                    DmzStoredRetractionTransaction.QueryResult generatedNegative = overlay.probeCandidate(fact, 97,
+                            "!~derived(1);", "?~tail(1);", 10000);
+                    require(Boolean.TRUE.equals(generatedNegative.value)
+                            && generatedNegative.candidateMode == DmzStoredRetractionTransaction.QueryResult.CandidateMode.NEW_INPUT,
+                            "negative generated target admits conditional primary rather than duplicate shortcut");
+                    count(overlay, root, original - 1, false);
+                    count(overlay, tailGround, original - 1, false);
+                }
                 DmzStoredRetractionTransaction.QueryResult negativeDuplicate = overlay.probeCandidate(fact, 82,
                         "!~negativePrimary(7);", "?~negativePrimary(7);", 10000);
                 require(Boolean.TRUE.equals(negativeDuplicate.value)
