@@ -186,8 +186,8 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
     QueryResult probeCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
             String candidate, String queryStatement, int auditBudget, int lookupBudget) throws Exception {
         if (closed) throw new IllegalStateException("Retraction overlay closed");
-        if (!continuationOnly || candidate == null || !candidate.matches("![A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
-            throw new IllegalArgumentException("Only positive unary integer candidates are qualified");
+        if (!continuationOnly || candidate == null || !candidate.matches("!~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
+            throw new IllegalArgumentException("Only signed unary integer candidates are qualified");
         if (queryStatement == null || !queryStatement.matches("\\?~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
             throw new IllegalArgumentException("Only signed unary integer candidate queries are qualified");
         if (auditBudget < 1 || auditBudget > 10000) throw new IllegalArgumentException("Query audit budget must be between 1 and 10000");
@@ -220,7 +220,8 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
     }
     private static boolean existingPrimary(Mind mind, String statement, int budget) throws Exception {
         int open = statement.indexOf('(');
-        String predicate = statement.substring(1, open);
+        boolean positive = !statement.startsWith("!~");
+        String predicate = statement.substring(positive ? 1 : 2, open);
         java.math.BigDecimal value = new java.math.BigDecimal(statement.substring(open + 1, statement.length() - 2));
         for (IRule candidate : mind.getRules()) {
             if (budget-- == 0) throw new IllegalStateException("Candidate primary lookup budget exceeded");
@@ -228,7 +229,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             Rule rule = (Rule) candidate;
             if (rule.getTree().size() != 1 || rule.getTree().get(0).size() != 1) continue;
             Domain literal = rule.getDomain();
-            if (!literal.isAntc() || !literal.getPredicate().getName(mind).equals(predicate)
+            if (literal.isAntc() != positive || !literal.getPredicate().getName(mind).equals(predicate)
                     || literal.getArguments().size() != 1) continue;
             org.kanger.interfaces.ITerm term = literal.getArguments().get(0).getValue(mind);
             Object actual = term == null ? null : term.getValue();

@@ -32,6 +32,8 @@ public final class DmzNativeRecursiveContinuationRunner {
             accept(q, rules, 13, negative ? "!@x middle(x) -> ~derived(x);" : "!@x middle(x) -> derived(x);");
             accept(q, rules, 14, negative ? "!@x ~derived(x) -> ~tail(x);" : "!@x derived(x) -> tail(x);");
             accept(q, rules, 16, "!@x independent(x) -> middle(x);");
+            accept(q, rules, 80, "!@x ~negativeSeed(x) -> negativeResult(x);");
+            accept(q, fact, 81, "!~negativePrimary(7);");
             if (duplicate) DmzReplayProvenance.replayRule(q, rules, 15,
                     DmzReplayProvenance.Authority.EXTERNAL, negative ? "!@x middle(x) -> ~derived(x);" : "!@x middle(x) -> derived(x);");
             DmzAcceptanceProofGuard guard = DmzAcceptanceProofGuard.beforeInput(capture, journal, q);
@@ -53,6 +55,8 @@ public final class DmzNativeRecursiveContinuationRunner {
             require(!q.getHypothesis().isEmpty(), "parent hypothesis store is populated before branch opens");
             String state = DmzObservationStateFingerprint.capture(q);
             String parentHypotheses = hypothesisText(q);
+            require(guard.auditRoutes(proof, blocked, q).matched,
+                    "pre-branch route audit: " + guard.auditRoutes(proof, blocked, q).gaps);
             DmzStoredRetractionTransaction overlay = DmzStoredRetractionTransaction.beginContinuation(guard, proof, blocked, q, 10000);
             try {
                 require(overlay.hasLiveRule(stored.nativeRule) == (original > 1)
@@ -112,10 +116,22 @@ public final class DmzNativeRecursiveContinuationRunner {
                         "explicit primary occurrence of cached generated support authorizes the same ground");
                 require(java.util.Objects.equals(overlay.queryContinuation(signed(negative, "?derived(1);")),
                         original > 1 ? Boolean.TRUE : null), "same-ground candidate aliases disappear after probe rollback");
-                boolean candidateRefused = false;
-                try { overlay.probeCandidate(fact, 65, "!~middle(1);", signed(negative, "?derived(1);"), 10000); }
-                catch (IllegalArgumentException expected) { candidateRefused = true; }
-                require(candidateRefused, "negative candidate rejected before probe opens");
+                DmzStoredRetractionTransaction.QueryResult negativeDuplicate = overlay.probeCandidate(fact, 82,
+                        "!~negativePrimary(7);", "?~negativePrimary(7);", 10000);
+                require(Boolean.TRUE.equals(negativeDuplicate.value)
+                        && negativeDuplicate.candidateMode == DmzStoredRetractionTransaction.QueryResult.CandidateMode.EXISTING_PRIMARY,
+                        "negative primary duplicate reuses the existing signed source");
+                DmzStoredRetractionTransaction.QueryResult negativeFresh = overlay.probeCandidate(fact, 83,
+                        "!~negativeSeed(8);", "?negativeResult(8);", 10000);
+                require(Boolean.TRUE.equals(negativeFresh.value)
+                        && negativeFresh.candidateMode == DmzStoredRetractionTransaction.QueryResult.CandidateMode.NEW_INPUT,
+                        "fresh negative candidate supports positive consequence");
+                require(overlay.queryContinuation("?negativeResult(8);") == null,
+                        "negative candidate consequences disappear on rollback");
+                require(Boolean.FALSE.equals(overlay.probeCandidate(fact, 84, "!~negativeSeed(8);",
+                        "?~negativeResult(8);", 10000).value), "negative candidate refutes opposite consequence query");
+                if (!negative) require(Boolean.FALSE.equals(overlay.probeCandidate(fact, 85, "!~tail(99);",
+                        "?derived(99);", 10000).value), "negative downstream candidate refutes upstream through contraposition");
                 if (negative) require(Boolean.FALSE.equals(overlay.probeCandidate(fact, 62, "!tail(99);",
                         signed(negative, "?derived(99);"), 10000).value),
                         "opposite downstream candidate refutes the signed query rather than supporting it");
@@ -173,12 +189,12 @@ public final class DmzNativeRecursiveContinuationRunner {
                 boolean auditRejected = false;
                 try {
                     if (failureMode == 1) overlay.queryContinuation(signed(negative, "?derived(1);"), 1);
-                    else if (failureMode == 2) overlay.probeCandidate(fact, 70, "!source(66);",
+                    else if (failureMode == 2) overlay.probeCandidate(fact, 70, "!~negativeSeed(66);",
                             signed(negative, "?derived(66);"), 1);
-                    else if (failureMode == 4) overlay.probeCandidate(fact, 74, "!source(66);",
+                    else if (failureMode == 4) overlay.probeCandidate(fact, 74, "!~negativeSeed(66);",
                             signed(negative, "?derived(66);"), 10000, 1);
                     else if (failureMode == 3) overlay.probeCandidate(
-                            new IContextResults.Revision(fact.getContextId(), 2), 71, "!source(66);",
+                            new IContextResults.Revision(fact.getContextId(), 2), 71, "!~negativeSeed(66);",
                             signed(negative, "?derived(66);"), 10000);
                     else overlay.accept(new IContextResults.Revision(fact.getContextId(), 2), 31,
                             DmzReplayProvenance.Authority.EXTERNAL, "!independent(3);");
