@@ -1,0 +1,84 @@
+{
+  "native_head": "2422f7f6d9e1af7608203b1566df64b5f29fe344",
+  "JVMs": 55,
+  "context_snapshot_JVMs": 6,
+  "reentrant_context_cases": 24,
+  "context_membership_and_retirement_traces_identical": true,
+  "consumer_JVMs": 9,
+  "owner_JVMs": 3,
+  "route_order_JVMs": 2,
+  "route_probe_cases": 100,
+  "cost_JVMs": 28,
+  "wiring_JVMs": 4,
+  "disagreement_gate_JVMs": 3,
+  "cost_measured_batches": 1792,
+  "prior_accepted_traces_identical": 63,
+  "cost_trace_replays_identical": 56,
+  "native_controls_identical": true,
+  "signed_route_order_and_deduplication_identical": true,
+  "JOURNAL_DISAGREEMENT_fault_injected_and_recovers": true,
+  "both_full_authority_journals_enabled": true,
+  "production_changed": false,
+  "metrics": [
+    {
+      "size": 32,
+      "workload": "setter",
+      "baseline_ns": 438.0799560546875,
+      "baseline_bytes": 1173.060791015625,
+      "candidate_ns": 386.8424377441406,
+      "candidate_bytes": 819.3388671875,
+      "paired_candidate_baseline_ratio": 0.8651406344512376,
+      "ratio_range": [
+        0.5623287912846856,
+        1.3153581963758956
+      ],
+      "paired_saved_bytes": 341.721923828125
+    },
+    {
+      "size": 32,
+      "workload": "export",
+      "baseline_ns": 367001.828125,
+      "baseline_bytes": 777677.0,
+      "candidate_ns": 462876.34375,
+      "candidate_bytes": 772810.0,
+      "paired_candidate_baseline_ratio": 1.3219532696589305,
+      "ratio_range": [
+        0.7523862706688426,
+        1.939385319688971
+      ],
+      "paired_saved_bytes": 5169.875
+    },
+    {
+      "size": 128,
+      "workload": "setter",
+      "baseline_ns": 420.53216552734375,
+      "baseline_bytes": 1195.3388671875,
+      "candidate_ns": 423.5641174316406,
+      "candidate_bytes": 843.3388671875,
+      "paired_candidate_baseline_ratio": 0.8124912538599292,
+      "ratio_range": [
+        0.7185298999824276,
+        1.2575020482254196
+      ],
+      "paired_saved_bytes": 352.0
+    },
+    {
+      "size": 128,
+      "workload": "export",
+      "baseline_ns": 899034.484375,
+      "baseline_bytes": 2662544.0,
+      "candidate_ns": 901930.28125,
+      "candidate_bytes": 2663824.0,
+      "paired_candidate_baseline_ratio": 0.9926932682015737,
+      "ratio_range": [
+        0.8964559042485902,
+        1.097927505836126
+      ],
+      "paired_saved_bytes": -1200.0
+    }
+  ],
+  "SMART_qualified": false,
+  "full_inference_corpus_qualified": false,
+  "native_recycled_ID_repaired": false,
+  "exclusive_host_or_end_to_end_speedup_claimed": false
+}

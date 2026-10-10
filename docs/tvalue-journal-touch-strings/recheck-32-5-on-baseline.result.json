@@ -1,0 +1,30 @@
+{
+  "flag": "on",
+  "module": "baseline",
+  "driver": "cost",
+  "repetition": 5,
+  "size": 32,
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx512m",
+    "-Duser.home=/tmp/three-routes-xtt_s3mb",
+    "-Dresult.path=/workspace/scratch/fe58fcae83c2/K3/docs/tvalue-journal-touch-strings/recheck-32-5-on-baseline",
+    "-Dnative.hooks=true",
+    "-Djournal.cost.enabled=false",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-journal-touch-strings-tests:../build/tvalue-journal-three-routes-tests:../build/tvalue-observer-fast-disabled-tests:../build/tvalue-observer-fast-disabled-cost-tests:../build/tvalue-journal-context-snapshots.jar:../build/tvalue-observer-fast-disabled-hooked:../K3-observer-native/kanger/resources:../K3-observer-native/kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ObserverCostRunner",
+    "attached",
+    "32"
+  ],
+  "exit_code": 0
+}

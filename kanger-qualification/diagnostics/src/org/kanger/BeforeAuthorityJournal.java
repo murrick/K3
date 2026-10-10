@@ -92,6 +92,8 @@ public final class BeforeAuthorityJournal {
         return result;
     }
     private static String scope(State st){return "ctx="+st.context+" mind="+st.mind.getId()+" generation="+st.generation+" invocation="+st.invocation;}
+    // Build TOUCH directly: keep scope/getter evaluation order and avoid its temporary String.
+    private static StringBuilder touchRow(State st,String reason){return new StringBuilder("TOUCH ctx=").append(st.context).append(" mind=").append(st.mind.getId()).append(" generation=").append(st.generation).append(" invocation=").append(st.invocation).append(" reason=").append(reason).append(" variable=");}
     private static String encode(SortedMap<Long,String> view){StringBuilder text=new StringBuilder("{");boolean first=true;for(Map.Entry<Long,String> e:view.entrySet()){if(!first)text.append(';');first=false;text.append(e.getKey()).append('=').append(e.getValue());}return text.append('}').toString();}
     /** Private native journal views use natural-order TreeMaps. */
     private static List<Long> changedKeys(SortedMap<Long,String> before,SortedMap<Long,String> after){
@@ -148,7 +150,7 @@ public final class BeforeAuthorityJournal {
             State[] states=s.ordered;
             for(State st:states)if(!st.retired&&dependsOn(st.mind,owner)){
                 st.observed.put(value,value.getTVarId());st.dirty.add(value.getTVarId());st.variableByValue.put(value.getId(),value.getTVarId());s.touches++;
-                s.rows.add("TOUCH "+scope(st)+" reason="+reason+" variable="+value.getTVarId()+" value="+value.getId()+" term="+value.getValueId());
+                s.rows.add(touchRow(st,reason).append(value.getTVarId()).append(" value=").append(value.getId()).append(" term=").append(value.getValueId()).toString());
             }
         });
     }
@@ -178,7 +180,7 @@ public final class BeforeAuthorityJournal {
     }
     private static void metadataTouch(Session s,State st,TValue value,String reason,long variable){
         st.dirty.add(variable);s.touches++;
-        s.rows.add("TOUCH "+scope(st)+" reason="+reason+" variable="+variable+" value="+value.getId()+" term="+value.getValueId());
+        s.rows.add(touchRow(st,reason).append(variable).append(" value=").append(value.getId()).append(" term=").append(value.getValueId()).toString());
     }
     /** Post-successful native Base.get only. No snapshot, hydration, LRU
      * access, owner write, factory repair or authority registration. */
@@ -211,7 +213,7 @@ public final class BeforeAuthorityJournal {
                 // context; aliases in other contexts are checked separately.
                 Iterator<TValue> old=st.observed.keySet().iterator();while(old.hasNext())if(old.next().getId()==id)old.remove();
                 st.observed.put(value,route);st.dirty.add(route);s.touches++;
-                s.rows.add("TOUCH "+scope(st)+" reason=materialize variable="+route+" value="+id+" term="+value.getValueId());
+                s.rows.add(touchRow(st,"materialize").append(route).append(" value=").append(id).append(" term=").append(value.getValueId()).toString());
             }
         }catch(Throwable e){s.errors.add(e.getClass().getName()+":"+e.getMessage());}
     }

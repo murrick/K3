@@ -1,5 +1,9 @@
 # TValue diagnostic source set
 
+## TOUCH string experiment (candidate)
+
+Both journals assemble TOUCH with one local StringBuilder, avoiding the temporary scope String while retaining getter order. Setter allocations decrease, but export-32 has an unresolved timing regression signal; do not promote this candidate yet. See [the TOUCH report](../../docs/tvalue-journal-touch-strings.md) for 67 JVM checks, measurements and frozen-parent reproduction.
+
 ## Current context-membership snapshot experiment
 
 Each journal now retains a private ordered State array and replaces it only on context registration. Every traversal captures the array reference at entry, preserving reentrant registration and live retirement semantics. See [the context-snapshot report](../../docs/tvalue-journal-context-snapshots.md) for bounded qualification, callback allocation measurements and the extra registration cost. Prior experiment build scripts require their frozen source checkout.

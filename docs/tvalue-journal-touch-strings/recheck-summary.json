@@ -1,0 +1,221 @@
+{
+  "JVMs": 12,
+  "measured_batches": 768,
+  "identical_trace_replays": 24,
+  "metrics": [
+    {
+      "size": 32,
+      "workload": "setter",
+      "paired_candidate_baseline_ratio": 0.9152956489285402,
+      "ratios": [
+        0.9131488923577668,
+        1.0571619515658741,
+        0.830962435591099,
+        0.6259345311543825,
+        0.9174424054993136,
+        1.0165416488036934
+      ],
+      "paired_saved_bytes": 340.39990234375,
+      "savings": [
+        316.0,
+        352.0,
+        353.05322265625,
+        370.30615234375,
+        328.7998046875,
+        328.1318359375
+      ]
+    },
+    {
+      "size": 32,
+      "workload": "export",
+      "paired_candidate_baseline_ratio": 1.0705025648573088,
+      "ratios": [
+        0.9046656739296841,
+        1.3764550307280259,
+        0.9565291514711645,
+        1.0548069138319185,
+        1.4760597502266817,
+        1.0861982158826993
+      ],
+      "paired_saved_bytes": 2620.0,
+      "savings": [
+        7685.0,
+        9696.0,
+        2600.0,
+        -2287.5,
+        2640.0,
+        -9731.25
+      ]
+    }
+  ],
+  "per_JVM": [
+    {
+      "repetition": 0,
+      "module": "baseline",
+      "workload": "setter",
+      "ns": 354.67755126953125,
+      "bytes": 1135.3388671875
+    },
+    {
+      "repetition": 0,
+      "module": "baseline",
+      "workload": "export",
+      "ns": 383997.3125,
+      "bytes": 777728.0
+    },
+    {
+      "repetition": 0,
+      "module": "candidate",
+      "workload": "setter",
+      "ns": 323.8734130859375,
+      "bytes": 819.3388671875
+    },
+    {
+      "repetition": 0,
+      "module": "candidate",
+      "workload": "export",
+      "ns": 347389.1875,
+      "bytes": 770043.0
+    },
+    {
+      "repetition": 1,
+      "module": "baseline",
+      "workload": "setter",
+      "ns": 358.281005859375,
+      "bytes": 1195.3388671875
+    },
+    {
+      "repetition": 1,
+      "module": "baseline",
+      "workload": "export",
+      "ns": 377276.71875,
+      "bytes": 777789.0
+    },
+    {
+      "repetition": 1,
+      "module": "candidate",
+      "workload": "setter",
+      "ns": 378.76104736328125,
+      "bytes": 843.3388671875
+    },
+    {
+      "repetition": 1,
+      "module": "candidate",
+      "workload": "export",
+      "ns": 519304.4375,
+      "bytes": 768093.0
+    },
+    {
+      "repetition": 2,
+      "module": "baseline",
+      "workload": "setter",
+      "ns": 469.36798095703125,
+      "bytes": 1195.3388671875
+    },
+    {
+      "repetition": 2,
+      "module": "baseline",
+      "workload": "export",
+      "ns": 444690.25,
+      "bytes": 780280.0
+    },
+    {
+      "repetition": 2,
+      "module": "candidate",
+      "workload": "setter",
+      "ns": 390.02716064453125,
+      "bytes": 842.28564453125
+    },
+    {
+      "repetition": 2,
+      "module": "candidate",
+      "workload": "export",
+      "ns": 425359.1875,
+      "bytes": 777680.0
+    },
+    {
+      "repetition": 3,
+      "module": "baseline",
+      "workload": "setter",
+      "ns": 608.404541015625,
+      "bytes": 1189.64501953125
+    },
+    {
+      "repetition": 3,
+      "module": "baseline",
+      "workload": "export",
+      "ns": 406173.09375,
+      "bytes": 770932.0
+    },
+    {
+      "repetition": 3,
+      "module": "candidate",
+      "workload": "setter",
+      "ns": 380.8214111328125,
+      "bytes": 819.3388671875
+    },
+    {
+      "repetition": 3,
+      "module": "candidate",
+      "workload": "export",
+      "ns": 428434.1875,
+      "bytes": 773219.5
+    },
+    {
+      "repetition": 4,
+      "module": "baseline",
+      "workload": "setter",
+      "ns": 365.9014892578125,
+      "bytes": 1172.138671875
+    },
+    {
+      "repetition": 4,
+      "module": "baseline",
+      "workload": "export",
+      "ns": 295465.40625,
+      "bytes": 778704.0
+    },
+    {
+      "repetition": 4,
+      "module": "candidate",
+      "workload": "setter",
+      "ns": 335.69354248046875,
+      "bytes": 843.3388671875
+    },
+    {
+      "repetition": 4,
+      "module": "candidate",
+      "workload": "export",
+      "ns": 436124.59375,
+      "bytes": 776064.0
+    },
+    {
+      "repetition": 5,
+      "module": "baseline",
+      "workload": "setter",
+      "ns": 398.9176025390625,
+      "bytes": 1147.470703125
+    },
+    {
+      "repetition": 5,
+      "module": "baseline",
+      "workload": "export",
+      "ns": 382836.375,
+      "bytes": 769996.75
+    },
+    {
+      "repetition": 5,
+      "module": "candidate",
+      "workload": "setter",
+      "ns": 405.516357421875,
+      "bytes": 819.3388671875
+    },
+    {
+      "repetition": 5,
+      "module": "candidate",
+      "workload": "export",
+      "ns": 415836.1875,
+      "bytes": 779728.0
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "flag": "verify",
+  "module": "candidate",
+  "driver": "contexts",
+  "repetition": 0,
+  "size": 0,
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx512m",
+    "-Duser.home=/tmp/three-routes-sm8s9hn2",
+    "-Dresult.path=/workspace/scratch/fe58fcae83c2/K3/docs/tvalue-journal-touch-strings/contexts-verify-candidate",
+    "-Dnative.hooks=true",
+    "-Djournal.cost.enabled=false",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-Dkanger.experiment.verifyTValueIndex=true",
+    "-Dkanger.experiment.verifySolveSync=true",
+    "-cp",
+    "../build/tvalue-journal-touch-strings-tests:../build/tvalue-journal-three-routes-tests:../build/tvalue-observer-fast-disabled-tests:../build/tvalue-observer-fast-disabled-cost-tests:../build/tvalue-journal-touch-strings.jar:../build/tvalue-observer-fast-disabled-hooked:../K3-observer-native/kanger/resources:../K3-observer-native/kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ContextSnapshotRunner",
+    "0"
+  ],
+  "exit_code": 0
+}
