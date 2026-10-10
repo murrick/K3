@@ -6,17 +6,18 @@ import java.util.UUID;
 import org.kanger.interfaces.IContextResults;
 import org.kanger.udf.UDF;
 
-/** Native positive unary continuation and isolated recursive query qualification. */
+/** Native positive-input continuation and isolated signed recursive query qualification. */
 public final class DmzNativeRecursiveContinuationRunner {
     private static int checks;
     public static void main(String[] args) throws Exception {
         System.setProperty("user.home", Files.createTempDirectory("dmz-native-recursive-").toString());
         for (boolean alternative : new boolean[] {false, true})
             for (boolean duplicate : new boolean[] {false, true})
-                for (boolean primaryDuplicate : new boolean[] {false, true}) run(alternative, duplicate, primaryDuplicate);
+                for (boolean primaryDuplicate : new boolean[] {false, true})
+                    for (boolean negative : new boolean[] {false, true}) run(alternative, duplicate, primaryDuplicate, negative);
         System.out.println("DMZ_NATIVE_RECURSIVE_CONTINUATION_PASS checks=" + checks);
     }
-    private static void run(boolean alternative, boolean duplicate, boolean primaryDuplicate) throws Exception {
+    private static void run(boolean alternative, boolean duplicate, boolean primaryDuplicate, boolean negative) throws Exception {
         User user = new User(); new UDF().init(user); Mind q = new Mind(user); user.setCurrentMind(q);
         IContextResults.Revision rules = new IContextResults.Revision(UUID.randomUUID(), 1);
         IContextResults.Revision fact = new IContextResults.Revision(UUID.randomUUID(), 1);
@@ -26,11 +27,11 @@ public final class DmzNativeRecursiveContinuationRunner {
                 accept(q, rules, 11, "!@x source(x) -> other(x);");
                 accept(q, rules, 12, "!@x other(x) -> middle(x);");
             }
-            accept(q, rules, 13, "!@x middle(x) -> derived(x);");
-            accept(q, rules, 14, "!@x derived(x) -> tail(x);");
+            accept(q, rules, 13, negative ? "!@x middle(x) -> ~derived(x);" : "!@x middle(x) -> derived(x);");
+            accept(q, rules, 14, negative ? "!@x ~derived(x) -> ~tail(x);" : "!@x derived(x) -> tail(x);");
             accept(q, rules, 16, "!@x independent(x) -> middle(x);");
             if (duplicate) DmzReplayProvenance.replayRule(q, rules, 15,
-                    DmzReplayProvenance.Authority.EXTERNAL, "!@x middle(x) -> derived(x);");
+                    DmzReplayProvenance.Authority.EXTERNAL, negative ? "!@x middle(x) -> ~derived(x);" : "!@x middle(x) -> derived(x);");
             DmzAcceptanceProofGuard guard = DmzAcceptanceProofGuard.beforeInput(capture, journal, q);
             require(Boolean.TRUE.equals(guard.acceptAliases(fact, primaryDuplicate ? new long[] {20,24} : new long[] {20},
                     DmzReplayProvenance.Authority.EXTERNAL, "!source(1);")), "native input");
@@ -52,22 +53,21 @@ public final class DmzNativeRecursiveContinuationRunner {
                         && overlay.hasLiveRule(tail.nativeRule) == (original > 1), "native last-support retraction or retained alternative");
                 count(overlay, root, original - 1, false);
                 count(overlay, tailGround, original - 1, false);
-                require(Boolean.TRUE.equals(overlay.queryContinuation("?derived(1);")) == (original > 1),
+                require(java.util.Objects.equals(overlay.queryContinuation(signed(negative, "?derived(1);")), original > 1 ? Boolean.TRUE : null),
                         "recursive native query respects exact chain restriction");
-                require(Boolean.TRUE.equals(overlay.queryContinuation("?tail(1);")) == (original > 1),
+                require(java.util.Objects.equals(overlay.queryContinuation(signed(negative, "?tail(1);")), original > 1 ? Boolean.TRUE : null),
                         "downstream native query respects exact chain restriction");
-                require(Boolean.TRUE.equals(overlay.queryContinuation("?derived(1);")) == (original > 1),
+                require(java.util.Objects.equals(overlay.queryContinuation(signed(negative, "?derived(1);")), original > 1 ? Boolean.TRUE : null),
                         "repeated query uses a fresh audit");
-                require(!Boolean.TRUE.equals(overlay.queryContinuation("?derived(99);")), "absent substitution remains unknown");
+                require(!Boolean.TRUE.equals(overlay.queryContinuation(signed(negative, "?derived(99);"))), "absent substitution remains unknown");
                 if (original == 1) require(overlay.queryDeniedCount() > 0, "native recursive query pair veto exercised");
                 count(overlay, root, original - 1, false);
                 boolean queryRefused = false;
-                try { overlay.query("?derived(1);"); } catch (IllegalArgumentException expected) { queryRefused = true; }
+                try { overlay.query(signed(negative, "?derived(1);")); } catch (IllegalArgumentException expected) { queryRefused = true; }
                 require(queryRefused, "legacy query entry point remains unavailable in continuation mode");
-                boolean negativeQueryRefused = false;
-                try { overlay.queryContinuation("?~derived(1);"); }
-                catch (IllegalArgumentException expected) { negativeQueryRefused = true; }
-                require(negativeQueryRefused, "negative recursive queries remain outside qualification");
+                require(java.util.Objects.equals(overlay.queryContinuation(signed(!negative, "?derived(1);")),
+                        original > 1 ? Boolean.FALSE : null), "negative query distinguishes refutation from missing proof");
+                require(overlay.queryContinuation(signed(!negative, "?derived(99);")) == null, "absent negative query remains unknown");
                 boolean negativeRefused = false;
                 try { overlay.accept(fact, 30, DmzReplayProvenance.Authority.EXTERNAL, "!~derived(1);"); }
                 catch (IllegalArgumentException expected) { negativeRefused = true; }
@@ -81,8 +81,8 @@ public final class DmzNativeRecursiveContinuationRunner {
                 require(overlay.hasLiveRule(fresh.nativeRule), "native fresh derived result stored");
                 count(overlay, fresh.causes.nodes.get(fresh.causes.root).ground,
                         (alternative ? 2 : 1) * (duplicate ? 2 : 1), true);
-                require(Boolean.TRUE.equals(overlay.queryContinuation("?derived(2);")), "pending fresh substitution query succeeds");
-                require(Boolean.TRUE.equals(overlay.queryContinuation("?derived(1);")) == (original > 1),
+                require(Boolean.TRUE.equals(overlay.queryContinuation(signed(negative, "?derived(2);"))), "pending fresh substitution query succeeds");
+                require(java.util.Objects.equals(overlay.queryContinuation(signed(negative, "?derived(1);")), original > 1 ? Boolean.TRUE : null),
                         "pending unrelated fact cannot authorize blocked ground");
                 require(Boolean.TRUE.equals(overlay.accept(fact, 22, DmzReplayProvenance.Authority.EXTERNAL, "!independent(1);")), "new independent native branch input accepted");
                 require(overlay.hasLiveGround(root) && overlay.hasLiveGround(tailGround),
@@ -91,9 +91,12 @@ public final class DmzNativeRecursiveContinuationRunner {
                         "current allowed proof readmits the retracted native cache");
                 count(overlay, root, original - 1 + (duplicate ? 2 : 1), true);
                 count(overlay, tailGround, original - 1 + (duplicate ? 2 : 1), true);
-                require(Boolean.TRUE.equals(overlay.queryContinuation("?derived(1);"))
-                        && Boolean.TRUE.equals(overlay.queryContinuation("?tail(1);")),
+                require(Boolean.TRUE.equals(overlay.queryContinuation(signed(negative, "?derived(1);")))
+                        && Boolean.TRUE.equals(overlay.queryContinuation(signed(negative, "?tail(1);"))),
                         "pending independent route authorizes root and downstream queries");
+                require(Boolean.FALSE.equals(overlay.queryContinuation(signed(!negative, "?derived(1);")))
+                        && Boolean.FALSE.equals(overlay.queryContinuation(signed(!negative, "?tail(1);"))),
+                        "independent route refutes opposite signed root and downstream queries");
                 count(overlay, root, original - 1 + (duplicate ? 2 : 1), true);
                 require(Boolean.TRUE.equals(overlay.accept(fact, 26, DmzReplayProvenance.Authority.EXTERNAL, "!middle(1);")),
                         "explicit primary alias of cached middle accepted");
@@ -125,10 +128,10 @@ public final class DmzNativeRecursiveContinuationRunner {
             try { overlay.proofs(root, 10000); } catch (IllegalStateException expected) { closed = true; }
             require(closed, "closed branch proof API rejects reuse");
             boolean closedQuery = false;
-            try { overlay.queryContinuation("?derived(1);"); }
+            try { overlay.queryContinuation(signed(negative, "?derived(1);")); }
             catch (IllegalStateException expected) { closedQuery = true; }
             require(closedQuery, "closed branch query API rejects reuse");
-            require(Boolean.TRUE.equals(q.query("?derived(1);", null, false)), "parent query unaffected after scope closes");
+            require(Boolean.TRUE.equals(q.query(signed(negative, "?derived(1);"), null, false)), "parent query unaffected after scope closes");
         }
     }
     private static TerminalSupportCapture.Materialization stored(TerminalSupportCapture capture, String predicate,
@@ -140,6 +143,9 @@ public final class DmzNativeRecursiveContinuationRunner {
         }
         if (result == null) throw new AssertionError("Missing native result " + predicate);
         return result;
+    }
+    private static String signed(boolean negative, String query) {
+        return negative ? "?~" + query.substring(1) : query;
     }
     private static void count(DmzStoredRetractionTransaction overlay, TerminalSupportCapture.Ground ground,
             int expected, boolean provisional) throws Exception {

@@ -9,7 +9,7 @@ import org.kanger.units.Domain;
 import org.kanger.units.Rule;
 
 /** Rollback-only native overlay with narrowly qualified unit-application restrictions.
- * Recursive continuation and its separate query entry point qualify positive unary integer facts.
+ * Recursive continuation accepts positive unary integer facts; its separate query entry point accepts either sign.
  */
 final class DmzStoredRetractionTransaction implements AutoCloseable {
     private final TechnicalMindTransaction transaction;
@@ -137,8 +137,8 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
     int queryDeniedCount() { return restriction.queryDeniedCount(); }
     Boolean queryContinuation(String statement) throws Exception {
         if (closed) throw new IllegalStateException("Retraction overlay closed");
-        if (!continuationOnly || statement == null || !statement.matches("\\?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
-            throw new IllegalArgumentException("Only positive unary integer continuation queries are qualified");
+        if (!continuationOnly || statement == null || !statement.matches("\\?~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
+            throw new IllegalArgumentException("Only signed unary integer continuation queries are qualified");
         Mind child = transaction.mind();
         String state = DmzObservationStateFingerprint.capture(child);
         try {
