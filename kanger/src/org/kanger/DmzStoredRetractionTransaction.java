@@ -139,9 +139,11 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
     static final class QueryResult {
         final Boolean value;
         final List<String> hypotheses;
-        private QueryResult(Boolean value, List<String> hypotheses) {
+        final List<String> hypothesisAssertions;
+        private QueryResult(Boolean value, List<String> hypotheses, List<String> assertions) {
             this.value = value;
             this.hypotheses = java.util.Collections.unmodifiableList(new ArrayList<String>(hypotheses));
+            this.hypothesisAssertions = java.util.Collections.unmodifiableList(new ArrayList<String>(assertions));
         }
     }
     Boolean queryContinuation(String statement) throws Exception { return queryContinuation(statement, 10000); }
@@ -161,7 +163,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             try (DmzTerminalRestriction.QueryScope audit = DmzTerminalRestriction.prepareQuery(child, auditBudget);
                 TechnicalMindTransaction query = TechnicalMindTransaction.beginIsolated(child)) {
                 Boolean value = query.mind().query(statement, null, false);
-                result = new QueryResult(value, hypothesisText(query.mind()));
+                result = querySnapshot(value, query.mind());
             }
             if (!state.equals(DmzObservationStateFingerprint.capture(child)))
                 throw new IllegalStateException("Continuation query changed its branch boundary");
@@ -169,6 +171,40 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 throw new IllegalStateException("Continuation query changed branch hypotheses");
             return result;
         } catch (Exception failure) { close(); throw failure; }
+    }
+    /** Conditional relevance probe; the candidate and its consequences always roll back. */
+    QueryResult probeCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+            String candidate, String queryStatement, int auditBudget) throws Exception {
+        if (closed) throw new IllegalStateException("Retraction overlay closed");
+        if (!continuationOnly || candidate == null || !candidate.matches("![A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
+            throw new IllegalArgumentException("Only positive unary integer candidates are qualified");
+        if (queryStatement == null || !queryStatement.matches("\\?~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
+            throw new IllegalArgumentException("Only signed unary integer candidate queries are qualified");
+        if (auditBudget < 1 || auditBudget > 10000) throw new IllegalArgumentException("Query audit budget must be between 1 and 10000");
+        Mind child = transaction.mind();
+        String state = DmzObservationStateFingerprint.capture(child);
+        List<String> hypotheses = hypothesisText(child);
+        try {
+            QueryResult result;
+            try (TechnicalMindTransaction probe = TechnicalMindTransaction.beginIsolated(child)) {
+                if (!Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(probe.mind(), source, sourceRule,
+                        DmzReplayProvenance.Authority.EXTERNAL, candidate)))
+                    throw new IllegalStateException("Candidate was not accepted in isolated probe");
+                try (DmzTerminalRestriction.QueryScope audit = DmzTerminalRestriction.prepareQuery(probe.mind(), auditBudget)) {
+                    Boolean value = probe.mind().query(queryStatement, null, false);
+                    result = querySnapshot(value, probe.mind());
+                }
+            }
+            if (!state.equals(DmzObservationStateFingerprint.capture(child)) || !hypotheses.equals(hypothesisText(child)))
+                throw new IllegalStateException("Candidate probe changed its branch boundary");
+            return result;
+        } catch (Exception failure) { close(); throw failure; }
+    }
+    private static QueryResult querySnapshot(Boolean value, Mind mind) throws Exception {
+        List<String> assertions = new ArrayList<String>();
+        for (org.kanger.interfaces.IHypothesis hypothesis : mind.getHypothesis())
+            assertions.add(((org.kanger.primitives.Hypothesis) hypothesis).toAssertionString(mind));
+        return new QueryResult(value, hypothesisText(mind), assertions);
     }
     private static List<String> hypothesisText(Mind mind) throws Exception {
         List<String> result = new ArrayList<String>();

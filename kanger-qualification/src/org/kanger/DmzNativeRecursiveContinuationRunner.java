@@ -48,6 +48,9 @@ public final class DmzNativeRecursiveContinuationRunner {
             TerminalSupportCapture.Materialization tail = stored(capture, "tail", null);
             TerminalSupportCapture.Ground tailGround = tail.causes.nodes.get(tail.causes.root).ground;
             int original = (alternative ? 2 : 1) * (duplicate ? 2 : 1) * (primaryDuplicate ? 2 : 1);
+            require(q.query(signed(negative, "?derived(88);"), null, false) == null,
+                    "parent unknown query seeds its own hypothesis store");
+            require(!q.getHypothesis().isEmpty(), "parent hypothesis store is populated before branch opens");
             String state = DmzObservationStateFingerprint.capture(q);
             String parentHypotheses = hypothesisText(q);
             DmzStoredRetractionTransaction overlay = DmzStoredRetractionTransaction.beginContinuation(guard, proof, blocked, q, 10000);
@@ -76,6 +79,25 @@ public final class DmzNativeRecursiveContinuationRunner {
                 require(immutable, "detached hypothesis list is immutable");
                 require(parentHypotheses.equals(hypothesisText(q)), "query hypotheses cannot escape to Q");
                 String hypotheses = unknown.hypotheses.toString();
+                String candidate = null;
+                for (String assertion : unknown.hypothesisAssertions) {
+                    String normalized = assertion.replaceAll("\\s+", "").replace("(99.0)", "(99)");
+                    if (normalized.equals("!source(99);")) { candidate = normalized; break; }
+                }
+                require(candidate != null, "native hypothesis has an assertion-ready positive candidate: " + unknown.hypothesisAssertions);
+                DmzStoredRetractionTransaction.QueryResult candidateResult = overlay.probeCandidate(fact, 60, candidate,
+                        signed(negative, "?derived(99);"), 10000);
+                require(Boolean.TRUE.equals(candidateResult.value), "isolated native hypothesis replay supports its query: "
+                        + candidate + ":" + negative + ":" + candidateResult.value + ":" + candidateResult.hypotheses);
+                require(overlay.queryContinuation(signed(negative, "?derived(99);")) == null,
+                        "candidate success does not become accepted branch evidence");
+                require(overlay.probeCandidate(fact, 61, "!source(77);",
+                        signed(negative, "?derived(99);"), 10000).value == null, "unrelated candidate cannot answer the query");
+                require(java.util.Objects.equals(overlay.queryContinuation(signed(negative, "?derived(1);")),
+                        original > 1 ? Boolean.TRUE : null), "candidate probes preserve the exact old restriction");
+                if (negative) require(Boolean.FALSE.equals(overlay.probeCandidate(fact, 62, "!tail(99);",
+                        signed(negative, "?derived(99);"), 10000).value),
+                        "opposite downstream candidate refutes the signed query rather than supporting it");
                 if (original == 1) require(overlay.queryDeniedCount() > 0, "native recursive query pair veto exercised");
                 count(overlay, root, original - 1, false);
                 boolean queryRefused = false;
