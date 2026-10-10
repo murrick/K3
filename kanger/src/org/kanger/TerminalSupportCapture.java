@@ -320,6 +320,18 @@ final class TerminalSupportCapture implements AutoCloseable {
                 && operation.opened > checkpoint.opened;
     }
 
+    /** One committed acceptance directly after this baseline, with no intervening frame. */
+    boolean followsStored(Checkpoint before, Checkpoint after, Materialization stored) {
+        requireActive();
+        if (!materializations.contains(stored) || !scopeId.equals(before.scope)
+                || !scopeId.equals(after.scope) || before.target != after.target
+                || after.sequence != before.sequence + 1) return false;
+        Frame operation = frames.get(stored.operation);
+        return operation != null && operation.knownBoundary && operation.parent == before.target
+                && operation.opened == before.opened + 1
+                && storedOutcome(stored) == Outcome.COMMITTED;
+    }
+
     boolean isCurrent(Checkpoint checkpoint, Mind target) throws Exception {
         if (closed || Thread.currentThread() != owner || ACTIVE.get() != this || checkpoint == null)
             return false;

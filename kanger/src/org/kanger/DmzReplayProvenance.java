@@ -40,6 +40,10 @@ public final class DmzReplayProvenance implements AutoCloseable {
     private boolean closed;
     private DmzReplayProvenance(Mind boundary) { this.boundary = boundary; previous = ACTIVE.get(); ACTIVE.set(this); }
     public static DmzReplayProvenance begin() { return new DmzReplayProvenance(null); }
+    void requireActiveJournal() {
+        if (closed || Thread.currentThread() != owner || ACTIVE.get() != this)
+            throw new IllegalStateException("Active owning replay journal required");
+    }
     public static DmzReplayProvenance begin(Mind boundary) {
         if (boundary == null) throw new IllegalArgumentException("Explicit boundary required");
         return new DmzReplayProvenance(boundary);

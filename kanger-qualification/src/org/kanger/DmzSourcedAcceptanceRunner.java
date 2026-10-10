@@ -33,7 +33,8 @@ public final class DmzSourcedAcceptanceRunner {
             TechnicalMindTransaction outer = nested ? TechnicalMindTransaction.begin(q) : null;
             try {
                 Mind target = nested ? outer.mind() : q;
-                require(Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(target, fact, 20,
+                DmzAcceptanceProofGuard input = DmzAcceptanceProofGuard.beforeInput(capture, journal, target);
+                require(Boolean.TRUE.equals(input.accept(fact, 20,
                         DmzReplayProvenance.Authority.EXTERNAL, "!source(1);")), "sourced native fact");
                 TerminalSupportCapture.Materialization stored = null;
                 boolean eventSource = false;
@@ -67,6 +68,14 @@ public final class DmzSourcedAcceptanceRunner {
                     for (DmzProofWitnesses.Witness witness : proof.witnesses)
                         require(DmzStoredProofGuard.atCurrentState(capture, q, proof, witness).isCurrent(q),
                                 "all original input bindings visible from Q after commit");
+                    for (DmzProofWitnesses.Witness witness : proof.witnesses)
+                        require(input.isCurrent(proof, witness, q) == !nested,
+                                "pre-input ticket certifies only its exact immediate committed target");
+                    require(!input.isCurrent(proof, null, q), "missing witness rejected");
+                    boolean reused = false;
+                    try { input.accept(fact, 20, DmzReplayProvenance.Authority.EXTERNAL, "!source(2);"); }
+                    catch (IllegalStateException expected) { reused = true; }
+                    require(reused, "pre-input boundary cannot be reused");
                     try (CollisionProofCapture collisions = CollisionProofCapture.begin()) {
                         require(!Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(q, rejected, 30,
                                 DmzReplayProvenance.Authority.EXTERNAL, "!~source(1);")), "contradictory sourced input rejected");
