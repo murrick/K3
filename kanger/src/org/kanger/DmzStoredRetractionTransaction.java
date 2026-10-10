@@ -181,6 +181,10 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
     /** Conditional relevance probe; the candidate and its consequences always roll back. */
     QueryResult probeCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
             String candidate, String queryStatement, int auditBudget) throws Exception {
+        return probeCandidate(source, sourceRule, candidate, queryStatement, auditBudget, 10000);
+    }
+    QueryResult probeCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+            String candidate, String queryStatement, int auditBudget, int lookupBudget) throws Exception {
         if (closed) throw new IllegalStateException("Retraction overlay closed");
         if (!continuationOnly || candidate == null || !candidate.matches("![A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
             throw new IllegalArgumentException("Only positive unary integer candidates are qualified");
@@ -189,13 +193,15 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         if (auditBudget < 1 || auditBudget > 10000) throw new IllegalArgumentException("Query audit budget must be between 1 and 10000");
         if (source == null || sourceRule < 0 || source.getCommune() != null || !source.getCommuneMembers().isEmpty())
             throw new IllegalArgumentException("Exact atomic candidate source required");
+        if (lookupBudget < 1 || lookupBudget > 10000)
+            throw new IllegalArgumentException("Candidate lookup budget must be between 1 and 10000");
         Mind child = transaction.mind();
         String state = DmzObservationStateFingerprint.capture(child);
         List<String> hypotheses = hypothesisText(child);
         try {
             QueryResult result;
             try (TechnicalMindTransaction probe = TechnicalMindTransaction.beginIsolated(child)) {
-                QueryResult.CandidateMode mode = existingPrimary(child, candidate)
+                QueryResult.CandidateMode mode = existingPrimary(child, candidate, lookupBudget)
                         ? QueryResult.CandidateMode.EXISTING_PRIMARY : QueryResult.CandidateMode.NEW_INPUT;
                 if (mode == QueryResult.CandidateMode.NEW_INPUT
                         && !Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(probe.mind(), source, sourceRule,
@@ -212,11 +218,12 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             return result;
         } catch (Exception failure) { close(); throw failure; }
     }
-    private static boolean existingPrimary(Mind mind, String statement) throws Exception {
+    private static boolean existingPrimary(Mind mind, String statement, int budget) throws Exception {
         int open = statement.indexOf('(');
         String predicate = statement.substring(1, open);
         java.math.BigDecimal value = new java.math.BigDecimal(statement.substring(open + 1, statement.length() - 2));
         for (IRule candidate : mind.getRules()) {
+            if (budget-- == 0) throw new IllegalStateException("Candidate primary lookup budget exceeded");
             if (candidate.isDeleted(mind) || candidate.isQuery() || mind.getRules().isGenerated(candidate)) continue;
             Rule rule = (Rule) candidate;
             if (rule.getTree().size() != 1 || rule.getTree().get(0).size() != 1) continue;

@@ -15,7 +15,7 @@ public final class DmzNativeRecursiveContinuationRunner {
             for (boolean duplicate : new boolean[] {false, true})
                 for (boolean primaryDuplicate : new boolean[] {false, true})
                     for (boolean negative : new boolean[] {false, true})
-                        for (int failureMode : new int[] {0, 1, 2, 3})
+                        for (int failureMode : new int[] {0, 1, 2, 3, 4})
                             run(alternative, duplicate, primaryDuplicate, negative, failureMode);
         System.out.println("DMZ_NATIVE_RECURSIVE_CONTINUATION_PASS checks=" + checks);
     }
@@ -85,6 +85,10 @@ public final class DmzNativeRecursiveContinuationRunner {
                     if (normalized.equals("!source(99);")) { candidate = normalized; break; }
                 }
                 require(candidate != null, "native hypothesis has an assertion-ready positive candidate: " + unknown.hypothesisAssertions);
+                boolean lookupBudgetRefused = false;
+                try { overlay.probeCandidate(fact, 75, candidate, signed(negative, "?derived(99);"), 10000, 0); }
+                catch (IllegalArgumentException expected) { lookupBudgetRefused = true; }
+                require(lookupBudgetRefused, "invalid primary lookup budget rejected before mutation");
                 DmzStoredRetractionTransaction.QueryResult candidateResult = overlay.probeCandidate(fact, 60, candidate,
                         signed(negative, "?derived(99);"), 10000);
                 require(Boolean.TRUE.equals(candidateResult.value), "isolated native hypothesis replay supports its query: "
@@ -171,6 +175,8 @@ public final class DmzNativeRecursiveContinuationRunner {
                     if (failureMode == 1) overlay.queryContinuation(signed(negative, "?derived(1);"), 1);
                     else if (failureMode == 2) overlay.probeCandidate(fact, 70, "!source(66);",
                             signed(negative, "?derived(66);"), 1);
+                    else if (failureMode == 4) overlay.probeCandidate(fact, 74, "!source(66);",
+                            signed(negative, "?derived(66);"), 10000, 1);
                     else if (failureMode == 3) overlay.probeCandidate(
                             new IContextResults.Revision(fact.getContextId(), 2), 71, "!source(66);",
                             signed(negative, "?derived(66);"), 10000);
@@ -178,6 +184,8 @@ public final class DmzNativeRecursiveContinuationRunner {
                             DmzReplayProvenance.Authority.EXTERNAL, "!independent(3);");
                 } catch (IllegalStateException expected) {
                     auditRejected = true;
+                    if (failureMode == 4) require(expected.getMessage().contains("primary lookup budget exceeded"),
+                            "candidate fails at the separately bounded primary lookup");
                     if (failureMode == 1 || failureMode == 2) require(expected.getMessage().contains("inventory unavailable"),
                             "query fails at the bounded inventory audit");
                 }
