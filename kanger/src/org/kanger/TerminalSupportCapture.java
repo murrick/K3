@@ -154,6 +154,40 @@ final class TerminalSupportCapture implements AutoCloseable {
         }
     }
 
+    /** Detached stored-result observation, not a certified rule derivation. */
+    static final class Materialization {
+        final int mind;
+        final long nativeRule;
+        final boolean generated;
+        final CollisionProofCapture.Graph causes;
+        Materialization(int mind, long nativeRule, boolean generated, CollisionProofCapture.Graph causes) {
+            this.mind = mind; this.nativeRule = nativeRule; this.generated = generated; this.causes = causes;
+        }
+    }
+
+    static final class StoredObservation {
+        final Materialization materialization;
+        final Outcome outcome;
+        StoredObservation(Materialization materialization, Outcome outcome) {
+            this.materialization = materialization; this.outcome = outcome;
+        }
+    }
+
+    /** Includes pending/discarded occurrences explicitly; acceptance is historical only. */
+    List<StoredObservation> storedSnapshot() {
+        List<StoredObservation> result = new ArrayList<StoredObservation>();
+        for (Materialization stored : materializations)
+            result.add(new StoredObservation(stored, outcome(stored.mind)));
+        return Collections.unmodifiableList(result);
+    }
+
+    static void recordStored(Mind mind, IRule rule) throws Exception {
+        TerminalSupportCapture capture = ACTIVE.get();
+        if (capture == null) return;
+        capture.materializations.add(new Materialization(capture.identity(mind), rule.getId(),
+                mind.getRules().isGenerated(rule), CollisionProofCapture.build(mind, rule)));
+    }
+
     private static final class Frame {
         final int parent;
         final boolean knownBoundary;
@@ -284,6 +318,7 @@ final class TerminalSupportCapture implements AutoCloseable {
     private Mind boundary;
     private final List<Event> events = new ArrayList<Event>();
     private final List<Application> applications = new ArrayList<Application>();
+    private final List<Materialization> materializations = new ArrayList<Materialization>();
     private final List<String> applicationGaps = new ArrayList<String>();
     private final List<Match> matches = new ArrayList<Match>();
     private final java.util.UUID scopeId = java.util.UUID.randomUUID();

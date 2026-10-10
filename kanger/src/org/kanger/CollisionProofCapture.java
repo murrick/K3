@@ -89,7 +89,7 @@ final class CollisionProofCapture implements AutoCloseable {
         return Collections.unmodifiableList(new ArrayList<Conflict>(conflicts));
     }
 
-    private static Graph build(Mind mind, IRule root) throws Exception {
+    static Graph build(Mind mind, IRule root) throws Exception {
         Builder builder = new Builder(mind);
         return new Graph(builder.visit(root), builder.nodes);
     }
