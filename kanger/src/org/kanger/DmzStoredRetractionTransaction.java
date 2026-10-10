@@ -124,6 +124,99 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             throw new IllegalStateException("Candidate assessment branch boundary changed");
         return new CandidateAssessment(branch, authority);
     }
+    static final class ConflictSupport {
+        final DmzProofWitnesses.Witness witness;
+        final List<DmzReplayProvenance.Binding> accepted, pending;
+        private ConflictSupport(DmzProofWitnesses.Witness witness, List<DmzReplayProvenance.Binding> accepted,
+                List<DmzReplayProvenance.Binding> pending) {
+            this.witness = witness;
+            this.accepted = java.util.Collections.unmodifiableList(new ArrayList<DmzReplayProvenance.Binding>(accepted));
+            this.pending = java.util.Collections.unmodifiableList(new ArrayList<DmzReplayProvenance.Binding>(pending));
+        }
+    }
+    static final class ConflictEvidence {
+        final CandidateAssessment assessment;
+        final List<ConflictSupport> supports;
+        final TerminalSupportCapture.Ground candidate;
+        private final DmzStoredRetractionTransaction owner;
+        private final String state;
+        private final DmzReplayProvenance.SourceCheckpoint sources;
+        private ConflictEvidence(DmzStoredRetractionTransaction owner, CandidateAssessment assessment,
+                List<ConflictSupport> supports, String state, DmzReplayProvenance.SourceCheckpoint sources) {
+            this.owner = owner; this.assessment = assessment; this.state = state; this.sources = sources;
+            this.supports = java.util.Collections.unmodifiableList(new ArrayList<ConflictSupport>(supports));
+            DmzProofWitnesses.Witness first = supports.get(0).witness;
+            TerminalSupportCapture.Ground opposing = first.graph.observed.nodes.get(first.node).ground;
+            this.candidate = new TerminalSupportCapture.Ground(opposing.predicate, !opposing.sign, opposing.arguments);
+        }
+        boolean isCurrent() throws Exception {
+            return !owner.closed && owner.authorityState.equals(DmzObservationStateFingerprint.capture(owner.authorityTarget))
+                    && owner.authoritySources.isCurrent(owner.authorityTarget)
+                    && state.equals(DmzObservationStateFingerprint.capture(owner.transaction.mind()))
+                    && sources.isCurrent(owner.transaction.mind());
+        }
+    }
+    /** Exact opposing branch witnesses, never a cut or a pending-evidence no-good. */
+    ConflictEvidence conflictEvidence(String candidate, int budget) throws Exception {
+        if (closed) throw new IllegalStateException("Retraction overlay closed");
+        Mind child = transaction.mind();
+        String state = DmzObservationStateFingerprint.capture(child);
+        DmzReplayProvenance.SourceCheckpoint sources = DmzReplayProvenance.sourceCheckpoint(child);
+        CandidateAssessment assessment = assessCandidate(candidate, budget);
+        if (assessment.disposition != CandidateDisposition.NEEDS_BRANCHING || assessment.branch != InputKind.CONFLICT)
+            throw new IllegalArgumentException("Unambiguous branch-only conflict required");
+        DmzCurrentUnaryProofInventory inventory = DmzCurrentUnaryProofInventory.capture(child, budget, true);
+        if (!inventory.eligible) throw new IllegalStateException("Conflict inventory unavailable: " + inventory.gaps);
+        int open = candidate.indexOf('(');
+        boolean sign = !candidate.startsWith("!~");
+        String predicate = candidate.substring(sign ? 1 : 2, open);
+        java.math.BigDecimal value = new java.math.BigDecimal(candidate.substring(open + 1, candidate.length() - 2));
+        List<ConflictSupport> supports = new ArrayList<ConflictSupport>();
+        int remaining = budget;
+        int[] sourceBudget = new int[] {budget};
+        for (DmzObservedProofGraph.Node node : inventory.graph.observed.nodes) {
+            if (remaining-- == 0) throw new IllegalStateException("Conflict ground scan budget exceeded");
+            TerminalSupportCapture.Ground ground = node.ground;
+            if (ground.sign == sign || !ground.predicate.equals(predicate) || ground.arguments.size() != 1) continue;
+            Object actual = ground.arguments.get(0).materialize().getValue();
+            if (!(actual instanceof Number) || value.compareTo(new java.math.BigDecimal(actual.toString())) != 0) continue;
+            DmzCurrentUnaryProofInventory.Proofs proofs = inventory.proofs(ground, DmzTerminalRestriction.activeNoGoods(child), budget);
+            if (proofs.truncated) throw new IllegalStateException("Conflict witness budget exceeded");
+            for (DmzProofWitnesses.Witness witness : proofs.witnesses) {
+                if (supports.size() >= budget) throw new IllegalStateException("Conflict support budget exceeded");
+                List<DmzReplayProvenance.Binding> accepted = new ArrayList<DmzReplayProvenance.Binding>();
+                List<DmzReplayProvenance.Binding> pending = new ArrayList<DmzReplayProvenance.Binding>();
+                collectConflictSources(child, witness, accepted, pending,
+                        java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<DmzReplayProvenance.Binding, Boolean>()),
+                        sourceBudget);
+                if (pending.isEmpty()) throw new IllegalStateException("Branch conflict must have exact pending support");
+                supports.add(new ConflictSupport(witness, accepted, pending));
+            }
+        }
+        if (supports.isEmpty() || !inventory.isCurrent(child)) throw new IllegalStateException("Current opposing support required");
+        ConflictEvidence result = new ConflictEvidence(this, assessment, supports, state, sources);
+        if (!result.isCurrent()) throw new IllegalStateException("Conflict evidence boundary changed");
+        return result;
+    }
+    private static void collectConflictSources(Mind child, DmzProofWitnesses.Witness witness,
+            List<DmzReplayProvenance.Binding> accepted, List<DmzReplayProvenance.Binding> pending,
+            java.util.Set<DmzReplayProvenance.Binding> seen, int[] remaining) throws Exception {
+        if (remaining[0]-- == 0) throw new IllegalStateException("Conflict source traversal budget exceeded");
+        if (seen.add(witness.source)) {
+            boolean found = false;
+            for (DmzReplayProvenance.SourceObservation observation : DmzReplayProvenance.observedSources(child, witness.source.nativeRule)) {
+                if (remaining[0]-- == 0) throw new IllegalStateException("Conflict source lookup budget exceeded");
+                if (observation.binding != witness.source) continue;
+                if (observation.outcome == DmzReplayProvenance.Outcome.ACCEPTED) accepted.add(witness.source);
+                else if (observation.outcome == DmzReplayProvenance.Outcome.PENDING) pending.add(witness.source);
+                else throw new IllegalStateException("Live conflict source outcome required");
+                found = true; break;
+            }
+            if (!found) throw new IllegalStateException("Exact conflict source observation required");
+        }
+        for (DmzProofWitnesses.Witness premise : witness.premises)
+            collectConflictSources(child, premise, accepted, pending, seen, remaining);
+    }
     /** Read-only current-proof diagnostic; never an admission or durable permission. */
     InputKind classifyInput(String statement, int budget) throws Exception {
         if (closed) throw new IllegalStateException("Retraction overlay closed");

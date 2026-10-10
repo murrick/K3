@@ -294,6 +294,44 @@ public final class DmzNativeRecursiveContinuationRunner {
                 try { overlay.assessCandidate("!source(555);", 1); }
                 catch (IllegalStateException expected) { assessmentBounded = expected.getMessage().contains("Classification inventory unavailable"); }
                 require(assessmentBounded, "bounded combined assessment refuses unavailable evidence");
+                DmzStoredRetractionTransaction.ConflictEvidence primaryConflict = overlay.conflictEvidence("!negativeSeed(9);", 10000);
+                require(primaryConflict.isCurrent() && primaryConflict.supports.size() == 1,
+                        "current branch primary conflict has one exact opposing support");
+                require(primaryConflict.candidate.predicate.equals("negativeSeed") && primaryConflict.candidate.sign,
+                        "receipt preserves typed positive candidate opposite pending negative premise");
+                DmzStoredRetractionTransaction.ConflictSupport primarySupport = primaryConflict.supports.get(0);
+                require(primarySupport.witness.step == -1 && primarySupport.accepted.isEmpty()
+                        && primarySupport.pending.size() == 1 && primarySupport.pending.get(0).sourceRule == 100,
+                        "primary conflict identifies pending input without an accepted production");
+                DmzStoredRetractionTransaction.ConflictEvidence derivedConflict = overlay.conflictEvidence("!~negativeResult(9);", 10000);
+                require(derivedConflict.isCurrent() && derivedConflict.supports.size() == 1,
+                        "derived branch conflict has exact current support");
+                require(derivedConflict.candidate.predicate.equals("negativeResult") && !derivedConflict.candidate.sign,
+                        "receipt preserves typed negative candidate opposite positive derived consequence");
+                DmzStoredRetractionTransaction.ConflictSupport derivedSupport = derivedConflict.supports.get(0);
+                require(derivedSupport.witness.step != -1 && derivedSupport.accepted.size() == 1
+                        && derivedSupport.accepted.get(0).sourceRule == 80 && derivedSupport.pending.size() == 1
+                        && derivedSupport.pending.get(0).sourceRule == 100,
+                        "derived conflict separates accepted production and pending premise");
+                DmzStoredRetractionTransaction.ConflictEvidence alternativeConflict = overlay.conflictEvidence(
+                        "!" + (negative ? "" : "~") + "derived(2);", 10000);
+                require(alternativeConflict.supports.size() == (alternative ? 2 : 1) * (duplicate ? 2 : 1),
+                        "conflict receipt preserves alternative paths and duplicate production occurrences");
+                for (DmzStoredRetractionTransaction.ConflictSupport support : alternativeConflict.supports)
+                    require(support.pending.size() == 1 && support.pending.get(0).sourceRule == 21,
+                            "every opposing alternative retains its exact pending source");
+                boolean qCutRefused = false;
+                try { overlay.conflictEvidence("!" + (negative ? "" : "~") + "derived(1);", 10000); }
+                catch (IllegalArgumentException expected) { qCutRefused = true; }
+                require(qCutRefused, "Q conflict cannot produce a branch-cut support receipt");
+                boolean evidenceBounded = false;
+                try { overlay.conflictEvidence("!negativeSeed(9);", 1); }
+                catch (IllegalStateException expected) { evidenceBounded = expected.getMessage().contains("Classification inventory unavailable"); }
+                require(evidenceBounded && primaryConflict.isCurrent(), "bounded evidence refusal preserves current receipt");
+                boolean evidenceImmutable = false;
+                try { derivedConflict.supports.clear(); }
+                catch (UnsupportedOperationException expected) { evidenceImmutable = true; }
+                require(evidenceImmutable, "conflict support list is immutable");
                 DmzReplayProvenance.Settlement beforeValidation = journal.settlementSnapshot();
                 invalidEvaluation(overlay, null, 116, "!~source(1);", "?source(1);", 10000, 10000);
                 invalidEvaluation(overlay, fact, -1, "!~source(1);", "?source(1);", 10000, 10000);
@@ -352,6 +390,8 @@ public final class DmzNativeRecursiveContinuationRunner {
                         && evaluatedUnknown.query != null && evaluatedUnknown.query.value == null
                         && !evaluatedUnknown.query.hypotheses.isEmpty(),
                         "executed unknown query snapshot differs from absence of rejected query");
+                require(primaryConflict.isCurrent() && derivedConflict.isCurrent() && alternativeConflict.isCurrent(),
+                        "rolled-back probes and read-only queries preserve conflict receipt boundary");
                 Boolean positiveRepeat = overlay.accept(fact, 102, DmzReplayProvenance.Authority.EXTERNAL, "!source(1);");
                 Boolean negativeRepeat = overlay.accept(fact, 103, DmzReplayProvenance.Authority.EXTERNAL, "!~negativePrimary(7);");
                 require(positiveRepeat == null && negativeRepeat == null,
@@ -378,6 +418,10 @@ public final class DmzNativeRecursiveContinuationRunner {
                 require(overlay.classifyAuthorityInput("!" + (negative ? "~" : "") + "derived(1);", 10000)
                         == DmzStoredRetractionTransaction.InputKind.SUPPORTED_DERIVED,
                         "new branch primary cannot relabel Q derived proof");
+                require(!primaryConflict.isCurrent() && !derivedConflict.isCurrent() && !alternativeConflict.isCurrent(),
+                        "new native branch primary invalidates all prior conflict receipts");
+                require(derivedConflict.supports.size() == 1 && derivedSupport.pending.get(0).sourceRule == 100,
+                        "stale detached receipt retains its diagnostic source snapshot");
                 DmzStoredRetractionTransaction.CandidateAssessment changedAssessment = overlay.assessCandidate(
                         "!" + (negative ? "~" : "") + "derived(1);", 10000);
                 require(changedAssessment.branch == DmzStoredRetractionTransaction.InputKind.EXISTING_PRIMARY
@@ -429,6 +473,7 @@ public final class DmzNativeRecursiveContinuationRunner {
                             "query fails at the bounded inventory audit");
                 }
                 require(auditRejected, "audit failure closes continuation, mode=" + failureMode);
+                require(!primaryConflict.isCurrent(), "rolled-back branch conflict receipt is unusable");
                 boolean failureClosed = false;
                 try { overlay.proofs(root, 10000); }
                 catch (IllegalStateException expected) { failureClosed = true; }
@@ -466,6 +511,10 @@ public final class DmzNativeRecursiveContinuationRunner {
             try { overlay.evaluateCandidate(fact, 115, "!source(1);", "?source(1);", 10000, 10000); }
             catch (IllegalStateException expected) { closedEvaluation = true; }
             require(closedEvaluation, "closed branch rejects evaluated candidate");
+            boolean closedEvidence = false;
+            try { overlay.conflictEvidence("!negativeSeed(9);", 10000); }
+            catch (IllegalStateException expected) { closedEvidence = true; }
+            require(closedEvidence, "closed branch rejects conflict evidence collection");
             boolean closedProbe = false;
             try { overlay.probeCandidate(fact, 72, "!source(5);", signed(negative, "?derived(5);"), 10000); }
             catch (IllegalStateException expected) { closedProbe = true; }
@@ -503,6 +552,10 @@ public final class DmzNativeRecursiveContinuationRunner {
             try (DmzStoredRetractionTransaction overlay = DmzStoredRetractionTransaction.beginContinuation(guard, proof, proof.witnesses.get(0), q, 10000)) {
                 require(overlay.classifyAuthorityInput("!~derived(1);", 10000) == DmzStoredRetractionTransaction.InputKind.CONFLICT,
                         "authority valid before external change");
+                require(Boolean.TRUE.equals(overlay.accept(source, 5, DmzReplayProvenance.Authority.EXTERNAL, "!source(9);")),
+                        "authority fixture adds separate pending branch source");
+                DmzStoredRetractionTransaction.ConflictEvidence evidence = overlay.conflictEvidence("!~derived(9);", 10000);
+                require(evidence.isCurrent(), "conflict evidence current before external Q change");
                 String before = DmzObservationStateFingerprint.capture(q);
                 if (sourceOnly) DmzReplayProvenance.replayRule(q, source, 3, DmzReplayProvenance.Authority.EXTERNAL,
                         "!@x source(x) -> derived(x);");
@@ -514,6 +567,7 @@ public final class DmzNativeRecursiveContinuationRunner {
                 try { overlay.classifyAuthorityInput("!~derived(1);", 10000); }
                 catch (IllegalStateException expected) { stale = expected.getMessage().contains("Pinned Q authority boundary changed"); }
                 require(stale, "changed authority rejected, sourceOnly=" + sourceOnly);
+                require(!evidence.isCurrent(), "native or source-only Q change invalidates conflict evidence");
                 boolean assessmentStale = false;
                 try { overlay.assessCandidate("!~derived(1);", 10000); }
                 catch (IllegalStateException expected) { assessmentStale = expected.getMessage().contains("Pinned Q authority boundary changed"); }
