@@ -26,12 +26,12 @@ final class DmzTerminalRestriction implements AutoCloseable {
         private final List<DmzTerminalRestriction> restrictions = new ArrayList<DmzTerminalRestriction>();
         private final List<Boolean> previousDecisions = new ArrayList<Boolean>();
         private boolean closed;
-        private QueryScope(Mind mind) throws Exception {
+        private QueryScope(Mind mind, int budget) throws Exception {
             try {
                 for (DmzTerminalRestriction r = ACTIVE.get(); r != null; r = r.previous)
                     if (r.recursive && r.local(mind)) {
                         if (r.queryDecision != null) throw new IllegalStateException("Recursive query audit already active");
-                        boolean decision = r.noCurrentAlternative(mind);
+                        boolean decision = r.noCurrentAlternative(mind, budget);
                         restrictions.add(r); previousDecisions.add(r.queryDecision);
                         r.queryDecision = decision;
                     }
@@ -44,7 +44,7 @@ final class DmzTerminalRestriction implements AutoCloseable {
             closed = true;
         }
     }
-    static QueryScope prepareQuery(Mind mind) throws Exception { return new QueryScope(mind); }
+    static QueryScope prepareQuery(Mind mind, int budget) throws Exception { return new QueryScope(mind, budget); }
     private DmzTerminalRestriction(Mind boundary, DmzProofWitnesses.Witness blocked) {
         this(boundary, blocked, false);
     }
@@ -145,13 +145,14 @@ final class DmzTerminalRestriction implements AutoCloseable {
     static DmzTerminalRestriction beginContinuation(Mind boundary, DmzProofWitnesses.Witness blocked) {
         return new DmzTerminalRestriction(boundary, blocked, true);
     }
-    private boolean noCurrentAlternative(Mind mind) throws Exception {
+    private boolean noCurrentAlternative(Mind mind) throws Exception { return noCurrentAlternative(mind, 10000); }
+    private boolean noCurrentAlternative(Mind mind, int budget) throws Exception {
         if (queryDecision != null) return queryDecision;
         ++inventoryChecks;
-        DmzCurrentUnaryProofInventory inventory = DmzCurrentUnaryProofInventory.capture(mind, 10000, true);
+        DmzCurrentUnaryProofInventory inventory = DmzCurrentUnaryProofInventory.capture(mind, budget, true);
         if (!inventory.eligible) throw new IllegalStateException("Current continuation inventory unavailable: " + inventory.gaps);
         DmzCurrentUnaryProofInventory.Proofs proofs = inventory.proofs(blocked.graph.observed.nodes.get(blocked.node).ground,
-                activeNoGoods(mind), 10000);
+                activeNoGoods(mind), budget);
         if (proofs.truncated) throw new IllegalStateException("Continuation proof budget exceeded");
         for (DmzProofWitnesses.Witness witness : proofs.witnesses)
             if (witness.step >= 0 && witness.source.nativeRule == blocked.source.nativeRule && witness.premises.size() == 1

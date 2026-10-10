@@ -14,10 +14,12 @@ public final class DmzNativeRecursiveContinuationRunner {
         for (boolean alternative : new boolean[] {false, true})
             for (boolean duplicate : new boolean[] {false, true})
                 for (boolean primaryDuplicate : new boolean[] {false, true})
-                    for (boolean negative : new boolean[] {false, true}) run(alternative, duplicate, primaryDuplicate, negative);
+                    for (boolean negative : new boolean[] {false, true})
+                        for (boolean queryFailure : new boolean[] {false, true})
+                            run(alternative, duplicate, primaryDuplicate, negative, queryFailure);
         System.out.println("DMZ_NATIVE_RECURSIVE_CONTINUATION_PASS checks=" + checks);
     }
-    private static void run(boolean alternative, boolean duplicate, boolean primaryDuplicate, boolean negative) throws Exception {
+    private static void run(boolean alternative, boolean duplicate, boolean primaryDuplicate, boolean negative, boolean queryFailure) throws Exception {
         User user = new User(); new UDF().init(user); Mind q = new Mind(user); user.setCurrentMind(q);
         IContextResults.Revision rules = new IContextResults.Revision(UUID.randomUUID(), 1);
         IContextResults.Revision fact = new IContextResults.Revision(UUID.randomUUID(), 1);
@@ -53,6 +55,10 @@ public final class DmzNativeRecursiveContinuationRunner {
                         && overlay.hasLiveRule(tail.nativeRule) == (original > 1), "native last-support retraction or retained alternative");
                 count(overlay, root, original - 1, false);
                 count(overlay, tailGround, original - 1, false);
+                boolean invalidBudget = false;
+                try { overlay.queryContinuation(signed(negative, "?derived(1);"), 0); }
+                catch (IllegalArgumentException expected) { invalidBudget = true; }
+                require(invalidBudget, "invalid query budget rejected before scope creation");
                 require(java.util.Objects.equals(overlay.queryContinuation(signed(negative, "?derived(1);")), original > 1 ? Boolean.TRUE : null),
                         "recursive native query respects exact chain restriction");
                 require(java.util.Objects.equals(overlay.queryContinuation(signed(negative, "?tail(1);")), original > 1 ? Boolean.TRUE : null),
@@ -108,10 +114,15 @@ public final class DmzNativeRecursiveContinuationRunner {
                 require(state.equals(DmzObservationStateFingerprint.capture(q)), "continuation remains isolated from Q");
                 boolean auditRejected = false;
                 try {
-                    overlay.accept(new IContextResults.Revision(fact.getContextId(), 2), 31,
+                    if (queryFailure) overlay.queryContinuation(signed(negative, "?derived(1);"), 1);
+                    else overlay.accept(new IContextResults.Revision(fact.getContextId(), 2), 31,
                             DmzReplayProvenance.Authority.EXTERNAL, "!independent(3);");
-                } catch (IllegalStateException expected) { auditRejected = true; }
-                require(auditRejected, "inconsistent source revision closes continuation");
+                } catch (IllegalStateException expected) {
+                    auditRejected = true;
+                    if (queryFailure) require(expected.getMessage().contains("inventory unavailable"),
+                            "query fails at the bounded inventory audit");
+                }
+                require(auditRejected, queryFailure ? "query audit budget exhaustion closes continuation" : "inconsistent source revision closes continuation");
                 boolean failureClosed = false;
                 try { overlay.proofs(root, 10000); }
                 catch (IllegalStateException expected) { failureClosed = true; }

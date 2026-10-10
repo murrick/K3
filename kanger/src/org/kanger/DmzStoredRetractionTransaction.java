@@ -135,15 +135,17 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         return transaction.mind().query(statement, null, false);
     }
     int queryDeniedCount() { return restriction.queryDeniedCount(); }
-    Boolean queryContinuation(String statement) throws Exception {
+    Boolean queryContinuation(String statement) throws Exception { return queryContinuation(statement, 10000); }
+    Boolean queryContinuation(String statement, int auditBudget) throws Exception {
         if (closed) throw new IllegalStateException("Retraction overlay closed");
         if (!continuationOnly || statement == null || !statement.matches("\\?~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
             throw new IllegalArgumentException("Only signed unary integer continuation queries are qualified");
+        if (auditBudget < 1 || auditBudget > 10000) throw new IllegalArgumentException("Query audit budget must be between 1 and 10000");
         Mind child = transaction.mind();
         String state = DmzObservationStateFingerprint.capture(child);
         try {
             Boolean result;
-            try (DmzTerminalRestriction.QueryScope audit = DmzTerminalRestriction.prepareQuery(child);
+            try (DmzTerminalRestriction.QueryScope audit = DmzTerminalRestriction.prepareQuery(child, auditBudget);
                 TechnicalMindTransaction query = TechnicalMindTransaction.beginIsolated(child)) {
                 result = query.mind().query(statement, null, false);
             }
