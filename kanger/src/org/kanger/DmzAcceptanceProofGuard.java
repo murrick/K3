@@ -37,22 +37,32 @@ final class DmzAcceptanceProofGuard {
 
     Boolean accept(IContextResults.Revision source, long sourceRule,
             DmzReplayProvenance.Authority authority, String statement) throws Exception {
+        return acceptAliases(source, new long[] { sourceRule }, authority, statement);
+    }
+    Boolean acceptAliases(IContextResults.Revision source, long[] sourceRules,
+            DmzReplayProvenance.Authority authority, String statement) throws Exception {
         if (used) throw new IllegalStateException("Acceptance boundary already consumed");
         used = true;
         journal.requireActiveJournal();
         if (!capture.isCurrent(before, target) || !baselineSources.isCurrent(target))
             throw new IllegalStateException("Acceptance baseline changed");
         List<DmzReplayProvenance.Binding> prior = journal.snapshot();
-        Boolean result = DmzReplayProvenance.acceptRule(target, source, sourceRule, authority, statement);
+        Boolean result = DmzReplayProvenance.acceptAliases(target, source, sourceRules, authority, statement);
         after = capture.baselineCheckpoint(target);
         afterSources = DmzReplayProvenance.sourceCheckpoint(target);
         for (DmzReplayProvenance.Binding binding : journal.snapshot()) {
             if (prior.contains(binding)) continue;
+            boolean declared = false;
+            for (long id : sourceRules) declared |= binding.sourceRule == id;
             if (!binding.context.equals(source.getContextId()) || binding.revision != source.getRevision()
-                    || binding.sourceRule != sourceRule || binding.authority != authority) return result;
+                    || !declared || binding.authority != authority) return result;
             incoming.add(binding);
         }
-        accepted = Boolean.TRUE.equals(result) && incoming.size() == 1 && afterSources.contains(incoming.get(0));
+        accepted = Boolean.TRUE.equals(result) && incoming.size() == sourceRules.length;
+        java.util.Set<Long> labels = new java.util.HashSet<Long>();
+        for (DmzReplayProvenance.Binding binding : incoming)
+            accepted &= afterSources.contains(binding) && labels.add(binding.sourceRule)
+                    && binding.nativeRule == incoming.get(0).nativeRule;
         return result;
     }
 
@@ -80,13 +90,13 @@ final class DmzAcceptanceProofGuard {
             DmzProofWitnesses.Witness witness, Mind candidate) throws Exception {
         if (!isCurrent(proof, witness, candidate)) return new DmzUnaryStateDelta.Result(false, false,
                 java.util.Collections.singletonList("input-proof-boundary-not-current"));
-        return delta.auditRoutes(candidate, incoming.get(0), proof.graph, proof.root);
+        return delta.auditRoutes(candidate, incoming, proof.graph, proof.root);
     }
 
     DmzUnaryStateDelta.Result auditNodeRoutes(DmzStoredProof proof,
             DmzProofWitnesses.Witness witness, Mind candidate, int node) throws Exception {
         if (!isCurrent(proof, witness, candidate)) return new DmzUnaryStateDelta.Result(false, false,
                 java.util.Collections.singletonList("input-proof-boundary-not-current"));
-        return delta.auditRoutes(candidate, incoming.get(0), proof.graph, node);
+        return delta.auditRoutes(candidate, incoming, proof.graph, node);
     }
 }

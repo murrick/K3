@@ -10,10 +10,12 @@ final class DmzSourcedProofGraph {
         final int observedStep;
         final List<DmzReplayProvenance.Binding> ruleSources;
         final List<List<DmzReplayProvenance.Binding>> primarySources;
+        final List<TerminalSupportCapture.SourcePair> excludedPairs;
         final boolean available;
         Step(int index, TerminalSupportCapture.ApplicationSources sources, boolean available) {
             observedStep = index; ruleSources = sources.ruleSources;
             primarySources = sources.supportSources; this.available = available;
+            excludedPairs = sources.excludedPairs;
         }
     }
     final DmzObservedProofGraph observed;

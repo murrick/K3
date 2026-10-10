@@ -162,6 +162,17 @@ public final class DmzReplayProvenance implements AutoCloseable {
      */
     public static Boolean acceptRule(Mind target, IContextResults.Revision source, long sourceRule,
             Authority authority, String statement) throws Exception {
+        return acceptAliases(target, source, new long[] { sourceRule }, authority, statement);
+    }
+    /** Explicit same-revision aliases of one input, attached before native inference. */
+    static Boolean acceptAliases(Mind target, IContextResults.Revision source, long[] sourceRules,
+            Authority authority, String statement) throws Exception {
+        if (sourceRules == null || sourceRules.length == 0 || sourceRules.length > 100)
+            throw new IllegalArgumentException("Bounded explicit source aliases required");
+        java.util.Set<Long> distinct = new java.util.HashSet<Long>();
+        for (long id : sourceRules) if (id < 0 || !distinct.add(id))
+            throw new IllegalArgumentException("Distinct nonnegative source aliases required");
+        long sourceRule = sourceRules[0];
         if (source == null || authority == null || sourceRule < 0 || source.getCommune() != null
                 || !source.getCommuneMembers().isEmpty() || statement == null || !statement.startsWith("!"))
             throw new IllegalArgumentException("Exact atomic source and acceptance statement required");
@@ -169,6 +180,7 @@ public final class DmzReplayProvenance implements AutoCloseable {
         if (capture == null) return target.query(statement, null, false);
         Input previous = capture.input;
         Input accepted = new Input(source, sourceRule, authority, target, true);
+        accepted.aliases = sourceRules.clone();
         capture.input = accepted;
         try {
             Boolean result = target.query(statement, null, false);
@@ -193,6 +205,12 @@ public final class DmzReplayProvenance implements AutoCloseable {
         Binding binding = new Binding(index, rule.getId(), capture.input, duplicate);
         capture.bindings.add(binding);
         if (capture.input.acceptance) capture.input.bound.add(binding);
+        if (capture.input.aliases != null) for (int i = 1; i < capture.input.aliases.length; ++i) {
+            Input alias = new Input(capture.input.source, capture.input.aliases[i], capture.input.authority,
+                    capture.input.target, true);
+            Binding additional = new Binding(index, rule.getId(), alias, true);
+            capture.bindings.add(additional); capture.input.bound.add(additional);
+        }
     }
     public List<Binding> snapshot() { return Collections.unmodifiableList(new ArrayList<Binding>(bindings)); }
     /** Historical accepted occurrences visible through this Mind ancestry, keyed by native ID. */
@@ -287,6 +305,7 @@ public final class DmzReplayProvenance implements AutoCloseable {
         final Mind target;
         final boolean acceptance;
         final List<Binding> bound = new ArrayList<Binding>();
+        long[] aliases;
         Input(IContextResults.Revision source, long rule, Authority authority, Mind target) {
             this(source, rule, authority, target, false);
         }

@@ -36,7 +36,8 @@ final class DmzProvisionalCollisionProof {
                     a.rule, a.ruleOrigin, a.conclusion, a.ground, a.bindings, a.supports, a.sourceCandidates);
             List<List<DmzReplayProvenance.Binding>> supports = new ArrayList<>();
             for (List<DmzReplayProvenance.SourceObservation> sources : observed.supportSources) supports.add(bindings(sources));
-            associations.add(new TerminalSupportCapture.ApplicationSources(copy, bindings(observed.ruleSources), supports));
+            associations.add(new TerminalSupportCapture.ApplicationSources(copy, bindings(observed.ruleSources), supports,
+                    observed.excludedPairs));
         }
         DmzSourcedProofGraph graph = DmzSourcedProofGraph.build(associations);
         DmzWitnessConflicts.Result pairs = DmzWitnessConflicts.collect(graph, witnessBudget, pairBudget);

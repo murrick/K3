@@ -93,6 +93,9 @@ final class DmzProofWitnesses {
             List<List<Witness>> choices, int slot, List<Witness> selected, List<Witness> result, Budget budget) {
         if (!budget.advance()) return;
         if (slot == choices.size()) {
+            if (selected.size() == 1 && selected.get(0).step < 0
+                    && TerminalSupportCapture.SourcePair.excludes(graph.steps.get(step).excludedPairs,
+                            source, selected.get(0).source)) return;
             Map<UUID, Long> revisions = new HashMap<UUID, Long>();
             revisions.put(source.context, source.revision);
             for (Witness premise : selected) if (!compatible(premise, revisions)) return;

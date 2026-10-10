@@ -139,6 +139,16 @@ final class DmzUnaryStateDelta {
     /** Checks every relevant unit edge and primary occurrence, independent of witness count. */
     Result auditRoutes(Mind candidate, DmzReplayProvenance.Binding incoming,
             DmzSourcedProofGraph graph, int root) throws Exception {
+        return auditRoutes(candidate, Collections.singletonList(incoming), graph, root);
+    }
+    Result auditRoutes(Mind candidate, List<DmzReplayProvenance.Binding> inputs,
+            DmzSourcedProofGraph graph, int root) throws Exception {
+        if (inputs == null || inputs.isEmpty()) return new Result(false, false,
+                Collections.singletonList("missing-incoming-source"));
+        DmzReplayProvenance.Binding incoming = inputs.get(0);
+        for (DmzReplayProvenance.Binding binding : inputs)
+            if (binding.nativeRule != incoming.nativeRule) return new Result(false, false,
+                    Collections.singletonList("different-incoming-native-rules"));
         Result state = audit(candidate, incoming.nativeRule);
         if (!state.matched) return state;
         List<String> errors = new ArrayList<String>();
@@ -150,7 +160,7 @@ final class DmzUnaryStateDelta {
         Rule input = null;
         for (IRule rule : candidate.getRules()) if (rule.getId() == incoming.nativeRule && !rule.isDeleted(candidate)) input = (Rule) rule;
         seeds.put(incoming.nativeRule, atom(input, candidate));
-        expectedSources.put(incoming.nativeRule, Collections.singletonList(incoming));
+        expectedSources.put(incoming.nativeRule, new ArrayList<DmzReplayProvenance.Binding>(inputs));
         for (List<DmzReplayProvenance.Binding> bindings : expectedSources.values())
             if (bindings.isEmpty()) errors.add("missing-inventory-source");
         Map<java.util.UUID, Long> pins = new HashMap<java.util.UUID, Long>();

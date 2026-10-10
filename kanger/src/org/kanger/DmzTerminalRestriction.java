@@ -8,7 +8,7 @@ import org.kanger.primitives.Solve;
 import org.kanger.units.Domain;
 
 /** Opt-in transaction-local restriction for a direct unary application.
- * Production source alternatives are retained; primary source alternatives and recursive restrictions are unsupported.
+ * Production/primary source pairs are retained independently; recursive restrictions are unsupported.
  */
 final class DmzTerminalRestriction implements AutoCloseable {
     private static final ThreadLocal<DmzTerminalRestriction> ACTIVE = new ThreadLocal<DmzTerminalRestriction>();
@@ -27,7 +27,8 @@ final class DmzTerminalRestriction implements AutoCloseable {
                 || blocked.source.authority != DmzReplayProvenance.Authority.EXTERNAL)
             throw new IllegalStateException("Only direct externally sourced unit applications can be enforced");
         requireAccepted(target, blocked.source);
-        requireUnique(target, blocked.premises.get(0).source);
+        requireAccepted(target, blocked.premises.get(0).source);
+        checkPairBudget(target, blocked);
     }
     private static List<DmzReplayProvenance.Binding> requireAccepted(Mind target, DmzReplayProvenance.Binding binding) {
         List<DmzReplayProvenance.Binding> result = new ArrayList<DmzReplayProvenance.Binding>();
@@ -44,33 +45,37 @@ final class DmzTerminalRestriction implements AutoCloseable {
         return false;
     }
     /** Frozen per-application exclusions, never a global removal of a production label. */
-    static List<DmzReplayProvenance.Binding> excludedSources(Mind mind, long rule,
+    static List<TerminalSupportCapture.SourcePair> excludedPairs(Mind mind, long rule,
             TerminalSupportCapture.Ground conclusion, long evidence, TerminalSupportCapture.Ground premise) {
-        List<DmzReplayProvenance.Binding> result = new ArrayList<DmzReplayProvenance.Binding>();
+        List<TerminalSupportCapture.SourcePair> result = new ArrayList<TerminalSupportCapture.SourcePair>();
         for (DmzTerminalRestriction restriction = ACTIVE.get(); restriction != null; restriction = restriction.previous) {
             DmzProofWitnesses.Witness witness = restriction.blocked;
             if (restriction.local(mind) && rule == witness.source.nativeRule
                     && evidence == witness.premises.get(0).source.nativeRule
                     && conclusion.equivalent(witness.graph.observed.nodes.get(witness.node).ground)
                     && premise.equivalent(witness.graph.observed.nodes.get(witness.premises.get(0).node).ground)) {
-                requireAccepted(mind, witness.source); requireUnique(mind, witness.premises.get(0).source);
-                if (!result.contains(witness.source)) result.add(witness.source);
+                requireAccepted(mind, witness.source); requireAccepted(mind, witness.premises.get(0).source);
+                result.add(new TerminalSupportCapture.SourcePair(witness.source, witness.premises.get(0).source));
             }
         }
         return result;
     }
-    private boolean noAlternative(Mind mind) {
-        List<DmzReplayProvenance.Binding> remaining = requireAccepted(mind, blocked.source);
-        remaining.removeAll(excludedSources(mind, blocked.source.nativeRule,
-                blocked.graph.observed.nodes.get(blocked.node).ground, blocked.premises.get(0).source.nativeRule,
-                blocked.graph.observed.nodes.get(blocked.premises.get(0).node).ground));
-        return remaining.isEmpty();
+    private static void checkPairBudget(Mind mind, DmzProofWitnesses.Witness witness) {
+        long rules = requireAccepted(mind, witness.source).size();
+        long facts = requireAccepted(mind, witness.premises.get(0).source).size();
+        if (rules * facts > 10000L) throw new IllegalStateException("Direct source-pair budget exceeded");
     }
-    private static void requireUnique(Mind target, DmzReplayProvenance.Binding binding) {
-        List<DmzReplayProvenance.SourceObservation> sources = DmzReplayProvenance.observedSources(target, binding.nativeRule);
-        if (sources.size() != 1 || sources.get(0).binding != binding
-                || sources.get(0).outcome != DmzReplayProvenance.Outcome.ACCEPTED)
-            throw new IllegalStateException("Native application veto requires a unique accepted source occurrence");
+    private boolean noAlternative(Mind mind) {
+        checkPairBudget(mind, blocked);
+        List<TerminalSupportCapture.SourcePair> excluded = excludedPairs(mind, blocked.source.nativeRule,
+                blocked.graph.observed.nodes.get(blocked.node).ground, blocked.premises.get(0).source.nativeRule,
+                blocked.graph.observed.nodes.get(blocked.premises.get(0).node).ground);
+        for (DmzReplayProvenance.Binding rule : requireAccepted(mind, blocked.source))
+            for (DmzReplayProvenance.Binding primary : requireAccepted(mind, blocked.premises.get(0).source)) {
+                if (rule.context.equals(primary.context) && rule.revision != primary.revision) continue;
+                if (!TerminalSupportCapture.SourcePair.excludes(excluded, rule, primary)) return false;
+            }
+        return true;
     }
     static DmzTerminalRestriction begin(Mind boundary, DmzProofWitnesses.Witness blocked) {
         return new DmzTerminalRestriction(boundary, blocked);
@@ -93,7 +98,7 @@ final class DmzTerminalRestriction implements AutoCloseable {
                 conclusion.isAntc(), conclusion.getArguments().convertBase(mind)), mind);
         if (!expected.equivalent(actual)) return false;
         if (tree.size() != 2) throw new IllegalStateException("Restricted application changed shape");
-        requireAccepted(mind, blocked.source); requireUnique(mind, blocked.premises.get(0).source);
+        requireAccepted(mind, blocked.source); requireAccepted(mind, blocked.premises.get(0).source);
         for (Domain premise : tree) if (premise != conclusion) {
             if (!premise.isExcluded(mind)) throw new IllegalStateException("Restricted premise must be satisfied");
             Solve wanted = new Solve(premise.getPredicate(), !premise.isAntc(), premise.getArguments().convertBase(mind));
@@ -125,7 +130,7 @@ final class DmzTerminalRestriction implements AutoCloseable {
         TerminalSupportCapture.Ground candidate = TerminalSupportCapture.Ground.capture(new Solve(opposite.getPredicate(),
                 !opposite.isAntc(), opposite.getArguments().convertBase(mind)), mind);
         if (!expected.equivalent(candidate)) return false;
-        requireAccepted(mind, blocked.source); requireUnique(mind, blocked.premises.get(0).source);
+        requireAccepted(mind, blocked.source); requireAccepted(mind, blocked.premises.get(0).source);
         // The originally selected primary support must still exist; a query assumption is not a substitute.
         for (IRule rule : mind.getRules()) if (rule.getId() == blocked.premises.get(0).source.nativeRule
                 && !rule.isDeleted(mind) && !mind.getRules().isGenerated(rule)) return noAlternative(mind);
