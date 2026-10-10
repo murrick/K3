@@ -277,15 +277,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
     QueryResult probeCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
             String candidate, String queryStatement, int auditBudget, int lookupBudget) throws Exception {
         if (closed) throw new IllegalStateException("Retraction overlay closed");
-        if (!continuationOnly || candidate == null || !candidate.matches("!~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
-            throw new IllegalArgumentException("Only signed unary integer candidates are qualified");
-        if (queryStatement == null || !queryStatement.matches("\\?~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
-            throw new IllegalArgumentException("Only signed unary integer candidate queries are qualified");
-        if (auditBudget < 1 || auditBudget > 10000) throw new IllegalArgumentException("Query audit budget must be between 1 and 10000");
-        if (source == null || sourceRule < 0 || source.getCommune() != null || !source.getCommuneMembers().isEmpty())
-            throw new IllegalArgumentException("Exact atomic candidate source required");
-        if (lookupBudget < 1 || lookupBudget > 10000)
-            throw new IllegalArgumentException("Candidate lookup budget must be between 1 and 10000");
+        validateCandidate(source, sourceRule, candidate, queryStatement, auditBudget, lookupBudget);
         Mind child = transaction.mind();
         String state = DmzObservationStateFingerprint.capture(child);
         List<String> hypotheses = hypothesisText(child);
@@ -308,6 +300,51 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 throw new IllegalStateException("Candidate probe changed its branch boundary");
             return result;
         } catch (Exception failure) { close(); throw failure; }
+    }
+    private void validateCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+            String candidate, String queryStatement, int auditBudget, int lookupBudget) {
+        if (!continuationOnly || candidate == null || !candidate.matches("!~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
+            throw new IllegalArgumentException("Only signed unary integer candidates are qualified");
+        if (queryStatement == null || !queryStatement.matches("\\?~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
+            throw new IllegalArgumentException("Only signed unary integer candidate queries are qualified");
+        if (auditBudget < 1 || auditBudget > 10000) throw new IllegalArgumentException("Query audit budget must be between 1 and 10000");
+        if (source == null || sourceRule < 0 || source.getCommune() != null || !source.getCommuneMembers().isEmpty())
+            throw new IllegalArgumentException("Exact atomic candidate source required");
+        if (lookupBudget < 1 || lookupBudget > 10000)
+            throw new IllegalArgumentException("Candidate lookup budget must be between 1 and 10000");
+    }
+    enum CandidateStatus { DECLINED_Q, BRANCHING_REQUIRED, REUSED_PRIMARY, PROBED_NEW_INPUT }
+    static final class CandidateEvaluation {
+        final CandidateAssessment assessment;
+        final CandidateStatus status;
+        final QueryResult query; // absent for declined/deferred candidates, never an unknown truth result
+        private CandidateEvaluation(CandidateAssessment assessment, CandidateStatus status, QueryResult query) {
+            this.assessment = assessment; this.status = status; this.query = query;
+        }
+    }
+    /** Checked workflow; rejected/deferred candidates never reach native admission. */
+    CandidateEvaluation evaluateCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+            String candidate, String queryStatement, int auditBudget, int lookupBudget) throws Exception {
+        if (closed) throw new IllegalStateException("Retraction overlay closed");
+        validateCandidate(source, sourceRule, candidate, queryStatement, auditBudget, lookupBudget);
+        CandidateAssessment assessment = assessCandidate(candidate, auditBudget);
+        if (assessment.disposition == CandidateDisposition.REJECT_Q)
+            return new CandidateEvaluation(assessment, CandidateStatus.DECLINED_Q, null);
+        if (assessment.disposition == CandidateDisposition.NEEDS_BRANCHING)
+            return new CandidateEvaluation(assessment, CandidateStatus.BRANCHING_REQUIRED, null);
+        QueryResult result;
+        CandidateStatus status;
+        if (assessment.disposition == CandidateDisposition.REUSE_PRIMARY) {
+            QueryResult snapshot = queryContinuationResult(queryStatement, auditBudget);
+            result = new QueryResult(snapshot.value, snapshot.hypotheses, snapshot.hypothesisAssertions,
+                    QueryResult.CandidateMode.EXISTING_PRIMARY);
+            status = CandidateStatus.REUSED_PRIMARY;
+        } else {
+            result = probeCandidate(source, sourceRule, candidate, queryStatement, auditBudget, lookupBudget);
+            status = CandidateStatus.PROBED_NEW_INPUT;
+        }
+        requireAuthorityCurrent();
+        return new CandidateEvaluation(assessment, status, result);
     }
     private static boolean existingPrimary(Mind mind, String statement, int budget) throws Exception {
         int open = statement.indexOf('(');

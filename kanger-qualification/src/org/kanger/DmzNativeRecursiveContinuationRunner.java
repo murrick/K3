@@ -109,6 +109,15 @@ public final class DmzNativeRecursiveContinuationRunner {
                 require(overlay.assessCandidate("!" + (negative ? "" : "~") + "derived(1);", 10000).disposition
                         == DmzStoredRetractionTransaction.CandidateDisposition.REJECT_Q,
                         "Q conflict wins even when branch has no proof");
+                DmzReplayProvenance.Settlement beforeDecline = journal.settlementSnapshot();
+                DmzStoredRetractionTransaction.CandidateEvaluation declined = overlay.evaluateCandidate(fact, 110,
+                        "!" + (negative ? "" : "~") + "derived(1);", signed(negative, "?derived(1);"), 10000, 10000);
+                require(declined.status == DmzStoredRetractionTransaction.CandidateStatus.DECLINED_Q && declined.query == null,
+                        "Q conflict is declined without a truth-query result even if branch has no support");
+                require(journal.settlementSnapshot().pending == beforeDecline.pending
+                        && journal.settlementSnapshot().discarded == beforeDecline.discarded,
+                        "declined candidate opens no input transaction or source binding");
+                count(overlay, root, original - 1, false);
                 boolean invalidBudget = false;
                 try { overlay.queryContinuation(signed(negative, "?derived(1);"), 0); }
                 catch (IllegalArgumentException expected) { invalidBudget = true; }
@@ -285,6 +294,26 @@ public final class DmzNativeRecursiveContinuationRunner {
                 try { overlay.assessCandidate("!source(555);", 1); }
                 catch (IllegalStateException expected) { assessmentBounded = expected.getMessage().contains("Classification inventory unavailable"); }
                 require(assessmentBounded, "bounded combined assessment refuses unavailable evidence");
+                DmzReplayProvenance.Settlement beforeDeferred = journal.settlementSnapshot();
+                DmzStoredRetractionTransaction.CandidateEvaluation deferred = overlay.evaluateCandidate(fact, 111,
+                        "!negativeSeed(9);", "?negativeResult(9);", 10000, 10000);
+                require(deferred.status == DmzStoredRetractionTransaction.CandidateStatus.BRANCHING_REQUIRED && deferred.query == null,
+                        "branch conflict is deferred without native candidate admission");
+                DmzStoredRetractionTransaction.CandidateEvaluation reusable = overlay.evaluateCandidate(fact, 112,
+                        "!source(1);", signed(negative, "?derived(1);"), 10000, 10000);
+                require(reusable.status == DmzStoredRetractionTransaction.CandidateStatus.REUSED_PRIMARY
+                        && reusable.query.candidateMode == DmzStoredRetractionTransaction.QueryResult.CandidateMode.EXISTING_PRIMARY
+                        && Boolean.TRUE.equals(reusable.query.value), "existing primary queried after recoverable rejection");
+                require(journal.settlementSnapshot().pending == beforeDeferred.pending
+                        && journal.settlementSnapshot().discarded == beforeDeferred.discarded,
+                        "deferred candidate and primary reuse import no proposed source");
+                DmzStoredRetractionTransaction.CandidateEvaluation evaluatedFresh = overlay.evaluateCandidate(fact, 113,
+                        "!source(556);", signed(negative, "?derived(556);"), 10000, 10000);
+                require(evaluatedFresh.status == DmzStoredRetractionTransaction.CandidateStatus.PROBED_NEW_INPUT
+                        && evaluatedFresh.query.candidateMode == DmzStoredRetractionTransaction.QueryResult.CandidateMode.NEW_INPUT
+                        && Boolean.TRUE.equals(evaluatedFresh.query.value), "valid fresh candidate still probes after rejection");
+                require(overlay.queryContinuation(signed(negative, "?derived(556);")) == null,
+                        "evaluated fresh candidate fully rolls back");
                 Boolean positiveRepeat = overlay.accept(fact, 102, DmzReplayProvenance.Authority.EXTERNAL, "!source(1);");
                 Boolean negativeRepeat = overlay.accept(fact, 103, DmzReplayProvenance.Authority.EXTERNAL, "!~negativePrimary(7);");
                 require(positiveRepeat == null && negativeRepeat == null,
@@ -319,6 +348,16 @@ public final class DmzNativeRecursiveContinuationRunner {
                         "fresh assessment observes admitted branch primary without relabeling Q");
                 require(initialSame.disposition == DmzStoredRetractionTransaction.CandidateDisposition.PROBE_NEW_INPUT,
                         "old detached assessment stays diagnostic rather than refreshing into permission");
+                DmzReplayProvenance.Settlement beforeGeneratedReuse = journal.settlementSnapshot();
+                DmzStoredRetractionTransaction.CandidateEvaluation generatedReuse = overlay.evaluateCandidate(fact, 114,
+                        "!" + (negative ? "~" : "") + "derived(1);", signed(negative, "?tail(1);"), 10000, 10000);
+                require(generatedReuse.status == DmzStoredRetractionTransaction.CandidateStatus.REUSED_PRIMARY
+                        && Boolean.TRUE.equals(generatedReuse.query.value),
+                        "explicit primary over generated cache reuses proof without native repeat admission");
+                count(overlay, root, original - 1 + 3 * (duplicate ? 2 : 1) + 1, true);
+                require(journal.settlementSnapshot().pending == beforeGeneratedReuse.pending
+                        && journal.settlementSnapshot().discarded == beforeGeneratedReuse.discarded,
+                        "generated primary reuse imports no alias or input transaction");
                 boolean auditRejected = false;
                 try {
                     if (failureMode == 7 || failureMode == 8) {
@@ -333,7 +372,7 @@ public final class DmzNativeRecursiveContinuationRunner {
                     else if (failureMode == 1) overlay.queryContinuation(signed(negative, "?derived(1);"), 1);
                     else if (failureMode == 2) overlay.probeCandidate(fact, 70, "!~negativeSeed(66);",
                             signed(negative, "?derived(66);"), 1);
-                    else if (failureMode == 4) overlay.probeCandidate(fact, 74, "!~negativeSeed(66);",
+                    else if (failureMode == 4) overlay.evaluateCandidate(fact, 74, "!~negativeSeed(66);",
                             signed(negative, "?derived(66);"), 10000, 1);
                     else if (failureMode == 3) overlay.probeCandidate(
                             new IContextResults.Revision(fact.getContextId(), 2), 71, "!~negativeSeed(66);",
@@ -383,6 +422,10 @@ public final class DmzNativeRecursiveContinuationRunner {
             try { overlay.assessCandidate("!source(1);", 10000); }
             catch (IllegalStateException expected) { closedAssessment = true; }
             require(closedAssessment, "closed branch rejects combined assessment");
+            boolean closedEvaluation = false;
+            try { overlay.evaluateCandidate(fact, 115, "!source(1);", "?source(1);", 10000, 10000); }
+            catch (IllegalStateException expected) { closedEvaluation = true; }
+            require(closedEvaluation, "closed branch rejects evaluated candidate");
             boolean closedProbe = false;
             try { overlay.probeCandidate(fact, 72, "!source(5);", signed(negative, "?derived(5);"), 10000); }
             catch (IllegalStateException expected) { closedProbe = true; }
@@ -428,6 +471,10 @@ public final class DmzNativeRecursiveContinuationRunner {
                 try { overlay.assessCandidate("!~derived(1);", 10000); }
                 catch (IllegalStateException expected) { assessmentStale = expected.getMessage().contains("Pinned Q authority boundary changed"); }
                 require(assessmentStale, "combined assessment rejects stale Q authority");
+                boolean evaluationStale = false;
+                try { overlay.evaluateCandidate(source, 8, "!~derived(1);", "?derived(1);", 10000, 10000); }
+                catch (IllegalStateException expected) { evaluationStale = expected.getMessage().contains("Pinned Q authority boundary changed"); }
+                require(evaluationStale, "candidate evaluation refuses stale Q authority without classifying rejection");
                 require(changed.equals(DmzObservationStateFingerprint.capture(q)), "classification refusal preserves changed Q");
             }
         }
