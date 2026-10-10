@@ -347,17 +347,29 @@ public final class DmzNativeRecursiveContinuationRunner {
                             DmzStoredRetractionTransaction.SupportChoice.KEEP_EXISTING, 10000);
                     try {
                         require(kept.hiddenRules == 0, "existing choice hides no native input or cache");
-                        for (DmzStoredRetractionTransaction.ProjectedGround ground : projected.grounds)
+                        for (DmzStoredRetractionTransaction.ProjectedGround ground : projected.grounds) {
                             require(kept.hasLiveGround(ground.ground) == overlay.hasLiveGround(ground.ground),
                                     "existing choice preserves every live native ground");
+                            require(kept.proofs(ground.ground, 10000).witnesses.size() == ground.keepExisting,
+                                    "existing child current proofs preserve projected support multiplicity");
+                        }
                     } finally { kept.close(); }
                     DmzStoredRetractionTransaction.NativeSupportChoice cut = overlay.beginSupportChoice(projected,
                             DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, 10000);
                     try {
                         require(cut.hiddenRules > 0, "candidate choice applies native last-support visibility loss");
-                        for (DmzStoredRetractionTransaction.ProjectedGround ground : projected.grounds)
+                        for (DmzStoredRetractionTransaction.ProjectedGround ground : projected.grounds) {
                             require(cut.hasLiveGround(ground.ground) == (overlay.hasLiveGround(ground.ground) && !ground.losesLastSupport()),
                                     "native child visibility matches exact projected loss while preserving independent grounds");
+                            DmzCurrentUnaryProofInventory.Proofs proofs = cut.proofs(ground.ground, 10000);
+                            require(proofs.witnesses.size() == ground.keepCandidate && !proofs.truncated,
+                                    "current child proofs exclude exact reconstructed chains and retain independent supports");
+                        }
+                        boolean proofBudgetRefused = false;
+                        try { cut.proofs(projected.evidence.candidate, 1); }
+                        catch (IllegalStateException expected) { proofBudgetRefused = true; }
+                        require(proofBudgetRefused && projected.isCurrent(), "bounded proof refusal preserves open child and parent");
+                        cut.proofs(projected.evidence.candidate, 10000);
                         require(projected.isCurrent(), "child masks leave parent evidence current");
                     } finally { cut.close(); }
                     cut.close();
@@ -365,6 +377,10 @@ public final class DmzNativeRecursiveContinuationRunner {
                     try { cut.hasLiveGround(projected.evidence.candidate); }
                     catch (IllegalStateException expected) { cutClosed = true; }
                     require(cutClosed, "settled support choice refuses inspection reuse");
+                    boolean closedProofs = false;
+                    try { cut.proofs(projected.evidence.candidate, 10000); }
+                    catch (IllegalStateException expected) { closedProofs = true; }
+                    require(closedProofs, "settled support choice refuses current proof reuse");
                     require(projected.isCurrent(), "choice rollback preserves parent projection");
                 }
                 boolean partialChoiceFailure = false;
@@ -685,6 +701,10 @@ public final class DmzNativeRecursiveContinuationRunner {
                     try { held.hasLiveGround(evidence.candidate); }
                     catch (IllegalStateException expected) { heldStale = expected.getMessage().contains("boundary changed"); }
                     require(heldStale, "open native choice refuses inspection after Q mutation");
+                    boolean staleProofs = false;
+                    try { held.proofs(evidence.candidate, 10000); }
+                    catch (IllegalStateException expected) { staleProofs = expected.getMessage().contains("boundary changed"); }
+                    require(staleProofs, "open native choice refuses proof reconstruction after Q mutation");
                     held.close();
                     require(changed.equals(DmzObservationStateFingerprint.capture(q)),
                             "closing stale choice preserves externally changed Q");

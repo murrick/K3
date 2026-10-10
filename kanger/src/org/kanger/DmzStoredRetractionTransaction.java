@@ -302,6 +302,31 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             }
             return false;
         }
+        /** Detached current proofs with exact pending-source cuts; does not authorize native inference. */
+        DmzCurrentUnaryProofInventory.Proofs proofs(TerminalSupportCapture.Ground ground, int proofBudget) throws Exception {
+            if (closed) throw new IllegalStateException("Native support choice closed");
+            if (ground == null || proofBudget < 1 || proofBudget > 10000)
+                throw new IllegalArgumentException("Ground and bounded proof budget required");
+            if (!projection.isCurrent()) throw new IllegalStateException("Native support choice boundary changed");
+            Mind child = transaction.mind();
+            DmzCurrentUnaryProofInventory inventory = DmzCurrentUnaryProofInventory.capture(child, proofBudget, true);
+            if (!inventory.eligible) throw new IllegalStateException("Native support choice current inventory unavailable");
+            DmzCurrentUnaryProofInventory.Proofs raw = inventory.proofs(ground,
+                    DmzTerminalRestriction.activeNoGoods(child), proofBudget);
+            if (raw.truncated) throw new IllegalStateException("Native support choice proof budget exceeded");
+            List<DmzProofWitnesses.Witness> kept = new ArrayList<DmzProofWitnesses.Witness>();
+            int[] work = {proofBudget};
+            for (DmzProofWitnesses.Witness witness : raw.witnesses) {
+                boolean excluded = false;
+                if (choice == SupportChoice.KEEP_CANDIDATE)
+                    for (ConflictSupport cut : projection.candidateSideCuts)
+                        if (containsExactWitness(witness, cut.witness, work)) { excluded = true; break; }
+                if (!excluded) kept.add(witness);
+            }
+            if (!inventory.isCurrent(child) || !projection.isCurrent())
+                throw new IllegalStateException("Native support choice boundary changed");
+            return new DmzCurrentUnaryProofInventory.Proofs(kept, false, raw.provisional);
+        }
         public void close() throws Exception {
             if (closed) return;
             Mind parent = owner.transaction.mind();
