@@ -1,0 +1,20 @@
+{
+  "exit_code": 0,
+  "command": [
+    "java",
+    "-Duser.home=/tmp/journal-gate-mpnucyaf",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-Dkanger.experiment.verifyTValueIndex=true",
+    "-Dkanger.experiment.verifySolveSync=true",
+    "-cp",
+    "../build/tvalue-journal-three-routes-tests:../build/tvalue-journal-context-snapshots.jar:../build/tvalue-observer-fast-disabled-hooked:../K3-observer-native/kanger/resources:../K3-observer-native/kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.GateDisagreementRunner"
+  ]
+}

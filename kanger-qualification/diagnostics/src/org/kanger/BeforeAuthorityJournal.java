@@ -15,6 +15,8 @@ public final class BeforeAuthorityJournal {
     public static List<String> profile(){return Collections.unmodifiableList(CURRENT.get().cost);}
     private static final class Session {
         final IdentityHashMap<Mind,State> states=new IdentityHashMap<>();
+        // Replace membership snapshots only on registration; never mutate a published array.
+        State[] ordered=new State[0];
         final List<String> rows=new ArrayList<>(),errors=new ArrayList<>();
         int contexts,observations,deferred,changes,resets,touches,bucketReads,seeds,mapChanges;
         UpdateFrame update;
@@ -61,7 +63,11 @@ public final class BeforeAuthorityJournal {
     private static void safely(Mind mind,Work work){
         Session s=CURRENT.get();if(s==null||mind==null||mind.getClass()!=Mind.class)return;
         try{
-            State st=s.states.get(mind);if(st==null){st=new State(mind,++s.contexts);s.states.put(mind,st);}
+            State st=s.states.get(mind);if(st==null){
+                st=new State(mind,++s.contexts);s.states.put(mind,st);
+                State[] next=Arrays.copyOf(s.ordered,s.ordered.length+1);next[next.length-1]=st;
+                Arrays.sort(next,Comparator.comparingInt(state->state.context));s.ordered=next;
+            }
             if(!st.retired)work.run(s,st);
         }catch(Throwable e){s.errors.add(e.getClass().getName()+":"+e.getMessage());}
     }
@@ -139,7 +145,7 @@ public final class BeforeAuthorityJournal {
     private static boolean dependsOn(Mind candidate,Mind owner){for(Mind m=candidate;m!=null;m=(Mind)m.getNext())if(m==owner)return true;return false;}
     public static void touch(Mind owner,TValue value,String reason){
         safely(owner,(s,source)->{
-            List<State> states=new ArrayList<>(s.states.values());states.sort(Comparator.comparingInt(st->st.context));
+            State[] states=s.ordered;
             for(State st:states)if(!st.retired&&dependsOn(st.mind,owner)){
                 st.observed.put(value,value.getTVarId());st.dirty.add(value.getTVarId());st.variableByValue.put(value.getId(),value.getTVarId());s.touches++;
                 s.rows.add("TOUCH "+scope(st)+" reason="+reason+" variable="+value.getTVarId()+" value="+value.getId()+" term="+value.getValueId());
@@ -152,7 +158,7 @@ public final class BeforeAuthorityJournal {
     public static void metadata(TValue value,long oldId,long oldVariable,long oldTerm,String reason){
         Session s=CURRENT.get();if(s==null)return;
         try{
-            List<State> states=new ArrayList<>(s.states.values());states.sort(Comparator.comparingInt(st->st.context));
+            State[] states=s.ordered;
             for(State st:states)if(!st.retired&&st.observed.containsKey(value)){
                 long route=st.observed.get(value);
                 // Preserve the natural signed-long order and uniqueness of three routes
@@ -183,7 +189,7 @@ public final class BeforeAuthorityJournal {
         try{
             Object data=ResidentTValueRead.field(step,"data");if(data==null||data.getClass()!=TValue.class)return;
             TValue value=(TValue)data;long id=value.getId(),variable=value.getTVarId();
-            List<State> states=new ArrayList<>(s.states.values());states.sort(Comparator.comparingInt(st->st.context));
+            State[] states=s.ordered;
             for(State st:states){
                 if(st.retired||!st.initialized||st.reset||!st.variableByValue.containsKey(id)||st.observed.containsKey(value))continue;
                 Object user=ResidentTValueRead.field(st.mind,"user");if(user==null||user.getClass()!=User.class)continue;
@@ -222,7 +228,7 @@ public final class BeforeAuthorityJournal {
     public static int contextChangeCount(Mind mind){State st=CURRENT.get().states.get(mind);if(st==null)return 0;String prefix="CHANGE ctx="+st.context+" ";int count=0;for(String row:CURRENT.get().rows)if(row.startsWith(prefix))count++;return count;}
     public static List<String> finish(){
         Session s=CURRENT.get();if(s==null)throw new AssertionError("no journal");
-        List<State> states=new ArrayList<>(s.states.values());states.sort(Comparator.comparingInt(st->st.context));for(State st:states)if(!st.retired)observe(st.mind,"session-end");CURRENT.remove();
+        State[] states=s.ordered;for(State st:states)if(!st.retired)observe(st.mind,"session-end");CURRENT.remove();
         for(State st:states)if(st.checkpoints!=0||st.settlements!=0)s.errors.add("unsettled context "+st.context);
         if(!s.errors.isEmpty())throw new AssertionError("journal errors "+s.errors);
         s.rows.add("DIRTY_JOURNAL_OK contexts="+s.contexts+" observations="+s.observations+" deferred="+s.deferred+" changes="+s.changes+" resets="+s.resets+" touches="+s.touches+" bucketReads="+s.bucketReads+" seeds="+s.seeds+" mapChanges="+s.mapChanges);return s.rows;

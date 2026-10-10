@@ -1,5 +1,9 @@
 # TValue diagnostic source set
 
+## Current context-membership snapshot experiment
+
+Each journal now retains a private ordered State array and replaces it only on context registration. Every traversal captures the array reference at entry, preserving reentrant registration and live retirement semantics. See [the context-snapshot report](../../docs/tvalue-journal-context-snapshots.md) for bounded qualification, callback allocation measurements and the extra registration cost. Prior experiment build scripts require their frozen source checkout.
+
 ## Current three-route allocation experiment
 
 The metadata callbacks now sort and deduplicate three primitive route IDs without a temporary list/TreeSet. Both journals and full authority export gates remain active. See [the three-route report](../../docs/tvalue-journal-three-routes.md) for qualification, allocation measurements and reproduction using a frozen parent control checkout. Earlier build scripts below require their frozen source checkout; the current diagnostic sources intentionally differ in the two journal classes.

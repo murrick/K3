@@ -1,0 +1,84 @@
+{
+  "commands": [
+    [
+      "java",
+      "-jar",
+      "../tooling/ecj.jar",
+      "-1.8",
+      "-nowarn",
+      "-cp",
+      "../build/tvalue-observer-fast-disabled-clean:lib/jline-3.13.0.jar",
+      "-d",
+      "../build/tvalue-journal-context-snapshots-module",
+      "@kanger-qualification/diagnostics/sources.txt"
+    ],
+    [
+      "java",
+      "-jar",
+      "../tooling/ecj.jar",
+      "-1.8",
+      "-nowarn",
+      "-cp",
+      "../build/tvalue-observer-fast-disabled-clean:lib/jline-3.13.0.jar:../build/tvalue-journal-context-snapshots.jar",
+      "-d",
+      "../build/tvalue-journal-context-snapshots-tests",
+      "/workspace/scratch/fe58fcae83c2/K3/docs/tvalue-journal-context-snapshots/ContextSnapshotRunner.java"
+    ]
+  ],
+  "compiler_sha256": "f7686c4960cf70c2ebc5c500a73a8cfc04541b730c18f1c5c21329889b137f45",
+  "source_sha256": {
+    "kanger-qualification/diagnostics/src/org/kanger/BeforeAuthorityJournal.java": "8a58c7a98aa635a1e5e1bd10e928c4b0c5e1b38c342d12e2c38e04285d58db8b",
+    "kanger-qualification/diagnostics/src/org/kanger/ConsumerHooks.java": "0a59d9bc9dab55c7da8dcccaf5d23f6eaf8223ed0e85922ea0dd41ebae63580f",
+    "kanger-qualification/diagnostics/src/org/kanger/ObservationLayers.java": "de34cee51960c606008a5ba5ecc4c807b4e68bb69ad02de1c2c5ddb30fdfb983",
+    "kanger-qualification/diagnostics/src/org/kanger/QualifiedJournalConsumer.java": "020227b18a95bc63c5a83a3ffb96ecaedcd4a89deacb645ea1c03f6d6881171b",
+    "kanger-qualification/diagnostics/src/org/kanger/RecordedLinks.java": "d66db3dfcf31acecb4fb02b3d9ad3ab457af3c3424a26bec1a5584c6e91fa7d1",
+    "kanger-qualification/diagnostics/src/org/kanger/ResidentPersistentRead.java": "96db19c65936623a9886addbed7c353deb2cb5238c38a9b3f479685d6aa48b40",
+    "kanger-qualification/diagnostics/src/org/kanger/ResidentTValueRead.java": "39aeadef4d511d55c172f68a770c27d088a79e973c5db43aa8632c6eee9c8772",
+    "kanger-qualification/diagnostics/src/org/kanger/StreamAuthorityJournal.java": "67378873e6579ba1bb65ccbe7fc89bcbb68d667855eafa5381dbab412cf29779",
+    "kanger-qualification/diagnostics/src/org/kanger/StreamAuthorityRead.java": "9641859e5ec75f0652fe60470aa55b04e84db7c7ef74f961502615bd6fa45931"
+  },
+  "class_sha256": {
+    "org/kanger/ResidentPersistentRead.class": "6b3457c8795d9240feba43bab322e415953b4313d7f4a8b0ebdfafbfdd6cb2c4",
+    "org/kanger/RecordedLinks$Gate.class": "892b49bbb42f75ccad183afc0abced5680175e0286f2295bdef774e09858c675",
+    "org/kanger/BeforeAuthorityJournal$UpdateFrame.class": "ea5abb79ad628fc4712f07aa28fd3601127d7f597bfff35847490897dd2f525b",
+    "org/kanger/StreamAuthorityJournal$UpdateFrame.class": "96554d54307fcdb963c1ae0688bb2a7a841a2e8a956909e6156a51a07d560829",
+    "org/kanger/StreamAuthorityJournal$Work.class": "a9561671bcf23d9af98da92a3c768054dc85fa43630007a3638e45a661a69054",
+    "org/kanger/ResidentPersistentRead$Row.class": "a05949de057a944ba3198b5710e9ec6022b3524570b90e896c4df350cd88df16",
+    "org/kanger/StreamAuthorityJournal$State.class": "b819ba54cffef2a79448c3e22533aabed979a3aa91f4949934dff43b824018e1",
+    "org/kanger/StreamAuthorityJournal$Session.class": "26451399b49baa89922002773ebace54fd09d90987370f1d75d1d27873fcf49d",
+    "org/kanger/RecordedLinks$WriteFrame.class": "a23493424f4483753ce9ae8ff8a6c6b9cdc8e71071929c4e98748aa9c65ccd90",
+    "org/kanger/RecordedLinks.class": "11d9c476e121d11af67d890e85b0462d4c9ba5441f183140dd18aaa918bbb0c9",
+    "org/kanger/BeforeAuthorityJournal$State.class": "35d10e81f4be5da606eaed76b12ec513b151a8a73b2a462ec8405a4bec20fd5e",
+    "org/kanger/ObservationLayers.class": "63dc90d7c980fa52c817b7840f46821c6b577bb51dfbbf8b9c97ee15646e6fc2",
+    "org/kanger/ResidentTValueRead$Layer.class": "f3db2a61489c79022f113f50b61429a3346c015ee0179e7f902c6f83a159f724",
+    "org/kanger/BeforeAuthorityJournal.class": "5318590ac9896059e7d86e3dda88779e63a8fe0a41c4f691f183a3449f2e4c95",
+    "org/kanger/ResidentTValueRead.class": "57a53dfba1ba3c0e8fb1d757dcbdeee6b2ac5f5c6c2cfc160e831c1a7c8cf7d0",
+    "org/kanger/QualifiedJournalConsumer.class": "04d1c513bcab84a7dcc7973bb7efad343f0cde890e3a7642aa35c727d50ef9f4",
+    "org/kanger/ConsumerHooks.class": "4558fbfdcc3e2a7f11e00bb810c50e77648d12b2bd75ad9d0f6b1827ca9b3a96",
+    "org/kanger/RecordedLinks$State.class": "44eed9e71faa1bfbe3334e118534b9ef086ca5f2c58e5301888535810e76d709",
+    "org/kanger/QualifiedJournalConsumer$Session.class": "b75620c5a9c10adaaabfc2533ed8f220e5393807d2e69254ba490744f06f63b9",
+    "org/kanger/ConsumerHooks$1.class": "94f19b433e18b53d6c6eda1b11c4027e749a84fcf210128ac90b607bede6f91e",
+    "org/kanger/QualifiedJournalConsumer$Refusal.class": "e3fb00485fe6bbfd52c8d093c93ca2c2ba23b4b9173a8d5c3822093e12f6bf46",
+    "org/kanger/BeforeAuthorityJournal$Session.class": "6b5af4459a5f28607d407efb20ab084c401d1d043924500cd63b493ff06e9c35",
+    "org/kanger/StreamAuthorityRead.class": "c1351a3588ba1862d06769feb984abd0f5dc4820718290f96c6ea781a12c0d48",
+    "org/kanger/StreamAuthorityJournal.class": "ea170ff9c901b94eff848205f72a9279f3108bf561ffc0a763244e6178f2cc37",
+    "org/kanger/BeforeAuthorityJournal$Work.class": "b936dd31bdca36c48b065883f19bd91c8411d7e5353a065c9c8b8d05c557575f",
+    "org/kanger/RecordedLinks$Witness.class": "2fd0da5138d5258838a81b4cef48a127602cea28252f497e5fc16ff97c5998a1"
+  },
+  "changed_classes": [
+    "org/kanger/BeforeAuthorityJournal$Session.class",
+    "org/kanger/BeforeAuthorityJournal$State.class",
+    "org/kanger/BeforeAuthorityJournal$UpdateFrame.class",
+    "org/kanger/BeforeAuthorityJournal.class",
+    "org/kanger/StreamAuthorityJournal$Session.class",
+    "org/kanger/StreamAuthorityJournal$State.class",
+    "org/kanger/StreamAuthorityJournal$UpdateFrame.class",
+    "org/kanger/StreamAuthorityJournal.class"
+  ],
+  "jar_sha256": "164eacfb151e6a2f9f8646eb5bfdb91654082d1a1720497d0584d8302cdbedc1",
+  "fixture_source_sha256": "d151e52e462e4e9edfdde458beb262b372b52815f89aa7e2befd07d5b2a3c02e",
+  "fixture_class_sha256": {
+    "org/kanger/ContextSnapshotRunner$Probe.class": "7fb00ccace16b138d814c399d093a046903f5cd651e2841c9e836da586025579",
+    "org/kanger/ContextSnapshotRunner.class": "6ffa58d1e3b13d035e0b4290de6b016b3a355e60bd809446b7a014b9e66b5acf"
+  }
+}
