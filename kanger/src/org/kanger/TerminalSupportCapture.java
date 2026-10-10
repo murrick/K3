@@ -352,6 +352,8 @@ final class TerminalSupportCapture implements AutoCloseable {
     private Mind boundary;
     private final List<Event> events = new ArrayList<Event>();
     private final List<Application> applications = new ArrayList<Application>();
+    private final Map<Application, List<DmzReplayProvenance.Binding>> restrictedSources =
+            new IdentityHashMap<Application, List<DmzReplayProvenance.Binding>>();
     private final List<Materialization> materializations = new ArrayList<Materialization>();
     private final List<String> applicationGaps = new ArrayList<String>();
     private final List<Match> matches = new ArrayList<Match>();
@@ -425,6 +427,7 @@ final class TerminalSupportCapture implements AutoCloseable {
             }
         }
         List<Support> supports = new ArrayList<Support>();
+        long primaryEvidence = -1;
         for (Domain premise : tree) {
             if (premise == conclusion) continue;
             if (!premise.isExcluded(mind)) return "premise-not-excluded";
@@ -456,12 +459,20 @@ final class TerminalSupportCapture implements AutoCloseable {
             if (!witnessed) return "missing-compatible-premise-match";
             supports.add(new Support(identity(premise), identity(evidence), donor, ground,
                     !mind.getRules().isGenerated(evidence), DmzSourceCandidates.capture(mind, evidence.getOrigin())));
+            if (!mind.getRules().isGenerated(evidence)) primaryEvidence = evidence.getId();
         }
         Solve result = new Solve(conclusion.getPredicate(), conclusion.isAntc(),
                 conclusion.getArguments().convertBase(mind));
-        applications.add(new Application(identity(mind), identity(rule), rule.getOrigin(),
+        Application application = new Application(identity(mind), identity(rule), rule.getOrigin(),
                 result.toString(mind), Ground.capture(result, mind), bindings, supports,
-                DmzSourceCandidates.capture(mind, rule.getOrigin())));
+                DmzSourceCandidates.capture(mind, rule.getOrigin()));
+        if (supports.size() == 1 && supports.get(0).primary) {
+            List<DmzReplayProvenance.Binding> excluded = DmzTerminalRestriction.excludedSources(mind,
+                    rule.getId(), application.ground, primaryEvidence, supports.get(0).ground);
+            if (!excluded.isEmpty()) restrictedSources.put(application,
+                    Collections.unmodifiableList(new ArrayList<DmzReplayProvenance.Binding>(excluded)));
+        }
+        applications.add(application);
         return null;
     }
 
@@ -495,7 +506,10 @@ final class TerminalSupportCapture implements AutoCloseable {
                 supports.add(support.primary ? journal.sources(mind, evidence.getId())
                         : Collections.<DmzReplayProvenance.Binding>emptyList());
             }
-            result.add(new ApplicationSources(application, journal.sources(mind, rule.getId()), supports));
+            List<DmzReplayProvenance.Binding> rules = new ArrayList<DmzReplayProvenance.Binding>(journal.sources(mind, rule.getId()));
+            List<DmzReplayProvenance.Binding> excluded = restrictedSources.get(application);
+            if (excluded != null) rules.removeAll(excluded);
+            result.add(new ApplicationSources(application, Collections.unmodifiableList(rules), supports));
         }
         return Collections.unmodifiableList(result);
     }
@@ -543,6 +557,36 @@ final class TerminalSupportCapture implements AutoCloseable {
             this.gaps = Collections.unmodifiableList(new ArrayList<String>(gaps)); captureActive = active; this.scope = scope; this.operation = operation;
         }
     }
+    /** Explicitly provisional branch associations; these are not accepted proof certificates. */
+    List<ProvisionalApplication> provisionalSourceSnapshot() {
+        requireActive();
+        Map<Integer, Object> objects = new java.util.HashMap<Integer, Object>();
+        for (Map.Entry<Object, Integer> entry : identities.entrySet()) objects.put(entry.getValue(), entry.getKey());
+        List<ProvisionalApplication> result = new ArrayList<ProvisionalApplication>();
+        for (Application application : applications) {
+            Outcome state = outcome(application.mind);
+            if (state == Outcome.PENDING || state == Outcome.COMMITTED)
+                result.add(provisionalSources(application, state, objects));
+        }
+        return Collections.unmodifiableList(result);
+    }
+    private ProvisionalApplication provisionalSources(Application application, Outcome state, Map<Integer, Object> objects) {
+        Mind mind = (Mind) objects.get(application.mind);
+        IRule rule = (IRule) objects.get(application.rule);
+        List<List<DmzReplayProvenance.SourceObservation>> supports =
+                new ArrayList<List<DmzReplayProvenance.SourceObservation>>();
+        for (Support support : application.supports) {
+            IRule evidence = (IRule) objects.get(support.evidence);
+            supports.add(support.primary ? DmzReplayProvenance.observedSources(mind, evidence.getId())
+                    : Collections.<DmzReplayProvenance.SourceObservation>emptyList());
+        }
+        List<DmzReplayProvenance.SourceObservation> rules =
+                new ArrayList<DmzReplayProvenance.SourceObservation>();
+        List<DmzReplayProvenance.Binding> excluded = restrictedSources.get(application);
+        for (DmzReplayProvenance.SourceObservation source : DmzReplayProvenance.observedSources(mind, rule.getId()))
+            if (excluded == null || !excluded.contains(source.binding)) rules.add(source);
+        return new ProvisionalApplication(application, state, Collections.unmodifiableList(rules), supports);
+    }
     /** Event-time provisional surface; settlementSnapshot remains acceptance-only. */
     static CollisionObservations collisionObservations(Mind eventMind) {
         TerminalSupportCapture capture = ACTIVE.get();
@@ -569,17 +613,7 @@ final class TerminalSupportCapture implements AutoCloseable {
             if (!related || operation < 0 || capture.operation(application.mind) != operation) continue;
             Outcome outcome = capture.outcome(application.mind);
             if (outcome != Outcome.PENDING && outcome != Outcome.COMMITTED) continue;
-            Mind mind = (Mind) objects.get(application.mind);
-            IRule rule = (IRule) objects.get(application.rule);
-            List<List<DmzReplayProvenance.SourceObservation>> supports =
-                    new ArrayList<List<DmzReplayProvenance.SourceObservation>>();
-            for (Support support : application.supports) {
-                IRule evidence = (IRule) objects.get(support.evidence);
-                supports.add(support.primary ? DmzReplayProvenance.observedSources(mind, evidence.getId())
-                        : Collections.<DmzReplayProvenance.SourceObservation>emptyList());
-            }
-            result.add(new ProvisionalApplication(application, outcome,
-                    DmzReplayProvenance.observedSources(mind, rule.getId()), supports));
+            result.add(capture.provisionalSources(application, outcome, objects));
         }
         return new CollisionObservations(result, capture.applicationGaps, true, capture.scopeId, operation);
     }
@@ -630,6 +664,7 @@ final class TerminalSupportCapture implements AutoCloseable {
         }
         closed = true;
         identities.clear();
+        restrictedSources.clear();
         boundary = null;
         if (previous == null) ACTIVE.remove(); else ACTIVE.set(previous);
     }

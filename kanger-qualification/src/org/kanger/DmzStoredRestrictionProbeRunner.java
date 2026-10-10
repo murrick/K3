@@ -44,21 +44,14 @@ public final class DmzStoredRestrictionProbeRunner {
                 return;
             }
             require(projected.eligible && !projected.truncated && !projected.complete, "bounded projection eligible");
-            if (duplicate) {
-                boolean refused = false;
-                try { DmzStoredRetractionTransaction.begin(guard, proof, blocked, q, 10000); }
-                catch (IllegalStateException expected) { refused = true; }
-                require(refused, "canonical source alternatives cannot be globally vetoed");
-                require(state.equals(DmzObservationStateFingerprint.capture(q)), "unsupported source alternative leaves parent unchanged");
-                return;
-            }
+            boolean retained = alternative || duplicate;
             int checked = 0;
             for (DmzStoredRestrictionProbe.Node node : projected.nodes) {
                 String predicate = proof.graph.observed.nodes.get(node.index).ground.predicate;
                 if (predicate.equals("derived") || predicate.equals("tail")) {
-                    require(node.removed == 1 && node.retracted() == !alternative,
+                    require(node.removed == 1 && node.retracted() == !retained,
                             "dependent route removed; independent route preserves " + predicate);
-                    require(node.retained.size() == (alternative ? 1 : 0), "exact retained route count"); ++checked;
+                    require(node.retained.size() == (retained ? 1 : 0), "exact retained route count"); ++checked;
                 }
                 if (predicate.equals("source")) require(node.removed == 0 && !node.retained.isEmpty(), "primary survives");
             }
@@ -72,26 +65,28 @@ public final class DmzStoredRestrictionProbeRunner {
                     if (q.getRules().isGenerated(rule)) {
                         String predicate = rule.getDomain().getPredicate().getName(q);
                         if (predicate.equals("derived") || predicate.equals("tail"))
-                            require(overlay.hasLiveRule(rule.getId()) == alternative,
+                            require(overlay.hasLiveRule(rule.getId()) == retained,
                                     "native overlay retracts last-dependent atom and preserves independent " + predicate);
                     } else require(overlay.hasLiveRule(rule.getId()), "native primary rule preserved");
                 }
                 require(state.equals(DmzObservationStateFingerprint.capture(q)), "native child tombstones leave parent unchanged");
                 Boolean rootAnswer = overlay.query("?derived(1);");
-                require(alternative ? Boolean.TRUE.equals(rootAnswer) : rootAnswer == null,
+                require(retained ? Boolean.TRUE.equals(rootAnswer) : rootAnswer == null,
                         "query cannot bypass excluded direct route; independent proof survives");
                 Boolean tailAnswer = overlay.query("?tail(1);");
-                require(alternative ? Boolean.TRUE.equals(tailAnswer) : tailAnswer == null,
+                require(retained ? Boolean.TRUE.equals(tailAnswer) : tailAnswer == null,
                         "dependent query respects selected derivation restriction");
                 Boolean negative = overlay.query("?~derived(1);");
-                require(alternative ? Boolean.FALSE.equals(negative) : negative == null,
+                require(retained ? Boolean.FALSE.equals(negative) : negative == null,
                         "blocked proof means unknown, never asserted opposite opinion");
-                if (!alternative) require(overlay.queryDeniedCount() > 0, "native query pair veto exercised");
+                if (!retained) require(overlay.queryDeniedCount() > 0, "native query pair veto exercised");
                 require(Boolean.TRUE.equals(overlay.accept(fact, 21, DmzReplayProvenance.Authority.EXTERNAL,
                         "!source(2);")), "native continuation accepts another substitution");
-                require(overlay.hasLiveRule(stored.nativeRule) == alternative,
+                require(overlay.hasLiveRule(stored.nativeRule) == retained,
                         "continued acceptance cannot restore blocked substitution");
-                require(overlay.deniedCount() > 0, "terminal veto exercised by real native continuation");
+                require(duplicate ? overlay.deniedCount() == 0 : overlay.deniedCount() > 0,
+                        "native continuation retains a canonical alternative or exercises the veto");
+                if (duplicate) checkSources(capture, journal, stored.operation, proof.graph.observed.nodes.get(proof.root).ground, true);
                 int fresh = 0;
                 for (TerminalSupportCapture.StoredObservation observation : capture.storedSnapshot()) {
                     TerminalSupportCapture.Materialization materialization = observation.materialization;
@@ -108,6 +103,7 @@ public final class DmzStoredRestrictionProbeRunner {
                 catch (IllegalArgumentException expected) { unsupported = true; }
                 require(unsupported, "hypothesis/query path cannot bypass qualification boundary");
             } finally { overlay.close(); }
+            if (duplicate) checkSources(capture, journal, stored.operation, proof.graph.observed.nodes.get(proof.root).ground, false);
             require(state.equals(DmzObservationStateFingerprint.capture(q)), "rollback restores unchanged parent");
             boolean closed = false;
             try { overlay.hasLiveRule(stored.nativeRule); } catch (IllegalStateException expected) { closed = true; }
@@ -119,7 +115,47 @@ public final class DmzStoredRestrictionProbeRunner {
             require(!DmzStoredRestrictionProbe.project(guard, proof, other.witnesses.get(0), q, 10000).eligible, "foreign witness rejected");
             q.query("!anchor(2);", null, false);
             require(!DmzStoredRestrictionProbe.project(guard, proof, blocked, q, 10000).eligible, "stale boundary cannot project");
+            if (duplicate) {
+                int before = capture.applicationSnapshot().size();
+                require(Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(q, fact, 23,
+                        DmzReplayProvenance.Authority.EXTERNAL, "!source(3);")), "parent accepts after restriction closes");
+                int restored = 0;
+                java.util.List<TerminalSupportCapture.Application> applications = capture.applicationSnapshot();
+                for (TerminalSupportCapture.ApplicationSources sources : capture.sourceSnapshot(journal)) {
+                    if (applications.indexOf(sources.application) < before
+                            || !sources.application.ground.predicate.equals("derived")) continue;
+                    boolean first = false, second = false;
+                    for (DmzReplayProvenance.Binding binding : sources.ruleSources) {
+                        if (binding.sourceRule == 10) first = true;
+                        if (binding.sourceRule == 14) second = true;
+                    }
+                    require(first && second, "closed child exclusion cannot filter new parent associations"); ++restored;
+                }
+                require(restored > 0, "unrestricted parent provenance exercised");
+            }
         }
+    }
+    private static void checkSources(TerminalSupportCapture capture, DmzReplayProvenance journal,
+            int originalOperation, TerminalSupportCapture.Ground selected, boolean open) {
+        int filtered = 0, untouched = 0;
+        for (TerminalSupportCapture.ProvisionalApplication sources : capture.provisionalSourceSnapshot()) {
+            if (!sources.application.ground.predicate.equals("derived") || sources.application.supports.size() != 1
+                    || !sources.application.supports.get(0).primary) continue;
+            boolean one = sources.application.ground.arguments.get(0).semanticallyEquals(selected.arguments.get(0));
+            boolean blocked = false, other = false;
+            for (DmzReplayProvenance.SourceObservation observation : sources.ruleSources) {
+                DmzReplayProvenance.Binding binding = observation.binding;
+                if (binding.sourceRule == 10) blocked = true;
+                if (binding.sourceRule == 14) other = true;
+            }
+            if (sources.application.mind == originalOperation) continue;
+            if (one && other && !blocked) ++filtered;
+            if (!one && other && blocked) ++untouched;
+        }
+        if (open) {
+            require(filtered > 0, "continued same-ground proof omits only the blocked production occurrence");
+            require(untouched > 0, "other substitution retains both production source occurrences");
+        } else require(filtered == 0 && untouched == 0, "rolled-back child applications cannot enter accepted provenance");
     }
     private static void accept(Mind q, IContextResults.Revision source, long id, String statement) throws Exception {
         require(Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(q, source, id, DmzReplayProvenance.Authority.EXTERNAL, statement)), "native production");
