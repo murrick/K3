@@ -22,9 +22,14 @@ final class DmzCurrentUnaryProofInventory {
     static final class Proofs {
         final List<DmzProofWitnesses.Witness> witnesses;
         final boolean truncated;
+        final boolean provisional;
         Proofs(List<DmzProofWitnesses.Witness> witnesses, boolean truncated) {
+            this(witnesses, truncated, false);
+        }
+        Proofs(List<DmzProofWitnesses.Witness> witnesses, boolean truncated, boolean provisional) {
             this.witnesses = Collections.unmodifiableList(new ArrayList<DmzProofWitnesses.Witness>(witnesses));
             this.truncated = truncated;
+            this.provisional = provisional;
         }
     }
     private static final class Seed {
@@ -169,9 +174,9 @@ final class DmzCurrentUnaryProofInventory {
         DmzSourcedProofGraph branch = graph.restrict(noGoods);
         for (int i = 0; i < branch.observed.nodes.size(); ++i) if (ground.equivalent(branch.observed.nodes.get(i).ground)) {
             DmzProofWitnesses.Result result = DmzProofWitnesses.enumerate(branch, i, budget);
-            return new Proofs(result.witnesses, result.truncated);
+            return new Proofs(result.witnesses, result.truncated, provisional);
         }
-        return new Proofs(Collections.<DmzProofWitnesses.Witness>emptyList(), false);
+        return new Proofs(Collections.<DmzProofWitnesses.Witness>emptyList(), false, provisional);
     }
     private static boolean ordinary(Domain literal, Mind mind) throws Exception {
         return !literal.isSystem(mind) && !literal.isCalculated(mind) && !literal.isQuery(mind) && literal.getArguments().size() == 1;

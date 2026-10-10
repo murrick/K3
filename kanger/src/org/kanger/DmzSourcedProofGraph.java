@@ -77,7 +77,11 @@ final class DmzSourcedProofGraph {
         List<Step> steps = new ArrayList<Step>();
         for (int i = 0; i < graph.steps.size(); ++i)
             steps.add(new Step(i, mapped.get(i), ready(graph.steps.get(i), mapped.get(i), available)));
-        return new DmzSourcedProofGraph(graph, steps, available);
+        List<DmzProofWitnesses.NoGood> noGoods = new ArrayList<DmzProofWitnesses.NoGood>();
+        for (TerminalSupportCapture.ApplicationSources sources : associations)
+            for (DmzProofWitnesses.NoGood pattern : sources.noGoods) if (!noGoods.contains(pattern)) noGoods.add(pattern);
+        if (noGoods.size() > 10000) throw new IllegalArgumentException("Observed no-good count exceeds budget");
+        return new DmzSourcedProofGraph(graph, steps, available, noGoods);
     }
     private static boolean ready(DmzObservedProofGraph.Step step,
             TerminalSupportCapture.ApplicationSources sources, List<Boolean> available) {

@@ -354,6 +354,8 @@ final class TerminalSupportCapture implements AutoCloseable {
     private final List<Application> applications = new ArrayList<Application>();
     private final Map<Application, List<SourcePair>> restrictedPairs =
             new IdentityHashMap<Application, List<SourcePair>>();
+    private final Map<Application, List<DmzProofWitnesses.NoGood>> restrictedChains =
+            new IdentityHashMap<Application, List<DmzProofWitnesses.NoGood>>();
     private final List<Materialization> materializations = new ArrayList<Materialization>();
     private final List<String> applicationGaps = new ArrayList<String>();
     private final List<Match> matches = new ArrayList<Match>();
@@ -472,6 +474,11 @@ final class TerminalSupportCapture implements AutoCloseable {
             if (!excluded.isEmpty()) restrictedPairs.put(application,
                     Collections.unmodifiableList(new ArrayList<SourcePair>(excluded)));
         }
+        if (supports.size() == 1) {
+            List<DmzProofWitnesses.NoGood> patterns = DmzTerminalRestriction.applicationNoGoods(mind,
+                    rule.getId(), application.ground, supports.get(0).ground);
+            if (!patterns.isEmpty()) restrictedChains.put(application, Collections.unmodifiableList(patterns));
+        }
         applications.add(application);
         return null;
     }
@@ -496,21 +503,32 @@ final class TerminalSupportCapture implements AutoCloseable {
         List<SourcePair> pairs = restrictedPairs.get(application);
         return pairs == null ? Collections.<SourcePair>emptyList() : pairs;
     }
+    private List<DmzProofWitnesses.NoGood> chains(Application application) {
+        List<DmzProofWitnesses.NoGood> result = restrictedChains.get(application);
+        return result == null ? Collections.<DmzProofWitnesses.NoGood>emptyList() : result;
+    }
     /** Detached exact-ID source alternatives; generated supports require upstream proof resolution. */
     static final class ApplicationSources {
         final Application application;
         final List<DmzReplayProvenance.Binding> ruleSources;
         final List<List<DmzReplayProvenance.Binding>> supportSources;
         final List<SourcePair> excludedPairs;
+        final List<DmzProofWitnesses.NoGood> noGoods;
         ApplicationSources(Application application, List<DmzReplayProvenance.Binding> ruleSources,
                 List<List<DmzReplayProvenance.Binding>> supportSources) {
             this(application, ruleSources, supportSources, Collections.<SourcePair>emptyList());
         }
         ApplicationSources(Application application, List<DmzReplayProvenance.Binding> ruleSources,
                 List<List<DmzReplayProvenance.Binding>> supportSources, List<SourcePair> excludedPairs) {
+            this(application, ruleSources, supportSources, excludedPairs, Collections.<DmzProofWitnesses.NoGood>emptyList());
+        }
+        ApplicationSources(Application application, List<DmzReplayProvenance.Binding> ruleSources,
+                List<List<DmzReplayProvenance.Binding>> supportSources, List<SourcePair> excludedPairs,
+                List<DmzProofWitnesses.NoGood> noGoods) {
             this.application = application; this.ruleSources = ruleSources;
             this.supportSources = Collections.unmodifiableList(supportSources);
             this.excludedPairs = Collections.unmodifiableList(new ArrayList<SourcePair>(excludedPairs));
+            this.noGoods = Collections.unmodifiableList(new ArrayList<DmzProofWitnesses.NoGood>(noGoods));
         }
     }
     List<ApplicationSources> sourceSnapshot(DmzReplayProvenance journal) {
@@ -529,7 +547,7 @@ final class TerminalSupportCapture implements AutoCloseable {
                         : Collections.<DmzReplayProvenance.Binding>emptyList());
             }
             List<DmzReplayProvenance.Binding> rules = new ArrayList<DmzReplayProvenance.Binding>(journal.sources(mind, rule.getId()));
-            result.add(new ApplicationSources(application, Collections.unmodifiableList(rules), supports, pairs(application)));
+            result.add(new ApplicationSources(application, Collections.unmodifiableList(rules), supports, pairs(application), chains(application)));
         }
         return Collections.unmodifiableList(result);
     }
@@ -560,6 +578,7 @@ final class TerminalSupportCapture implements AutoCloseable {
         final List<DmzReplayProvenance.SourceObservation> ruleSources;
         final List<List<DmzReplayProvenance.SourceObservation>> supportSources;
         final List<SourcePair> excludedPairs;
+        final List<DmzProofWitnesses.NoGood> noGoods;
         ProvisionalApplication(Application application, Outcome outcome,
                 List<DmzReplayProvenance.SourceObservation> ruleSources,
                 List<List<DmzReplayProvenance.SourceObservation>> supportSources) {
@@ -568,9 +587,16 @@ final class TerminalSupportCapture implements AutoCloseable {
         ProvisionalApplication(Application application, Outcome outcome,
                 List<DmzReplayProvenance.SourceObservation> ruleSources,
                 List<List<DmzReplayProvenance.SourceObservation>> supportSources, List<SourcePair> excludedPairs) {
+            this(application, outcome, ruleSources, supportSources, excludedPairs, Collections.<DmzProofWitnesses.NoGood>emptyList());
+        }
+        ProvisionalApplication(Application application, Outcome outcome,
+                List<DmzReplayProvenance.SourceObservation> ruleSources,
+                List<List<DmzReplayProvenance.SourceObservation>> supportSources, List<SourcePair> excludedPairs,
+                List<DmzProofWitnesses.NoGood> noGoods) {
             this.application = application; this.outcome = outcome; this.ruleSources = ruleSources;
             this.supportSources = Collections.unmodifiableList(supportSources);
             this.excludedPairs = Collections.unmodifiableList(new ArrayList<SourcePair>(excludedPairs));
+            this.noGoods = Collections.unmodifiableList(new ArrayList<DmzProofWitnesses.NoGood>(noGoods));
         }
     }
     static final class CollisionObservations {
@@ -608,7 +634,7 @@ final class TerminalSupportCapture implements AutoCloseable {
                     : Collections.<DmzReplayProvenance.SourceObservation>emptyList());
         }
         return new ProvisionalApplication(application, state,
-                DmzReplayProvenance.observedSources(mind, rule.getId()), supports, pairs(application));
+                DmzReplayProvenance.observedSources(mind, rule.getId()), supports, pairs(application), chains(application));
     }
     /** Event-time provisional surface; settlementSnapshot remains acceptance-only. */
     static CollisionObservations collisionObservations(Mind eventMind) {
@@ -687,7 +713,7 @@ final class TerminalSupportCapture implements AutoCloseable {
         }
         closed = true;
         identities.clear();
-        restrictedPairs.clear();
+        restrictedPairs.clear(); restrictedChains.clear();
         boundary = null;
         if (previous == null) ACTIVE.remove(); else ACTIVE.set(previous);
     }
