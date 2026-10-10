@@ -97,6 +97,33 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         return false;
     }
     enum InputKind { FRESH, EXISTING_PRIMARY, SUPPORTED_DERIVED, CONFLICT, INCONSISTENT }
+    enum CandidateDisposition { REJECT_Q, NEEDS_BRANCHING, REUSE_PRIMARY, PROBE_NEW_INPUT }
+    static final class CandidateAssessment {
+        final InputKind branch, authority;
+        final CandidateDisposition disposition;
+        private CandidateAssessment(InputKind branch, InputKind authority) {
+            this.branch = branch; this.authority = authority;
+            disposition = authority == InputKind.CONFLICT || authority == InputKind.INCONSISTENT
+                    ? CandidateDisposition.REJECT_Q
+                    : branch == InputKind.CONFLICT || branch == InputKind.INCONSISTENT
+                    ? CandidateDisposition.NEEDS_BRANCHING
+                    : branch == InputKind.EXISTING_PRIMARY ? CandidateDisposition.REUSE_PRIMARY
+                    : CandidateDisposition.PROBE_NEW_INPUT;
+        }
+    }
+    /** Detached checked-boundary diagnostic, not a permission to accept or reuse a source. */
+    CandidateAssessment assessCandidate(String statement, int budget) throws Exception {
+        if (closed) throw new IllegalStateException("Retraction overlay closed");
+        Mind child = transaction.mind();
+        String state = DmzObservationStateFingerprint.capture(child);
+        DmzReplayProvenance.SourceCheckpoint sources = DmzReplayProvenance.sourceCheckpoint(child);
+        InputKind authority = classifyAuthorityInput(statement, budget);
+        InputKind branch = classifyInput(statement, budget);
+        requireAuthorityCurrent();
+        if (!state.equals(DmzObservationStateFingerprint.capture(child)) || !sources.isCurrent(child))
+            throw new IllegalStateException("Candidate assessment branch boundary changed");
+        return new CandidateAssessment(branch, authority);
+    }
     /** Read-only current-proof diagnostic; never an admission or durable permission. */
     InputKind classifyInput(String statement, int budget) throws Exception {
         if (closed) throw new IllegalStateException("Retraction overlay closed");
