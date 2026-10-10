@@ -1,0 +1,23 @@
+{
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-journal-touch-strings.jar:../build/tvalue-observer-fast-disabled-hooked:../build/tvalue-observer-fast-disabled-tests:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-export-phase-tests",
+    "/workspace/scratch/fe58fcae83c2/K3/docs/tvalue-export-phase-study/ExportPhaseRunner.java"
+  ],
+  "source_sha256": "14ae4ccd2ff0ee7133dc1eb4404f0e6ff36ea580eb0c9aedafa1bafbdfc65767",
+  "compiler_sha256": "f7686c4960cf70c2ebc5c500a73a8cfc04541b730c18f1c5c21329889b137f45",
+  "classes": {
+    "../build/tvalue-export-phase-tests/org/kanger/ExportPhaseRunner.class": "cd959442b3fd78db6a1ace4912962f3c0470b3fa6ae8dcc02cc17baa38268506"
+  },
+  "jars": {
+    "../build/tvalue-journal-context-snapshots.jar": "164eacfb151e6a2f9f8646eb5bfdb91654082d1a1720497d0584d8302cdbedc1",
+    "../build/tvalue-journal-touch-strings.jar": "51cb2973a4eba52e2167e6a6f8934907470908181d367a5d139c9c0ce34d97f6"
+  }
+}
