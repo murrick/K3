@@ -33,6 +33,7 @@ public final class DmzNativeRecursiveContinuationRunner {
             accept(q, rules, 13, negative ? "!@x middle(x) -> ~derived(x);" : "!@x middle(x) -> derived(x);");
             accept(q, rules, 14, negative ? "!@x ~derived(x) -> ~tail(x);" : "!@x derived(x) -> tail(x);");
             accept(q, rules, 16, "!@x independent(x) -> middle(x);");
+            accept(q, rules, 120, "!@x negativeResult(x) -> negativeTail(x);");
             accept(q, rules, 98, "!@x ~negativeIndependent(x) -> middle(x);");
             accept(q, rules, 80, "!@x ~negativeSeed(x) -> negativeResult(x);");
             accept(q, fact, 81, "!~negativePrimary(7);");
@@ -320,6 +321,34 @@ public final class DmzNativeRecursiveContinuationRunner {
                 for (DmzStoredRetractionTransaction.ConflictSupport support : alternativeConflict.supports)
                     require(support.pending.size() == 1 && support.pending.get(0).sourceRule == 21,
                             "every opposing alternative retains its exact pending source");
+                DmzStoredRetractionTransaction.SymmetricProjection primaryProjection = overlay.projectSymmetric(primaryConflict, 10000);
+                require(primaryProjection.isCurrent() && primaryProjection.candidateSideCuts.size() == 1,
+                        "primary symmetric projection has exact opposing occurrence cut");
+                projectionCount(primaryProjection, "negativeSeed", false, 9, 1, 0);
+                projectionCount(primaryProjection, "negativeResult", true, 9, 1, 0);
+                projectionCount(primaryProjection, "negativeTail", true, 9, 1, 0);
+                DmzStoredRetractionTransaction.SymmetricProjection derivedProjection = overlay.projectSymmetric(derivedConflict, 10000);
+                projectionCount(derivedProjection, "negativeSeed", false, 9, 1, 1);
+                projectionCount(derivedProjection, "negativeResult", true, 9, 1, 0);
+                projectionCount(derivedProjection, "negativeTail", true, 9, 1, 0);
+                DmzStoredRetractionTransaction.SymmetricProjection alternativeProjection = overlay.projectSymmetric(alternativeConflict, 10000);
+                int freshRoutes = (alternative ? 2 : 1) * (duplicate ? 2 : 1);
+                projectionCount(alternativeProjection, "derived", !negative, 2, freshRoutes, 0);
+                projectionCount(alternativeProjection, "tail", !negative, 2, freshRoutes, 0);
+                projectionCount(alternativeProjection, "source", true, 2, 1, 1);
+                projectionCount(alternativeProjection, "derived", !negative, 1,
+                        original - 1 + 3 * (duplicate ? 2 : 1), original - 1 + 3 * (duplicate ? 2 : 1));
+                count(overlay, root, original - 1 + 3 * (duplicate ? 2 : 1), true);
+                require(Boolean.TRUE.equals(overlay.queryContinuation("?negativeTail(9);")),
+                        "projection does not remove live native downstream facts");
+                boolean projectionBounded = false;
+                try { overlay.projectSymmetric(primaryConflict, 1); }
+                catch (IllegalStateException expected) { projectionBounded = expected.getMessage().contains("inventory unavailable"); }
+                require(projectionBounded && primaryProjection.isCurrent(), "bounded projection failure preserves live receipt");
+                boolean projectionImmutable = false;
+                try { primaryProjection.grounds.clear(); }
+                catch (UnsupportedOperationException expected) { projectionImmutable = true; }
+                require(projectionImmutable, "symmetric projection grounds are immutable");
                 boolean qCutRefused = false;
                 try { overlay.conflictEvidence("!" + (negative ? "" : "~") + "derived(1);", 10000); }
                 catch (IllegalArgumentException expected) { qCutRefused = true; }
@@ -418,6 +447,12 @@ public final class DmzNativeRecursiveContinuationRunner {
                 require(overlay.classifyAuthorityInput("!" + (negative ? "~" : "") + "derived(1);", 10000)
                         == DmzStoredRetractionTransaction.InputKind.SUPPORTED_DERIVED,
                         "new branch primary cannot relabel Q derived proof");
+                require(!primaryProjection.isCurrent() && !derivedProjection.isCurrent() && !alternativeProjection.isCurrent(),
+                        "new branch admission invalidates symmetric projections");
+                boolean staleProjection = false;
+                try { overlay.projectSymmetric(primaryConflict, 10000); }
+                catch (IllegalStateException expected) { staleProjection = expected.getMessage().contains("Current conflict evidence required"); }
+                require(staleProjection, "stale evidence cannot generate a new symmetric projection");
                 require(!primaryConflict.isCurrent() && !derivedConflict.isCurrent() && !alternativeConflict.isCurrent(),
                         "new native branch primary invalidates all prior conflict receipts");
                 require(derivedConflict.supports.size() == 1 && derivedSupport.pending.get(0).sourceRule == 100,
@@ -534,6 +569,20 @@ public final class DmzNativeRecursiveContinuationRunner {
             }
         }
     }
+    private static void projectionCount(DmzStoredRetractionTransaction.SymmetricProjection projection, String predicate,
+            boolean sign, int value, int before, int after) throws Exception {
+        for (DmzStoredRetractionTransaction.ProjectedGround ground : projection.grounds) {
+            Object actual = ground.ground.arguments.get(0).materialize().getValue();
+            if (ground.ground.predicate.equals(predicate) && ground.ground.sign == sign
+                    && actual instanceof Number && ((Number) actual).doubleValue() == value) {
+                require(ground.keepExisting == before && ground.keepCandidate == after
+                        && ground.losesLastSupport() == (before > 0 && after == 0),
+                        "symmetric projected support counts: " + predicate + "(" + value + ") " + before + "/" + after);
+                return;
+            }
+        }
+        throw new AssertionError("Missing projected ground " + predicate + "(" + value + ")");
+    }
     private static void invalidEvaluation(DmzStoredRetractionTransaction overlay, IContextResults.Revision source,
             long label, String candidate, String query, int auditBudget, int lookupBudget) throws Exception {
         boolean invalid = false;
@@ -556,6 +605,16 @@ public final class DmzNativeRecursiveContinuationRunner {
                         "authority fixture adds separate pending branch source");
                 DmzStoredRetractionTransaction.ConflictEvidence evidence = overlay.conflictEvidence("!~derived(9);", 10000);
                 require(evidence.isCurrent(), "conflict evidence current before external Q change");
+                DmzStoredRetractionTransaction.SymmetricProjection projection = overlay.projectSymmetric(evidence, 10000);
+                require(projection.isCurrent(), "symmetric projection current before Q mutation");
+                try (DmzStoredRetractionTransaction sibling = DmzStoredRetractionTransaction.beginContinuation(
+                        guard, proof, proof.witnesses.get(0), q, 10000)) {
+                    boolean wrongOwner = false;
+                    try { sibling.projectSymmetric(evidence, 10000); }
+                    catch (IllegalArgumentException expected) { wrongOwner = true; }
+                    require(wrongOwner, "sibling transaction cannot project another branch's receipt");
+                }
+                require(projection.isCurrent(), "closing sibling transaction preserves original projection");
                 String before = DmzObservationStateFingerprint.capture(q);
                 if (sourceOnly) DmzReplayProvenance.replayRule(q, source, 3, DmzReplayProvenance.Authority.EXTERNAL,
                         "!@x source(x) -> derived(x);");
@@ -568,6 +627,11 @@ public final class DmzNativeRecursiveContinuationRunner {
                 catch (IllegalStateException expected) { stale = expected.getMessage().contains("Pinned Q authority boundary changed"); }
                 require(stale, "changed authority rejected, sourceOnly=" + sourceOnly);
                 require(!evidence.isCurrent(), "native or source-only Q change invalidates conflict evidence");
+                require(!projection.isCurrent(), "Q native or source-only mutation invalidates projection");
+                boolean staleProjection = false;
+                try { overlay.projectSymmetric(evidence, 10000); }
+                catch (IllegalStateException expected) { staleProjection = expected.getMessage().contains("Current conflict evidence required"); }
+                require(staleProjection, "changed Q prevents fresh projection from old receipt");
                 boolean assessmentStale = false;
                 try { overlay.assessCandidate("!~derived(1);", 10000); }
                 catch (IllegalStateException expected) { assessmentStale = expected.getMessage().contains("Pinned Q authority boundary changed"); }

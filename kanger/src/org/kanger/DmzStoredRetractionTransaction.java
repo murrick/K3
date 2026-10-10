@@ -217,6 +217,71 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         for (DmzProofWitnesses.Witness premise : witness.premises)
             collectConflictSources(child, premise, accepted, pending, seen, remaining);
     }
+    static final class ProjectedGround {
+        final TerminalSupportCapture.Ground ground;
+        final int keepExisting, keepCandidate;
+        private ProjectedGround(TerminalSupportCapture.Ground ground, int before, int after) {
+            this.ground = ground; keepExisting = before; keepCandidate = after;
+        }
+        boolean losesLastSupport() { return keepExisting > 0 && keepCandidate == 0; }
+    }
+    static final class SymmetricProjection {
+        final ConflictEvidence evidence;
+        final List<ProjectedGround> grounds;
+        // KEEP_EXISTING excludes the incoming candidate; KEEP_CANDIDATE excludes these exact opposing chains.
+        final List<ConflictSupport> candidateSideCuts;
+        private SymmetricProjection(ConflictEvidence evidence, List<ProjectedGround> grounds) {
+            this.evidence = evidence;
+            this.grounds = java.util.Collections.unmodifiableList(new ArrayList<ProjectedGround>(grounds));
+            candidateSideCuts = evidence.supports;
+        }
+        boolean isCurrent() throws Exception { return evidence.isCurrent(); }
+    }
+    /** Read-only inherited-proof projection; the proposed candidate is not inserted or inferred. */
+    SymmetricProjection projectSymmetric(ConflictEvidence evidence, int budget) throws Exception {
+        if (closed) throw new IllegalStateException("Retraction overlay closed");
+        if (evidence == null || evidence.owner != this) throw new IllegalArgumentException("Owning branch conflict evidence required");
+        if (budget < 1 || budget > 10000) throw new IllegalArgumentException("Projection budget must be between 1 and 10000");
+        if (!evidence.isCurrent()) throw new IllegalStateException("Current conflict evidence required");
+        Mind child = transaction.mind();
+        DmzCurrentUnaryProofInventory inventory = DmzCurrentUnaryProofInventory.capture(child, budget, true);
+        if (!inventory.eligible) throw new IllegalStateException("Symmetric projection inventory unavailable: " + inventory.gaps);
+        List<ProjectedGround> grounds = new ArrayList<ProjectedGround>();
+        int[] work = new int[] {budget};
+        for (DmzObservedProofGraph.Node node : inventory.graph.observed.nodes) {
+            projectionWork(work);
+            DmzCurrentUnaryProofInventory.Proofs proofs = inventory.proofs(node.ground, DmzTerminalRestriction.activeNoGoods(child), budget);
+            if (proofs.truncated) throw new IllegalStateException("Symmetric projection witness budget exceeded");
+            int kept = 0;
+            for (DmzProofWitnesses.Witness witness : proofs.witnesses) {
+                boolean excluded = false;
+                for (ConflictSupport cut : evidence.supports)
+                    if (containsExactWitness(witness, cut.witness, work)) { excluded = true; break; }
+                if (!excluded) ++kept;
+            }
+            grounds.add(new ProjectedGround(node.ground, proofs.witnesses.size(), kept));
+        }
+        if (!inventory.isCurrent(child) || !evidence.isCurrent()) throw new IllegalStateException("Symmetric projection boundary changed");
+        return new SymmetricProjection(evidence, grounds);
+    }
+    private static void projectionWork(int[] work) {
+        if (work[0]-- == 0) throw new IllegalStateException("Symmetric projection traversal budget exceeded");
+    }
+    private static boolean containsExactWitness(DmzProofWitnesses.Witness witness, DmzProofWitnesses.Witness cut, int[] work) {
+        projectionWork(work);
+        if (sameExactWitness(witness, cut, work)) return true;
+        for (DmzProofWitnesses.Witness premise : witness.premises)
+            if (containsExactWitness(premise, cut, work)) return true;
+        return false;
+    }
+    private static boolean sameExactWitness(DmzProofWitnesses.Witness a, DmzProofWitnesses.Witness b, int[] work) {
+        projectionWork(work);
+        if (a.source != b.source || (a.step < 0) != (b.step < 0) || a.premises.size() != b.premises.size()
+                || !a.graph.observed.nodes.get(a.node).ground.equivalent(b.graph.observed.nodes.get(b.node).ground)) return false;
+        for (int i = 0; i < a.premises.size(); ++i)
+            if (!sameExactWitness(a.premises.get(i), b.premises.get(i), work)) return false;
+        return true;
+    }
     /** Read-only current-proof diagnostic; never an admission or durable permission. */
     InputKind classifyInput(String statement, int budget) throws Exception {
         if (closed) throw new IllegalStateException("Retraction overlay closed");
