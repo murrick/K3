@@ -327,24 +327,52 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 throw new IllegalStateException("Native support choice boundary changed");
             return new DmzCurrentUnaryProofInventory.Proofs(kept, false, raw.provisional);
         }
-        /** Rollback-only signed unary query; primary-cut query gates remain unqualified. */
+        /** Expand primary cuts through the pinned parent's complete eligible unary closure before query assumptions. */
+        private List<DmzProofWitnesses.Witness> queryCuts(int auditBudget) throws Exception {
+            List<DmzProofWitnesses.Witness> result = new ArrayList<DmzProofWitnesses.Witness>();
+            if (choice != SupportChoice.KEEP_CANDIDATE) return result;
+            boolean primary = false;
+            for (ConflictSupport cut : projection.candidateSideCuts)
+                if (cut.witness.step < 0) primary = true;
+                else result.add(cut.witness);
+            if (!primary) return result;
+            Mind parent = owner.transaction.mind();
+            DmzCurrentUnaryProofInventory inventory = DmzCurrentUnaryProofInventory.capture(parent, auditBudget, true);
+            if (!inventory.eligible) throw new IllegalStateException("Primary cut query inventory unavailable");
+            int[] work = {auditBudget};
+            for (DmzObservedProofGraph.Node node : inventory.graph.observed.nodes) {
+                projectionWork(work);
+                DmzCurrentUnaryProofInventory.Proofs proofs = inventory.proofs(node.ground,
+                        DmzTerminalRestriction.activeNoGoods(parent), auditBudget);
+                if (proofs.truncated) throw new IllegalStateException("Primary cut query proof budget exceeded");
+                for (DmzProofWitnesses.Witness witness : proofs.witnesses) {
+                    projectionWork(work);
+                    if (witness.step < 0) continue;
+                    for (ConflictSupport cut : projection.candidateSideCuts)
+                        if (cut.witness.step < 0 && containsExactWitness(witness, cut.witness, work)) {
+                            result.add(witness); break;
+                        }
+                }
+            }
+            if (!inventory.isCurrent(parent) || !projection.isCurrent())
+                throw new IllegalStateException("Native support choice boundary changed");
+            return result;
+        }
+        /** Rollback-only signed unary query with pre-assumption derived gates for exact primary or derived cuts. */
         QueryResult query(String statement, int auditBudget) throws Exception {
             if (closed) throw new IllegalStateException("Native support choice closed");
             if (statement == null || !statement.matches("\\?~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
                 throw new IllegalArgumentException("Only signed unary integer choice queries are qualified");
             if (auditBudget < 1 || auditBudget > 10000) throw new IllegalArgumentException("Bounded query audit required");
             if (!projection.isCurrent()) throw new IllegalStateException("Native support choice boundary changed");
-            if (choice == SupportChoice.KEEP_CANDIDATE)
-                for (ConflictSupport cut : projection.candidateSideCuts)
-                    if (cut.witness.step < 0) throw new IllegalStateException("Primary support cut query gate not qualified");
+            List<DmzProofWitnesses.Witness> cuts = queryCuts(auditBudget);
             Mind child = transaction.mind();
             String state = DmzObservationStateFingerprint.capture(child);
             List<String> hypotheses = hypothesisText(child);
             List<DmzTerminalRestriction> gates = new ArrayList<DmzTerminalRestriction>();
             try {
-                if (choice == SupportChoice.KEEP_CANDIDATE)
-                    for (ConflictSupport cut : projection.candidateSideCuts)
-                        gates.add(DmzTerminalRestriction.beginPendingChoice(child, cut.witness));
+                for (DmzProofWitnesses.Witness cut : cuts)
+                    gates.add(DmzTerminalRestriction.beginPendingChoice(child, cut));
                 QueryResult result;
                 try (DmzTerminalRestriction.QueryScope audit = DmzTerminalRestriction.prepareQuery(child, auditBudget);
                         TechnicalMindTransaction query = TechnicalMindTransaction.beginIsolated(child)) {

@@ -18,6 +18,8 @@ public final class DmzNativeRecursiveContinuationRunner {
                         for (int failureMode : new int[] {0, 1, 2, 3, 4, 5, 6, 7, 8})
                             run(alternative, duplicate, primaryDuplicate, negative, failureMode);
         authorityStaleness(false); authorityStaleness(true);
+        isolatedPrimaryCut(false, false); isolatedPrimaryCut(true, false);
+        isolatedPrimaryCut(false, true); isolatedPrimaryCut(true, true);
         System.out.println("DMZ_NATIVE_RECURSIVE_CONTINUATION_PASS checks=" + checks);
     }
     private static void run(boolean alternative, boolean duplicate, boolean primaryDuplicate, boolean negative, int failureMode) throws Exception {
@@ -374,10 +376,19 @@ public final class DmzNativeRecursiveContinuationRunner {
                         require(proofBudgetRefused && projected.isCurrent(), "bounded proof refusal preserves open child and parent");
                         cut.proofs(projected.evidence.candidate, 10000);
                         if (projected == primaryProjection) {
-                            boolean primaryGateRefused = false;
-                            try { cut.query("?negativeResult(9);", 10000); }
-                            catch (IllegalStateException expected) { primaryGateRefused = expected.getMessage().contains("Primary support cut"); }
-                            require(primaryGateRefused, "primary-cut native queries remain closed before their gate is qualified");
+                            require(!Boolean.TRUE.equals(cut.query("?~negativeSeed(9);", 10000).value),
+                                    "excluded primary is not recovered as a supported native fact");
+                            require(!Boolean.TRUE.equals(cut.query("?negativeResult(9);", 10000).value),
+                                    "primary-cut query cannot recover its immediate consequence from an assumption");
+                            require(!Boolean.TRUE.equals(cut.query("?negativeTail(9);", 10000).value),
+                                    "primary-cut query cannot recover its downstream chain from an assumption");
+                            require(Boolean.TRUE.equals(cut.query("?middle(1);", 10000).value),
+                                    "primary-cut query preserves independent accepted and pending supports");
+                            boolean primaryBudgetRefused = false;
+                            try { cut.query("?negativeTail(9);", 1); }
+                            catch (IllegalStateException expected) { primaryBudgetRefused = true; }
+                            require(primaryBudgetRefused && !Boolean.TRUE.equals(cut.query("?negativeTail(9);", 10000).value),
+                                    "primary-cut audit budget refusal keeps choice usable");
                         } else {
                             String lost = projected == derivedProjection ? "?negativeResult(9);"
                                     : (negative ? "?~derived(2);" : "?derived(2);");
@@ -681,6 +692,52 @@ public final class DmzNativeRecursiveContinuationRunner {
         try { overlay.evaluateCandidate(source, label, candidate, query, auditBudget, lookupBudget); }
         catch (IllegalArgumentException expected) { invalid = true; }
         require(invalid, "invalid evaluation parameters fail before recoverable classification");
+    }
+    private static void isolatedPrimaryCut(boolean negative, boolean connected) throws Exception {
+        User user = new User(); new UDF().init(user); Mind q = new Mind(user); user.setCurrentMind(q);
+        IContextResults.Revision source = new IContextResults.Revision(UUID.randomUUID(), 1);
+        try (DmzReplayProvenance journal = DmzReplayProvenance.begin(); TerminalSupportCapture capture = TerminalSupportCapture.begin(q)) {
+            accept(q, source, 1, "!@x source(x) -> derived(x);");
+            if (connected) {
+                accept(q, source, 4, negative ? "!@x ~isolatedPending(x) -> isolatedResult(x);"
+                        : "!@x isolatedPending(x) -> isolatedResult(x);");
+                accept(q, source, 5, "!@x isolatedResult(x) -> isolatedTail(x);");
+            }
+            DmzAcceptanceProofGuard guard = DmzAcceptanceProofGuard.beforeInput(capture, journal, q);
+            require(Boolean.TRUE.equals(guard.accept(source, 2, DmzReplayProvenance.Authority.EXTERNAL, "!source(1);")),
+                    "isolated primary fixture authoritative input");
+            DmzStoredProof proof = DmzStoredProof.build(capture, journal, stored(capture, "derived", null), 10000);
+            String qState = DmzObservationStateFingerprint.capture(q);
+            try (DmzStoredRetractionTransaction overlay = DmzStoredRetractionTransaction.beginContinuation(
+                    guard, proof, proof.witnesses.get(0), q, 10000)) {
+                require(Boolean.TRUE.equals(overlay.accept(source, 3, DmzReplayProvenance.Authority.EXTERNAL,
+                        (negative ? "!~isolatedPending(9);" : "!isolatedPending(9);"))), "isolated signed pending primary input");
+                DmzStoredRetractionTransaction.ConflictEvidence evidence = overlay.conflictEvidence(
+                        (negative ? "!isolatedPending(9);" : "!~isolatedPending(9);"), 10000);
+                DmzStoredRetractionTransaction.SymmetricProjection projection = overlay.projectSymmetric(evidence, 10000);
+                try (DmzStoredRetractionTransaction.NativeSupportChoice cut = overlay.beginSupportChoice(projection,
+                        DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, 10000)) {
+                    for (int attempt = 0; attempt < 2; ++attempt) {
+                        DmzStoredRetractionTransaction.QueryResult result = cut.query(signed(negative, "?isolatedPending(9);"), 10000);
+                        require(result.value == null && !result.hypotheses.isEmpty(),
+                                "isolated cut remains unknown and returns only conditional query hypotheses");
+                        for (DmzStoredRetractionTransaction.ProjectedGround ground : projection.grounds)
+                            if (ground.ground.predicate.equals("isolatedPending"))
+                                require(cut.proofs(ground.ground, 10000).witnesses.isEmpty(),
+                                        "query hypothesis never becomes current primary support");
+                        if (connected) {
+                            require(!Boolean.TRUE.equals(cut.query("?isolatedResult(9);", 10000).value)
+                                    && !Boolean.TRUE.equals(cut.query("?isolatedTail(9);", 10000).value),
+                                    "both signed primary cuts prevent assumption-driven downstream reconstruction");
+                        }
+                        require(projection.isCurrent(), "isolated query rollback keeps parent receipt current");
+                    }
+                }
+                require(Boolean.TRUE.equals(overlay.queryContinuation(signed(negative, "?isolatedPending(9);"))),
+                        "closing isolated cut restores parent primary opinion");
+            }
+            require(qState.equals(DmzObservationStateFingerprint.capture(q)), "isolated primary choices preserve authoritative Q");
+        }
     }
     private static void authorityStaleness(boolean sourceOnly) throws Exception {
         User user = new User(); new UDF().init(user); Mind q = new Mind(user); user.setCurrentMind(q);
