@@ -83,6 +83,22 @@ public final class DmzNativeRecursiveContinuationRunner {
                     if (application.application.ground.equivalent(root) && !application.noGoods.isEmpty()) ++receipts;
                 require(receipts > 0, "new native application associations freeze the recursive no-good");
                 require(state.equals(DmzObservationStateFingerprint.capture(q)), "continuation remains isolated from Q");
+                boolean auditRejected = false;
+                try {
+                    overlay.accept(new IContextResults.Revision(fact.getContextId(), 2), 31,
+                            DmzReplayProvenance.Authority.EXTERNAL, "!independent(3);");
+                } catch (IllegalStateException expected) { auditRejected = true; }
+                require(auditRejected, "inconsistent source revision closes continuation");
+                boolean failureClosed = false;
+                try { overlay.proofs(root, 10000); }
+                catch (IllegalStateException expected) { failureClosed = true; }
+                require(failureClosed, "failed audit branch cannot expose proofs");
+                boolean inputClosed = false;
+                try { overlay.accept(fact, 32, DmzReplayProvenance.Authority.EXTERNAL, "!source(4);"); }
+                catch (IllegalStateException expected) { inputClosed = true; }
+                require(inputClosed, "failed audit branch cannot accept another input");
+                require(state.equals(DmzObservationStateFingerprint.capture(q)),
+                        "audit failure rolls back all previous successful branch inputs");
             } finally { overlay.close(); }
             require(state.equals(DmzObservationStateFingerprint.capture(q)), "recursive continuation fully rolls back");
             boolean closed = false;
