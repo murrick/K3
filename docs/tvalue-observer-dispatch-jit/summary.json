@@ -1,0 +1,446 @@
+{
+  "JVMs": 75,
+  "timing_JVMs": 72,
+  "JIT_JVMs": 3,
+  "timing_batches": 9216,
+  "nonzero_allocation_timing_batches": 0,
+  "all_batches_check_exact_callback_count_and_payload_checksum": true,
+  "native_controls_identical": true,
+  "metrics": [
+    {
+      "workload": "bridge",
+      "slow-disabled": {
+        "ns": 35.464813232421875,
+        "bytes": 0.0,
+        "JVM_range_ns": [
+          27.560577392578125,
+          96.52336883544922
+        ]
+      },
+      "slow-attached": {
+        "ns": 33.898258209228516,
+        "bytes": 0.0,
+        "JVM_range_ns": [
+          28.55443572998047,
+          72.45194244384766
+        ]
+      },
+      "fast-disabled": {
+        "ns": 6.423061370849609,
+        "bytes": 0.0,
+        "JVM_range_ns": [
+          5.0166015625,
+          9.289192199707031
+        ]
+      },
+      "fast-attached": {
+        "ns": 39.31021499633789,
+        "bytes": 0.0,
+        "JVM_range_ns": [
+          28.48992156982422,
+          75.09886169433594
+        ]
+      },
+      "direct-disabled": {
+        "ns": 4.952320098876953,
+        "bytes": 0.0,
+        "JVM_range_ns": [
+          4.361061096191406,
+          11.693328857421875
+        ]
+      },
+      "direct-attached": {
+        "ns": 38.858909606933594,
+        "bytes": 0.0,
+        "JVM_range_ns": [
+          32.53247833251953,
+          80.72171783447266
+        ]
+      },
+      "fast_slow_attached_paired_ratio": 1.0669798298107662,
+      "fast_ratio_range": [
+        0.5825579914353174,
+        1.940721732808541
+      ],
+      "direct_slow_attached_paired_ratio": 1.1652035614087846,
+      "direct_ratio_range": [
+        0.6147169549454473,
+        2.3918503050636564
+      ]
+    },
+    {
+      "workload": "native",
+      "slow-disabled": {
+        "ns": 37.48057556152344,
+        "bytes": 0.0,
+        "JVM_range_ns": [
+          25.554649353027344,
+          64.09483337402344
+        ]
+      },
+      "slow-attached": {
+        "ns": 32.4934196472168,
+        "bytes": 0.0,
+        "JVM_range_ns": [
+          26.85320281982422,
+          87.15711212158203
+        ]
+      },
+      "fast-disabled": {
+        "ns": 8.83001708984375,
+        "bytes": 0.0,
+        "JVM_range_ns": [
+          6.69915771484375,
+          17.436134338378906
+        ]
+      },
+      "fast-attached": {
+        "ns": 38.47634506225586,
+        "bytes": 0.0,
+        "JVM_range_ns": [
+          27.53302764892578,
+          65.96791076660156
+        ]
+      },
+      "direct-disabled": {
+        "ns": 9.541614532470703,
+        "bytes": 0.0,
+        "JVM_range_ns": [
+          6.835662841796875,
+          20.105148315429688
+        ]
+      },
+      "direct-attached": {
+        "ns": 41.06925582885742,
+        "bytes": 0.0,
+        "JVM_range_ns": [
+          33.22179412841797,
+          66.6732406616211
+        ]
+      },
+      "fast_slow_attached_paired_ratio": 1.1209096283964135,
+      "fast_ratio_range": [
+        0.7175904275875963,
+        1.7863986319136642
+      ],
+      "direct_slow_attached_paired_ratio": 1.2553707791785929,
+      "direct_ratio_range": [
+        0.3973088073493917,
+        2.206825835659942
+      ]
+    }
+  ],
+  "jit_evidence": {
+    "direct-attached": [
+      {
+        "method": "org.kanger.MinimalObserverRunner$Counter::<init>",
+        "outcome": "inline_success",
+        "reason": "inline (hot)",
+        "count": 1
+      },
+      {
+        "method": "org.kanger.MinimalObserverRunner$Counter::metadata",
+        "outcome": "inline_success",
+        "reason": "inline (hot)",
+        "count": 5
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::access$1",
+        "outcome": "inline_success",
+        "reason": "accessor",
+        "count": 5
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::access$3",
+        "outcome": "inline_success",
+        "reason": "accessor",
+        "count": 5
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::checkOwner",
+        "outcome": "inline_success",
+        "reason": "inline",
+        "count": 9
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::close",
+        "outcome": "inline_fail",
+        "reason": "executed < MinInliningThreshold times",
+        "count": 2
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::close",
+        "outcome": "inline_fail",
+        "reason": "never executed",
+        "count": 2
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::failed",
+        "outcome": "inline_fail",
+        "reason": "executed < MinInliningThreshold times",
+        "count": 1
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::failed",
+        "outcome": "inline_fail",
+        "reason": "never executed",
+        "count": 1
+      },
+      {
+        "method": "org.kanger.TValueObservation::access$0",
+        "outcome": "inline_success",
+        "reason": "inline",
+        "count": 6
+      },
+      {
+        "method": "org.kanger.TValueObservation::access$1",
+        "outcome": "inline_success",
+        "reason": "inline",
+        "count": 6
+      },
+      {
+        "method": "org.kanger.TValueObservation::attach",
+        "outcome": "inline_fail",
+        "reason": "too big",
+        "count": 1
+      },
+      {
+        "method": "org.kanger.TValueObservation::attached",
+        "outcome": "inline_fail",
+        "reason": "never executed",
+        "count": 1
+      },
+      {
+        "method": "org.kanger.TValueObservation::metadata",
+        "outcome": "inline_success",
+        "reason": "inline (hot)",
+        "count": 4
+      }
+    ],
+    "fast-attached": [
+      {
+        "method": "org.kanger.MinimalObserverRunner$Counter::<init>",
+        "outcome": "inline_success",
+        "reason": "inline (hot)",
+        "count": 2
+      },
+      {
+        "method": "org.kanger.MinimalObserverRunner$Counter::metadata",
+        "outcome": "inline_success",
+        "reason": "inline (hot)",
+        "count": 10
+      },
+      {
+        "method": "org.kanger.TValueObservation$$Lambda$42/0x00007f8b9401f480::<init>",
+        "outcome": "inline_success",
+        "reason": "inline (hot)",
+        "count": 7
+      },
+      {
+        "method": "org.kanger.TValueObservation$$Lambda$42/0x00007f8b9401f480::call",
+        "outcome": "inline_success",
+        "reason": "inline (hot)",
+        "count": 8
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::access$1",
+        "outcome": "inline_success",
+        "reason": "accessor",
+        "count": 8
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::access$3",
+        "outcome": "inline_success",
+        "reason": "accessor",
+        "count": 8
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::checkOwner",
+        "outcome": "inline_success",
+        "reason": "inline",
+        "count": 6
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::close",
+        "outcome": "inline_fail",
+        "reason": "executed < MinInliningThreshold times",
+        "count": 2
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::close",
+        "outcome": "inline_fail",
+        "reason": "never executed",
+        "count": 5
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::failed",
+        "outcome": "inline_fail",
+        "reason": "executed < MinInliningThreshold times",
+        "count": 1
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::failed",
+        "outcome": "inline_fail",
+        "reason": "never executed",
+        "count": 2
+      },
+      {
+        "method": "org.kanger.TValueObservation::access$0",
+        "outcome": "inline_success",
+        "reason": "inline",
+        "count": 4
+      },
+      {
+        "method": "org.kanger.TValueObservation::access$1",
+        "outcome": "inline_success",
+        "reason": "inline",
+        "count": 4
+      },
+      {
+        "method": "org.kanger.TValueObservation::attach",
+        "outcome": "inline_fail",
+        "reason": "too big",
+        "count": 2
+      },
+      {
+        "method": "org.kanger.TValueObservation::attached",
+        "outcome": "inline_fail",
+        "reason": "never executed",
+        "count": 2
+      },
+      {
+        "method": "org.kanger.TValueObservation::dispatch",
+        "outcome": "inline_success",
+        "reason": "inline (hot)",
+        "count": 7
+      },
+      {
+        "method": "org.kanger.TValueObservation::lambda$6",
+        "outcome": "inline_success",
+        "reason": "inline (hot)",
+        "count": 9
+      },
+      {
+        "method": "org.kanger.TValueObservation::metadata",
+        "outcome": "inline_success",
+        "reason": "inline (hot)",
+        "count": 6
+      }
+    ],
+    "slow-attached": [
+      {
+        "method": "org.kanger.MinimalObserverRunner$Counter::<init>",
+        "outcome": "inline_success",
+        "reason": "inline (hot)",
+        "count": 2
+      },
+      {
+        "method": "org.kanger.MinimalObserverRunner$Counter::metadata",
+        "outcome": "inline_success",
+        "reason": "inline (hot)",
+        "count": 10
+      },
+      {
+        "method": "org.kanger.TValueObservation$$Lambda$40/0x00007f40c801d698::<init>",
+        "outcome": "inline_success",
+        "reason": "inline (hot)",
+        "count": 7
+      },
+      {
+        "method": "org.kanger.TValueObservation$$Lambda$40/0x00007f40c801d698::call",
+        "outcome": "inline_success",
+        "reason": "inline (hot)",
+        "count": 8
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::access$1",
+        "outcome": "inline_success",
+        "reason": "accessor",
+        "count": 8
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::access$3",
+        "outcome": "inline_success",
+        "reason": "accessor",
+        "count": 8
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::checkOwner",
+        "outcome": "inline_success",
+        "reason": "inline",
+        "count": 6
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::close",
+        "outcome": "inline_fail",
+        "reason": "executed < MinInliningThreshold times",
+        "count": 2
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::close",
+        "outcome": "inline_fail",
+        "reason": "never executed",
+        "count": 5
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::failed",
+        "outcome": "inline_fail",
+        "reason": "executed < MinInliningThreshold times",
+        "count": 1
+      },
+      {
+        "method": "org.kanger.TValueObservation$Attachment::failed",
+        "outcome": "inline_fail",
+        "reason": "never executed",
+        "count": 2
+      },
+      {
+        "method": "org.kanger.TValueObservation::access$0",
+        "outcome": "inline_success",
+        "reason": "inline",
+        "count": 4
+      },
+      {
+        "method": "org.kanger.TValueObservation::access$1",
+        "outcome": "inline_success",
+        "reason": "inline",
+        "count": 4
+      },
+      {
+        "method": "org.kanger.TValueObservation::attach",
+        "outcome": "inline_fail",
+        "reason": "too big",
+        "count": 2
+      },
+      {
+        "method": "org.kanger.TValueObservation::attached",
+        "outcome": "inline_fail",
+        "reason": "never executed",
+        "count": 2
+      },
+      {
+        "method": "org.kanger.TValueObservation::dispatch",
+        "outcome": "inline_success",
+        "reason": "inline (hot)",
+        "count": 7
+      },
+      {
+        "method": "org.kanger.TValueObservation::lambda$6",
+        "outcome": "inline_success",
+        "reason": "inline (hot)",
+        "count": 9
+      },
+      {
+        "method": "org.kanger.TValueObservation::metadata",
+        "outcome": "inline_success",
+        "reason": "inline (hot)",
+        "count": 6
+      }
+    ]
+  },
+  "diagnostic_journals_enabled": false,
+  "diagnostic_export_qualified": false,
+  "production_changed": false,
+  "end_to_end_inference_speedup_qualified": false,
+  "exclusive_host": false
+}

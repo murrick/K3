@@ -1,0 +1,1502 @@
+[
+  {
+    "mode": "direct-attached",
+    "repetition": 0,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 80.72171783447266,
+    "bytes": 0.0,
+    "first_half_ns": 89.58207702636719,
+    "second_half_ns": 75.51302337646484
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 0,
+    "jit": false,
+    "workload": "native",
+    "ns": 66.6732406616211,
+    "bytes": 0.0,
+    "first_half_ns": 62.783103942871094,
+    "second_half_ns": 71.50949096679688
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 0,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 10.524002075195312,
+    "bytes": 0.0,
+    "first_half_ns": 10.264747619628906,
+    "second_half_ns": 10.888519287109375
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 0,
+    "jit": false,
+    "workload": "native",
+    "ns": 13.530967712402344,
+    "bytes": 0.0,
+    "first_half_ns": 13.530967712402344,
+    "second_half_ns": 13.375129699707031
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 0,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 44.306495666503906,
+    "bytes": 0.0,
+    "first_half_ns": 47.57544708251953,
+    "second_half_ns": 41.6002197265625
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 0,
+    "jit": false,
+    "workload": "native",
+    "ns": 53.97117614746094,
+    "bytes": 0.0,
+    "first_half_ns": 42.54302978515625,
+    "second_half_ns": 60.30390167236328
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 0,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 9.289192199707031,
+    "bytes": 0.0,
+    "first_half_ns": 9.039199829101562,
+    "second_half_ns": 9.4744873046875
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 0,
+    "jit": false,
+    "workload": "native",
+    "ns": 7.144020080566406,
+    "bytes": 0.0,
+    "first_half_ns": 7.42034912109375,
+    "second_half_ns": 6.80609130859375
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 0,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 33.74864959716797,
+    "bytes": 0.0,
+    "first_half_ns": 36.67314147949219,
+    "second_half_ns": 30.111572265625
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 0,
+    "jit": false,
+    "workload": "native",
+    "ns": 30.2122802734375,
+    "bytes": 0.0,
+    "first_half_ns": 30.183731079101562,
+    "second_half_ns": 30.23798370361328
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 0,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 38.426429748535156,
+    "bytes": 0.0,
+    "first_half_ns": 37.86457824707031,
+    "second_half_ns": 39.58836364746094
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 0,
+    "jit": false,
+    "workload": "native",
+    "ns": 41.64311218261719,
+    "bytes": 0.0,
+    "first_half_ns": 41.843048095703125,
+    "second_half_ns": 41.64311218261719
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 1,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 44.537437438964844,
+    "bytes": 0.0,
+    "first_half_ns": 47.85469055175781,
+    "second_half_ns": 41.98096466064453
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 1,
+    "jit": false,
+    "workload": "native",
+    "ns": 34.62828826904297,
+    "bytes": 0.0,
+    "first_half_ns": 34.89185333251953,
+    "second_half_ns": 33.59137725830078
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 1,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 4.812995910644531,
+    "bytes": 0.0,
+    "first_half_ns": 5.244087219238281,
+    "second_half_ns": 4.682228088378906
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 1,
+    "jit": false,
+    "workload": "native",
+    "ns": 20.105148315429688,
+    "bytes": 0.0,
+    "first_half_ns": 21.4984130859375,
+    "second_half_ns": 10.338912963867188
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 1,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 75.09886169433594,
+    "bytes": 0.0,
+    "first_half_ns": 89.56869506835938,
+    "second_half_ns": 68.52110290527344
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 1,
+    "jit": false,
+    "workload": "native",
+    "ns": 65.96791076660156,
+    "bytes": 0.0,
+    "first_half_ns": 75.41448211669922,
+    "second_half_ns": 60.30988311767578
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 1,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 7.37042236328125,
+    "bytes": 0.0,
+    "first_half_ns": 7.2348175048828125,
+    "second_half_ns": 8.402244567871094
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 1,
+    "jit": false,
+    "workload": "native",
+    "ns": 17.436134338378906,
+    "bytes": 0.0,
+    "first_half_ns": 23.60785675048828,
+    "second_half_ns": 14.234375
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 1,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 72.45194244384766,
+    "bytes": 0.0,
+    "first_half_ns": 80.37506103515625,
+    "second_half_ns": 67.1440200805664
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 1,
+    "jit": false,
+    "workload": "native",
+    "ns": 87.15711212158203,
+    "bytes": 0.0,
+    "first_half_ns": 84.78311157226562,
+    "second_half_ns": 96.84648132324219
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 1,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 45.67229461669922,
+    "bytes": 0.0,
+    "first_half_ns": 55.194488525390625,
+    "second_half_ns": 39.993690490722656
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 1,
+    "jit": false,
+    "workload": "native",
+    "ns": 39.10755157470703,
+    "bytes": 0.0,
+    "first_half_ns": 37.14411926269531,
+    "second_half_ns": 44.29374694824219
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 10,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 39.159576416015625,
+    "bytes": 0.0,
+    "first_half_ns": 39.159576416015625,
+    "second_half_ns": 39.61548614501953
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 10,
+    "jit": false,
+    "workload": "native",
+    "ns": 38.5792236328125,
+    "bytes": 0.0,
+    "first_half_ns": 40.46753692626953,
+    "second_half_ns": 37.28804016113281
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 10,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 4.712730407714844,
+    "bytes": 0.0,
+    "first_half_ns": 4.636016845703125,
+    "second_half_ns": 4.9282379150390625
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 10,
+    "jit": false,
+    "workload": "native",
+    "ns": 7.294548034667969,
+    "bytes": 0.0,
+    "first_half_ns": 7.4831695556640625,
+    "second_half_ns": 7.186882019042969
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 10,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 41.14146423339844,
+    "bytes": 0.0,
+    "first_half_ns": 44.16008758544922,
+    "second_half_ns": 39.682220458984375
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 10,
+    "jit": false,
+    "workload": "native",
+    "ns": 39.95246124267578,
+    "bytes": 0.0,
+    "first_half_ns": 39.417823791503906,
+    "second_half_ns": 39.95246124267578
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 10,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 6.524749755859375,
+    "bytes": 0.0,
+    "first_half_ns": 6.900672912597656,
+    "second_half_ns": 6.226287841796875
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 10,
+    "jit": false,
+    "workload": "native",
+    "ns": 8.458786010742188,
+    "bytes": 0.0,
+    "first_half_ns": 8.304046630859375,
+    "second_half_ns": 8.972312927246094
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 10,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 30.766456604003906,
+    "bytes": 0.0,
+    "first_half_ns": 31.533470153808594,
+    "second_half_ns": 29.68914031982422
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 10,
+    "jit": false,
+    "workload": "native",
+    "ns": 29.963088989257812,
+    "bytes": 0.0,
+    "first_half_ns": 29.43389892578125,
+    "second_half_ns": 31.93151092529297
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 10,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 33.925865173339844,
+    "bytes": 0.0,
+    "first_half_ns": 36.63880157470703,
+    "second_half_ns": 32.91008758544922
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 10,
+    "jit": false,
+    "workload": "native",
+    "ns": 35.33943176269531,
+    "bytes": 0.0,
+    "first_half_ns": 31.150161743164062,
+    "second_half_ns": 40.599815368652344
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 11,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 33.20757293701172,
+    "bytes": 0.0,
+    "first_half_ns": 33.612632751464844,
+    "second_half_ns": 32.51465606689453
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 11,
+    "jit": false,
+    "workload": "native",
+    "ns": 33.22179412841797,
+    "bytes": 0.0,
+    "first_half_ns": 33.33714294433594,
+    "second_half_ns": 33.133460998535156
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 11,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 4.361061096191406,
+    "bytes": 0.0,
+    "first_half_ns": 4.554389953613281,
+    "second_half_ns": 4.038421630859375
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 11,
+    "jit": false,
+    "workload": "native",
+    "ns": 10.362632751464844,
+    "bytes": 0.0,
+    "first_half_ns": 17.825714111328125,
+    "second_half_ns": 7.970603942871094
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 11,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 30.49919891357422,
+    "bytes": 0.0,
+    "first_half_ns": 29.54071044921875,
+    "second_half_ns": 30.992469787597656
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 11,
+    "jit": false,
+    "workload": "native",
+    "ns": 33.588035583496094,
+    "bytes": 0.0,
+    "first_half_ns": 32.01818084716797,
+    "second_half_ns": 35.83988952636719
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 11,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 5.074913024902344,
+    "bytes": 0.0,
+    "first_half_ns": 4.769783020019531,
+    "second_half_ns": 5.1400146484375
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 11,
+    "jit": false,
+    "workload": "native",
+    "ns": 9.201248168945312,
+    "bytes": 0.0,
+    "first_half_ns": 12.379226684570312,
+    "second_half_ns": 8.853736877441406
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 11,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 52.35392761230469,
+    "bytes": 0.0,
+    "first_half_ns": 48.19731140136719,
+    "second_half_ns": 62.881072998046875
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 11,
+    "jit": false,
+    "workload": "native",
+    "ns": 46.80669403076172,
+    "bytes": 0.0,
+    "first_half_ns": 54.97047424316406,
+    "second_half_ns": 44.08124542236328
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 11,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 33.09967041015625,
+    "bytes": 0.0,
+    "first_half_ns": 33.541175842285156,
+    "second_half_ns": 33.09967041015625
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 11,
+    "jit": false,
+    "workload": "native",
+    "ns": 45.09196472167969,
+    "bytes": 0.0,
+    "first_half_ns": 36.4912109375,
+    "second_half_ns": 52.24920654296875
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 2,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 43.576438903808594,
+    "bytes": 0.0,
+    "first_half_ns": 43.56096649169922,
+    "second_half_ns": 44.8262939453125
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 2,
+    "jit": false,
+    "workload": "native",
+    "ns": 43.678192138671875,
+    "bytes": 0.0,
+    "first_half_ns": 57.94916534423828,
+    "second_half_ns": 41.47209167480469
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 2,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 4.9744415283203125,
+    "bytes": 0.0,
+    "first_half_ns": 5.118095397949219,
+    "second_half_ns": 4.7373199462890625
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 2,
+    "jit": false,
+    "workload": "native",
+    "ns": 13.551040649414062,
+    "bytes": 0.0,
+    "first_half_ns": 13.358047485351562,
+    "second_half_ns": 14.632408142089844
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 2,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 55.41621398925781,
+    "bytes": 0.0,
+    "first_half_ns": 57.72020721435547,
+    "second_half_ns": 50.90309143066406
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 2,
+    "jit": false,
+    "workload": "native",
+    "ns": 44.14439392089844,
+    "bytes": 0.0,
+    "first_half_ns": 47.12604522705078,
+    "second_half_ns": 43.07484436035156
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 2,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 6.321372985839844,
+    "bytes": 0.0,
+    "first_half_ns": 5.9044647216796875,
+    "second_half_ns": 7.2085723876953125
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 2,
+    "jit": false,
+    "workload": "native",
+    "ns": 6.69915771484375,
+    "bytes": 0.0,
+    "first_half_ns": 6.855743408203125,
+    "second_half_ns": 6.447288513183594
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 2,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 28.55443572998047,
+    "bytes": 0.0,
+    "first_half_ns": 26.459388732910156,
+    "second_half_ns": 31.198394775390625
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 2,
+    "jit": false,
+    "workload": "native",
+    "ns": 26.85320281982422,
+    "bytes": 0.0,
+    "first_half_ns": 27.32990264892578,
+    "second_half_ns": 26.326560974121094
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 2,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 27.560577392578125,
+    "bytes": 0.0,
+    "first_half_ns": 26.764312744140625,
+    "second_half_ns": 28.032508850097656
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 2,
+    "jit": false,
+    "workload": "native",
+    "ns": 25.554649353027344,
+    "bytes": 0.0,
+    "first_half_ns": 25.687850952148438,
+    "second_half_ns": 25.473129272460938
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 3,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 32.53247833251953,
+    "bytes": 0.0,
+    "first_half_ns": 34.89155578613281,
+    "second_half_ns": 29.80290985107422
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 3,
+    "jit": false,
+    "workload": "native",
+    "ns": 37.29823303222656,
+    "bytes": 0.0,
+    "first_half_ns": 39.30235290527344,
+    "second_half_ns": 35.8927001953125
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 3,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 10.596389770507812,
+    "bytes": 0.0,
+    "first_half_ns": 9.823745727539062,
+    "second_half_ns": 11.127128601074219
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 3,
+    "jit": false,
+    "workload": "native",
+    "ns": 16.510398864746094,
+    "bytes": 0.0,
+    "first_half_ns": 16.012779235839844,
+    "second_half_ns": 17.33722686767578
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 3,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 38.16558074951172,
+    "bytes": 0.0,
+    "first_half_ns": 38.653594970703125,
+    "second_half_ns": 37.11973571777344
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 3,
+    "jit": false,
+    "workload": "native",
+    "ns": 36.885215759277344,
+    "bytes": 0.0,
+    "first_half_ns": 38.13685607910156,
+    "second_half_ns": 35.44279479980469
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 3,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 5.857490539550781,
+    "bytes": 0.0,
+    "first_half_ns": 6.171089172363281,
+    "second_half_ns": 5.428306579589844
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 3,
+    "jit": false,
+    "workload": "native",
+    "ns": 15.762474060058594,
+    "bytes": 0.0,
+    "first_half_ns": 28.315269470214844,
+    "second_half_ns": 8.366722106933594
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 3,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 38.24491882324219,
+    "bytes": 0.0,
+    "first_half_ns": 42.51707458496094,
+    "second_half_ns": 37.04071807861328
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 3,
+    "jit": false,
+    "workload": "native",
+    "ns": 33.47112274169922,
+    "bytes": 0.0,
+    "first_half_ns": 33.18506622314453,
+    "second_half_ns": 33.64723205566406
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 3,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 36.571990966796875,
+    "bytes": 0.0,
+    "first_half_ns": 39.07884216308594,
+    "second_half_ns": 33.648475646972656
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 3,
+    "jit": false,
+    "workload": "native",
+    "ns": 35.853599548339844,
+    "bytes": 0.0,
+    "first_half_ns": 36.061622619628906,
+    "second_half_ns": 35.769012451171875
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 4,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 37.57472229003906,
+    "bytes": 0.0,
+    "first_half_ns": 37.905311584472656,
+    "second_half_ns": 36.902488708496094
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 4,
+    "jit": false,
+    "workload": "native",
+    "ns": 38.4959716796875,
+    "bytes": 0.0,
+    "first_half_ns": 31.674880981445312,
+    "second_half_ns": 44.593971252441406
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 4,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 9.345611572265625,
+    "bytes": 0.0,
+    "first_half_ns": 9.484809875488281,
+    "second_half_ns": 9.134300231933594
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 4,
+    "jit": false,
+    "workload": "native",
+    "ns": 7.40869140625,
+    "bytes": 0.0,
+    "first_half_ns": 7.053825378417969,
+    "second_half_ns": 8.188575744628906
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 4,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 28.48992156982422,
+    "bytes": 0.0,
+    "first_half_ns": 29.054527282714844,
+    "second_half_ns": 28.344627380371094
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 4,
+    "jit": false,
+    "workload": "native",
+    "ns": 27.53302764892578,
+    "bytes": 0.0,
+    "first_half_ns": 27.676254272460938,
+    "second_half_ns": 27.53282928466797
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 4,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 8.293235778808594,
+    "bytes": 0.0,
+    "first_half_ns": 7.800262451171875,
+    "second_half_ns": 9.403457641601562
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 4,
+    "jit": false,
+    "workload": "native",
+    "ns": 6.815879821777344,
+    "bytes": 0.0,
+    "first_half_ns": 6.639305114746094,
+    "second_half_ns": 6.887786865234375
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 4,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 31.335617065429688,
+    "bytes": 0.0,
+    "first_half_ns": 31.99864959716797,
+    "second_half_ns": 30.80358123779297
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 4,
+    "jit": false,
+    "workload": "native",
+    "ns": 31.4991455078125,
+    "bytes": 0.0,
+    "first_half_ns": 31.253326416015625,
+    "second_half_ns": 31.732017517089844
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 4,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 30.36071014404297,
+    "bytes": 0.0,
+    "first_half_ns": 31.133026123046875,
+    "second_half_ns": 29.998268127441406
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 4,
+    "jit": false,
+    "workload": "native",
+    "ns": 31.02277374267578,
+    "bytes": 0.0,
+    "first_half_ns": 29.235885620117188,
+    "second_half_ns": 49.460418701171875
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 5,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 54.16381072998047,
+    "bytes": 0.0,
+    "first_half_ns": 49.53813934326172,
+    "second_half_ns": 56.39824676513672
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 5,
+    "jit": false,
+    "workload": "native",
+    "ns": 65.15406799316406,
+    "bytes": 0.0,
+    "first_half_ns": 63.74279022216797,
+    "second_half_ns": 66.90785217285156
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 5,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 11.693328857421875,
+    "bytes": 0.0,
+    "first_half_ns": 11.416763305664062,
+    "second_half_ns": 12.228500366210938
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 5,
+    "jit": false,
+    "workload": "native",
+    "ns": 18.880294799804688,
+    "bytes": 0.0,
+    "first_half_ns": 13.348251342773438,
+    "second_half_ns": 25.701637268066406
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 5,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 68.36641693115234,
+    "bytes": 0.0,
+    "first_half_ns": 70.98196411132812,
+    "second_half_ns": 65.85435485839844
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 5,
+    "jit": false,
+    "workload": "native",
+    "ns": 51.36958312988281,
+    "bytes": 0.0,
+    "first_half_ns": 76.2498550415039,
+    "second_half_ns": 45.4664306640625
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 5,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 7.499931335449219,
+    "bytes": 0.0,
+    "first_half_ns": 7.627220153808594,
+    "second_half_ns": 6.8431854248046875
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 5,
+    "jit": false,
+    "workload": "native",
+    "ns": 6.783416748046875,
+    "bytes": 0.0,
+    "first_half_ns": 6.5732879638671875,
+    "second_half_ns": 6.9177398681640625
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 5,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 37.61840057373047,
+    "bytes": 0.0,
+    "first_half_ns": 38.00639343261719,
+    "second_half_ns": 36.28971862792969
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 5,
+    "jit": false,
+    "workload": "native",
+    "ns": 39.99578857421875,
+    "bytes": 0.0,
+    "first_half_ns": 36.137908935546875,
+    "second_half_ns": 41.890663146972656
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 5,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 56.992431640625,
+    "bytes": 0.0,
+    "first_half_ns": 56.66759490966797,
+    "second_half_ns": 59.33721160888672
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 5,
+    "jit": false,
+    "workload": "native",
+    "ns": 52.77576446533203,
+    "bytes": 0.0,
+    "first_half_ns": 55.08427429199219,
+    "second_half_ns": 49.91658020019531
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 6,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 38.518394470214844,
+    "bytes": 0.0,
+    "first_half_ns": 38.768592834472656,
+    "second_half_ns": 37.26515197753906
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 6,
+    "jit": false,
+    "workload": "native",
+    "ns": 44.2352294921875,
+    "bytes": 0.0,
+    "first_half_ns": 43.672767639160156,
+    "second_half_ns": 44.31443786621094
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 6,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 4.55474853515625,
+    "bytes": 0.0,
+    "first_half_ns": 4.7017059326171875,
+    "second_half_ns": 4.427276611328125
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 6,
+    "jit": false,
+    "workload": "native",
+    "ns": 6.835662841796875,
+    "bytes": 0.0,
+    "first_half_ns": 6.65435791015625,
+    "second_half_ns": 7.096015930175781
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 6,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 36.14378356933594,
+    "bytes": 0.0,
+    "first_half_ns": 37.311180114746094,
+    "second_half_ns": 34.09814453125
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 6,
+    "jit": false,
+    "workload": "native",
+    "ns": 29.333221435546875,
+    "bytes": 0.0,
+    "first_half_ns": 30.9620361328125,
+    "second_half_ns": 28.637779235839844
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 6,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 5.0166015625,
+    "bytes": 0.0,
+    "first_half_ns": 4.508064270019531,
+    "second_half_ns": 6.3028564453125
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 6,
+    "jit": false,
+    "workload": "native",
+    "ns": 9.312286376953125,
+    "bytes": 0.0,
+    "first_half_ns": 12.238380432128906,
+    "second_half_ns": 8.333244323730469
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 6,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 34.04786682128906,
+    "bytes": 0.0,
+    "first_half_ns": 37.11847686767578,
+    "second_half_ns": 31.033851623535156
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 6,
+    "jit": false,
+    "workload": "native",
+    "ns": 36.164024353027344,
+    "bytes": 0.0,
+    "first_half_ns": 29.837318420410156,
+    "second_half_ns": 41.20814514160156
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 6,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 96.52336883544922,
+    "bytes": 0.0,
+    "first_half_ns": 91.95787048339844,
+    "second_half_ns": 129.82068634033203
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 6,
+    "jit": false,
+    "workload": "native",
+    "ns": 64.09483337402344,
+    "bytes": 0.0,
+    "first_half_ns": 70.98189544677734,
+    "second_half_ns": 60.26024627685547
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 7,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 40.197052001953125,
+    "bytes": 0.0,
+    "first_half_ns": 38.830322265625,
+    "second_half_ns": 42.419822692871094
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 7,
+    "jit": false,
+    "workload": "native",
+    "ns": 58.774391174316406,
+    "bytes": 0.0,
+    "first_half_ns": 58.96269226074219,
+    "second_half_ns": 58.732765197753906
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 7,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 4.658195495605469,
+    "bytes": 0.0,
+    "first_half_ns": 4.525856018066406,
+    "second_half_ns": 4.984626770019531
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 7,
+    "jit": false,
+    "workload": "native",
+    "ns": 8.338966369628906,
+    "bytes": 0.0,
+    "first_half_ns": 8.770515441894531,
+    "second_half_ns": 8.11553955078125
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 7,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 39.4466552734375,
+    "bytes": 0.0,
+    "first_half_ns": 39.35261535644531,
+    "second_half_ns": 40.10584259033203
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 7,
+    "jit": false,
+    "workload": "native",
+    "ns": 40.21836853027344,
+    "bytes": 0.0,
+    "first_half_ns": 37.94490051269531,
+    "second_half_ns": 40.30516052246094
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 7,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 5.033454895019531,
+    "bytes": 0.0,
+    "first_half_ns": 4.791473388671875,
+    "second_half_ns": 5.185699462890625
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 7,
+    "jit": false,
+    "workload": "native",
+    "ns": 15.208518981933594,
+    "bytes": 0.0,
+    "first_half_ns": 14.821662902832031,
+    "second_half_ns": 15.435287475585938
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 7,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 31.12628936767578,
+    "bytes": 0.0,
+    "first_half_ns": 32.64202117919922,
+    "second_half_ns": 30.502639770507812
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 7,
+    "jit": false,
+    "workload": "native",
+    "ns": 31.515716552734375,
+    "bytes": 0.0,
+    "first_half_ns": 29.820831298828125,
+    "second_half_ns": 32.70030975341797
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 7,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 31.010498046875,
+    "bytes": 0.0,
+    "first_half_ns": 32.314964294433594,
+    "second_half_ns": 30.085906982421875
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 7,
+    "jit": false,
+    "workload": "native",
+    "ns": 30.21654510498047,
+    "bytes": 0.0,
+    "first_half_ns": 29.014480590820312,
+    "second_half_ns": 31.77099609375
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 8,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 33.6080322265625,
+    "bytes": 0.0,
+    "first_half_ns": 34.833709716796875,
+    "second_half_ns": 32.086639404296875
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 8,
+    "jit": false,
+    "workload": "native",
+    "ns": 43.559288024902344,
+    "bytes": 0.0,
+    "first_half_ns": 44.502235412597656,
+    "second_half_ns": 42.90898895263672
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 8,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 4.930198669433594,
+    "bytes": 0.0,
+    "first_half_ns": 4.97491455078125,
+    "second_half_ns": 4.930198669433594
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 8,
+    "jit": false,
+    "workload": "native",
+    "ns": 8.062385559082031,
+    "bytes": 0.0,
+    "first_half_ns": 9.588478088378906,
+    "second_half_ns": 7.476432800292969
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 8,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 33.023193359375,
+    "bytes": 0.0,
+    "first_half_ns": 33.15574645996094,
+    "second_half_ns": 32.51831817626953
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 8,
+    "jit": false,
+    "workload": "native",
+    "ns": 32.77490997314453,
+    "bytes": 0.0,
+    "first_half_ns": 32.0064697265625,
+    "second_half_ns": 33.39518737792969
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 8,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 6.5750885009765625,
+    "bytes": 0.0,
+    "first_half_ns": 5.807945251464844,
+    "second_half_ns": 7.484031677246094
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 8,
+    "jit": false,
+    "workload": "native",
+    "ns": 7.855384826660156,
+    "bytes": 0.0,
+    "first_half_ns": 7.751716613769531,
+    "second_half_ns": 8.693313598632812
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 8,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 30.793678283691406,
+    "bytes": 0.0,
+    "first_half_ns": 31.78667449951172,
+    "second_half_ns": 30.27214813232422
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 8,
+    "jit": false,
+    "workload": "native",
+    "ns": 28.75450897216797,
+    "bytes": 0.0,
+    "first_half_ns": 28.247947692871094,
+    "second_half_ns": 30.319984436035156
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 8,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 34.357635498046875,
+    "bytes": 0.0,
+    "first_half_ns": 34.17155456542969,
+    "second_half_ns": 34.46214294433594
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 8,
+    "jit": false,
+    "workload": "native",
+    "ns": 33.563079833984375,
+    "bytes": 0.0,
+    "first_half_ns": 35.249961853027344,
+    "second_half_ns": 32.60374450683594
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 9,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 38.55824279785156,
+    "bytes": 0.0,
+    "first_half_ns": 40.43534851074219,
+    "second_half_ns": 37.618080139160156
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 9,
+    "jit": false,
+    "workload": "native",
+    "ns": 38.565521240234375,
+    "bytes": 0.0,
+    "first_half_ns": 39.88433074951172,
+    "second_half_ns": 37.951751708984375
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 9,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 8.137245178222656,
+    "bytes": 0.0,
+    "first_half_ns": 7.991523742675781,
+    "second_half_ns": 8.217193603515625
+  },
+  {
+    "mode": "direct-disabled",
+    "repetition": 9,
+    "jit": false,
+    "workload": "native",
+    "ns": 8.720596313476562,
+    "bytes": 0.0,
+    "first_half_ns": 13.023300170898438,
+    "second_half_ns": 6.818489074707031
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 9,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 39.17377471923828,
+    "bytes": 0.0,
+    "first_half_ns": 39.64965057373047,
+    "second_half_ns": 39.006134033203125
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 9,
+    "jit": false,
+    "workload": "native",
+    "ns": 37.00022888183594,
+    "bytes": 0.0,
+    "first_half_ns": 38.09458923339844,
+    "second_half_ns": 35.27742004394531
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 9,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 5.973014831542969,
+    "bytes": 0.0,
+    "first_half_ns": 5.787261962890625,
+    "second_half_ns": 6.037208557128906
+  },
+  {
+    "mode": "fast-disabled",
+    "repetition": 9,
+    "jit": false,
+    "workload": "native",
+    "ns": 15.413703918457031,
+    "bytes": 0.0,
+    "first_half_ns": 11.851364135742188,
+    "second_half_ns": 16.59404754638672
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 9,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 40.962745666503906,
+    "bytes": 0.0,
+    "first_half_ns": 50.62525177001953,
+    "second_half_ns": 37.136253356933594
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 9,
+    "jit": false,
+    "workload": "native",
+    "ns": 41.323768615722656,
+    "bytes": 0.0,
+    "first_half_ns": 39.408470153808594,
+    "second_half_ns": 42.135292053222656
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 9,
+    "jit": false,
+    "workload": "bridge",
+    "ns": 39.945556640625,
+    "bytes": 0.0,
+    "first_half_ns": 41.809051513671875,
+    "second_half_ns": 38.94677734375
+  },
+  {
+    "mode": "slow-disabled",
+    "repetition": 9,
+    "jit": false,
+    "workload": "native",
+    "ns": 47.656166076660156,
+    "bytes": 0.0,
+    "first_half_ns": 37.801780700683594,
+    "second_half_ns": 55.374664306640625
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 0,
+    "jit": true,
+    "workload": "bridge",
+    "ns": 36.79518127441406,
+    "bytes": 0.0,
+    "first_half_ns": 36.157737731933594,
+    "second_half_ns": 36.943275451660156
+  },
+  {
+    "mode": "direct-attached",
+    "repetition": 0,
+    "jit": true,
+    "workload": "native",
+    "ns": 37.05885314941406,
+    "bytes": 0.0,
+    "first_half_ns": 41.31678009033203,
+    "second_half_ns": 32.110130310058594
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 0,
+    "jit": true,
+    "workload": "bridge",
+    "ns": 42.58720397949219,
+    "bytes": 0.0,
+    "first_half_ns": 46.36742401123047,
+    "second_half_ns": 37.549522399902344
+  },
+  {
+    "mode": "fast-attached",
+    "repetition": 0,
+    "jit": true,
+    "workload": "native",
+    "ns": 37.39765167236328,
+    "bytes": 0.0,
+    "first_half_ns": 29.9722900390625,
+    "second_half_ns": 43.347259521484375
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 0,
+    "jit": true,
+    "workload": "bridge",
+    "ns": 35.387115478515625,
+    "bytes": 0.0,
+    "first_half_ns": 34.07825469970703,
+    "second_half_ns": 37.365089416503906
+  },
+  {
+    "mode": "slow-attached",
+    "repetition": 0,
+    "jit": true,
+    "workload": "native",
+    "ns": 31.226425170898438,
+    "bytes": 0.0,
+    "first_half_ns": 33.695709228515625,
+    "second_half_ns": 29.794166564941406
+  }
+]

@@ -1,0 +1,20 @@
+{
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-observer-fast-disabled-clean:../build/tvalue-observer-fast-disabled.jar:../build/tvalue-observer-fast-disabled-cost-tests:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-observer-dispatch-jit",
+    "/workspace/scratch/fe58fcae83c2/K3/docs/tvalue-observer-dispatch-jit/MinimalObserverRunner.java"
+  ],
+  "source_sha256": "034fdbc832d4250487b7eea115f2169ce018ee0cf1cdb4ed8848c00893200216",
+  "compiler_sha256": "f7686c4960cf70c2ebc5c500a73a8cfc04541b730c18f1c5c21329889b137f45",
+  "class_sha256": {
+    "org/kanger/MinimalObserverRunner$Counter.class": "df028881019200388a82284b58922a62fa6929fbc4e441e8fd9d833ed953e3f2",
+    "org/kanger/MinimalObserverRunner.class": "0edf7a718c73dd6e30a32f7df3f9a8dbc7edcc59a62ca4c3b0d674320afd23d9"
+  }
+}
