@@ -12,12 +12,16 @@ public final class DmzReplayQueryCascadeRunner {
     public static void main(String[] args) throws Exception {
         System.setProperty("user.home", Files.createTempDirectory("dmz-replay-query-cascade-").toString());
         run(false); run(true); run(false, 0); run(false, 1); run(false, -1, true); run(true, -1, true);
+        for (boolean negative : new boolean[] { false, true }) for (boolean deeper : new boolean[] { false, true })
+            for (int variant = 1; variant < 8; ++variant) run(negative, -1, deeper, variant);
         System.out.println("DMZ_REPLAY_QUERY_CASCADE_PASS checks=" + checks);
         System.exit(0);
     }
     private static void run(boolean negative) throws Exception { run(negative, -1); }
     private static void run(boolean negative, int staleMode) throws Exception { run(negative, staleMode, false); }
-    private static void run(boolean negative, int staleMode, boolean deeper) throws Exception {
+    private static void run(boolean negative, int staleMode, boolean deeper) throws Exception { run(negative, staleMode, deeper, 0); }
+    private static void run(boolean negative, int staleMode, boolean deeper, int variant) throws Exception {
+        boolean productionAliases = (variant & 1) != 0, primaryAliases = (variant & 2) != 0, independent = (variant & 4) != 0;
         User user = new User(); new UDF().init(user); Mind q = new Mind(user); user.setCurrentMind(q);
         IContextResults.Revision source = new IContextResults.Revision(UUID.randomUUID(), 1);
         try (DmzReplayProvenance journal = DmzReplayProvenance.begin(); TerminalSupportCapture capture = TerminalSupportCapture.begin(q)) {
@@ -27,8 +31,17 @@ public final class DmzReplayQueryCascadeRunner {
                     DmzReplayProvenance.Authority.EXTERNAL, "!@x bridge(x) -> middle(x);")), "intermediate production");
             require(Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(q, source, 2,
                     DmzReplayProvenance.Authority.EXTERNAL, negative ? "!@x middle(x) -> ~derived(x);" : "!@x middle(x) -> derived(x);")), "second production");
+            if (productionAliases) {
+                DmzReplayProvenance.replayRule(q, source, 211, DmzReplayProvenance.Authority.EXTERNAL,
+                        deeper ? "!@x source(x) -> bridge(x);" : "!@x source(x) -> middle(x);");
+                DmzReplayProvenance.replayRule(q, source, 212, DmzReplayProvenance.Authority.EXTERNAL,
+                        negative ? "!@x middle(x) -> ~derived(x);" : "!@x middle(x) -> derived(x);");
+            }
+            if (independent) require(Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(q, source, 219,
+                    DmzReplayProvenance.Authority.EXTERNAL, "!@x independent(x) -> middle(x);")), "independent production");
             DmzAcceptanceProofGuard guard = DmzAcceptanceProofGuard.beforeInput(capture, journal, q);
-            require(Boolean.TRUE.equals(guard.accept(source, 3, DmzReplayProvenance.Authority.EXTERNAL, "!source(1);")), "Q primary");
+            require(Boolean.TRUE.equals(guard.acceptAliases(source, primaryAliases ? new long[] { 3, 213 } : new long[] { 3 },
+                    DmzReplayProvenance.Authority.EXTERNAL, "!source(1);")), "Q primary");
             TerminalSupportCapture.Materialization materialized = null;
             for (TerminalSupportCapture.StoredObservation observed : capture.storedSnapshot())
                 if (observed.materialization.causes.nodes.get(observed.materialization.causes.root).ground.predicate.equals("derived"))
@@ -39,6 +52,8 @@ public final class DmzReplayQueryCascadeRunner {
             try (DmzStoredRetractionTransaction overlay = DmzStoredRetractionTransaction.beginContinuation(
                     guard, proof, proof.witnesses.get(0), q, 10000)) {
                 require(Boolean.TRUE.equals(overlay.accept(source, 4, DmzReplayProvenance.Authority.EXTERNAL, "!source(2);")), "pending fresh route");
+                if (independent) require(Boolean.TRUE.equals(overlay.accept(source, 220,
+                        DmzReplayProvenance.Authority.EXTERNAL, "!independent(1);")), "independent pending root");
                 String candidate = negative ? "!derived(2);" : "!~derived(2);";
                 DmzStoredRetractionTransaction.ConflictEvidence evidence = overlay.conflictEvidence(candidate, 10000);
                 DmzStoredRetractionTransaction.SymmetricProjection projection = overlay.projectSymmetric(evidence, 10000);
@@ -111,7 +126,8 @@ public final class DmzReplayQueryCascadeRunner {
                     DmzStoredRetractionTransaction.ReplayPath retainedTwoStep = null;
                     boolean twoStepBudgetFailure = false;
                     boolean deferredTwoStep = false;
-                    String[] queries = staleMode < 0 ? new String[] { "?source(1);", "?middle(2);", "?source(2);", "?~source(2);" }
+                    String[] queries = independent ? new String[] { "?source(1);", "?middle(1);", negative ? "?~derived(1);" : "?derived(1);", "?middle(2);", "?source(2);", "?~source(2);" }
+                            : variant != 0 ? new String[] { "?source(1);", negative ? "?~derived(1);" : "?derived(1);", "?middle(2);", "?source(2);", "?~source(2);" } : staleMode < 0 ? new String[] { "?source(1);", "?middle(2);", "?source(2);", "?~source(2);" }
                             : new String[] { "?source(1);" };
                     for (String statement : queries) {
                         DmzStoredRetractionTransaction.ReplayPathExtension extension = choice.extendReplayPath(
@@ -142,6 +158,22 @@ public final class DmzReplayQueryCascadeRunner {
                             boolean immutable = false;
                             try { path.steps.clear(); } catch (UnsupportedOperationException expected) { immutable = true; }
                             require(immutable, "two-step descriptor immutable");
+                            if (variant != 0) {
+                                int expectedDerived = (productionAliases ? 4 : 1) * (primaryAliases ? 2 : 1) - 1
+                                        + (independent ? (productionAliases ? 2 : 1) : 0);
+                                require(groundOneProofs(path.steps.get(0).grounds, "derived", !negative) == expectedDerived
+                                        && groundOneProofs(path.steps.get(1).grounds, "derived", !negative) == expectedDerived,
+                                        "exact original cut removes one derivation and retains all alternate root proofs");
+                                int expectedMiddle = (productionAliases ? 2 : 1) * (primaryAliases ? 2 : 1) + (independent ? 1 : 0);
+                                require(middleOneProofs(path.steps.get(0).grounds) == expectedMiddle
+                                        && middleOneProofs(path.steps.get(1).grounds) == expectedMiddle,
+                                        "both choices preserve all independent and aliased middle(1) proofs");
+                            }
+                            if (!unresolved && statement.equals(negative ? "?~derived(1);" : "?derived(1);"))
+                                require(Boolean.TRUE.equals(applied.query.value), "alternate support keeps the original signed root queryable");
+                            if (!unresolved && statement.equals("?middle(1);"))
+                                require(Boolean.TRUE.equals(applied.query.value), "independent alternative stays natively queryable");
+
                             retainedTwoStep = path;
                             if (statement.equals("?source(1);")) {
                                 boolean wrongLabel = false;
@@ -164,6 +196,11 @@ public final class DmzReplayQueryCascadeRunner {
                                     && freshPath.steps.get(0).evidence != path.steps.get(0).evidence
                                     && freshPath.steps.get(1).evidence != path.steps.get(1).evidence,
                                     "both exact choices recognized under fresh candidate evidence");
+                            if (variant != 0) require(groundOneProofs(freshPath.steps.get(0).grounds, "derived", !negative) == groundOneProofs(path.steps.get(0).grounds, "derived", !negative)
+                                    && groundOneProofs(freshPath.steps.get(1).grounds, "derived", !negative) == groundOneProofs(path.steps.get(1).grounds, "derived", !negative)
+                                    && middleOneProofs(freshPath.steps.get(0).grounds) == middleOneProofs(path.steps.get(0).grounds)
+                                    && middleOneProofs(freshPath.steps.get(1).grounds) == middleOneProofs(path.steps.get(1).grounds),
+                                    "restoration retains exact alternative and alias multiplicity");
                             require(fresh.disposition == applied.disposition
                                     && (unresolved ? fresh.query == null && fresh.conflict != null && fresh.conflict != path.remaining
                                         : fresh.query != null && java.util.Objects.equals(fresh.query.value, applied.query.value)),
@@ -231,6 +268,16 @@ public final class DmzReplayQueryCascadeRunner {
             require(qState.equals(DmzObservationStateFingerprint.capture(q)), "Q native state restored");
             require(Boolean.TRUE.equals(q.query("?source(1);", null, false)), "Q remains authoritative");
         }
+    }
+    private static int middleOneProofs(java.util.List<DmzStoredRetractionTransaction.ReplayAppliedGround> rows) {
+        return groundOneProofs(rows, "middle", true);
+    }
+    private static int groundOneProofs(java.util.List<DmzStoredRetractionTransaction.ReplayAppliedGround> rows, String predicate, boolean sign) {
+        for (DmzStoredRetractionTransaction.ReplayAppliedGround row : rows)
+            if (row.ground.sign == sign && row.ground.predicate.equals(predicate)
+                    && new java.math.BigDecimal(row.ground.arguments.get(0).materialize().getValue().toString()).intValueExact() == 1)
+                return row.proofs;
+        return -1;
     }
     private static void require(boolean value, String message) { ++checks; if (!value) throw new AssertionError(message); }
 }
