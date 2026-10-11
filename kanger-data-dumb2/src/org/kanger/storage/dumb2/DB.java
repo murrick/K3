@@ -1349,7 +1349,17 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         return result;
     }
 
-    /** Internal experimental session. Public federation dispatch is not wired yet. */
+    @Override
+    public synchronized org.kanger.interfaces.DmzSourcesQuery.Result executeDmzSources(IMind sourceMind,
+            org.kanger.interfaces.DmzSourcesQuery.Request request) throws Exception {
+        if(request==null)throw new IllegalArgumentException("Explicit DMZ execution request required");
+        if(!(sourceMind instanceof Mind))throw new CommandErrorException("DMZ execution requires a storage Mind");
+        try(DmzSourceSession session=openDmzCandidateSession((Mind)sourceMind,request.sources,request.limits.preparation)) {
+            return DmzSourceQueryProjection.execute(session,request);
+        }
+    }
+
+    /** Internal operation-local owner; never returned by public federation dispatch. */
     synchronized DmzSourceSession openDmzCandidateSession(Mind sourceMind,
             org.kanger.interfaces.DmzSourcePlan.Request request,int preparationBudget) throws Exception {
         requireOpen();
