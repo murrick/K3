@@ -636,7 +636,7 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
     @Override
     public void setDeleted(boolean on, Mind mind) throws Exception {
         mind.setUnitDeleted(this, on);
-        for (TVariable t : getArguments().getTVariables(mind)) {
+        for (TVariable t : getArguments().getTVariables(mind, !on)) {
             t.setDeleted(on, mind);
         }
         for (Function f : getArguments().getFunctions(mind)) {
