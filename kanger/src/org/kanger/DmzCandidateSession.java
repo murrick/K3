@@ -141,12 +141,16 @@ public final class DmzCandidateSession implements AutoCloseable {
         final List<SequenceOpinion> opinions=new ArrayList<SequenceOpinion>();
         final List<SequenceEvent> events=new ArrayList<SequenceEvent>();
         List<SequenceStep> interruptedPrefix=Collections.emptyList();
-        int visits,interruptedInput=-1;
+        int visits,interruptedInput=-1,proofNodes;
         boolean restartRequired,visitLimit;
         SequenceRun(DmzCandidateSession session,List<SourceRule> candidates,List<SourceRule> productions,List<SourceRule> supports,
                 List<DmzSourceShape.Declaration> inputs,String query,Limits limits,int maximumVisits) {
             this.session=session;this.candidates=candidates;this.productions=productions;this.supports=supports;
             this.inputs=inputs;this.query=query;this.limits=limits;this.maximumVisits=maximumVisits;
+        }
+        private void countProof(org.kanger.interfaces.DmzSourcesQuery.Proof proof) {
+            if(++proofNodes>limits.projection)throw new IllegalStateException("DMZ answer trees exceed the operation projection budget");
+            for(org.kanger.interfaces.DmzSourcesQuery.Proof child:proof.premises)countProof(child);
         }
         void walk(DmzStoredRetractionTransaction workflow,final int index,final List<SequenceStep> prefix) throws Exception {
             if(visits==maximumVisits) {
@@ -155,7 +159,9 @@ public final class DmzCandidateSession implements AutoCloseable {
             ++visits;
             if(index==candidates.size()) {
                 if(candidates.isEmpty())workflow.auditFixedInputs(limits.audit);
-                opinions.add(new SequenceOpinion(prefix,workflow.queryContinuationResult(query,limits.audit)));return;
+                DmzStoredRetractionTransaction.QueryResult answer=workflow.queryContinuationWithProofs(query,limits.audit,limits.projection);
+                for(org.kanger.interfaces.DmzSourcesQuery.Proof proof:answer.proofs)countProof(proof);
+                opinions.add(new SequenceOpinion(prefix,answer));return;
             }
             final SourceRule input=candidates.get(index);
             DmzStoredRetractionTransaction.ConditionalQueryResult value=workflow.visitCandidate(session.external.get(input.context).revision,
@@ -178,6 +184,7 @@ public final class DmzCandidateSession implements AutoCloseable {
     }
     private final Thread owner=Thread.currentThread();
     private final Participant authority;
+    private final List<Participant> authorityComponents;
     private final Map<UUID,Participant> external;
     private final User user;
     private final Mind root,q;
@@ -194,44 +201,53 @@ public final class DmzCandidateSession implements AutoCloseable {
             throw new IllegalStateException("Settled physical Q without pending children required");
     }
     public static DmzCandidateSession open(Participant authority,List<Participant> external,int preparationBudget) throws Exception {
-        if(authority==null || external==null)throw new NullPointerException();
-        if(preparationBudget<1 || preparationBudget>10000 || external.size()>64)
+        return open(authority,Collections.<Participant>emptyList(),external,preparationBudget);
+    }
+    public static DmzCandidateSession open(Participant authority,List<Participant> components,List<Participant> external,int preparationBudget) throws Exception {
+        if(authority==null || components==null || external==null)throw new NullPointerException();
+        java.util.Set<UUID> identities=new java.util.HashSet<UUID>();identities.add(authority.revision.getContextId());
+        for(Participant component:components)if(component==null || !identities.add(component.revision.getContextId()))
+            throw new IllegalArgumentException("Distinct Q components required");
+        if(preparationBudget<1 || preparationBudget>10000 || external.size()>64 || components.size()>64)
             throw new IllegalArgumentException("Bounded explicit session inputs required");
         Map<UUID,Participant> selected=new LinkedHashMap<UUID,Participant>();
         for(Participant source:external) {
-            if(source==null || source.revision.getContextId().equals(authority.revision.getContextId())
+            if(source==null || identities.contains(source.revision.getContextId())
                     || selected.put(source.revision.getContextId(),source)!=null)
                 throw new IllegalArgumentException("Unique external source Contexts required");
         }
         int rows=authority.inputs.inspectedRows;
+        for(Participant component:components)rows+=component.inputs.inspectedRows;
         for(Participant source:selected.values())rows+=source.inputs.inspectedRows;
         if(rows>10000)throw new IllegalArgumentException("At most 10000 acquired source rows required");
-        DmzCandidateSession session=new DmzCandidateSession(authority,selected,preparationBudget);
+        DmzCandidateSession session=new DmzCandidateSession(authority,components,selected,preparationBudget);
         try { session.prepare(); return session; }
         catch(Throwable failure) {
             try { session.close(); }catch(Throwable cleanup) { failure.addSuppressed(cleanup); }
             rethrow(failure); throw new AssertionError("unreachable");
         }
     }
-    private DmzCandidateSession(Participant authority,Map<UUID,Participant> external,int budget) throws Exception {
-        this.authority=authority; this.external=Collections.unmodifiableMap(external); preparationBudget=budget;
+    private DmzCandidateSession(Participant authority,List<Participant> components,Map<UUID,Participant> external,int budget) throws Exception {
+        this.authority=authority;this.authorityComponents=copy(components); this.external=Collections.unmodifiableMap(external); preparationBudget=budget;
         user=new User(); root=new Mind(user); user.setCurrentMind(root);
         q=Mind.contextConnectionLayer(root); user.setCurrentMind(q);
     }
     private void prepare() throws Exception {
         journal=DmzReplayProvenance.begin(); capture=TerminalSupportCapture.begin();
         try(DmzReplayProvenance.Preparation preparation=DmzReplayProvenance.preparation(q)) {
-            for(DmzSourceShape.Declaration input:authority.inputs.declarations)
-                if(!Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(q,authority.revision,input.sourceRule,
+            List<Participant> all=new ArrayList<Participant>();all.add(authority);all.addAll(authorityComponents);
+            for(Participant participant:all)for(DmzSourceShape.Declaration input:participant.inputs.declarations)
+                if(!Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(q,participant.revision,input.sourceRule,
                         DmzReplayProvenance.Authority.EXTERNAL,input.statement)))
                     throw new IllegalStateException("Q primary reconstruction refused");
             preparation.accept();
         }
         // Physical Q caches are observations to verify, never replay inputs or proof seeds.
-        if(authority.inputs.unsupportedGenerated!=0)throw new IllegalStateException("Unsupported physical Q generated cache");
+        List<Participant> authorities=new ArrayList<Participant>();authorities.add(authority);authorities.addAll(authorityComponents);
+        for(Participant participant:authorities)if(participant.inputs.unsupportedGenerated!=0)throw new IllegalStateException("Unsupported physical Q generated cache");
         DmzCurrentUnaryProofInventory rebuilt=DmzCurrentUnaryProofInventory.capture(q,preparationBudget,false);
         if(!rebuilt.eligible)throw new IllegalStateException("Reconstructed Q inventory unavailable: "+rebuilt.gaps);
-        for(TerminalSupportCapture.Ground ground:authority.inputs.cachedGrounds) {
+        for(Participant participant:authorities)for(TerminalSupportCapture.Ground ground:participant.inputs.cachedGrounds) {
             DmzCurrentUnaryProofInventory.Proofs proofs=rebuilt.proofs(ground,Collections.<DmzProofWitnesses.NoGood>emptyList(),preparationBudget);
             if(proofs.truncated || proofs.witnesses.isEmpty())throw new IllegalStateException("Physical Q cache has no complete reconstructed support");
         }
@@ -374,7 +390,7 @@ public final class DmzCandidateSession implements AutoCloseable {
     }
     private static DmzConditionalResult.Answer answer(DmzStoredRetractionTransaction.QueryResult value) {
         return value==null ? null : new DmzConditionalResult.Answer(
-                DmzConditionalResult.CandidateMode.valueOf(value.candidateMode.name()),value.value,value.hypotheses,value.hypothesisAssertions);
+                DmzConditionalResult.CandidateMode.valueOf(value.candidateMode.name()),value.value,value.hypotheses,value.hypothesisAssertions,value.proofs);
     }
     @Override public void close() throws Exception {
         if(closed)return;

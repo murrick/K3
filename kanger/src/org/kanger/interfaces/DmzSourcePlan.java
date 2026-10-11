@@ -9,7 +9,7 @@ import java.util.List;
  * Sources are explicit published pins; this DTO carries no claims or native owners.
  */
 public final class DmzSourcePlan {
-    public enum Role { AUTHORITY_Q, EXTERNAL }
+    public enum Role { AUTHORITY_Q, AUTHORITY_COMPONENT, EXTERNAL }
     public static final class Selection {
         public final String locator;
         public final IContextResults.Revision revision;
@@ -47,27 +47,41 @@ public final class DmzSourcePlan {
         public final IContextResults.Revision revision;
         /** Semantic participant role, independent of replay-journal authority labels. */
         public final Role role;
+        public final boolean configured;
         public final int primaryRules, inspectedRows;
         /** Digest of ordered source-local primary rule IDs and origins; not a proof certificate. */
         public final String primaryDigest;
         public Source(String locator,IContextResults.Revision revision,Role role,int primaryRules,int inspectedRows,String digest) {
+            this(locator,revision,role,primaryRules,inspectedRows,digest,false);
+        }
+        public Source(String locator,IContextResults.Revision revision,Role role,int primaryRules,int inspectedRows,String digest,boolean configured) {
             if(locator==null || revision==null || role==null || digest==null)throw new NullPointerException();
             if(primaryRules<0 || inspectedRows<primaryRules || inspectedRows>10000 || !digest.matches("[0-9a-f]{64}"))
                 throw new IllegalArgumentException("Source metadata");
-            this.locator=locator; this.revision=revision; this.role=role;
+            this.locator=locator; this.revision=revision; this.role=role;this.configured=configured;
             this.primaryRules=primaryRules; this.inspectedRows=inspectedRows; primaryDigest=digest;
         }
     }
     public final Source authority;
     public final List<Source> external;
+    public final List<Source> authorityComponents;
     public final int inspectedRows, maximumRows, qTransactionLevel;
     public DmzSourcePlan(Source authority,List<Source> external,int maximumRows,int qTransactionLevel) {
-        if(authority==null || external==null)throw new NullPointerException();
-        if(authority.role!=Role.AUTHORITY_Q || maximumRows<1 || maximumRows>10000 || qTransactionLevel<0 || external.size()>64)
+        this(authority,java.util.Collections.<Source>emptyList(),external,maximumRows,qTransactionLevel);
+    }
+    public DmzSourcePlan(Source authority,List<Source> components,List<Source> external,int maximumRows,int qTransactionLevel) {
+        if(authority==null || components==null || external==null)throw new NullPointerException();
+        if(authority.role!=Role.AUTHORITY_Q || maximumRows<1 || maximumRows>10000 || qTransactionLevel<0 || external.size()>64 || components.size()>64)
             throw new IllegalArgumentException("Q metadata");
         int rows=authority.inspectedRows;
         java.util.Set<java.util.UUID> identities=new java.util.HashSet<java.util.UUID>();
         identities.add(authority.revision.getContextId());
+        for(Source source:components) {
+            if(source==null || source.role!=Role.AUTHORITY_COMPONENT || !identities.add(source.revision.getContextId()))
+                throw new IllegalArgumentException("Distinct authority components required");
+            rows+=source.inspectedRows;
+        }
+        authorityComponents=Collections.unmodifiableList(new ArrayList<Source>(components));
         for(Source source:external) {
             if(source==null || source.role!=Role.EXTERNAL || !identities.add(source.revision.getContextId()))
                 throw new IllegalArgumentException("External metadata");

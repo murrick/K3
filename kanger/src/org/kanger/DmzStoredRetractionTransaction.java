@@ -1978,10 +1978,16 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         final Boolean value;
         final List<String> hypotheses;
         final List<String> hypothesisAssertions;
+        final List<org.kanger.interfaces.DmzSourcesQuery.Proof> proofs;
         private QueryResult(Boolean value, List<String> hypotheses, List<String> assertions) {
             this(value, hypotheses, assertions, CandidateMode.NONE);
         }
         private QueryResult(Boolean value, List<String> hypotheses, List<String> assertions, CandidateMode mode) {
+            this(value,hypotheses,assertions,mode,java.util.Collections.<org.kanger.interfaces.DmzSourcesQuery.Proof>emptyList());
+        }
+        private QueryResult(Boolean value,List<String> hypotheses,List<String> assertions,CandidateMode mode,
+                List<org.kanger.interfaces.DmzSourcesQuery.Proof> proofs) {
+            this.proofs=java.util.Collections.unmodifiableList(new ArrayList<org.kanger.interfaces.DmzSourcesQuery.Proof>(proofs));
             this.value = value;
             this.candidateMode = mode;
             this.hypotheses = java.util.Collections.unmodifiableList(new ArrayList<String>(hypotheses));
@@ -2041,6 +2047,44 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 throw new IllegalStateException("Continuation query changed branch hypotheses");
             return result;
         } catch (Exception failure) { close(); throw failure; }
+    }
+    /** Capture only the final answer's audited support before the live branch closes. */
+    QueryResult queryContinuationWithProofs(String statement,int auditBudget,int budget) throws Exception {
+        QueryResult answer=queryContinuationResult(statement,auditBudget);
+        List<org.kanger.interfaces.DmzSourcesQuery.Proof> proofs=new ArrayList<org.kanger.interfaces.DmzSourcesQuery.Proof>();
+        if(answer.value!=null) {
+            Mind child=transaction.mind();
+            DmzCurrentUnaryProofInventory inventory=DmzCurrentUnaryProofInventory.capture(child,budget,true);
+            if(!inventory.eligible)throw new IllegalStateException("DMZ answer proof inventory unavailable: "+inventory.gaps);
+            int open=statement.indexOf('(');boolean positive=!statement.startsWith("?~");
+            String predicate=statement.substring(positive ? 1 : 2,open);
+            java.math.BigInteger argument=new java.math.BigInteger(statement.substring(open+1,statement.length()-2));
+            if(!answer.value)positive=!positive;
+            int[] remaining={budget};
+            for(DmzObservedProofGraph.Node node:inventory.graph.observed.nodes) {
+                if(!node.ground.predicate.equals(predicate) || node.ground.sign!=positive)continue;
+                Object actual=node.ground.arguments.get(0).materialize().getValue();
+                if(!(actual instanceof Number) || new java.math.BigDecimal(actual.toString()).compareTo(new java.math.BigDecimal(argument))!=0)continue;
+                DmzCurrentUnaryProofInventory.Proofs supports=inventory.proofs(node.ground,DmzTerminalRestriction.activeNoGoods(child),budget);
+                if(supports.truncated)throw new IllegalStateException("DMZ answer proof budget exceeded");
+                for(DmzProofWitnesses.Witness witness:supports.witnesses)proofs.add(detachProof(witness,remaining));
+            }
+            if(proofs.isEmpty())throw new IllegalStateException("Resolved DMZ answer has no audited source proof");
+            if(!inventory.isCurrent(child))throw new IllegalStateException("DMZ answer proof boundary changed");
+        }
+        return new QueryResult(answer.value,answer.hypotheses,answer.hypothesisAssertions,answer.candidateMode,proofs);
+    }
+    private static org.kanger.interfaces.DmzSourcesQuery.Proof detachProof(DmzProofWitnesses.Witness witness,int[] remaining) {
+        if(--remaining[0]<0)throw new IllegalStateException("DMZ answer tree budget exceeded");
+        TerminalSupportCapture.Ground ground=witness.graph.observed.nodes.get(witness.node).ground;
+        Object value=ground.arguments.get(0).materialize().getValue();
+        String conclusion=(ground.sign ? "" : "~")+ground.predicate+"("+new java.math.BigDecimal(value.toString()).toBigIntegerExact()+")";
+        String origin=witness.step<0 ? "!"+conclusion+";" : witness.graph.observed.steps.get(witness.step).application.ruleOrigin;
+        List<org.kanger.interfaces.DmzSourcesQuery.Proof> premises=new ArrayList<org.kanger.interfaces.DmzSourcesQuery.Proof>();
+        for(DmzProofWitnesses.Witness child:witness.premises)premises.add(detachProof(child,remaining));
+        return new org.kanger.interfaces.DmzSourcesQuery.Proof(new org.kanger.interfaces.DmzSourcesQuery.Input(
+                new org.kanger.interfaces.IContextResults.Revision(witness.source.context,witness.source.revision),
+                witness.source.sourceRule,origin),conclusion,premises);
     }
     /** Conditional relevance probe; the candidate and its consequences always roll back. */
     QueryResult probeCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,

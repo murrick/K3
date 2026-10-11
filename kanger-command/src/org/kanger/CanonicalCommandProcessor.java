@@ -50,6 +50,8 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.STORAGE_CLOSE
                 || intent == CommandIntent.STORAGE_DROP
                 || intent == CommandIntent.STORAGE_REINDEX
+                || intent == CommandIntent.CTX_DMZ_EXPLAIN
+                || intent == CommandIntent.CTX_OPINION_TREE
                 || intent == CommandIntent.CTX_DMZ
                 || intent == CommandIntent.CTX_OPINIONS
                 || intent == CommandIntent.CTX_VALUES
@@ -313,13 +315,27 @@ public final class CanonicalCommandProcessor {
                         federation.federationSnapshot(), null);
             }
 
+            case CTX_DMZ_EXPLAIN:
+            case CTX_OPINION_TREE: {
+                if(!(user instanceof User))throw new org.kanger.exception.CommandErrorException("No saved DMZ query");
+                org.kanger.interfaces.DmzSourcesQuery.Result saved=((User)user).getLastDmzResult();
+                if(saved==null)throw new org.kanger.exception.CommandErrorException("No saved DMZ query");
+                if(invocation.getIntent()==CommandIntent.CTX_OPINION_TREE) {
+                    long number=((Number)invocation.getArgument("number")).longValue();
+                    if(number<1 || number>saved.viewOpinions.size())throw new org.kanger.exception.CommandErrorException("No saved opinion "+number);
+                }
+                return Result.successDmz(mind,saved);
+            }
             case CTX_DMZ: {
+                ((User)user).setLastDmzResult(null);
                 IContextFederation federation=contextFederation(user,mind);
                 Object request=invocation.getArgument("request");
                 if(!(request instanceof org.kanger.interfaces.DmzSourcesQuery.Request))
                     throw new IllegalArgumentException("Explicit DMZ request required");
-                return Result.successDmz(mind,federation.executeDmzSources(mind,
-                        (org.kanger.interfaces.DmzSourcesQuery.Request)request));
+                org.kanger.interfaces.DmzSourcesQuery.Result result=federation.executeDmzSources(mind,
+                        (org.kanger.interfaces.DmzSourcesQuery.Request)request);
+                ((User)user).setLastDmzResult(result);
+                return Result.successDmz(mind,result);
             }
 
             case CTX_OPINIONS:

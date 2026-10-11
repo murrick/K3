@@ -117,10 +117,27 @@ public final class CanonicalConsole {
                         continue;
                     }
 
+                    if(trimmed.toLowerCase(java.util.Locale.ROOT).startsWith("ctx dmz ")
+                            && !trimmed.equalsIgnoreCase("ctx dmz explain") && mind.getUser() instanceof User)
+                        ((User)mind.getUser()).setLastDmzResult(null);
                     CommandInvocation invocation = PARSER.parse(line);
                     if (invocation.isCoreLanguage()) {
                         if (trimmed.charAt(0) == Enums.SUC) {
                             lastQuery = line;
+                        }
+                        if(mind.getUser() instanceof User)((User)mind.getUser()).setLastDmzResult(null);
+                        if(trimmed.startsWith("?") && !"?".equals(trimmed) && mind.isStorageUsed()
+                                && mind.getUser() instanceof User && ((User)mind.getUser()).getData() instanceof IContextFederation) {
+                            IContextFederation federation=(IContextFederation)((User)mind.getUser()).getData();
+                            if(federation.supportsDmzSources() && federation.hasConnectedContexts()) {
+                                try {
+                                    org.kanger.interfaces.DmzSourcesQuery.Result answer=federation.executeConnectedDmz(mind,trimmed);
+                                    ((User)mind.getUser()).setLastDmzResult(answer);ConsoleDmzView.show(answer);continue;
+                                } catch(Exception refusal) {
+                                    String reason=refusal.getMessage();
+                                    throw new CommandErrorException("DMZ refused: "+(reason==null ? refusal.toString() : reason));
+                                }
+                            }
                         }
                         processCore(line, mind, parseSource);
                         continue;
@@ -358,12 +375,17 @@ public final class CanonicalConsole {
                 }
                 return same(mind);
 
+            case CTX_DMZ_EXPLAIN:
+            case CTX_OPINION_TREE:
             case CTX_DMZ:
                 try {
                     CanonicalCommandProcessor.Result dmz=COMMAND_PROCESSOR.execute(invocation,mind.getUser());
                     if(!dmz.isHandled() || dmz.getDmzResult()==null)throw new CommandErrorException("Unsupported DMZ operation");
                     mind=track(shutdownHook,dmz.getMind());
-                    ConsoleDmzView.show(dmz.getDmzResult());
+                    if(invocation.getIntent()==org.kanger.command.CommandIntent.CTX_DMZ_EXPLAIN)ConsoleDmzView.explain(dmz.getDmzResult());
+                    else if(invocation.getIntent()==org.kanger.command.CommandIntent.CTX_OPINION_TREE)
+                        ConsoleDmzView.tree(dmz.getDmzResult(),((Number)invocation.getArgument("number")).intValue());
+                    else ConsoleDmzView.show(dmz.getDmzResult());
                 } catch(org.kanger.interfaces.DmzSourcesQuery.PlanningRefusal refusal) {
                     System.err.println("DMZ refused: "+refusal.reason
                             +(refusal.context==null ? "" : " at "+refusal.context+":"+refusal.rule)+": "+refusal.getMessage());

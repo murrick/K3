@@ -471,6 +471,17 @@ public final class CommandParser {
         if (tokens.size() == 1) {
             return CommandInvocation.command(CommandIntent.CTX_STATUS, raw);
         }
+        if("opinion".equalsIgnoreCase(tokens.get(1).value)) {
+            requireRequiredArgument(tokens,4);requireSize(tokens,4);
+            long number=parseNonNegativeLong(tokens.get(2).value,"opinion number");
+            if(number==0 || !"tree".equalsIgnoreCase(tokens.get(3).value))
+                throw error(INVALID_ARGUMENT_SHAPE,"Use ctx opinion <positive N> tree");
+            return CommandInvocation.command(CommandIntent.CTX_OPINION_TREE,args("number",number),raw);
+        }
+        if("dmz".equalsIgnoreCase(tokens.get(1).value) && tokens.size()>=3
+                && "explain".equalsIgnoreCase(tokens.get(2).value)) {
+            requireSize(tokens,3);return CommandInvocation.command(CommandIntent.CTX_DMZ_EXPLAIN,raw);
+        }
         Keyword keyword;
         try {
             keyword = "dmz".equalsIgnoreCase(tokens.get(1).value) ? Keyword.DMZ : CommandRegistry.resolveKeyword(

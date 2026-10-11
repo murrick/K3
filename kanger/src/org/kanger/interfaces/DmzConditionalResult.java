@@ -105,10 +105,15 @@ public final class DmzConditionalResult {
         /** null means the native query did not determine a Boolean value. */
         public final Boolean value;
         public final List<String> hypotheses, hypothesisAssertions;
+        public final List<DmzSourcesQuery.Proof> proofs;
         public Answer(CandidateMode mode, Boolean value, List<String> hypotheses, List<String> assertions) {
+            this(mode,value,hypotheses,assertions,Collections.<DmzSourcesQuery.Proof>emptyList());
+        }
+        public Answer(CandidateMode mode, Boolean value, List<String> hypotheses, List<String> assertions,
+                List<DmzSourcesQuery.Proof> proofs) {
             if (mode == null) throw new NullPointerException("mode");
             candidateMode = mode; this.value = value;
-            this.hypotheses = copy(hypotheses); hypothesisAssertions = copy(assertions);
+            this.hypotheses = copy(hypotheses); hypothesisAssertions = copy(assertions);this.proofs=copy(proofs);
         }
     }
     public static final class Opinion {

@@ -277,6 +277,14 @@ class CanonicalCommandRuntimeReactorTest {
             assertEquals("canonical_intent_not_bound", response.optString("code"));
             assertEquals("CTX_DMZ", response.optString(CanonicalCommandIngressReactor.CANONICAL_INTENT_FIELD));
             assertEquals(0, escaped.get(), "DMZ escaped into legacy query execution");
+            String[] histories={"ctx dmz explain","ctx opinion 1 tree"};
+            String[] intents={"CTX_DMZ_EXPLAIN","CTX_OPINION_TREE"};
+            for(int i=0;i<histories.length;++i) {
+                JSONObject history=invoke(reactor,fixture.token,histories[i]);
+                assertEquals("canonical_intent_not_bound",history.optString("code"));
+                assertEquals(intents[i],history.optString(CanonicalCommandIngressReactor.CANONICAL_INTENT_FIELD));
+            }
+            assertEquals(0,escaped.get(),"DMZ history escaped into legacy execution");
             assertEquals(fixture.root, fixture.user.getCurrentMind());
             assertEquals(rules, fixture.root.getRules().size());
             assertEquals(level, fixture.root.getTransactionLevel());

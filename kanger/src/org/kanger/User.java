@@ -93,6 +93,10 @@ import java.util.*;
  * @see IUser
  */
 public class User implements IUser {
+    private org.kanger.interfaces.DmzSourcesQuery.Result lastDmzResult;
+    public synchronized org.kanger.interfaces.DmzSourcesQuery.Result getLastDmzResult() { return lastDmzResult; }
+    public synchronized void setLastDmzResult(org.kanger.interfaces.DmzSourcesQuery.Result result) { lastDmzResult=result; }
+
     private final OptimizationOptions.Session optimizationOptions = new OptimizationOptions.Session();
 
     OptimizationOptions.Session optimizationOptions() { return optimizationOptions; }

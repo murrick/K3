@@ -115,6 +115,8 @@ public final class CommandFormatter {
             case STORAGE_REINDEX:
                 return "storage reindex " + argument(invocation.getArgument("name"));
 
+            case CTX_DMZ_EXPLAIN: return "ctx dmz explain";
+            case CTX_OPINION_TREE: return "ctx opinion "+number(invocation,"number")+" tree";
             case CTX_DMZ:
                 return dmz((org.kanger.interfaces.DmzSourcesQuery.Request)invocation.getArgument("request"));
             case CTX_OPINIONS:

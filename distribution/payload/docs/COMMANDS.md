@@ -547,8 +547,9 @@ follow HEAD, switch pins or publish anything.
 
 ### `ctx dmz <Q-UUID>@<revision> <query> [from=<name>@<UUID>@<revision> ...] [<limit>=<value> ...]`
 
-DMZ uses a settled physical Q with no active child transaction/reservation and no
-existing Context connections. Inspect names and published revisions without
+DMZ uses a settled physical Q with no active child transaction/reservation.
+Direct TRUST-tagged connections form one protected Q authority; untagged
+connections are autonomous external sources for ordinary Console queries. Inspect names and published revisions without
 connecting them:
 
 ```text
@@ -576,7 +577,7 @@ depth, nodes, work and visits. Defaults are 10000 for rows and each phase, depth
 nodes=128, work=1000000 and visits=1000. Phase/rows/nodes/visits values must be
 1..10000, depth 1..16, work 1..1000000. Unknown/repeated limits, duplicate Context
 pins, Q as an external source, noncanonical UUIDs and missing pins are refused.
-The output shows the actual profile, authority pin and source inventories.
+Use `ctx dmz explain` to inspect the saved profile, authority pins and source inventories.
 
 The explicit policy admits all fixed unit implications before grounds, then
 orders source grounds by Context UUID string and source-local rule ID. Supported
@@ -594,6 +595,12 @@ opinions, per-input decisions including DECLINED_Q, and unchanged Q. A source wi
 A production-only source `!@x authority(x) -> more(x);` can answer `?more(1);`
 from Q; it does not add more(1) to Q. Named empty sources retain an inventory.
 
+The default Console output lists compact TRUE/FALSE/UNKNOWN opinions with their
+actual source Contexts and primary causes. `ctx opinion <N> tree` shows all
+retained inference alternatives with applied productions, primary premises and
+exact source identities; `ctx dmz explain` shows the technical traversal report.
+Both commands read the saved last DMZ result without inference. New/failed query
+attempts clear old history. Source advancement does not change saved trees.
 The Console distinguishes COMPLETE under the displayed ordered policy from
 PARTIAL. A visit stop shows the interrupted input/prefix; conditional stops show
 their event/frontier reasons. Completed leaves before a stop are explicitly
@@ -608,6 +615,26 @@ to the prompt. Follow any refusal with a valid query, close/reopen Q, and verify
 its declarations and topology. Existing connections are not modified by this
 operation. The shared canonical processor carries a detached SDK result; Server
 has no DMZ transport binding yet and explicitly refuses the new intent.
+
+### `ctx opinion <N> tree`
+
+Read the selected last DMZ opinion's detached inference alternatives. N is a
+positive number displayed by that query. Trees retain Context UUIDs/revisions,
+source-local rules and configured-by-Q view provenance. UNKNOWN has no resolved
+tree. Partial opinions remain labelled partial.
+
+### `ctx dmz explain`
+
+Read the last DMZ query's technical report, including exact authority components,
+inputs, ordering, budgets, decisions and conditional events. No inference runs.
+
+Ordinary Console `?predicate(integer);` queries with direct connections select
+their current pinned views automatically: Q and all TRUST-tagged members are
+authority, untagged members supply external opinions. Explicit `ctx dmz ...`
+still selects its external physical pins for debugging. Existing connection
+creation, publication and repin qualification boundaries remain in force.
+Unsupported connected DMZ grammar is refused; bare `?` program checks and
+assertion/mutation commands retain their Core lifecycle.
 
 ### `ctx explain <query...>`
 

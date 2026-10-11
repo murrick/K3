@@ -147,8 +147,10 @@ public final class DmzSourceSessionRunner {
             data.connectContext("C");
             try {
                 IContextResults.Revision connectedPin=new IContextResults.Revision(data.getContextId(),data.getRevision());
-                reject(() -> data.openDmzCandidateSession(physical,new DmzSourcePlan.Request(connectedPin,request.external,1000),10000),"existing Context connections");
-                require(data.hasConnectedContexts(),"refused internal bridge preserves existing ordinary connections");
+                try(DmzSourceSession connected=data.openDmzCandidateSession(physical,new DmzSourcePlan.Request(connectedPin,request.external,1000),10000)) {
+                    require(Boolean.TRUE.equals(connected.queryQ("?changed(7);",10000).value),"explicit debug session preserves authority with an ordinary connection");
+                }
+                require(data.hasConnectedContexts(),"internal bridge preserves existing ordinary connections");
             } finally { data.disconnectContext("C"); }
             IContextResults.Revision changedPin=new IContextResults.Revision(data.getContextId(),data.getRevision());
             try(DmzSourceSession updated=data.openDmzCandidateSession(q,new DmzSourcePlan.Request(changedPin,request.external,1000),10000)) {
