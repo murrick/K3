@@ -1992,6 +1992,34 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
     Boolean queryContinuation(String statement, int auditBudget) throws Exception {
         return queryContinuationResult(statement, auditBudget).value;
     }
+    /** Zero-ground operations have no candidate audit: fixed units must be consistent before their final query. */
+    void auditFixedInputs(int budget) throws Exception {
+        if(closed || !continuationOnly || budget<1 || budget>10000)
+            throw new IllegalArgumentException("Open fixed-input workflow and bounded audit required");
+        requireAuthorityCurrent();
+        Mind child=transaction.mind();
+        DmzCurrentUnaryProofInventory current=DmzCurrentUnaryProofInventory.capture(child,budget,true);
+        DmzCurrentUnaryProofInventory authority=DmzCurrentUnaryProofInventory.capture(authorityTarget,budget,false);
+        if(!current.eligible || !authority.eligible)throw new IllegalStateException("Fixed source inventory unavailable");
+        int[] work={budget};
+        List<DmzProofWitnesses.NoGood> exclusions=DmzTerminalRestriction.activeNoGoods(child);
+        for(DmzObservedProofGraph.Node node:current.graph.observed.nodes) {
+            projectionWork(work);
+            DmzCurrentUnaryProofInventory.Proofs supported=current.proofs(node.ground,exclusions,budget);
+            if(supported.truncated)throw new IllegalStateException("Fixed source proof audit exceeded");
+            if(supported.witnesses.isEmpty())continue;
+            for(DmzProofWitnesses.Witness witness:supported.witnesses)projectionWork(work);
+            TerminalSupportCapture.Ground opposite=new TerminalSupportCapture.Ground(node.ground.predicate,!node.ground.sign,node.ground.arguments);
+            DmzCurrentUnaryProofInventory.Proofs local=current.proofs(opposite,exclusions,budget);
+            DmzCurrentUnaryProofInventory.Proofs q=authority.proofs(opposite,java.util.Collections.<DmzProofWitnesses.NoGood>emptyList(),budget);
+            if(local.truncated || q.truncated)throw new IllegalStateException("Fixed source opposite proof audit exceeded");
+            if(!q.witnesses.isEmpty() || !local.witnesses.isEmpty())
+                throw new IllegalStateException("Fixed source productions conflict with Q or each other");
+        }
+        if(!current.isCurrent(child) || !authority.isCurrent(authorityTarget))
+            throw new IllegalStateException("Fixed source audit boundary changed");
+        requireAuthorityCurrent();
+    }
     QueryResult queryContinuationResult(String statement, int auditBudget) throws Exception {
         if (closed) throw new IllegalStateException("Retraction overlay closed");
         if (!continuationOnly || statement == null || !statement.matches("\\?~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))

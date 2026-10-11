@@ -111,6 +111,13 @@ public final class DmzSourceSequenceRunner {
                     }
                     require(yes && other,"revived source aliases retain both consequence alternatives: "+branchQuery);
                 }
+                DmzCandidateSession.SourcesResult automatic=session.evaluateSources("?authority(1);",limits(128),10000);
+                require(!automatic.sequence.restartRequired && automatic.plan.primaryRules==18
+                        && automatic.plan.candidates.size()==14 && automatic.plan.productions.size()==4,
+                        "provider automatically covers every acquired primary, including unselected manual fixture grounds");
+                for(DmzCandidateSession.SequenceOpinion opinion:automatic.sequence.opinions)
+                    require(opinion.steps.size()==14 && Boolean.TRUE.equals(opinion.answer.value),"automatic full-source history retains original Q");
+                require(automatic.sequence.opinions.size()>=2,"automatic source ordering preserves opposing alternatives");
                 DmzCandidateSession.SequenceResult limited=session.evaluateSequence(ordered,units,Collections.emptyList(),"?authority(1);",limits(128),2);
                 require(limited.visitLimit && limited.restartRequired && limited.visits==2 && limited.interruptedInput>=0,"global ordered visit stop records interruption and requires fresh invocation");
                 DmzCandidateSession.SequenceResult partial=session.evaluateSequence(ordered,units,Collections.emptyList(),"?authority(1);",limits(128),ordered.size()+2);

@@ -82,6 +82,12 @@ final class DmzSourceSession implements AutoCloseable {
             finally { requireCurrent(); }
         }
     }
+    org.kanger.DmzSourceDispatchPlan planSources() throws Exception {
+        synchronized(provider) { requireCurrent();try { return core.planSources(); }finally { requireCurrent(); } }
+    }
+    DmzCandidateSession.SourcesResult evaluateSources(String query,DmzCandidateSession.Limits limits,int maximumVisits) throws Exception {
+        synchronized(provider) { requireCurrent();try { return core.evaluateSources(query,limits,maximumVisits); }finally { requireCurrent(); } }
+    }
     @Override public void close() throws Exception {
         if(closed)return;
         if(Thread.currentThread()!=owner)throw new IllegalStateException("Provider DMZ session must close on its owning thread");

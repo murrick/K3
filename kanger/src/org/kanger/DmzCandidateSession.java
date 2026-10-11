@@ -154,6 +154,7 @@ public final class DmzCandidateSession implements AutoCloseable {
             }
             ++visits;
             if(index==candidates.size()) {
+                if(candidates.isEmpty())workflow.auditFixedInputs(limits.audit);
                 opinions.add(new SequenceOpinion(prefix,workflow.queryContinuationResult(query,limits.audit)));return;
             }
             final SourceRule input=candidates.get(index);
@@ -307,7 +308,7 @@ public final class DmzCandidateSession implements AutoCloseable {
             String query,Limits limits,int maximumVisits) throws Exception {
         requireCurrent();
         if(candidates==null || productions==null || supports==null || limits==null)throw new NullPointerException();
-        if(candidates.isEmpty() || candidates.size()>16 || productions.size()>64 || supports.size()>64
+        if(candidates.size()>DmzSourceDispatchPlan.MAXIMUM_GROUNDS || productions.size()>64 || supports.size()>64
                 || productions.size()+supports.size()>64 || maximumVisits<1 || maximumVisits>10000)
             throw new IllegalArgumentException("Bounded ordered candidates, prerequisites and visits required");
         if(query==null || !query.matches("\\?~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
@@ -342,6 +343,21 @@ public final class DmzCandidateSession implements AutoCloseable {
             catch(SequenceVisitStop bounded) { /* Every live child has rolled back; observations require a fresh invocation. */ }
             return new SequenceResult(run);
         } finally { requireCurrent(); }
+    }
+    public static final class SourcesResult {
+        public final DmzSourceDispatchPlan plan;
+        public final SequenceResult sequence;
+        private SourcesResult(DmzSourceDispatchPlan plan,SequenceResult sequence) { this.plan=plan;this.sequence=sequence; }
+    }
+    /** Reviewable deterministic coverage of all acquired active primary declarations; no native trial opens. */
+    public DmzSourceDispatchPlan planSources() throws Exception {
+        requireCurrent();
+        return DmzSourceDispatchPlan.prepare(authority,new ArrayList<Participant>(external.values()));
+    }
+    /** Fixed acquired units followed by every acquired ground; no unsupported or excess primary is skipped. */
+    public SourcesResult evaluateSources(String query,Limits limits,int maximumVisits) throws Exception {
+        DmzSourceDispatchPlan plan=planSources();
+        return new SourcesResult(plan,evaluateSequence(plan.candidates,plan.productions,Collections.<SourceRule>emptyList(),query,limits,maximumVisits));
     }
     private static String key(SourceRule rule) { return rule.context.toString()+":"+rule.rule; }
     private DmzSourceShape.Declaration declaration(SourceRule selected) {
