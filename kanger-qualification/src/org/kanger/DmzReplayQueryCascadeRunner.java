@@ -11,7 +11,7 @@ public final class DmzReplayQueryCascadeRunner {
     private static int checks;
     public static void main(String[] args) throws Exception {
         System.setProperty("user.home", Files.createTempDirectory("dmz-replay-query-cascade-").toString());
-        run(false); run(true); run(false, 0); run(false, 1); run(false, -1, true); run(true, -1, true);
+        run(false); run(true); run(false, 0); run(false, 1); run(false, -1, true); run(true, -1, true); run(false, 0, true); run(false, 1, true);
         for (boolean negative : new boolean[] { false, true }) for (boolean deeper : new boolean[] { false, true })
             for (int variant = 1; variant < 8; ++variant) run(negative, -1, deeper, variant);
         System.out.println("DMZ_REPLAY_QUERY_CASCADE_PASS checks=" + checks);
@@ -126,6 +126,7 @@ public final class DmzReplayQueryCascadeRunner {
                     DmzStoredRetractionTransaction.ReplayPath retainedTwoStep = null;
                     boolean twoStepBudgetFailure = false;
                     boolean deferredTwoStep = false;
+                    DmzStoredRetractionTransaction.ReplayPath thirdPrefix = null;
                     String[] queries = independent ? new String[] { "?source(1);", "?middle(1);", negative ? "?~derived(1);" : "?derived(1);", "?middle(2);", "?source(2);", "?~source(2);" }
                             : variant != 0 ? new String[] { "?source(1);", negative ? "?~derived(1);" : "?derived(1);", "?middle(2);", "?source(2);", "?~source(2);" } : staleMode < 0 ? new String[] { "?source(1);", "?middle(2);", "?source(2);", "?~source(2);" }
                             : new String[] { "?source(1);" };
@@ -174,6 +175,74 @@ public final class DmzReplayQueryCascadeRunner {
                             if (!unresolved && statement.equals("?middle(1);"))
                                 require(Boolean.TRUE.equals(applied.query.value), "independent alternative stays natively queryable");
 
+                            if (unresolved && statement.equals("?source(1);")) {
+                                thirdPrefix = path;
+                                int thirdIndex = -1;
+                                for (int j = 0; j < path.remaining.conflicts.size(); ++j)
+                                    if (path.remaining.conflicts.get(j).ground.predicate.equals("source")) thirdIndex = j;
+                                require(thirdIndex >= 0, "third source conflict selected from deferred two-step packet");
+                                boolean wrongThirdLabel = false;
+                                try { choice.extendTwoStepPath(path, thirdIndex, source, 151, candidate, statement,
+                                        10000, 10000, 10000, 10000, 10000, 10000, 10000); }
+                                catch (IllegalArgumentException expected) { wrongThirdLabel = true; }
+                                require(wrongThirdLabel && projection.isCurrent(), "third extension rejects different candidate label before admission");
+                                boolean invalidThird = false;
+                                try { choice.extendTwoStepPath(path, path.remaining.conflicts.size(), source, 150, candidate, statement,
+                                        10000, 10000, 10000, 10000, 10000, 10000, 10000); }
+                                catch (IllegalArgumentException expected) { invalidThird = true; }
+                                require(invalidThird && projection.isCurrent(), "third extension rejects nonexistent historical conflict");
+                                boolean thirdBudget = false;
+                                try { choice.extendTwoStepPath(path, thirdIndex, source, 150, candidate, statement,
+                                        10000, 10000, 10000, 10000, 10000, 10000, 1); }
+                                catch (DmzStoredRetractionTransaction.SupportChoiceBudgetFailure expected) { thirdBudget = true; }
+                                require(thirdBudget && projection.isCurrent(), "third mask budget failure rolls back both restored prefix levels");
+                                String[] thirdQueries = { "?source(1);", "?middle(2);", "?bridge(2);", "?source(2);", "?~source(2);" };
+                                for (String thirdQuery : thirdQueries) {
+                                    DmzStoredRetractionTransaction.ReplayPathExtension third = choice.extendTwoStepPath(path, thirdIndex,
+                                            source, 150, candidate, thirdQuery, 10000, 10000, 10000, 10000, 10000, 10000, 10000);
+                                    require(third.paths.size() == 2 && third.applications.size() == 2 && projection.isCurrent(),
+                                            "both third variants complete and roll back to unchanged parent");
+                                    for (int j = 0; j < 2; ++j) {
+                                        DmzStoredRetractionTransaction.ReplayPath full = third.paths.get(j);
+                                        DmzStoredRetractionTransaction.ReplayAppliedChoice terminal = third.applications.get(j);
+                                        require(full.steps.size() == 3 && full.steps.get(0).side == path.steps.get(0).side
+                                                && full.steps.get(1).side == path.steps.get(1).side && full.steps.get(2).side == terminal.side
+                                                && full.steps.get(2).conflict.predicate.equals("source"), "ordered three-step descriptor preserves prefix and third choice");
+                                        require(terminal.disposition == DmzStoredRetractionTransaction.ReplayQueryDisposition.QUERIED
+                                                && terminal.query != null && terminal.conflict == null, "third choice resolves source conflict before query");
+                                        if (thirdQuery.equals("?source(1);")) require(Boolean.TRUE.equals(terminal.query.value), "Q source survives third choice");
+                                        if (thirdQuery.equals("?middle(2);") || thirdQuery.equals("?bridge(2);"))
+                                            require(!Boolean.TRUE.equals(terminal.query.value), "both earlier cuts inherited at third level");
+                                        if ((thirdQuery.equals("?source(2);") && terminal.side == DmzStoredRetractionTransaction.ReplaySide.OPPOSING)
+                                                || (thirdQuery.equals("?~source(2);") && terminal.side == DmzStoredRetractionTransaction.ReplaySide.SUPPORTING))
+                                            require(!Boolean.TRUE.equals(terminal.query.value), "third cut rejects selected signed source root");
+                                        if (variant != 0) require(groundOneProofs(full.steps.get(2).grounds, "derived", !negative)
+                                                == groundOneProofs(path.steps.get(1).grounds, "derived", !negative), "third choice preserves independent and aliased original root proofs");
+                                        boolean threeImmutable = false;
+                                        try { full.steps.clear(); } catch (UnsupportedOperationException expected) { threeImmutable = true; }
+                                        require(threeImmutable, "three-step descriptor immutable");
+                                        if (thirdQuery.equals("?source(1);")) {
+                                            boolean unsupportedRestore = false;
+                                            try { choice.replayTwoStepPath(full, source, 150, candidate, thirdQuery,
+                                                    10000, 10000, 10000, 10000, 10000, 10000); }
+                                            catch (IllegalArgumentException expected) { unsupportedRestore = true; }
+                                            require(unsupportedRestore && projection.isCurrent(), "two-step restore refuses three-step descriptor before admission");
+                                        }
+
+                                    }
+                                }
+                                require(choice.replayTwoStepPath(path, source, 150, candidate, statement,
+                                        10000, 10000, 10000, 10000, 10000, 10000).applications.get(0).disposition
+                                        == DmzStoredRetractionTransaction.ReplayQueryDisposition.NEEDS_BRANCHING,
+                                        "two-step prefix reusable after complete third extensions");
+                            }
+                            if (!unresolved && statement.equals("?source(1);")) {
+                                boolean completedThird = false;
+                                try { choice.extendTwoStepPath(path, 0, source, 150, candidate, statement,
+                                        10000, 10000, 10000, 10000, 10000, 10000, 10000); }
+                                catch (IllegalArgumentException expected) { completedThird = true; }
+                                require(completedThird && projection.isCurrent(), "completed two-step path has no third conflict to extend");
+                            }
                             retainedTwoStep = path;
                             if (statement.equals("?source(1);")) {
                                 boolean wrongLabel = false;
@@ -222,7 +291,7 @@ public final class DmzReplayQueryCascadeRunner {
                     if (staleMode >= 0) {
                         String beforeMutation = DmzObservationStateFingerprint.capture(q);
                         if (staleMode == 1) DmzReplayProvenance.replayRule(q, source, 201,
-                                DmzReplayProvenance.Authority.EXTERNAL, "!@x source(x) -> middle(x);");
+                                DmzReplayProvenance.Authority.EXTERNAL, deeper ? "!@x source(x) -> bridge(x);" : "!@x source(x) -> middle(x);");
                         else {
                             boolean changedVisibility = false;
                             for (org.kanger.interfaces.IRule rule : q.getRules()) if (q.getRules().isGenerated(rule) && !rule.isDeleted(q)) {
@@ -237,10 +306,24 @@ public final class DmzReplayQueryCascadeRunner {
                                 10000, 10000, 10000, 10000, 10000, 10000); }
                         catch (IllegalStateException expected) { staleTwoStep = expected.getMessage().contains("boundary changed"); }
                         require(staleTwoStep && !projection.isCurrent(), "two-step replay refuses native or source-only Q mutation");
+                        if (thirdPrefix != null) {
+                            boolean staleThird = false;
+                            try { choice.extendTwoStepPath(thirdPrefix, 0, source, 150, candidate, "?source(1);",
+                                    10000, 10000, 10000, 10000, 10000, 10000, 10000); }
+                            catch (IllegalStateException expected) { staleThird = expected.getMessage().contains("boundary changed"); }
+                            require(staleThird, "third extension refuses stale Q pins before admission");
+                        }
                         choice.close();
                         require(qState.equals(DmzObservationStateFingerprint.capture(q)), "stale choice close preserves external Q mutation");
                     } else {
                         choice.close();
+                        if (thirdPrefix != null) {
+                            boolean closedThird = false;
+                            try { choice.extendTwoStepPath(thirdPrefix, 0, source, 150, candidate, "?source(1);",
+                                    10000, 10000, 10000, 10000, 10000, 10000, 10000); }
+                            catch (IllegalStateException expected) { closedThird = true; }
+                            require(closedThird && projection.isCurrent(), "closed choice refuses third extension");
+                        }
                         boolean closedTwoStep = false;
                         try { choice.replayTwoStepPath(retainedTwoStep, source, 150, candidate, "?source(1);",
                                 10000, 10000, 10000, 10000, 10000, 10000); }
@@ -252,6 +335,13 @@ public final class DmzReplayQueryCascadeRunner {
                         require(closedReplay && projection.isCurrent(), "closed native choice refuses historical path replay");
                         try (DmzStoredRetractionTransaction.NativeSupportChoice foreign = overlay.beginSupportChoice(projection,
                                 DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, 10000)) {
+                            if (thirdPrefix != null) {
+                                boolean foreignThird = false;
+                                try { foreign.extendTwoStepPath(thirdPrefix, 0, source, 150, candidate, "?source(1);",
+                                        10000, 10000, 10000, 10000, 10000, 10000, 10000); }
+                                catch (IllegalArgumentException expected) { foreignThird = true; }
+                                require(foreignThird && projection.isCurrent(), "third extension refuses foreign path ownership");
+                            }
                             boolean wrongTwoStepOwner = false;
                             try { foreign.replayTwoStepPath(retainedTwoStep, source, 150, candidate, "?source(1);",
                                     10000, 10000, 10000, 10000, 10000, 10000); }
