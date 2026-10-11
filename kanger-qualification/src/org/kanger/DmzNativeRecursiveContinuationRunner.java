@@ -985,9 +985,21 @@ public final class DmzNativeRecursiveContinuationRunner {
                     String query = "?" + candidate.substring(1);
                     require(Boolean.TRUE.equals(cut.probeCandidate(source, 6, candidate, query, 10000).value),
                             "both signed isolated primary candidates are conditionally admitted");
+                    DmzStoredRetractionTransaction.ConditionalQueryResult direct = cut.executeConditionalQuery(source, 6,
+                            candidate, query, 10000, 10000, 10000, 10000, 10000, 4, 64, 1000000);
+                    require(direct.disposition == DmzStoredRetractionTransaction.ConditionalQueryDisposition.QUERIED
+                            && direct.direct != null && Boolean.TRUE.equals(direct.direct.value) && direct.family == null
+                            && !direct.retryDiscovery && projection.isCurrent(), "automatic consistent candidate yields fresh direct query snapshot");
                     require(cut.query(query, 10000).value == null && projection.isCurrent(),
                             "isolated candidate input and provenance roll back completely");
                 }
+                DmzStoredRetractionTransaction.CandidateEvaluation rejected = overlay.evaluateCandidate(source, 78,
+                        "!~derived(1);", "?~derived(1);", 10000, 10000,
+                        new DmzStoredRetractionTransaction.ConditionalQueryLimits(10000, 10000, 10000, 10000, 4, 64, 1000000));
+                require(rejected.status == DmzStoredRetractionTransaction.CandidateStatus.DECLINED_Q
+                        && rejected.query == null && rejected.conditional.disposition == DmzStoredRetractionTransaction.ConditionalQueryDisposition.DECLINED_BY_Q
+                        && rejected.conditional.direct == null && rejected.conditional.family == null,
+                        "checked workflow declines Q conflict before constructing a branch-only receipt");
                 require(Boolean.TRUE.equals(overlay.queryContinuation(signed(negative, "?isolatedPending(9);"))),
                         "closing isolated cut restores parent primary opinion");
             }

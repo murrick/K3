@@ -62,8 +62,51 @@ public final class DmzReplayQueryCascadeRunner {
                 String candidate = negative ? "!derived(2);" : "!~derived(2);";
                 DmzStoredRetractionTransaction.ConflictEvidence evidence = overlay.conflictEvidence(candidate, 10000);
                 DmzStoredRetractionTransaction.SymmetricProjection projection = overlay.projectSymmetric(evidence, 10000);
+                DmzStoredRetractionTransaction.CandidateEvaluation coordinated = overlay.evaluateCandidate(source, 150,
+                        candidate, "?source(1);", 10000, 10000,
+                        new DmzStoredRetractionTransaction.ConditionalQueryLimits(10000, 10000, 10000, 10000, 4, 64, 1000000));
+                require(coordinated.status == DmzStoredRetractionTransaction.CandidateStatus.CONDITIONAL_RESULT
+                        && coordinated.query == null && coordinated.conditional.disposition == DmzStoredRetractionTransaction.ConditionalQueryDisposition.BRANCHED
+                        && coordinated.conditional.family.outcome == DmzStoredRetractionTransaction.ReplayTraversalOutcome.COMPLETE
+                        && !coordinated.conditional.restartRequired && projection.isCurrent(), "checked workflow owns preparation, discovery, family and support-choice cleanup");
+                DmzStoredRetractionTransaction.CandidateEvaluation coordinatedStop = overlay.evaluateCandidate(source, 150,
+                        candidate, "?source(1);", 10000, 10000,
+                        new DmzStoredRetractionTransaction.ConditionalQueryLimits(10000, 10000, 10000, 10000, 4, 1, 1000000));
+                require(coordinatedStop.conditional.restartRequired && coordinatedStop.conditional.family.unstartedRoot != null
+                        && coordinatedStop.conditional.family.outcome == DmzStoredRetractionTransaction.ReplayTraversalOutcome.NODE_LIMIT
+                        && projection.isCurrent(), "returned incomplete workflow result requests fresh coordinated restart after owner scope closes");
                 try (DmzStoredRetractionTransaction.NativeSupportChoice choice = overlay.beginSupportChoice(projection,
                         DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, 10000)) {
+                    DmzStoredRetractionTransaction.ConditionalQueryResult automatic = choice.executeConditionalQuery(source, 150,
+                            candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000, 4, 64, 1000000);
+                    require(automatic.disposition == DmzStoredRetractionTransaction.ConditionalQueryDisposition.BRANCHED
+                            && automatic.direct == null && automatic.family != null && automatic.family.unstartedRoot == null
+                            && automatic.family.outcome == DmzStoredRetractionTransaction.ReplayTraversalOutcome.COMPLETE
+                            && automatic.family.opinions.size() >= 2 && automatic.traversalWork >= automatic.family.traversalWork
+                            && automatic.traversalWork <= automatic.workLimit && !automatic.retryDiscovery && projection.isCurrent(),
+                            "one core operation discovers collisions and collects conditional family without manual packet selection");
+                    for (DmzStoredRetractionTransaction.ReplayOpinion opinion : automatic.family.opinions)
+                        require(Boolean.TRUE.equals(opinion.application.query.value), "automatic family preserves independent authoritative source");
+                    DmzStoredRetractionTransaction.ConditionalQueryResult automaticTiny = choice.executeConditionalQuery(source, 150,
+                            candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000, 4, 64, 1);
+                    require(automaticTiny.disposition == DmzStoredRetractionTransaction.ConditionalQueryDisposition.WORK_LIMIT
+                            && automaticTiny.retryDiscovery && automaticTiny.family == null && automaticTiny.direct == null
+                            && automaticTiny.traversalWork == 1 && projection.isCurrent(), "discovery exhaustion requires explicit retry and supplies no invented packet");
+                    DmzStoredRetractionTransaction.ConditionalQueryResult automaticNodes = choice.executeConditionalQuery(source, 150,
+                            candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000, 4, 1, 1000000);
+                    require(automaticNodes.disposition == DmzStoredRetractionTransaction.ConditionalQueryDisposition.BRANCHED
+                            && automaticNodes.family.outcome == DmzStoredRetractionTransaction.ReplayTraversalOutcome.NODE_LIMIT
+                            && automaticNodes.family.unstartedRoot != null && automaticNodes.family.opinions.isEmpty()
+                            && automaticNodes.traversalWork > 0 && projection.isCurrent(), "discovered initial packet survives root node refusal");
+                    if (!negative && !deeper && variant == 0 && staleMode < 0) {
+                        DmzStoredRetractionTransaction.ConditionalQueryResult discoverySized = choice.executeConditionalQuery(source, 150,
+                                candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000, 4, 64, automaticNodes.traversalWork + 10);
+                        require(discoverySized.disposition == DmzStoredRetractionTransaction.ConditionalQueryDisposition.BRANCHED
+                                && discoverySized.family.outcome == DmzStoredRetractionTransaction.ReplayTraversalOutcome.WORK_LIMIT
+                                && discoverySized.family.unstartedRoot != null && discoverySized.family.opinions.isEmpty()
+                                && discoverySized.traversalWork == discoverySized.workLimit && projection.isCurrent(),
+                                "discovery and family replay consume one allowance without resetting it");
+                    }
                     DmzStoredRetractionTransaction.ConsequenceAuditFailure packet = null;
                     try { choice.probeCandidate(source, 150, candidate, "?source(1);", 10000); }
                     catch (DmzStoredRetractionTransaction.ConsequenceAuditFailure conflict) { packet = conflict; }
@@ -677,6 +720,11 @@ public final class DmzReplayQueryCascadeRunner {
                                 10000, 10000, 10000, 10000, 10000, 4, 64, 1000000); }
                         catch (IllegalStateException expected) { staleFamily = true; }
                         require(staleFamily, "whole root family refuses stale boundary");
+                        boolean staleAutomatic = false;
+                        try { choice.executeConditionalQuery(source, 150, candidate, "?source(1);",
+                                10000, 10000, 10000, 10000, 10000, 4, 64, 1000000); }
+                        catch (IllegalStateException expected) { staleAutomatic = true; }
+                        require(staleAutomatic, "automatic operation refuses stale choice");
                         choice.close();
                         require(qState.equals(DmzObservationStateFingerprint.capture(q)), "stale choice close preserves external Q mutation");
                     } else {
@@ -696,6 +744,11 @@ public final class DmzReplayQueryCascadeRunner {
                                 10000, 10000, 10000, 10000, 10000, 4, 64, 1000000); }
                         catch (IllegalStateException expected) { closedFamily = true; }
                         require(closedFamily, "whole root family refuses closed boundary");
+                        boolean closedAutomatic = false;
+                        try { choice.executeConditionalQuery(source, 150, candidate, "?source(1);",
+                                10000, 10000, 10000, 10000, 10000, 4, 64, 1000000); }
+                        catch (IllegalStateException expected) { closedAutomatic = true; }
+                        require(closedAutomatic, "automatic operation refuses closed choice");
                         if (thirdPrefix != null) {
                             boolean closedThird = false;
                             try { choice.extendTwoStepPath(thirdPrefix, 0, source, 150, candidate, "?source(1);",

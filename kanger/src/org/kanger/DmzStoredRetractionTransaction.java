@@ -383,6 +383,31 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             this.maximumDepth = maximumDepth; this.maximumNodes = maximumNodes; this.workLimit = workLimit;
         }
     }
+    enum ConditionalQueryDisposition { QUERIED, BRANCHED, DECLINED_BY_Q, WORK_LIMIT }
+    static final class ConditionalQueryResult {
+        final ConditionalQueryDisposition disposition;
+        final QueryResult direct;
+        final ReplayTraversalResult family;
+        final ConsequenceAuditFailure authorityConflict;
+        final boolean retryDiscovery, restartRequired;
+        final String candidate, queryStatement;
+        final org.kanger.interfaces.IContextResults.Revision source;
+        final long sourceRule;
+        final int traversalWork, maximumDepth, maximumNodes, workLimit;
+        private ConditionalQueryResult(ConditionalQueryDisposition disposition, QueryResult direct, ReplayTraversalResult family,
+                ConsequenceAuditFailure authorityConflict, boolean retryDiscovery, BranchTraversalRun run) {
+            this(disposition, direct, family, authorityConflict, retryDiscovery, run, false);
+        }
+        private ConditionalQueryResult(ConditionalQueryDisposition disposition, QueryResult direct, ReplayTraversalResult family,
+                ConsequenceAuditFailure authorityConflict, boolean retryDiscovery, BranchTraversalRun run, boolean restartRequired) {
+            this.restartRequired = restartRequired;
+            this.disposition = disposition; this.direct = direct; this.family = family;
+            this.authorityConflict = authorityConflict; this.retryDiscovery = retryDiscovery;
+            candidate = run.candidate; queryStatement = run.queryStatement; source = run.source; sourceRule = run.sourceRule;
+            traversalWork = run.totalWork - run.remainingWork; maximumDepth = run.maximumDepth;
+            maximumNodes = run.maximumNodes; workLimit = run.totalWork;
+        }
+    }
     private static final class BranchTraversalRun {
         final org.kanger.interfaces.IContextResults.Revision source;
         final long sourceRule;
@@ -683,6 +708,63 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         QueryResult probeCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
                 String candidate, String queryStatement, int auditBudget, int consequenceBudget) throws Exception {
             return probeCandidate(source, sourceRule, candidate, queryStatement, auditBudget, consequenceBudget, null, 10000, -1, 10000, null, 0, null);
+        }
+        ConditionalQueryResult executeConditionalQuery(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+                String candidate, String queryStatement, int auditBudget, int recognitionBudget, int projectionBudget,
+                int applicationBudget, int queryBudget, int maximumDepth, int maximumNodes, int totalWork) throws Exception {
+            BranchTraversalRun run = new BranchTraversalRun(source, sourceRule, candidate, queryStatement, auditBudget,
+                    recognitionBudget, projectionBudget, applicationBudget, queryBudget, maximumDepth, maximumNodes, totalWork);
+            validateReceiptCandidate(source, sourceRule, candidate, queryStatement, auditBudget);
+            if (RECORDED_PATH_WORK.get() != null) throw new IllegalStateException("Recorded path traversal already active");
+            RecordedPathRun discovery = new RecordedPathRun(null, projectionBudget, applicationBudget, totalWork);
+            QueryResult direct = null;
+            ConsequenceAuditFailure packet = null;
+            RECORDED_PATH_WORK.set(discovery);
+            try {
+                InputKind authority = owner.classifyAuthorityInput(candidate, auditBudget);
+                if (authority == InputKind.CONFLICT || authority == InputKind.INCONSISTENT) {
+                    run.remainingWork = discovery.remainingWork;
+                    return new ConditionalQueryResult(ConditionalQueryDisposition.DECLINED_BY_Q, null, null, null, false, run);
+                }
+                direct = probeCandidate(source, sourceRule, candidate, queryStatement, auditBudget, queryBudget);
+            } catch (ConsequenceAuditFailure conflict) {
+                packet = conflict;
+            } catch (ReplayPathBudgetFailure exhausted) {
+                run.remainingWork = 0;
+                return new ConditionalQueryResult(ConditionalQueryDisposition.WORK_LIMIT, null, null, null, true, run);
+            } finally { RECORDED_PATH_WORK.remove(); }
+            run.remainingWork = discovery.remainingWork;
+            if (direct != null) return new ConditionalQueryResult(ConditionalQueryDisposition.QUERIED, direct, null, null, false, run);
+            if (packet == null) throw new IllegalStateException("Complete candidate discovery required");
+            if (packet.kind == ConsequenceConflictKind.AUTHORITY)
+                return new ConditionalQueryResult(ConditionalQueryDisposition.DECLINED_BY_Q, null, null, packet, false, run);
+            ReplayTraversalResult family;
+            if (run.remainingWork == 0) {
+                run.outcome = ReplayTraversalOutcome.WORK_LIMIT;
+                family = new ReplayTraversalResult(run.outcome, run.opinions, run.declined, run.frontier, candidate, queryStatement,
+                        source, sourceRule, 0, 0, maximumDepth, maximumNodes, 0, new ReplayRootFrontier(packet, 0, run.outcome, 0));
+            } else {
+                family = traverseReplayFamily(packet, 0, source, sourceRule, candidate, queryStatement, auditBudget,
+                        recognitionBudget, projectionBudget, applicationBudget, queryBudget, maximumDepth, maximumNodes, run.remainingWork);
+                run.remainingWork -= family.traversalWork;
+            }
+            return new ConditionalQueryResult(ConditionalQueryDisposition.BRANCHED, null, family, null, false, run);
+        }
+        private void validateReceiptCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+                String candidate, String queryStatement, int auditBudget) throws Exception {
+            if (closed) throw new IllegalStateException("Native support choice closed");
+            owner.validateCandidate(source, sourceRule, candidate, queryStatement, auditBudget, auditBudget);
+            if (!projection.isCurrent()) throw new IllegalStateException("Native support choice boundary changed");
+            if (choice != SupportChoice.KEEP_CANDIDATE)
+                throw new IllegalStateException("Candidate admission requires candidate support choice");
+            int open = candidate.indexOf('(');
+            boolean sign = !candidate.startsWith("!~");
+            String predicate = candidate.substring(sign ? 1 : 2, open);
+            Object expected = projection.evidence.candidate.arguments.get(0).materialize().getValue();
+            if (sign != projection.evidence.candidate.sign || !predicate.equals(projection.evidence.candidate.predicate)
+                    || !(expected instanceof Number) || new java.math.BigDecimal(candidate.substring(open + 1, candidate.length() - 2))
+                            .compareTo(new java.math.BigDecimal(expected.toString())) != 0)
+                throw new IllegalArgumentException("Exact conflict receipt candidate required");
         }
         /** Recognize historical chains while the replay is live; always rolls back and never applies cuts. */
         ConsequenceAuditFailure replayConflict(ConsequenceAuditFailure prior,
@@ -1089,18 +1171,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             if (closed) throw new IllegalStateException("Native support choice closed");
             if (consequenceBudget < 1 || consequenceBudget > 10000)
                 throw new IllegalArgumentException("Bounded consequence audit required");
-            owner.validateCandidate(source, sourceRule, candidate, queryStatement, auditBudget, auditBudget);
-            if (!projection.isCurrent()) throw new IllegalStateException("Native support choice boundary changed");
-            if (choice != SupportChoice.KEEP_CANDIDATE)
-                throw new IllegalStateException("Candidate admission requires candidate support choice");
-            int open = candidate.indexOf('(');
-            boolean sign = !candidate.startsWith("!~");
-            String predicate = candidate.substring(sign ? 1 : 2, open);
-            Object expected = projection.evidence.candidate.arguments.get(0).materialize().getValue();
-            if (sign != projection.evidence.candidate.sign || !predicate.equals(projection.evidence.candidate.predicate)
-                    || !(expected instanceof Number) || new java.math.BigDecimal(candidate.substring(open + 1, candidate.length() - 2))
-                            .compareTo(new java.math.BigDecimal(expected.toString())) != 0)
-                throw new IllegalArgumentException("Exact conflict receipt candidate required");
+            validateReceiptCandidate(source, sourceRule, candidate, queryStatement, auditBudget);
             InputKind authority = owner.classifyAuthorityInput(candidate, auditBudget);
             if (authority == InputKind.CONFLICT || authority == InputKind.INCONSISTENT)
                 throw new IllegalStateException("Candidate conflicts with pinned Q");
@@ -1768,13 +1839,65 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         if (lookupBudget < 1 || lookupBudget > 10000)
             throw new IllegalArgumentException("Candidate lookup budget must be between 1 and 10000");
     }
-    enum CandidateStatus { DECLINED_Q, BRANCHING_REQUIRED, REUSED_PRIMARY, PROBED_NEW_INPUT }
+    enum CandidateStatus { DECLINED_Q, BRANCHING_REQUIRED, REUSED_PRIMARY, PROBED_NEW_INPUT, CONDITIONAL_RESULT }
     static final class CandidateEvaluation {
         final CandidateAssessment assessment;
         final CandidateStatus status;
         final QueryResult query; // absent for declined/deferred candidates, never an unknown truth result
+        final ConditionalQueryResult conditional;
         private CandidateEvaluation(CandidateAssessment assessment, CandidateStatus status, QueryResult query) {
-            this.assessment = assessment; this.status = status; this.query = query;
+            this(assessment, status, query, null);
+        }
+        private CandidateEvaluation(CandidateAssessment assessment, CandidateStatus status, QueryResult query, ConditionalQueryResult conditional) {
+            this.assessment = assessment; this.status = status; this.query = query; this.conditional = conditional;
+        }
+    }
+    static final class ConditionalQueryLimits {
+        final int recognition, projection, application, query, depth, nodes, work;
+        ConditionalQueryLimits(int recognition, int projection, int application, int query, int depth, int nodes, int work) {
+            this.recognition = recognition; this.projection = projection; this.application = application; this.query = query;
+            this.depth = depth; this.nodes = nodes; this.work = work;
+        }
+    }
+    /** Explicit opt-in branch workflow; owns and closes the support choice before returning. */
+    CandidateEvaluation evaluateCandidate(org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+            String candidate, String queryStatement, int auditBudget, int lookupBudget, ConditionalQueryLimits limits) throws Exception {
+        if (closed) throw new IllegalStateException("Retraction overlay closed");
+        if (limits == null) throw new IllegalArgumentException("Explicit conditional limits required");
+        BranchTraversalRun run = new BranchTraversalRun(source, sourceRule, candidate, queryStatement, auditBudget,
+                limits.recognition, limits.projection, limits.application, limits.query, limits.depth, limits.nodes, limits.work);
+        validateCandidate(source, sourceRule, candidate, queryStatement, auditBudget, lookupBudget);
+        CandidateAssessment assessment = assessCandidate(candidate, auditBudget);
+        if (assessment.disposition == CandidateDisposition.REJECT_Q)
+            return new CandidateEvaluation(assessment, CandidateStatus.DECLINED_Q, null,
+                    new ConditionalQueryResult(ConditionalQueryDisposition.DECLINED_BY_Q, null, null, null, false, run));
+        if (assessment.disposition != CandidateDisposition.NEEDS_BRANCHING)
+            return evaluateCandidate(source, sourceRule, candidate, queryStatement, auditBudget, lookupBudget);
+        if (RECORDED_PATH_WORK.get() != null) throw new IllegalStateException("Recorded path traversal already active");
+        RecordedPathRun preparation = new RecordedPathRun(null, limits.projection, limits.application, limits.work);
+        NativeSupportChoice selected;
+        RECORDED_PATH_WORK.set(preparation);
+        try {
+            ConflictEvidence evidence = conflictEvidence(candidate, auditBudget);
+            SymmetricProjection projection = projectSymmetric(evidence, limits.projection);
+            selected = beginSupportChoice(projection, SupportChoice.KEEP_CANDIDATE, limits.application);
+        } catch (ReplayPathBudgetFailure exhausted) {
+            run.remainingWork = 0;
+            return new CandidateEvaluation(assessment, CandidateStatus.CONDITIONAL_RESULT, null,
+                    new ConditionalQueryResult(ConditionalQueryDisposition.WORK_LIMIT, null, null, null, true, run, true));
+        } finally { RECORDED_PATH_WORK.remove(); }
+        run.remainingWork = preparation.remainingWork;
+        try (NativeSupportChoice owned = selected) {
+            if (run.remainingWork == 0)
+                return new CandidateEvaluation(assessment, CandidateStatus.CONDITIONAL_RESULT, null,
+                        new ConditionalQueryResult(ConditionalQueryDisposition.WORK_LIMIT, null, null, null, true, run, true));
+            ConditionalQueryResult result = owned.executeConditionalQuery(source, sourceRule, candidate, queryStatement, auditBudget,
+                    limits.recognition, limits.projection, limits.application, limits.query, limits.depth, limits.nodes, run.remainingWork);
+            run.remainingWork -= result.traversalWork;
+            boolean restart = result.retryDiscovery || result.family != null && result.family.outcome != ReplayTraversalOutcome.COMPLETE;
+            return new CandidateEvaluation(assessment, CandidateStatus.CONDITIONAL_RESULT, null,
+                    new ConditionalQueryResult(result.disposition, result.direct, result.family, result.authorityConflict,
+                            result.retryDiscovery, run, restart));
         }
     }
     /** Checked workflow; rejected/deferred candidates never reach native admission. */
