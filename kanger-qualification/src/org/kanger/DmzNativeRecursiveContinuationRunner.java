@@ -987,6 +987,7 @@ public final class DmzNativeRecursiveContinuationRunner {
                             "both signed isolated primary candidates are conditionally admitted");
                     DmzStoredRetractionTransaction.ConditionalQueryResult direct = cut.executeConditionalQuery(source, 6,
                             candidate, query, 10000, 10000, 10000, 10000, 10000, 4, 64, 1000000);
+                    DmzConditionalResultContractRunner.verify(direct);
                     require(direct.disposition == DmzStoredRetractionTransaction.ConditionalQueryDisposition.QUERIED
                             && direct.direct != null && Boolean.TRUE.equals(direct.direct.value) && direct.family == null
                             && !direct.retryDiscovery && projection.isCurrent(), "automatic consistent candidate yields fresh direct query snapshot");
@@ -1000,6 +1001,7 @@ public final class DmzNativeRecursiveContinuationRunner {
                         && rejected.query == null && rejected.conditional.disposition == DmzStoredRetractionTransaction.ConditionalQueryDisposition.DECLINED_BY_Q
                         && rejected.conditional.direct == null && rejected.conditional.family == null,
                         "checked workflow declines Q conflict before constructing a branch-only receipt");
+                DmzConditionalResultContractRunner.verify(rejected.conditional);
                 require(Boolean.TRUE.equals(overlay.queryContinuation(signed(negative, "?isolatedPending(9);"))),
                         "closing isolated cut restores parent primary opinion");
             }

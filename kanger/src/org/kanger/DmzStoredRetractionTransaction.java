@@ -385,6 +385,10 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
     }
     enum ConditionalQueryDisposition { QUERIED, BRANCHED, DECLINED_BY_Q, WORK_LIMIT }
     static final class ConditionalQueryResult {
+        /** Historical provider-facing observations; carries no replay owner or cut capability. */
+        org.kanger.interfaces.DmzConditionalResult toContextResult() {
+            return DmzConditionalResultProjection.project(this);
+        }
         final ConditionalQueryDisposition disposition;
         final QueryResult direct;
         final ReplayTraversalResult family;

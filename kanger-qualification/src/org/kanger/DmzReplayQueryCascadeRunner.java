@@ -69,12 +69,14 @@ public final class DmzReplayQueryCascadeRunner {
                         && coordinated.query == null && coordinated.conditional.disposition == DmzStoredRetractionTransaction.ConditionalQueryDisposition.BRANCHED
                         && coordinated.conditional.family.outcome == DmzStoredRetractionTransaction.ReplayTraversalOutcome.COMPLETE
                         && !coordinated.conditional.restartRequired && projection.isCurrent(), "checked workflow owns preparation, discovery, family and support-choice cleanup");
+                DmzConditionalResultContractRunner.verify(coordinated.conditional);
                 DmzStoredRetractionTransaction.CandidateEvaluation coordinatedStop = overlay.evaluateCandidate(source, 150,
                         candidate, "?source(1);", 10000, 10000,
                         new DmzStoredRetractionTransaction.ConditionalQueryLimits(10000, 10000, 10000, 10000, 4, 1, 1000000));
                 require(coordinatedStop.conditional.restartRequired && coordinatedStop.conditional.family.unstartedRoot != null
                         && coordinatedStop.conditional.family.outcome == DmzStoredRetractionTransaction.ReplayTraversalOutcome.NODE_LIMIT
                         && projection.isCurrent(), "returned incomplete workflow result requests fresh coordinated restart after owner scope closes");
+                DmzConditionalResultContractRunner.verify(coordinatedStop.conditional);
                 try (DmzStoredRetractionTransaction.NativeSupportChoice choice = overlay.beginSupportChoice(projection,
                         DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, 10000)) {
                     DmzStoredRetractionTransaction.ConditionalQueryResult automatic = choice.executeConditionalQuery(source, 150,
@@ -92,6 +94,7 @@ public final class DmzReplayQueryCascadeRunner {
                     require(automaticTiny.disposition == DmzStoredRetractionTransaction.ConditionalQueryDisposition.WORK_LIMIT
                             && automaticTiny.retryDiscovery && automaticTiny.family == null && automaticTiny.direct == null
                             && automaticTiny.traversalWork == 1 && projection.isCurrent(), "discovery exhaustion requires explicit retry and supplies no invented packet");
+                    DmzConditionalResultContractRunner.verify(automaticTiny);
                     DmzStoredRetractionTransaction.ConditionalQueryResult automaticNodes = choice.executeConditionalQuery(source, 150,
                             candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000, 4, 1, 1000000);
                     require(automaticNodes.disposition == DmzStoredRetractionTransaction.ConditionalQueryDisposition.BRANCHED
