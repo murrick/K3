@@ -39,6 +39,54 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             DmzProofWitnesses.Witness blocked, Mind target, int budget) throws Exception {
         return begin(guard, proof, blocked, target, budget, true);
     }
+    /** Provider preparation entry: pins fully sourced Q and opens a child without any initial cut. */
+    static DmzStoredRetractionTransaction beginCandidateWorkflow(TerminalSupportCapture capture,
+            DmzReplayProvenance journal, Mind target, int budget) throws Exception {
+        if (capture == null || journal == null || target == null || budget < 1 || budget > 10000)
+            throw new IllegalArgumentException("Explicit capture, journal, Q and bounded inventory required");
+        journal.requireActiveJournal();
+        TerminalSupportCapture.Checkpoint checkpoint = capture.baselineCheckpoint(target);
+        if (!DmzTerminalRestriction.activeNoGoods(target).isEmpty())
+            throw new IllegalStateException("Neutral candidate workflow cannot inherit Q exclusions");
+        DmzCurrentUnaryProofInventory inventory = DmzCurrentUnaryProofInventory.capture(target, budget, false);
+        if (!inventory.eligible)
+            throw new IllegalStateException("Settled qualified Q inventory required: " + inventory.gaps);
+        // Each reconstructed ground must have a complete, phase-bounded proof inventory.
+        for (DmzObservedProofGraph.Node node : inventory.graph.observed.nodes) {
+            Object value = node.ground.arguments.get(0).materialize().getValue();
+            if (!(value instanceof Number))
+                throw new IllegalStateException("Only unary integer Q grounds are qualified");
+            try { new java.math.BigDecimal(value.toString()).toBigIntegerExact(); }
+            catch (ArithmeticException | NumberFormatException unsupported) {
+                throw new IllegalStateException("Only unary integer Q grounds are qualified", unsupported);
+            }
+            DmzCurrentUnaryProofInventory.Proofs proofs = inventory.proofs(node.ground,
+                    java.util.Collections.<DmzProofWitnesses.NoGood>emptyList(), budget);
+            if (proofs.truncated || proofs.witnesses.isEmpty())
+                throw new IllegalStateException("Complete Q support inventory required");
+        }
+        // A cached native atom is not a proof seed; it must still have sourced support.
+        int remaining = budget;
+        for (IRule item : target.getRules()) {
+            if (remaining-- == 0) throw new IllegalStateException("Neutral Q cache scan budget exceeded");
+            if (item.isDeleted(target) || !target.getRules().isGenerated(item)) continue;
+            Rule rule = (Rule)item;
+            Domain literal = rule.getTree().get(0).get(0);
+            TerminalSupportCapture.Ground ground = TerminalSupportCapture.Ground.capture(new Solve(
+                    literal.getPredicate(), literal.isAntc(), literal.getArguments().convertBase(target)), target);
+            DmzCurrentUnaryProofInventory.Proofs proofs = inventory.proofs(ground,
+                    java.util.Collections.<DmzProofWitnesses.NoGood>emptyList(), budget);
+            if (proofs.truncated || proofs.witnesses.isEmpty())
+                throw new IllegalStateException("Cached Q atom has no complete sourced support");
+        }
+        String state = DmzObservationStateFingerprint.capture(target);
+        DmzReplayProvenance.SourceCheckpoint sources = DmzReplayProvenance.sourceCheckpoint(target);
+        if (!inventory.isCurrent(target) || !capture.isCurrent(checkpoint, target))
+            throw new IllegalStateException("Neutral Q preparation boundary changed");
+        TechnicalMindTransaction transaction = TechnicalMindTransaction.beginIsolated(target);
+        return new DmzStoredRetractionTransaction(transaction, null, true,
+                java.util.Collections.<Rule>emptyList(), target, state, sources);
+    }
     private static DmzStoredRetractionTransaction begin(DmzAcceptanceProofGuard guard, DmzStoredProof proof,
             DmzProofWitnesses.Witness blocked, Mind target, int budget, boolean continuationOnly) throws Exception {
         DmzStoredRestrictionProbe projection = DmzStoredRestrictionProbe.project(guard, proof, blocked, target, budget);
@@ -1740,8 +1788,8 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         if (!inventory.isCurrent(child)) throw new IllegalStateException("Cache admission boundary changed");
         for (Rule rule : admitted) { rule.setDeleted(false, child); ++cacheAdmissions; }
     }
-    int deniedCount() { return restriction.deniedCount(); }
-    int inventoryCheckCount() { return restriction.inventoryCheckCount(); }
+    int deniedCount() { return restriction == null ? 0 : restriction.deniedCount(); }
+    int inventoryCheckCount() { return restriction == null ? 0 : restriction.inventoryCheckCount(); }
     int cacheAdmissionCount() { return cacheAdmissions; }
     DmzCurrentUnaryProofInventory.Proofs proofs(TerminalSupportCapture.Ground ground, int budget) throws Exception {
         if (closed) throw new IllegalStateException("Retraction overlay closed");
@@ -1755,7 +1803,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             throw new IllegalArgumentException("Only open unary integer-fact queries are qualified");
         return transaction.mind().query(statement, null, false);
     }
-    int queryDeniedCount() { return restriction.queryDeniedCount(); }
+    int queryDeniedCount() { return restriction == null ? 0 : restriction.queryDeniedCount(); }
     /** Detached diagnostic hypotheses, never accepted proof inputs. */
     static final class QueryResult {
         enum CandidateMode { NONE, NEW_INPUT, EXISTING_PRIMARY }
@@ -1960,6 +2008,6 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         return result;
     }
     @Override public void close() throws Exception {
-        if (!closed) { restriction.close(); closed = true; transaction.close(); }
+        if (!closed) { if (restriction != null) restriction.close(); closed = true; transaction.close(); }
     }
 }
