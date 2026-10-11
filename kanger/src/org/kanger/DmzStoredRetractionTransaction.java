@@ -650,6 +650,33 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             return restoreTwoStepPath(path, source, sourceRule, candidate, queryStatement, auditBudget,
                     recognitionBudget, projectionBudget, applicationBudget, queryBudget, nextApplicationBudget, null);
         }
+        ReplayPathExtension replayThreeStepPath(ReplayPath path,
+                org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+                String candidate, String queryStatement, int auditBudget, int recognitionBudget,
+                int projectionBudget, int applicationBudget, int queryBudget, int secondApplicationBudget,
+                int thirdApplicationBudget) throws Exception {
+            if (closed) throw new IllegalStateException("Native support choice closed");
+            if (path == null || path.replayOwner != replayOwner || path.steps.size() != 3
+                    || (path.disposition != ReplayQueryDisposition.QUERIED
+                        && path.disposition != ReplayQueryDisposition.NEEDS_BRANCHING))
+                throw new IllegalArgumentException("Owned qualified three-step path required");
+            if (thirdApplicationBudget < 1 || thirdApplicationBudget > 10000)
+                throw new IllegalArgumentException("Bounded third application required");
+            ReplayPathStep second = path.steps.get(1), third = path.steps.get(2);
+            if (third.evidence == null || third.evidence.replayOwner != replayOwner
+                    || third.evidence.kind != ConsequenceConflictKind.INTERNAL)
+                throw new IllegalArgumentException("Owned third pre-choice packet required");
+            ReplayAppliedChoice terminal = new ReplayAppliedChoice(third.side, 0, third.grounds,
+                    path.disposition, null, path.remaining);
+            ReplayExtensionRequest following = new ReplayExtensionRequest(third.conflict, projectionBudget, thirdApplicationBudget);
+            following.selectedPath = new ReplayPath(replayOwner, second.evidence,
+                    path.steps.subList(1, 3), terminal);
+            ReplayAppliedChoice intermediate = new ReplayAppliedChoice(second.side, 0, second.grounds,
+                    ReplayQueryDisposition.NEEDS_BRANCHING, null, third.evidence);
+            ReplayPath prefix = new ReplayPath(replayOwner, path.root, path.steps.subList(0, 2), intermediate);
+            return restoreTwoStepPath(prefix, source, sourceRule, candidate, queryStatement, auditBudget,
+                    recognitionBudget, projectionBudget, applicationBudget, queryBudget, secondApplicationBudget, following);
+        }
         ReplayPathExtension extendTwoStepPath(ReplayPath path, int nextConflict,
                 org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
                 String candidate, String queryStatement, int auditBudget, int recognitionBudget,
@@ -703,7 +730,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             request.extension.following = following;
             projectReplayConflict(path.root, rootIndex, source, sourceRule, candidate, queryStatement,
                     auditBudget, recognitionBudget, projectionBudget, applicationBudget, request);
-            if (request.extension.result == null || request.extension.result.paths.size() != (following == null ? 1 : 2))
+            if (request.extension.result == null || request.extension.result.paths.size() != (following == null || following.selectedPath != null ? 1 : 2))
                 throw new IllegalStateException("Complete selected two-step replay required");
             return request.extension.result;
         }
@@ -982,8 +1009,9 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                             paths.add(new ReplayPath(replayOwner, projected.evidence, steps, applied));
                         } else {
                             ReplayPathExtension deeper = request.extension.following.result;
-                            if (deeper == null || deeper.paths.size() != 2 || deeper.applications.size() != 2)
-                                throw new IllegalStateException("Complete third-choice extension required");
+                            int expected = request.extension.following.selectedPath == null ? 2 : 1;
+                            if (deeper == null || deeper.paths.size() != expected || deeper.applications.size() != expected)
+                                throw new IllegalStateException("Complete third-choice replay required");
                             for (int i = 0; i < deeper.paths.size(); ++i) {
                                 List<ReplayPathStep> steps = new ArrayList<ReplayPathStep>();
                                 steps.add(new ReplayPathStep(projected.evidence, conflict.ground, prefix));
