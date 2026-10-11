@@ -40,3 +40,4 @@ org.kanger.storage.dumb2.DmzSourcesQueryRunner | DMZ_SOURCES_QUERY_PASS
 org.kanger.storage.dumb2.DmzUnitSourceSessionRunner | DMZ_UNIT_SOURCE_SESSION_PASS
 org.kanger.command.CommandParserConformanceTest | KANGER command parser conformance PASS:
 org.kanger.KangerCanonicalConsoleInputContractRunner | PASS: Canonical Console logical-input and parse-diagnostic boundary qualified
+org.kanger.storage.dumb2.DmzOpinionWorkflowRunner | DMZ_OPINION_WORKFLOW_PASS

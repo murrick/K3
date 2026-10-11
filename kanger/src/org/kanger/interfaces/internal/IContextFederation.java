@@ -644,6 +644,10 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
     /** Experimental fresh exact-pinned whole-source DMZ query. No owner escapes this operation.
      * Planning refusals are typed; acquisition/phase failures propagate as exceptions.
      * A bounded stop returns partial histories with restartRequired, never a complete answer. */
+    default boolean supportsDmzSources() { return false; }
+    default org.kanger.interfaces.DmzSourcesQuery.Result executeConnectedDmz(IMind sourceMind,String query) throws Exception {
+        throw new UnsupportedOperationException("Connected DMZ queries are unavailable");
+    }
     default org.kanger.interfaces.DmzSourcesQuery.Result executeDmzSources(IMind sourceMind,
             org.kanger.interfaces.DmzSourcesQuery.Request request) throws Exception {
         throw new UnsupportedOperationException("DMZ source execution is not supported by this provider");

@@ -17,14 +17,18 @@ final class DmzSourceSession implements AutoCloseable {
     private final Thread owner=Thread.currentThread();
     private final DmzCandidateSession core;
     private final DmzSourceShape.Observation inputs;
+    private final List<ContextConnection> topology;
     private boolean closed;
 
     static DmzSourceSession open(DB provider,Mind q,DmzSourcePreflight.Inputs acquired,int budget) throws Exception {
         List<DmzCandidateSession.Participant> external=new ArrayList<DmzCandidateSession.Participant>();
         for(int i=0;i<acquired.external.size();++i)
             external.add(new DmzCandidateSession.Participant(acquired.plan.external.get(i).revision,acquired.external.get(i)));
+        List<DmzCandidateSession.Participant> components=new ArrayList<DmzCandidateSession.Participant>();
+        for(int i=0;i<acquired.components.size();++i)
+            components.add(new DmzCandidateSession.Participant(acquired.plan.authorityComponents.get(i).revision,acquired.components.get(i)));
         DmzCandidateSession core=DmzCandidateSession.open(
-                new DmzCandidateSession.Participant(acquired.plan.authority.revision,acquired.authority),external,budget);
+                new DmzCandidateSession.Participant(acquired.plan.authority.revision,acquired.authority),components,external,budget);
         DmzSourceSession session=new DmzSourceSession(provider,q,acquired.plan,acquired.authority,core);
         try { session.requireCurrent(); return session; }
         catch(Throwable failure) {
@@ -35,7 +39,7 @@ final class DmzSourceSession implements AutoCloseable {
         }
     }
     private DmzSourceSession(DB provider,Mind physicalQ,DmzSourcePlan plan,DmzSourceShape.Observation inputs,DmzCandidateSession core) {
-        this.provider=provider; this.physicalQ=physicalQ; this.plan=plan; this.inputs=inputs; this.core=core;
+        this.provider=provider;this.topology=provider.dmzTopology(); this.physicalQ=physicalQ; this.plan=plan; this.inputs=inputs; this.core=core;
     }
     private void requireCurrent() throws Exception {
         if(closed || Thread.currentThread()!=owner)throw new IllegalStateException("Active owning provider DMZ session required");
@@ -44,6 +48,7 @@ final class DmzSourceSession implements AutoCloseable {
                 || plan.authority.revision.getRevision()!=provider.getRevision()
                 || physicalQ.getTransactionLevel()!=plan.qTransactionLevel)
             throw new IllegalStateException("Physical Q session boundary changed");
+        if(!topology.equals(provider.dmzTopology()))throw new IllegalStateException("DMZ working topology changed");
         DmzCandidateSession.requireSettledPhysicalQ(physicalQ);
         DmzSourceShape.Observation now=DmzSourceShape.inspect(physicalQ,plan.maximumRows);
         if(!inputs.isCurrent(physicalQ) || now.inspectedRows!=plan.authority.inspectedRows || !now.primaryDigest.equals(plan.authority.primaryDigest))

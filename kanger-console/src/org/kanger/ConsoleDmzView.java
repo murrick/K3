@@ -10,10 +10,12 @@ import org.kanger.interfaces.IContextResults;
 /** Detached DMZ histories; presentation never queries or changes a Context. */
 final class ConsoleDmzView {
     private ConsoleDmzView() { }
-    static void show(DmzSourcesQuery.Result result) {
+    static void explain(DmzSourcesQuery.Result result) {
         System.out.println("DMZ policy: "+result.request.policy);
         System.out.println("Q: "+result.acquisition.authority.locator+" "+pin(result.acquisition.authority.revision));
         System.out.println("Query: "+result.request.queryStatement);
+        for(DmzSourcePlan.Source component:result.acquisition.authorityComponents)
+            System.out.println("Q component: "+component.locator+" "+pin(component.revision)+(component.configured ? " [configured by Q]" : ""));
         DmzSourcesQuery.Limits l=result.request.limits;
         System.out.println("Limits: rows="+result.request.sources.maximumRows+", preparation="+l.preparation+", audit="+l.audit
                 +", lookup="+l.lookup+", recognition="+l.recognition+", projection="+l.projection+", application="+l.application
@@ -58,6 +60,57 @@ final class ConsoleDmzView {
             }
         }
     }
+    static void show(DmzSourcesQuery.Result result) {
+        if(result.restartRequired)System.out.println("PARTIAL opinions; restart required");
+        int number=0;
+        for(DmzSourcesQuery.ViewOpinion opinion:result.viewOpinions) {
+            java.util.Set<String> sources=new java.util.LinkedHashSet<String>();
+            for(DmzSourcesQuery.Proof proof:opinion.proofs)sources(result,proof,sources);
+            System.out.println("Opinion "+(++number)+": "+truth(opinion.value)+(sources.isEmpty() ? "" : " from "+String.join(", ",sources)));
+            java.util.Set<String> causes=new java.util.LinkedHashSet<String>();
+            for(DmzSourcesQuery.Proof proof:opinion.proofs)causes(proof,causes);
+            if(!causes.isEmpty())System.out.println("  "+(causes.size()==1 ? "Cause: " : "Causes: ")+String.join("; ",causes));
+        }
+        if(result.viewOpinions.isEmpty())System.out.println("No completed opinions");
+        else System.out.println("Use \"ctx opinion <N> tree\" for inference tree.");
+    }
+    static void tree(DmzSourcesQuery.Result result,int number) {
+        DmzSourcesQuery.ViewOpinion opinion=result.viewOpinions.get(number-1);
+        System.out.println("Opinion "+number+": "+truth(opinion.value)+"; query "+result.request.queryStatement);
+        if(result.restartRequired)System.out.println("PARTIAL historical opinion");
+        int alternative=0;
+        for(DmzSourcesQuery.Proof proof:opinion.proofs) {
+            System.out.println("Inference "+(++alternative)+":");tree(result,proof,"  ");
+        }
+        if(opinion.proofs.isEmpty()) {
+            System.out.println("No resolved inference tree");
+            for(String hypothesis:opinion.hypotheses)System.out.println("  Hypothesis: "+hypothesis);
+        }
+    }
+    private static void causes(DmzSourcesQuery.Proof proof,java.util.Set<String> values) {
+        if(proof.premises.isEmpty())values.add(proof.conclusion);
+        else for(DmzSourcesQuery.Proof child:proof.premises)causes(child,values);
+    }
+    private static String truth(Boolean value) { return value==null ? "UNKNOWN" : value ? "TRUE" : "FALSE"; }
+    private static void sources(DmzSourcesQuery.Result result,DmzSourcesQuery.Proof proof,java.util.Set<String> values) {
+        values.add(locator(result,proof.source.revision));
+        for(DmzSourcesQuery.Proof child:proof.premises)sources(result,child,values);
+    }
+    private static void tree(DmzSourcesQuery.Result result,DmzSourcesQuery.Proof proof,String indent) {
+        DmzSourcePlan.Source source=source(result,proof.source.revision);
+        System.out.println(indent+proof.conclusion+" from "+source.locator+"@"+source.revision.getRevision()
+                +" ["+pin(source.revision)+":"+proof.source.rule+"]"+(source.configured ? " [configured by Q]" : ""));
+        if(!proof.premises.isEmpty())System.out.println(indent+"  Rule: "+proof.source.statement);
+        for(DmzSourcesQuery.Proof child:proof.premises)tree(result,child,indent+"  ");
+    }
+    private static DmzSourcePlan.Source source(DmzSourcesQuery.Result result,IContextResults.Revision revision) {
+        if(result.acquisition.authority.revision.getContextId().equals(revision.getContextId()))return result.acquisition.authority;
+        for(DmzSourcePlan.Source source:result.acquisition.authorityComponents)
+            if(source.revision.getContextId().equals(revision.getContextId()))return source;
+        for(DmzSourcePlan.Source source:result.acquisition.external)
+            if(source.revision.getContextId().equals(revision.getContextId()))return source;
+        throw new IllegalStateException("DMZ proof refers to an unacquired Context");
+    }
     private static void steps(DmzSourcesQuery.Result result,List<DmzSourcesQuery.Step> steps,String prefix) {
         for(int i=0;i<steps.size();++i) {
             DmzSourcesQuery.Step step=steps.get(i);System.out.println(prefix+"["+i+"] "+identity(result,step.input)+" "+step.decision+" variant="+step.variant);
@@ -68,8 +121,6 @@ final class ConsoleDmzView {
     }
     private static String pin(IContextResults.Revision revision) { return revision.getContextId()+"@"+revision.getRevision(); }
     private static String locator(DmzSourcesQuery.Result result,IContextResults.Revision revision) {
-        for(DmzSourcePlan.Source source:result.acquisition.external)
-            if(source.revision.getContextId().equals(revision.getContextId()))return source.locator;
-        throw new IllegalStateException("DMZ result refers to an unacquired Context");
+        return source(result,revision).locator;
     }
 }

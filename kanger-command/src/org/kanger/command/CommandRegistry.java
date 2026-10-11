@@ -326,6 +326,11 @@ public final class CommandRegistry {
         define(CommandIntent.STORAGE_REINDEX, "storage reindex <name>", "STORAGE", "Reindex one explicitly named storage.",
                 args("name", "Storage logical name."), aliases("reindex <name>"), n++);
 
+        define(CommandIntent.CTX_DMZ_EXPLAIN,"ctx dmz explain","CONTEXT",
+                "Show the saved last DMZ query's technical report without inference.",args(),n++);
+        define(CommandIntent.CTX_OPINION_TREE,"ctx opinion <N> tree","CONTEXT",
+                "Show the selected saved opinion's exact source inference alternatives without inference.",
+                args("number","Positive saved opinion number."),n++);
         define(CommandIntent.CTX_DMZ, "ctx dmz <Q-UUID>@<revision> <query> [from=<name>@<UUID>@<revision> ...] [<limit>=<value> ...]", "CONTEXT",
                 "Experimental ordered whole-source query on explicit pins. Defaults: rows/preparation/audit/lookup/recognition/projection/application/query=10000, depth=8, nodes=128, work=1000000, visits=1000. Stops require a fresh full invocation.",
                 args("request", "Explicit Q pin, quoted signed unary integer query, exact sources and bounded limits."), n++);

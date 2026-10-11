@@ -77,6 +77,31 @@ public final class DmzSourcesQuery {
             this.input=input;this.decision=decision;this.variant=variant;
         }
     }
+    /** Immutable proof alternative, captured while its branch is alive. */
+    public static final class Proof {
+        public final Input source;
+        public final String conclusion;
+        public final List<Proof> premises;
+        public Proof(Input source,String conclusion,List<Proof> premises) {
+            if(source==null || conclusion==null)throw new NullPointerException();
+            this.source=source;this.conclusion=conclusion;this.premises=copy(premises);
+        }
+        public String identity() {
+            StringBuilder key=new StringBuilder(source.revision.getContextId()+"@"+source.revision.getRevision()
+                    +":"+source.rule+":"+conclusion);
+            for(Proof child:premises)key.append("[").append(child.identity()).append("]");
+            return key.toString();
+        }
+    }
+    /** User opinion; alternatives retain separate premise trees. */
+    public static final class ViewOpinion {
+        public final Boolean value;
+        public final List<Proof> proofs;
+        public final List<String> hypotheses;
+        private ViewOpinion(Boolean value,List<Proof> proofs,List<String> hypotheses) {
+            this.value=value;this.proofs=copy(proofs);this.hypotheses=copy(hypotheses);
+        }
+    }
     public static final class Opinion {
         public final List<Step> steps;
         public final DmzConditionalResult.Answer answer;
@@ -101,6 +126,7 @@ public final class DmzSourcesQuery {
         public final List<SourceInventory> sources;
         public final List<Input> candidates,productions;
         public final List<Opinion> opinions;
+        public final List<ViewOpinion> viewOpinions;
         public final List<Event> events;
         public final List<Step> interruptedPrefix;
         /** Completed leaves preceding a stop remain partial historical observations. */
@@ -111,10 +137,25 @@ public final class DmzSourcesQuery {
                 List<Step> interruptedPrefix,boolean restartRequired,boolean visitLimit,int visits,int interruptedInput) {
             if(request==null || acquisition==null)throw new NullPointerException();
             this.request=request;this.acquisition=acquisition;this.sources=copy(sources);
-            this.candidates=copy(candidates);this.productions=copy(productions);this.opinions=copy(opinions);
+            this.candidates=copy(candidates);this.productions=copy(productions);this.opinions=copy(opinions);this.viewOpinions=views(opinions);
             this.events=copy(events);this.interruptedPrefix=copy(interruptedPrefix);
             this.restartRequired=restartRequired;this.visitLimit=visitLimit;this.visits=visits;this.interruptedInput=interruptedInput;
         }
+    }
+    private static List<ViewOpinion> views(List<Opinion> opinions) {
+        List<ViewOpinion> result=new ArrayList<ViewOpinion>();
+        for(Boolean truth:new Boolean[]{Boolean.TRUE,Boolean.FALSE,null}) {
+            java.util.Map<String,Proof> proofs=new java.util.LinkedHashMap<String,Proof>();
+            java.util.Set<String> hypotheses=new java.util.LinkedHashSet<String>();
+            boolean found=false;
+            for(Opinion opinion:opinions)if(java.util.Objects.equals(truth,opinion.answer.value)) {
+                found=true;
+                for(Proof proof:opinion.answer.proofs)proofs.put(proof.identity(),proof);
+                hypotheses.addAll(opinion.answer.hypotheses);
+            }
+            if(found)result.add(new ViewOpinion(truth,new ArrayList<Proof>(proofs.values()),new ArrayList<String>(hypotheses)));
+        }
+        return copy(result);
     }
     private static <T> List<T> copy(List<T> values) {
         if(values==null)throw new NullPointerException();

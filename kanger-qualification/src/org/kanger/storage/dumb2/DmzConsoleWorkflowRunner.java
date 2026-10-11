@@ -78,12 +78,12 @@ public final class DmzConsoleWorkflowRunner {
         String oldAnswer="ctx dmz "+pin(qp)+" ?result(3); from=A@"+pin(a);
         IContextResults.Revision advanced=create(dir,"A","!later(9);");
         require(advanced.getRevision()>a.getRevision(),"source head advances before Console invocation");
-        String script="ctx version Q\nctx version A\n"+base+"\n"+base+" visits=2\n"+base+" work=1\n"
+        String script="ctx version Q\nctx version A\n"+base+"\nctx opinion 1 tree\nctx opinion 2 tree\nctx dmz explain\n"+base+" visits=2\nctx dmz explain\n"+base+" work=1\nctx dmz explain\n"
                 +"ctx dmz "+pin(qp)+" ?authority(1); from=Decimal@"+pin(decimal)+"\n"
                 +"ctx dmz "+pin(qp)+" ?authority(1); from=Missing@"+pin(a)+"\n"
                 +"ctx dmz "+pin(qp)+" ?authority(1); from=BadUnit@"+pin(badUnit)+"\n"
                 +"ctx dmz "+qp.getContextId()+"@"+(qp.getRevision()+1)+" ?authority(1);\n"
-                +oldAnswer+"\n"+"ctx dmz "+pin(qp)+" ?more(1); from=Unit@"+pin(unit)+"\n"
+                +oldAnswer+"\nctx dmz explain\n"+"ctx dmz "+pin(qp)+" ?more(1); from=Unit@"+pin(unit)+"\nctx dmz explain\n"
                 +"ctx dmz "+pin(qp)+" ?authority(1);\n"+"ctx dmz "+pin(qp)+" ?authority(1); visits=0\n"
                 +"?authority(1);\n";
         InputStream originalIn=System.in;PrintStream originalOut=System.out,originalErr=System.err;

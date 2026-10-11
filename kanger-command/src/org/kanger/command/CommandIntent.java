@@ -57,6 +57,8 @@ public enum CommandIntent {
     STORAGE_REINDEX,
 
     CTX_DMZ,
+    CTX_DMZ_EXPLAIN,
+    CTX_OPINION_TREE,
     CTX_OPINIONS,
     CTX_VALUES,
     CTX_SOLVES,

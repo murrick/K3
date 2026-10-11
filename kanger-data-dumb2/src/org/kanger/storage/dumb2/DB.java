@@ -1342,8 +1342,8 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         if(request==null)throw new IllegalArgumentException("Explicit DMZ source request required");
         if(!request.expectedQ.getContextId().equals(getContextId()) || request.expectedQ.getRevision()!=getRevision())
             throw new CommandErrorException("DMZ Q revision mismatch");
-        org.kanger.interfaces.DmzSourcePlan result=DmzSourcePreflight.inspect((Mind)sourceMind,sourceLocator(),request,
-                name -> location(name));
+        org.kanger.interfaces.DmzSourcePlan result=DmzSourcePreflight.acquire((Mind)sourceMind,sourceLocator(),request,
+                name -> location(name),dmzTopology(),false).plan;
         if(user.getCurrentMind()!=sourceMind || !request.expectedQ.getContextId().equals(getContextId())
                 || request.expectedQ.getRevision()!=getRevision())throw new CommandErrorException("DMZ Q boundary changed during preflight");
         return result;
@@ -1359,9 +1359,30 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    @Override public boolean supportsDmzSources() { return true; }
+    @Override public synchronized org.kanger.interfaces.DmzSourcesQuery.Result executeConnectedDmz(IMind sourceMind,String query) throws Exception {
+        requireOpen();
+        List<org.kanger.interfaces.DmzSourcePlan.Selection> sources=new ArrayList<>();
+        for(ContextConnection connection:workingConnections.getConnections())if(connection.getTrustGroup()==null)
+            sources.add(new org.kanger.interfaces.DmzSourcePlan.Selection(displayFederationLocator(connection.getTargetLocation()),
+                    new org.kanger.interfaces.IContextResults.Revision(connection.getTarget().getContextId(),connection.getTarget().getRevision())));
+        org.kanger.interfaces.DmzSourcesQuery.Request request=new org.kanger.interfaces.DmzSourcesQuery.Request(
+                new org.kanger.interfaces.DmzSourcePlan.Request(new org.kanger.interfaces.IContextResults.Revision(getContextId(),getRevision()),sources,10000),
+                org.kanger.interfaces.DmzSourcesQuery.Policy.FIXED_UNITS_THEN_ORDERED_GROUNDS_CONTEXT_UUID_RULE_ID,query,
+                new org.kanger.interfaces.DmzSourcesQuery.Limits(10000,10000,10000,10000,10000,10000,10000,8,128,1000000,1000));
+        if(!(sourceMind instanceof Mind))throw new CommandErrorException("Active storage Mind required");
+        try(DmzSourceSession session=openDmzCandidateSession((Mind)sourceMind,request.sources,request.limits.preparation,true)) {
+            return DmzSourceQueryProjection.execute(session,request);
+        }
+    }
+    synchronized List<ContextConnection> dmzTopology() { return new ArrayList<ContextConnection>(workingConnections.getConnections()); }
     /** Internal operation-local owner; never returned by public federation dispatch. */
     synchronized DmzSourceSession openDmzCandidateSession(Mind sourceMind,
             org.kanger.interfaces.DmzSourcePlan.Request request,int preparationBudget) throws Exception {
+        return openDmzCandidateSession(sourceMind,request,preparationBudget,false);
+    }
+    private synchronized DmzSourceSession openDmzCandidateSession(Mind sourceMind,
+            org.kanger.interfaces.DmzSourcePlan.Request request,int preparationBudget,boolean connectedViews) throws Exception {
         requireOpen();
         if(sourceMind==null || sourceMind.getUser()!=user || user.getCurrentMind()!=sourceMind
                 || !sourceMind.isStorageUsed() || !(user instanceof User) || ((User)user).getData()!=this)
@@ -1370,9 +1391,8 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         if(preparationBudget<1 || preparationBudget>10000)throw new IllegalArgumentException("Bounded DMZ preparation required");
         if(!request.expectedQ.getContextId().equals(getContextId()) || request.expectedQ.getRevision()!=getRevision())
             throw new CommandErrorException("DMZ Q revision mismatch");
-        if(hasConnectedContexts())throw new CommandErrorException("DMZ sessions with existing Context connections are not qualified");
         org.kanger.DmzCandidateSession.requireSettledPhysicalQ(sourceMind);
-        DmzSourcePreflight.Inputs inputs=DmzSourcePreflight.acquire(sourceMind,sourceLocator(),request,name -> location(name));
+        DmzSourcePreflight.Inputs inputs=DmzSourcePreflight.acquire(sourceMind,sourceLocator(),request,name -> location(name),dmzTopology(),connectedViews);
         return DmzSourceSession.open(this,sourceMind,inputs,preparationBudget);
     }
 
