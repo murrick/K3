@@ -63,7 +63,12 @@ public final class CommandParser {
             return parseValuesOrder(line);
         }
         if (family == Family.CONTEXT && prefix.size() > 1
-                && "ask".equalsIgnoreCase(prefix.get(1).value)) {
+                && resolvesTo(family, prefix.get(1).value, Keyword.ASK)) {
+            // The legacy "ctx A ?..." shape has no explicit ask locator.
+            if(!CommandRegistry.isExact(prefix.get(1).value,"ask")
+                    && (tailAfter(line,prefix.get(1).end).startsWith("?")
+                        || tokenize(line,4,false).size()<4))
+                return parseContextIsolatedQuery(line,false);
             return parseContextIsolatedQuery(line, true);
         }
         if (family == Family.CONTEXT && prefix.size() > 1
@@ -471,25 +476,15 @@ public final class CommandParser {
         if (tokens.size() == 1) {
             return CommandInvocation.command(CommandIntent.CTX_STATUS, raw);
         }
-        if("opinion".equalsIgnoreCase(tokens.get(1).value)) {
-            requireRequiredArgument(tokens,4);requireSize(tokens,4);
-            long number=parseNonNegativeLong(tokens.get(2).value,"opinion number");
-            if(number==0 || !"tree".equalsIgnoreCase(tokens.get(3).value))
-                throw error(INVALID_ARGUMENT_SHAPE,"Use ctx opinion <positive N> tree");
-            return CommandInvocation.command(CommandIntent.CTX_OPINION_TREE,args("number",number),raw);
-        }
-        if("dmz".equalsIgnoreCase(tokens.get(1).value) && tokens.size()>=3
-                && "explain".equalsIgnoreCase(tokens.get(2).value)) {
-            requireSize(tokens,3);return CommandInvocation.command(CommandIntent.CTX_DMZ_EXPLAIN,raw);
-        }
         Keyword keyword;
         try {
-            keyword = "dmz".equalsIgnoreCase(tokens.get(1).value) ? Keyword.DMZ : CommandRegistry.resolveKeyword(
+            keyword = CommandRegistry.resolveKeyword(
                     Family.CONTEXT, tokens.get(1).value,
                     Keyword.CONNECT, Keyword.DISCONNECT, Keyword.CLOSE,
                     Keyword.SWITCH, Keyword.VERSION,
                     Keyword.RULES, Keyword.PUBLISH, Keyword.FORK,
-                    Keyword.EXPLAIN, Keyword.OPINIONS, Keyword.VALUES, Keyword.SOLVES, Keyword.WHEN);
+                    Keyword.EXPLAIN, Keyword.ASK, Keyword.DMZ, Keyword.TREE, Keyword.OPINION,
+                    Keyword.OPINIONS, Keyword.VALUES, Keyword.SOLVES, Keyword.WHEN);
         } catch (CommandParseException rejected) {
             if (rejected.getReason() == AMBIGUOUS_PREFIX) {
                 throw rejected;
@@ -497,7 +492,19 @@ public final class CommandParser {
             return parseContextIsolatedQuery(raw);
         }
         switch (keyword) {
+            case TREE:
+            case OPINION:
+                requireRequiredArgument(tokens, keyword == Keyword.TREE ? 3 : 4);
+                requireSize(tokens, keyword == Keyword.TREE ? 3 : 4);
+                long number=parseNonNegativeLong(tokens.get(2).value,"opinion number");
+                if(number==0)throw error(INVALID_ARGUMENT_SHAPE,"Use ctx tree <positive N>");
+                if(keyword == Keyword.OPINION)
+                    CommandRegistry.resolveKeyword(Family.RULE,tokens.get(3).value,Keyword.TREE);
+                return CommandInvocation.command(CommandIntent.CTX_OPINION_TREE,args("number",number),raw);
             case DMZ:
+                if(tokens.size()>=3 && tryResolve(Family.CONTEXT,tokens.get(2).value,Keyword.EXPLAIN)==Keyword.EXPLAIN) {
+                    requireSize(tokens,3);return CommandInvocation.command(CommandIntent.CTX_DMZ_EXPLAIN,raw);
+                }
                 requireRequiredArgument(tokens,4);
                 List<String> dmzOptions=new ArrayList<String>();
                 for(int i=4;i<tokens.size();++i)dmzOptions.add(tokens.get(i).value);
@@ -527,7 +534,7 @@ public final class CommandParser {
                 return parseContextRules(raw,tokens);
             case CONNECT:
                 requireRequiredArgument(tokens, 3);
-                if (tokens.size() == 5 && "trust".equalsIgnoreCase(tokens.get(3).value)) {
+                if (tokens.size() == 5 && "trust".equals(resolveOption(tokens.get(3).value,new String[]{"trust"}))) {
                     Map<String,Object> connection = new LinkedHashMap<String,Object>();
                     connection.put("locator", tokens.get(2).value);
                     try { connection.put("trustGroup", org.kanger.TrustGroups.validate(tokens.get(4).value)); }
@@ -583,8 +590,7 @@ public final class CommandParser {
         int i=2;
         if(i<tokens.size()) {
             String value=tokens.get(i).value;
-            boolean modifier=java.util.Arrays.asList("all","produced","tree","comment","level")
-                    .contains(value.toLowerCase(java.util.Locale.ROOT));
+            boolean modifier=tryResolve(Family.RULE,value,Keyword.ALL,Keyword.PRODUCED,Keyword.TREE,Keyword.COMMENT,Keyword.LEVEL)!=null;
             if(!modifier && !value.matches("[-+]?\\d+")) { result.put("locator",value); ++i; }
         }
         String selection="PRIMARY";
@@ -791,7 +797,7 @@ public final class CommandParser {
 
     private boolean resolvesTo(Family family, String token, Keyword expected)
             throws CommandParseException {
-        Keyword resolved = tryResolve(family, token, expected);
+        Keyword resolved = tryResolve(family, token);
         return resolved == expected;
     }
 

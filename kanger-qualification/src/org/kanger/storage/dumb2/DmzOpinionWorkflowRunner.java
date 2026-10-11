@@ -79,20 +79,21 @@ public final class DmzOpinionWorkflowRunner {
             require(newer.getRevision()>a.getRevision(),"source HEAD advances");
             require(historical.equals(proofText(derived.viewOpinions.get(0).proofs)),"retained proof unaffected by source advance");
             CanonicalCommandProcessor processor=new CanonicalCommandProcessor();CommandParser parser=new CommandParser();CommandFormatter formatter=new CommandFormatter();
-            for(String cmd:new String[]{"ctx opinion 1 tree","ctx dmz explain"})require(formatter.format(parser.parse(cmd)).equals(cmd),"new command round trip "+cmd);
+            for(String cmd:new String[]{"ctx tree 1","ctx dmz explain"})require(formatter.format(parser.parse(cmd)).equals(cmd),"new command round trip "+cmd);
             reject(() -> parser.parse("ctx opinion 0 tree"));reject(() -> parser.parse("ctx opinion 1 other"));
             reject(() -> parser.parse("ctx dmz explain extra"));
             user.setLastDmzResult(derived);
-            require(processor.execute(parser.parse("ctx opinion 1 tree"),user).getDmzResult()==derived,"tree reads detached history without inference");
+            require(processor.execute(parser.parse("ctx tr 1"),user).getDmzResult()==derived,"tree reads detached history without inference");
             require(processor.execute(parser.parse("ctx dmz explain"),user).getDmzResult()==derived,"explain reads same detached result");
             reject(() -> processor.execute(parser.parse("ctx opinion 99 tree"),user));
             User other=new User();other.setCurrentMind(new Mind(other));reject(() -> processor.execute(parser.parse("ctx dmz explain"),other));
             q=(Mind)db.publishContext(q,"opinion workflow fixture");user.setCurrentMind(q);
             String beforeScript=DmzSourceShape.inspect(q,10000).primaryDigest;
             String topology=topology(db);
-            String output=console(q,"?left(2);\nctx opinion 1 tree\nctx opinion 2 tree\nctx dmz explain\n?protected(5);\nctx opinion 1 tree\n");
+            String output=console(q,"?left(2);\nctx tr 1\nctx tree 2\nctx dm ex\n?protected(5);\nctx opinion 1 tree\n");
             require(output.contains("Opinion 1: TRUE from A") && output.contains("Opinion 2: FALSE from PlainB"),"real ordinary Console query presents compact source opinions");
             require(output.contains("Cause: left(2)") && output.contains("Cause: ~left(2)"),"real causes reflect answer literals");
+            require(output.contains("Use \"ctx tree <N>\" for inference tree."),"compact tree hint");
             require(output.contains("Inference 1:") && output.contains("Rule: !@x component(x) -> protected(x);")
                     && output.contains("[configured by Q]"),"real tree includes applied rule and configured authority provenance");
             int firstTree=output.indexOf("Inference 1:");

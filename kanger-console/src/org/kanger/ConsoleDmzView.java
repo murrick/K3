@@ -72,7 +72,7 @@ final class ConsoleDmzView {
             if(!causes.isEmpty())System.out.println("  "+(causes.size()==1 ? "Cause: " : "Causes: ")+String.join("; ",causes));
         }
         if(result.viewOpinions.isEmpty())System.out.println("No completed opinions");
-        else System.out.println("Use \"ctx opinion <N> tree\" for inference tree.");
+        else System.out.println("Use \"ctx tree <N>\" for inference tree.");
     }
     static void tree(DmzSourcesQuery.Result result,int number) {
         DmzSourcesQuery.ViewOpinion opinion=result.viewOpinions.get(number-1);
