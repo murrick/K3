@@ -110,6 +110,13 @@ public final class DmzReplayQueryCascadeRunner {
                         catch (DmzStoredRetractionTransaction.ReplayPathBudgetFailure expected) { tinyShared = true; }
                         require(tinyShared && projection.isCurrent(), "shared pre-admission budget refuses without changing parent");
 
+                        if (child.disposition == DmzStoredRetractionTransaction.ReplayQueryDisposition.QUERIED) {
+                            boolean resolvedRefused = false;
+                            try { choice.extendRecordedPath(path, 0, source, 150, candidate, "?source(1);",
+                                    10000, 10000, 10000, 10000, 10000, 2, 1000000); }
+                            catch (IllegalArgumentException expected) { resolvedRefused = true; }
+                            require(resolvedRefused && projection.isCurrent(), "generic extension refuses already resolved path");
+                        }
                         boolean wrongLabel = false;
                         try { choice.replayPath(path, source, 151, candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000); }
                         catch (IllegalArgumentException expected) { wrongLabel = true; }
@@ -152,6 +159,45 @@ public final class DmzReplayQueryCascadeRunner {
                         DmzStoredRetractionTransaction.ReplayPathExtension extension = choice.extendReplayPath(
                                 deferredPath, nextIndex, source, 150, candidate, statement,
                                 10000, 10000, 10000, 10000, 10000, 10000);
+                        DmzStoredRetractionTransaction.ReplayPathExtension genericExtension = choice.extendRecordedPath(
+                                deferredPath, nextIndex, source, 150, candidate, statement,
+                                10000, 10000, 10000, 10000, 10000, 2, 1000000);
+                        compareExtension(extension, genericExtension);
+                        if (statement.equals("?source(1);")) {
+                            boolean depthRefused = false, indexRefused = false, labelRefused = false, phaseRefused = false;
+                            try { choice.extendRecordedPath(deferredPath, nextIndex, source, 150, candidate, statement,
+                                    10000, 10000, 10000, 10000, 1, 2, 1000000); }
+                            catch (IllegalStateException expected) { phaseRefused = true; }
+                            require(phaseRefused && projection.isCurrent(), "generic extension phase failure restores prefix and scopes");
+                            try { choice.extendRecordedPath(deferredPath, nextIndex, source, 150, candidate, statement,
+                                    10000, 10000, 10000, 10000, 10000, 1, 1000000); }
+                            catch (IllegalArgumentException expected) { depthRefused = true; }
+                            try { choice.extendRecordedPath(deferredPath, deferredPath.remaining.conflicts.size(), source, 150, candidate, statement,
+                                    10000, 10000, 10000, 10000, 10000, 2, 1000000); }
+                            catch (IllegalArgumentException expected) { indexRefused = true; }
+                            try { choice.extendRecordedPath(deferredPath, nextIndex, source, 151, candidate, statement,
+                                    10000, 10000, 10000, 10000, 10000, 2, 1000000); }
+                            catch (IllegalArgumentException expected) { labelRefused = true; }
+                            require(depthRefused && indexRefused && labelRefused && projection.isCurrent(),
+                                    "generic extension rejects depth, index and candidate mismatch without publication");
+                            if (!negative && variant == 0 && !deeper && staleMode < 0) {
+                                boolean siblingBudget = false;
+                                int low = 1, high = genericExtension.traversalWork * 2;
+                                for (int attempt = 0; attempt < 24 && low <= high && !siblingBudget; ++attempt) {
+                                    int allowance = low + (high - low) / 2;
+                                    try { choice.extendRecordedPath(deferredPath, nextIndex, source, 150, candidate, statement,
+                                            10000, 10000, 10000, 10000, 10000, 2, allowance); high = allowance - 1; }
+                                    catch (DmzStoredRetractionTransaction.ReplayPathBudgetFailure expected) {
+                                        siblingBudget = expected.completedBranches == 1;
+                                        low = allowance + 1;
+                                    }
+                                    require(projection.isCurrent(), "budget search restores parent after each symmetric extension attempt");
+                                }
+                                require(siblingBudget, "shared allowance can expire in second sibling after first has rolled back");
+                                compareExtension(extension, choice.extendRecordedPath(deferredPath, nextIndex, source, 150, candidate, statement,
+                                        10000, 10000, 10000, 10000, 10000, 2, 1000000));
+                            }
+                        }
                         require(extension.paths.size() == 2 && extension.applications.size() == 2 && projection.isCurrent(),
                                 "both second choices complete and roll back");
                         for (int i = 0; i < 2; ++i) {
@@ -219,6 +265,8 @@ public final class DmzReplayQueryCascadeRunner {
                                 for (String thirdQuery : thirdQueries) {
                                     DmzStoredRetractionTransaction.ReplayPathExtension third = choice.extendTwoStepPath(path, thirdIndex,
                                             source, 150, candidate, thirdQuery, 10000, 10000, 10000, 10000, 10000, 10000, 10000);
+                                    compareExtension(third, choice.extendRecordedPath(path, thirdIndex, source, 150, candidate, thirdQuery,
+                                            10000, 10000, 10000, 10000, 10000, 3, 1000000));
                                     require(third.paths.size() == 2 && third.applications.size() == 2 && projection.isCurrent(),
                                             "both third variants complete and roll back to unchanged parent");
                                     for (int j = 0; j < 2; ++j) {
@@ -232,6 +280,35 @@ public final class DmzReplayQueryCascadeRunner {
                                             require(fourth && terminal.query == null && terminal.conflict != null,
                                                     "four-production terminal retains remaining conflict without query");
                                             deferredThreeStep = true;
+                                            int fourthIndex = -1;
+                                            for (int k = 0; k < full.remaining.conflicts.size(); ++k)
+                                                if (full.remaining.conflicts.get(k).ground.predicate.equals("hop")) fourthIndex = k;
+                                            require(fourthIndex >= 0, "fourth live hop conflict available");
+                                            DmzStoredRetractionTransaction.ReplayPathExtension fourthFamily = choice.extendRecordedPath(full, fourthIndex,
+                                                    source, 150, candidate, thirdQuery, 10000, 10000, 10000, 10000, 10000, 4, 1000000);
+                                            require(fourthFamily.paths.size() == 2 && fourthFamily.traversalWork > 0 && projection.isCurrent(),
+                                                    "generic extension produces both fourth choices with checked rollback");
+                                            for (int k = 0; k < 2; ++k) {
+                                                DmzStoredRetractionTransaction.ReplayPath fourthPath = fourthFamily.paths.get(k);
+                                                DmzStoredRetractionTransaction.ReplayAppliedChoice fourthTerminal = fourthFamily.applications.get(k);
+                                                require(fourthPath.steps.size() == 4 && fourthPath.steps.get(3).side == fourthTerminal.side
+                                                        && fourthTerminal.disposition == DmzStoredRetractionTransaction.ReplayQueryDisposition.QUERIED
+                                                        && fourthTerminal.query != null && fourthTerminal.conflict == null,
+                                                        "fourth choices resolve all internal conflicts before native query");
+                                                for (int level = 0; level < 3; ++level)
+                                                    require(fourthPath.steps.get(level).side == full.steps.get(level).side
+                                                            && fourthPath.steps.get(level).evidence != full.steps.get(level).evidence,
+                                                            "fourth choice keeps freshly recognized selected prefix");
+                                                if (thirdQuery.equals("?source(1);")) require(Boolean.TRUE.equals(fourthTerminal.query.value),
+                                                        "Q authority survives fourth symmetric choices");
+                                                if (thirdQuery.equals("?middle(2);") || thirdQuery.equals("?bridge(2);"))
+                                                    require(!Boolean.TRUE.equals(fourthTerminal.query.value), "fourth choice inherits earlier rejected chain");
+                                                DmzStoredRetractionTransaction.ReplayPathExtension fourthRestored = choice.restoreRecordedPath(fourthPath,
+                                                        source, 150, candidate, thirdQuery, 10000, 10000, 10000, 10000, 10000, 4, 1000000);
+                                                require(fourthRestored.paths.get(0).steps.size() == 4
+                                                        && java.util.Objects.equals(fourthRestored.applications.get(0).query.value, fourthTerminal.query.value)
+                                                        && projection.isCurrent(), "detached four-step records restore through generic operator");
+                                            }
                                         } else require(terminal.disposition == DmzStoredRetractionTransaction.ReplayQueryDisposition.QUERIED
                                                 && terminal.query != null && terminal.conflict == null, "third choice resolves source conflict before query");
                                         if (!thirdUnresolved && thirdQuery.equals("?source(1);")) require(Boolean.TRUE.equals(terminal.query.value), "Q source survives third choice");
@@ -415,10 +492,20 @@ public final class DmzReplayQueryCascadeRunner {
                             catch (IllegalStateException expected) { staleThree = expected.getMessage().contains("boundary changed"); }
                             require(staleThree, "three-step restore refuses stale native or source-only Q pins");
                         }
+                        boolean staleExtension = false;
+                        try { choice.extendRecordedPath(deferredPath, nextIndex, source, 150, candidate, "?source(1);",
+                                10000, 10000, 10000, 10000, 10000, 2, 1000000); }
+                        catch (IllegalStateException expected) { staleExtension = expected.getMessage().contains("boundary changed"); }
+                        require(staleExtension, "generic extension refuses native and source-only Q staleness");
                         choice.close();
                         require(qState.equals(DmzObservationStateFingerprint.capture(q)), "stale choice close preserves external Q mutation");
                     } else {
                         choice.close();
+                        boolean closedExtension = false;
+                        try { choice.extendRecordedPath(deferredPath, nextIndex, source, 150, candidate, "?source(1);",
+                                10000, 10000, 10000, 10000, 10000, 2, 1000000); }
+                        catch (IllegalStateException expected) { closedExtension = true; }
+                        require(closedExtension && projection.isCurrent(), "generic extension refuses closed owner");
                         if (thirdPrefix != null) {
                             boolean closedThird = false;
                             try { choice.extendTwoStepPath(thirdPrefix, 0, source, 150, candidate, "?source(1);",
@@ -449,6 +536,11 @@ public final class DmzReplayQueryCascadeRunner {
                         require(closedReplay && projection.isCurrent(), "closed native choice refuses historical path replay");
                         try (DmzStoredRetractionTransaction.NativeSupportChoice foreign = overlay.beginSupportChoice(projection,
                                 DmzStoredRetractionTransaction.SupportChoice.KEEP_CANDIDATE, 10000)) {
+                            boolean foreignExtension = false;
+                            try { foreign.extendRecordedPath(deferredPath, nextIndex, source, 150, candidate, "?source(1);",
+                                    10000, 10000, 10000, 10000, 10000, 2, 1000000); }
+                            catch (IllegalArgumentException expected) { foreignExtension = true; }
+                            require(foreignExtension && projection.isCurrent(), "generic extension refuses foreign ownership");
                             if (thirdPrefix != null) {
                                 boolean foreignThird = false;
                                 try { foreign.extendTwoStepPath(thirdPrefix, 0, source, 150, candidate, "?source(1);",
@@ -483,6 +575,29 @@ public final class DmzReplayQueryCascadeRunner {
             }
             require(qState.equals(DmzObservationStateFingerprint.capture(q)), "Q native state restored");
             require(Boolean.TRUE.equals(q.query("?source(1);", null, false)), "Q remains authoritative");
+        }
+    }
+    private static void compareExtension(DmzStoredRetractionTransaction.ReplayPathExtension expected,
+            DmzStoredRetractionTransaction.ReplayPathExtension actual) {
+        require(actual.paths.size() == 2 && actual.applications.size() == 2 && actual.traversalWork > 0,
+                "generic extension returns complete metered symmetric family");
+        for (int i = 0; i < 2; ++i) {
+            DmzStoredRetractionTransaction.ReplayPath a = actual.paths.get(i), e = expected.paths.get(i);
+            DmzStoredRetractionTransaction.ReplayAppliedChoice x = actual.applications.get(i), y = expected.applications.get(i);
+            require(a.steps.size() == e.steps.size() && x.side == y.side && x.disposition == y.disposition
+                    && (x.query == null ? y.query == null && x.conflict != null : y.query != null
+                        && java.util.Objects.equals(x.query.value, y.query.value)), "generic terminal matches fixed-length reference");
+            for (int level = 0; level < a.steps.size(); ++level) {
+                DmzStoredRetractionTransaction.ReplayPathStep fresh = a.steps.get(level), old = e.steps.get(level);
+                require(fresh.side == old.side && fresh.conflict.equivalent(old.conflict) && fresh.evidence != old.evidence
+                        && fresh.grounds.size() == old.grounds.size(), "generic extension retains fresh ordered prefix and ground coverage");
+                for (DmzStoredRetractionTransaction.ReplayAppliedGround row : old.grounds) {
+                    boolean matched = false;
+                    for (DmzStoredRetractionTransaction.ReplayAppliedGround now : fresh.grounds)
+                        if (now.ground.equivalent(row.ground) && now.proofs == row.proofs && now.visible == row.visible) matched = true;
+                    require(matched, "generic extension preserves exact residual multiplicity and visibility");
+                }
+            }
         }
     }
     private static int middleOneProofs(java.util.List<DmzStoredRetractionTransaction.ReplayAppliedGround> rows) {
