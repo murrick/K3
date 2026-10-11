@@ -274,3 +274,33 @@ to the prompt. Follow any refusal with a valid query, close/reopen Q, and verify
 its declarations and topology. Existing connections are not modified by this
 operation. The shared canonical processor carries a detached SDK result; Server
 has no DMZ transport binding yet and explicitly refuses the new intent.
+
+## Repeat the combined DMZ qualification gate
+
+With a JDK providing javac and Python 3:
+
+```sh
+python3 scripts/qualify-dmz.py
+```
+
+With a Java runtime and an ECJ jar:
+
+```sh
+python3 scripts/qualify-dmz.py --ecj /path/to/ecj.jar --jobs 3
+```
+
+The explicit gate manifest is kanger-qualification/test-data/dmz-suite.txt. A run
+compiles fresh Java 8-target production and qualification classes, then executes
+41 driver processes including the large recursive/cascade matrices, same-JVM
+legacy hypothesis cleanup, pinned/portable replay cleanup, public provider and
+real Console workflow. Existing repository JLine/Jansi jars are used. This does
+not require an installed DUMB plugin or select a user's real storage.
+
+Each invocation writes a fresh run directory under target/dmz-qualification
+(or --output), with compiler/driver logs and report.json. --jobs is 1..8; --timeout
+sets seconds per driver (default 900). A timeout, nonzero exit or absent final
+suite marker fails the command. The aggregate printed check count includes the
+recursive matrix repeated inside the legacy cleanup driver; gates without a
+published count are still required to pass and are not assigned fictitious
+counts. This is a standalone experimental DMZ gate, not full Maven reactor,
+packaging or release qualification.

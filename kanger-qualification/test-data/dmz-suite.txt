@@ -1,0 +1,42 @@
+# Explicit DMZ qualification gate: class | required stdout success marker.
+org.kanger.DmzAcceptanceProofGuardRunner | DMZ_ACCEPTANCE_PROOF_GUARD_PASS
+org.kanger.DmzApplicationSourcesRunner | DMZ_APPLICATION_SOURCES_PASS
+org.kanger.DmzCandidateSessionRunner | DMZ_CANDIDATE_SESSION_PASS
+org.kanger.DmzCollisionProofCaptureRunner | DMZ_COLLISION_PROOF_CAPTURE_PASS
+org.kanger.DmzConditionalQueryAllowanceRunner | DMZ_CONDITIONAL_EXACT_ALLOWANCE_PASS
+org.kanger.DmzConditionalResultContractRunner | DMZ_CONDITIONAL_RESULT_CONTRACT_PASS
+org.kanger.DmzCurrentUnaryProofInventoryRunner | DMZ_CURRENT_UNARY_PROOF_INVENTORY_PASS
+org.kanger.DmzLegacyHypothesisContractRunner | DMZ_LEGACY_NATIVE_SCOPE_CLEANUP_PASS
+org.kanger.DmzLiveBranchContinuationRunner | DMZ_LIVE_BRANCH_CONTINUATION_PASS
+org.kanger.DmzNativeAlternativeProofRunner | DMZ_NATIVE_ALTERNATIVE_PROOF_PASS
+org.kanger.DmzNativeCollisionSourcesRunner | DMZ_NATIVE_COLLISION_SOURCES_PASS
+org.kanger.DmzNativeRecursiveContinuationRunner | DMZ_NATIVE_RECURSIVE_CONTINUATION_PASS
+org.kanger.DmzNeutralCandidateWorkflowRunner | DMZ_NEUTRAL_CANDIDATE_WORKFLOW_PASS
+org.kanger.DmzObservationCheckpointRunner | DMZ_OBSERVATION_CHECKPOINT_PASS
+org.kanger.DmzObservedProofGraphRunner | DMZ_OBSERVED_PROOF_GRAPH_PASS
+org.kanger.DmzRecursiveNoGoodRunner | DMZ_RECURSIVE_NO_GOOD_PASS
+org.kanger.DmzReplayQueryCascadeRunner | DMZ_REPLAY_QUERY_CASCADE_PASS
+org.kanger.DmzReplaySettlementRunner | DMZ_REPLAY_SETTLEMENT_PASS
+org.kanger.DmzSourceCandidatesRunner | DMZ_SOURCE_CANDIDATES_PASS
+org.kanger.DmzSourcedAcceptanceRunner | DMZ_SOURCED_ACCEPTANCE_PASS
+org.kanger.DmzStoredProductionRunner | DMZ_STORED_PRODUCTION_PASS
+org.kanger.DmzStoredProofGuardRunner | DMZ_STORED_PROOF_GUARD_PASS
+org.kanger.DmzStoredProofRunner | DMZ_STORED_PROOF_PASS
+org.kanger.DmzStoredRestrictionProbeRunner | DMZ_STORED_RESTRICTION_PROBE_PASS
+org.kanger.DmzStoredRouteCoverageRunner | DMZ_STORED_ROUTE_COVERAGE_PASS
+org.kanger.DmzTerminalSupportCaptureRunner | DMZ_TERMINAL_SUPPORT_CAPTURE_PASS
+org.kanger.DmzTransactionBranchProbeRunner | DMZ_TRANSACTION_BRANCH_PROBE_PASS
+org.kanger.DmzTransactionObservationRunner | DMZ_TRANSACTION_OBSERVATION_PASS
+org.kanger.DmzUnaryProofCoverageRunner | DMZ_UNARY_PROOF_COVERAGE_PASS
+org.kanger.DmzUnaryStateDeltaRunner | DMZ_UNARY_STATE_DELTA_PASS
+org.kanger.DmzWholeSourcePlanRunner | DMZ_WHOLE_SOURCE_PLAN_PASS
+org.kanger.DmzWitnessConflictsRunner | DMZ_WITNESS_CONFLICTS_PASS
+org.kanger.storage.dumb2.DmzConsoleWorkflowRunner | DMZ_CONSOLE_WORKFLOW_PASS
+org.kanger.storage.dumb2.DmzProviderReplayRegressionRunner | DMZ_PROVIDER_REPLAY_REGRESSION_PASS
+org.kanger.storage.dumb2.DmzSourcePreflightRunner | DMZ_SOURCE_PREFLIGHT_PASS
+org.kanger.storage.dumb2.DmzSourceSequenceRunner | DMZ_SOURCE_SEQUENCE_PASS
+org.kanger.storage.dumb2.DmzSourceSessionRunner | DMZ_SOURCE_SESSION_PASS
+org.kanger.storage.dumb2.DmzSourcesQueryRunner | DMZ_SOURCES_QUERY_PASS
+org.kanger.storage.dumb2.DmzUnitSourceSessionRunner | DMZ_UNIT_SOURCE_SESSION_PASS
+org.kanger.command.CommandParserConformanceTest | KANGER command parser conformance PASS:
+org.kanger.KangerCanonicalConsoleInputContractRunner | PASS: Canonical Console logical-input and parse-diagnostic boundary qualified
