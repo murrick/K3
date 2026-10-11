@@ -25,7 +25,7 @@ public final class DmzSourcePreflightRunner {
         System.setProperty("user.home",directory.toString());
         IContextResults.Revision a=create(directory,"A","!@x source(x) -> middle(x); !source(2);");
         IContextResults.Revision b=create(directory,"B","!~source(2);");
-        create(directory,"Q","!authority(1);");
+        create(directory,"Q","!@x authority(x) -> derived(x); !authority(1);");
         IContextResults.Revision word=create(directory,"Word","!word(item);");
         User user=new User(); user.setDatabaseDir(directory.toString()+java.io.File.separator);
         DB data=new DB(); data.init(user);
@@ -38,7 +38,19 @@ public final class DmzSourcePreflightRunner {
             selected.clear(); require(request.external.size()==2,"request detaches caller selection list");
             require(!data.hasConnectedContexts(),"fixture has no connections or trust groups");
             DmzSourcePlan first=data.prepareDmzSources(q,request);
-            require(first.authority.role==DmzSourcePlan.Role.AUTHORITY_Q && first.authority.primaryRules==1,
+            String physicalState=org.kanger.DmzSourceMaterializationQualification.fingerprint(q);
+            DmzSourcePreflight.Inputs acquired=DmzSourcePreflight.acquire(q,"Q",request,directory::resolve);
+            require(acquired.authority.declarations.size()==2,"Q cache excluded from executable primary inputs");
+            require(acquired.external.size()==2 && acquired.external.get(0).declarations.size()==2
+                    && acquired.external.get(1).declarations.size()==1,"contradictory sources remain separate declaration bundles");
+            for(int i=0;i<acquired.external.size();++i)
+                require(acquired.external.get(i).primaryDigest.equals(first.external.get(i).primaryDigest),"inputs match exact preflight digest");
+            try { acquired.authority.declarations.clear(); throw new AssertionError("mutable declarations"); }
+            catch(UnsupportedOperationException expected) { ++checks; }
+            checks+=org.kanger.DmzSourceMaterializationQualification.verify(acquired.authority,pin);
+            require(physicalState.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)) && user.getCurrentMind()==q,
+                    "isolated sourced materialization leaves physical Q unchanged");
+            require(first.authority.role==DmzSourcePlan.Role.AUTHORITY_Q && first.authority.primaryRules==2,
                     "Q participant role is explicit");
             require(first.external.size()==2 && first.external.get(0).primaryRules==2 && first.external.get(1).primaryRules==1,
                     "opposite foreign claims are acquired without joint collision qualification");
@@ -57,6 +69,10 @@ public final class DmzSourcePreflightRunner {
             require(after.external.get(0).primaryDigest.equals(first.external.get(0).primaryDigest)
                     && after.external.get(0).primaryRules==first.external.get(0).primaryRules,
                     "advancing foreign HEAD never floats the selected immutable revision");
+            DmzSourcePreflight.Inputs pinned=DmzSourcePreflight.acquire(q,"Q",request,directory::resolve);
+            require(pinned.external.get(0).primaryDigest.equals(acquired.external.get(0).primaryDigest)
+                    && pinned.external.get(0).declarations.size()==acquired.external.get(0).declarations.size(),
+                    "operation-time declaration acquisition remains pinned after foreign HEAD advancement");
             reject(data,q,new DmzSourcePlan.Request(new IContextResults.Revision(pin.getContextId(),pin.getRevision()+1),request.external,1000),"Q revision mismatch");
             reject(data,q,new DmzSourcePlan.Request(pin,Collections.singletonList(new DmzSourcePlan.Selection("A",new IContextResults.Revision(UUID.randomUUID(),a.getRevision()))),1000),"identity mismatch");
             reject(data,q,new DmzSourcePlan.Request(pin,Collections.singletonList(new DmzSourcePlan.Selection("A",new IContextResults.Revision(a.getContextId(),a.getRevision()+999))),1000),null);

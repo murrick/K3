@@ -10,10 +10,19 @@ import org.kanger.units.Rule;
 /** Read-only declaration-shape audit; source acquisition and proof qualification are separate. */
 public final class DmzSourceShape {
     private DmzSourceShape() {}
+    public static final class Declaration {
+        public final long sourceRule;
+        public final String statement;
+        private Declaration(long id,String origin) { sourceRule=id; statement=origin; }
+    }
     public static final class Observation {
         public final int primaryRules, inspectedRows;
         public final String primaryDigest;
-        private Observation(int primary,int rows,String digest) { primaryRules=primary; inspectedRows=rows; primaryDigest=digest; }
+        public final java.util.List<Declaration> declarations;
+        private Observation(int rows,String digest,java.util.List<Declaration> inputs) {
+            declarations=java.util.Collections.unmodifiableList(new java.util.ArrayList<Declaration>(inputs));
+            primaryRules=declarations.size(); inspectedRows=rows; primaryDigest=digest;
+        }
     }
     public static Observation inspect(Mind source,int maximumRows) throws Exception {
         if(source==null || maximumRows<0 || maximumRows>10000)throw new IllegalArgumentException("Bounded source inspection required");
@@ -49,13 +58,15 @@ public final class DmzSourceShape {
             primary.put(rule.getId(),rule);
         }
         java.security.MessageDigest digest=java.security.MessageDigest.getInstance("SHA-256");
+        java.util.List<Declaration> inputs=new java.util.ArrayList<Declaration>();
         for(Rule rule:primary.values()) {
+            inputs.add(new Declaration(rule.getId(),rule.getOrigin()));
             byte[] origin=rule.getOrigin().getBytes(java.nio.charset.StandardCharsets.UTF_8);
             digest.update(java.nio.ByteBuffer.allocate(12).putLong(rule.getId()).putInt(origin.length).array());
             digest.update(origin);
         }
         StringBuilder hex=new StringBuilder();
         for(byte b:digest.digest())hex.append(String.format(java.util.Locale.ROOT,"%02x",b&255));
-        return new Observation(primary.size(),rows,hex.toString());
+        return new Observation(rows,hex.toString(),inputs);
     }
 }
