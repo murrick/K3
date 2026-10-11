@@ -1771,6 +1771,50 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             close(); throw failure;
         }
     }
+    /** Explicit acquired unit prerequisite; semantic authority remains the original pinned Q. */
+    Boolean acceptUnitProduction(DmzReplayProvenance journal,org.kanger.interfaces.IContextResults.Revision source,
+            DmzSourceShape.Declaration input,int inventoryBudget) throws Exception {
+        if(closed || !continuationOnly)throw new IllegalStateException("Open neutral continuation workflow required");
+        if(journal==null || source==null || input==null || input.unitStatement==null || inventoryBudget<1 || inventoryBudget>10000)
+            throw new IllegalArgumentException("Acquired unit production and bounded inventory required");
+        journal.requireActiveJournal(); requireAuthorityCurrent();
+        int before=journal.snapshot().size();
+        try {
+            Mind child=transaction.mind();
+            Rule canonical=null;
+            int inspected=0;
+            for(org.kanger.interfaces.IRule item:child.getRules()) {
+                if(++inspected>inventoryBudget)throw new IllegalStateException("Unit production inventory budget exceeded");
+                if(!(item instanceof Rule))continue;
+                Rule existing=(Rule)item;
+                if(existing.isDeleted(child) || child.getRules().isGenerated(existing))continue;
+                if(input.unitSignature.equals(DmzSourceShape.unitSignature(existing,child))) { canonical=existing; break; }
+            }
+            Boolean accepted;
+            if(canonical==null) {
+                accepted=DmzReplayProvenance.acceptRule(child,source,input.sourceRule,
+                        DmzReplayProvenance.Authority.EXTERNAL,input.unitStatement);
+                if(!Boolean.TRUE.equals(accepted))return accepted;
+            } else {
+                DmzReplayProvenance.replayRule(child,source,input.sourceRule,
+                        DmzReplayProvenance.Authority.EXTERNAL,input.unitStatement);
+                accepted=Boolean.TRUE;
+            }
+            java.util.List<DmzReplayProvenance.Binding> after=journal.snapshot();
+            if(after.size()!=before+1)throw new IllegalStateException("One exact unit production occurrence required");
+            DmzReplayProvenance.Binding binding=after.get(before);
+            Rule nativeRule=(Rule)child.getRules().get(binding.nativeRule);
+            if(canonical!=null && (!binding.duplicate || binding.nativeRule!=canonical.getId()))
+                throw new IllegalStateException("Unit production alias did not bind the existing native rule");
+            if(!binding.context.equals(source.getContextId()) || binding.revision!=source.getRevision()
+                    || binding.sourceRule!=input.sourceRule || !input.unitSignature.equals(DmzSourceShape.unitSignature(nativeRule,child)))
+                throw new IllegalStateException("Replayed unit production disagrees with acquired source");
+            DmzCurrentUnaryProofInventory current=DmzCurrentUnaryProofInventory.capture(child,inventoryBudget,true);
+            if(!current.eligible)throw new IllegalStateException("Unit production continuation inventory unavailable: "+current.gaps);
+            reconcileCache(); requireAuthorityCurrent();
+            return accepted;
+        } catch(Exception failure) { close(); throw failure; }
+    }
     private void reconcileCache() throws Exception {
         Mind child = transaction.mind();
         DmzCurrentUnaryProofInventory inventory = DmzCurrentUnaryProofInventory.capture(child, 10000, true);

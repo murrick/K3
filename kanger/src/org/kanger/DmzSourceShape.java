@@ -15,7 +15,12 @@ public final class DmzSourceShape {
         public final String statement;
         /** Exact supported ground origin, checked against its native literal; null for other declarations. */
         public final String groundStatement;
-        private Declaration(long id,String origin,String ground) { sourceRule=id; statement=origin; groundStatement=ground; }
+        /** Native-checked signed unary implication with one shared variable, or null. */
+        public final String unitStatement;
+        final String unitSignature;
+        private Declaration(long id,String origin,String ground,String unit,String signature) {
+            sourceRule=id; statement=origin; groundStatement=ground; unitStatement=unit; unitSignature=signature;
+        }
     }
     public static final class Observation {
         public final int primaryRules, inspectedRows;
@@ -91,7 +96,8 @@ public final class DmzSourceShape {
                     ground=text;
                 }
             }
-            inputs.add(new Declaration(rule.getId(),rule.getOrigin(),ground));
+            String unit=rule.getTree().get(0).size()==2 ? checkedUnitStatement(rule,source) : null;
+            inputs.add(new Declaration(rule.getId(),rule.getOrigin(),ground,unit,unit==null ? null : unitSignature(rule,source)));
             byte[] origin=rule.getOrigin().getBytes(java.nio.charset.StandardCharsets.UTF_8);
             digest.update(java.nio.ByteBuffer.allocate(12).putLong(rule.getId()).putInt(origin.length).array());
             digest.update(origin);
@@ -99,6 +105,35 @@ public final class DmzSourceShape {
         StringBuilder hex=new StringBuilder();
         for(byte b:digest.digest())hex.append(String.format(java.util.Locale.ROOT,"%02x",b&255));
         return new Observation(rows,hex.toString(),inputs,cached,unsupportedGenerated,DmzObservationStateFingerprint.capture(source));
+    }
+    private static String checkedUnitStatement(Rule rule,Mind source) throws Exception {
+        java.util.regex.Matcher parsed=java.util.regex.Pattern.compile(
+                "!\\s*@([A-Za-z_][A-Za-z_0-9]*)\\s+(~?)([A-Za-z_][A-Za-z_0-9]*)\\s*\\(\\s*\\1\\s*\\)\\s*->\\s*(~?)([A-Za-z_][A-Za-z_0-9]*)\\s*\\(\\s*\\1\\s*\\)\\s*;")
+                .matcher(rule.getOrigin().trim());
+        if(!parsed.matches())return null;
+        java.util.List<String> expected=new java.util.ArrayList<String>();
+        expected.add((parsed.group(2).equals("~") ? "1:" : "0:")+parsed.group(3));
+        expected.add((parsed.group(4).equals("~") ? "0:" : "1:")+parsed.group(5));
+        java.util.Collections.sort(expected);
+        if(!expected.toString().equals(unitSignature(rule,source)))
+            throw new IllegalArgumentException("DMZ source unit origin disagrees with native clause");
+        String variable=parsed.group(1);
+        return "!@"+variable+" "+parsed.group(2)+parsed.group(3)+"("+variable+") -> "
+                +parsed.group(4)+parsed.group(5)+"("+variable+");";
+    }
+    static String unitSignature(Rule rule,Mind source) throws Exception {
+        if(rule.isQuery() || rule.getTree().size()!=1 || rule.getTree().get(0).size()!=2)return null;
+        long variable=-1;
+        java.util.List<String> literals=new java.util.ArrayList<String>();
+        for(Domain literal:rule.getTree().get(0)) {
+            if(literal.isSystem(source) || literal.isCalculated(source) || literal.isQuery(source)
+                    || literal.getArguments().size()!=1)return null;
+            IArgument argument=literal.getArguments().get(0);
+            if(argument.getType()!=ArgumentType.TVARIABLE || variable>=0 && variable!=argument.getId())return null;
+            variable=argument.getId();
+            literals.add((literal.isAntc() ? "1:" : "0:")+literal.getPredicate().getName(source));
+        }
+        java.util.Collections.sort(literals); return literals.toString();
     }
     private static TerminalSupportCapture.Ground cachedGround(Rule rule,Mind source) throws Exception {
         if(rule.getTree().size()!=1 || rule.getTree().get(0).size()!=1)return null;

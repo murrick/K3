@@ -54,13 +54,13 @@ public final class DmzCandidateSession implements AutoCloseable {
         public final Status status;
         public final SourceRule candidate;
         public final IContextResults.Revision authorityRevision,candidateRevision;
-        public final List<IContextResults.Revision> supportRevisions;
+        public final List<IContextResults.Revision> supportRevisions,productionRevisions;
         public final String candidateStatement,queryStatement;
-        public final List<SourceRule> supports;
+        public final List<SourceRule> supports,productions;
         public final DmzConditionalResult.Answer legacyAnswer;
         public final DmzConditionalResult conditional;
         private Result(DmzStoredRetractionTransaction.CandidateEvaluation evaluation,SourceRule candidate,
-                String candidateStatement,String query,List<SourceRule> supports,Participant authority,Map<UUID,Participant> sources) {
+                String candidateStatement,String query,List<SourceRule> productions,List<SourceRule> supports,Participant authority,Map<UUID,Participant> sources) {
             status=Status.valueOf(evaluation.status.name()); this.candidate=candidate;
             this.candidateStatement=candidateStatement; queryStatement=query;
             this.supports=Collections.unmodifiableList(new ArrayList<SourceRule>(supports));
@@ -68,6 +68,10 @@ public final class DmzCandidateSession implements AutoCloseable {
             List<IContextResults.Revision> pins=new ArrayList<IContextResults.Revision>();
             for(SourceRule support:supports)pins.add(sources.get(support.context).revision);
             supportRevisions=Collections.unmodifiableList(pins);
+            this.productions=Collections.unmodifiableList(new ArrayList<SourceRule>(productions));
+            List<IContextResults.Revision> productionPins=new ArrayList<IContextResults.Revision>();
+            for(SourceRule production:productions)productionPins.add(sources.get(production.context).revision);
+            productionRevisions=Collections.unmodifiableList(productionPins);
             legacyAnswer=answer(evaluation.query);
             conditional=evaluation.conditional==null ? null : evaluation.conditional.toContextResult();
         }
@@ -154,21 +158,41 @@ public final class DmzCandidateSession implements AutoCloseable {
     }
     /** Explicit primary grounds only. Supports are prerequisites, not automatically branched inputs. */
     public Result evaluate(SourceRule candidate,List<SourceRule> supports,String query,Limits limits) throws Exception {
+        return evaluateWithProductions(candidate,Collections.<SourceRule>emptyList(),supports,query,limits);
+    }
+    /** Explicit unit productions and grounds are prerequisites to this independent candidate trial. */
+    public Result evaluateWithProductions(SourceRule candidate,List<SourceRule> productions,List<SourceRule> supports,
+            String query,Limits limits) throws Exception {
         requireCurrent();
-        if(candidate==null || supports==null || limits==null)throw new NullPointerException();
-        if(supports.size()>64)throw new IllegalArgumentException("At most 64 explicit support grounds required");
+        if(candidate==null || productions==null || supports==null || limits==null)throw new NullPointerException();
+        if(productions.size()>64 || supports.size()>64 || productions.size()+supports.size()>64)
+            throw new IllegalArgumentException("At most 64 explicit production/ground prerequisites required");
         if(query==null || !query.matches("\\?~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
             throw new IllegalArgumentException("Signed unary integer query required");
         DmzSourceShape.Declaration input=ground(candidate);
         List<SourceRule> selected=new ArrayList<SourceRule>(supports);
         List<DmzSourceShape.Declaration> prerequisites=new ArrayList<DmzSourceShape.Declaration>();
         java.util.Set<String> distinct=new java.util.HashSet<String>(); distinct.add(key(candidate));
+        List<SourceRule> selectedProductions=new ArrayList<SourceRule>(productions);
+        List<DmzSourceShape.Declaration> units=new ArrayList<DmzSourceShape.Declaration>();
+        for(SourceRule production:selectedProductions) {
+            if(production==null || !distinct.add(key(production)))throw new IllegalArgumentException("Distinct production, support and candidate occurrences required");
+            DmzSourceShape.Declaration declaration=declaration(production);
+            if(declaration.unitStatement==null)throw new IllegalArgumentException("Acquired signed unary shared-variable implication required");
+            units.add(declaration);
+        }
         for(SourceRule support:selected) {
             if(support==null || !distinct.add(key(support)))throw new IllegalArgumentException("Distinct support and candidate occurrences required");
             prerequisites.add(ground(support));
         }
         Participant source=external.get(candidate.context);
         try(DmzStoredRetractionTransaction workflow=DmzStoredRetractionTransaction.beginCandidateWorkflow(capture,journal,q,limits.preparation)) {
+            for(int i=0;i<selectedProductions.size();++i) {
+                SourceRule production=selectedProductions.get(i);
+                Boolean accepted=workflow.acceptUnitProduction(journal,external.get(production.context).revision,units.get(i),limits.preparation);
+                if(!Boolean.TRUE.equals(accepted))
+                    throw new IllegalStateException("Explicit unit production prerequisite was not accepted: "+units.get(i).unitStatement+" outcome="+accepted);
+            }
             for(int i=0;i<selected.size();++i) {
                 SourceRule support=selected.get(i);
                 if(!Boolean.TRUE.equals(workflow.accept(external.get(support.context).revision,support.rule,
@@ -176,19 +200,21 @@ public final class DmzCandidateSession implements AutoCloseable {
                     throw new IllegalStateException("Explicit candidate support was not accepted");
             }
             return new Result(workflow.evaluateCandidate(source.revision,candidate.rule,input.groundStatement,query,
-                    limits.audit,limits.lookup,limits.traversal()),candidate,input.groundStatement,query,selected,authority,external);
+                    limits.audit,limits.lookup,limits.traversal()),candidate,input.groundStatement,query,selectedProductions,selected,authority,external);
         } finally { requireCurrent(); }
     }
     private static String key(SourceRule rule) { return rule.context.toString()+":"+rule.rule; }
-    private DmzSourceShape.Declaration ground(SourceRule selected) {
+    private DmzSourceShape.Declaration declaration(SourceRule selected) {
         Participant source=external.get(selected.context);
         if(source==null)throw new IllegalArgumentException("Selected external Context required");
         for(DmzSourceShape.Declaration input:source.inputs.declarations)
-            if(input.sourceRule==selected.rule) {
-                if(input.groundStatement==null)throw new IllegalArgumentException("Only acquired signed unary integer primary grounds can be dispatched");
-                return input;
-            }
+            if(input.sourceRule==selected.rule)return input;
         throw new IllegalArgumentException("Acquired source-local primary rule required");
+    }
+    private DmzSourceShape.Declaration ground(SourceRule selected) {
+        DmzSourceShape.Declaration input=declaration(selected);
+        if(input.groundStatement==null)throw new IllegalArgumentException("Only acquired signed unary integer primary grounds can be dispatched");
+        return input;
     }
     private static DmzConditionalResult.Answer answer(DmzStoredRetractionTransaction.QueryResult value) {
         return value==null ? null : new DmzConditionalResult.Answer(

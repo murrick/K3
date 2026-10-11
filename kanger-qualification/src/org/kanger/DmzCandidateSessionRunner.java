@@ -60,6 +60,16 @@ public final class DmzCandidateSessionRunner {
         Mind wrong=source("!base(1);");
         primary(wrong,"!base(1);").setOrigin(new Term("!other(1);",wrong));
         reject(() -> DmzSourceShape.inspect(wrong,1000),"ground origin disagrees");
+        Mind unit=source("!@x source(x) -> derived(x);");
+        Rule production=primary(unit,"!@x source(x) -> derived(x);");
+        production.setOrigin(new Term("!@y source(y) -> ~derived(y);",unit));
+        reject(() -> DmzSourceShape.inspect(unit,1000),"unit origin disagrees");
+        production.setOrigin(new Term("!@y source(y) -> derived(y);",unit));
+        require("!@y source(y) -> derived(y);".equals(DmzSourceShape.inspect(unit,1000).declarations.get(0).unitStatement),
+                "unit origin permits alpha renaming while checking native signs");
+        Mind negativeUnit=source("!@x ~source(x) -> ~derived(x);");
+        require("!@x ~source(x) -> ~derived(x);".equals(DmzSourceShape.inspect(negativeUnit,1000).declarations.get(0).unitStatement),
+                "negative antecedent and consequent agree with native clause polarity");
         reject(() -> new DmzCandidateSession.Limits(10000,10000,10000,10000,10000,10000,10000,17,64,1000000),"Bounded candidate");
         reject(() -> new DmzCandidateSession.Limits(10000,10000,0,10000,10000,10000,10000,4,64,1000000),"Phase allowance");
         reject(() -> DmzCandidateSession.open(authority,Collections.singletonList(authority),10000),"Unique external");
