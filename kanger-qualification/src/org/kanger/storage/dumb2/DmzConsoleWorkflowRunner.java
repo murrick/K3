@@ -85,7 +85,7 @@ public final class DmzConsoleWorkflowRunner {
                 +"ctx dmz "+qp.getContextId()+"@"+(qp.getRevision()+1)+" ?authority(1);\n"
                 +oldAnswer+"\n"+"ctx dmz "+pin(qp)+" ?more(1); from=Unit@"+pin(unit)+"\n"
                 +"ctx dmz "+pin(qp)+" ?authority(1);\n"+"ctx dmz "+pin(qp)+" ?authority(1); visits=0\n"
-                +"?authority(1);\nquit\n";
+                +"?authority(1);\n";
         InputStream originalIn=System.in;PrintStream originalOut=System.out,originalErr=System.err;
         ByteArrayOutputStream stdout=new ByteArrayOutputStream(),stderr=new ByteArrayOutputStream();
         ShutdownHook hook=new ShutdownHook(q);
@@ -110,6 +110,7 @@ public final class DmzConsoleWorkflowRunner {
         require(err.contains("DMZ refused:") && err.contains("INVALID_ARGUMENT_SHAPE"),"phase/acquisition and malformed command refusals keep session alive");
         require(!err.contains("DMZ refused: null") && !err.contains("\tat org.kanger") && !err.contains("Unsupported canonical intent"),"expected DMZ failures are readable and routed");
         require(out.contains("Query: ?result(3);") && out.contains("Query: ?more(1);") && out.contains("KANGER III Session closed"),"fresh exact-pinned retry, unit-only execution and graceful session closure");
+        require(out.contains("Result: TRUE"),"finite input executes the final Core query before EOF closes the session");
         require(!user.getCurrentMind().isStorageUsed(),"Console shutdown tracks active physical Mind");
         Mind reopen=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(reopen);
         try {
