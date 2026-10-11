@@ -262,7 +262,7 @@ A production-only source `!@x authority(x) -> more(x);` can answer `?more(1);`
 from Q; it does not add more(1) to Q. Named empty sources retain an inventory.
 
 The default Console output lists compact TRUE/FALSE/UNKNOWN opinions with their
-actual source Contexts and primary causes. `ctx opinion <N> tree` shows all
+actual source Contexts and primary causes. `ctx tree <N>` shows all
 retained inference alternatives with applied productions, primary premises and
 exact source identities; `ctx dmz explain` shows the technical traversal report.
 Both commands read the saved last DMZ result without inference. New/failed query
@@ -282,7 +282,11 @@ its declarations and topology. Existing connections are not modified by this
 operation. The shared canonical processor carries a detached SDK result; Server
 has no DMZ transport binding yet and explicitly refuses the new intent.
 
-### `ctx opinion <N> tree`
+### `ctx tree <N>`
+
+Accepts minimum unique prefixes, for example `ctx tr 1`. The previous
+`ctx opinion <N> tree` remains accepted. `ctx op` is ambiguous between
+`opinion` and `opinions`; exact keywords win over prefixes.
 
 Read the selected last DMZ opinion's detached inference alternatives. N is a
 positive number displayed by that query. Trees retain Context UUIDs/revisions,

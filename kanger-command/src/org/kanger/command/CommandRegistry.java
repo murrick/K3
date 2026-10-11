@@ -75,6 +75,7 @@ public final class CommandRegistry {
         PUBLISH,
         FORK,
         DMZ,
+        OPINION,
         OPINIONS,
         VALUES,
         SOLVES,
@@ -217,6 +218,8 @@ public final class CommandRegistry {
         keyword(Family.CONTEXT, Keyword.EXPLAIN, "explain");
         keyword(Family.CONTEXT, Keyword.ASK, "ask");
         keyword(Family.CONTEXT, Keyword.DMZ, "dmz");
+        keyword(Family.CONTEXT, Keyword.TREE, "tree");
+        keyword(Family.CONTEXT, Keyword.OPINION, "opinion");
         keyword(Family.CONTEXT, Keyword.OPINIONS, "opinions");
         keyword(Family.CONTEXT, Keyword.VALUES, "values");
         keyword(Family.CONTEXT, Keyword.SOLVES, "solves");
@@ -328,7 +331,7 @@ public final class CommandRegistry {
 
         define(CommandIntent.CTX_DMZ_EXPLAIN,"ctx dmz explain","CONTEXT",
                 "Show the saved last DMZ query's technical report without inference.",args(),n++);
-        define(CommandIntent.CTX_OPINION_TREE,"ctx opinion <N> tree","CONTEXT",
+        define(CommandIntent.CTX_OPINION_TREE,"ctx tree <N>","CONTEXT",
                 "Show the selected saved opinion's exact source inference alternatives without inference.",
                 args("number","Positive saved opinion number."),n++);
         define(CommandIntent.CTX_DMZ, "ctx dmz <Q-UUID>@<revision> <query> [from=<name>@<UUID>@<revision> ...] [<limit>=<value> ...]", "CONTEXT",
@@ -588,6 +591,13 @@ public final class CommandRegistry {
             }
         }
         return resolve(token, scoped, family);
+    }
+
+    public static boolean isExactKeyword(Family family, String token) {
+        Map<Keyword,List<String>> words=KEYWORDS.get(family);
+        if(words!=null)for(List<String> spellings:words.values())
+            for(String word:spellings)if(isExact(token,word))return true;
+        return false;
     }
 
     public static boolean isExact(String token, String word) {

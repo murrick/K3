@@ -430,7 +430,26 @@ public final class CommandParserConformanceTest {
                 "ctx explain preserves KANGER source");
 
         expect("ctx opinions", CommandIntent.CTX_OPINIONS);
-        expectArgument("ctx op A", CommandIntent.CTX_OPINIONS, "locator", "A");
+        reject("ctx op A", AMBIGUOUS_PREFIX);
+        expectArgument("ctx opinions A", CommandIntent.CTX_OPINIONS, "locator", "A");
+        expectCanonical("ctx tr 1", "ctx tree 1");
+        expectCanonical("ctx t 2", "ctx tree 2");
+        expectCanonical("ctx opinion 1 tr", "ctx tree 1");
+        expectCanonical("ctx dM eX", "ctx dmz explain");
+        expectCanonical("ctx a A ?left(2);", "ctx ask A ?left(2);");
+        expectArgument("ctx A ?$x child(x, John);",CommandIntent.CTX_ISOLATED_QUERY,"locator","A");
+        expectArgument("ctx D ?left(2);",CommandIntent.CTX_ISOLATED_QUERY,"locator","D");
+        expectCanonical("ctx rul tr 1", "ctx rules tree 1");
+        expectCanonical("ctx rul pr", "ctx rules produced");
+        expectCanonical("ctx rul al", "ctx rules all");
+        expectCanonical("ctx rul A", "ctx rules A");
+        expectCanonical("ctx rul A tr 1", "ctx rules A tree 1");
+        expectCanonical("ctx con A tr components", "ctx connect A trust components");
+        reject("ctx d", AMBIGUOUS_PREFIX);
+        reject("ctx c A", AMBIGUOUS_PREFIX);
+        reject("ctx tree", MISSING_ARGUMENT);
+        reject("ctx tree 0", INVALID_ARGUMENT_SHAPE);
+        reject("ctx tr 1 extra", EXTRA_ARGUMENT);
         expect("ctx values", CommandIntent.CTX_VALUES);
         expect("ctx solves", CommandIntent.CTX_SOLVES);
         expect("ctx when", CommandIntent.CTX_WHEN);
