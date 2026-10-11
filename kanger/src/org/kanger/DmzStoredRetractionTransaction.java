@@ -337,6 +337,43 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             this.applications = java.util.Collections.unmodifiableList(new ArrayList<ReplayAppliedChoice>(applications));
         }
     }
+    enum ReplayTraversalOutcome { COMPLETE, DEPTH_LIMIT, NODE_LIMIT, WORK_LIMIT }
+    enum ReplayTraversalPolicy { PACKET_FIRST_BREADTH_FIRST }
+    static final class ReplayOpinion {
+        final ReplayPath path;
+        final ReplayAppliedChoice application;
+        private ReplayOpinion(ReplayPath path, ReplayAppliedChoice application) { this.path = path; this.application = application; }
+    }
+    static final class ReplayFrontier {
+        final ReplayPath path;
+        final ReplayTraversalOutcome reason;
+        final boolean recognizedInTraversal;
+        private ReplayFrontier(ReplayPath path, ReplayTraversalOutcome reason, boolean recognized) {
+            this.path = path; this.reason = reason; recognizedInTraversal = recognized;
+        }
+    }
+    /** Detached conditional results; frontier entries still require fresh live recognition. */
+    static final class ReplayTraversalResult {
+        final ReplayTraversalPolicy policy = ReplayTraversalPolicy.PACKET_FIRST_BREADTH_FIRST;
+        final ReplayTraversalOutcome outcome;
+        final List<ReplayOpinion> opinions, declined;
+        final List<ReplayFrontier> frontier;
+        final String candidate, queryStatement;
+        final org.kanger.interfaces.IContextResults.Revision source;
+        final long sourceRule;
+        final int traversalWork, generatedNodes, maximumDepth, maximumNodes, workLimit;
+        private ReplayTraversalResult(ReplayTraversalOutcome outcome, List<ReplayOpinion> opinions, List<ReplayOpinion> declined,
+                List<ReplayFrontier> frontier, String candidate, String queryStatement,
+                org.kanger.interfaces.IContextResults.Revision source, long sourceRule, int work, int nodes, int maximumDepth, int maximumNodes, int workLimit) {
+            this.outcome = outcome;
+            this.opinions = java.util.Collections.unmodifiableList(new ArrayList<ReplayOpinion>(opinions));
+            this.declined = java.util.Collections.unmodifiableList(new ArrayList<ReplayOpinion>(declined));
+            this.frontier = java.util.Collections.unmodifiableList(new ArrayList<ReplayFrontier>(frontier));
+            this.candidate = candidate; this.queryStatement = queryStatement; this.source = source; this.sourceRule = sourceRule;
+            traversalWork = work; generatedNodes = nodes;
+            this.maximumDepth = maximumDepth; this.maximumNodes = maximumNodes; this.workLimit = workLimit;
+        }
+    }
     private static final class ReplayExtensionRequest {
         final TerminalSupportCapture.Ground conflict;
         final int projectionBudget, applicationBudget;
@@ -688,6 +725,67 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             return traverseRecordedPath(path, source, sourceRule, candidate, queryStatement, auditBudget,
                     recognitionBudget, projectionBudget, applicationBudget, queryBudget, maximumDepth, totalWork,
                     path.remaining.conflicts.get(nextConflict).ground);
+        }
+        ReplayTraversalResult traverseRecordedBranches(ReplayPath seed,
+                org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+                String candidate, String queryStatement, int auditBudget, int recognitionBudget,
+                int projectionBudget, int applicationBudget, int queryBudget,
+                int maximumDepth, int maximumNodes, int totalWork) throws Exception {
+            if (maximumNodes < 1 || maximumNodes > 10000) throw new IllegalArgumentException("Bounded traversal nodes required");
+            List<ReplayOpinion> opinions = new ArrayList<ReplayOpinion>(), declined = new ArrayList<ReplayOpinion>();
+            List<ReplayFrontier> frontier = new ArrayList<ReplayFrontier>();
+            java.util.ArrayDeque<ReplayPath> pending = new java.util.ArrayDeque<ReplayPath>();
+            int remainingWork = totalWork, nodes = 0;
+            ReplayTraversalOutcome outcome = ReplayTraversalOutcome.COMPLETE;
+            try {
+                ReplayPathExtension restored = restoreRecordedPath(seed, source, sourceRule, candidate, queryStatement,
+                        auditBudget, recognitionBudget, projectionBudget, applicationBudget, queryBudget, maximumDepth, remainingWork);
+                remainingWork -= restored.traversalWork;
+                ++nodes;
+                collectTraversalTerminal(restored.paths.get(0), restored.applications.get(0), pending, opinions, declined);
+            } catch (ReplayPathBudgetFailure exhausted) {
+                frontier.add(new ReplayFrontier(seed, ReplayTraversalOutcome.WORK_LIMIT, false));
+                return new ReplayTraversalResult(ReplayTraversalOutcome.WORK_LIMIT, opinions, declined, frontier,
+                        candidate, queryStatement, source, sourceRule, totalWork, nodes, maximumDepth, maximumNodes, totalWork);
+            }
+            while (!pending.isEmpty()) {
+                ReplayPath path = pending.peekFirst();
+                if (path.steps.size() >= maximumDepth) {
+                    frontier.add(new ReplayFrontier(pending.removeFirst(), ReplayTraversalOutcome.DEPTH_LIMIT, true));
+                    outcome = ReplayTraversalOutcome.DEPTH_LIMIT;
+                    continue;
+                }
+                if (nodes + 2 > maximumNodes) { outcome = ReplayTraversalOutcome.NODE_LIMIT; break; }
+                if (remainingWork == 0) { outcome = ReplayTraversalOutcome.WORK_LIMIT; break; }
+                try {
+                    ReplayPathExtension next = extendRecordedPath(path, 0, source, sourceRule, candidate, queryStatement,
+                            auditBudget, recognitionBudget, projectionBudget, applicationBudget, queryBudget, maximumDepth, remainingWork);
+                    remainingWork -= next.traversalWork;
+                    pending.removeFirst();
+                    nodes += 2;
+                    for (int i = 0; i < next.paths.size(); ++i)
+                        collectTraversalTerminal(next.paths.get(i), next.applications.get(i), pending, opinions, declined);
+                } catch (ReplayPathBudgetFailure exhausted) {
+                    remainingWork = 0;
+                    outcome = ReplayTraversalOutcome.WORK_LIMIT;
+                    break;
+                }
+            }
+            for (ReplayPath path : pending) frontier.add(new ReplayFrontier(path, outcome, true));
+            return new ReplayTraversalResult(outcome, opinions, declined, frontier, candidate, queryStatement,
+                    source, sourceRule, totalWork - remainingWork, nodes, maximumDepth, maximumNodes, totalWork);
+        }
+        private void collectTraversalTerminal(ReplayPath path, ReplayAppliedChoice application,
+                java.util.ArrayDeque<ReplayPath> pending, List<ReplayOpinion> opinions, List<ReplayOpinion> declined) {
+            if (application.disposition == ReplayQueryDisposition.QUERIED && application.query != null && application.conflict == null)
+                opinions.add(new ReplayOpinion(path, application));
+            else if (application.disposition == ReplayQueryDisposition.DECLINED_BY_Q && application.query == null && application.conflict != null
+                    && application.conflict.kind == ConsequenceConflictKind.AUTHORITY)
+                declined.add(new ReplayOpinion(path, application));
+            else if (application.disposition == ReplayQueryDisposition.NEEDS_BRANCHING && application.query == null && application.conflict != null
+                    && application.conflict.kind == ConsequenceConflictKind.INTERNAL && !application.conflict.conflicts.isEmpty())
+                pending.addLast(path);
+            else throw new IllegalStateException("Qualified traversal terminal required");
         }
         private ReplayPathExtension traverseRecordedPath(ReplayPath path,
                 org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
