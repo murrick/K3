@@ -99,6 +99,17 @@ public final class DmzReplayQueryCascadeRunner {
                         boolean immutable = false;
                         try { path.steps.clear(); } catch (UnsupportedOperationException expected) { immutable = true; }
                         require(immutable, "path step list is immutable");
+                        DmzStoredRetractionTransaction.ReplayPathExtension genericOne = choice.restoreRecordedPath(path, source, 150,
+                                candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000, 1, 1000000);
+                        require(genericOne.paths.size() == 1 && genericOne.paths.get(0).steps.size() == 1
+                                && genericOne.applications.get(0).disposition == child.disposition && genericOne.traversalWork > 0,
+                                "generic operator restores one-step terminal under shared work limit");
+                        boolean tinyShared = false;
+                        try { choice.restoreRecordedPath(path, source, 150, candidate, "?source(1);",
+                                10000, 10000, 10000, 10000, 10000, 1, 1); }
+                        catch (DmzStoredRetractionTransaction.ReplayPathBudgetFailure expected) { tinyShared = true; }
+                        require(tinyShared && projection.isCurrent(), "shared pre-admission budget refuses without changing parent");
+
                         boolean wrongLabel = false;
                         try { choice.replayPath(path, source, 151, candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000); }
                         catch (IllegalArgumentException expected) { wrongLabel = true; }
@@ -247,6 +258,26 @@ public final class DmzReplayQueryCascadeRunner {
                                         }
                                         DmzStoredRetractionTransaction.ReplayPathExtension restoredThree = choice.replayThreeStepPath(full,
                                                 source, 150, candidate, thirdQuery, 10000, 10000, 10000, 10000, 10000, 10000, 10000);
+                                        DmzStoredRetractionTransaction.ReplayPathExtension genericThree = choice.restoreRecordedPath(full,
+                                                source, 150, candidate, thirdQuery, 10000, 10000, 10000, 10000, 10000, 3, 1000000);
+                                        DmzStoredRetractionTransaction.ReplayAppliedChoice genericTerminal = genericThree.applications.get(0);
+                                        require(genericThree.paths.get(0).steps.size() == 3 && genericTerminal.disposition == terminal.disposition
+                                                && (thirdUnresolved ? genericTerminal.query == null && genericTerminal.conflict != null
+                                                    : genericTerminal.query != null && java.util.Objects.equals(genericTerminal.query.value, terminal.query.value))
+                                                && projection.isCurrent(), "generic three-step restore preserves terminal evidence or fresh query");
+                                        if (!negative && variant == 0 && !fourth && thirdQuery.equals("?source(1);")) {
+                                            DmzStoredRetractionTransaction.ReplayPathExtension onePrefix = choice.restoreRecordedPath(deferredPath,
+                                                    source, 150, candidate, thirdQuery, 10000, 10000, 10000, 10000, 10000, 1, 1000000);
+                                            boolean nestedShared = false;
+                                            try { choice.restoreRecordedPath(full, source, 150, candidate, thirdQuery,
+                                                    10000, 10000, 10000, 10000, 10000, 3, onePrefix.traversalWork + 2); }
+                                            catch (DmzStoredRetractionTransaction.ReplayPathBudgetFailure expected) { nestedShared = expected.completedLevels >= 1; }
+                                            require(nestedShared && projection.isCurrent(), "shared budget exhaustion after live prefix rolls back all scopes");
+                                        }
+                                        require(choice.restoreRecordedPath(genericThree.paths.get(0), source, 150, candidate, thirdQuery,
+                                                10000, 10000, 10000, 10000, 10000, 3, 1000000)
+                                                .applications.get(0).disposition == terminal.disposition,
+                                                "fresh descriptor permits repeated bounded restoration");
                                         require(restoredThree.paths.size() == 1 && restoredThree.applications.size() == 1 && projection.isCurrent(),
                                                 "only selected three-step chain restored and completely rolled back");
                                         DmzStoredRetractionTransaction.ReplayPath freshThree = restoredThree.paths.get(0);
@@ -303,6 +334,17 @@ public final class DmzReplayQueryCascadeRunner {
                             }
                             DmzStoredRetractionTransaction.ReplayPathExtension restored = choice.replayTwoStepPath(path,
                                     source, 150, candidate, statement, 10000, 10000, 10000, 10000, 10000, 10000);
+                            if (statement.equals("?source(1);")) {
+                                boolean depthRefused = false;
+                                try { choice.restoreRecordedPath(path, source, 150, candidate, statement,
+                                        10000, 10000, 10000, 10000, 10000, 1, 1000000); }
+                                catch (IllegalArgumentException expected) { depthRefused = true; }
+                                require(depthRefused && projection.isCurrent(), "declared maximum depth refuses longer path before admission");
+                                DmzStoredRetractionTransaction.ReplayPathExtension genericTwo = choice.restoreRecordedPath(path, source, 150,
+                                        candidate, statement, 10000, 10000, 10000, 10000, 10000, 2, 1000000);
+                                require(genericTwo.paths.get(0).steps.size() == 2 && genericTwo.applications.get(0).disposition == applied.disposition
+                                        && projection.isCurrent(), "generic operator restores selected two-step path");
+                            }
                             require(restored.paths.size() == 1 && restored.applications.size() == 1 && projection.isCurrent(),
                                     "only selected two-step path restored and completely rolled back");
                             DmzStoredRetractionTransaction.ReplayPath freshPath = restored.paths.get(0);
@@ -362,6 +404,11 @@ public final class DmzReplayQueryCascadeRunner {
                             require(staleThird, "third extension refuses stale Q pins before admission");
                         }
                         if (retainedThreeStep != null) {
+                            boolean staleGeneric = false;
+                            try { choice.restoreRecordedPath(retainedThreeStep, source, 150, candidate, "?source(1);",
+                                    10000, 10000, 10000, 10000, 10000, 3, 1000000); }
+                            catch (IllegalStateException expected) { staleGeneric = expected.getMessage().contains("boundary changed"); }
+                            require(staleGeneric, "generic restore refuses stale Q pins");
                             boolean staleThree = false;
                             try { choice.replayThreeStepPath(retainedThreeStep, source, 150, candidate, "?source(1);",
                                     10000, 10000, 10000, 10000, 10000, 10000, 10000); }
@@ -380,6 +427,11 @@ public final class DmzReplayQueryCascadeRunner {
                             require(closedThird && projection.isCurrent(), "closed choice refuses third extension");
                         }
                         if (retainedThreeStep != null) {
+                            boolean closedGeneric = false;
+                            try { choice.restoreRecordedPath(retainedThreeStep, source, 150, candidate, "?source(1);",
+                                    10000, 10000, 10000, 10000, 10000, 3, 1000000); }
+                            catch (IllegalStateException expected) { closedGeneric = true; }
+                            require(closedGeneric && projection.isCurrent(), "closed choice refuses generic restore");
                             boolean closedThree = false;
                             try { choice.replayThreeStepPath(retainedThreeStep, source, 150, candidate, "?source(1);",
                                     10000, 10000, 10000, 10000, 10000, 10000, 10000); }
@@ -405,6 +457,11 @@ public final class DmzReplayQueryCascadeRunner {
                                 require(foreignThird && projection.isCurrent(), "third extension refuses foreign path ownership");
                             }
                             if (retainedThreeStep != null) {
+                                boolean foreignGeneric = false;
+                                try { foreign.restoreRecordedPath(retainedThreeStep, source, 150, candidate, "?source(1);",
+                                        10000, 10000, 10000, 10000, 10000, 3, 1000000); }
+                                catch (IllegalArgumentException expected) { foreignGeneric = true; }
+                                require(foreignGeneric && projection.isCurrent(), "generic path ownership cannot transfer to another choice");
                                 boolean foreignThree = false;
                                 try { foreign.replayThreeStepPath(retainedThreeStep, source, 150, candidate, "?source(1);",
                                         10000, 10000, 10000, 10000, 10000, 10000, 10000); }

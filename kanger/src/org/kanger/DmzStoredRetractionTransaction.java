@@ -329,7 +329,10 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
     static final class ReplayPathExtension {
         final List<ReplayPath> paths;
         final List<ReplayAppliedChoice> applications;
-        private ReplayPathExtension(List<ReplayPath> paths, List<ReplayAppliedChoice> applications) {
+        final int traversalWork;
+        private ReplayPathExtension(List<ReplayPath> paths, List<ReplayAppliedChoice> applications) { this(paths, applications, -1); }
+        private ReplayPathExtension(List<ReplayPath> paths, List<ReplayAppliedChoice> applications, int traversalWork) {
+            this.traversalWork = traversalWork;
             this.paths = java.util.Collections.unmodifiableList(new ArrayList<ReplayPath>(paths));
             this.applications = java.util.Collections.unmodifiableList(new ArrayList<ReplayAppliedChoice>(applications));
         }
@@ -344,8 +347,29 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             this.conflict = conflict; this.projectionBudget = projectionBudget; this.applicationBudget = applicationBudget;
         }
     }
+    static final class ReplayPathBudgetFailure extends IllegalStateException {
+        final int completedLevels;
+        private ReplayPathBudgetFailure(int completedLevels) {
+            super("Recorded path traversal budget exceeded"); this.completedLevels = completedLevels;
+        }
+    }
+    private static final class RecordedPathRun {
+        final ReplayPath historical;
+        final int projectionBudget, applicationBudget;
+        int remainingWork, completedLevels;
+        final List<ReplayPathStep> fresh = new ArrayList<ReplayPathStep>();
+        ReplayAppliedChoice terminal;
+        RecordedPathRun(ReplayPath path, int projectionBudget, int applicationBudget, int work) {
+            historical = path; this.projectionBudget = projectionBudget; this.applicationBudget = applicationBudget;
+            remainingWork = work;
+        }
+        void charge() { if (remainingWork-- <= 0) throw new ReplayPathBudgetFailure(completedLevels); }
+    }
+    private static final ThreadLocal<RecordedPathRun> RECORDED_PATH_WORK = new ThreadLocal<RecordedPathRun>();
     private static final class ReplayQueryRequest {
         ReplayExtensionRequest extension;
+        RecordedPathRun recorded;
+        int recordedLevel;
         final String statement;
         final int budget;
         final ReplayPath path;
@@ -643,6 +667,61 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             if (request.extension.result == null) throw new IllegalStateException("Complete nested replay required");
             return request.extension.result;
         }
+        ReplayPathExtension restoreRecordedPath(ReplayPath path,
+                org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+                String candidate, String queryStatement, int auditBudget, int recognitionBudget,
+                int projectionBudget, int applicationBudget, int queryBudget, int maximumDepth, int totalWork) throws Exception {
+            if (closed) throw new IllegalStateException("Native support choice closed");
+            if (path == null || path.replayOwner != replayOwner || maximumDepth < 1 || maximumDepth > 16
+                    || path.steps.isEmpty() || path.steps.size() > maximumDepth
+                    || (path.disposition != ReplayQueryDisposition.QUERIED && path.disposition != ReplayQueryDisposition.NEEDS_BRANCHING))
+                throw new IllegalArgumentException("Owned bounded recorded path required");
+            if (totalWork < 1 || totalWork > 1000000 || auditBudget < 1 || auditBudget > 10000
+                    || recognitionBudget < 1 || recognitionBudget > 10000 || projectionBudget < 1 || projectionBudget > 10000
+                    || applicationBudget < 1 || applicationBudget > 10000 || queryBudget < 1 || queryBudget > 10000)
+                throw new IllegalArgumentException("Bounded recorded path work required");
+            if (!projection.isCurrent()) throw new IllegalStateException("Replay path boundary changed");
+            if (RECORDED_PATH_WORK.get() != null) throw new IllegalStateException("Recorded path traversal already active");
+            RecordedPathRun run = new RecordedPathRun(path, projectionBudget, applicationBudget, totalWork);
+            RECORDED_PATH_WORK.set(run);
+            try {
+                for (ReplayPathStep step : path.steps) {
+                    run.charge();
+                    if (step.evidence == null || step.evidence.replayOwner != replayOwner
+                            || step.evidence.kind != ConsequenceConflictKind.INTERNAL || step.side == null)
+                        throw new IllegalArgumentException("Owned internal pre-choice packets required");
+                }
+                if (path.steps.get(0).evidence != path.root) throw new IllegalArgumentException("Exact recorded root packet required");
+                int index = -1;
+                int[] work = { recognitionBudget };
+                for (int i = 0; i < path.root.conflicts.size(); ++i) {
+                    projectionWork(work);
+                    if (path.steps.get(0).conflict.equivalent(path.root.conflicts.get(i).ground)) index = i;
+                }
+                if (index < 0) throw new IllegalStateException("Recorded root conflict missing");
+                ReplayQueryRequest request = recordedRequest(run, 0, queryStatement, queryBudget, source, sourceRule, recognitionBudget);
+                ReplaySymmetricProjection restored = projectReplayConflict(path.root, index, source, sourceRule, candidate,
+                        queryStatement, auditBudget, recognitionBudget, projectionBudget, applicationBudget, request);
+                if (path.steps.size() == 1) run.terminal = restored.applications.get(0);
+                if (run.terminal == null || run.fresh.size() != path.steps.size())
+                    throw new IllegalStateException("Complete recorded path restoration required");
+                ReplayPath fresh = new ReplayPath(replayOwner, restored.evidence, run.fresh, run.terminal);
+                return new ReplayPathExtension(java.util.Collections.singletonList(fresh), java.util.Collections.singletonList(run.terminal), totalWork - run.remainingWork);
+            } finally { RECORDED_PATH_WORK.remove(); }
+        }
+        private ReplayQueryRequest recordedRequest(RecordedPathRun run, int level, String statement, int budget,
+                org.kanger.interfaces.IContextResults.Revision source, long label, int recognitionBudget) {
+            ReplayPath old = run.historical;
+            boolean last = level + 1 == old.steps.size();
+            ReplayPathStep step = old.steps.get(level);
+            ReplayAppliedChoice terminal = new ReplayAppliedChoice(step.side, 0, step.grounds,
+                    last ? old.disposition : ReplayQueryDisposition.NEEDS_BRANCHING, null,
+                    last ? old.remaining : old.steps.get(level + 1).evidence);
+            ReplayPath one = new ReplayPath(replayOwner, step.evidence, step, terminal);
+            ReplayQueryRequest request = new ReplayQueryRequest(statement, budget, one, source, label, recognitionBudget);
+            request.recorded = run; request.recordedLevel = level;
+            return request;
+        }
         ReplayPathExtension replayTwoStepPath(ReplayPath path,
                 org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
                 String candidate, String queryStatement, int auditBudget, int recognitionBudget,
@@ -908,6 +987,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                     int kept = side == ReplaySide.SUPPORTING ? row.keepSupporting : row.keepOpposing;
                     if (row.before == 0 || kept != 0) continue;
                     for (IRule item : child.mind().getRules()) {
+                        recordedPathWork();
                         if (work[0]-- == 0) throw new SupportChoiceBudgetFailure("replay application", hidden);
                         if (item.isDeleted(child.mind()) || item.isQuery()) continue;
                         Rule rule = (Rule) item;
@@ -918,6 +998,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                         if (!row.ground.equivalent(ground)) continue;
                         boolean pending = false;
                         for (DmzReplayProvenance.SourceObservation observation : DmzReplayProvenance.observedSources(parent, item.getId())) {
+                            recordedPathWork();
                             if (work[0]-- == 0) throw new SupportChoiceBudgetFailure("replay source", hidden);
                             if (observation.outcome == DmzReplayProvenance.Outcome.ACCEPTED)
                                 throw new IllegalStateException("Accepted Q occurrence cannot be masked in replay choice");
@@ -968,6 +1049,32 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 try { auditConsequences(child.mind(), request.budget); }
                 catch (ConsequenceAuditFailure conflictEvidence) { remaining = conflictEvidence; }
                 if (request.path != null) recognizePathTerminal(request, result, remaining);
+                if (request.recorded != null) {
+                    RecordedPathRun run = request.recorded;
+                    ReplayAppliedChoice observed = new ReplayAppliedChoice(side, hidden, result,
+                            remaining == null ? ReplayQueryDisposition.QUERIED : ReplayQueryDisposition.NEEDS_BRANCHING, null, remaining);
+                    run.fresh.add(new ReplayPathStep(projected.evidence, conflict.ground, observed));
+                    run.completedLevels = run.fresh.size();
+                    if (request.recordedLevel + 1 < run.historical.steps.size()) {
+                        if (remaining == null || remaining.kind != ConsequenceConflictKind.INTERNAL)
+                            throw new IllegalStateException("Recorded intermediate conflict required");
+                        ReplayPathStep nextStep = run.historical.steps.get(request.recordedLevel + 1);
+                        int nextIndex = -1;
+                        int[] nextWork = { request.recognitionBudget };
+                        for (int i = 0; i < remaining.conflicts.size(); ++i) {
+                            projectionWork(nextWork);
+                            if (nextStep.conflict.equivalent(remaining.conflicts.get(i).ground)) nextIndex = i;
+                        }
+                        if (nextIndex < 0) throw new IllegalStateException("Recorded next conflict missing");
+                        ReplaySymmetricProjection next = projectLiveConflict(child.mind(), remaining, nextIndex, run.projectionBudget);
+                        ReplayQueryRequest nextRequest = recordedRequest(run, request.recordedLevel + 1, request.statement,
+                                request.budget, request.source, request.sourceRule, request.recognitionBudget);
+                        ReplayAppliedChoice applied = applyReplayChoice(child.mind(), next, nextStep.side,
+                                run.applicationBudget, run.projectionBudget, nextRequest);
+                        if (request.recordedLevel + 2 == run.historical.steps.size()) run.terminal = applied;
+                        return observed;
+                    }
+                }
                 if (request.extension != null) {
                     if (remaining == null || remaining.kind != ConsequenceConflictKind.INTERNAL)
                         throw new IllegalStateException("Internal live conflict required for extension");
@@ -1224,7 +1331,12 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             return new NativeSupportChoice(this, projection, choice, child, budget, hidden);
         } catch (Exception failure) { child.close(); throw failure; }
     }
+    private static void recordedPathWork() {
+        RecordedPathRun run = RECORDED_PATH_WORK.get();
+        if (run != null) run.charge();
+    }
     private static void projectionWork(int[] work) {
+        recordedPathWork();
         if (work[0]-- == 0) throw new IllegalStateException("Symmetric projection traversal budget exceeded");
     }
     private static boolean containsExactWitness(DmzProofWitnesses.Witness witness, DmzProofWitnesses.Witness cut, int[] work) {
