@@ -96,6 +96,9 @@ public final class DmzConsoleWorkflowRunner {
         } finally { System.setIn(originalIn);System.setOut(originalOut);System.setErr(originalErr); }
         String out=stdout.toString("UTF-8"),err=stderr.toString("UTF-8");
         Files.write(dir.resolve("console-out.txt"),out.getBytes("UTF-8"));Files.write(dir.resolve("console-err.txt"),err.getBytes("UTF-8"));
+        // Preserve the real terminal transcript in CI artifacts if a presentation check fails.
+        System.out.println("DMZ_CONSOLE_STDOUT_BEGIN\n"+out+"\nDMZ_CONSOLE_STDOUT_END");
+        System.out.println("DMZ_CONSOLE_STDERR_BEGIN\n"+err+"\nDMZ_CONSOLE_STDERR_END");
         require(out.contains("UUID: "+qp.getContextId()) && out.contains("UUID: "+a.getContextId()),"read-only history provides exact Q and unconnected source UUIDs for operator selection");
         require(out.contains("DMZ policy:") && out.contains("Q: Q "+pin(qp)),"real session displays applied policy and physical authority pin");
         require(out.contains("Source: A "+pin(a)) && out.contains("Fixed productions: 1") && out.contains("Ordered grounds: 4"),"display retains historical exact source and every input selection");
