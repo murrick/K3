@@ -76,6 +76,105 @@ public final class DmzCandidateSession implements AutoCloseable {
             conditional=evaluation.conditional==null ? null : evaluation.conditional.toContextResult();
         }
     }
+    public enum SequenceDecision { ADMITTED, REUSED_PRIMARY, DECLINED_Q, KEEP_EXISTING, KEEP_CANDIDATE }
+    public static final class SequenceStep {
+        public final SourceRule input;
+        public final SequenceDecision decision;
+        public final int variant;
+        private SequenceStep(SourceRule input,DmzStoredRetractionTransaction.InputVisitKind kind,int variant) {
+            this.input=input;decision=SequenceDecision.valueOf(kind.name());this.variant=variant;
+        }
+    }
+    public static final class SequenceOpinion {
+        public final List<SequenceStep> steps;
+        public final DmzConditionalResult.Answer answer;
+        private SequenceOpinion(List<SequenceStep> steps,DmzStoredRetractionTransaction.QueryResult answer) {
+            this.steps=Collections.unmodifiableList(new ArrayList<SequenceStep>(steps));this.answer=answer(answer);
+        }
+    }
+    public static final class SequenceEvent {
+        public final int inputIndex;
+        public final List<SequenceStep> prefix;
+        public final DmzConditionalResult conditional;
+        private SequenceEvent(int index,List<SequenceStep> prefix,DmzStoredRetractionTransaction.ConditionalQueryResult value) {
+            inputIndex=index;this.prefix=Collections.unmodifiableList(new ArrayList<SequenceStep>(prefix));conditional=value.toContextResult();
+        }
+    }
+    /** Historical ordered-policy result. A stop requires a fresh full invocation, never replay of these steps. */
+    public static final class SequenceResult {
+        public final IContextResults.Revision authorityRevision;
+        public final List<SourceRule> candidates,productions,supports;
+        public final List<IContextResults.Revision> candidateRevisions,productionRevisions,supportRevisions;
+        public final List<String> candidateStatements,productionStatements,supportStatements;
+        public final List<SequenceOpinion> opinions;
+        public final List<SequenceEvent> events;
+        public final List<SequenceStep> interruptedPrefix;
+        public final String queryStatement;
+        public final boolean restartRequired,visitLimit;
+        public final int visits,maximumVisits,interruptedInput;
+        private SequenceResult(SequenceRun run) {
+            authorityRevision=run.session.authority.revision;queryStatement=run.query;
+            candidates=copy(run.candidates);productions=copy(run.productions);supports=copy(run.supports);
+            candidateRevisions=run.session.pins(candidates);productionRevisions=run.session.pins(productions);supportRevisions=run.session.pins(supports);
+            candidateStatements=run.session.statements(candidates);productionStatements=run.session.statements(productions);supportStatements=run.session.statements(supports);
+            opinions=copy(run.opinions);events=copy(run.events);interruptedPrefix=copy(run.interruptedPrefix);
+            restartRequired=run.restartRequired;visitLimit=run.visitLimit;visits=run.visits;maximumVisits=run.maximumVisits;interruptedInput=run.interruptedInput;
+        }
+    }
+    private static <T> List<T> copy(List<T> values) { return Collections.unmodifiableList(new ArrayList<T>(values)); }
+    private List<IContextResults.Revision> pins(List<SourceRule> selected) {
+        List<IContextResults.Revision> result=new ArrayList<IContextResults.Revision>();
+        for(SourceRule input:selected)result.add(external.get(input.context).revision);return copy(result);
+    }
+    private List<String> statements(List<SourceRule> selected) {
+        List<String> result=new ArrayList<String>();
+        for(SourceRule input:selected)result.add(declaration(input).statement);return copy(result);
+    }
+    private static final class SequenceVisitStop extends RuntimeException { private static final long serialVersionUID=1L; }
+    private static final class SequenceRun {
+        final DmzCandidateSession session;
+        final List<SourceRule> candidates,productions,supports;
+        final List<DmzSourceShape.Declaration> inputs;
+        final String query;
+        final Limits limits;
+        final int maximumVisits;
+        final List<SequenceOpinion> opinions=new ArrayList<SequenceOpinion>();
+        final List<SequenceEvent> events=new ArrayList<SequenceEvent>();
+        List<SequenceStep> interruptedPrefix=Collections.emptyList();
+        int visits,interruptedInput=-1;
+        boolean restartRequired,visitLimit;
+        SequenceRun(DmzCandidateSession session,List<SourceRule> candidates,List<SourceRule> productions,List<SourceRule> supports,
+                List<DmzSourceShape.Declaration> inputs,String query,Limits limits,int maximumVisits) {
+            this.session=session;this.candidates=candidates;this.productions=productions;this.supports=supports;
+            this.inputs=inputs;this.query=query;this.limits=limits;this.maximumVisits=maximumVisits;
+        }
+        void walk(DmzStoredRetractionTransaction workflow,final int index,final List<SequenceStep> prefix) throws Exception {
+            if(visits==maximumVisits) {
+                visitLimit=true;restartRequired=true;interruptedInput=index;interruptedPrefix=copy(prefix);throw new SequenceVisitStop();
+            }
+            ++visits;
+            if(index==candidates.size()) {
+                opinions.add(new SequenceOpinion(prefix,workflow.queryContinuationResult(query,limits.audit)));return;
+            }
+            final SourceRule input=candidates.get(index);
+            DmzStoredRetractionTransaction.ConditionalQueryResult value=workflow.visitCandidate(session.external.get(input.context).revision,
+                    input.rule,inputs.get(index).groundStatement,query,limits.audit,limits.lookup,limits.traversal(),session.journal,
+                    new DmzStoredRetractionTransaction.LiveBranchVisitor() {
+                        public void visit(DmzStoredRetractionTransaction owner,Mind live,
+                                DmzStoredRetractionTransaction.InputVisitKind kind,int variant) throws Exception {
+                            List<SequenceStep> next=new ArrayList<SequenceStep>(prefix);next.add(new SequenceStep(input,kind,variant));
+                            try(DmzStoredRetractionTransaction child=DmzStoredRetractionTransaction.beginBranchContinuation(owner,live,limits.preparation)) {
+                                walk(child,index+1,next);
+                            }
+                        }
+                    });
+            if(value!=null) {
+                events.add(new SequenceEvent(index,prefix,value));
+                if(value.restartRequired || value.retryDiscovery || value.family!=null
+                        && value.family.outcome!=DmzStoredRetractionTransaction.ReplayTraversalOutcome.COMPLETE)restartRequired=true;
+            }
+        }
+    }
     private final Thread owner=Thread.currentThread();
     private final Participant authority;
     private final Map<UUID,Participant> external;
@@ -201,6 +300,47 @@ public final class DmzCandidateSession implements AutoCloseable {
             }
             return new Result(workflow.evaluateCandidate(source.revision,candidate.rule,input.groundStatement,query,
                     limits.audit,limits.lookup,limits.traversal()),candidate,input.groundStatement,query,selectedProductions,selected,authority,external);
+        } finally { requireCurrent(); }
+    }
+    /** Up to sixteen ordered acquired grounds; explicit prerequisites are fixed for this operation only. */
+    public SequenceResult evaluateSequence(List<SourceRule> candidates,List<SourceRule> productions,List<SourceRule> supports,
+            String query,Limits limits,int maximumVisits) throws Exception {
+        requireCurrent();
+        if(candidates==null || productions==null || supports==null || limits==null)throw new NullPointerException();
+        if(candidates.isEmpty() || candidates.size()>16 || productions.size()>64 || supports.size()>64
+                || productions.size()+supports.size()>64 || maximumVisits<1 || maximumVisits>10000)
+            throw new IllegalArgumentException("Bounded ordered candidates, prerequisites and visits required");
+        if(query==null || !query.matches("\\?~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
+            throw new IllegalArgumentException("Signed unary integer query required");
+        List<SourceRule> ordered=new ArrayList<SourceRule>(candidates),units=new ArrayList<SourceRule>(productions),grounds=new ArrayList<SourceRule>(supports);
+        java.util.Set<String> distinct=new java.util.HashSet<String>();
+        List<DmzSourceShape.Declaration> inputs=new ArrayList<DmzSourceShape.Declaration>();
+        for(SourceRule input:ordered) {
+            if(input==null || !distinct.add(key(input)))throw new IllegalArgumentException("Distinct ordered input occurrences required");
+            inputs.add(ground(input));
+        }
+        List<DmzSourceShape.Declaration> unitInputs=new ArrayList<DmzSourceShape.Declaration>(),groundInputs=new ArrayList<DmzSourceShape.Declaration>();
+        for(SourceRule input:units) {
+            if(input==null || !distinct.add(key(input)))throw new IllegalArgumentException("Distinct prerequisite occurrences required");
+            DmzSourceShape.Declaration declaration=declaration(input);
+            if(declaration.unitStatement==null)throw new IllegalArgumentException("Acquired signed unary shared-variable implication required");
+            unitInputs.add(declaration);
+        }
+        for(SourceRule input:grounds) {
+            if(input==null || !distinct.add(key(input)))throw new IllegalArgumentException("Distinct prerequisite occurrences required");
+            groundInputs.add(ground(input));
+        }
+        SequenceRun run=new SequenceRun(this,ordered,units,grounds,inputs,query,limits,maximumVisits);
+        try(DmzStoredRetractionTransaction workflow=DmzStoredRetractionTransaction.beginCandidateWorkflow(capture,journal,q,limits.preparation)) {
+            for(int n=0;n<units.size();++n)if(!Boolean.TRUE.equals(workflow.acceptUnitProduction(journal,
+                    external.get(units.get(n).context).revision,unitInputs.get(n),limits.preparation)))
+                throw new IllegalStateException("Explicit sequence production prerequisite was not accepted");
+            for(int n=0;n<grounds.size();++n)if(!Boolean.TRUE.equals(workflow.accept(external.get(grounds.get(n).context).revision,
+                    grounds.get(n).rule,DmzReplayProvenance.Authority.EXTERNAL,groundInputs.get(n).groundStatement)))
+                throw new IllegalStateException("Explicit sequence ground prerequisite was not accepted");
+            try { run.walk(workflow,0,Collections.<SequenceStep>emptyList()); }
+            catch(SequenceVisitStop bounded) { /* Every live child has rolled back; observations require a fresh invocation. */ }
+            return new SequenceResult(run);
         } finally { requireCurrent(); }
     }
     private static String key(SourceRule rule) { return rule.context.toString()+":"+rule.rule; }

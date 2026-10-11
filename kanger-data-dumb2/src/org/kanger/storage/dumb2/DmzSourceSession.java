@@ -73,6 +73,15 @@ final class DmzSourceSession implements AutoCloseable {
             finally { requireCurrent(); }
         }
     }
+    DmzCandidateSession.SequenceResult evaluateSequence(List<DmzCandidateSession.SourceRule> candidates,
+            List<DmzCandidateSession.SourceRule> productions,List<DmzCandidateSession.SourceRule> supports,
+            String query,DmzCandidateSession.Limits limits,int maximumVisits) throws Exception {
+        synchronized(provider) {
+            requireCurrent();
+            try { return core.evaluateSequence(candidates,productions,supports,query,limits,maximumVisits); }
+            finally { requireCurrent(); }
+        }
+    }
     @Override public void close() throws Exception {
         if(closed)return;
         if(Thread.currentThread()!=owner)throw new IllegalStateException("Provider DMZ session must close on its owning thread");

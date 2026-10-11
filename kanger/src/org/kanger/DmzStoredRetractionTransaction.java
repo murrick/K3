@@ -21,6 +21,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
     private final DmzReplayProvenance.SourceCheckpoint authoritySources;
     private int cacheAdmissions;
     private boolean closed;
+    private boolean inheritedQueryScopes;
     private DmzStoredRetractionTransaction(TechnicalMindTransaction transaction, DmzTerminalRestriction restriction,
             boolean continuationOnly, List<Rule> retracted, Mind authorityTarget,
             String authorityState, DmzReplayProvenance.SourceCheckpoint authoritySources) {
@@ -86,6 +87,92 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         TechnicalMindTransaction transaction = TechnicalMindTransaction.beginIsolated(target);
         return new DmzStoredRetractionTransaction(transaction, null, true,
                 java.util.Collections.<Rule>emptyList(), target, state, sources);
+    }
+    /** Live descendants inherit restrictions and pending sources, but retain the original settled Q owner. */
+    static DmzStoredRetractionTransaction beginBranchContinuation(DmzStoredRetractionTransaction owner,
+            Mind live,int budget) throws Exception {
+        if(owner==null || owner.closed || live==null || budget<1 || budget>10000)
+            throw new IllegalArgumentException("Live owning branch and bounded inventory required");
+        owner.requireAuthorityCurrent();
+        boolean descendant=false;
+        for(Mind current=live;current!=null;current=(Mind)current.getNext())
+            if(current==owner.transaction.mind()) { descendant=true; break; }
+        if(!descendant)throw new IllegalStateException("Continuation must belong to the live owner");
+        DmzCurrentUnaryProofInventory inventory=DmzCurrentUnaryProofInventory.capture(live,budget,true);
+        if(!inventory.eligible || !inventory.isCurrent(live))
+            throw new IllegalStateException("Qualified live continuation inventory required");
+        DmzStoredRetractionTransaction child=new DmzStoredRetractionTransaction(TechnicalMindTransaction.beginIsolated(live),null,true,
+                java.util.Collections.<Rule>emptyList(),owner.authorityTarget,owner.authorityState,owner.authoritySources);
+        child.inheritedQueryScopes=true;
+        return child;
+    }
+    private DmzTerminalRestriction.QueryScope prepareContinuationQuery(Mind live,int budget) throws Exception {
+        return inheritedQueryScopes ? DmzTerminalRestriction.prepareChildQuery(live,budget)
+                : DmzTerminalRestriction.prepareQuery(live,budget);
+    }
+    enum InputVisitKind { ADMITTED, REUSED_PRIMARY, DECLINED_Q, KEEP_EXISTING, KEEP_CANDIDATE }
+    interface LiveBranchVisitor {
+        void visit(DmzStoredRetractionTransaction owner,Mind live,InputVisitKind kind,int variant) throws Exception;
+    }
+    private LiveBranchVisitor liveVisitor;
+    private DmzReplayProvenance visitJournal;
+    private InputVisitKind liveKind;
+    private int liveVariant;
+    /** Private synchronous continuation; native state is never returned or retained by the public owner. */
+    private void notifyLiveBranch(Mind live) throws Exception {
+        if(liveVisitor==null)return;
+        String state=DmzObservationStateFingerprint.capture(live);
+        List<String> hypotheses=hypothesisText(live);
+        DmzReplayProvenance.SourceCheckpoint sources=DmzReplayProvenance.sourceCheckpoint(live);
+        RecordedPathRun previous=RECORDED_PATH_WORK.get();
+        RECORDED_PATH_WORK.remove();
+        try { liveVisitor.visit(this,live,liveKind,liveVariant++); }
+        finally {
+            boolean leaked=RECORDED_PATH_WORK.get()!=null;
+            if(previous==null)RECORDED_PATH_WORK.remove(); else RECORDED_PATH_WORK.set(previous);
+            if(leaked || !state.equals(DmzObservationStateFingerprint.capture(live))
+                    || !hypotheses.equals(hypothesisText(live)) || !sources.isCurrent(live))
+                throw new IllegalStateException("Live continuation changed its parent boundary");
+            requireAuthorityCurrent();
+        }
+    }
+    /** Ordered input dispatch visits both initial sides and every audited conditional terminal while live. */
+    ConditionalQueryResult visitCandidate(org.kanger.interfaces.IContextResults.Revision source,long sourceRule,
+            String candidate,String query,int auditBudget,int lookupBudget,ConditionalQueryLimits limits,
+            DmzReplayProvenance journal,LiveBranchVisitor visitor) throws Exception {
+        if(journal==null)throw new IllegalArgumentException("Explicit active journal required");
+        journal.requireActiveJournal();
+        if(liveVisitor!=null || visitor==null || limits==null)throw new IllegalStateException("Exclusive live visitor required");
+        validateCandidate(source,sourceRule,candidate,query,auditBudget,lookupBudget);
+        CandidateAssessment assessment=assessCandidate(candidate,auditBudget);
+        liveVisitor=visitor;visitJournal=journal;liveVariant=0;
+        try {
+            if(assessment.disposition==CandidateDisposition.REJECT_Q) {
+                liveKind=InputVisitKind.DECLINED_Q;notifyLiveBranch(transaction.mind());return null;
+            }
+            SymmetricProjection projected;
+            if(assessment.disposition==CandidateDisposition.NEEDS_BRANCHING) {
+                projected=projectSymmetric(conflictEvidence(candidate,auditBudget),limits.projection);
+                try(NativeSupportChoice kept=beginSupportChoice(projected,SupportChoice.KEEP_EXISTING,limits.application)) {
+                    liveKind=InputVisitKind.KEEP_EXISTING;notifyLiveBranch(kept.transaction.mind());
+                }
+                liveKind=InputVisitKind.KEEP_CANDIDATE;
+            } else {
+                ConflictEvidence neutral=new ConflictEvidence(this,assessment,java.util.Collections.<ConflictSupport>emptyList(),
+                        DmzObservationStateFingerprint.capture(transaction.mind()),DmzReplayProvenance.sourceCheckpoint(transaction.mind()));
+                projected=new SymmetricProjection(neutral,java.util.Collections.<ProjectedGround>emptyList());
+                liveKind=assessment.disposition==CandidateDisposition.REUSE_PRIMARY ? InputVisitKind.REUSED_PRIMARY : InputVisitKind.ADMITTED;
+            }
+            ConditionalQueryResult result;
+            try(NativeSupportChoice selected=beginSupportChoice(projected,SupportChoice.KEEP_CANDIDATE,limits.application)) {
+                result=selected.executeConditionalQuery(source,sourceRule,candidate,query,auditBudget,limits.recognition,
+                        limits.projection,limits.application,limits.query,limits.depth,limits.nodes,limits.work);
+            }
+            if(result.disposition==ConditionalQueryDisposition.DECLINED_BY_Q) {
+                liveKind=InputVisitKind.DECLINED_Q;notifyLiveBranch(transaction.mind());
+            }
+            return result;
+        } finally { liveVisitor=null;visitJournal=null;liveKind=null;requireAuthorityCurrent(); }
     }
     private static DmzStoredRetractionTransaction begin(DmzAcceptanceProofGuard guard, DmzStoredProof proof,
             DmzProofWitnesses.Witness blocked, Mind target, int budget, boolean continuationOnly) throws Exception {
@@ -193,9 +280,16 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 List<ConflictSupport> supports, String state, DmzReplayProvenance.SourceCheckpoint sources) {
             this.owner = owner; this.assessment = assessment; this.state = state; this.sources = sources;
             this.supports = java.util.Collections.unmodifiableList(new ArrayList<ConflictSupport>(supports));
-            DmzProofWitnesses.Witness first = supports.get(0).witness;
-            TerminalSupportCapture.Ground opposing = first.graph.observed.nodes.get(first.node).ground;
-            this.candidate = new TerminalSupportCapture.Ground(opposing.predicate, !opposing.sign, opposing.arguments);
+            if(supports.isEmpty()) {
+                if(assessment.disposition!=CandidateDisposition.PROBE_NEW_INPUT && assessment.disposition!=CandidateDisposition.REUSE_PRIMARY)
+                    throw new IllegalArgumentException("Neutral input assessment required");
+                this.candidate=null; // Internal neutral input scaffold; never a conflict receipt.
+            }
+            else {
+                DmzProofWitnesses.Witness first = supports.get(0).witness;
+                TerminalSupportCapture.Ground opposing = first.graph.observed.nodes.get(first.node).ground;
+                this.candidate = new TerminalSupportCapture.Ground(opposing.predicate, !opposing.sign, opposing.arguments);
+            }
         }
         boolean isCurrent() throws Exception {
             return !owner.closed && owner.authorityState.equals(DmzObservationStateFingerprint.capture(owner.authorityTarget))
@@ -598,6 +692,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         private final TechnicalMindTransaction transaction;
         private final int budget;
         private final Object replayOwner = new Object();
+        private String neutralCandidate;
         private boolean closed;
         private NativeSupportChoice(DmzStoredRetractionTransaction owner, SymmetricProjection projection,
                 SupportChoice choice, TechnicalMindTransaction transaction, int budget, int hiddenRules) {
@@ -693,7 +788,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 for (DmzProofWitnesses.Witness cut : cuts)
                     gates.add(DmzTerminalRestriction.beginPendingChoice(child, cut));
                 QueryResult result;
-                try (DmzTerminalRestriction.QueryScope audit = DmzTerminalRestriction.prepareQuery(child, auditBudget);
+                try (DmzTerminalRestriction.QueryScope audit = owner.prepareContinuationQuery(child, auditBudget);
                         TechnicalMindTransaction query = TechnicalMindTransaction.beginIsolated(child)) {
                     result = querySnapshot(query.mind().query(statement, null, false), query.mind());
                 }
@@ -809,6 +904,11 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             if (!projection.isCurrent()) throw new IllegalStateException("Native support choice boundary changed");
             if (choice != SupportChoice.KEEP_CANDIDATE)
                 throw new IllegalStateException("Candidate admission requires candidate support choice");
+            if(projection.evidence.candidate==null) {
+                if(neutralCandidate==null)neutralCandidate=candidate;
+                else if(!neutralCandidate.equals(candidate))throw new IllegalArgumentException("Exact neutral replay candidate required");
+                return;
+            }
             int open = candidate.indexOf('(');
             boolean sign = !candidate.startsWith("!~");
             String predicate = candidate.substring(sign ? 1 : 2, open);
@@ -1236,16 +1336,26 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             try {
                 for (DmzProofWitnesses.Witness cut : cuts) gates.add(DmzTerminalRestriction.beginPendingAdmission(child, cut));
                 QueryResult result;
-                try (DmzTerminalRestriction.QueryScope audit = DmzTerminalRestriction.prepareQuery(child, auditBudget);
+                try (DmzTerminalRestriction.QueryScope audit = owner.prepareContinuationQuery(child, auditBudget);
                         TechnicalMindTransaction probe = TechnicalMindTransaction.beginIsolated(child)) {
                     InputKind input = classifyCurrent(probe.mind(), candidate, auditBudget, true,
                             DmzTerminalRestriction.activeNoGoods(probe.mind()));
                     if (input == InputKind.CONFLICT || input == InputKind.INCONSISTENT)
                         throw new IllegalStateException("Candidate retains an unexcluded branch conflict");
-                    if (input != InputKind.FRESH) throw new IllegalStateException("Fresh receipt candidate required");
-                    if (!Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(probe.mind(), source, sourceRule,
-                            DmzReplayProvenance.Authority.EXTERNAL, candidate)))
-                        throw new IllegalStateException("Support choice candidate was not accepted: " + candidate);
+                    if (projection.evidence.candidate==null && input==InputKind.EXISTING_PRIMARY && owner.visitJournal!=null) {
+                        int before=owner.visitJournal.snapshot().size();
+                        DmzReplayProvenance.replayRule(probe.mind(),source,sourceRule,DmzReplayProvenance.Authority.EXTERNAL,candidate);
+                        List<DmzReplayProvenance.Binding> after=owner.visitJournal.snapshot();
+                        if(after.size()!=before+1 || !after.get(before).duplicate
+                                || !existingPrimary(probe.mind(),candidate,auditBudget))
+                            throw new IllegalStateException("Exact primary source alias required");
+                    } else {
+                        if (input != InputKind.FRESH && !(projection.evidence.candidate==null && input==InputKind.SUPPORTED_DERIVED))
+                            throw new IllegalStateException("Fresh receipt candidate required");
+                        if (!Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(probe.mind(), source, sourceRule,
+                                DmzReplayProvenance.Authority.EXTERNAL, candidate)))
+                            throw new IllegalStateException("Support choice candidate was not accepted: " + candidate);
+                    }
                     DmzCurrentUnaryProofInventory inventory = DmzCurrentUnaryProofInventory.capture(probe.mind(), auditBudget, true);
                     if (!inventory.eligible) throw new IllegalStateException("Candidate continuation inventory unavailable");
                     if (classifyCurrent(probe.mind(), candidate, auditBudget, true,
@@ -1278,6 +1388,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                         }
                         throw fresh;
                     }
+                    owner.notifyLiveBranch(probe.mind());
                     QueryResult snapshot = querySnapshot(probe.mind().query(queryStatement, null, false), probe.mind());
                     result = new QueryResult(snapshot.value, snapshot.hypotheses, snapshot.hypothesisAssertions,
                             QueryResult.CandidateMode.NEW_INPUT);
@@ -1482,6 +1593,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                         remaining.kind == ConsequenceConflictKind.AUTHORITY ? ReplayQueryDisposition.DECLINED_BY_Q
                                 : ReplayQueryDisposition.NEEDS_BRANCHING, null, remaining);
                 Mind branch = child.mind();
+                owner.notifyLiveBranch(branch);
                 String queryState = DmzObservationStateFingerprint.capture(branch);
                 List<String> queryHypotheses = hypothesisText(branch);
                 DmzReplayProvenance.SourceCheckpoint querySources = DmzReplayProvenance.sourceCheckpoint(branch);
@@ -1577,11 +1689,22 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                 java.util.Set<DmzReplayProvenance.Binding> found, int[] work) {
             projectionWork(work);
             DmzReplayProvenance.Binding binding = witness.source;
-            if (witness.step == -1 && projection.evidence.candidate.equivalent(witness.graph.observed.nodes.get(witness.node).ground)
+            if (witness.step == -1 && (projection.evidence.candidate==null
+                    ? matchesNeutralCandidate(witness.graph.observed.nodes.get(witness.node).ground)
+                    : projection.evidence.candidate.equivalent(witness.graph.observed.nodes.get(witness.node).ground))
                     && binding.context.equals(source.getContextId()) && binding.revision == source.getRevision()
                     && binding.sourceRule == label && binding.authority == DmzReplayProvenance.Authority.EXTERNAL
                     && pending.contains(binding)) found.add(binding);
             for (DmzProofWitnesses.Witness premise : witness.premises) findCandidate(premise, pending, source, label, found, work);
+        }
+        private boolean matchesNeutralCandidate(TerminalSupportCapture.Ground ground) {
+            if(neutralCandidate==null || ground.arguments.size()!=1)return false;
+            int open=neutralCandidate.indexOf('(');
+            boolean sign=!neutralCandidate.startsWith("!~");
+            Object value=ground.arguments.get(0).materialize().getValue();
+            return ground.sign==sign && ground.predicate.equals(neutralCandidate.substring(sign ? 1 : 2,open))
+                    && value instanceof Number && new java.math.BigDecimal(value.toString()).compareTo(
+                            new java.math.BigDecimal(neutralCandidate.substring(open+1,neutralCandidate.length()-2)))==0;
         }
         private boolean sameReplayWitness(DmzProofWitnesses.Witness old, DmzProofWitnesses.Witness live,
                 DmzReplayProvenance.Binding oldCandidate, DmzReplayProvenance.Binding liveCandidate, int[] work) {
@@ -1879,7 +2002,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         List<String> previousHypotheses = hypothesisText(child);
         try {
             QueryResult result;
-            try (DmzTerminalRestriction.QueryScope audit = DmzTerminalRestriction.prepareQuery(child, auditBudget);
+            try (DmzTerminalRestriction.QueryScope audit = prepareContinuationQuery(child, auditBudget);
                 TechnicalMindTransaction query = TechnicalMindTransaction.beginIsolated(child)) {
                 Boolean value = query.mind().query(statement, null, false);
                 result = querySnapshot(value, query.mind());
@@ -1912,7 +2035,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                         && !Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(probe.mind(), source, sourceRule,
                                 DmzReplayProvenance.Authority.EXTERNAL, candidate)))
                     throw new IllegalStateException("Candidate was not accepted in isolated probe");
-                try (DmzTerminalRestriction.QueryScope audit = DmzTerminalRestriction.prepareQuery(probe.mind(), auditBudget)) {
+                try (DmzTerminalRestriction.QueryScope audit = prepareContinuationQuery(probe.mind(), auditBudget)) {
                     Boolean value = probe.mind().query(queryStatement, null, false);
                     QueryResult snapshot = querySnapshot(value, probe.mind());
                     result = new QueryResult(snapshot.value, snapshot.hypotheses, snapshot.hypothesisAssertions, mode);
