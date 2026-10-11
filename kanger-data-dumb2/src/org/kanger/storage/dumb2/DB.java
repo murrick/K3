@@ -1333,6 +1333,22 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         return Collections.unmodifiableMap(result);
     }
 
+    @Override
+    public synchronized org.kanger.interfaces.DmzSourcePlan prepareDmzSources(IMind sourceMind,
+            org.kanger.interfaces.DmzSourcePlan.Request request) throws Exception {
+        requireOpen();
+        if(!(sourceMind instanceof Mind) || sourceMind.getUser()!=user || user.getCurrentMind()!=sourceMind)
+            throw new CommandErrorException("DMZ source preflight requires the active storage Mind");
+        if(request==null)throw new IllegalArgumentException("Explicit DMZ source request required");
+        if(!request.expectedQ.getContextId().equals(getContextId()) || request.expectedQ.getRevision()!=getRevision())
+            throw new CommandErrorException("DMZ Q revision mismatch");
+        org.kanger.interfaces.DmzSourcePlan result=DmzSourcePreflight.inspect((Mind)sourceMind,sourceLocator(),request,
+                name -> location(name));
+        if(user.getCurrentMind()!=sourceMind || !request.expectedQ.getContextId().equals(getContextId())
+                || request.expectedQ.getRevision()!=getRevision())throw new CommandErrorException("DMZ Q boundary changed during preflight");
+        return result;
+    }
+
     private IContextFederation.Opinion localOpinion(Mind root, String locator, RevisionRef ref,
             boolean working, String query, List<org.kanger.SemanticTermSnapshot> parameters) throws Exception {
         return localOpinion(root, locator, ref, working, query, parameters, false);
