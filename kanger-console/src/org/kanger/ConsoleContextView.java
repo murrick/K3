@@ -193,6 +193,7 @@ final class ConsoleContextView {
         }
         System.out.println(
                 "Context " + history.getLocator());
+        System.out.println("UUID: " + history.getContextId());
         if (history.hasPinnedRevision()) {
             System.out.println(
                     "Pinned: "

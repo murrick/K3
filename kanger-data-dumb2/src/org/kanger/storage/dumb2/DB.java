@@ -1333,6 +1333,49 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         return Collections.unmodifiableMap(result);
     }
 
+    @Override
+    public synchronized org.kanger.interfaces.DmzSourcePlan prepareDmzSources(IMind sourceMind,
+            org.kanger.interfaces.DmzSourcePlan.Request request) throws Exception {
+        requireOpen();
+        if(!(sourceMind instanceof Mind) || sourceMind.getUser()!=user || user.getCurrentMind()!=sourceMind)
+            throw new CommandErrorException("DMZ source preflight requires the active storage Mind");
+        if(request==null)throw new IllegalArgumentException("Explicit DMZ source request required");
+        if(!request.expectedQ.getContextId().equals(getContextId()) || request.expectedQ.getRevision()!=getRevision())
+            throw new CommandErrorException("DMZ Q revision mismatch");
+        org.kanger.interfaces.DmzSourcePlan result=DmzSourcePreflight.inspect((Mind)sourceMind,sourceLocator(),request,
+                name -> location(name));
+        if(user.getCurrentMind()!=sourceMind || !request.expectedQ.getContextId().equals(getContextId())
+                || request.expectedQ.getRevision()!=getRevision())throw new CommandErrorException("DMZ Q boundary changed during preflight");
+        return result;
+    }
+
+    @Override
+    public synchronized org.kanger.interfaces.DmzSourcesQuery.Result executeDmzSources(IMind sourceMind,
+            org.kanger.interfaces.DmzSourcesQuery.Request request) throws Exception {
+        if(request==null)throw new IllegalArgumentException("Explicit DMZ execution request required");
+        if(!(sourceMind instanceof Mind))throw new CommandErrorException("DMZ execution requires a storage Mind");
+        try(DmzSourceSession session=openDmzCandidateSession((Mind)sourceMind,request.sources,request.limits.preparation)) {
+            return DmzSourceQueryProjection.execute(session,request);
+        }
+    }
+
+    /** Internal operation-local owner; never returned by public federation dispatch. */
+    synchronized DmzSourceSession openDmzCandidateSession(Mind sourceMind,
+            org.kanger.interfaces.DmzSourcePlan.Request request,int preparationBudget) throws Exception {
+        requireOpen();
+        if(sourceMind==null || sourceMind.getUser()!=user || user.getCurrentMind()!=sourceMind
+                || !sourceMind.isStorageUsed() || !(user instanceof User) || ((User)user).getData()!=this)
+            throw new CommandErrorException("DMZ session requires this provider's active storage Mind");
+        if(request==null)throw new IllegalArgumentException("Explicit DMZ source request required");
+        if(preparationBudget<1 || preparationBudget>10000)throw new IllegalArgumentException("Bounded DMZ preparation required");
+        if(!request.expectedQ.getContextId().equals(getContextId()) || request.expectedQ.getRevision()!=getRevision())
+            throw new CommandErrorException("DMZ Q revision mismatch");
+        if(hasConnectedContexts())throw new CommandErrorException("DMZ sessions with existing Context connections are not qualified");
+        org.kanger.DmzCandidateSession.requireSettledPhysicalQ(sourceMind);
+        DmzSourcePreflight.Inputs inputs=DmzSourcePreflight.acquire(sourceMind,sourceLocator(),request,name -> location(name));
+        return DmzSourceSession.open(this,sourceMind,inputs,preparationBudget);
+    }
+
     private IContextFederation.Opinion localOpinion(Mind root, String locator, RevisionRef ref,
             boolean working, String query, List<org.kanger.SemanticTermSnapshot> parameters) throws Exception {
         return localOpinion(root, locator, ref, working, query, parameters, false);

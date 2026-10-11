@@ -74,6 +74,7 @@ public final class CommandRegistry {
         RULES,
         PUBLISH,
         FORK,
+        DMZ,
         OPINIONS,
         VALUES,
         SOLVES,
@@ -215,6 +216,7 @@ public final class CommandRegistry {
         keyword(Family.CONTEXT, Keyword.DISCONNECT, "disconnect");
         keyword(Family.CONTEXT, Keyword.EXPLAIN, "explain");
         keyword(Family.CONTEXT, Keyword.ASK, "ask");
+        keyword(Family.CONTEXT, Keyword.DMZ, "dmz");
         keyword(Family.CONTEXT, Keyword.OPINIONS, "opinions");
         keyword(Family.CONTEXT, Keyword.VALUES, "values");
         keyword(Family.CONTEXT, Keyword.SOLVES, "solves");
@@ -324,6 +326,9 @@ public final class CommandRegistry {
         define(CommandIntent.STORAGE_REINDEX, "storage reindex <name>", "STORAGE", "Reindex one explicitly named storage.",
                 args("name", "Storage logical name."), aliases("reindex <name>"), n++);
 
+        define(CommandIntent.CTX_DMZ, "ctx dmz <Q-UUID>@<revision> <query> [from=<name>@<UUID>@<revision> ...] [<limit>=<value> ...]", "CONTEXT",
+                "Experimental ordered whole-source query on explicit pins. Defaults: rows/preparation/audit/lookup/recognition/projection/application/query=10000, depth=8, nodes=128, work=1000000, visits=1000. Stops require a fresh full invocation.",
+                args("request", "Explicit Q pin, quoted signed unary integer query, exact sources and bounded limits."), n++);
         define(CommandIntent.CTX_OPINIONS, "ctx opinions [<locator>]", "CONTEXT",
                 "Collect local-only opinions of the full last query in live X and exact direct pins.",
                 args("locator", "Optional source Context."), n++);

@@ -1,0 +1,422 @@
+{
+  "head": "a450c13f79610d6f5657ac2d4a3f6b2da5afd206",
+  "working_tree_dirty": true,
+  "production_sources": 473,
+  "drivers": 41,
+  "passed": 41,
+  "checks": 216791,
+  "results": [
+    {
+      "driver": "org.kanger.DmzAcceptanceProofGuardRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.264,
+      "checks": 28,
+      "count_reported": true,
+      "required_marker": "DMZ_ACCEPTANCE_PROOF_GUARD_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzApplicationSourcesRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.371,
+      "checks": 149,
+      "count_reported": true,
+      "required_marker": "DMZ_APPLICATION_SOURCES_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzCandidateSessionRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.38,
+      "checks": 29,
+      "count_reported": true,
+      "required_marker": "DMZ_CANDIDATE_SESSION_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzCollisionProofCaptureRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.37,
+      "checks": 74,
+      "count_reported": true,
+      "required_marker": "DMZ_COLLISION_PROOF_CAPTURE_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzConditionalQueryAllowanceRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 1.375,
+      "checks": 6,
+      "count_reported": true,
+      "required_marker": "DMZ_CONDITIONAL_EXACT_ALLOWANCE_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzConditionalResultContractRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 1.477,
+      "checks": 4580,
+      "count_reported": true,
+      "required_marker": "DMZ_CONDITIONAL_RESULT_CONTRACT_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzCurrentUnaryProofInventoryRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 1.217,
+      "checks": 292,
+      "count_reported": true,
+      "required_marker": "DMZ_CURRENT_UNARY_PROOF_INVENTORY_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzLegacyHypothesisContractRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 186.309,
+      "checks": 86598,
+      "count_reported": true,
+      "required_marker": "DMZ_LEGACY_NATIVE_SCOPE_CLEANUP_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzLiveBranchContinuationRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.394,
+      "checks": 32,
+      "count_reported": true,
+      "required_marker": "DMZ_LIVE_BRANCH_CONTINUATION_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzNativeAlternativeProofRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.964,
+      "checks": 490,
+      "count_reported": true,
+      "required_marker": "DMZ_NATIVE_ALTERNATIVE_PROOF_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzNativeCollisionSourcesRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.651,
+      "checks": 390,
+      "count_reported": true,
+      "required_marker": "DMZ_NATIVE_COLLISION_SOURCES_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzNativeRecursiveContinuationRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 171.89,
+      "checks": 86598,
+      "count_reported": true,
+      "required_marker": "DMZ_NATIVE_RECURSIVE_CONTINUATION_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzNeutralCandidateWorkflowRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 4.298,
+      "checks": 191,
+      "count_reported": true,
+      "required_marker": "DMZ_NEUTRAL_CANDIDATE_WORKFLOW_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzObservationCheckpointRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.423,
+      "checks": 20,
+      "count_reported": true,
+      "required_marker": "DMZ_OBSERVATION_CHECKPOINT_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzObservedProofGraphRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.35,
+      "checks": 46,
+      "count_reported": true,
+      "required_marker": "DMZ_OBSERVED_PROOF_GRAPH_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzRecursiveNoGoodRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.803,
+      "checks": 160,
+      "count_reported": true,
+      "required_marker": "DMZ_RECURSIVE_NO_GOOD_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzReplayQueryCascadeRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 147.681,
+      "checks": 32242,
+      "count_reported": true,
+      "required_marker": "DMZ_REPLAY_QUERY_CASCADE_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzReplaySettlementRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.191,
+      "checks": 22,
+      "count_reported": true,
+      "required_marker": "DMZ_REPLAY_SETTLEMENT_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzSourceCandidatesRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.169,
+      "checks": 24,
+      "count_reported": true,
+      "required_marker": "DMZ_SOURCE_CANDIDATES_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzSourcedAcceptanceRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.319,
+      "checks": 68,
+      "count_reported": true,
+      "required_marker": "DMZ_SOURCED_ACCEPTANCE_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzStoredProductionRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.396,
+      "checks": 144,
+      "count_reported": true,
+      "required_marker": "DMZ_STORED_PRODUCTION_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzStoredProofGuardRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.321,
+      "checks": 82,
+      "count_reported": true,
+      "required_marker": "DMZ_STORED_PROOF_GUARD_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzStoredProofRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.259,
+      "checks": 88,
+      "count_reported": true,
+      "required_marker": "DMZ_STORED_PROOF_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzStoredRestrictionProbeRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.602,
+      "checks": 225,
+      "count_reported": true,
+      "required_marker": "DMZ_STORED_RESTRICTION_PROBE_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzStoredRouteCoverageRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.244,
+      "checks": 12,
+      "count_reported": true,
+      "required_marker": "DMZ_STORED_ROUTE_COVERAGE_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzTerminalSupportCaptureRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.314,
+      "checks": 253,
+      "count_reported": true,
+      "required_marker": "DMZ_TERMINAL_SUPPORT_CAPTURE_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzTransactionBranchProbeRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 1.019,
+      "checks": 523,
+      "count_reported": true,
+      "required_marker": "DMZ_TRANSACTION_BRANCH_PROBE_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzTransactionObservationRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.213,
+      "checks": 31,
+      "count_reported": true,
+      "required_marker": "DMZ_TRANSACTION_OBSERVATION_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzUnaryProofCoverageRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.41,
+      "checks": 63,
+      "count_reported": true,
+      "required_marker": "DMZ_UNARY_PROOF_COVERAGE_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzUnaryStateDeltaRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.239,
+      "checks": 39,
+      "count_reported": true,
+      "required_marker": "DMZ_UNARY_STATE_DELTA_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzWholeSourcePlanRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 1.506,
+      "checks": 80,
+      "count_reported": true,
+      "required_marker": "DMZ_WHOLE_SOURCE_PLAN_PASS"
+    },
+    {
+      "driver": "org.kanger.DmzWitnessConflictsRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.255,
+      "checks": 48,
+      "count_reported": true,
+      "required_marker": "DMZ_WITNESS_CONFLICTS_PASS"
+    },
+    {
+      "driver": "org.kanger.KangerCanonicalConsoleInputContractRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.051,
+      "checks": 0,
+      "count_reported": false,
+      "required_marker": "PASS: Canonical Console logical-input and parse-diagnostic boundary qualified"
+    },
+    {
+      "driver": "org.kanger.command.CommandParserConformanceTest",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.095,
+      "checks": 603,
+      "count_reported": true,
+      "required_marker": "KANGER command parser conformance PASS:"
+    },
+    {
+      "driver": "org.kanger.storage.dumb2.DmzConsoleWorkflowRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 1.122,
+      "checks": 52,
+      "count_reported": true,
+      "required_marker": "DMZ_CONSOLE_WORKFLOW_PASS"
+    },
+    {
+      "driver": "org.kanger.storage.dumb2.DmzProviderReplayRegressionRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.473,
+      "checks": 57,
+      "count_reported": true,
+      "required_marker": "DMZ_PROVIDER_REPLAY_REGRESSION_PASS"
+    },
+    {
+      "driver": "org.kanger.storage.dumb2.DmzSourcePreflightRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 0.577,
+      "checks": 50,
+      "count_reported": true,
+      "required_marker": "DMZ_SOURCE_PREFLIGHT_PASS"
+    },
+    {
+      "driver": "org.kanger.storage.dumb2.DmzSourceSequenceRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 113.465,
+      "checks": 1960,
+      "count_reported": true,
+      "required_marker": "DMZ_SOURCE_SEQUENCE_PASS"
+    },
+    {
+      "driver": "org.kanger.storage.dumb2.DmzSourceSessionRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 1.312,
+      "checks": 58,
+      "count_reported": true,
+      "required_marker": "DMZ_SOURCE_SESSION_PASS"
+    },
+    {
+      "driver": "org.kanger.storage.dumb2.DmzSourcesQueryRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 1.3,
+      "checks": 52,
+      "count_reported": true,
+      "required_marker": "DMZ_SOURCES_QUERY_PASS"
+    },
+    {
+      "driver": "org.kanger.storage.dumb2.DmzUnitSourceSessionRunner",
+      "passed": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 6.308,
+      "checks": 332,
+      "count_reported": true,
+      "required_marker": "DMZ_UNIT_SOURCE_SESSION_PASS"
+    }
+  ],
+  "final_manifest_verified_against_retained_logs": true,
+  "qualification_note": "Production sources equal stage-96 commit 133624959bd9cc62128416918a0446a726b3d9e6 (published); local equivalent a450c13f. New stage-97 qualification wrapper/harness compiled and executed. Final manifest requires final suite markers; retained JVM logs were checked against every marker. Count includes the native recursive matrix repeated by the same-JVM legacy cleanup driver; uncounted assertions are not invented."
+}

@@ -358,6 +358,22 @@ public final class CanonicalConsole {
                 }
                 return same(mind);
 
+            case CTX_DMZ:
+                try {
+                    CanonicalCommandProcessor.Result dmz=COMMAND_PROCESSOR.execute(invocation,mind.getUser());
+                    if(!dmz.isHandled() || dmz.getDmzResult()==null)throw new CommandErrorException("Unsupported DMZ operation");
+                    mind=track(shutdownHook,dmz.getMind());
+                    ConsoleDmzView.show(dmz.getDmzResult());
+                } catch(org.kanger.interfaces.DmzSourcesQuery.PlanningRefusal refusal) {
+                    System.err.println("DMZ refused: "+refusal.reason
+                            +(refusal.context==null ? "" : " at "+refusal.context+":"+refusal.rule)+": "+refusal.getMessage());
+                } catch(Exception refusal) {
+                    String reason=refusal.getMessage();
+                    if(reason==null || reason.isEmpty())reason=refusal.toString();
+                    throw new CommandErrorException("DMZ refused: "+reason);
+                }
+                return same(mind);
+
             case CTX_OPINIONS:
             case CTX_VALUES:
             case CTX_SOLVES:

@@ -473,7 +473,7 @@ public final class CommandParser {
         }
         Keyword keyword;
         try {
-            keyword = CommandRegistry.resolveKeyword(
+            keyword = "dmz".equalsIgnoreCase(tokens.get(1).value) ? Keyword.DMZ : CommandRegistry.resolveKeyword(
                     Family.CONTEXT, tokens.get(1).value,
                     Keyword.CONNECT, Keyword.DISCONNECT, Keyword.CLOSE,
                     Keyword.SWITCH, Keyword.VERSION,
@@ -486,6 +486,13 @@ public final class CommandParser {
             return parseContextIsolatedQuery(raw);
         }
         switch (keyword) {
+            case DMZ:
+                requireRequiredArgument(tokens,4);
+                List<String> dmzOptions=new ArrayList<String>();
+                for(int i=4;i<tokens.size();++i)dmzOptions.add(tokens.get(i).value);
+                try { return CommandInvocation.command(CommandIntent.CTX_DMZ,
+                        args("request",DmzCommandArguments.parse(tokens.get(2).value,tokens.get(3).value,dmzOptions)),raw); }
+                catch(IllegalArgumentException invalid) { throw error(INVALID_ARGUMENT_SHAPE,invalid.getMessage()); }
             case OPINIONS:
             case VALUES:
             case SOLVES:

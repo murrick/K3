@@ -754,6 +754,7 @@ public class Linker {
                         for (Domain master : treeMaster) {
                             statistics.incrementDomainPairs();
                             if (master.getPredicateId() == slave.getPredicateId() && master.isAntc() != slave.isAntc()) {
+                                if (DmzTerminalRestriction.deniesQueryPair(mind, master, slave)) continue;
                                 long operationId = statistics.incrementUnificationAttempts(
                                         currentPass == 1, rule.isQuery(), rule.isGenerated());
                                 int operationEffects = 0;
@@ -1016,6 +1017,7 @@ public class Linker {
         if (r != null) {
 
             if (occurrs) {
+                TerminalSupportCapture.recordMatch(mind, master, slave, list, result);
                 Cause s = new Cause(master, slave, mind);
                 if (!causes.containsKey(r)) {
                     causes.put(r, new HashSet<>());
@@ -1145,6 +1147,9 @@ public class Linker {
 
             if (candidates.size() == 1) {
                 for (Domain d : candidates) {
+                    if (DmzTerminalRestriction.denies(mind, d, tree)) continue;
+                    TerminalSupportCapture.record(mind, d, causes.get(d.getRule()));
+                    TerminalSupportCapture.recordApplication(mind, d, tree, tvars);
                     occurs = true;
                     if (!d.isStored(mind) && (d.setCauses(causes.get(d.getRule()), mind) || !calculated.isEmpty() || !excluded.isEmpty())) {
                         boolean term = false;
@@ -1171,6 +1176,11 @@ public class Linker {
             } else if (!excluded.isEmpty() && candidates.isEmpty() && stored.isEmpty()) {
                 occurs = true;
                 for (Domain d : excluded) {
+                    if (DmzTerminalRestriction.denies(mind, d, tree)) continue;
+                    // Opposite stored conclusions can close every literal before a
+                    // recursive production is materialized. Retain its qualified
+                    // application while bindings and excluded premises are live.
+                    TerminalSupportCapture.recordApplication(mind, d, tree, tvars);
                     if (!d.isStored(mind) && d.setCauses(causes.get(d.getRule()), mind)) {
                         result = true;
                         d.setProduced(mind);
@@ -1314,6 +1324,7 @@ public class Linker {
                         ((Rule) x).getSolves().clear();
                         ((Rule) x).getSolves().addAll(d.getSolves(mind));
                     }
+                    TerminalSupportCapture.recordStored(mind, d, x);
                 }
             }
         }

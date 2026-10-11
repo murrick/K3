@@ -50,6 +50,7 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.STORAGE_CLOSE
                 || intent == CommandIntent.STORAGE_DROP
                 || intent == CommandIntent.STORAGE_REINDEX
+                || intent == CommandIntent.CTX_DMZ
                 || intent == CommandIntent.CTX_OPINIONS
                 || intent == CommandIntent.CTX_VALUES
                 || intent == CommandIntent.CTX_SOLVES
@@ -310,6 +311,15 @@ public final class CanonicalCommandProcessor {
                 org.kanger.interfaces.IContextResults.Revision fork = mind.forkContext(locator);
                 return Result.successFederation(mind, "Context forked: " + locator + "@" + fork.getRevision(),
                         federation.federationSnapshot(), null);
+            }
+
+            case CTX_DMZ: {
+                IContextFederation federation=contextFederation(user,mind);
+                Object request=invocation.getArgument("request");
+                if(!(request instanceof org.kanger.interfaces.DmzSourcesQuery.Request))
+                    throw new IllegalArgumentException("Explicit DMZ request required");
+                return Result.successDmz(mind,federation.executeDmzSources(mind,
+                        (org.kanger.interfaces.DmzSourcesQuery.Request)request));
             }
 
             case CTX_OPINIONS:
@@ -752,6 +762,7 @@ public final class CanonicalCommandProcessor {
         private final IContextFederation.ExplainResult contextExplainResult;
         private final List<IContextFederation.RuleBlock> contextRules;
         private final java.util.Map<String, IContextFederation.Opinion> contextOpinions;
+        private final org.kanger.interfaces.DmzSourcesQuery.Result dmzResult;
 
         private Result(boolean handled,
                        boolean success,
@@ -808,6 +819,15 @@ public final class CanonicalCommandProcessor {
                 IContextFederation.QueryResult federationQueryResult, IContextFederation.VersionHistory contextVersionHistory,
                 IContextFederation.ExplainResult contextExplainResult, List<IContextFederation.RuleBlock> contextRules,
                 java.util.Map<String, IContextFederation.Opinion> contextOpinions) {
+            this(handled,success,mind,description,storageStatus,rejection,transactionStatus,federationSnapshot,
+                    federationQueryResult,contextVersionHistory,contextExplainResult,contextRules,contextOpinions,null);
+        }
+        private Result(boolean handled,boolean success,IMind mind,String description,StorageStatus storageStatus,
+                Rejection rejection,TransactionStatus transactionStatus,IContextFederation.Snapshot federationSnapshot,
+                IContextFederation.QueryResult federationQueryResult,IContextFederation.VersionHistory contextVersionHistory,
+                IContextFederation.ExplainResult contextExplainResult,List<IContextFederation.RuleBlock> contextRules,
+                java.util.Map<String,IContextFederation.Opinion> contextOpinions,org.kanger.interfaces.DmzSourcesQuery.Result dmzResult) {
+            this.dmzResult=dmzResult;
             this.contextOpinions = contextOpinions;
             this.handled = handled;
             this.success = success;
@@ -870,6 +890,10 @@ public final class CanonicalCommandProcessor {
                 java.util.Map<String, IContextFederation.Opinion> opinions) {
             return new Result(true, true, mind, "", null, null, null, snapshot, null, null, null, null, opinions);
         }
+        private static Result successDmz(IMind mind,org.kanger.interfaces.DmzSourcesQuery.Result result) {
+            return new Result(true,true,mind,"",null,null,null,null,null,null,null,null,null,result);
+        }
+        public org.kanger.interfaces.DmzSourcesQuery.Result getDmzResult() { return dmzResult; }
         public java.util.Map<String, IContextFederation.Opinion> getContextOpinions() { return contextOpinions; }
 
         private static Result successContextRules(IMind mind,IContextFederation.Snapshot snapshot,List<IContextFederation.RuleBlock> rules) {

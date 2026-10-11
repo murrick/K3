@@ -262,6 +262,35 @@ class CanonicalCommandRuntimeReactorTest {
                 "Missing session token escaped into legacy runtime");
     }
 
+    @Test
+    void dmzConsoleIntentRemainsExplicitlyUnboundOnServer() throws Exception {
+        Fixture fixture = fixture("dmz-unbound");
+        try {
+            assertTrue(fixture.root.compile("!dmzauthority(1);", null, false));
+            long rules = fixture.root.getRules().size();
+            int level = fixture.root.getTransactionLevel();
+            AtomicInteger escaped = new AtomicInteger();
+            IReactor<JSONObject> reactor = new CanonicalErrorBoundaryReactor(canonicalChain(escaped));
+            String command = "ctx dmz " + UUID.randomUUID() + "@1 ?dmzauthority(1);";
+            JSONObject response = invoke(reactor, fixture.token, command);
+            assertEquals("error", response.optString("result"), response.toString());
+            assertEquals("canonical_intent_not_bound", response.optString("code"));
+            assertEquals("CTX_DMZ", response.optString(CanonicalCommandIngressReactor.CANONICAL_INTENT_FIELD));
+            assertEquals(0, escaped.get(), "DMZ escaped into legacy query execution");
+            assertEquals(fixture.root, fixture.user.getCurrentMind());
+            assertEquals(rules, fixture.root.getRules().size());
+            assertEquals(level, fixture.root.getTransactionLevel());
+            assertTrue(Boolean.TRUE.equals(fixture.root.query("?dmzauthority(1);", null, false)));
+            JSONObject malformed = invoke(reactor, fixture.token, command + " visits=0");
+            assertEquals("command_parse_error", malformed.optString("code"));
+            JSONObject following = invoke(reactor, fixture.token, "status core objects");
+            assertEquals("OK", following.optString("result"), following.toString());
+            assertEquals(0, escaped.get(), "Refused DMZ changed canonical routing");
+        } finally {
+            fixture.close();
+        }
+    }
+
     private IReactor<JSONObject> canonicalChain(final AtomicInteger escaped) {
         IReactor<JSONObject> legacy = new IReactor<JSONObject>() {
             @Override

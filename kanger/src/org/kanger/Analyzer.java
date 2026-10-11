@@ -297,6 +297,7 @@ public class Analyzer {
 
 
     private void recordCollision(Rule left, Rule right) throws Exception {
+        CollisionProofCapture.record(mind, left, right);
         ContextQualification.CollisionWitness witness =
                 new ContextQualification.CollisionWitness(
                         diagnosticRule(left), diagnosticRule(right));

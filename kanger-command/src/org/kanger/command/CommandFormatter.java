@@ -115,6 +115,8 @@ public final class CommandFormatter {
             case STORAGE_REINDEX:
                 return "storage reindex " + argument(invocation.getArgument("name"));
 
+            case CTX_DMZ:
+                return dmz((org.kanger.interfaces.DmzSourcesQuery.Request)invocation.getArgument("request"));
             case CTX_OPINIONS:
                 return optionalArgumentCommand("ctx opinions", invocation.getArgument("locator"));
             case CTX_VALUES:
@@ -242,6 +244,19 @@ public final class CommandFormatter {
             throw new IllegalArgumentException(name + " must be numeric");
         }
         return String.valueOf(((Number) value).longValue());
+    }
+
+    private String dmz(org.kanger.interfaces.DmzSourcesQuery.Request request) {
+        StringBuilder out=new StringBuilder("ctx dmz ").append(DmzCommandArguments.pin(request.sources.expectedQ))
+                .append(' ').append(argument(request.queryStatement));
+        for(org.kanger.interfaces.DmzSourcePlan.Selection source:request.sources.external)
+            out.append(' ').append(argument("from="+source.locator+"@"+DmzCommandArguments.pin(source.revision)));
+        org.kanger.interfaces.DmzSourcesQuery.Limits l=request.limits;
+        String[] keys={"rows","preparation","audit","lookup","recognition","projection","application","query","depth","nodes","work","visits"};
+        int[] values={request.sources.maximumRows,l.preparation,l.audit,l.lookup,l.recognition,l.projection,l.application,l.query,l.depth,l.nodes,l.work,l.maximumVisits};
+        int[] defaults={10000,10000,10000,10000,10000,10000,10000,10000,8,128,1000000,1000};
+        for(int i=0;i<keys.length;++i)if(values[i]!=defaults[i])out.append(' ').append(keys[i]).append('=').append(values[i]);
+        return out.toString();
     }
 
     private String argument(Object value) {

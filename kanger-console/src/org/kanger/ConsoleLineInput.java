@@ -18,6 +18,7 @@ import org.jline.reader.UserInterruptException;
 import org.jline.reader.impl.history.DefaultHistory;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import org.jline.terminal.impl.DumbTerminal;
 import org.kanger.enums.Enums;
 import org.kanger.interfaces.IUser;
 
@@ -81,12 +82,11 @@ final class ConsoleLineInput implements AutoCloseable {
                     .system(true)
                     .build();
         }
-        return TerminalBuilder.builder()
-                .system(false)
-                .streams(new NonClosingInputStream(System.in),
-                        new NonClosingOutputStream(System.out))
-                .type("dumb")
-                .build();
+        // A finite redirected stream must reach the reader before EOF. The
+        // external-terminal pump can close its pipe while buffered commands
+        // remain unread (observed on Java 8). Read redirected input directly.
+        return new DumbTerminal(new NonClosingInputStream(System.in),
+                new NonClosingOutputStream(System.out));
     }
 
     String readCommand() throws IOException {

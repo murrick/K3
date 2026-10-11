@@ -210,3 +210,104 @@ Pair-rejection smoke: connect a target containing male(John) and ~(male(x),femal
 Console ctx opinions progress: fast/cached collections remain silent. After 500 ms, a running collection prints `Collecting context opinions...`, then adds a dot every 10 seconds. Completion or failure closes the line before the result/error. Inference remains on the command thread; the daemon timer only prints progress.
 
 Ordinary federated proof smoke: A:p→q, B:q→r, C:p(John), X:p(Mary). Query ?$x r(x), then solution tree for each returned id. Mary must expand B→A→X and John B→A→C, including both native rules and the original p fact, exact revisions, and `[configured by X]` for an edited connection view. Repeat after a fresh query to check stale provenance is cleared. ctx opinions may remain empty: isolated sources cannot prove the entire federated query. Java combined trees are available through ContextProofProjection.solution(mind, rule).causes; Server adds context_proof alongside legacy causes. No provenance is published to storage.
+
+## Experimental whole-source DMZ query
+
+DMZ uses a settled physical Q with no active child transaction/reservation and no
+existing Context connections. Inspect names and published revisions without
+connecting them:
+
+```text
+ctx version Q
+ctx version A
+ctx version B
+```
+
+History output includes `UUID:` and the published revision list. Select the exact
+Q revision currently open and an explicit published revision of every source:
+
+```text
+ctx dmz <Q-UUID>@<revision> "?left(2);" from=A@<A-UUID>@<revision> from=B@<B-UUID>@<revision>
+```
+
+Replace each placeholder using the displayed history. `dmz` is an exact keyword;
+existing `ctx d A` still means disconnect. A source name containing spaces uses
+one quoted token, for example `"from=Named Context@<UUID>@<revision>"`. Names and
+pins are supplied separately for every source; omitting sources queries only Q.
+There is no implicit CURRENT/HEAD selection or automatic trust connection.
+
+Append named limits when needed, for example `visits=2 work=1000`. Accepted limits
+are rows, preparation, audit, lookup, recognition, projection, application, query,
+depth, nodes, work and visits. Defaults are 10000 for rows and each phase, depth=8,
+nodes=128, work=1000000 and visits=1000. Phase/rows/nodes/visits values must be
+1..10000, depth 1..16, work 1..1000000. Unknown/repeated limits, duplicate Context
+pins, Q as an external source, noncanonical UUIDs and missing pins are refused.
+The output shows the actual profile, authority pin and source inventories.
+
+The explicit policy admits all fixed unit implications before grounds, then
+orders source grounds by Context UUID string and source-local rule ID. Supported
+external primaries are signed unary integer grounds and signed unary implications
+sharing one quantified variable. Every primary must be supported, with at most
+16 grounds and 64 units; no unsupported input or capacity overflow is silently
+skipped. Source generated caches are reported and excluded. Arbitrary productions,
+order-independent/maximal theory enumeration and production alternatives remain
+outside this experimental operation.
+
+Smoke fixtures: Q contains `!authority(1);`, A contains `!left(2);`, B contains
+`!~left(2); !~authority(1);`. Query `?left(2);` and expect separate TRUE/FALSE
+opinions, per-input decisions including DECLINED_Q, and unchanged Q. A source with
+`!source(3); !@x source(x) -> result(x);` answers `?result(3);` only inside DMZ.
+A production-only source `!@x authority(x) -> more(x);` can answer `?more(1);`
+from Q; it does not add more(1) to Q. Named empty sources retain an inventory.
+
+The Console distinguishes COMPLETE under the displayed ordered policy from
+PARTIAL. A visit stop shows the interrupted input/prefix; conditional stops show
+their event/frontier reasons. Completed leaves before a stop are explicitly
+partial historical observations. Retry by issuing a fresh complete command with
+explicit pins and suitable limits. There is no resume/replay command for a saved
+history. Hypotheses are diagnostic and are never accepted automatically.
+
+Planning refuses unsupported primary origins with a typed reason and exact
+Context/rule identity, or reports GROUND_LIMIT/PRODUCTION_LIMIT. Revision/name,
+acquisition, fixed-unit, audit and query failures display a DMZ refusal and return
+to the prompt. Follow any refusal with a valid query, close/reopen Q, and verify
+its declarations and topology. Existing connections are not modified by this
+operation. The shared canonical processor carries a detached SDK result; Server
+has no DMZ transport binding yet and explicitly refuses the new intent.
+
+## Repeat the combined DMZ qualification gate
+
+With a JDK providing javac and Python 3:
+
+```sh
+python3 scripts/qualify-dmz.py
+```
+
+With a Java runtime and an ECJ jar:
+
+```sh
+python3 scripts/qualify-dmz.py --ecj /path/to/ecj.jar --jobs 3
+```
+
+The explicit gate manifest is kanger-qualification/test-data/dmz-suite.txt. A run
+compiles fresh Java 8-target production and qualification classes, then executes
+41 driver processes including the large recursive/cascade matrices, same-JVM
+legacy hypothesis cleanup, pinned/portable replay cleanup, public provider and
+real Console workflow. Existing repository JLine/Jansi jars are used. This does
+not require an installed DUMB plugin or select a user's real storage.
+
+Each invocation writes a fresh run directory under target/dmz-qualification
+(or --output), with compiler/driver logs and report.json. --jobs is 1..8; --timeout
+sets seconds per driver (default 900). A timeout, nonzero exit or absent final
+suite marker fails the command. The aggregate printed check count includes the
+recursive matrix repeated inside the legacy cleanup driver; gates without a
+published count are still required to pass and are not assigned fictitious
+counts. This is a standalone experimental DMZ gate, not full Maven reactor,
+packaging or release qualification.
+
+The KANGER DMZ GitHub Actions workflow runs this same manifest for relevant
+DMZ/develop changes and PRs targeting develop/3.8.0, and retains compiler/driver
+logs plus report.json as an artifact. Repository Maven/Server/bundle checks run
+separately. Server's canonical transport intentionally returns
+canonical_intent_not_bound for CTX_DMZ; it does not execute the Console-only
+operation via a legacy query fallback.

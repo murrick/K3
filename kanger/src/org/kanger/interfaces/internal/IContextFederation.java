@@ -635,6 +635,19 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
             List<org.kanger.SemanticTermSnapshot> parameters) throws Exception {
         throw new UnsupportedOperationException("Context opinions are not supported by this provider");
     }
+    /** Experimental explicit source inspection only; returned metadata is not a DMZ execution permission. */
+    default org.kanger.interfaces.DmzSourcePlan prepareDmzSources(IMind sourceMind,
+            org.kanger.interfaces.DmzSourcePlan.Request request) throws Exception {
+        throw new UnsupportedOperationException("DMZ source preflight is not supported by this provider");
+    }
+
+    /** Experimental fresh exact-pinned whole-source DMZ query. No owner escapes this operation.
+     * Planning refusals are typed; acquisition/phase failures propagate as exceptions.
+     * A bounded stop returns partial histories with restartRequired, never a complete answer. */
+    default org.kanger.interfaces.DmzSourcesQuery.Result executeDmzSources(IMind sourceMind,
+            org.kanger.interfaces.DmzSourcesQuery.Request request) throws Exception {
+        throw new UnsupportedOperationException("DMZ source execution is not supported by this provider");
+    }
 
     /**
      * Executes one local-only diagnostic query against X or one explicitly

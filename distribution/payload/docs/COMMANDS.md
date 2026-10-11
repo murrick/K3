@@ -537,13 +537,77 @@ operator commands do not bypass that boundary.
 ### `ctx version [<locator>]`
 
 Shows immutable revision history. Without a locator it shows the initiating
-Context. With a locator it accepts that Context itself or one direct working
-connection.
+Context. With a locator it reads any existing named Context without adding a connection.
+The output includes its UUID and published revisions for explicit DMZ pins.
 
 For a connected Context the projection shows both the exact `PINNED` revision
 and its informational `CURRENT` revision. Revision descriptions come from the
 immutable revision manifest. The command is read-only: it does not notify,
 follow HEAD, switch pins or publish anything.
+
+### `ctx dmz <Q-UUID>@<revision> <query> [from=<name>@<UUID>@<revision> ...] [<limit>=<value> ...]`
+
+DMZ uses a settled physical Q with no active child transaction/reservation and no
+existing Context connections. Inspect names and published revisions without
+connecting them:
+
+```text
+ctx version Q
+ctx version A
+ctx version B
+```
+
+History output includes `UUID:` and the published revision list. Select the exact
+Q revision currently open and an explicit published revision of every source:
+
+```text
+ctx dmz <Q-UUID>@<revision> "?left(2);" from=A@<A-UUID>@<revision> from=B@<B-UUID>@<revision>
+```
+
+Replace each placeholder using the displayed history. `dmz` is an exact keyword;
+existing `ctx d A` still means disconnect. A source name containing spaces uses
+one quoted token, for example `"from=Named Context@<UUID>@<revision>"`. Names and
+pins are supplied separately for every source; omitting sources queries only Q.
+There is no implicit CURRENT/HEAD selection or automatic trust connection.
+
+Append named limits when needed, for example `visits=2 work=1000`. Accepted limits
+are rows, preparation, audit, lookup, recognition, projection, application, query,
+depth, nodes, work and visits. Defaults are 10000 for rows and each phase, depth=8,
+nodes=128, work=1000000 and visits=1000. Phase/rows/nodes/visits values must be
+1..10000, depth 1..16, work 1..1000000. Unknown/repeated limits, duplicate Context
+pins, Q as an external source, noncanonical UUIDs and missing pins are refused.
+The output shows the actual profile, authority pin and source inventories.
+
+The explicit policy admits all fixed unit implications before grounds, then
+orders source grounds by Context UUID string and source-local rule ID. Supported
+external primaries are signed unary integer grounds and signed unary implications
+sharing one quantified variable. Every primary must be supported, with at most
+16 grounds and 64 units; no unsupported input or capacity overflow is silently
+skipped. Source generated caches are reported and excluded. Arbitrary productions,
+order-independent/maximal theory enumeration and production alternatives remain
+outside this experimental operation.
+
+Smoke fixtures: Q contains `!authority(1);`, A contains `!left(2);`, B contains
+`!~left(2); !~authority(1);`. Query `?left(2);` and expect separate TRUE/FALSE
+opinions, per-input decisions including DECLINED_Q, and unchanged Q. A source with
+`!source(3); !@x source(x) -> result(x);` answers `?result(3);` only inside DMZ.
+A production-only source `!@x authority(x) -> more(x);` can answer `?more(1);`
+from Q; it does not add more(1) to Q. Named empty sources retain an inventory.
+
+The Console distinguishes COMPLETE under the displayed ordered policy from
+PARTIAL. A visit stop shows the interrupted input/prefix; conditional stops show
+their event/frontier reasons. Completed leaves before a stop are explicitly
+partial historical observations. Retry by issuing a fresh complete command with
+explicit pins and suitable limits. There is no resume/replay command for a saved
+history. Hypotheses are diagnostic and are never accepted automatically.
+
+Planning refuses unsupported primary origins with a typed reason and exact
+Context/rule identity, or reports GROUND_LIMIT/PRODUCTION_LIMIT. Revision/name,
+acquisition, fixed-unit, audit and query failures display a DMZ refusal and return
+to the prompt. Follow any refusal with a valid query, close/reopen Q, and verify
+its declarations and topology. Existing connections are not modified by this
+operation. The shared canonical processor carries a detached SDK result; Server
+has no DMZ transport binding yet and explicitly refuses the new intent.
 
 ### `ctx explain <query...>`
 
