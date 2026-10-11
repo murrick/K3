@@ -64,7 +64,7 @@ public final class DmzConsoleWorkflowRunner {
         require("Named Empty".equals(normalized.sources.external.get(0).locator) && normalized.limits.audit==8000
                 && normalized.limits.depth==7 && normalized.limits.maximumVisits==999 && normalized.sources.maximumRows==999,"quoted name and all explicit limits survive canonical round trip");
         require(echo.equals(FORMATTER.format(PARSER.parse(echo))),"canonical DMZ echo is stable");
-        require(PARSER.parse("ctx d A").getIntent()==CommandIntent.CTX_DISCONNECT,"legacy disconnect prefix remains bound");
+        require(PARSER.parse("ctx dis A").getIntent()==CommandIntent.CTX_DISCONNECT,"unique disconnect prefix remains bound");
         String[] malformed={"ctx dmz","ctx dmz "+pin(qp),"ctx dmz HEAD ?p(1);","ctx dmz 1-1-1-1-1@0 ?p(1);",
                 "ctx dmz "+qp.getContextId()+"@-1 ?p(1);",base+" from=A@"+pin(a),base+" from=../A@"+pin(a),
                 base+" from=Q@"+pin(qp),base+" from=A@HEAD",base+" nodes=0",base+" nodes=10001",base+" work=1000001",

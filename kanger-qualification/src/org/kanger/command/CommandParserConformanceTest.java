@@ -438,6 +438,7 @@ public final class CommandParserConformanceTest {
         expectCanonical("ctx dM eX", "ctx dmz explain");
         expectCanonical("ctx a A ?left(2);", "ctx ask A ?left(2);");
         expectArgument("ctx A ?$x child(x, John);",CommandIntent.CTX_ISOLATED_QUERY,"locator","A");
+        expectArgument("ctx D ?left(2);",CommandIntent.CTX_ISOLATED_QUERY,"locator","D");
         expectCanonical("ctx rul tr 1", "ctx rules tree 1");
         expectCanonical("ctx rul pr", "ctx rules produced");
         expectCanonical("ctx con A tr components", "ctx connect A trust components");

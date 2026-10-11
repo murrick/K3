@@ -54,6 +54,15 @@ public final class CommandParser {
 
         Family family = CommandRegistry.resolveFamily(prefix.get(0).value);
 
+        if(family==Family.CONTEXT && prefix.size()>1
+                && tailAfter(line,prefix.get(1).end).startsWith("?")
+                && !CommandRegistry.isExactKeyword(family,prefix.get(1).value)) {
+            Keyword action=null;
+            try { action=CommandRegistry.resolveKeyword(family,prefix.get(1).value); }
+            catch(CommandParseException ignored) { /* Explicit legacy locator/query shape. */ }
+            if(action!=Keyword.EXPLAIN)return parseContextIsolatedQuery(line,false);
+        }
+
         if (family == Family.RULE && prefix.size() > 1
                 && resolvesTo(family, prefix.get(1).value, Keyword.COMMENT)) {
             return parseRuleComment(line);

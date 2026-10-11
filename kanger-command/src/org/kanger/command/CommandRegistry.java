@@ -593,6 +593,13 @@ public final class CommandRegistry {
         return resolve(token, scoped, family);
     }
 
+    public static boolean isExactKeyword(Family family, String token) {
+        Map<Keyword,List<String>> words=KEYWORDS.get(family);
+        if(words!=null)for(List<String> spellings:words.values())
+            for(String word:spellings)if(isExact(token,word))return true;
+        return false;
+    }
+
     public static boolean isExact(String token, String word) {
         return token != null && word != null && token.equalsIgnoreCase(word);
     }
