@@ -342,7 +342,7 @@ final class TerminalSupportCapture implements AutoCloseable {
                 && checkpoint.state.equals(DmzObservationStateFingerprint.capture(target));
     }
 
-    private void requireActive() {
+    void requireActive() {
         if (closed || Thread.currentThread() != owner || ACTIVE.get() != this)
             throw new IllegalStateException("Active capture scope required");
     }
