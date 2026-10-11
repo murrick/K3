@@ -304,3 +304,10 @@ recursive matrix repeated inside the legacy cleanup driver; gates without a
 published count are still required to pass and are not assigned fictitious
 counts. This is a standalone experimental DMZ gate, not full Maven reactor,
 packaging or release qualification.
+
+The KANGER DMZ GitHub Actions workflow runs this same manifest for relevant
+DMZ/develop changes and PRs targeting develop/3.8.0, and retains compiler/driver
+logs plus report.json as an artifact. Repository Maven/Server/bundle checks run
+separately. Server's canonical transport intentionally returns
+canonical_intent_not_bound for CTX_DMZ; it does not execute the Console-only
+operation via a legacy query fallback.

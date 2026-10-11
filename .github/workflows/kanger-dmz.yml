@@ -1,0 +1,63 @@
+name: KANGER DMZ
+
+on:
+  push:
+    branches:
+      - 'develop/3.8.0'
+      - 'experiment/3.8.0-dmz-transaction-probe'
+    paths:
+      - 'kanger/**'
+      - 'kanger-core/**'
+      - 'kanger-command/**'
+      - 'kanger-bootstrap/**'
+      - 'kanger-udf/**'
+      - 'kanger-data-dumb2/**'
+      - 'kanger-console/**'
+      - 'kanger-qualification/**'
+      - 'scripts/qualify-dmz.py'
+      - '.github/workflows/kanger-dmz.yml'
+  pull_request:
+    branches:
+      - 'develop/3.8.0'
+    paths:
+      - 'kanger/**'
+      - 'kanger-core/**'
+      - 'kanger-command/**'
+      - 'kanger-bootstrap/**'
+      - 'kanger-udf/**'
+      - 'kanger-data-dumb2/**'
+      - 'kanger-console/**'
+      - 'kanger-qualification/**'
+      - 'scripts/qualify-dmz.py'
+      - '.github/workflows/kanger-dmz.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kanger-dmz-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dmz:
+    name: Combined DMZ source and Console gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Run the explicit DMZ qualification manifest
+        run: python3 scripts/qualify-dmz.py --jobs 2 --timeout 900
+      - name: Preserve compiler logs, driver logs and result record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dmz-qualification-${{ github.run_id }}
+          path: target/dmz-qualification/
+          if-no-files-found: warn
