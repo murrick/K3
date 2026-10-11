@@ -165,6 +165,87 @@ public final class DmzReplayQueryCascadeRunner {
                                 10000, 10000, 10000, 10000, 10000, 4, 1000000).applications.get(0).query.value)
                                 && projection.isCurrent(), "collected detached opinion can be recognized and queried again");
                     }
+                    DmzStoredRetractionTransaction.ReplayTraversalResult family = choice.traverseReplayFamily(packet, middle,
+                            source, 150, candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000, 4, 64, 1000000);
+                    require(family.outcome == DmzStoredRetractionTransaction.ReplayTraversalOutcome.COMPLETE
+                            && family.unstartedRoot == null && family.frontier.isEmpty() && family.declined.isEmpty()
+                            && family.opinions.size() == walked.opinions.size() + 1 && family.generatedNodes == walked.generatedNodes + 1
+                            && family.generatedNodes <= 64 && family.traversalWork <= family.workLimit && projection.isCurrent(),
+                            "whole root family shares traversal limits and includes both initial alternatives");
+                    boolean supportingRoot = false, opposingRoot = false;
+                    for (DmzStoredRetractionTransaction.ReplayOpinion opinion : family.opinions) {
+                        supportingRoot |= opinion.path.steps.get(0).side == DmzStoredRetractionTransaction.ReplaySide.SUPPORTING;
+                        opposingRoot |= opinion.path.steps.get(0).side == DmzStoredRetractionTransaction.ReplaySide.OPPOSING;
+                        require(Boolean.TRUE.equals(opinion.application.query.value)
+                                && opinion.path.steps.get(0).conflict.equivalent(packet.conflicts.get(middle).ground)
+                                && opinion.path.steps.get(0).evidence != packet,
+                                "whole-family opinions carry fresh root evidence and authoritative truth");
+                        require(Boolean.TRUE.equals(choice.restoreRecordedPath(opinion.path, source, 150, candidate, "?source(1);",
+                                10000, 10000, 10000, 10000, 10000, 4, 1000000).applications.get(0).query.value)
+                                && projection.isCurrent(), "whole-family opinion descriptor can be freshly restored");
+                    }
+                    require(supportingRoot && opposingRoot, "equal answers preserve distinct initial conditional opinions");
+                    DmzStoredRetractionTransaction.ReplayTraversalResult rootDepth = choice.traverseReplayFamily(packet, middle,
+                            source, 150, candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000, 1, 64, 1000000);
+                    require(rootDepth.outcome == DmzStoredRetractionTransaction.ReplayTraversalOutcome.DEPTH_LIMIT
+                            && rootDepth.generatedNodes == 2 && rootDepth.opinions.size() == 1 && rootDepth.frontier.size() == 1
+                            && rootDepth.unstartedRoot == null && projection.isCurrent(), "whole-family depth stop retains both root outcomes");
+                    DmzStoredRetractionTransaction.ReplayTraversalResult rootNodes = choice.traverseReplayFamily(packet, middle,
+                            source, 150, candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000, 4, 1, 1000000);
+                    require(rootNodes.outcome == DmzStoredRetractionTransaction.ReplayTraversalOutcome.NODE_LIMIT
+                            && rootNodes.generatedNodes == 0 && rootNodes.traversalWork == 0 && rootNodes.opinions.isEmpty()
+                            && rootNodes.frontier.isEmpty() && rootNodes.unstartedRoot.evidence == packet
+                            && rootNodes.unstartedRoot.conflictIndex == middle && projection.isCurrent(),
+                            "root pair is reserved atomically and unstarted family is explicitly retained");
+                    DmzStoredRetractionTransaction.ReplayTraversalResult rootTiny = choice.traverseReplayFamily(packet, middle,
+                            source, 150, candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000, 4, 64, 1);
+                    require(rootTiny.outcome == DmzStoredRetractionTransaction.ReplayTraversalOutcome.WORK_LIMIT
+                            && rootTiny.generatedNodes == 0 && rootTiny.traversalWork == 1 && rootTiny.opinions.isEmpty()
+                            && rootTiny.unstartedRoot.evidence == packet && projection.isCurrent(), "root work refusal preserves whole historical family");
+                    boolean rootIndexRefused = false, rootLabelRefused = false, rootPhaseRefused = false;
+                    try { choice.traverseReplayFamily(packet, packet.conflicts.size(), source, 150, candidate, "?source(1);",
+                            10000, 10000, 10000, 10000, 10000, 4, 64, 1000000); }
+                    catch (IllegalArgumentException expected) { rootIndexRefused = true; }
+                    try { choice.traverseReplayFamily(packet, middle, source, 151, candidate, "?source(1);",
+                            10000, 10000, 10000, 10000, 10000, 4, 64, 1000000); }
+                    catch (IllegalArgumentException expected) { rootLabelRefused = true; }
+                    try { choice.traverseReplayFamily(packet, middle, source, 150, candidate, "?source(1);",
+                            10000, 10000, 10000, 10000, 1, 4, 64, 1000000); }
+                    catch (IllegalStateException expected) { rootPhaseRefused = true; }
+                    require(rootIndexRefused && rootLabelRefused && rootPhaseRefused && projection.isCurrent(),
+                            "root selection, candidate and phase refusals are not partial family success");
+                    DmzStoredRetractionTransaction.ReplayTraversalResult rootNodePartial = choice.traverseReplayFamily(packet, middle,
+                            source, 150, candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000, 4, 3, 1000000);
+                    require(rootNodePartial.outcome == DmzStoredRetractionTransaction.ReplayTraversalOutcome.NODE_LIMIT
+                            && rootNodePartial.generatedNodes == 2 && rootNodePartial.opinions.size() == 1
+                            && rootNodePartial.frontier.size() == 1 && rootNodePartial.unstartedRoot == null,
+                            "root and descendants consume one node allowance without resetting it");
+                    if (!negative && variant == 0 && !deeper && staleMode < 0) {
+                        boolean secondRootStop = false;
+                        int low = 1, high = rootDepth.traversalWork * 2;
+                        for (int attempt = 0; attempt < 24 && low <= high && !secondRootStop; ++attempt) {
+                            int allowance = low + (high - low) / 2;
+                            DmzStoredRetractionTransaction.ReplayTraversalResult limited = choice.traverseReplayFamily(packet, middle,
+                                    source, 150, candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000, 1, 64, allowance);
+                            if (limited.unstartedRoot != null) {
+                                secondRootStop = limited.unstartedRoot.completedBranches == 1;
+                                require(limited.opinions.isEmpty() && limited.generatedNodes == 0 && projection.isCurrent(),
+                                        "failure in root pair publishes no partial root opinion");
+                                low = allowance + 1;
+                            } else high = allowance - 1;
+                        }
+                        require(secondRootStop, "shared root allowance can expire after first root has rolled back");
+                        DmzStoredRetractionTransaction.ReplayTraversalResult sharedRoot = choice.traverseReplayFamily(packet, middle,
+                                source, 150, candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000, 4, 64, rootDepth.traversalWork + 10);
+                        require(sharedRoot.outcome == DmzStoredRetractionTransaction.ReplayTraversalOutcome.WORK_LIMIT
+                                && sharedRoot.generatedNodes == 2 && sharedRoot.opinions.size() == 1 && sharedRoot.frontier.size() == 1
+                                && sharedRoot.traversalWork == sharedRoot.workLimit && projection.isCurrent(),
+                                "root and descendant work consume one shared allowance while earlier root opinion survives");
+                        require(choice.traverseReplayFamily(rootNodes.unstartedRoot.evidence, rootNodes.unstartedRoot.conflictIndex,
+                                source, 150, candidate, "?source(1);", 10000, 10000, 10000, 10000, 10000, 4, 64, 1000000).outcome
+                                == DmzStoredRetractionTransaction.ReplayTraversalOutcome.COMPLETE,
+                                "full root-family retry succeeds after shared root and descendant refusals");
+                    }
                     boolean immutableOpinions = false, immutableFrontier = false;
                     try { walked.opinions.clear(); } catch (UnsupportedOperationException expected) { immutableOpinions = true; }
                     DmzStoredRetractionTransaction.ReplayTraversalResult depthStop = choice.traverseRecordedBranches(deferredPath,
@@ -591,6 +672,11 @@ public final class DmzReplayQueryCascadeRunner {
                                 10000, 10000, 10000, 10000, 10000, 4, 64, 1000000); }
                         catch (IllegalStateException expected) { staleTraversal = expected.getMessage().contains("boundary changed"); }
                         require(staleTraversal, "traversal refuses stale Q rather than reporting budget frontier");
+                        boolean staleFamily = false;
+                        try { choice.traverseReplayFamily(packet, middle, source, 150, candidate, "?source(1);",
+                                10000, 10000, 10000, 10000, 10000, 4, 64, 1000000); }
+                        catch (IllegalStateException expected) { staleFamily = true; }
+                        require(staleFamily, "whole root family refuses stale boundary");
                         choice.close();
                         require(qState.equals(DmzObservationStateFingerprint.capture(q)), "stale choice close preserves external Q mutation");
                     } else {
@@ -605,6 +691,11 @@ public final class DmzReplayQueryCascadeRunner {
                                 10000, 10000, 10000, 10000, 10000, 4, 64, 1000000); }
                         catch (IllegalStateException expected) { closedTraversal = true; }
                         require(closedTraversal && projection.isCurrent(), "traversal refuses closed owner");
+                        boolean closedFamily = false;
+                        try { choice.traverseReplayFamily(packet, middle, source, 150, candidate, "?source(1);",
+                                10000, 10000, 10000, 10000, 10000, 4, 64, 1000000); }
+                        catch (IllegalStateException expected) { closedFamily = true; }
+                        require(closedFamily, "whole root family refuses closed boundary");
                         if (thirdPrefix != null) {
                             boolean closedThird = false;
                             try { choice.extendTwoStepPath(thirdPrefix, 0, source, 150, candidate, "?source(1);",
@@ -645,6 +736,11 @@ public final class DmzReplayQueryCascadeRunner {
                                     10000, 10000, 10000, 10000, 10000, 4, 64, 1000000); }
                             catch (IllegalArgumentException expected) { foreignTraversal = true; }
                             require(foreignTraversal && projection.isCurrent(), "traversal cannot adopt foreign seed");
+                        boolean foreignFamily = false;
+                        try { foreign.traverseReplayFamily(packet, middle, source, 150, candidate, "?source(1);",
+                                10000, 10000, 10000, 10000, 10000, 4, 64, 1000000); }
+                        catch (IllegalArgumentException expected) { foreignFamily = true; }
+                        require(foreignFamily, "whole root family refuses foreign boundary");
                             if (thirdPrefix != null) {
                                 boolean foreignThird = false;
                                 try { foreign.extendTwoStepPath(thirdPrefix, 0, source, 150, candidate, "?source(1);",
