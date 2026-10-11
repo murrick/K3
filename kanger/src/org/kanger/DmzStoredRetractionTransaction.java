@@ -338,6 +338,7 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
         final TerminalSupportCapture.Ground conflict;
         final int projectionBudget, applicationBudget;
         ReplayPathExtension result;
+        ReplayPath selectedPath;
         ReplayExtensionRequest(TerminalSupportCapture.Ground conflict, int projectionBudget, int applicationBudget) {
             this.conflict = conflict; this.projectionBudget = projectionBudget; this.applicationBudget = applicationBudget;
         }
@@ -641,6 +642,43 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
             if (request.extension.result == null) throw new IllegalStateException("Complete nested replay required");
             return request.extension.result;
         }
+        ReplayPathExtension replayTwoStepPath(ReplayPath path,
+                org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
+                String candidate, String queryStatement, int auditBudget, int recognitionBudget,
+                int projectionBudget, int applicationBudget, int queryBudget, int nextApplicationBudget) throws Exception {
+            if (closed) throw new IllegalStateException("Native support choice closed");
+            if (path == null || path.replayOwner != replayOwner || path.steps.size() != 2
+                    || (path.disposition != ReplayQueryDisposition.QUERIED
+                        && path.disposition != ReplayQueryDisposition.NEEDS_BRANCHING))
+                throw new IllegalArgumentException("Owned qualified two-choice path required");
+            if (recognitionBudget < 1 || recognitionBudget > 10000 || projectionBudget < 1 || projectionBudget > 10000
+                    || applicationBudget < 1 || applicationBudget > 10000 || queryBudget < 1 || queryBudget > 10000
+                    || nextApplicationBudget < 1 || nextApplicationBudget > 10000)
+                throw new IllegalArgumentException("Bounded two-step replay work required");
+            if (!projection.isCurrent()) throw new IllegalStateException("Replay path boundary changed");
+            ReplayPathStep first = path.steps.get(0), second = path.steps.get(1);
+            if (first.evidence != path.root || second.evidence == null
+                    || second.evidence.replayOwner != replayOwner || second.evidence.kind != ConsequenceConflictKind.INTERNAL)
+                throw new IllegalArgumentException("Owned intermediate conflict evidence required");
+            ReplayAppliedChoice intermediate = new ReplayAppliedChoice(first.side, 0, first.grounds,
+                    ReplayQueryDisposition.NEEDS_BRANCHING, null, second.evidence);
+            ReplayPath prefix = new ReplayPath(replayOwner, path.root, first, intermediate);
+            int rootIndex = -1;
+            int[] work = { recognitionBudget };
+            for (int i = 0; i < path.root.conflicts.size(); ++i) {
+                projectionWork(work);
+                if (first.conflict.equivalent(path.root.conflicts.get(i).ground)) rootIndex = i;
+            }
+            if (rootIndex < 0) throw new IllegalStateException("Replay path root conflict missing");
+            ReplayQueryRequest request = new ReplayQueryRequest(queryStatement, queryBudget, prefix, source, sourceRule, recognitionBudget);
+            request.extension = new ReplayExtensionRequest(second.conflict, projectionBudget, nextApplicationBudget);
+            request.extension.selectedPath = path;
+            projectReplayConflict(path.root, rootIndex, source, sourceRule, candidate, queryStatement,
+                    auditBudget, recognitionBudget, projectionBudget, applicationBudget, request);
+            if (request.extension.result == null || request.extension.result.paths.size() != 1)
+                throw new IllegalStateException("Complete selected two-step replay required");
+            return request.extension.result;
+        }
         private ReplaySymmetricProjection projectReplayConflict(ConsequenceAuditFailure prior, int conflictIndex,
                 org.kanger.interfaces.IContextResults.Revision source, long sourceRule,
                 String candidate, String queryStatement, int auditBudget, int recognitionBudget,
@@ -891,10 +929,22 @@ final class DmzStoredRetractionTransaction implements AutoCloseable {
                             ReplayQueryDisposition.NEEDS_BRANCHING, null, remaining);
                     List<ReplayAppliedChoice> applications = new ArrayList<ReplayAppliedChoice>();
                     List<ReplayPath> paths = new ArrayList<ReplayPath>();
-                    for (ReplaySide nextSide : ReplaySide.values()) {
+                    ReplayPath selected = request.extension.selectedPath;
+                    ReplaySide[] sides = selected == null ? ReplaySide.values()
+                            : new ReplaySide[] { selected.steps.get(1).side };
+                    for (ReplaySide nextSide : sides) {
+                        ReplayQueryRequest nextRequest = new ReplayQueryRequest(request.statement, request.budget);
+                        if (selected != null) {
+                            ReplayAppliedChoice terminal = new ReplayAppliedChoice(nextSide, 0, selected.steps.get(1).grounds,
+                                    selected.disposition, null, selected.remaining);
+                            ReplayPath tail = new ReplayPath(replayOwner, selected.steps.get(1).evidence,
+                                    selected.steps.get(1), terminal);
+                            nextRequest = new ReplayQueryRequest(request.statement, request.budget, tail,
+                                    request.source, request.sourceRule, request.recognitionBudget);
+                        }
                         ReplayAppliedChoice applied = applyReplayChoice(child.mind(), next, nextSide,
                                 request.extension.applicationBudget, request.extension.projectionBudget,
-                                new ReplayQueryRequest(request.statement, request.budget));
+                                nextRequest);
                         applications.add(applied);
                         List<ReplayPathStep> steps = new ArrayList<ReplayPathStep>();
                         steps.add(new ReplayPathStep(projected.evidence, conflict.ground, prefix));
