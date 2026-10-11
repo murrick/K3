@@ -441,6 +441,9 @@ public final class CommandParserConformanceTest {
         expectArgument("ctx D ?left(2);",CommandIntent.CTX_ISOLATED_QUERY,"locator","D");
         expectCanonical("ctx rul tr 1", "ctx rules tree 1");
         expectCanonical("ctx rul pr", "ctx rules produced");
+        expectCanonical("ctx rul al", "ctx rules all");
+        expectCanonical("ctx rul A", "ctx rules A");
+        expectCanonical("ctx rul A tr 1", "ctx rules A tree 1");
         expectCanonical("ctx con A tr components", "ctx connect A trust components");
         reject("ctx d", AMBIGUOUS_PREFIX);
         reject("ctx c A", AMBIGUOUS_PREFIX);

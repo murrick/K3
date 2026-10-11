@@ -599,7 +599,8 @@ public final class CommandParser {
         int i=2;
         if(i<tokens.size()) {
             String value=tokens.get(i).value;
-            boolean modifier=tryResolve(Family.RULE,value,Keyword.ALL,Keyword.PRODUCED,Keyword.TREE,Keyword.COMMENT,Keyword.LEVEL)!=null;
+            // A one-letter token in the optional locator slot remains a literal Context.
+            boolean modifier=value.length()>1 && tryResolve(Family.RULE,value,Keyword.ALL,Keyword.PRODUCED,Keyword.TREE,Keyword.COMMENT,Keyword.LEVEL)!=null;
             if(!modifier && !value.matches("[-+]?\\d+")) { result.put("locator",value); ++i; }
         }
         String selection="PRIMARY";
