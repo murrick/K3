@@ -67,7 +67,8 @@ public final class KangerTestRunner {
             boolean consoleLifecycleSuccess =
                     KangerConsoleLifecycleBindingRunner.test();
             boolean canonicalConsoleSuccess =
-                    KangerCanonicalConsoleRunner.test();
+                    KangerCanonicalConsoleRunner.test()
+                    && CoreResultWorkflowRunner.test();
             boolean canonicalConsoleLifecycleSuccess =
                     KangerCanonicalConsoleLifecycleConvergenceRunner.test();
             boolean isolatedVisualTestSuccess =

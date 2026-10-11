@@ -560,6 +560,7 @@ public final class CanonicalConsole {
         boolean settlementStarted = false;
         boolean query = false;
         Boolean response = null;
+        List<String> output = new ArrayList<String>();
         try {
             while ((token = Tools.extractLine(line, token)) != null) {
                 String operator = token.getToken(line);
@@ -571,6 +572,9 @@ public final class CanonicalConsole {
                 if (!lastComments.isEmpty() && overlay.getAcceptedRule() != null) {
                     overlay.getAcceptedRule().setComment(lastComments);
                     lastComments = "";
+                }
+                if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
+                    collectCoreOutput(overlay, operator, response, output);
                 }
             }
             if (!query) {
@@ -597,19 +601,21 @@ public final class CanonicalConsole {
                 mind.release(overlay);
             }
         }
-        if ((mind.getDebugLevel() & Enums.DEBUG_OPTION_RTLOGS) == 0) {
-            ILogEntry log = mind.getCurrentLogRecord(LogMode.ANALYZER);
-            if (log != null) {
-                System.out.println(log.getRecord());
-            }
-            if (mind.hasOtherContextOpinions()) System.out.println("Other opinions may be available (ctx opinions)");
-            if (response != null) {
-                Console.showLog(mind, LogMode.SOLVES, null, null);
-                Console.showLog(mind, LogMode.VALUES, null, null);
-            }
-            if (response == null && line.trim().charAt(0) == Enums.SUC) {
-                showWhen(mind);
-            }
+        for (String record : output) System.out.println(record);
+    }
+
+    /** Detach each statement's presentation before the next query clears its stores. */
+    private static void collectCoreOutput(IMind mind, String operator, Boolean response,
+                                          List<String> output) throws Exception {
+        ILogEntry summary = mind.getCurrentLogRecord(LogMode.ANALYZER);
+        if (summary != null) output.add(summary.getRecord());
+        if (mind.hasOtherContextOpinions()) output.add("Other opinions may be available (ctx opinions)");
+        if (response != null) {
+            for (LogMode mode : new LogMode[]{LogMode.SOLVES, LogMode.VALUES})
+                for (ILogEntry entry : mind.getLog())
+                    if (entry.getType() == mode) output.add(entry.getRecord());
+        } else if (operator.charAt(0) == Enums.SUC) {
+            collectWhen(mind, output);
         }
     }
 
@@ -727,17 +733,22 @@ public final class CanonicalConsole {
     }
 
     private static void showWhen(IMind mind) throws Exception {
+        List<String> output = new ArrayList<String>();
+        collectWhen(mind, output);
+        for (String record : output) System.out.println(record);
+    }
+
+    private static void collectWhen(IMind mind, List<String> output) throws Exception {
         if (mind.getHypothesis().isEmpty()) {
-            System.out.println("No hypothesis found");
+            output.add("No hypothesis found");
             return;
         }
-        System.out.print("Optimizing hypothesis list...");
         mind.optimizeHypothesis();
-        System.out.printf("%nHypothesis list (%d):%n", mind.getHypothesis().size());
-        for (int i = 0; i < mind.getHypothesis().size(); ++i) {
-            System.out.printf("\t%03d:\t%s%n", i,
-                    ((Hypothesis) mind.getHypothesis().get(i)).toAssertionString(mind));
-        }
+        output.add("Optimizing hypothesis list...");
+        output.add(String.format("Hypothesis list (%d):", mind.getHypothesis().size()));
+        for (int i = 0; i < mind.getHypothesis().size(); ++i)
+            output.add(String.format("\t%03d:\t%s", i,
+                    ((Hypothesis) mind.getHypothesis().get(i)).toAssertionString(mind)));
     }
 
     private static void acceptWhen(IMind mind, long index) throws Exception {

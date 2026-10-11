@@ -1516,7 +1516,7 @@ public class Mind implements IMind {
         List<IRule> productions = new ArrayList<>();
         for (IRule pr : getRules()) {
             if (pr.getId() > r.getId()) {
-                if (pr.isGenerated()) {
+                if (pr.isGenerated() && !pr.isDeleted(this)) {
                     productions.add(pr);
                 }
             } else {

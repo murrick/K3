@@ -318,7 +318,7 @@ python3 scripts/qualify-dmz.py --ecj /path/to/ecj.jar --jobs 3
 
 The explicit gate manifest is kanger-qualification/test-data/dmz-suite.txt. A run
 compiles fresh Java 8-target production and qualification classes, then executes
-42 driver processes including the large recursive/cascade matrices, same-JVM
+43 driver processes including the large recursive/cascade matrices, same-JVM
 legacy hypothesis cleanup, pinned/portable replay cleanup, public provider and
 real Console workflow. Existing repository JLine/Jansi jars are used. This does
 not require an installed DUMB plugin or select a user's real storage.

@@ -251,15 +251,19 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
 
 
     public List<TVariable> getTVariables(IMind mind) throws Exception {
+        return getTVariables(mind, false);
+    }
+
+    /** Structural traversal for restoration, including hidden variables. */
+    public List<TVariable> getTVariables(IMind mind, boolean includeDeleted) throws Exception {
         List<TVariable> list = new ArrayList<>();
         for (IArgument a : this) {
             if (a.getType() == ArgumentType.TVARIABLE
-                    && !a.isDeleted(mind)
-                    && !a.isDeleted(mind)
+                    && (includeDeleted || !a.isDeleted(mind))
                     && !list.contains(a.getObject(mind))) {
                 list.add(((TVariable) a.getObject(mind)));
             } else if (a.getType() == ArgumentType.FUNCTION) {
-                List<TVariable> temp = ((Function) a.getObject(mind)).getArguments().getTVariables(mind);
+                List<TVariable> temp = ((Function) a.getObject(mind)).getArguments().getTVariables(mind, includeDeleted);
                 for (TVariable t : temp) {
                     if (!list.contains(t)) {
                         list.add(t);

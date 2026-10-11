@@ -140,6 +140,11 @@ public class Compiller {
             ((Rule) r).setQuery(query);
             mind.getRules().expand((Rule) r);
         } else if (mind.getRules().isPromotedHere(r) || r.isRestored(mind)) {
+            if (r.isRestored(mind)) {
+                // Rebind restored domains and register variable terminals in this
+                // transaction just as for a newly compiled declaration.
+                mind.getRules().expand((Rule) r);
+            }
             ((Rule) r).setSecond(false);
         } else {
             ((Rule) r).setSecond(true);
