@@ -14,8 +14,18 @@ final class DmzProofWitnesses {
     /** Detached exact unit-chain no-good, portable across graph indices in the same source scope. */
     static final class NoGood {
         private final Witness selected;
+        private final boolean typed;
         final int depth;
-        private NoGood(Witness selected, int depth) { this.selected = selected; this.depth = depth; }
+        final int workCost;
+        private NoGood(Witness selected, int depth) { this(selected,depth,false); }
+        private NoGood(Witness selected,int depth,boolean typed) {
+            this.selected=selected;this.depth=depth;this.typed=typed;
+            int cost=depth;
+            if (typed) for (Witness current=selected;current.step>=0;current=current.premises.get(0)) {
+                int size=current.graph.observed.steps.get(current.step).application.bindings.size();cost+=size*size;
+            }
+            workCost=cost;
+        }
         static NoGood from(Witness witness) {
             if (witness == null || witness.step < 0 || witness.source.authority != DmzReplayProvenance.Authority.EXTERNAL)
                 throw new IllegalArgumentException("External derived unit witness required");
@@ -30,20 +40,48 @@ final class DmzProofWitnesses {
                 throw new IllegalArgumentException("Coherent primary-terminated witness required");
             return new NoGood(witness, depth + 1);
         }
+        /** Exact typed substitution pattern; does not authorize native enforcement. */
+        static NoGood fromTyped(Witness witness) {
+            NoGood shape=from(witness);
+            for (Witness current=witness;current.step>=0;current=current.premises.get(0)) {
+                List<TerminalSupportCapture.Binding> bindings=current.graph.observed.steps.get(current.step).application.bindings;
+                if (bindings.isEmpty() || bindings.size()>16) throw new IllegalArgumentException("Bounded typed substitution required");
+                Set<Long> ids=new HashSet<Long>();
+                for (TerminalSupportCapture.Binding binding:bindings)
+                    if (binding.nativeVariable<0 || binding.value==null || !ids.add(binding.nativeVariable))
+                        throw new IllegalArgumentException("Exact distinct native variable IDs required");
+            }
+            return new NoGood(witness,shape.depth,true);
+        }
         boolean matches(DmzSourcedProofGraph graph, int node, int step,
                 DmzReplayProvenance.Binding source, List<Witness> premises) {
-            return matches(selected, graph, node, step, source, premises);
+            return matches(selected, graph, node, step, source, premises,typed);
         }
         private static boolean matches(Witness expected, DmzSourcedProofGraph graph, int node, int step,
-                DmzReplayProvenance.Binding source, List<Witness> premises) {
+                DmzReplayProvenance.Binding source, List<Witness> premises,boolean typed) {
             if (expected.source != source || (expected.step < 0) != (step < 0)
                     || expected.premises.size() != premises.size()
                     || !expected.graph.observed.nodes.get(expected.node).ground.equivalent(graph.observed.nodes.get(node).ground))
                 return false;
+            if (typed && step>=0 && !sameBindings(expected.graph.observed.steps.get(expected.step).application.bindings,
+                    graph.observed.steps.get(step).application.bindings)) return false;
             for (int i = 0; i < premises.size(); ++i) {
                 Witness actual = premises.get(i);
-                if (!matches(expected.premises.get(i), actual.graph, actual.node, actual.step, actual.source, actual.premises))
+                if (!matches(expected.premises.get(i), actual.graph, actual.node, actual.step, actual.source, actual.premises,typed))
                     return false;
+            }
+            return true;
+        }
+        private static boolean sameBindings(List<TerminalSupportCapture.Binding> expected,List<TerminalSupportCapture.Binding> actual) {
+            if (expected.size()!=actual.size() || actual.size()>16) return false;
+            Set<Long> seen=new HashSet<Long>();
+            for (TerminalSupportCapture.Binding binding:actual)
+                if (binding.nativeVariable<0 || binding.value==null || !seen.add(binding.nativeVariable)) return false;
+            for (TerminalSupportCapture.Binding wanted:expected) {
+                boolean found=false;
+                for (TerminalSupportCapture.Binding binding:actual)
+                    found |= wanted.nativeVariable==binding.nativeVariable && wanted.value.semanticallyEquals(binding.value);
+                if (!found) return false;
             }
             return true;
         }
@@ -137,7 +175,7 @@ final class DmzProofWitnesses {
                     && TerminalSupportCapture.SourcePair.excludes(graph.steps.get(step).excludedPairs,
                             source, selected.get(0).source)) return;
             for (NoGood noGood : graph.noGoods) {
-                if (!budget.advance(noGood.depth)) return;
+                if (!budget.advance(noGood.workCost)) return;
                 if (noGood.matches(graph, node, step, source, selected)) return;
             }
             Map<UUID, Long> revisions = new HashMap<UUID, Long>();
