@@ -251,9 +251,14 @@ public final class DmzCandidateSession implements AutoCloseable {
         for(Participant participant:authorities)if(participant.inputs.unsupportedGenerated!=0)throw new IllegalStateException("Unsupported physical Q generated cache");
         DmzCurrentUnaryProofInventory rebuilt=DmzCurrentUnaryProofInventory.capture(q,preparationBudget,false);
         if(!rebuilt.eligible)throw new IllegalStateException("Reconstructed Q inventory unavailable: "+rebuilt.gaps);
+        DmzCurrentGroundProofInventory typed=DmzCurrentGroundProofInventory.capture(q,preparationBudget,false);
+        if(!typed.eligible)throw new IllegalStateException("Reconstructed Q typed inventory unavailable: "+typed.gaps);
         for(Participant participant:authorities)for(TerminalSupportCapture.Ground ground:participant.inputs.cachedGrounds) {
             DmzCurrentUnaryProofInventory.Proofs proofs=rebuilt.proofs(ground,Collections.<DmzProofWitnesses.NoGood>emptyList(),preparationBudget);
             if(proofs.truncated || proofs.witnesses.isEmpty())throw new IllegalStateException("Physical Q cache has no complete reconstructed support");
+            DmzCurrentGroundProofInventory.Proofs typedProofs=typed.proofs(ground,preparationBudget);
+            if(typedProofs.truncated || typedProofs.witnesses.isEmpty())
+                throw new IllegalStateException("Physical Q cache has no reconstructed typed support");
         }
         // Validate full sourced Q/cache support before returning a usable session.
         try(DmzStoredRetractionTransaction audit=DmzStoredRetractionTransaction.beginCandidateWorkflow(capture,journal,q,preparationBudget)) {}

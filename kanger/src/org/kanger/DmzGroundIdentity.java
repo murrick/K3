@@ -40,6 +40,9 @@ final class DmzGroundIdentity {
         return new DmzGroundIdentity(ground);
     }
 
+    /** Immutable detached payload for the internal proof graph. */
+    TerminalSupportCapture.Ground ground() { return ground; }
+
     boolean equivalent(DmzGroundIdentity other) {
         return other != null && ground.equivalent(other.ground);
     }
