@@ -45,3 +45,5 @@ org.kanger.CoreResultWorkflowRunner | CORE_RESULT_WORKFLOW_PASS
 org.kanger.DmzGroundIdentityRunner | DMZ_GROUND_IDENTITY_PASS
 org.kanger.DmzGroundReplayRunner | DMZ_GROUND_REPLAY_PASS
 org.kanger.DmzCurrentGroundProofInventoryRunner | DMZ_CURRENT_GROUND_PROOF_INVENTORY_PASS
+
+org.kanger.DmzGroundProofCoverageRunner | DMZ_GROUND_PROOF_COVERAGE_PASS
