@@ -665,12 +665,13 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
 
     /**
      * Executes one local-only diagnostic query against X or one explicitly
-     * connected exact-pinned Context.
+     * connected exact-pinned Context, or an existing named TRUST commune view.
      *
      * <p>The source locator selects the live initiating Mind. A foreign locator
      * resolves only through the source Context's direct ConnectionVector and
      * executes against that immutable pinned revision plus X's private initialization layer. Target connections are
-     * never traversed.</p>
+     * never traversed. Commune queries inspect the prepared qualified member
+     * view and expose no edit/publication capability.</p>
      */
     QueryResult executeIsolatedQuery(
             IMind sourceMind,

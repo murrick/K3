@@ -384,8 +384,8 @@ public final class CommandRegistry {
                 args("query", "KANGER query beginning with ?."), n++);
         define(CommandIntent.CTX_ISOLATED_QUERY,
                 "ctx ask <locator> <query-or-command...>", "CONTEXT",
-                "Inspect rules by source-local ID, query one Context locally, or apply !/+/- commands to its private connection layer owned by X. The short query form ctx <locator> <query...> remains available for non-command names.",
-                args("locator", "Current Context or direct connected Context locator.",
+                "Inspect rules by view-local ID, query one Context or named TRUST commune locally, or apply !/+/- commands to a physical member's private connection layer owned by X. Commune views are read-only. The short query form ctx <locator> <query...> remains available for non-command names.",
+                args("locator", "Current Context, direct connected Context, or exact TRUST commune name (for example own). Use ./name for a physical Context when its name collides with a commune.",
                         "query", "Query ?..., or private connection initialization !..., +..., -...."), n++);
         define(CommandIntent.STATUS,
                 "status [core [objects|transaction|levels]|storage|session|runtime]",
