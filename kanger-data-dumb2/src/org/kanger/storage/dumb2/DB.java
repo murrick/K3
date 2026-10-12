@@ -908,12 +908,13 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         List<IContextFederation.RuleBlock> result=new ArrayList<IContextFederation.RuleBlock>();
         Path local=activeLocation().toAbsolutePath().normalize();
         boolean addressed=locator!=null;
+        if(number!=null && !addressed)
+            throw new CommandErrorException("Rule IDs require a Context locator; use ctx ask <locator> rules ...");
         Path selected=addressed?resolveFederationLocator(locator):null;
         if(!addressed || local.equals(selected)) {
             result.add(org.kanger.ContextRuleInspection.inspect((Mind)source,sourceLocator(),
                     new IContextFederation.Revision(getContextId(),getRevision()),!isReadOnly(),selection,number));
         }
-        if(number!=null && !addressed) return Collections.unmodifiableList(result);
         for(ContextConnection c:workingConnections.getConnections()) {
             if(addressed && !c.getTargetLocation().toAbsolutePath().normalize().equals(selected)) continue;
             IContextFederation.RuleBlock block = org.kanger.ContextRuleInspection.inspect(c.layer(),

@@ -42,6 +42,12 @@ public final class DmzOpinionWorkflowRunner {
             String structure=inspection.execute(grammar.parse("ctx ask all rules structure "+generated),user).getContextRules().get(0).rules.get(0).tree.toString();
             require(inference.contains("Cause:"),"Context rule tree is actual inference");
             require(!structure.contains("Cause:") && !structure.isEmpty(),"structure retains separate internal layout");
+            require(inspection.execute(grammar.parse("ctx ask all rules 0"),user).getContextRules().get(0).rules.get(0).statement.contains("@x"),"ID zero selects all's production");
+            require(inspection.execute(grammar.parse("ctx ask tree rules 0"),user).getContextRules().get(0).rules.get(0).statement.contains("marker"),"same ID selects tree's distinct fact");
+            for(String unaddressed:new String[]{"ctx rules 0","ctx rules tree 0","ctx rules structure 0","ctx rules comment 0"})
+                reject(() -> grammar.parse(unaddressed));
+            final Mind inspectionMind=q;
+            reject(() -> db.inspectRules(inspectionMind,null,org.kanger.interfaces.internal.IContextFederation.RuleSelection.SHOW,0L));
             db.disconnectContext("all");db.disconnectContext("tree");
             db.connectContext("T","own");
             String state=DmzSourceMaterializationQualification.fingerprint(q);

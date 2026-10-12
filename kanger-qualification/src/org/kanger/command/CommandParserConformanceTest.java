@@ -451,7 +451,14 @@ public final class CommandParserConformanceTest {
         expectCanonical("ctx a A ?left(2);", "ctx ask A ?left(2);");
         expectArgument("ctx A ?$x child(x, John);",CommandIntent.CTX_ISOLATED_QUERY,"locator","A");
         expectArgument("ctx D ?left(2);",CommandIntent.CTX_ISOLATED_QUERY,"locator","D");
-        expectCanonical("ctx rul tr 1", "ctx rules tree 1");
+        for (String unaddressed : new String[]{"ctx rules 3", "ctx rul tr 1",
+                "ctx rules structure 3", "ctx rules comment 3"}) {
+            reject(unaddressed, INVALID_GRAMMAR);
+        }
+        expectCanonical("ctx ask facts rules 3", "ctx ask facts rules 3");
+        expectCanonical("ctx ask natives rules 3", "ctx ask natives rules 3");
+        expectCanonical("ctx ask natives rules struct 3", "ctx ask natives rules structure 3");
+        expectCanonical("ctx ask facts rules comment 3", "ctx ask facts rules comment 3");
         expectCanonical("ctx rul pr", "ctx rules produced");
         expectCanonical("ctx rul al", "ctx rules all");
         expectCanonical("ctx rul A","ctx rules all");
@@ -640,6 +647,8 @@ public final class CommandParserConformanceTest {
                 "predicate/predicates are family spellings, not aliases");
 
         String help = new CommandHelpRenderer().render();
+        check(help.indexOf("RULE:\n") == help.lastIndexOf("RULE:\n"), "help has one RULE section");
+        check(help.contains("ctx rules [all|produced|base]"), "Context rule list has no implicit ID addressing");
         check(help.contains("rule <id>"), "help contains rule object syntax");
         check(help.contains("rule/rules family spellings are synonymous"),
                 "help explains rule/rules synonymy");

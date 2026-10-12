@@ -346,7 +346,7 @@ operation via a legacy query fallback.
 
 ## Command dialogue: source names and saved inference
 
-`ctx rules [all|produced|base|<id>|tree <id>|structure <id>|comment <id>]`
+`ctx rules [all|produced|base]`
 inspects all participating Contexts. A Context name never occupies a modifier
 slot. Use `ctx ask <locator> rules ...` to inspect one exact direct pin or live X.
 For example, `ctx ask all rules` selects the Context named **all**, whereas
