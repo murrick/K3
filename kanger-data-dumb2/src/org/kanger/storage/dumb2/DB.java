@@ -1106,6 +1106,20 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     }
 
     @Override
+    public synchronized IContextFederation.Connection switchContextCurrent(String targetLocator) throws Exception {
+        requireWritable();
+        ContextConnection connection=connectedContext(resolveFederationLocator(targetLocator),targetLocator);
+        long revision;
+        try (ContextSnapshot current=ContextSnapshot.open(connection.getTargetLocation())) {
+            if (!connection.getTarget().getContextId().equals(current.getContextId()))
+                throw new StorageLifecycleException(StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,
+                        "Target CURRENT identity mismatch for " + targetLocator);
+            revision=current.getRevision();
+        }
+        return switchContextRevision(connection.getTarget().getContextId(),revision);
+    }
+
+    @Override
     public synchronized IContextFederation.Connection switchContextRevision(
             String targetLocator,
             long targetRevision) throws Exception {

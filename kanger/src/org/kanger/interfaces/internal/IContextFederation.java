@@ -593,6 +593,11 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
     void disconnectContext(UUID targetContextId)
             throws Exception;
 
+    /** Resolve CURRENT once and qualify an exact working pin; never follow future HEADs. */
+    default Connection switchContextCurrent(String targetLocator) throws Exception {
+        throw new UnsupportedOperationException("Switch to current revision is unavailable");
+    }
+
     Connection switchContextRevision(
             String targetLocator,
             long targetRevision) throws Exception;

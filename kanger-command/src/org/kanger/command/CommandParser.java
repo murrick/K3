@@ -85,6 +85,17 @@ public final class CommandParser {
             return parseContextExplain(line);
         }
 
+        if (prefix.size()>1 && (family==Family.TRANSACTION && resolvesTo(family,prefix.get(1).value,Keyword.COMMIT)
+                || family==Family.CONTEXT && resolvesTo(family,prefix.get(1).value,Keyword.PUBLISH))) {
+            String description=tailAfter(line,prefix.get(1).end);
+            if (description.startsWith("\"")) {
+                List<Token> quoted=tokenize(description,Integer.MAX_VALUE,true);
+                requireSize(quoted,1); description=quoted.get(0).value;
+            }
+            return CommandInvocation.command(family==Family.TRANSACTION ? CommandIntent.TX_COMMIT : CommandIntent.CTX_PUBLISH,
+                tailAfter(line,prefix.get(1).end).isEmpty() ? java.util.Collections.<String,Object>emptyMap() : args("description",description),line);
+        }
+
         List<Token> tokens = tokenize(line, Integer.MAX_VALUE, true);
         switch (family) {
             case RULE:
@@ -592,10 +603,10 @@ public final class CommandParser {
                 Map<String, Object> arguments =
                         new LinkedHashMap<String, Object>();
                 arguments.put("locator", tokens.get(2).value);
-                arguments.put("RevisionId",
-                        parseNonNegativeLong(
-                                tokens.get(3).value,
-                                "RevisionId"));
+                if (!tokens.get(3).value.isEmpty()
+                        && "current".startsWith(tokens.get(3).value.toLowerCase(java.util.Locale.ROOT)))
+                    arguments.put("current",Boolean.TRUE);
+                else arguments.put("RevisionId",parseNonNegativeLong(tokens.get(3).value,"RevisionId"));
                 return CommandInvocation.command(
                         CommandIntent.CTX_SWITCH,
                         arguments, raw);

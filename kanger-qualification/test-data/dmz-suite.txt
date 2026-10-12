@@ -47,3 +47,4 @@ org.kanger.DmzGroundReplayRunner | DMZ_GROUND_REPLAY_PASS
 org.kanger.DmzCurrentGroundProofInventoryRunner | DMZ_CURRENT_GROUND_PROOF_INVENTORY_PASS
 
 org.kanger.DmzGroundProofCoverageRunner | DMZ_GROUND_PROOF_COVERAGE_PASS
+org.kanger.storage.dumb2.ContextCommandConvenienceRunner | CONTEXT_COMMAND_CONVENIENCE_PASS
