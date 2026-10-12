@@ -42,3 +42,4 @@ org.kanger.command.CommandParserConformanceTest | KANGER command parser conforma
 org.kanger.KangerCanonicalConsoleInputContractRunner | PASS: Canonical Console logical-input and parse-diagnostic boundary qualified
 org.kanger.storage.dumb2.DmzOpinionWorkflowRunner | DMZ_OPINION_WORKFLOW_PASS
 org.kanger.CoreResultWorkflowRunner | CORE_RESULT_WORKFLOW_PASS
+org.kanger.DmzGroundIdentityRunner | DMZ_GROUND_IDENTITY_PASS
