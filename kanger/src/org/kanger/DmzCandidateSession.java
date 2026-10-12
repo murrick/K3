@@ -236,10 +236,14 @@ public final class DmzCandidateSession implements AutoCloseable {
         journal=DmzReplayProvenance.begin(); capture=TerminalSupportCapture.begin();
         try(DmzReplayProvenance.Preparation preparation=DmzReplayProvenance.preparation(q)) {
             List<Participant> all=new ArrayList<Participant>();all.add(authority);all.addAll(authorityComponents);
-            for(Participant participant:all)for(DmzSourceShape.Declaration input:participant.inputs.declarations)
+            for(Participant participant:all)for(DmzSourceShape.Declaration input:participant.inputs.declarations) {
+                int priorBindings=journal.snapshot().size();
                 if(!Boolean.TRUE.equals(DmzReplayProvenance.acceptRule(q,participant.revision,input.sourceRule,
                         DmzReplayProvenance.Authority.EXTERNAL,input.statement)))
                     throw new IllegalStateException("Q primary reconstruction refused");
+                if(input.checkedGround!=null)input.checkedGround.verifyReplay(q,journal,participant.revision,
+                        DmzReplayProvenance.Authority.EXTERNAL,priorBindings);
+            }
             preparation.accept();
         }
         // Physical Q caches are observations to verify, never replay inputs or proof seeds.

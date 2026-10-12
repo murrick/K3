@@ -18,8 +18,9 @@ public final class DmzSourceShape {
         /** Native-checked signed unary implication with one shared variable, or null. */
         public final String unitStatement;
         final String unitSignature;
-        private Declaration(long id,String origin,String ground,String unit,String signature) {
-            sourceRule=id; statement=origin; groundStatement=ground; unitStatement=unit; unitSignature=signature;
+        final DmzGroundReplay checkedGround;
+        private Declaration(long id,String origin,String ground,String unit,String signature,DmzGroundReplay checked) {
+            sourceRule=id; statement=origin; groundStatement=ground; unitStatement=unit; unitSignature=signature; checkedGround=checked;
         }
     }
     public static final class Observation {
@@ -97,7 +98,8 @@ public final class DmzSourceShape {
                 }
             }
             String unit=rule.getTree().get(0).size()==2 ? checkedUnitStatement(rule,source) : null;
-            inputs.add(new Declaration(rule.getId(),rule.getOrigin(),ground,unit,unit==null ? null : unitSignature(rule,source)));
+            inputs.add(new Declaration(rule.getId(),rule.getOrigin(),ground,unit,unit==null ? null : unitSignature(rule,source),
+                    ground==null ? null : DmzGroundReplay.prepareCapturedPrimary(source,rule)));
             byte[] origin=rule.getOrigin().getBytes(java.nio.charset.StandardCharsets.UTF_8);
             digest.update(java.nio.ByteBuffer.allocate(12).putLong(rule.getId()).putInt(origin.length).array());
             digest.update(origin);
