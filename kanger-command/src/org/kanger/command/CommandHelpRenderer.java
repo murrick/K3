@@ -16,6 +16,7 @@ public final class CommandHelpRenderer {
         String currentSection = null;
 
         for (CommandRegistry.Definition definition : CommandRegistry.definitions()) {
+            if((definition.getIntent()==CommandIntent.BASE_STATUS || definition.getIntent()==CommandIntent.BASE_TREE) || definition.getIntent()==CommandIntent.CTX_OPINION_TREE)continue;
             if (!definition.getHelpSection().equals(currentSection)) {
                 if (out.length() > 0) {
                     out.append('\n');
@@ -78,6 +79,7 @@ public final class CommandHelpRenderer {
         Map<String, java.util.List<CommandRegistry.Definition>> result =
                 new LinkedHashMap<String, java.util.List<CommandRegistry.Definition>>();
         for (CommandRegistry.Definition definition : CommandRegistry.definitions()) {
+            if((definition.getIntent()==CommandIntent.BASE_STATUS || definition.getIntent()==CommandIntent.BASE_TREE) || definition.getIntent()==CommandIntent.CTX_OPINION_TREE)continue;
             java.util.List<CommandRegistry.Definition> section =
                     result.get(definition.getHelpSection());
             if (section == null) {

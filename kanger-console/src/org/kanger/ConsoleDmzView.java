@@ -60,10 +60,24 @@ final class ConsoleDmzView {
             }
         }
     }
+    static void opinions(DmzSourcesQuery.Result result,String locator,boolean trees,Long selected) throws Exception {
+        java.util.List<Integer> numbers=DmzOpinionSelection.select(result,locator,selected);
+        if(numbers.isEmpty())System.out.println("No saved opinions for "+locator);
+        if(trees) {
+            int ordinal=0;
+            for(Integer number:numbers)tree(result,number,selected==null ? ++ordinal : selected.intValue());
+        } else showSelected(result,numbers);
+    }
     static void show(DmzSourcesQuery.Result result) {
+        java.util.List<Integer> numbers=new java.util.ArrayList<Integer>();
+        for(int i=1;i<=result.viewOpinions.size();i++)numbers.add(i);
+        showSelected(result,numbers);
+    }
+    private static void showSelected(DmzSourcesQuery.Result result,java.util.List<Integer> numbers) {
         if(result.restartRequired)System.out.println("PARTIAL opinions; restart required");
         int number=0;
-        for(DmzSourcesQuery.ViewOpinion opinion:result.viewOpinions) {
+        for(Integer selected:numbers) {
+            DmzSourcesQuery.ViewOpinion opinion=result.viewOpinions.get(selected-1);
             java.util.Set<String> sources=new java.util.LinkedHashSet<String>();
             for(DmzSourcesQuery.Proof proof:opinion.proofs)sources(result,proof,sources);
             System.out.println("Opinion "+(++number)+": "+truth(opinion.value)+(sources.isEmpty() ? "" : " from "+String.join(", ",sources)));
@@ -72,11 +86,12 @@ final class ConsoleDmzView {
             if(!causes.isEmpty())System.out.println("  "+(causes.size()==1 ? "Cause: " : "Causes: ")+String.join("; ",causes));
         }
         if(result.viewOpinions.isEmpty())System.out.println("No completed opinions");
-        else System.out.println("Use \"ctx tree <N>\" for inference tree.");
+        else System.out.println("Use \"ctx opinions <locator> tree [<N>]\" for inference tree.");
     }
-    static void tree(DmzSourcesQuery.Result result,int number) {
+    static void tree(DmzSourcesQuery.Result result,int number) { tree(result,number,number); }
+    private static void tree(DmzSourcesQuery.Result result,int number,int displayed) {
         DmzSourcesQuery.ViewOpinion opinion=result.viewOpinions.get(number-1);
-        System.out.println("Opinion "+number+": "+truth(opinion.value)+"; query "+result.request.queryStatement);
+        System.out.println("Opinion "+displayed+": "+truth(opinion.value)+"; query "+result.request.queryStatement);
         if(result.restartRequired)System.out.println("PARTIAL historical opinion");
         int alternative=0;
         for(DmzSourcesQuery.Proof proof:opinion.proofs) {

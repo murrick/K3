@@ -65,20 +65,20 @@ public final class DmzConsoleWorkflowRunner {
                 && normalized.limits.depth==7 && normalized.limits.maximumVisits==999 && normalized.sources.maximumRows==999,"quoted name and all explicit limits survive canonical round trip");
         require(echo.equals(FORMATTER.format(PARSER.parse(echo))),"canonical DMZ echo is stable");
         require(PARSER.parse("ctx dis A").getIntent()==CommandIntent.CTX_DISCONNECT,"unique disconnect prefix remains bound");
-        String[] malformed={"ctx dmz","ctx dmz "+pin(qp),"ctx dmz HEAD ?p(1);","ctx dmz 1-1-1-1-1@0 ?p(1);",
+        String[] malformed={"ctx dmz","ctx dmz "+pin(qp),"ctx dmz HEAD ?p(1);",
                 "ctx dmz "+qp.getContextId()+"@-1 ?p(1);",base+" from=A@"+pin(a),base+" from=../A@"+pin(a),
                 base+" from=Q@"+pin(qp),base+" from=A@HEAD",base+" nodes=0",base+" nodes=10001",base+" work=1000001",
                 base+" depth=17",base+" visits=0",base+" rows=10001",base+" audit=-1",base+" visits=2 visits=3",base+" unknown=3",base+" 7",
                 base+" audit=99999999999999999999999","ctx dmz "+qp.getContextId()+"@99999999999999999999999 ?p(1);"};
         for(String invalid:malformed)reject(() -> PARSER.parse(invalid),CommandParseException.class);
         String syntax=new org.kanger.command.CommandHelpRenderer().render();
-        require(syntax.contains("ctx dmz") && syntax.contains("from=<name>@<UUID>@<revision>"),"shared help includes explicit operation grammar");
+        require(syntax.contains("dmz <name>@<revision>") && syntax.contains("from=<name>@<revision>"),"shared help includes explicit operation grammar");
         reject(() -> processor.execute(PARSER.parse("ctx dmz "+pin(qp)+" ?authority(1); from=BadUnit@"+pin(badUnit)),user),Exception.class);
         require(state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && user.getCurrentMind()==q && !db.hasConnectedContexts(),"command phase failure closes private owner and preserves Q");
         String oldAnswer="ctx dmz "+pin(qp)+" ?result(3); from=A@"+pin(a);
         IContextResults.Revision advanced=create(dir,"A","!later(9);");
         require(advanced.getRevision()>a.getRevision(),"source head advances before Console invocation");
-        String script="ctx version Q\nctx version A\n"+base+"\nctx opinion 1 tree\nctx opinion 2 tree\nctx dmz explain\n"+base+" visits=2\nctx dmz explain\n"+base+" work=1\nctx dmz explain\n"
+        String script="ctx version Q\nctx version A\n"+base+"\nctx tree 1\nctx tree 2\nctx dmz explain\n"+base+" visits=2\nctx dmz explain\n"+base+" work=1\nctx dmz explain\n"
                 +"ctx dmz "+pin(qp)+" ?authority(1); from=Decimal@"+pin(decimal)+"\n"
                 +"ctx dmz "+pin(qp)+" ?authority(1); from=Missing@"+pin(a)+"\n"
                 +"ctx dmz "+pin(qp)+" ?authority(1); from=BadUnit@"+pin(badUnit)+"\n"

@@ -430,11 +430,23 @@ public final class CommandParserConformanceTest {
                 "ctx explain preserves KANGER source");
 
         expect("ctx opinions", CommandIntent.CTX_OPINIONS);
-        reject("ctx op A", AMBIGUOUS_PREFIX);
+        expectCanonical("ctx op all tr 1","ctx opinions all tree 1");
+        expectCanonical("ctx opinion tree","ctx opinions tree");
+        expectCanonical("ctx ask all rul ba","ctx ask all rules base");
+        expectCanonical("ctx ask tree rules str 4","ctx ask tree rules structure 4");
+        expectCanonical("rules ba","rule base");
+        expectCanonical("rule str 4","rule structure 4");
+        expectCanonical("dmz Q@1 ?left(2); from=A@1 from=B@2","dmz Q@1 ?left(2); from=A@1 from=B@2");
+        reject("ctx opinions A tree 0",INVALID_ARGUMENT_SHAPE);
+        reject("dmz Q@HEAD ?left(2);",INVALID_ARGUMENT_SHAPE);
+        check(parser.parse("dmz 00000000-0000-0000-0000-000000000000@1 ?left(2); from=A@1").getArgument("request") instanceof NamedDmzRequest,
+                "standalone DMZ authority is always a name, even if it resembles a UUID");
+
+        expectArgument("ctx op A",CommandIntent.CTX_OPINIONS,"locator","A");
         expectArgument("ctx opinions A", CommandIntent.CTX_OPINIONS, "locator", "A");
         expectCanonical("ctx tr 1", "ctx tree 1");
         expectCanonical("ctx t 2", "ctx tree 2");
-        expectCanonical("ctx opinion 1 tr", "ctx tree 1");
+        expectCanonical("ctx opinion A tr 1", "ctx opinions A tree 1");
         expectCanonical("ctx dM eX", "ctx dmz explain");
         expectCanonical("ctx a A ?left(2);", "ctx ask A ?left(2);");
         expectArgument("ctx A ?$x child(x, John);",CommandIntent.CTX_ISOLATED_QUERY,"locator","A");
@@ -442,8 +454,9 @@ public final class CommandParserConformanceTest {
         expectCanonical("ctx rul tr 1", "ctx rules tree 1");
         expectCanonical("ctx rul pr", "ctx rules produced");
         expectCanonical("ctx rul al", "ctx rules all");
-        expectCanonical("ctx rul A", "ctx rules A");
-        expectCanonical("ctx rul A tr 1", "ctx rules A tree 1");
+        expectCanonical("ctx rul A","ctx rules all");
+        expectCanonical("ctx ask A rul", "ctx ask A rules");
+        expectCanonical("ctx ask A rul tr 1", "ctx ask A rules tree 1");
         expectCanonical("ctx con A tr components", "ctx connect A trust components");
         reject("ctx d", AMBIGUOUS_PREFIX);
         reject("ctx c A", AMBIGUOUS_PREFIX);
@@ -456,7 +469,7 @@ public final class CommandParserConformanceTest {
         for (String command : new String[]{"opinions", "values", "solves", "when"}) {
             expectCanonical("ctx " + command, "ctx " + command);
             expectCanonical("ctx " + command + " A", "ctx " + command + " A");
-            reject("ctx " + command + " A extra", EXTRA_ARGUMENT);
+            reject("ctx " + command + " A extra", command.equals("opinions")?UNKNOWN_KEYWORD:EXTRA_ARGUMENT);
         }
         reject("ctx s", AMBIGUOUS_PREFIX);
         expectCanonical("ctx v", "ctx version");
@@ -535,7 +548,7 @@ public final class CommandParserConformanceTest {
         expectCanonical("rules level 2", "rule level 2");
         expectCanonical("ru c 17", "rule comment 17");
         expectCanonical("f s 8", "function source 8");
-        expectCanonical("b p father", "base predicate father");
+        expectCanonical("b p father", "predicate father");
         expectCanonical("v o x d, y a", "values order x desc, y asc");
         expectCanonical("so t 42", "solution tree 42");
         expectCanonical("w a 0", "when accept 0");
@@ -548,8 +561,8 @@ public final class CommandParserConformanceTest {
         expectCanonical("co", "transaction commit");
         expectCanonical("ro", "transaction rollback");
         expectCanonical("sq", "transaction squash");
-        expectCanonical("pr", "base predicates");
-        expectCanonical("predicates father", "base predicate father");
+        expectCanonical("pr", "predicates");
+        expectCanonical("predicates father", "predicate father");
         expectCanonical("sto u close", "storage use close");
         expectCanonical("u", "storage");
         expectCanonical("u close", "storage use close");
@@ -634,9 +647,9 @@ public final class CommandParserConformanceTest {
         check(help.contains("values order <field>"), "help contains values syntax");
         check(help.contains("when accept <index>"), "help contains hypothesis addressing");
         check(help.contains("delete [<source>]"), "help contains safe bare delete syntax");
-        check(help.contains("base predicates  (family spellings: predicate, predicates)"),
+        check(help.contains("predicates  (family spellings: predicate, predicates)"),
                 "help exposes predicate/predicates family spellings");
-        check(help.contains("base predicate <id|name>  (family spellings: predicate <id|name>, predicates <id|name>)"),
+        check(help.contains("predicate <id|name>  (family spellings: predicate <id|name>, predicates <id|name>)"),
                 "help exposes predicate/predicates argument spellings");
         check(help.contains("transaction start  (alias: start)"),
                 "help contains start alias");

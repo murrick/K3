@@ -228,12 +228,12 @@ History output includes `UUID:` and the published revision list. Select the exac
 Q revision currently open and an explicit published revision of every source:
 
 ```text
-ctx dmz <Q-UUID>@<revision> "?left(2);" from=A@<A-UUID>@<revision> from=B@<B-UUID>@<revision>
+dmz Q@<revision> "?left(2);" from=A@<revision> from=B@<revision>
 ```
 
 Replace each placeholder using the displayed history. `dmz` is an exact keyword;
-existing `ctx d A` still means disconnect. A source name containing spaces uses
-one quoted token, for example `"from=Named Context@<UUID>@<revision>"`. Names and
+existing Use `ctx dis A` for disconnect; `ctx d` is ambiguous. A source name containing spaces uses
+one quoted token, for example `"from=Named Context@<revision>"`. Names and
 pins are supplied separately for every source; omitting sources queries only Q.
 There is no implicit CURRENT/HEAD selection or automatic trust connection.
 
@@ -284,9 +284,9 @@ has no DMZ transport binding yet and explicitly refuses the new intent.
 
 ### `ctx tree <N>`
 
-Accepts minimum unique prefixes, for example `ctx tr 1`. The previous
-`ctx opinion <N> tree` remains accepted. `ctx op` is ambiguous between
-`opinion` and `opinions`; exact keywords win over prefixes.
+Compatibility command for global saved-opinion numbers. Canonical commands
+use `ctx opinions <locator> tree [<N>]`; `opinion` and `opinions` are spellings
+of one keyword, so `ctx op` is unambiguous.
 
 Read the selected last DMZ opinion's detached inference alternatives. N is a
 positive number displayed by that query. Trees retain Context UUIDs/revisions,
@@ -342,3 +342,53 @@ logs plus report.json as an artifact. Repository Maven/Server/bundle checks run
 separately. Server's canonical transport intentionally returns
 canonical_intent_not_bound for CTX_DMZ; it does not execute the Console-only
 operation via a legacy query fallback.
+
+
+## Command dialogue: source names and saved inference
+
+`ctx rules [all|produced|base|<id>|tree <id>|structure <id>|comment <id>]`
+inspects all participating Contexts. A Context name never occupies a modifier
+slot. Use `ctx ask <locator> rules ...` to inspect one exact direct pin or live X.
+For example, `ctx ask all rules` selects the Context named **all**, whereas
+`ctx rules all` selects all visible rules. `ctx ask tree rules base` is also valid.
+The source's own connections are not followed; private working initialization is
+retained and inspection does not change the active Mind or publish a revision.
+
+`dmz <name>@<revision> <query> [from=<name>@<revision> ...] [<limit>=<value> ...]`
+resolves names to UUIDs and exact published revisions at execution. For example:
+`dmz Q@1 ?left(2); from=A@1 from=B@1`. Names containing spaces are quoted.
+Queries containing spaces are quoted as one argument. Missing names/revisions
+are refused; neither CURRENT nor HEAD is substituted. Captured results and
+proofs keep their exact UUID/revision identities after source HEAD advances.
+The older UUID syntax `ctx dmz ...` remains available for technical compatibility.
+The currently qualified DMZ declaration/query surface remains unary integer
+facts and signed shared-variable unit productions. Naming does not widen inference.
+
+`ctx opinions [<locator> [tree [<N>]]]` reads the saved last DMZ query.
+`opinion` and `opinions` are spellings of one keyword; `ctx op` is unambiguous.
+The four forms list all opinions, list those supported by one source, show all
+inference variants for that source, or show its selected opinion variant:
+
+```text
+ctx op
+ctx op A
+ctx op A tree
+ctx op A tree 1
+```
+
+The number is one-based within the source-filtered opinion list. A multi-source
+opinion belongs to every supporting source; its full proof is retained. The
+filter reads names and identities from the saved acquisition, without resolving
+a current Context or executing inference. Unknown source names and unavailable
+variant numbers are refused. A failed new DMZ request clears the previous history;
+`ctx dmz explain` (also `dmz explain`) reads the saved technical report.
+The previous global `ctx tree N` remains a compatibility spelling. Without a
+saved DMZ result, the pre-DMZ local opinion collection remains a legacy diagnostic
+path; source trees require a saved DMZ result.
+
+`rule base` (also `rules base`) lists visible assertions, including generated
+assertions; it excludes compound declarations. `rule tree <id>` displays actual
+inference causes. `rule structure <id>` displays the internal rule structure for
+debugging. These modifiers also work through `ctx rules` and `ctx ask`.
+The historical `base` command is kept for compatibility and omitted from
+canonical help; predicate inspection uses `predicates` and `predicate <id|name>`.

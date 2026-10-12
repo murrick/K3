@@ -18,6 +18,8 @@ public enum CommandIntent {
     RULE_PRODUCED,
     RULE_LEVEL,
     RULE_TREE,
+    RULE_STRUCTURE,
+    RULE_BASE,
     RULE_COMMENT_GET,
     RULE_COMMENT_SET,
 

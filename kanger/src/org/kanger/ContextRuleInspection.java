@@ -23,7 +23,8 @@ public final class ContextRuleInspection {
             if (rule.isDeleted(mind)) continue;
             boolean selected = number != null ? rule.getId() == number.longValue()
                     : selection == IContextFederation.RuleSelection.ALL
-                    || (selection == IContextFederation.RuleSelection.PRODUCED
+                    || (selection == IContextFederation.RuleSelection.BASE ? rule.isStored()
+                            : selection == IContextFederation.RuleSelection.PRODUCED
                             ? rule.isGenerated() : !rule.isGenerated());
             if (selected) {
                 rows.add(row(mind, rule, selection));
@@ -40,7 +41,8 @@ public final class ContextRuleInspection {
         String statement = rule.getOrigin();
         if (statement == null || statement.isEmpty()) statement = rule.toString();
         return new IContextFederation.RuleRow(rule.getId(), statement,
-                rule.isGenerated(), rule.getComment(), selection == IContextFederation.RuleSelection.TREE
-                ? mind.formatTree(rule) : Collections.<List<String>>emptyList());
+                rule.isGenerated(), rule.getComment(), selection == IContextFederation.RuleSelection.STRUCTURE ? mind.formatTree(rule)
+                : selection == IContextFederation.RuleSelection.TREE ? RuleInferenceInspection.tree(mind,rule)
+                : Collections.<List<String>>emptyList());
     }
 }
