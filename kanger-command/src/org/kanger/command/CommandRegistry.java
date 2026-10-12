@@ -310,7 +310,7 @@ public final class CommandRegistry {
                 noArgs(), aliases("start"), n++);
         define(CommandIntent.TX_COMMIT, "transaction commit [description]", "TRANSACTION",
                 "Commit the current transaction or qualified root checkpoint.",
-                args("description", "Optional revision description."), aliases("commit"), n++);
+                args("description", "Optional description to end of line; quotes are optional."), aliases("commit"), n++);
         define(CommandIntent.TX_ROLLBACK, "transaction rollback", "TRANSACTION", "Rollback the current child transaction.",
                 noArgs(), aliases("rollback"), n++);
         define(CommandIntent.TX_SQUASH, "transaction squash", "TRANSACTION",
@@ -364,7 +364,7 @@ public final class CommandRegistry {
                 "Fork the selected published revision into a new independent Context; requires U0 and saved connections.",
                 args("locator", "New independent Context name."), n++);
         define(CommandIntent.CTX_PUBLISH, "ctx publish [description]", "CONTEXT",
-                "Publish local content and explicit connections as one revision. Collapsing open transactions requires confirmation.", args("description", "Optional publication description."), n++);
+                "Publish local content and explicit connections as one revision. Collapsing open transactions requires confirmation.", args("description", "Optional description to end of line; quotes are optional."), n++);
         define(CommandIntent.CTX_CONNECT, "ctx connect <locator> [trust <group>]", "CONTEXT",
                 "Qualify and connect one exact revision, optionally joining a local trust commune.",
                 args("locator", "Context locator or DUMB2 logical storage name.",
@@ -372,10 +372,10 @@ public final class CommandRegistry {
         define(CommandIntent.CTX_DISCONNECT, "ctx disconnect <locator>", "CONTEXT",
                 "Disconnect one direct Context by locator (ctx close is an alias).",
                 args("locator", "Context locator or DUMB2 logical storage name."), n++);
-        define(CommandIntent.CTX_SWITCH, "ctx switch <locator> <RevisionId>", "CONTEXT",
+        define(CommandIntent.CTX_SWITCH, "ctx switch <locator> <RevisionId|current>", "CONTEXT",
                 "Deliberately requalify and repin one direct Context to an exact revision.",
                 args("locator", "Context locator or DUMB2 logical storage name.",
-                        "RevisionId", "Exact target revision."), n++);
+                        "RevisionId", "Exact target revision, or current resolved once."), n++);
         define(CommandIntent.CTX_VERSION, "ctx version [<locator>]", "CONTEXT",
                 "Show immutable revision history of the current or any named Context, without opening or connecting it.",
                 args("locator", "Optional Context locator; a named Context can be inspected while storage is closed."), n++);

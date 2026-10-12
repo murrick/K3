@@ -261,11 +261,9 @@ public final class CanonicalCommandProcessor {
                         contextFederation(user, mind);
                 String locator = String.valueOf(
                         invocation.getArgument("locator"));
-                long revision = ((Number) invocation.getArgument(
-                        "RevisionId")).longValue();
-                IContextFederation.Connection connection =
-                        federation.switchContextRevision(
-                                locator, revision);
+                IContextFederation.Connection connection = Boolean.TRUE.equals(invocation.getArgument("current"))
+                        ? federation.switchContextCurrent(locator)
+                        : federation.switchContextRevision(locator,((Number)invocation.getArgument("RevisionId")).longValue());
                 return Result.successFederation(
                         mind,
                         "Context pin switched: "

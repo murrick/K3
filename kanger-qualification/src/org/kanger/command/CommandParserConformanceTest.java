@@ -374,6 +374,12 @@ public final class CommandParserConformanceTest {
                         switched.getArgument("RevisionId")),
                 "ctx switch RevisionId");
 
+        check(Boolean.TRUE.equals(parser.parse("ctx switch A current").getArgument("current")),"CURRENT selector");
+        check(Boolean.TRUE.equals(parser.parse("ctx sw A C").getArgument("current")),"CURRENT unique prefix");
+        check("ctx switch A current".equals(formatter.format(parser.parse("ctx sw A cur"))),"canonical current selector");
+        reject("ctx switch A current extra",EXTRA_ARGUMENT);
+        reject("ctx switch A -1",INVALID_ARGUMENT_SHAPE);
+
         CommandInvocation version =
                 parser.parse("ctx version");
         check(version.getIntent()
@@ -507,8 +513,17 @@ public final class CommandParserConformanceTest {
         expectArgument("commit now", CommandIntent.TX_COMMIT, "description", "now");
         expectArgument("commit \"Release candidate\"", CommandIntent.TX_COMMIT, "description", "Release candidate");
         expectArgument("ctx publish \"Release candidate\"", CommandIntent.CTX_PUBLISH, "description", "Release candidate");
-        reject("commit too many", EXTRA_ARGUMENT);
-        reject("ctx publish too many", EXTRA_ARGUMENT);
+        expectArgument("commit too many", CommandIntent.TX_COMMIT, "description", "too many");
+        expectArgument("ctx publish too many", CommandIntent.CTX_PUBLISH, "description", "too many");
+
+        expectArgument("co Первая  ревизия",CommandIntent.TX_COMMIT,"description","Первая  ревизия");
+        expectArgument("transaction com add \"quoted\" fragment",CommandIntent.TX_COMMIT,"description","add \"quoted\" fragment");
+        expectArgument("ctx pub исправили вывод",CommandIntent.CTX_PUBLISH,"description","исправили вывод");
+        expectArgument("ctx publish \"\"",CommandIntent.CTX_PUBLISH,"description","");
+        reject("commit \"quoted\" extra",EXTRA_ARGUMENT);
+        reject("ctx publish \"unfinished",UNTERMINATED_QUOTE);
+        CommandInvocation comment=parser.parse("commit fix  several words");
+        check(comment.getArguments().equals(parser.parse(formatter.format(comment)).getArguments()),"tail formatter preserves exact description");
 
         expect("use", CommandIntent.STORAGE_STATUS);
         expectArgument("use demo", CommandIntent.STORAGE_USE,
@@ -682,7 +697,7 @@ public final class CommandParserConformanceTest {
                 "help contains Context connect syntax");
         check(help.contains("ctx disconnect <locator>"),
                 "help contains Context disconnect syntax");
-        check(help.contains("ctx switch <locator> <RevisionId>"),
+        check(help.contains("ctx switch <locator> <RevisionId|current>"),
                 "help contains Context revision switch syntax");
         check(help.contains("ctx version [<locator>]"),
                 "help contains Context revision history syntax");

@@ -465,6 +465,11 @@ pass `confirmed: true` in the dialogue envelope. The complete candidate is quali
 before the live stack changes. Cancellation or failed qualification preserves all
 user levels, descriptions, working pins and CURRENT.
 
+In `commit` and `ctx publish`, the optional description consumes the rest of the
+line: `commit исправили вывод` or `ctx publish новая ревизия`. Double quotes
+remain supported and decode escapes: `commit "исправили вывод"`. An unquoted
+description preserves internal spaces and quote characters.
+
 Console asks for an optional description when none is given: Enter accepts the
 pending or automatic proposal. Descriptions are one line, at most 512 Unicode
 characters. Ordinary `commit [description]` moves only to the immediate parent;
@@ -516,7 +521,11 @@ source revision remains unchanged. Disconnecting does not rewrite local
 knowledge and does not require cleanup of previously queried foreign evidence
 because such evidence is operation-local.
 
-### `ctx switch <locator> <RevisionId>`
+### `ctx switch <locator> <RevisionId|current>`
+
+`current` (also a unique prefix such as `cur`) selects the target's published
+CURRENT once, then qualifies and pins that exact revision. It does not follow
+subsequent publications. Example: `ctx switch natives current`.
 
 Deliberately attempts to repin one existing working connection to the requested
 exact target revision. The requested target is pair-qualified against the

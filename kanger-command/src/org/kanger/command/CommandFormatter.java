@@ -161,7 +161,7 @@ public final class CommandFormatter {
             case CTX_SWITCH:
                 return "ctx switch "
                         + argument(invocation.getArgument("locator"))
-                        + " " + number(invocation, "RevisionId");
+                        + " " + (Boolean.TRUE.equals(invocation.getArgument("current")) ? "current" : number(invocation, "RevisionId"));
             case CTX_VERSION:
                 Object versionLocator =
                         invocation.getArgument("locator");
