@@ -43,3 +43,4 @@ org.kanger.KangerCanonicalConsoleInputContractRunner | PASS: Canonical Console l
 org.kanger.storage.dumb2.DmzOpinionWorkflowRunner | DMZ_OPINION_WORKFLOW_PASS
 org.kanger.CoreResultWorkflowRunner | CORE_RESULT_WORKFLOW_PASS
 org.kanger.DmzGroundIdentityRunner | DMZ_GROUND_IDENTITY_PASS
+org.kanger.DmzGroundReplayRunner | DMZ_GROUND_REPLAY_PASS
