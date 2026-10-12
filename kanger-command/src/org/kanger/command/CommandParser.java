@@ -629,14 +629,8 @@ public final class CommandParser {
             if(selector==Keyword.ALL) selection="ALL";
             else if(selector==Keyword.PRODUCED) selection="PRODUCED";
             else if(selector==Keyword.BASE) selection="BASE";
-            else if(selector==Keyword.TREE || selector==Keyword.STRUCTURE || selector==Keyword.COMMENT) {
-                selection=selector.name();
-                requireRequiredArgument(tokens,i+1);
-                result.put("id",parseNonNegativeLong(tokens.get(i++).value,"rule id"));
-            } else {
-                selection="SHOW";
-                result.put("id",parseNonNegativeLong(value,"rule id"));
-            }
+            else throw error(INVALID_GRAMMAR,
+                    "Rule IDs require a Context locator; use ctx ask <locator> rules [<id>|tree <id>|structure <id>|comment <id>]");
         }
         requireSize(tokens,i);
         result.put("selection",selection);

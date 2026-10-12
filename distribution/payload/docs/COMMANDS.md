@@ -434,26 +434,26 @@ For each connection the projection includes:
 A newer target `CURRENT` is informational only. It never moves the existing
 pin automatically.
 
-### `ctx rules [all|produced|base|<id>|tree <id>|structure <id>|comment <id>]`
+### `ctx rules [all|produced|base]`
 
-Shows native rules in separate Context blocks. Without a locator, collection
-views include live X and all explicitly connected direct Contexts. A named
-foreign Context is inspected at the revision pinned in X; its own dependencies
-are not traversed. `ctx rules X` includes X's current user transaction layer.
+Lists rules in separate Context blocks: live X and all explicitly connected
+exact direct pins. The default selects primary rules. `all` includes generated
+rules, `produced` selects generated rules, and `base` selects stored assertions.
 
-The default view selects primary rules. `all` includes primary and generated
-rules, while `produced` selects generated rules only. A numeric ID selects one
-rule; `tree <id>` shows its native tree and `comment <id>` reads its comment.
-IDs are local to the named block. Without a locator, numeric views address X.
-These views are read-only. Comment editing stays on ordinary `rule comment`;
-transaction levels stay on ordinary `rule level [n]` for X. There is no
-`ctx rules level` modifier.
+Use `ctx ask <locator> rules [<id>|tree <id>|structure <id>|comment <id>]`
+for one rule. IDs belong only to the selected Context: `facts:3` and `natives:3`
+are different rules. `tree` shows inference causes; `structure` shows compiled
+rule structure. Inspection is read-only and does not follow source dependencies.
+Comment editing and transaction levels remain local `rule comment` and
+`rule level [n]` commands.
 
 ```text
 ctx rules
-ctx rules A all
-ctx rules A tree 12
-ctx rules A comment 12
+ctx rules all
+ctx ask natives rules 3
+ctx ask natives rules tree 3
+ctx ask natives rules structure 3
+ctx ask facts rules comment 3
 ```
 
 ### `ctx publish [description]`
@@ -1029,7 +1029,7 @@ Free query candidates are checked independently through native ground queries be
 
 ## Command dialogue: source names and saved inference
 
-`ctx rules [all|produced|base|<id>|tree <id>|structure <id>|comment <id>]`
+`ctx rules [all|produced|base]`
 inspects all participating Contexts. A Context name never occupies a modifier
 slot. Use `ctx ask <locator> rules ...` to inspect one exact direct pin or live X.
 For example, `ctx ask all rules` selects the Context named **all**, whereas

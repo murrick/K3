@@ -28,6 +28,23 @@ class ContextOperatorSurfaceTest {
         assertThrows(Exception.class,()->parser.parse("ctx ask A rules tree"));
     }
 
+    @Test void overlappingRuleIdsRequireAndRespectSourceLocator() throws Exception {
+        context("facts","!age(Sarah,4);");
+        context("natives","!@x @y daughter(x,y) -> female(x), child(x,y);");
+        try(Fixture x=open("X")) {
+            x.command("ctx connect facts");x.command("ctx connect natives");
+            IContextFederation.RuleBlock facts=x.command("ctx ask facts rules 0").getContextRules().get(0);
+            IContextFederation.RuleBlock natives=x.command("ctx ask natives rules 0").getContextRules().get(0);
+            assertEquals("facts",facts.locator);assertEquals("natives",natives.locator);
+            assertTrue(facts.rules.get(0).statement.contains("age("));
+            assertTrue(natives.rules.get(0).statement.contains("daughter("));
+            assertFalse(x.command("ctx ask natives rules struct 0").getContextRules().get(0).rules.get(0).tree.isEmpty());
+            for(String line:Arrays.asList("ctx rules 0","ctx rules tree 0","ctx rules structure 0","ctx rules comment 0"))
+                assertThrows(CommandParseException.class,()->parser.parse(line));
+            assertThrows(Exception.class,()->x.data.inspectRules(x.user.getCurrentMind(),null,IContextFederation.RuleSelection.SHOW,0L));
+        }
+    }
+
     @Test void reservedContextNamesAndInferenceStructureAreSeparate() throws Exception {
         context("all","!@x p(x) -> q(x);","!p(John);");
         context("tree","!marker(7);");

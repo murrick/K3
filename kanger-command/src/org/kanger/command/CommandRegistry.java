@@ -255,10 +255,12 @@ public final class CommandRegistry {
                 noArgs(), n++);
         define(CommandIntent.RULE_PRODUCED, "rule produced", "RULE", "Show produced/generated rules.",
                 noArgs(), n++);
+        define(CommandIntent.RULE_BASE,"rule base","RULE","List base assertions.",noArgs(),n++);
+        define(CommandIntent.RULE_STRUCTURE,"rule structure <id>","RULE","Show the rule's internal structure.",args("id","Rule identity."),n++);
         define(CommandIntent.RULE_LEVEL, "rule level [<n>]", "RULE",
                 "Show rules grouped by published user transaction level, or one level when n is supplied.",
                 args("n", "Optional transaction level."), n++);
-        define(CommandIntent.RULE_TREE, "rule tree <id>", "RULE", "Show the compiled structural tree of one rule.",
+        define(CommandIntent.RULE_TREE, "rule tree <id>", "RULE", "Show the saved inference tree of one rule.",
                 args("id", "Rule runtime identifier."), n++);
         define(CommandIntent.RULE_COMMENT_GET, "rule comment <id>", "RULE", "Show a rule comment.",
                 args("id", "Rule runtime identifier."), n++);
@@ -335,8 +337,6 @@ public final class CommandRegistry {
         define(CommandIntent.STORAGE_REINDEX, "storage reindex <name>", "STORAGE", "Reindex one explicitly named storage.",
                 args("name", "Storage logical name."), aliases("reindex <name>"), n++);
 
-        define(CommandIntent.RULE_BASE,"rule base","RULE","List base assertions.",noArgs(),n++);
-        define(CommandIntent.RULE_STRUCTURE,"rule structure <id>","RULE","Show the rule's internal structure.",args("id","Rule identity."),n++);
         define(CommandIntent.CTX_DMZ_EXPLAIN,"ctx dmz explain","CONTEXT",
                 "Show the saved last DMZ query's technical report without inference.",args(),n++);
         define(CommandIntent.CTX_OPINION_TREE,"ctx tree <N>","CONTEXT",
@@ -357,9 +357,9 @@ public final class CommandRegistry {
         define(CommandIntent.CTX_STATUS, "ctx", "CONTEXT",
                 "Show direct exact-revision Context federation connections.",
                 noArgs(), n++);
-        define(CommandIntent.CTX_RULES, "ctx rules [all|produced|base|<id>|tree <id>|structure <id>|comment <id>]", "CONTEXT",
-                "Inspect local and exact-pinned direct Context rules. Rule IDs belong to the displayed Context; transaction levels remain local rule level diagnostics.",
-                args("locator", "Optional current or direct connected Context locator."), n++);
+        define(CommandIntent.CTX_RULES, "ctx rules [all|produced|base]", "CONTEXT",
+                "List local and exact-pinned direct Context rules. For one rule use ctx ask <locator> rules [<id>|tree <id>|structure <id>|comment <id>].",
+                noArgs(), n++);
         define(CommandIntent.CTX_FORK, "ctx fork <locator>", "CONTEXT",
                 "Fork the selected published revision into a new independent Context; requires U0 and saved connections.",
                 args("locator", "New independent Context name."), n++);
@@ -384,7 +384,7 @@ public final class CommandRegistry {
                 args("query", "KANGER query beginning with ?."), n++);
         define(CommandIntent.CTX_ISOLATED_QUERY,
                 "ctx ask <locator> <query-or-command...>", "CONTEXT",
-                "Query one Context locally, or apply !/+/- commands to its private connection layer owned by X. The short query form ctx <locator> <query...> remains available for non-command names.",
+                "Inspect rules by source-local ID, query one Context locally, or apply !/+/- commands to its private connection layer owned by X. The short query form ctx <locator> <query...> remains available for non-command names.",
                 args("locator", "Current Context or direct connected Context locator.",
                         "query", "Query ?..., or private connection initialization !..., +..., -...."), n++);
         define(CommandIntent.STATUS,
