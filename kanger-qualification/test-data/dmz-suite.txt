@@ -49,3 +49,4 @@ org.kanger.DmzCurrentGroundProofInventoryRunner | DMZ_CURRENT_GROUND_PROOF_INVEN
 org.kanger.DmzGroundProofCoverageRunner | DMZ_GROUND_PROOF_COVERAGE_PASS
 org.kanger.storage.dumb2.ContextCommandConvenienceRunner | CONTEXT_COMMAND_CONVENIENCE_PASS
 org.kanger.DmzGroundCollisionRestrictionRunner | DMZ_GROUND_COLLISION_RESTRICTION_PASS
+org.kanger.DmzTypedNativeResumeRunner | DMZ_TYPED_NATIVE_RESUME_PASS
