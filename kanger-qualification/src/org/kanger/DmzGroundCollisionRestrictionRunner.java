@@ -151,6 +151,14 @@ public final class DmzGroundCollisionRestrictionRunner {
                                 DmzGroundReplay.parseIdentity("!value(Forged);").ground().arguments.get(0)))invented=side;
                     require(invented!=null,"forged selected alternative constructed");
                     require(!restriction.project(extraProof,invented,q,10000).eligible,"coverage of real routes cannot authorize an invented selected substitution");
+                    reduced=new ArrayList<TerminalSupportCapture.ProvisionalApplication>();
+                    for(TerminalSupportCapture.ProvisionalApplication observed:event.observations.applications)
+                        reduced.add(new TerminalSupportCapture.ProvisionalApplication(observed.application,observed.outcome,
+                            observed.ruleSources,observed.supportSources,observed.excludedPairs,
+                            java.util.Collections.singletonList(DmzProofWitnesses.NoGood.fromTyped(selected))));
+                    DmzProvisionalCollisionProof masked=rebuild(event,reduced);
+                    require(!masked.combinations.isEmpty(),"remaining conflict alternatives survive injected diagnostic exclusion");
+                    refusal(restriction,masked,q);
                     replay(q, duplicate, 12, "!a(John,Tom);");
                     require(!restriction.project(proof,selected,q,10000).eligible,"new source occurrence invalidates typed projection");
                     require(!coverage.audit(proof, q).current, "new source occurrence invalidates audited baseline");

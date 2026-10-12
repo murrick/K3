@@ -27,7 +27,8 @@ final class DmzGroundCollisionRestriction {
         boolean member=false;
         if (proof!=null) for (DmzWitnessConflicts.Combination pair:proof.combinations)
             member |= selected==pair.left || selected==pair.right;
-        if (!member || selected==null || selected.graph!=proof.graph) return refused(false);
+        if (!member || selected==null || selected.graph!=proof.graph || !proof.graph.noGoods.isEmpty()) return refused(false);
+        for(DmzSourcedProofGraph.Step step:proof.graph.steps) if(!step.excludedPairs.isEmpty())return refused(false);
         DmzGroundProofCoverage.Result audit=coverage.audit(proof,target);
         if (!audit.covered) return refused(audit.truncated);
         DmzProofWitnesses.NoGood noGood;
