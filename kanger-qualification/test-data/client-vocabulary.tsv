@@ -12,9 +12,9 @@ ACCEPT	sq	TX_SQUASH	transaction squash	-	-	OK	yes
 ACCEPT	tr	TX_STATUS	transaction	-	-	OK	yes
 ACCEPT	ti	TIMEZONE	options timezone	-	-	OK	yes
 ACCEPT	ti Europe/Brussels	TIMEZONE	options timezone Europe/Brussels	zoneId	Europe/Brussels	OK	yes
-ACCEPT	pr	BASE_PREDICATES	base predicates	-	-	OK	yes
-ACCEPT	predicate	BASE_PREDICATES	base predicates	-	-	OK	yes
-ACCEPT	predicates father	BASE_PREDICATE	base predicate father	predicate	father	OK	yes
+ACCEPT	pr	BASE_PREDICATES	predicates	-	-	OK	yes
+ACCEPT	predicate	BASE_PREDICATES	predicates	-	-	OK	yes
+ACCEPT	predicates father	BASE_PREDICATE	predicate father	predicate	father	OK	yes
 ACCEPT	g test.k	SOURCE_GET	get test.k	source	test.k	OK	yes
 ACCEPT	u	STORAGE_STATUS	storage	-	-	OK	yes
 ACCEPT	u demo	STORAGE_USE	storage use demo	name	demo	OK	yes

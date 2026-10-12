@@ -922,6 +922,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                     !c.getInitialization().isEmpty()));
         }
         if (!addressed && (selection == IContextFederation.RuleSelection.ALL
+                || selection == IContextFederation.RuleSelection.BASE
                 || selection == IContextFederation.RuleSelection.PRODUCED)) {
             for (ContextConnection participant : workingConnections.executionConnections(communeCache)) {
                 CommuneRuntime commune = participant.commune();
@@ -1356,6 +1357,13 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         if(!(sourceMind instanceof Mind))throw new CommandErrorException("DMZ execution requires a storage Mind");
         try(DmzSourceSession session=openDmzCandidateSession((Mind)sourceMind,request.sources,request.limits.preparation)) {
             return DmzSourceQueryProjection.execute(session,request);
+        }
+    }
+
+    @Override public synchronized org.kanger.interfaces.IContextResults.Revision resolveDmzRevision(String locator,long revision) throws Exception {
+        requireOpen();
+        try(ContextSnapshot snapshot=ContextSnapshot.open(resolveFederationLocator(locator),revision)) {
+            return new org.kanger.interfaces.IContextResults.Revision(snapshot.getContextId(),snapshot.getRevision());
         }
     }
 

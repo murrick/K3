@@ -16,16 +16,35 @@ class ContextOperatorSurfaceTest {
     private final CanonicalCommandProcessor processor=new CanonicalCommandProcessor();
 
     @Test void canonicalRulesModifiersRoundTripAndKeepContextAUnambiguous() throws Exception {
-        for(String line:Arrays.asList("ctx rules","ctx rules A","ctx rules A all","ctx rules produced",
-                "ctx rules A 12","ctx rules A tree 12","ctx rules A comment 12","ctx publish")) {
+        for(String line:Arrays.asList("ctx rules","ctx ask A rules","ctx ask A rules all","ctx rules produced",
+                "ctx ask A rules 12","ctx ask A rules tree 12","ctx ask A rules comment 12","ctx publish")) {
             CommandInvocation command=parser.parse(line);
             assertEquals(line,new CommandFormatter().format(command));
         }
-        assertEquals("A",parser.parse("ctx rules A").getArgument("locator"));
+        assertEquals("A",parser.parse("ctx ask A rules").getArgument("locator"));
         assertThrows(Exception.class,()->parser.parse("ctx rules level"));
-        assertThrows(Exception.class,()->parser.parse("ctx rules A level 0"));
-        assertThrows(Exception.class,()->parser.parse("ctx rules A comment 1 replacement"));
-        assertThrows(Exception.class,()->parser.parse("ctx rules A tree"));
+        assertThrows(Exception.class,()->parser.parse("ctx ask A rules level 0"));
+        assertThrows(Exception.class,()->parser.parse("ctx ask A rules comment 1 replacement"));
+        assertThrows(Exception.class,()->parser.parse("ctx ask A rules tree"));
+    }
+
+    @Test void reservedContextNamesAndInferenceStructureAreSeparate() throws Exception {
+        context("all","!@x p(x) -> q(x);","!p(John);");
+        context("tree","!marker(7);");
+        try(Fixture x=open("X")) {
+            x.command("ctx connect all");x.command("ctx connect tree");
+            assertEquals(3,x.command("ctx rules all").getContextRules().size());
+            IContextFederation.RuleBlock base=x.command("ctx ask all rules base").getContextRules().get(0);
+            assertEquals("all",base.locator);
+            assertTrue(base.rules.stream().noneMatch(r->r.statement.contains("@x")));
+            assertEquals("tree",x.command("ctx ask tree rules").getContextRules().get(0).locator);
+            long produced=x.command("ctx ask all rules produced").getContextRules().get(0).rules.get(0).id;
+            IContextFederation.RuleRow inference=x.command("ctx ask all rules tree "+produced).getContextRules().get(0).rules.get(0);
+            IContextFederation.RuleRow structure=x.command("ctx ask all rules structure "+produced).getContextRules().get(0).rules.get(0);
+            assertTrue(inference.tree.toString().contains("Cause:"));
+            assertFalse(structure.tree.toString().contains("Cause:"));
+            assertFalse(structure.tree.isEmpty());
+        }
     }
 
     @Test void rulesUseOldExactPinWithGeneratedTreeCommentAndLiveXOverlay() throws Exception {
@@ -34,20 +53,20 @@ class ContextOperatorSurfaceTest {
             x.command("ctx connect A");
             long pin=x.data.federationSnapshot().getConnections().get(0).getPinnedRevision();
             context("A","!p(Mary);");
-            List<IContextFederation.RuleBlock> primary=x.command("ctx rules A").getContextRules();
+            List<IContextFederation.RuleBlock> primary=x.command("ctx ask A rules").getContextRules();
             assertEquals(1,primary.size()); assertEquals(pin,primary.get(0).revision.getRevision());
             assertTrue(primary.get(0).rules.stream().noneMatch(r->r.generated||r.statement.contains("Mary")));
-            assertFalse(x.command("ctx rules A produced").getContextRules().get(0).rules.isEmpty());
+            assertFalse(x.command("ctx ask A rules produced").getContextRules().get(0).rules.isEmpty());
             long id=primary.get(0).rules.get(0).id;
-            assertFalse(x.command("ctx rules A tree "+id).getContextRules().get(0).rules.get(0).tree.isEmpty());
-            assertNotNull(x.command("ctx rules A comment "+id).getContextRules().get(0).rules.get(0).comment);
+            assertFalse(x.command("ctx ask A rules tree "+id).getContextRules().get(0).rules.get(0).tree.isEmpty());
+            assertNotNull(x.command("ctx ask A rules comment "+id).getContextRules().get(0).rules.get(0).comment);
             long revision=x.data.getRevision();
             x.command("transaction start");
             Mind tx=(Mind)x.user.getCurrentMind();
             assertTrue(tx.query("!local;"));
             assertEquals(2,x.command("ctx rules").getContextRules().size());
-            assertTrue(x.command("ctx rules X").getContextRules().get(0).rules.stream().anyMatch(r->r.statement.contains("local")));
-            assertThrows(Exception.class,()->x.command("ctx rules Unknown"));
+            assertTrue(x.command("ctx ask X rules").getContextRules().get(0).rules.stream().anyMatch(r->r.statement.contains("local")));
+            assertThrows(Exception.class,()->x.command("ctx ask Unknown rules"));
             assertFalse(x.command("ctx publish").isSuccess());
             x.command("transaction rollback");
             assertEquals(revision,x.data.getRevision());
@@ -66,7 +85,7 @@ class ContextOperatorSurfaceTest {
             assertEquals(1,snapshot.getConnections().size());
             assertEquals(1,snapshot.getDependencyNotices().size());
             assertEquals("NOT_CONNECTED",snapshot.getDependencyNotices().get(0).getStatus());
-            assertFalse(x.command("ctx rules A").getContextRules().get(0).rules.isEmpty());
+            assertFalse(x.command("ctx ask A rules").getContextRules().get(0).rules.isEmpty());
             assertNull(((Mind)x.user.getCurrentMind()).query("?q(John);",null,false));
             x.command("ctx publish");
         }

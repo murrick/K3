@@ -308,7 +308,7 @@ public final class CanonicalCommandProcessor {
             }
 
             case CTX_FORK: {
-                IContextFederation federation = contextFederation(user, mind);
+                IContextFederation federation=contextFederation(user,mind);
                 String locator = (String) invocation.getArgument("locator");
                 org.kanger.interfaces.IContextResults.Revision fork = mind.forkContext(locator);
                 return Result.successFederation(mind, "Context forked: " + locator + "@" + fork.getRevision(),
@@ -330,6 +330,7 @@ public final class CanonicalCommandProcessor {
                 ((User)user).setLastDmzResult(null);
                 IContextFederation federation=contextFederation(user,mind);
                 Object request=invocation.getArgument("request");
+                if(request instanceof org.kanger.command.NamedDmzRequest)request=((org.kanger.command.NamedDmzRequest)request).resolve(federation);
                 if(!(request instanceof org.kanger.interfaces.DmzSourcesQuery.Request))
                     throw new IllegalArgumentException("Explicit DMZ request required");
                 org.kanger.interfaces.DmzSourcesQuery.Result result=federation.executeDmzSources(mind,
@@ -342,8 +343,16 @@ public final class CanonicalCommandProcessor {
             case CTX_VALUES:
             case CTX_SOLVES:
             case CTX_WHEN: {
-                IContextFederation federation = contextFederation(user, mind);
                 String locator = (String) invocation.getArgument("locator");
+                if(invocation.getIntent()==CommandIntent.CTX_OPINIONS && user instanceof User
+                        && ((User)user).getLastDmzResult()!=null) {
+                    org.kanger.interfaces.DmzSourcesQuery.Result saved=((User)user).getLastDmzResult();
+                    DmzOpinionSelection.select(saved,locator,(Long)invocation.getArgument("number"));
+                    return Result.successDmz(mind,saved);
+                }
+                if(invocation.getIntent()==CommandIntent.CTX_OPINIONS && Boolean.TRUE.equals(invocation.getArgument("tree")))
+                    throw new org.kanger.exception.CommandErrorException("No saved DMZ query");
+                IContextFederation federation = contextFederation(user,mind);
                 java.util.Map<String, IContextFederation.Opinion> opinions = invocation.getIntent() == CommandIntent.CTX_OPINIONS
                         ? mind.collectContextOpinions(locator) : mind.getContextOpinions(locator);
                 return Result.successContextOpinions(mind, federation.federationSnapshot(), opinions);

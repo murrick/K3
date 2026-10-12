@@ -144,6 +144,15 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
             case BASE_STATUS:
                 result = baseStatus(mind);
                 break;
+            case RULE_TREE:
+                result = baseTree(mind,number(invocation,"id"),false);
+                break;
+            case RULE_BASE:
+                List<JSONObject> baseRules=new ArrayList<JSONObject>();
+                for(IRule rule:mind.getRules())if(!rule.isDeleted(mind) && rule.isStored())
+                    baseRules.add(new JSONObject(((Rule)rule).createMap(mind)));
+                result=ok().put("size",baseRules.size()).put("list",baseRules);
+                break;
             case BASE_TREE:
                 result = baseTree(mind, number(invocation, "statementId"));
                 break;
@@ -254,6 +263,21 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
         if (federation != null) {
             result.put("context_federation",
                     federationSnapshot(federation));
+        }
+        if(outcome.getDmzResult()!=null) {
+            org.kanger.interfaces.DmzSourcesQuery.Result saved=outcome.getDmzResult();
+            JSONArray opinions=new JSONArray();
+            java.util.List<Integer> selected=org.kanger.DmzOpinionSelection.select(saved,
+                    (String)invocation.getArgument("locator"),(Long)invocation.getArgument("number"));
+            int ordinal=0;
+            for(Integer number:selected) {
+                org.kanger.interfaces.DmzSourcesQuery.ViewOpinion opinion=saved.viewOpinions.get(number-1);
+                JSONObject row=new JSONObject().put("number",invocation.getArgument("number")==null?++ordinal:invocation.getArgument("number"))
+                        .put("value",opinion.value==null?JSONObject.NULL:opinion.value);
+                if(Boolean.TRUE.equals(invocation.getArgument("tree")))row.put("proofs",savedProofs(opinion.proofs));
+                opinions.put(row);
+            }
+            result.put("dmz_opinions",opinions);
         }
         if (outcome.getContextOpinions() != null)
             result.put("context_opinions", contextOpinions(outcome.getContextOpinions(), invocation.getIntent()));
@@ -920,6 +944,16 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                 .put("comment", rule.getComment());
     }
 
+    private JSONArray savedProofs(java.util.List<org.kanger.interfaces.DmzSourcesQuery.Proof> proofs) {
+        JSONArray result=new JSONArray();
+        for(org.kanger.interfaces.DmzSourcesQuery.Proof proof:proofs)
+            result.put(new JSONObject().put("conclusion",proof.conclusion)
+                    .put("context_uuid",proof.source.revision.getContextId().toString())
+                    .put("revision",proof.source.revision.getRevision()).put("rule",proof.source.rule)
+                    .put("premises",savedProofs(proof.premises)));
+        return result;
+    }
+
     private JSONObject baseStatus(IMind mind) throws Exception {
         List<JSONObject> list = new ArrayList<JSONObject>();
         for (IPredicate predicate : mind.getPredicates()) {
@@ -948,19 +982,20 @@ final class CanonicalCommandRuntimeReactor implements IReactor<JSONObject> {
                 .put("list", list);
     }
 
-    private JSONObject baseTree(IMind mind, long id) throws Exception {
+    private JSONObject baseTree(IMind mind,long id) throws Exception { return baseTree(mind,id,true); }
+    private JSONObject baseTree(IMind mind,long id,boolean assertionOnly) throws Exception {
         IRule statement = null;
         for (IRule rule : mind.getRules()) {
             if (rule.getId() == id
                     && !rule.isDeleted(mind)
-                    && rule.isStored()) {
+                    && (!assertionOnly || rule.isStored())) {
                 statement = rule;
                 break;
             }
         }
         if (statement == null) {
-            return error("base_statement_not_found",
-                    "Base statement not found " + id);
+            return error(assertionOnly ? "base_statement_not_found" : "rule_not_found",
+                    (assertionOnly ? "Base statement not found " : "Rule not found ") + id);
         }
         JSONObject projected = new JSONObject(((Rule) statement).createMap(mind));
         projected.put("causes", recurseCauses(statement, mind));

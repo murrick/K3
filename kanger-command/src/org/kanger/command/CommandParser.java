@@ -93,6 +93,16 @@ public final class CommandParser {
                 return parseFunction(line, tokens);
             case BASE:
                 return parseBase(line, tokens);
+            case DMZ:
+                if(tokens.size()>1 && tryResolve(Family.CONTEXT,tokens.get(1).value,Keyword.EXPLAIN)==Keyword.EXPLAIN) {
+                    requireSize(tokens,2);return CommandInvocation.command(CommandIntent.CTX_DMZ_EXPLAIN,line);
+                }
+                requireRequiredArgument(tokens,3);
+                List<String> namedOptions=new ArrayList<String>();
+                for(int i=3;i<tokens.size();i++)namedOptions.add(tokens.get(i).value);
+                try { return CommandInvocation.command(CommandIntent.CTX_DMZ,
+                        args("request",new NamedDmzRequest(tokens.get(1).value,tokens.get(2).value,namedOptions)),line); }
+                catch(IllegalArgumentException invalid) { throw error(INVALID_ARGUMENT_SHAPE,invalid.getMessage()); }
             case PREDICATE:
                 return parsePredicateFamily(line, tokens);
             case VALUES:
@@ -193,9 +203,6 @@ public final class CommandParser {
             }
             return CommandInvocation.command(CommandIntent.RULE_STATUS, raw);
         }
-        if (CommandRegistry.isExactPluralFamilyWord(Family.RULE, head)) {
-            throw error(INVALID_GRAMMAR, "rules is the collection form");
-        }
 
         String selector = tokens.get(1).value;
         if (CommandRegistry.isExact(selector, "show")) {
@@ -203,7 +210,7 @@ public final class CommandParser {
         }
 
         Keyword keyword = tryResolve(Family.RULE, selector,
-                Keyword.ALL, Keyword.PRODUCED, Keyword.LEVEL, Keyword.TREE);
+                Keyword.ALL, Keyword.PRODUCED, Keyword.BASE, Keyword.STRUCTURE, Keyword.LEVEL, Keyword.TREE);
         if (keyword == null) {
             if (tokens.size() != 2) {
                 throw error(INVALID_GRAMMAR, "Invalid rule production");
@@ -215,6 +222,12 @@ public final class CommandParser {
             case ALL:
                 requireSize(tokens, 2);
                 return CommandInvocation.command(CommandIntent.RULE_ALL, raw);
+            case BASE:
+                requireSize(tokens,2);
+                return CommandInvocation.command(CommandIntent.RULE_BASE,raw);
+            case STRUCTURE:
+                requireRequiredArgument(tokens,3);requireSize(tokens,3);
+                return commandWithLong(CommandIntent.RULE_STRUCTURE,"id",tokens.get(2).value,raw);
             case PRODUCED:
                 requireSize(tokens, 2);
                 return CommandInvocation.command(CommandIntent.RULE_PRODUCED, raw);
@@ -492,7 +505,7 @@ public final class CommandParser {
                     Keyword.CONNECT, Keyword.DISCONNECT, Keyword.CLOSE,
                     Keyword.SWITCH, Keyword.VERSION,
                     Keyword.RULES, Keyword.PUBLISH, Keyword.FORK,
-                    Keyword.EXPLAIN, Keyword.ASK, Keyword.DMZ, Keyword.TREE, Keyword.OPINION,
+                    Keyword.EXPLAIN, Keyword.ASK, Keyword.DMZ, Keyword.TREE,
                     Keyword.OPINIONS, Keyword.VALUES, Keyword.SOLVES, Keyword.WHEN);
         } catch (CommandParseException rejected) {
             if (rejected.getReason() == AMBIGUOUS_PREFIX) {
@@ -502,13 +515,9 @@ public final class CommandParser {
         }
         switch (keyword) {
             case TREE:
-            case OPINION:
-                requireRequiredArgument(tokens, keyword == Keyword.TREE ? 3 : 4);
-                requireSize(tokens, keyword == Keyword.TREE ? 3 : 4);
+                requireRequiredArgument(tokens,3);requireSize(tokens,3);
                 long number=parseNonNegativeLong(tokens.get(2).value,"opinion number");
-                if(number==0)throw error(INVALID_ARGUMENT_SHAPE,"Use ctx tree <positive N>");
-                if(keyword == Keyword.OPINION)
-                    CommandRegistry.resolveKeyword(Family.RULE,tokens.get(3).value,Keyword.TREE);
+                if(number==0)throw error(INVALID_ARGUMENT_SHAPE,"Positive opinion number required");
                 return CommandInvocation.command(CommandIntent.CTX_OPINION_TREE,args("number",number),raw);
             case DMZ:
                 if(tokens.size()>=3 && tryResolve(Family.CONTEXT,tokens.get(2).value,Keyword.EXPLAIN)==Keyword.EXPLAIN) {
@@ -518,9 +527,24 @@ public final class CommandParser {
                 List<String> dmzOptions=new ArrayList<String>();
                 for(int i=4;i<tokens.size();++i)dmzOptions.add(tokens.get(i).value);
                 try { return CommandInvocation.command(CommandIntent.CTX_DMZ,
-                        args("request",DmzCommandArguments.parse(tokens.get(2).value,tokens.get(3).value,dmzOptions)),raw); }
+                        args("request",tokens.get(2).value.matches("[0-9a-fA-F-]{36}@[0-9]+")
+                                ? DmzCommandArguments.parse(tokens.get(2).value,tokens.get(3).value,dmzOptions)
+                                : new NamedDmzRequest(tokens.get(2).value,tokens.get(3).value,dmzOptions)),raw); }
                 catch(IllegalArgumentException invalid) { throw error(INVALID_ARGUMENT_SHAPE,invalid.getMessage()); }
             case OPINIONS:
+                Map<String,Object> opinionArgs=new LinkedHashMap<String,Object>();
+                if(tokens.size()>2)opinionArgs.put("locator",tokens.get(2).value);
+                if(tokens.size()>3) {
+                    CommandRegistry.resolveKeyword(Family.RULE,tokens.get(3).value,Keyword.TREE);
+                    opinionArgs.put("tree",Boolean.TRUE);
+                }
+                if(tokens.size()>4) {
+                    long opinion=parseNonNegativeLong(tokens.get(4).value,"opinion number");
+                    if(opinion==0)throw error(INVALID_ARGUMENT_SHAPE,"Positive opinion number required");
+                    opinionArgs.put("number",opinion);
+                }
+                if(tokens.size()>5)throw error(EXTRA_ARGUMENT,"Unexpected extra argument");
+                return CommandInvocation.command(CommandIntent.CTX_OPINIONS,opinionArgs,raw);
             case VALUES:
             case SOLVES:
             case WHEN:
@@ -597,20 +621,15 @@ public final class CommandParser {
     private CommandInvocation parseContextRules(String raw,List<Token> tokens) throws CommandParseException {
         Map<String,Object> result=new LinkedHashMap<String,Object>();
         int i=2;
-        if(i<tokens.size()) {
-            String value=tokens.get(i).value;
-            // A one-letter token in the optional locator slot remains a literal Context.
-            boolean modifier=value.length()>1 && tryResolve(Family.RULE,value,Keyword.ALL,Keyword.PRODUCED,Keyword.TREE,Keyword.COMMENT,Keyword.LEVEL)!=null;
-            if(!modifier && !value.matches("[-+]?\\d+")) { result.put("locator",value); ++i; }
-        }
         String selection="PRIMARY";
         if(i<tokens.size()) {
             String value=tokens.get(i++).value;
-            Keyword selector=tryResolve(Family.RULE,value,Keyword.ALL,Keyword.PRODUCED,Keyword.TREE,Keyword.COMMENT,Keyword.LEVEL);
+            Keyword selector=tryResolve(Family.RULE,value,Keyword.ALL,Keyword.PRODUCED,Keyword.BASE,Keyword.TREE,Keyword.STRUCTURE,Keyword.COMMENT,Keyword.LEVEL);
             if(selector==Keyword.LEVEL) throw error(INVALID_GRAMMAR,"Transaction levels belong to X; use rule level [n]");
             if(selector==Keyword.ALL) selection="ALL";
             else if(selector==Keyword.PRODUCED) selection="PRODUCED";
-            else if(selector==Keyword.TREE || selector==Keyword.COMMENT) {
+            else if(selector==Keyword.BASE) selection="BASE";
+            else if(selector==Keyword.TREE || selector==Keyword.STRUCTURE || selector==Keyword.COMMENT) {
                 selection=selector.name();
                 requireRequiredArgument(tokens,i+1);
                 result.put("id",parseNonNegativeLong(tokens.get(i++).value,"rule id"));
@@ -662,6 +681,21 @@ public final class CommandParser {
         if (query.isEmpty()) {
             throw error(MISSING_ARGUMENT,
                     "ctx diagnostic query requires a KANGER query");
+        }
+        if(explicit && "?!+-".indexOf(query.charAt(0))<0) {
+            CommandInvocation nested=parse(query);
+            if(nested.getIntent()==CommandIntent.RULE_STATUS || nested.getIntent()==CommandIntent.RULE_ALL
+                    || nested.getIntent()==CommandIntent.RULE_PRODUCED || nested.getIntent()==CommandIntent.RULE_BASE
+                    || nested.getIntent()==CommandIntent.RULE_SHOW || nested.getIntent()==CommandIntent.RULE_TREE
+                    || nested.getIntent()==CommandIntent.RULE_STRUCTURE || nested.getIntent()==CommandIntent.RULE_COMMENT_GET) {
+                Map<String,Object> selected=new LinkedHashMap<String,Object>();
+                selected.put("locator",prefix.get(locatorIndex).value);
+                String kind=nested.getIntent().name().substring(5);
+                selected.put("selection",kind.equals("STATUS")?"PRIMARY":kind.equals("COMMENT_GET")?"COMMENT":kind);
+                if(nested.getArgument("id")!=null)selected.put("id",nested.getArgument("id"));
+                return CommandInvocation.command(CommandIntent.CTX_RULES,selected,raw);
+            }
+            throw error(INVALID_GRAMMAR,"ctx ask supports rule inspection or Core query/command");
         }
         if (query.charAt(0) != '?' && !(explicit && "!+-".indexOf(query.charAt(0)) >= 0)) {
             throw error(INVALID_ARGUMENT_SHAPE,

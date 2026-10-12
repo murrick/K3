@@ -117,8 +117,7 @@ public final class CanonicalConsole {
                         continue;
                     }
 
-                    if(trimmed.toLowerCase(java.util.Locale.ROOT).startsWith("ctx dmz ")
-                            && !trimmed.equalsIgnoreCase("ctx dmz explain") && mind.getUser() instanceof User)
+                    if(isNewDmzAttempt(trimmed) && mind.getUser() instanceof User)
                         ((User)mind.getUser()).setLastDmzResult(null);
                     CommandInvocation invocation = PARSER.parse(line);
                     if (invocation.isCoreLanguage()) {
@@ -210,12 +209,25 @@ public final class CanonicalConsole {
                                            ParseSourceContext parseSource) throws Exception {
         String canonical = FORMATTER.format(invocation);
         switch (invocation.getIntent()) {
+            case RULE_BASE:
+                for(org.kanger.interfaces.IRule rule:mind.getRules())
+                    if(!rule.isDeleted(mind) && rule.isStored())
+                        System.out.println("Rule "+rule.getId()+": "+rule.toString(mind));
+                return same(mind);
+            case RULE_STRUCTURE:
+                Console.showRules(mind,"rule tree "+number(invocation,"id"));
+                return same(mind);
+            case RULE_TREE:
+                org.kanger.interfaces.IRule selectedRule=mind.getRules().get(number(invocation,"id"));
+                if(selectedRule==null || selectedRule.isDeleted(mind))throw new CommandErrorException("Rule not found");
+                System.out.println("Rule "+selectedRule.getId()+": "+selectedRule.toString(mind));
+                for(java.util.List<String> row:RuleInferenceInspection.tree((Mind)mind,selectedRule))System.out.println(String.join(" ",row));
+                return same(mind);
             case RULE_STATUS:
             case RULE_SHOW:
             case RULE_ALL:
             case RULE_PRODUCED:
             case RULE_LEVEL:
-            case RULE_TREE:
                 if((invocation.getIntent()==org.kanger.command.CommandIntent.RULE_STATUS
                         || invocation.getIntent()==org.kanger.command.CommandIntent.RULE_ALL) && mind.isStorageUsed()
                         && mind.getUser() instanceof org.kanger.User
@@ -433,6 +445,12 @@ public final class CanonicalConsole {
                         ? new OpinionProgress() : null) {
                     federation = COMMAND_PROCESSOR.execute(invocation, mind.getUser());
                 }
+                if(federation.isHandled() && federation.getDmzResult()!=null
+                        && invocation.getIntent()==org.kanger.command.CommandIntent.CTX_OPINIONS) {
+                    ConsoleDmzView.opinions(federation.getDmzResult(),(String)invocation.getArgument("locator"),
+                            Boolean.TRUE.equals(invocation.getArgument("tree")),(Long)invocation.getArgument("number"));
+                    return same(mind);
+                }
                 if (!federation.isHandled()
                         || (federation.getFederationSnapshot() == null
                                 && federation.getContextVersionHistory() == null)) {
@@ -504,6 +522,23 @@ public final class CanonicalConsole {
                     action.getCommand() == null ? "" : " [" + action.getCommand() + "]",
                     action.getDescription());
         }
+    }
+
+    private static boolean isNewDmzAttempt(String line) {
+        String[] words=line.trim().split("\\s+",4);
+        try {
+            org.kanger.command.CommandRegistry.Family family=org.kanger.command.CommandRegistry.resolveFamily(words[0]);
+            int detail;
+            if(family==org.kanger.command.CommandRegistry.Family.DMZ)detail=1;
+            else if(family==org.kanger.command.CommandRegistry.Family.CONTEXT && words.length>1
+                    && org.kanger.command.CommandRegistry.resolveKeyword(family,words[1])==org.kanger.command.CommandRegistry.Keyword.DMZ)detail=2;
+            else return false;
+            if(words.length<=detail)return true;
+            try { return org.kanger.command.CommandRegistry.resolveKeyword(
+                    org.kanger.command.CommandRegistry.Family.CONTEXT,words[detail],org.kanger.command.CommandRegistry.Keyword.EXPLAIN)
+                    !=org.kanger.command.CommandRegistry.Keyword.EXPLAIN; }
+            catch(org.kanger.command.CommandParseException notExplain) { return true; }
+        } catch(org.kanger.command.CommandParseException unknown) { return false; }
     }
 
     private static void processCore(String line, IMind mind) throws Exception {

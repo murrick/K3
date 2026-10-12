@@ -322,7 +322,7 @@ final class CanonicalCommandIngressReactor implements IReactor<JSONObject> {
                 query(envelope, "rules", "");
                 parameters.put("level", number(invocation, "level"));
                 return true;
-            case RULE_TREE:
+            case RULE_STRUCTURE:
                 query(envelope, "rules", "");
                 parameters.put("id", number(invocation, "id"));
                 parameters.put("tree", true);

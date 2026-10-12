@@ -30,6 +30,7 @@ public final class CommandRegistry {
         BASE,
         CONTEXT,
         DELETE,
+        DMZ,
         ERASE,
         FUNCTION,
         GET,
@@ -50,6 +51,8 @@ public final class CommandRegistry {
 
     public enum Keyword {
         ALL,
+        BASE,
+        STRUCTURE,
         PRODUCED,
         LEVEL,
         TREE,
@@ -165,6 +168,7 @@ public final class CommandRegistry {
     static {
         family(Family.BASE, "base");
         family(Family.CONTEXT, "ctx");
+        family(Family.DMZ, "dmz");
         family(Family.DELETE, "delete");
         family(Family.ERASE, "erase");
         family(Family.FUNCTION, "function", "functions");
@@ -184,6 +188,8 @@ public final class CommandRegistry {
         family(Family.WHEN, "when");
 
         keyword(Family.RULE, Keyword.ALL, "all");
+        keyword(Family.RULE, Keyword.BASE, "base");
+        keyword(Family.RULE, Keyword.STRUCTURE, "structure");
         keyword(Family.RULE, Keyword.PRODUCED, "produced");
         keyword(Family.RULE, Keyword.LEVEL, "level");
         keyword(Family.RULE, Keyword.TREE, "tree");
@@ -219,8 +225,8 @@ public final class CommandRegistry {
         keyword(Family.CONTEXT, Keyword.ASK, "ask");
         keyword(Family.CONTEXT, Keyword.DMZ, "dmz");
         keyword(Family.CONTEXT, Keyword.TREE, "tree");
-        keyword(Family.CONTEXT, Keyword.OPINION, "opinion");
-        keyword(Family.CONTEXT, Keyword.OPINIONS, "opinions");
+
+        keyword(Family.CONTEXT, Keyword.OPINIONS, "opinions", "opinion");
         keyword(Family.CONTEXT, Keyword.VALUES, "values");
         keyword(Family.CONTEXT, Keyword.SOLVES, "solves");
         keyword(Family.CONTEXT, Keyword.WHEN, "when");
@@ -267,11 +273,11 @@ public final class CommandRegistry {
 
         define(CommandIntent.BASE_STATUS, "base", "BASE", "Show current unambiguous base statements.", noArgs(), n++);
         defineWithFamilySpellings(CommandIntent.BASE_PREDICATES,
-                "base predicates", "BASE",
+                "predicates", "PREDICATE",
                 "Show predicates known in the semantic context.",
                 noArgs(), familySpellings("predicate", "predicates"), n++);
         defineWithFamilySpellings(CommandIntent.BASE_PREDICATE,
-                "base predicate <id|name>", "BASE",
+                "predicate <id|name>", "PREDICATE",
                 "Show base statements for one predicate.",
                 args("id|name", "Predicate runtime ID or name."),
                 familySpellings("predicate <id|name>",
@@ -329,16 +335,18 @@ public final class CommandRegistry {
         define(CommandIntent.STORAGE_REINDEX, "storage reindex <name>", "STORAGE", "Reindex one explicitly named storage.",
                 args("name", "Storage logical name."), aliases("reindex <name>"), n++);
 
+        define(CommandIntent.RULE_BASE,"rule base","RULE","List base assertions.",noArgs(),n++);
+        define(CommandIntent.RULE_STRUCTURE,"rule structure <id>","RULE","Show the rule's internal structure.",args("id","Rule identity."),n++);
         define(CommandIntent.CTX_DMZ_EXPLAIN,"ctx dmz explain","CONTEXT",
                 "Show the saved last DMZ query's technical report without inference.",args(),n++);
         define(CommandIntent.CTX_OPINION_TREE,"ctx tree <N>","CONTEXT",
                 "Show the selected saved opinion's exact source inference alternatives without inference.",
                 args("number","Positive saved opinion number."),n++);
-        define(CommandIntent.CTX_DMZ, "ctx dmz <Q-UUID>@<revision> <query> [from=<name>@<UUID>@<revision> ...] [<limit>=<value> ...]", "CONTEXT",
+        define(CommandIntent.CTX_DMZ, "dmz <name>@<revision> <query> [from=<name>@<revision> ...] [<limit>=<value> ...]", "CONTEXT",
                 "Experimental ordered whole-source query on explicit pins. Defaults: rows/preparation/audit/lookup/recognition/projection/application/query=10000, depth=8, nodes=128, work=1000000, visits=1000. Stops require a fresh full invocation.",
                 args("request", "Explicit Q pin, quoted signed unary integer query, exact sources and bounded limits."), n++);
-        define(CommandIntent.CTX_OPINIONS, "ctx opinions [<locator>]", "CONTEXT",
-                "Collect local-only opinions of the full last query in live X and exact direct pins.",
+        define(CommandIntent.CTX_OPINIONS, "ctx opinions [<locator> [tree [<N>]]]", "CONTEXT",
+                "Read saved last-query opinions; optionally select a source and its inference alternatives.",
                 args("locator", "Optional source Context."), n++);
         define(CommandIntent.CTX_VALUES, "ctx values [<locator>]", "CONTEXT",
                 "Show saved source Values without executing a query.", args("locator", "Optional source Context."), n++);
@@ -349,7 +357,7 @@ public final class CommandRegistry {
         define(CommandIntent.CTX_STATUS, "ctx", "CONTEXT",
                 "Show direct exact-revision Context federation connections.",
                 noArgs(), n++);
-        define(CommandIntent.CTX_RULES, "ctx rules [<locator>] [all|produced|<id>|tree <id>|comment <id>]", "CONTEXT",
+        define(CommandIntent.CTX_RULES, "ctx rules [all|produced|base|<id>|tree <id>|structure <id>|comment <id>]", "CONTEXT",
                 "Inspect local and exact-pinned direct Context rules. Rule IDs belong to the displayed Context; transaction levels remain local rule level diagnostics.",
                 args("locator", "Optional current or direct connected Context locator."), n++);
         define(CommandIntent.CTX_FORK, "ctx fork <locator>", "CONTEXT",

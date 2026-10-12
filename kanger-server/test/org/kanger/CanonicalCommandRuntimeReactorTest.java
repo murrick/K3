@@ -55,7 +55,7 @@ class CanonicalCommandRuntimeReactorTest {
                     if ("delete [<source>]".equals(syntax)) {
                         foundDeleteListForm = true;
                     }
-                    if ("base predicates".equals(syntax)) {
+                    if ("predicates".equals(syntax)) {
                         JSONArray spellings = command.getJSONArray(
                                 "family_spellings");
                         foundPredicateFamilySpellings = spellings.length() == 2
@@ -277,7 +277,7 @@ class CanonicalCommandRuntimeReactorTest {
             assertEquals("canonical_intent_not_bound", response.optString("code"));
             assertEquals("CTX_DMZ", response.optString(CanonicalCommandIngressReactor.CANONICAL_INTENT_FIELD));
             assertEquals(0, escaped.get(), "DMZ escaped into legacy query execution");
-            String[] histories={"ctx dmz explain","ctx opinion 1 tree","ctx tr 1","ctx dm ex"};
+            String[] histories={"ctx dmz explain","ctx tree 1","ctx tr 1","ctx dm ex"};
             String[] intents={"CTX_DMZ_EXPLAIN","CTX_OPINION_TREE","CTX_OPINION_TREE","CTX_DMZ_EXPLAIN"};
             for(int i=0;i<histories.length;++i) {
                 JSONObject history=invoke(reactor,fixture.token,histories[i]);
@@ -297,6 +297,30 @@ class CanonicalCommandRuntimeReactorTest {
         } finally {
             fixture.close();
         }
+    }
+
+    @Test void ruleTreeIsInferenceAndBaseModifierExcludesCompoundRules() throws Exception {
+        Fixture fixture=fixture("rule-inference");
+        try {
+            assertTrue(fixture.root.query("!@x commandseed(x) -> commandderived(x);"));
+            assertTrue(fixture.root.query("!commandseed(1);"));
+            long derived=-1;
+            for(org.kanger.interfaces.IRule rule:fixture.root.getRules())
+                if(rule.isStored() && rule.isGenerated() && rule.toString(fixture.root).contains("commandderived"))derived=rule.getId();
+            assertTrue(derived>=0);
+            AtomicInteger escaped=new AtomicInteger();
+            IReactor<JSONObject> reactor=new CanonicalErrorBoundaryReactor(canonicalChain(escaped));
+            JSONObject tree=invoke(reactor,fixture.token,"rule tree "+derived);
+            assertEquals("OK",tree.optString("result"),tree.toString());
+            assertTrue(!tree.getJSONArray("list").getJSONObject(0).getJSONArray("causes").isEmpty());
+            JSONObject base=invoke(reactor,fixture.token,"rules base");
+            assertEquals("OK",base.optString("result"),base.toString());
+            for(int i=0;i<base.getJSONArray("list").length();i++)
+                assertTrue(base.getJSONArray("list").getJSONObject(i).getBoolean("stored"));
+            JSONObject named=invoke(reactor,fixture.token,"dmz Q@1 ?commandseed(1); from=A@1");
+            assertEquals("canonical_intent_not_bound",named.optString("code"));
+            assertEquals(0,escaped.get());
+        } finally { fixture.close(); }
     }
 
     private IReactor<JSONObject> canonicalChain(final AtomicInteger escaped) {

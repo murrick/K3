@@ -38,6 +38,8 @@ public final class CommandFormatter {
                         : "rule level " + number(invocation, "level");
             case RULE_TREE:
                 return "rule tree " + number(invocation, "id");
+            case RULE_STRUCTURE: return "rule structure "+number(invocation,"id");
+            case RULE_BASE: return "rule base";
             case RULE_COMMENT_GET:
                 return "rule comment " + number(invocation, "id");
             case RULE_COMMENT_SET:
@@ -54,9 +56,9 @@ public final class CommandFormatter {
             case BASE_STATUS:
                 return "base";
             case BASE_PREDICATES:
-                return "base predicates";
+                return "predicates";
             case BASE_PREDICATE:
-                return "base predicate " + argument(invocation.getArgument("predicate"));
+                return "predicate " + argument(invocation.getArgument("predicate"));
             case BASE_TREE:
                 return "base tree " + number(invocation, "statementId");
 
@@ -118,9 +120,19 @@ public final class CommandFormatter {
             case CTX_DMZ_EXPLAIN: return "ctx dmz explain";
             case CTX_OPINION_TREE: return "ctx tree "+number(invocation,"number");
             case CTX_DMZ:
-                return dmz((org.kanger.interfaces.DmzSourcesQuery.Request)invocation.getArgument("request"));
+                Object dmzRequest=invocation.getArgument("request");
+                if(dmzRequest instanceof NamedDmzRequest) {
+                    NamedDmzRequest named=(NamedDmzRequest)dmzRequest;
+                    String text="dmz "+argument(named.authority)+" "+argument(named.query);
+                    for(String opt:named.options)text+=" "+argument(opt);
+                    return text;
+                }
+                return dmz((org.kanger.interfaces.DmzSourcesQuery.Request)dmzRequest);
             case CTX_OPINIONS:
-                return optionalArgumentCommand("ctx opinions", invocation.getArgument("locator"));
+                String opinions=optionalArgumentCommand("ctx opinions",invocation.getArgument("locator"));
+                if(Boolean.TRUE.equals(invocation.getArgument("tree")))opinions+=" tree";
+                if(invocation.getArgument("number")!=null)opinions+=" "+number(invocation,"number");
+                return opinions;
             case CTX_VALUES:
                 return optionalArgumentCommand("ctx values", invocation.getArgument("locator"));
             case CTX_SOLVES:
@@ -134,8 +146,8 @@ public final class CommandFormatter {
             case CTX_PUBLISH:
                 return optionalArgumentCommand("ctx publish", invocation.getArgument("description"));
             case CTX_RULES:
-                String rules="ctx rules";
-                if(invocation.getArgument("locator")!=null) rules+=" "+argument(invocation.getArgument("locator"));
+                String rules=invocation.getArgument("locator")==null ? "ctx rules"
+                        : "ctx ask "+argument(invocation.getArgument("locator"))+" rules";
                 String selection=String.valueOf(invocation.getArgument("selection"));
                 if(!"PRIMARY".equals(selection) && !"SHOW".equals(selection)) rules+=" "+selection.toLowerCase(java.util.Locale.ROOT);
                 if(invocation.getArgument("id")!=null) rules+=" "+number(invocation,"id");

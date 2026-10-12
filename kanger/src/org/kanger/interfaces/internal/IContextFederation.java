@@ -40,7 +40,7 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
         STALE
     }
 
-    enum RuleSelection { PRIMARY, ALL, PRODUCED, SHOW, TREE, COMMENT }
+    enum RuleSelection { PRIMARY, ALL, PRODUCED, BASE, SHOW, TREE, STRUCTURE, COMMENT }
 
     final class RuleBlock {
         public final String locator;
@@ -648,6 +648,11 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
     default org.kanger.interfaces.DmzSourcesQuery.Result executeConnectedDmz(IMind sourceMind,String query) throws Exception {
         throw new UnsupportedOperationException("Connected DMZ queries are unavailable");
     }
+    /** Resolves one logical name at the requested immutable revision, never at HEAD. */
+    default org.kanger.interfaces.IContextResults.Revision resolveDmzRevision(String locator,long revision) throws Exception {
+        throw new org.kanger.exception.CommandErrorException("Named DMZ pins are unavailable");
+    }
+
     default org.kanger.interfaces.DmzSourcesQuery.Result executeDmzSources(IMind sourceMind,
             org.kanger.interfaces.DmzSourcesQuery.Request request) throws Exception {
         throw new UnsupportedOperationException("DMZ source execution is not supported by this provider");
