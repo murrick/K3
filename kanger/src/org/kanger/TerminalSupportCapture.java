@@ -46,11 +46,16 @@ final class TerminalSupportCapture implements AutoCloseable {
     /** Partial substitution observed at one premise match, not a complete application. */
     static final class Binding {
         final int variable;
+        final long nativeVariable;
         final String name;
         final String rendering;
         final SemanticTermSnapshot value;
         Binding(int variable, String name, String rendering, SemanticTermSnapshot value) {
+            this(variable, -1L, name, rendering, value);
+        }
+        Binding(int variable, long nativeVariable, String name, String rendering, SemanticTermSnapshot value) {
             this.variable = variable;
+            this.nativeVariable = nativeVariable;
             this.name = name;
             this.rendering = rendering;
             this.value = value;
@@ -380,7 +385,7 @@ final class TerminalSupportCapture implements AutoCloseable {
         for (TValue candidate : substitution) {
             TVariable variable = candidate.getTVar(mind);
             if (!SemanticTermSnapshot.isOrdinaryValue(candidate.getValue(mind))) return;
-            bindings.add(new Binding(capture.identity(variable), variable.getName(mind).toString(),
+            bindings.add(new Binding(capture.identity(variable), variable.getId(), variable.getName(mind).toString(),
                     candidate.getValue(mind).toString(), SemanticTermSnapshot.capture(candidate.getValue(mind))));
         }
         if (bindings.isEmpty()) return;
@@ -416,7 +421,7 @@ final class TerminalSupportCapture implements AutoCloseable {
             TValue current = variable.getCurrent();
             if (current == null || !SemanticTermSnapshot.isOrdinaryValue(current.getValue(mind)))
                 return "incomplete-or-nonordinary-binding";
-            bindings.add(new Binding(identity(variable), variable.getName(mind).toString(),
+            bindings.add(new Binding(identity(variable), variable.getId(), variable.getName(mind).toString(),
                     current.getValue(mind).toString(), SemanticTermSnapshot.capture(current.getValue(mind))));
         }
         for (Domain literal : tree) {

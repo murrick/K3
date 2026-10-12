@@ -219,7 +219,7 @@ final class DmzCurrentGroundProofInventory {
         for (int i=0; i<variables.size(); ++i) {
             if (!take()) return null;
             SemanticTermSnapshot actual = bindings.get(variables.get(i));
-            substitution.add(new TerminalSupportCapture.Binding(i, String.valueOf(variables.get(i)),
+            substitution.add(new TerminalSupportCapture.Binding(i, variables.get(i), String.valueOf(variables.get(i)),
                     "<"+actual.getType()+">", actual));
         }
         return new Applied(new TerminalSupportCapture.Ground(conclusion.predicate, conclusion.sign, arguments), substitution);
