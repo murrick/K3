@@ -910,6 +910,14 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         boolean addressed=locator!=null;
         if(number!=null && !addressed)
             throw new CommandErrorException("Rule IDs require a Context locator; use ctx ask <locator> rules ...");
+        CommuneRuntime communeAddress=addressed?addressedCommune(locator):null;
+        if(communeAddress!=null) {
+            Mind root=communeAddress.mind();
+            IContextFederation.RuleBlock block=org.kanger.ContextRuleInspection.inspect(root,locator,
+                    localOpinionRevision(root,communeAddress.members().get(0).getTarget()),false,selection,number);
+            return Collections.singletonList(new IContextFederation.RuleBlock(block.locator,block.revision,
+                    false,block.rules,communeAddress.members().stream().anyMatch(c->!c.getInitialization().isEmpty())));
+        }
         Path selected=addressed?resolveFederationLocator(locator):null;
         if(!addressed || local.equals(selected)) {
             result.add(org.kanger.ContextRuleInspection.inspect((Mind)source,sourceLocator(),
@@ -1450,6 +1458,8 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         requireWritable(); requireOpen();
         if (sourceMind != user.getCurrentMind() || sourceMind.getUser() != user)
             throw new CommandErrorException("Connection editing requires the current X Mind");
+        if(addressedCommune(locator)!=null)
+            throw new CommandErrorException("Commune views are read-only; address a physical member for connection edits");
         if (command == null || command.isEmpty() || "!+-".indexOf(command.charAt(0)) < 0)
             throw new CommandErrorException("Only assertion/addition/deletion commands are allowed in a connection layer");
         org.kanger.compiler.Token token = org.kanger.enums.Tools.extractLine(command, null);
@@ -1504,6 +1514,14 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                 || querySource.charAt(0) != '?') {
             throw new IllegalArgumentException(
                     "Isolated Context query requires a query source");
+        }
+
+        CommuneRuntime commune=addressedCommune(targetLocator);
+        if(commune!=null) {
+            Mind root=commune.mind();
+            Mind work=Mind.ephemeralChild(root);
+            try { return projectLocalQuery(work,commune.members().get(0).getTarget(),querySource); }
+            finally { root.discardEphemeral(work); }
         }
 
         Path requested =
@@ -1737,6 +1755,20 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         throw new CommandErrorException(
                 "No direct Context connection exists for locator "
                         + targetLocator);
+    }
+
+    /** Literal group names address the existing qualified execution view, never a new union. */
+    private CommuneRuntime addressedCommune(String locator) throws Exception {
+        if(locator==null)return null;
+        boolean grouped=workingConnections.getConnections().stream().anyMatch(c->locator.equals(c.getTrustGroup()));
+        if(!grouped)return null;
+        Path physical=resolveFederationLocator(locator);
+        if(physical.equals(activeLocation().toAbsolutePath().normalize())
+                || workingConnections.getConnections().stream().anyMatch(c->physical.equals(c.getTargetLocation().toAbsolutePath().normalize())))
+            throw new CommandErrorException("Ambiguous Context/commune locator "+locator+"; use a path such as ./"+locator+" for the physical Context");
+        for(ContextConnection participant:workingConnections.executionConnections(communeCache))
+            if(locator.equals(participant.getTrustGroup()) && participant.commune()!=null)return participant.commune();
+        throw new CommandErrorException("Qualified commune view unavailable: "+locator);
     }
 
     private Path resolveFederationLocator(
