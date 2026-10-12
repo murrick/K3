@@ -51,3 +51,4 @@ org.kanger.storage.dumb2.ContextCommandConvenienceRunner | CONTEXT_COMMAND_CONVE
 org.kanger.DmzGroundCollisionRestrictionRunner | DMZ_GROUND_COLLISION_RESTRICTION_PASS
 org.kanger.DmzTypedNativeResumeRunner | DMZ_TYPED_NATIVE_RESUME_PASS
 org.kanger.storage.dumb2.CommuneAddressWorkflowRunner | COMMUNE_ADDRESS_WORKFLOW_PASS
+org.kanger.DmzTypedCacheProjectionRunner | DMZ_TYPED_CACHE_PROJECTION_PASS
