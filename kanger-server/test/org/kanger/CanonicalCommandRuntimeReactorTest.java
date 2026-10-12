@@ -312,7 +312,7 @@ class CanonicalCommandRuntimeReactorTest {
             IReactor<JSONObject> reactor=new CanonicalErrorBoundaryReactor(canonicalChain(escaped));
             JSONObject tree=invoke(reactor,fixture.token,"rule tree "+derived);
             assertEquals("OK",tree.optString("result"),tree.toString());
-            assertFalse(tree.getJSONArray("list").getJSONObject(0).getJSONArray("causes").isEmpty());
+            assertTrue(!tree.getJSONArray("list").getJSONObject(0).getJSONArray("causes").isEmpty());
             JSONObject base=invoke(reactor,fixture.token,"rules base");
             assertEquals("OK",base.optString("result"),base.toString());
             for(int i=0;i<base.getJSONArray("list").length();i++)
