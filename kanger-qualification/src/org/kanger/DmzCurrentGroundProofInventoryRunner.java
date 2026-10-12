@@ -132,6 +132,7 @@ public final class DmzCurrentGroundProofInventoryRunner {
         try (DmzReplayProvenance journal=DmzReplayProvenance.begin(); TerminalSupportCapture capture=TerminalSupportCapture.begin(q)) {
             accept(q,source,0,"!@x @y ~(pair(x,y),pair(y,x));");
             accept(q,source,1,"!pair(John,Tom);");
+            accept(q,source,2,"!@x @y ~pair(x,y) -> negative(x,y);");
             DmzCurrentGroundProofInventory model=inventory(q,false);
             count(model,"~pair(Tom,John)",2);
             List<DmzProofWitnesses.Witness> proofs=model.proofs(ground("~pair(Tom,John)"),10000).witnesses;
@@ -139,6 +140,38 @@ public final class DmzCurrentGroundProofInventoryRunner {
             List<TerminalSupportCapture.Binding> second=proofs.get(1).graph.observed.steps.get(proofs.get(1).step).application.bindings;
             require(first.size()==2 && second.size()==2 && !first.get(0).value.semanticallyEquals(second.get(0).value),
                     "equal conclusion/premise/source retain different substitutions");
+            DmzProofWitnesses.NoGood one=DmzProofWitnesses.NoGood.fromTyped(proofs.get(0));
+            DmzSourcedProofGraph branch=model.graph.restrict(Collections.singletonList(one));
+            DmzProofWitnesses.Result remaining=DmzProofWitnesses.enumerate(branch,proofs.get(0).node,10000);
+            require(!remaining.truncated && remaining.witnesses.size()==1,"typed exclusion keeps the other substitution with equal endpoints and source");
+            int downstream=-1;
+            for(int i=0;i<branch.observed.nodes.size();++i) if(branch.observed.nodes.get(i).ground.equivalent(ground("negative(Tom,John)")))downstream=i;
+            require(downstream>=0 && DmzProofWitnesses.enumerate(model.graph,downstream,10000).witnesses.size()==2
+                && DmzProofWitnesses.enumerate(branch,downstream,10000).witnesses.size()==1,"typed no-good propagates to dependent continuation while other substitution survives");
+            DmzProofWitnesses.Witness kept=remaining.witnesses.get(0);
+            require(!one.matches(kept.graph,kept.node,kept.step,kept.source,kept.premises),"surviving substitution differs exactly");
+            require(DmzProofWitnesses.enumerate(model.graph,proofs.get(0).node,10000).witnesses.size()==2,"unrestricted graph intact");
+            DmzProofWitnesses.NoGood two=DmzProofWitnesses.NoGood.fromTyped(proofs.get(1));
+            require(DmzProofWitnesses.enumerate(branch.restrict(Collections.singletonList(two)),proofs.get(0).node,10000).witnesses.isEmpty(),
+                "both explicit typed exclusions remove both substitutions");
+            List<TerminalSupportCapture.ApplicationSources> rebuilt=new ArrayList<TerminalSupportCapture.ApplicationSources>();
+            for(int i=model.graph.observed.steps.size()-1;i>=0;--i) {
+                TerminalSupportCapture.Application app=model.graph.observed.steps.get(i).application;
+                List<TerminalSupportCapture.Binding> relocated=new ArrayList<TerminalSupportCapture.Binding>();
+                for(TerminalSupportCapture.Binding binding:app.bindings) relocated.add(new TerminalSupportCapture.Binding(
+                    binding.variable+1000,binding.nativeVariable,"renamed",binding.rendering,binding.value));
+                Collections.reverse(relocated);
+                TerminalSupportCapture.Application copy=new TerminalSupportCapture.Application(app.mind,app.rule,app.ruleOrigin,
+                    app.conclusion,app.ground,relocated,app.supports);
+                rebuilt.add(new TerminalSupportCapture.ApplicationSources(copy,model.graph.steps.get(i).ruleSources,model.graph.steps.get(i).primarySources));
+            }
+            DmzSourcedProofGraph portable=DmzSourcedProofGraph.build(rebuilt).restrict(Collections.singletonList(one));
+            int portableRoot=-1;
+            for(int i=0;i<portable.observed.nodes.size();++i) if(portable.observed.nodes.get(i).ground.equivalent(ground("~pair(Tom,John)")))portableRoot=i;
+            require(portableRoot>=0 && DmzProofWitnesses.enumerate(portable,portableRoot,10000).witnesses.size()==1,
+                "typed pattern ignores graph indices, capture indices, names and binding order");
+            try {DmzProofWitnesses.NoGood.fromTyped(proofs.get(0).premises.get(0));throw new AssertionError("primary exclusion accepted");}
+            catch(IllegalArgumentException expected) {++checks;}
             nativeAnswer(q,"pair(Tom,John)",false);
         }
     }

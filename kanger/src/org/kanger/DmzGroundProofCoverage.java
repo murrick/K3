@@ -101,6 +101,9 @@ final class DmzGroundProofCoverage {
         }
         return new Result(true,true,false,count,gaps);
     }
+    DmzCurrentGroundProofInventory.Proofs expectedProofs(TerminalSupportCapture.Ground atom,int budget) throws Exception {
+        return inventory.proofs(atom,budget);
+    }
     private static boolean bindings(List<TerminalSupportCapture.Binding> expected,List<TerminalSupportCapture.Binding> actual) {
         if (expected.size()!=actual.size()) return false;
         Set<Long> seen=new HashSet<Long>();
