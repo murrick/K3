@@ -85,6 +85,7 @@ final class DmzTerminalRestriction implements AutoCloseable {
     }
     static List<DmzProofWitnesses.NoGood> activeNoGoods(Mind mind) {
         List<DmzProofWitnesses.NoGood> result = new ArrayList<DmzProofWitnesses.NoGood>();
+        result.addAll(DmzTypedNativeResume.active(mind));
         for (DmzTerminalRestriction restriction = ACTIVE.get(); restriction != null; restriction = restriction.previous)
             if (restriction.local(mind)) result.add(restriction.noGood);
         return result;
@@ -197,6 +198,7 @@ final class DmzTerminalRestriction implements AutoCloseable {
         return true;
     }
     static boolean denies(Mind mind, Domain conclusion, List<Domain> tree) throws Exception {
+        if(DmzTypedNativeResume.denies(mind,conclusion,tree))return true;
         DmzTerminalRestriction restriction = ACTIVE.get();
         if (restriction == null) return false;
         // Consult stacked scopes separately: an outer restriction still applies in its descendants.
@@ -230,6 +232,7 @@ final class DmzTerminalRestriction implements AutoCloseable {
         return false;
     }
     static boolean deniesQueryPair(Mind mind, Domain left, Domain right) throws Exception {
+        if(DmzTypedNativeResume.deniesQueryPair(mind,left,right))return true;
         DmzTerminalRestriction active = ACTIVE.get();
         if (active == null) return false;
         boolean accepting = mind.getQueryPass() == org.kanger.enums.QueryPass.ACCEPT;

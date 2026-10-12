@@ -173,6 +173,11 @@ public final class DmzGroundCollisionRestrictionRunner {
                     DmzGroundCollisionRestriction.Result branch=restriction.project(proof,recursive,q,10000);
                     require(branch.eligible && branch.removed==1 && branch.retained.size()==DmzProofWitnesses.enumerate(proof.graph,recursive.node,10000).witnesses.size()-1,"recursive typed chain exclusion removes only one native witness: eligible="+branch.eligible+" removed="+branch.removed+" retained="+branch.retained.size());
                     require(state.equals(DmzObservationStateFingerprint.capture(q)),"recursive projection preserves Q");
+                    boolean nativeRefused=false;
+                    try {DmzTypedNativeResume.run(restriction,proof,recursive,q,10000);}catch(IllegalStateException expected) {
+                        nativeRefused=expected.getMessage().contains("direct typed collision projection");
+                    }
+                    require(nativeRefused && state.equals(DmzObservationStateFingerprint.capture(q)),"recursive native enforcement remains outside direct cold protocol");
                 } else if (mode.equals("unseeded-cycle")) {
                     require(result.covered && result.expectedSteps == 3,
                             "unseeded cycle contributes no invented unit application");

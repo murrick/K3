@@ -482,6 +482,7 @@ final class TerminalSupportCapture implements AutoCloseable {
         if (supports.size() == 1) {
             List<DmzProofWitnesses.NoGood> patterns = DmzTerminalRestriction.applicationNoGoods(mind,
                     rule.getId(), application.ground, supports.get(0).ground);
+            patterns.addAll(DmzTypedNativeResume.patterns(mind,rule.getId(),application.ground,supports.get(0).ground,bindings));
             if (!patterns.isEmpty()) restrictedChains.put(application, Collections.unmodifiableList(patterns));
         }
         applications.add(application);

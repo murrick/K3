@@ -72,7 +72,7 @@ final class DmzProofWitnesses {
             }
             return true;
         }
-        private static boolean sameBindings(List<TerminalSupportCapture.Binding> expected,List<TerminalSupportCapture.Binding> actual) {
+        static boolean sameBindings(List<TerminalSupportCapture.Binding> expected,List<TerminalSupportCapture.Binding> actual) {
             if (expected.size()!=actual.size() || actual.size()>16) return false;
             Set<Long> seen=new HashSet<Long>();
             for (TerminalSupportCapture.Binding binding:actual)
