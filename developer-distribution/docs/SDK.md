@@ -948,6 +948,14 @@ ordinary query does not inherit earlier restriction choices or foreign source
 attribution. Previously retained detached results remain unchanged and can be
 presented independently without switching the active runtime back to them.
 
+A new initial query attempt clears the active saved result before Console parses
+its arguments and before the processor executes it. An invalid projection limit
+or a mismatched Q revision therefore leaves no active opinion for saved explain
+or tree commands. A corrected initial request acquires and validates its own
+inputs and becomes the new active result on success. These refusals do not alter
+independently retained results or Q. Presentation-selection errors and malformed
+saved-choice preparation retain the current result as described above.
+
 A source name rebound to a different Context UUID is refused even when its
 declarations and revision number match. Restoring the original source permits a
 fresh reconstruction of its old exact pin. Advancing source HEAD while retaining

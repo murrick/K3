@@ -722,6 +722,40 @@ public final class DmzConsoleWorkflowRunner {
         q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
         require(state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && db.getRevision()==revision && !db.hasConnectedContexts(),
                 "active result replacement and historical reads preserve durable Q, revision and topology");
+        String valid=prefix+" ?seed("+(choices+1)+");";
+        String wrongRevision="ctx dmz "+db.getContextId()+"@"+(revision+1)+" ?seed("+(choices+1)+");";
+        reject(() -> processor.execute(PARSER.parse(wrongRevision),user),org.kanger.exception.CommandErrorException.class);
+        require(user.getLastDmzResult()==null && state.equals(DmzSourceMaterializationQualification.fingerprint(q)),
+                "new provider refusal clears the active unknown result before execution and preserves Q");
+        DmzSourcesQuery.Result beforeParse=processor.execute(PARSER.parse(valid),user).getDmzResult();
+        output.reset();
+        errors=boundaryConsole(q,valid+" projection=0\nctx dmz explain\nctx tree 1\n",output);
+        require(user.getLastDmzResult()==null && errors.contains("Phase allowance") && errors.contains("No saved DMZ query")
+                && !errors.contains("\tat org.kanger") && !output.toString("UTF-8").contains("Opinion 1:"),
+                "malformed fresh Console attempt clears the preceding result before parsing and exposes no stale opinion");
+        q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+        require(state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && db.getRevision()==revision,
+                "fresh parsing refusal preserves durable Q and published revision after reopening");
+        DmzSourcesQuery.Result beforeExecution=processor.execute(PARSER.parse(valid),user).getDmzResult();
+        output.reset();
+        errors=boundaryConsole(q,wrongRevision+"\nctx dmz explain\nctx tree 1\n"+valid+"\nctx dmz explain\nctx tree 1\n",output);
+        DmzSourcesQuery.Result corrected=user.getLastDmzResult();
+        require(errors.contains("Q revision mismatch") && errors.contains("No saved DMZ query")
+                && !errors.contains("\tat org.kanger") && !errors.contains("Exact replay request:")
+                && corrected!=null && corrected!=beforeExecution && corrected.request.queryStatement.equals("?seed("+(choices+1)+");")
+                && Boolean.TRUE.equals(corrected.opinions.get(0).answer.value) && corrected.request.restrictions==null
+                && output.toString("UTF-8").contains("Opinion 1: TRUE") && !output.toString("UTF-8").contains("Restricted source chain"),
+                "Console provider refusal clears saved views until a corrected fresh query installs its own result");
+        require(beforeParse!=beforeExecution && Boolean.TRUE.equals(beforeParse.opinions.get(0).answer.value)
+                && Boolean.TRUE.equals(beforeExecution.opinions.get(0).answer.value)
+                && latest.viewOpinions.get(0).value==null && latest.viewOpinions.get(0).proofs.isEmpty()
+                && previous.restrictionOutcome.trace.size()==choices,
+                "fresh parse and provider refusals do not mutate retained known, unknown or restricted histories");
+        savedViews(historical,original,truth,choices);
+        require(user.getLastDmzResult()==corrected,"retained historical presentation cannot restore an active result cleared by a new failed query");
+        q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+        require(state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && db.getRevision()==revision && !db.hasConnectedContexts(),
+                "failed fresh attempts and corrected recovery preserve physical Q, revision and topology");
         return q;
     }
     private static void savedViews(User user,DmzSourcesQuery.Result saved,Boolean truth,int choices) throws Exception {
