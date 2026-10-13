@@ -1,0 +1,1946 @@
+[
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "total",
+    "ns": 224519.0,
+    "cpu_ns": 0.0,
+    "bytes": 760256.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "open",
+    "ns": 3713.125,
+    "cpu_ns": 3980.875,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "baseline",
+    "ns": 67827.5625,
+    "cpu_ns": 68136.875,
+    "bytes": 266944.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "mutate_b",
+    "ns": 3034.5,
+    "cpu_ns": 3282.9375,
+    "bytes": 9128.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "changed",
+    "ns": 51315.5625,
+    "cpu_ns": 51593.9375,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "mutate_a",
+    "ns": 2635.125,
+    "cpu_ns": 2882.5625,
+    "bytes": 9392.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "restored",
+    "ns": 50611.4375,
+    "cpu_ns": 50877.75,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "finish",
+    "ns": 31220.0625,
+    "cpu_ns": 31496.875,
+    "bytes": 101848.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "close",
+    "ns": 117.0625,
+    "cpu_ns": 338.75,
+    "bytes": 0.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "total",
+    "ns": 223472.4375,
+    "cpu_ns": 0.0,
+    "bytes": 755392.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "open",
+    "ns": 3852.0625,
+    "cpu_ns": 4154.875,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "baseline",
+    "ns": 64848.8125,
+    "cpu_ns": 65164.6875,
+    "bytes": 266944.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "mutate_b",
+    "ns": 2635.0,
+    "cpu_ns": 2910.4375,
+    "bytes": 6696.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "changed",
+    "ns": 51581.75,
+    "cpu_ns": 51906.25,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "mutate_a",
+    "ns": 2323.375,
+    "cpu_ns": 2564.375,
+    "bytes": 6960.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "restored",
+    "ns": 49415.0,
+    "cpu_ns": 49812.6875,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "finish",
+    "ns": 31670.125,
+    "cpu_ns": 32059.375,
+    "bytes": 101848.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "close",
+    "ns": 107.625,
+    "cpu_ns": 334.4375,
+    "bytes": 0.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "total",
+    "ns": 243350.0625,
+    "cpu_ns": 0.0,
+    "bytes": 760256.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "open",
+    "ns": 4051.1875,
+    "cpu_ns": 4352.8125,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "baseline",
+    "ns": 69795.375,
+    "cpu_ns": 70118.25,
+    "bytes": 266944.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "mutate_b",
+    "ns": 3122.6875,
+    "cpu_ns": 3369.375,
+    "bytes": 9128.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "changed",
+    "ns": 55002.0,
+    "cpu_ns": 55304.5625,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "mutate_a",
+    "ns": 2736.5625,
+    "cpu_ns": 2983.9375,
+    "bytes": 9392.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "restored",
+    "ns": 53976.4375,
+    "cpu_ns": 54263.6875,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "finish",
+    "ns": 32890.8125,
+    "cpu_ns": 33177.875,
+    "bytes": 101848.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "close",
+    "ns": 123.1875,
+    "cpu_ns": 348.6875,
+    "bytes": 0.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "total",
+    "ns": 244863.5,
+    "cpu_ns": 0.0,
+    "bytes": 755392.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "open",
+    "ns": 4045.375,
+    "cpu_ns": 4333.25,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "baseline",
+    "ns": 74265.9375,
+    "cpu_ns": 72877.0625,
+    "bytes": 266944.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "mutate_b",
+    "ns": 2822.6875,
+    "cpu_ns": 3065.875,
+    "bytes": 6696.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "changed",
+    "ns": 56593.9375,
+    "cpu_ns": 56916.3125,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "mutate_a",
+    "ns": 2381.6875,
+    "cpu_ns": 2645.1875,
+    "bytes": 6960.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "restored",
+    "ns": 53980.25,
+    "cpu_ns": 54289.3125,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "finish",
+    "ns": 32912.5625,
+    "cpu_ns": 33193.125,
+    "bytes": 101848.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "close",
+    "ns": 115.25,
+    "cpu_ns": 339.0625,
+    "bytes": 0.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "total",
+    "ns": 241111.6875,
+    "cpu_ns": 0.0,
+    "bytes": 760256.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "open",
+    "ns": 3918.6875,
+    "cpu_ns": 4231.9375,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "baseline",
+    "ns": 73821.4375,
+    "cpu_ns": 73852.0625,
+    "bytes": 266944.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "mutate_b",
+    "ns": 3204.1875,
+    "cpu_ns": 3464.5,
+    "bytes": 9128.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "changed",
+    "ns": 55937.5,
+    "cpu_ns": 56218.1875,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "mutate_a",
+    "ns": 2754.625,
+    "cpu_ns": 2995.6875,
+    "bytes": 9392.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "restored",
+    "ns": 55026.1875,
+    "cpu_ns": 55342.0,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "finish",
+    "ns": 33064.625,
+    "cpu_ns": 33344.9375,
+    "bytes": 101848.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "close",
+    "ns": 111.375,
+    "cpu_ns": 334.875,
+    "bytes": 0.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "total",
+    "ns": 217169.875,
+    "cpu_ns": 0.0,
+    "bytes": 755392.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "open",
+    "ns": 3638.625,
+    "cpu_ns": 3920.375,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "baseline",
+    "ns": 64852.0,
+    "cpu_ns": 65100.1875,
+    "bytes": 266944.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "mutate_b",
+    "ns": 2565.6875,
+    "cpu_ns": 2814.8125,
+    "bytes": 6696.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "changed",
+    "ns": 50501.8125,
+    "cpu_ns": 50813.625,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "mutate_a",
+    "ns": 2324.0,
+    "cpu_ns": 2573.8125,
+    "bytes": 6960.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "restored",
+    "ns": 50041.6875,
+    "cpu_ns": 50346.0,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "finish",
+    "ns": 30647.4375,
+    "cpu_ns": 30957.75,
+    "bytes": 101848.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "close",
+    "ns": 102.0625,
+    "cpu_ns": 323.6875,
+    "bytes": 0.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "total",
+    "ns": 241029.0625,
+    "cpu_ns": 0.0,
+    "bytes": 760256.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "open",
+    "ns": 3898.3125,
+    "cpu_ns": 4176.125,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "baseline",
+    "ns": 68415.4375,
+    "cpu_ns": 68643.625,
+    "bytes": 266944.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "mutate_b",
+    "ns": 3094.6875,
+    "cpu_ns": 3345.125,
+    "bytes": 9128.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "changed",
+    "ns": 55187.5625,
+    "cpu_ns": 55490.9375,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "mutate_a",
+    "ns": 2680.9375,
+    "cpu_ns": 2958.625,
+    "bytes": 9392.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "restored",
+    "ns": 52609.8125,
+    "cpu_ns": 52894.0625,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "finish",
+    "ns": 33769.5625,
+    "cpu_ns": 34239.9375,
+    "bytes": 101848.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "close",
+    "ns": 126.3125,
+    "cpu_ns": 351.75,
+    "bytes": 0.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "total",
+    "ns": 214877.75,
+    "cpu_ns": 0.0,
+    "bytes": 755392.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "open",
+    "ns": 3503.4375,
+    "cpu_ns": 3807.625,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "baseline",
+    "ns": 64549.625,
+    "cpu_ns": 64881.75,
+    "bytes": 266944.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "mutate_b",
+    "ns": 2551.875,
+    "cpu_ns": 2804.6875,
+    "bytes": 6696.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "changed",
+    "ns": 50899.4375,
+    "cpu_ns": 51193.5,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "mutate_a",
+    "ns": 2259.5625,
+    "cpu_ns": 2514.1875,
+    "bytes": 6960.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "restored",
+    "ns": 50215.75,
+    "cpu_ns": 50545.4375,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "finish",
+    "ns": 30114.25,
+    "cpu_ns": 30413.8125,
+    "bytes": 101848.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "close",
+    "ns": 113.4375,
+    "cpu_ns": 336.6875,
+    "bytes": 0.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "total",
+    "ns": 234330.9375,
+    "cpu_ns": 0.0,
+    "bytes": 760256.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "open",
+    "ns": 3953.3125,
+    "cpu_ns": 4224.375,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "baseline",
+    "ns": 68850.375,
+    "cpu_ns": 69181.4375,
+    "bytes": 266944.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "mutate_b",
+    "ns": 3064.6875,
+    "cpu_ns": 3312.3125,
+    "bytes": 9128.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "changed",
+    "ns": 56165.9375,
+    "cpu_ns": 56185.6875,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "mutate_a",
+    "ns": 2742.875,
+    "cpu_ns": 2993.6875,
+    "bytes": 9392.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "restored",
+    "ns": 53983.75,
+    "cpu_ns": 54614.0625,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "finish",
+    "ns": 33000.9375,
+    "cpu_ns": 33369.0625,
+    "bytes": 101848.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "close",
+    "ns": 113.8125,
+    "cpu_ns": 338.5625,
+    "bytes": 0.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "total",
+    "ns": 231406.75,
+    "cpu_ns": 0.0,
+    "bytes": 755392.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "open",
+    "ns": 3829.9375,
+    "cpu_ns": 4094.75,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "baseline",
+    "ns": 68500.4375,
+    "cpu_ns": 68845.3125,
+    "bytes": 266944.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "mutate_b",
+    "ns": 2724.8125,
+    "cpu_ns": 2969.375,
+    "bytes": 6696.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "changed",
+    "ns": 53786.0625,
+    "cpu_ns": 54090.8125,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "mutate_a",
+    "ns": 2355.375,
+    "cpu_ns": 2608.875,
+    "bytes": 6960.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "restored",
+    "ns": 52000.25,
+    "cpu_ns": 52300.8125,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "finish",
+    "ns": 31817.3125,
+    "cpu_ns": 32097.0,
+    "bytes": 101848.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "close",
+    "ns": 103.875,
+    "cpu_ns": 321.1875,
+    "bytes": 0.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "total",
+    "ns": 214619.6875,
+    "cpu_ns": 0.0,
+    "bytes": 760256.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "open",
+    "ns": 3547.875,
+    "cpu_ns": 3825.8125,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "baseline",
+    "ns": 64448.25,
+    "cpu_ns": 64747.25,
+    "bytes": 266944.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "mutate_b",
+    "ns": 2919.375,
+    "cpu_ns": 3179.125,
+    "bytes": 9128.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "changed",
+    "ns": 51598.4375,
+    "cpu_ns": 51911.8125,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "mutate_a",
+    "ns": 2614.4375,
+    "cpu_ns": 2866.125,
+    "bytes": 9392.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "restored",
+    "ns": 49508.3125,
+    "cpu_ns": 49753.625,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "finish",
+    "ns": 30840.0625,
+    "cpu_ns": 31114.875,
+    "bytes": 101848.0
+  },
+  {
+    "profile": "batch",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "close",
+    "ns": 105.25,
+    "cpu_ns": 323.9375,
+    "bytes": 0.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "total",
+    "ns": 219975.25,
+    "cpu_ns": 0.0,
+    "bytes": 755392.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "open",
+    "ns": 3681.75,
+    "cpu_ns": 3975.3125,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "baseline",
+    "ns": 64804.1875,
+    "cpu_ns": 65127.1875,
+    "bytes": 266944.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "mutate_b",
+    "ns": 2610.6875,
+    "cpu_ns": 2871.875,
+    "bytes": 6696.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "changed",
+    "ns": 51390.6875,
+    "cpu_ns": 51715.4375,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "mutate_a",
+    "ns": 2292.75,
+    "cpu_ns": 2544.375,
+    "bytes": 6960.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "restored",
+    "ns": 49787.4375,
+    "cpu_ns": 50444.8125,
+    "bytes": 185648.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "finish",
+    "ns": 30460.125,
+    "cpu_ns": 30721.8125,
+    "bytes": 101848.0
+  },
+  {
+    "profile": "batch",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "close",
+    "ns": 96.625,
+    "cpu_ns": 319.25,
+    "bytes": 0.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "total",
+    "ns": 374055.375,
+    "cpu_ns": 0.0,
+    "bytes": 767584.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "open",
+    "ns": 7476.1875,
+    "cpu_ns": 7880.4375,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "baseline",
+    "ns": 108521.0625,
+    "cpu_ns": 109120.375,
+    "bytes": 269984.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "mutate_b",
+    "ns": 10066.125,
+    "cpu_ns": 10668.25,
+    "bytes": 9896.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "changed",
+    "ns": 90490.125,
+    "cpu_ns": 90892.3125,
+    "bytes": 186912.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "mutate_a",
+    "ns": 9979.125,
+    "cpu_ns": 10338.6875,
+    "bytes": 10160.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "restored",
+    "ns": 87854.0625,
+    "cpu_ns": 88388.75,
+    "bytes": 186912.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "finish",
+    "ns": 56700.5625,
+    "cpu_ns": 57080.9375,
+    "bytes": 102072.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 0,
+    "phase": "close",
+    "ns": 145.25,
+    "cpu_ns": 493.25,
+    "bytes": 0.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "total",
+    "ns": 345671.875,
+    "cpu_ns": 0.0,
+    "bytes": 755392.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "open",
+    "ns": 6211.1875,
+    "cpu_ns": 6600.5625,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "baseline",
+    "ns": 97214.125,
+    "cpu_ns": 97458.1875,
+    "bytes": 266368.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "mutate_b",
+    "ns": 7504.125,
+    "cpu_ns": 7880.375,
+    "bytes": 7080.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "changed",
+    "ns": 82548.9375,
+    "cpu_ns": 83211.5625,
+    "bytes": 185600.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "mutate_a",
+    "ns": 7018.5,
+    "cpu_ns": 7354.625,
+    "bytes": 7344.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "restored",
+    "ns": 80355.5625,
+    "cpu_ns": 80944.9375,
+    "bytes": 185600.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "finish",
+    "ns": 51401.375,
+    "cpu_ns": 51573.3125,
+    "bytes": 101752.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 0,
+    "phase": "close",
+    "ns": 139.5625,
+    "cpu_ns": 451.375,
+    "bytes": 0.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "total",
+    "ns": 412212.5625,
+    "cpu_ns": 0.0,
+    "bytes": 770912.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "open",
+    "ns": 5581.5,
+    "cpu_ns": 6311.875,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "baseline",
+    "ns": 118488.875,
+    "cpu_ns": 118258.3125,
+    "bytes": 270640.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "mutate_b",
+    "ns": 8360.4375,
+    "cpu_ns": 8627.0625,
+    "bytes": 10280.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "changed",
+    "ns": 93635.875,
+    "cpu_ns": 93873.4375,
+    "bytes": 187568.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "mutate_a",
+    "ns": 7450.5625,
+    "cpu_ns": 7760.6875,
+    "bytes": 10544.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "restored",
+    "ns": 92605.0,
+    "cpu_ns": 92847.125,
+    "bytes": 187568.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "finish",
+    "ns": 58645.0625,
+    "cpu_ns": 58590.5625,
+    "bytes": 102728.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 1,
+    "phase": "close",
+    "ns": 114.5,
+    "cpu_ns": 393.75,
+    "bytes": 0.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "total",
+    "ns": 352878.875,
+    "cpu_ns": 0.0,
+    "bytes": 755712.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "open",
+    "ns": 6623.0625,
+    "cpu_ns": 7045.375,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "baseline",
+    "ns": 103982.4375,
+    "cpu_ns": 104552.4375,
+    "bytes": 266432.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "mutate_b",
+    "ns": 7652.1875,
+    "cpu_ns": 8048.8125,
+    "bytes": 7080.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "changed",
+    "ns": 86779.4375,
+    "cpu_ns": 87276.125,
+    "bytes": 185712.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "mutate_a",
+    "ns": 7102.375,
+    "cpu_ns": 7457.25,
+    "bytes": 7344.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "restored",
+    "ns": 83623.5,
+    "cpu_ns": 84096.5625,
+    "bytes": 185712.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "finish",
+    "ns": 49972.875,
+    "cpu_ns": 50400.25,
+    "bytes": 101784.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 1,
+    "phase": "close",
+    "ns": 139.25,
+    "cpu_ns": 468.125,
+    "bytes": 0.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "total",
+    "ns": 304155.3125,
+    "cpu_ns": 0.0,
+    "bytes": 765440.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "open",
+    "ns": 4840.875,
+    "cpu_ns": 5159.0,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "baseline",
+    "ns": 83067.125,
+    "cpu_ns": 82764.375,
+    "bytes": 267300.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "mutate_b",
+    "ns": 7186.3125,
+    "cpu_ns": 7476.25,
+    "bytes": 10280.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "changed",
+    "ns": 69622.3125,
+    "cpu_ns": 70011.8125,
+    "bytes": 186508.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "mutate_a",
+    "ns": 6640.4375,
+    "cpu_ns": 6926.5,
+    "bytes": 10544.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "restored",
+    "ns": 67436.3125,
+    "cpu_ns": 67589.75,
+    "bytes": 186512.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "finish",
+    "ns": 44541.0,
+    "cpu_ns": 44850.25,
+    "bytes": 102660.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 2,
+    "phase": "close",
+    "ns": 109.5,
+    "cpu_ns": 351.875,
+    "bytes": 0.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "total",
+    "ns": 352696.0625,
+    "cpu_ns": 0.0,
+    "bytes": 761952.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "open",
+    "ns": 5805.5,
+    "cpu_ns": 6124.75,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "baseline",
+    "ns": 96306.1875,
+    "cpu_ns": 96500.0,
+    "bytes": 269984.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "mutate_b",
+    "ns": 6508.9375,
+    "cpu_ns": 6741.875,
+    "bytes": 7080.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "changed",
+    "ns": 80763.6875,
+    "cpu_ns": 81230.4375,
+    "bytes": 186912.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "mutate_a",
+    "ns": 6235.4375,
+    "cpu_ns": 6494.5625,
+    "bytes": 7344.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "restored",
+    "ns": 77577.8125,
+    "cpu_ns": 78002.375,
+    "bytes": 186912.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "finish",
+    "ns": 53570.1875,
+    "cpu_ns": 53054.9375,
+    "bytes": 102072.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 2,
+    "phase": "close",
+    "ns": 120.1875,
+    "cpu_ns": 380.0,
+    "bytes": 0.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "total",
+    "ns": 398219.25,
+    "cpu_ns": 0.0,
+    "bytes": 770870.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "open",
+    "ns": 5869.875,
+    "cpu_ns": 6233.0625,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "baseline",
+    "ns": 106888.875,
+    "cpu_ns": 107369.1875,
+    "bytes": 269600.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "mutate_b",
+    "ns": 7405.25,
+    "cpu_ns": 7742.5625,
+    "bytes": 10280.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "changed",
+    "ns": 92811.625,
+    "cpu_ns": 93345.6875,
+    "bytes": 187680.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "mutate_a",
+    "ns": 6636.75,
+    "cpu_ns": 6929.125,
+    "bytes": 10544.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "restored",
+    "ns": 90220.25,
+    "cpu_ns": 89225.5,
+    "bytes": 187680.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "finish",
+    "ns": 58868.125,
+    "cpu_ns": 57978.5625,
+    "bytes": 103368.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 3,
+    "phase": "close",
+    "ns": 123.1875,
+    "cpu_ns": 371.5625,
+    "bytes": 0.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "total",
+    "ns": 250051.25,
+    "cpu_ns": 0.0,
+    "bytes": 763072.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "open",
+    "ns": 4127.375,
+    "cpu_ns": 4437.875,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "baseline",
+    "ns": 72099.5,
+    "cpu_ns": 72500.0625,
+    "bytes": 270304.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "mutate_b",
+    "ns": 4192.9375,
+    "cpu_ns": 4475.4375,
+    "bytes": 7080.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "changed",
+    "ns": 55624.0625,
+    "cpu_ns": 55972.25,
+    "bytes": 187232.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "mutate_a",
+    "ns": 3934.4375,
+    "cpu_ns": 4195.0,
+    "bytes": 7344.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "restored",
+    "ns": 55337.25,
+    "cpu_ns": 55715.0625,
+    "bytes": 187232.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "finish",
+    "ns": 32374.375,
+    "cpu_ns": 32710.5,
+    "bytes": 102232.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 3,
+    "phase": "close",
+    "ns": 109.125,
+    "cpu_ns": 370.0,
+    "bytes": 0.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "total",
+    "ns": 354169.625,
+    "cpu_ns": 0.0,
+    "bytes": 770996.5
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "open",
+    "ns": 5782.875,
+    "cpu_ns": 6187.8125,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "baseline",
+    "ns": 95161.4375,
+    "cpu_ns": 95586.1875,
+    "bytes": 270640.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "mutate_b",
+    "ns": 8030.8125,
+    "cpu_ns": 8303.0,
+    "bytes": 10280.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "changed",
+    "ns": 81437.6875,
+    "cpu_ns": 80819.0625,
+    "bytes": 187568.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "mutate_a",
+    "ns": 7372.375,
+    "cpu_ns": 7654.0,
+    "bytes": 10544.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "restored",
+    "ns": 78355.0,
+    "cpu_ns": 78808.5625,
+    "bytes": 187568.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "finish",
+    "ns": 51345.5625,
+    "cpu_ns": 51269.125,
+    "bytes": 102728.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 4,
+    "phase": "close",
+    "ns": 127.0,
+    "cpu_ns": 381.875,
+    "bytes": 0.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "total",
+    "ns": 352234.75,
+    "cpu_ns": 0.0,
+    "bytes": 762480.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "open",
+    "ns": 5833.6875,
+    "cpu_ns": 6239.125,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "baseline",
+    "ns": 99615.875,
+    "cpu_ns": 99695.3125,
+    "bytes": 269888.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "mutate_b",
+    "ns": 7674.625,
+    "cpu_ns": 8021.9375,
+    "bytes": 7464.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "changed",
+    "ns": 84425.125,
+    "cpu_ns": 84567.25,
+    "bytes": 186864.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "mutate_a",
+    "ns": 6929.8125,
+    "cpu_ns": 7276.4375,
+    "bytes": 7728.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "restored",
+    "ns": 79261.5,
+    "cpu_ns": 79629.4375,
+    "bytes": 186864.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "finish",
+    "ns": 54244.1875,
+    "cpu_ns": 54652.9375,
+    "bytes": 102024.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 4,
+    "phase": "close",
+    "ns": 122.6875,
+    "cpu_ns": 442.5,
+    "bytes": 0.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "total",
+    "ns": 294782.5625,
+    "cpu_ns": 0.0,
+    "bytes": 765376.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "open",
+    "ns": 4533.5625,
+    "cpu_ns": 4882.75,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "baseline",
+    "ns": 80796.375,
+    "cpu_ns": 80974.3125,
+    "bytes": 267216.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "mutate_b",
+    "ns": 7205.625,
+    "cpu_ns": 7499.9375,
+    "bytes": 10280.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "changed",
+    "ns": 68367.25,
+    "cpu_ns": 68300.6875,
+    "bytes": 186512.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "mutate_a",
+    "ns": 6661.25,
+    "cpu_ns": 6964.125,
+    "bytes": 10544.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "restored",
+    "ns": 65791.5,
+    "cpu_ns": 66132.9375,
+    "bytes": 186512.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "finish",
+    "ns": 45817.9375,
+    "cpu_ns": 46225.4375,
+    "bytes": 102664.0
+  },
+  {
+    "profile": "default",
+    "module": "baseline",
+    "rep": 5,
+    "phase": "close",
+    "ns": 108.875,
+    "cpu_ns": 361.875,
+    "bytes": 0.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "total",
+    "ns": 335764.0625,
+    "cpu_ns": 0.0,
+    "bytes": 762368.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "open",
+    "ns": 5280.3125,
+    "cpu_ns": 5608.9375,
+    "bytes": 1648.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "baseline",
+    "ns": 96233.25,
+    "cpu_ns": 96717.625,
+    "bytes": 269968.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "mutate_b",
+    "ns": 6865.75,
+    "cpu_ns": 7161.1875,
+    "bytes": 7464.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "changed",
+    "ns": 77441.8125,
+    "cpu_ns": 77814.8125,
+    "bytes": 186800.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "mutate_a",
+    "ns": 6468.125,
+    "cpu_ns": 6755.625,
+    "bytes": 7728.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "restored",
+    "ns": 76505.375,
+    "cpu_ns": 76378.25,
+    "bytes": 186800.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "finish",
+    "ns": 53699.25,
+    "cpu_ns": 53944.3125,
+    "bytes": 101960.0
+  },
+  {
+    "profile": "default",
+    "module": "candidate",
+    "rep": 5,
+    "phase": "close",
+    "ns": 102.0,
+    "cpu_ns": 362.375,
+    "bytes": 0.0
+  }
+]
