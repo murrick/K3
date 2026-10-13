@@ -213,6 +213,11 @@ Ordinary federated proof smoke: A:p→q, B:q→r, C:p(John), X:p(Mary). Query ?$
 
 ## Experimental whole-source DMZ query
 
+For a ready-to-run exact-source restriction fixture, use the
+[disposable DMZ walkthrough](dmz-manual-walkthrough.md). It builds fresh isolated
+Q/Rules storage, prints actual pins and trigger IDs, and exercises successive
+choices, proof views and projection refusal/recovery through real Console.
+
 DMZ uses a settled physical Q with no active child transaction/reservation.
 Direct TRUST-tagged connections form one protected Q authority; untagged
 connections are autonomous external sources for ordinary Console queries. Inspect names and published revisions without

@@ -32,6 +32,7 @@ org.kanger.DmzUnaryStateDeltaRunner | DMZ_UNARY_STATE_DELTA_PASS
 org.kanger.DmzWholeSourcePlanRunner | DMZ_WHOLE_SOURCE_PLAN_PASS
 org.kanger.DmzWitnessConflictsRunner | DMZ_WITNESS_CONFLICTS_PASS
 org.kanger.storage.dumb2.DmzConsoleWorkflowRunner | DMZ_CONSOLE_WORKFLOW_PASS
+org.kanger.storage.dumb2.DmzManualFixtureRunner | DMZ_MANUAL_FIXTURE_PASS
 org.kanger.storage.dumb2.DmzProviderReplayRegressionRunner | DMZ_PROVIDER_REPLAY_REGRESSION_PASS
 org.kanger.storage.dumb2.DmzSourcePreflightRunner | DMZ_SOURCE_PREFLIGHT_PASS
 org.kanger.storage.dumb2.DmzSourceSequenceRunner | DMZ_SOURCE_SEQUENCE_PASS
