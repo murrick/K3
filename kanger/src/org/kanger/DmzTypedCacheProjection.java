@@ -32,22 +32,28 @@ final class DmzTypedCacheProjection {
     }
     static DmzTypedCacheProjection project(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
             DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
-        return project(guard,proof,selected,target,budget,false);
+        return project(guard,proof,selected,target,budget,false,false);
     }
     static DmzTypedCacheProjection projectRecursive(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
             DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
-        return project(guard,proof,selected,target,budget,true);
+        return project(guard,proof,selected,target,budget,true,false);
+    }
+    static DmzTypedCacheProjection projectPending(TechnicalMindTransaction owner,DmzGroundCollisionRestriction guard,
+            DmzProvisionalCollisionProof proof,DmzProofWitnesses.Witness selected,int budget) throws Exception {
+        Mind target=owner.pendingBoundary();
+        return project(guard,proof,selected,target,budget,selected!=null && selected.step>=0
+                && selected.premises.get(0).step>=0,true);
     }
     private static DmzTypedCacheProjection project(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
-            DmzProofWitnesses.Witness selected,Mind target,int budget,boolean recursive) throws Exception {
+            DmzProofWitnesses.Witness selected,Mind target,int budget,boolean recursive,boolean pending) throws Exception {
         if(target==null || guard==null || budget<1 || budget>10000)throw new IllegalArgumentException("Current bounded typed cache projection required");
         DmzGroundCollisionRestriction.Result restriction=guard.project(proof,selected,target,budget);
         if(!restriction.eligible || (!recursive && selected.premises.get(0).step>=0))
             return refused(target,restriction.truncated,0);
         if(recursive && !DmzProofWitnesses.NoGood.fromTyped(selected).recursiveWithin(8))
             return refused(target,false,0);
-        DmzCurrentGroundProofInventory inventory=DmzCurrentGroundProofInventory.capture(target,budget,false);
-        if(!inventory.eligible || inventory.provisional)return refused(target,inventory.truncated,0);
+        DmzCurrentGroundProofInventory inventory=DmzCurrentGroundProofInventory.capture(target,budget,pending);
+        if(!inventory.eligible || (!pending && inventory.provisional))return refused(target,inventory.truncated,0);
         DmzProofWitnesses.NoGood pattern=DmzProofWitnesses.NoGood.fromTyped(selected);
         DmzSourcedProofGraph graph=inventory.graph.restrict(Collections.singletonList(pattern));
         int remaining=budget;
