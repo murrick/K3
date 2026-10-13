@@ -262,7 +262,42 @@ public final class DmzConsoleWorkflowRunner {
             Mind reopened=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(reopened);
             require(state.equals(DmzSourceMaterializationQualification.fingerprint(reopened)) && !db.hasConnectedContexts(),
                     "SDK and command successes/refusals preserve durable Q and topology");
-            user.setCurrentMind(reopened.closeStorage());
+            user.setLastDmzResult(null);
+            String retry=diagnostic.replace(" projection=1"," projection=3");
+            DmzSourcesQuery.Request adjusted=(DmzSourcesQuery.Request)PARSER.parse(retry).getArgument("request");
+            require(adjusted.restrictions.choices.equals(refused.restrictions.choices)
+                    && adjusted.restrictions.triggerRevision.getContextId().equals(refused.restrictions.triggerRevision.getContextId())
+                    && adjusted.restrictions.triggerRevision.getRevision()==refused.restrictions.triggerRevision.getRevision()
+                    && adjusted.restrictions.triggerRule==refused.restrictions.triggerRule
+                    && adjusted.restrictions.budget==refused.restrictions.budget && adjusted.limits.projection==3,
+                    "editing diagnostic projection preserves the complete exact selected prefix and trigger");
+            out.reset();err.reset();
+            try {
+                System.setIn(new ByteArrayInputStream((diagnostic+"\n"+retry+"\nctx dmz explain\nctx dmz choose 1 projection=3\nctx dmz explain\n").getBytes("UTF-8")));
+                System.setOut(new PrintStream(out,true,"UTF-8"));System.setErr(new PrintStream(err,true,"UTF-8"));
+                CanonicalConsole.session(reopened,new ShutdownHook(reopened));
+            } finally { System.setIn(savedIn);System.setOut(savedOut);System.setErr(savedErr); }
+            require(err.toString("UTF-8").contains("Detached source proof budget exceeded")
+                    && !err.toString("UTF-8").contains("Exact replay request:") && !err.toString("UTF-8").contains("\tat org.kanger"),
+                    "unchanged diagnostic still refuses as a fresh initial request without requiring a saved result");
+            require(out.toString("UTF-8").contains("DMZ restrictions: NEXT_CONFLICT; selected=1")
+                    && out.toString("UTF-8").contains("DMZ restrictions: COMPLETE; selected=2")
+                    && out.toString("UTF-8").contains("Opinion 1: FALSE"),
+                    "enlarged diagnostic reconstructs its historical prefix and Console completes the remaining conflict");
+            DmzSourcesQuery.Result recovered=user.getLastDmzResult();
+            require(recovered!=null && recovered.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE
+                    && recovered.restrictionOutcome.trace.size()==2 && recovered.request.restrictions.choices.get(0).equals(firstIdentity)
+                    && recovered.restrictionOutcome.trace.get(0).selected.identity().equals(firstIdentity)
+                    && recovered.request.sources.expectedQ.getContextId().equals(qp.getContextId())
+                    && recovered.request.sources.expectedQ.getRevision()==qp.getRevision()
+                    && recovered.request.sources.external.get(0).revision.getContextId().equals(units.getContextId())
+                    && recovered.request.sources.external.get(0).revision.getRevision()==units.getRevision()
+                    && recovered.request.limits.projection==3 && refused.limits.projection==1,
+                    "fresh Console recovery retains old exact pins after source HEAD advancement and unchanged diagnostic data");
+            Mind afterRetry=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(afterRetry);
+            require(state.equals(DmzSourceMaterializationQualification.fingerprint(afterRetry)) && db.getRevision()==qp.getRevision()
+                    && !db.hasConnectedContexts(),"diagnostic failures and successful retries preserve durable Q, revision and topology");
+            user.setCurrentMind(afterRetry.closeStorage());
         } finally { if(user.getCurrentMind().isStorageUsed())user.setCurrentMind(user.getCurrentMind().closeStorage()); }
     }
     private static void reject(Attempt attempt,Class<? extends Exception> type) throws Exception {
