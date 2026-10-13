@@ -56,3 +56,4 @@ org.kanger.DmzTypedMaterializedResumeRunner | DMZ_TYPED_MATERIALIZED_RESUME_PASS
 org.kanger.DmzTypedRecursiveResumeRunner | DMZ_TYPED_RECURSIVE_RESUME_PASS
 org.kanger.DmzTypedPendingResumeRunner | DMZ_TYPED_PENDING_RESUME_PASS
 org.kanger.DmzCacheCollisionCoverageRunner | DMZ_CACHE_COLLISION_COVERAGE_PASS
+org.kanger.DmzCacheCollisionEvidenceRunner | DMZ_CACHE_COLLISION_EVIDENCE_PASS

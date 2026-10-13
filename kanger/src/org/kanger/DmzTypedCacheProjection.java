@@ -32,24 +32,35 @@ final class DmzTypedCacheProjection {
     }
     static DmzTypedCacheProjection project(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
             DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
-        return project(guard,proof,selected,target,budget,false,false);
+        return project(guard,proof,selected,target,budget,false,false,null);
     }
     static DmzTypedCacheProjection projectRecursive(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
             DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
-        return project(guard,proof,selected,target,budget,true,false);
+        return project(guard,proof,selected,target,budget,true,false,null);
     }
     static DmzTypedCacheProjection projectPending(TechnicalMindTransaction owner,DmzGroundCollisionRestriction guard,
             DmzProvisionalCollisionProof proof,DmzProofWitnesses.Witness selected,int budget) throws Exception {
         Mind target=owner.pendingBoundary();
         return project(guard,proof,selected,target,budget,selected!=null && selected.step>=0
-                && selected.premises.get(0).step>=0,true);
+                && selected.premises.get(0).step>=0,true,null);
+    }
+    static DmzTypedCacheProjection projectCache(DmzCacheCollisionEvidence evidence,DmzProofWitnesses.Witness selected,
+            Mind target,int budget) throws Exception {
+        return project(null,null,selected,target,budget,selected!=null && selected.step>=0
+                && selected.premises.get(0).step>=0,false,evidence);
     }
     private static DmzTypedCacheProjection project(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
-            DmzProofWitnesses.Witness selected,Mind target,int budget,boolean recursive,boolean pending) throws Exception {
-        if(target==null || guard==null || budget<1 || budget>10000)throw new IllegalArgumentException("Current bounded typed cache projection required");
-        DmzGroundCollisionRestriction.Result restriction=guard.project(proof,selected,target,budget);
-        if(!restriction.eligible || (!recursive && selected.premises.get(0).step>=0))
-            return refused(target,restriction.truncated,0);
+            DmzProofWitnesses.Witness selected,Mind target,int budget,boolean recursive,boolean pending,DmzCacheCollisionEvidence evidence) throws Exception {
+        if(target==null || (guard==null && evidence==null) || budget<1 || budget>10000)throw new IllegalArgumentException("Current bounded typed cache projection required");
+        boolean eligible,truncated;
+        if(evidence!=null) {
+            DmzCacheCollisionEvidence.Projection restriction=evidence.project(selected,target,budget);
+            eligible=restriction.eligible;truncated=restriction.truncated;
+        } else {
+            DmzGroundCollisionRestriction.Result restriction=guard.project(proof,selected,target,budget);
+            eligible=restriction.eligible;truncated=restriction.truncated;
+        }
+        if(!eligible || (!recursive && selected.premises.get(0).step>=0))return refused(target,truncated,0);
         if(recursive && !DmzProofWitnesses.NoGood.fromTyped(selected).recursiveWithin(8))
             return refused(target,false,0);
         DmzCurrentGroundProofInventory inventory=DmzCurrentGroundProofInventory.capture(target,budget,pending);

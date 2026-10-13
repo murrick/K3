@@ -342,6 +342,11 @@ final class TerminalSupportCapture implements AutoCloseable {
                 && operation.opened > checkpoint.opened;
     }
 
+    boolean followsImmediate(Checkpoint checkpoint, CollisionObservations event) {
+        if(!follows(checkpoint,event))return false;
+        return frames.get(event.operation).opened==checkpoint.opened+1;
+    }
+
     /** One committed acceptance directly after this baseline, with no intervening frame. */
     boolean followsStored(Checkpoint before, Checkpoint after, Materialization stored) {
         requireActive();

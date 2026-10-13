@@ -81,35 +81,43 @@ final class DmzTypedNativeResume {
     }
     static Result run(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
             DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
-        return run(guard,proof,selected,target,budget,false,false,null);
+        return run(guard,proof,selected,target,budget,false,false,null,null);
     }
     static Result runMaterialized(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
             DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
-        return run(guard,proof,selected,target,budget,true,false,null);
+        return run(guard,proof,selected,target,budget,true,false,null,null);
     }
     static Result runRecursive(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
             DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
-        return run(guard,proof,selected,target,budget,true,true,null);
+        return run(guard,proof,selected,target,budget,true,true,null,null);
     }
     static Result runPending(TechnicalMindTransaction owner,DmzGroundCollisionRestriction guard,
             DmzProvisionalCollisionProof proof,DmzProofWitnesses.Witness selected,int budget) throws Exception {
         Mind target=owner.pendingBoundary();
         return run(guard,proof,selected,target,budget,true,selected!=null && selected.step>=0
-                && selected.premises.get(0).step>=0,owner);
+                && selected.premises.get(0).step>=0,owner,null);
+    }
+    static Result runCache(DmzCacheCollisionEvidence evidence,DmzProofWitnesses.Witness selected,
+            Mind target,int budget) throws Exception {
+        return run(null,null,selected,target,budget,true,selected!=null && selected.step>=0
+                && selected.premises.get(0).step>=0,null,evidence);
     }
     private static Result run(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
-            DmzProofWitnesses.Witness selected,Mind target,int budget,boolean materialized,boolean recursive,TechnicalMindTransaction owner) throws Exception {
+            DmzProofWitnesses.Witness selected,Mind target,int budget,boolean materialized,boolean recursive,TechnicalMindTransaction owner,DmzCacheCollisionEvidence evidence) throws Exception {
         if(target.hasPendingTransactions())throw new IllegalStateException("Exclusive typed resume boundary required");
         if(ACTIVE.get()!=null || !DmzTerminalRestriction.activeNoGoods(target).isEmpty())
             throw new IllegalStateException("Unrestricted typed resume boundary required");
-        DmzGroundCollisionRestriction.Result projection=guard.project(proof,selected,target,budget);
-        if(!projection.eligible || (!recursive && selected.premises.get(0).step>=0))
+        boolean projected;
+        if(evidence!=null)projected=evidence.project(selected,target,budget).eligible;
+        else projected=guard.project(proof,selected,target,budget).eligible;
+        if(!projected || (!recursive && selected.premises.get(0).step>=0))
             throw new IllegalStateException("Current direct typed collision projection required");
         if(recursive && !DmzProofWitnesses.NoGood.fromTyped(selected).recursiveWithin(8))
             throw new IllegalStateException("Bounded recursive typed chain required");
         for(IRule rule:target.getRules())if(!materialized && !rule.isDeleted(target) && target.getRules().isGenerated(rule))
             throw new IllegalStateException("Cold typed resume cannot retract existing caches");
-        DmzTypedCacheProjection cachePlan=materialized?(owner!=null
+        DmzTypedCacheProjection cachePlan=materialized?(evidence!=null
+                ?DmzTypedCacheProjection.projectCache(evidence,selected,target,budget):owner!=null
                 ?DmzTypedCacheProjection.projectPending(owner,guard,proof,selected,budget):recursive
                 ?DmzTypedCacheProjection.projectRecursive(guard,proof,selected,target,budget)
                 :DmzTypedCacheProjection.project(guard,proof,selected,target,budget)):null;
@@ -151,6 +159,7 @@ final class DmzTypedNativeResume {
         for(IRule item:target.getRules())for(List<Domain> row:((Rule)item).getTree())for(Domain domain:row)
             if(domain.getPredicate().getName(target).equals(probe))throw new IllegalStateException("Probe predicate already exists");
         if(materialized && !cachePlan.isCurrent(target))throw new IllegalStateException("Typed cache plan changed before native child");
+        if(evidence!=null && !evidence.isCurrent(target))throw new IllegalStateException("Cache collision evidence changed before native child");
         if(owner!=null && owner.pendingBoundary()!=target)throw new IllegalStateException("Pending transaction ownership changed");
         try(TechnicalMindTransaction tx=TechnicalMindTransaction.beginIsolated(target)) {
             try(Scope scope=new Scope(tx.mind(),selected,retained);
