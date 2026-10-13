@@ -106,6 +106,28 @@ final class DmzCacheCollisionEvidence {
         for(DmzStoredGroundRoutes receipt:receipts)if(!receipt.isCurrent(candidate))return false;
         return true;
     }
+    DmzStoredGroundRoutes routes(CollisionProofCapture.Node endpoint,Mind target,int budget) throws Exception {
+        if(!isCurrent(target) || endpoint.ground==null)throw new IllegalStateException("Current successive endpoint required");
+        int remaining=budget;
+        for(IRule rule:target.getRules()) {
+            if(--remaining<0)throw new IllegalStateException("Successive endpoint budget exceeded");
+            if(rule.getId()!=endpoint.nativeRule || rule.isDeleted(target))continue;
+            if(!endpoint.ground.equivalent(DmzGroundIdentity.capture(rule,target).ground()))break;
+            if(target.getRules().isGenerated(rule)) {
+                DmzStoredGroundRoutes receipt=DmzStoredGroundRoutes.capture(baseline.capture,target,rule.getId(),remaining);
+                if(!receipt.covered || !receipt.isCurrent(target))break;
+                return receipt;
+            }
+            if(endpoint.generated || endpoint.sources.isEmpty())break;
+            for(DmzReplayProvenance.SourceObservation source:endpoint.sources) {
+                if(--remaining<0)throw new IllegalStateException("Successive endpoint budget exceeded");
+                if(source.outcome!=DmzReplayProvenance.Outcome.ACCEPTED || !baseline.sources.contains(source.binding))
+                    throw new IllegalStateException("Current primary endpoint required");
+            }
+            return null;
+        }
+        throw new IllegalStateException("Covered live successive cache endpoint required");
+    }
     Projection project(DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
         if(budget<1 || budget>10000)throw new IllegalArgumentException("Bounded cache projection required");
         if(!isCurrent(target) || selected==null || selected.graph!=graph || selected.step<0

@@ -27,8 +27,17 @@ final class DmzTypedNativeResume {
         final List<CollisionProofCapture.Conflict> conflicts;
         final List<Long> retractedCaches;
         final List<Materialization> materializations;
-        Result(boolean compiled,Scope scope,DmzSourcedProofGraph graph,List<CollisionProofCapture.Conflict> conflicts,
-                List<Rule> removed,Mind branch,int budget,boolean provisional) throws Exception {
+        private final DmzCacheRestrictionSet prefix;
+        private final Mind target;
+        private final String state;
+        private final DmzReplayProvenance.SourceCheckpoint sources;
+        boolean belongsTo(DmzCacheRestrictionSet candidate,Mind boundary) throws Exception {
+            return prefix!=null && candidate==prefix && target==boundary && prefix.isCurrent(boundary)
+                    && sources.isCurrent(boundary) && state.equals(DmzObservationStateFingerprint.capture(boundary));
+        }
+        private Result(boolean compiled,Scope scope,DmzSourcedProofGraph graph,List<CollisionProofCapture.Conflict> conflicts,
+                List<Rule> removed,Mind branch,int budget,boolean provisional,DmzCacheRestrictionSet prefix,Mind target) throws Exception {
+            this.prefix=prefix;this.target=target;state=DmzObservationStateFingerprint.capture(target);sources=DmzReplayProvenance.sourceCheckpoint(target);
             this.compiled=compiled;this.provisional=provisional;applicationDenied=scope.denied;queryDenied=scope.queryDenied;this.graph=graph;
             this.conflicts=Collections.unmodifiableList(new ArrayList<CollisionProofCapture.Conflict>(conflicts));
             List<Long> ids=new ArrayList<Long>();for(Rule rule:removed)ids.add(rule.getId());
@@ -75,6 +84,7 @@ final class DmzTypedNativeResume {
         boolean alternative(Choice choice,boolean exactAssignment) {
             for(DmzProofWitnesses.Witness witness:retained)
                 if(witness.step>=0 && witness.source.nativeRule==choice.selected.source.nativeRule && witness.premises.size()==1
+                        && choice.root.equivalent(witness.graph.observed.nodes.get(witness.node).ground)
                         && (!exactAssignment || choice.premise.equivalent(witness.graph.observed.nodes.get(witness.premises.get(0).node).ground)
                             && DmzProofWitnesses.NoGood.sameBindings(choice.bindings,witness.graph.observed.steps.get(witness.step).application.bindings)))return true;
             return false;
@@ -134,23 +144,9 @@ final class DmzTypedNativeResume {
             throw new IllegalStateException("Current settled typed cache plan required");
         DmzCurrentGroundProofInventory inventory=DmzCurrentGroundProofInventory.capture(target,budget,owner!=null);
         if(!inventory.eligible || (owner==null && inventory.provisional))throw new IllegalStateException("Settled typed inventory required");
-        DmzCurrentGroundProofInventory.Proofs choices=inventory.proofs(selected.graph.observed.nodes.get(selected.node).ground,budget);
-        if(choices.truncated)throw new IllegalStateException("Typed resume witness budget exceeded");
-        DmzProofWitnesses.NoGood pattern=DmzProofWitnesses.NoGood.fromTyped(selected);
-        List<DmzProofWitnesses.Witness> retained=new ArrayList<DmzProofWitnesses.Witness>();
         List<DmzProofWitnesses.Witness> selections=set==null?Collections.singletonList(selected):set.selections;
-        List<DmzProofWitnesses.NoGood> patterns=set==null?Collections.singletonList(pattern):set.patterns;
-        int removed=0,remainingMatches=budget;int[] matches=new int[patterns.size()];
-        for(DmzProofWitnesses.Witness choice:choices.witnesses) {
-            boolean denied=false;
-            for(int i=0;i<patterns.size();++i) {
-                if((remainingMatches-=patterns.get(i).workCost)<0)throw new IllegalStateException("Typed restriction matching budget exceeded");
-                if(patterns.get(i).matches(choice.graph,choice.node,choice.step,choice.source,choice.premises)){++matches[i];denied=true;}
-            }
-            if(denied)++removed;else retained.add(choice);
-        }
-        for(int count:matches)if(count!=1)throw new IllegalStateException("Exact typed source choice required");
-        if(removed!=selections.size())throw new IllegalStateException("Exact typed source choice required");
+        List<DmzProofWitnesses.NoGood> patterns=set==null?Collections.singletonList(DmzProofWitnesses.NoGood.fromTyped(selected)):set.patterns;
+        List<DmzProofWitnesses.Witness> retained=DmzCacheRestrictionSet.retained(inventory,selections,patterns,budget);
         List<Rule> cacheRules=new ArrayList<Rule>();
         if(materialized) {
             Map<Long,Rule> live=new HashMap<Long,Rule>();int remaining=budget;
@@ -195,11 +191,11 @@ final class DmzTypedNativeResume {
                     CollisionProofCapture.Conflict event=collisions.snapshot().get(collisions.snapshot().size()-1);
                     DmzSourcedProofGraph graph=DmzProvisionalCollisionProof.build(event,budget,budget).graph;
                     if(materialized)graph=graph.restrict(scope.patterns);
-                    return new Result(false,scope,graph,collisions.snapshot(),cacheRules,tx.mind(),budget,inventory.provisional);
+                    return new Result(false,scope,graph,collisions.snapshot(),cacheRules,tx.mind(),budget,inventory.provisional,set,target);
                 }
                 DmzSourcedProofGraph graph=DmzSourcedProofGraph.build(observations);
                 if(materialized)graph=graph.restrict(scope.patterns);
-                return new Result(compiled,scope,graph,collisions.snapshot(),cacheRules,tx.mind(),budget,inventory.provisional);
+                return new Result(compiled,scope,graph,collisions.snapshot(),cacheRules,tx.mind(),budget,inventory.provisional,set,target);
             }
         } finally {
             if(!state.equals(DmzObservationStateFingerprint.capture(target)) || !sources.isCurrent(target))

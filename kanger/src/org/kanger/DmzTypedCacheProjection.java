@@ -74,21 +74,9 @@ final class DmzTypedCacheProjection {
         List<DmzProofWitnesses.NoGood> patterns=set==null?Collections.singletonList(pattern):set.patterns;
         DmzSourcedProofGraph graph=inventory.graph.restrict(patterns);
         int remaining=budget;
-        // Recognize the exact selected source/substitution in this current reconstruction,
-        // independently of whether the selected ground has been materialized.
-        TerminalSupportCapture.Ground root=selected.graph.observed.nodes.get(selected.node).ground;
-        int index=-1;
-        for(int i=0;i<inventory.graph.observed.nodes.size();++i) {
-            if(--remaining<0)return refused(target,true,budget);
-            if(root.equivalent(inventory.graph.observed.nodes.get(i).ground))index=i;
-        }
-        if(index<0)return refused(target,false,budget-remaining);
-        if(remaining<=0)return refused(target,true,budget);
-        DmzProofWitnesses.Result before=DmzProofWitnesses.enumerate(inventory.graph,index,remaining);
-        if(before.truncated || (remaining-=before.created)<=0)return refused(target,true,budget);
-        DmzProofWitnesses.Result after=DmzProofWitnesses.enumerate(graph,index,remaining);
-        if(after.truncated || (remaining-=after.created)<=0)return refused(target,true,budget);
-        if(before.witnesses.size()-after.witnesses.size()!=(set==null?1:set.selections.size()))return refused(target,false,budget-remaining);
+        try {DmzCacheRestrictionSet.retained(inventory,set==null?Collections.singletonList(selected):set.selections,patterns,budget);}
+        catch(IllegalStateException failure){return refused(target,failure.getMessage().contains("budget"),budget);}
+        DmzProofWitnesses.Result before,after;
         List<Cache> caches=new ArrayList<Cache>();
         for(IRule rule:target.getRules()) {
             if(--remaining<0)return refused(target,true,budget);
