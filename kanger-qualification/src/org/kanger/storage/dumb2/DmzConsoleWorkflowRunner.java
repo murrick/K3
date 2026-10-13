@@ -31,7 +31,8 @@ public final class DmzConsoleWorkflowRunner {
     private static final CommandFormatter FORMATTER=new CommandFormatter();
     public static void main(String[] args) {
         try { run();restrictions(false);restrictions(true);staleAuthority();lateDiagnostic(false);lateDiagnostic(true);
-            answerDiagnostic(false,1);answerDiagnostic(true,1);answerDiagnostic(false,3);answerDiagnostic(true,3);
+            answerDiagnostic(false,1,Boolean.TRUE);answerDiagnostic(true,1,Boolean.TRUE);
+            for(boolean negative:new boolean[]{false,true})for(Boolean truth:new Boolean[]{Boolean.TRUE,Boolean.FALSE,null})answerDiagnostic(negative,3,truth);
             System.out.println("DMZ_CONSOLE_WORKFLOW_PASS checks="+checks);System.exit(0); }
         catch(Throwable failure) { failure.printStackTrace();System.exit(1); }
     }
@@ -472,7 +473,7 @@ public final class DmzConsoleWorkflowRunner {
                     && !db.hasConnectedContexts(),"long-prefix failures and recovery preserve Q, topology and detached earlier observations");
         } finally { if(user.getCurrentMind().isStorageUsed())user.setCurrentMind(user.getCurrentMind().closeStorage()); }
     }
-    private static void answerDiagnostic(boolean negative,int conflicts) throws Exception {
+    private static void answerDiagnostic(boolean negative,int conflicts,Boolean truth) throws Exception {
         Path dir=Files.createTempDirectory("dmz-answer-diagnostic-");System.setProperty("user.home",dir.toString());
         String sign=negative?"~":"",opposite=negative?"":"~";
         int answerIndex=conflicts+1;
@@ -493,7 +494,8 @@ public final class DmzConsoleWorkflowRunner {
         try {
             IContextResults.Revision qp=new IContextResults.Revision(db.getContextId(),db.getRevision());
             String state=DmzSourceMaterializationQualification.fingerprint(q);
-            String base="ctx dmz "+pin(qp)+" ?"+sign+"answer("+answerIndex+"); from=Short@"+pin(shortSource)+" from=Answer@"+pin(answerSource)
+            String query=truth==null?"?missing("+answerIndex+");":"?"+(truth?sign:opposite)+"answer("+answerIndex+");";
+            String base="ctx dmz "+pin(qp)+" "+query+" from=Short@"+pin(shortSource)+" from=Answer@"+pin(answerSource)
                     +" restrict="+pin(shortSource)+":"+trigger+" projection=3";
             DmzSourcesQuery.Result first=processor.execute(PARSER.parse(base),user).getDmzResult();
             require(first.restrictionOutcome.availableChoices.size()==1 && evidenceNodes(first.restrictionOutcome.availableConflicts)==3,
@@ -505,6 +507,45 @@ public final class DmzConsoleWorkflowRunner {
                     && retained.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT,
                     "answer recovery retains every earlier executed conflict before the final explicit selection");
             DmzSourcesQuery.Request selected=retained.chooseRestriction(1);
+            if(truth==null) {
+                ByteArrayOutputStream output=new ByteArrayOutputStream();
+                String errors=boundaryConsole(q,"ctx dmz choose 1\nctx dmz explain\nctx tree 1\n",output);
+                DmzSourcesQuery.Result unknown=user.getLastDmzResult();
+                require(errors.isEmpty() && unknown!=null && unknown.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE
+                        && unknown.restrictionOutcome.trace.size()==conflicts && unknown.request.restrictions.choices.equals(selected.restrictions.choices)
+                        && unknown.opinions.get(0).answer.value==null && unknown.opinions.get(0).answer.proofs.isEmpty()
+                        && unknown.viewOpinions.size()==1 && unknown.viewOpinions.get(0).value==null && unknown.viewOpinions.get(0).proofs.isEmpty(),
+                        "unknown multi-choice branch completes without fabricated answer or truth-view proofs under the three-node cap");
+                require(unknown.restrictionProofs.size()==conflicts && unknown.opinions.get(0).restrictionProofs.size()==conflicts
+                        && unknown.viewOpinions.get(0).restrictionProofs.size()==conflicts && !unknown.restartRequired
+                        && output.toString("UTF-8").contains("Opinion 1: UNKNOWN"),
+                        "unknown Console opinion retains restriction provenance and does not become a projection stop");
+                q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+                require(state.equals(DmzSourceMaterializationQualification.fingerprint(q)),"unknown completion preserves durable Q");
+                IContextResults.Revision advanced=create(dir,"Answer","!later(9);");
+                require(advanced.getRevision()>answerSource.getRevision(),"answer source HEAD advances before exact unknown replay");
+                String command=FORMATTER.format(CommandInvocation.command(CommandIntent.CTX_DMZ,
+                        java.util.Collections.<String,Object>singletonMap("request",selected),""));
+                output.reset();
+                errors=boundaryConsole(q,command.replace(" projection=3"," projection=2")+"\n"+command+"\nctx dmz explain\nctx tree 1\n",output);
+                require(errors.contains("phase=CONFLICT_EVIDENCE; completedChoices=0; projection=2") && !errors.contains("phase=QUERY_ANSWER")
+                        && !errors.contains("\tat org.kanger"),"unknown answer needs no answer proof budget but still enforces complete conflict evidence");
+                DmzSourcesQuery.Result replayed=user.getLastDmzResult();
+                require(replayed!=null && replayed.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE
+                        && replayed.opinions.get(0).answer.value==null && replayed.opinions.get(0).answer.proofs.isEmpty()
+                        && replayed.request.restrictions.choices.equals(selected.restrictions.choices)
+                        && replayed.sources.stream().anyMatch(source->source.revision.getContextId().equals(answerSource.getContextId())
+                                && source.revision.getRevision()==answerSource.getRevision())
+                        && output.toString("UTF-8").contains("Opinion 1: UNKNOWN"),"fresh unknown replay retains exact old pins and full prefix after evidence refusal");
+                for(int i=0;i<conflicts;i++)require(unknown.restrictionOutcome.trace.get(i).selected.identity().equals(replayed.restrictionOutcome.trace.get(i).selected.identity())
+                        && unknown.restrictionOutcome.trace.get(i).conflicts.get(0).identity().equals(replayed.restrictionOutcome.trace.get(i).conflicts.get(0).identity()),
+                        "unknown fresh replay preserves all selected histories and opposing proof pairs");
+                q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+                require(retained.restrictionOutcome.trace.size()==conflicts-1 && unknown.restrictionOutcome.trace.size()==conflicts
+                        && state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && db.getRevision()==qp.getRevision()
+                        && !db.hasConnectedContexts(),"unknown completions and bounded evidence refusal preserve Q, topology and retained history");
+                return;
+            }
             String errors=boundaryConsole(q,"ctx dmz choose 1\n");
             require(errors.contains("phase=QUERY_ANSWER; completedChoices="+conflicts+"; projection=3; restriction-budget=10000; allowance=3")
                     && user.getLastDmzResult()==null && !errors.contains("\tat org.kanger"),
@@ -536,8 +577,8 @@ public final class DmzConsoleWorkflowRunner {
             require(done!=null && done.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE
                     && done.request.restrictions.choices.equals(selected.restrictions.choices) && done.restrictionOutcome.trace.size()==conflicts
                     && done.restrictionOutcome.trace.get(0).conflicts.get(0).identity().equals(firstPair)
-                    && Boolean.TRUE.equals(done.opinions.get(0).answer.value) && done.opinions.get(0).answer.proofs.size()==1,
-                    "fresh four-node Console retry returns the same completed branch, historical pair and true native opinion");
+                    && truth.equals(done.opinions.get(0).answer.value) && done.opinions.get(0).answer.proofs.size()==1,
+                    "fresh four-node Console retry returns the same completed branch, historical pair and requested native truth value");
             for(int i=0;i<retained.restrictionOutcome.trace.size();i++) {
                 DmzSourcesQuery.RestrictionStep before=retained.restrictionOutcome.trace.get(i),after=done.restrictionOutcome.trace.get(i);
                 require(before.selected.identity().equals(after.selected.identity()) && before.alternatives.size()==after.alternatives.size()
@@ -551,7 +592,7 @@ public final class DmzConsoleWorkflowRunner {
                     && answer.source.revision.getRevision()==answerSource.getRevision() && answer.conclusion.equals("!"+sign+"answer("+answerIndex+");"),
                     "recovered final proof retains all four nodes and the historical source revision after HEAD advances");
             require(output.toString("UTF-8").contains("DMZ restrictions: COMPLETE; selected="+conflicts)
-                    && output.toString("UTF-8").contains("Opinion 1: TRUE") && output.toString("UTF-8").contains(sign+"answer("+answerIndex+")"),
+                    && output.toString("UTF-8").contains("Opinion 1: "+(truth?"TRUE":"FALSE")) && output.toString("UTF-8").contains(sign+"answer("+answerIndex+")"),
                     "Console displays the recovered completed opinion and signed answer proof tree");
             q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
             require(first.restrictionOutcome.trace.isEmpty() && retained.restrictionOutcome.trace.size()==conflicts-1

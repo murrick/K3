@@ -921,6 +921,13 @@ is returned. Recovery reconstructs every selected identity and historical pair
 before projecting the answer; earlier retained frontiers remain readable and
 unchanged.
 
+Completed restricted opinions retain the native query's three-valued result.
+`FALSE` carries proof of the opposing signed conclusion; projecting that proof
+can require a larger allowance just as for `TRUE`. `UNKNOWN` carries no answer
+proof tree, while its restriction provenance and full historical trace remain
+available. Unknown completion still requires enough allowance to project every
+conflict's covered evidence; it does not bypass the conflict phase limits.
+
 A source name rebound to a different Context UUID is refused even when its
 declarations and revision number match. Restoring the original source permits a
 fresh reconstruction of its old exact pin. Advancing source HEAD while retaining
