@@ -915,6 +915,11 @@ allowance reconstructs that same completed branch and projects its native answer
 Do not add another restriction choice: the command already contains all selected
 identities. Console explanation and opinion trees become available after the
 successful replay, with answer proofs pinned to the original source revisions.
+This applies equally to a completed prefix with several restrictions. The
+refusal's `completedChoices` can cover the whole prefix while no final opinion
+is returned. Recovery reconstructs every selected identity and historical pair
+before projecting the answer; earlier retained frontiers remain readable and
+unchanged.
 
 A source name rebound to a different Context UUID is refused even when its
 declarations and revision number match. Restoring the original source permits a
