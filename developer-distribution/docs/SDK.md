@@ -888,6 +888,13 @@ new Q revision eligible for that historical request. Restore the required source
 identity or construct a new explicit request for the current Q; do not replace
 pins in the diagnostic and assume the old proof identities remain valid.
 
+Late refusal diagnostics retain every previous selected identity in order plus
+the newly attempted selection. Replaying the full command with more projection
+allowance reconstructs all those historical steps and their opposing proof pairs.
+The remaining frontier is determined by the fresh native replay; use only its
+newly offered alternatives for further explicit selections. Earlier retained
+results and diagnostic requests stay unchanged after recovery and completion.
+
 A source name rebound to a different Context UUID is refused even when its
 declarations and revision number match. Restoring the original source permits a
 fresh reconstruction of its old exact pin. Advancing source HEAD while retaining

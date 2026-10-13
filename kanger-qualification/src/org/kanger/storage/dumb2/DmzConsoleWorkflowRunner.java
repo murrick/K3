@@ -30,7 +30,8 @@ public final class DmzConsoleWorkflowRunner {
     private static final CommandParser PARSER=new CommandParser();
     private static final CommandFormatter FORMATTER=new CommandFormatter();
     public static void main(String[] args) {
-        try { run();restrictions(false);restrictions(true);staleAuthority();System.out.println("DMZ_CONSOLE_WORKFLOW_PASS checks="+checks);System.exit(0); }
+        try { run();restrictions(false);restrictions(true);staleAuthority();lateDiagnostic(false);lateDiagnostic(true);
+            System.out.println("DMZ_CONSOLE_WORKFLOW_PASS checks="+checks);System.exit(0); }
         catch(Throwable failure) { failure.printStackTrace();System.exit(1); }
     }
     private static String pin(IContextResults.Revision p) { return p.getContextId()+"@"+p.getRevision(); }
@@ -387,6 +388,89 @@ public final class DmzConsoleWorkflowRunner {
                     && restored.restrictionOutcome.trace.get(0).conflicts.get(0).identity().equals(historicalPair),
                     "saved and fresh stale-Q diagnostic retries preserve the advanced Q and old endpoint history");
         } finally { user.setCurrentMind(q.closeStorage()); }
+    }
+    private static void lateDiagnostic(boolean negative) throws Exception {
+        Path dir=Files.createTempDirectory("dmz-late-diagnostic-");System.setProperty("user.home",dir.toString());
+        String sign=negative?"~":"",opposite=negative?"":"~";
+        create(dir,"Q","!seed(1); !deep(2); !"+opposite+"cache(2);");
+        IContextResults.Revision sa=create(dir,"ShortA","!@x seed(x) -> "+sign+"cache(x);");
+        IContextResults.Revision sb=create(dir,"ShortB","!@x seed(x) -> "+sign+"cache(x);");
+        String recursive="!@x deep(x) -> middle(x); !@x middle(x) -> "+sign+"cache(x);";
+        IContextResults.Revision la=create(dir,"LongA",recursive),lb=create(dir,"LongB",recursive);
+        IContextResults.Revision blocker=create(dir,"Blocker","!"+opposite+"cache(1);");
+        long trigger;
+        try(SnapshotMindRuntime snapshot=SnapshotMindRuntime.open(dir.resolve("Blocker"),new RevisionRef(blocker.getContextId(),blocker.getRevision()),"late-trigger")) {
+            trigger=org.kanger.DmzSourceShape.inspect(snapshot.getMind(),100).declarations.get(0).sourceRule;
+        }
+        User user=new User();user.setUserDir(Files.createDirectories(dir.resolve("operator")).toString());
+        user.setDatabaseDir(dir.toString()+java.io.File.separator);DB db=new DB();db.init(user);
+        Mind initial=new Mind(user);user.setCurrentMind(initial);Mind q=(Mind)initial.useStorage("Q");user.setCurrentMind(q);
+        CanonicalCommandProcessor processor=new CanonicalCommandProcessor();
+        try {
+            IContextResults.Revision qp=new IContextResults.Revision(db.getContextId(),db.getRevision());
+            String state=DmzSourceMaterializationQualification.fingerprint(q);
+            String base="ctx dmz "+pin(qp)+" ?"+sign+"cache(1); from=ShortA@"+pin(sa)+" from=ShortB@"+pin(sb)
+                    +" from=LongA@"+pin(la)+" from=LongB@"+pin(lb)+" from=Blocker@"+pin(blocker)
+                    +" restrict="+pin(blocker)+":"+trigger+" projection=16";
+            DmzSourcesQuery.Result first=processor.execute(PARSER.parse(base),user).getDmzResult();
+            require(first.restrictionOutcome.availableChoices.size()==2,"late fixture offers two short source derivations at its exact first conflict");
+            require(evidenceNodes(first.restrictionOutcome.availableConflicts)==6,"six nodes fully cover the initial short conflict evidence");
+            processor.execute(PARSER.parse("ctx dmz choose 1"),user);
+            DmzSourcesQuery.Result saved=processor.execute(PARSER.parse("ctx dmz choose 1"),user).getDmzResult();
+            require(saved.restrictionOutcome.trace.size()==2 && saved.restrictionOutcome.availableChoices.size()>=3,
+                    "two explicit selections retain a longer mixed-source frontier");
+            require(evidenceNodes(saved.restrictionOutcome.availableConflicts)>6,
+                    "the remaining recursive conflict requires more evidence than the first-conflict allowance");
+            DmzSourcesQuery.Limits l=saved.request.limits;
+            DmzSourcesQuery.Request attempted=saved.chooseRestriction(1,new DmzSourcesQuery.Limits(l.preparation,l.audit,l.lookup,l.recognition,
+                    6,l.application,l.query,l.depth,l.nodes,l.work,l.maximumVisits));
+            String command=FORMATTER.format(CommandInvocation.command(CommandIntent.CTX_DMZ,
+                    java.util.Collections.<String,Object>singletonMap("request",attempted),""));
+            String errors=boundaryConsole(q,"ctx dmz choose 1 projection=6\n");
+            require(errors.contains("Detached source proof budget exceeded") && errors.contains("Exact replay request: "+command)
+                    && !errors.contains("\tat org.kanger") && user.getLastDmzResult()==null,
+                    "late projection refusal reports the third selection and both earlier exact identities");
+            DmzSourcesQuery.Request parsed=(DmzSourcesQuery.Request)PARSER.parse(command).getArgument("request");
+            require(parsed.restrictions.choices.size()==3 && parsed.restrictions.choices.subList(0,2).equals(saved.request.restrictions.choices),
+                    "canonical late diagnostic retains the entire ordered three-choice prefix");
+            q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+            require(state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && db.getRevision()==qp.getRevision(),
+                    "late refusal preserves durable Q after replayed earlier native branches");
+            String retry=command.replace(" projection=6"," projection=16");
+            errors=boundaryConsole(q,command+"\n"+retry+"\nctx dmz explain\n");
+            require(errors.contains("Detached source proof budget exceeded") && errors.contains("Exact replay request: "+command),
+                    "unchanged late command refuses again before the enlarged-budget recovery");
+            DmzSourcesQuery.Result recovered=user.getLastDmzResult();
+            require(recovered!=null && recovered.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT
+                    && recovered.restrictionOutcome.trace.size()==3 && recovered.request.restrictions.choices.equals(attempted.restrictions.choices),
+                    "fresh enlarged retry reconstructs the exact three selected identities and a next frontier");
+            for(int i=0;i<2;i++) {
+                DmzSourcesQuery.RestrictionStep before=saved.restrictionOutcome.trace.get(i),after=recovered.restrictionOutcome.trace.get(i);
+                require(before.selected.identity().equals(after.selected.identity()) && before.conflicts.size()==after.conflicts.size(),
+                        "long-prefix recovery preserves earlier selected histories and pair counts");
+                for(int j=0;j<before.conflicts.size();j++)require(before.conflicts.get(j).identity().equals(after.conflicts.get(j).identity()),
+                        "long-prefix recovery reproduces both sides of every earlier conflict");
+            }
+            q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+            DmzSourcesQuery.Result done=recovered;
+            for(int count=0;done.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT;count++) {
+                require(count<3,"remaining recursive alternatives stay bounded after recovery");
+                done=processor.execute(PARSER.parse("ctx dmz choose 1"),user).getDmzResult();
+            }
+            require(done.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE && done.restrictionOutcome.trace.size()==6
+                    && done.request.restrictions.choices.subList(0,3).equals(attempted.restrictions.choices)
+                    && Boolean.FALSE.equals(done.opinions.get(0).answer.value),"all six exact choices complete without duplicating the diagnostic prefix");
+            require(saved.restrictionOutcome.trace.size()==2 && recovered.restrictionOutcome.trace.size()==3
+                    && attempted.limits.projection==6 && done.request.limits.projection==16
+                    && state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && db.getRevision()==qp.getRevision()
+                    && !db.hasConnectedContexts(),"long-prefix failures and recovery preserve Q, topology and detached earlier observations");
+        } finally { if(user.getCurrentMind().isStorageUsed())user.setCurrentMind(user.getCurrentMind().closeStorage()); }
+    }
+    private static int proofNodes(DmzSourcesQuery.Proof proof) {
+        int nodes=1;for(DmzSourcesQuery.Proof premise:proof.premises)nodes+=proofNodes(premise);return nodes;
+    }
+    private static int evidenceNodes(java.util.List<DmzSourcesQuery.RestrictionConflict> conflicts) {
+        int nodes=0;for(DmzSourcesQuery.RestrictionConflict pair:conflicts)nodes+=proofNodes(pair.positive)+proofNodes(pair.negative);return nodes;
     }
     private static String boundaryConsole(Mind q,String script) throws Exception {
         InputStream in=System.in;PrintStream out=System.out,err=System.err;
