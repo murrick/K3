@@ -20,7 +20,7 @@ final class DmzTypedNativeResume {
         }
     }
     static final class Result {
-        final boolean compiled;
+        final boolean compiled,provisional;
         final boolean complete=false;
         final int applicationDenied,queryDenied;
         final DmzSourcedProofGraph graph;
@@ -28,8 +28,8 @@ final class DmzTypedNativeResume {
         final List<Long> retractedCaches;
         final List<Materialization> materializations;
         Result(boolean compiled,Scope scope,DmzSourcedProofGraph graph,List<CollisionProofCapture.Conflict> conflicts,
-                List<Rule> removed,Mind branch,int budget) throws Exception {
-            this.compiled=compiled;applicationDenied=scope.denied;queryDenied=scope.queryDenied;this.graph=graph;
+                List<Rule> removed,Mind branch,int budget,boolean provisional) throws Exception {
+            this.compiled=compiled;this.provisional=provisional;applicationDenied=scope.denied;queryDenied=scope.queryDenied;this.graph=graph;
             this.conflicts=Collections.unmodifiableList(new ArrayList<CollisionProofCapture.Conflict>(conflicts));
             List<Long> ids=new ArrayList<Long>();for(Rule rule:removed)ids.add(rule.getId());
             retractedCaches=Collections.unmodifiableList(ids);
@@ -81,18 +81,24 @@ final class DmzTypedNativeResume {
     }
     static Result run(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
             DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
-        return run(guard,proof,selected,target,budget,false,false);
+        return run(guard,proof,selected,target,budget,false,false,null);
     }
     static Result runMaterialized(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
             DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
-        return run(guard,proof,selected,target,budget,true,false);
+        return run(guard,proof,selected,target,budget,true,false,null);
     }
     static Result runRecursive(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
             DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
-        return run(guard,proof,selected,target,budget,true,true);
+        return run(guard,proof,selected,target,budget,true,true,null);
+    }
+    static Result runPending(TechnicalMindTransaction owner,DmzGroundCollisionRestriction guard,
+            DmzProvisionalCollisionProof proof,DmzProofWitnesses.Witness selected,int budget) throws Exception {
+        Mind target=owner.pendingBoundary();
+        return run(guard,proof,selected,target,budget,true,selected!=null && selected.step>=0
+                && selected.premises.get(0).step>=0,owner);
     }
     private static Result run(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
-            DmzProofWitnesses.Witness selected,Mind target,int budget,boolean materialized,boolean recursive) throws Exception {
+            DmzProofWitnesses.Witness selected,Mind target,int budget,boolean materialized,boolean recursive,TechnicalMindTransaction owner) throws Exception {
         if(target.hasPendingTransactions())throw new IllegalStateException("Exclusive typed resume boundary required");
         if(ACTIVE.get()!=null || !DmzTerminalRestriction.activeNoGoods(target).isEmpty())
             throw new IllegalStateException("Unrestricted typed resume boundary required");
@@ -103,13 +109,14 @@ final class DmzTypedNativeResume {
             throw new IllegalStateException("Bounded recursive typed chain required");
         for(IRule rule:target.getRules())if(!materialized && !rule.isDeleted(target) && target.getRules().isGenerated(rule))
             throw new IllegalStateException("Cold typed resume cannot retract existing caches");
-        DmzTypedCacheProjection cachePlan=materialized?(recursive
+        DmzTypedCacheProjection cachePlan=materialized?(owner!=null
+                ?DmzTypedCacheProjection.projectPending(owner,guard,proof,selected,budget):recursive
                 ?DmzTypedCacheProjection.projectRecursive(guard,proof,selected,target,budget)
                 :DmzTypedCacheProjection.project(guard,proof,selected,target,budget)):null;
         if(materialized && (!cachePlan.eligible || !cachePlan.isCurrent(target)))
             throw new IllegalStateException("Current settled typed cache plan required");
-        DmzCurrentGroundProofInventory inventory=DmzCurrentGroundProofInventory.capture(target,budget,false);
-        if(!inventory.eligible || inventory.provisional)throw new IllegalStateException("Settled typed inventory required");
+        DmzCurrentGroundProofInventory inventory=DmzCurrentGroundProofInventory.capture(target,budget,owner!=null);
+        if(!inventory.eligible || (owner==null && inventory.provisional))throw new IllegalStateException("Settled typed inventory required");
         DmzCurrentGroundProofInventory.Proofs choices=inventory.proofs(selected.graph.observed.nodes.get(selected.node).ground,budget);
         if(choices.truncated)throw new IllegalStateException("Typed resume witness budget exceeded");
         DmzProofWitnesses.NoGood pattern=DmzProofWitnesses.NoGood.fromTyped(selected);
@@ -144,6 +151,7 @@ final class DmzTypedNativeResume {
         for(IRule item:target.getRules())for(List<Domain> row:((Rule)item).getTree())for(Domain domain:row)
             if(domain.getPredicate().getName(target).equals(probe))throw new IllegalStateException("Probe predicate already exists");
         if(materialized && !cachePlan.isCurrent(target))throw new IllegalStateException("Typed cache plan changed before native child");
+        if(owner!=null && owner.pendingBoundary()!=target)throw new IllegalStateException("Pending transaction ownership changed");
         try(TechnicalMindTransaction tx=TechnicalMindTransaction.beginIsolated(target)) {
             try(Scope scope=new Scope(tx.mind(),selected,retained);
                     TerminalSupportCapture capture=TerminalSupportCapture.begin(tx.mind());
@@ -161,11 +169,11 @@ final class DmzTypedNativeResume {
                     CollisionProofCapture.Conflict event=collisions.snapshot().get(collisions.snapshot().size()-1);
                     DmzSourcedProofGraph graph=DmzProvisionalCollisionProof.build(event,budget,budget).graph;
                     if(materialized)graph=graph.restrict(Collections.singletonList(scope.pattern));
-                    return new Result(false,scope,graph,collisions.snapshot(),cacheRules,tx.mind(),budget);
+                    return new Result(false,scope,graph,collisions.snapshot(),cacheRules,tx.mind(),budget,inventory.provisional);
                 }
                 DmzSourcedProofGraph graph=DmzSourcedProofGraph.build(observations);
                 if(materialized)graph=graph.restrict(Collections.singletonList(scope.pattern));
-                return new Result(compiled,scope,graph,collisions.snapshot(),cacheRules,tx.mind(),budget);
+                return new Result(compiled,scope,graph,collisions.snapshot(),cacheRules,tx.mind(),budget,inventory.provisional);
             }
         } finally {
             if(!state.equals(DmzObservationStateFingerprint.capture(target)) || !sources.isCurrent(target))

@@ -43,6 +43,7 @@ final class TechnicalMindTransaction implements AutoCloseable {
     private final Mind parent;
     private final Mind child;
     private boolean settlementStarted;
+    private final Thread owner = Thread.currentThread();
 
     private TechnicalMindTransaction(Mind parent) throws Exception {
         this(parent, false);
@@ -64,6 +65,13 @@ final class TechnicalMindTransaction implements AutoCloseable {
 
     static TechnicalMindTransaction beginIsolated(Mind parent) throws Exception {
         return new TechnicalMindTransaction(parent, true);
+    }
+
+    /** Internal permission for pending-source continuation in this still-owned frame. */
+    Mind pendingBoundary() {
+        if (settlementStarted || Thread.currentThread() != owner)
+            throw new IllegalStateException("Open owning technical transaction required");
+        return child;
     }
 
     Mind mind() {
