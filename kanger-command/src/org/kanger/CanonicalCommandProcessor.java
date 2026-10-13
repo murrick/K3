@@ -32,6 +32,14 @@ import java.util.List;
  */
 public final class CanonicalCommandProcessor {
 
+    static org.kanger.interfaces.DmzSourcesQuery.Request prepareDmzChoice(CommandInvocation invocation,
+            org.kanger.interfaces.DmzSourcesQuery.Result saved) throws org.kanger.exception.CommandErrorException {
+        if(saved==null)throw new org.kanger.exception.CommandErrorException("No saved DMZ query");
+        return saved.chooseRestriction(((Number)invocation.getArgument("number")).longValue(),
+                invocation.getArgument("limits")==null?saved.request.limits:
+                ((org.kanger.command.DmzLimitOverrides)invocation.getArgument("limits")).apply(saved.request.limits));
+    }
+
     public boolean handles(CommandInvocation invocation) {
         if (invocation == null || invocation.isCoreLanguage()) {
             return false;
@@ -342,10 +350,7 @@ public final class CanonicalCommandProcessor {
                 User owner=(User)user;
                 org.kanger.interfaces.DmzSourcesQuery.Result saved=owner.getLastDmzResult();
                 if(saved==null)throw new org.kanger.exception.CommandErrorException("No saved DMZ query");
-                org.kanger.interfaces.DmzSourcesQuery.Request replay=saved.chooseRestriction(
-                        ((Number)invocation.getArgument("number")).longValue(),
-                        invocation.getArgument("limits")==null?saved.request.limits:
-                        ((org.kanger.command.DmzLimitOverrides)invocation.getArgument("limits")).apply(saved.request.limits));
+                org.kanger.interfaces.DmzSourcesQuery.Request replay=prepareDmzChoice(invocation,saved);
                 owner.setLastDmzResult(null);
                 org.kanger.interfaces.DmzSourcesQuery.Result result=mind.executeDmzSources(replay);
                 owner.setLastDmzResult(result);

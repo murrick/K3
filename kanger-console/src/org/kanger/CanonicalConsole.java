@@ -391,7 +391,11 @@ public final class CanonicalConsole {
             case CTX_DMZ_CHOOSE:
             case CTX_OPINION_TREE:
             case CTX_DMZ:
+                org.kanger.interfaces.DmzSourcesQuery.Request attemptedReplay=null;
                 try {
+                    if(invocation.getIntent()==org.kanger.command.CommandIntent.CTX_DMZ_CHOOSE)
+                        attemptedReplay=CanonicalCommandProcessor.prepareDmzChoice(invocation,
+                                mind.getUser() instanceof User?((User)mind.getUser()).getLastDmzResult():null);
                     CanonicalCommandProcessor.Result dmz=COMMAND_PROCESSOR.execute(invocation,mind.getUser());
                     if(!dmz.isHandled() || dmz.getDmzResult()==null)throw new CommandErrorException("Unsupported DMZ operation");
                     mind=track(shutdownHook,dmz.getMind());
@@ -401,11 +405,12 @@ public final class CanonicalConsole {
                     else ConsoleDmzView.show(dmz.getDmzResult());
                 } catch(org.kanger.interfaces.DmzSourcesQuery.PlanningRefusal refusal) {
                     System.err.println("DMZ refused: "+refusal.reason
-                            +(refusal.context==null ? "" : " at "+refusal.context+":"+refusal.rule)+": "+refusal.getMessage());
+                            +(refusal.context==null ? "" : " at "+refusal.context+":"+refusal.rule)+": "+refusal.getMessage()
+                            +replayDiagnostic(attemptedReplay));
                 } catch(Exception refusal) {
                     String reason=refusal.getMessage();
                     if(reason==null || reason.isEmpty())reason=refusal.toString();
-                    throw new CommandErrorException("DMZ refused: "+reason);
+                    throw new CommandErrorException("DMZ refused: "+reason+replayDiagnostic(attemptedReplay));
                 }
                 return same(mind);
 
@@ -523,6 +528,13 @@ public final class CanonicalConsole {
                     action.getCommand() == null ? "" : " [" + action.getCommand() + "]",
                     action.getDescription());
         }
+    }
+
+    private static String replayDiagnostic(org.kanger.interfaces.DmzSourcesQuery.Request request) {
+        if(request==null)return "";
+        return "\nExact replay request: "+FORMATTER.format(CommandInvocation.command(
+                org.kanger.command.CommandIntent.CTX_DMZ,
+                java.util.Collections.<String,Object>singletonMap("request",request),""));
     }
 
     private static boolean isNewDmzAttempt(String line) {

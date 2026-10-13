@@ -222,7 +222,7 @@ public final class DmzConsoleWorkflowRunner {
             require(user.getLastDmzResult()==null,"executed replay refusal clears saved result and keeps Q unchanged");
             String syntax=new org.kanger.command.CommandHelpRenderer().render();
             require(syntax.contains("restrict=") && syntax.contains("choice=<proof-identity>") && syntax.contains("restriction-budget="),"shared help exposes opt-in grammar");
-            script.append("ctx tree 1\nctx dmz choose 1\n").append(base).append(" choice=foreign-proof\n").append("ctx dmz ").append(pin(qp)).append(" ?seed(1);\n");
+            script.append(base).append("\nctx dmz choose 1 projection=1\n").append("ctx tree 1\nctx dmz choose 1\n").append(base).append(" choice=foreign-proof\n").append("ctx dmz ").append(pin(qp)).append(" ?seed(1);\n");
             InputStream savedIn=System.in;PrintStream savedOut=System.out,savedErr=System.err;
             ByteArrayOutputStream out=new ByteArrayOutputStream(),err=new ByteArrayOutputStream();
             try {
@@ -245,6 +245,20 @@ public final class DmzConsoleWorkflowRunner {
                     "console explains both covered native endpoints for pending and historical conflicts");
             require(err.toString("UTF-8").contains("DMZ refused:") && !err.toString("UTF-8").contains("\tat org.kanger"),
                     "invalid choice remains readable and console continues to ordinary query");
+            String diagnostic=null;
+            for(String line:err.toString("UTF-8").split("\\R"))if(line.startsWith("Exact replay request: ")) {
+                require(diagnostic==null,"only a prepared execution refusal emits an exact replay request");
+                diagnostic=line.substring("Exact replay request: ".length());
+            }
+            require(diagnostic!=null,"Console execution refusal retains a copyable exact attempted request");
+            DmzSourcesQuery.Request refused=(DmzSourcesQuery.Request)PARSER.parse(diagnostic).getArgument("request");
+            require(refused.sources.expectedQ.getContextId().equals(qp.getContextId())
+                    && refused.sources.expectedQ.getRevision()==qp.getRevision() && refused.limits.projection==1
+                    && refused.restrictions.budget==9000 && refused.restrictions.triggerRevision.getContextId().equals(units.getContextId())
+                    && refused.restrictions.triggerRevision.getRevision()==units.getRevision() && refused.restrictions.triggerRule==rule
+                    && refused.restrictions.choices.equals(java.util.Collections.singletonList(firstIdentity)),
+                    "refusal diagnostic preserves exact Q/source trigger, selected prefix and overridden projection");
+            require(FORMATTER.format(PARSER.parse(diagnostic)).equals(diagnostic),"refused full request has a stable canonical round trip");
             Mind reopened=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(reopened);
             require(state.equals(DmzSourceMaterializationQualification.fingerprint(reopened)) && !db.hasConnectedContexts(),
                     "SDK and command successes/refusals preserve durable Q and topology");
@@ -279,7 +293,7 @@ public final class DmzConsoleWorkflowRunner {
             moveContextFixture(dir,"Rules","Rules-original");
             moveContextFixture(dir,"Replacement","Rules");
             try {
-                processor.execute(PARSER.parse("ctx dmz choose 1"),user);
+                processor.execute(PARSER.parse("ctx dmz choose 1 projection=9000 visits=99"),user);
                 throw new AssertionError("Saved pin followed a foreign source under the same name");
             } catch(IllegalStateException refusal) {
                 require(refusal.getMessage().contains("source identity mismatch"),"saved replay rejects source name rebound to a foreign UUID");
@@ -298,7 +312,7 @@ public final class DmzConsoleWorkflowRunner {
             require(db.getRevision()>revision,"Q publishes a new immutable revision");
             String advanced=DmzSourceMaterializationQualification.fingerprint(q);
             try {
-                processor.execute(PARSER.parse("ctx dmz choose 1"),user);
+                processor.execute(PARSER.parse("ctx dmz choose 1 projection=9000 visits=99"),user);
                 throw new AssertionError("Saved old Q pin resumed against a new revision");
             } catch(org.kanger.exception.CommandErrorException refusal) {
                 require(refusal.toString().contains("Q revision mismatch"),"saved selection must reacquire its original Q pin");

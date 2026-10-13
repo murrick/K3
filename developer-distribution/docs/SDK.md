@@ -862,6 +862,15 @@ results remain readable, and Console recovery requires a fresh initial invocatio
 SDK callers can make the same explicit selection with replacement limits through
 `result.chooseRestriction(N, replacementLimits)`.
 
+When execution of a prepared saved selection is refused, Console also prints
+`Exact replay request:` followed by the canonical full attempted command. It
+contains the original exact Q/source pins, query, trigger, complete selected
+identity prefix and actual limits. This historical diagnostic remains available
+after the active saved result is cleared; copying it into a new invocation
+performs fresh acquisition and validation. A malformed choice or selection-limit
+error has no prepared execution request and does not print this diagnostic.
+Changing limits cannot bypass source identity or Q revision validation.
+
 A source name rebound to a different Context UUID is refused even when its
 declarations and revision number match. Restoring the original source permits a
 fresh reconstruction of its old exact pin. Advancing source HEAD while retaining
