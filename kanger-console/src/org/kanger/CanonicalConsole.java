@@ -396,6 +396,11 @@ public final class CanonicalConsole {
                     if(invocation.getIntent()==org.kanger.command.CommandIntent.CTX_DMZ_CHOOSE)
                         attemptedReplay=CanonicalCommandProcessor.prepareDmzChoice(invocation,
                                 mind.getUser() instanceof User?((User)mind.getUser()).getLastDmzResult():null);
+                    else if(invocation.getIntent()==org.kanger.command.CommandIntent.CTX_DMZ
+                            && invocation.getArgument("request") instanceof org.kanger.interfaces.DmzSourcesQuery.Request) {
+                        org.kanger.interfaces.DmzSourcesQuery.Request explicit=(org.kanger.interfaces.DmzSourcesQuery.Request)invocation.getArgument("request");
+                        if(explicit.restrictions!=null && !explicit.restrictions.choices.isEmpty())attemptedReplay=explicit;
+                    }
                     CanonicalCommandProcessor.Result dmz=COMMAND_PROCESSOR.execute(invocation,mind.getUser());
                     if(!dmz.isHandled() || dmz.getDmzResult()==null)throw new CommandErrorException("Unsupported DMZ operation");
                     mind=track(shutdownHook,dmz.getMind());

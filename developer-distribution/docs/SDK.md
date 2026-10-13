@@ -867,7 +867,7 @@ When execution of a prepared saved selection is refused, Console also prints
 contains the original exact Q/source pins, query, trigger, complete selected
 identity prefix and actual limits. This historical diagnostic remains available
 after the active saved result is cleared; copying it into a new invocation
-performs fresh acquisition and validation. A malformed choice or selection-limit
+performs fresh acquisition and validation. A malformed saved choice or selection-limit
 error has no prepared execution request and does not print this diagnostic.
 Changing limits cannot bypass source identity or Q revision validation.
 
@@ -879,6 +879,14 @@ prefix and offers the next conflict, or returns the completed restricted opinion
 Once a next frontier is saved, use another explicit `ctx dmz choose N` to extend
 it. Keeping the insufficient budget produces the same refusal; advancing source
 HEAD does not change the exact revision retained in the copied command.
+
+If a fresh full command with exact UUID pins and a selected restriction prefix
+is refused, Console prints its canonical attempted command again. This includes
+source identity and Q revision refusals, preserving the original pins, prefix
+and effective limits. Increasing a budget does not make changed identities or a
+new Q revision eligible for that historical request. Restore the required source
+identity or construct a new explicit request for the current Q; do not replace
+pins in the diagnostic and assume the old proof identities remain valid.
 
 A source name rebound to a different Context UUID is refused even when its
 declarations and revision number match. Restoring the original source permits a

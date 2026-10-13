@@ -247,8 +247,12 @@ public final class DmzConsoleWorkflowRunner {
                     "invalid choice remains readable and console continues to ordinary query");
             String diagnostic=null;
             for(String line:err.toString("UTF-8").split("\\R"))if(line.startsWith("Exact replay request: ")) {
-                require(diagnostic==null,"only a prepared execution refusal emits an exact replay request");
-                diagnostic=line.substring("Exact replay request: ".length());
+                String attempted=line.substring("Exact replay request: ".length());
+                DmzSourcesQuery.Request parsed=(DmzSourcesQuery.Request)PARSER.parse(attempted).getArgument("request");
+                if(parsed.limits.projection==1) {
+                    require(diagnostic==null,"prepared selection projection refusal emits one exact request");
+                    diagnostic=attempted;
+                }
             }
             require(diagnostic!=null,"Console execution refusal retains a copyable exact attempted request");
             DmzSourcesQuery.Request refused=(DmzSourcesQuery.Request)PARSER.parse(diagnostic).getArgument("request");
@@ -278,7 +282,7 @@ public final class DmzConsoleWorkflowRunner {
                 CanonicalConsole.session(reopened,new ShutdownHook(reopened));
             } finally { System.setIn(savedIn);System.setOut(savedOut);System.setErr(savedErr); }
             require(err.toString("UTF-8").contains("Detached source proof budget exceeded")
-                    && !err.toString("UTF-8").contains("Exact replay request:") && !err.toString("UTF-8").contains("\tat org.kanger"),
+                    && err.toString("UTF-8").contains("Exact replay request: "+diagnostic) && !err.toString("UTF-8").contains("\tat org.kanger"),
                     "unchanged diagnostic still refuses as a fresh initial request without requiring a saved result");
             require(out.toString("UTF-8").contains("DMZ restrictions: NEXT_CONFLICT; selected=1")
                     && out.toString("UTF-8").contains("DMZ restrictions: COMPLETE; selected=2")
@@ -317,10 +321,17 @@ public final class DmzConsoleWorkflowRunner {
         CanonicalCommandProcessor processor=new CanonicalCommandProcessor();
         try {
             long revision=db.getRevision();
+            user.setUserDir(Files.createDirectories(dir.resolve("operator")).toString());
             String command="ctx dmz "+db.getContextId()+"@"+revision+" ?cache(1); from=Rules@"+pin(units)+" restrict="+pin(units)+":"+rule;
             processor.execute(PARSER.parse(command),user);
             DmzSourcesQuery.Result saved=processor.execute(PARSER.parse("ctx dmz choose 1"),user).getDmzResult();
             String historicalPair=saved.restrictionOutcome.trace.get(0).conflicts.get(0).identity();
+            DmzSourcesQuery.Request selected=saved.chooseRestriction(1);
+            DmzSourcesQuery.Limits l=selected.limits;
+            DmzSourcesQuery.Request adjusted=selected.withLimits(new DmzSourcesQuery.Limits(l.preparation,l.audit,l.lookup,l.recognition,
+                    9000,l.application,l.query,l.depth,l.nodes,l.work,99));
+            String exactAttempt=FORMATTER.format(CommandInvocation.command(CommandIntent.CTX_DMZ,
+                    java.util.Collections.<String,Object>singletonMap("request",adjusted),""));
             String beforeReplacement=DmzSourceMaterializationQualification.fingerprint(q);
             IContextResults.Revision replacement=create(dir,"Replacement","!@x seed(x) -> cache(x);");
             require(!replacement.getContextId().equals(units.getContextId()) && replacement.getRevision()==units.getRevision(),
@@ -336,6 +347,14 @@ public final class DmzConsoleWorkflowRunner {
             require(user.getLastDmzResult()==null && beforeReplacement.equals(DmzSourceMaterializationQualification.fingerprint(q))
                     && saved.restrictionOutcome.trace.size()==1 && saved.restrictionOutcome.trace.get(0).conflicts.get(0).identity().equals(historicalPair),
                     "source replacement preserves physical Q and detached historical endpoint proofs");
+            user.setLastDmzResult(saved);
+            String sourceErrors=boundaryConsole(q,"ctx dmz choose 1 projection=9000 visits=99\n"+exactAttempt+"\n");
+            requireBoundaryDiagnostics(sourceErrors,exactAttempt,"source identity mismatch");
+            q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+            require(user.getLastDmzResult()==null && beforeReplacement.equals(DmzSourceMaterializationQualification.fingerprint(q))
+                    && db.getRevision()==revision && !db.hasConnectedContexts()
+                    && saved.restrictionOutcome.trace.get(0).conflicts.get(0).identity().equals(historicalPair),
+                    "saved and fresh source-boundary refusals preserve durable Q and historical evidence");
             moveContextFixture(dir,"Rules","Replacement");
             moveContextFixture(dir,"Rules-original","Rules");
             processor.execute(PARSER.parse(command),user);
@@ -345,6 +364,10 @@ public final class DmzConsoleWorkflowRunner {
             require(q.compile("!later(9);",null,false),"Q advances after saving a restriction frontier");
             user.checkpoint(q);
             require(db.getRevision()>revision,"Q publishes a new immutable revision");
+            // Compare reloaded durable Q on both sides; this diagnostic fingerprint also
+            // includes live attribution metadata, which is rebuilt when a revision opens.
+            user.setCurrentMind(q.closeStorage());
+            q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
             String advanced=DmzSourceMaterializationQualification.fingerprint(q);
             try {
                 processor.execute(PARSER.parse("ctx dmz choose 1 projection=9000 visits=99"),user);
@@ -355,7 +378,37 @@ public final class DmzConsoleWorkflowRunner {
             require(user.getLastDmzResult()==null && advanced.equals(DmzSourceMaterializationQualification.fingerprint(q))
                     && user.getCurrentMind()==q && saved.restrictionOutcome.availableChoices.size()==1,
                     "stale replay refuses without changing advanced Q or old detached alternatives");
+            user.setLastDmzResult(restored);
+            String qErrors=boundaryConsole(q,"ctx dmz choose 1 projection=9000 visits=99\n"+exactAttempt+"\n");
+            requireBoundaryDiagnostics(qErrors,exactAttempt,"Q revision mismatch");
+            q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+            require(user.getLastDmzResult()==null && advanced.equals(DmzSourceMaterializationQualification.fingerprint(q))
+                    && db.getRevision()>revision && !db.hasConnectedContexts()
+                    && restored.restrictionOutcome.trace.get(0).conflicts.get(0).identity().equals(historicalPair),
+                    "saved and fresh stale-Q diagnostic retries preserve the advanced Q and old endpoint history");
         } finally { user.setCurrentMind(q.closeStorage()); }
+    }
+    private static String boundaryConsole(Mind q,String script) throws Exception {
+        InputStream in=System.in;PrintStream out=System.out,err=System.err;
+        ByteArrayOutputStream errors=new ByteArrayOutputStream();
+        try {
+            System.setIn(new ByteArrayInputStream(script.getBytes("UTF-8")));
+            System.setOut(new PrintStream(new ByteArrayOutputStream(),true,"UTF-8"));
+            System.setErr(new PrintStream(errors,true,"UTF-8"));
+            CanonicalConsole.session(q,new ShutdownHook(q));
+        } finally { System.setIn(in);System.setOut(out);System.setErr(err); }
+        return errors.toString("UTF-8");
+    }
+    private static void requireBoundaryDiagnostics(String errors,String exactAttempt,String reason) throws Exception {
+        require(errors.contains(reason) && !errors.contains("\tat org.kanger"),"boundary refusal remains readable in real Console");
+        int count=0;
+        for(String line:errors.split("\\R"))if(line.startsWith("Exact replay request: ")) {
+            String command=line.substring("Exact replay request: ".length());
+            require(command.equals(exactAttempt) && FORMATTER.format(PARSER.parse(command)).equals(command),
+                    "saved and fresh boundary refusals retain identical exact attempted commands");
+            ++count;
+        }
+        require(count==2,"both saved selection and fresh diagnostic retry report their exact request");
     }
     private static void require(boolean value,String reason) { ++checks;if(!value)throw new AssertionError(reason); }
     private static void moveContextFixture(Path directory,String from,String to) throws Exception {
