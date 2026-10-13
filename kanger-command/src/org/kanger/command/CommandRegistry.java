@@ -342,8 +342,8 @@ public final class CommandRegistry {
         define(CommandIntent.CTX_OPINION_TREE,"ctx tree <N>","CONTEXT",
                 "Show the selected saved opinion's exact source inference alternatives without inference.",
                 args("number","Positive saved opinion number."),n++);
-        define(CommandIntent.CTX_DMZ, "dmz <name>@<revision> <query> [from=<name>@<revision> ...] [<limit>=<value> ...]", "CONTEXT",
-                "Experimental ordered whole-source query on explicit pins. Defaults: rows/preparation/audit/lookup/recognition/projection/application/query=10000, depth=8, nodes=128, work=1000000, visits=1000. Stops require a fresh full invocation.",
+        define(CommandIntent.CTX_DMZ, "dmz <name>@<revision> <query> [from=<name>@<revision> ...] [restrict=<name>@<revision>:<rule>] [choice=<proof-identity> ...] [restriction-budget=<value>] [<limit>=<value> ...]", "CONTEXT",
+                "Experimental exact-source query. Optional restrict inspects native conflicts; choice replays exact proof selections. Only completed restrictions produce an opinion. Defaults: restriction-budget and rows/preparation/audit/lookup/recognition/projection/application/query=10000, depth=8, nodes=128, work=1000000, visits=1000. Stops require a fresh full invocation.",
                 args("request", "Explicit Q pin, quoted signed unary integer query, exact sources and bounded limits."), n++);
         define(CommandIntent.CTX_OPINIONS, "ctx opinions [<locator> [tree [<N>]]]", "CONTEXT",
                 "Read saved last-query opinions; optionally select a source and its inference alternatives.",

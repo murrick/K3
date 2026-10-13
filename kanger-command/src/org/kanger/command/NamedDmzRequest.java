@@ -18,14 +18,23 @@ public final class NamedDmzRequest {
             if(option.startsWith("from=")) {
                 String value=option.substring(5);namePin(value);
                 checked.add("from="+name(value)+"@"+UUID.nameUUIDFromBytes(name(value).getBytes(java.nio.charset.StandardCharsets.UTF_8))+"@"+revision(value));
+            } else if(option.startsWith("restrict=")) {
+                String value=option.substring(9),source=DmzCommandArguments.triggerPin(value);namePin(source);
+                checked.add("restrict="+UUID.nameUUIDFromBytes(name(source).getBytes(java.nio.charset.StandardCharsets.UTF_8))
+                        +"@"+revision(source)+":"+DmzCommandArguments.triggerRule(value));
             } else checked.add(option);
         }
         DmzCommandArguments.parse(UUID.nameUUIDFromBytes(name(authority).getBytes(java.nio.charset.StandardCharsets.UTF_8))+"@"+revision(authority),query,checked);
     }
     public DmzSourcesQuery.Request resolve(IContextFederation federation) throws Exception {
         List<String> resolved=new ArrayList<String>();
-        for(String option:options)resolved.add(option.startsWith("from=")
-                ? "from="+name(option.substring(5))+"@"+pin(federation,option.substring(5)) : option);
+        for(String option:options) {
+            if(option.startsWith("from="))resolved.add("from="+name(option.substring(5))+"@"+pin(federation,option.substring(5)));
+            else if(option.startsWith("restrict=")) {
+                String value=option.substring(9);
+                resolved.add("restrict="+pin(federation,DmzCommandArguments.triggerPin(value))+":"+DmzCommandArguments.triggerRule(value));
+            } else resolved.add(option);
+        }
         return DmzCommandArguments.parse(pin(federation,authority),query,resolved);
     }
     private static String pin(IContextFederation federation,String text) throws Exception {

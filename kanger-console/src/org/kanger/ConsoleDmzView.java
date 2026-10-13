@@ -29,7 +29,8 @@ final class ConsoleDmzView {
         for(int i=0;i<result.candidates.size();++i) {
             DmzSourcesQuery.Input input=result.candidates.get(i);System.out.println("  ["+i+"] "+identity(result,input)+" "+input.statement);
         }
-        if(result.restartRequired) {
+        if(result.request.restrictions!=null)restrictions(result,true);
+        else if(result.restartRequired) {
             System.out.println("DMZ traversal: PARTIAL; restart required with a fresh full invocation");
             System.out.println("Completed leaves below are partial historical observations");
         } else System.out.println("DMZ traversal: COMPLETE under the displayed ordered policy");
@@ -74,7 +75,8 @@ final class ConsoleDmzView {
         showSelected(result,numbers);
     }
     private static void showSelected(DmzSourcesQuery.Result result,java.util.List<Integer> numbers) {
-        if(result.restartRequired)System.out.println("PARTIAL opinions; restart required");
+        if(result.request.restrictions!=null)restrictions(result,false);
+        else if(result.restartRequired)System.out.println("PARTIAL opinions; restart required");
         int number=0;
         for(Integer selected:numbers) {
             DmzSourcesQuery.ViewOpinion opinion=result.viewOpinions.get(selected-1);
@@ -97,10 +99,42 @@ final class ConsoleDmzView {
         for(DmzSourcesQuery.Proof proof:opinion.proofs) {
             System.out.println("Inference "+(++alternative)+":");tree(result,proof,"  ");
         }
+        int cut=0;
+        for(DmzSourcesQuery.Proof proof:opinion.restrictionProofs) {
+            System.out.println("Restricted source chain "+(++cut)+":");tree(result,proof,"  ");
+        }
         if(opinion.proofs.isEmpty()) {
             System.out.println("No resolved inference tree");
             for(String hypothesis:opinion.hypotheses)System.out.println("  Hypothesis: "+hypothesis);
         }
+    }
+    private static void restrictions(DmzSourcesQuery.Result result,boolean detailed) {
+        DmzSourcesQuery.RestrictionRequest request=result.request.restrictions;
+        DmzSourcesQuery.RestrictionOutcome outcome=result.restrictionOutcome;
+        System.out.println("DMZ restrictions: "+outcome.status+"; selected="+outcome.choices);
+        System.out.println("Trigger: "+locator(result,request.triggerRevision)+"@"+request.triggerRevision.getRevision()+":"+request.triggerRule
+                +"; restriction-budget="+request.budget);
+        if(detailed) {
+            int cut=0;
+            for(DmzSourcesQuery.Proof proof:result.restrictionProofs) {
+                System.out.println("Restricted source chain "+(++cut)+":");tree(result,proof,"  ");
+            }
+            for(String choice:request.choices)System.out.println("  Selected choice: "+choiceArgument(choice));
+        }
+        int number=0;
+        for(DmzSourcesQuery.Proof proof:outcome.availableChoices) {
+            System.out.println("Restriction choice "+(++number)+":");tree(result,proof,"  ");
+            System.out.println("  "+choiceArgument(proof.identity()));
+        }
+        if(outcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT)
+            System.out.println("Replay the full invocation with all prior choice values and one selected alternative.");
+        else if(outcome.status==DmzSourcesQuery.RestrictionStatus.STOPPED_UNCOVERED)
+            System.out.println("Source history is uncovered; no further choices or completed opinion.");
+        else if(outcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE)
+            System.out.println("Opinion queried in the completed restricted native branch.");
+    }
+    private static String choiceArgument(String identity) {
+        return "\"choice="+identity.replace("\\","\\\\").replace("\"","\\\"")+"\"";
     }
     private static void causes(DmzSourcesQuery.Proof proof,java.util.Set<String> values) {
         if(proof.premises.isEmpty())values.add(proof.conclusion);

@@ -331,7 +331,7 @@ public final class CanonicalCommandProcessor {
                 if(request instanceof org.kanger.command.NamedDmzRequest)request=((org.kanger.command.NamedDmzRequest)request).resolve(federation);
                 if(!(request instanceof org.kanger.interfaces.DmzSourcesQuery.Request))
                     throw new IllegalArgumentException("Explicit DMZ request required");
-                org.kanger.interfaces.DmzSourcesQuery.Result result=federation.executeDmzSources(mind,
+                org.kanger.interfaces.DmzSourcesQuery.Result result=mind.executeDmzSources(
                         (org.kanger.interfaces.DmzSourcesQuery.Request)request);
                 ((User)user).setLastDmzResult(result);
                 return Result.successDmz(mind,result);

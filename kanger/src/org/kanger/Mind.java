@@ -183,6 +183,12 @@ public class Mind implements IMind {
         return ((IContextFederation) user.getData()).forkContext(this, locator);
     }
     @Override public boolean hasOtherContextOpinions() { return otherOpinionsPossible; }
+    @Override public org.kanger.interfaces.DmzSourcesQuery.Result executeDmzSources(org.kanger.interfaces.DmzSourcesQuery.Request request) throws Exception {
+        if(!isStorageUsed())throw new IllegalStateException("DMZ source execution requires the active storage Mind");
+        if(!(user.getData() instanceof IContextFederation))
+            throw new UnsupportedOperationException("DMZ source execution requires a supporting storage provider");
+        return ((IContextFederation)user.getData()).executeDmzSources(this,request);
+    }
     @Override public Map<String, org.kanger.interfaces.IContextResults.Opinion> collectContextOpinions(String locator) throws Exception {
         return user.getContextOpinionSession().collect(this, locator);
     }

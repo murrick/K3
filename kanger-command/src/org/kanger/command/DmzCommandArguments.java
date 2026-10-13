@@ -21,6 +21,8 @@ final class DmzCommandArguments {
         limits.put("nodes",128);limits.put("work",1000000);limits.put("visits",1000);
         java.util.Set<String> specified=new java.util.HashSet<String>();
         List<DmzSourcePlan.Selection> sources=new ArrayList<DmzSourcePlan.Selection>();
+        String trigger=null;int restrictionBudget=10000;
+        List<String> choices=new ArrayList<String>();
         for(String option:options) {
             int equals=option.indexOf('=');
             if(equals<1)throw new IllegalArgumentException("Expected from=name@UUID@revision or limit=value");
@@ -29,6 +31,15 @@ final class DmzCommandArguments {
                 int at=value.indexOf('@');
                 if(at<1)throw new IllegalArgumentException("Explicit source name@UUID@revision required");
                 sources.add(new DmzSourcePlan.Selection(value.substring(0,at),pin(value.substring(at+1))));
+            } else if("restrict".equals(key)) {
+                if(!specified.add(key))throw new IllegalArgumentException("Repeated DMZ restriction trigger");
+                trigger=value;
+            } else if("choice".equals(key)) {
+                choices.add(value);
+            } else if("restriction-budget".equals(key)) {
+                if(!specified.add(key) || !value.matches("[0-9]+"))throw new IllegalArgumentException("One integer restriction budget required");
+                try { restrictionBudget=Integer.parseInt(value); }
+                catch(NumberFormatException invalid) { throw new IllegalArgumentException("Restriction budget overflow"); }
             } else {
                 if(!limits.containsKey(key) || !specified.add(key))throw new IllegalArgumentException("Unknown or repeated DMZ limit: "+key);
                 if(!value.matches("[0-9]+"))throw new IllegalArgumentException("Nonnegative integer limit required: "+key);
@@ -36,11 +47,26 @@ final class DmzCommandArguments {
                 catch(NumberFormatException invalid) { throw new IllegalArgumentException("DMZ limit overflow: "+key); }
             }
         }
+        if(trigger==null && (!choices.isEmpty() || specified.contains("restriction-budget")))
+            throw new IllegalArgumentException("Choices and restriction budget require restrict=<source-pin>:<rule>");
+        DmzSourcesQuery.RestrictionRequest restrictions=trigger==null?null:new DmzSourcesQuery.RestrictionRequest(
+                pin(triggerPin(trigger)),triggerRule(trigger),choices,restrictionBudget);
         return new DmzSourcesQuery.Request(new DmzSourcePlan.Request(pin(q),sources,limits.get("rows")),
                 DmzSourcesQuery.Policy.FIXED_UNITS_THEN_ORDERED_GROUNDS_CONTEXT_UUID_RULE_ID,query,
                 new DmzSourcesQuery.Limits(limits.get("preparation"),limits.get("audit"),limits.get("lookup"),
                         limits.get("recognition"),limits.get("projection"),limits.get("application"),limits.get("query"),
-                        limits.get("depth"),limits.get("nodes"),limits.get("work"),limits.get("visits")));
+                        limits.get("depth"),limits.get("nodes"),limits.get("work"),limits.get("visits")),restrictions);
+    }
+    static String triggerPin(String value) {
+        int colon=value.lastIndexOf(':');
+        if(colon<1)throw new IllegalArgumentException("Restriction trigger requires source-pin:rule");
+        triggerRule(value);return value.substring(0,colon);
+    }
+    static long triggerRule(String value) {
+        int colon=value.lastIndexOf(':');
+        if(colon<1 || !value.substring(colon+1).matches("[0-9]+"))throw new IllegalArgumentException("Source-local restriction rule required");
+        try { return Long.parseLong(value.substring(colon+1)); }
+        catch(NumberFormatException invalid) { throw new IllegalArgumentException("Restriction rule overflow"); }
     }
     static String pin(IContextResults.Revision revision) { return revision.getContextId()+"@"+revision.getRevision(); }
     private static IContextResults.Revision pin(String value) {

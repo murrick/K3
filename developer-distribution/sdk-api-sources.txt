@@ -1,4 +1,4 @@
-# Canonical KANGER 3.7.0 Developer SDK JavaDoc source slice.
+# Curated Developer SDK JavaDoc: stable interfaces and documented experimental DTOs.
 # Repository-relative paths; implementation packages are intentionally absent.
 kanger/src/org/kanger/interfaces/IArgument.java
 kanger/src/org/kanger/interfaces/ICause.java
@@ -27,3 +27,6 @@ kanger-bootstrap/src/org/kanger/bootstrap/RuntimeBootstrap.java
 kanger-bootstrap/src/org/kanger/bootstrap/RuntimeBootstrapResult.java
 kanger-bootstrap/src/org/kanger/bootstrap/RuntimeCapability.java
 kanger/src/org/kanger/interfaces/IContextResults.java
+kanger/src/org/kanger/interfaces/DmzSourcePlan.java
+kanger/src/org/kanger/interfaces/DmzSourcesQuery.java
+kanger/src/org/kanger/interfaces/DmzConditionalResult.java

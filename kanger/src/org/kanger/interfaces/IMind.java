@@ -577,4 +577,9 @@ public interface IMind {
         throw new UnsupportedOperationException("Context fork is unavailable");
     }
     default boolean hasOtherContextOpinions() { return false; }
+    /** Experimental exact-source DMZ operation, including explicit restriction requests.
+     * Returns detached historical observations; requires the active settled storage Mind. */
+    default DmzSourcesQuery.Result executeDmzSources(DmzSourcesQuery.Request request) throws Exception {
+        throw new UnsupportedOperationException("DMZ source execution requires a supporting storage provider");
+    }
 }

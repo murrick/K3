@@ -726,3 +726,64 @@ The canonical command/control classes shown in the Assembly model are feature-le
 
 
 DUMB2 is the default storage provider in the standard 3.8.0 delivery. Legacy DUMB remains available separately as `org.kanger:kanger-data-dumb` for old databases. In a custom assembly containing both providers, set `runtime.storage.module=dumb` for explicit legacy selection; otherwise DUMB2 is selected. Existing legacy data is not converted automatically.
+
+### Experimental exact-source DMZ restrictions (3.8.0)
+
+`IMind.executeDmzSources(DmzSourcesQuery.Request)` is the public Java entry point
+for an active, settled storage Mind. It returns detached observations and leaves
+the physical Q, source revisions and topology unchanged. Providers without DMZ
+support reject this feature. It is experimental rather than a Stable SDK contract.
+
+The four-argument `Request` constructor executes the ordinary ordered source
+query. Its five-argument overload accepts a `RestrictionRequest` containing the
+exact external trigger revision, source-local rule, ordered proof identities and
+a phase budget. Sources remain explicit published pins in `DmzSourcePlan.Request`.
+For example, given caller-supplied `qRevision`, `rulesRevision`, `triggerRule` and
+an active `IMind q`:
+
+```java
+DmzSourcesQuery.Limits limits = new DmzSourcesQuery.Limits(
+    10000, 10000, 10000, 10000, 10000, 10000, 10000, 8, 128, 1000000, 1000);
+DmzSourcePlan.Request sources = new DmzSourcePlan.Request(qRevision,
+    java.util.Collections.singletonList(
+        new DmzSourcePlan.Selection("Rules", rulesRevision)), 1000);
+java.util.List<String> choices = new java.util.ArrayList<String>();
+DmzSourcesQuery.Request request = new DmzSourcesQuery.Request(sources,
+    DmzSourcesQuery.Policy.FIXED_UNITS_THEN_ORDERED_GROUNDS_CONTEXT_UUID_RULE_ID,
+    "?cache(1);", limits,
+    new DmzSourcesQuery.RestrictionRequest(rulesRevision, triggerRule, choices, 10000));
+DmzSourcesQuery.Result result = q.executeDmzSources(request);
+```
+
+With an empty choice list, `NEXT_CONFLICT` returns
+`result.restrictionOutcome.availableChoices`. Display their source proof trees and
+let the caller select one explicit `Proof.identity()`; append that identity to
+the choice list and build a fresh request with the entire prefix. Each call
+reacquires the exact revisions and revalidates every conflict and choice. A changed
+source HEAD does not replace a requested historical revision. There is no owner
+or continuation token to reuse.
+
+`COMPLETE` returns a native opinion queried while all selected restrictions remain
+active. Its answer proof trees, hypotheses and `restrictionProofs` are historical
+data. `NEXT_CONFLICT` and `STOPPED_UNCOVERED` return no completed opinion and require
+a fresh invocation. An uncovered initial conflict, stale/foreign/duplicate/unused
+choice or exhausted phase budget is refused. Completion concerns the chosen
+native continuation, not an exhaustive enumeration of consistent theories.
+
+The optional command feature exposes the same operation:
+
+```text
+dmz Q@7 "?cache(1);" from=Rules@3 restrict=Rules@3:12
+dmz Q@7 "?cache(1);" from=Rules@3 restrict=Rules@3:12 "choice=<full returned identity>" restriction-budget=10000
+ctx dmz explain
+ctx tree 1
+```
+
+For the UUID form, use `ctx dmz <Q-UUID>@<revision>` with
+`from=Rules@<source-UUID>@<revision>` and
+`restrict=<source-UUID>@<revision>:<rule>`. Quote an entire option when its source
+name or identity contains spaces; the console prints quoted `choice=` options.
+Keep all earlier choices in subsequent commands. `ctx dmz explain` reads the
+saved result without inference, including selected chains and next alternatives.
+`ctx tree 1` includes the completed opinion's restriction provenance. DMZ execution
+refusals clear the saved command result; malformed syntax is rejected during parsing.

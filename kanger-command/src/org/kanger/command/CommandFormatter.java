@@ -265,6 +265,12 @@ public final class CommandFormatter {
                 .append(' ').append(argument(request.queryStatement));
         for(org.kanger.interfaces.DmzSourcePlan.Selection source:request.sources.external)
             out.append(' ').append(argument("from="+source.locator+"@"+DmzCommandArguments.pin(source.revision)));
+        if(request.restrictions!=null) {
+            org.kanger.interfaces.DmzSourcesQuery.RestrictionRequest restriction=request.restrictions;
+            out.append(" restrict=").append(DmzCommandArguments.pin(restriction.triggerRevision)).append(':').append(restriction.triggerRule);
+            for(String choice:restriction.choices)out.append(' ').append(argument("choice="+choice));
+            if(restriction.budget!=10000)out.append(" restriction-budget=").append(restriction.budget);
+        }
         org.kanger.interfaces.DmzSourcesQuery.Limits l=request.limits;
         String[] keys={"rows","preparation","audit","lookup","recognition","projection","application","query","depth","nodes","work","visits"};
         int[] values={request.sources.maximumRows,l.preparation,l.audit,l.lookup,l.recognition,l.projection,l.application,l.query,l.depth,l.nodes,l.work,l.maximumVisits};

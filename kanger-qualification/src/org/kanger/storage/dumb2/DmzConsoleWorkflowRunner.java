@@ -30,7 +30,7 @@ public final class DmzConsoleWorkflowRunner {
     private static final CommandParser PARSER=new CommandParser();
     private static final CommandFormatter FORMATTER=new CommandFormatter();
     public static void main(String[] args) {
-        try { run();System.out.println("DMZ_CONSOLE_WORKFLOW_PASS checks="+checks);System.exit(0); }
+        try { run();restrictions(false);restrictions(true);System.out.println("DMZ_CONSOLE_WORKFLOW_PASS checks="+checks);System.exit(0); }
         catch(Throwable failure) { failure.printStackTrace();System.exit(1); }
     }
     private static String pin(IContextResults.Revision p) { return p.getContextId()+"@"+p.getRevision(); }
@@ -126,6 +126,83 @@ public final class DmzConsoleWorkflowRunner {
         try(org.kanger.storage.dumb2.ContextSnapshot snapshot=org.kanger.storage.dumb2.ContextSnapshot.open(dir.resolve(name))) {
             return new IContextResults.Revision(snapshot.getContextId(),snapshot.getRevision());
         }
+    }
+    private static void restrictions(boolean negative) throws Exception {
+        Path dir=Files.createTempDirectory("dmz-restriction-console-");System.setProperty("user.home",dir.toString());
+        String sign=negative?"~":"",opposite=negative?"":"~";
+        create(dir,"Q","!seed(1); !"+opposite+"cache(1); !seed(2); !"+opposite+"cache(2);");
+        IContextResults.Revision units=create(dir,"Named Units","!@x seed(x) -> "+sign+"cache(x);");
+        long rule;
+        try(SnapshotMindRuntime snapshot=SnapshotMindRuntime.open(dir.resolve("Named Units"),new RevisionRef(units.getContextId(),units.getRevision()),"trigger")) {
+            rule=org.kanger.DmzSourceShape.inspect(snapshot.getMind(),100).declarations.get(0).sourceRule;
+        }
+        User user=new User();user.setUserDir(Files.createDirectories(dir.resolve("operator")).toString());
+        user.setDatabaseDir(dir.toString()+java.io.File.separator);DB db=new DB();db.init(user);
+        Mind initial=new Mind(user);user.setCurrentMind(initial);Mind q=(Mind)initial.useStorage("Q");user.setCurrentMind(q);
+        IContextResults.Revision qp=new IContextResults.Revision(db.getContextId(),db.getRevision());
+        String base="ctx dmz "+pin(qp)+" ?"+sign+"cache(1); \"from=Named Units@"+pin(units)+"\" restrict="+pin(units)+":"+rule+" restriction-budget=9000";
+        String named="dmz Q@"+qp.getRevision()+" ?"+sign+"cache(1); \"from=Named Units@"+units.getRevision()+"\" \"restrict=Named Units@"+units.getRevision()+":"+rule+"\" restriction-budget=9000";
+        CanonicalCommandProcessor processor=new CanonicalCommandProcessor();
+        String state=DmzSourceMaterializationQualification.fingerprint(q);
+        try {
+            DmzSourcesQuery.Request request=(DmzSourcesQuery.Request)PARSER.parse(base).getArgument("request");
+            require(request.restrictions.triggerRule==rule && request.restrictions.budget==9000 && request.restrictions.choices.isEmpty(),
+                    "exact command normalizes explicit opt-in trigger and budget");
+            org.kanger.interfaces.IMind sdk=q;
+            DmzSourcesQuery.Result result=sdk.executeDmzSources(request);
+            require(result.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT && result.opinions.isEmpty(),
+                    "public SDK interface returns detached restriction choices");
+            String firstIdentity=result.restrictionOutcome.availableChoices.get(0).identity();
+            reject(() -> new Mind(new User()).executeDmzSources(request),IllegalStateException.class);
+            Mind pending=new Mind(q);
+            try { reject(() -> sdk.executeDmzSources(request),IllegalStateException.class); }
+            finally { q.release(pending); }
+            String echoed=FORMATTER.format(PARSER.parse(named));
+            require(echoed.equals(FORMATTER.format(PARSER.parse(echoed))),"named restriction command canonical echo is stable");
+            DmzSourcesQuery.Result byName=processor.execute(PARSER.parse(named),user).getDmzResult();
+            require(byName.restrictionOutcome.availableChoices.get(0).identity().equals(result.restrictionOutcome.availableChoices.get(0).identity()),
+                    "named pins and exact UUID pins expose the same proof identities");
+            String selections="";StringBuilder script=new StringBuilder(base+"\nctx dmz explain\n");
+            for(int count=0;result.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT;count++) {
+                require(count<3,"bounded command replay");
+                selections+=" \"choice="+result.restrictionOutcome.availableChoices.get(0).identity()+"\"";
+                String command=base+selections;
+                DmzSourcesQuery.Request parsed=(DmzSourcesQuery.Request)PARSER.parse(FORMATTER.format(PARSER.parse(command))).getArgument("request");
+                require(parsed.restrictions.choices.size()==count+1 && parsed.restrictions.budget==9000,
+                        "full proof identities and ordered prefix survive format/parse");
+                result=processor.execute(PARSER.parse(named+selections),user).getDmzResult();
+                script.append(named).append(selections).append("\nctx dmz explain\n");
+            }
+            require(result.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE && result.restrictionProofs.size()==2
+                    && Boolean.FALSE.equals(result.opinions.get(0).answer.value),"named command completes both conflicts and queries protected Q fact");
+            String[] invalid={base+" restrict="+pin(units)+":"+rule,base+" restriction-budget=1",base.replace("restriction-budget=9000","restriction-budget=0"),
+                    base+" choice=duplicate choice=duplicate",base.replace(":"+rule+" restriction-budget",":-1 restriction-budget"),
+                    "ctx dmz "+pin(qp)+" ?seed(1); choice=orphan","ctx dmz "+pin(qp)+" ?seed(1); restriction-budget=100",named+" restrict=Missing@1:0"};
+            for(String bad:invalid)reject(() -> PARSER.parse(bad),CommandParseException.class);
+            reject(() -> processor.execute(PARSER.parse(base+" choice=foreign-proof"),user),IllegalArgumentException.class);
+            require(((User)user).getLastDmzResult()==null,"failed restriction command clears saved historical result");
+            String syntax=new org.kanger.command.CommandHelpRenderer().render();
+            require(syntax.contains("restrict=") && syntax.contains("choice=<proof-identity>") && syntax.contains("restriction-budget="),"shared help exposes opt-in grammar");
+            script.append("ctx tree 1\n").append(base).append(" choice=foreign-proof\n").append("ctx dmz ").append(pin(qp)).append(" ?seed(1);\n");
+            InputStream savedIn=System.in;PrintStream savedOut=System.out,savedErr=System.err;
+            ByteArrayOutputStream out=new ByteArrayOutputStream(),err=new ByteArrayOutputStream();
+            try {
+                System.setIn(new ByteArrayInputStream(script.toString().getBytes("UTF-8")));
+                System.setOut(new PrintStream(out,true,"UTF-8"));System.setErr(new PrintStream(err,true,"UTF-8"));
+                CanonicalConsole.session(q,new ShutdownHook(q));
+            } finally { System.setIn(savedIn);System.setOut(savedOut);System.setErr(savedErr); }
+            String display=out.toString("UTF-8");
+            require(display.contains("DMZ restrictions: NEXT_CONFLICT; selected=0") && display.contains("Restriction choice 1:")
+                    && display.contains("\"choice="+firstIdentity+"\"") && display.contains("Replay the full invocation"),"real console prints copyable exact choices and replay instructions");
+            require(display.contains("DMZ restrictions: COMPLETE; selected=2") && display.contains("Restricted source chain 2:")
+                    && display.contains("Opinion 1: FALSE") && display.contains("completed restricted native branch"),"console explains restriction outcome and selected proof trees");
+            require(err.toString("UTF-8").contains("DMZ refused:") && !err.toString("UTF-8").contains("\tat org.kanger"),
+                    "invalid choice remains readable and console continues to ordinary query");
+            Mind reopened=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(reopened);
+            require(state.equals(DmzSourceMaterializationQualification.fingerprint(reopened)) && !db.hasConnectedContexts(),
+                    "SDK and command successes/refusals preserve durable Q and topology");
+            user.setCurrentMind(reopened.closeStorage());
+        } finally { if(user.getCurrentMind().isStorageUsed())user.setCurrentMind(user.getCurrentMind().closeStorage()); }
     }
     private static void reject(Attempt attempt,Class<? extends Exception> type) throws Exception {
         try { attempt.run();throw new AssertionError("Expected rejection "+type); }
