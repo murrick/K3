@@ -30,6 +30,16 @@ final class TerminalSupportCapture implements AutoCloseable {
     private static final ThreadLocal<TerminalSupportCapture> ACTIVE =
             new ThreadLocal<TerminalSupportCapture>();
 
+    private final Map<Integer,Object> identityObjects = new java.util.HashMap<Integer,Object>();
+    private final Map<Application,ProvisionalApplication> historicalSources =
+            new java.util.IdentityHashMap<Application,ProvisionalApplication>();
+
+    /** Source identities frozen at application time; later aliases cannot acquire old routes. */
+    ProvisionalApplication historicalSources(Application application) {
+        requireActive();
+        return historicalSources.get(application);
+    }
+
     static final class Event {
         final String conclusion;
         final String ruleOrigin;
@@ -197,6 +207,13 @@ final class TerminalSupportCapture implements AutoCloseable {
             result.add(new StoredObservation(stored, outcome(stored.mind), routes));
         }
         return Collections.unmodifiableList(result);
+    }
+
+    List<StoredObservation> storedSnapshotBounded(int budget) {
+        requireActive();
+        if((long)materializations.size()*(applications.size()+1)>budget)
+            throw new IllegalStateException("Stored route scan budget exceeded");
+        return storedSnapshot();
     }
 
     /** Same concrete atom in exactly this observed Mind and technical operation. */
@@ -373,7 +390,7 @@ final class TerminalSupportCapture implements AutoCloseable {
 
     private int identity(Object object) {
         Integer index = identities.get(object);
-        if (index == null) { index = identities.size(); identities.put(object, index); }
+        if (index == null) { index = identities.size(); identities.put(object, index); identityObjects.put(index,object); }
         return index;
     }
 
@@ -486,6 +503,7 @@ final class TerminalSupportCapture implements AutoCloseable {
             if (!patterns.isEmpty()) restrictedChains.put(application, Collections.unmodifiableList(patterns));
         }
         applications.add(application);
+        historicalSources.put(application,provisionalSources(application,outcome(application.mind),identityObjects));
         return null;
     }
 
