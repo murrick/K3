@@ -13,20 +13,41 @@ public final class DmzSourcesQuery {
     public enum Decision { ADMITTED, REUSED_PRIMARY, DECLINED_Q, KEEP_EXISTING, KEEP_CANDIDATE }
     public enum Refusal { UNSUPPORTED_DECLARATION, GROUND_LIMIT, PRODUCTION_LIMIT }
     public enum RestrictionStatus { NOT_REQUESTED, COMPLETE, NEXT_CONFLICT, STOPPED_UNCOVERED }
+    /** One covered historical pair of proofs for an exact opposite signed ground. */
+    public static final class RestrictionConflict {
+        private static final java.util.regex.Pattern GROUND=java.util.regex.Pattern.compile("!(~?)([A-Za-z_][A-Za-z_0-9]*)\\(([+-]?[0-9]+)\\);");
+        public final Proof positive,negative;
+        public RestrictionConflict(Proof positive,Proof negative) {
+            if(positive==null || negative==null)throw new NullPointerException();
+            java.util.regex.Matcher a=GROUND.matcher(positive.conclusion),b=GROUND.matcher(negative.conclusion);
+            if(!a.matches() || !b.matches() || !a.group(1).isEmpty() || !b.group(1).equals("~")
+                    || !a.group(2).equals(b.group(2)) || !new java.math.BigInteger(a.group(3)).equals(new java.math.BigInteger(b.group(3))))
+                throw new IllegalArgumentException("Exact opposite signed proof conclusions required");
+            this.positive=positive;this.negative=negative;
+        }
+        public String identity() { return positive.identity()+"<>"+negative.identity(); }
+        public boolean contains(String identity) { return positive.identity().equals(identity) || negative.identity().equals(identity); }
+    }
     /** Historical alternatives and the exact choice made at one native conflict. */
     public static final class RestrictionStep {
         public final int number;
         public final Proof selected;
         public final List<Proof> alternatives;
         public final RestrictionStatus after;
+        public final List<RestrictionConflict> conflicts;
         public RestrictionStep(int number,Proof selected,List<Proof> alternatives,RestrictionStatus after) {
+            this(number,selected,alternatives,after,Collections.<RestrictionConflict>emptyList());
+        }
+        public RestrictionStep(int number,Proof selected,List<Proof> alternatives,RestrictionStatus after,List<RestrictionConflict> conflicts) {
             if(number<1 || number>128 || selected==null || after==null || after==RestrictionStatus.NOT_REQUESTED)
                 throw new IllegalArgumentException("Exact historical restriction step required");
             this.number=number;this.selected=selected;this.alternatives=copy(alternatives);this.after=after;
+            this.conflicts=copy(conflicts);
             java.util.Set<String> identities=new java.util.HashSet<String>();
             for(Proof proof:this.alternatives)if(!identities.add(proof.identity()))
                 throw new IllegalArgumentException("Distinct historical alternatives required");
             if(!identities.contains(selected.identity()))throw new IllegalArgumentException("Selected proof must be an offered alternative");
+            requireConflictMembers(this.alternatives,this.conflicts);
         }
     }
     /** Detached summary of an accumulated restriction workflow; carries no native owner or resume token. */
@@ -36,6 +57,7 @@ public final class DmzSourcesQuery {
         /** Historical proof alternatives; replay the whole request to validate an identity. */
         public final List<Proof> availableChoices;
         public final List<RestrictionStep> trace;
+        public final List<RestrictionConflict> availableConflicts;
         public RestrictionOutcome(RestrictionStatus status,int choices) {
             this(status,choices,Collections.<Proof>emptyList());
         }
@@ -43,11 +65,19 @@ public final class DmzSourcesQuery {
             this(status,choices,availableChoices,Collections.<RestrictionStep>emptyList());
         }
         public RestrictionOutcome(RestrictionStatus status,int choices,List<Proof> availableChoices,List<RestrictionStep> trace) {
+            this(status,choices,availableChoices,trace,Collections.<RestrictionConflict>emptyList());
+        }
+        public RestrictionOutcome(RestrictionStatus status,int choices,List<Proof> availableChoices,List<RestrictionStep> trace,
+                List<RestrictionConflict> availableConflicts) {
             if(status==null || choices<0 || status==RestrictionStatus.NOT_REQUESTED && choices!=0)
                 throw new IllegalArgumentException("Restriction outcome");
             this.status=status;this.choices=choices;
             this.availableChoices=copy(availableChoices);
             this.trace=copy(trace);
+            this.availableConflicts=copy(availableConflicts);
+            if(status!=RestrictionStatus.NEXT_CONFLICT && !this.availableConflicts.isEmpty())
+                throw new IllegalArgumentException("Only next conflicts expose current proof pairs");
+            requireConflictMembers(this.availableChoices,this.availableConflicts);
             if(!this.trace.isEmpty()) {
                 if(this.trace.size()!=choices)throw new IllegalArgumentException("Trace must cover the exact selected prefix");
                 for(int i=0;i<this.trace.size();++i) {
@@ -59,6 +89,16 @@ public final class DmzSourcesQuery {
             if(status!=RestrictionStatus.NEXT_CONFLICT && !this.availableChoices.isEmpty())
                 throw new IllegalArgumentException("Only next conflicts have choices");
         }
+    }
+    private static void requireConflictMembers(List<Proof> proofs,List<RestrictionConflict> conflicts) {
+        java.util.Set<String> seen=new java.util.HashSet<String>();
+        java.util.Set<String> members=new java.util.HashSet<String>();
+        for(RestrictionConflict conflict:conflicts) {
+            if(!seen.add(conflict.identity()))throw new IllegalArgumentException("Distinct historical conflict pairs required");
+            members.add(conflict.positive.identity());members.add(conflict.negative.identity());
+        }
+        if(!conflicts.isEmpty())for(Proof proof:proofs)if(!members.contains(proof.identity()))
+            throw new IllegalArgumentException("Choice proof must belong to the historical conflict pairs");
     }
     public static final class PlanningRefusal extends IllegalArgumentException {
         private static final long serialVersionUID=1L;

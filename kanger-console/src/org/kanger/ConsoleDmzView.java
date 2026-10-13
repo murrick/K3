@@ -120,12 +120,16 @@ final class ConsoleDmzView {
                 for(int i=0;i<step.alternatives.size();++i)if(step.alternatives.get(i).identity().equals(step.selected.identity()))ordinal=i+1;
                 System.out.println("Restriction step "+step.number+": selected alternative "+ordinal+"/"+step.alternatives.size()+" -> "+step.after);
                 System.out.println("  Historical identity: "+step.selected.identity());
+                conflicts(result,step.conflicts,"  ");
             }
             int cut=0;
             for(DmzSourcesQuery.Proof proof:result.restrictionProofs) {
                 System.out.println("Restricted source chain "+(++cut)+":");tree(result,proof,"  ");
             }
             for(String choice:request.choices)System.out.println("  Selected choice: "+choiceArgument(choice));
+        }
+        if(detailed && !outcome.availableConflicts.isEmpty()) {
+            System.out.println("Current covered conflict evidence:");conflicts(result,outcome.availableConflicts,"  ");
         }
         int number=0;
         for(DmzSourcesQuery.Proof proof:outcome.availableChoices) {
@@ -139,6 +143,14 @@ final class ConsoleDmzView {
             System.out.println("Source history is uncovered; no further choices or completed opinion.");
         else if(outcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE)
             System.out.println("Opinion queried in the completed restricted native branch.");
+    }
+    private static void conflicts(DmzSourcesQuery.Result result,List<DmzSourcesQuery.RestrictionConflict> pairs,String indent) {
+        int number=0;
+        for(DmzSourcesQuery.RestrictionConflict pair:pairs) {
+            System.out.println(indent+"Conflict pair "+(++number)+":");
+            System.out.println(indent+"  Positive evidence:");tree(result,pair.positive,indent+"    ");
+            System.out.println(indent+"  Negative evidence:");tree(result,pair.negative,indent+"    ");
+        }
     }
     private static String choiceArgument(String identity) {
         return "\"choice="+identity.replace("\\","\\\\").replace("\"","\\\"")+"\"";

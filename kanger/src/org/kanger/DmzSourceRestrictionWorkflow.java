@@ -98,6 +98,16 @@ public final class DmzSourceRestrictionWorkflow {
             List<DmzSourcesQuery.Proof> selected=Collections.emptyList();
             List<DmzSourcesQuery.RestrictionStep> trace=new ArrayList<DmzSourcesQuery.RestrictionStep>();
             for(int index=0;;++index) {
+                SortedMap<String,DmzSourcesQuery.RestrictionConflict> observed=new TreeMap<String,DmzSourcesQuery.RestrictionConflict>();
+                int[] conflictBudget={Math.min(budget,request.limits.projection)};
+                for(DmzWitnessConflicts.Combination pair:pairs) {
+                    boolean positive=pair.left.graph.observed.nodes.get(pair.left.node).ground.sign;
+                    DmzSourcesQuery.Proof a=DmzCacheRestrictionSet.publicProof(positive?pair.left:pair.right,declarations,conflictBudget);
+                    DmzSourcesQuery.Proof b=DmzCacheRestrictionSet.publicProof(positive?pair.right:pair.left,declarations,conflictBudget);
+                    DmzSourcesQuery.RestrictionConflict conflictPair=new DmzSourcesQuery.RestrictionConflict(a,b);
+                    observed.put(conflictPair.identity(),conflictPair);
+                }
+                List<DmzSourcesQuery.RestrictionConflict> conflicts=new ArrayList<DmzSourcesQuery.RestrictionConflict>(observed.values());
                 SortedMap<String,Option> options=new TreeMap<String,Option>();
                 for(DmzWitnessConflicts.Combination pair:pairs)for(DmzProofWitnesses.Witness witness:Arrays.asList(pair.left,pair.right)) {
                     if(--remaining<1)throw new IllegalStateException("Restriction choice projection budget exceeded");
@@ -113,10 +123,11 @@ public final class DmzSourceRestrictionWorkflow {
                     if(options.isEmpty() && !trace.isEmpty()) {
                         DmzSourcesQuery.RestrictionStep last=trace.get(trace.size()-1);
                         trace.set(trace.size()-1,new DmzSourcesQuery.RestrictionStep(last.number,last.selected,last.alternatives,
-                                DmzSourcesQuery.RestrictionStatus.STOPPED_UNCOVERED));
+                                DmzSourcesQuery.RestrictionStatus.STOPPED_UNCOVERED,last.conflicts));
                     }
                     return new Result(new DmzSourcesQuery.RestrictionOutcome(options.isEmpty()?DmzSourcesQuery.RestrictionStatus.STOPPED_UNCOVERED
-                            :DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT,index,offered,trace),selected,null);
+                            :DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT,index,offered,trace,
+                            options.isEmpty()?Collections.<DmzSourcesQuery.RestrictionConflict>emptyList():conflicts),selected,null);
                 }
                 Option option=options.get(choice.choices.get(index));
                 if(option==null)throw new IllegalArgumentException("Requested proof is not an exact current conflict choice");
@@ -130,7 +141,7 @@ public final class DmzSourceRestrictionWorkflow {
                         || q.hasPendingTransactions() || !DmzTerminalRestriction.activeNoGoods(q).isEmpty() || user.getCurrentMind()!=q)
                     throw new IllegalStateException("Restriction workflow failed to restore its reconstruction");
                 DmzSourcesQuery.RestrictionOutcome summary=continued.detached();
-                trace.add(new DmzSourcesQuery.RestrictionStep(index+1,option.proof,offered,summary.status));
+                trace.add(new DmzSourcesQuery.RestrictionStep(index+1,option.proof,offered,summary.status,conflicts));
                 if(continued.status!=DmzCacheRestrictionSet.ContinuationStatus.NEXT_CONFLICT) {
                     if(index+1!=choice.choices.size())throw new IllegalArgumentException("Unused restriction choices after workflow stop");
                     DmzConditionalResult.Answer answer=null;

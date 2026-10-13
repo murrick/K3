@@ -813,6 +813,15 @@ retained earlier results stay readable after later invocations or boundary chang
 `ctx dmz explain` displays the historical selection ordinal and resulting status
 for every step. The trace is diagnostic data and grants no replay permission.
 
+Each step also carries the covered opposing evidence as immutable
+`RestrictionConflict` pairs. A pair contains the exact positive and negative
+proof trees for one signed ground; a pending `NEXT_CONFLICT` outcome exposes the
+same evidence through `availableConflicts`. These detached trees retain exact
+source revisions and rules, including primary Q evidence. They explain why an
+alternative was offered and do not make either endpoint an eligible restriction
+choice by themselves. `ctx dmz explain` displays both sides for pending and
+historical conflicts.
+
 A source name rebound to a different Context UUID is refused even when its
 declarations and revision number match. Restoring the original source permits a
 fresh reconstruction of its old exact pin. Advancing source HEAD while retaining

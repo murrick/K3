@@ -139,6 +139,21 @@ public final class DmzSourcesQueryRunner {
                     && current.restrictionOutcome.choices==0 && current.opinions.isEmpty() && current.restartRequired,
                     "explicit trigger returns choices without inventing an opinion");
             int firstRoot=current.restrictionOutcome.availableChoices.get(0).conclusion.endsWith("(1);")?1:2;
+            require(current.restrictionOutcome.availableConflicts.size()==current.restrictionOutcome.availableChoices.size(),
+                    "covered pending conflict preserves both proof endpoints for every source alternative");
+            for(DmzSourcesQuery.RestrictionConflict pair:current.restrictionOutcome.availableConflicts) {
+                require(pair.positive.conclusion.substring(1).equals(pair.negative.conclusion.substring(2)),
+                        "public endpoints are exact opposite signed grounds");
+                DmzSourcesQuery.Proof protectedQ=negative?pair.positive:pair.negative;
+                require(protectedQ.premises.isEmpty() && protectedQ.source.revision.getContextId().equals(pin.getContextId())
+                        && protectedQ.source.revision.getRevision()==pin.getRevision(),"opposing Q endpoint retains its exact primary source pin");
+            }
+            DmzSourcesQuery.Result initialResult=current;
+            reject(() -> initialResult.restrictionOutcome.availableConflicts.clear(),UnsupportedOperationException.class);
+            DmzSourcesQuery.RestrictionConflict firstPair=current.restrictionOutcome.availableConflicts.get(0);
+            reject(() -> new DmzSourcesQuery.RestrictionConflict(firstPair.negative,firstPair.positive),IllegalArgumentException.class);
+            DmzSourcesQuery.Proof wrongGround=new DmzSourcesQuery.Proof(firstPair.negative.source,"!~other(99);",firstPair.negative.premises);
+            reject(() -> new DmzSourcesQuery.RestrictionConflict(firstPair.positive,wrongGround),IllegalArgumentException.class);
             DmzSourcesQuery.Result second=q.executeDmzSources(current.chooseRestriction(2));
             require(second.restrictionProofs.get(0).identity().equals(current.restrictionOutcome.availableChoices.get(1).identity()),
                     "historical ordinal helper preserves an explicit nonfirst caller choice");
@@ -146,6 +161,7 @@ public final class DmzSourcesQueryRunner {
                     ==current.restrictionOutcome.availableChoices.size(),"trace retains all offered alternatives for an explicit nonfirst selection");
             reject(() -> second.restrictionOutcome.trace.clear(),UnsupportedOperationException.class);
             reject(() -> second.restrictionOutcome.trace.get(0).alternatives.clear(),UnsupportedOperationException.class);
+            reject(() -> second.restrictionOutcome.trace.get(0).conflicts.clear(),UnsupportedOperationException.class);
             reject(() -> currentChoicesImmutable(base,db,q,a,trigger),UnsupportedOperationException.class);
             reject(() -> db.executeDmzSources(q,optIn(base,a,trigger,Collections.singletonList("foreign-proof"),10000)),IllegalArgumentException.class);
             reject(() -> db.executeDmzSources(q,optIn(base,a,Long.MAX_VALUE,choices,10000)),IllegalArgumentException.class);
@@ -167,10 +183,21 @@ public final class DmzSourcesQueryRunner {
                             && step.alternatives.stream().anyMatch(proof->proof.identity().equals(step.selected.identity()))
                             && step.after==(i+1==choices.size()?current.restrictionOutcome.status:DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT),
                             "historical alternatives, selection and resulting status are coherent");
+                    require(!step.conflicts.isEmpty() && step.conflicts.stream().anyMatch(pair->pair.contains(step.selected.identity())),
+                            "selected historical proof belongs to an actually covered conflict pair");
+                    for(DmzSourcesQuery.RestrictionConflict pair:step.conflicts) {
+                        require(pair.positive.conclusion.substring(1).equals(pair.negative.conclusion.substring(2)),
+                                "replayed historical endpoints retain exact opposite substitution");
+                        for(int prior=0;prior<i;prior++)require(!pair.contains(choices.get(prior)),
+                                "already excluded endpoint alternatives do not reappear in later conflict evidence");
+                    }
                     if(i<earlier.restrictionOutcome.trace.size()) {
                         DmzSourcesQuery.RestrictionStep previous=earlier.restrictionOutcome.trace.get(i);
                         require(previous.selected.identity().equals(step.selected.identity())
                                 && previous.alternatives.size()==step.alternatives.size(),"earlier branch trace survives native owner closure and fresh replay");
+                        require(previous.conflicts.size()==step.conflicts.size(),"historical conflict pair count is stable across full replay");
+                        for(int pair=0;pair<previous.conflicts.size();pair++)require(previous.conflicts.get(pair).identity().equals(step.conflicts.get(pair).identity()),
+                                "both historical endpoint source chains survive native owner closure and fresh replay");
                     }
                 }
                 org.kanger.DmzCandidateSession.requireSettledPhysicalQ(q);
@@ -180,6 +207,7 @@ public final class DmzSourcesQueryRunner {
             int expected=recursive?8:4;
             require(current.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE && choices.size()==expected
                     && !current.restartRequired && current.restrictionOutcome.availableChoices.isEmpty(),"two successive roots exhaust exact source alternatives: "+negative+"/"+recursive+" "+current.restrictionOutcome.status+" choices="+choices.size());
+            require(current.restrictionOutcome.availableConflicts.isEmpty(),"complete result offers no current conflict evidence");
             require(current.opinions.size()==1 && Boolean.FALSE.equals(current.opinions.get(0).answer.value)
                     && !current.opinions.get(0).answer.proofs.isEmpty(),"query executes in the completed restricted native branch");
             require(current.opinions.get(0).restrictionProofs.size()==expected && current.viewOpinions.get(0).restrictionProofs.size()==expected,
@@ -219,6 +247,8 @@ public final class DmzSourcesQueryRunner {
                         "uncovered successive history returns a stopped outcome without a complete opinion");
                 require(stopped.restrictionOutcome.trace.size()==prefix.size() && stopped.restrictionOutcome.trace.get(prefix.size()-1).after
                         ==DmzSourcesQuery.RestrictionStatus.STOPPED_UNCOVERED,"uncovered outcome retains the executed historical branch trace");
+                require(stopped.restrictionOutcome.availableConflicts.isEmpty() && !stopped.restrictionOutcome.trace.get(prefix.size()-1).conflicts.isEmpty(),
+                        "uncovered stop retains earlier covered pairs without fabricating the next endpoints");
                 DmzSourcesQuery.Result stoppedResult=stopped;
                 reject(() -> stoppedResult.chooseRestriction(1),IllegalStateException.class);
                 IContextResults.Revision initialGap=create(dir,"InitialGap","!other("+firstRoot+"); !@x other(x) -> "+sign+"cache(x);");

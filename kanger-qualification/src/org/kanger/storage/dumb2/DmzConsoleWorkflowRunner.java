@@ -231,6 +231,9 @@ public final class DmzConsoleWorkflowRunner {
                     && display.contains("Opinion 1: FALSE") && display.contains("completed restricted native branch"),"console explains restriction outcome and selected proof trees");
             require(display.contains("Restriction step 1: selected alternative 1/1 -> NEXT_CONFLICT")
                     && display.contains("Restriction step 2: selected alternative 1/1 -> COMPLETE"),"saved explanation displays successive historical branch outcomes");
+            require(display.contains("Current covered conflict evidence:") && display.contains("Positive evidence:")
+                    && display.contains("Negative evidence:") && display.contains("Conflict pair 1:"),
+                    "console explains both covered native endpoints for pending and historical conflicts");
             require(err.toString("UTF-8").contains("DMZ refused:") && !err.toString("UTF-8").contains("\tat org.kanger"),
                     "invalid choice remains readable and console continues to ordinary query");
             Mind reopened=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(reopened);
@@ -259,6 +262,7 @@ public final class DmzConsoleWorkflowRunner {
             String command="ctx dmz "+db.getContextId()+"@"+revision+" ?cache(1); from=Rules@"+pin(units)+" restrict="+pin(units)+":"+rule;
             processor.execute(PARSER.parse(command),user);
             DmzSourcesQuery.Result saved=processor.execute(PARSER.parse("ctx dmz choose 1"),user).getDmzResult();
+            String historicalPair=saved.restrictionOutcome.trace.get(0).conflicts.get(0).identity();
             String beforeReplacement=DmzSourceMaterializationQualification.fingerprint(q);
             IContextResults.Revision replacement=create(dir,"Replacement","!@x seed(x) -> cache(x);");
             require(!replacement.getContextId().equals(units.getContextId()) && replacement.getRevision()==units.getRevision(),
@@ -272,7 +276,8 @@ public final class DmzConsoleWorkflowRunner {
                 require(refusal.getMessage().contains("source identity mismatch"),"saved replay rejects source name rebound to a foreign UUID");
             }
             require(user.getLastDmzResult()==null && beforeReplacement.equals(DmzSourceMaterializationQualification.fingerprint(q))
-                    && saved.restrictionOutcome.trace.size()==1,"source replacement preserves physical Q and detached historical trace");
+                    && saved.restrictionOutcome.trace.size()==1 && saved.restrictionOutcome.trace.get(0).conflicts.get(0).identity().equals(historicalPair),
+                    "source replacement preserves physical Q and detached historical endpoint proofs");
             moveContextFixture(dir,"Rules","Replacement");
             moveContextFixture(dir,"Rules-original","Rules");
             processor.execute(PARSER.parse(command),user);
