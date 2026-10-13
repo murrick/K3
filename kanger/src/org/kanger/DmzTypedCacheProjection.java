@@ -4,7 +4,7 @@ package org.kanger;
 import java.util.*;
 import org.kanger.interfaces.IRule;
 
-/** Current read-only cache plan for one direct typed collision restriction.
+/** Current read-only cache plan for one direct or bounded recursive typed collision restriction.
  * Native IDs are diagnostic addresses, never a deletion or continuation capability.
  */
 final class DmzTypedCacheProjection {
@@ -32,10 +32,20 @@ final class DmzTypedCacheProjection {
     }
     static DmzTypedCacheProjection project(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
             DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
+        return project(guard,proof,selected,target,budget,false);
+    }
+    static DmzTypedCacheProjection projectRecursive(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
+            DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
+        return project(guard,proof,selected,target,budget,true);
+    }
+    private static DmzTypedCacheProjection project(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
+            DmzProofWitnesses.Witness selected,Mind target,int budget,boolean recursive) throws Exception {
         if(target==null || guard==null || budget<1 || budget>10000)throw new IllegalArgumentException("Current bounded typed cache projection required");
         DmzGroundCollisionRestriction.Result restriction=guard.project(proof,selected,target,budget);
-        if(!restriction.eligible || selected.premises.get(0).step>=0)
+        if(!restriction.eligible || (!recursive && selected.premises.get(0).step>=0))
             return refused(target,restriction.truncated,0);
+        if(recursive && !DmzProofWitnesses.NoGood.fromTyped(selected).recursiveWithin(8))
+            return refused(target,false,0);
         DmzCurrentGroundProofInventory inventory=DmzCurrentGroundProofInventory.capture(target,budget,false);
         if(!inventory.eligible || inventory.provisional)return refused(target,inventory.truncated,0);
         DmzProofWitnesses.NoGood pattern=DmzProofWitnesses.NoGood.fromTyped(selected);

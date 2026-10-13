@@ -81,23 +81,31 @@ final class DmzTypedNativeResume {
     }
     static Result run(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
             DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
-        return run(guard,proof,selected,target,budget,false);
+        return run(guard,proof,selected,target,budget,false,false);
     }
     static Result runMaterialized(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
             DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
-        return run(guard,proof,selected,target,budget,true);
+        return run(guard,proof,selected,target,budget,true,false);
+    }
+    static Result runRecursive(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
+            DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
+        return run(guard,proof,selected,target,budget,true,true);
     }
     private static Result run(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
-            DmzProofWitnesses.Witness selected,Mind target,int budget,boolean materialized) throws Exception {
+            DmzProofWitnesses.Witness selected,Mind target,int budget,boolean materialized,boolean recursive) throws Exception {
         if(target.hasPendingTransactions())throw new IllegalStateException("Exclusive typed resume boundary required");
         if(ACTIVE.get()!=null || !DmzTerminalRestriction.activeNoGoods(target).isEmpty())
             throw new IllegalStateException("Unrestricted typed resume boundary required");
         DmzGroundCollisionRestriction.Result projection=guard.project(proof,selected,target,budget);
-        if(!projection.eligible || selected.premises.get(0).step>=0)
+        if(!projection.eligible || (!recursive && selected.premises.get(0).step>=0))
             throw new IllegalStateException("Current direct typed collision projection required");
+        if(recursive && !DmzProofWitnesses.NoGood.fromTyped(selected).recursiveWithin(8))
+            throw new IllegalStateException("Bounded recursive typed chain required");
         for(IRule rule:target.getRules())if(!materialized && !rule.isDeleted(target) && target.getRules().isGenerated(rule))
             throw new IllegalStateException("Cold typed resume cannot retract existing caches");
-        DmzTypedCacheProjection cachePlan=materialized?DmzTypedCacheProjection.project(guard,proof,selected,target,budget):null;
+        DmzTypedCacheProjection cachePlan=materialized?(recursive
+                ?DmzTypedCacheProjection.projectRecursive(guard,proof,selected,target,budget)
+                :DmzTypedCacheProjection.project(guard,proof,selected,target,budget)):null;
         if(materialized && (!cachePlan.eligible || !cachePlan.isCurrent(target)))
             throw new IllegalStateException("Current settled typed cache plan required");
         DmzCurrentGroundProofInventory inventory=DmzCurrentGroundProofInventory.capture(target,budget,false);

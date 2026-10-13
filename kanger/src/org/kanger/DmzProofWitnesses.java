@@ -53,6 +53,10 @@ final class DmzProofWitnesses {
             }
             return new NoGood(witness,shape.depth,true);
         }
+        /** Shape bound only; this is not native coverage or continuation permission. */
+        boolean recursiveWithin(int maximumDepth) {
+            return typed && depth>=3 && depth<=maximumDepth;
+        }
         boolean matches(DmzSourcedProofGraph graph, int node, int step,
                 DmzReplayProvenance.Binding source, List<Witness> premises) {
             return matches(selected, graph, node, step, source, premises,typed);
