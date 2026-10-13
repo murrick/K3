@@ -909,6 +909,13 @@ when all conflict evidence fitted: that phase projects the native opinion's
 proof trees independently. Both phases preserve Q and permit a fresh replay with
 the same exact identity prefix and sufficient explicit limits.
 
+A `QUERY_ANSWER` refusal can therefore include a prefix that already resolves
+every conflict. Replaying its full diagnostic command with a larger projection
+allowance reconstructs that same completed branch and projects its native answer.
+Do not add another restriction choice: the command already contains all selected
+identities. Console explanation and opinion trees become available after the
+successful replay, with answer proofs pinned to the original source revisions.
+
 A source name rebound to a different Context UUID is refused even when its
 declarations and revision number match. Restoring the original source permits a
 fresh reconstruction of its old exact pin. Advancing source HEAD while retaining

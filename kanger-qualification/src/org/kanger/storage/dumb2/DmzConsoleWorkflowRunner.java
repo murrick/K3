@@ -31,6 +31,7 @@ public final class DmzConsoleWorkflowRunner {
     private static final CommandFormatter FORMATTER=new CommandFormatter();
     public static void main(String[] args) {
         try { run();restrictions(false);restrictions(true);staleAuthority();lateDiagnostic(false);lateDiagnostic(true);
+            answerDiagnostic(false);answerDiagnostic(true);
             System.out.println("DMZ_CONSOLE_WORKFLOW_PASS checks="+checks);System.exit(0); }
         catch(Throwable failure) { failure.printStackTrace();System.exit(1); }
     }
@@ -471,6 +472,76 @@ public final class DmzConsoleWorkflowRunner {
                     && !db.hasConnectedContexts(),"long-prefix failures and recovery preserve Q, topology and detached earlier observations");
         } finally { if(user.getCurrentMind().isStorageUsed())user.setCurrentMind(user.getCurrentMind().closeStorage()); }
     }
+    private static void answerDiagnostic(boolean negative) throws Exception {
+        Path dir=Files.createTempDirectory("dmz-answer-diagnostic-");System.setProperty("user.home",dir.toString());
+        String sign=negative?"~":"",opposite=negative?"":"~";
+        create(dir,"Q","!seed(1); !"+opposite+"cache(1); !seed(2);");
+        IContextResults.Revision shortSource=create(dir,"Short","!@x seed(x) -> "+sign+"cache(x);");
+        IContextResults.Revision answerSource=create(dir,"Answer","!@x seed(x) -> a(x); !@x a(x) -> b(x); !@x b(x) -> "+sign+"answer(x);");
+        long trigger;
+        try(SnapshotMindRuntime snapshot=SnapshotMindRuntime.open(dir.resolve("Short"),new RevisionRef(shortSource.getContextId(),shortSource.getRevision()),"answer-trigger")) {
+            trigger=org.kanger.DmzSourceShape.inspect(snapshot.getMind(),100).declarations.get(0).sourceRule;
+        }
+        User user=new User();user.setUserDir(Files.createDirectories(dir.resolve("operator")).toString());
+        user.setDatabaseDir(dir.toString()+java.io.File.separator);DB db=new DB();db.init(user);
+        Mind initial=new Mind(user);user.setCurrentMind(initial);Mind q=(Mind)initial.useStorage("Q");user.setCurrentMind(q);
+        CanonicalCommandProcessor processor=new CanonicalCommandProcessor();
+        try {
+            IContextResults.Revision qp=new IContextResults.Revision(db.getContextId(),db.getRevision());
+            String state=DmzSourceMaterializationQualification.fingerprint(q);
+            String base="ctx dmz "+pin(qp)+" ?"+sign+"answer(2); from=Short@"+pin(shortSource)+" from=Answer@"+pin(answerSource)
+                    +" restrict="+pin(shortSource)+":"+trigger+" projection=3";
+            DmzSourcesQuery.Result first=processor.execute(PARSER.parse(base),user).getDmzResult();
+            require(first.restrictionOutcome.availableChoices.size()==1 && evidenceNodes(first.restrictionOutcome.availableConflicts)==3,
+                    "Console answer fixture completely projects its conflict evidence under three nodes");
+            String firstPair=first.restrictionOutcome.availableConflicts.get(0).identity();
+            DmzSourcesQuery.Request selected=first.chooseRestriction(1);
+            String errors=boundaryConsole(q,"ctx dmz choose 1\n");
+            require(errors.contains("phase=QUERY_ANSWER; completedChoices=1; projection=3; restriction-budget=10000; allowance=3")
+                    && user.getLastDmzResult()==null && !errors.contains("\tat org.kanger"),
+                    "real Console reports final answer projection refusal after the selected branch completes");
+            String diagnostic=null;
+            for(String line:errors.split("\\R"))if(line.startsWith("Exact replay request: ")) {
+                require(diagnostic==null,"answer projection refusal reports exactly one attempted request");
+                diagnostic=line.substring("Exact replay request: ".length());
+            }
+            require(diagnostic!=null && FORMATTER.format(PARSER.parse(diagnostic)).equals(diagnostic),
+                    "answer-phase diagnostic is a canonical full replay command");
+            DmzSourcesQuery.Request attempted=(DmzSourcesQuery.Request)PARSER.parse(diagnostic).getArgument("request");
+            require(attempted.restrictions.choices.equals(selected.restrictions.choices) && attempted.queryStatement.equals(selected.queryStatement)
+                    && attempted.restrictions.triggerRule==trigger && attempted.sources.expectedQ.getContextId().equals(qp.getContextId())
+                    && attempted.sources.expectedQ.getRevision()==qp.getRevision(),
+                    "answer diagnostic preserves native query, exact trigger, Q pin and completed restriction identity");
+            q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+            require(state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && db.getRevision()==qp.getRevision(),
+                    "answer projection failure preserves durable Q after native branch rollback and reopening");
+            IContextResults.Revision advanced=create(dir,"Answer","!later(9);");
+            require(advanced.getRevision()>answerSource.getRevision(),"answer source HEAD advances before exact diagnostic recovery");
+            String retry=diagnostic.replace(" projection=3"," projection=4");
+            ByteArrayOutputStream output=new ByteArrayOutputStream();
+            errors=boundaryConsole(q,diagnostic+"\n"+retry+"\nctx dmz explain\nctx tree 1\n",output);
+            require(errors.contains("phase=QUERY_ANSWER; completedChoices=1; projection=3")
+                    && errors.contains("Exact replay request: "+diagnostic) && !errors.contains("\tat org.kanger"),
+                    "unchanged full command repeats its answer-phase refusal before recovery");
+            DmzSourcesQuery.Result done=user.getLastDmzResult();
+            require(done!=null && done.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE
+                    && done.request.restrictions.choices.equals(selected.restrictions.choices) && done.restrictionOutcome.trace.size()==1
+                    && done.restrictionOutcome.trace.get(0).conflicts.get(0).identity().equals(firstPair)
+                    && Boolean.TRUE.equals(done.opinions.get(0).answer.value) && done.opinions.get(0).answer.proofs.size()==1,
+                    "fresh four-node Console retry returns the same completed branch, historical pair and true native opinion");
+            DmzSourcesQuery.Proof answer=done.opinions.get(0).answer.proofs.get(0);
+            require(proofNodes(answer)==4 && answer.source.revision.getContextId().equals(answerSource.getContextId())
+                    && answer.source.revision.getRevision()==answerSource.getRevision() && answer.conclusion.equals("!"+sign+"answer(2);"),
+                    "recovered final proof retains all four nodes and the historical source revision after HEAD advances");
+            require(output.toString("UTF-8").contains("DMZ restrictions: COMPLETE; selected=1")
+                    && output.toString("UTF-8").contains("Opinion 1: TRUE") && output.toString("UTF-8").contains(sign+"answer(2)"),
+                    "Console displays the recovered completed opinion and signed answer proof tree");
+            q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+            require(first.restrictionOutcome.trace.isEmpty() && attempted.limits.projection==3 && done.request.limits.projection==4
+                    && state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && db.getRevision()==qp.getRevision()
+                    && !db.hasConnectedContexts(),"final answer refusal and recovery preserve Q, topology and detached original observations");
+        } finally { if(user.getCurrentMind().isStorageUsed())user.setCurrentMind(user.getCurrentMind().closeStorage()); }
+    }
     private static int proofNodes(DmzSourcesQuery.Proof proof) {
         int nodes=1;for(DmzSourcesQuery.Proof premise:proof.premises)nodes+=proofNodes(premise);return nodes;
     }
@@ -478,11 +549,14 @@ public final class DmzConsoleWorkflowRunner {
         int nodes=0;for(DmzSourcesQuery.RestrictionConflict pair:conflicts)nodes+=proofNodes(pair.positive)+proofNodes(pair.negative);return nodes;
     }
     private static String boundaryConsole(Mind q,String script) throws Exception {
+        return boundaryConsole(q,script,new ByteArrayOutputStream());
+    }
+    private static String boundaryConsole(Mind q,String script,ByteArrayOutputStream output) throws Exception {
         InputStream in=System.in;PrintStream out=System.out,err=System.err;
         ByteArrayOutputStream errors=new ByteArrayOutputStream();
         try {
             System.setIn(new ByteArrayInputStream(script.getBytes("UTF-8")));
-            System.setOut(new PrintStream(new ByteArrayOutputStream(),true,"UTF-8"));
+            System.setOut(new PrintStream(output,true,"UTF-8"));
             System.setErr(new PrintStream(errors,true,"UTF-8"));
             CanonicalConsole.session(q,new ShutdownHook(q));
         } finally { System.setIn(in);System.setOut(out);System.setErr(err); }
