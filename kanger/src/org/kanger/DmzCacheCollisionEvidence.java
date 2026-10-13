@@ -11,8 +11,13 @@ final class DmzCacheCollisionEvidence {
         final boolean eligible,truncated,complete=false;
         final int removed;
         final DmzSourcedProofGraph graph;
+        final DmzStoredGroundRoutes causalRoute;
         Projection(boolean eligible,boolean truncated,int removed,DmzSourcedProofGraph graph) {
+            this(eligible,truncated,removed,graph,null);
+        }
+        Projection(boolean eligible,boolean truncated,int removed,DmzSourcedProofGraph graph,DmzStoredGroundRoutes causalRoute) {
             this.eligible=eligible;this.truncated=truncated;this.removed=removed;this.graph=graph;
+            this.causalRoute=causalRoute;
         }
     }
     static final class Baseline {
@@ -129,12 +134,48 @@ final class DmzCacheCollisionEvidence {
         throw new IllegalStateException("Covered live successive cache endpoint required");
     }
     Projection project(DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
+        return project(selected,target,budget,false);
+    }
+    /** Opt-in internal cut of an actual observed external subchain, with its own live cache receipt. */
+    Projection projectCausal(DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
+        return project(selected,target,budget,true);
+    }
+    private Projection project(DmzProofWitnesses.Witness selected,Mind target,int budget,boolean causal) throws Exception {
         if(budget<1 || budget>10000)throw new IllegalArgumentException("Bounded cache projection required");
         if(!isCurrent(target) || selected==null || selected.graph!=graph || selected.step<0
                 || selected.source.authority!=DmzReplayProvenance.Authority.EXTERNAL)return new Projection(false,false,0,null);
         boolean member=false;
-        for(DmzWitnessConflicts.Combination pair:combinations)member |= selected==pair.left || selected==pair.right;
+        int remaining=budget;
+        for(DmzWitnessConflicts.Combination pair:combinations) {
+            if(!causal)member |= selected==pair.left || selected==pair.right;
+            else {
+                Deque<DmzProofWitnesses.Witness> pending=new ArrayDeque<DmzProofWitnesses.Witness>();
+                pending.add(pair.left);pending.add(pair.right);
+                while(!pending.isEmpty() && !member) {
+                    if(--remaining<1)return new Projection(false,true,0,null);
+                    DmzProofWitnesses.Witness current=pending.removeFirst();
+                    member=current==selected;pending.addAll(current.premises);
+                }
+            }
+            if(member)break;
+        }
         if(!member)return new Projection(false,false,0,null);
+        DmzStoredGroundRoutes causalRoute=null;
+        if(causal) {
+            TerminalSupportCapture.Ground wanted=selected.graph.observed.nodes.get(selected.node).ground;
+            IRule live=null;
+            for(IRule rule:target.getRules()) {
+                if(--remaining<1)return new Projection(false,true,0,null);
+                if(!rule.isDeleted(target) && target.getRules().isGenerated(rule)
+                        && wanted.equivalent(DmzGroundIdentity.capture(rule,target).ground())) {
+                    if(live!=null)return new Projection(false,false,0,null);
+                    live=rule;
+                }
+            }
+            if(live==null)return new Projection(false,false,0,null);
+            causalRoute=DmzStoredGroundRoutes.capture(baseline.capture,target,live.getId(),remaining);
+            if(!causalRoute.covered || !causalRoute.isCurrent(target))return new Projection(false,causalRoute.truncated,0,null);
+        }
         DmzProofWitnesses.NoGood pattern;
         try {pattern=DmzProofWitnesses.NoGood.fromTyped(selected);}catch(IllegalArgumentException unsupported){return new Projection(false,false,0,null);}
         if(pattern.depth>8)return new Projection(false,false,0,null);
@@ -144,7 +185,7 @@ final class DmzCacheCollisionEvidence {
         DmzProofWitnesses.Result after=DmzProofWitnesses.enumerate(reduced,selected.node,budget-before.created);
         if(after.truncated)return new Projection(false,true,0,null);
         int removed=before.witnesses.size()-after.witnesses.size();
-        return removed==1 ? new Projection(true,false,1,reduced):new Projection(false,false,0,null);
+        return removed==1 ? new Projection(true,false,1,reduced,causalRoute):new Projection(false,false,0,null);
     }
     private static DmzCacheCollisionEvidence refused(Baseline baseline,CollisionProofCapture.Conflict event,boolean truncated) {
         return new DmzCacheCollisionEvidence(baseline,event,false,truncated,null,Collections.<DmzWitnessConflicts.Combination>emptyList(),Collections.<DmzStoredGroundRoutes>emptyList());

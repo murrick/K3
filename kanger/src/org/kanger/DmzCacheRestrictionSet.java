@@ -103,6 +103,18 @@ final class DmzCacheRestrictionSet {
             throw new IllegalStateException("Current bounded cache choice required");
         if(!selections.isEmpty() && !graph.observed.nodes.get(selections.get(0).node).ground.equivalent(graph.observed.nodes.get(selected.node).ground))
             throw new IllegalStateException("One exact cache root required");
+        return appendVerified(selected,budget,receipts);
+    }
+    /** First causal subchain cut only; endpoint-only callers retain their existing permissions. */
+    DmzCacheRestrictionSet appendCausal(DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
+        if(!selections.isEmpty() || !receipts.isEmpty() || !isCurrent(target))
+            throw new IllegalStateException("Fresh current causal choice required");
+        DmzCacheCollisionEvidence.Projection projection=evidence.projectCausal(selected,target,budget);
+        if(!projection.eligible || projection.causalRoute==null)
+            throw new IllegalStateException("Covered observed external causal choice required");
+        return appendVerified(selected,budget,Collections.singletonList(projection.causalRoute));
+    }
+    private DmzCacheRestrictionSet appendVerified(DmzProofWitnesses.Witness selected,int budget,List<DmzStoredGroundRoutes> history) throws Exception {
         DmzProofWitnesses.NoGood pattern=DmzProofWitnesses.NoGood.fromTyped(selected);
         DmzProofWitnesses.Result before=DmzProofWitnesses.enumerate(graph,selected.node,budget);
         if(before.truncated || before.created>=budget)throw new IllegalStateException("Accumulated cache witness budget exceeded");
@@ -112,7 +124,7 @@ final class DmzCacheRestrictionSet {
         if(before.witnesses.size()-after.witnesses.size()!=1)throw new IllegalStateException("New exact cache choice required");
         List<DmzProofWitnesses.Witness> choices=new ArrayList<DmzProofWitnesses.Witness>(selections);choices.add(selected);
         List<DmzProofWitnesses.NoGood> rules=new ArrayList<DmzProofWitnesses.NoGood>(patterns);rules.add(pattern);
-        return new DmzCacheRestrictionSet(evidence,choices,rules,next,receipts);
+        return new DmzCacheRestrictionSet(evidence,choices,rules,next,history);
     }
     Next next(DmzTypedNativeResume.Result result,Mind target,int budget) throws Exception {
         if(budget<1 || budget>10000)throw new IllegalArgumentException("Bounded successive conflict required");
