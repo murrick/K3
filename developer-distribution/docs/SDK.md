@@ -835,6 +835,17 @@ projecting the next frontier. Retained detached results remain readable after
 that refusal. Raise the projection allowance in a fresh request while preserving
 the exact source pins, trigger and entire selected identity prefix.
 
+Use `request.withLimits(replacementLimits)` to construct that fresh request.
+For example, after a failed `q.executeDmzSources(selectedRequest)`, execute
+`q.executeDmzSources(selectedRequest.withLimits(enlargedLimits))`. The helper
+preserves the acquisition request, policy, query, restriction trigger, full
+selected prefix and restriction workflow budget. It also accepts ordinary
+requests, preserving their ordinary mode. It performs no provider lookup or
+inference; execution revalidates the new limits and all exact inputs. Lowering
+the visit allowance preserves every selected identity, so execution refuses if
+that allowance cannot cover the full prefix. The original request and retained
+result remain unchanged.
+
 A source name rebound to a different Context UUID is refused even when its
 declarations and revision number match. Restoring the original source permits a
 fresh reconstruction of its old exact pin. Advancing source HEAD while retaining

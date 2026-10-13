@@ -130,6 +130,13 @@ public final class DmzSourcesQuery {
         public final Limits limits;
         /** null selects the ordinary ordered opinion traversal. */
         public final RestrictionRequest restrictions;
+        /** Build a fresh request with replacement traversal limits and the same exact inputs.
+         * Preserves source pins, policy, query, trigger, selected identity prefix and restriction
+         * workflow budget. Performs no inference or provider lookup; execute the returned request
+         * to revalidate it. The original request remains unchanged. */
+        public Request withLimits(Limits replacement) {
+            return new Request(sources,policy,queryStatement,replacement,restrictions);
+        }
         public Request(DmzSourcePlan.Request sources,Policy policy,String queryStatement,Limits limits) {
             this(sources,policy,queryStatement,limits,null);
         }

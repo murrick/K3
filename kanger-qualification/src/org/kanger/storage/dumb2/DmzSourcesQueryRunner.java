@@ -54,6 +54,13 @@ public final class DmzSourcesQueryRunner {
             DmzSourcePlan.Selection sa=new DmzSourcePlan.Selection("A",a),sb=new DmzSourcePlan.Selection("B",b),se=new DmzSourcePlan.Selection("Empty",empty);
             String state=org.kanger.DmzSourceMaterializationQualification.fingerprint(q);
             DmzSourcesQuery.Request invocation=request(pin,"?left(2);",1000,128,sb,se,sa);
+            DmzSourcesQuery.Limits replacement=limits(2,128);
+            DmzSourcesQuery.Request changed=invocation.withLimits(replacement);
+            require(changed!=invocation && changed.limits==replacement && changed.sources==invocation.sources
+                    && changed.policy==invocation.policy && changed.queryStatement.equals(invocation.queryStatement)
+                    && changed.restrictions==null && invocation.limits.maximumVisits==1000,
+                    "ordinary limit helper retains exact acquisition and policy without enabling restrictions");
+            reject(() -> invocation.withLimits(null),NullPointerException.class);
             DmzSourcesQuery.Result retained=provider.executeDmzSources(q,invocation);
             require(!retained.restartRequired && retained.opinions.size()>=2,"public invocation completes both opposing opinions");
             require(retained.restrictionProofs.isEmpty(),"ordinary public result has no attached accumulated restriction receipt");
@@ -348,7 +355,15 @@ public final class DmzSourcesQueryRunner {
             require(first.restrictionOutcome.trace.isEmpty() && first.restrictionOutcome.availableConflicts.get(0).identity().equals(firstPair.identity())
                     && first.chooseRestriction(1).restrictions.choices.equals(lowReplay.restrictions.choices),
                     "failed later projection leaves retained first evidence and exact replay request usable");
-            DmzSourcesQuery.Result later=db.executeDmzSources(q,optIn(projection(base,4),blocker,trigger,Collections.singletonList(choice),10000));
+            DmzSourcesQuery.Limits enlarged=projection(base,4).limits;
+            DmzSourcesQuery.Request enlargedReplay=lowReplay.withLimits(enlarged);
+            require(enlargedReplay!=lowReplay && enlargedReplay.sources==lowReplay.sources && enlargedReplay.policy==lowReplay.policy
+                    && enlargedReplay.queryStatement.equals(lowReplay.queryStatement) && enlargedReplay.restrictions==lowReplay.restrictions
+                    && enlargedReplay.limits==enlarged && lowReplay.limits.projection==3
+                    && enlargedReplay.restrictions.budget==10000 && enlargedReplay.restrictions.choices.equals(Collections.singletonList(choice)),
+                    "limit helper preserves exact source pins, trigger, full prefix and workflow budget after refusal");
+            reject(() -> lowReplay.withLimits(null),NullPointerException.class);
+            DmzSourcesQuery.Result later=db.executeDmzSources(q,enlargedReplay);
             require(later.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT && later.restrictionOutcome.trace.size()==1
                     && later.restrictionOutcome.trace.get(0).selected.identity().equals(choice)
                     && later.restrictionOutcome.trace.get(0).conflicts.get(0).identity().equals(firstPair.identity()),
@@ -367,6 +382,12 @@ public final class DmzSourcesQueryRunner {
             require(later.restrictionOutcome.trace.size()==1 && later.restrictionOutcome.availableConflicts.get(0).identity().equals(laterPair.identity())
                     && state.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)) && user.getCurrentMind()==q,
                     "completed replay preserves earlier detached frontier and physical Q");
+            DmzSourcesQuery.Request insufficientVisits=done.request.withLimits(limits(1,128));
+            require(insufficientVisits.restrictions.choices.equals(done.request.restrictions.choices)
+                    && insufficientVisits.restrictions.choices.size()==2,"lowering visit allowance retains the complete selected prefix");
+            reject(() -> db.executeDmzSources(q,insufficientVisits),IllegalArgumentException.class);
+            require(state.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)) && user.getCurrentMind()==q,
+                    "provider revalidates lowered limits without modifying Q or earlier completed history");
         } finally { user.setCurrentMind(q.closeStorage()); }
     }
     private static void currentChoicesImmutable(DmzSourcesQuery.Request base,DB db,Mind q,IContextResults.Revision a,long trigger) throws Exception {
@@ -381,7 +402,7 @@ public final class DmzSourcesQueryRunner {
     }
     private static DmzSourcesQuery.Request projection(DmzSourcesQuery.Request base,int nodes) {
         DmzSourcesQuery.Limits l=base.limits;
-        return new DmzSourcesQuery.Request(base.sources,base.policy,base.queryStatement,
+        return base.withLimits(
                 new DmzSourcesQuery.Limits(l.preparation,l.audit,l.lookup,l.recognition,nodes,l.application,l.query,
                         l.depth,l.nodes,l.work,l.maximumVisits));
     }
