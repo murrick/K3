@@ -59,3 +59,4 @@ org.kanger.DmzCacheCollisionCoverageRunner | DMZ_CACHE_COLLISION_COVERAGE_PASS
 org.kanger.DmzCacheCollisionEvidenceRunner | DMZ_CACHE_COLLISION_EVIDENCE_PASS
 org.kanger.DmzAccumulatedCacheRestrictionsRunner | DMZ_ACCUMULATED_CACHE_RESTRICTIONS_PASS
 org.kanger.DmzSuccessiveCacheRestrictionsRunner | DMZ_SUCCESSIVE_CACHE_RESTRICTIONS_PASS
+org.kanger.DmzAccumulatedSourcePreparationRunner | DMZ_ACCUMULATED_SOURCE_PREPARATION_PASS

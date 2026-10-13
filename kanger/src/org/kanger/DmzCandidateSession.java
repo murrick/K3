@@ -15,6 +15,23 @@ import org.kanger.interfaces.IContextResults;
  * This is not a full multi-declaration source workflow or a public SDK session.
  */
 public final class DmzCandidateSession implements AutoCloseable {
+    static final class PreparedRestrictions {
+        private final DmzCacheRestrictionSet.PreparedSources receipt;
+        private PreparedRestrictions(DmzCacheRestrictionSet.PreparedSources receipt) { this.receipt=receipt; }
+        List<org.kanger.interfaces.DmzSourcesQuery.Proof> proofs() { return receipt.proofs; }
+        boolean isCurrent(DmzCacheRestrictionSet restrictions,DmzCandidateSession owner) throws Exception {
+            return receipt.isCurrent(restrictions,owner);
+        }
+        DmzTypedNativeResume.Result runAccumulated(Mind target,int budget) throws Exception {
+            return receipt.runAccumulated(target,budget);
+        }
+        DmzCacheRestrictionSet.Continuation continueAccumulated(Mind target,int budget) throws Exception {
+            return receipt.continueAccumulated(target,budget);
+        }
+        DmzCacheRestrictionSet.Continuation continueAccumulatedQuery(Mind target,int budget,String query) throws Exception {
+            return receipt.continueAccumulatedQuery(target,budget,query);
+        }
+    }
     public static final class Participant {
         public final IContextResults.Revision revision;
         public final DmzSourceShape.Observation inputs;
@@ -107,6 +124,8 @@ public final class DmzCandidateSession implements AutoCloseable {
         public final List<IContextResults.Revision> candidateRevisions,productionRevisions,supportRevisions;
         public final List<String> candidateStatements,productionStatements,supportStatements;
         public final List<SequenceOpinion> opinions;
+        /** Detached source proof chains carried from an explicitly prepared restriction receipt. */
+        public final List<org.kanger.interfaces.DmzSourcesQuery.Proof> restrictionProofs;
         public final List<SequenceEvent> events;
         public final List<SequenceStep> interruptedPrefix;
         public final String queryStatement;
@@ -118,6 +137,7 @@ public final class DmzCandidateSession implements AutoCloseable {
             candidateRevisions=run.session.pins(candidates);productionRevisions=run.session.pins(productions);supportRevisions=run.session.pins(supports);
             candidateStatements=run.session.statements(candidates);productionStatements=run.session.statements(productions);supportStatements=run.session.statements(supports);
             opinions=copy(run.opinions);events=copy(run.events);interruptedPrefix=copy(run.interruptedPrefix);
+            restrictionProofs=Collections.unmodifiableList(new ArrayList<org.kanger.interfaces.DmzSourcesQuery.Proof>(run.session.restrictionProofs));
             restartRequired=run.restartRequired;visitLimit=run.visitLimit;visits=run.visits;maximumVisits=run.maximumVisits;interruptedInput=run.interruptedInput;
         }
     }
@@ -193,6 +213,7 @@ public final class DmzCandidateSession implements AutoCloseable {
     private TerminalSupportCapture capture;
     private String qState;
     private DmzReplayProvenance.SourceCheckpoint qSources;
+    private List<org.kanger.interfaces.DmzSourcesQuery.Proof> restrictionProofs=Collections.emptyList();
     private boolean closed;
 
     /** The provider cannot promote pending physical source work to settled Q authority. */
@@ -273,6 +294,19 @@ public final class DmzCandidateSession implements AutoCloseable {
         requireScope();
         if(!qState.equals(DmzObservationStateFingerprint.capture(q)) || !qSources.isCurrent(q))
             throw new IllegalStateException("Rebuilt Q session boundary changed");
+    }
+    boolean isCurrent() throws Exception {
+        try { requireCurrent();return true; }
+        catch(IllegalStateException stale) { return false; }
+    }
+    PreparedRestrictions prepareAccumulatedRestrictions(DmzCacheRestrictionSet restrictions,
+            DmzCacheRestrictionSet.SourceReceipt receipt,int budget) throws Exception {
+        requireCurrent();
+        if(!restrictionProofs.isEmpty())throw new IllegalStateException("Accumulated restrictions already attached");
+        List<Participant> all=new ArrayList<Participant>();all.add(authority);all.addAll(authorityComponents);all.addAll(external.values());
+        PreparedRestrictions prepared=new PreparedRestrictions(restrictions.attachSourceReceipt(this,all,receipt,budget));
+        restrictionProofs=Collections.unmodifiableList(new ArrayList<org.kanger.interfaces.DmzSourcesQuery.Proof>(prepared.proofs()));
+        return prepared;
     }
     /** No native owner escapes. Each call starts from the same complete Q. */
     public DmzConditionalResult.Answer queryQ(String statement,int auditBudget) throws Exception {

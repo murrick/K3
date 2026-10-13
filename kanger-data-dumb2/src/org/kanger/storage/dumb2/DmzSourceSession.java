@@ -16,6 +16,8 @@ final class DmzSourceSession implements AutoCloseable {
     private final Mind physicalQ;
     private final Thread owner=Thread.currentThread();
     private final DmzCandidateSession core;
+    private final DmzCandidateSession.Participant authority;
+    private final List<DmzCandidateSession.Participant> components,external;
     private final DmzSourceShape.Observation inputs;
     private final List<ContextConnection> topology;
     private boolean closed;
@@ -27,9 +29,9 @@ final class DmzSourceSession implements AutoCloseable {
         List<DmzCandidateSession.Participant> components=new ArrayList<DmzCandidateSession.Participant>();
         for(int i=0;i<acquired.components.size();++i)
             components.add(new DmzCandidateSession.Participant(acquired.plan.authorityComponents.get(i).revision,acquired.components.get(i)));
-        DmzCandidateSession core=DmzCandidateSession.open(
-                new DmzCandidateSession.Participant(acquired.plan.authority.revision,acquired.authority),components,external,budget);
-        DmzSourceSession session=new DmzSourceSession(provider,q,acquired.plan,acquired.authority,core);
+        DmzCandidateSession.Participant authority=new DmzCandidateSession.Participant(acquired.plan.authority.revision,acquired.authority);
+        DmzCandidateSession core=DmzCandidateSession.open(authority,components,external,budget);
+        DmzSourceSession session=new DmzSourceSession(provider,q,acquired.plan,acquired.authority,core,authority,components,external);
         try { session.requireCurrent(); return session; }
         catch(Throwable failure) {
             try { session.close(); }catch(Throwable cleanup) { failure.addSuppressed(cleanup); }
@@ -38,8 +40,10 @@ final class DmzSourceSession implements AutoCloseable {
             throw new AssertionError(failure);
         }
     }
-    private DmzSourceSession(DB provider,Mind physicalQ,DmzSourcePlan plan,DmzSourceShape.Observation inputs,DmzCandidateSession core) {
+    private DmzSourceSession(DB provider,Mind physicalQ,DmzSourcePlan plan,DmzSourceShape.Observation inputs,DmzCandidateSession core,
+            DmzCandidateSession.Participant authority,List<DmzCandidateSession.Participant> components,List<DmzCandidateSession.Participant> external) {
         this.provider=provider;this.topology=provider.dmzTopology(); this.physicalQ=physicalQ; this.plan=plan; this.inputs=inputs; this.core=core;
+        this.authority=authority;this.components=components;this.external=external;
     }
     private void requireCurrent() throws Exception {
         if(closed || Thread.currentThread()!=owner)throw new IllegalStateException("Active owning provider DMZ session required");
@@ -92,6 +96,13 @@ final class DmzSourceSession implements AutoCloseable {
     }
     DmzCandidateSession.SourcesResult evaluateSources(String query,DmzCandidateSession.Limits limits,int maximumVisits) throws Exception {
         synchronized(provider) { requireCurrent();try { return core.evaluateSources(query,limits,maximumVisits); }finally { requireCurrent(); } }
+    }
+    org.kanger.DmzSourceRestrictionWorkflow.Result restrict(org.kanger.interfaces.DmzSourcesQuery.Request request) throws Exception {
+        synchronized(provider) {
+            requireCurrent();
+            try { return org.kanger.DmzSourceRestrictionWorkflow.execute(authority,components,external,request); }
+            finally { requireCurrent(); }
+        }
     }
     @Override public void close() throws Exception {
         if(closed)return;

@@ -24,7 +24,8 @@ public final class DmzSourcesQueryRunner {
                 DmzSourcesQuery.Policy.FIXED_UNITS_THEN_ORDERED_GROUNDS_CONTEXT_UUID_RULE_ID,query,limits(visits,nodes));
     }
     public static void main(String[] args) {
-        try { run();System.out.println("DMZ_SOURCES_QUERY_PASS checks="+checks);System.exit(0); }
+        try { run();for(boolean negative:new boolean[]{false,true})for(boolean recursive:new boolean[]{false,true})restrictions(negative,recursive);
+            System.out.println("DMZ_SOURCES_QUERY_PASS checks="+checks);System.exit(0); }
         catch(Throwable failure) { failure.printStackTrace();System.exit(1); }
     }
     private static void run() throws Exception {
@@ -52,6 +53,12 @@ public final class DmzSourcesQueryRunner {
             DmzSourcesQuery.Request invocation=request(pin,"?left(2);",1000,128,sb,se,sa);
             DmzSourcesQuery.Result retained=provider.executeDmzSources(q,invocation);
             require(!retained.restartRequired && retained.opinions.size()>=2,"public invocation completes both opposing opinions");
+            require(retained.restrictionProofs.isEmpty(),"ordinary public result has no attached accumulated restriction receipt");
+            require(retained.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NOT_REQUESTED
+                    && retained.restrictionOutcome.choices==0,"ordinary public result reports that restriction continuation was not requested");
+            require(retained.opinions.get(0).restrictionProofs.isEmpty(),"ordinary opinion has no attached accumulated restriction receipt");
+            for(DmzSourcesQuery.ViewOpinion view:retained.viewOpinions)
+                require(view.restrictionProofs.isEmpty(),"ordinary view opinion has no attached restriction provenance");
             require(retained.request==invocation && retained.acquisition.authority.revision.getContextId().equals(pin.getContextId()),"explicit policy/limits and Q pin retained");
             require(retained.candidates.size()==4 && retained.productions.size()==1 && retained.sources.size()==3,"all declarations and named empty inventory retained");
             boolean yes=false,other=false,declined=false;
@@ -72,6 +79,8 @@ public final class DmzSourcesQueryRunner {
             reject(() -> retained.opinions.get(0).steps.clear(),UnsupportedOperationException.class);
             reject(() -> retained.candidates.clear(),UnsupportedOperationException.class);
             reject(() -> retained.events.clear(),UnsupportedOperationException.class);
+            reject(() -> retained.restrictionProofs.clear(),UnsupportedOperationException.class);
+            reject(() -> retained.opinions.get(0).restrictionProofs.clear(),UnsupportedOperationException.class);
             DmzSourcesQuery.Result stopped=provider.executeDmzSources(q,request(pin,"?left(2);",2,128,sa,sb));
             require(stopped.restartRequired && stopped.visitLimit && stopped.visits==2 && !stopped.interruptedPrefix.isEmpty(),"public visit stop is partial historical frontier");
             DmzSourcesQuery.Request bounded=request(pin,"?left(2);",1000,1,sa,sb);
@@ -105,6 +114,125 @@ public final class DmzSourcesQueryRunner {
     private static void refusal(IContextFederation provider,Mind q,DmzSourcesQuery.Request request,DmzSourcesQuery.Refusal reason,boolean identity) throws Exception {
         try { provider.executeDmzSources(q,request);throw new AssertionError("Expected typed refusal"); }
         catch(DmzSourcesQuery.PlanningRefusal expected) { require(expected.reason==reason && (expected.context!=null)==identity && (expected.rule!=null)==identity,"typed public planning refusal with precise identity"); }
+    }
+    private static void restrictions(boolean negative,boolean recursive) throws Exception {
+        Path dir=Files.createTempDirectory("dmz-provider-restrictions-");System.setProperty("user.home",dir.toString());
+        String sign=negative?"~":"",opposite=negative?"":"~",premise=recursive?"middle":"seed";
+        create(dir,"Q","!seed(1); !"+opposite+"cache(1); !seed(2); !"+opposite+"cache(2); !seed(3);");
+        String text=(recursive?"!@x seed(x) -> middle(x); ":"")+"!@x "+premise+"(x) -> "+sign+"cache(x);";
+        IContextResults.Revision a=create(dir,"A",text),b=create(dir,"B",text);
+        long trigger;
+        try(SnapshotMindRuntime snapshot=SnapshotMindRuntime.open(dir.resolve("A"),new RevisionRef(a.getContextId(),a.getRevision()),"restriction-trigger")) {
+            trigger=org.kanger.DmzSourceShape.inspect(snapshot.getMind(),100).declarations.get(0).sourceRule;
+        }
+        User user=new User();user.setDatabaseDir(dir.toString()+java.io.File.separator);
+        DB db=new DB();db.init(user);Mind initial=new Mind(user);user.setCurrentMind(initial);
+        Mind q=(Mind)initial.useStorage("Q");user.setCurrentMind(q);
+        try {
+            IContextResults.Revision pin=new IContextResults.Revision(db.getContextId(),db.getRevision());
+            DmzSourcesQuery.Request base=request(pin,"?"+sign+"cache(1);",1000,128,
+                    new DmzSourcePlan.Selection("A",a),new DmzSourcePlan.Selection("B",b));
+            java.util.List<String> choices=new java.util.ArrayList<String>();
+            String state=org.kanger.DmzSourceMaterializationQualification.fingerprint(q);
+            DmzSourcesQuery.Result current=db.executeDmzSources(q,optIn(base,a,trigger,choices,10000));
+            require(current.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT
+                    && current.restrictionOutcome.choices==0 && current.opinions.isEmpty() && current.restartRequired,
+                    "explicit trigger returns choices without inventing an opinion");
+            int firstRoot=current.restrictionOutcome.availableChoices.get(0).conclusion.endsWith("(1);")?1:2;
+            reject(() -> currentChoicesImmutable(base,db,q,a,trigger),UnsupportedOperationException.class);
+            reject(() -> db.executeDmzSources(q,optIn(base,a,trigger,Collections.singletonList("foreign-proof"),10000)),IllegalArgumentException.class);
+            reject(() -> db.executeDmzSources(q,optIn(base,a,Long.MAX_VALUE,choices,10000)),IllegalArgumentException.class);
+            reject(() -> db.executeDmzSources(q,optIn(base,a,trigger,choices,1)),IllegalStateException.class);
+            for(int count=0;current.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT;++count) {
+                require(count<8 && !current.restrictionOutcome.availableChoices.isEmpty(),"bounded caller choice workflow");
+                DmzSourcesQuery.Proof selected=current.restrictionOutcome.availableChoices.get(0);
+                choices.add(selected.identity());
+                current=db.executeDmzSources(q,optIn(base,a,trigger,choices,10000));
+                require(current.restrictionProofs.size()==choices.size() && current.restrictionOutcome.choices==choices.size(),
+                        "fresh provider reconstruction validates the full exact choice prefix");
+                for(int i=0;i<choices.size();++i)require(choices.get(i).equals(current.restrictionProofs.get(i).identity()),
+                        "detached selected proof identities are stable across invocations");
+                org.kanger.DmzCandidateSession.requireSettledPhysicalQ(q);
+                require(state.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)) && user.getCurrentMind()==q
+                        && db.getRevision()==pin.getRevision(),"each provider invocation restores physical Q");
+            }
+            int expected=recursive?8:4;
+            require(current.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE && choices.size()==expected
+                    && !current.restartRequired && current.restrictionOutcome.availableChoices.isEmpty(),"two successive roots exhaust exact source alternatives: "+negative+"/"+recursive+" "+current.restrictionOutcome.status+" choices="+choices.size());
+            require(current.opinions.size()==1 && Boolean.FALSE.equals(current.opinions.get(0).answer.value)
+                    && !current.opinions.get(0).answer.proofs.isEmpty(),"query executes in the completed restricted native branch");
+            require(current.opinions.get(0).restrictionProofs.size()==expected && current.viewOpinions.get(0).restrictionProofs.size()==expected,
+                    "completed opinion and truth view retain exact restriction provenance");
+            DmzSourcesQuery.Request unrelated=new DmzSourcesQuery.Request(base.sources,base.policy,"?"+sign+"cache(3);",base.limits);
+            DmzSourcesQuery.Result unaffected=db.executeDmzSources(q,optIn(unrelated,a,trigger,choices,10000));
+            require(Boolean.TRUE.equals(unaffected.opinions.get(0).answer.value) && unaffected.opinions.get(0).answer.proofs.size()>=2,
+                    "other substitution retains source proof alternatives under the same accumulated cuts");
+            DmzSourcesQuery.Request shortProof=new DmzSourcesQuery.Request(unrelated.sources,unrelated.policy,unrelated.queryStatement,
+                    new DmzSourcesQuery.Limits(10000,10000,10000,10000,1,10000,10000,8,128,1000000,1000));
+            reject(() -> db.executeDmzSources(q,optIn(shortProof,a,trigger,choices,10000)),IllegalStateException.class);
+            DmzSourcesQuery.Request unknown=new DmzSourcesQuery.Request(base.sources,base.policy,"?unknown(9);",base.limits);
+            DmzSourcesQuery.Result unknownResult=db.executeDmzSources(q,optIn(unknown,a,trigger,choices,10000));
+            require(unknownResult.opinions.get(0).answer.value==null && unknownResult.opinions.get(0).answer.proofs.isEmpty(),
+                    "unknown restricted query remains an unknown historical observation");
+            java.util.List<String> extra=new java.util.ArrayList<String>(choices);extra.add("unused-proof");
+            reject(() -> db.executeDmzSources(q,optIn(base,a,trigger,extra,10000)),IllegalArgumentException.class);
+            DmzSourcesQuery.Request shortVisits=new DmzSourcesQuery.Request(base.sources,base.policy,base.queryStatement,limits(1,128));
+            reject(() -> db.executeDmzSources(q,optIn(shortVisits,a,trigger,choices,10000)),IllegalArgumentException.class);
+            IContextResults.Revision peaceful=create(dir,"Peaceful","!unused(99);");
+            long peacefulRule=primaryRule(dir,"Peaceful",peaceful);
+            DmzSourcesQuery.Request noConflict=request(pin,"?seed(1);",1000,128,new DmzSourcePlan.Selection("Peaceful",peaceful));
+            reject(() -> db.executeDmzSources(q,optIn(noConflict,peaceful,peacefulRule,Collections.<String>emptyList(),10000)),IllegalStateException.class);
+            if(!recursive) {
+                IContextResults.Revision independent=create(dir,"Independent","!other("+(3-firstRoot)+"); !@x other(x) -> "+sign+"cache(x);");
+                DmzSourcesQuery.Request uncovered=request(pin,base.queryStatement,1000,128,new DmzSourcePlan.Selection("A",a),
+                        new DmzSourcePlan.Selection("B",b),new DmzSourcePlan.Selection("Independent",independent));
+                java.util.List<String> prefix=new java.util.ArrayList<String>();
+                DmzSourcesQuery.Result stopped=db.executeDmzSources(q,optIn(uncovered,a,trigger,prefix,10000));
+                for(int count=0;stopped.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT;++count) {
+                    require(count<4,"uncovered fixture stays bounded");
+                    prefix.add(stopped.restrictionOutcome.availableChoices.get(0).identity());
+                    stopped=db.executeDmzSources(q,optIn(uncovered,a,trigger,prefix,10000));
+                }
+                require(stopped.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.STOPPED_UNCOVERED
+                        && stopped.restrictionOutcome.availableChoices.isEmpty() && stopped.opinions.isEmpty() && stopped.restartRequired,
+                        "uncovered successive history returns a stopped outcome without a complete opinion");
+                IContextResults.Revision initialGap=create(dir,"InitialGap","!other("+firstRoot+"); !@x other(x) -> "+sign+"cache(x);");
+                DmzSourcesQuery.Request initialUncovered=request(pin,base.queryStatement,1000,128,new DmzSourcePlan.Selection("A",a),
+                        new DmzSourcePlan.Selection("B",b),new DmzSourcePlan.Selection("InitialGap",initialGap));
+                try {
+                    db.executeDmzSources(q,optIn(initialUncovered,a,trigger,Collections.<String>emptyList(),10000));
+                    throw new AssertionError("Initial uncovered conflict accepted");
+                } catch(IllegalStateException refusal) {
+                    require(refusal.getMessage().contains("initial conflict") && refusal.getMessage().contains("source history"),
+                            "initial coverage gap is a hard refusal before a choice receipt is returned");
+                }
+            }
+            DmzSourcesQuery.Request permuted=request(pin,base.queryStatement,1000,128,new DmzSourcePlan.Selection("B",b),new DmzSourcePlan.Selection("A",a));
+            require(db.executeDmzSources(q,optIn(permuted,a,trigger,choices,10000)).restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE,
+                    "source request permutation preserves caller proof choices");
+            IContextResults.Revision advanced=create(dir,"A","!later(9);");
+            require(advanced.getRevision()>a.getRevision() && db.executeDmzSources(q,optIn(base,a,trigger,choices,10000)).restrictionOutcome.status
+                    ==DmzSourcesQuery.RestrictionStatus.COMPLETE,"historical choices reacquire exact source pins after HEAD advances");
+            reject(() -> new DmzSourcesQuery.RestrictionRequest(a,trigger,Arrays.asList("duplicate","duplicate"),10000),IllegalArgumentException.class);
+            reject(() -> new DmzSourcesQuery.RestrictionRequest(a,trigger,Collections.nCopies(129,"too-many"),10000),IllegalArgumentException.class);
+            IContextResults.Revision empty=create(dir,"Empty","");
+            reject(() -> new DmzSourcesQuery.Request(base.sources,base.policy,base.queryStatement,base.limits,
+                    new DmzSourcesQuery.RestrictionRequest(empty,0,Collections.<String>emptyList(),10000)),IllegalArgumentException.class);
+            require(state.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)) && user.getCurrentMind()==q,
+                    "invalid exact choices and triggers preserve the provider boundary");
+        } finally { user.setCurrentMind(q.closeStorage()); }
+    }
+    private static void currentChoicesImmutable(DmzSourcesQuery.Request base,DB db,Mind q,IContextResults.Revision a,long trigger) throws Exception {
+        db.executeDmzSources(q,optIn(base,a,trigger,Collections.<String>emptyList(),10000)).restrictionOutcome.availableChoices.clear();
+    }
+    private static DmzSourcesQuery.Request optIn(DmzSourcesQuery.Request base,IContextResults.Revision pin,long rule,java.util.List<String> choices,int budget) {
+        return new DmzSourcesQuery.Request(base.sources,base.policy,base.queryStatement,base.limits,
+                new DmzSourcesQuery.RestrictionRequest(pin,rule,choices,budget));
+    }
+    private static long primaryRule(Path dir,String name,IContextResults.Revision revision) throws Exception {
+        try(SnapshotMindRuntime snapshot=SnapshotMindRuntime.open(dir.resolve(name),new RevisionRef(revision.getContextId(),revision.getRevision()),"exact-trigger")) {
+            return org.kanger.DmzSourceShape.inspect(snapshot.getMind(),100).declarations.get(0).sourceRule;
+        }
     }
     private static IContextResults.Revision create(Path dir,String name,String source) throws Exception {
         User user=new User();user.setDatabaseDir(dir.toString()+java.io.File.separator);DB db=new DB();db.init(user);

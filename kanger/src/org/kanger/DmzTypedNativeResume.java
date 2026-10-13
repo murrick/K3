@@ -10,6 +10,16 @@ import org.kanger.primitives.Solve;
 
 /** One owned rollback-only typed resume. No arbitrary query/input or exposed child Mind. */
 final class DmzTypedNativeResume {
+    static final class QueryObservation {
+        final Boolean value;
+        final List<DmzProofWitnesses.Witness> proofs;
+        final List<String> hypotheses,assertions;
+        QueryObservation(Boolean value,List<DmzProofWitnesses.Witness> proofs,List<String> hypotheses,List<String> assertions) {
+            this.value=value;this.proofs=Collections.unmodifiableList(new ArrayList<DmzProofWitnesses.Witness>(proofs));
+            this.hypotheses=Collections.unmodifiableList(new ArrayList<String>(hypotheses));
+            this.assertions=Collections.unmodifiableList(new ArrayList<String>(assertions));
+        }
+    }
     static final class Materialization {
         final long nativeRule;
         final boolean generated;
@@ -27,6 +37,7 @@ final class DmzTypedNativeResume {
         final List<CollisionProofCapture.Conflict> conflicts;
         final List<Long> retractedCaches;
         final List<Materialization> materializations;
+        final QueryObservation queryAnswer;
         private final DmzCacheRestrictionSet prefix;
         private final Mind target;
         private final String state;
@@ -37,6 +48,11 @@ final class DmzTypedNativeResume {
         }
         private Result(boolean compiled,Scope scope,DmzSourcedProofGraph graph,List<CollisionProofCapture.Conflict> conflicts,
                 List<Rule> removed,Mind branch,int budget,boolean provisional,DmzCacheRestrictionSet prefix,Mind target) throws Exception {
+            this(compiled,scope,graph,conflicts,removed,branch,budget,provisional,prefix,target,null);
+        }
+        private Result(boolean compiled,Scope scope,DmzSourcedProofGraph graph,List<CollisionProofCapture.Conflict> conflicts,
+                List<Rule> removed,Mind branch,int budget,boolean provisional,DmzCacheRestrictionSet prefix,Mind target,QueryObservation queryAnswer) throws Exception {
+            this.queryAnswer=queryAnswer;
             this.prefix=prefix;this.target=target;state=DmzObservationStateFingerprint.capture(target);sources=DmzReplayProvenance.sourceCheckpoint(target);
             this.compiled=compiled;this.provisional=provisional;applicationDenied=scope.denied;queryDenied=scope.queryDenied;this.graph=graph;
             this.conflicts=Collections.unmodifiableList(new ArrayList<CollisionProofCapture.Conflict>(conflicts));
@@ -121,6 +137,17 @@ final class DmzTypedNativeResume {
     }
     private static Result run(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
             DmzProofWitnesses.Witness selected,Mind target,int budget,boolean materialized,boolean recursive,TechnicalMindTransaction owner,DmzCacheCollisionEvidence evidence,DmzCacheRestrictionSet set) throws Exception {
+        return run(guard,proof,selected,target,budget,materialized,recursive,owner,evidence,set,null);
+    }
+    static Result queryAccumulated(DmzCacheRestrictionSet set,Mind target,int budget,String query) throws Exception {
+        if(set==null || set.selections.isEmpty() || query==null
+                || !query.matches("\\?~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
+            throw new IllegalArgumentException("Exact accumulated query required");
+        DmzProofWitnesses.Witness selected=set.selections.get(0);
+        return run(null,null,selected,target,budget,true,selected.premises.get(0).step>=0,null,set.evidence,set,query);
+    }
+    private static Result run(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
+            DmzProofWitnesses.Witness selected,Mind target,int budget,boolean materialized,boolean recursive,TechnicalMindTransaction owner,DmzCacheCollisionEvidence evidence,DmzCacheRestrictionSet set,String query) throws Exception {
         if(target.hasPendingTransactions())throw new IllegalStateException("Exclusive typed resume boundary required");
         if(ACTIVE.get()!=null || !DmzTerminalRestriction.activeNoGoods(target).isEmpty())
             throw new IllegalStateException("Unrestricted typed resume boundary required");
@@ -195,7 +222,43 @@ final class DmzTypedNativeResume {
                 }
                 DmzSourcedProofGraph graph=DmzSourcedProofGraph.build(observations);
                 if(materialized)graph=graph.restrict(scope.patterns);
-                return new Result(compiled,scope,graph,collisions.snapshot(),cacheRules,tx.mind(),budget,inventory.provisional,set,target);
+                QueryObservation queryAnswer=null;
+                if(compiled && query!=null) {
+                    for(IRule item:tx.mind().getRules())if(!item.isDeleted(tx.mind()) && !item.isQuery()) {
+                        Rule rule=(Rule)item;
+                        if(rule.getTree().size()==1 && rule.getTree().get(0).size()==1
+                                && rule.getDomain().getPredicate().getName(tx.mind()).equals(probe))rule.setDeleted(true,tx.mind());
+                    }
+                    Boolean queryValue=tx.mind().query(query,null,false);
+                    List<DmzProofWitnesses.Witness> witnesses=new ArrayList<DmzProofWitnesses.Witness>();
+                    List<String> hypotheses=new ArrayList<String>(),assertions=new ArrayList<String>();
+                    for(IHypothesis hypothesis:tx.mind().getHypothesis()) {
+                        hypotheses.add(((org.kanger.primitives.Hypothesis)hypothesis).toString(tx.mind()));
+                        assertions.add(((org.kanger.primitives.Hypothesis)hypothesis).toAssertionString(tx.mind()));
+                    }
+                    if(queryValue!=null) {
+                        TerminalSupportCapture.Ground expected=DmzGroundReplay.parseIdentity("!"+query.substring(1)).ground();
+                        if(!queryValue)expected=new TerminalSupportCapture.Ground(expected.predicate,!expected.sign,expected.arguments);
+                        // The full pre-child inventory is current and source-qualified. Restrict
+                        // it by the same exact patterns enforced by both native gates; an inventory
+                        // captured under an active restriction intentionally grants no new receipt.
+                        DmzSourcedProofGraph reduced=inventory.graph.restrict(scope.patterns);
+                        int remaining=budget;
+                        for(int i=0;i<reduced.observed.nodes.size();++i) {
+                            if(--remaining<1)throw new IllegalStateException("Restricted answer budget exceeded");
+                            if(expected.equivalent(reduced.observed.nodes.get(i).ground)) {
+                                DmzProofWitnesses.Result supports=DmzProofWitnesses.enumerate(reduced,i,remaining);
+                                if(supports.truncated || (remaining-=supports.created)<1)
+                                    throw new IllegalStateException("Restricted answer witness budget exceeded");
+                                witnesses.addAll(supports.witnesses);
+                            }
+                        }
+                        if(witnesses.isEmpty() || !inventory.isCurrent(target))
+                            throw new IllegalStateException("Resolved restricted answer requires current exact proof");
+                    }
+                    queryAnswer=new QueryObservation(queryValue,witnesses,hypotheses,assertions);
+                }
+                return new Result(compiled,scope,graph,collisions.snapshot(),cacheRules,tx.mind(),budget,inventory.provisional,set,target,queryAnswer);
             }
         } finally {
             if(!state.equals(DmzObservationStateFingerprint.capture(target)) || !sources.isCurrent(target))

@@ -1,14 +1,81 @@
 /* MIT License. Copyright (c) 2026 Dmitry G. Quznetsov. */
 package org.kanger;
 import java.util.*;
+import org.kanger.interfaces.DmzSourcesQuery;
 
 /** Immutable accumulated exact choices for covered cache-conflict roots. */
 final class DmzCacheRestrictionSet {
+    enum ContinuationStatus { COMPLETE, NEXT_CONFLICT, STOPPED_UNCOVERED }
+    static final class Continuation {
+        final ContinuationStatus status;
+        final DmzTypedNativeResume.Result result;
+        final Next next;
+        final int choices;
+        private Continuation(ContinuationStatus status,DmzTypedNativeResume.Result result,Next next,int choices) {
+            this.status=status;this.result=result;this.next=next;this.choices=choices;
+        }
+        org.kanger.interfaces.DmzSourcesQuery.RestrictionOutcome detached() {
+            return new org.kanger.interfaces.DmzSourcesQuery.RestrictionOutcome(
+                    org.kanger.interfaces.DmzSourcesQuery.RestrictionStatus.valueOf(status.name()),choices);
+        }
+    }
+    static final class UncoveredConflict extends IllegalStateException {
+        private static final long serialVersionUID=1L;
+        UncoveredConflict(String message) { super(message); }
+    }
     final DmzCacheCollisionEvidence evidence;
     final List<DmzProofWitnesses.Witness> selections;
     final List<DmzProofWitnesses.NoGood> patterns;
     final DmzSourcedProofGraph graph;
     private final List<DmzStoredGroundRoutes> receipts;
+    static final class PreparedSources {
+        private final DmzCacheRestrictionSet prefix;
+        private final DmzCandidateSession session;
+        final List<DmzSourcesQuery.Proof> proofs;
+        private PreparedSources(DmzCacheRestrictionSet prefix,DmzCandidateSession session,List<DmzSourcesQuery.Proof> proofs) {
+            this.prefix=prefix;this.session=session;this.proofs=Collections.unmodifiableList(new ArrayList<DmzSourcesQuery.Proof>(proofs));
+        }
+        boolean isCurrent(DmzCacheRestrictionSet candidate,DmzCandidateSession owner) throws Exception {
+            return candidate==prefix && owner==session && session.isCurrent();
+        }
+        DmzTypedNativeResume.Result runAccumulated(Mind target,int budget) throws Exception {
+            consume(target,budget);
+            return DmzTypedNativeResume.runAccumulated(prefix,target,budget);
+        }
+        private void consume(Mind target,int budget) throws Exception {
+            if(budget<1 || budget>10000 || !isCurrent(prefix,session))
+                throw new IllegalStateException("Current prepared accumulated restrictions required");
+            // The prepared owner has a nested replay journal. Close it first so the
+            // original collision evidence's journal is active again for validation.
+            session.close();
+            if(!prefix.isCurrent(target))
+                throw new IllegalStateException("Originating accumulated restriction boundary changed");
+        }
+        Continuation continueAccumulatedQuery(Mind target,int budget,String query) throws Exception {
+            if(query==null || !query.matches("\\?~?[A-Za-z_][A-Za-z_0-9]*\\([+-]?[0-9]+\\);"))
+                throw new IllegalArgumentException("Signed unary integer query required");
+            consume(target,budget);
+            return classify(prefix,DmzTypedNativeResume.queryAccumulated(prefix,target,budget,query),target,budget);
+        }
+        Continuation continueAccumulated(Mind target,int budget) throws Exception {
+            DmzTypedNativeResume.Result result=runAccumulated(target,budget);
+            return classify(prefix,result,target,budget);
+        }
+    }
+    static final class SourceReceipt {
+        private final DmzCacheRestrictionSet prefix;
+        private final Map<String,RequiredSource> required;
+        final List<DmzSourcesQuery.Proof> proofs;
+        private SourceReceipt(DmzCacheRestrictionSet prefix,Map<String,RequiredSource> required,List<DmzSourcesQuery.Proof> proofs) {
+            this.prefix=prefix;this.required=Collections.unmodifiableMap(new HashMap<String,RequiredSource>(required));
+            this.proofs=Collections.unmodifiableList(new ArrayList<DmzSourcesQuery.Proof>(proofs));
+        }
+    }
+    private static final class RequiredSource {
+        final boolean production;
+        final String statement;
+        RequiredSource(boolean production,String statement) { this.production=production;this.statement=statement; }
+    }
     static final class Next {
         final List<DmzWitnessConflicts.Combination> combinations;
         final DmzSourcedProofGraph graph;
@@ -65,7 +132,13 @@ final class DmzCacheRestrictionSet {
                 if(item.nativeRule==endpoint.nativeRule && item.ground.equivalent(endpoint.ground))live=true;
             }
             if(!live)throw new IllegalStateException("Live owned successive endpoint required");
-            DmzStoredGroundRoutes receipt=evidence.routes(endpoint,target,budget);
+            DmzStoredGroundRoutes receipt;
+            try { receipt=evidence.routes(endpoint,target,budget); }
+            catch(IllegalStateException uncovered) {
+                if(uncovered.getMessage()!=null && uncovered.getMessage().contains("Covered live"))
+                    throw new UncoveredConflict(uncovered.getMessage());
+                throw uncovered;
+            }
             if(receipt!=null){history.add(receipt);generated=true;}
         }
         if(!generated)throw new IllegalStateException("Successive generated cache conflict required");
@@ -80,8 +153,18 @@ final class DmzCacheRestrictionSet {
             TerminalSupportCapture.Ground a=remaining.observed.nodes.get(pair.left.node).ground,b=remaining.observed.nodes.get(pair.right.node).ground;
             if(a.equivalent(left.ground) && b.equivalent(right.ground) || a.equivalent(right.ground) && b.equivalent(left.ground))pairs.add(pair);
         }
-        if(pairs.isEmpty() || !isCurrent(target) || !inventory.isCurrent(target))throw new IllegalStateException("Remaining successive conflict required");
+        if(pairs.isEmpty())throw new UncoveredConflict("Covered live successive conflict required");
+        if(!isCurrent(target) || !inventory.isCurrent(target))throw new IllegalStateException("Remaining successive conflict boundary changed");
         return new Next(this,remaining,pairs,history);
+    }
+    static Continuation classify(DmzCacheRestrictionSet prefix,DmzTypedNativeResume.Result result,Mind target,int budget) throws Exception {
+        if(prefix==null || result==null || !result.belongsTo(prefix,target))
+            throw new IllegalStateException("Owned accumulated continuation result required");
+        if(result.compiled)return new Continuation(ContinuationStatus.COMPLETE,result,null,prefix.selections.size());
+        try { return new Continuation(ContinuationStatus.NEXT_CONFLICT,result,prefix.next(result,target,budget),prefix.selections.size()); }
+        catch(UncoveredConflict uncovered) {
+            return new Continuation(ContinuationStatus.STOPPED_UNCOVERED,result,null,prefix.selections.size());
+        }
     }
     DmzCacheRestrictionSet append(Next next,DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
         if(budget<1 || budget>10000)throw new IllegalArgumentException("Bounded successive choice required");
@@ -152,5 +235,92 @@ final class DmzCacheRestrictionSet {
         if(!evidence.isCurrent(target))return false;
         for(DmzStoredGroundRoutes receipt:receipts)if(!receipt.isCurrent(target))return false;
         return true;
+    }
+    SourceReceipt prepareSourceReceipt(List<DmzCandidateSession.Participant> participants,Mind target,int budget) throws Exception {
+        if(budget<1 || budget>10000 || participants==null || !isCurrent(target))
+            throw new IllegalStateException("Current accumulated source preparation required");
+        Map<String,DmzSourceShape.Declaration> declarations=new HashMap<String,DmzSourceShape.Declaration>();
+        Map<java.util.UUID,Long> revisions=new HashMap<java.util.UUID,Long>();
+        int remaining=budget;
+        for(DmzCandidateSession.Participant participant:participants) {
+            if(participant==null)throw new IllegalStateException("Acquired source participant required");
+            Long old=revisions.put(participant.revision.getContextId(),participant.revision.getRevision());
+            if(old!=null && old.longValue()!=participant.revision.getRevision())
+                throw new IllegalStateException("One exact source revision per Context required");
+            for(DmzSourceShape.Declaration declaration:participant.inputs.declarations) {
+                if(--remaining<1)throw new IllegalStateException("Accumulated source preparation budget exceeded");
+                String key=participant.revision.getContextId()+"@"+participant.revision.getRevision()+":"+declaration.sourceRule;
+                if(declarations.put(key,declaration)!=null)throw new IllegalStateException("Unique prepared source rule required");
+            }
+        }
+        for(DmzProofWitnesses.Witness selected:selections) {
+            for(DmzProofWitnesses.Witness current=selected;current!=null;current=current.premises.isEmpty()?null:current.premises.get(0)) {
+                if(--remaining<1)throw new IllegalStateException("Accumulated source chain budget exceeded");
+                DmzReplayProvenance.Binding source=current.source;
+                if(source==null || source.authority==null)throw new IllegalStateException("Sourced accumulated chain required");
+                String key=source.context+"@"+source.revision+":"+source.sourceRule;
+                DmzSourceShape.Declaration declaration=declarations.get(key);
+                if(declaration==null || current.step>=0 && declaration.unitStatement==null
+                        || current.step<0 && declaration.groundStatement==null)
+                    throw new IllegalStateException("Selected restriction source is absent from prepared exact revisions");
+            }
+        }
+        if(!isCurrent(target))throw new IllegalStateException("Accumulated source preparation boundary changed");
+        Map<String,RequiredSource> required=new HashMap<String,RequiredSource>();
+        for(DmzProofWitnesses.Witness selected:selections)
+            for(DmzProofWitnesses.Witness current=selected;current!=null;current=current.premises.isEmpty()?null:current.premises.get(0)) {
+                DmzReplayProvenance.Binding source=current.source;
+                String key=source.context+"@"+source.revision+":"+source.sourceRule;
+                required.put(key,new RequiredSource(current.step>=0,declarations.get(key).statement));
+            }
+        List<DmzSourcesQuery.Proof> proofs=new ArrayList<DmzSourcesQuery.Proof>();
+        for(DmzProofWitnesses.Witness selected:selections)proofs.add(publicProof(selected,declarations));
+        return new SourceReceipt(this,required,proofs);
+    }
+    PreparedSources attachSourceReceipt(DmzCandidateSession session,List<DmzCandidateSession.Participant> participants,
+            SourceReceipt receipt,int budget) throws Exception {
+        if(budget<1 || budget>10000 || session==null || participants==null || receipt==null
+                || receipt.prefix!=this || !session.isCurrent())
+            throw new IllegalStateException("Owned accumulated source receipt required");
+        Map<String,DmzSourceShape.Declaration> declarations=new HashMap<String,DmzSourceShape.Declaration>();
+        int remaining=budget;
+        for(DmzCandidateSession.Participant participant:participants)for(DmzSourceShape.Declaration declaration:participant.inputs.declarations) {
+            if(--remaining<1)throw new IllegalStateException("Accumulated source attachment budget exceeded");
+            declarations.put(participant.revision.getContextId()+"@"+participant.revision.getRevision()+":"+declaration.sourceRule,declaration);
+        }
+        for(Map.Entry<String,RequiredSource> entry:receipt.required.entrySet()) {
+            if(--remaining<1)throw new IllegalStateException("Accumulated source attachment budget exceeded");
+            DmzSourceShape.Declaration declaration=declarations.get(entry.getKey());
+            RequiredSource wanted=entry.getValue();
+            if(declaration==null || !wanted.statement.equals(declaration.statement)
+                    || wanted.production && declaration.unitStatement==null
+                    || !wanted.production && declaration.groundStatement==null)
+                throw new IllegalStateException("Prepared sources do not match accumulated receipt");
+        }
+        if(!session.isCurrent())throw new IllegalStateException("Prepared source session changed");
+        return new PreparedSources(this,session,receipt.proofs);
+    }
+    static DmzSourcesQuery.Proof publicProof(DmzProofWitnesses.Witness witness,
+            Map<String,DmzSourceShape.Declaration> declarations) {
+        return publicProof(witness,declarations,new int[]{10000});
+    }
+    static DmzSourcesQuery.Proof publicProof(DmzProofWitnesses.Witness witness,
+            Map<String,DmzSourceShape.Declaration> declarations,int[] remaining) {
+        if(--remaining[0]<0)throw new IllegalStateException("Detached source proof budget exceeded");
+        DmzReplayProvenance.Binding source=witness.source;
+        String key=source.context+"@"+source.revision+":"+source.sourceRule;
+        DmzSourceShape.Declaration declaration=declarations.get(key);
+        if(declaration==null)throw new IllegalStateException("Prepared proof source disappeared");
+        TerminalSupportCapture.Ground ground=witness.graph.observed.nodes.get(witness.node).ground;
+        if(ground.arguments.size()!=1)throw new IllegalStateException("Public source proof requires unary ground");
+        Object value=ground.arguments.get(0).materialize().getValue();
+        if(!(value instanceof Number))throw new IllegalStateException("Public source proof requires integer ground");
+        java.math.BigInteger integer=new java.math.BigDecimal(value.toString()).toBigIntegerExact();
+        String conclusion="!"+(ground.sign?"":"~")+ground.predicate+"("+integer+");";
+        List<DmzSourcesQuery.Proof> premises=new ArrayList<DmzSourcesQuery.Proof>();
+        for(DmzProofWitnesses.Witness premise:witness.premises)premises.add(publicProof(premise,declarations,remaining));
+        DmzSourcesQuery.Input input=new DmzSourcesQuery.Input(
+                new org.kanger.interfaces.IContextResults.Revision(source.context,source.revision),source.sourceRule,declaration.statement);
+        return new DmzSourcesQuery.Proof(input,conclusion,premises);
     }
 }

@@ -87,10 +87,16 @@ public final class DmzSuccessiveCacheRestrictionsRunner {
                         && !q.hasPendingTransactions() && user.getCurrentMind()==q && DmzTerminalRestriction.activeNoGoods(q).isEmpty(),"each continuation restores Q, sources and ownership");
                 if(exhausted>0)require(result.applicationDenied>0 && result.queryDenied>0,"both native resurrection gates remain active");
                 if(step==4) {
+                    DmzCacheRestrictionSet.Continuation outcome=DmzCacheRestrictionSet.classify(set,result,q,10000);
+                    require(outcome.status==DmzCacheRestrictionSet.ContinuationStatus.COMPLETE && outcome.next==null,
+                            "typed continuation outcome reports complete only after final exclusion");
                     try {set.next(result,q,10000);throw new AssertionError("Expected successful continuation refusal");}catch(IllegalStateException expected){++checks;}
                     break;
                 }
-                DmzCacheRestrictionSet.Next next=set.next(result,q,10000);
+                DmzCacheRestrictionSet.Continuation outcome=DmzCacheRestrictionSet.classify(set,result,q,10000);
+                require(outcome.status==DmzCacheRestrictionSet.ContinuationStatus.NEXT_CONFLICT && outcome.next!=null,
+                        "typed continuation outcome exposes the next covered conflict");
+                DmzCacheRestrictionSet.Next next=outcome.next;
                 try {next.combinations.clear();throw new AssertionError("Expected immutable next pairs");}catch(UnsupportedOperationException expected){++checks;}
                 try {set.next(null,q,10000);throw new AssertionError("Expected missing result refusal");}catch(IllegalStateException expected){++checks;}
                 DmzProofWitnesses.Witness selected=choice(next.combinations);
@@ -150,8 +156,11 @@ public final class DmzSuccessiveCacheRestrictionsRunner {
             String state=DmzObservationStateFingerprint.capture(q);DmzReplayProvenance.SourceCheckpoint sources=DmzReplayProvenance.sourceCheckpoint(q);
             DmzTypedNativeResume.Result result=DmzTypedNativeResume.runAccumulated(set,q,10000);
             require(!result.compiled && result.retractedCaches.size()==1 && !result.conflicts.isEmpty(),"continuation reaches separate cache conflict");
-            try {set.next(result,q,10000);throw new AssertionError("Expected missing successive history refusal");}
-            catch(IllegalStateException expected){require(expected.getMessage().contains("Covered live"),"next root must have full native storage coverage");}
+            DmzCacheRestrictionSet.Continuation outcome=DmzCacheRestrictionSet.classify(set,result,q,10000);
+            require(outcome.status==DmzCacheRestrictionSet.ContinuationStatus.STOPPED_UNCOVERED && outcome.next==null,
+                    "typed continuation stops when the next root lacks full native storage coverage");
+            require(outcome.detached().status==DmzSourcesQuery.RestrictionStatus.STOPPED_UNCOVERED
+                    && outcome.detached().choices==1,"uncovered stop projects without exposing a next-choice token");
             require(set.selections.size()==1 && set.isCurrent(q) && state.equals(DmzObservationStateFingerprint.capture(q)) && sources.isCurrent(q)
                     && !q.hasPendingTransactions() && user.getCurrentMind()==q && DmzTerminalRestriction.activeNoGoods(q).isEmpty(),"missing next history preserves Q and original immutable prefix");
         }

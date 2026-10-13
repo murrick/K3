@@ -658,6 +658,9 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
         throw new org.kanger.exception.CommandErrorException("Named DMZ pins are unavailable");
     }
 
+    /** Optional request.restrictions uses fresh source reconstruction and exact caller proof choices.
+     * In that mode an unfinished conflict returns historical alternatives without an opinion;
+     * only native completion queries the restricted branch. Every invocation rolls back. */
     default org.kanger.interfaces.DmzSourcesQuery.Result executeDmzSources(IMind sourceMind,
             org.kanger.interfaces.DmzSourcesQuery.Request request) throws Exception {
         throw new UnsupportedOperationException("DMZ source execution is not supported by this provider");
