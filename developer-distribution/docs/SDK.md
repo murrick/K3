@@ -804,3 +804,18 @@ Invalid ordinals and exhausted visit/choice limits refuse request construction.
 The original result and its immutable alternatives remain readable. For commands,
 selection errors retain the saved result; a refusal after provider execution is
 attempted clears it. This saved workflow carries no native session or resume token.
+
+Provider opt-in results also expose `restrictionOutcome.trace`. Each immutable
+`RestrictionStep` records its one-based prefix number, the alternatives offered at
+that particular native conflict, the selected exact proof and the resulting
+workflow status. The complete trace is regenerated during each successful replay;
+retained earlier results stay readable after later invocations or boundary changes.
+`ctx dmz explain` displays the historical selection ordinal and resulting status
+for every step. The trace is diagnostic data and grants no replay permission.
+
+A source name rebound to a different Context UUID is refused even when its
+declarations and revision number match. Restoring the original source permits a
+fresh reconstruction of its old exact pin. Advancing source HEAD while retaining
+the requested immutable revision is allowed; changing Q's published revision
+requires a new explicit initial request. Selection never substitutes a currently
+named Context for the identity retained in the historical request.

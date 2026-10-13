@@ -13,20 +13,49 @@ public final class DmzSourcesQuery {
     public enum Decision { ADMITTED, REUSED_PRIMARY, DECLINED_Q, KEEP_EXISTING, KEEP_CANDIDATE }
     public enum Refusal { UNSUPPORTED_DECLARATION, GROUND_LIMIT, PRODUCTION_LIMIT }
     public enum RestrictionStatus { NOT_REQUESTED, COMPLETE, NEXT_CONFLICT, STOPPED_UNCOVERED }
+    /** Historical alternatives and the exact choice made at one native conflict. */
+    public static final class RestrictionStep {
+        public final int number;
+        public final Proof selected;
+        public final List<Proof> alternatives;
+        public final RestrictionStatus after;
+        public RestrictionStep(int number,Proof selected,List<Proof> alternatives,RestrictionStatus after) {
+            if(number<1 || number>128 || selected==null || after==null || after==RestrictionStatus.NOT_REQUESTED)
+                throw new IllegalArgumentException("Exact historical restriction step required");
+            this.number=number;this.selected=selected;this.alternatives=copy(alternatives);this.after=after;
+            java.util.Set<String> identities=new java.util.HashSet<String>();
+            for(Proof proof:this.alternatives)if(!identities.add(proof.identity()))
+                throw new IllegalArgumentException("Distinct historical alternatives required");
+            if(!identities.contains(selected.identity()))throw new IllegalArgumentException("Selected proof must be an offered alternative");
+        }
+    }
     /** Detached summary of an accumulated restriction workflow; carries no native owner or resume token. */
     public static final class RestrictionOutcome {
         public final RestrictionStatus status;
         public final int choices;
         /** Historical proof alternatives; replay the whole request to validate an identity. */
         public final List<Proof> availableChoices;
+        public final List<RestrictionStep> trace;
         public RestrictionOutcome(RestrictionStatus status,int choices) {
             this(status,choices,Collections.<Proof>emptyList());
         }
         public RestrictionOutcome(RestrictionStatus status,int choices,List<Proof> availableChoices) {
+            this(status,choices,availableChoices,Collections.<RestrictionStep>emptyList());
+        }
+        public RestrictionOutcome(RestrictionStatus status,int choices,List<Proof> availableChoices,List<RestrictionStep> trace) {
             if(status==null || choices<0 || status==RestrictionStatus.NOT_REQUESTED && choices!=0)
                 throw new IllegalArgumentException("Restriction outcome");
             this.status=status;this.choices=choices;
             this.availableChoices=copy(availableChoices);
+            this.trace=copy(trace);
+            if(!this.trace.isEmpty()) {
+                if(this.trace.size()!=choices)throw new IllegalArgumentException("Trace must cover the exact selected prefix");
+                for(int i=0;i<this.trace.size();++i) {
+                    RestrictionStep step=this.trace.get(i);
+                    if(step.number!=i+1 || step.after!=(i+1==choices?status:RestrictionStatus.NEXT_CONFLICT))
+                        throw new IllegalArgumentException("Ordered restriction outcomes required");
+                }
+            }
             if(status!=RestrictionStatus.NEXT_CONFLICT && !this.availableChoices.isEmpty())
                 throw new IllegalArgumentException("Only next conflicts have choices");
         }

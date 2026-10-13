@@ -96,6 +96,7 @@ public final class DmzSourceRestrictionWorkflow {
             DmzCacheRestrictionSet.Next next=null;
             List<DmzWitnessConflicts.Combination> pairs=evidence.combinations;
             List<DmzSourcesQuery.Proof> selected=Collections.emptyList();
+            List<DmzSourcesQuery.RestrictionStep> trace=new ArrayList<DmzSourcesQuery.RestrictionStep>();
             for(int index=0;;++index) {
                 SortedMap<String,Option> options=new TreeMap<String,Option>();
                 for(DmzWitnessConflicts.Combination pair:pairs)for(DmzProofWitnesses.Witness witness:Arrays.asList(pair.left,pair.right)) {
@@ -106,11 +107,16 @@ public final class DmzSourceRestrictionWorkflow {
                     DmzSourcesQuery.Proof proof=receipt.proofs.get(receipt.proofs.size()-1);
                     options.put(proof.identity(),new Option(candidate,proof));
                 }
+                List<DmzSourcesQuery.Proof> offered=new ArrayList<DmzSourcesQuery.Proof>();
+                for(Option option:options.values())offered.add(option.proof);
                 if(index==choice.choices.size()) {
-                    List<DmzSourcesQuery.Proof> offered=new ArrayList<DmzSourcesQuery.Proof>();
-                    for(Option option:options.values())offered.add(option.proof);
+                    if(options.isEmpty() && !trace.isEmpty()) {
+                        DmzSourcesQuery.RestrictionStep last=trace.get(trace.size()-1);
+                        trace.set(trace.size()-1,new DmzSourcesQuery.RestrictionStep(last.number,last.selected,last.alternatives,
+                                DmzSourcesQuery.RestrictionStatus.STOPPED_UNCOVERED));
+                    }
                     return new Result(new DmzSourcesQuery.RestrictionOutcome(options.isEmpty()?DmzSourcesQuery.RestrictionStatus.STOPPED_UNCOVERED
-                            :DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT,index,offered),selected,null);
+                            :DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT,index,offered,trace),selected,null);
                 }
                 Option option=options.get(choice.choices.get(index));
                 if(option==null)throw new IllegalArgumentException("Requested proof is not an exact current conflict choice");
@@ -123,6 +129,8 @@ public final class DmzSourceRestrictionWorkflow {
                 if(!state.equals(DmzObservationStateFingerprint.capture(q)) || !checkpoint.isCurrent(q) || !prefix.isCurrent(q)
                         || q.hasPendingTransactions() || !DmzTerminalRestriction.activeNoGoods(q).isEmpty() || user.getCurrentMind()!=q)
                     throw new IllegalStateException("Restriction workflow failed to restore its reconstruction");
+                DmzSourcesQuery.RestrictionOutcome summary=continued.detached();
+                trace.add(new DmzSourcesQuery.RestrictionStep(index+1,option.proof,offered,summary.status));
                 if(continued.status!=DmzCacheRestrictionSet.ContinuationStatus.NEXT_CONFLICT) {
                     if(index+1!=choice.choices.size())throw new IllegalArgumentException("Unused restriction choices after workflow stop");
                     DmzConditionalResult.Answer answer=null;
@@ -135,7 +143,8 @@ public final class DmzSourceRestrictionWorkflow {
                         answer=new DmzConditionalResult.Answer(DmzConditionalResult.CandidateMode.NONE,observation.value,
                                 observation.hypotheses,observation.assertions,proofs);
                     }
-                    return new Result(continued.detached(),selected,answer);
+                    return new Result(new DmzSourcesQuery.RestrictionOutcome(summary.status,summary.choices,
+                            Collections.<DmzSourcesQuery.Proof>emptyList(),trace),selected,answer);
                 }
                 next=continued.next;pairs=next.combinations;
             }

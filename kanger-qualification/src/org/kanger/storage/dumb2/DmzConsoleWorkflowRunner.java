@@ -229,6 +229,8 @@ public final class DmzConsoleWorkflowRunner {
             require(display.contains("ctx dmz choose 1"),"console exposes the saved exact-alternative replay command");
             require(display.contains("DMZ restrictions: COMPLETE; selected=2") && display.contains("Restricted source chain 2:")
                     && display.contains("Opinion 1: FALSE") && display.contains("completed restricted native branch"),"console explains restriction outcome and selected proof trees");
+            require(display.contains("Restriction step 1: selected alternative 1/1 -> NEXT_CONFLICT")
+                    && display.contains("Restriction step 2: selected alternative 1/1 -> COMPLETE"),"saved explanation displays successive historical branch outcomes");
             require(err.toString("UTF-8").contains("DMZ refused:") && !err.toString("UTF-8").contains("\tat org.kanger"),
                     "invalid choice remains readable and console continues to ordinary query");
             Mind reopened=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(reopened);
@@ -243,7 +245,7 @@ public final class DmzConsoleWorkflowRunner {
     }
     private static void staleAuthority() throws Exception {
         Path dir=Files.createTempDirectory("dmz-saved-q-revision-");System.setProperty("user.home",dir.toString());
-        create(dir,"Q","!seed(1); !~cache(1);");
+        create(dir,"Q","!seed(1); !~cache(1); !seed(2); !~cache(2);");
         IContextResults.Revision units=create(dir,"Rules","!@x seed(x) -> cache(x);");
         long rule;
         try(SnapshotMindRuntime snapshot=SnapshotMindRuntime.open(dir.resolve("Rules"),new RevisionRef(units.getContextId(),units.getRevision()),"trigger")) {
@@ -255,7 +257,28 @@ public final class DmzConsoleWorkflowRunner {
         try {
             long revision=db.getRevision();
             String command="ctx dmz "+db.getContextId()+"@"+revision+" ?cache(1); from=Rules@"+pin(units)+" restrict="+pin(units)+":"+rule;
-            DmzSourcesQuery.Result saved=processor.execute(PARSER.parse(command),user).getDmzResult();
+            processor.execute(PARSER.parse(command),user);
+            DmzSourcesQuery.Result saved=processor.execute(PARSER.parse("ctx dmz choose 1"),user).getDmzResult();
+            String beforeReplacement=DmzSourceMaterializationQualification.fingerprint(q);
+            IContextResults.Revision replacement=create(dir,"Replacement","!@x seed(x) -> cache(x);");
+            require(!replacement.getContextId().equals(units.getContextId()) && replacement.getRevision()==units.getRevision(),
+                    "replacement source has the same declarations and revision number but a different Context identity");
+            moveContextFixture(dir,"Rules","Rules-original");
+            moveContextFixture(dir,"Replacement","Rules");
+            try {
+                processor.execute(PARSER.parse("ctx dmz choose 1"),user);
+                throw new AssertionError("Saved pin followed a foreign source under the same name");
+            } catch(IllegalStateException refusal) {
+                require(refusal.getMessage().contains("source identity mismatch"),"saved replay rejects source name rebound to a foreign UUID");
+            }
+            require(user.getLastDmzResult()==null && beforeReplacement.equals(DmzSourceMaterializationQualification.fingerprint(q))
+                    && saved.restrictionOutcome.trace.size()==1,"source replacement preserves physical Q and detached historical trace");
+            moveContextFixture(dir,"Rules","Replacement");
+            moveContextFixture(dir,"Rules-original","Rules");
+            processor.execute(PARSER.parse(command),user);
+            DmzSourcesQuery.Result restored=processor.execute(PARSER.parse("ctx dmz choose 1"),user).getDmzResult();
+            require(restored.restrictionOutcome.trace.get(0).selected.identity().equals(saved.restrictionOutcome.trace.get(0).selected.identity()),
+                    "restored exact source reproduces the historical branch choice through fresh reconstruction");
             require(q.compile("!later(9);",null,false),"Q advances after saving a restriction frontier");
             user.checkpoint(q);
             require(db.getRevision()>revision,"Q publishes a new immutable revision");
@@ -272,4 +295,10 @@ public final class DmzConsoleWorkflowRunner {
         } finally { user.setCurrentMind(q.closeStorage()); }
     }
     private static void require(boolean value,String reason) { ++checks;if(!value)throw new AssertionError(reason); }
+    private static void moveContextFixture(Path directory,String from,String to) throws Exception {
+        Path source=directory.resolve(from),target=directory.resolve(to);
+        Files.move(ContextStore.contextPath(source),ContextStore.contextPath(target));
+        Files.move(ContextStore.revisionPath(source),ContextStore.revisionPath(target));
+        Files.move(ContextStore.stateRoot(source),ContextStore.stateRoot(target));
+    }
 }

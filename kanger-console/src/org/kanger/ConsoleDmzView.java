@@ -115,6 +115,12 @@ final class ConsoleDmzView {
         System.out.println("Trigger: "+locator(result,request.triggerRevision)+"@"+request.triggerRevision.getRevision()+":"+request.triggerRule
                 +"; restriction-budget="+request.budget);
         if(detailed) {
+            for(DmzSourcesQuery.RestrictionStep step:outcome.trace) {
+                int ordinal=0;
+                for(int i=0;i<step.alternatives.size();++i)if(step.alternatives.get(i).identity().equals(step.selected.identity()))ordinal=i+1;
+                System.out.println("Restriction step "+step.number+": selected alternative "+ordinal+"/"+step.alternatives.size()+" -> "+step.after);
+                System.out.println("  Historical identity: "+step.selected.identity());
+            }
             int cut=0;
             for(DmzSourcesQuery.Proof proof:result.restrictionProofs) {
                 System.out.println("Restricted source chain "+(++cut)+":");tree(result,proof,"  ");

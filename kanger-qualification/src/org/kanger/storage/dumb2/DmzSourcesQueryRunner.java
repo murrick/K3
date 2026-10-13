@@ -142,6 +142,10 @@ public final class DmzSourcesQueryRunner {
             DmzSourcesQuery.Result second=q.executeDmzSources(current.chooseRestriction(2));
             require(second.restrictionProofs.get(0).identity().equals(current.restrictionOutcome.availableChoices.get(1).identity()),
                     "historical ordinal helper preserves an explicit nonfirst caller choice");
+            require(second.restrictionOutcome.trace.size()==1 && second.restrictionOutcome.trace.get(0).alternatives.size()
+                    ==current.restrictionOutcome.availableChoices.size(),"trace retains all offered alternatives for an explicit nonfirst selection");
+            reject(() -> second.restrictionOutcome.trace.clear(),UnsupportedOperationException.class);
+            reject(() -> second.restrictionOutcome.trace.get(0).alternatives.clear(),UnsupportedOperationException.class);
             reject(() -> currentChoicesImmutable(base,db,q,a,trigger),UnsupportedOperationException.class);
             reject(() -> db.executeDmzSources(q,optIn(base,a,trigger,Collections.singletonList("foreign-proof"),10000)),IllegalArgumentException.class);
             reject(() -> db.executeDmzSources(q,optIn(base,a,Long.MAX_VALUE,choices,10000)),IllegalArgumentException.class);
@@ -149,12 +153,26 @@ public final class DmzSourcesQueryRunner {
             for(int count=0;current.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT;++count) {
                 require(count<8 && !current.restrictionOutcome.availableChoices.isEmpty(),"bounded caller choice workflow");
                 DmzSourcesQuery.Proof selected=current.restrictionOutcome.availableChoices.get(0);
+                DmzSourcesQuery.Result earlier=current;
                 choices.add(selected.identity());
                 current=db.executeDmzSources(q,optIn(base,a,trigger,choices,10000));
                 require(current.restrictionProofs.size()==choices.size() && current.restrictionOutcome.choices==choices.size(),
                         "fresh provider reconstruction validates the full exact choice prefix");
                 for(int i=0;i<choices.size();++i)require(choices.get(i).equals(current.restrictionProofs.get(i).identity()),
                         "detached selected proof identities are stable across invocations");
+                require(current.restrictionOutcome.trace.size()==choices.size(),"trace covers every replayed choice");
+                for(int i=0;i<choices.size();++i) {
+                    DmzSourcesQuery.RestrictionStep step=current.restrictionOutcome.trace.get(i);
+                    require(step.number==i+1 && step.selected.identity().equals(choices.get(i))
+                            && step.alternatives.stream().anyMatch(proof->proof.identity().equals(step.selected.identity()))
+                            && step.after==(i+1==choices.size()?current.restrictionOutcome.status:DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT),
+                            "historical alternatives, selection and resulting status are coherent");
+                    if(i<earlier.restrictionOutcome.trace.size()) {
+                        DmzSourcesQuery.RestrictionStep previous=earlier.restrictionOutcome.trace.get(i);
+                        require(previous.selected.identity().equals(step.selected.identity())
+                                && previous.alternatives.size()==step.alternatives.size(),"earlier branch trace survives native owner closure and fresh replay");
+                    }
+                }
                 org.kanger.DmzCandidateSession.requireSettledPhysicalQ(q);
                 require(state.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)) && user.getCurrentMind()==q
                         && db.getRevision()==pin.getRevision(),"each provider invocation restores physical Q");
@@ -199,6 +217,8 @@ public final class DmzSourcesQueryRunner {
                 require(stopped.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.STOPPED_UNCOVERED
                         && stopped.restrictionOutcome.availableChoices.isEmpty() && stopped.opinions.isEmpty() && stopped.restartRequired,
                         "uncovered successive history returns a stopped outcome without a complete opinion");
+                require(stopped.restrictionOutcome.trace.size()==prefix.size() && stopped.restrictionOutcome.trace.get(prefix.size()-1).after
+                        ==DmzSourcesQuery.RestrictionStatus.STOPPED_UNCOVERED,"uncovered outcome retains the executed historical branch trace");
                 DmzSourcesQuery.Result stoppedResult=stopped;
                 reject(() -> stoppedResult.chooseRestriction(1),IllegalStateException.class);
                 IContextResults.Revision initialGap=create(dir,"InitialGap","!other("+firstRoot+"); !@x other(x) -> "+sign+"cache(x);");
