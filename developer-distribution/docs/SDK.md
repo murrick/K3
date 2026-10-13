@@ -805,6 +805,14 @@ The original result and its immutable alternatives remain readable. For commands
 selection errors retain the saved result; a refusal after provider execution is
 attempted clears it. This saved workflow carries no native session or resume token.
 
+Console also preserves the active frontier when saved-choice parsing rejects an
+invalid, repeated or unsupported option, or selection preparation rejects an
+ordinal or visit limit. `ctx dmz explain` still reads the same conflict evidence.
+Correct the saved-choice command and retry it directly; no new initial request
+is needed. Only explicitly supplied limits change, and the correction replays
+the original exact pins and full earlier prefix before extending it. Errors
+before a replay request is prepared do not print an exact execution diagnostic.
+
 Provider opt-in results also expose `restrictionOutcome.trace`. Each immutable
 `RestrictionStep` records its one-based prefix number, the alternatives offered at
 that particular native conflict, the selected exact proof and the resulting

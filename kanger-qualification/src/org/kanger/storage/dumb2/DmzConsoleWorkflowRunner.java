@@ -205,7 +205,8 @@ public final class DmzConsoleWorkflowRunner {
             require(user.getLastDmzResult()==bounded,"bounded prefix refusal leaves the historical frontier readable");
             reject(() -> PARSER.parse("ctx dmz choose 1 projection=0"),CommandParseException.class);
             require(user.getLastDmzResult()==bounded,"malformed replacement limit preserves the saved frontier");
-            DmzSourcesQuery.Result enlarged=processor.execute(PARSER.parse("dmz choose 1 visits=2 projection=9999"),user).getDmzResult();
+            q=savedChoicePreparation(user,db,q,bounded,state,qp);
+            DmzSourcesQuery.Result enlarged=user.getLastDmzResult();
             require(enlarged.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE
                     && enlarged.request.sources==bounded.request.sources && enlarged.request.limits.maximumVisits==2
                     && enlarged.request.limits.projection==9999 && enlarged.request.limits.audit==bounded.request.limits.audit
@@ -308,6 +309,49 @@ public final class DmzConsoleWorkflowRunner {
                     && !db.hasConnectedContexts(),"diagnostic failures and successful retries preserve durable Q, revision and topology");
             user.setCurrentMind(afterRetry.closeStorage());
         } finally { if(user.getCurrentMind().isStorageUsed())user.setCurrentMind(user.getCurrentMind().closeStorage()); }
+    }
+    private static Mind savedChoicePreparation(User user,DB db,Mind q,DmzSourcesQuery.Result bounded,String state,
+            IContextResults.Revision qp) throws Exception {
+        String identity=bounded.request.restrictions.choices.get(0);
+        String pair=bounded.restrictionOutcome.trace.get(0).conflicts.get(0).identity();
+        String[] invalid={"ctx dmz choose 1 projection=0","dmz choose 1 projection=2 projection=3",
+                "ctx dmz \"cho\" 1 unknown=2","ctx dmz choose 1 restriction-budget=10",
+                "ctx dmz choose 0","dmz choose 99999","ctx dmz choose 1 visits=1"};
+        StringBuilder script=new StringBuilder();
+        for(String command:invalid)script.append(command).append("\nctx dmz explain\n");
+        ByteArrayOutputStream output=new ByteArrayOutputStream();
+        String errors=boundaryConsole(q,script.toString(),output);
+        require(user.getLastDmzResult()==bounded && bounded.request.limits.maximumVisits==1
+                && bounded.request.restrictions.choices.size()==1 && bounded.request.restrictions.choices.get(0).equals(identity)
+                && bounded.restrictionOutcome.trace.get(0).conflicts.get(0).identity().equals(pair),
+                "real Console parser and selection preparation errors retain the identical active frontier and immutable history");
+        require(errors.contains("Phase allowance") && errors.contains("DMZ refused:")
+                && !errors.contains("Exact replay request:") && !errors.contains("No saved DMZ query")
+                && !errors.contains("\tat org.kanger") && output.toString("UTF-8").contains("DMZ restrictions: NEXT_CONFLICT; selected=1")
+                && output.toString("UTF-8").contains("Current covered conflict evidence:"),
+                "invalid saved choices keep readable frontier evidence without execution diagnostics or losing the active query");
+        q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+        require(state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && db.getRevision()==qp.getRevision()
+                && !db.hasConnectedContexts(),"saved choice preparation errors preserve physical Q, revision and topology");
+        output.reset();
+        errors=boundaryConsole(q,"dmz choose 1 visits=2 projection=9999\nctx dmz explain\nctx tree 1\n",output);
+        DmzSourcesQuery.Result corrected=user.getLastDmzResult();
+        require(errors.isEmpty() && corrected!=null && corrected!=bounded
+                && corrected.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE
+                && corrected.request.restrictions.choices.size()==2 && corrected.request.restrictions.choices.get(0).equals(identity)
+                && corrected.restrictionOutcome.trace.get(0).conflicts.get(0).identity().equals(pair)
+                && Boolean.FALSE.equals(corrected.opinions.get(0).answer.value)
+                && output.toString("UTF-8").contains("DMZ restrictions: COMPLETE; selected=2")
+                && output.toString("UTF-8").contains("Opinion 1: FALSE"),
+                "corrected Console selection extends the still-active exact frontier and displays its completed native opinion");
+        require(bounded.request.limits.maximumVisits==1 && bounded.request.restrictions.choices.size()==1
+                && bounded.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT
+                && bounded.restrictionOutcome.trace.size()==1 && bounded.restrictionOutcome.trace.get(0).conflicts.get(0).identity().equals(pair),
+                "successful correction leaves the independently retained earlier frontier unchanged");
+        q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+        require(state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && db.getRevision()==qp.getRevision()
+                && !db.hasConnectedContexts(),"corrected saved selection preserves durable Q, published revision and topology");
+        return q;
     }
     private static void reject(Attempt attempt,Class<? extends Exception> type) throws Exception {
         try { attempt.run();throw new AssertionError("Expected rejection "+type); }
