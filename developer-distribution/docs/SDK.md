@@ -936,6 +936,12 @@ including premises; restriction-only sources do not acquire credit for the
 answer. Thus an unfiltered UNKNOWN opinion remains available while source-filtered
 UNKNOWN proof selections are empty. Invalid opinion numbers and source names
 refuse presentation without discarding the saved result.
+Retained presentations continue to use their captured identities and revisions
+after a source name is rebound or Q publishes a newer revision. They do not
+grant fresh replay permission: execution still reacquires and validates the
+original pins and whole identity prefix. An execution refusal clears the active
+saved workflow; a separately retained detached result remains readable as
+historical data. Reading it does not restore that refused active workflow.
 
 A source name rebound to a different Context UUID is refused even when its
 declarations and revision number match. Restoring the original source permits a

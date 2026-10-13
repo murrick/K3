@@ -545,6 +545,7 @@ public final class DmzConsoleWorkflowRunner {
                 require(retained.restrictionOutcome.trace.size()==conflicts-1 && unknown.restrictionOutcome.trace.size()==conflicts
                         && state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && db.getRevision()==qp.getRevision()
                         && !db.hasConnectedContexts(),"unknown completions and bounded evidence refusal preserve Q, topology and retained history");
+                if(conflicts==3)changedBoundaryViews(dir,user,db,replayed,truth,conflicts);
                 return;
             }
             String errors=boundaryConsole(q,"ctx dmz choose 1\n");
@@ -601,7 +602,71 @@ public final class DmzConsoleWorkflowRunner {
                     && selected.restrictions.choices.size()==conflicts && attempted.limits.projection==3 && done.request.limits.projection==4
                     && state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && db.getRevision()==qp.getRevision()
                     && !db.hasConnectedContexts(),"final answer refusal and recovery preserve Q, topology and detached original observations");
+            if(conflicts==3)changedBoundaryViews(dir,user,db,done,truth,conflicts);
         } finally { if(user.getCurrentMind().isStorageUsed())user.setCurrentMind(user.getCurrentMind().closeStorage()); }
+    }
+    private static void changedBoundaryViews(Path dir,User user,DB db,DmzSourcesQuery.Result saved,Boolean truth,int choices) throws Exception {
+        DmzSourcesQuery.Request request=saved.request;
+        IContextResults.Revision oldAnswer=null;
+        for(org.kanger.interfaces.DmzSourcePlan.Selection source:request.sources.external)if(source.locator.equals("Answer"))oldAnswer=source.revision;
+        require(oldAnswer!=null,"historical view fixture retains its explicit Answer source pin");
+        StringBuilder declarations=new StringBuilder();
+        for(DmzSourcesQuery.Input production:saved.productions)if(production.revision.getContextId().equals(oldAnswer.getContextId()))
+            declarations.append(production.statement).append(' ');
+        IContextResults.Revision replacement=create(dir,"Replacement",declarations.toString());
+        require(!replacement.getContextId().equals(oldAnswer.getContextId()) && replacement.getRevision()==oldAnswer.getRevision(),
+                "historical Answer replacement retains declaration text and pinned revision but changes Context identity");
+        user.setCurrentMind(user.getCurrentMind().closeStorage());
+        moveContextFixture(dir,"Answer","Answer-original");moveContextFixture(dir,"Replacement","Answer");
+        savedViews(user,saved,truth,choices);
+        String command=FORMATTER.format(CommandInvocation.command(CommandIntent.CTX_DMZ,
+                java.util.Collections.<String,Object>singletonMap("request",request),""));
+        Mind q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+        String state=DmzSourceMaterializationQualification.fingerprint(q);
+        String errors=boundaryConsole(q,command+"\n");
+        require(errors.contains("source identity mismatch") && errors.contains("Exact replay request: "+command)
+                && user.getLastDmzResult()==null && !errors.contains("\tat org.kanger"),
+                "historical presentation does not authorize fresh replay against a substituted source");
+        q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+        require(state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && db.getRevision()==request.sources.expectedQ.getRevision()
+                && !db.hasConnectedContexts(),"source-boundary refusal preserves current physical Q after historical views");
+        user.setCurrentMind(q.closeStorage());
+        User historical=new User();historical.setUserDir(Files.createDirectories(dir.resolve("historical-operator")).toString());
+        historical.setCurrentMind(new Mind(historical));historical.setLastDmzResult(saved);
+        savedViews(historical,saved,truth,choices);
+        require(user.getLastDmzResult()==null,"detached historical presentation does not restore the active refused workflow");
+        moveContextFixture(dir,"Answer","Replacement");moveContextFixture(dir,"Answer-original","Answer");
+        q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+        CanonicalCommandProcessor processor=new CanonicalCommandProcessor();
+        DmzSourcesQuery.Result restored=processor.execute(PARSER.parse(command),user).getDmzResult();
+        require(restored!=saved && restored.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE
+                && java.util.Objects.equals(restored.opinions.get(0).answer.value,truth)
+                && restored.request.restrictions.choices.equals(request.restrictions.choices),
+                "restoring the exact source permits fresh validated reconstruction without changing the retained history");
+        for(int i=0;i<choices;i++)require(restored.restrictionOutcome.trace.get(i).selected.identity().equals(saved.restrictionOutcome.trace.get(i).selected.identity())
+                && restored.restrictionOutcome.trace.get(i).conflicts.get(0).identity().equals(saved.restrictionOutcome.trace.get(i).conflicts.get(0).identity()),
+                "restored replay reproduces every historical selection and opposing pair");
+        require(q.compile("!view_later(9);",null,false),"Q advances after retaining completed historical views");
+        user.checkpoint(q);
+        long newerRevision=db.getRevision();
+        require(newerRevision>request.sources.expectedQ.getRevision(),"historical Q pin precedes the newly published revision");
+        user.setCurrentMind(q.closeStorage());
+        savedViews(user,restored,truth,choices);
+        savedViews(historical,saved,truth,choices);
+        q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+        String advanced=DmzSourceMaterializationQualification.fingerprint(q);
+        errors=boundaryConsole(q,command+"\n");
+        require(errors.contains("Q revision mismatch") && errors.contains("Exact replay request: "+command)
+                && user.getLastDmzResult()==null && !errors.contains("\tat org.kanger"),
+                "historical views remain diagnostic while fresh replay still rejects a changed Q revision");
+        q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+        require(advanced.equals(DmzSourceMaterializationQualification.fingerprint(q)) && db.getRevision()==newerRevision
+                && !db.hasConnectedContexts(),"stale historical replay preserves the advanced durable Q and topology");
+        user.setCurrentMind(q.closeStorage());
+        savedViews(historical,saved,truth,choices);
+        require(user.getLastDmzResult()==null && historical.getLastDmzResult()==saved
+                && saved.request.sources.expectedQ.getRevision()<newerRevision,
+                "retained old result stays readable after both boundary refusals without restoring replay authority");
     }
     private static void savedViews(User user,DmzSourcesQuery.Result saved,Boolean truth,int choices) throws Exception {
         require(!user.getCurrentMind().isStorageUsed() && user.getLastDmzResult()==saved,
