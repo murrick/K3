@@ -942,6 +942,11 @@ grant fresh replay permission: execution still reacquires and validates the
 original pins and whole identity prefix. An execution refusal clears the active
 saved workflow; a separately retained detached result remains readable as
 historical data. Reading it does not restore that refused active workflow.
+A successful later query replaces the runtime's active saved result. Saved
+Console views and source filters then refer only to that latest request; an
+ordinary query does not inherit earlier restriction choices or foreign source
+attribution. Previously retained detached results remain unchanged and can be
+presented independently without switching the active runtime back to them.
 
 A source name rebound to a different Context UUID is refused even when its
 declarations and revision number match. Restoring the original source permits a

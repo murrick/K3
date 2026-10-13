@@ -646,11 +646,13 @@ public final class DmzConsoleWorkflowRunner {
         for(int i=0;i<choices;i++)require(restored.restrictionOutcome.trace.get(i).selected.identity().equals(saved.restrictionOutcome.trace.get(i).selected.identity())
                 && restored.restrictionOutcome.trace.get(i).conflicts.get(0).identity().equals(saved.restrictionOutcome.trace.get(i).conflicts.get(0).identity()),
                 "restored replay reproduces every historical selection and opposing pair");
+        q=replaceSavedPresentation(user,db,restored,historical,saved,truth,choices);
         require(q.compile("!view_later(9);",null,false),"Q advances after retaining completed historical views");
         user.checkpoint(q);
         long newerRevision=db.getRevision();
         require(newerRevision>request.sources.expectedQ.getRevision(),"historical Q pin precedes the newly published revision");
         user.setCurrentMind(q.closeStorage());
+        user.setLastDmzResult(restored);
         savedViews(user,restored,truth,choices);
         savedViews(historical,saved,truth,choices);
         q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
@@ -667,6 +669,60 @@ public final class DmzConsoleWorkflowRunner {
         require(user.getLastDmzResult()==null && historical.getLastDmzResult()==saved
                 && saved.request.sources.expectedQ.getRevision()<newerRevision,
                 "retained old result stays readable after both boundary refusals without restoring replay authority");
+    }
+    private static Mind replaceSavedPresentation(User user,DB db,DmzSourcesQuery.Result previous,User historical,
+            DmzSourcesQuery.Result original,Boolean truth,int choices) throws Exception {
+        Mind q=(Mind)user.getCurrentMind();
+        String state=DmzSourceMaterializationQualification.fingerprint(q);
+        long revision=db.getRevision();
+        String prefix="ctx dmz "+db.getContextId()+"@"+revision;
+        CanonicalCommandProcessor processor=new CanonicalCommandProcessor();
+        DmzSourcesQuery.Result known=processor.execute(PARSER.parse(prefix+" ?seed("+(choices+1)+");"),user).getDmzResult();
+        require(known!=previous && user.getLastDmzResult()==known && known.request.restrictions==null
+                && known.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NOT_REQUESTED
+                && known.restrictionOutcome.trace.isEmpty() && known.restrictionProofs.isEmpty()
+                && known.acquisition.external.isEmpty() && Boolean.TRUE.equals(known.opinions.get(0).answer.value),
+                "fresh Q-only query replaces the active restricted result without inheriting its selected history or foreign sources");
+        require(known.viewOpinions.size()==1 && known.viewOpinions.get(0).restrictionProofs.isEmpty()
+                && known.viewOpinions.get(0).proofs.size()==1
+                && known.viewOpinions.get(0).proofs.get(0).source.revision.getContextId().equals(db.getContextId())
+                && known.viewOpinions.get(0).proofs.get(0).source.revision.getRevision()==revision,
+                "new saved known opinion attributes its proof only to the current exact Q pin");
+        for(String command:new String[]{"ctx dmz explain","ctx tree 1","ctx opinions"})
+            require(processor.execute(PARSER.parse(command),user).getDmzResult()==known,
+                    "saved presentation follows the latest fresh query rather than the older completed prefix");
+        reject(() -> processor.execute(PARSER.parse("ctx opinions Answer"),user),org.kanger.exception.CommandErrorException.class);
+        require(user.getLastDmzResult()==known && previous.restrictionOutcome.trace.size()==choices,
+                "old source selection refusal preserves the new active result and retained old history");
+        ByteArrayOutputStream output=new ByteArrayOutputStream();
+        String newQuery="?fresh_missing(77);";
+        String errors=boundaryConsole(q,"ctx dmz explain\nctx tree 1\nctx opinions Answer\n"+prefix+" "+newQuery
+                +"\nctx dmz explain\nctx tree 1\nctx opinions\n",output);
+        DmzSourcesQuery.Result latest=user.getLastDmzResult();
+        require(latest!=null && latest!=known && latest!=previous && latest.request.queryStatement.equals(newQuery)
+                && latest.request.restrictions==null && latest.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NOT_REQUESTED
+                && latest.restrictionProofs.isEmpty() && latest.restrictionOutcome.trace.isEmpty()
+                && latest.viewOpinions.size()==1 && latest.viewOpinions.get(0).value==null
+                && latest.viewOpinions.get(0).proofs.isEmpty() && latest.viewOpinions.get(0).restrictionProofs.isEmpty(),
+                "later ordinary unknown query replaces the known opinion without leaking either earlier proof forest");
+        require(output.toString("UTF-8").contains("Opinion 1: TRUE") && output.toString("UTF-8").contains("Opinion 1: UNKNOWN")
+                && output.toString("UTF-8").contains(newQuery) && !output.toString("UTF-8").contains("Restricted source chain")
+                && !output.toString("UTF-8").contains("Restriction step") && !output.toString("UTF-8").contains("DMZ restrictions:"),
+                "real Console switches its displayed query and truth without carrying over the old restriction report");
+        require(errors.contains("No saved source Answer") && !errors.contains("\tat org.kanger") && !errors.contains("Exact replay request:"),
+                "latest ordinary saved source filtering remains historical to that request and performs no fallback inference");
+        reject(() -> processor.execute(PARSER.parse("ctx dmz choose 1"),user),IllegalStateException.class);
+        require(user.getLastDmzResult()==latest && Boolean.TRUE.equals(known.opinions.get(0).answer.value)
+                && known.request.queryStatement.equals("?seed("+(choices+1)+");")
+                && java.util.Objects.equals(previous.opinions.get(0).answer.value,truth) && previous.restrictionOutcome.trace.size()==choices,
+                "ordinary selection refusal does not reactivate older restrictions or mutate either retained result");
+        savedViews(historical,original,truth,choices);
+        require(user.getLastDmzResult()==latest && historical.getLastDmzResult()==original,
+                "reading an independently retained historical result leaves the current active presentation untouched");
+        q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
+        require(state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && db.getRevision()==revision && !db.hasConnectedContexts(),
+                "active result replacement and historical reads preserve durable Q, revision and topology");
+        return q;
     }
     private static void savedViews(User user,DmzSourcesQuery.Result saved,Boolean truth,int choices) throws Exception {
         require(!user.getCurrentMind().isStorageUsed() && user.getLastDmzResult()==saved,
