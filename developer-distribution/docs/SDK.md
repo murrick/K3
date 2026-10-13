@@ -895,6 +895,20 @@ The remaining frontier is determined by the fresh native replay; use only its
 newly offered alternatives for further explicit selections. Earlier retained
 results and diagnostic requests stay unchanged after recovery and completion.
 
+Detached proof projection failures are `DmzSourcesQuery.ProjectionRefusal`
+(an `IllegalStateException`). `phase` distinguishes `CONFLICT_EVIDENCE` from
+`QUERY_ANSWER`; `completedChoices` counts selections executed during the current
+reconstruction before projection stopped, excluding the unexecuted request
+suffix. `projectionLimit` and `restrictionBudget` retain both configured caps;
+`allowance` is their minimum. Console includes these fields in its readable
+refusal reason alongside the exact attempted command.
+
+The allowance is the exhausted bounded projection budget, not an estimate of
+the complete required proof size. A final query-answer projection can fail even
+when all conflict evidence fitted: that phase projects the native opinion's
+proof trees independently. Both phases preserve Q and permit a fresh replay with
+the same exact identity prefix and sufficient explicit limits.
+
 A source name rebound to a different Context UUID is refused even when its
 declarations and revision number match. Restoring the original source permits a
 fresh reconstruction of its old exact pin. Advancing source HEAD while retaining

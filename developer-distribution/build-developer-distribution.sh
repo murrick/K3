@@ -170,6 +170,8 @@ required_api=(
   'org/kanger/interfaces/DmzSourcesQuery.RestrictionRequest.html'
   'org/kanger/interfaces/DmzSourcesQuery.RestrictionOutcome.html'
   'org/kanger/interfaces/DmzSourcesQuery.RestrictionStep.html'
+  'org/kanger/interfaces/DmzSourcesQuery.ProjectionPhase.html'
+  'org/kanger/interfaces/DmzSourcesQuery.ProjectionRefusal.html'
   'org/kanger/interfaces/DmzConditionalResult.html'
   'org/kanger/interfaces/ITerm.html'
   'org/kanger/enums/ArgumentType.html'

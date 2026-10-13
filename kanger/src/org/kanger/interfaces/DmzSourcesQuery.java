@@ -13,6 +13,22 @@ public final class DmzSourcesQuery {
     public enum Decision { ADMITTED, REUSED_PRIMARY, DECLINED_Q, KEEP_EXISTING, KEEP_CANDIDATE }
     public enum Refusal { UNSUPPORTED_DECLARATION, GROUND_LIMIT, PRODUCTION_LIMIT }
     public enum RestrictionStatus { NOT_REQUESTED, COMPLETE, NEXT_CONFLICT, STOPPED_UNCOVERED }
+    public enum ProjectionPhase { CONFLICT_EVIDENCE, QUERY_ANSWER }
+    /** Bounded detached projection refusal; does not report the full required proof size. */
+    public static final class ProjectionRefusal extends IllegalStateException {
+        private static final long serialVersionUID=1L;
+        public final ProjectionPhase phase;
+        public final int completedChoices,projectionLimit,restrictionBudget,allowance;
+        public ProjectionRefusal(ProjectionPhase phase,int completedChoices,int projectionLimit,int restrictionBudget) {
+            super("Detached source proof budget exceeded; phase="+phase+"; completedChoices="+completedChoices
+                    +"; projection="+projectionLimit+"; restriction-budget="+restrictionBudget
+                    +"; allowance="+Math.min(projectionLimit,restrictionBudget));
+            if(phase==null || completedChoices<0 || completedChoices>128 || projectionLimit<1 || projectionLimit>10000
+                    || restrictionBudget<1 || restrictionBudget>10000)throw new IllegalArgumentException("Bounded projection refusal required");
+            this.phase=phase;this.completedChoices=completedChoices;this.projectionLimit=projectionLimit;
+            this.restrictionBudget=restrictionBudget;this.allowance=Math.min(projectionLimit,restrictionBudget);
+        }
+    }
     /** One covered historical pair of proofs for an exact opposite signed ground. */
     public static final class RestrictionConflict {
         private static final java.util.regex.Pattern GROUND=java.util.regex.Pattern.compile("!(~?)([A-Za-z_][A-Za-z_0-9]*)\\(([+-]?[0-9]+)\\);");

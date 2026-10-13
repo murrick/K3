@@ -100,12 +100,15 @@ public final class DmzSourceRestrictionWorkflow {
             for(int index=0;;++index) {
                 SortedMap<String,DmzSourcesQuery.RestrictionConflict> observed=new TreeMap<String,DmzSourcesQuery.RestrictionConflict>();
                 int[] conflictBudget={Math.min(budget,request.limits.projection)};
-                for(DmzWitnessConflicts.Combination pair:pairs) {
+                try { for(DmzWitnessConflicts.Combination pair:pairs) {
                     boolean positive=pair.left.graph.observed.nodes.get(pair.left.node).ground.sign;
                     DmzSourcesQuery.Proof a=DmzCacheRestrictionSet.publicProof(positive?pair.left:pair.right,declarations,conflictBudget);
                     DmzSourcesQuery.Proof b=DmzCacheRestrictionSet.publicProof(positive?pair.right:pair.left,declarations,conflictBudget);
                     DmzSourcesQuery.RestrictionConflict conflictPair=new DmzSourcesQuery.RestrictionConflict(a,b);
                     observed.put(conflictPair.identity(),conflictPair);
+                } } catch(DmzCacheRestrictionSet.ProofProjectionBudgetExceeded exceeded) {
+                    throw new DmzSourcesQuery.ProjectionRefusal(DmzSourcesQuery.ProjectionPhase.CONFLICT_EVIDENCE,index,
+                            request.limits.projection,budget);
                 }
                 List<DmzSourcesQuery.RestrictionConflict> conflicts=new ArrayList<DmzSourcesQuery.RestrictionConflict>(observed.values());
                 SortedMap<String,Option> options=new TreeMap<String,Option>();
@@ -150,7 +153,12 @@ public final class DmzSourceRestrictionWorkflow {
                         DmzTypedNativeResume.QueryObservation observation=continued.result.queryAnswer;
                         if(observation==null)throw new IllegalStateException("Completed restriction query observation required");
                         int[] projectionBudget={Math.min(budget,request.limits.projection)};
-                        for(DmzProofWitnesses.Witness witness:observation.proofs)proofs.add(DmzCacheRestrictionSet.publicProof(witness,declarations,projectionBudget));
+                        try {
+                            for(DmzProofWitnesses.Witness witness:observation.proofs)proofs.add(DmzCacheRestrictionSet.publicProof(witness,declarations,projectionBudget));
+                        } catch(DmzCacheRestrictionSet.ProofProjectionBudgetExceeded exceeded) {
+                            throw new DmzSourcesQuery.ProjectionRefusal(DmzSourcesQuery.ProjectionPhase.QUERY_ANSWER,index+1,
+                                    request.limits.projection,budget);
+                        }
                         answer=new DmzConditionalResult.Answer(DmzConditionalResult.CandidateMode.NONE,observation.value,
                                 observation.hypotheses,observation.assertions,proofs);
                     }

@@ -300,13 +300,17 @@ final class DmzCacheRestrictionSet {
         if(!session.isCurrent())throw new IllegalStateException("Prepared source session changed");
         return new PreparedSources(this,session,receipt.proofs);
     }
+    static final class ProofProjectionBudgetExceeded extends IllegalStateException {
+        private static final long serialVersionUID=1L;
+        ProofProjectionBudgetExceeded() { super("Detached source proof budget exceeded"); }
+    }
     static DmzSourcesQuery.Proof publicProof(DmzProofWitnesses.Witness witness,
             Map<String,DmzSourceShape.Declaration> declarations) {
         return publicProof(witness,declarations,new int[]{10000});
     }
     static DmzSourcesQuery.Proof publicProof(DmzProofWitnesses.Witness witness,
             Map<String,DmzSourceShape.Declaration> declarations,int[] remaining) {
-        if(--remaining[0]<0)throw new IllegalStateException("Detached source proof budget exceeded");
+        if(--remaining[0]<0)throw new ProofProjectionBudgetExceeded();
         DmzReplayProvenance.Binding source=witness.source;
         String key=source.context+"@"+source.revision+":"+source.sourceRule;
         DmzSourceShape.Declaration declaration=declarations.get(key);

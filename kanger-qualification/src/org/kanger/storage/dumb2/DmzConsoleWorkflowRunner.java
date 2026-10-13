@@ -256,6 +256,8 @@ public final class DmzConsoleWorkflowRunner {
                 }
             }
             require(diagnostic!=null,"Console execution refusal retains a copyable exact attempted request");
+            require(err.toString("UTF-8").contains("phase=CONFLICT_EVIDENCE; completedChoices=0; projection=1; restriction-budget=9000; allowance=1"),
+                    "Console refusal identifies the initial evidence phase and configured effective cap");
             DmzSourcesQuery.Request refused=(DmzSourcesQuery.Request)PARSER.parse(diagnostic).getArgument("request");
             require(refused.sources.expectedQ.getContextId().equals(qp.getContextId())
                     && refused.sources.expectedQ.getRevision()==qp.getRevision() && refused.limits.projection==1
@@ -430,6 +432,9 @@ public final class DmzConsoleWorkflowRunner {
             require(errors.contains("Detached source proof budget exceeded") && errors.contains("Exact replay request: "+command)
                     && !errors.contains("\tat org.kanger") && user.getLastDmzResult()==null,
                     "late projection refusal reports the third selection and both earlier exact identities");
+            require(errors.contains("phase=CONFLICT_EVIDENCE") && errors.contains("projection=6; restriction-budget=10000; allowance=6")
+                    && (errors.contains("completedChoices=1;") || errors.contains("completedChoices=2;")),
+                    "late Console refusal identifies its actual replayed prefix count and evidence projection allowance");
             DmzSourcesQuery.Request parsed=(DmzSourcesQuery.Request)PARSER.parse(command).getArgument("request");
             require(parsed.restrictions.choices.size()==3 && parsed.restrictions.choices.subList(0,2).equals(saved.request.restrictions.choices),
                     "canonical late diagnostic retains the entire ordered three-choice prefix");

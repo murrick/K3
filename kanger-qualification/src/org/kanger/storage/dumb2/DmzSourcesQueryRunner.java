@@ -28,6 +28,7 @@ public final class DmzSourcesQueryRunner {
                 for(boolean recursive:new boolean[]{false,true})restrictions(negative,recursive);
                 growingEvidence(negative);
             }
+            queryProjection();
             System.out.println("DMZ_SOURCES_QUERY_PASS checks="+checks);System.exit(0); }
         catch(Throwable failure) { failure.printStackTrace();System.exit(1); }
     }
@@ -181,6 +182,13 @@ public final class DmzSourcesQueryRunner {
             } catch(IllegalStateException refusal) {
                 require(refusal.getMessage().contains("Detached source proof budget exceeded"),
                         "one missing evidence node refuses before exposing a partial frontier");
+                require(refusal instanceof DmzSourcesQuery.ProjectionRefusal
+                        && ((DmzSourcesQuery.ProjectionRefusal)refusal).phase==DmzSourcesQuery.ProjectionPhase.CONFLICT_EVIDENCE
+                        && ((DmzSourcesQuery.ProjectionRefusal)refusal).completedChoices==0
+                        && ((DmzSourcesQuery.ProjectionRefusal)refusal).projectionLimit==exactEvidenceNodes-1
+                        && ((DmzSourcesQuery.ProjectionRefusal)refusal).restrictionBudget==10000
+                        && ((DmzSourcesQuery.ProjectionRefusal)refusal).allowance==exactEvidenceNodes-1,
+                        "initial refusal identifies the actual projection phase and effective configured allowance");
             }
             require(state.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)) && user.getCurrentMind()==q
                     && db.getRevision()==pin.getRevision() && !db.hasConnectedContexts(),
@@ -348,6 +356,11 @@ public final class DmzSourcesQueryRunner {
             } catch(IllegalStateException refusal) {
                 require(refusal.getMessage().contains("Detached source proof budget exceeded"),
                         "later evidence projection refuses after replaying the selected short restriction");
+                require(refusal instanceof DmzSourcesQuery.ProjectionRefusal
+                        && ((DmzSourcesQuery.ProjectionRefusal)refusal).phase==DmzSourcesQuery.ProjectionPhase.CONFLICT_EVIDENCE
+                        && ((DmzSourcesQuery.ProjectionRefusal)refusal).completedChoices==1
+                        && ((DmzSourcesQuery.ProjectionRefusal)refusal).allowance==3,
+                        "later evidence refusal reports one completed choice and the exact three-node cap");
             }
             require(state.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)) && user.getCurrentMind()==q
                     && db.getRevision()==pin.getRevision() && !db.hasConnectedContexts(),
@@ -400,6 +413,40 @@ public final class DmzSourcesQueryRunner {
             reject(() -> db.executeDmzSources(q,insufficientVisits),IllegalArgumentException.class);
             require(state.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)) && user.getCurrentMind()==q,
                     "provider revalidates lowered limits without modifying Q or earlier completed history");
+        } finally { user.setCurrentMind(q.closeStorage()); }
+    }
+    private static void queryProjection() throws Exception {
+        Path dir=Files.createTempDirectory("dmz-answer-projection-");System.setProperty("user.home",dir.toString());
+        create(dir,"Q","!seed(1); !~cache(1); !seed(2);");
+        IContextResults.Revision shortSource=create(dir,"Short","!@x seed(x) -> cache(x);");
+        IContextResults.Revision answerSource=create(dir,"Answer","!@x seed(x) -> a(x); !@x a(x) -> b(x); !@x b(x) -> answer(x);");
+        long trigger=primaryRule(dir,"Short",shortSource);
+        User user=new User();user.setDatabaseDir(dir.toString()+java.io.File.separator);
+        DB db=new DB();db.init(user);Mind initial=new Mind(user);user.setCurrentMind(initial);
+        Mind q=(Mind)initial.useStorage("Q");user.setCurrentMind(q);
+        try {
+            IContextResults.Revision pin=new IContextResults.Revision(db.getContextId(),db.getRevision());
+            String state=org.kanger.DmzSourceMaterializationQualification.fingerprint(q);
+            DmzSourcesQuery.Request base=projection(request(pin,"?answer(2);",1000,128,
+                    new DmzSourcePlan.Selection("Short",shortSource),new DmzSourcePlan.Selection("Answer",answerSource)),3);
+            DmzSourcesQuery.Result first=db.executeDmzSources(q,optIn(base,shortSource,trigger,Collections.<String>emptyList(),10000));
+            DmzSourcesQuery.Request selected=first.chooseRestriction(1);
+            try {
+                db.executeDmzSources(q,selected);throw new AssertionError("Long native answer projected under three-node cap");
+            } catch(DmzSourcesQuery.ProjectionRefusal refusal) {
+                require(refusal.phase==DmzSourcesQuery.ProjectionPhase.QUERY_ANSWER && refusal.completedChoices==1
+                        && refusal.projectionLimit==3 && refusal.restrictionBudget==10000 && refusal.allowance==3,
+                        "completed branch refusal identifies query-answer projection and the actual selected prefix count");
+            }
+            require(state.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)) && user.getCurrentMind()==q
+                    && db.getRevision()==pin.getRevision() && !db.hasConnectedContexts(),"query-answer projection refusal preserves physical Q and provider boundary");
+            DmzSourcesQuery.Result done=db.executeDmzSources(q,projection(selected,4));
+            require(done.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE && Boolean.TRUE.equals(done.opinions.get(0).answer.value)
+                    && done.opinions.get(0).answer.proofs.size()==1 && proofNodes(done.opinions.get(0).answer.proofs.get(0))==4
+                    && done.request.restrictions.choices.equals(selected.restrictions.choices),
+                    "one more answer node permits the same exact selected branch and four-node native proof");
+            require(state.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)) && first.restrictionOutcome.trace.isEmpty(),
+                    "successful answer replay leaves Q and retained initial evidence unchanged");
         } finally { user.setCurrentMind(q.closeStorage()); }
     }
     private static void currentChoicesImmutable(DmzSourcesQuery.Request base,DB db,Mind q,IContextResults.Revision a,long trigger) throws Exception {
