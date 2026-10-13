@@ -32,28 +32,33 @@ final class DmzTypedCacheProjection {
     }
     static DmzTypedCacheProjection project(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
             DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
-        return project(guard,proof,selected,target,budget,false,false,null);
+        return project(guard,proof,selected,target,budget,false,false,null,null);
     }
     static DmzTypedCacheProjection projectRecursive(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
             DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
-        return project(guard,proof,selected,target,budget,true,false,null);
+        return project(guard,proof,selected,target,budget,true,false,null,null);
     }
     static DmzTypedCacheProjection projectPending(TechnicalMindTransaction owner,DmzGroundCollisionRestriction guard,
             DmzProvisionalCollisionProof proof,DmzProofWitnesses.Witness selected,int budget) throws Exception {
         Mind target=owner.pendingBoundary();
         return project(guard,proof,selected,target,budget,selected!=null && selected.step>=0
-                && selected.premises.get(0).step>=0,true,null);
+                && selected.premises.get(0).step>=0,true,null,null);
     }
     static DmzTypedCacheProjection projectCache(DmzCacheCollisionEvidence evidence,DmzProofWitnesses.Witness selected,
             Mind target,int budget) throws Exception {
         return project(null,null,selected,target,budget,selected!=null && selected.step>=0
-                && selected.premises.get(0).step>=0,false,evidence);
+                && selected.premises.get(0).step>=0,false,evidence,null);
+    }
+    static DmzTypedCacheProjection projectAccumulated(DmzCacheRestrictionSet set,Mind target,int budget) throws Exception {
+        if(set==null || set.selections.isEmpty())throw new IllegalArgumentException("Nonempty cache restrictions required");
+        DmzProofWitnesses.Witness first=set.selections.get(0);
+        return project(null,null,first,target,budget,first.premises.get(0).step>=0,false,set.evidence,set);
     }
     private static DmzTypedCacheProjection project(DmzGroundCollisionRestriction guard,DmzProvisionalCollisionProof proof,
-            DmzProofWitnesses.Witness selected,Mind target,int budget,boolean recursive,boolean pending,DmzCacheCollisionEvidence evidence) throws Exception {
+            DmzProofWitnesses.Witness selected,Mind target,int budget,boolean recursive,boolean pending,DmzCacheCollisionEvidence evidence,DmzCacheRestrictionSet set) throws Exception {
         if(target==null || (guard==null && evidence==null) || budget<1 || budget>10000)throw new IllegalArgumentException("Current bounded typed cache projection required");
         boolean eligible,truncated;
-        if(evidence!=null) {
+        if(set!=null) {eligible=set.isCurrent(target);truncated=false;} else if(evidence!=null) {
             DmzCacheCollisionEvidence.Projection restriction=evidence.project(selected,target,budget);
             eligible=restriction.eligible;truncated=restriction.truncated;
         } else {
@@ -66,7 +71,8 @@ final class DmzTypedCacheProjection {
         DmzCurrentGroundProofInventory inventory=DmzCurrentGroundProofInventory.capture(target,budget,pending);
         if(!inventory.eligible || (!pending && inventory.provisional))return refused(target,inventory.truncated,0);
         DmzProofWitnesses.NoGood pattern=DmzProofWitnesses.NoGood.fromTyped(selected);
-        DmzSourcedProofGraph graph=inventory.graph.restrict(Collections.singletonList(pattern));
+        List<DmzProofWitnesses.NoGood> patterns=set==null?Collections.singletonList(pattern):set.patterns;
+        DmzSourcedProofGraph graph=inventory.graph.restrict(patterns);
         int remaining=budget;
         // Recognize the exact selected source/substitution in this current reconstruction,
         // independently of whether the selected ground has been materialized.
@@ -82,7 +88,7 @@ final class DmzTypedCacheProjection {
         if(before.truncated || (remaining-=before.created)<=0)return refused(target,true,budget);
         DmzProofWitnesses.Result after=DmzProofWitnesses.enumerate(graph,index,remaining);
         if(after.truncated || (remaining-=after.created)<=0)return refused(target,true,budget);
-        if(before.witnesses.size()-after.witnesses.size()!=1)return refused(target,false,budget-remaining);
+        if(before.witnesses.size()-after.witnesses.size()!=(set==null?1:set.selections.size()))return refused(target,false,budget-remaining);
         List<Cache> caches=new ArrayList<Cache>();
         for(IRule rule:target.getRules()) {
             if(--remaining<0)return refused(target,true,budget);
