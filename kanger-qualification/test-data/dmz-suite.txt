@@ -53,3 +53,4 @@ org.kanger.DmzTypedNativeResumeRunner | DMZ_TYPED_NATIVE_RESUME_PASS
 org.kanger.storage.dumb2.CommuneAddressWorkflowRunner | COMMUNE_ADDRESS_WORKFLOW_PASS
 org.kanger.DmzTypedCacheProjectionRunner | DMZ_TYPED_CACHE_PROJECTION_PASS
 org.kanger.DmzTypedMaterializedResumeRunner | DMZ_TYPED_MATERIALIZED_RESUME_PASS
+org.kanger.DmzTypedRecursiveResumeRunner | DMZ_TYPED_RECURSIVE_RESUME_PASS
