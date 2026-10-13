@@ -928,6 +928,15 @@ proof tree, while its restriction provenance and full historical trace remain
 available. Unknown completion still requires enough allowance to project every
 conflict's covered evidence; it does not bypass the conflict phase limits.
 
+Saved `ctx opinions`, source-filtered opinions, `ctx tree N` and `ctx dmz explain`
+read the detached result without inference or an open storage provider. Grouped
+truth views preserve the native value, answer proof identities and ordered
+restriction provenance. Source filtering uses the actual answer proof trees,
+including premises; restriction-only sources do not acquire credit for the
+answer. Thus an unfiltered UNKNOWN opinion remains available while source-filtered
+UNKNOWN proof selections are empty. Invalid opinion numbers and source names
+refuse presentation without discarding the saved result.
+
 A source name rebound to a different Context UUID is refused even when its
 declarations and revision number match. Restoring the original source permits a
 fresh reconstruction of its old exact pin. Advancing source HEAD while retaining

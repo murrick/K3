@@ -540,6 +540,7 @@ public final class DmzConsoleWorkflowRunner {
                 for(int i=0;i<conflicts;i++)require(unknown.restrictionOutcome.trace.get(i).selected.identity().equals(replayed.restrictionOutcome.trace.get(i).selected.identity())
                         && unknown.restrictionOutcome.trace.get(i).conflicts.get(0).identity().equals(replayed.restrictionOutcome.trace.get(i).conflicts.get(0).identity()),
                         "unknown fresh replay preserves all selected histories and opposing proof pairs");
+                savedViews(user,replayed,truth,conflicts);
                 q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
                 require(retained.restrictionOutcome.trace.size()==conflicts-1 && unknown.restrictionOutcome.trace.size()==conflicts
                         && state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && db.getRevision()==qp.getRevision()
@@ -594,12 +595,58 @@ public final class DmzConsoleWorkflowRunner {
             require(output.toString("UTF-8").contains("DMZ restrictions: COMPLETE; selected="+conflicts)
                     && output.toString("UTF-8").contains("Opinion 1: "+(truth?"TRUE":"FALSE")) && output.toString("UTF-8").contains(sign+"answer("+answerIndex+")"),
                     "Console displays the recovered completed opinion and signed answer proof tree");
+            savedViews(user,done,truth,conflicts);
             q=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(q);
             require(first.restrictionOutcome.trace.isEmpty() && retained.restrictionOutcome.trace.size()==conflicts-1
                     && selected.restrictions.choices.size()==conflicts && attempted.limits.projection==3 && done.request.limits.projection==4
                     && state.equals(DmzSourceMaterializationQualification.fingerprint(q)) && db.getRevision()==qp.getRevision()
                     && !db.hasConnectedContexts(),"final answer refusal and recovery preserve Q, topology and detached original observations");
         } finally { if(user.getCurrentMind().isStorageUsed())user.setCurrentMind(user.getCurrentMind().closeStorage()); }
+    }
+    private static void savedViews(User user,DmzSourcesQuery.Result saved,Boolean truth,int choices) throws Exception {
+        require(!user.getCurrentMind().isStorageUsed() && user.getLastDmzResult()==saved,
+                "recovered opinion is retained after Q closes without an active provider");
+        DmzSourcesQuery.ViewOpinion view=saved.viewOpinions.get(0);
+        require(saved.viewOpinions.size()==1 && java.util.Objects.equals(view.value,truth)
+                && view.proofs.size()==saved.opinions.get(0).answer.proofs.size() && view.restrictionProofs.size()==choices,
+                "saved grouped truth view preserves native value, answer evidence and all restriction identities");
+        for(int i=0;i<view.proofs.size();i++)require(view.proofs.get(i).identity().equals(saved.opinions.get(0).answer.proofs.get(i).identity()),
+                "saved grouped answer tree retains its exact source proof identity");
+        for(int i=0;i<choices;i++)require(view.restrictionProofs.get(i).identity().equals(saved.request.restrictions.choices.get(i)),
+                "saved grouped restriction provenance retains full caller order");
+        java.util.List<Integer> all=java.util.Collections.singletonList(1);
+        require(org.kanger.DmzOpinionSelection.select(saved,null,null).equals(all),"unfiltered saved view includes the completed native outcome");
+        require(org.kanger.DmzOpinionSelection.select(saved,"Short",null).isEmpty(),
+                "source filter does not credit a restriction-only source with the native answer");
+        java.util.List<Integer> supported=truth==null?java.util.Collections.<Integer>emptyList():all;
+        require(org.kanger.DmzOpinionSelection.select(saved,"Answer",null).equals(supported)
+                && org.kanger.DmzOpinionSelection.select(saved,saved.acquisition.authority.locator,null).equals(supported),
+                "saved source filters follow actual answer production and Q premise evidence, including opposite proofs for FALSE");
+        CanonicalCommandProcessor processor=new CanonicalCommandProcessor();
+        for(String command:new String[]{"ctx dmz explain","ctx tree 1","ctx opinions","ctx opinions Answer","ctx opinions Short"})
+            require(processor.execute(PARSER.parse(command),user).getDmzResult()==saved,
+                    "saved presentation command reuses the identical detached result without open storage: "+command);
+        reject(() -> processor.execute(PARSER.parse("ctx tree 2"),user),org.kanger.exception.CommandErrorException.class);
+        reject(() -> processor.execute(PARSER.parse("ctx opinions Missing"),user),org.kanger.exception.CommandErrorException.class);
+        if(truth==null)reject(() -> processor.execute(PARSER.parse("ctx opinions Answer tree 1"),user),org.kanger.exception.CommandErrorException.class);
+        else require(processor.execute(PARSER.parse("ctx opinions Answer tree 1"),user).getDmzResult()==saved,
+                "resolved saved source tree reads historical proof evidence without storage");
+        ByteArrayOutputStream output=new ByteArrayOutputStream();
+        String errors=boundaryConsole((Mind)user.getCurrentMind(),"ctx dmz explain\nctx opinions\nctx opinions Answer\nctx opinions Answer tree 1\nctx opinions Short\nctx tree 1\nctx tree 2\nctx opinions Missing\n",output);
+        String display=output.toString("UTF-8"),value=truth==null?"UNKNOWN":truth?"TRUE":"FALSE";
+        require(display.contains("Opinion 1: "+value) && display.contains("No saved opinions for Short")
+                && display.contains("Restricted source chain "+choices+":") && display.contains("Restriction step "+choices+":"),
+                "real saved views show the native truth, complete selected history and restriction trees without inference");
+        if(truth==null)require(display.contains("No saved opinions for Answer") && display.contains("No resolved inference tree")
+                && !display.contains("Inference 1:"),"unknown saved views display no fabricated inference or source attribution");
+        else require(display.contains("Inference 1:") && !display.contains("No saved opinions for Answer"),
+                "resolved saved views show the actual supporting or opposing answer tree");
+        require(errors.contains("No saved opinion 2") && errors.contains("No saved source Missing")
+                && !errors.contains("\tat org.kanger") && !errors.contains("Exact replay request:"),
+                "saved view selection errors remain readable without replay diagnostics or provider execution");
+        require(user.getLastDmzResult()==saved && !user.getCurrentMind().isStorageUsed()
+                && saved.restrictionOutcome.trace.size()==choices,
+                "saved view successes and selection refusals preserve the detached result and closed storage");
     }
     private static int proofNodes(DmzSourcesQuery.Proof proof) {
         int nodes=1;for(DmzSourcesQuery.Proof premise:proof.premises)nodes+=proofNodes(premise);return nodes;
