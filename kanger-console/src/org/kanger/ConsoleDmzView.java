@@ -125,6 +125,7 @@ final class ConsoleDmzView {
         for(DmzSourcesQuery.Proof proof:outcome.availableChoices) {
             System.out.println("Restriction choice "+(++number)+":");tree(result,proof,"  ");
             System.out.println("  "+choiceArgument(proof.identity()));
+            System.out.println("  ctx dmz choose "+number);
         }
         if(outcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT)
             System.out.println("Replay the full invocation with all prior choice values and one selected alternative.");

@@ -139,6 +139,9 @@ public final class DmzSourcesQueryRunner {
                     && current.restrictionOutcome.choices==0 && current.opinions.isEmpty() && current.restartRequired,
                     "explicit trigger returns choices without inventing an opinion");
             int firstRoot=current.restrictionOutcome.availableChoices.get(0).conclusion.endsWith("(1);")?1:2;
+            DmzSourcesQuery.Result second=q.executeDmzSources(current.chooseRestriction(2));
+            require(second.restrictionProofs.get(0).identity().equals(current.restrictionOutcome.availableChoices.get(1).identity()),
+                    "historical ordinal helper preserves an explicit nonfirst caller choice");
             reject(() -> currentChoicesImmutable(base,db,q,a,trigger),UnsupportedOperationException.class);
             reject(() -> db.executeDmzSources(q,optIn(base,a,trigger,Collections.singletonList("foreign-proof"),10000)),IllegalArgumentException.class);
             reject(() -> db.executeDmzSources(q,optIn(base,a,Long.MAX_VALUE,choices,10000)),IllegalArgumentException.class);
@@ -196,6 +199,8 @@ public final class DmzSourcesQueryRunner {
                 require(stopped.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.STOPPED_UNCOVERED
                         && stopped.restrictionOutcome.availableChoices.isEmpty() && stopped.opinions.isEmpty() && stopped.restartRequired,
                         "uncovered successive history returns a stopped outcome without a complete opinion");
+                DmzSourcesQuery.Result stoppedResult=stopped;
+                reject(() -> stoppedResult.chooseRestriction(1),IllegalStateException.class);
                 IContextResults.Revision initialGap=create(dir,"InitialGap","!other("+firstRoot+"); !@x other(x) -> "+sign+"cache(x);");
                 DmzSourcesQuery.Request initialUncovered=request(pin,base.queryStatement,1000,128,new DmzSourcePlan.Selection("A",a),
                         new DmzSourcePlan.Selection("B",b),new DmzSourcePlan.Selection("InitialGap",initialGap));

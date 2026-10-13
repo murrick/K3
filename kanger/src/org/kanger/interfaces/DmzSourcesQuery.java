@@ -181,6 +181,20 @@ public final class DmzSourcesQuery {
         }
     }
     public static final class Result {
+        /** Build a fresh request selecting a one-based alternative from this historical result.
+         * The caller must execute it to revalidate all pins and the whole choice prefix. */
+        public Request chooseRestriction(long number) {
+            if(request.restrictions==null || restrictionOutcome.status!=RestrictionStatus.NEXT_CONFLICT)
+                throw new IllegalStateException("Saved result does not offer restriction choices");
+            if(number<1 || number>restrictionOutcome.availableChoices.size())
+                throw new IllegalArgumentException("No saved restriction choice "+number);
+            if(request.restrictions.choices.size()>=request.limits.maximumVisits)
+                throw new IllegalStateException("Restriction visit limit reached; start a fresh request with explicit limits");
+            List<String> choices=new ArrayList<String>(request.restrictions.choices);
+            choices.add(restrictionOutcome.availableChoices.get((int)number-1).identity());
+            return new Request(request.sources,request.policy,request.queryStatement,request.limits,
+                    new RestrictionRequest(request.restrictions.triggerRevision,request.restrictions.triggerRule,choices,request.restrictions.budget));
+        }
         public final Request request;
         /** Freshly acquired physical Q and named source observations. */
         public final DmzSourcePlan acquisition;

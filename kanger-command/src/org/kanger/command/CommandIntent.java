@@ -60,6 +60,7 @@ public enum CommandIntent {
 
     CTX_DMZ,
     CTX_DMZ_EXPLAIN,
+    CTX_DMZ_CHOOSE,
     CTX_OPINION_TREE,
     CTX_OPINIONS,
     CTX_VALUES,

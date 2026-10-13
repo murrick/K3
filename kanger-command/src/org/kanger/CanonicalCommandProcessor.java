@@ -51,6 +51,7 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.STORAGE_DROP
                 || intent == CommandIntent.STORAGE_REINDEX
                 || intent == CommandIntent.CTX_DMZ_EXPLAIN
+                || intent == CommandIntent.CTX_DMZ_CHOOSE
                 || intent == CommandIntent.CTX_OPINION_TREE
                 || intent == CommandIntent.CTX_DMZ
                 || intent == CommandIntent.CTX_OPINIONS
@@ -334,6 +335,18 @@ public final class CanonicalCommandProcessor {
                 org.kanger.interfaces.DmzSourcesQuery.Result result=mind.executeDmzSources(
                         (org.kanger.interfaces.DmzSourcesQuery.Request)request);
                 ((User)user).setLastDmzResult(result);
+                return Result.successDmz(mind,result);
+            }
+            case CTX_DMZ_CHOOSE: {
+                if(!(user instanceof User))throw new org.kanger.exception.CommandErrorException("No saved DMZ query");
+                User owner=(User)user;
+                org.kanger.interfaces.DmzSourcesQuery.Result saved=owner.getLastDmzResult();
+                if(saved==null)throw new org.kanger.exception.CommandErrorException("No saved DMZ query");
+                org.kanger.interfaces.DmzSourcesQuery.Request replay=saved.chooseRestriction(
+                        ((Number)invocation.getArgument("number")).longValue());
+                owner.setLastDmzResult(null);
+                org.kanger.interfaces.DmzSourcesQuery.Result result=mind.executeDmzSources(replay);
+                owner.setLastDmzResult(result);
                 return Result.successDmz(mind,result);
             }
 

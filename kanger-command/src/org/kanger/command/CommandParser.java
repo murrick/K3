@@ -105,6 +105,8 @@ public final class CommandParser {
             case BASE:
                 return parseBase(line, tokens);
             case DMZ:
+                if(tokens.size()>1 && tryResolve(Family.DMZ,tokens.get(1).value,Keyword.CHOOSE)==Keyword.CHOOSE)
+                    return parseDmzChoice(tokens,1,line);
                 if(tokens.size()>1 && tryResolve(Family.CONTEXT,tokens.get(1).value,Keyword.EXPLAIN)==Keyword.EXPLAIN) {
                     requireSize(tokens,2);return CommandInvocation.command(CommandIntent.CTX_DMZ_EXPLAIN,line);
                 }
@@ -531,6 +533,8 @@ public final class CommandParser {
                 if(number==0)throw error(INVALID_ARGUMENT_SHAPE,"Positive opinion number required");
                 return CommandInvocation.command(CommandIntent.CTX_OPINION_TREE,args("number",number),raw);
             case DMZ:
+                if(tokens.size()>=3 && tryResolve(Family.DMZ,tokens.get(2).value,Keyword.CHOOSE)==Keyword.CHOOSE)
+                    return parseDmzChoice(tokens,2,raw);
                 if(tokens.size()>=3 && tryResolve(Family.CONTEXT,tokens.get(2).value,Keyword.EXPLAIN)==Keyword.EXPLAIN) {
                     requireSize(tokens,3);return CommandInvocation.command(CommandIntent.CTX_DMZ_EXPLAIN,raw);
                 }
@@ -923,6 +927,12 @@ public final class CommandParser {
         return p >= line.length() ? "" : line.substring(p);
     }
 
+    private CommandInvocation parseDmzChoice(List<Token> tokens,int index,String raw) throws CommandParseException {
+        requireSize(tokens,index+2);
+        long number=parseNonNegativeLong(tokens.get(index+1).value,"restriction choice");
+        if(number==0)throw error(INVALID_ARGUMENT_SHAPE,"Positive restriction choice number required");
+        return CommandInvocation.command(CommandIntent.CTX_DMZ_CHOOSE,args("number",number),raw);
+    }
     private List<Token> tokenize(String line, int maxTokens, boolean validateRest)
             throws CommandParseException {
         List<Token> result = new ArrayList<Token>();

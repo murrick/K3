@@ -79,6 +79,7 @@ public final class CommandRegistry {
         FORK,
         DMZ,
         OPINION,
+        CHOOSE,
         OPINIONS,
         VALUES,
         SOLVES,
@@ -224,6 +225,7 @@ public final class CommandRegistry {
         keyword(Family.CONTEXT, Keyword.EXPLAIN, "explain");
         keyword(Family.CONTEXT, Keyword.ASK, "ask");
         keyword(Family.CONTEXT, Keyword.DMZ, "dmz");
+        keyword(Family.DMZ, Keyword.CHOOSE, "choose");
         keyword(Family.CONTEXT, Keyword.TREE, "tree");
 
         keyword(Family.CONTEXT, Keyword.OPINIONS, "opinions", "opinion");
@@ -339,6 +341,9 @@ public final class CommandRegistry {
 
         define(CommandIntent.CTX_DMZ_EXPLAIN,"ctx dmz explain","CONTEXT",
                 "Show the saved last DMZ query's technical report without inference.",args(),n++);
+        define(CommandIntent.CTX_DMZ_CHOOSE,"ctx dmz choose <N>","CONTEXT",
+                "Select one alternative from the saved pending restriction result and replay the full exact-pinned request.",
+                args("number","Positive alternative number from the latest saved result."),n++);
         define(CommandIntent.CTX_OPINION_TREE,"ctx tree <N>","CONTEXT",
                 "Show the selected saved opinion's exact source inference alternatives without inference.",
                 args("number","Positive saved opinion number."),n++);

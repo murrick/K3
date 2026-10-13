@@ -388,6 +388,7 @@ public final class CanonicalConsole {
                 return same(mind);
 
             case CTX_DMZ_EXPLAIN:
+            case CTX_DMZ_CHOOSE:
             case CTX_OPINION_TREE:
             case CTX_DMZ:
                 try {
@@ -534,8 +535,15 @@ public final class CanonicalConsole {
                     && org.kanger.command.CommandRegistry.resolveKeyword(family,words[1])==org.kanger.command.CommandRegistry.Keyword.DMZ)detail=2;
             else return false;
             if(words.length<=detail)return true;
+            String operation=words[detail];
+            if(operation.length()>1 && operation.startsWith("\"") && operation.endsWith("\""))
+                operation=operation.substring(1,operation.length()-1);
+            try {
+                if(org.kanger.command.CommandRegistry.resolveKeyword(org.kanger.command.CommandRegistry.Family.DMZ,operation,
+                        org.kanger.command.CommandRegistry.Keyword.CHOOSE)==org.kanger.command.CommandRegistry.Keyword.CHOOSE)return false;
+            } catch(org.kanger.command.CommandParseException notChoose) { /* A fresh invocation may follow. */ }
             try { return org.kanger.command.CommandRegistry.resolveKeyword(
-                    org.kanger.command.CommandRegistry.Family.CONTEXT,words[detail],org.kanger.command.CommandRegistry.Keyword.EXPLAIN)
+                    org.kanger.command.CommandRegistry.Family.CONTEXT,operation,org.kanger.command.CommandRegistry.Keyword.EXPLAIN)
                     !=org.kanger.command.CommandRegistry.Keyword.EXPLAIN; }
             catch(org.kanger.command.CommandParseException notExplain) { return true; }
         } catch(org.kanger.command.CommandParseException unknown) { return false; }

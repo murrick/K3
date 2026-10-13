@@ -787,3 +787,20 @@ Keep all earlier choices in subsequent commands. `ctx dmz explain` reads the
 saved result without inference, including selected chains and next alternatives.
 `ctx tree 1` includes the completed opinion's restriction provenance. DMZ execution
 refusals clear the saved command result; malformed syntax is rejected during parsing.
+
+For an interactive saved workflow, `ctx dmz choose <N>` (or `dmz choose <N>`)
+selects the one-based alternative printed by the latest saved `NEXT_CONFLICT`
+result. It builds and executes a fresh request with the entire earlier identity
+prefix, the original query and exact resolved source/Q pins. A changed source HEAD
+does not replace those pins; a changed Q revision refuses replay. The command
+accepts no automatic or default selection. Numbers refer only to the latest saved
+pending result. `COMPLETE`, `STOPPED_UNCOVERED` and ordinary query results cannot
+be selected as a restriction frontier.
+
+`result.chooseRestriction(N)` provides the same historical selection helper for
+SDK clients. It returns a fresh `DmzSourcesQuery.Request` without inference or
+provider lookup; execute it with `q.executeDmzSources(...)` to validate and run it.
+Invalid ordinals and exhausted visit/choice limits refuse request construction.
+The original result and its immutable alternatives remain readable. For commands,
+selection errors retain the saved result; a refusal after provider execution is
+attempted clears it. This saved workflow carries no native session or resume token.

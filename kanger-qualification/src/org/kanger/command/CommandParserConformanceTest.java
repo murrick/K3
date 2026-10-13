@@ -454,6 +454,12 @@ public final class CommandParserConformanceTest {
         expectCanonical("ctx t 2", "ctx tree 2");
         expectCanonical("ctx opinion A tr 1", "ctx opinions A tree 1");
         expectCanonical("ctx dM eX", "ctx dmz explain");
+        expectCanonical("dmz choose 2","ctx dmz choose 2");
+        expectCanonical("ctx dmz cho 1","ctx dmz choose 1");
+        check(((Number)parser.parse("ctx dmz choose 3").getArgument("number")).longValue()==3,"restriction choice is an exact positive ordinal");
+        reject("ctx dmz choose 0",INVALID_ARGUMENT_SHAPE);
+        reject("dmz choose -1",INVALID_ARGUMENT_SHAPE);
+        reject("dmz choose 99999999999999999999999",INVALID_ARGUMENT_SHAPE);
         expectCanonical("ctx a A ?left(2);", "ctx ask A ?left(2);");
         expectArgument("ctx A ?$x child(x, John);",CommandIntent.CTX_ISOLATED_QUERY,"locator","A");
         expectArgument("ctx D ?left(2);",CommandIntent.CTX_ISOLATED_QUERY,"locator","D");
