@@ -828,6 +828,12 @@ consume their own allowance. An insufficient allowance refuses the invocation
 before returning a partial set of pairs or choices; Q is restored and a fresh
 request with sufficient allowance can reconstruct the same historical evidence.
 Displaying a primary Q endpoint does not permit choosing it as a restriction.
+The allowance applies separately at each reconstructed conflict. A later
+conflict can require more proof nodes than the first one: an allowance sufficient
+to inspect the first frontier may refuse execution of its selected prefix when
+projecting the next frontier. Retained detached results remain readable after
+that refusal. Raise the projection allowance in a fresh request while preserving
+the exact source pins, trigger and entire selected identity prefix.
 
 A source name rebound to a different Context UUID is refused even when its
 declarations and revision number match. Restoring the original source permits a

@@ -24,7 +24,10 @@ public final class DmzSourcesQueryRunner {
                 DmzSourcesQuery.Policy.FIXED_UNITS_THEN_ORDERED_GROUNDS_CONTEXT_UUID_RULE_ID,query,limits(visits,nodes));
     }
     public static void main(String[] args) {
-        try { run();for(boolean negative:new boolean[]{false,true})for(boolean recursive:new boolean[]{false,true})restrictions(negative,recursive);
+        try { run();for(boolean negative:new boolean[]{false,true}) {
+                for(boolean recursive:new boolean[]{false,true})restrictions(negative,recursive);
+                growingEvidence(negative);
+            }
             System.out.println("DMZ_SOURCES_QUERY_PASS checks="+checks);System.exit(0); }
         catch(Throwable failure) { failure.printStackTrace();System.exit(1); }
     }
@@ -306,6 +309,64 @@ public final class DmzSourcesQueryRunner {
                     new DmzSourcesQuery.RestrictionRequest(empty,0,Collections.<String>emptyList(),10000)),IllegalArgumentException.class);
             require(state.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)) && user.getCurrentMind()==q,
                     "invalid exact choices and triggers preserve the provider boundary");
+        } finally { user.setCurrentMind(q.closeStorage()); }
+    }
+    private static void growingEvidence(boolean negative) throws Exception {
+        Path dir=Files.createTempDirectory("dmz-growing-evidence-");System.setProperty("user.home",dir.toString());
+        String sign=negative?"~":"",opposite=negative?"":"~";
+        create(dir,"Q","!seed(1); !deep(2); !"+opposite+"cache(2);");
+        IContextResults.Revision shortSource=create(dir,"Short","!@x seed(x) -> "+sign+"cache(x);");
+        IContextResults.Revision longSource=create(dir,"Long","!@x deep(x) -> middle(x); !@x middle(x) -> "+sign+"cache(x);");
+        IContextResults.Revision blocker=create(dir,"Blocker","!"+opposite+"cache(1);");
+        long trigger=primaryRule(dir,"Blocker",blocker);
+        User user=new User();user.setDatabaseDir(dir.toString()+java.io.File.separator);
+        DB db=new DB();db.init(user);Mind initial=new Mind(user);user.setCurrentMind(initial);
+        Mind q=(Mind)initial.useStorage("Q");user.setCurrentMind(q);
+        try {
+            IContextResults.Revision pin=new IContextResults.Revision(db.getContextId(),db.getRevision());
+            String state=org.kanger.DmzSourceMaterializationQualification.fingerprint(q);
+            DmzSourcesQuery.Request base=request(pin,"?"+sign+"cache(1);",1000,128,
+                    new DmzSourcePlan.Selection("Short",shortSource),new DmzSourcePlan.Selection("Long",longSource),
+                    new DmzSourcePlan.Selection("Blocker",blocker));
+            DmzSourcesQuery.Result first=db.executeDmzSources(q,optIn(projection(base,3),blocker,trigger,Collections.<String>emptyList(),10000));
+            require(first.restrictionOutcome.availableChoices.size()==1 && first.restrictionOutcome.availableConflicts.size()==1,
+                    "explicit short trigger exposes one first conflict before the longer derivation");
+            DmzSourcesQuery.RestrictionConflict firstPair=first.restrictionOutcome.availableConflicts.get(0);
+            require(proofNodes(firstPair.positive)+proofNodes(firstPair.negative)==3,
+                    "first evidence exactly consumes its three-node allowance");
+            DmzSourcesQuery.Request lowReplay=first.chooseRestriction(1);
+            String choice=lowReplay.restrictions.choices.get(0);
+            try {
+                db.executeDmzSources(q,lowReplay);throw new AssertionError("Later larger evidence accepted under first-conflict budget");
+            } catch(IllegalStateException refusal) {
+                require(refusal.getMessage().contains("Detached source proof budget exceeded"),
+                        "later evidence projection refuses after replaying the selected short restriction");
+            }
+            require(state.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)) && user.getCurrentMind()==q
+                    && db.getRevision()==pin.getRevision() && !db.hasConnectedContexts(),
+                    "later projection failure rolls back the selected prefix and preserves provider topology");
+            require(first.restrictionOutcome.trace.isEmpty() && first.restrictionOutcome.availableConflicts.get(0).identity().equals(firstPair.identity())
+                    && first.chooseRestriction(1).restrictions.choices.equals(lowReplay.restrictions.choices),
+                    "failed later projection leaves retained first evidence and exact replay request usable");
+            DmzSourcesQuery.Result later=db.executeDmzSources(q,optIn(projection(base,4),blocker,trigger,Collections.singletonList(choice),10000));
+            require(later.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT && later.restrictionOutcome.trace.size()==1
+                    && later.restrictionOutcome.trace.get(0).selected.identity().equals(choice)
+                    && later.restrictionOutcome.trace.get(0).conflicts.get(0).identity().equals(firstPair.identity()),
+                    "larger allowance reconstructs the same selected prefix and historical pair");
+            require(later.restrictionOutcome.availableConflicts.size()==1 && later.restrictionOutcome.availableChoices.size()==1,
+                    "later frontier exposes the full remaining recursive pair");
+            DmzSourcesQuery.RestrictionConflict laterPair=later.restrictionOutcome.availableConflicts.get(0);
+            require(proofNodes(laterPair.positive)+proofNodes(laterPair.negative)==4 && !laterPair.contains(choice),
+                    "later evidence needs four nodes and excludes the already selected derivation");
+            DmzSourcesQuery.Result done=db.executeDmzSources(q,later.chooseRestriction(1));
+            require(done.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE && done.restrictionOutcome.trace.size()==2
+                    && done.restrictionOutcome.trace.get(0).conflicts.get(0).identity().equals(firstPair.identity())
+                    && done.restrictionOutcome.trace.get(1).conflicts.get(0).identity().equals(laterPair.identity())
+                    && Boolean.FALSE.equals(done.opinions.get(0).answer.value),
+                    "per-conflict allowance supports both historical pairs and the final restricted native opinion");
+            require(later.restrictionOutcome.trace.size()==1 && later.restrictionOutcome.availableConflicts.get(0).identity().equals(laterPair.identity())
+                    && state.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)) && user.getCurrentMind()==q,
+                    "completed replay preserves earlier detached frontier and physical Q");
         } finally { user.setCurrentMind(q.closeStorage()); }
     }
     private static void currentChoicesImmutable(DmzSourcesQuery.Request base,DB db,Mind q,IContextResults.Revision a,long trigger) throws Exception {
