@@ -822,6 +822,13 @@ alternative was offered and do not make either endpoint an eligible restriction
 choice by themselves. `ctx dmz explain` displays both sides for pending and
 historical conflicts.
 
+The conflict-evidence projection allowance counts every proof node on both sides
+of all covered pairs at a conflict. Repeated endpoint trees in separate pairs
+consume their own allowance. An insufficient allowance refuses the invocation
+before returning a partial set of pairs or choices; Q is restored and a fresh
+request with sufficient allowance can reconstruct the same historical evidence.
+Displaying a primary Q endpoint does not permit choosing it as a restriction.
+
 A source name rebound to a different Context UUID is refused even when its
 declarations and revision number match. Restoring the original source permits a
 fresh reconstruction of its old exact pin. Advancing source HEAD while retaining

@@ -139,6 +139,8 @@ public final class DmzSourcesQueryRunner {
                     && current.restrictionOutcome.choices==0 && current.opinions.isEmpty() && current.restartRequired,
                     "explicit trigger returns choices without inventing an opinion");
             int firstRoot=current.restrictionOutcome.availableChoices.get(0).conclusion.endsWith("(1);")?1:2;
+            boolean mixedChain=false;
+            int evidenceNodes=0;
             require(current.restrictionOutcome.availableConflicts.size()==current.restrictionOutcome.availableChoices.size(),
                     "covered pending conflict preserves both proof endpoints for every source alternative");
             for(DmzSourcesQuery.RestrictionConflict pair:current.restrictionOutcome.availableConflicts) {
@@ -147,10 +149,39 @@ public final class DmzSourcesQueryRunner {
                 DmzSourcesQuery.Proof protectedQ=negative?pair.positive:pair.negative;
                 require(protectedQ.premises.isEmpty() && protectedQ.source.revision.getContextId().equals(pin.getContextId())
                         && protectedQ.source.revision.getRevision()==pin.getRevision(),"opposing Q endpoint retains its exact primary source pin");
+                DmzSourcesQuery.Proof external=negative?pair.negative:pair.positive;
+                java.util.Set<java.util.UUID> origins=new java.util.HashSet<java.util.UUID>();
+                proofOrigins(external,origins);
+                require(origins.contains(pin.getContextId()) && (origins.contains(a.getContextId()) || origins.contains(b.getContextId())),
+                        "external endpoint retains both its production source and its Q premise source");
+                if(origins.contains(a.getContextId()) && origins.contains(b.getContextId()))mixedChain=true;
+                evidenceNodes+=proofNodes(pair.positive)+proofNodes(pair.negative);
             }
+            require(!recursive || mixedChain,"recursive conflict evidence includes derivations crossing both exact external sources");
+            final int exactEvidenceNodes=evidenceNodes;
+            DmzSourcesQuery.Request exactProjection=projection(base,exactEvidenceNodes);
+            DmzSourcesQuery.Result exact=db.executeDmzSources(q,optIn(exactProjection,a,trigger,Collections.<String>emptyList(),10000));
+            require(exact.restrictionOutcome.availableConflicts.size()==current.restrictionOutcome.availableConflicts.size(),
+                    "exact shared evidence node allowance succeeds without dropping opposing alternatives");
+            for(int i=0;i<exact.restrictionOutcome.availableConflicts.size();i++)require(exact.restrictionOutcome.availableConflicts.get(i).identity()
+                    .equals(current.restrictionOutcome.availableConflicts.get(i).identity()),"budget-boundary replay retains deterministic exact endpoint trees");
+            try {
+                db.executeDmzSources(q,optIn(projection(base,exactEvidenceNodes-1),a,trigger,Collections.<String>emptyList(),10000));
+                throw new AssertionError("Incomplete opposing evidence accepted");
+            } catch(IllegalStateException refusal) {
+                require(refusal.getMessage().contains("Detached source proof budget exceeded"),
+                        "one missing evidence node refuses before exposing a partial frontier");
+            }
+            require(state.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)) && user.getCurrentMind()==q
+                    && db.getRevision()==pin.getRevision() && !db.hasConnectedContexts(),
+                    "evidence projection refusal restores physical Q, revision and topology");
             DmzSourcesQuery.Result initialResult=current;
             reject(() -> initialResult.restrictionOutcome.availableConflicts.clear(),UnsupportedOperationException.class);
             DmzSourcesQuery.RestrictionConflict firstPair=current.restrictionOutcome.availableConflicts.get(0);
+            String protectedIdentity=(negative?firstPair.positive:firstPair.negative).identity();
+            reject(() -> db.executeDmzSources(q,optIn(base,a,trigger,Collections.singletonList(protectedIdentity),10000)),IllegalArgumentException.class);
+            require(db.executeDmzSources(q,optIn(base,a,trigger,Collections.<String>emptyList(),10000)).restrictionOutcome.availableConflicts.get(0)
+                    .identity().equals(firstPair.identity()),"fresh full evidence remains usable after budget and primary-selection refusals");
             reject(() -> new DmzSourcesQuery.RestrictionConflict(firstPair.negative,firstPair.positive),IllegalArgumentException.class);
             DmzSourcesQuery.Proof wrongGround=new DmzSourcesQuery.Proof(firstPair.negative.source,"!~other(99);",firstPair.negative.premises);
             reject(() -> new DmzSourcesQuery.RestrictionConflict(firstPair.positive,wrongGround),IllegalArgumentException.class);
@@ -279,6 +310,19 @@ public final class DmzSourcesQueryRunner {
     }
     private static void currentChoicesImmutable(DmzSourcesQuery.Request base,DB db,Mind q,IContextResults.Revision a,long trigger) throws Exception {
         db.executeDmzSources(q,optIn(base,a,trigger,Collections.<String>emptyList(),10000)).restrictionOutcome.availableChoices.clear();
+    }
+    private static int proofNodes(DmzSourcesQuery.Proof proof) {
+        int count=1;for(DmzSourcesQuery.Proof premise:proof.premises)count+=proofNodes(premise);return count;
+    }
+    private static void proofOrigins(DmzSourcesQuery.Proof proof,java.util.Set<java.util.UUID> origins) {
+        origins.add(proof.source.revision.getContextId());
+        for(DmzSourcesQuery.Proof premise:proof.premises)proofOrigins(premise,origins);
+    }
+    private static DmzSourcesQuery.Request projection(DmzSourcesQuery.Request base,int nodes) {
+        DmzSourcesQuery.Limits l=base.limits;
+        return new DmzSourcesQuery.Request(base.sources,base.policy,base.queryStatement,
+                new DmzSourcesQuery.Limits(l.preparation,l.audit,l.lookup,l.recognition,nodes,l.application,l.query,
+                        l.depth,l.nodes,l.work,l.maximumVisits));
     }
     private static DmzSourcesQuery.Request optIn(DmzSourcesQuery.Request base,IContextResults.Revision pin,long rule,java.util.List<String> choices,int budget) {
         return new DmzSourcesQuery.Request(base.sources,base.policy,base.queryStatement,base.limits,
