@@ -180,7 +180,7 @@ public final class DmzConsoleWorkflowRunner {
                 result=processor.execute(PARSER.parse(count==0?"dmz choose 1":"ctx dmz choose 1"),user).getDmzResult();
                 require(result.request.restrictions.choices.equals(parsed.restrictions.choices),
                         "saved ordinal selection replays the identical whole proof prefix");
-                script.append(count==0?"ctx dmz \"cho\" 1\nctx dmz explain\n":"dmz choose 1\nctx dmz explain\n");
+                script.append(count==0?"ctx dmz \"cho\" 1 projection=9999\nctx dmz explain\n":"dmz choose 1 visits=3\nctx dmz explain\n");
             }
             require(result.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE && result.restrictionProofs.size()==2
                     && Boolean.FALSE.equals(result.opinions.get(0).answer.value),"named command completes both conflicts and queries protected Q fact");
@@ -200,6 +200,15 @@ public final class DmzConsoleWorkflowRunner {
             DmzSourcesQuery.Result bounded=user.getLastDmzResult();
             reject(() -> processor.execute(PARSER.parse("ctx dmz choose 1"),user),IllegalStateException.class);
             require(user.getLastDmzResult()==bounded,"bounded prefix refusal leaves the historical frontier readable");
+            reject(() -> PARSER.parse("ctx dmz choose 1 projection=0"),CommandParseException.class);
+            require(user.getLastDmzResult()==bounded,"malformed replacement limit preserves the saved frontier");
+            DmzSourcesQuery.Result enlarged=processor.execute(PARSER.parse("dmz choose 1 visits=2 projection=9999"),user).getDmzResult();
+            require(enlarged.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE
+                    && enlarged.request.sources==bounded.request.sources && enlarged.request.limits.maximumVisits==2
+                    && enlarged.request.limits.projection==9999 && enlarged.request.limits.audit==bounded.request.limits.audit
+                    && enlarged.request.restrictions.budget==9000
+                    && enlarged.request.restrictions.choices.subList(0,1).equals(bounded.request.restrictions.choices),
+                    "saved choice overrides only explicit limits and extends the exact full prefix beyond the old visit bound");
             processor.execute(PARSER.parse(named),user);
             IContextResults.Revision advanced=create(dir,"Named Units","!later(99);");
             require(advanced.getRevision()>units.getRevision(),"source HEAD advances before saved choice replay");

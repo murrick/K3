@@ -928,10 +928,17 @@ public final class CommandParser {
     }
 
     private CommandInvocation parseDmzChoice(List<Token> tokens,int index,String raw) throws CommandParseException {
-        requireSize(tokens,index+2);
+        requireRequiredArgument(tokens,index+2);
         long number=parseNonNegativeLong(tokens.get(index+1).value,"restriction choice");
         if(number==0)throw error(INVALID_ARGUMENT_SHAPE,"Positive restriction choice number required");
-        return CommandInvocation.command(CommandIntent.CTX_DMZ_CHOOSE,args("number",number),raw);
+        List<String> options=new ArrayList<String>();
+        for(int i=index+2;i<tokens.size();i++)options.add(tokens.get(i).value);
+        try {
+            Map<String,Object> arguments=args("number",number);
+            arguments.put("limits",DmzLimitOverrides.parse(options));
+            return CommandInvocation.command(CommandIntent.CTX_DMZ_CHOOSE,arguments,raw);
+        }
+        catch(IllegalArgumentException invalid) { throw error(INVALID_ARGUMENT_SHAPE,invalid.getMessage()); }
     }
     private List<Token> tokenize(String line, int maxTokens, boolean validateRest)
             throws CommandParseException {

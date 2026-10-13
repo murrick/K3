@@ -341,9 +341,9 @@ public final class CommandRegistry {
 
         define(CommandIntent.CTX_DMZ_EXPLAIN,"ctx dmz explain","CONTEXT",
                 "Show the saved last DMZ query's technical report without inference.",args(),n++);
-        define(CommandIntent.CTX_DMZ_CHOOSE,"ctx dmz choose <N>","CONTEXT",
+        define(CommandIntent.CTX_DMZ_CHOOSE,"ctx dmz choose <N> [<limit>=<value> ...]","CONTEXT",
                 "Select one alternative from the saved pending restriction result and replay the full exact-pinned request.",
-                args("number","Positive alternative number from the latest saved result."),n++);
+                args("number","Positive alternative number from the latest saved result.","limits","Explicit traversal limit replacements; other saved inputs are preserved."),n++);
         define(CommandIntent.CTX_OPINION_TREE,"ctx tree <N>","CONTEXT",
                 "Show the selected saved opinion's exact source inference alternatives without inference.",
                 args("number","Positive saved opinion number."),n++);

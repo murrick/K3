@@ -356,6 +356,8 @@ public final class DmzSourcesQueryRunner {
                     && first.chooseRestriction(1).restrictions.choices.equals(lowReplay.restrictions.choices),
                     "failed later projection leaves retained first evidence and exact replay request usable");
             DmzSourcesQuery.Limits enlarged=projection(base,4).limits;
+            require(first.chooseRestriction(1,enlarged).restrictions.choices.equals(lowReplay.restrictions.choices),
+                    "explicit SDK selection with replacement limits preserves the offered identity");
             DmzSourcesQuery.Request enlargedReplay=lowReplay.withLimits(enlarged);
             require(enlargedReplay!=lowReplay && enlargedReplay.sources==lowReplay.sources && enlargedReplay.policy==lowReplay.policy
                     && enlargedReplay.queryStatement.equals(lowReplay.queryStatement) && enlargedReplay.restrictions==lowReplay.restrictions
@@ -363,7 +365,17 @@ public final class DmzSourcesQueryRunner {
                     && enlargedReplay.restrictions.budget==10000 && enlargedReplay.restrictions.choices.equals(Collections.singletonList(choice)),
                     "limit helper preserves exact source pins, trigger, full prefix and workflow budget after refusal");
             reject(() -> lowReplay.withLimits(null),NullPointerException.class);
-            DmzSourcesQuery.Result later=db.executeDmzSources(q,enlargedReplay);
+            org.kanger.CanonicalCommandProcessor processor=new org.kanger.CanonicalCommandProcessor();
+            org.kanger.command.CommandParser parser=new org.kanger.command.CommandParser();
+            user.setLastDmzResult(first);
+            reject(() -> processor.execute(parser.parse("ctx dmz choose 1 projection=3"),user),IllegalStateException.class);
+            require(user.getLastDmzResult()==null && state.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)),
+                    "Console execution refusal clears the active saved frontier and restores Q");
+            user.setLastDmzResult(first);
+            DmzSourcesQuery.Result later=processor.execute(parser.parse("dmz choose 1 projection=4"),user).getDmzResult();
+            require(later.request.restrictions.choices.equals(enlargedReplay.restrictions.choices)
+                    && later.request.sources==first.request.sources && later.request.restrictions.triggerRevision==first.request.restrictions.triggerRevision,
+                    "Console enlarged projection replays the same exact SDK request inputs");
             require(later.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT && later.restrictionOutcome.trace.size()==1
                     && later.restrictionOutcome.trace.get(0).selected.identity().equals(choice)
                     && later.restrictionOutcome.trace.get(0).conflicts.get(0).identity().equals(firstPair.identity()),

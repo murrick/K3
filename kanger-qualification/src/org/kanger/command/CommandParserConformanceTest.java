@@ -456,6 +456,10 @@ public final class CommandParserConformanceTest {
         expectCanonical("ctx dM eX", "ctx dmz explain");
         expectCanonical("dmz choose 2","ctx dmz choose 2");
         expectCanonical("ctx dmz cho 1","ctx dmz choose 1");
+        expectCanonical("dmz choose 2 visits=3 projection=4","ctx dmz choose 2 projection=4 visits=3");
+        for(String option:new String[]{"projection=0","depth=17","visits=10001","work=1000001","rows=5","from=A@1",
+                "restrict=A@1:0","choice=x","restriction-budget=5","query=-1","nodes=99999999999999999","projection=2 projection=3"})
+            reject("ctx dmz choose 1 "+option,INVALID_ARGUMENT_SHAPE);
         check(((Number)parser.parse("ctx dmz choose 3").getArgument("number")).longValue()==3,"restriction choice is an exact positive ordinal");
         reject("ctx dmz choose 0",INVALID_ARGUMENT_SHAPE);
         reject("dmz choose -1",INVALID_ARGUMENT_SHAPE);

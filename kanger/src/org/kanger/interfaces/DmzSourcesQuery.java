@@ -260,15 +260,21 @@ public final class DmzSourcesQuery {
         /** Build a fresh request selecting a one-based alternative from this historical result.
          * The caller must execute it to revalidate all pins and the whole choice prefix. */
         public Request chooseRestriction(long number) {
+            return chooseRestriction(number,request.limits);
+        }
+        /** Select an explicit historical alternative with replacement traversal limits.
+         * All other request inputs and the complete identity prefix are preserved. */
+        public Request chooseRestriction(long number,Limits replacement) {
+            Request replay=request.withLimits(replacement);
             if(request.restrictions==null || restrictionOutcome.status!=RestrictionStatus.NEXT_CONFLICT)
                 throw new IllegalStateException("Saved result does not offer restriction choices");
             if(number<1 || number>restrictionOutcome.availableChoices.size())
                 throw new IllegalArgumentException("No saved restriction choice "+number);
-            if(request.restrictions.choices.size()>=request.limits.maximumVisits)
+            if(request.restrictions.choices.size()>=replay.limits.maximumVisits)
                 throw new IllegalStateException("Restriction visit limit reached; start a fresh request with explicit limits");
             List<String> choices=new ArrayList<String>(request.restrictions.choices);
             choices.add(restrictionOutcome.availableChoices.get((int)number-1).identity());
-            return new Request(request.sources,request.policy,request.queryStatement,request.limits,
+            return new Request(replay.sources,replay.policy,replay.queryStatement,replay.limits,
                     new RestrictionRequest(request.restrictions.triggerRevision,request.restrictions.triggerRule,choices,request.restrictions.budget));
         }
         public final Request request;

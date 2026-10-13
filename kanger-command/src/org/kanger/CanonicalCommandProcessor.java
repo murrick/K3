@@ -343,7 +343,9 @@ public final class CanonicalCommandProcessor {
                 org.kanger.interfaces.DmzSourcesQuery.Result saved=owner.getLastDmzResult();
                 if(saved==null)throw new org.kanger.exception.CommandErrorException("No saved DMZ query");
                 org.kanger.interfaces.DmzSourcesQuery.Request replay=saved.chooseRestriction(
-                        ((Number)invocation.getArgument("number")).longValue());
+                        ((Number)invocation.getArgument("number")).longValue(),
+                        invocation.getArgument("limits")==null?saved.request.limits:
+                        ((org.kanger.command.DmzLimitOverrides)invocation.getArgument("limits")).apply(saved.request.limits));
                 owner.setLastDmzResult(null);
                 org.kanger.interfaces.DmzSourcesQuery.Result result=mind.executeDmzSources(replay);
                 owner.setLastDmzResult(result);

@@ -846,6 +846,22 @@ the visit allowance preserves every selected identity, so execution refuses if
 that allowance cannot cover the full prefix. The original request and retained
 result remain unchanged.
 
+Saved Console selections accept explicit traversal limit replacements, for
+example `ctx dmz choose 1 projection=4 visits=2` (also `dmz choose ...`).
+Only the specified limits change; source pins, query, trigger, restriction workflow
+budget and the prior identity prefix are retained before appending the explicitly
+selected alternative. The new visit allowance is checked before execution, so
+it can extend a saved frontier beyond its old visit limit. Supported replacements
+are preparation, audit, lookup, recognition, projection, application, query, depth,
+nodes, work and visits. Acquisition rows, source/trigger changes and a replacement
+restriction workflow budget require a fresh initial command.
+
+Malformed replacements and selection errors preserve the saved result. A refusal
+after provider execution clears the active saved result; retained detached SDK
+results remain readable, and Console recovery requires a fresh initial invocation.
+SDK callers can make the same explicit selection with replacement limits through
+`result.chooseRestriction(N, replacementLimits)`.
+
 A source name rebound to a different Context UUID is refused even when its
 declarations and revision number match. Restoring the original source permits a
 fresh reconstruction of its old exact pin. Advancing source HEAD while retaining
