@@ -35,9 +35,10 @@ public final class ContextProductionRoundsReference {
     }
     public static final class Product {
         public final Fact fact;
+        public final Clause clause;
         public final List<Proof> supports;
         private Product(Bucket b) {
-            fact = b.fact; supports = Collections.unmodifiableList(new ArrayList<>(b.proofs));
+            clause = b.clause; fact = clause.literals.size() == 1 ? clause.literals.get(0) : null; supports = Collections.unmodifiableList(new ArrayList<>(b.proofs));
         }
     }
     public static final class Result {
@@ -56,22 +57,22 @@ public final class ContextProductionRoundsReference {
         }
     }
     private static final class Bucket {
-        final Fact fact;
+        final Clause clause;
         final List<Proof> proofs = new ArrayList<>();
-        Bucket(Fact fact) { this.fact = fact; }
+        Bucket(Clause clause) { this.clause = clause; }
     }
     private static final class Budget {
         int remaining;
         Budget(int work) { remaining = work; }
         void take() { if (--remaining < 0) throw new IllegalStateException("Proof work limit; qualification incomplete"); }
     }
-    private static Bucket find(List<Bucket> pool, Fact fact) {
-        for (Bucket bucket : pool) if (bucket.fact.equivalent(fact)) return bucket;
+    private static Bucket find(List<Bucket> pool, Clause clause) {
+        for (Bucket bucket : pool) if (bucket.clause.equivalent(clause)) return bucket;
         return null;
     }
-    private static boolean add(List<Bucket> pool, Fact fact, Proof proof, Limits limits, Budget budget) {
+    private static boolean add(List<Bucket> pool, Clause clause, Proof proof, Limits limits, Budget budget) {
         budget.take();
-        Bucket bucket = find(pool, fact);
+        Bucket bucket = find(pool, clause);
         if (bucket != null) for (int i = 0; i < bucket.proofs.size(); ++i) {
             Proof old = bucket.proofs.get(i);
             if (old.sources.equals(proof.sources)) {
@@ -80,47 +81,50 @@ public final class ContextProductionRoundsReference {
             }
         }
         if (proof.depth > limits.depth) throw new IllegalStateException("Transported derivation depth limit; qualification incomplete");
-        if (bucket == null) { bucket = new Bucket(fact); pool.add(bucket); }
+        if (bucket == null) { bucket = new Bucket(clause); pool.add(bucket); }
         bucket.proofs.add(proof); return true;
     }
     private static List<Bucket> copy(List<Bucket> state) {
         List<Bucket> result = new ArrayList<>();
-        for (Bucket bucket : state) { Bucket clone = new Bucket(bucket.fact); clone.proofs.addAll(bucket.proofs); result.add(clone); }
+        for (Bucket bucket : state) { Bucket clone = new Bucket(bucket.clause); clone.proofs.addAll(bucket.proofs); result.add(clone); }
         return result;
     }
-    private static boolean derive(Application application, Source producer, int slot, Set<Source> sources, int depth,
+    private static boolean derive(Clause conclusion, int slot, Set<Source> sources, int depth,
                                   List<List<Proof>> premises, List<Bucket> pool, Limits limits, Budget budget) {
         budget.take();
-        if (slot == premises.size()) return add(pool, application.conclusion, new Proof(sources, depth + 1), limits, budget);
+        if (slot == premises.size()) return add(pool, conclusion, new Proof(sources, depth + 1), limits, budget);
         boolean changed = false;
         for (Proof proof : premises.get(slot)) {
             Set<Source> joined = new LinkedHashSet<>(sources); joined.addAll(proof.sources);
-            changed |= derive(application, producer, slot + 1, joined, Math.max(depth, proof.depth), premises, pool, limits, budget);
+            changed |= derive(conclusion, slot + 1, joined, Math.max(depth, proof.depth), premises, pool, limits, budget);
         }
         return changed;
     }
     private static List<Bucket> closure(Snapshot snapshot, List<Bucket> state, Limits limits, Budget budget) {
         List<Bucket> pool = copy(state);
-        for (Input input : snapshot.inputs) if (input.fact != null)
-            add(pool, input.fact, new Proof(Collections.singleton(input.source), 0), limits, budget);
+        for (Input input : snapshot.inputs) if (input.clause != null && input.source != null)
+            add(pool, input.clause, new Proof(Collections.singleton(input.source), 0), limits, budget);
+        List<Residual> events = new ArrayList<>(snapshot.residuals);
+        for (Application app : snapshot.applications)
+            events.add(new Residual(new Clause(Collections.singletonList(app.conclusion)), app.premises, app.producerSupports));
         boolean changed;
         do {
             changed = false;
-            for (Application application : snapshot.applications) {
+            for (Residual event : events) {
                 List<List<Proof>> premises = new ArrayList<>();
-                for (Fact fact : application.premises) {
-                    Bucket bucket = find(pool, fact);
+                for (Fact fact : event.premises) {
+                    Bucket bucket = find(pool, new Clause(Collections.singletonList(fact)));
                     if (bucket == null) { premises = null; break; }
                     premises.add(new ArrayList<>(bucket.proofs));
                 }
                 if (premises == null) continue;
-                for (Source producer : application.producers)
-                    changed |= derive(application, producer, 0, new LinkedHashSet<>(Collections.singleton(producer)), 0,
+                for (Support producer : event.producerSupports)
+                    changed |= derive(event.conclusion, 0, new LinkedHashSet<>(producer.sources), producer.depth,
                             premises, pool, limits, budget);
             }
         } while (changed);
-        for (Application application : snapshot.applications) for (Fact premise : application.premises)
-            if (find(pool, premise) == null)
+        for (Residual event : events) for (Fact premise : event.premises)
+            if (find(pool, new Clause(Collections.singletonList(premise))) == null)
                 throw new IllegalStateException("Unreconstructed native premise; qualification incomplete");
         return pool;
     }
@@ -157,7 +161,11 @@ public final class ContextProductionRoundsReference {
                         Mind participant = transaction.mind();
                         participant.setQueryPass(org.kanger.enums.QueryPass.ACCEPT);
                         for (Declaration declaration : local) capture.replay(participant, declaration.source, declaration.statement);
-                        for (Bucket bucket : state) participant.compileLine(bucket.fact.assertion(), false, bucket.fact.project(participant));
+                        for (Bucket bucket : state) {
+                            List<Support> supports = new ArrayList<>();
+                            for (Proof proof : bucket.proofs) supports.add(new Support(proof.sources, proof.depth));
+                            capture.replayDerived(participant, bucket.clause, supports);
+                        }
                         for (Declaration declaration : target) capture.replay(participant, declaration.source, declaration.statement);
                         participant.link(null, false);
                         Analyzer analyzer = new Analyzer(participant);
@@ -171,7 +179,7 @@ public final class ContextProductionRoundsReference {
                         else return new Result(Status.INCOMPLETE, round, gap, state, observations, null);
                     }
                     for (Bucket bucket : closure(snapshot, state, limits, budget)) for (Proof proof : bucket.proofs)
-                        if (proof.usesX()) changed |= add(next, bucket.fact, proof, limits, budget);
+                        if (proof.usesX()) changed |= add(next, bucket.clause, proof, limits, budget);
                 }
             } catch (IllegalStateException | org.kanger.exception.RuntimeErrorException incomplete) {
                 return new Result(Status.INCOMPLETE, round, incomplete.toString(), state, observations, null);

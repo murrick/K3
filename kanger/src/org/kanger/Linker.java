@@ -1143,6 +1143,7 @@ public class Linker {
                 } else if (d.isCalculated(mind)) {
                     calculated.add(d);
                 } else if (d.isSystem(mind) || !d.isComplete()) {
+                    ContextProductionCapture.incompleteResidual(mind, tree);
                     excluded.clear();
                     candidates.clear();
                     break;

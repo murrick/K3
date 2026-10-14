@@ -84,15 +84,81 @@ public final class ContextProductionCapture implements AutoCloseable {
         }
     }
 
+    /** A disjunction is transported intact; its literals are not separate facts. */
+    public static final class Clause {
+        public final List<Fact> literals;
+        public Clause(List<Fact> literals) {
+            if (literals.isEmpty()) throw new IllegalArgumentException("Nonempty clause required");
+            List<Fact> copy = new ArrayList<>();
+            for (Fact fact : literals) { boolean exists = false;
+                for (Fact old : copy) exists |= old.equivalent(fact);
+                if (!exists) copy.add(Objects.requireNonNull(fact));
+            }
+            this.literals = Collections.unmodifiableList(copy);
+        }
+        public boolean equivalent(Clause other) {
+            if (other == null || literals.size() != other.literals.size()) return false;
+            for (Fact fact : literals) { boolean found = false;
+                for (Fact candidate : other.literals) found |= fact.equivalent(candidate);
+                if (!found) return false;
+            }
+            return true;
+        }
+        public String assertion() {
+            StringBuilder text = new StringBuilder("!(");
+            for (Fact fact : literals) {
+                if (text.length() > 2) text.append(" || ");
+                String atom = fact.assertion(); text.append(atom.substring(1, atom.length()-1));
+            }
+            return text.append(");").toString();
+        }
+        public Queue<ITerm> project(Mind target) throws Exception {
+            Queue<ITerm> values = new LinkedList<>();
+            for (Fact fact : literals) values.addAll(fact.project(target));
+            return values;
+        }
+    }
+    /** Each entry is one whole alternative proof, never an alias per premise. */
+    public static final class Support {
+        public final Set<Source> sources;
+        public final int depth;
+        public Support(Set<Source> sources, int depth) {
+            if (sources.isEmpty() || depth < 0) throw new IllegalArgumentException("Proof required");
+            this.sources = Collections.unmodifiableSet(new LinkedHashSet<>(sources)); this.depth = depth;
+        }
+        @Override public boolean equals(Object other) {
+            return other instanceof Support && depth == ((Support) other).depth
+                    && sources.equals(((Support) other).sources);
+        }
+        @Override public int hashCode() { return Objects.hash(sources, depth); }
+    }
+    public static final class Residual {
+        public final Clause conclusion;
+        public final List<Fact> premises;
+        public final List<Support> producerSupports;
+        Residual(Clause conclusion, List<Fact> premises, List<Support> supports) {
+            this.conclusion = conclusion; this.premises = Collections.unmodifiableList(new ArrayList<>(premises));
+            producerSupports = Collections.unmodifiableList(new ArrayList<>(supports));
+        }
+    }
+
     public static final class Input {
         public final Source source;
         public final long nativeRule;
         public final String origin;
         public final Fact fact;
+        public final Clause clause;
         public final boolean duplicate;
         private Input(Source source, Rule rule, Mind mind, boolean duplicate) throws Exception {
             this.source = source; nativeRule = rule.getId(); origin = rule.getOrigin();
             fact = rule.isStored() && !rule.isQuery() ? Fact.of(rule.getDomain(), mind, false) : null;
+            List<Fact> literals = new ArrayList<>();
+            if (rule.getTree().size() == 1) for (Domain literal : rule.getTree().get(0)) {
+                Fact value = Fact.of(literal, mind, false);
+                if (value == null) { literals.clear(); break; }
+                literals.add(value);
+            }
+            clause = literals.isEmpty() ? null : new Clause(literals);
             this.duplicate = duplicate;
         }
     }
@@ -102,11 +168,15 @@ public final class ContextProductionCapture implements AutoCloseable {
         public final Fact conclusion;
         public final List<Fact> premises;
         public final List<Source> producers;
+        public final List<Support> producerSupports;
         public final long nativeRule;
         public final String origin;
-        private Application(Fact conclusion, List<Fact> premises, List<Source> producers, Rule rule) throws Exception {
+        private Application(Fact conclusion, List<Fact> premises, List<Support> supports, Rule rule) throws Exception {
             this.conclusion = conclusion;
             this.premises = Collections.unmodifiableList(new ArrayList<>(premises));
+            producerSupports = Collections.unmodifiableList(new ArrayList<>(supports));
+            Set<Source> producers = new LinkedHashSet<>();
+            for (Support support : supports) producers.addAll(support.sources);
             this.producers = Collections.unmodifiableList(new ArrayList<>(producers));
             nativeRule = rule.getId(); origin = rule.getOrigin();
         }
@@ -115,10 +185,12 @@ public final class ContextProductionCapture implements AutoCloseable {
     public static final class Snapshot {
         public final List<Input> inputs;
         public final List<Application> applications;
+        public final List<Residual> residuals;
         public final List<String> gaps;
         private Snapshot(ContextProductionCapture capture) {
             inputs = Collections.unmodifiableList(new ArrayList<>(capture.inputs));
             applications = Collections.unmodifiableList(new ArrayList<>(capture.applications));
+            residuals = Collections.unmodifiableList(new ArrayList<>(capture.residuals));
             Set<String> gaps = new LinkedHashSet<>(capture.gaps);
             for (Materialization stored : capture.stored) {
                 boolean covered = false;
@@ -143,11 +215,14 @@ public final class ContextProductionCapture implements AutoCloseable {
     private final int maximumEvents;
     private final List<Input> inputs = new ArrayList<>();
     private final List<Application> applications = new ArrayList<>();
+    private final List<Residual> residuals = new ArrayList<>();
     private final List<Materialization> stored = new ArrayList<>();
     private final Set<String> gaps = new LinkedHashSet<>();
-    private final Map<Mind, Map<Long, List<Source>>> labels = new IdentityHashMap<>();
+    private final Map<Mind, Map<Long, List<Support>>> labels = new IdentityHashMap<>();
     private Mind inputTarget;
     private Source inputSource;
+    private List<Support> inputSupports;
+    private Clause inputClause;
     private boolean closed;
 
     private ContextProductionCapture(Mind boundary, int maximumEvents) {
@@ -168,7 +243,7 @@ public final class ContextProductionCapture implements AutoCloseable {
         return false;
     }
     private void take() {
-        if ((long) inputs.size() + applications.size() + stored.size() >= maximumEvents) {
+        if ((long) inputs.size() + applications.size() + residuals.size() + stored.size() >= maximumEvents) {
             gaps.add("observation-budget-exhausted");
             throw new IllegalStateException("Context production observation limit exceeded; qualification incomplete");
         }
@@ -190,15 +265,30 @@ public final class ContextProductionCapture implements AutoCloseable {
         }
         finally { inputTarget = previousTarget; inputSource = previousSource; }
     }
+    public void replayDerived(Mind target, Clause clause, List<Support> supports) throws Exception {
+        check();
+        if (!visible(target) || supports.isEmpty()) throw new IllegalArgumentException("Supported derived clause required");
+        if (inputTarget != null) throw new IllegalStateException("Nested replay");
+        inputTarget = target; inputSupports = new ArrayList<>(supports); inputClause = Objects.requireNonNull(clause);
+        int before = inputs.size();
+        try {
+            target.compileLine(clause.assertion(), false, clause.project(target));
+            if (inputs.size() == before) gaps.add("unbound-derived-input");
+        } finally { inputTarget = null; inputSupports = null; inputClause = null; }
+    }
     static void compiled(Mind mind, Rule rule, boolean duplicate) throws Exception {
         ContextProductionCapture capture = ACTIVE.get();
-        if (capture == null || capture.inputTarget != mind || capture.inputSource == null || rule.isQuery()) return;
+        if (capture == null || capture.inputTarget != mind || (capture.inputSource == null && capture.inputSupports == null) || rule.isQuery()) return;
         capture.check(); capture.take();
-        Map<Long, List<Source>> local = capture.labels.computeIfAbsent(mind, ignored -> new HashMap<>());
-        List<Source> sources = local.computeIfAbsent(rule.getId(), ignored -> new ArrayList<>());
-        if (!sources.contains(capture.inputSource)) sources.add(capture.inputSource);
+        Map<Long, List<Support>> local = capture.labels.computeIfAbsent(mind, ignored -> new HashMap<>());
+        List<Support> sources = local.computeIfAbsent(rule.getId(), ignored -> new ArrayList<>());
+        List<Support> incoming = capture.inputSource != null
+                ? Collections.singletonList(new Support(Collections.singleton(capture.inputSource), 0)) : capture.inputSupports;
+        for (Support support : incoming) if (!sources.contains(support)) sources.add(support);
         Input input = new Input(capture.inputSource, rule, mind, duplicate);
         capture.inputs.add(input);
+        if (capture.inputClause != null && !capture.inputClause.equivalent(input.clause))
+            capture.gaps.add("derived-clause-transport-mismatch:" + rule.getId());
         if (rule.getTree().size() != 1) capture.gaps.add("multi-clause-input:" + rule.getId());
         else if (rule.getTree().get(0).size() == 1 && input.fact == null)
             capture.gaps.add("nonordinary-primary-fact:" + rule.getId());
@@ -211,12 +301,12 @@ public final class ContextProductionCapture implements AutoCloseable {
                 capture.gaps.add("functional-input:" + rule.getId());
         }
     }
-    private List<Source> sources(Mind mind, long rule) {
-        List<Source> result = new ArrayList<>();
+    private List<Support> sources(Mind mind, long rule) {
+        List<Support> result = new ArrayList<>();
         for (Mind level = mind; level != null; level = (Mind) level.getNext()) {
-            Map<Long, List<Source>> local = labels.get(level);
+            Map<Long, List<Support>> local = labels.get(level);
             if (local != null && local.containsKey(rule))
-                for (Source source : local.get(rule)) if (!result.contains(source)) result.add(source);
+                for (Support source : local.get(rule)) if (!result.contains(source)) result.add(source);
             if (level == boundary) break;
         }
         return result;
@@ -241,17 +331,39 @@ public final class ContextProductionCapture implements AutoCloseable {
             if (premise == null) { capture.gaps.add("nonordinary-premise:" + rule.getId()); return; }
             premises.add(premise);
         }
-        List<Source> producers = capture.sources(mind, rule.getId());
+        List<Support> producers = capture.sources(mind, rule.getId());
         if (producers.isEmpty()) capture.gaps.add("unlabelled-production:" + rule.getId());
         capture.take();
         capture.applications.add(new Application(result, premises, producers, rule));
+    }
+    static void incompleteResidual(Mind mind, List<Domain> branch) throws Exception {
+        ContextProductionCapture capture = ACTIVE.get();
+        if (capture == null || !capture.visible(mind)
+                || (mind.getQueryPass() != QueryPass.CHECK && mind.getQueryPass() != QueryPass.ACCEPT)) return;
+        capture.check();
+        for (Domain literal : branch) if (literal.isExcluded(mind)) {
+            compoundResidual(mind, branch); return;
+        }
     }
     static void compoundResidual(Mind mind, List<Domain> branch) throws Exception {
         ContextProductionCapture capture = ACTIVE.get();
         if (capture == null || !capture.visible(mind)
                 || (mind.getQueryPass() != QueryPass.CHECK && mind.getQueryPass() != QueryPass.ACCEPT)) return;
         capture.check();
-        if (!branch.isEmpty()) capture.gaps.add("compound-residual:" + branch.get(0).getRuleId());
+        if (branch.isEmpty()) return;
+        Rule rule = (Rule) branch.get(0).getRule();
+        if (rule.isQuery()) return;
+        List<Fact> literals = new ArrayList<>(), premises = new ArrayList<>();
+        for (Domain literal : branch) {
+            boolean excluded = literal.isExcluded(mind);
+            Fact fact = Fact.of(literal, mind, excluded);
+            if (fact == null) { capture.gaps.add("compound-residual:" + rule.getId()); return; }
+            (excluded ? premises : literals).add(fact);
+        }
+        if (literals.isEmpty()) return;
+        List<Support> supports = capture.sources(mind, rule.getId());
+        if (supports.isEmpty()) capture.gaps.add("unlabelled-residual:" + rule.getId());
+        capture.take(); capture.residuals.add(new Residual(new Clause(literals), premises, supports));
     }
     static void stored(Mind mind, Domain producer, IRule result) throws Exception {
         ContextProductionCapture capture = ACTIVE.get();
@@ -265,7 +377,7 @@ public final class ContextProductionCapture implements AutoCloseable {
     public Snapshot snapshot() { check(); return new Snapshot(this); }
     @Override public void close() {
         if (closed) return;
-        check(); closed = true; inputTarget = null; inputSource = null; labels.clear();
+        check(); closed = true; inputTarget = null; inputSource = null; inputSupports = null; inputClause = null; labels.clear();
         if (previous == null) ACTIVE.remove(); else ACTIVE.set(previous);
     }
 }
