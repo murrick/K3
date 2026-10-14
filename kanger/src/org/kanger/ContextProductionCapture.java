@@ -220,6 +220,26 @@ public final class ContextProductionCapture implements AutoCloseable {
                 values.add(target.getTerms().projectSemantic(slot.value.materialize()));
             return values;
         }
+        /** Eigenparameters absent from all primary knowledge are universally generalizable.
+         * Only direct slots are generalized; structured parameter values are unsupported. */
+        public Clause generalize(List<SemanticTermSnapshot> parameters) {
+            List<Atom> result = new ArrayList<>();
+            int offset = variables.isEmpty() ? 0 : Collections.max(variables) + 1;
+            for (Atom atom : literals) {
+                List<Slot> slots = new ArrayList<>();
+                for (Slot slot : atom.arguments) {
+                    Slot replacement = slot;
+                    if (slot.variable < 0) for (int i=0; i<parameters.size(); ++i)
+                        if (slot.value.semanticallyEquals(parameters.get(i))) {
+                            replacement = new Slot(null, offset+i); break;
+                        } else if (slot.value.containsSemanticValue(parameters.get(i)))
+                            throw new IllegalStateException("Structured eigenparameter; qualification incomplete");
+                    slots.add(replacement);
+                }
+                result.add(new Atom(atom.predicate,atom.positive,slots));
+            }
+            return new Clause(result);
+        }
     }
     /** Each entry is one whole alternative proof, never an alias per premise. */
     public static final class Support {
@@ -330,6 +350,7 @@ public final class ContextProductionCapture implements AutoCloseable {
     private final List<Application> applications = new ArrayList<>();
     private final List<Residual> residuals = new ArrayList<>();
     private final List<Materialization> stored = new ArrayList<>();
+    private final List<SemanticTermSnapshot> primaryValues = new ArrayList<>();
     private final Set<String> gaps = new LinkedHashSet<>();
     private final Map<Mind, Map<Long, List<Support>>> labels = new IdentityHashMap<>();
     private Mind inputTarget;
@@ -345,6 +366,12 @@ public final class ContextProductionCapture implements AutoCloseable {
     }
     public static ContextProductionCapture begin(Mind boundary, int maximumEvents) {
         return new ContextProductionCapture(boundary, maximumEvents);
+    }
+    public void verifyParametersFresh(List<SemanticTermSnapshot> parameters) {
+        check();
+        for (SemanticTermSnapshot value : primaryValues) for (SemanticTermSnapshot parameter : parameters)
+            if (value.containsSemanticValue(parameter))
+                throw new IllegalStateException("Eigenparameter occurs in primary knowledge; qualification incomplete");
     }
     private void check() {
         if (closed || Thread.currentThread() != owner || ACTIVE.get() != this)
@@ -417,6 +444,8 @@ public final class ContextProductionCapture implements AutoCloseable {
                     ITerm value = argument.getValue(mind);
                     if (value != null && value.isCVariable()) capture.gaps.add("cvariable-input:" + rule.getId());
                     else if (!SemanticTermSnapshot.isOrdinaryValue(value)) capture.gaps.add("nonordinary-input:" + rule.getId());
+                    else if (capture.inputSource != null && argument.getType() != ArgumentType.TVARIABLE)
+                        capture.primaryValues.add(SemanticTermSnapshot.capture(value));
                 }
             }
         }

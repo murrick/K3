@@ -154,6 +154,14 @@ public final class SemanticTermSnapshot {
         return hash;
     }
 
+    /** Exact containment, including nested ordinary values. */
+    public boolean containsSemanticValue(SemanticTermSnapshot other) {
+        if (semanticallyEquals(other)) return true;
+        for (SemanticTermSnapshot member : members)
+            if (member.containsSemanticValue(other)) return true;
+        return false;
+    }
+
     /**
      * Exact semantic equality. Hash is only a prefilter; Term.equalsTo remains
      * the authority so frontier deduplication cannot turn a hash collision into

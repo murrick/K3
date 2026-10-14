@@ -3,6 +3,11 @@ package org.kanger;
 
 import java.util.*;
 import org.kanger.ContextProductionCapture.*;
+import org.kanger.interfaces.IRule;
+import org.kanger.interfaces.ITerm;
+import org.kanger.units.Domain;
+import org.kanger.units.Rule;
+import org.kanger.units.TVariable;
 
 /**
  * Qualification-only reference for the observed ordinary-ground production
@@ -137,7 +142,48 @@ public final class ContextProductionRoundsReference {
         Mind mind = new Mind(user); user.setCurrentMind(mind);
         mind.setFloodControlLimit(limits.depth); return mind;
     }
+    /** Bounded native parameter experiment, not an extra unification engine.
+     * No parameter predicate or assumed fact is installed. All actual premises
+     * must still be proved by the captured native application/closure protocol. */
+    private static void seedParameters(Mind mind, List<SemanticTermSnapshot> parameters,
+                                       Budget budget) throws Exception {
+        Set<TVariable> variables = new LinkedHashSet<>();
+        int rank = 0;
+        for (IRule entry : mind.getRules()) if (!entry.isDeleted(mind)) {
+            Set<TVariable> scoped = new LinkedHashSet<>();
+            for (List<Domain> branch : ((Rule)entry).getTree()) for (Domain domain : branch)
+                scoped.addAll(domain.getArguments().getTVariables(mind));
+            // Charge the planned additional rotations before creating TValue bindings.
+            if (scoped.size() > 3) throw new IllegalStateException("Parameter rank limit; qualification incomplete");
+            rank = Math.max(rank,scoped.size()); variables.addAll(scoped);
+        }
+        while (parameters.size() < rank) {
+            ITerm term = mind.getTerms().add("ctxparameter_" + UUID.randomUUID().toString().replace("-",""));
+            parameters.add(SemanticTermSnapshot.capture(term));
+        }
+        for (IRule entry : mind.getRules()) if (!entry.isDeleted(mind)) {
+            Set<TVariable> scoped = new LinkedHashSet<>();
+            for (List<Domain> branch : ((Rule)entry).getTree()) for (Domain domain : branch)
+                scoped.addAll(domain.getArguments().getTVariables(mind));
+            int rotations = 1;
+            for (int i=0; i<scoped.size(); ++i) rotations *= Math.max(1,parameters.size());
+            for (int i=0; i<rotations; ++i) budget.take();
+        }
+        for (TVariable variable : variables) for (SemanticTermSnapshot parameter : parameters) {
+            budget.take();
+            mind.getTValues().add(variable,mind.getTerms().projectSemantic(parameter.materialize()));
+        }
+    }
     public static Result inspect(List<Declaration> x, List<List<Declaration>> targets, Limits limits) throws Exception {
+        return inspect(x,targets,limits,false);
+    }
+    /** Experimental: assumes @ ranges over arbitrary admissible values,
+     * including fresh parameters absent from primary knowledge. */
+    public static Result inspectWithParameters(List<Declaration> x, List<List<Declaration>> targets, Limits limits) throws Exception {
+        return inspect(x,targets,limits,true);
+    }
+    private static Result inspect(List<Declaration> x, List<List<Declaration>> targets, Limits limits,
+                                  boolean parameterExperiment) throws Exception {
         Objects.requireNonNull(x); Objects.requireNonNull(targets); Objects.requireNonNull(limits);
         List<Declaration> local = Collections.unmodifiableList(new ArrayList<>(x));
         List<List<Declaration>> frozen = new ArrayList<>();
@@ -147,6 +193,7 @@ public final class ContextProductionRoundsReference {
         for (List<Declaration> target : frozen) for (Declaration declaration : target)
             if (declaration.source.localX) throw new IllegalArgumentException("External label required");
         List<Bucket> state = new ArrayList<>(); List<Snapshot> observations = new ArrayList<>();
+        List<SemanticTermSnapshot> parameters = new ArrayList<>();
         Budget budget = new Budget(limits.work);
         for (int round = 1; round <= limits.rounds; ++round) {
             List<Bucket> next = copy(state); boolean changed = false;
@@ -156,6 +203,7 @@ public final class ContextProductionRoundsReference {
                     // Every participant starts from STATE, never another participant's NEXT.
                     List<Bucket> participantState = copy(state);
                     int remainingEvents = limits.events;
+                    boolean parameterPass = false;
                     while (true) {
                         budget.take();
                         if (remainingEvents < 1) throw new IllegalStateException("Participant observation budget; qualification incomplete");
@@ -172,6 +220,8 @@ public final class ContextProductionRoundsReference {
                                 capture.replayDerived(participant, bucket.clause, supports);
                             }
                             for (Declaration declaration : target) capture.replay(participant, declaration.source, declaration.statement);
+                            if (parameterPass) seedParameters(participant,parameters,budget);
+                            capture.verifyParametersFresh(parameters);
                             participant.link(null, false);
                             Analyzer analyzer = new Analyzer(participant);
                             boolean collision = analyzer.analyze(null, false);
@@ -181,7 +231,8 @@ public final class ContextProductionRoundsReference {
                                 return new Result(Status.COLLISION, round, "Native collision", state, observations, qualification);
                         }
                         remainingEvents -= snapshot.eventCount;
-                        for (String gap : snapshot.gaps) if (!gap.startsWith("compound-residual:"))
+                        for (String gap : snapshot.gaps) if (!gap.startsWith("compound-residual:")
+                                && !(parameterExperiment && gap.startsWith("unbound-waiter-composition:")))
                             return new Result(Status.INCOMPLETE, round, gap, state, observations, null);
                         List<Bucket> settled = closure(snapshot, participantState, limits, budget);
                         boolean localChanged = false;
@@ -193,9 +244,12 @@ public final class ContextProductionRoundsReference {
                         // inputs; an in-place replay can be suppressed by an existing
                         // generated canonical twin. Foreign proofs never enter NEXT.
                         if (localChanged) continue;
+                        if (parameterExperiment && !parameterPass && snapshot.gaps.stream().anyMatch(gap -> gap.startsWith("unbound-waiter-composition:"))) {
+                            parameterPass = true; continue;
+                        }
                         unresolvedResiduals.addAll(snapshot.gaps);
                         for (Bucket bucket : participantState) for (Proof proof : bucket.proofs)
-                            if (proof.usesX()) changed |= add(next, bucket.clause, proof, limits, budget);
+                            if (proof.usesX()) changed |= add(next, bucket.clause.generalize(parameters), proof, limits, budget);
                         break;
                     }
                 }

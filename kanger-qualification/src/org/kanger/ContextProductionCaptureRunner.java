@@ -19,6 +19,7 @@ public final class ContextProductionCaptureRunner {
             sourceAliases();
             multipleCompiledBranches();
             quantifiedClauseTransport();
+            eigenparameterFreshness();
             typedDetachedTransport();
             nullaryAndRepeatedArguments();
             queryArtifactsAreExcluded();
@@ -129,6 +130,21 @@ public final class ContextProductionCaptureRunner {
         Mind work = memory();
         org.kanger.units.Rule rule = (org.kanger.units.Rule) work.compileLine(statement, false, new LinkedList<ITerm>());
         return Clause.of(rule.getTree().get(0), work, true);
+    }
+    private static void eigenparameterFreshness() throws Exception {
+        Mind work = memory();
+        try (ContextProductionCapture capture = ContextProductionCapture.begin(work,10000)) {
+            capture.replay(work,source(X,0),"!p(1);");
+            SemanticTermSnapshot known = capture.snapshot().inputs.get(0).fact.arguments.get(0);
+            boolean refused = false;
+            try { capture.verifyParametersFresh(Collections.singletonList(known)); }
+            catch (IllegalStateException expected) { refused = true; }
+            require(refused,"an existing constant cannot be generalized as an arbitrary fresh parameter");
+            SemanticTermSnapshot fresh = SemanticTermSnapshot.capture(work.getTerms().add("ctxfresh_"+UUID.randomUUID().toString().replace("-","")));
+            capture.verifyParametersFresh(Collections.singletonList(fresh));
+            require(capture.snapshot().inputs.size() == 1,
+                    "fresh parameter verification installs no assertion or knowledge source");
+        }
     }
     private static void quantifiedClauseTransport() throws Exception {
         Snapshot snapshot = replay(new String[] {"!@x @y left(x) && right(y) -> p(x,y);", "!left(John);"},

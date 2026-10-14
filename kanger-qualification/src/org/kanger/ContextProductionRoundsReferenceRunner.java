@@ -320,10 +320,61 @@ public final class ContextProductionRoundsReferenceRunner {
                     "a universal unit ground consequence is qualified in both target orders");
         }
         List<Declaration> generic = source(UUID.randomUUID(),false,"!@y p(y) -> q(y);");
-        Result deferred = ContextProductionRoundsReference.inspect(x,Arrays.asList(generic,negative),NORMAL);
-        require(deferred.status == Status.INCOMPLETE && deferred.reason.contains("unbound-waiter-composition"),
-                "unobserved universal-to-universal composition cannot receive a saturation certificate: "
+        Result deferred = ContextProductionRoundsReference.inspectWithParameters(x,Arrays.asList(generic,negative),NORMAL);
+        require(deferred.status == Status.COLLISION && deferred.rounds == 2,
+                "a proved generic consequence is qualified on the next round: "
                         + deferred.status + " " + deferred.reason);
+        Result reverseGeneric = ContextProductionRoundsReference.inspectWithParameters(x,Arrays.asList(negative,generic),NORMAL);
+        require(reverseGeneric.status == Status.COLLISION && reverseGeneric.rounds == 2,
+                "generic consequence collision does not depend on target order");
+        Result genericOnly = ContextProductionRoundsReference.inspectWithParameters(x,Collections.singletonList(generic),NORMAL);
+        Product template = null;
+        for (Product candidate : genericOnly.products)
+            if (candidate.clause.literals.size() == 1 && candidate.clause.literals.get(0).predicate.equals("q")) template = candidate;
+        require(genericOnly.status == Status.INCOMPLETE && template != null && template.fact == null
+                        && template.clause.variables.size() == 1,
+                "native parameter proof exports a universal template without claiming traversal completeness");
+        require(template.supports.stream().anyMatch(proof -> proof.sources.size() == 2 && proof.usesX() && proof.depth == 1),
+                "generic consequence retains whole X/A support and one rule application");
+        User templateUser = new User(); Mind templateMind = new Mind(templateUser); templateUser.setCurrentMind(templateMind);
+        templateMind.compileLine(template.clause.assertion(),false,template.clause.project(templateMind));
+        require(Boolean.TRUE.equals(templateMind.query("?q(73);",null,false))
+                        && Boolean.TRUE.equals(templateMind.query("?q(John);",null,false)),
+                "generalized native consequence covers unrelated numeric and named instances");
+        List<List<Declaration>> chain = Arrays.asList(generic,
+                source(UUID.randomUUID(),false,"!@z q(z) -> r(z);"),
+                source(UUID.randomUUID(),false,"!~r(1);"));
+        for (int i=0; i<3; ++i) for (int j=0; j<3; ++j) if (i!=j) {
+            Result chained = ContextProductionRoundsReference.inspectWithParameters(x,
+                    Arrays.asList(chain.get(i),chain.get(j),chain.get(3-i-j)),NORMAL);
+            require(chained.status == Status.COLLISION && chained.rounds == 3,
+                    "two generic rule applications collide in all six target orders: " + chained.status + " " + chained.reason);
+        }
+        Result diagonal = ContextProductionRoundsReference.inspectWithParameters(source(X,true,"!@x pair(x,x);"),
+                Collections.singletonList(source(UUID.randomUUID(),false,"!@u @v pair(u,v) -> q(u,v);")),NORMAL);
+        Product diagonalTemplate = null;
+        for (Product candidate : diagonal.products)
+            if (candidate.clause.literals.size() == 1 && candidate.clause.literals.get(0).predicate.equals("q")) diagonalTemplate = candidate;
+        require(diagonalTemplate != null && diagonalTemplate.fact == null && diagonalTemplate.clause.variables.size() == 1,
+                "generalization preserves repeated argument identity instead of asserting independent variables");
+        Result independent = ContextProductionRoundsReference.inspectWithParameters(source(X,true,"!@x @y pair(x,y);"),
+                Collections.singletonList(source(UUID.randomUUID(),false,"!@u @v pair(u,v) -> q(u,v);")),NORMAL);
+        require(independent.products.stream().anyMatch(candidate -> candidate.clause.literals.size() == 1
+                        && candidate.clause.literals.get(0).predicate.equals("q") && candidate.clause.variables.size() == 2),
+                "distinct fresh parameters preserve independent universally quantified arguments");
+        User diagonalUser = new User(); Mind diagonalMind = new Mind(diagonalUser); diagonalUser.setCurrentMind(diagonalMind);
+        diagonalMind.compileLine(diagonalTemplate.clause.assertion(),false,diagonalTemplate.clause.project(diagonalMind));
+        require(Boolean.TRUE.equals(diagonalMind.query("?q(73,73);",null,false))
+                        && diagonalMind.query("?q(73,74);",null,false) == null,
+                "diagonal generic proof does not certify a mismatched ordinary instance");
+        Result foreignGeneric = ContextProductionRoundsReference.inspectWithParameters(source(X,true,"!anchor(1);"),
+                Collections.singletonList(source(UUID.randomUUID(),false,"!@x p(x);","!@y p(y) -> q(y);")),NORMAL);
+        require(foreignGeneric.products.stream().noneMatch(candidate -> candidate.clause.literals.stream().anyMatch(atom -> atom.predicate.equals("q"))),
+                "generalized foreign-only proofs do not enter X");
+        Result rankStop = ContextProductionRoundsReference.inspectWithParameters(source(X,true,"!@a @b @c @d p(a,b,c,d);"),
+                Collections.singletonList(source(UUID.randomUUID(),false,"!@a @b @c @d p(a,b,c,d) -> q(a,b,c,d);")),NORMAL);
+        require(rankStop.status == Status.INCOMPLETE && rankStop.reason.contains("Parameter rank limit"),
+                "a parameter experiment exceeding its bounded rank cannot certify saturation");
         User user = new User(); Mind monolithic = new Mind(user); user.setCurrentMind(monolithic);
         require(!monolithic.compile("!@x p(x); !@y p(y) -> q(y); !~q(1);",null,false),
                 "native monolithic control proves the deferred generic-composition conflict");
