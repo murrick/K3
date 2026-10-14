@@ -170,8 +170,13 @@ class ContextOpinionsTest {
             assertEquals(IContextFederation.FrontierTruth.UNKNOWN, opinions.get("A").getResult().getResultTruth());
             assertFalse(opinions.containsKey("C"));
             assertTrue(opinions.get("A").getResult().getProvisionalHypotheses().stream().anyMatch(h -> h.getStatement().contains("p(Mary)")));
-            assertNull(mind.query("?p(Mary), q(Mary);", null, false));
-            assertFalse(command("ctx opinions").values().stream().anyMatch(o -> o.getResult().getResultTruth()==IContextFederation.FrontierTruth.TRUE));
+            // Exact ground literals can close the full joint query. This does
+            // not supply either isolated source with the other's knowledge.
+            assertEquals(Boolean.TRUE, mind.query("?p(Mary), q(Mary);", null, false));
+            Map<String,IContextFederation.Opinion> compound = command("ctx opinions");
+            assertEquals(IContextFederation.FrontierTruth.UNKNOWN, compound.get("A").getResult().getResultTruth());
+            assertEquals(IContextFederation.FrontierTruth.UNKNOWN, compound.get("C").getResult().getResultTruth());
+            assertFalse(compound.values().stream().anyMatch(o -> o.getResult().getResultTruth()==IContextFederation.FrontierTruth.TRUE));
         } finally { close(mind); }
     }
 

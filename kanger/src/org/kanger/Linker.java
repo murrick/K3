@@ -1014,6 +1014,17 @@ public class Linker {
             occurrs = true;
         }
 
+        // An exact concrete match closes a clause literal without creating a
+        // TValue. Keep its owning rule and donor cause just as for substitution
+        // matches; a different ground or unresolved argument must not close it.
+        if (r == null && !master.isSubstitutable() && !slave.isSubstitutable()
+                && !master.isAbstractive() && !slave.isAbstractive()
+                && master.isComplete() && slave.isComplete()
+                && master.getArguments().equalsBase(mind, slave.getArguments())) {
+            r = master.getRule();
+            occurrs = true;
+        }
+
         if (r != null) {
 
             if (occurrs) {
