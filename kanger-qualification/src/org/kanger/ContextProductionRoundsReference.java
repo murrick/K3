@@ -30,6 +30,7 @@ public final class ContextProductionRoundsReference {
         }
     }
     public enum Status { SATURATED, COLLISION, INCOMPLETE }
+    public enum Coverage { NONE, MONADIC_HORN }
     public static final class Proof {
         public final Set<Source> sources;
         public final int depth;
@@ -53,8 +54,15 @@ public final class ContextProductionRoundsReference {
         public final List<Product> products;
         public final List<Snapshot> observations;
         public final ContextQualification collision;
+        /** Explicit scope certificate; legacy observation closure alone is not one. */
+        public final Coverage coverage;
         private Result(Status status, int rounds, String reason, List<Bucket> state,
                        List<Snapshot> observations, ContextQualification collision) {
+            this(status,rounds,reason,state,observations,collision,Coverage.NONE);
+        }
+        private Result(Status status, int rounds, String reason, List<Bucket> state,
+                       List<Snapshot> observations, ContextQualification collision, Coverage coverage) {
+            this.coverage = coverage;
             this.status = status; this.rounds = rounds; this.reason = reason; this.collision = collision;
             List<Product> copy = new ArrayList<>(); for (Bucket bucket : state) copy.add(new Product(bucket));
             products = Collections.unmodifiableList(copy);
@@ -142,11 +150,78 @@ public final class ContextProductionRoundsReference {
         Mind mind = new Mind(user); user.setCurrentMind(mind);
         mind.setFloodControlLimit(limits.depth); return mind;
     }
+    /** Coverage classification only: no rule application or unification here. */
+    private static final class MonadicCoverage {
+        boolean covered = true;
+        boolean quantified;
+        final List<SemanticTermSnapshot> constants = new ArrayList<>();
+        final List<SemanticTermSnapshot> primaryValues = new ArrayList<>();
+        final Budget budget;
+        MonadicCoverage(Budget budget) { this.budget = budget; }
+        void fresh(List<SemanticTermSnapshot> parameters) {
+            for (SemanticTermSnapshot value : primaryValues) for (SemanticTermSnapshot parameter : parameters) {
+                budget.take();
+                if (value.containsSemanticValue(parameter))
+                    throw new IllegalStateException("Eigenparameter occurs in primary family; qualification incomplete");
+            }
+        }
+        void constant(SemanticTermSnapshot value) {
+            if (value.getType() != org.kanger.enums.DataType.NUMERIC
+                    && value.getType() != org.kanger.enums.DataType.STRING) { covered = false; return; }
+            for (SemanticTermSnapshot old : constants) {
+                budget.take(); if (old.semanticallyEquals(value)) return;
+            }
+            constants.add(value);
+        }
+        void shape(Clause clause) {
+            int positive = 0, variable = -1;
+            boolean fixed = false, generic = false;
+            for (Atom atom : clause.literals) {
+                budget.take();
+                if (atom.arguments.size() != 1) { covered = false; return; }
+                if (atom.positive) ++positive;
+                Slot argument = atom.arguments.get(0);
+                if (argument.variable >= 0) {
+                    generic = true;
+                    if (variable >= 0 && variable != argument.variable) covered = false;
+                    variable = argument.variable;
+                } else { fixed = true; constant(argument.value); }
+            }
+            // Signed units, definite Horn rules, and no mixed parameter/constant rule.
+            if ((clause.literals.size() > 1 && positive != 1) || (fixed && generic)) covered = false;
+        }
+    }
+
+    private static MonadicCoverage coverage(List<Declaration> declarations, Limits limits, Budget budget) throws Exception {
+        MonadicCoverage result = new MonadicCoverage(budget);
+        // Compile each occurrence alone: siblings' assertions never coexist in this preflight.
+        for (Declaration declaration : declarations) {
+            budget.take();
+            Mind probe = memory(limits);
+            try (ContextProductionCapture capture = ContextProductionCapture.begin(probe,limits.events)) {
+                capture.replay(probe,declaration.source,declaration.statement);
+                Snapshot snapshot = capture.snapshot();
+                for (SemanticTermSnapshot value : snapshot.primaryValues) {
+                    budget.take(); result.primaryValues.add(value);
+                }
+                if (!snapshot.gaps.isEmpty() || snapshot.inputs.isEmpty()) result.covered = false;
+                for (Input input : snapshot.inputs) {
+                    result.quantified |= input.quantified;
+                    // Native rotation spans the entire rule. Do not certify
+                    // multiple variables merely because separate branches are unary.
+                    if (input.variableCount > 1) result.covered = false;
+                    if (input.shapes.size() != input.branches) result.covered = false;
+                    for (Clause shape : input.shapes) { budget.take(); result.shape(shape); }
+                }
+            }
+        }
+        return result;
+    }
     /** Bounded native parameter experiment, not an extra unification engine.
      * No parameter predicate or assumed fact is installed. All actual premises
      * must still be proved by the captured native application/closure protocol. */
     private static void seedParameters(Mind mind, List<SemanticTermSnapshot> parameters,
-                                       Budget budget) throws Exception {
+                                       List<SemanticTermSnapshot> constants, Budget budget) throws Exception {
         Set<TVariable> variables = new LinkedHashSet<>();
         int rank = 0;
         for (IRule entry : mind.getRules()) if (!entry.isDeleted(mind)) {
@@ -161,15 +236,21 @@ public final class ContextProductionRoundsReference {
             ITerm term = mind.getTerms().add("ctxparameter_" + UUID.randomUUID().toString().replace("-",""));
             parameters.add(SemanticTermSnapshot.capture(term));
         }
+        List<SemanticTermSnapshot> representatives = new ArrayList<>(parameters);
+        representatives.addAll(constants);
         for (IRule entry : mind.getRules()) if (!entry.isDeleted(mind)) {
             Set<TVariable> scoped = new LinkedHashSet<>();
             for (List<Domain> branch : ((Rule)entry).getTree()) for (Domain domain : branch)
                 scoped.addAll(domain.getArguments().getTVariables(mind));
             int rotations = 1;
-            for (int i=0; i<scoped.size(); ++i) rotations *= Math.max(1,parameters.size());
+            for (int i=0; i<scoped.size(); ++i) {
+                long planned = (long) rotations * Math.max(1,representatives.size());
+                if (planned > budget.remaining) throw new IllegalStateException("Representative work limit; qualification incomplete");
+                rotations = (int) planned;
+            }
             for (int i=0; i<rotations; ++i) budget.take();
         }
-        for (TVariable variable : variables) for (SemanticTermSnapshot parameter : parameters) {
+        for (TVariable variable : variables) for (SemanticTermSnapshot parameter : representatives) {
             budget.take();
             mind.getTValues().add(variable,mind.getTerms().projectSemantic(parameter.materialize()));
         }
@@ -196,9 +277,17 @@ public final class ContextProductionRoundsReference {
         List<Bucket> state = new ArrayList<>(); List<Snapshot> observations = new ArrayList<>();
         List<SemanticTermSnapshot> parameters = new ArrayList<>();
         Budget budget = new Budget(limits.work);
+        List<Declaration> declarations = new ArrayList<>(local);
+        for (List<Declaration> target : frozen) declarations.addAll(target);
+        MonadicCoverage coverage;
+        try { coverage = coverage(declarations,limits,budget); }
+        catch (IllegalStateException | org.kanger.exception.RuntimeErrorException incomplete) {
+            return new Result(Status.INCOMPLETE,0,incomplete.toString(),state,observations,null);
+        }
         for (int round = 1; round <= limits.rounds; ++round) {
             List<Bucket> next = copy(state); boolean changed = false;
             List<String> unresolvedResiduals = new ArrayList<>();
+            if (!coverage.covered && coverage.quantified) unresolvedResiduals.add("unproved-symbolic-coverage");
             try {
                 for (List<Declaration> target : frozen) {
                     // Every participant starts from STATE, never another participant's NEXT.
@@ -221,7 +310,9 @@ public final class ContextProductionRoundsReference {
                                 capture.replayDerived(participant, bucket.clause, supports);
                             }
                             for (Declaration declaration : target) capture.replay(participant, declaration.source, declaration.statement);
-                            if (parameterPass) seedParameters(participant,parameters,budget);
+                            if (parameterPass) seedParameters(participant,parameters,
+                                    coverage.covered ? coverage.constants : Collections.<SemanticTermSnapshot>emptyList(),budget);
+                            coverage.fresh(parameters);
                             capture.verifyParametersFresh(parameters);
                             participant.link(null, false);
                             Analyzer analyzer = new Analyzer(participant);
@@ -245,10 +336,12 @@ public final class ContextProductionRoundsReference {
                         // inputs; an in-place replay can be suppressed by an existing
                         // generated canonical twin. Foreign proofs never enter NEXT.
                         if (localChanged) continue;
-                        if (parameterExperiment && !parameterPass && snapshot.gaps.stream().anyMatch(gap -> gap.startsWith("unbound-waiter-composition:"))) {
+                        if (parameterExperiment && !parameterPass && (coverage.covered
+                                || snapshot.gaps.stream().anyMatch(gap -> gap.startsWith("unbound-waiter-composition:")))) {
                             parameterPass = true; continue;
                         }
-                        unresolvedResiduals.addAll(snapshot.gaps);
+                        for (String gap : snapshot.gaps) if (!(coverage.covered && parameterPass
+                                && gap.startsWith("unbound-waiter-composition:"))) unresolvedResiduals.add(gap);
                         for (Bucket bucket : participantState) for (Proof proof : bucket.proofs)
                             if (proof.usesX()) changed |= add(next, bucket.clause.generalize(parameters), proof, limits, budget);
                         break;
@@ -260,7 +353,9 @@ public final class ContextProductionRoundsReference {
             state = next;
             if (!changed) return new Result(unresolvedResiduals.isEmpty() ? Status.SATURATED : Status.INCOMPLETE,
                     round, unresolvedResiduals.isEmpty() ? "No new products or source support sets"
-                            : unresolvedResiduals.toString(), state, observations, null);
+                            + (coverage.covered ? "; monadic-uniform representative closure" : "")
+                            : unresolvedResiduals.toString(), state, observations, null,
+                    unresolvedResiduals.isEmpty() && coverage.covered ? Coverage.MONADIC_HORN : Coverage.NONE);
         }
         return new Result(Status.INCOMPLETE, limits.rounds, "Round limit; qualification incomplete", state, observations, null);
     }

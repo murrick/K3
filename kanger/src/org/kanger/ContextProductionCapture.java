@@ -104,11 +104,15 @@ public final class ContextProductionCapture implements AutoCloseable {
             return new Atom(fact.predicate, fact.positive, slots);
         }
         private static Atom of(Domain domain, Mind mind, boolean unbound, Map<Long,Integer> variables) throws Exception {
+            return of(domain,mind,unbound,variables,false);
+        }
+        private static Atom of(Domain domain, Mind mind, boolean unbound, Map<Long,Integer> variables,
+                               boolean declaration) throws Exception {
             if (domain.isSystem(mind) || domain.isCalculated(mind)
                     || "rule(1)".equals(domain.getPredicate(mind).toString(mind))) return null;
             List<Slot> slots = new ArrayList<>();
             for (IArgument argument : domain.getArguments()) {
-                if (argument.isEmpty(mind)) {
+                if ((declaration && argument.getType() == ArgumentType.TVARIABLE) || argument.isEmpty(mind)) {
                     if (!unbound || argument.getType() != ArgumentType.TVARIABLE) return null;
                     Integer variable = variables.get(argument.getId());
                     if (variable == null) { variable = variables.size(); variables.put(argument.getId(), variable); }
@@ -171,6 +175,15 @@ public final class ContextProductionCapture implements AutoCloseable {
             List<Atom> atoms = new ArrayList<>(); Map<Long,Integer> variables = new HashMap<>();
             for (Domain domain : branch) {
                 Atom atom = Atom.of(domain, mind, unbound, variables);
+                if (atom == null) return null;
+                atoms.add(atom);
+            }
+            return atoms.isEmpty() ? null : new Clause(atoms);
+        }
+        static Clause shapeOf(List<Domain> branch, Mind mind) throws Exception {
+            List<Atom> atoms = new ArrayList<>(); Map<Long,Integer> variables = new HashMap<>();
+            for (Domain domain : branch) {
+                Atom atom = Atom.of(domain,mind,true,variables,true);
                 if (atom == null) return null;
                 atoms.add(atom);
             }
@@ -277,15 +290,32 @@ public final class ContextProductionCapture implements AutoCloseable {
         public final Fact fact;
         public final Clause clause;
         public final List<Clause> clauses;
+        /** Structural coverage metadata; never inserted into the proved-clause pool. */
+        public final List<Clause> shapes;
+        public final int branches;
+        public final boolean quantified;
+        public final int variableCount;
         public final boolean duplicate;
         private Input(Source source, Rule rule, Mind mind, boolean duplicate) throws Exception {
             this.source = source; nativeRule = rule.getId(); origin = rule.getOrigin();
             fact = rule.isStored() && !rule.isQuery() ? Fact.of(rule.getDomain(), mind, false) : null;
             List<Clause> captured = new ArrayList<>();
+            List<Clause> shapes = new ArrayList<>();
+            branches = rule.getTree().size();
+            boolean quantified = false;
+            Set<Long> declaredVariables = new HashSet<>();
             for (List<Domain> branch : rule.getTree()) {
+                for (Domain domain : branch) for (org.kanger.units.TVariable variable : domain.getArguments().getTVariables(mind)) {
+                    quantified = true; declaredVariables.add(variable.getId());
+                }
                 Clause clause = Clause.of(branch, mind, source == null || branch.size() == 1);
                 if (clause != null) captured.add(clause);
+                Clause shape = Clause.shapeOf(branch,mind);
+                if (shape != null) shapes.add(shape);
             }
+            this.shapes = Collections.unmodifiableList(shapes);
+            this.quantified = quantified;
+            variableCount = declaredVariables.size();
             clauses = Collections.unmodifiableList(captured);
             clause = rule.getTree().size() == 1 && captured.size() == 1 ? captured.get(0) : null;
             this.duplicate = duplicate;
@@ -318,12 +348,14 @@ public final class ContextProductionCapture implements AutoCloseable {
         public final List<Application> applications;
         public final List<Residual> residuals;
         public final List<String> gaps;
+        public final List<SemanticTermSnapshot> primaryValues;
         public final int eventCount;
         private Snapshot(ContextProductionCapture capture) {
             eventCount = capture.inputs.size() + capture.applications.size() + capture.residuals.size() + capture.stored.size();
             inputs = Collections.unmodifiableList(new ArrayList<>(capture.inputs));
             applications = Collections.unmodifiableList(new ArrayList<>(capture.applications));
             residuals = Collections.unmodifiableList(new ArrayList<>(capture.residuals));
+            primaryValues = Collections.unmodifiableList(new ArrayList<>(capture.primaryValues));
             Set<String> gaps = new LinkedHashSet<>(capture.gaps);
             for (Materialization stored : capture.stored) {
                 boolean covered = false;

@@ -20,6 +20,7 @@ public final class ContextProductionCaptureRunner {
             multipleCompiledBranches();
             quantifiedClauseTransport();
             eigenparameterFreshness();
+            declaredShapeSurvivesBinding();
             typedDetachedTransport();
             nullaryAndRepeatedArguments();
             queryArtifactsAreExcluded();
@@ -145,6 +146,20 @@ public final class ContextProductionCaptureRunner {
             require(capture.snapshot().inputs.size() == 1,
                     "fresh parameter verification installs no assertion or knowledge source");
         }
+    }
+    private static void declaredShapeSurvivesBinding() throws Exception {
+        Mind work = memory();
+        org.kanger.units.Rule rule = (org.kanger.units.Rule)work.compileLine("!@x p(x) -> q(1);",false,new LinkedList<ITerm>());
+        Set<org.kanger.units.TVariable> variables = new LinkedHashSet<>();
+        for (org.kanger.units.Domain domain : rule.getTree().get(0)) variables.addAll(domain.getArguments().getTVariables(work));
+        org.kanger.units.TVariable variable = variables.iterator().next();
+        variable.setCurrent(work.getTValues().add(variable,work.getTerms().add(2)));
+        Clause concrete = Clause.of(rule.getTree().get(0),work,true);
+        Clause declared = Clause.shapeOf(rule.getTree().get(0),work);
+        require(concrete.variables.isEmpty() && declared.variables.size() == 1,
+                "a live variable binding cannot disguise a mixed quantified rule as an entirely ground rule");
+        require(declared.literals.stream().anyMatch(atom -> atom.arguments.get(0).variable < 0),
+                "declared coverage shape retains the constant head alongside the universal premise");
     }
     private static void quantifiedClauseTransport() throws Exception {
         Snapshot snapshot = replay(new String[] {"!@x @y left(x) && right(y) -> p(x,y);", "!left(John);"},

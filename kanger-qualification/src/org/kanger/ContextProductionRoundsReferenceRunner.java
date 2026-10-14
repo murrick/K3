@@ -19,7 +19,7 @@ public final class ContextProductionRoundsReferenceRunner {
     public static void main(String[] args) {
         try {
             System.setProperty("user.home", java.nio.file.Files.createTempDirectory("production-round-reference-").toString());
-            maskedAndUnmasked(); pureForeign(); alternateSupports(); delayedChainPermutations(); cyclesAndLimits(); compoundResiduals(); multiClauseSources(); quantifiedResiduals(); universalUnits();
+            maskedAndUnmasked(); pureForeign(); alternateSupports(); delayedChainPermutations(); cyclesAndLimits(); compoundResiduals(); multiClauseSources(); quantifiedResiduals(); universalUnits(); monadicCoverageOracle();
             System.out.println("CONTEXT_PRODUCTION_ROUNDS_REFERENCE_PASS checks=" + checks);
             System.exit(0);
         } catch (Throwable failure) { failure.printStackTrace(); System.exit(1); }
@@ -135,16 +135,16 @@ public final class ContextProductionRoundsReferenceRunner {
                 source(UUID.randomUUID(), false, "!left(John,2);"),
                 source(UUID.randomUUID(), false, "!right(2,John);")), NORMAL);
         Product typedP = product(typed, "p");
-        require(typed.status == Status.SATURATED && typedP != null && typedP.fact.arguments.size() == 2,
+        require(typed.status == Status.INCOMPLETE && typedP != null && typedP.fact.arguments.size() == 2,
                 "named and numeric arguments survive positional compound transport");
         Result mismatch = ContextProductionRoundsReference.inspect(typedX, Arrays.asList(
                 source(UUID.randomUUID(), false, "!left(John,2);"),
                 source(UUID.randomUUID(), false, "!right(John,2);")), NORMAL);
-        require(mismatch.status == Status.SATURATED && product(mismatch, "p") == null,
+        require(mismatch.status == Status.INCOMPLETE && product(mismatch, "p") == null,
                 "compound transport preserves argument order rather than matching rendered text");
         Result unbound = ContextProductionRoundsReference.inspect(
                 source(X, true, "!@x @y left(x) && right(y) -> p(x,y);"), Collections.singletonList(a), NORMAL);
-        require(unbound.status == Status.SATURATED && product(unbound, "p") == null,
+        require(unbound.status == Status.INCOMPLETE && product(unbound, "p") == null,
                 "quantified compound residual remains a clause without asserting its head: " + unbound.status + " " + unbound.reason);
         Result shallow = ContextProductionRoundsReference.inspect(x, Arrays.asList(a, b), new Limits(16, 10000, 100000, 1));
         require(shallow.status == Status.INCOMPLETE && shallow.reason.contains("depth limit"),
@@ -226,7 +226,7 @@ public final class ContextProductionRoundsReferenceRunner {
         for (boolean reverse : new boolean[] {false, true}) {
             Result result = ContextProductionRoundsReference.inspect(x, reverse ? Arrays.asList(b,a) : Arrays.asList(a,b), NORMAL);
             Product p = product(result, "p");
-            require(result.status == Status.SATURATED && p != null,
+            require(result.status == Status.INCOMPLETE && p != null,
                     "remaining quantified variable carries the independent-argument join: " + result.status + " " + result.reason);
             for (Proof proof : p.supports)
                 require(proof.sources.contains(x.get(0).source) && proof.sources.contains(a.get(0).source)
@@ -237,24 +237,24 @@ public final class ContextProductionRoundsReferenceRunner {
                         source(UUID.randomUUID(),false,"!left(John);"),
                         source(UUID.randomUUID(),false,"!right(2,3);")),NORMAL);
         Product triple = product(multiple,"p");
-        require(multiple.status == Status.SATURATED && triple != null && triple.fact.arguments.size() == 3,
+        require(multiple.status == Status.INCOMPLETE && triple != null && triple.fact.arguments.size() == 3,
                 "two remaining variables and a typed constant survive the same clause scope");
         require(proves(triple,"?p(John,2,3);") && !proves(triple,"?p(John,3,2);"),
                 "separate remaining variables retain their positional binding");
         Result repeatedMismatch = ContextProductionRoundsReference.inspect(
                 source(X,true,"!@x @y left(x) && right(y,y) -> p(x,y);"), Arrays.asList(a,
                         source(UUID.randomUUID(),false,"!right(2,3);")),NORMAL);
-        require(repeatedMismatch.status == Status.SATURATED && product(repeatedMismatch,"p") == null,
+        require(repeatedMismatch.status == Status.INCOMPLETE && product(repeatedMismatch,"p") == null,
                 "one repeated variable cannot match distinct donor arguments after transport");
         Result repeatedMatch = ContextProductionRoundsReference.inspect(
                 source(X,true,"!@x @y left(x) && right(y,y) -> p(x,y);"), Arrays.asList(a,
                         source(UUID.randomUUID(),false,"!right(2,2);")),NORMAL);
-        require(repeatedMatch.status == Status.SATURATED && product(repeatedMatch,"p") != null,
+        require(repeatedMatch.status == Status.INCOMPLETE && product(repeatedMatch,"p") != null,
                 "equal repeated donor arguments retain the native quantified proof");
         Result signed = ContextProductionRoundsReference.inspect(
                 source(X,true,"!@x @y left(x) && right(y) -> ~p(x,y);"),Arrays.asList(a,b),NORMAL);
         Product negative = product(signed,"p");
-        require(signed.status == Status.SATURATED && negative != null && !negative.fact.positive,
+        require(signed.status == Status.INCOMPLETE && negative != null && !negative.fact.positive,
                 "negative conclusion polarity survives a quantified residual");
         Result signedConflict = ContextProductionRoundsReference.inspect(
                 source(X,true,"!@x @y left(x) && right(y) -> ~p(x,y);"),
@@ -263,7 +263,7 @@ public final class ContextProductionRoundsReferenceRunner {
                 "opposite-polarity quantified conflict is refused");
         Result masked = ContextProductionRoundsReference.inspect(x, Arrays.asList(
                 source(UUID.randomUUID(),false,"!left(1);", "!p(1,2);"),b),NORMAL);
-        require(masked.status == Status.SATURATED && product(masked,"p") != null,
+        require(masked.status == Status.INCOMPLETE && product(masked,"p") != null,
                 "a new X-dependent quantified proof survives an existing foreign conclusion");
         for (Proof proof : product(masked,"p").supports)
             require(proof.usesX() && proof.sources.contains(b.get(0).source),
@@ -271,7 +271,7 @@ public final class ContextProductionRoundsReferenceRunner {
         List<Declaration> alias = source(UUID.randomUUID(), false, "!left(1);");
         Result alternatives = ContextProductionRoundsReference.inspect(x, Arrays.asList(a,alias,b), NORMAL);
         Product joint = product(alternatives, "p");
-        require(alternatives.status == Status.SATURATED && joint != null, "quantified alternative support fixture saturates");
+        require(alternatives.status == Status.INCOMPLETE && joint != null, "quantified alternatives survive without claiming complete symbolic coverage");
         boolean routeA = false, routeAlias = false;
         for (Proof proof : joint.supports) {
             require(proof.sources.contains(x.get(0).source) && proof.sources.contains(b.get(0).source),
@@ -285,11 +285,11 @@ public final class ContextProductionRoundsReferenceRunner {
                 "quantified templates carry derivation depth into the bound application");
         Result isolated = ContextProductionRoundsReference.inspect(source(X,true,"!anchor(1);"), Arrays.asList(
                 source(UUID.randomUUID(),false,"!@x @y left(x) && right(y) -> p(x,y);", "!left(1);"),b), NORMAL);
-        require(isolated.status == Status.SATURATED && product(isolated,"p") == null,
+        require(isolated.status == Status.INCOMPLETE && product(isolated,"p") == null,
                 "pure foreign quantified residuals do not cross the outer barrier");
         Result unsupportedUnit = ContextProductionRoundsReference.inspect(
                 source(X,true,"!@x @y left(x) -> p(x,y);"), Collections.singletonList(a),NORMAL);
-        require(unsupportedUnit.status == Status.SATURATED && product(unsupportedUnit,"p") == null, "universal unit residual stays a schema rather than inventing a ground fact");
+        require(unsupportedUnit.status == Status.INCOMPLETE && product(unsupportedUnit,"p") == null, "universal unit residual stays a schema rather than inventing a ground fact");
         Result existential = ContextProductionRoundsReference.inspect(
                 source(X,true,"!@x $y left(x) && right(y) -> p(x,y);"), Collections.singletonList(a),NORMAL);
         require(existential.status == Status.INCOMPLETE, "existential witness identity is not replaced by an ordinary universal slot");
@@ -331,9 +331,10 @@ public final class ContextProductionRoundsReferenceRunner {
         Product template = null;
         for (Product candidate : genericOnly.products)
             if (candidate.clause.literals.size() == 1 && candidate.clause.literals.get(0).predicate.equals("q")) template = candidate;
-        require(genericOnly.status == Status.INCOMPLETE && template != null && template.fact == null
+        require(genericOnly.status == Status.SATURATED && genericOnly.reason.contains("monadic-uniform")
+                        && template != null && template.fact == null
                         && template.clause.variables.size() == 1,
-                "native parameter proof exports a universal template without claiming traversal completeness");
+                "the uniform monadic fragment certifies representative closure and exports a universal template");
         require(template.supports.stream().anyMatch(proof -> proof.sources.size() == 2 && proof.usesX() && proof.depth == 1),
                 "generic consequence retains whole X/A support and one rule application");
         User templateUser = new User(); Mind templateMind = new Mind(templateUser); templateUser.setCurrentMind(templateMind);
@@ -379,10 +380,12 @@ public final class ContextProductionRoundsReferenceRunner {
                 source(X,true,"!@x r(x);","!p(1);"),
                 Arrays.asList(source(UUID.randomUUID(),false,"!@x r(x) -> s(x);","!@x p(x) -> q(x);"),
                         source(UUID.randomUUID(),false,"!~q(2);")),NORMAL);
-        require(specific.status == Status.INCOMPLETE && product(specific,"q") != null
+        require(specific.status == Status.SATURATED && specific.reason.contains("monadic-uniform") && product(specific,"q") != null
                         && specific.products.stream().noneMatch(candidate -> !candidate.clause.variables.isEmpty()
                         && candidate.clause.literals.size() == 1 && candidate.clause.literals.get(0).predicate.equals("q")),
                 "an unrelated generic proof cannot generalize a consequence supported only at p(1)");
+        require(diagonal.status == Status.INCOMPLETE && !diagonal.reason.contains("monadic-uniform"),
+                "a binary rule cannot inherit the monadic coverage certificate");
         Result missing = ContextProductionRoundsReference.inspectWithParameters(x,
                 Collections.singletonList(source(UUID.randomUUID(),false,"!@y p(y) && missing(y) -> q(y);")),NORMAL);
         require(missing.products.stream().noneMatch(candidate -> candidate.clause.literals.size() == 1
@@ -405,13 +408,93 @@ public final class ContextProductionRoundsReferenceRunner {
                 "a foreign universal unit and its foreign consequence remain private");
         Result negativeUnit = ContextProductionRoundsReference.inspect(source(X,true,"!@x ~p(x);"),
                 Collections.singletonList(source(UUID.randomUUID(),false,"!~p(1) -> q(1);")),NORMAL);
-        require(negativeUnit.status == Status.SATURATED && product(negativeUnit,"q") != null,
+        require(negativeUnit.status == Status.INCOMPLETE && product(negativeUnit,"q") != null,
                 "universal unit instantiation preserves negative polarity");
         Result residualUnit = ContextProductionRoundsReference.inspect(source(X,true,"!@x @y left(x) -> p(x,y);"),
                 Arrays.asList(source(UUID.randomUUID(),false,"!left(1);"),
                         source(UUID.randomUUID(),false,"!p(1,2) -> q(1);"),negative),NORMAL);
         require(residualUnit.status == Status.COLLISION,
                 "a transported universal unit residual supplies an ordinary ground instance");
+    }
+    /** Independent finite truth-closure oracle, confined to controls. */
+    private static void monadicCoverageOracle() throws Exception {
+        String[] excluded = {"!@x (p(x)||q(x));", "!@x (~p(x)||q(x));",
+                "!@x (p(x)||~q(x));", "!@x (~p(x)||~q(x));"};
+        Result uncovered = ContextProductionRoundsReference.inspect(source(X,true,excluded[0]),
+                Collections.singletonList(source(UUID.randomUUID(),false,excluded[1],excluded[2],excluded[3])),NORMAL);
+        require(uncovered.status == Status.INCOMPLETE && uncovered.coverage == Coverage.NONE
+                        && uncovered.reason.contains("unproved-symbolic-coverage"),
+                "absence of waiter gaps cannot certify an unsupported inconsistent universal clause family");
+        for (boolean p : new boolean[]{false,true}) for (boolean q : new boolean[]{false,true})
+            require(!((p||q) && (!p||q) && (p||!q) && (!p||!q)),
+                    "independent truth table excludes every valuation of the coverage counterexample");
+        for (String assumption : new String[]{"!p(1);","!~p(1);"}) {
+            User user = new User(); Mind nativeMind = new Mind(user); user.setCurrentMind(nativeMind);
+            for (String rule : excluded) require(nativeMind.compile(rule,null,false),"native control accepts the ungrounded source occurrence");
+            require(!nativeMind.compile(assumption,null,false),"native grounding rejects each possible polarity of p(1)");
+        }
+        List<Declaration> universal = source(X,true,"!@x p(x);");
+        List<Declaration> first = source(UUID.randomUUID(),false,"!@x p(x) -> q(x);");
+        List<Declaration> second = source(UUID.randomUUID(),false,"!@x q(x) -> r(x);");
+        for (boolean reverse : new boolean[]{false,true}) {
+            Result chain = ContextProductionRoundsReference.inspect(universal,
+                    reverse ? Arrays.asList(second,first) : Arrays.asList(first,second),NORMAL);
+            require(chain.status == Status.SATURATED && chain.reason.contains("monadic-uniform"),
+                    "consistent generic chain has order-independent representative saturation");
+            require(chain.products.stream().filter(candidate -> candidate.clause.variables.size() == 1
+                    && candidate.clause.literals.size() == 1 && candidate.clause.literals.get(0).predicate.equals("r"))
+                    .anyMatch(candidate -> candidate.supports.stream().anyMatch(proof -> proof.sources.size() == 3 && proof.depth == 2)),
+                    "certified generic chain retains whole X/A/B support and carried depth2");
+        }
+        Result negative = ContextProductionRoundsReference.inspect(source(X,true,"!@x ~q(x);"),Collections.singletonList(first),NORMAL);
+        require(negative.status == Status.SATURATED && negative.products.stream().anyMatch(candidate -> candidate.clause.variables.size() == 1
+                && candidate.clause.literals.size() == 1 && candidate.clause.literals.get(0).predicate.equals("p")
+                && !candidate.clause.literals.get(0).positive),"negative universal units propagate through the same complete representatives");
+        Result fixedHead = ContextProductionRoundsReference.inspect(universal,
+                Collections.singletonList(source(UUID.randomUUID(),false,"!@x p(x) -> q(1);")),NORMAL);
+        require(fixedHead.status == Status.INCOMPLETE && !fixedHead.reason.contains("monadic-uniform"),
+                "a constant head cannot borrow a certificate for uniform same-variable rules");
+        Result typed = ContextProductionRoundsReference.inspect(source(X,true,"!p(1);"),
+                Arrays.asList(first,source(UUID.randomUUID(),false,"!~q(John);")),NORMAL);
+        require(typed.status == Status.SATURATED && typed.reason.contains("monadic-uniform")
+                && product(typed,"q") != null && proves(product(typed,"q"),"?q(1);")
+                && typed.products.stream().noneMatch(candidate -> !candidate.clause.variables.isEmpty()
+                && candidate.clause.literals.get(0).predicate.equals("q")),
+                "numeric and named representatives remain distinct and a ground consequence is not generalized");
+        Result siblings = ContextProductionRoundsReference.inspect(source(X,true,"!anchor(1);"),Arrays.asList(
+                source(UUID.randomUUID(),false,"!@x p(x);"),source(UUID.randomUUID(),false,"!@x ~p(x);")),NORMAL);
+        require(siblings.status == Status.SATURATED && siblings.reason.contains("monadic-uniform")
+                && siblings.products.stream().noneMatch(candidate -> candidate.clause.literals.stream().anyMatch(atom -> atom.predicate.equals("p"))),
+                "opposite sibling universals remain independent despite shared representative terms");
+        Result separateVariables = ContextProductionRoundsReference.inspect(source(X,true,
+                "!@x @y (p(x) -> q(x)) && (r(y) -> s(y));"),
+                Collections.singletonList(source(UUID.randomUUID(),false,"!anchor(1);")),NORMAL);
+        require(separateVariables.status == Status.INCOMPLETE && separateVariables.coverage == Coverage.NONE,
+                "separate unary branches cannot hide multi-variable native rotation in one source rule");
+        for (int edges=0; edges<4; ++edges) for (int roots=0; roots<4; ++roots) for (int negatives=0; negatives<4; ++negatives) {
+            int reachable = roots, previous;
+            do {
+                previous = reachable;
+                if ((edges & 1) != 0 && (reachable & 1) != 0) reachable |= 2;
+                if ((edges & 2) != 0 && (reachable & 2) != 0) reachable |= 1;
+            } while (reachable != previous);
+            List<String> local = new ArrayList<>(); local.add("!anchor(1);");
+            if ((roots & 1) != 0) local.add("!@x p(x);");
+            if ((roots & 2) != 0) local.add("!@x q(x);");
+            List<String> foreign = new ArrayList<>();
+            if ((edges & 1) != 0) foreign.add("!@x p(x) -> q(x);");
+            if ((edges & 2) != 0) foreign.add("!@x q(x) -> p(x);");
+            if ((negatives & 1) != 0) foreign.add("!~p(1);");
+            if ((negatives & 2) != 0) foreign.add("!~q(1);");
+            Result actual = ContextProductionRoundsReference.inspect(source(X,true,local.toArray(new String[0])),
+                    Collections.singletonList(source(UUID.randomUUID(),false,foreign.toArray(new String[0]))),NORMAL);
+            boolean conflict = (reachable & negatives) != 0;
+            require(actual.status == (conflict ? Status.COLLISION : Status.SATURATED),
+                    "independent monadic truth closure edges="+edges+" roots="+roots+" negatives="+negatives
+                            +" observed="+actual.status+" "+actual.reason);
+            if (!conflict) require(actual.coverage == Coverage.MONADIC_HORN && actual.reason.contains("monadic-uniform"),
+                    "consistent fragment has explicit coverage evidence");
+        }
     }
     private static boolean proves(Product product, String query) throws Exception {
         User user = new User(); Mind mind = new Mind(user); user.setCurrentMind(mind);
