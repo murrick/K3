@@ -109,6 +109,12 @@ public final class DmzSuccessiveCacheRestrictionsRunner {
                 try {set.append(next,selected,q,1);throw new AssertionError("Expected short append refusal");}catch(IllegalStateException expected){++checks;}
                 try {empty.next(result,q,10000);throw new AssertionError("Expected unrelated prefix refusal");}catch(IllegalStateException expected){++checks;}
                 try {set.next(result,new Mind(user),10000);throw new AssertionError("Expected wrong boundary refusal");}catch(IllegalStateException expected){++checks;}
+                try {set.appendCausal(next,primary(next.combinations),q,10000);throw new AssertionError("Expected causal primary refusal");}catch(IllegalStateException expected){++checks;}
+                try {empty.appendCausal(next,selected,q,10000);throw new AssertionError("Expected foreign causal next refusal");}catch(IllegalStateException expected){++checks;}
+                try {set.appendCausal(next,selected,new Mind(user),10000);throw new AssertionError("Expected foreign causal target refusal");}catch(IllegalStateException expected){++checks;}
+                try {set.appendCausal(next,selected,q,1);throw new AssertionError("Expected causal budget refusal");}catch(IllegalStateException expected){++checks;}
+                DmzProofWitnesses.Witness rebuilt=new DmzProofWitnesses.Witness(selected.graph,selected.node,selected.step,selected.source,selected.premises);
+                try {set.appendCausal(next,rebuilt,q,10000);throw new AssertionError("Expected causal lookalike refusal");}catch(IllegalStateException expected){++checks;}
                 if(previousResult!=null) {
                     try {set.next(previousResult,q,10000);throw new AssertionError("Expected old result refusal");}catch(IllegalStateException expected){++checks;}
                     try {previousPrefix.append(next,selected,q,10000);throw new AssertionError("Expected foreign next receipt refusal");}catch(IllegalStateException expected){++checks;}

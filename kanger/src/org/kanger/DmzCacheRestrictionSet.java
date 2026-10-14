@@ -179,13 +179,25 @@ final class DmzCacheRestrictionSet {
         }
     }
     DmzCacheRestrictionSet append(Next next,DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
+        return appendNext(next,selected,target,budget,false);
+    }
+    DmzCacheRestrictionSet appendCausal(Next next,DmzProofWitnesses.Witness selected,Mind target,int budget) throws Exception {
+        return appendNext(next,selected,target,budget,true);
+    }
+    private DmzCacheRestrictionSet appendNext(Next next,DmzProofWitnesses.Witness selected,Mind target,int budget,boolean causal) throws Exception {
         if(budget<1 || budget>10000)throw new IllegalArgumentException("Bounded successive choice required");
         if(next==null || next.prefix!=this || !isCurrent(target) || selections.size()>=128 || selected==null
                 || selected.graph!=next.graph || selected.step<0 || selected.source.authority!=DmzReplayProvenance.Authority.EXTERNAL)
             throw new IllegalStateException("Current owned successive derived choice required");
         boolean member=false;
         for(DmzWitnessConflicts.Combination pair:next.combinations)member |= selected==pair.left || selected==pair.right;
-        if(!member)throw new IllegalStateException("Successive conflict member required");
+        List<DmzStoredGroundRoutes> history=new ArrayList<DmzStoredGroundRoutes>(next.receipts);
+        if(causal) {
+            DmzCacheCollisionEvidence.Projection projection=evidence.projectCausal(selected,target,budget,next.graph,next.combinations);
+            if(!projection.eligible || projection.causalRoute==null)
+                throw new IllegalStateException("Covered observed successive causal choice required");
+            history.add(projection.causalRoute);
+        } else if(!member)throw new IllegalStateException("Successive conflict member required");
         for(DmzStoredGroundRoutes receipt:next.receipts)if(!receipt.isCurrent(target))throw new IllegalStateException("Current successive history required");
         DmzProofWitnesses.NoGood pattern=DmzProofWitnesses.NoGood.fromTyped(selected);
         if(pattern.depth>8)throw new IllegalStateException("Bounded successive typed choice required");
@@ -196,7 +208,7 @@ final class DmzCacheRestrictionSet {
         if(after.truncated || before.witnesses.size()-after.witnesses.size()!=1)throw new IllegalStateException("New exact successive choice required");
         List<DmzProofWitnesses.Witness> choices=new ArrayList<DmzProofWitnesses.Witness>(selections);choices.add(selected);
         List<DmzProofWitnesses.NoGood> rules=new ArrayList<DmzProofWitnesses.NoGood>(patterns);rules.add(pattern);
-        return new DmzCacheRestrictionSet(evidence,choices,rules,reduced,next.receipts);
+        return new DmzCacheRestrictionSet(evidence,choices,rules,reduced,history);
     }
     static List<DmzProofWitnesses.Witness> retained(DmzCurrentGroundProofInventory inventory,
             List<DmzProofWitnesses.Witness> selections,List<DmzProofWitnesses.NoGood> patterns,int budget) throws Exception {

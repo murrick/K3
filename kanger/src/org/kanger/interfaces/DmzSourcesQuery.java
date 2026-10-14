@@ -181,8 +181,8 @@ public final class DmzSourcesQuery {
             this.restrictions=restrictions;
         }
     }
-    /** Causal scope widens only the initial offer; later conflicts retain endpoint-only eligibility. */
-    public enum RestrictionChoiceScope { ENDPOINTS, INITIAL_OBSERVED_CAUSAL_CHAINS }
+    /** Explicit observed causal scopes; every offered proof requires fresh native coverage. */
+    public enum RestrictionChoiceScope { ENDPOINTS, INITIAL_OBSERVED_CAUSAL_CHAINS, OBSERVED_CAUSAL_CHAINS }
     /** Explicit opt-in. Every invocation reconstructs and revalidates these historical proof identities.
      * Empty choices inspect the first conflict; extend the prefix from availableChoices.
      * Only COMPLETE carries an opinion, queried while all choices are enforced in the native child.

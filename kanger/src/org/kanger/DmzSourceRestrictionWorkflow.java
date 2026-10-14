@@ -121,17 +121,19 @@ public final class DmzSourceRestrictionWorkflow {
                         DmzProofWitnesses.Witness witness=pending.removeFirst();
                         if(!seen.add(witness))continue;
                         boolean endpoint=witness==pair.left || witness==pair.right;
-                        boolean causal=index==0 && choice.choiceScope==DmzSourcesQuery.RestrictionChoiceScope.INITIAL_OBSERVED_CAUSAL_CHAINS;
+                        boolean causal=choice.choiceScope==DmzSourcesQuery.RestrictionChoiceScope.OBSERVED_CAUSAL_CHAINS
+                                || index==0 && choice.choiceScope==DmzSourcesQuery.RestrictionChoiceScope.INITIAL_OBSERVED_CAUSAL_CHAINS;
                         if(causal)pending.addAll(witness.premises);
                         if(witness.step<0 || witness.source.authority!=DmzReplayProvenance.Authority.EXTERNAL)continue;
                         DmzCacheRestrictionSet candidate;
                         if(endpoint)candidate=next==null?prefix.append(witness,q,budget):prefix.append(next,witness,q,budget);
                         else {
                             if(!causal)continue;
-                            DmzCacheCollisionEvidence.Projection projection=evidence.projectCausal(witness,q,budget);
+                            DmzCacheCollisionEvidence.Projection projection=next==null?evidence.projectCausal(witness,q,budget)
+                                    :evidence.projectCausal(witness,q,budget,next.graph,next.combinations);
                             if(projection.truncated)throw new IllegalStateException("Causal restriction choice evidence budget exceeded");
                             if(!projection.eligible)continue;
-                            candidate=prefix.appendCausal(witness,q,budget);
+                            candidate=next==null?prefix.appendCausal(witness,q,budget):prefix.appendCausal(next,witness,q,budget);
                         }
                         DmzCacheRestrictionSet.SourceReceipt receipt=candidate.prepareSourceReceipt(all,q,budget);
                         DmzSourcesQuery.Proof proof=receipt.proofs.get(receipt.proofs.size()-1);

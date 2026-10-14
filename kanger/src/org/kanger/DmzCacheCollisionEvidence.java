@@ -141,6 +141,14 @@ final class DmzCacheCollisionEvidence {
         return project(selected,target,budget,true);
     }
     private Projection project(DmzProofWitnesses.Witness selected,Mind target,int budget,boolean causal) throws Exception {
+        return projectObserved(selected,target,budget,causal,graph,combinations);
+    }
+    Projection projectCausal(DmzProofWitnesses.Witness selected,Mind target,int budget,
+            DmzSourcedProofGraph observed,List<DmzWitnessConflicts.Combination> pairs) throws Exception {
+        return projectObserved(selected,target,budget,true,observed,pairs);
+    }
+    private Projection projectObserved(DmzProofWitnesses.Witness selected,Mind target,int budget,boolean causal,
+            DmzSourcedProofGraph graph,List<DmzWitnessConflicts.Combination> combinations) throws Exception {
         if(budget<1 || budget>10000)throw new IllegalArgumentException("Bounded cache projection required");
         if(!isCurrent(target) || selected==null || selected.graph!=graph || selected.step<0
                 || selected.source.authority!=DmzReplayProvenance.Authority.EXTERNAL)return new Projection(false,false,0,null);

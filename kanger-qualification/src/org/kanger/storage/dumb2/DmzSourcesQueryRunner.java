@@ -29,6 +29,7 @@ public final class DmzSourcesQueryRunner {
                 growingEvidence(negative);
             }
             for(boolean negative:new boolean[]{false,true})for(boolean recursive:new boolean[]{false,true})for(boolean protectedRule:new boolean[]{false,true})causalChoices(negative,recursive,protectedRule);
+            for(boolean negative:new boolean[]{false,true})for(boolean recursive:new boolean[]{false,true})successiveCausal(negative,recursive);
             queryProjection();
             System.out.println("DMZ_SOURCES_QUERY_PASS checks="+checks);System.exit(0); }
         catch(Throwable failure) { failure.printStackTrace();System.exit(1); }
@@ -520,6 +521,63 @@ public final class DmzSourcesQueryRunner {
             } else require(yes && no,"public exact choices expose both signed native opinions");
             require(db.executeDmzSources(q,causal).restrictionOutcome.availableChoices.size()==offered.restrictionOutcome.availableChoices.size(),
                     "fresh replay retains sibling offer after all evaluations");
+        } finally {user.setCurrentMind(q.closeStorage());}
+    }
+    private static void successiveCausal(boolean negative,boolean recursive) throws Exception {
+        Path dir=Files.createTempDirectory("dmz-public-successive-causal-");System.setProperty("user.home",dir.toString());
+        String sign=negative?"~":"",opposite=negative?"":"~";
+        create(dir,"Q","!a(1); !a(2); !a(3); !b(4);");
+        IContextResults.Revision a=create(dir,"A",recursive?"!@x a(x) -> middle(x); !@x middle(x) -> "+sign+"p(x);":"!@x a(x) -> "+sign+"p(x);");
+        IContextResults.Revision b=create(dir,"B","!b(1); !b(2); !@x b(x) -> "+opposite+"p(x);");
+        long trigger=primaryRule(dir,"A",a);
+        User user=new User();user.setDatabaseDir(dir.toString()+java.io.File.separator);DB db=new DB();db.init(user);
+        Mind initial=new Mind(user);user.setCurrentMind(initial);final Mind q=(Mind)initial.useStorage("Q");user.setCurrentMind(q);
+        try {
+            IContextResults.Revision pin=new IContextResults.Revision(db.getContextId(),db.getRevision());
+            DmzSourcesQuery.Request base=request(pin,"?p(1);",1000,128,new DmzSourcePlan.Selection("A",a),new DmzSourcePlan.Selection("B",b));
+            DmzSourcesQuery.Request all=new DmzSourcesQuery.Request(base.sources,base.policy,base.queryStatement,base.limits,
+                    new DmzSourcesQuery.RestrictionRequest(a,trigger,Collections.<String>emptyList(),10000,DmzSourcesQuery.RestrictionChoiceScope.OBSERVED_CAUSAL_CHAINS));
+            String state=org.kanger.DmzSourceMaterializationQualification.fingerprint(q);
+            DmzSourcesQuery.Result first=db.executeDmzSources(q,all);
+            require(first.restrictionOutcome.availableChoices.size()>=2,"initial successive offer has both external causal sides");
+            java.util.Set<String> opinions=new java.util.HashSet<String>();
+            boolean nestedSecond=false;
+            for(int i=1;i<=first.restrictionOutcome.availableChoices.size();++i) {
+                DmzSourcesQuery.Result second=db.executeDmzSources(q,first.chooseRestriction(i));
+                require(second.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.NEXT_CONFLICT
+                        && second.restrictionOutcome.trace.size()==1 && second.restrictionOutcome.availableChoices.size()>=2,
+                        "first exact cut preserves the second real conflict and both choices");
+                for(int j=1;j<=second.restrictionOutcome.availableChoices.size();++j) {
+                    DmzSourcesQuery.Request selected=second.chooseRestriction(j);
+                    require(selected.restrictions.choiceScope==DmzSourcesQuery.RestrictionChoiceScope.OBSERVED_CAUSAL_CHAINS
+                            && selected.restrictions.choices.size()==2,"successive helper retains scope and complete exact prefix");
+                    DmzSourcesQuery.Result done=db.executeDmzSources(q,selected);
+                    require(done.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE && done.restrictionProofs.size()==2
+                            && done.restrictionOutcome.trace.size()==2,"both selected conflicts complete only under the full prefix");
+                    String identity=done.restrictionProofs.get(1).identity();
+                    require(second.restrictionOutcome.availableConflicts.stream().anyMatch(pair->pair.containsObservedChain(identity)),
+                            "second exact cut belongs to the second actual conflict ancestry");
+                    nestedSecond|=second.restrictionOutcome.availableConflicts.stream().noneMatch(pair->pair.contains(identity));
+                    if(second.restrictionOutcome.availableConflicts.stream().noneMatch(pair->pair.contains(identity))) {
+                        DmzSourcesQuery.Request initialOnly=new DmzSourcesQuery.Request(selected.sources,selected.policy,selected.queryStatement,selected.limits,
+                                new DmzSourcesQuery.RestrictionRequest(a,trigger,selected.restrictions.choices,10000,
+                                        DmzSourcesQuery.RestrictionChoiceScope.INITIAL_OBSERVED_CAUSAL_CHAINS));
+                        reject(() -> db.executeDmzSources(q,initialOnly),IllegalArgumentException.class);
+                    }
+                    DmzSourcesQuery.Request other=new DmzSourcesQuery.Request(selected.sources,selected.policy,"?p(2);",selected.limits,selected.restrictions);
+                    DmzSourcesQuery.Result otherResult=db.executeDmzSources(q,other);
+                    require(otherResult.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE
+                            && !done.opinions.get(0).answer.proofs.isEmpty() && !otherResult.opinions.get(0).answer.proofs.isEmpty(),
+                            "both atom opinions have native proofs under identical two-cut prefix");
+                    opinions.add(done.opinions.get(0).answer.value+"/"+otherResult.opinions.get(0).answer.value);
+                    require(state.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)) && user.getCurrentMind()==q,
+                            "successive sibling evaluations restore physical Q and owner");
+                }
+            }
+            require(nestedSecond && opinions.size()==4 && !opinions.toString().contains("null"),
+                    "later nested causal choices yield all four signed opinion combinations");
+            require(first.restrictionOutcome.trace.isEmpty() && db.executeDmzSources(q,all).restrictionOutcome.availableChoices.size()
+                    ==first.restrictionOutcome.availableChoices.size(),"saved initial offer remains detached and reproducible");
         } finally {user.setCurrentMind(q.closeStorage());}
     }
     private static long primaryRule(Path dir,String name,IContextResults.Revision revision) throws Exception {

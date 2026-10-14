@@ -789,10 +789,18 @@ evidence work refuses the request. `RestrictionConflict.contains` still checks
 endpoints; `containsObservedChain` checks historical ancestry, which alone grants
 no restriction permission. Trace alternatives can contain such qualified subchains.
 
-This scope adds initial SDK choices, not automatic family enumeration. At later
-conflicts it retains the existing endpoint-only continuation and explicit uncovered
-stops. The Console command still creates endpoint-only requests; no new command
-syntax or full DMZ manual acceptance is claimed.
+`INITIAL_OBSERVED_CAUSAL_CHAINS` retains endpoint-only eligibility at later
+conflicts. To request qualified causal choices at every successive actual covered
+conflict, explicitly use `RestrictionChoiceScope.OBSERVED_CAUSAL_CHAINS` instead.
+Every later candidate must belong to the owned next-conflict proof object and
+has its own current stored-cache route receipt. Full-prefix restrictions and all
+prior receipts remain enforced. `chooseRestriction` preserves either scope;
+an initial-only request rejects a later nested causal identity.
+
+Neither scope automatically enumerates a branch family. Missing live cache
+history still produces a refusal or an explicit uncovered stop; these scopes do
+not fabricate storage provenance. The Console command still creates endpoint-only
+requests; no new command syntax or full DMZ manual acceptance is claimed.
 
 The optional command feature exposes the same operation:
 
