@@ -84,37 +84,140 @@ public final class ContextProductionCapture implements AutoCloseable {
         }
     }
 
-    /** A disjunction is transported intact; its literals are not separate facts. */
-    public static final class Clause {
-        public final List<Fact> literals;
-        public Clause(List<Fact> literals) {
-            if (literals.isEmpty()) throw new IllegalArgumentException("Nonempty clause required");
-            List<Fact> copy = new ArrayList<>();
-            for (Fact fact : literals) { boolean exists = false;
-                for (Fact old : copy) exists |= old.equivalent(fact);
-                if (!exists) copy.add(Objects.requireNonNull(fact));
-            }
-            this.literals = Collections.unmodifiableList(copy);
+    /** A slot is either an ordinary semantic value or a clause-local universal variable. */
+    public static final class Slot {
+        public final SemanticTermSnapshot value;
+        public final int variable;
+        private Slot(SemanticTermSnapshot value, int variable) { this.value = value; this.variable = variable; }
+    }
+    public static final class Atom {
+        public final String predicate;
+        public final boolean positive;
+        public final List<Slot> arguments;
+        private Atom(String predicate, boolean positive, List<Slot> arguments) {
+            this.predicate = predicate; this.positive = positive;
+            this.arguments = Collections.unmodifiableList(new ArrayList<>(arguments));
         }
-        public boolean equivalent(Clause other) {
-            if (other == null || literals.size() != other.literals.size()) return false;
-            for (Fact fact : literals) { boolean found = false;
-                for (Fact candidate : other.literals) found |= fact.equivalent(candidate);
-                if (!found) return false;
+        private static Atom of(Fact fact) {
+            List<Slot> slots = new ArrayList<>();
+            for (SemanticTermSnapshot value : fact.arguments) slots.add(new Slot(value, -1));
+            return new Atom(fact.predicate, fact.positive, slots);
+        }
+        private static Atom of(Domain domain, Mind mind, boolean unbound, Map<Long,Integer> variables) throws Exception {
+            if (domain.isSystem(mind) || domain.isCalculated(mind)
+                    || "rule(1)".equals(domain.getPredicate(mind).toString(mind))) return null;
+            List<Slot> slots = new ArrayList<>();
+            for (IArgument argument : domain.getArguments()) {
+                if (argument.isEmpty(mind)) {
+                    if (!unbound || argument.getType() != ArgumentType.TVARIABLE) return null;
+                    Integer variable = variables.get(argument.getId());
+                    if (variable == null) { variable = variables.size(); variables.put(argument.getId(), variable); }
+                    slots.add(new Slot(null, variable));
+                } else {
+                    ITerm value = argument.getValue(mind);
+                    if (!SemanticTermSnapshot.isOrdinaryValue(value)) return null;
+                    slots.add(new Slot(SemanticTermSnapshot.capture(value), -1));
+                }
+            }
+            return new Atom(domain.getPredicate(mind).getName(mind), domain.isAntc(), slots);
+        }
+        public Fact fact() {
+            List<SemanticTermSnapshot> values = new ArrayList<>();
+            for (Slot slot : arguments) { if (slot.variable >= 0) return null; values.add(slot.value); }
+            return new Fact(predicate, positive, values);
+        }
+        private boolean matches(Atom other, Map<Integer,Integer> forward, Map<Integer,Integer> reverse) {
+            if (positive != other.positive || !predicate.equals(other.predicate) || arguments.size() != other.arguments.size()) return false;
+            for (int i=0; i<arguments.size(); ++i) {
+                Slot left = arguments.get(i), right = other.arguments.get(i);
+                if (left.variable < 0 || right.variable < 0) {
+                    if (left.variable != right.variable || !left.value.semanticallyEquals(right.value)) return false;
+                } else {
+                    Integer mapped = forward.get(left.variable), back = reverse.get(right.variable);
+                    if ((mapped != null && mapped.intValue() != right.variable) || (back != null && back.intValue() != left.variable)) return false;
+                    forward.put(left.variable, right.variable); reverse.put(right.variable, left.variable);
+                }
             }
             return true;
         }
+        private boolean identical(Atom other) {
+            Map<Integer,Integer> identity = new HashMap<>();
+            for (Slot slot : arguments) if (slot.variable >= 0) identity.put(slot.variable, slot.variable);
+            return matches(other, new HashMap<>(identity), new HashMap<>(identity));
+        }
+    }
+
+    /** Detached disjunction; scoped variables never become ordinary facts or values. */
+    public static final class Clause {
+        public final List<Atom> literals;
+        public final Set<Integer> variables;
+        public Clause(List<Fact> literals) { this(atoms(literals)); }
+        private static List<Atom> atoms(List<Fact> facts) {
+            List<Atom> atoms = new ArrayList<>(); for (Fact fact : facts) atoms.add(Atom.of(Objects.requireNonNull(fact))); return atoms;
+        }
+        private Clause(Collection<Atom> literals) {
+            if (literals.isEmpty()) throw new IllegalArgumentException("Nonempty clause required");
+            List<Atom> copy = new ArrayList<>();
+            for (Atom atom : literals) { boolean exists = false;
+                for (Atom old : copy) exists |= old.identical(atom);
+                if (!exists) copy.add(atom);
+            }
+            this.literals = Collections.unmodifiableList(copy);
+            Set<Integer> variables = new TreeSet<>();
+            for (Atom atom : copy) for (Slot slot : atom.arguments) if (slot.variable >= 0) variables.add(slot.variable);
+            this.variables = Collections.unmodifiableSet(variables);
+        }
+        static Clause of(List<Domain> branch, Mind mind, boolean unbound) throws Exception {
+            List<Atom> atoms = new ArrayList<>(); Map<Long,Integer> variables = new HashMap<>();
+            for (Domain domain : branch) {
+                Atom atom = Atom.of(domain, mind, unbound, variables);
+                if (atom == null) return null;
+                atoms.add(atom);
+            }
+            return atoms.isEmpty() ? null : new Clause(atoms);
+        }
+        public boolean equivalent(Clause other) {
+            if (other == null || literals.size() != other.literals.size() || variables.size() != other.variables.size()) return false;
+            return match(other, 0, new boolean[literals.size()], new HashMap<Integer,Integer>(), new HashMap<Integer,Integer>(), new int[]{10000});
+        }
+        private boolean match(Clause other, int slot, boolean[] used, Map<Integer,Integer> forward,
+                              Map<Integer,Integer> reverse, int[] budget) {
+            if (--budget[0] < 0) throw new IllegalStateException("Clause comparison budget; qualification incomplete");
+            if (slot == literals.size()) return true;
+            for (int i=0; i<used.length; ++i) if (!used[i]) {
+                if (--budget[0] < 0) throw new IllegalStateException("Clause comparison budget; qualification incomplete");
+                Map<Integer,Integer> next = new HashMap<>(forward), back = new HashMap<>(reverse);
+                if (!literals.get(slot).matches(other.literals.get(i), next, back)) continue;
+                used[i] = true;
+                boolean found = match(other, slot+1, used, next, back, budget);
+                used[i] = false;
+                if (found) return true;
+            }
+            return false;
+        }
         public String assertion() {
-            StringBuilder text = new StringBuilder("!(");
-            for (Fact fact : literals) {
-                if (text.length() > 2) text.append(" || ");
-                String atom = fact.assertion(); text.append(atom.substring(1, atom.length()-1));
+            StringBuilder text = new StringBuilder("!");
+            for (int variable : variables) text.append("@ctxroundv").append(variable).append(' ');
+            text.append('(');
+            boolean first = true;
+            for (Atom atom : literals) {
+                if (!first) text.append(" || "); first = false;
+                if (!atom.positive) text.append('~');
+                text.append(atom.predicate).append('(');
+                for (int i=0; i<atom.arguments.size(); ++i) {
+                    if (i != 0) text.append(',');
+                    Slot argument = atom.arguments.get(i);
+                    if (argument.variable >= 0) text.append("ctxroundv").append(argument.variable);
+                    else text.append('?');
+                }
+                text.append(')');
             }
             return text.append(");").toString();
         }
         public Queue<ITerm> project(Mind target) throws Exception {
             Queue<ITerm> values = new LinkedList<>();
-            for (Fact fact : literals) values.addAll(fact.project(target));
+            for (Atom atom : literals) for (Slot slot : atom.arguments) if (slot.variable < 0)
+                values.add(target.getTerms().projectSemantic(slot.value.materialize()));
             return values;
         }
     }
@@ -155,13 +258,8 @@ public final class ContextProductionCapture implements AutoCloseable {
             fact = rule.isStored() && !rule.isQuery() ? Fact.of(rule.getDomain(), mind, false) : null;
             List<Clause> captured = new ArrayList<>();
             for (List<Domain> branch : rule.getTree()) {
-                List<Fact> literals = new ArrayList<>();
-                for (Domain literal : branch) {
-                    Fact value = Fact.of(literal, mind, false);
-                    if (value == null) { literals.clear(); break; }
-                    literals.add(value);
-                }
-                if (!literals.isEmpty()) captured.add(new Clause(literals));
+                Clause clause = Clause.of(branch, mind, source == null);
+                if (clause != null) captured.add(clause);
             }
             clauses = Collections.unmodifiableList(captured);
             clause = rule.getTree().size() == 1 && captured.size() == 1 ? captured.get(0) : null;
@@ -305,8 +403,15 @@ public final class ContextProductionCapture implements AutoCloseable {
                 capture.gaps.add("calculated-input:" + rule.getId());
             if ("rule(1)".equals(literal.getPredicate(mind).toString(mind)))
                 capture.gaps.add("local-rule-id-input:" + rule.getId());
-            for (IArgument argument : literal.getArguments()) if (argument.getType() == ArgumentType.FUNCTION)
-                capture.gaps.add("functional-input:" + rule.getId());
+            for (IArgument argument : literal.getArguments()) {
+                if (argument.getType() == ArgumentType.FUNCTION) {
+                    capture.gaps.add("functional-input:" + rule.getId());
+                } else if (!argument.isEmpty(mind)) {
+                    ITerm value = argument.getValue(mind);
+                    if (value != null && value.isCVariable()) capture.gaps.add("cvariable-input:" + rule.getId());
+                    else if (!SemanticTermSnapshot.isOrdinaryValue(value)) capture.gaps.add("nonordinary-input:" + rule.getId());
+                }
+            }
         }
     }
     private List<Support> sources(Mind mind, long rule) {
@@ -361,17 +466,22 @@ public final class ContextProductionCapture implements AutoCloseable {
         if (branch.isEmpty()) return;
         Rule rule = (Rule) branch.get(0).getRule();
         if (rule.isQuery()) return;
-        List<Fact> literals = new ArrayList<>(), premises = new ArrayList<>();
+        List<Domain> remaining = new ArrayList<>(); List<Fact> premises = new ArrayList<>();
         for (Domain literal : branch) {
-            boolean excluded = literal.isExcluded(mind);
-            Fact fact = Fact.of(literal, mind, excluded);
+            if (!literal.isExcluded(mind)) { remaining.add(literal); continue; }
+            Fact fact = Fact.of(literal, mind, true);
             if (fact == null) { capture.gaps.add("compound-residual:" + rule.getId()); return; }
-            (excluded ? premises : literals).add(fact);
+            premises.add(fact);
         }
-        if (literals.isEmpty()) return;
+        if (remaining.isEmpty()) return;
+        Clause conclusion = Clause.of(remaining, mind, true);
+        // Quantified units and C-variable witnesses need a separate transport contract.
+        if (conclusion == null || (!conclusion.variables.isEmpty() && conclusion.literals.size() == 1)) {
+            capture.gaps.add("compound-residual:" + rule.getId()); return;
+        }
         List<Support> supports = capture.sources(mind, rule.getId());
         if (supports.isEmpty()) capture.gaps.add("unlabelled-residual:" + rule.getId());
-        capture.take(); capture.residuals.add(new Residual(new Clause(literals), premises, supports));
+        capture.take(); capture.residuals.add(new Residual(conclusion, premises, supports));
     }
     static void stored(Mind mind, Domain producer, IRule result) throws Exception {
         ContextProductionCapture capture = ACTIVE.get();

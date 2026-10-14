@@ -19,7 +19,7 @@ public final class ContextProductionRoundsReferenceRunner {
     public static void main(String[] args) {
         try {
             System.setProperty("user.home", java.nio.file.Files.createTempDirectory("production-round-reference-").toString());
-            maskedAndUnmasked(); pureForeign(); alternateSupports(); delayedChainPermutations(); cyclesAndLimits(); compoundResiduals(); multiClauseSources();
+            maskedAndUnmasked(); pureForeign(); alternateSupports(); delayedChainPermutations(); cyclesAndLimits(); compoundResiduals(); multiClauseSources(); quantifiedResiduals();
             System.out.println("CONTEXT_PRODUCTION_ROUNDS_REFERENCE_PASS checks=" + checks);
             System.exit(0);
         } catch (Throwable failure) { failure.printStackTrace(); System.exit(1); }
@@ -144,8 +144,8 @@ public final class ContextProductionRoundsReferenceRunner {
                 "compound transport preserves argument order rather than matching rendered text");
         Result unbound = ContextProductionRoundsReference.inspect(
                 source(X, true, "!@x @y left(x) && right(y) -> p(x,y);"), Collections.singletonList(a), NORMAL);
-        require(unbound.status == Status.INCOMPLETE && unbound.reason.contains("compound-residual"),
-                "unbound compound residual cannot certify saturation: " + unbound.status + " " + unbound.reason);
+        require(unbound.status == Status.SATURATED && product(unbound, "p") == null,
+                "quantified compound residual remains a clause without asserting its head: " + unbound.status + " " + unbound.reason);
         Result shallow = ContextProductionRoundsReference.inspect(x, Arrays.asList(a, b), new Limits(16, 10000, 100000, 1));
         require(shallow.status == Status.INCOMPLETE && shallow.reason.contains("depth limit"),
                 "compound replay preserves derivation depth");
@@ -218,6 +218,99 @@ public final class ContextProductionRoundsReferenceRunner {
             require(result.status == Status.COLLISION && result.rounds == 3,
                     "multi-clause source conflict is refused in all six orders");
         }
+    }
+    private static void quantifiedResiduals() throws Exception {
+        List<Declaration> x = source(X, true, "!@x @y left(x) && right(y) -> p(x,y);");
+        List<Declaration> a = source(UUID.randomUUID(), false, "!left(1);");
+        List<Declaration> b = source(UUID.randomUUID(), false, "!right(2);");
+        for (boolean reverse : new boolean[] {false, true}) {
+            Result result = ContextProductionRoundsReference.inspect(x, reverse ? Arrays.asList(b,a) : Arrays.asList(a,b), NORMAL);
+            Product p = product(result, "p");
+            require(result.status == Status.SATURATED && p != null,
+                    "remaining quantified variable carries the independent-argument join: " + result.status + " " + result.reason);
+            for (Proof proof : p.supports)
+                require(proof.sources.contains(x.get(0).source) && proof.sources.contains(a.get(0).source)
+                        && proof.sources.contains(b.get(0).source), "quantified join retains its whole source group");
+        }
+        Result multiple = ContextProductionRoundsReference.inspect(
+                source(X,true,"!@x @y @z left(x) && right(y,z) -> p(x,y,z);"), Arrays.asList(
+                        source(UUID.randomUUID(),false,"!left(John);"),
+                        source(UUID.randomUUID(),false,"!right(2,3);")),NORMAL);
+        Product triple = product(multiple,"p");
+        require(multiple.status == Status.SATURATED && triple != null && triple.fact.arguments.size() == 3,
+                "two remaining variables and a typed constant survive the same clause scope");
+        require(proves(triple,"?p(John,2,3);") && !proves(triple,"?p(John,3,2);"),
+                "separate remaining variables retain their positional binding");
+        Result repeatedMismatch = ContextProductionRoundsReference.inspect(
+                source(X,true,"!@x @y left(x) && right(y,y) -> p(x,y);"), Arrays.asList(a,
+                        source(UUID.randomUUID(),false,"!right(2,3);")),NORMAL);
+        require(repeatedMismatch.status == Status.SATURATED && product(repeatedMismatch,"p") == null,
+                "one repeated variable cannot match distinct donor arguments after transport");
+        Result repeatedMatch = ContextProductionRoundsReference.inspect(
+                source(X,true,"!@x @y left(x) && right(y,y) -> p(x,y);"), Arrays.asList(a,
+                        source(UUID.randomUUID(),false,"!right(2,2);")),NORMAL);
+        require(repeatedMatch.status == Status.SATURATED && product(repeatedMatch,"p") != null,
+                "equal repeated donor arguments retain the native quantified proof");
+        Result signed = ContextProductionRoundsReference.inspect(
+                source(X,true,"!@x @y left(x) && right(y) -> ~p(x,y);"),Arrays.asList(a,b),NORMAL);
+        Product negative = product(signed,"p");
+        require(signed.status == Status.SATURATED && negative != null && !negative.fact.positive,
+                "negative conclusion polarity survives a quantified residual");
+        Result signedConflict = ContextProductionRoundsReference.inspect(
+                source(X,true,"!@x @y left(x) && right(y) -> ~p(x,y);"),
+                Arrays.asList(a,b,source(UUID.randomUUID(),false,"!p(1,2);")),NORMAL);
+        require(signedConflict.status == Status.COLLISION && signedConflict.rounds == 3,
+                "opposite-polarity quantified conflict is refused");
+        Result masked = ContextProductionRoundsReference.inspect(x, Arrays.asList(
+                source(UUID.randomUUID(),false,"!left(1);", "!p(1,2);"),b),NORMAL);
+        require(masked.status == Status.SATURATED && product(masked,"p") != null,
+                "a new X-dependent quantified proof survives an existing foreign conclusion");
+        for (Proof proof : product(masked,"p").supports)
+            require(proof.usesX() && proof.sources.contains(b.get(0).source),
+                    "stored conclusion suppression cannot erase the independent quantified route");
+        List<Declaration> alias = source(UUID.randomUUID(), false, "!left(1);");
+        Result alternatives = ContextProductionRoundsReference.inspect(x, Arrays.asList(a,alias,b), NORMAL);
+        Product joint = product(alternatives, "p");
+        require(alternatives.status == Status.SATURATED && joint != null, "quantified alternative support fixture saturates");
+        boolean routeA = false, routeAlias = false;
+        for (Proof proof : joint.supports) {
+            require(proof.sources.contains(x.get(0).source) && proof.sources.contains(b.get(0).source),
+                    "quantified support alternatives retain the whole producer group");
+            routeA |= proof.sources.contains(a.get(0).source) && !proof.sources.contains(alias.get(0).source);
+            routeAlias |= proof.sources.contains(alias.get(0).source) && !proof.sources.contains(a.get(0).source);
+        }
+        require(routeA && routeAlias, "independent quantified producer alternatives survive");
+        Result shallow = ContextProductionRoundsReference.inspect(x, Arrays.asList(a,b), new Limits(16,10000,100000,1));
+        require(shallow.status == Status.INCOMPLETE && shallow.reason.contains("depth limit"),
+                "quantified templates carry derivation depth into the bound application");
+        Result isolated = ContextProductionRoundsReference.inspect(source(X,true,"!anchor(1);"), Arrays.asList(
+                source(UUID.randomUUID(),false,"!@x @y left(x) && right(y) -> p(x,y);", "!left(1);"),b), NORMAL);
+        require(isolated.status == Status.SATURATED && product(isolated,"p") == null,
+                "pure foreign quantified residuals do not cross the outer barrier");
+        Result unsupportedUnit = ContextProductionRoundsReference.inspect(
+                source(X,true,"!@x @y left(x) -> p(x,y);"), Collections.singletonList(a),NORMAL);
+        require(unsupportedUnit.status == Status.INCOMPLETE, "quantified unit residual remains an explicit coverage stop");
+        Result existential = ContextProductionRoundsReference.inspect(
+                source(X,true,"!@x $y left(x) && right(y) -> p(x,y);"), Collections.singletonList(a),NORMAL);
+        require(existential.status == Status.INCOMPLETE, "existential witness identity is not replaced by an ordinary universal slot");
+        Result untouchedWitness = ContextProductionRoundsReference.inspect(
+                source(X,true,"!$z (a(z) || b(z));"),
+                Collections.singletonList(source(UUID.randomUUID(),false,"!anchor(1);")),NORMAL);
+        require(untouchedWitness.status == Status.INCOMPLETE && untouchedWitness.reason.contains("cvariable-input"),
+                "lack of a ground existential application cannot masquerade as complete observation: "
+                        + untouchedWitness.status + " " + untouchedWitness.reason);
+        List<List<Declaration>> targets = Arrays.asList(a,b,source(UUID.randomUUID(), false, "!~p(1,2);"));
+        for (int i=0; i<3; ++i) for (int j=0; j<3; ++j) if (i!=j) {
+            Result result = ContextProductionRoundsReference.inspect(x,
+                    Arrays.asList(targets.get(i),targets.get(j),targets.get(3-i-j)),NORMAL);
+            require(result.status == Status.COLLISION && result.rounds == 3,
+                    "all six orders refuse a conflict through a quantified residual: " + result.status + " " + result.reason);
+        }
+    }
+    private static boolean proves(Product product, String query) throws Exception {
+        User user = new User(); Mind mind = new Mind(user); user.setCurrentMind(mind);
+        mind.compileLine(product.fact.assertion(), false, product.fact.project(mind));
+        return Boolean.TRUE.equals(mind.query(query,null,false));
     }
     private static Product product(Result result, String predicate) {
         for (Product product : result.products) if (product.fact != null && product.fact.predicate.equals(predicate)) return product;

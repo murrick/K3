@@ -38,7 +38,7 @@ public final class ContextProductionRoundsReference {
         public final Clause clause;
         public final List<Proof> supports;
         private Product(Bucket b) {
-            clause = b.clause; fact = clause.literals.size() == 1 ? clause.literals.get(0) : null; supports = Collections.unmodifiableList(new ArrayList<>(b.proofs));
+            clause = b.clause; fact = clause.literals.size() == 1 ? clause.literals.get(0).fact() : null; supports = Collections.unmodifiableList(new ArrayList<>(b.proofs));
         }
     }
     public static final class Result {

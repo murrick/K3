@@ -18,6 +18,7 @@ public final class ContextProductionCaptureRunner {
             negativeProduct();
             sourceAliases();
             multipleCompiledBranches();
+            quantifiedClauseTransport();
             typedDetachedTransport();
             nullaryAndRepeatedArguments();
             queryArtifactsAreExcluded();
@@ -124,6 +125,60 @@ public final class ContextProductionCaptureRunner {
                             + incomplete.inputs.get(0).clauses.size() + " gaps=" + incomplete.gaps);
         }
     }
+    private static Clause template(String statement) throws Exception {
+        Mind work = memory();
+        org.kanger.units.Rule rule = (org.kanger.units.Rule) work.compileLine(statement, false, new LinkedList<ITerm>());
+        return Clause.of(rule.getTree().get(0), work, true);
+    }
+    private static void quantifiedClauseTransport() throws Exception {
+        Snapshot snapshot = replay(new String[] {"!@x @y left(x) && right(y) -> p(x,y);", "!left(John);"},
+                new Source[] {source(X, 0), source(A, 0)});
+        Residual residual = null;
+        for (Residual event : snapshot.residuals) if (event.conclusion.variables.size() == 1) { residual = event; break; }
+        require(residual != null && residual.premises.size() == 1, "partially bound native residual retains its ordinary excluded premise");
+        Clause clause = residual.conclusion;
+        require(clause.literals.size() == 2 && clause.variables.size() == 1,
+                "remaining variable is scoped once across the whole disjunction");
+        for (Atom atom : clause.literals) require(atom.fact() == null, "variable-containing atoms never masquerade as ground facts");
+        Mind target = memory();
+        target.compileLine(clause.assertion(), false, clause.project(target));
+        require(target.query("?p(John,2);", null, false) == null, "a quantified residual does not assert its head");
+        require(target.compile("!right(2);", null, false), "fresh participant supplies the bound donor");
+        require(Boolean.TRUE.equals(target.query("?p(John,2);", null, false)), "typed constant and remaining universal variable survive native replay");
+        require(target.query("?p(2,John);", null, false) == null, "quantified transport preserves argument order");
+        Snapshot hygienic = replay(new String[] {"!@x @y left(x) && right(y) -> p(x,y);", "!left(ctxroundv0);"},
+                new Source[] {source(X, 3), source(A, 3)});
+        Clause sameName = null;
+        for (Residual event : hygienic.residuals) if (!event.conclusion.variables.isEmpty()) { sameName = event.conclusion; break; }
+        Mind names = memory(); names.compileLine(sameName.assertion(), false, sameName.project(names));
+        names.compile("!right(2);", null, false);
+        require(Boolean.TRUE.equals(names.query("?p(ctxroundv0,2);", null, false)),
+                "a named constant equal to the carrier binder name remains a constant");
+        require(names.query("?p(John,2);", null, false) == null,
+                "placeholder projection prevents accidental variable capture of a named constant");
+        Clause original = template("!@x @y (p(x,y) || q(y,x));");
+        Clause renamed = template("!@a @b (q(b,a) || p(a,b));");
+        require(original.equivalent(renamed) && renamed.equivalent(original),
+                "alpha renaming and literal order preserve the same scoped clause");
+        Clause different = template("!@x @y (p(x,y) || q(x,y));");
+        require(!original.equivalent(different), "alpha comparison preserves cross-literal variable relationships");
+        Clause independent = template("!@x @y (p(x) || p(y));");
+        Clause repeated = template("!@x (p(x) || p(x));");
+        require(independent.literals.size() == 2 && independent.variables.size() == 2
+                && repeated.literals.size() == 1 && repeated.variables.size() == 1,
+                "deduplication cannot merge independently quantified slots");
+        Clause repeatedArgument = template("!@x (p(x,x) || q(x));");
+        Clause distinctArguments = template("!@x @y (p(x,y) || q(y));");
+        require(!repeatedArgument.equivalent(distinctArguments), "repeated argument identity is part of clause semantics");
+        Mind replay = memory();
+        try (ContextProductionCapture capture = ContextProductionCapture.begin(replay, 10000)) {
+            capture.replayDerived(replay, clause, Collections.singletonList(
+                    new Support(new LinkedHashSet<>(Arrays.asList(source(X,0),source(A,0))), 1)));
+            Input input = capture.snapshot().inputs.get(0);
+            require(input.source == null && input.clause.equivalent(clause) && input.fact == null
+                    && capture.snapshot().gaps.isEmpty(), "derived template binds native provenance without inventing a primary fact");
+        }
+    }
     private static void typedDetachedTransport() throws Exception {
         Snapshot snapshot = replay(new String[] {"!@x @y pair(x,y) -> reverse(y,x);", "!pair(John,2);"},
                 new Source[] {source(X, 0), source(A, 0)});
@@ -183,6 +238,12 @@ public final class ContextProductionCaptureRunner {
         try (ContextProductionCapture capture = ContextProductionCapture.begin(work, 10000)) {
             capture.replay(work, source(X, 0), "!@x p(x);");
             require(!capture.snapshot().gaps.isEmpty(), "abstract unit input cannot masquerade as complete ground capture");
+        }
+        Mind witness = memory();
+        try (ContextProductionCapture capture = ContextProductionCapture.begin(witness, 10000)) {
+            capture.replay(witness, source(X, 4), "!$x (p(x) || q(x));");
+            require(capture.snapshot().gaps.toString().contains("cvariable-input:"),
+                    "an unresolved existential disjunction cannot silently pass the supported-source gate");
         }
         work = memory();
         try (ContextProductionCapture capture = ContextProductionCapture.begin(work, 10000)) {
