@@ -112,13 +112,31 @@ public final class DmzSourceRestrictionWorkflow {
                 }
                 List<DmzSourcesQuery.RestrictionConflict> conflicts=new ArrayList<DmzSourcesQuery.RestrictionConflict>(observed.values());
                 SortedMap<String,Option> options=new TreeMap<String,Option>();
-                for(DmzWitnessConflicts.Combination pair:pairs)for(DmzProofWitnesses.Witness witness:Arrays.asList(pair.left,pair.right)) {
-                    if(--remaining<1)throw new IllegalStateException("Restriction choice projection budget exceeded");
-                    if(witness.step<0 || witness.source.authority!=DmzReplayProvenance.Authority.EXTERNAL)continue;
-                    DmzCacheRestrictionSet candidate=next==null?prefix.append(witness,q,budget):prefix.append(next,witness,q,budget);
-                    DmzCacheRestrictionSet.SourceReceipt receipt=candidate.prepareSourceReceipt(all,q,budget);
-                    DmzSourcesQuery.Proof proof=receipt.proofs.get(receipt.proofs.size()-1);
-                    options.put(proof.identity(),new Option(candidate,proof));
+                Set<DmzProofWitnesses.Witness> seen=Collections.newSetFromMap(new IdentityHashMap<DmzProofWitnesses.Witness,Boolean>());
+                for(DmzWitnessConflicts.Combination pair:pairs) {
+                    Deque<DmzProofWitnesses.Witness> pending=new ArrayDeque<DmzProofWitnesses.Witness>();
+                    pending.add(pair.left);pending.add(pair.right);
+                    while(!pending.isEmpty()) {
+                        if(--remaining<1)throw new IllegalStateException("Restriction choice projection budget exceeded");
+                        DmzProofWitnesses.Witness witness=pending.removeFirst();
+                        if(!seen.add(witness))continue;
+                        boolean endpoint=witness==pair.left || witness==pair.right;
+                        boolean causal=index==0 && choice.choiceScope==DmzSourcesQuery.RestrictionChoiceScope.INITIAL_OBSERVED_CAUSAL_CHAINS;
+                        if(causal)pending.addAll(witness.premises);
+                        if(witness.step<0 || witness.source.authority!=DmzReplayProvenance.Authority.EXTERNAL)continue;
+                        DmzCacheRestrictionSet candidate;
+                        if(endpoint)candidate=next==null?prefix.append(witness,q,budget):prefix.append(next,witness,q,budget);
+                        else {
+                            if(!causal)continue;
+                            DmzCacheCollisionEvidence.Projection projection=evidence.projectCausal(witness,q,budget);
+                            if(projection.truncated)throw new IllegalStateException("Causal restriction choice evidence budget exceeded");
+                            if(!projection.eligible)continue;
+                            candidate=prefix.appendCausal(witness,q,budget);
+                        }
+                        DmzCacheRestrictionSet.SourceReceipt receipt=candidate.prepareSourceReceipt(all,q,budget);
+                        DmzSourcesQuery.Proof proof=receipt.proofs.get(receipt.proofs.size()-1);
+                        options.put(proof.identity(),new Option(candidate,proof));
+                    }
                 }
                 List<DmzSourcesQuery.Proof> offered=new ArrayList<DmzSourcesQuery.Proof>();
                 for(Option option:options.values())offered.add(option.proof);

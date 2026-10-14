@@ -43,6 +43,17 @@ public final class DmzSourcesQuery {
         }
         public String identity() { return positive.identity()+"<>"+negative.identity(); }
         public boolean contains(String identity) { return positive.identity().equals(identity) || negative.identity().equals(identity); }
+        /** Historical ancestry only; this does not authorize restricting any member. */
+        public boolean containsObservedChain(String identity) {
+            java.util.ArrayDeque<Proof> pending=new java.util.ArrayDeque<Proof>();pending.add(positive);pending.add(negative);
+            java.util.Set<Proof> visited=Collections.newSetFromMap(new java.util.IdentityHashMap<Proof,Boolean>());
+            while(!pending.isEmpty()) {
+                Proof proof=pending.removeFirst();if(!visited.add(proof))continue;
+                if(proof.identity().equals(identity))return true;
+                pending.addAll(proof.premises);
+            }
+            return false;
+        }
     }
     /** Historical alternatives and the exact choice made at one native conflict. */
     public static final class RestrictionStep {
@@ -108,13 +119,13 @@ public final class DmzSourcesQuery {
     }
     private static void requireConflictMembers(List<Proof> proofs,List<RestrictionConflict> conflicts) {
         java.util.Set<String> seen=new java.util.HashSet<String>();
-        java.util.Set<String> members=new java.util.HashSet<String>();
-        for(RestrictionConflict conflict:conflicts) {
+        for(RestrictionConflict conflict:conflicts)
             if(!seen.add(conflict.identity()))throw new IllegalArgumentException("Distinct historical conflict pairs required");
-            members.add(conflict.positive.identity());members.add(conflict.negative.identity());
+        if(!conflicts.isEmpty())for(Proof proof:proofs) {
+            boolean member=false;
+            for(RestrictionConflict conflict:conflicts)member|=conflict.containsObservedChain(proof.identity());
+            if(!member)throw new IllegalArgumentException("Choice proof must belong to the historical conflict chains");
         }
-        if(!conflicts.isEmpty())for(Proof proof:proofs)if(!members.contains(proof.identity()))
-            throw new IllegalArgumentException("Choice proof must belong to the historical conflict pairs");
     }
     public static final class PlanningRefusal extends IllegalArgumentException {
         private static final long serialVersionUID=1L;
@@ -170,6 +181,8 @@ public final class DmzSourcesQuery {
             this.restrictions=restrictions;
         }
     }
+    /** Causal scope widens only the initial offer; later conflicts retain endpoint-only eligibility. */
+    public enum RestrictionChoiceScope { ENDPOINTS, INITIAL_OBSERVED_CAUSAL_CHAINS }
     /** Explicit opt-in. Every invocation reconstructs and revalidates these historical proof identities.
      * Empty choices inspect the first conflict; extend the prefix from availableChoices.
      * Only COMPLETE carries an opinion, queried while all choices are enforced in the native child.
@@ -182,15 +195,19 @@ public final class DmzSourcesQuery {
         public final List<String> choices;
         /** 1..10000 work allowance for reconstruction, evidence, source binding and native projection phases. */
         public final int budget;
+        public final RestrictionChoiceScope choiceScope;
         public RestrictionRequest(IContextResults.Revision revision,long rule,List<String> choices,int budget) {
-            if(revision==null || choices==null)throw new NullPointerException();
+            this(revision,rule,choices,budget,RestrictionChoiceScope.ENDPOINTS);
+        }
+        public RestrictionRequest(IContextResults.Revision revision,long rule,List<String> choices,int budget,RestrictionChoiceScope scope) {
+            if(revision==null || choices==null || scope==null)throw new NullPointerException();
             if(revision.getCommune()!=null || !revision.getCommuneMembers().isEmpty() || rule<0
                     || choices.size()>128 || budget<1 || budget>10000)
                 throw new IllegalArgumentException("Bounded exact restriction request required");
             java.util.Set<String> unique=new java.util.HashSet<String>();
             for(String choice:choices)if(choice==null || choice.isEmpty() || !unique.add(choice))
                 throw new IllegalArgumentException("Distinct explicit proof identities required");
-            triggerRevision=revision;triggerRule=rule;this.choices=copy(choices);this.budget=budget;
+            triggerRevision=revision;triggerRule=rule;this.choices=copy(choices);this.budget=budget;choiceScope=scope;
         }
     }
     public static final class Input {
@@ -291,7 +308,7 @@ public final class DmzSourcesQuery {
             List<String> choices=new ArrayList<String>(request.restrictions.choices);
             choices.add(restrictionOutcome.availableChoices.get((int)number-1).identity());
             return new Request(replay.sources,replay.policy,replay.queryStatement,replay.limits,
-                    new RestrictionRequest(request.restrictions.triggerRevision,request.restrictions.triggerRule,choices,request.restrictions.budget));
+                    new RestrictionRequest(request.restrictions.triggerRevision,request.restrictions.triggerRule,choices,request.restrictions.budget,request.restrictions.choiceScope));
         }
         public final Request request;
         /** Freshly acquired physical Q and named source observations. */

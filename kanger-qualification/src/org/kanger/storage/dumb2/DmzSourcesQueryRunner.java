@@ -28,6 +28,7 @@ public final class DmzSourcesQueryRunner {
                 for(boolean recursive:new boolean[]{false,true})restrictions(negative,recursive);
                 growingEvidence(negative);
             }
+            for(boolean negative:new boolean[]{false,true})for(boolean recursive:new boolean[]{false,true})for(boolean protectedRule:new boolean[]{false,true})causalChoices(negative,recursive,protectedRule);
             queryProjection();
             System.out.println("DMZ_SOURCES_QUERY_PASS checks="+checks);System.exit(0); }
         catch(Throwable failure) { failure.printStackTrace();System.exit(1); }
@@ -468,6 +469,58 @@ public final class DmzSourcesQueryRunner {
     private static DmzSourcesQuery.Request optIn(DmzSourcesQuery.Request base,IContextResults.Revision pin,long rule,java.util.List<String> choices,int budget) {
         return new DmzSourcesQuery.Request(base.sources,base.policy,base.queryStatement,base.limits,
                 new DmzSourcesQuery.RestrictionRequest(pin,rule,choices,budget));
+    }
+    private static void causalChoices(boolean negative,boolean recursive,boolean protectedRule) throws Exception {
+        Path dir=Files.createTempDirectory("dmz-public-causal-");System.setProperty("user.home",dir.toString());
+        String sign=negative?"~":"",opposite=negative?"":"~";
+        String chain=recursive?"!@x a(x) -> middle(x); !@x middle(x) -> "+sign+"p(x);":"!@x a(x) -> "+sign+"p(x);";
+        create(dir,"Q","!a(1); !b(1); !a(2); !b(3); "+(protectedRule?chain:""));
+        IContextResults.Revision a=create(dir,"A",protectedRule?"!@x unused(x) -> unusedResult(x);":chain);
+        IContextResults.Revision b=create(dir,"B","!@x b(x) -> "+opposite+"p(x);");
+        IContextResults.Revision triggerPin=protectedRule?b:a;
+        long trigger=primaryRule(dir,protectedRule?"B":"A",triggerPin);
+        User user=new User();user.setDatabaseDir(dir.toString()+java.io.File.separator);DB db=new DB();db.init(user);
+        Mind initial=new Mind(user);user.setCurrentMind(initial);final Mind q=(Mind)initial.useStorage("Q");user.setCurrentMind(q);
+        try {
+            IContextResults.Revision pin=new IContextResults.Revision(db.getContextId(),db.getRevision());
+            DmzSourcesQuery.Request base=request(pin,"?p(1);",1000,128,new DmzSourcePlan.Selection("A",a),new DmzSourcePlan.Selection("B",b));
+            String state=org.kanger.DmzSourceMaterializationQualification.fingerprint(q);
+            DmzSourcesQuery.Result ordinary=db.executeDmzSources(q,optIn(base,triggerPin,trigger,Collections.<String>emptyList(),10000));
+            DmzSourcesQuery.Request causal=new DmzSourcesQuery.Request(base.sources,base.policy,base.queryStatement,base.limits,
+                    new DmzSourcesQuery.RestrictionRequest(triggerPin,trigger,Collections.<String>emptyList(),10000,
+                            DmzSourcesQuery.RestrictionChoiceScope.INITIAL_OBSERVED_CAUSAL_CHAINS));
+            DmzSourcesQuery.Result offered=db.executeDmzSources(q,causal);
+            require(ordinary.request.restrictions.choiceScope==DmzSourcesQuery.RestrictionChoiceScope.ENDPOINTS
+                    && ordinary.restrictionOutcome.availableChoices.size()<=1 && (protectedRule || ordinary.restrictionOutcome.availableChoices.size()==1),"legacy request keeps endpoint-only choice");
+            require(offered.restrictionOutcome.availableChoices.size()>=(protectedRule?1:2) && offered.opinions.isEmpty(),"explicit causal scope offers both external sides without choosing");
+            boolean yes=false,no=false;
+            for(int i=1;i<=offered.restrictionOutcome.availableChoices.size();++i) {
+                DmzSourcesQuery.Request chosen=offered.chooseRestriction(i);
+                require(chosen.restrictions.choiceScope==causal.restrictions.choiceScope,"saved choice preserves causal scope");
+                DmzSourcesQuery.Result result=db.executeDmzSources(q,chosen);
+                require(result.restrictionOutcome.status==DmzSourcesQuery.RestrictionStatus.COMPLETE && result.opinions.size()==1,
+                        "explicit causal choice reaches native completed opinion");
+                require(result.restrictionProofs.get(0).identity().equals(offered.restrictionOutcome.availableChoices.get(i-1).identity())
+                        && !result.opinions.get(0).answer.proofs.isEmpty(),"selected exact public proof and native answer proof survive closure");
+                yes|=Boolean.TRUE.equals(result.opinions.get(0).answer.value);no|=Boolean.FALSE.equals(result.opinions.get(0).answer.value);
+                require(state.equals(org.kanger.DmzSourceMaterializationQualification.fingerprint(q)) && user.getCurrentMind()==q,
+                        "each public sibling preserves physical Q and owner");
+                require(offered.restrictionOutcome.availableConflicts.stream().anyMatch(pair->pair.containsObservedChain(result.restrictionProofs.get(0).identity())),
+                        "public causal choice remains tied to an actual historical conflict chain");
+                {
+                    String identity=offered.restrictionOutcome.availableChoices.get(i-1).identity();
+                    if(ordinary.restrictionOutcome.availableChoices.stream().noneMatch(proof->proof.identity().equals(identity)))
+                        reject(() -> db.executeDmzSources(q,optIn(base,triggerPin,trigger,Collections.singletonList(identity),10000)),IllegalArgumentException.class);
+                }
+            }
+            if(protectedRule) {
+                require(negative?no && !yes:yes && !no,"Q production fixes the retained opinion without a Q cut");
+                for(DmzSourcesQuery.Proof proof:offered.restrictionOutcome.availableChoices)
+                    require(!proof.source.revision.getContextId().equals(pin.getContextId()),"Q productions are absent from public choices");
+            } else require(yes && no,"public exact choices expose both signed native opinions");
+            require(db.executeDmzSources(q,causal).restrictionOutcome.availableChoices.size()==offered.restrictionOutcome.availableChoices.size(),
+                    "fresh replay retains sibling offer after all evaluations");
+        } finally {user.setCurrentMind(q.closeStorage());}
     }
     private static long primaryRule(Path dir,String name,IContextResults.Revision revision) throws Exception {
         try(SnapshotMindRuntime snapshot=SnapshotMindRuntime.open(dir.resolve(name),new RevisionRef(revision.getContextId(),revision.getRevision()),"exact-trigger")) {

@@ -770,6 +770,30 @@ a fresh invocation. An uncovered initial conflict, stale/foreign/duplicate/unuse
 choice or exhausted phase budget is refused. Completion concerns the chosen
 native continuation, not an exhaustive enumeration of consistent theories.
 
+The four-argument `RestrictionRequest` retains endpoint-only choices. To inspect
+qualified external applications inside the **first** conflict's actual proof
+chains, use its explicit five-argument overload:
+
+```java
+new DmzSourcesQuery.RestrictionRequest(rulesRevision, triggerRule, choices, 10000,
+    DmzSourcesQuery.RestrictionChoiceScope.INITIAL_OBSERVED_CAUSAL_CHAINS)
+```
+
+This SDK scope can expose both derived source opinions when contraposition hides
+one source application inside a terminal proof. It offers qualified alternatives
+and waits for the caller's exact choice. `result.chooseRestriction(N)` and its
+limits overload preserve the scope on fresh replay. Q-authored applications and
+primary facts remain unselectable, even when shown in historical proof trees.
+A causal choice requires its own current generated-cache route coverage; exhausted
+evidence work refuses the request. `RestrictionConflict.contains` still checks
+endpoints; `containsObservedChain` checks historical ancestry, which alone grants
+no restriction permission. Trace alternatives can contain such qualified subchains.
+
+This scope adds initial SDK choices, not automatic family enumeration. At later
+conflicts it retains the existing endpoint-only continuation and explicit uncovered
+stops. The Console command still creates endpoint-only requests; no new command
+syntax or full DMZ manual acceptance is claimed.
+
 The optional command feature exposes the same operation:
 
 ```text
