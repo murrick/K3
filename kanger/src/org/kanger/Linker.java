@@ -1161,6 +1161,7 @@ public class Linker {
                     if (DmzTerminalRestriction.denies(mind, d, tree)) continue;
                     TerminalSupportCapture.record(mind, d, causes.get(d.getRule()));
                     TerminalSupportCapture.recordApplication(mind, d, tree, tvars);
+                    ContextProductionCapture.record(mind, d, tree);
                     occurs = true;
                     if (!d.isStored(mind) && (d.setCauses(causes.get(d.getRule()), mind) || !calculated.isEmpty() || !excluded.isEmpty())) {
                         boolean term = false;
@@ -1192,6 +1193,7 @@ public class Linker {
                     // recursive production is materialized. Retain its qualified
                     // application while bindings and excluded premises are live.
                     TerminalSupportCapture.recordApplication(mind, d, tree, tvars);
+                    ContextProductionCapture.record(mind, d, tree);
                     if (!d.isStored(mind) && d.setCauses(causes.get(d.getRule()), mind)) {
                         result = true;
                         d.setProduced(mind);
@@ -1249,6 +1251,7 @@ public class Linker {
             }
 
             if (!occurs && candidates.size() > 1) {
+                if (!excluded.isEmpty()) ContextProductionCapture.compoundResidual(mind, tree);
                 for (Domain d : candidates) {
                     if (!d.isStored(mind) && d.isComplete() && !d.isUsed(mind)) {
 
@@ -1336,6 +1339,7 @@ public class Linker {
                         ((Rule) x).getSolves().addAll(d.getSolves(mind));
                     }
                     TerminalSupportCapture.recordStored(mind, d, x);
+                    ContextProductionCapture.stored(mind, d, x);
                 }
             }
         }

@@ -1,0 +1,170 @@
+/* MIT License. Copyright (c) 2026 Dmitry G. Quznetsov. */
+package org.kanger;
+
+import java.util.*;
+import org.kanger.enums.QueryPass;
+import org.kanger.interfaces.ITerm;
+import org.kanger.ContextProductionCapture.*;
+
+/** Native production journal qualification; does not certify a round executor. */
+public final class ContextProductionCaptureRunner {
+    private static int checks;
+    private static final UUID X = UUID.randomUUID(), A = UUID.randomUUID(), B = UUID.randomUUID();
+    public static void main(String[] args) {
+        try {
+            System.setProperty("user.home", java.nio.file.Files.createTempDirectory("production-capture-").toString());
+            joinedApplication();
+            maskedConclusionAndAlternatives();
+            negativeProduct();
+            sourceAliases();
+            typedDetachedTransport();
+            nullaryAndRepeatedArguments();
+            queryArtifactsAreExcluded();
+            unsupportedInputsAreVisible();
+            boundedScopeAndInactiveHooks();
+            System.out.println("CONTEXT_PRODUCTION_CAPTURE_PASS checks=" + checks);
+            System.exit(0);
+        } catch (Throwable failure) { failure.printStackTrace(); System.exit(1); }
+    }
+    private static Mind memory() throws Exception {
+        User user = new User(); Mind mind = new Mind(user); user.setCurrentMind(mind); return mind;
+    }
+    private static Source source(UUID context, long rule) { return new Source(context, 1, rule, context.equals(X), "base"); }
+    private static Snapshot replay(String[] statements, Source[] sources) throws Exception {
+        Mind work = memory();
+        try (ContextProductionCapture capture = ContextProductionCapture.begin(work, 10000)) {
+            for (int i = 0; i < statements.length; ++i) capture.replay(work, sources[i], statements[i]);
+            work.setQueryPass(QueryPass.CHECK); work.link(null, false);
+            require(!work.analyze(null, false), "fixture locally consistent");
+            Snapshot snapshot = capture.snapshot();
+            require(snapshot.gaps.isEmpty(), "ordinary applications have no projection gaps: " + snapshot.gaps);
+            return snapshot;
+        }
+    }
+    private static void joinedApplication() throws Exception {
+        Snapshot snapshot = replay(new String[] {"!@x left(x) && right(x) -> p(x);", "!left(1);", "!right(1);"},
+                new Source[] {source(X, 0), source(A, 0), source(B, 0)});
+        Application result = application(snapshot, "p", true, X, 0);
+        require(result != null, "joined production captured");
+        require(result.premises.size() == 2, "whole two-premise donor group retained");
+        require(hasPremise(result, "left", true) && hasPremise(result, "right", true), "donor polarity retained");
+        require(result.producers.get(0).localX, "producer is labelled X");
+    }
+    private static void maskedConclusionAndAlternatives() throws Exception {
+        Snapshot snapshot = replay(new String[] {"!p(1);", "!@x a(x) -> p(x);", "!@x c(x) -> p(x);", "!a(1);", "!c(1);"},
+                new Source[] {source(A, 0), source(X, 0), source(X, 1), source(A, 1), source(B, 0)});
+        Application first = application(snapshot, "p", true, X, 0), second = application(snapshot, "p", true, X, 1);
+        require(first != null && second != null, "both routes retained beside an existing foreign p");
+        require(first.conclusion.equivalent(second.conclusion), "alternative routes reach a semantic twin");
+        require(hasPremise(first, "a", true) && hasPremise(second, "c", true), "independent donor groups preserved");
+        require(snapshot.inputs.get(0).source.context.equals(A) && snapshot.inputs.get(0).fact != null,
+                "foreign primary p remains a distinct support");
+        boolean immutable = false;
+        try { snapshot.applications.clear(); } catch (UnsupportedOperationException expected) { immutable = true; }
+        require(immutable, "detached applications immutable");
+    }
+    private static void negativeProduct() throws Exception {
+        Snapshot snapshot = replay(new String[] {"!@x left(x) && right(x) -> p(x);", "!right(1);", "!~p(1);"},
+                new Source[] {source(X, 0), source(B, 0), source(B, 1)});
+        Application negative = application(snapshot, "left", false, X, 0);
+        require(negative != null, "actual counterexample negative product captured");
+        require(hasPremise(negative, "right", true) && hasPremise(negative, "p", false),
+                "negative product has both concrete donor supports");
+        Mind target = memory();
+        require(target.compileLine(negative.conclusion.assertion(), false, negative.conclusion.project(target)) != null,
+                "detached negative product canonically replayed");
+        require(Boolean.TRUE.equals(target.query("?~left(1);", null, false)), "replay preserves negative sign");
+    }
+    private static void sourceAliases() throws Exception {
+        Snapshot snapshot = replay(new String[] {"!a(1);", "!a(1);", "!@x a(x) -> p(x);"},
+                new Source[] {source(A, 0), source(B, 0), source(X, 0)});
+        Input a = snapshot.inputs.get(0), b = snapshot.inputs.get(1);
+        require(a.fact.equivalent(b.fact) && a.nativeRule == b.nativeRule, "semantic duplicate uses one native rule");
+        require(!a.source.equals(b.source) && b.duplicate, "both exact source aliases retained");
+        require(application(snapshot, "p", true, X, 0) != null, "duplicate donor remains available to production");
+        snapshot = replay(new String[] {"!@x a(x) -> p(x);", "!@x a(x) -> p(x);", "!a(1);"},
+                new Source[] {source(X, 0), source(A, 0), source(B, 0)});
+        Application result = application(snapshot, "p", true, X, 0);
+        require(result != null && result.producers.size() == 2, "same rule has local and foreign source alternatives");
+    }
+    private static void typedDetachedTransport() throws Exception {
+        Snapshot snapshot = replay(new String[] {"!@x @y pair(x,y) -> reverse(y,x);", "!pair(John,2);"},
+                new Source[] {source(X, 0), source(A, 0)});
+        Application result = application(snapshot, "reverse", true, X, 0);
+        require(result != null && result.conclusion.arguments.size() == 2, "binary typed product captured");
+        Mind target = memory(); target.compileLine(result.conclusion.assertion(), false, result.conclusion.project(target));
+        require(Boolean.TRUE.equals(target.query("?reverse(2,John);", null, false)), "positional canonical transport");
+        require(target.query("?reverse(John,2);", null, false) == null, "arguments are not interchanged");
+    }
+    private static void queryArtifactsAreExcluded() throws Exception {
+        Mind work = memory();
+        try (ContextProductionCapture capture = ContextProductionCapture.begin(work, 10000)) {
+            capture.replay(work, source(A, 0), "!@x a(x) && b(x) -> r(x);");
+            capture.replay(work, source(A, 1), "!~r(1);");
+            require(work.query("?b(1);", null, false) == null, "conditional-query fixture");
+            require(!work.getHypothesis().isEmpty(), "query retains its local hypothesis");
+            require(capture.snapshot().applications.isEmpty(), "conditional query products do not enter qualification journal");
+        }
+    }
+    private static void nullaryAndRepeatedArguments() throws Exception {
+        Snapshot snapshot = replay(new String[] {"!@x a(x) -> ready();", "!a(1);"},
+                new Source[] {source(X, 0), source(A, 0)});
+        Application result = application(snapshot, "ready", true, X, 0);
+        require(result != null && result.conclusion.arguments.isEmpty(), "nullary result is detached");
+        Mind target = memory(); target.compileLine(result.conclusion.assertion(), false, result.conclusion.project(target));
+        require(Boolean.TRUE.equals(target.query("?ready();", null, false)), "nullary result canonically transported");
+        snapshot = replay(new String[] {"!@x pair(x,x) -> same(x);", "!pair(1,2);"},
+                new Source[] {source(X, 0), source(A, 0)});
+        require(application(snapshot, "same", true, X, 0) == null, "repeated variable cannot accept mismatched arguments");
+        snapshot = replay(new String[] {"!@x pair(x,x) -> same(x);", "!pair(1,1);"},
+                new Source[] {source(X, 0), source(A, 0)});
+        require(application(snapshot, "same", true, X, 0) != null, "equal repeated arguments preserve native proof");
+    }
+    private static void boundedScopeAndInactiveHooks() throws Exception {
+        Mind work = memory();
+        try (ContextProductionCapture outer = ContextProductionCapture.begin(work, 10000)) {
+            outer.replay(work, source(A, 0), "!a(1);");
+            Mind innerMind = memory();
+            try (ContextProductionCapture inner = ContextProductionCapture.begin(innerMind, 1)) {
+                inner.replay(innerMind, source(B, 0), "!b(1);");
+                boolean stopped = false;
+                try { inner.replay(innerMind, source(B, 1), "!c(1);"); }
+                catch (IllegalStateException expected) { stopped = expected.getMessage().contains("incomplete"); }
+                require(stopped, "budget stop is explicit incomplete qualification");
+                require(inner.snapshot().gaps.contains("observation-budget-exhausted"), "partial journal remains marked incomplete");
+            }
+            outer.replay(work, source(A, 1), "!d(1);");
+            require(outer.snapshot().inputs.size() == 2, "nested scope restores outer journal");
+            Mind unrelated = memory(); unrelated.compile("!@x a(x) -> b(x); !a(1);", null, false);
+            require(outer.snapshot().applications.isEmpty(), "unrelated Mind cannot contaminate journal");
+        }
+        require(work.compile("!@x a(x) -> p(x);", null, false), "inactive hooks preserve normal compile");
+        require(Boolean.TRUE.equals(work.query("?p(1);", null, false)), "inactive hooks preserve normal proof");
+    }
+    private static void unsupportedInputsAreVisible() throws Exception {
+        Mind work = memory();
+        try (ContextProductionCapture capture = ContextProductionCapture.begin(work, 10000)) {
+            capture.replay(work, source(X, 0), "!@x p(x);");
+            require(!capture.snapshot().gaps.isEmpty(), "abstract unit input cannot masquerade as complete ground capture");
+        }
+        work = memory();
+        try (ContextProductionCapture capture = ContextProductionCapture.begin(work, 10000)) {
+            boolean refused = false;
+            try { capture.replay(work, source(X, 0), "!a(1); !b(1);"); }
+            catch (IllegalArgumentException expected) { refused = true; }
+            require(refused && capture.snapshot().inputs.isEmpty(), "one source label cannot silently bind a multi-command payload");
+        }
+    }
+    private static boolean hasPremise(Application a, String predicate, boolean positive) {
+        for (Fact premise : a.premises) if (predicate.equals(premise.predicate) && positive == premise.positive) return true;
+        return false;
+    }
+    private static Application application(Snapshot s, String predicate, boolean positive, UUID context, long rule) {
+        for (Application a : s.applications) if (predicate.equals(a.conclusion.predicate) && positive == a.conclusion.positive)
+            for (Source producer : a.producers) if (producer.context.equals(context) && producer.rule == rule) return a;
+        return null;
+    }
+    private static void require(boolean value, String message) {
+        ++checks; if (!value) throw new AssertionError(message);
+    }
+}

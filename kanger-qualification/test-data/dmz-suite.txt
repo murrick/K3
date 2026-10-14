@@ -1,6 +1,8 @@
 # Explicit DMZ qualification gate: class | required stdout success marker.
 org.kanger.storage.dumb2.GroundDisjunctionQualificationRunner | GROUND_DISJUNCTION_QUALIFICATION_PASS
 org.kanger.DmzAcceptanceProofGuardRunner | DMZ_ACCEPTANCE_PROOF_GUARD_PASS
+org.kanger.ContextProductionCaptureRunner | CONTEXT_PRODUCTION_CAPTURE_PASS
+org.kanger.ContextProductionRoundsReferenceRunner | CONTEXT_PRODUCTION_ROUNDS_REFERENCE_PASS
 org.kanger.DmzApplicationSourcesRunner | DMZ_APPLICATION_SOURCES_PASS
 org.kanger.DmzCandidateSessionRunner | DMZ_CANDIDATE_SESSION_PASS
 org.kanger.DmzCollisionProofCaptureRunner | DMZ_COLLISION_PROOF_CAPTURE_PASS
