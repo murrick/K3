@@ -164,7 +164,7 @@ final class ConsoleDmzView {
         values.add(locator(result,proof.source.revision));
         for(DmzSourcesQuery.Proof child:proof.premises)sources(result,child,values);
     }
-    private static void tree(DmzSourcesQuery.Result result,DmzSourcesQuery.Proof proof,String indent) {
+    static void tree(DmzSourcesQuery.Result result,DmzSourcesQuery.Proof proof,String indent) {
         DmzSourcePlan.Source source=source(result,proof.source.revision);
         System.out.println(indent+proof.conclusion+" from "+source.locator+"@"+source.revision.getRevision()
                 +" ["+pin(source.revision)+":"+proof.source.rule+"]"+(source.configured ? " [configured by Q]" : ""));

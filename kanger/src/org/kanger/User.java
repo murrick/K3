@@ -93,6 +93,9 @@ import java.util.*;
  * @see IUser
  */
 public class User implements IUser {
+    private org.kanger.interfaces.DmzRestrictionFamily.Result lastDmzFamily;
+    public synchronized org.kanger.interfaces.DmzRestrictionFamily.Result getLastDmzFamily() { return lastDmzFamily; }
+    public synchronized void setLastDmzFamily(org.kanger.interfaces.DmzRestrictionFamily.Result result) { lastDmzFamily=result; }
     private org.kanger.interfaces.DmzSourcesQuery.Result lastDmzResult;
     public synchronized org.kanger.interfaces.DmzSourcesQuery.Result getLastDmzResult() { return lastDmzResult; }
     public synchronized void setLastDmzResult(org.kanger.interfaces.DmzSourcesQuery.Result result) { lastDmzResult=result; }

@@ -74,6 +74,18 @@ public final class DmzRestrictionFamilyRunner {
             DmzRestrictionFamily.Result uncovered=DmzRestrictionFamily.explore(uncoveredProvider,seed,64);
             require(!uncovered.exhausted && uncovered.uncovered.size()==1 && uncovered.leaves.isEmpty() && uncovered.pending.isEmpty(),
                     "provider uncovered outcome remains an explicit nonexhaustive stopped branch");
+            List<String> longPrefix=new ArrayList<String>();for(int i=0;i<128;++i)longPrefix.add("bounded-history-"+i);
+            DmzSourcesQuery.Limits roomy=new DmzSourcesQuery.Limits(10000,10000,10000,10000,10000,10000,10000,8,128,1000000,1000);
+            DmzSourcesQuery.Request capped=new DmzSourcesQuery.Request(sources,seed.policy,seed.queryStatement,roomy,
+                    new DmzSourcesQuery.RestrictionRequest(a,trigger,longPrefix,10000,DmzSourcesQuery.RestrictionChoiceScope.OBSERVED_CAUSAL_CHAINS));
+            DmzSourcesQuery.Result cappedParent=new DmzSourcesQuery.Result(capped,parent.acquisition,parent.sources,parent.candidates,parent.productions,
+                    parent.opinions,parent.events,parent.interruptedPrefix,parent.restartRequired,parent.visitLimit,parent.visits,parent.interruptedInput,
+                    parent.restrictionProofs,parent.restrictionOutcome);
+            IMind cappedProvider=(IMind)java.lang.reflect.Proxy.newProxyInstance(IMind.class.getClassLoader(),new Class<?>[]{IMind.class},
+                    (proxy,method,args)->{if(method.getName().equals("executeDmzSources"))return cappedParent;throw new UnsupportedOperationException();});
+            DmzRestrictionFamily.Result bounded=DmzRestrictionFamily.explore(cappedProvider,capped,64);
+            require(!bounded.exhausted && bounded.pending.size()==1 && bounded.pending.get(0).reason==DmzRestrictionFamily.Stop.CHOICE_LIMIT,
+                    "hard 128-choice request cap is an explicit frontier even with larger visit allowance");
             IMind failedProvider=(IMind)java.lang.reflect.Proxy.newProxyInstance(IMind.class.getClassLoader(),new Class<?>[]{IMind.class},
                     (proxy,method,args)->{throw new IllegalStateException("provider refusal");});
             reject(() -> DmzRestrictionFamily.explore(failedProvider,seed,64),IllegalStateException.class);

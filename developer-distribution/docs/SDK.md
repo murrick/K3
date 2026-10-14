@@ -829,7 +829,14 @@ history, arbitrary source order, or deduplication by model equivalence. A provid
 exception propagates; the call returns no family object on such failure and never
 labels it completed or uncovered. Retry with a fresh exploration and corrected
 limits. Returned parents and proofs are historical data, not native resume tokens.
-The Console has no family command yet.
+Console provides `ctx dmz family N` to freshly explore the last saved exact
+restriction request, `ctx dmz family` to inspect its last successful historical
+family, and `ctx dmz branch N` for a completed leaf's proof trees. The numbered
+family command explicitly widens choice scope to OBSERVED_CAUSAL_CHAINS and keeps
+all source/query/trigger/prefix/phase limits. It does not replace the saved single
+DMZ result used for explicit choice. Failed exploration preserves the last family.
+These commands have no Server binding. Choice-depth stops respect both
+maximumVisits and the hard 128-choice request cap.
 A disposable manual report can be generated from the repository with
 `python3 scripts/run-dmz-manual.py --family`; optional `--family-invocations N`
 and `--family-choices N` expose partial traversal and corrected retries. Its

@@ -170,3 +170,42 @@ or `--prepare-only`. No automatic theory/model equivalence deduplication or nati
 missing-history reconstruction is claimed. The report is a first manual family
 surface; choosing/reporting families inside Console and the remaining full-DMZ
 language/result scenarios are still readiness-plan work.
+
+
+## Saved family in Console (stage 156)
+
+After entering a full exact restriction inspection request from the generated
+Console walkthrough, use:
+
+```text
+ctx dmz family 3
+ctx dmz family
+ctx dmz branch 1
+ctx dmz family 64
+```
+
+The numbered family command freshly traverses the saved request's exact source
+pins, trigger, query and complete selected prefix with OBSERVED_CAUSAL_CHAINS.
+It changes only the choice scope and supplies an explicit fresh-invocation cap.
+If the saved request already contains selections, it explores that subtree.
+Other limits, including the native phase budget, remain those of the saved request.
+
+The command without a cap reads the last successfully saved family with no
+inference. Branch numbers refer to completed historical leaves, not pending
+choices or truth values; `ctx dmz branch N` shows the branch's restriction trace,
+both conflict proofs and native answer proof trees. Summary output distinguishes
+qualified exhaustion, partial traversal, uncovered stops and pending suffixes.
+Pending groups include their parent evidence and first unexplored ordinal.
+Equal opinions may correspond to different histories.
+
+The protected-Q walkthrough can yield fewer branches than the two-source family
+report fixture: Q facts and rules remain unselectable. Only request `branch N`
+for a number actually displayed. A missing saved request/family, invalid ordinal,
+invalid cap or failed exploration refuses without replacing the last successful
+family. Family execution/display also preserves the single DMZ result used by
+`ctx dmz choose`. New normal DMZ requests retain their existing single-result
+replacement behavior. Historical family views can survive source/owner changes;
+fresh exploration always revalidates physical Q and exact pinned sources.
+
+The choice frontier respects both maximumVisits and the hard 128-choice request
+cap. These family commands are Console-bound; no Server transport is added.

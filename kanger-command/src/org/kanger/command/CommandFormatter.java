@@ -117,6 +117,8 @@ public final class CommandFormatter {
             case STORAGE_REINDEX:
                 return "storage reindex " + argument(invocation.getArgument("name"));
 
+            case CTX_DMZ_FAMILY: return "ctx dmz family"+(invocation.getArgument("number")==null?"":" "+number(invocation,"number"));
+            case CTX_DMZ_BRANCH: return "ctx dmz branch "+number(invocation,"number");
             case CTX_DMZ_EXPLAIN: return "ctx dmz explain";
             case CTX_DMZ_CHOOSE: return "ctx dmz choose "+number(invocation,"number")
                     +(invocation.getArgument("limits")==null?"":((DmzLimitOverrides)invocation.getArgument("limits")).format());

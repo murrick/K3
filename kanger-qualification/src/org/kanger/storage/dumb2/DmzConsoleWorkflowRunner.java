@@ -30,11 +30,48 @@ public final class DmzConsoleWorkflowRunner {
     private static final CommandParser PARSER=new CommandParser();
     private static final CommandFormatter FORMATTER=new CommandFormatter();
     public static void main(String[] args) {
-        try { run();restrictions(false);restrictions(true);staleAuthority();lateDiagnostic(false);lateDiagnostic(true);
+        try { family();run();restrictions(false);restrictions(true);staleAuthority();lateDiagnostic(false);lateDiagnostic(true);
             answerDiagnostic(false,1,Boolean.TRUE);answerDiagnostic(true,1,Boolean.TRUE);
             for(boolean negative:new boolean[]{false,true})for(Boolean truth:new Boolean[]{Boolean.TRUE,Boolean.FALSE,null})answerDiagnostic(negative,3,truth);
             System.out.println("DMZ_CONSOLE_WORKFLOW_PASS checks="+checks);System.exit(0); }
         catch(Throwable failure) { failure.printStackTrace();System.exit(1); }
+    }
+    private static void family() throws Exception {
+        Path dir=Files.createTempDirectory("dmz-console-family-");System.setProperty("user.home",dir.toString());
+        create(dir,"Q","!a(1); !a(2); !a(3); !b(4);");
+        IContextResults.Revision a=create(dir,"A","!@x a(x) -> p(x);");
+        IContextResults.Revision b=create(dir,"B","!b(1); !b(2); !@x b(x) -> ~p(x);");
+        long trigger;
+        try(SnapshotMindRuntime snapshot=SnapshotMindRuntime.open(dir.resolve("A"),new RevisionRef(a.getContextId(),a.getRevision()),"console-family-trigger")) {
+            trigger=org.kanger.DmzSourceShape.inspect(snapshot.getMind(),100).declarations.get(0).sourceRule;
+        }
+        User user=new User();user.setUserDir(Files.createDirectories(dir.resolve("operator")).toString());user.setDatabaseDir(dir.toString()+java.io.File.separator);
+        DB db=new DB();db.init(user);Mind initial=new Mind(user);user.setCurrentMind(initial);Mind q=(Mind)initial.useStorage("Q");user.setCurrentMind(q);
+        IContextResults.Revision qp=new IContextResults.Revision(db.getContextId(),db.getRevision());
+        String state=DmzSourceMaterializationQualification.fingerprint(q);
+        String seed="ctx dmz "+pin(qp)+" \"?p(1);\" from=A@"+pin(a)+" from=B@"+pin(b)+" restrict="+pin(a)+":"+trigger;
+        for(String command:new String[]{"ctx dmz family","ctx dmz family 3","ctx dmz branch 4"})
+            require(FORMATTER.format(PARSER.parse(command)).equals(command),"family command canonical round trip");
+        for(String bad:new String[]{"ctx dmz family 0","ctx dmz family 10001","ctx dmz branch 0","ctx dmz family 3 extra"})
+            reject(() -> PARSER.parse(bad),CommandParseException.class);
+        require(!new CanonicalCommandProcessor().handles(PARSER.parse("ctx dmz family 3")),"family execution remains Console-bound without a server binding");
+        ByteArrayOutputStream out=new ByteArrayOutputStream();
+        String errors=boundaryConsole(q,"ctx dmz family\n"+seed+"\nctx dmz family 3\nctx dmz family\nctx dmz branch 1\nctx dmz family 64\nctx dmz branch 4\nctx dmz branch 99\nctx dmz family 0\nctx dmz family\n",out);
+        String report=out.toString("UTF-8");
+        require(report.contains("DMZ family: PARTIAL") && report.contains("INVOCATION_LIMIT") && report.contains("first unexplored choice="),"partial family has visible pending suffix and limit");
+        int pendingStart=report.indexOf("Pending group ");
+        int pendingEnd=report.indexOf("Use ctx dmz branch",pendingStart);
+        require(pendingStart>=0 && pendingEnd>pendingStart && !report.substring(pendingStart,pendingEnd).contains("ctx dmz choose"),
+                "pending historical suffix does not advertise choices against the unrelated single result");
+        require(report.contains("DMZ family: EXHAUSTED qualified choices") && report.contains("branches=4") && report.contains("DMZ family branch 4 (historical)"),"full family and selected leaf display in real Console");
+        require(report.contains("TRUE") && report.contains("FALSE") && report.contains("Selected") && report.contains("Restriction"),"Console branch includes opinions and proof provenance");
+        require(errors.contains("No saved DMZ family") && errors.contains("No saved family branch 99"),"missing/foreign ordinals refuse readably");
+        require(user.getLastDmzFamily()!=null && user.getLastDmzFamily().leaves.size()==4 && user.getLastDmzFamily().exhausted,
+                "failed branch and parse requests preserve saved family");
+        require(user.getLastDmzResult()!=null && user.getLastDmzResult().request.restrictions.choices.isEmpty(),"family exploration/view does not replace single-result choice history");
+        Mind reopened=(Mind)user.getCurrentMind().useStorage("Q");user.setCurrentMind(reopened);
+        require(state.equals(DmzSourceMaterializationQualification.fingerprint(reopened)),"family Console restores Q through owner closure");
+        user.setCurrentMind(reopened.closeStorage());
     }
     private static String pin(IContextResults.Revision p) { return p.getContextId()+"@"+p.getRevision(); }
     private static void run() throws Exception {

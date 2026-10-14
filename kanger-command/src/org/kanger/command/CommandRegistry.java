@@ -80,6 +80,8 @@ public final class CommandRegistry {
         DMZ,
         OPINION,
         CHOOSE,
+        FAMILY,
+        BRANCH,
         OPINIONS,
         VALUES,
         SOLVES,
@@ -226,6 +228,8 @@ public final class CommandRegistry {
         keyword(Family.CONTEXT, Keyword.ASK, "ask");
         keyword(Family.CONTEXT, Keyword.DMZ, "dmz");
         keyword(Family.DMZ, Keyword.CHOOSE, "choose");
+        keyword(Family.DMZ, Keyword.FAMILY, "family");
+        keyword(Family.DMZ, Keyword.BRANCH, "branch");
         keyword(Family.CONTEXT, Keyword.TREE, "tree");
 
         keyword(Family.CONTEXT, Keyword.OPINIONS, "opinions", "opinion");
@@ -339,6 +343,10 @@ public final class CommandRegistry {
         define(CommandIntent.STORAGE_REINDEX, "storage reindex <name>", "STORAGE", "Reindex one explicitly named storage.",
                 args("name", "Storage logical name."), aliases("reindex <name>"), n++);
 
+        define(CommandIntent.CTX_DMZ_FAMILY,"ctx dmz family [<invocations>]","CONTEXT",
+                "Console: inspect saved family, or freshly explore the saved exact restriction request with an explicit cap.",args("number","Optional fresh invocation cap, 1..10000."),n++);
+        define(CommandIntent.CTX_DMZ_BRANCH,"ctx dmz branch <N>","CONTEXT",
+                "Console: show a saved family leaf and its proof trees without inference.",args("number","Positive saved family branch number."),n++);
         define(CommandIntent.CTX_DMZ_EXPLAIN,"ctx dmz explain","CONTEXT",
                 "Show the saved last DMZ query's technical report without inference.",args(),n++);
         define(CommandIntent.CTX_DMZ_CHOOSE,"ctx dmz choose <N> [<limit>=<value> ...]","CONTEXT",

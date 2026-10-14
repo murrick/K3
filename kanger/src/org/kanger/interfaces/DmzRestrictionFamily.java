@@ -54,7 +54,7 @@ public final class DmzRestrictionFamily {
             case NEXT_CONFLICT:
                 if(observed.restrictionOutcome.availableChoices.isEmpty())
                     throw new IllegalStateException("Nonempty qualified family choices required");
-                if(observed.request.restrictions.choices.size()>=observed.request.limits.maximumVisits)
+                if(observed.request.restrictions.choices.size()>=Math.min(128,observed.request.limits.maximumVisits))
                     pending.add(new Pending(observed,1,Stop.CHOICE_LIMIT));
                 else stack.push(new Frame(observed));
                 break;

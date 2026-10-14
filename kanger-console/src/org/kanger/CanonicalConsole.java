@@ -387,6 +387,28 @@ public final class CanonicalConsole {
                 }
                 return same(mind);
 
+            case CTX_DMZ_FAMILY:
+            case CTX_DMZ_BRANCH:
+                try {
+                    User operator=(User)mind.getUser();
+                    if(invocation.getIntent()==org.kanger.command.CommandIntent.CTX_DMZ_FAMILY) {
+                        if(invocation.getArgument("number")!=null) {
+                            org.kanger.interfaces.DmzSourcesQuery.Result saved=operator.getLastDmzResult();
+                            if(saved==null || saved.request.restrictions==null)throw new IllegalStateException("Saved exact restriction request required");
+                            org.kanger.interfaces.DmzSourcesQuery.Request seed=saved.request;
+                            org.kanger.interfaces.DmzSourcesQuery.RestrictionRequest old=seed.restrictions;
+                            org.kanger.interfaces.DmzSourcesQuery.Request all=new org.kanger.interfaces.DmzSourcesQuery.Request(seed.sources,seed.policy,seed.queryStatement,seed.limits,
+                                    new org.kanger.interfaces.DmzSourcesQuery.RestrictionRequest(old.triggerRevision,old.triggerRule,old.choices,old.budget,
+                                            org.kanger.interfaces.DmzSourcesQuery.RestrictionChoiceScope.OBSERVED_CAUSAL_CHAINS));
+                            org.kanger.interfaces.DmzRestrictionFamily.Result family=org.kanger.interfaces.DmzRestrictionFamily.explore(mind,all,
+                                    ((Number)invocation.getArgument("number")).intValue());
+                            operator.setLastDmzFamily(family);
+                        }
+                        ConsoleDmzFamilyView.show(operator.getLastDmzFamily());
+                    } else ConsoleDmzFamilyView.branch(operator.getLastDmzFamily(),((Number)invocation.getArgument("number")).longValue());
+                } catch(Exception refusal) { throw new CommandErrorException("DMZ family refused: "+(refusal.getMessage()==null?refusal.toString():refusal.getMessage())); }
+                return same(mind);
+
             case CTX_DMZ_EXPLAIN:
             case CTX_DMZ_CHOOSE:
             case CTX_OPINION_TREE:
@@ -557,7 +579,7 @@ public final class CanonicalConsole {
                 operation=operation.substring(1,operation.length()-1);
             try {
                 if(org.kanger.command.CommandRegistry.resolveKeyword(org.kanger.command.CommandRegistry.Family.DMZ,operation,
-                        org.kanger.command.CommandRegistry.Keyword.CHOOSE)==org.kanger.command.CommandRegistry.Keyword.CHOOSE)return false;
+                        org.kanger.command.CommandRegistry.Keyword.CHOOSE,org.kanger.command.CommandRegistry.Keyword.FAMILY,org.kanger.command.CommandRegistry.Keyword.BRANCH)!=null)return false;
             } catch(org.kanger.command.CommandParseException notChoose) { /* A fresh invocation may follow. */ }
             try { return org.kanger.command.CommandRegistry.resolveKeyword(
                     org.kanger.command.CommandRegistry.Family.CONTEXT,operation,org.kanger.command.CommandRegistry.Keyword.EXPLAIN)

@@ -533,6 +533,17 @@ public final class CommandParser {
                 if(number==0)throw error(INVALID_ARGUMENT_SHAPE,"Positive opinion number required");
                 return CommandInvocation.command(CommandIntent.CTX_OPINION_TREE,args("number",number),raw);
             case DMZ:
+                if(tokens.size()>=3 && tryResolve(Family.DMZ,tokens.get(2).value,Keyword.FAMILY,Keyword.BRANCH)==Keyword.FAMILY) {
+                    if(tokens.size()==3)return CommandInvocation.command(CommandIntent.CTX_DMZ_FAMILY,raw);
+                    requireSize(tokens,4);long cap=parseNonNegativeLong(tokens.get(3).value,"invocation cap");
+                    if(cap<1 || cap>10000)throw error(INVALID_ARGUMENT_SHAPE,"Family invocation cap must be 1..10000");
+                    return CommandInvocation.command(CommandIntent.CTX_DMZ_FAMILY,args("number",cap),raw);
+                }
+                if(tokens.size()>=3 && tryResolve(Family.DMZ,tokens.get(2).value,Keyword.FAMILY,Keyword.BRANCH)==Keyword.BRANCH) {
+                    requireSize(tokens,4);long branch=parseNonNegativeLong(tokens.get(3).value,"branch number");
+                    if(branch<1)throw error(INVALID_ARGUMENT_SHAPE,"Positive branch number required");
+                    return CommandInvocation.command(CommandIntent.CTX_DMZ_BRANCH,args("number",branch),raw);
+                }
                 if(tokens.size()>=3 && tryResolve(Family.DMZ,tokens.get(2).value,Keyword.CHOOSE)==Keyword.CHOOSE)
                     return parseDmzChoice(tokens,2,raw);
                 if(tokens.size()>=3 && tryResolve(Family.CONTEXT,tokens.get(2).value,Keyword.EXPLAIN)==Keyword.EXPLAIN) {
