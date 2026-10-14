@@ -117,3 +117,56 @@ gate; the displayed assertion count is not a count of independent scenarios.
 The fixture uses an explicit caller-selected continuation and supported unary
 integer rules. A complete symmetric derived branch family and general query/result
 forms remain subsequent development work in the DMZ readiness plan.
+
+
+## Disposable family proof report (stage 155)
+
+For manual inspection of the SDK family traversal, run:
+
+```sh
+python3 scripts/run-dmz-manual.py --family
+```
+
+This creates a separate disposable fixture and saves `family-report.txt` in the
+printed `run-*` directory. It runs the real public SDK family utility, with exact
+Context/revision/rule discovery and a fresh source reconstruction for every
+prefix. It does not open Console or existing user databases. The original command
+without `--family` still opens the explicit-choice Console walkthrough above.
+
+The family fixture has Q donors `a(1)`, `a(2)`, `a(3)`, `b(4)`, source A's
+`a(x) -> p(x)`, and source B's `b(1)`, `b(2)`, `b(x) -> ~p(x)`. Both caches are
+warmed before contrary source primaries, so two actual conflicts have stored
+history. The report queries `?p(1);`. With default limits expect:
+
+- `Qualified traversal: exhausted`, four completed branches and no pending or
+  uncovered branches. These are four exact proof histories; some answer values
+  repeat. Both TRUE and FALSE appear with native answer proofs.
+- Each branch lists its selected source/substitution restrictions and complete
+  premise trees. Observed conflict sections show both endpoint proofs, including
+  Q facts and any contrapositive application. Query answer proofs are separate
+  from the restriction proof trees.
+- `Physical Q: unchanged (verified)`. Every native continuation rolled back;
+  the report remains readable after the fixture's owner closes.
+
+To inspect partial results and corrected retries:
+
+```sh
+python3 scripts/run-dmz-manual.py --family --family-invocations 3
+python3 scripts/run-dmz-manual.py --family --family-choices 1
+python3 scripts/run-dmz-manual.py --family --family-invocations 64 --family-choices 128
+```
+
+The invocation cap of three retains one completed branch plus pending sibling
+groups marked `Invocation limit`. A choice-depth cap of one leaves no complete
+two-conflict branches and marks pending groups `Choice limit`. Each group identifies
+the exact historical parent, first unexplored ordinal and all remaining choices
+in that sibling suffix. Read the selected prefix and current conflict before
+interpreting these options. A fresh retry creates new fixture UUIDs, so compare
+status and source statements rather than copying old identities between runs.
+
+Allowed caps are 1..10000 fresh SDK invocations and 1..128 selected restrictions.
+Family-only limit flags require `--family`; it cannot be combined with `--smoke`
+or `--prepare-only`. No automatic theory/model equivalence deduplication or native
+missing-history reconstruction is claimed. The report is a first manual family
+surface; choosing/reporting families inside Console and the remaining full-DMZ
+language/result scenarios are still readiness-plan work.

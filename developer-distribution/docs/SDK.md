@@ -830,6 +830,12 @@ exception propagates; the call returns no family object on such failure and neve
 labels it completed or uncovered. Retry with a fresh exploration and corrected
 limits. Returned parents and proofs are historical data, not native resume tokens.
 The Console has no family command yet.
+A disposable manual report can be generated from the repository with
+`python3 scripts/run-dmz-manual.py --family`; optional `--family-invocations N`
+and `--family-choices N` expose partial traversal and corrected retries. Its
+`family-report.txt` includes exact selected restrictions, both conflict proof
+trees, native answer proofs and remaining sibling suffixes. See
+`docs/dmz-manual-walkthrough.md`; this is a fixture report, not a Console command.
 
 The optional command feature exposes the same operation:
 
