@@ -54,13 +54,6 @@ public final class DmzCausalConflictChoicesRunner {
                 require(!q.compile("!anchor();",null,false),"actual immediate native conflict");event=collisions.snapshot().get(0);
             }
             DmzCacheCollisionEvidence evidence=DmzCacheCollisionEvidence.bind(baseline,event,q,10000);
-            if(protectedRule && !warmA) {
-                require(!evidence.eligible && !evidence.truncated,"Q-authored terminal cache lacks current typed historical cut coverage");
-                require(state.equals(DmzObservationStateFingerprint.capture(q)) && sources.isCurrent(q)
-                        && !q.hasPendingTransactions() && DmzTerminalRestriction.activeNoGoods(q).isEmpty(),
-                        "uncovered Q-authored endpoint refuses without fabricating a causal permission");
-                return;
-            }
             require(evidence.eligible && !evidence.truncated,"complete current historical endpoint coverage: "+negative+"/"+recursive+"/"+aliases+"/"+protectedRule+"/"+warmA);
             DmzProofWitnesses.Witness endpoint=evidence.combinations.get(0).left.step>=0
                     ?evidence.combinations.get(0).left:evidence.combinations.get(0).right;
@@ -81,8 +74,18 @@ public final class DmzCausalConflictChoicesRunner {
             require(!evidence.projectCausal(stem,new Mind(user),10000).eligible,"another Mind cannot borrow causal ancestry");
             require(evidence.projectCausal(stem,q,1).truncated || protectedRule && warmA,"bounded ancestry lookup refuses before permission");
             reject(() -> empty.append(stem,q,10000),"default append retains endpoint-only contract");
-            DmzCacheRestrictionSet retained=empty.append(endpoint,q,10000);
-            {
+            DmzCacheRestrictionSet retained=null;
+            if(protectedRule && !warmA) {
+                require(!evidence.project(endpoint,q,10000).eligible && !evidence.projectCausal(endpoint,q,10000).eligible,
+                        "historical Q endpoint identity grants no cut permission");
+                reject(() -> empty.append(endpoint,q,10000),"Q-authored terminal endpoint remains protected");
+                try {DmzProofWitnesses.NoGood.fromTyped(endpoint);throw new AssertionError("Q no-good forbidden");}
+                catch(IllegalArgumentException expected){++checks;}
+                DmzProofWitnesses.TypedRoute route=DmzProofWitnesses.TypedRoute.from(endpoint);
+                require(route.matches(endpoint.graph,endpoint.node,endpoint.step,endpoint.source,endpoint.premises),
+                        "read-only identity accepts Q-derived routes");
+            } else {
+                retained=empty.append(endpoint,q,10000);
                 DmzTypedNativeResume.Result original=DmzTypedNativeResume.queryAccumulated(retained,q,10000,"?p(1);");
                 require(original.compiled==!aliases,"remaining independent support controls endpoint continuation");
                 if(!aliases)require(original.queryAnswer!=null && Boolean.valueOf(warmA?!negative:negative).equals(original.queryAnswer.value),
@@ -100,7 +103,7 @@ public final class DmzCausalConflictChoicesRunner {
             DmzProofWitnesses.Witness rebuilt=DmzProofWitnesses.enumerate(evidence.graph,stem.node,10000).witnesses.get(0);
             require(!evidence.projectCausal(rebuilt,q,10000).eligible,"reconstructed lookalike is not an offered observed subchain object");
             DmzCacheRestrictionSet oppositeBranch=empty.appendCausal(stem,q,10000);
-            require(empty.selections.isEmpty() && retained.selections.get(0)==endpoint && oppositeBranch.selections.get(0)==stem,
+            require(empty.selections.isEmpty() && (retained==null || retained.selections.get(0)==endpoint) && oppositeBranch.selections.get(0)==stem,
                     "two sibling prefixes remain immutable and independent");
             DmzTypedNativeResume.Result alternative=DmzTypedNativeResume.queryAccumulated(oppositeBranch,q,10000,"?p(1);");
             require(alternative.compiled==!aliases,"causal cut does not discard independent alternative support");
@@ -118,11 +121,13 @@ public final class DmzCausalConflictChoicesRunner {
             require(state.equals(DmzObservationStateFingerprint.capture(q)) && sources.isCurrent(q) && oppositeBranch.isCurrent(q)
                     && !q.hasPendingTransactions() && DmzTerminalRestriction.activeNoGoods(q).isEmpty() && user.getCurrentMind()==q,
                     "opposite sibling restores Q, sources, owner and restriction scope");
+            if(retained!=null) {
             DmzTypedNativeResume.Result repeated=DmzTypedNativeResume.queryAccumulated(retained,q,10000,"?p(1);");
             require(repeated.compiled==!aliases && (aliases || repeated.queryAnswer!=null
                     && Boolean.valueOf(warmA?!negative:negative).equals(repeated.queryAnswer.value))
                     && state.equals(DmzObservationStateFingerprint.capture(q)) && sources.isCurrent(q),
                     "evaluating the opposite sibling does not change the original branch or its native answer");
+            }
             reject(() -> oppositeBranch.appendCausal(stem,q,10000),"causal entry point requires a fresh initial prefix");
             try(TechnicalMindTransaction occupied=TechnicalMindTransaction.beginIsolated(q)) {
                 reject(() -> DmzTypedNativeResume.queryAccumulated(oppositeBranch,q,10000,"?p(1);"),"native continuation requires exclusive ownership");

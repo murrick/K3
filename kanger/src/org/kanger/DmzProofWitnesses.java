@@ -29,6 +29,11 @@ final class DmzProofWitnesses {
         static NoGood from(Witness witness) {
             if (witness == null || witness.step < 0 || witness.source.authority != DmzReplayProvenance.Authority.EXTERNAL)
                 throw new IllegalArgumentException("External derived unit witness required");
+            return new NoGood(witness, chainDepth(witness));
+        }
+        private static int chainDepth(Witness witness) {
+            if (witness == null || witness.step < 0)
+                throw new IllegalArgumentException("Derived unit witness required");
             Witness current = witness;
             int depth = 0;
             while (current.step >= 0) {
@@ -38,11 +43,15 @@ final class DmzProofWitnesses {
             }
             if (!current.premises.isEmpty() || !compatible(witness, new HashMap<UUID, Long>()))
                 throw new IllegalArgumentException("Coherent primary-terminated witness required");
-            return new NoGood(witness, depth + 1);
+            return depth + 1;
         }
         /** Exact typed substitution pattern; does not authorize native enforcement. */
         static NoGood fromTyped(Witness witness) {
             NoGood shape=from(witness);
+            validateTyped(witness);
+            return new NoGood(witness,shape.depth,true);
+        }
+        private static void validateTyped(Witness witness) {
             for (Witness current=witness;current.step>=0;current=current.premises.get(0)) {
                 List<TerminalSupportCapture.Binding> bindings=current.graph.observed.steps.get(current.step).application.bindings;
                 if (bindings.isEmpty() || bindings.size()>16) throw new IllegalArgumentException("Bounded typed substitution required");
@@ -51,7 +60,6 @@ final class DmzProofWitnesses {
                     if (binding.nativeVariable<0 || binding.value==null || !ids.add(binding.nativeVariable))
                         throw new IllegalArgumentException("Exact distinct native variable IDs required");
             }
-            return new NoGood(witness,shape.depth,true);
         }
         /** Shape bound only; this is not native coverage or continuation permission. */
         boolean recursiveWithin(int maximumDepth) {
@@ -88,6 +96,22 @@ final class DmzProofWitnesses {
                 if (!found) return false;
             }
             return true;
+        }
+    }
+    /** Read-only exact typed route identity; cannot be installed as a graph restriction. */
+    static final class TypedRoute {
+        private final NoGood identity;
+        final int workCost;
+        private TypedRoute(Witness witness) {
+            int depth=NoGood.chainDepth(witness);
+            NoGood.validateTyped(witness);
+            identity=new NoGood(witness,depth,true);
+            workCost=identity.workCost;
+        }
+        static TypedRoute from(Witness witness) { return new TypedRoute(witness); }
+        boolean matches(DmzSourcedProofGraph graph,int node,int step,
+                DmzReplayProvenance.Binding source,List<Witness> premises) {
+            return identity.matches(graph,node,step,source,premises);
         }
     }
     static final class Witness {

@@ -75,8 +75,8 @@ final class DmzStoredGroundRoutes {
         if(wanted.truncated)return refused(target,capture,boundary,sources,state,true);
         boolean covered=!wanted.witnesses.isEmpty() && observed.witnesses.size()==wanted.witnesses.size();
         for(DmzProofWitnesses.Witness witness:wanted.witnesses) {
-            DmzProofWitnesses.NoGood exact;
-            try {exact=DmzProofWitnesses.NoGood.fromTyped(witness);}catch(IllegalArgumentException unsupported){covered=false;break;}
+            DmzProofWitnesses.TypedRoute exact;
+            try {exact=DmzProofWitnesses.TypedRoute.from(witness);}catch(IllegalArgumentException unsupported){covered=false;break;}
             int matches=0;
             for(DmzProofWitnesses.Witness nativeProof:observed.witnesses) {
                 if((remaining-=exact.workCost)<0)return refused(target,capture,boundary,sources,state,true);
