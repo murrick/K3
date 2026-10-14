@@ -89,14 +89,14 @@ public final class ContextProductionRoundsReference {
         for (Bucket bucket : state) { Bucket clone = new Bucket(bucket.clause); clone.proofs.addAll(bucket.proofs); result.add(clone); }
         return result;
     }
-    private static boolean derive(Clause conclusion, int slot, Set<Source> sources, int depth,
+    private static boolean derive(Clause conclusion, int steps, int slot, Set<Source> sources, int depth,
                                   List<List<Proof>> premises, List<Bucket> pool, Limits limits, Budget budget) {
         budget.take();
-        if (slot == premises.size()) return add(pool, conclusion, new Proof(sources, depth + 1), limits, budget);
+        if (slot == premises.size()) return add(pool, conclusion, new Proof(sources, depth + steps), limits, budget);
         boolean changed = false;
         for (Proof proof : premises.get(slot)) {
             Set<Source> joined = new LinkedHashSet<>(sources); joined.addAll(proof.sources);
-            changed |= derive(conclusion, slot + 1, joined, Math.max(depth, proof.depth), premises, pool, limits, budget);
+            changed |= derive(conclusion, steps, slot + 1, joined, Math.max(depth, proof.depth), premises, pool, limits, budget);
         }
         return changed;
     }
@@ -106,7 +106,7 @@ public final class ContextProductionRoundsReference {
             add(pool, clause, new Proof(Collections.singleton(input.source), 0), limits, budget);
         List<Residual> events = new ArrayList<>(snapshot.residuals);
         for (Application app : snapshot.applications)
-            events.add(new Residual(new Clause(Collections.singletonList(app.conclusion)), app.premises, app.producerSupports));
+            events.add(new Residual(new Clause(Collections.singletonList(app.conclusion)), app.premises, app.producerSupports, app.steps));
         boolean changed;
         do {
             changed = false;
@@ -119,7 +119,7 @@ public final class ContextProductionRoundsReference {
                 }
                 if (premises == null) continue;
                 for (Support producer : event.producerSupports)
-                    changed |= derive(event.conclusion, 0, new LinkedHashSet<>(producer.sources), producer.depth,
+                    changed |= derive(event.conclusion, event.steps, 0, new LinkedHashSet<>(producer.sources), producer.depth,
                             premises, pool, limits, budget);
             }
         } while (changed);

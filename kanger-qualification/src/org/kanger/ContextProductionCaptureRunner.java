@@ -118,7 +118,7 @@ public final class ContextProductionCaptureRunner {
         }
         Mind work = memory();
         try (ContextProductionCapture capture = ContextProductionCapture.begin(work, 10000)) {
-            capture.replay(work, source(X, 2), "!@x known(1) && abstract(x);");
+            capture.replay(work, source(X, 2), "!$x known(1) && abstract(x);");
             Snapshot incomplete = capture.snapshot();
             require(incomplete.inputs.get(0).clauses.size() == 1 && !incomplete.gaps.isEmpty(),
                     "a concrete branch cannot hide an unsupported abstract unit sibling: clauses="
@@ -236,7 +236,7 @@ public final class ContextProductionCaptureRunner {
     private static void unsupportedInputsAreVisible() throws Exception {
         Mind work = memory();
         try (ContextProductionCapture capture = ContextProductionCapture.begin(work, 10000)) {
-            capture.replay(work, source(X, 0), "!@x p(x);");
+            capture.replay(work, source(X, 0), "!$x p(x);");
             require(!capture.snapshot().gaps.isEmpty(), "abstract unit input cannot masquerade as complete ground capture");
         }
         Mind witness = memory();

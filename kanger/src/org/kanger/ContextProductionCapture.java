@@ -239,7 +239,12 @@ public final class ContextProductionCapture implements AutoCloseable {
         public final Clause conclusion;
         public final List<Fact> premises;
         public final List<Support> producerSupports;
+        public final int steps;
         Residual(Clause conclusion, List<Fact> premises, List<Support> supports) {
+            this(conclusion, premises, supports, 1);
+        }
+        Residual(Clause conclusion, List<Fact> premises, List<Support> supports, int steps) {
+            this.steps = steps;
             this.conclusion = conclusion; this.premises = Collections.unmodifiableList(new ArrayList<>(premises));
             producerSupports = Collections.unmodifiableList(new ArrayList<>(supports));
         }
@@ -258,7 +263,7 @@ public final class ContextProductionCapture implements AutoCloseable {
             fact = rule.isStored() && !rule.isQuery() ? Fact.of(rule.getDomain(), mind, false) : null;
             List<Clause> captured = new ArrayList<>();
             for (List<Domain> branch : rule.getTree()) {
-                Clause clause = Clause.of(branch, mind, source == null);
+                Clause clause = Clause.of(branch, mind, source == null || branch.size() == 1);
                 if (clause != null) captured.add(clause);
             }
             clauses = Collections.unmodifiableList(captured);
@@ -275,7 +280,9 @@ public final class ContextProductionCapture implements AutoCloseable {
         public final List<Support> producerSupports;
         public final long nativeRule;
         public final String origin;
-        private Application(Fact conclusion, List<Fact> premises, List<Support> supports, Rule rule) throws Exception {
+        public final int steps;
+        private Application(Fact conclusion, List<Fact> premises, List<Support> supports, Rule rule, int steps) throws Exception {
+            this.steps = steps;
             this.conclusion = conclusion;
             this.premises = Collections.unmodifiableList(new ArrayList<>(premises));
             producerSupports = Collections.unmodifiableList(new ArrayList<>(supports));
@@ -396,7 +403,7 @@ public final class ContextProductionCapture implements AutoCloseable {
         if (capture.inputClause != null && !capture.inputClause.equivalent(input.clause))
             capture.gaps.add("derived-clause-transport-mismatch:" + rule.getId());
         for (List<Domain> branch : rule.getTree()) if (branch.size() == 1
-                && Fact.of(branch.get(0), mind, false) == null)
+                && Clause.of(branch, mind, true) == null)
             capture.gaps.add("nonordinary-primary-fact:" + rule.getId());
         for (List<Domain> branch : rule.getTree()) for (Domain literal : branch) {
             if (literal.isSystem(mind) || literal.isCalculated(mind))
@@ -430,9 +437,14 @@ public final class ContextProductionCapture implements AutoCloseable {
                 || (mind.getQueryPass() != QueryPass.CHECK && mind.getQueryPass() != QueryPass.ACCEPT)) return;
         capture.check();
         Rule rule = (Rule) conclusion.getRule();
-        if (rule == null || rule.isQuery() || branch.size() < 2) return;
+        if (rule == null || rule.isQuery()) return;
+        boolean instance = branch.size() == 1;
+        if (instance && (!rule.isSubstitutable() || rule.isGenerated())) return;
         Fact result = Fact.of(conclusion, mind, false);
-        if (result == null) { capture.gaps.add("nonordinary-conclusion:" + rule.getId()); return; }
+        if (result == null) {
+            if (!instance) capture.gaps.add("nonordinary-conclusion:" + rule.getId());
+            return;
+        }
         List<Fact> premises = new ArrayList<>();
         for (Domain literal : branch) {
             if (literal == conclusion) continue;
@@ -447,7 +459,20 @@ public final class ContextProductionCapture implements AutoCloseable {
         List<Support> producers = capture.sources(mind, rule.getId());
         if (producers.isEmpty()) capture.gaps.add("unlabelled-production:" + rule.getId());
         capture.take();
-        capture.applications.add(new Application(result, premises, producers, rule));
+        capture.applications.add(new Application(result, premises, producers, rule, instance ? 0 : 1));
+    }
+    /** Observe unsupported schema interaction without treating a waiter assumption as a fact. */
+    static void waiterComposition(Mind mind, Domain waiter, Domain literal) throws Exception {
+        ContextProductionCapture capture = ACTIVE.get();
+        if (capture == null || !capture.visible(mind)
+                || (mind.getQueryPass() != QueryPass.CHECK && mind.getQueryPass() != QueryPass.ACCEPT)) return;
+        capture.check();
+        Rule rule = (Rule) literal.getRule();
+        if (rule == null || rule.isQuery() || waiter.getPredicateId() != literal.getPredicateId()
+                || waiter.isAntc() == literal.isAntc()) return;
+        if (!waiter.getArguments().getTVariables(mind).isEmpty()
+                && !literal.getArguments().getTVariables(mind).isEmpty())
+            capture.gaps.add("unbound-waiter-composition:" + rule.getId());
     }
     static void incompleteResidual(Mind mind, List<Domain> branch) throws Exception {
         ContextProductionCapture capture = ACTIVE.get();
@@ -475,8 +500,8 @@ public final class ContextProductionCapture implements AutoCloseable {
         }
         if (remaining.isEmpty()) return;
         Clause conclusion = Clause.of(remaining, mind, true);
-        // Quantified units and C-variable witnesses need a separate transport contract.
-        if (conclusion == null || (!conclusion.variables.isEmpty() && conclusion.literals.size() == 1)) {
+        // C-variable witnesses cannot be replaced by universal slots.
+        if (conclusion == null) {
             capture.gaps.add("compound-residual:" + rule.getId()); return;
         }
         List<Support> supports = capture.sources(mind, rule.getId());

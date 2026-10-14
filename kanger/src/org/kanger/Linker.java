@@ -1115,6 +1115,7 @@ public class Linker {
             for (Domain d : tree) {
 
                 for (Domain master : mind.getDomains().getWaiters()) {
+                    ContextProductionCapture.waiterComposition(mind, master, d);
                     if (master.getPredicateId() == d.getPredicateId() && master.isAntc() != d.isAntc() && d.isComplete()) {
                         boolean success = true;
                         for (int i = 0; i < d.getRange(); ++i) {

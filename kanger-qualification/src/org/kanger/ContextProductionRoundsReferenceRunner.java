@@ -19,7 +19,7 @@ public final class ContextProductionRoundsReferenceRunner {
     public static void main(String[] args) {
         try {
             System.setProperty("user.home", java.nio.file.Files.createTempDirectory("production-round-reference-").toString());
-            maskedAndUnmasked(); pureForeign(); alternateSupports(); delayedChainPermutations(); cyclesAndLimits(); compoundResiduals(); multiClauseSources(); quantifiedResiduals();
+            maskedAndUnmasked(); pureForeign(); alternateSupports(); delayedChainPermutations(); cyclesAndLimits(); compoundResiduals(); multiClauseSources(); quantifiedResiduals(); universalUnits();
             System.out.println("CONTEXT_PRODUCTION_ROUNDS_REFERENCE_PASS checks=" + checks);
             System.exit(0);
         } catch (Throwable failure) { failure.printStackTrace(); System.exit(1); }
@@ -158,7 +158,7 @@ public final class ContextProductionRoundsReferenceRunner {
             require(conflict.status == Status.COLLISION && conflict.rounds == 3,
                     "compound three-source conflict is refused in all six orders");
         }
-        result = ContextProductionRoundsReference.inspect(source(X, true, "!@x p(x);"),
+        result = ContextProductionRoundsReference.inspect(source(X, true, "!$x p(x);"),
                 Collections.singletonList(source(UUID.randomUUID(), false, "!@x p(x) -> q(x);")), NORMAL);
         require(result.status == Status.INCOMPLETE && result.reason.contains("nonordinary-primary-fact"),
                 "abstract source input is an explicit coverage stop");
@@ -206,7 +206,7 @@ public final class ContextProductionRoundsReferenceRunner {
         require(foreign.status == Status.SATURATED && product(foreign, "p") == null && product(foreign, "q") == null,
                 "multi-clause sibling disagreement stays external");
         Result mixedUnsupported = ContextProductionRoundsReference.inspect(
-                source(X, true, "!@x known(1) && abstract(x);"), Collections.singletonList(a), NORMAL);
+                source(X, true, "!$x known(1) && abstract(x);"), Collections.singletonList(a), NORMAL);
         require(mixedUnsupported.status == Status.INCOMPLETE && mixedUnsupported.reason.contains("nonordinary-primary-fact"),
                 "a supported source branch cannot hide an unsupported abstract unit");
         List<Declaration> c = source(UUID.randomUUID(), false, "!~end(John) && other(3);");
@@ -289,7 +289,7 @@ public final class ContextProductionRoundsReferenceRunner {
                 "pure foreign quantified residuals do not cross the outer barrier");
         Result unsupportedUnit = ContextProductionRoundsReference.inspect(
                 source(X,true,"!@x @y left(x) -> p(x,y);"), Collections.singletonList(a),NORMAL);
-        require(unsupportedUnit.status == Status.INCOMPLETE, "quantified unit residual remains an explicit coverage stop");
+        require(unsupportedUnit.status == Status.SATURATED && product(unsupportedUnit,"p") == null, "universal unit residual stays a schema rather than inventing a ground fact");
         Result existential = ContextProductionRoundsReference.inspect(
                 source(X,true,"!@x $y left(x) && right(y) -> p(x,y);"), Collections.singletonList(a),NORMAL);
         require(existential.status == Status.INCOMPLETE, "existential witness identity is not replaced by an ordinary universal slot");
@@ -306,6 +306,40 @@ public final class ContextProductionRoundsReferenceRunner {
             require(result.status == Status.COLLISION && result.rounds == 3,
                     "all six orders refuse a conflict through a quantified residual: " + result.status + " " + result.reason);
         }
+    }
+    private static void universalUnits() throws Exception {
+        List<Declaration> x = source(X,true,"!@x p(x);");
+        List<Declaration> a = source(UUID.randomUUID(),false,"!p(1) -> q(1);");
+        Result result = ContextProductionRoundsReference.inspect(x,Collections.singletonList(a),NORMAL);
+        require(result.status == Status.SATURATED && product(result,"q") != null && proves(product(result,"q"),"?q(1);"),
+                "a native universal unit instance supports its ground consequence: " + result.status + " " + result.reason);
+        List<Declaration> negative = source(UUID.randomUUID(),false,"!~q(1);");
+        for (boolean reverse : new boolean[]{false,true}) {
+            Result conflict = ContextProductionRoundsReference.inspect(x,reverse ? Arrays.asList(negative,a) : Arrays.asList(a,negative),NORMAL);
+            require(conflict.status == Status.COLLISION && conflict.rounds == 2,
+                    "a universal unit ground consequence is qualified in both target orders");
+        }
+        List<Declaration> generic = source(UUID.randomUUID(),false,"!@y p(y) -> q(y);");
+        Result deferred = ContextProductionRoundsReference.inspect(x,Arrays.asList(generic,negative),NORMAL);
+        require(deferred.status == Status.INCOMPLETE && deferred.reason.contains("unbound-waiter-composition"),
+                "unobserved universal-to-universal composition cannot receive a saturation certificate: "
+                        + deferred.status + " " + deferred.reason);
+        User user = new User(); Mind monolithic = new Mind(user); user.setCurrentMind(monolithic);
+        require(!monolithic.compile("!@x p(x); !@y p(y) -> q(y); !~q(1);",null,false),
+                "native monolithic control proves the deferred generic-composition conflict");
+        Result foreign = ContextProductionRoundsReference.inspect(source(X,true,"!anchor(1);"),
+                Collections.singletonList(source(UUID.randomUUID(),false,"!@x p(x);", "!p(1) -> q(1);")),NORMAL);
+        require(foreign.status == Status.SATURATED && product(foreign,"q") == null,
+                "a foreign universal unit and its foreign consequence remain private");
+        Result negativeUnit = ContextProductionRoundsReference.inspect(source(X,true,"!@x ~p(x);"),
+                Collections.singletonList(source(UUID.randomUUID(),false,"!~p(1) -> q(1);")),NORMAL);
+        require(negativeUnit.status == Status.SATURATED && product(negativeUnit,"q") != null,
+                "universal unit instantiation preserves negative polarity");
+        Result residualUnit = ContextProductionRoundsReference.inspect(source(X,true,"!@x @y left(x) -> p(x,y);"),
+                Arrays.asList(source(UUID.randomUUID(),false,"!left(1);"),
+                        source(UUID.randomUUID(),false,"!p(1,2) -> q(1);"),negative),NORMAL);
+        require(residualUnit.status == Status.COLLISION,
+                "a transported universal unit residual supplies an ordinary ground instance");
     }
     private static boolean proves(Product product, String query) throws Exception {
         User user = new User(); Mind mind = new Mind(user); user.setCurrentMind(mind);
