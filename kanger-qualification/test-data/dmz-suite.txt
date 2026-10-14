@@ -62,3 +62,4 @@ org.kanger.DmzCausalConflictChoicesRunner | DMZ_CAUSAL_CONFLICT_CHOICES_PASS
 org.kanger.DmzAccumulatedCacheRestrictionsRunner | DMZ_ACCUMULATED_CACHE_RESTRICTIONS_PASS
 org.kanger.DmzSuccessiveCacheRestrictionsRunner | DMZ_SUCCESSIVE_CACHE_RESTRICTIONS_PASS
 org.kanger.DmzAccumulatedSourcePreparationRunner | DMZ_ACCUMULATED_SOURCE_PREPARATION_PASS
+org.kanger.storage.dumb2.DmzRestrictionFamilyRunner | DMZ_RESTRICTION_FAMILY_PASS

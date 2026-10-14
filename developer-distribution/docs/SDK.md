@@ -802,6 +802,35 @@ history still produces a refusal or an explicit uncovered stop; these scopes do
 not fabricate storage provenance. The Console command still creates endpoint-only
 requests; no new command syntax or full DMZ manual acceptance is claimed.
 
+For a bounded SDK traversal of every offered sibling, pass an explicit
+`OBSERVED_CAUSAL_CHAINS` request to the separate utility:
+
+```java
+DmzRestrictionFamily.Result family = DmzRestrictionFamily.explore(q, request, 64);
+```
+
+The cap is 1..10000 **fresh provider invocations**, including inspection of the
+seed. Existing per-request native phase budgets and `maximumVisits` still apply.
+The seed may contain an explicit prefix; traversal then concerns that subtree.
+Stable depth-first order explores every qualified choice, retaining different
+proof histories even when they yield the same opinion. Each invocation reacquires
+exact source pins, revalidates the complete prefix and rolls back its native child.
+
+`observations` retains every evaluated result; `leaves` contains completed native
+opinions and their exact restriction/answer proofs. `uncovered` records explicit
+provider coverage stops. `pending` contains historical parents and the first
+unexplored one-based choice of each remaining sibling suffix, with reason
+`INVOCATION_LIMIT` or `CHOICE_LIMIT`. Completed leaves remain usable historical
+observations when the family is partial. These lists are immutable.
+
+`exhausted` means there are no pending or uncovered branches in this qualified
+choice traversal. It does not certify all consistent theories, missing storage
+history, arbitrary source order, or deduplication by model equivalence. A provider
+exception propagates; the call returns no family object on such failure and never
+labels it completed or uncovered. Retry with a fresh exploration and corrected
+limits. Returned parents and proofs are historical data, not native resume tokens.
+The Console has no family command yet.
+
 The optional command feature exposes the same operation:
 
 ```text
