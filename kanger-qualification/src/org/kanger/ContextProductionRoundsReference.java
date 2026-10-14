@@ -175,10 +175,11 @@ public final class ContextProductionRoundsReference {
         }
     }
     public static Result inspect(List<Declaration> x, List<List<Declaration>> targets, Limits limits) throws Exception {
-        return inspect(x,targets,limits,false);
+        return inspect(x,targets,limits,true);
     }
-    /** Experimental: assumes @ ranges over arbitrary admissible values,
-     * including fresh parameters absent from primary knowledge. */
+    /** Explicit alias retained for parameter experiment callers. The author
+     * confirmed @ ranges over arbitrary admissible values, including fresh
+     * values absent from primary knowledge. Generic coverage is still bounded. */
     public static Result inspectWithParameters(List<Declaration> x, List<List<Declaration>> targets, Limits limits) throws Exception {
         return inspect(x,targets,limits,true);
     }

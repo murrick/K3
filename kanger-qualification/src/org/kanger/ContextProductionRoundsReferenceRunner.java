@@ -320,11 +320,11 @@ public final class ContextProductionRoundsReferenceRunner {
                     "a universal unit ground consequence is qualified in both target orders");
         }
         List<Declaration> generic = source(UUID.randomUUID(),false,"!@y p(y) -> q(y);");
-        Result deferred = ContextProductionRoundsReference.inspectWithParameters(x,Arrays.asList(generic,negative),NORMAL);
+        Result deferred = ContextProductionRoundsReference.inspect(x,Arrays.asList(generic,negative),NORMAL);
         require(deferred.status == Status.COLLISION && deferred.rounds == 2,
                 "a proved generic consequence is qualified on the next round: "
                         + deferred.status + " " + deferred.reason);
-        Result reverseGeneric = ContextProductionRoundsReference.inspectWithParameters(x,Arrays.asList(negative,generic),NORMAL);
+        Result reverseGeneric = ContextProductionRoundsReference.inspect(x,Arrays.asList(negative,generic),NORMAL);
         require(reverseGeneric.status == Status.COLLISION && reverseGeneric.rounds == 2,
                 "generic consequence collision does not depend on target order");
         Result genericOnly = ContextProductionRoundsReference.inspectWithParameters(x,Collections.singletonList(generic),NORMAL);
@@ -375,6 +375,27 @@ public final class ContextProductionRoundsReferenceRunner {
                 Collections.singletonList(source(UUID.randomUUID(),false,"!@a @b @c @d p(a,b,c,d) -> q(a,b,c,d);")),NORMAL);
         require(rankStop.status == Status.INCOMPLETE && rankStop.reason.contains("Parameter rank limit"),
                 "a parameter experiment exceeding its bounded rank cannot certify saturation");
+        Result specific = ContextProductionRoundsReference.inspectWithParameters(
+                source(X,true,"!@x r(x);","!p(1);"),
+                Arrays.asList(source(UUID.randomUUID(),false,"!@x r(x) -> s(x);","!@x p(x) -> q(x);"),
+                        source(UUID.randomUUID(),false,"!~q(2);")),NORMAL);
+        require(specific.status == Status.INCOMPLETE && product(specific,"q") != null
+                        && specific.products.stream().noneMatch(candidate -> !candidate.clause.variables.isEmpty()
+                        && candidate.clause.literals.size() == 1 && candidate.clause.literals.get(0).predicate.equals("q")),
+                "an unrelated generic proof cannot generalize a consequence supported only at p(1)");
+        Result missing = ContextProductionRoundsReference.inspectWithParameters(x,
+                Collections.singletonList(source(UUID.randomUUID(),false,"!@y p(y) && missing(y) -> q(y);")),NORMAL);
+        require(missing.products.stream().noneMatch(candidate -> candidate.clause.literals.size() == 1
+                        && candidate.clause.literals.get(0).predicate.equals("q")),
+                "a missing parameter premise remains conditional and never becomes an unconditional universal fact");
+        Result aliases = ContextProductionRoundsReference.inspectWithParameters(source(X,true,"!@x p(x);","!@y p(y);"),
+                Collections.singletonList(generic),NORMAL);
+        Product aliasTemplate = null;
+        for (Product candidate : aliases.products) if (candidate.clause.literals.size() == 1
+                && candidate.clause.literals.get(0).predicate.equals("q") && !candidate.clause.variables.isEmpty()) aliasTemplate = candidate;
+        require(aliasTemplate != null && aliasTemplate.supports.stream().filter(proof -> proof.sources.size() == 2
+                        && proof.depth == 1 && proof.usesX()).count() == 2,
+                "duplicate universal source occurrences retain separate whole alternative proofs");
         User user = new User(); Mind monolithic = new Mind(user); user.setCurrentMind(monolithic);
         require(!monolithic.compile("!@x p(x); !@y p(y) -> q(y); !~q(1);",null,false),
                 "native monolithic control proves the deferred generic-composition conflict");
