@@ -19,7 +19,7 @@ public final class ContextProductionRoundsReferenceRunner {
     public static void main(String[] args) {
         try {
             System.setProperty("user.home", java.nio.file.Files.createTempDirectory("production-round-reference-").toString());
-            maskedAndUnmasked(); pureForeign(); alternateSupports(); delayedChainPermutations(); cyclesAndLimits(); compoundResiduals();
+            maskedAndUnmasked(); pureForeign(); alternateSupports(); delayedChainPermutations(); cyclesAndLimits(); compoundResiduals(); multiClauseSources();
             System.out.println("CONTEXT_PRODUCTION_ROUNDS_REFERENCE_PASS checks=" + checks);
             System.exit(0);
         } catch (Throwable failure) { failure.printStackTrace(); System.exit(1); }
@@ -162,6 +162,62 @@ public final class ContextProductionRoundsReferenceRunner {
                 Collections.singletonList(source(UUID.randomUUID(), false, "!@x p(x) -> q(x);")), NORMAL);
         require(result.status == Status.INCOMPLETE && result.reason.contains("nonordinary-primary-fact"),
                 "abstract source input is an explicit coverage stop");
+    }
+    private static void multiClauseSources() throws Exception {
+        List<Declaration> x = source(X, true, "!seed(John) && anchor(2);");
+        List<Declaration> a = source(UUID.randomUUID(), false, "!@x seed(x) -> (mid(x) && tail(x));");
+        List<Declaration> b = source(UUID.randomUUID(), false, "!@x mid(x) && tail(x) -> end(x);");
+        for (boolean reverse : new boolean[] {false, true}) {
+            Result result = ContextProductionRoundsReference.inspect(x, reverse ? Arrays.asList(b, a) : Arrays.asList(a, b), NORMAL);
+            require(result.status == Status.SATURATED && product(result, "end") != null,
+                    "conjoined primary sources and multi-head rules saturate: " + result.status + " " + result.reason);
+            Product end = product(result, "end");
+            for (Proof proof : end.supports)
+                require(proof.sources.contains(x.get(0).source) && proof.sources.contains(a.get(0).source)
+                        && proof.sources.contains(b.get(0).source), "each compiled branch retains the original source occurrence");
+        }
+        Result mixed = ContextProductionRoundsReference.inspect(
+                source(X, true, "!(seed(1) || other(1)) && anchor(2);"),
+                Arrays.asList(source(UUID.randomUUID(), false, "!~other(1) && (seed(1) -> mid(1));"),
+                        source(UUID.randomUUID(), false, "!~mid(1);")), NORMAL);
+        require(mixed.status == Status.COLLISION && mixed.rounds == 2,
+                "multi-clause ground disjunctions and negative siblings retain their native resolution: "
+                        + mixed.status + " round=" + mixed.rounds + " reason=" + mixed.reason);
+        Result internalChain = ContextProductionRoundsReference.inspect(source(X, true, "!anchor(1);"),
+                Collections.singletonList(source(UUID.randomUUID(), false,
+                        "!seed(1) && (seed(1) -> mid(1)) && (mid(1) && anchor(1) -> p(1));")), NORMAL);
+        require(internalChain.status == Status.SATURATED && product(internalChain, "p") != null,
+                "foreign internal multi-clause chain contributes its X-dependent terminal product: "
+                        + internalChain.status + " " + internalChain.reason);
+        require(product(internalChain, "seed") == null && product(internalChain, "mid") == null,
+                "pure foreign intermediates are retained privately, never exported to X");
+        for (Proof proof : product(internalChain, "p").supports)
+            require(proof.usesX() && proof.sources.size() == 2,
+                    "terminal proof preserves the X fact and the whole foreign source occurrence");
+        Result boundedLocal = ContextProductionRoundsReference.inspect(source(X, true, "!anchor(1);"),
+                Collections.singletonList(source(UUID.randomUUID(), false,
+                        "!seed(1) && (seed(1) -> mid(1)) && (mid(1) && anchor(1) -> p(1));")),
+                new Limits(16, internalChain.observations.get(0).eventCount + 1, 100000, 64));
+        require(boundedLocal.status == Status.INCOMPLETE && boundedLocal.rounds == 1,
+                "observation budget spans private participant rebuilds rather than resetting at each replay");
+        Result foreign = ContextProductionRoundsReference.inspect(source(X, true, "!anchor(1);"), Arrays.asList(
+                source(UUID.randomUUID(), false, "!p(1) && q(2);"),
+                source(UUID.randomUUID(), false, "!~p(1) && ~q(2);")), NORMAL);
+        require(foreign.status == Status.SATURATED && product(foreign, "p") == null && product(foreign, "q") == null,
+                "multi-clause sibling disagreement stays external");
+        Result mixedUnsupported = ContextProductionRoundsReference.inspect(
+                source(X, true, "!@x known(1) && abstract(x);"), Collections.singletonList(a), NORMAL);
+        require(mixedUnsupported.status == Status.INCOMPLETE && mixedUnsupported.reason.contains("nonordinary-primary-fact"),
+                "a supported source branch cannot hide an unsupported abstract unit");
+        List<Declaration> c = source(UUID.randomUUID(), false, "!~end(John) && other(3);");
+        List<List<Declaration>> targets = Arrays.asList(a, b, c);
+        for (int i = 0; i < 3; ++i) for (int j = 0; j < 3; ++j) {
+            if (i == j) continue;
+            Result result = ContextProductionRoundsReference.inspect(x,
+                    Arrays.asList(targets.get(i), targets.get(j), targets.get(3-i-j)), NORMAL);
+            require(result.status == Status.COLLISION && result.rounds == 3,
+                    "multi-clause source conflict is refused in all six orders");
+        }
     }
     private static Product product(Result result, String predicate) {
         for (Product product : result.products) if (product.fact != null && product.fact.predicate.equals(predicate)) return product;

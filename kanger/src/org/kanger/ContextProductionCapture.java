@@ -148,17 +148,23 @@ public final class ContextProductionCapture implements AutoCloseable {
         public final String origin;
         public final Fact fact;
         public final Clause clause;
+        public final List<Clause> clauses;
         public final boolean duplicate;
         private Input(Source source, Rule rule, Mind mind, boolean duplicate) throws Exception {
             this.source = source; nativeRule = rule.getId(); origin = rule.getOrigin();
             fact = rule.isStored() && !rule.isQuery() ? Fact.of(rule.getDomain(), mind, false) : null;
-            List<Fact> literals = new ArrayList<>();
-            if (rule.getTree().size() == 1) for (Domain literal : rule.getTree().get(0)) {
-                Fact value = Fact.of(literal, mind, false);
-                if (value == null) { literals.clear(); break; }
-                literals.add(value);
+            List<Clause> captured = new ArrayList<>();
+            for (List<Domain> branch : rule.getTree()) {
+                List<Fact> literals = new ArrayList<>();
+                for (Domain literal : branch) {
+                    Fact value = Fact.of(literal, mind, false);
+                    if (value == null) { literals.clear(); break; }
+                    literals.add(value);
+                }
+                if (!literals.isEmpty()) captured.add(new Clause(literals));
             }
-            clause = literals.isEmpty() ? null : new Clause(literals);
+            clauses = Collections.unmodifiableList(captured);
+            clause = rule.getTree().size() == 1 && captured.size() == 1 ? captured.get(0) : null;
             this.duplicate = duplicate;
         }
     }
@@ -187,7 +193,9 @@ public final class ContextProductionCapture implements AutoCloseable {
         public final List<Application> applications;
         public final List<Residual> residuals;
         public final List<String> gaps;
+        public final int eventCount;
         private Snapshot(ContextProductionCapture capture) {
+            eventCount = capture.inputs.size() + capture.applications.size() + capture.residuals.size() + capture.stored.size();
             inputs = Collections.unmodifiableList(new ArrayList<>(capture.inputs));
             applications = Collections.unmodifiableList(new ArrayList<>(capture.applications));
             residuals = Collections.unmodifiableList(new ArrayList<>(capture.residuals));
@@ -289,8 +297,8 @@ public final class ContextProductionCapture implements AutoCloseable {
         capture.inputs.add(input);
         if (capture.inputClause != null && !capture.inputClause.equivalent(input.clause))
             capture.gaps.add("derived-clause-transport-mismatch:" + rule.getId());
-        if (rule.getTree().size() != 1) capture.gaps.add("multi-clause-input:" + rule.getId());
-        else if (rule.getTree().get(0).size() == 1 && input.fact == null)
+        for (List<Domain> branch : rule.getTree()) if (branch.size() == 1
+                && Fact.of(branch.get(0), mind, false) == null)
             capture.gaps.add("nonordinary-primary-fact:" + rule.getId());
         for (List<Domain> branch : rule.getTree()) for (Domain literal : branch) {
             if (literal.isSystem(mind) || literal.isCalculated(mind))

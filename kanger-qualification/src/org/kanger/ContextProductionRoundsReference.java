@@ -102,8 +102,8 @@ public final class ContextProductionRoundsReference {
     }
     private static List<Bucket> closure(Snapshot snapshot, List<Bucket> state, Limits limits, Budget budget) {
         List<Bucket> pool = copy(state);
-        for (Input input : snapshot.inputs) if (input.clause != null && input.source != null)
-            add(pool, input.clause, new Proof(Collections.singleton(input.source), 0), limits, budget);
+        for (Input input : snapshot.inputs) if (input.source != null) for (Clause clause : input.clauses)
+            add(pool, clause, new Proof(Collections.singleton(input.source), 0), limits, budget);
         List<Residual> events = new ArrayList<>(snapshot.residuals);
         for (Application app : snapshot.applications)
             events.add(new Residual(new Clause(Collections.singletonList(app.conclusion)), app.premises, app.producerSupports));
@@ -153,33 +153,51 @@ public final class ContextProductionRoundsReference {
             List<String> unresolvedResiduals = new ArrayList<>();
             try {
                 for (List<Declaration> target : frozen) {
-                    // Every participant receives STATE, never another participant's NEXT.
-                    Mind work = memory(limits);
-                    Snapshot snapshot;
-                    try (ContextProductionCapture capture = ContextProductionCapture.begin(work, limits.events);
-                         TechnicalMindTransaction transaction = TechnicalMindTransaction.begin(work)) {
-                        Mind participant = transaction.mind();
-                        participant.setQueryPass(org.kanger.enums.QueryPass.ACCEPT);
-                        for (Declaration declaration : local) capture.replay(participant, declaration.source, declaration.statement);
-                        for (Bucket bucket : state) {
-                            List<Support> supports = new ArrayList<>();
-                            for (Proof proof : bucket.proofs) supports.add(new Support(proof.sources, proof.depth));
-                            capture.replayDerived(participant, bucket.clause, supports);
+                    // Every participant starts from STATE, never another participant's NEXT.
+                    List<Bucket> participantState = copy(state);
+                    int remainingEvents = limits.events;
+                    while (true) {
+                        budget.take();
+                        if (remainingEvents < 1) throw new IllegalStateException("Participant observation budget; qualification incomplete");
+                        Mind work = memory(limits);
+                        Snapshot snapshot;
+                        try (ContextProductionCapture capture = ContextProductionCapture.begin(work, remainingEvents);
+                             TechnicalMindTransaction transaction = TechnicalMindTransaction.begin(work)) {
+                            Mind participant = transaction.mind();
+                            participant.setQueryPass(org.kanger.enums.QueryPass.ACCEPT);
+                            for (Declaration declaration : local) capture.replay(participant, declaration.source, declaration.statement);
+                            for (Bucket bucket : participantState) {
+                                List<Support> supports = new ArrayList<>();
+                                for (Proof proof : bucket.proofs) supports.add(new Support(proof.sources, proof.depth));
+                                capture.replayDerived(participant, bucket.clause, supports);
+                            }
+                            for (Declaration declaration : target) capture.replay(participant, declaration.source, declaration.statement);
+                            participant.link(null, false);
+                            Analyzer analyzer = new Analyzer(participant);
+                            boolean collision = analyzer.analyze(null, false);
+                            ContextQualification qualification = new ContextQualification(!collision, analyzer.getCollisionWitnesses());
+                            snapshot = capture.snapshot(); observations.add(snapshot);
+                            if (!qualification.isValid())
+                                return new Result(Status.COLLISION, round, "Native collision", state, observations, qualification);
                         }
-                        for (Declaration declaration : target) capture.replay(participant, declaration.source, declaration.statement);
-                        participant.link(null, false);
-                        Analyzer analyzer = new Analyzer(participant);
-                        boolean collision = analyzer.analyze(null, false);
-                        ContextQualification qualification = new ContextQualification(!collision, analyzer.getCollisionWitnesses());
-                        snapshot = capture.snapshot(); observations.add(snapshot);
-                        if (!qualification.isValid()) return new Result(Status.COLLISION, round, "Native collision", state, observations, qualification);
+                        remainingEvents -= snapshot.eventCount;
+                        for (String gap : snapshot.gaps) if (!gap.startsWith("compound-residual:"))
+                            return new Result(Status.INCOMPLETE, round, gap, state, observations, null);
+                        List<Bucket> settled = closure(snapshot, participantState, limits, budget);
+                        boolean localChanged = false;
+                        List<Bucket> localNext = copy(participantState);
+                        for (Bucket bucket : settled) for (Proof proof : bucket.proofs)
+                            localChanged |= add(localNext, bucket.clause, proof, limits, budget);
+                        participantState = localNext;
+                        // Fresh native replay makes proved local results usable as
+                        // inputs; an in-place replay can be suppressed by an existing
+                        // generated canonical twin. Foreign proofs never enter NEXT.
+                        if (localChanged) continue;
+                        unresolvedResiduals.addAll(snapshot.gaps);
+                        for (Bucket bucket : participantState) for (Proof proof : bucket.proofs)
+                            if (proof.usesX()) changed |= add(next, bucket.clause, proof, limits, budget);
+                        break;
                     }
-                    for (String gap : snapshot.gaps) {
-                        if (gap.startsWith("compound-residual:")) unresolvedResiduals.add(gap);
-                        else return new Result(Status.INCOMPLETE, round, gap, state, observations, null);
-                    }
-                    for (Bucket bucket : closure(snapshot, state, limits, budget)) for (Proof proof : bucket.proofs)
-                        if (proof.usesX()) changed |= add(next, bucket.clause, proof, limits, budget);
                 }
             } catch (IllegalStateException | org.kanger.exception.RuntimeErrorException incomplete) {
                 return new Result(Status.INCOMPLETE, round, incomplete.toString(), state, observations, null);

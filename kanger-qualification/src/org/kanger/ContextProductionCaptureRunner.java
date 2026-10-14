@@ -17,6 +17,7 @@ public final class ContextProductionCaptureRunner {
             maskedConclusionAndAlternatives();
             negativeProduct();
             sourceAliases();
+            multipleCompiledBranches();
             typedDetachedTransport();
             nullaryAndRepeatedArguments();
             queryArtifactsAreExcluded();
@@ -86,6 +87,42 @@ public final class ContextProductionCaptureRunner {
                 new Source[] {source(X, 0), source(A, 0), source(B, 0)});
         Application result = application(snapshot, "p", true, X, 0);
         require(result != null && result.producers.size() == 2, "same rule has local and foreign source alternatives");
+    }
+    private static void multipleCompiledBranches() throws Exception {
+        Snapshot snapshot = replay(new String[] {"!(p(1) || q(1)) && (r(2) || s(2));", "!~q(1);", "!~s(2);"},
+                new Source[] {source(X, 0), source(A, 0), source(B, 0)});
+        Input primary = snapshot.inputs.get(0);
+        require(primary.clauses.size() == 2 && primary.clause == null,
+                "all ground clauses of one compiled source are detached separately");
+        for (Clause clause : primary.clauses)
+            require(clause.literals.size() == 2, "compiled disjunctions remain intact");
+        Application p = application(snapshot, "p", true, X, 0), r = application(snapshot, "r", true, X, 0);
+        require(p != null && r != null && p.nativeRule == r.nativeRule,
+                "native applications from different branches retain the same original source occurrence");
+        require(hasPremise(p, "q", false) && hasPremise(r, "s", false),
+                "branches retain their own complete donor groups");
+        boolean immutable = false;
+        try { primary.clauses.clear(); } catch (UnsupportedOperationException expected) { immutable = true; }
+        require(immutable, "multi-clause input collection is detached and immutable");
+        snapshot = replay(new String[] {"!@x seed(x) -> (mid(x) && tail(x));",
+                "!@x seed(x) -> (mid(x) && tail(x));", "!seed(John);"},
+                new Source[] {source(X, 1), source(A, 1), source(B, 1)});
+        for (String predicate : new String[] {"mid", "tail"}) {
+            Application result = application(snapshot, predicate, true, X, 1);
+            require(result != null && result.producerSupports.size() == 2,
+                    "every multi-head branch retains both semantic-duplicate source alternatives");
+            for (Support support : result.producerSupports)
+                require(support.sources.size() == 1 && support.depth == 0,
+                        "primary aliases remain alternative singleton supports");
+        }
+        Mind work = memory();
+        try (ContextProductionCapture capture = ContextProductionCapture.begin(work, 10000)) {
+            capture.replay(work, source(X, 2), "!@x known(1) && abstract(x);");
+            Snapshot incomplete = capture.snapshot();
+            require(incomplete.inputs.get(0).clauses.size() == 1 && !incomplete.gaps.isEmpty(),
+                    "a concrete branch cannot hide an unsupported abstract unit sibling: clauses="
+                            + incomplete.inputs.get(0).clauses.size() + " gaps=" + incomplete.gaps);
+        }
     }
     private static void typedDetachedTransport() throws Exception {
         Snapshot snapshot = replay(new String[] {"!@x @y pair(x,y) -> reverse(y,x);", "!pair(John,2);"},
