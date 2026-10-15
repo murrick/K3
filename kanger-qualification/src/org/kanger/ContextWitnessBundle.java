@@ -134,4 +134,54 @@ final class ContextWitnessBundle {
         }
         return target;
     }
+    static final class PrimaryEvidence {
+        final Bundle bundle;
+        final long nativeRule;
+        final List<Long> witnessTerms;
+        final Support support;
+        private PrimaryEvidence(Bundle bundle,Rule rule,Mind target,Runnable work) throws Exception {
+            this.bundle = bundle; nativeRule = rule.getId();
+            Set<Long> ids = new LinkedHashSet<>();
+            for (List<Domain> branch : rule.getTree()) for (Domain domain : branch) for (IArgument argument : domain.getArguments()) {
+                work.run(); ITerm value = argument.getValue(target);
+                if (value != null && value.isCVariable()) ids.add(value.getId());
+            }
+            witnessTerms = Collections.unmodifiableList(new ArrayList<>(ids));
+            support = new Support(Collections.singleton(bundle.source),0);
+        }
+    }
+    static final class Session implements AutoCloseable {
+        final UUID replay = UUID.randomUUID();
+        final Mind mind;
+        final ContextProductionCapture capture;
+        final List<PrimaryEvidence> primary;
+        private Session(Mind mind,ContextProductionCapture capture,List<PrimaryEvidence> primary) {
+            this.mind = mind; this.capture = capture;
+            this.primary = Collections.unmodifiableList(new ArrayList<>(primary));
+        }
+        public void close() { capture.close(); }
+    }
+    /** Labelled primary replay only; all nonordinary capture gaps remain in force. */
+    static Session restoreObserved(List<Bundle> bundles,int maximumWork,int maximumEvents) throws Exception {
+        Runnable work = budget(maximumWork); Map<Source,Bundle> sources = new HashMap<>();
+        for (Bundle bundle : bundles) {
+            work.run(); Bundle old = sources.put(bundle.source,bundle);
+            if (old != null && !equivalent(old,bundle,work)) throw new IllegalArgumentException("Conflicting source occurrence");
+        }
+        Mind target = memory(); ContextProductionCapture capture = ContextProductionCapture.begin(target,maximumEvents);
+        try {
+            capture.observeWitnessProjections(); List<PrimaryEvidence> primary = new ArrayList<>();
+            for (Bundle bundle : bundles) {
+                work.run(); capture.replayProjected(target,bundle.source,bundle.assertion(),bundle.project(target,work));
+                List<Input> inputs = capture.snapshot().inputs;
+                Input input = inputs.get(inputs.size()-1);
+                Rule rule = (Rule)target.getRules().get(input.nativeRule);
+                if (!bundle.source.equals(input.source) || !equivalent(bundle,extract(bundle.source,rule,target,work),work))
+                    throw new IllegalStateException("Observed witness bundle roundtrip mismatch");
+                primary.add(new PrimaryEvidence(bundle,rule,target,work));
+            }
+            return new Session(target,capture,primary);
+        } catch (Exception | Error failure) { capture.close(); throw failure; }
+    }
+
 }

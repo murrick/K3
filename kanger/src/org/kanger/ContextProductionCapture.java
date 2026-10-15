@@ -380,6 +380,7 @@ public final class ContextProductionCapture implements AutoCloseable {
         public final List<Input> inputs;
         public final List<Application> applications;
         public final List<Residual> residuals;
+        public final List<ContextWitnessProjection> witnessProjections;
         public final List<String> gaps;
         public final List<SemanticTermSnapshot> primaryValues;
         public final int eventCount;
@@ -404,6 +405,7 @@ public final class ContextProductionCapture implements AutoCloseable {
             inputs = Collections.unmodifiableList(new ArrayList<>(capture.inputs));
             applications = Collections.unmodifiableList(new ArrayList<>(capture.applications));
             residuals = Collections.unmodifiableList(new ArrayList<>(capture.residuals));
+            witnessProjections = Collections.unmodifiableList(new ArrayList<>(capture.witnessProjections));
             primaryValues = Collections.unmodifiableList(new ArrayList<>(capture.primaryValues));
             Set<String> gaps = new LinkedHashSet<>(capture.gaps);
             for (Materialization stored : capture.stored) {
@@ -438,6 +440,8 @@ public final class ContextProductionCapture implements AutoCloseable {
     private int rotationVisits;
     private long rotationComparisons;
     private boolean residualSubsets;
+    private boolean observeWitnesses;
+    private final List<ContextWitnessProjection> witnessProjections = new ArrayList<>();
     private final Map<Mind, Map<Long, List<Support>>> labels = new IdentityHashMap<>();
     private Mind inputTarget;
     private Source inputSource;
@@ -453,6 +457,8 @@ public final class ContextProductionCapture implements AutoCloseable {
     public static ContextProductionCapture begin(Mind boundary, int maximumEvents) {
         return new ContextProductionCapture(boundary, maximumEvents);
     }
+    /** Opt-in match-time metadata; never discharges ordinary capture gaps. */
+    public void observeWitnessProjections() { check(); observeWitnesses = true; }
     /** Opt-in observation of partial reductions at actual native database visits. */
     public void observeResidualSubsets() {
         check(); residualSubsets = true;
@@ -473,7 +479,7 @@ public final class ContextProductionCapture implements AutoCloseable {
         return false;
     }
     private int eventCount() {
-        return inputs.size() + applications.size() + residuals.size() + stored.size() + rotationPlans.size() + rotationVisits;
+        return inputs.size() + applications.size() + residuals.size() + witnessProjections.size() + stored.size() + rotationPlans.size() + rotationVisits;
     }
     private void take() {
         if (eventCount() >= maximumEvents) {
@@ -558,6 +564,9 @@ public final class ContextProductionCapture implements AutoCloseable {
         if (!observations.contains(tuple)) { capture.take(); observations.add(tuple); ++capture.rotationVisits; }
     }
     public void replay(Mind target, Source source, String statement) throws Exception {
+        replayProjected(target,source,statement,new LinkedList<ITerm>());
+    }
+    void replayProjected(Mind target,Source source,String statement,Queue<ITerm> values) throws Exception {
         check();
         if (!visible(target) || source == null || statement == null || !statement.startsWith("!"))
             throw new IllegalArgumentException("Sourced primary assertion in this boundary required");
@@ -569,7 +578,9 @@ public final class ContextProductionCapture implements AutoCloseable {
         inputTarget = target; inputSource = source;
         int before = inputs.size();
         try {
-            target.compileLine(statement, false, new LinkedList<ITerm>());
+            Queue<ITerm> queue = new LinkedList<>(values);
+            target.compileLine(statement, false, queue);
+            if (!queue.isEmpty()) throw new IllegalArgumentException("Unused projected input values");
             if (inputs.size() == before) gaps.add("unbound-input");
         }
         finally { inputTarget = previousTarget; inputSource = previousSource; }
@@ -638,6 +649,10 @@ public final class ContextProductionCapture implements AutoCloseable {
         if (rule == null || rule.isQuery()) return;
         boolean instance = branch.size() == 1;
         if (instance && (!rule.isSubstitutable() || rule.isGenerated())) return;
+        if (capture.observeWitnesses) {
+            ContextWitnessProjection projection = ContextWitnessProjection.observe(mind,conclusion,branch,capture.sources(mind,rule.getId()));
+            if (projection != null) { capture.take(); capture.witnessProjections.add(projection); }
+        }
         Fact result = Fact.of(conclusion, mind, false);
         if (result == null) {
             if (!instance) capture.gaps.add("nonordinary-conclusion:" + rule.getId());
