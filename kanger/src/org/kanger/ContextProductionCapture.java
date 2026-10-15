@@ -381,6 +381,7 @@ public final class ContextProductionCapture implements AutoCloseable {
         public final List<Application> applications;
         public final List<Residual> residuals;
         public final List<ContextWitnessProjection> witnessProjections;
+        public final List<ContextWitnessProjection.Materialization> witnessMaterializations;
         public final List<String> gaps;
         public final List<SemanticTermSnapshot> primaryValues;
         public final int eventCount;
@@ -406,6 +407,7 @@ public final class ContextProductionCapture implements AutoCloseable {
             applications = Collections.unmodifiableList(new ArrayList<>(capture.applications));
             residuals = Collections.unmodifiableList(new ArrayList<>(capture.residuals));
             witnessProjections = Collections.unmodifiableList(new ArrayList<>(capture.witnessProjections));
+            witnessMaterializations = Collections.unmodifiableList(new ArrayList<>(capture.witnessMaterializations));
             primaryValues = Collections.unmodifiableList(new ArrayList<>(capture.primaryValues));
             Set<String> gaps = new LinkedHashSet<>(capture.gaps);
             for (Materialization stored : capture.stored) {
@@ -442,6 +444,7 @@ public final class ContextProductionCapture implements AutoCloseable {
     private boolean residualSubsets;
     private boolean observeWitnesses;
     private final List<ContextWitnessProjection> witnessProjections = new ArrayList<>();
+    private final List<ContextWitnessProjection.Materialization> witnessMaterializations = new ArrayList<>();
     private final Map<Mind, Map<Long, List<Support>>> labels = new IdentityHashMap<>();
     private Mind inputTarget;
     private Source inputSource;
@@ -479,7 +482,7 @@ public final class ContextProductionCapture implements AutoCloseable {
         return false;
     }
     private int eventCount() {
-        return inputs.size() + applications.size() + residuals.size() + witnessProjections.size() + stored.size() + rotationPlans.size() + rotationVisits;
+        return inputs.size() + applications.size() + residuals.size() + witnessProjections.size() + witnessMaterializations.size() + stored.size() + rotationPlans.size() + rotationVisits;
     }
     private void take() {
         if (eventCount() >= maximumEvents) {
@@ -762,7 +765,13 @@ public final class ContextProductionCapture implements AutoCloseable {
         ContextProductionCapture capture = ACTIVE.get();
         if (capture == null || !capture.visible(mind)
                 || (mind.getQueryPass() != QueryPass.CHECK && mind.getQueryPass() != QueryPass.ACCEPT)) return;
-        capture.check(); capture.take();
+        capture.check();
+        if (capture.observeWitnesses) {
+            ContextWitnessProjection.Materialization materialization = ContextWitnessProjection.materialized(
+                    mind,producer,(Rule)result,capture.sources(mind,producer.getRuleId()));
+            if (materialization != null) { capture.take(); capture.witnessMaterializations.add(materialization); }
+        }
+        capture.take();
         Fact fact = Fact.of(((Rule) result).getDomain(), mind, false);
         if (fact == null) capture.gaps.add("nonordinary-materialization:" + producer.getRuleId());
         else capture.stored.add(new Materialization(producer.getRuleId(), fact));

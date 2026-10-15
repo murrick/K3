@@ -75,4 +75,25 @@ public final class ContextWitnessProjection {
         if (supports.isEmpty()) throw new IllegalStateException("Unlabelled witness projection producer");
         return new ContextWitnessProjection(conclusion.getRuleId(),result,premises,supports);
     }
+    /** One actual createStored result; never a global witness-equality assertion. */
+    public static final class Materialization {
+        public final long producerRule, storedRule;
+        public final Literal matched, stored;
+        public final List<Support> producerSupports;
+        private Materialization(Mind mind,Domain producer,Rule result,List<Support> supports) throws Exception {
+            producerRule = producer.getRuleId(); storedRule = result.getId();
+            matched = new Literal(producer,mind,false); stored = new Literal(result.getDomain(),mind,false);
+            producerSupports = Collections.unmodifiableList(new ArrayList<>(supports));
+        }
+    }
+    static Materialization materialized(Mind mind,Domain producer,Rule result,List<Support> supports) throws Exception {
+        boolean witness = false;
+        for (Domain domain : Arrays.asList(producer,result.getDomain())) for (IArgument argument : domain.getArguments()) {
+            ITerm value = argument.getValue(mind); witness |= value != null && value.isCVariable();
+        }
+        if (!witness) return null;
+        if (supports.isEmpty()) throw new IllegalStateException("Unlabelled witness materialization producer");
+        return new Materialization(mind,producer,result,supports);
+    }
+
 }
