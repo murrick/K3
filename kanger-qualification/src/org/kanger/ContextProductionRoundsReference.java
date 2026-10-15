@@ -10,9 +10,10 @@ import org.kanger.units.Rule;
 import org.kanger.units.TVariable;
 
 /**
- * Qualification-only reference for the observed ordinary-ground production
- * surface. It is not connected to publication gates. Unsupported residuals
- * and resource stops return INCOMPLETE, never SATURATED.
+ * Qualification-only reference for the observed ordinary scalar production
+ * surface, with explicitly scoped Horn coverage. It is not connected to
+ * publication gates. Unsupported residuals and resource stops return
+ * INCOMPLETE, never SATURATED.
  */
 public final class ContextProductionRoundsReference {
     public static final class Declaration {
@@ -30,7 +31,7 @@ public final class ContextProductionRoundsReference {
         }
     }
     public enum Status { SATURATED, COLLISION, INCOMPLETE }
-    public enum Coverage { NONE, MONADIC_HORN }
+    public enum Coverage { NONE, MONADIC_HORN, SINGLE_VARIABLE_HORN }
     public static final class Proof {
         public final Set<Source> sources;
         public final int depth;
@@ -151,13 +152,15 @@ public final class ContextProductionRoundsReference {
         mind.setFloodControlLimit(limits.depth); return mind;
     }
     /** Coverage classification only: no rule application or unification here. */
-    private static final class MonadicCoverage {
+    private static final class HornCoverage {
         boolean covered = true;
+        boolean monadicUniform = true;
         boolean quantified;
         final List<SemanticTermSnapshot> constants = new ArrayList<>();
         final List<SemanticTermSnapshot> primaryValues = new ArrayList<>();
         final Budget budget;
-        MonadicCoverage(Budget budget) { this.budget = budget; }
+        HornCoverage(Budget budget) { this.budget = budget; }
+        Coverage certificate() { return monadicUniform ? Coverage.MONADIC_HORN : Coverage.SINGLE_VARIABLE_HORN; }
         void fresh(List<SemanticTermSnapshot> parameters) {
             for (SemanticTermSnapshot value : primaryValues) for (SemanticTermSnapshot parameter : parameters) {
                 budget.take();
@@ -178,22 +181,27 @@ public final class ContextProductionRoundsReference {
             boolean fixed = false, generic = false;
             for (Atom atom : clause.literals) {
                 budget.take();
-                if (atom.arguments.size() != 1) { covered = false; return; }
+                if (atom.arguments.isEmpty()) { covered = false; return; }
+                if (atom.arguments.size() != 1) monadicUniform = false;
                 if (atom.positive) ++positive;
-                Slot argument = atom.arguments.get(0);
-                if (argument.variable >= 0) {
-                    generic = true;
-                    if (variable >= 0 && variable != argument.variable) covered = false;
-                    variable = argument.variable;
-                } else { fixed = true; constant(argument.value); }
+                for (Slot argument : atom.arguments) {
+                    budget.take();
+                    if (argument.variable >= 0) {
+                        generic = true;
+                        if (variable >= 0 && variable != argument.variable) covered = false;
+                        variable = argument.variable;
+                    } else { fixed = true; constant(argument.value); }
+                }
             }
-            // Signed units, definite Horn rules, and no mixed parameter/constant rule.
-            if ((clause.literals.size() > 1 && positive != 1) || (fixed && generic)) covered = false;
+            // Signed units and definite Horn rules with at most one variable.
+            // Fixed slots do not vary; their values join the representative basis.
+            if (clause.literals.size() > 1 && positive != 1) covered = false;
+            if (fixed && generic) monadicUniform = false;
         }
     }
 
-    private static MonadicCoverage coverage(List<Declaration> declarations, Limits limits, Budget budget) throws Exception {
-        MonadicCoverage result = new MonadicCoverage(budget);
+    private static HornCoverage coverage(List<Declaration> declarations, Limits limits, Budget budget) throws Exception {
+        HornCoverage result = new HornCoverage(budget);
         // Compile each occurrence alone: siblings' assertions never coexist in this preflight.
         for (Declaration declaration : declarations) {
             budget.take();
@@ -279,7 +287,7 @@ public final class ContextProductionRoundsReference {
         Budget budget = new Budget(limits.work);
         List<Declaration> declarations = new ArrayList<>(local);
         for (List<Declaration> target : frozen) declarations.addAll(target);
-        MonadicCoverage coverage;
+        HornCoverage coverage;
         try { coverage = coverage(declarations,limits,budget); }
         catch (IllegalStateException | org.kanger.exception.RuntimeErrorException incomplete) {
             return new Result(Status.INCOMPLETE,0,incomplete.toString(),state,observations,null);
@@ -353,9 +361,10 @@ public final class ContextProductionRoundsReference {
             state = next;
             if (!changed) return new Result(unresolvedResiduals.isEmpty() ? Status.SATURATED : Status.INCOMPLETE,
                     round, unresolvedResiduals.isEmpty() ? "No new products or source support sets"
-                            + (coverage.covered ? "; monadic-uniform representative closure" : "")
+                            + (coverage.covered ? (coverage.monadicUniform ? "; monadic-uniform representative closure"
+                                    : "; single-variable Horn representative closure") : "")
                             : unresolvedResiduals.toString(), state, observations, null,
-                    unresolvedResiduals.isEmpty() && coverage.covered ? Coverage.MONADIC_HORN : Coverage.NONE);
+                    unresolvedResiduals.isEmpty() && coverage.covered ? coverage.certificate() : Coverage.NONE);
         }
         return new Result(Status.INCOMPLETE, limits.rounds, "Round limit; qualification incomplete", state, observations, null);
     }

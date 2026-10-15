@@ -452,8 +452,9 @@ public final class ContextProductionRoundsReferenceRunner {
                 && !candidate.clause.literals.get(0).positive),"negative universal units propagate through the same complete representatives");
         Result fixedHead = ContextProductionRoundsReference.inspect(universal,
                 Collections.singletonList(source(UUID.randomUUID(),false,"!@x p(x) -> q(1);")),NORMAL);
-        require(fixedHead.status == Status.INCOMPLETE && !fixedHead.reason.contains("monadic-uniform"),
-                "a constant head cannot borrow a certificate for uniform same-variable rules");
+        require(fixedHead.status == Status.SATURATED && fixedHead.coverage == Coverage.SINGLE_VARIABLE_HORN
+                        && !fixedHead.reason.contains("monadic-uniform"),
+                "a constant head receives the wider single-variable certificate, not the monadic-uniform one");
         Result typed = ContextProductionRoundsReference.inspect(source(X,true,"!p(1);"),
                 Arrays.asList(first,source(UUID.randomUUID(),false,"!~q(John);")),NORMAL);
         require(typed.status == Status.SATURATED && typed.reason.contains("monadic-uniform")

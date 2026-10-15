@@ -25,6 +25,7 @@ def main():
     if args.mode == 'reference':
         names = [('org.kanger.ContextProductionCaptureRunner', 'CONTEXT_PRODUCTION_CAPTURE_PASS'),
                  ('org.kanger.ContextProductionRoundsReferenceRunner', 'CONTEXT_PRODUCTION_ROUNDS_REFERENCE_PASS'),
+                 ('org.kanger.ContextProductionTupleCoverageRunner', 'CONTEXT_PRODUCTION_TUPLE_COVERAGE_PASS'),
                  ('org.kanger.storage.dumb2.GroundDisjunctionQualificationRunner', 'GROUND_DISJUNCTION_QUALIFICATION_PASS'),
                  ('org.kanger.DmzTerminalSupportCaptureRunner', 'DMZ_TERMINAL_SUPPORT_CAPTURE_PASS'),
                  ('org.kanger.DmzCollisionProofCaptureRunner', 'DMZ_COLLISION_PROOF_CAPTURE_PASS'),
@@ -66,7 +67,7 @@ def main():
     head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
     passed = all(result['passed'] for result in results)
     report = dict(head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
-                  scope='Pending runtime authoring contract' if args.mode == 'contract' else 'Capture and bounded ground reference; runtime gate unchanged',
+                  scope='Pending runtime authoring contract' if args.mode == 'contract' else 'Capture and scoped scalar Horn reference; runtime gate unchanged',
                   source_dirty=bool(subprocess.check_output(
                       ['git', 'status', '--porcelain'], cwd=root, text=True).strip()))
     (run / 'report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')

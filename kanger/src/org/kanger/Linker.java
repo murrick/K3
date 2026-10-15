@@ -1224,6 +1224,11 @@ public class Linker {
                 }
             }
 
+            // Preserve proved reductions before waiter-based hypothesis preparation
+            // clears excluded/candidates. Assumed waiter literals are not premises.
+            if (!occurs && candidates.size() > 1 && !excluded.isEmpty())
+                ContextProductionCapture.compoundResidual(mind, tree);
+
             if (!occurs && !assumed.isEmpty() && tree.size() > 1) {
                 candidates.clear();
                 excluded.clear();
@@ -1253,7 +1258,6 @@ public class Linker {
             }
 
             if (!occurs && candidates.size() > 1) {
-                if (!excluded.isEmpty()) ContextProductionCapture.compoundResidual(mind, tree);
                 for (Domain d : candidates) {
                     if (!d.isStored(mind) && d.isComplete() && !d.isUsed(mind)) {
 

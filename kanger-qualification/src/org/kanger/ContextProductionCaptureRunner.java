@@ -21,6 +21,7 @@ public final class ContextProductionCaptureRunner {
             quantifiedClauseTransport();
             eigenparameterFreshness();
             declaredShapeSurvivesBinding();
+            waiterDoesNotEraseProvedResidual();
             typedDetachedTransport();
             nullaryAndRepeatedArguments();
             queryArtifactsAreExcluded();
@@ -29,6 +30,31 @@ public final class ContextProductionCaptureRunner {
             System.out.println("CONTEXT_PRODUCTION_CAPTURE_PASS checks=" + checks);
             System.exit(0);
         } catch (Throwable failure) { failure.printStackTrace(); System.exit(1); }
+    }
+    private static void waiterDoesNotEraseProvedResidual() throws Exception {
+        for (boolean premise : new boolean[]{false,true}) {
+            Mind work = memory();
+            try (ContextProductionCapture capture = ContextProductionCapture.begin(work,10000)) {
+                capture.replay(work,source(X,0),"!@x left(x) && right(x) -> p(x);");
+                if (premise) capture.replay(work,source(A,0),"!@x left(x);");
+                for (org.kanger.interfaces.IRule entry : work.getRules())
+                    for (List<org.kanger.units.Domain> branch : ((org.kanger.units.Rule)entry).getTree())
+                        for (org.kanger.units.Domain domain : branch)
+                            for (org.kanger.units.TVariable variable : domain.getArguments().getTVariables(work))
+                                work.getTValues().add(variable,work.getTerms().add(1));
+                work.setQueryPass(QueryPass.ACCEPT); work.link(null,false);
+                Snapshot snapshot = capture.snapshot();
+                boolean reduced = false;
+                for (Residual residual : snapshot.residuals) if (residual.premises.size() == 1
+                        && residual.premises.get(0).predicate.equals("left")
+                        && residual.conclusion.literals.size() == 2) {
+                    reduced = true;
+                    require(residual.producerSupports.stream().anyMatch(s -> s.sources.contains(source(X,0))),
+                            "proved residual retains its original producer");
+                }
+                require(reduced == premise,"waiter preparation cannot erase a proved reduction or invent an unproved one");
+            }
+        }
     }
     private static Mind memory() throws Exception {
         User user = new User(); Mind mind = new Mind(user); user.setCurrentMind(mind); return mind;
