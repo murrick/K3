@@ -115,25 +115,41 @@ final class ContextWitnessResultTransport {
                     add(items,new Atom(atom.predicate,atom.positive,arguments),primary.support,work);
                 }
             }
-            boolean product = false;
-            for (Route route : verified.routes) {
-                work.run(); if (route.proof.depth == 0 || !usesX(route.proof)) continue;
-                if (!route.replay.equals(session.replay) || !route.physical.root.equals(route.origin))
-                    throw new IllegalStateException("Non-primary carrier cannot be transported");
-                Origin origin = origins.get(route.origin);
-                if (origin == null) throw new IllegalStateException("Unbound transport origin");
-                List<Slot> arguments = new ArrayList<>();
-                for (Argument argument : route.physical.arguments) {
-                    work.run(); arguments.add(new Slot(argument.root == null ? null : origin,argument.value));
-                }
-                add(items,new Atom(route.physical.predicate,route.physical.positive,arguments),route.proof,work); product = true;
-            }
-            if (!product) return new Result(false,"No X-dependent witness products",null);
-            Set<Origin> rank = new HashSet<>();
-            for (Item item : items) for (Slot slot : item.atom.arguments) { work.run(); if (slot.origin != null) rank.add(slot.origin); }
-            if (rank.size() > 8) throw new IllegalStateException("Witness transport rank limit");
-            return new Result(true,"Detached X seeds and verified X-dependent products",new Packet(items));
+            return pack(items,origins,session.replay,verified.routes,work);
         } catch (IllegalStateException failure) { return new Result(false,failure.getMessage(),null); }
+    }
+    /** Re-verifies a fresh pass using its sealed imported ledger, not fabricated primary labels. */
+    static Result exportNext(ContextWitnessSeedReplay round,int maximumDepth,int maximumWork) {
+        Runnable work = budget(maximumWork);
+        ContextWitnessUnaryChainVerifier.Result verified = round.inspect(maximumDepth,maximumWork);
+        if (!verified.reconstructed) return new Result(false,verified.reason,null);
+        try {
+            Map<Root,Origin> origins = new HashMap<>();
+            for (Map.Entry<Origin,Root> entry : round.bindings.entrySet()) {
+                work.run(); if (origins.put(entry.getValue(),entry.getKey()) != null) throw new IllegalStateException("Ambiguous carried origin");
+            }
+            return pack(new ArrayList<>(round.seeds),origins,round.namespace,verified.routes,work);
+        } catch (IllegalStateException failure) { return new Result(false,failure.getMessage(),null); }
+    }
+    private static Result pack(List<Item> items,Map<Root,Origin> origins,UUID namespace,List<Route> routes,Runnable work) {
+        boolean product = false;
+        for (Route route : routes) {
+            work.run(); if (route.proof.depth == 0 || !usesX(route.proof)) continue;
+            if (!route.replay.equals(namespace) || !route.physical.root.equals(route.origin))
+                throw new IllegalStateException("Non-primary carrier cannot be transported");
+            Origin origin = origins.get(route.origin);
+            if (origin == null) throw new IllegalStateException("Unbound transport origin");
+            List<Slot> arguments = new ArrayList<>();
+            for (Argument argument : route.physical.arguments) {
+                work.run(); arguments.add(new Slot(argument.root == null ? null : origin,argument.value));
+            }
+            add(items,new Atom(route.physical.predicate,route.physical.positive,arguments),route.proof,work); product = true;
+        }
+        if (!product) return new Result(false,"No X-dependent witness products",null);
+        Set<Origin> rank = new HashSet<>();
+        for (Item item : items) for (Slot slot : item.atom.arguments) { work.run(); if (slot.origin != null) rank.add(slot.origin); }
+        if (rank.size() > 8) throw new IllegalStateException("Witness transport rank limit");
+        return new Result(true,"Detached X seeds and verified X-dependent products",new Packet(items));
     }
     /** Fresh private logical carrier plus an immutable ledger, not authenticated primary inputs. */
     static Replay restore(Packet packet,int maximumWork) throws Exception {

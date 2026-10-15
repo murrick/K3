@@ -106,7 +106,7 @@ final class ContextWitnessUnaryChainVerifier {
         pool.add(route); return true;
     }
     /** Only combinations with one common primary origin are admissible. */
-    private static boolean join(Session session,ContextWitnessProjection observation,Pattern conclusion,
+    private static boolean join(UUID replay,ContextWitnessProjection observation,Pattern conclusion,
             List<List<Route>> candidates,int slot,Root origin,List<Route> chosen,Support producer,
             List<Route> application,List<Route> pool,int maximumDepth,Runnable work) {
         work.run(); boolean changed = false;
@@ -115,7 +115,7 @@ final class ContextWitnessUnaryChainVerifier {
                 work.run();
                 if (origin != null && !origin.equals(donor.origin)) continue;
                 chosen.add(donor);
-                changed |= join(session,observation,conclusion,candidates,slot+1,donor.origin,chosen,producer,application,pool,maximumDepth,work);
+                changed |= join(replay,observation,conclusion,candidates,slot+1,donor.origin,chosen,producer,application,pool,maximumDepth,work);
                 chosen.remove(chosen.size()-1);
             }
             return changed;
@@ -123,7 +123,7 @@ final class ContextWitnessUnaryChainVerifier {
         int depth = producer.depth; Set<Source> sources = new LinkedHashSet<>(producer.sources);
         for (Route donor : chosen) { work.run(); depth = Math.max(depth,donor.proof.depth); sources.addAll(donor.proof.sources); }
         if (depth == Integer.MAX_VALUE) throw new IllegalStateException("witness-chain-depth-overflow");
-        Route route = new Route(session.replay,conclusion,origin,new Support(sources,depth+1),
+        Route route = new Route(replay,conclusion,origin,new Support(sources,depth+1),
                 chosen.size() == 1 ? chosen.get(0) : null,observation,producer,null,chosen);
         changed |= add(application,route,maximumDepth,work);
         changed |= add(pool,route,maximumDepth,work);
@@ -142,25 +142,7 @@ final class ContextWitnessUnaryChainVerifier {
         try {
             Snapshot snapshot = session.capture.snapshot();
             ContextWitnessPrimaryStepVerifier.Scope scope = ContextWitnessPrimaryStepVerifier.scope(session,snapshot,work,maximumPremises > 1);
-            ContextWitnessMaterializationVerifier.Result correspondence = ContextWitnessMaterializationVerifier.verify(session.replay,snapshot,work);
-            if (!correspondence.verified) return incomplete(correspondence.reason);
-            Map<ContextWitnessProjection,List<Pattern>> premises = new IdentityHashMap<>();
-            Map<ContextWitnessProjection,Pattern> conclusions = new IdentityHashMap<>();
-            Map<ContextWitnessProjection,List<Route>> applications = new IdentityHashMap<>();
-            for (ContextWitnessProjection observation : snapshot.witnessProjections) {
-                work.run(); if (observation.premises.isEmpty() || observation.premises.size() > maximumPremises)
-                    return incomplete(maximumPremises == 1 ? "outside-single-premise-witness-chain" : "outside-shared-origin-witness-join");
-                ContextWitnessPrimaryStepVerifier.application(scope,observation,work);
-                Pattern conclusion = pattern(observation.conclusion,work); List<Pattern> required = new ArrayList<>();
-                for (Literal literal : observation.premises) {
-                    Pattern premise = pattern(literal,work);
-                    if (!premise.root.equals(conclusion.root)) return incomplete("non-preserving-witness-chain-step");
-                    required.add(premise);
-                }
-                premises.put(observation,required); conclusions.put(observation,conclusion); applications.put(observation,new ArrayList<>());
-            }
-            if (applications.isEmpty()) return incomplete("no-witness-chain-applications");
-            List<Route> pool = new ArrayList<>();
+            List<Route> seeds = new ArrayList<>();
             for (PrimaryEvidence evidence : session.primary) for (ContextWitnessBundle.Atom atom : evidence.bundle.atoms) {
                 work.run(); List<Argument> arguments = new ArrayList<>(); boolean witness = false;
                 for (ContextWitnessBundle.Slot slot : atom.arguments) {
@@ -169,32 +151,62 @@ final class ContextWitnessUnaryChainVerifier {
                 }
                 if (!witness) continue;
                 Pattern key = new Pattern(atom.predicate,atom.positive,arguments);
-                add(pool,new Route(session.replay,key,key.root,evidence.support,null,null,null,null),maximumDepth,work);
+                add(seeds,new Route(session.replay,key,key.root,evidence.support,null,null,null,null),maximumDepth,work);
             }
-            boolean changed;
-            do {
-                work.run(); changed = false;
-                for (ContextWitnessProjection observation : snapshot.witnessProjections) {
-                    List<List<Route>> candidates = new ArrayList<>();
-                    for (Pattern premise : premises.get(observation)) {
-                        List<Route> matching = new ArrayList<>();
-                        for (Route donor : pool) if (donor.physical.equivalent(premise,work)) matching.add(donor);
-                        candidates.add(matching);
-                    }
-                    for (Support producer : observation.producerSupports)
-                        changed |= join(session,observation,conclusions.get(observation),candidates,0,null,new ArrayList<>(),
-                                producer,applications.get(observation),pool,maximumDepth,work);
-                }
-                for (Relation relation : correspondence.relations) {
-                    Pattern stored = pattern(relation.occurrence.stored,work);
-                    for (ContextWitnessProjection application : relation.applications) for (Route donor : new ArrayList<>(applications.get(application))) {
-                        work.run(); Route route = new Route(session.replay,stored,donor.origin,donor.proof,donor,null,null,relation);
-                        changed |= add(pool,route,maximumDepth,work);
-                    }
-                }
-            } while (changed);
-            for (List<Route> routes : applications.values()) { work.run(); if (routes.isEmpty()) return incomplete("unreconstructed-witness-chain-premise"); }
-            return new Result(true,maximumPremises == 1 ? "Observed single-premise witness routes reconstructed" : "Observed shared-origin witness joins reconstructed",pool);
+            return close(session.replay,snapshot,scope,seeds,maximumDepth,maximumPremises,work);
         } catch (IllegalStateException failure) { return incomplete(failure.getMessage()); }
+    }
+    /** Shared closure accepts verified seed groups at their carried depth, never relabelled as producers. */
+    static Result close(UUID replay,Snapshot snapshot,ContextWitnessPrimaryStepVerifier.Scope scope,List<Route> seeds,
+            int maximumDepth,int maximumPremises,Runnable work) {
+        ContextWitnessMaterializationVerifier.Result correspondence = ContextWitnessMaterializationVerifier.verify(replay,snapshot,work);
+        if (!correspondence.verified) return incomplete(correspondence.reason);
+        Map<ContextWitnessProjection,List<Pattern>> premises = new IdentityHashMap<>();
+        Map<ContextWitnessProjection,Pattern> conclusions = new IdentityHashMap<>();
+        Map<ContextWitnessProjection,List<Route>> applications = new IdentityHashMap<>();
+        for (ContextWitnessProjection observation : snapshot.witnessProjections) {
+            work.run(); if (observation.premises.isEmpty() || observation.premises.size() > maximumPremises)
+                return incomplete(maximumPremises == 1 ? "outside-single-premise-witness-chain" : "outside-shared-origin-witness-join");
+            ContextWitnessPrimaryStepVerifier.application(scope,observation,work);
+            Pattern conclusion = pattern(observation.conclusion,work); List<Pattern> required = new ArrayList<>();
+            for (Literal literal : observation.premises) {
+                Pattern premise = pattern(literal,work);
+                if (!premise.root.equals(conclusion.root)) return incomplete("non-preserving-witness-chain-step");
+                required.add(premise);
+            }
+            premises.put(observation,required); conclusions.put(observation,conclusion); applications.put(observation,new ArrayList<>());
+        }
+        if (applications.isEmpty()) return incomplete("no-witness-chain-applications");
+        List<Route> pool = new ArrayList<>();
+        for (Route seed : seeds) {
+            work.run();
+            if (!seed.replay.equals(replay) || seed.prior != null || seed.application != null || seed.crossing != null)
+                return incomplete("invalid-witness-seed-recipe");
+            add(pool,seed,maximumDepth,work);
+        }
+        boolean changed;
+        do {
+            work.run(); changed = false;
+            for (ContextWitnessProjection observation : snapshot.witnessProjections) {
+                List<List<Route>> candidates = new ArrayList<>();
+                for (Pattern premise : premises.get(observation)) {
+                    List<Route> matching = new ArrayList<>();
+                    for (Route donor : pool) if (donor.physical.equivalent(premise,work)) matching.add(donor);
+                    candidates.add(matching);
+                }
+                for (Support producer : observation.producerSupports)
+                    changed |= join(replay,observation,conclusions.get(observation),candidates,0,null,new ArrayList<>(),
+                            producer,applications.get(observation),pool,maximumDepth,work);
+            }
+            for (Relation relation : correspondence.relations) {
+                Pattern stored = pattern(relation.occurrence.stored,work);
+                for (ContextWitnessProjection application : relation.applications) for (Route donor : new ArrayList<>(applications.get(application))) {
+                    work.run(); Route route = new Route(replay,stored,donor.origin,donor.proof,donor,null,null,relation);
+                    changed |= add(pool,route,maximumDepth,work);
+                }
+            }
+        } while (changed);
+        for (List<Route> routes : applications.values()) { work.run(); if (routes.isEmpty()) return incomplete("unreconstructed-witness-chain-premise"); }
+        return new Result(true,maximumPremises == 1 ? "Observed single-premise witness routes reconstructed" : "Observed shared-origin witness joins reconstructed",pool);
     }
 }

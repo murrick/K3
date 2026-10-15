@@ -124,6 +124,9 @@ final class ContextWitnessPrimaryStepVerifier {
         return scope(session,snapshot,work,false);
     }
     static Scope scope(Session session,Snapshot snapshot,Runnable work,boolean observedJoins) {
+        return scope(session.primary,snapshot,work,observedJoins);
+    }
+    static Scope scope(List<PrimaryEvidence> primary,Snapshot snapshot,Runnable work,boolean observedJoins) {
         for (String gap : snapshot.gaps) {
             work.run();
             if (!(gap.startsWith("cvariable-input:") || gap.startsWith("nonordinary-primary-fact:")
@@ -135,7 +138,7 @@ final class ContextWitnessPrimaryStepVerifier {
         Map<Long,List<Clause>> producerShapes = new HashMap<>();
         Map<Boolean,Source> cutLabels = new HashMap<>();
         Set<Source> bundleSources = new HashSet<>();
-        for (PrimaryEvidence evidence : session.primary) { work.run(); bundleSources.add(evidence.bundle.source); }
+        for (PrimaryEvidence evidence : primary) { work.run(); bundleSources.add(evidence.bundle.source); }
         for (Input input : snapshot.inputs) {
             work.run();
             if (input.source == null) throw new IllegalStateException("derived-input-outside-primary-step");
@@ -153,7 +156,7 @@ final class ContextWitnessPrimaryStepVerifier {
                 producerShapes.put(input.nativeRule,input.shapes);
             }
         }
-        for (PrimaryEvidence evidence : session.primary) {
+        for (PrimaryEvidence evidence : primary) {
             work.run();
             if (!Objects.equals(sources.get(evidence.bundle.source),evidence.nativeRule)) throw new IllegalStateException("primary-binding-missing");
         }
