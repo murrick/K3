@@ -41,7 +41,8 @@ final class ContextWitnessClauseCollision {
         return left.origin != null || right.origin != null ? Objects.equals(left.origin,right.origin)
                 : left.value.semanticallyEquals(right.value);
     }
-    private static boolean match(ContextProductionCapture.Atom literal,Item opponent,Map<Integer,Slot> assignment,Runnable work) {
+    /** Shared exact opposite-literal instance match; each caller owns its tentative assignment. */
+    static boolean match(ContextProductionCapture.Atom literal,Item opponent,Map<Integer,Slot> assignment,Runnable work) {
         work.run();
         if (!literal.predicate.equals(opponent.atom.predicate) || literal.positive == opponent.atom.positive
                 || literal.arguments.size() != opponent.atom.arguments.size()) return false;

@@ -48,6 +48,7 @@ def main():
                  ('org.kanger.ContextWitnessFamilyBarrierRunner', 'CONTEXT_WITNESS_FAMILY_BARRIER_PASS'),
                  ('org.kanger.ContextWitnessClauseCollisionRunner', 'CONTEXT_WITNESS_CLAUSE_COLLISION_PASS'),
                  ('org.kanger.ContextWitnessDisjointCoverageRunner', 'CONTEXT_WITNESS_DISJOINT_COVERAGE_PASS'),
+                 ('org.kanger.ContextWitnessDormantCoverageRunner', 'CONTEXT_WITNESS_DORMANT_COVERAGE_PASS'),
                  ('org.kanger.storage.dumb2.ContextWitnessPrimaryIdentityStorageRunner', 'CONTEXT_WITNESS_PRIMARY_IDENTITY_STORAGE_PASS'),
                  ('org.kanger.storage.dumb2.GroundDisjunctionQualificationRunner', 'GROUND_DISJUNCTION_QUALIFICATION_PASS'),
                  ('org.kanger.DmzTerminalSupportCaptureRunner', 'DMZ_TERMINAL_SUPPORT_CAPTURE_PASS'),

@@ -287,6 +287,13 @@ final class ContextWitnessResultTransport {
         if (!checked.covered) return new Result(false,checked.reason,null);
         return new Result(true,checked.reason,new Packet(input.items,input.identity,checked.sources,false,cut));
     }
+    static Result exportDormantEmpty(Packet input,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+            int maximumDepth,int maximumWork,int maximumEvents) {
+        ContextWitnessDormantCoverage.Result checked = ContextWitnessDormantCoverage.inspect(
+                input,cut,declarations,maximumDepth,maximumWork,maximumEvents);
+        if (!checked.covered) return new Result(false,checked.reason,null);
+        return new Result(true,checked.reason,new Packet(input.items,input.identity,checked.sources,false,cut));
+    }
     private static Result pack(List<Item> items,Map<Root,Origin> origins,UUID namespace,List<Route> routes,Runnable work) {
         boolean product = false;
         for (Route route : routes) {
