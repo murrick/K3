@@ -272,8 +272,16 @@ public final class ContextProductionRoundsReference {
     public static Result inspectWithParameters(List<Declaration> x, List<List<Declaration>> targets, Limits limits) throws Exception {
         return inspect(x,targets,limits,true);
     }
+    /** Measurement experiment only; does not widen the structural certificate. */
+    public static Result inspectWithRotationAudit(List<Declaration> x,List<List<Declaration>> targets,Limits limits) throws Exception {
+        return inspect(x,targets,limits,true,true);
+    }
     private static Result inspect(List<Declaration> x, List<List<Declaration>> targets, Limits limits,
                                   boolean parameterExperiment) throws Exception {
+        return inspect(x,targets,limits,parameterExperiment,false);
+    }
+    private static Result inspect(List<Declaration> x, List<List<Declaration>> targets, Limits limits,
+                                  boolean parameterExperiment,boolean rotationAudit) throws Exception {
         Objects.requireNonNull(x); Objects.requireNonNull(targets); Objects.requireNonNull(limits);
         List<Declaration> local = Collections.unmodifiableList(new ArrayList<>(x));
         List<List<Declaration>> frozen = new ArrayList<>();
@@ -319,9 +327,13 @@ public final class ContextProductionRoundsReference {
                             }
                             for (Declaration declaration : target) capture.replay(participant, declaration.source, declaration.statement);
                             if (parameterPass) seedParameters(participant,parameters,
-                                    coverage.covered ? coverage.constants : Collections.<SemanticTermSnapshot>emptyList(),budget);
+                                    coverage.covered || rotationAudit ? coverage.constants : Collections.<SemanticTermSnapshot>emptyList(),budget);
                             coverage.fresh(parameters);
                             capture.verifyParametersFresh(parameters);
+                            if (parameterPass && rotationAudit) {
+                                List<SemanticTermSnapshot> basis = new ArrayList<>(parameters); basis.addAll(coverage.constants);
+                                if (!basis.isEmpty()) capture.auditRotations(participant,basis);
+                            }
                             participant.link(null, false);
                             Analyzer analyzer = new Analyzer(participant);
                             boolean collision = analyzer.analyze(null, false);
@@ -344,12 +356,14 @@ public final class ContextProductionRoundsReference {
                         // inputs; an in-place replay can be suppressed by an existing
                         // generated canonical twin. Foreign proofs never enter NEXT.
                         if (localChanged) continue;
-                        if (parameterExperiment && !parameterPass && (coverage.covered
+                        if (parameterExperiment && !parameterPass && (coverage.covered || rotationAudit
                                 || snapshot.gaps.stream().anyMatch(gap -> gap.startsWith("unbound-waiter-composition:")))) {
                             parameterPass = true; continue;
                         }
                         for (String gap : snapshot.gaps) if (!(coverage.covered && parameterPass
                                 && gap.startsWith("unbound-waiter-composition:"))) unresolvedResiduals.add(gap);
+                        if (snapshot.rotationsAudited && !snapshot.allRotationsVisited())
+                            unresolvedResiduals.add("missing-representative-rotations");
                         for (Bucket bucket : participantState) for (Proof proof : bucket.proofs)
                             if (proof.usesX()) changed |= add(next, bucket.clause.generalize(parameters), proof, limits, budget);
                         break;

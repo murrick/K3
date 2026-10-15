@@ -9,6 +9,7 @@ import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
 import org.kanger.units.Domain;
 import org.kanger.units.Rule;
+import org.kanger.units.TVariable;
 
 /**
  * Opt-in, detached observation of native qualification applications before
@@ -343,6 +344,25 @@ public final class ContextProductionCapture implements AutoCloseable {
         }
     }
 
+    /** Detached measurement, not a logical proof or a completeness certificate. */
+    public static final class RotationAudit {
+        public final long nativeRule;
+        public final int branch, rank, expected, admitted, visited;
+        private RotationAudit(RotationPlan plan) {
+            nativeRule = plan.rule; branch = plan.branch; rank = plan.variables.size();
+            expected = plan.expected; admitted = plan.admitted.size(); visited = plan.visited.size();
+        }
+    }
+    private static final class RotationPlan {
+        final long rule;
+        final int branch, expected;
+        final List<Long> variables;
+        final Set<List<Integer>> visited = new HashSet<>();
+        final Set<List<Integer>> admitted = new HashSet<>();
+        RotationPlan(long rule,int branch,List<Long> variables,int expected) {
+            this.rule = rule; this.branch = branch; this.variables = variables; this.expected = expected;
+        }
+    }
     public static final class Snapshot {
         public final List<Input> inputs;
         public final List<Application> applications;
@@ -350,8 +370,24 @@ public final class ContextProductionCapture implements AutoCloseable {
         public final List<String> gaps;
         public final List<SemanticTermSnapshot> primaryValues;
         public final int eventCount;
+        public final boolean rotationsAudited;
+        public final List<RotationAudit> rotations;
+        public boolean allRotationsVisited() {
+            if (!rotationsAudited) return false;
+            for (RotationAudit audit : rotations) if (audit.visited != audit.expected) return false;
+            return true;
+        }
+        public boolean allRotationsAdmitted() {
+            if (!rotationsAudited) return false;
+            for (RotationAudit audit : rotations) if (audit.admitted != audit.expected) return false;
+            return true;
+        }
         private Snapshot(ContextProductionCapture capture) {
-            eventCount = capture.inputs.size() + capture.applications.size() + capture.residuals.size() + capture.stored.size();
+            eventCount = capture.eventCount();
+            rotationsAudited = capture.rotationBasis != null;
+            List<RotationAudit> rotations = new ArrayList<>();
+            for (RotationPlan plan : capture.rotationPlans) rotations.add(new RotationAudit(plan));
+            this.rotations = Collections.unmodifiableList(rotations);
             inputs = Collections.unmodifiableList(new ArrayList<>(capture.inputs));
             applications = Collections.unmodifiableList(new ArrayList<>(capture.applications));
             residuals = Collections.unmodifiableList(new ArrayList<>(capture.residuals));
@@ -384,6 +420,10 @@ public final class ContextProductionCapture implements AutoCloseable {
     private final List<Materialization> stored = new ArrayList<>();
     private final List<SemanticTermSnapshot> primaryValues = new ArrayList<>();
     private final Set<String> gaps = new LinkedHashSet<>();
+    private List<SemanticTermSnapshot> rotationBasis;
+    private final List<RotationPlan> rotationPlans = new ArrayList<>();
+    private int rotationVisits;
+    private long rotationComparisons;
     private final Map<Mind, Map<Long, List<Support>>> labels = new IdentityHashMap<>();
     private Mind inputTarget;
     private Source inputSource;
@@ -414,11 +454,90 @@ public final class ContextProductionCapture implements AutoCloseable {
             if (level == boundary) return true;
         return false;
     }
+    private int eventCount() {
+        return inputs.size() + applications.size() + residuals.size() + stored.size() + rotationPlans.size() + rotationVisits;
+    }
     private void take() {
-        if ((long) inputs.size() + applications.size() + residuals.size() + stored.size() >= maximumEvents) {
+        if (eventCount() >= maximumEvents) {
             gaps.add("observation-budget-exhausted");
             throw new IllegalStateException("Context production observation limit exceeded; qualification incomplete");
         }
+    }
+    private void rotationComparison() {
+        if (++rotationComparisons > 64L * maximumEvents)
+            throw new IllegalStateException("Rotation audit comparison limit; qualification incomplete");
+    }
+    /** Register an exact finite vocabulary, without installing predicate assertions. */
+    public void auditRotations(Mind target,List<SemanticTermSnapshot> basis) throws Exception {
+        check();
+        if (!visible(target) || rotationBasis != null || basis.isEmpty())
+            throw new IllegalArgumentException("One nonempty rotation audit in this boundary required");
+        for (int i=0;i<basis.size();++i) {
+            Objects.requireNonNull(basis.get(i));
+            for (int j=0;j<i;++j) {
+                rotationComparison();
+                if (basis.get(i).semanticallyEquals(basis.get(j))) throw new IllegalArgumentException("Distinct representatives required");
+            }
+        }
+        List<RotationPlan> plans = new ArrayList<>(); long planned = eventCount();
+        for (IRule entry : target.getRules()) if (!entry.isDeleted(target)) {
+            Rule rule = (Rule)entry; SortedSet<TVariable> variables = new TreeSet<>();
+            for (List<Domain> branch : rule.getTree()) for (Domain domain : branch)
+                variables.addAll(domain.getArguments().getTVariables(target));
+            if (variables.isEmpty()) continue;
+            if (variables.size() > 3) throw new IllegalStateException("Rotation audit rank limit; qualification incomplete");
+            List<Long> ids = new ArrayList<>(); for (TVariable variable : variables) ids.add(variable.getId());
+            long expected = 1;
+            for (int i=0;i<variables.size();++i) {
+                expected *= basis.size();
+                if (expected > maximumEvents) throw new IllegalStateException("Rotation audit plan limit; qualification incomplete");
+            }
+            for (int branch=0;branch<rule.getTree().size();++branch) {
+                planned += 2 * expected + 1;
+                if (planned > maximumEvents) throw new IllegalStateException("Rotation audit plan limit; qualification incomplete");
+                plans.add(new RotationPlan(rule.getId(),branch,Collections.unmodifiableList(ids),(int)expected));
+            }
+        }
+        rotationBasis = Collections.unmodifiableList(new ArrayList<>(basis)); rotationPlans.addAll(plans);
+    }
+    /** Observe the binding reaching database evaluation after native filtering/matching. */
+    static void rotation(Mind mind,IRule rule,int branch,SortedSet<TVariable> variables) throws Exception {
+        rotation(mind,rule,branch,variables,true);
+    }
+    /** Observe terminal admission before predicate matching can change current bindings. */
+    static void rotationEntered(Mind mind,IRule rule,int branch,SortedSet<TVariable> variables) throws Exception {
+        rotation(mind,rule,branch,variables,false);
+    }
+    private static void rotation(Mind mind,IRule rule,int branch,SortedSet<TVariable> variables,boolean database) throws Exception {
+        ContextProductionCapture capture = ACTIVE.get();
+        if (capture == null || capture.rotationBasis == null || !capture.visible(mind)
+                || (mind.getQueryPass() != QueryPass.CHECK && mind.getQueryPass() != QueryPass.ACCEPT)) return;
+        capture.check(); if (variables.isEmpty()) return;
+        RotationPlan plan = null;
+        for (RotationPlan candidate : capture.rotationPlans) {
+            capture.rotationComparison();
+            if (candidate.rule == rule.getId() && candidate.branch == branch) { plan = candidate; break; }
+        }
+        if (plan == null) { capture.gaps.add("uncatalogued-rotation:"+rule.getId()+":"+branch); return; }
+        List<Integer> tuple = new ArrayList<>(); int slot = 0;
+        for (TVariable variable : variables) {
+            if (slot >= plan.variables.size() || plan.variables.get(slot++) != variable.getId()) {
+                capture.gaps.add("changed-rotation-scope:"+rule.getId()); return;
+            }
+            if (variable.isEmpty() || variable.getCurrent() == null) return;
+            ITerm value = variable.getCurrent().getValue(mind);
+            if (!SemanticTermSnapshot.isOrdinaryValue(value)) return;
+            SemanticTermSnapshot semantic = SemanticTermSnapshot.capture(value); int index = -1;
+            for (int i=0;i<capture.rotationBasis.size();++i) {
+                capture.rotationComparison();
+                if (semantic.semanticallyEquals(capture.rotationBasis.get(i))) { index = i; break; }
+            }
+            if (index < 0) return;
+            tuple.add(index);
+        }
+        if (slot != plan.variables.size()) { capture.gaps.add("changed-rotation-scope:"+rule.getId()); return; }
+        Set<List<Integer>> observations = database ? plan.visited : plan.admitted;
+        if (!observations.contains(tuple)) { capture.take(); observations.add(tuple); ++capture.rotationVisits; }
     }
     public void replay(Mind target, Source source, String statement) throws Exception {
         check();

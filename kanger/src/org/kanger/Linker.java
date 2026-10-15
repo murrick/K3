@@ -594,15 +594,18 @@ public class Linker {
 
             boolean wasUsed = ((Rule) r).isUsed(mind);
 
+            int branchIndex = 0;
             for (List<Domain> tree : ((Rule) r).getTree()) {
 
                 statistics.incrementBranchVisits();
                 final List<Domain> t = tree;
+                final int branchSlot = branchIndex++;
 
                 rotateVariables(tvars, tvars, new IReactor() {
                     @Override
                     public Object run(Object o) throws Exception {
                         statistics.incrementTerminalRotations();
+                        ContextProductionCapture.rotationEntered(mind,r,branchSlot,tvars);
                         boolean result = false;
                         for (Domain domain : t) {
                             for (Function function : domain.getArguments().getFunctions(mind)) {
@@ -622,6 +625,7 @@ public class Linker {
                             result = true;
                         }
                         statistics.incrementDatabaseEvaluations();
+                        ContextProductionCapture.rotation(mind,r,branchSlot,tvars);
                         if (linkDatabase(t, causes, tvars, logging)) {
                             result = true;
                         }
