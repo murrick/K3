@@ -70,28 +70,41 @@ final class ContextWitnessHornClosure {
             instances(producer,head,body,pool,index+1,next,selected,maximumDepth,obligations,work);
         }
     }
-    /** Preconditions: sound sealed pool and whole-rule-validated supplied definitions. */
-    static int verify(Packet pool,List<Input> definitions,int maximumDepth,Runnable work) {
+    private static final class Schema {
+        final ContextProductionCapture.Atom head;
+        final List<ContextProductionCapture.Atom> body;
+        Schema(ContextProductionCapture.Atom head,List<ContextProductionCapture.Atom> body) { this.head = head; this.body = body; }
+    }
+    private static Schema schema(Clause clause,Runnable work) {
+        ContextProductionCapture.Atom head = null; List<ContextProductionCapture.Atom> body = new ArrayList<>(); Set<Integer> variables = new HashSet<>();
+        for (ContextProductionCapture.Atom literal : clause.literals) {
+            work.run();
+            if (literal.positive) {
+                if (head != null) throw new IllegalStateException("Definite Horn closure required"); head = literal;
+            } else {
+                body.add(literal); for (ContextProductionCapture.Slot slot : literal.arguments) { work.run(); if (slot.variable >= 0) variables.add(slot.variable); }
+            }
+        }
+        if (head == null || body.isEmpty()) throw new IllegalStateException("Fact-free definite Horn closure required");
+        for (ContextProductionCapture.Slot slot : head.arguments) {
+            work.run(); if (slot.variable >= 0 && !variables.contains(slot.variable)) throw new IllegalStateException("Range-restricted Horn head required");
+        }
+        return new Schema(head,body);
+    }
+    /** Shape preflight, including every later clause, without testing closure or executing native inference. */
+    static void validate(Packet pool,List<Input> definitions,int maximumDepth,Runnable work) {
         for (Item item : pool.items) {
             work.run(); if (!item.atom.positive) throw new IllegalStateException("Positive Horn closure pool required");
             for (Support proof : item.proofs) { work.run(); if (proof.depth > maximumDepth) throw new IllegalStateException("Carried Horn proof exceeds depth limit"); }
         }
-        int[] obligations = {0};
+        for (Input input : definitions) for (Clause clause : input.shapes) schema(clause,work);
+    }
+    /** Preconditions: sound sealed pool and whole-rule-validated supplied definitions. */
+    static int verify(Packet pool,List<Input> definitions,int maximumDepth,Runnable work) {
+        validate(pool,definitions,maximumDepth,work); int[] obligations = {0};
         for (Input input : definitions) for (Clause clause : input.shapes) {
-            ContextProductionCapture.Atom head = null; List<ContextProductionCapture.Atom> body = new ArrayList<>(); Set<Integer> variables = new HashSet<>();
-            for (ContextProductionCapture.Atom literal : clause.literals) {
-                work.run();
-                if (literal.positive) {
-                    if (head != null) throw new IllegalStateException("Definite Horn closure required"); head = literal;
-                } else {
-                    body.add(literal); for (ContextProductionCapture.Slot slot : literal.arguments) { work.run(); if (slot.variable >= 0) variables.add(slot.variable); }
-                }
-            }
-            if (head == null || body.isEmpty()) throw new IllegalStateException("Fact-free definite Horn closure required");
-            for (ContextProductionCapture.Slot slot : head.arguments) {
-                work.run(); if (slot.variable >= 0 && !variables.contains(slot.variable)) throw new IllegalStateException("Range-restricted Horn head required");
-            }
-            instances(input.source,head,body,pool,0,new LinkedHashMap<>(),new ArrayList<>(),maximumDepth,obligations,work);
+            Schema rule = schema(clause,work);
+            instances(input.source,rule.head,rule.body,pool,0,new LinkedHashMap<>(),new ArrayList<>(),maximumDepth,obligations,work);
         }
         return obligations[0];
     }

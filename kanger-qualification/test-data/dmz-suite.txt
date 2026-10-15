@@ -91,3 +91,4 @@ org.kanger.ContextWitnessClauseCollisionRunner | CONTEXT_WITNESS_CLAUSE_COLLISIO
 org.kanger.ContextWitnessDisjointCoverageRunner | CONTEXT_WITNESS_DISJOINT_COVERAGE_PASS
 org.kanger.ContextWitnessDormantCoverageRunner | CONTEXT_WITNESS_DORMANT_COVERAGE_PASS
 org.kanger.ContextWitnessHornClosureRunner | CONTEXT_WITNESS_HORN_CLOSURE_PASS
+org.kanger.ContextWitnessFamilyFixedPointRunner | CONTEXT_WITNESS_FAMILY_FIXED_POINT_PASS

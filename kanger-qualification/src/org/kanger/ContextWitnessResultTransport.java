@@ -315,6 +315,20 @@ final class ContextWitnessResultTransport {
                     new Packet(observed.packet.items,round.inputIdentity,observed.packet.producers,true,null,cut));
         } catch (Exception failure) { return new Result(false,failure.getMessage(),null); }
     }
+    /** An already closed sound input needs no new native event, even when rule bodies are enabled. */
+    static Result exportHornUnchanged(Packet input,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+            int maximumDepth,int maximumWork,int maximumEvents) {
+        Runnable work = budget(maximumWork);
+        try {
+            if (maximumDepth < 0) throw new IllegalArgumentException("Bounded Horn unchanged proof required");
+            List<Input> definitions = ContextWitnessDeclarationCut.capture(input,cut,declarations,work,maximumWork,maximumEvents);
+            int obligations = ContextWitnessHornClosure.verify(input,definitions,maximumDepth,work);
+            Set<Source> sources = new LinkedHashSet<>();
+            for (Input definition : definitions) { work.run(); sources.add(definition.source); }
+            return new Result(true,"Unchanged positive Horn proof pool closed; obligations="+obligations,
+                    new Packet(input.items,input.identity,sources,false,cut,cut));
+        } catch (Exception failure) { return new Result(false,failure.getMessage(),null); }
+    }
     private static Result pack(List<Item> items,Map<Root,Origin> origins,UUID namespace,List<Route> routes,Runnable work) {
         boolean product = false;
         for (Route route : routes) {
