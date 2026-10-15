@@ -71,3 +71,4 @@ org.kanger.RuleVariableIdentityRunner | RULE_VARIABLE_IDENTITY_PASS
 org.kanger.ContextProductionRotationAuditRunner | CONTEXT_PRODUCTION_ROTATION_AUDIT_PASS
 org.kanger.ContextVerifiedLinearCoverageRunner | CONTEXT_VERIFIED_LINEAR_COVERAGE_PASS
 org.kanger.ContextHornResidualVerifierRunner | CONTEXT_HORN_RESIDUAL_VERIFIER_PASS
+org.kanger.ContextUniversalInstanceEvidenceRunner | CONTEXT_UNIVERSAL_INSTANCE_EVIDENCE_PASS

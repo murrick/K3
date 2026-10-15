@@ -30,6 +30,7 @@ def main():
                  ('org.kanger.ContextProductionRotationAuditRunner', 'CONTEXT_PRODUCTION_ROTATION_AUDIT_PASS'),
                  ('org.kanger.ContextVerifiedLinearCoverageRunner', 'CONTEXT_VERIFIED_LINEAR_COVERAGE_PASS'),
                  ('org.kanger.ContextHornResidualVerifierRunner', 'CONTEXT_HORN_RESIDUAL_VERIFIER_PASS'),
+                 ('org.kanger.ContextUniversalInstanceEvidenceRunner', 'CONTEXT_UNIVERSAL_INSTANCE_EVIDENCE_PASS'),
                  ('org.kanger.storage.dumb2.GroundDisjunctionQualificationRunner', 'GROUND_DISJUNCTION_QUALIFICATION_PASS'),
                  ('org.kanger.DmzTerminalSupportCaptureRunner', 'DMZ_TERMINAL_SUPPORT_CAPTURE_PASS'),
                  ('org.kanger.DmzCollisionProofCaptureRunner', 'DMZ_COLLISION_PROOF_CAPTURE_PASS'),
