@@ -98,21 +98,29 @@ final class ContextWitnessFamilyFixedPoint {
                         else {
                             try (ContextWitnessSeedReplay nativePass = ContextWitnessSeedReplay.open(current,limits.work,limits.events)) {
                                 for (Declaration declaration : branch.declarations) nativePass.rule(declaration.source,declaration.statement);
-                                result = ContextWitnessResultTransport.exportCoveredNext(nativePass,branch.cut,branch.declarations,
+                                result = ContextWitnessResultTransport.exportRoundNext(nativePass,branch.cut,branch.declarations,
                                         limits.depth,limits.work,limits.events);
                             }
                             if (!result.exported) throw new IllegalStateException("Round "+(number+1)+" branch incomplete: "+result.reason);
                             ++productive;
                         }
-                        if (result.packet.coveredCut == null || !result.packet.coveredCut.equals(branch.cut))
-                            throw new IllegalStateException("Uncovered branch cannot establish family fixed point");
+                        if (!branch.cut.equals(result.packet.coveredCut) && !branch.cut.equals(result.packet.roundCut))
+                            throw new IllegalStateException("Uncovered branch cannot establish family barrier");
                         outputs.put(branch.cut,result.packet);
                     }
                     FamilyResult merged = barrier.finish(outputs,limits.work);
                     if (merged.status != FamilyStatus.MERGED) throw new IllegalStateException("Family merge incomplete: "+merged.reason);
                     trace.add(new Round(current,merged.packet,merged.changed,productive,unchanged)); current = merged.packet;
                     if (check != null) check.inspect(current);
-                    if (!merged.changed) return new Result(Status.FIXED_POINT,"Supplied positive Horn family proof pools reached a common fixed point; admission pending",current,trace,this,input);
+                    if (!merged.changed) {
+                        // Round coverage never substitutes for a full unchanged-pool closure verdict.
+                        for (Branch branch : branches) {
+                            ContextWitnessResultTransport.Result closed = ContextWitnessResultTransport.exportHornUnchanged(
+                                    current,branch.cut,branch.declarations,limits.depth,limits.work,limits.events);
+                            if (!closed.exported) throw new IllegalStateException("Unchanged barrier is not closed: "+closed.reason);
+                        }
+                        return new Result(Status.FIXED_POINT,"Supplied positive Horn family proof pools reached a common fixed point; admission pending",current,trace,this,input);
+                    }
                 }
                 throw new IllegalStateException("Family round limit before an unchanged fully covered barrier");
             } catch (Exception failure) {

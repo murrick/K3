@@ -62,6 +62,7 @@ final class ContextWitnessResultTransport {
         final boolean observedStep;
         final Cut emptyCut;
         final Cut coveredCut;
+        final Cut roundCut;
         private Packet(List<Item> items) { this(items,null,Collections.emptySet(),false); }
         private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep) {
             this(items,basis,producers,observedStep,null);
@@ -70,6 +71,10 @@ final class ContextWitnessResultTransport {
             this(items,basis,producers,observedStep,emptyCut,null);
         }
         private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep,Cut emptyCut,Cut coveredCut) {
+            this(items,basis,producers,observedStep,emptyCut,coveredCut,null);
+        }
+        private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep,Cut emptyCut,Cut coveredCut,Cut roundCut) {
+            this.roundCut = roundCut;
             this.items = Collections.unmodifiableList(new ArrayList<>(items)); this.basis = basis;
             this.producers = Collections.unmodifiableSet(new LinkedHashSet<>(producers)); this.observedStep = observedStep;
             this.emptyCut = emptyCut;
@@ -145,6 +150,8 @@ final class ContextWitnessResultTransport {
                         throw new IllegalStateException("Empty witness branch has a different target cut");
                     if (output.coveredCut != null && !cut.equals(output.coveredCut))
                         throw new IllegalStateException("Covered witness branch has a different target cut");
+                    if (output.roundCut != null && !cut.equals(output.roundCut))
+                        throw new IllegalStateException("Round witness branch has a different target cut");
                     if (!parent.equals(parentX(output.items,work))) throw new IllegalStateException("Witness branch changed parent X");
                     boolean matched = false;
                     for (Source producer : output.producers) {
@@ -204,6 +211,20 @@ final class ContextWitnessResultTransport {
     }
     /** Equality of the logical/proof pool, ignoring allocation IDs and list order. Not a coverage verdict. */
     static boolean sameContents(Packet left,Packet right,int maximumWork) { return sameItems(left.items,right.items,budget(maximumWork)); }
+    /** A shorter proof with the same whole source set may replace a carried one. */
+    static boolean retains(Packet input,Packet output,Runnable work) {
+        for (Item item : input.items) {
+            Item found = null;
+            for (Item candidate : output.items) { work.run(); if (item.atom.same(candidate.atom,work)) { found = candidate; break; } }
+            if (found == null) return false;
+            for (Support proof : item.proofs) {
+                boolean present = false;
+                for (Support candidate : found.proofs) { work.run(); if (proof.sources.equals(candidate.sources) && candidate.depth <= proof.depth) { present = true; break; } }
+                if (!present) return false;
+            }
+        }
+        return true;
+    }
     private static boolean sameItems(List<Item> left,List<Item> right,Runnable work) {
         if (left.size() != right.size()) return false;
         for (Item item : left) {
@@ -333,15 +354,25 @@ final class ContextWitnessResultTransport {
     /** Sound observed proofs plus exhaustive positive Horn proof-pool closure, bound to the owning inputs. */
     static Result exportCoveredNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
             int maximumDepth,int maximumWork,int maximumEvents) {
+        return exportVerifiedNext(round,cut,declarations,maximumDepth,maximumWork,maximumEvents,false);
+    }
+    /** Full coverage of the exact immutable round input, without claiming output saturation. */
+    static Result exportRoundNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+            int maximumDepth,int maximumWork,int maximumEvents) {
+        return exportVerifiedNext(round,cut,declarations,maximumDepth,maximumWork,maximumEvents,true);
+    }
+    private static Result exportVerifiedNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+            int maximumDepth,int maximumWork,int maximumEvents,boolean roundStep) {
         Result observed = exportNext(round,maximumDepth,maximumWork);
         if (!observed.exported) return observed;
         Runnable work = budget(maximumWork);
         try {
             List<Input> definitions = ContextWitnessDeclarationCut.capture(round.input,cut,declarations,work,maximumWork,maximumEvents);
             ContextWitnessHornClosure.sameDeclarations(definitions,round.producerInputs(work),work);
-            int obligations = ContextWitnessHornClosure.verify(observed.packet,definitions,maximumDepth,work);
-            return new Result(true,"Observed positive Horn proof pool closed; obligations="+obligations,
-                    new Packet(observed.packet.items,round.inputIdentity,observed.packet.producers,true,null,cut));
+            int obligations = roundStep ? ContextWitnessHornClosure.verifyRound(round.input,observed.packet,definitions,maximumDepth,work)
+                    : ContextWitnessHornClosure.verify(observed.packet,definitions,maximumDepth,work);
+            return new Result(true,(roundStep ? "Input-enabled positive Horn round covered; obligations=" : "Observed positive Horn proof pool closed; obligations=")+obligations,
+                    new Packet(observed.packet.items,round.inputIdentity,observed.packet.producers,true,null,roundStep ? null : cut,roundStep ? cut : null));
         } catch (Exception failure) { return new Result(false,failure.getMessage(),null); }
     }
     /** An already closed sound input needs no new native event, even when rule bodies are enabled. */

@@ -90,7 +90,12 @@ public final class ContextProductionFamilyAssemblyRunner {
             Snapshot bridgeX = snapshot(19,true,"!$w p(w,1); !scalar(1); !@w p(w,1)->warm(w,1);");
             Snapshot bridgeA = snapshot(20,false,"!@x scalar(x)->gate(x); !@w p(w,1)&&gate(1)->bridged(w,1);");
             Evaluation bridge = assemble(bridgeX,bridgeA).evaluate(12,16,WORK,100000);
-            require(bridge.status == Status.INCOMPLETE && bridge.reason.contains("Missing Horn conclusion instance"),"missing actual same-cut mixed conclusion remains incomplete");
+            require(bridge.status == Status.FIXED_POINT,"same-cut mixed cascade reaches the next common barrier: "+bridge.reason);
+            require(proof(item(bridge.qualification.fixedPoint.packet,"bridged"),2,source(bridgeX,"$w"),source(bridgeX,"!scalar"),source(bridgeA,"@x"),source(bridgeA,"@w")),"same-cut mixed cascade preserves exact four-source depth2 proof");
+            require(assemble(bridgeX,bridgeA).evaluate(1,16,WORK,100000).status == Status.INCOMPLETE,"one changed step cannot count as same-cut saturation");
+            Snapshot bridgeConstraint = snapshot(24,false,"!@w bridged(w,1)->~p(w,1);");
+            Evaluation bridgeCollision = assemble(bridgeX,bridgeA,bridgeConstraint).evaluate(12,16,WORK,100000);
+            require(bridgeCollision.status == Status.COLLISION && bridgeCollision.qualification.barrier == 2,"same-cut deferred result is scanned for collisions at its complete merged barrier");
             Snapshot bridgeGround = snapshot(21,false,"!@x scalar(x)->gate(x);");
             Snapshot bridgeWitness = snapshot(22,false,"!@w p(w,1)&&gate(1)->bridged(w,1);");
             Evaluation crossBridge = assemble(bridgeX,bridgeGround,bridgeWitness).evaluate(12,16,WORK,100000);

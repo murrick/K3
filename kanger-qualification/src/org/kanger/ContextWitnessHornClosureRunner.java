@@ -72,6 +72,11 @@ public final class ContextWitnessHornClosureRunner {
             Packet newDonor = step(oldOut,d(s(1,4),"!@w p(w,1)->q(w,1);"));
             require(item(newDonor,"q").proofs.size() == 2 && item(newDonor,"out").proofs.size() == 1,"concrete sound pool has an old head but a newly added donor authority");
             missing(newDonor,"missing second out source group prevents closure even though all atoms exist",qout);
+            List<Input> roundDefinitions = ContextWitnessDeclarationCut.capture(newDonor,b,Arrays.asList(qout),() -> {},WORK,100000);
+            boolean missingRoundAlternative = false;
+            try { ContextWitnessHornClosure.verifyRound(newDonor,newDonor,roundDefinitions,16,() -> {}); }
+            catch (IllegalStateException expected) { missingRoundAlternative = true; }
+            require(missingRoundAlternative,"round coverage requires every input donor source alternative, even when the head already exists");
             Packet repaired = covered(newDonor,b,qout);
             require(item(repaired,"out").proofs.size() == 2,"only actual next native inference supplies the missing proof alternative");
             Packet multi = step(base,d(s(1,1),"!@w p(w,1)->q(w,1);"),d(s(1,4),"!@w p(w,1)->q(w,1);"),

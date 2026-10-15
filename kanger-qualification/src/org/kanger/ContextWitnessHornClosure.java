@@ -55,11 +55,11 @@ final class ContextWitnessHornClosure {
         }
     }
     private static void instances(Source producer,ContextProductionCapture.Atom head,List<ContextProductionCapture.Atom> body,
-            Packet pool,int index,Map<Integer,Slot> assignment,List<Item> donors,int maximumDepth,int[] obligations,Runnable work) {
+            Packet pool,Packet output,int index,Map<Integer,Slot> assignment,List<Item> donors,int maximumDepth,int[] obligations,Runnable work) {
         work.run();
         if (index == body.size()) {
             Item conclusion = null;
-            for (Item item : pool.items) if (head(head,item,assignment,work)) { conclusion = item; break; }
+            for (Item item : output.items) if (head(head,item,assignment,work)) { conclusion = item; break; }
             if (conclusion == null) throw new IllegalStateException("Missing Horn conclusion instance");
             proofs(conclusion,donors,0,new LinkedHashSet<>(Collections.singleton(producer)),0,maximumDepth,obligations,work); return;
         }
@@ -67,7 +67,7 @@ final class ContextWitnessHornClosure {
             Map<Integer,Slot> next = new LinkedHashMap<>(assignment);
             if (!ContextWitnessClauseCollision.match(body.get(index),item,next,work)) continue;
             List<Item> selected = new ArrayList<>(donors); selected.add(item);
-            instances(producer,head,body,pool,index+1,next,selected,maximumDepth,obligations,work);
+            instances(producer,head,body,pool,output,index+1,next,selected,maximumDepth,obligations,work);
         }
     }
     private static final class Schema {
@@ -99,12 +99,24 @@ final class ContextWitnessHornClosure {
         }
         for (Input input : definitions) for (Clause clause : input.shapes) schema(clause,work);
     }
+    /** Input-enabled obligations only; later output-enabled bodies belong to a later barrier. */
+    static int verifyRound(Packet input,Packet output,List<Input> definitions,int maximumDepth,Runnable work) {
+        validate(input,definitions,maximumDepth,work); validate(output,definitions,maximumDepth,work);
+        if (!ContextWitnessResultTransport.retains(input,output,work))
+            throw new IllegalStateException("Round output lost an input proof");
+        int[] obligations = {0};
+        for (Input definition : definitions) for (Clause clause : definition.shapes) {
+            Schema rule = schema(clause,work);
+            instances(definition.source,rule.head,rule.body,input,output,0,new LinkedHashMap<>(),new ArrayList<>(),maximumDepth,obligations,work);
+        }
+        return obligations[0];
+    }
     /** Preconditions: sound sealed pool and whole-rule-validated supplied definitions. */
     static int verify(Packet pool,List<Input> definitions,int maximumDepth,Runnable work) {
         validate(pool,definitions,maximumDepth,work); int[] obligations = {0};
         for (Input input : definitions) for (Clause clause : input.shapes) {
             Schema rule = schema(clause,work);
-            instances(input.source,rule.head,rule.body,pool,0,new LinkedHashMap<>(),new ArrayList<>(),maximumDepth,obligations,work);
+            instances(input.source,rule.head,rule.body,pool,pool,0,new LinkedHashMap<>(),new ArrayList<>(),maximumDepth,obligations,work);
         }
         return obligations[0];
     }
