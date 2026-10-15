@@ -14,11 +14,11 @@ final class ContextLinearProofVerifier {
             this.supports = Collections.unmodifiableList(new ArrayList<>(supports));
         }
     }
-    private static Claim find(List<Claim> pool,Clause clause,Runnable work) {
+    static Claim find(List<Claim> pool,Clause clause,Runnable work) {
         for (Claim claim : pool) { work.run(); if (claim.clause.equivalent(clause)) return claim; }
         return null;
     }
-    private static boolean hasProof(List<Claim> pool,Clause clause,Set<Source> sources,int depth,Runnable work) {
+    static boolean hasProof(List<Claim> pool,Clause clause,Set<Source> sources,int depth,Runnable work) {
         Claim claim = find(pool,clause,work);
         if (claim != null) for (Support support : claim.supports) {
             work.run(); if (support.sources.equals(sources) && support.depth <= depth) return true;

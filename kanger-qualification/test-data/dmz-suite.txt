@@ -70,3 +70,4 @@ org.kanger.storage.dumb2.DmzFamilyManualFixtureRunner | DMZ_FAMILY_MANUAL_FIXTUR
 org.kanger.RuleVariableIdentityRunner | RULE_VARIABLE_IDENTITY_PASS
 org.kanger.ContextProductionRotationAuditRunner | CONTEXT_PRODUCTION_ROTATION_AUDIT_PASS
 org.kanger.ContextVerifiedLinearCoverageRunner | CONTEXT_VERIFIED_LINEAR_COVERAGE_PASS
+org.kanger.ContextHornResidualVerifierRunner | CONTEXT_HORN_RESIDUAL_VERIFIER_PASS
