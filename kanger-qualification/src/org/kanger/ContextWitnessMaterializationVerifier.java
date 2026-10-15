@@ -59,25 +59,27 @@ final class ContextWitnessMaterializationVerifier {
         }
         return true;
     }
+    static Result verify(UUID replay,Snapshot snapshot,Runnable work) {
+        List<Relation> relations = new ArrayList<>();
+        if (snapshot.gaps.contains("observation-budget-exhausted")) return incomplete("observation-budget-exhausted");
+        for (Materialization occurrence : snapshot.witnessMaterializations) {
+            work.run();
+            if (!alphaPreserving(occurrence.matched,occurrence.stored,work)) return incomplete("witness-materialization-shape-mismatch");
+            List<ContextWitnessProjection> applications = new ArrayList<>();
+            for (ContextWitnessProjection application : snapshot.witnessProjections) {
+                work.run();
+                if (application.nativeRule == occurrence.producerRule && sameMatch(application.conclusion,occurrence.matched,work)
+                        && application.producerSupports.equals(occurrence.producerSupports)) applications.add(application);
+            }
+            if (applications.isEmpty()) return incomplete("witness-materialization-application-missing");
+            relations.add(new Relation(replay,occurrence,applications));
+        }
+        return relations.isEmpty() ? incomplete("no-witness-materializations") : new Result(true,"Observed witness materializations matched",relations);
+    }
     static Result inspect(Session session,int maximumWork) {
         if (maximumWork < 1) throw new IllegalArgumentException("Bounded materialization verification required");
         int[] remaining = {maximumWork}; Runnable work = () -> { if (--remaining[0] < 0) throw new IllegalStateException("Witness materialization work limit"); };
-        try {
-            Snapshot snapshot = session.capture.snapshot(); List<Relation> relations = new ArrayList<>();
-            if (snapshot.gaps.contains("observation-budget-exhausted")) return incomplete("observation-budget-exhausted");
-            for (Materialization occurrence : snapshot.witnessMaterializations) {
-                work.run();
-                if (!alphaPreserving(occurrence.matched,occurrence.stored,work)) return incomplete("witness-materialization-shape-mismatch");
-                List<ContextWitnessProjection> applications = new ArrayList<>();
-                for (ContextWitnessProjection application : snapshot.witnessProjections) {
-                    work.run();
-                    if (application.nativeRule == occurrence.producerRule && sameMatch(application.conclusion,occurrence.matched,work)
-                            && application.producerSupports.equals(occurrence.producerSupports)) applications.add(application);
-                }
-                if (applications.isEmpty()) return incomplete("witness-materialization-application-missing");
-                relations.add(new Relation(session.replay,occurrence,applications));
-            }
-            return relations.isEmpty() ? incomplete("no-witness-materializations") : new Result(true,"Observed witness materializations matched",relations);
-        } catch (IllegalStateException failure) { return incomplete(failure.getMessage()); }
+        try { return verify(session.replay,session.capture.snapshot(),work); }
+        catch (IllegalStateException failure) { return incomplete(failure.getMessage()); }
     }
 }

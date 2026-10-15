@@ -115,58 +115,70 @@ final class ContextWitnessPrimaryStepVerifier {
             join(donors,index+1,union,Math.max(depth,donor.depth),maximumDepth,output,work);
         }
     }
+    static final class Scope {
+        final Map<Long,Set<Source>> producers;
+        final Map<Long,List<Clause>> shapes;
+        Scope(Map<Long,Set<Source>> producers,Map<Long,List<Clause>> shapes) { this.producers = producers; this.shapes = shapes; }
+    }
+    static Scope scope(Session session,Snapshot snapshot,Runnable work) {
+        for (String gap : snapshot.gaps) {
+            work.run();
+            if (!(gap.startsWith("cvariable-input:") || gap.startsWith("nonordinary-primary-fact:")
+                || gap.startsWith("nonordinary-conclusion:") || gap.startsWith("nonordinary-premise:")
+                || gap.startsWith("nonordinary-materialization:"))) throw new IllegalStateException("unsupported-capture-gap:"+gap);
+        }
+        Map<Source,Long> sources = new HashMap<>(); Map<Long,Set<Source>> producers = new HashMap<>();
+        Map<Long,List<Clause>> producerShapes = new HashMap<>();
+        Map<Boolean,Source> cutLabels = new HashMap<>();
+        Set<Source> bundleSources = new HashSet<>();
+        for (PrimaryEvidence evidence : session.primary) { work.run(); bundleSources.add(evidence.bundle.source); }
+        for (Input input : snapshot.inputs) {
+            work.run();
+            if (input.source == null) throw new IllegalStateException("derived-input-outside-primary-step");
+            Source label = cutLabels.putIfAbsent(input.source.localX,input.source);
+            if (label != null && (!label.context.equals(input.source.context) || label.revision != input.source.revision
+                || !label.view.equals(input.source.view))) throw new IllegalStateException("incompatible-source-cut");
+            Source opposite = cutLabels.get(!input.source.localX);
+            if (opposite != null && opposite.context.equals(input.source.context)) throw new IllegalStateException("ambiguous-source-role");
+            Long old = sources.put(input.source,input.nativeRule);
+            if (old != null && old != input.nativeRule) throw new IllegalStateException("conflicting-source-occurrence");
+            producers.computeIfAbsent(input.nativeRule,k -> new LinkedHashSet<>()).add(input.source);
+            if (!bundleSources.contains(input.source)) {
+                if (input.variableCount > 2 || input.shapes.size() != input.branches) throw new IllegalStateException("producer-scope-unproved");
+                for (Clause shape : input.shapes) { work.run(); if (shape.literals.size() > 3) throw new IllegalStateException("producer-scope-unproved"); }
+                producerShapes.put(input.nativeRule,input.shapes);
+            }
+        }
+        for (PrimaryEvidence evidence : session.primary) {
+            work.run();
+            if (!Objects.equals(sources.get(evidence.bundle.source),evidence.nativeRule)) throw new IllegalStateException("primary-binding-missing");
+        }
+        return new Scope(producers,producerShapes);
+    }
+    static void application(Scope scope,ContextWitnessProjection observation,Runnable work) {
+        boolean instance = false;
+        for (Clause shape : scope.shapes.getOrDefault(observation.nativeRule,Collections.emptyList()))
+            if (producerInstance(shape,observation,work)) { instance = true; break; }
+        if (!instance) throw new IllegalStateException("witness-producer-instance-mismatch");
+        Set<Source> expected = scope.producers.get(observation.nativeRule), actual = new LinkedHashSet<>();
+        for (Support producer : observation.producerSupports) {
+            work.run(); if (producer.depth != 0 || producer.sources.size() != 1) throw new IllegalStateException("producer-proof-not-primary");
+            actual.addAll(producer.sources);
+        }
+        if (expected == null || !actual.equals(expected)) throw new IllegalStateException("producer-binding-mismatch");
+    }
     static Result inspect(Session session,int maximumDepth,int maximumWork) {
         if (maximumDepth < 0 || maximumWork < 1) throw new IllegalArgumentException("Bounded witness proof verification required");
         int[] left = {maximumWork}; Runnable work = () -> { if (--left[0] < 0) throw new IllegalStateException("Witness proof work limit"); };
         try {
             Snapshot snapshot = session.capture.snapshot();
-            for (String gap : snapshot.gaps) {
-                work.run();
-                if (!(gap.startsWith("cvariable-input:") || gap.startsWith("nonordinary-primary-fact:")
-                        || gap.startsWith("nonordinary-conclusion:") || gap.startsWith("nonordinary-premise:")
-                        || gap.startsWith("nonordinary-materialization:"))) return incomplete("unsupported-capture-gap:"+gap);
-            }
-            Map<Source,Long> sources = new HashMap<>(); Map<Long,Set<Source>> producers = new HashMap<>();
-            Map<Long,List<Clause>> producerShapes = new HashMap<>();
-            Map<Boolean,Source> cutLabels = new HashMap<>();
-            Set<Source> bundleSources = new HashSet<>();
-            for (PrimaryEvidence evidence : session.primary) { work.run(); bundleSources.add(evidence.bundle.source); }
-            for (Input input : snapshot.inputs) {
-                work.run();
-                if (input.source == null) return incomplete("derived-input-outside-primary-step");
-                Source label = cutLabels.putIfAbsent(input.source.localX,input.source);
-                if (label != null && (!label.context.equals(input.source.context) || label.revision != input.source.revision
-                        || !label.view.equals(input.source.view))) return incomplete("incompatible-source-cut");
-                Source opposite = cutLabels.get(!input.source.localX);
-                if (opposite != null && opposite.context.equals(input.source.context)) return incomplete("ambiguous-source-role");
-                Long old = sources.put(input.source,input.nativeRule);
-                if (old != null && old != input.nativeRule) return incomplete("conflicting-source-occurrence");
-                producers.computeIfAbsent(input.nativeRule,k -> new LinkedHashSet<>()).add(input.source);
-                if (!bundleSources.contains(input.source)) {
-                    if (input.variableCount > 2 || input.shapes.size() != input.branches) return incomplete("producer-scope-unproved");
-                    for (Clause shape : input.shapes) { work.run(); if (shape.literals.size() > 3) return incomplete("producer-scope-unproved"); }
-                    producerShapes.put(input.nativeRule,input.shapes);
-                }
-            }
-            for (PrimaryEvidence evidence : session.primary) {
-                work.run();
-                if (!Objects.equals(sources.get(evidence.bundle.source),evidence.nativeRule)) return incomplete("primary-binding-missing");
-            }
+            Scope scope = scope(session,snapshot,work);
             List<Step> steps = new ArrayList<>();
             for (ContextWitnessProjection observation : snapshot.witnessProjections) {
                 work.run();
                 if (observation.premises.isEmpty() || observation.premises.size() > 2) return incomplete("outside-primary-witness-step");
-                boolean instance = false;
-                for (Clause shape : producerShapes.getOrDefault(observation.nativeRule,Collections.emptyList()))
-                    if (producerInstance(shape,observation,work)) { instance = true; break; }
-                if (!instance) return incomplete("witness-producer-instance-mismatch");
+                application(scope,observation,work);
                 if (!knownRoots(observation.conclusion,session.primary,work)) return incomplete("new-witness-outside-primary-step");
-                Set<Source> expected = producers.get(observation.nativeRule), actual = new LinkedHashSet<>();
-                for (Support producer : observation.producerSupports) {
-                    work.run(); if (producer.depth != 0 || producer.sources.size() != 1) return incomplete("producer-proof-not-primary");
-                    actual.addAll(producer.sources);
-                }
-                if (expected == null || !actual.equals(expected)) return incomplete("producer-binding-mismatch");
                 List<List<Support>> donors = new ArrayList<>();
                 for (Literal premise : observation.premises) {
                     List<Support> alternatives = new ArrayList<>();
