@@ -77,3 +77,4 @@ org.kanger.ContextResidualSubsetCaptureRunner | CONTEXT_RESIDUAL_SUBSET_CAPTURE_
 org.kanger.ContextWitnessTransportBoundaryRunner | CONTEXT_WITNESS_TRANSPORT_BOUNDARY_PASS
 org.kanger.ContextWitnessBundleRunner | CONTEXT_WITNESS_BUNDLE_PASS
 org.kanger.ContextWitnessProjectionRunner | CONTEXT_WITNESS_PROJECTION_PASS
+org.kanger.ContextWitnessPrimaryStepRunner | CONTEXT_WITNESS_PRIMARY_STEP_PASS
