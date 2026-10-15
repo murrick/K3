@@ -61,14 +61,19 @@ final class ContextWitnessResultTransport {
         final Set<Source> producers;
         final boolean observedStep;
         final Cut emptyCut;
+        final Cut coveredCut;
         private Packet(List<Item> items) { this(items,null,Collections.emptySet(),false); }
         private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep) {
             this(items,basis,producers,observedStep,null);
         }
         private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep,Cut emptyCut) {
+            this(items,basis,producers,observedStep,emptyCut,null);
+        }
+        private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep,Cut emptyCut,Cut coveredCut) {
             this.items = Collections.unmodifiableList(new ArrayList<>(items)); this.basis = basis;
             this.producers = Collections.unmodifiableSet(new LinkedHashSet<>(producers)); this.observedStep = observedStep;
             this.emptyCut = emptyCut;
+            this.coveredCut = coveredCut;
         }
     }
     static final class Result {
@@ -138,6 +143,8 @@ final class ContextWitnessResultTransport {
                         throw new IllegalStateException("Witness branch has a different input barrier");
                     if (output.emptyCut != null && !cut.equals(output.emptyCut))
                         throw new IllegalStateException("Empty witness branch has a different target cut");
+                    if (output.coveredCut != null && !cut.equals(output.coveredCut))
+                        throw new IllegalStateException("Covered witness branch has a different target cut");
                     if (!parent.equals(parentX(output.items,work))) throw new IllegalStateException("Witness branch changed parent X");
                     boolean matched = false;
                     for (Source producer : output.producers) {
@@ -293,6 +300,20 @@ final class ContextWitnessResultTransport {
                 input,cut,declarations,maximumDepth,maximumWork,maximumEvents);
         if (!checked.covered) return new Result(false,checked.reason,null);
         return new Result(true,checked.reason,new Packet(input.items,input.identity,checked.sources,false,cut));
+    }
+    /** Sound observed proofs plus exhaustive positive Horn proof-pool closure, bound to the owning inputs. */
+    static Result exportCoveredNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+            int maximumDepth,int maximumWork,int maximumEvents) {
+        Result observed = exportNext(round,maximumDepth,maximumWork);
+        if (!observed.exported) return observed;
+        Runnable work = budget(maximumWork);
+        try {
+            List<Input> definitions = ContextWitnessDeclarationCut.capture(round.input,cut,declarations,work,maximumWork,maximumEvents);
+            ContextWitnessHornClosure.sameDeclarations(definitions,round.producerInputs(work),work);
+            int obligations = ContextWitnessHornClosure.verify(observed.packet,definitions,maximumDepth,work);
+            return new Result(true,"Observed positive Horn proof pool closed; obligations="+obligations,
+                    new Packet(observed.packet.items,round.inputIdentity,observed.packet.producers,true,null,cut));
+        } catch (Exception failure) { return new Result(false,failure.getMessage(),null); }
     }
     private static Result pack(List<Item> items,Map<Root,Origin> origins,UUID namespace,List<Route> routes,Runnable work) {
         boolean product = false;
