@@ -15,14 +15,15 @@ import org.kanger.units.Term;
 /** One fresh productive witness pass, seeded by a sealed proof ledger. */
 final class ContextWitnessSeedReplay implements AutoCloseable {
     final UUID namespace;
+    final UUID inputIdentity;
     final List<Item> seeds;
     final Map<Origin,Root> bindings;
     private final Replay replay;
     private final ContextProductionCapture capture;
     private boolean linked, closed;
     private String nativeFailure;
-    private ContextWitnessSeedReplay(Replay replay,int maximumEvents) throws Exception {
-        this.replay = replay; namespace = replay.namespace; seeds = replay.seeds;
+    private ContextWitnessSeedReplay(Replay replay,UUID inputIdentity,int maximumEvents) throws Exception {
+        this.replay = replay; this.inputIdentity = inputIdentity; namespace = replay.namespace; seeds = replay.seeds;
         Map<Origin,Root> roots = new LinkedHashMap<>();
         for (Map.Entry<Origin,Long> entry : replay.witnesses.entrySet()) {
             Term term = (Term)replay.mind.getTerms().get(entry.getValue());
@@ -34,7 +35,7 @@ final class ContextWitnessSeedReplay implements AutoCloseable {
         capture.observeWitnessProjections();
     }
     static ContextWitnessSeedReplay open(Packet packet,int maximumWork,int maximumEvents) throws Exception {
-        return new ContextWitnessSeedReplay(ContextWitnessResultTransport.restore(packet,maximumWork),maximumEvents);
+        return new ContextWitnessSeedReplay(ContextWitnessResultTransport.restore(packet,maximumWork),packet.identity,maximumEvents);
     }
     void rule(Source source,String statement) throws Exception {
         if (closed || linked) throw new IllegalStateException("Witness pass input is sealed");
@@ -98,6 +99,12 @@ final class ContextWitnessSeedReplay implements AutoCloseable {
             }
             return ContextWitnessUnaryChainVerifier.close(namespace,snapshot,scope,imported,maximumDepth,2,work);
         } catch (IllegalStateException failure) { return new Result(false,failure.getMessage(),Collections.emptyList()); }
+    }
+    Set<Source> producerSources(Runnable work) {
+        if (closed || !linked || nativeFailure != null) throw new IllegalStateException("Unsettled witness pass");
+        Set<Source> sources = new LinkedHashSet<>();
+        for (Input input : capture.snapshot().inputs) { work.run(); sources.add(input.source); }
+        return Collections.unmodifiableSet(sources);
     }
     public void close() {
         if (!closed) { capture.close(); closed = true; }

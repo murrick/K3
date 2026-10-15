@@ -34,7 +34,13 @@ final class ContextWitnessResultTransport {
             this.arguments = Collections.unmodifiableList(new ArrayList<>(arguments));
         }
         private boolean same(Atom other,Runnable work) {
-            work.run(); if (!predicate.equals(other.predicate) || positive != other.positive || arguments.size() != other.arguments.size()) return false;
+            return positive == other.positive && shape(other,work);
+        }
+        private boolean opposite(Atom other,Runnable work) {
+            return positive != other.positive && shape(other,work);
+        }
+        private boolean shape(Atom other,Runnable work) {
+            work.run(); if (!predicate.equals(other.predicate) || arguments.size() != other.arguments.size()) return false;
             for (int i=0;i<arguments.size();++i) {
                 work.run(); Slot a = arguments.get(i), b = other.arguments.get(i);
                 if (a.origin != null || b.origin != null) { if (!Objects.equals(a.origin,b.origin)) return false; }
@@ -50,7 +56,15 @@ final class ContextWitnessResultTransport {
     }
     static final class Packet {
         final List<Item> items;
-        private Packet(List<Item> items) { this.items = Collections.unmodifiableList(new ArrayList<>(items)); }
+        final UUID identity = UUID.randomUUID();
+        final UUID basis;
+        final Set<Source> producers;
+        final boolean observedStep;
+        private Packet(List<Item> items) { this(items,null,Collections.emptySet(),false); }
+        private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep) {
+            this.items = Collections.unmodifiableList(new ArrayList<>(items)); this.basis = basis;
+            this.producers = Collections.unmodifiableSet(new LinkedHashSet<>(producers)); this.observedStep = observedStep;
+        }
     }
     static final class Result {
         final boolean exported;
@@ -68,6 +82,131 @@ final class ContextWitnessResultTransport {
             this.mind = mind; this.witnesses = Collections.unmodifiableMap(new LinkedHashMap<>(witnesses));
             this.seeds = Collections.unmodifiableList(new ArrayList<>(seeds));
         }
+    }
+    static final class Cut {
+        final UUID context;
+        final long revision;
+        final String view;
+        final boolean localX;
+        private Cut(Source source) { context = source.context; revision = source.revision; view = source.view; localX = source.localX; }
+        static Cut of(Source source) { return new Cut(source); }
+        public boolean equals(Object other) {
+            if (!(other instanceof Cut)) return false; Cut cut = (Cut)other;
+            return context.equals(cut.context) && revision == cut.revision && view.equals(cut.view) && localX == cut.localX;
+        }
+        public int hashCode() { return Objects.hash(context,revision,view,localX); }
+    }
+    enum FamilyStatus { MERGED, CONFLICT, INCOMPLETE }
+    static final class Opposition {
+        final Item left, right;
+        private Opposition(Item left,Item right) { this.left = left; this.right = right; }
+    }
+    static final class FamilyResult {
+        final FamilyStatus status;
+        final String reason;
+        final Packet packet;
+        final boolean changed;
+        final List<Opposition> conflicts;
+        private FamilyResult(FamilyStatus status,String reason,Packet packet,boolean changed,List<Opposition> conflicts) {
+            this.status = status; this.reason = reason; this.packet = packet; this.changed = changed;
+            this.conflicts = Collections.unmodifiableList(new ArrayList<>(conflicts));
+        }
+    }
+    /** Immutable expected family and exact common input identity. No physical parallelism. */
+    static final class Family {
+        final Packet input;
+        final List<Cut> expected;
+        private final Cut parent;
+        private Family(Packet input,List<Cut> expected,Cut parent) {
+            this.input = input; this.expected = Collections.unmodifiableList(new ArrayList<>(expected)); this.parent = parent;
+        }
+        FamilyResult finish(Map<Cut,Packet> outputs,int maximumWork) {
+            Runnable work = budget(maximumWork);
+            try {
+                if (outputs.size() != expected.size()) throw new IllegalStateException("Incomplete witness family");
+                Map<Cut,Packet> snapshot = new LinkedHashMap<>();
+                for (Map.Entry<Cut,Packet> entry : outputs.entrySet()) { work.run(); snapshot.put(entry.getKey(),entry.getValue()); }
+                if (!snapshot.keySet().equals(new HashSet<>(expected))) throw new IllegalStateException("Unexpected witness family cut");
+                for (Cut cut : expected) {
+                    work.run(); Packet output = snapshot.get(cut);
+                    if (output == null || !output.observedStep || !input.identity.equals(output.basis))
+                        throw new IllegalStateException("Witness branch has a different input barrier");
+                    if (!parent.equals(parentX(output.items,work))) throw new IllegalStateException("Witness branch changed parent X");
+                    boolean matched = false;
+                    for (Source producer : output.producers) {
+                        work.run(); Cut actual = Cut.of(producer);
+                        if (producer.localX) {
+                            if (!parent.equals(actual)) throw new IllegalStateException("Witness branch changed X producer cut");
+                            if (cut.localX) matched = true;
+                        } else {
+                            if (cut.localX || !cut.equals(actual)) throw new IllegalStateException("Witness branch does not match expected foreign cut");
+                            matched = true;
+                        }
+                    }
+                    if (!matched) throw new IllegalStateException("Witness branch has no expected producer cut");
+                }
+                List<Item> merged = new ArrayList<>(input.items);
+                for (Cut cut : expected) for (Item item : snapshot.get(cut).items) for (Support proof : item.proofs) {
+                    work.run(); add(merged,item.atom,proof,work);
+                }
+                List<Opposition> conflicts = new ArrayList<>();
+                for (int i=0;i<merged.size();++i) for (int j=i+1;j<merged.size();++j) {
+                    work.run(); if (merged.get(i).atom.opposite(merged.get(j).atom,work)) conflicts.add(new Opposition(merged.get(i),merged.get(j)));
+                }
+                if (!conflicts.isEmpty()) return new FamilyResult(FamilyStatus.CONFLICT,"Proved opposite literals at one canonical witness",null,false,conflicts);
+                boolean changed = !sameItems(input.items,merged,work);
+                return new FamilyResult(FamilyStatus.MERGED,"All expected witness branches merged; coverage/admission still pending",
+                        new Packet(merged,input.identity,Collections.emptySet(),false),changed,Collections.emptyList());
+            } catch (IllegalStateException failure) {
+                return new FamilyResult(FamilyStatus.INCOMPLETE,failure.getMessage(),null,false,Collections.emptyList());
+            }
+        }
+    }
+    static Family family(Packet input,List<Cut> expected,int maximumWork) {
+        Runnable work = budget(maximumWork); Cut parent = parentX(input.items,work);
+        if (expected.isEmpty() || expected.size() > 16) throw new IllegalArgumentException("Bounded nonempty witness family required");
+        Set<UUID> contexts = new HashSet<>();
+        for (Cut cut : expected) {
+            work.run();
+            if (cut == null || !contexts.add(cut.context) || cut.localX && !parent.equals(cut)
+                    || !cut.localX && parent.context.equals(cut.context))
+                throw new IllegalArgumentException("One exact cut per family context required");
+        }
+        return new Family(input,expected,parent);
+    }
+    private static Cut parentX(List<Item> items,Runnable work) {
+        Cut parent = null;
+        for (Item item : items) for (Support proof : item.proofs) {
+            boolean uses = false;
+            for (Source source : proof.sources) {
+                work.run(); if (!source.localX) continue; uses = true; Cut cut = Cut.of(source);
+                if (parent == null) parent = cut;
+                else if (!parent.equals(cut)) throw new IllegalStateException("Incompatible family X cut");
+            }
+            if (!uses) throw new IllegalStateException("Foreign-only family proof");
+        }
+        if (parent == null) throw new IllegalStateException("Missing family X cut");
+        return parent;
+    }
+    /** Equality of the logical/proof pool, ignoring allocation IDs and list order. Not a coverage verdict. */
+    static boolean sameContents(Packet left,Packet right,int maximumWork) { return sameItems(left.items,right.items,budget(maximumWork)); }
+    private static boolean sameItems(List<Item> left,List<Item> right,Runnable work) {
+        if (left.size() != right.size()) return false;
+        for (Item item : left) {
+            boolean found = false;
+            for (Item other : right) {
+                work.run(); if (!item.atom.same(other.atom,work) || item.proofs.size() != other.proofs.size()) continue;
+                boolean equal = true;
+                for (Support proof : item.proofs) {
+                    boolean present = false;
+                    for (Support candidate : other.proofs) { work.run(); if (proof.equals(candidate)) { present = true; break; } }
+                    if (!present) { equal = false; break; }
+                }
+                if (equal) { found = true; break; }
+            }
+            if (!found) return false;
+        }
+        return true;
     }
     private static Runnable budget(int maximumWork) {
         if (maximumWork < 1) throw new IllegalArgumentException("Bounded transport required");
@@ -128,7 +267,9 @@ final class ContextWitnessResultTransport {
             for (Map.Entry<Origin,Root> entry : round.bindings.entrySet()) {
                 work.run(); if (origins.put(entry.getValue(),entry.getKey()) != null) throw new IllegalStateException("Ambiguous carried origin");
             }
-            return pack(new ArrayList<>(round.seeds),origins,round.namespace,verified.routes,work);
+            Result packed = pack(new ArrayList<>(round.seeds),origins,round.namespace,verified.routes,work);
+            if (!packed.exported) return packed;
+            return new Result(true,packed.reason,new Packet(packed.packet.items,round.inputIdentity,round.producerSources(work),true));
         } catch (IllegalStateException failure) { return new Result(false,failure.getMessage(),null); }
     }
     private static Result pack(List<Item> items,Map<Root,Origin> origins,UUID namespace,List<Route> routes,Runnable work) {
