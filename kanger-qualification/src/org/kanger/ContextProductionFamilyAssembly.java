@@ -63,8 +63,7 @@ public final class ContextProductionFamilyAssembly {
         if (!expected.isEmpty()) throw new IllegalStateException("Unaccounted primary inventory rows");
     }
     private static Cut cut(Snapshot snapshot) {
-        if (snapshot.primary.isEmpty()) throw new IllegalStateException("Empty effective cut needs explicit empty-snapshot support");
-        return Cut.of(snapshot.primary.get(0).source);
+        return Cut.of(snapshot.inventory);
     }
     public static Result assemble(Snapshot x,List<Snapshot> foreign,int maximumWork) {
         if (maximumWork < 1) throw new IllegalArgumentException("Bounded family assembly required");
@@ -88,14 +87,16 @@ public final class ContextProductionFamilyAssembly {
                 if (producer) xProducers.add(new Declaration(entry.source,entry.statement));
                 rows.add(new RowUse(entry.source,producer ? (literals == 0 ? Use.X_PRODUCER : Use.X_SEEDS_AND_PRODUCER) : Use.X_SEEDS,literals));
             }
-            if (xProducers.isEmpty()) throw new IllegalStateException("Empty self-X producer cut is not yet supported; no dummy source invented");
-            List<Branch> branches = new ArrayList<>(); branches.add(ContextWitnessFamilyFixedPoint.branch(cut(x),xProducers));
+            List<Branch> branches = new ArrayList<>();
+            branches.add(xProducers.isEmpty() ? ContextWitnessFamilyFixedPoint.emptyBranch(ContextWitnessEmptyTarget.of(x,work),xProducers)
+                    : ContextWitnessFamilyFixedPoint.branch(cut(x),xProducers));
             for (Snapshot source : sources) {
                 List<Declaration> declarations = new ArrayList<>(xProducers);
                 for (Entry entry : source.primary) {
                     work.run(); declarations.add(new Declaration(entry.source,entry.statement)); rows.add(new RowUse(entry.source,Use.FOREIGN_CUT,0));
                 }
-                branches.add(ContextWitnessFamilyFixedPoint.branch(cut(source),declarations));
+                branches.add(source.primary.isEmpty() ? ContextWitnessFamilyFixedPoint.emptyBranch(ContextWitnessEmptyTarget.of(source,work),declarations)
+                        : ContextWitnessFamilyFixedPoint.branch(cut(source),declarations));
             }
             ContextWitnessFamilyFixedPoint.Plan plan = ContextWitnessFamilyFixedPoint.plan(branches);
             return new Result(true,"Every bound primary row accounted as X seeds/producers or its own foreign cut",new Artifact(x,sources,rows,seeds.packet,plan));

@@ -14,20 +14,27 @@ import org.kanger.units.Rule;
 final class ContextWitnessDeclarationCut {
     static List<Input> capture(Packet input,Cut cut,List<Declaration> declarations,Runnable work,
             int maximumWork,int maximumEvents) throws Exception {
+        return capture(input,cut,declarations,work,maximumWork,maximumEvents,null);
+    }
+    static List<Input> capture(Packet input,Cut cut,List<Declaration> declarations,Runnable work,
+            int maximumWork,int maximumEvents,ContextWitnessEmptyTarget emptyTarget) throws Exception {
+        if (emptyTarget != null) emptyTarget.validate(cut,work);
         // Validate the entire supplied declaration snapshot before using shapes.
         ContextWitnessResultTransport.family(input,Collections.singletonList(cut),maximumWork);
         Cut parent = null;
         for (Item item : input.items) for (Support proof : item.proofs) for (Source source : proof.sources) {
             work.run(); if (source.localX) parent = Cut.of(source);
         }
-        if (declarations.isEmpty() || declarations.size() > 64) throw new IllegalStateException("Bounded nonempty declaration cut required");
+        if (declarations.isEmpty() && emptyTarget == null || declarations.size() > 64) throw new IllegalStateException("Bounded nonempty declaration cut required");
         List<Declaration> snapshot = new ArrayList<>(declarations); Set<Source> seen = new HashSet<>();
-        boolean target = false;
+        boolean target = emptyTarget != null;
         User user = new User(); Mind mind = new Mind(user); user.setCurrentMind(mind);
         List<Input> inputs;
         try (ContextProductionCapture capture = ContextProductionCapture.begin(mind,maximumEvents)) {
             for (Declaration declaration : snapshot) {
                 work.run(); Source source = declaration.source; Cut actual = Cut.of(source);
+                if (emptyTarget != null && (cut.localX || !source.localX))
+                    throw new IllegalStateException("Declaration contradicts empty target proof");
                 if (!seen.add(source)) throw new IllegalStateException("Duplicate declaration source occurrence");
                 if (!(source.localX ? actual.equals(parent) : !cut.localX && actual.equals(cut)))
                     throw new IllegalStateException("Declaration producer outside expected cut");

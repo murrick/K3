@@ -107,9 +107,9 @@ public final class ContextProductionFamilyAssemblyRunner {
             Item finished = item(alternatives.qualification.fixedPoint.packet,"finished");
             require(proof(finished,2,source(alternativesX,"!left"),source(alternativesX,"@x left"),source(groundJoinA,"@x"))
                     && proof(finished,2,source(alternativesX,"!right"),source(alternativesX,"@x right"),source(groundJoinA,"@x")),"ordinary duplicate conclusion retains both whole source alternatives through the next cut");
-            refused(ContextProductionFamilyAssembly.assemble(snapshot(9,true,"!$w p(w,1);"),Collections.emptyList(),WORK),"no synthetic rule supplies a missing self-X producer cut");
+            require(assemble(snapshot(9,true,"!$w p(w,1);")).evaluate(12,16,WORK,100000).status == Status.FIXED_POINT,"seed-only X has explicit empty producer coverage without a dummy rule");
             refused(ContextProductionFamilyAssembly.assemble(snapshot(10,true,"!@w p(w,1)->warm(w,1);"),Collections.emptyList(),WORK),"no synthetic seed supplies a missing X knowledge anchor");
-            refused(ContextProductionFamilyAssembly.assemble(x,Arrays.asList(snapshot(11,false,"")),WORK),"empty foreign cut requires explicit future completion support");
+            require(assemble(x,snapshot(11,false,"")).evaluate(12,16,WORK,100000).status == Status.FIXED_POINT,"empty foreign snapshot covers its target and shared X producers explicitly");
             refused(ContextProductionFamilyAssembly.assemble(a,Arrays.asList(b),WORK),"foreign-role snapshot cannot become X");
             refused(ContextProductionFamilyAssembly.assemble(x,Arrays.asList(x),WORK),"X snapshot cannot be relabelled foreign");
             refused(ContextProductionFamilyAssembly.assemble(x,Arrays.asList(a,a),WORK),"duplicate foreign Context cannot be accepted twice");

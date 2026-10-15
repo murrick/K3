@@ -42,7 +42,7 @@ final class ContextWitnessFamilyQualification {
             ++barrier; List<ContextWitnessClauseCollision.Result> found = new ArrayList<>();
             for (Branch branch : supplied.branches) {
                 ContextWitnessClauseCollision.Result scan = ContextWitnessClauseCollision.inspect(packet,branch.cut,branch.declarations,
-                        limits.depth,limits.work,limits.events);
+                        limits.depth,limits.work,limits.events,branch.emptyTarget);
                 if (!scan.scanned) throw new IllegalStateException("Incomplete full-cut collision scan: "+scan.reason);
                 if (scan.status == ContextWitnessClauseCollision.Status.COLLISION) found.add(scan);
             }
@@ -59,7 +59,7 @@ final class ContextWitnessFamilyQualification {
             List<Branch> producerBranches = new ArrayList<>(); boolean self = false;
             for (Branch branch : supplied.branches) {
                 Runnable work = budget(limits.work);
-                List<Input> definitions = ContextWitnessDeclarationCut.capture(input,branch.cut,branch.declarations,work,limits.work,limits.events);
+                List<Input> definitions = ContextWitnessDeclarationCut.capture(input,branch.cut,branch.declarations,work,limits.work,limits.events,branch.emptyTarget);
                 ContextWitnessHornClosure.validate(input,Collections.emptyList(),limits.depth,work);
                 Map<Source,Boolean> eligible = new HashMap<>();
                 for (Input definition : definitions) {
@@ -69,12 +69,13 @@ final class ContextWitnessFamilyQualification {
                     catch (IllegalStateException outside) { supported = false; uncovered.add(definition.source); }
                     eligible.put(definition.source,supported);
                 }
-                List<Declaration> producers = new ArrayList<>(); boolean target = false;
+                List<Declaration> producers = new ArrayList<>(); boolean target = branch.emptyTarget != null;
                 for (Declaration declaration : branch.declarations) if (eligible.get(declaration.source)) {
                     producers.add(declaration); target |= Cut.of(declaration.source).equals(branch.cut);
                 }
                 if (target) {
-                    producerBranches.add(ContextWitnessFamilyFixedPoint.branch(branch.cut,producers)); self |= branch.cut.localX;
+                    producerBranches.add(branch.emptyTarget == null ? ContextWitnessFamilyFixedPoint.branch(branch.cut,producers)
+                            : ContextWitnessFamilyFixedPoint.emptyBranch(branch.emptyTarget,producers)); self |= branch.cut.localX;
                 }
             }
             scan.inspect(input); // barrier0: a contradiction may already be proved without any inference.

@@ -20,11 +20,17 @@ final class ContextWitnessFamilyFixedPoint {
     static final class Branch {
         final Cut cut;
         final List<Declaration> declarations;
-        private Branch(Cut cut,List<Declaration> declarations) {
+        final ContextWitnessEmptyTarget emptyTarget;
+        private Branch(Cut cut,List<Declaration> declarations,ContextWitnessEmptyTarget emptyTarget) {
+            this.emptyTarget = emptyTarget;
+            if (emptyTarget != null) emptyTarget.validate(cut,() -> {});
             this.cut = Objects.requireNonNull(cut); this.declarations = Collections.unmodifiableList(new ArrayList<>(declarations));
         }
     }
-    static Branch branch(Cut cut,List<Declaration> declarations) { return new Branch(cut,declarations); }
+    static Branch branch(Cut cut,List<Declaration> declarations) { return new Branch(cut,declarations,null); }
+    static Branch emptyBranch(ContextWitnessEmptyTarget emptyTarget,List<Declaration> declarations) {
+        return new Branch(emptyTarget.cut,declarations,emptyTarget);
+    }
     static final class Round {
         final UUID input, output;
         final boolean changed;
@@ -60,7 +66,7 @@ final class ContextWitnessFamilyFixedPoint {
                 if (branch.cut.localX) {
                     if (self != null) throw new IllegalArgumentException("Exactly one self-X branch required"); self = branch;
                 }
-                if (branch.declarations.isEmpty() || branch.declarations.size() > 64) throw new IllegalArgumentException("Bounded nonempty declaration snapshot required");
+                if (branch.declarations.isEmpty() && branch.emptyTarget == null || branch.declarations.size() > 64) throw new IllegalArgumentException("Bounded nonempty declaration snapshot required");
             }
             if (self == null) throw new IllegalArgumentException("Exactly one self-X branch required");
             Map<Source,String> shared = xDeclarations(self);
@@ -85,7 +91,7 @@ final class ContextWitnessFamilyFixedPoint {
                 ContextWitnessResultTransport.family(input,expected,limits.work);
                 for (Branch branch : branches) {
                     Runnable work = budget(limits.work);
-                    List<Input> definitions = ContextWitnessDeclarationCut.capture(input,branch.cut,branch.declarations,work,limits.work,limits.events);
+                    List<Input> definitions = ContextWitnessDeclarationCut.capture(input,branch.cut,branch.declarations,work,limits.work,limits.events,branch.emptyTarget);
                     ContextWitnessHornClosure.validate(input,definitions,limits.depth,work);
                 }
                 for (int number=0;number<limits.rounds;++number) {
@@ -93,13 +99,13 @@ final class ContextWitnessFamilyFixedPoint {
                     Map<Cut,Packet> outputs = new LinkedHashMap<>(); int productive = 0, unchanged = 0;
                     for (Branch branch : branches) {
                         ContextWitnessResultTransport.Result result = ContextWitnessResultTransport.exportHornUnchanged(
-                                current,branch.cut,branch.declarations,limits.depth,limits.work,limits.events);
+                                current,branch.cut,branch.declarations,limits.depth,limits.work,limits.events,branch.emptyTarget);
                         if (result.exported) ++unchanged;
                         else {
                             try (ContextWitnessSeedReplay nativePass = ContextWitnessSeedReplay.open(current,limits.work,limits.events)) {
                                 for (Declaration declaration : branch.declarations) nativePass.rule(declaration.source,declaration.statement);
                                 result = ContextWitnessResultTransport.exportRoundNext(nativePass,branch.cut,branch.declarations,
-                                        limits.depth,limits.work,limits.events);
+                                        limits.depth,limits.work,limits.events,branch.emptyTarget);
                             }
                             if (!result.exported) throw new IllegalStateException("Round "+(number+1)+" branch incomplete: "+result.reason);
                             ++productive;
@@ -116,7 +122,7 @@ final class ContextWitnessFamilyFixedPoint {
                         // Round coverage never substitutes for a full unchanged-pool closure verdict.
                         for (Branch branch : branches) {
                             ContextWitnessResultTransport.Result closed = ContextWitnessResultTransport.exportHornUnchanged(
-                                    current,branch.cut,branch.declarations,limits.depth,limits.work,limits.events);
+                                    current,branch.cut,branch.declarations,limits.depth,limits.work,limits.events,branch.emptyTarget);
                             if (!closed.exported) throw new IllegalStateException("Unchanged barrier is not closed: "+closed.reason);
                         }
                         return new Result(Status.FIXED_POINT,"Supplied positive Horn family proof pools reached a common fixed point; admission pending",current,trace,this,input);

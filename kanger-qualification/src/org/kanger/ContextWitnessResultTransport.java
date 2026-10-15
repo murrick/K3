@@ -63,6 +63,7 @@ final class ContextWitnessResultTransport {
         final Cut emptyCut;
         final Cut coveredCut;
         final Cut roundCut;
+        final ContextWitnessEmptyTarget emptyTarget;
         private Packet(List<Item> items) { this(items,null,Collections.emptySet(),false); }
         private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep) {
             this(items,basis,producers,observedStep,null);
@@ -74,6 +75,10 @@ final class ContextWitnessResultTransport {
             this(items,basis,producers,observedStep,emptyCut,coveredCut,null);
         }
         private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep,Cut emptyCut,Cut coveredCut,Cut roundCut) {
+            this(items,basis,producers,observedStep,emptyCut,coveredCut,roundCut,null);
+        }
+        private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep,Cut emptyCut,Cut coveredCut,Cut roundCut,ContextWitnessEmptyTarget emptyTarget) {
+            this.emptyTarget = emptyTarget;
             this.roundCut = roundCut;
             this.items = Collections.unmodifiableList(new ArrayList<>(items)); this.basis = basis;
             this.producers = Collections.unmodifiableSet(new LinkedHashSet<>(producers)); this.observedStep = observedStep;
@@ -105,6 +110,10 @@ final class ContextWitnessResultTransport {
         final boolean localX;
         private Cut(Source source) { context = source.context; revision = source.revision; view = source.view; localX = source.localX; }
         static Cut of(Source source) { return new Cut(source); }
+        private Cut(ContextProductionInventory inventory) {
+            context = inventory.context; revision = inventory.revision; view = "inventory:"+inventory.fingerprint; localX = inventory.localX;
+        }
+        static Cut of(ContextProductionInventory inventory) { return new Cut(inventory); }
         public boolean equals(Object other) {
             if (!(other instanceof Cut)) return false; Cut cut = (Cut)other;
             return context.equals(cut.context) && revision == cut.revision && view.equals(cut.view) && localX == cut.localX;
@@ -153,7 +162,8 @@ final class ContextWitnessResultTransport {
                     if (output.roundCut != null && !cut.equals(output.roundCut))
                         throw new IllegalStateException("Round witness branch has a different target cut");
                     if (!parent.equals(parentX(output.items,work))) throw new IllegalStateException("Witness branch changed parent X");
-                    boolean matched = false;
+                    boolean matched = output.emptyTarget != null;
+                    if (matched) output.emptyTarget.validate(cut,work);
                     for (Source producer : output.producers) {
                         work.run(); Cut actual = Cut.of(producer);
                         if (producer.localX) {
@@ -359,34 +369,46 @@ final class ContextWitnessResultTransport {
     /** Full coverage of the exact immutable round input, without claiming output saturation. */
     static Result exportRoundNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
             int maximumDepth,int maximumWork,int maximumEvents) {
-        return exportVerifiedNext(round,cut,declarations,maximumDepth,maximumWork,maximumEvents,true);
+        return exportRoundNext(round,cut,declarations,maximumDepth,maximumWork,maximumEvents,null);
+    }
+    static Result exportRoundNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+            int maximumDepth,int maximumWork,int maximumEvents,ContextWitnessEmptyTarget emptyTarget) {
+        return exportVerifiedNext(round,cut,declarations,maximumDepth,maximumWork,maximumEvents,true,emptyTarget);
     }
     private static Result exportVerifiedNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
             int maximumDepth,int maximumWork,int maximumEvents,boolean roundStep) {
+        return exportVerifiedNext(round,cut,declarations,maximumDepth,maximumWork,maximumEvents,roundStep,null);
+    }
+    private static Result exportVerifiedNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+            int maximumDepth,int maximumWork,int maximumEvents,boolean roundStep,ContextWitnessEmptyTarget emptyTarget) {
         Result observed = exportNext(round,maximumDepth,maximumWork);
         if (!observed.exported) return observed;
         Runnable work = budget(maximumWork);
         try {
-            List<Input> definitions = ContextWitnessDeclarationCut.capture(round.input,cut,declarations,work,maximumWork,maximumEvents);
+            List<Input> definitions = ContextWitnessDeclarationCut.capture(round.input,cut,declarations,work,maximumWork,maximumEvents,emptyTarget);
             ContextWitnessHornClosure.sameDeclarations(definitions,round.producerInputs(work),work);
             int obligations = roundStep ? ContextWitnessHornClosure.verifyRound(round.input,observed.packet,definitions,maximumDepth,work)
                     : ContextWitnessHornClosure.verify(observed.packet,definitions,maximumDepth,work);
             return new Result(true,(roundStep ? "Input-enabled positive Horn round covered; obligations=" : "Observed positive Horn proof pool closed; obligations=")+obligations,
-                    new Packet(observed.packet.items,round.inputIdentity,observed.packet.producers,true,null,roundStep ? null : cut,roundStep ? cut : null));
+                    new Packet(observed.packet.items,round.inputIdentity,observed.packet.producers,true,null,roundStep ? null : cut,roundStep ? cut : null,emptyTarget));
         } catch (Exception failure) { return new Result(false,failure.getMessage(),null); }
     }
     /** An already closed sound input needs no new native event, even when rule bodies are enabled. */
     static Result exportHornUnchanged(Packet input,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
             int maximumDepth,int maximumWork,int maximumEvents) {
+        return exportHornUnchanged(input,cut,declarations,maximumDepth,maximumWork,maximumEvents,null);
+    }
+    static Result exportHornUnchanged(Packet input,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+            int maximumDepth,int maximumWork,int maximumEvents,ContextWitnessEmptyTarget emptyTarget) {
         Runnable work = budget(maximumWork);
         try {
             if (maximumDepth < 0) throw new IllegalArgumentException("Bounded Horn unchanged proof required");
-            List<Input> definitions = ContextWitnessDeclarationCut.capture(input,cut,declarations,work,maximumWork,maximumEvents);
+            List<Input> definitions = ContextWitnessDeclarationCut.capture(input,cut,declarations,work,maximumWork,maximumEvents,emptyTarget);
             int obligations = ContextWitnessHornClosure.verify(input,definitions,maximumDepth,work);
             Set<Source> sources = new LinkedHashSet<>();
             for (Input definition : definitions) { work.run(); sources.add(definition.source); }
             return new Result(true,"Unchanged positive Horn proof pool closed; obligations="+obligations,
-                    new Packet(input.items,input.identity,sources,false,cut,cut));
+                    new Packet(input.items,input.identity,sources,false,cut,cut,null,emptyTarget));
         } catch (Exception failure) { return new Result(false,failure.getMessage(),null); }
     }
     private static Result pack(List<Item> items,Map<Root,Origin> origins,UUID namespace,List<Route> routes,Runnable work) {

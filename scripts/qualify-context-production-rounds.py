@@ -57,6 +57,7 @@ def main():
                  ('org.kanger.ContextProductionFamilyAssemblyRunner', 'CONTEXT_PRODUCTION_FAMILY_ASSEMBLY_PASS'),
                  ('org.kanger.ContextGroundApplicationVerifierRunner', 'CONTEXT_GROUND_APPLICATION_VERIFIER_PASS'),
                  ('org.kanger.ContextWitnessRoundCoverageRunner', 'CONTEXT_WITNESS_ROUND_COVERAGE_PASS'),
+                 ('org.kanger.ContextWitnessEmptyTargetRunner', 'CONTEXT_WITNESS_EMPTY_TARGET_PASS'),
                  ('org.kanger.storage.dumb2.ContextWitnessPrimaryIdentityStorageRunner', 'CONTEXT_WITNESS_PRIMARY_IDENTITY_STORAGE_PASS'),
                  ('org.kanger.storage.dumb2.GroundDisjunctionQualificationRunner', 'GROUND_DISJUNCTION_QUALIFICATION_PASS'),
                  ('org.kanger.DmzTerminalSupportCaptureRunner', 'DMZ_TERMINAL_SUPPORT_CAPTURE_PASS'),

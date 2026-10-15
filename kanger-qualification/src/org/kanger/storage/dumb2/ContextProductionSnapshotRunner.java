@@ -18,7 +18,7 @@ public final class ContextProductionSnapshotRunner {
     private static RevisionRef create(Path dir,String name,String text) throws Exception {
         User user = new User(); user.setDatabaseDir(dir.toString()+File.separator); DB db = new DB(); db.init(user);
         Mind root = new Mind(user); user.setCurrentMind(root); Mind mind = (Mind)root.useStorage(name); user.setCurrentMind(mind);
-        try { require(mind.compile(text,null,false),"fixture "+name); }
+        try { if (!text.isEmpty()) require(mind.compile(text,null,false),"fixture "+name); }
         finally { user.setCurrentMind(mind.closeStorage()); }
         try (ContextSnapshot snapshot = ContextSnapshot.open(dir.resolve(name))) { return new RevisionRef(snapshot.getContextId(),snapshot.getRevision()); }
     }
@@ -96,6 +96,25 @@ public final class ContextProductionSnapshotRunner {
                 }
                 require(db.getRevision() >= revision && Boolean.TRUE.equals(x.query("?",null,false)),"read-only snapshot qualification leaves settled X consistent");
             } finally { user.setCurrentMind(x.closeStorage()); }
+            create(dir,"Empty","");
+            User emptyUser = new User(); emptyUser.setDatabaseDir(dir.toString()+File.separator); DB emptyDb = new DB(); emptyDb.init(emptyUser);
+            Mind emptyRoot = new Mind(emptyUser); emptyUser.setCurrentMind(emptyRoot); Mind seedX = (Mind)emptyRoot.useStorage("SeedOnly"); emptyUser.setCurrentMind(seedX);
+            try {
+                require(seedX.compile("!$w seed(w,1);",null,false),"real seed-only X fixture"); emptyDb.connectContext("Empty");
+                long before = emptyDb.getRevision(); int rows = seedX.getRules().size();
+                ContextProductionSnapshotSession absent = ContextProductionSnapshotSession.open(emptyDb,seedX,1000);
+                try {
+                    require(absent.inventory().foreign.get(0).primary.isEmpty(),"real pinned foreign has an explicit empty primary inventory");
+                    require(absent.qualify(12,16,4000000,100000).status == ContextProductionFamilyAssembly.Status.FIXED_POINT,"real empty foreign and seed-only X qualify without synthetic sources");
+                    require(emptyDb.getRevision() == before && seedX.getRules().size() == rows,"empty-target qualification does not modify source knowledge");
+                    emptyDb.applyConnectionCommand(seedX,"Empty","!private(4);");
+                    reject(absent::requireCurrent,"private effective initialization revokes old empty inventory authority");
+                } finally { absent.close(); }
+                try (ContextProductionSnapshotSession changed = ContextProductionSnapshotSession.open(emptyDb,seedX,1000)) {
+                    require(!changed.inventory().foreign.get(0).primary.isEmpty(),"new effective view exposes the added primary fact");
+                    require(changed.qualify(12,16,4000000,100000).status == ContextProductionFamilyAssembly.Status.INCOMPLETE,"formerly empty target cannot retain vacuous coverage after initialization");
+                }
+            } finally { emptyUser.setCurrentMind(seedX.closeStorage()); }
             System.out.println("CONTEXT_PRODUCTION_SNAPSHOT_PASS checks="+checks); System.exit(0);
         } catch (Throwable failure) { failure.printStackTrace(); System.exit(1); }
     }

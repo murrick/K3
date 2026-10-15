@@ -95,10 +95,13 @@ final class ContextWitnessClauseCollision {
     }
     /** A fresh compiler authenticates universal clause shape; no native link or general inference. */
     static Result inspect(Packet input,Cut cut,List<Declaration> declarations,int maximumDepth,int maximumWork,int maximumEvents) {
+        return inspect(input,cut,declarations,maximumDepth,maximumWork,maximumEvents,null);
+    }
+    static Result inspect(Packet input,Cut cut,List<Declaration> declarations,int maximumDepth,int maximumWork,int maximumEvents,ContextWitnessEmptyTarget emptyTarget) {
         if (maximumDepth < 0 || maximumWork < 1 || maximumEvents < 1) throw new IllegalArgumentException("Bounded collision verification required");
         int[] remaining = {maximumWork}; Runnable work = () -> { if (--remaining[0] < 0) throw new IllegalStateException("Clause collision work limit"); };
         try {
-            List<Input> inputs = ContextWitnessDeclarationCut.capture(input,cut,declarations,work,maximumWork,maximumEvents);
+            List<Input> inputs = ContextWitnessDeclarationCut.capture(input,cut,declarations,work,maximumWork,maximumEvents,emptyTarget);
             List<Evidence> evidence = new ArrayList<>();
             for (Input declaration : inputs) for (Clause clause : declaration.shapes)
                 instances(declaration.source,clause,input,0,new LinkedHashMap<>(),new ArrayList<>(),maximumDepth,evidence,work);
