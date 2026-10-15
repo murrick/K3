@@ -595,7 +595,14 @@ public class Domain extends Solve implements IUnit<Domain>, Comparable<Domain> {
                 if (arguments.get(i).getType() == to.getArguments().get(i).getType()) {
                     switch (arguments.get(i).getType()) {
                         case TVARIABLE:
-                            if (getVarOrder(mind, i) != to.getVarOrder(mind, i)) {
+                            // Atom-local order alone loses sharing between literals:
+                            // p(x)->q(x) must not equal p(x)->q(y). Match the
+                            // Rule-relative binder position as recursive functions do.
+                            if (getVarOrder(mind, i) != to.getVarOrder(mind, i)
+                                    || ((TVariable) arguments.get(i).getObject(mind)).getIndex()
+                                            - ((Rule) getRule()).getVarIndex()
+                                    != ((TVariable) to.getArguments().get(i).getObject(mind)).getIndex()
+                                            - ((Rule) to.getRule()).getVarIndex()) {
                                 return false;
                             }
                             break;

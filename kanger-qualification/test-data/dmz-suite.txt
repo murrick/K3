@@ -67,3 +67,4 @@ org.kanger.DmzSuccessiveCacheRestrictionsRunner | DMZ_SUCCESSIVE_CACHE_RESTRICTI
 org.kanger.DmzAccumulatedSourcePreparationRunner | DMZ_ACCUMULATED_SOURCE_PREPARATION_PASS
 org.kanger.storage.dumb2.DmzRestrictionFamilyRunner | DMZ_RESTRICTION_FAMILY_PASS
 org.kanger.storage.dumb2.DmzFamilyManualFixtureRunner | DMZ_FAMILY_MANUAL_FIXTURE_PASS
+org.kanger.RuleVariableIdentityRunner | RULE_VARIABLE_IDENTITY_PASS
