@@ -34,6 +34,7 @@ def main():
                  ('org.kanger.ContextVerifiedHornCoverageRunner', 'CONTEXT_VERIFIED_HORN_COVERAGE_PASS'),
                  ('org.kanger.ContextResidualSubsetCaptureRunner', 'CONTEXT_RESIDUAL_SUBSET_CAPTURE_PASS'),
                  ('org.kanger.ContextWitnessTransportBoundaryRunner', 'CONTEXT_WITNESS_TRANSPORT_BOUNDARY_PASS'),
+                 ('org.kanger.ContextWitnessBundleRunner', 'CONTEXT_WITNESS_BUNDLE_PASS'),
                  ('org.kanger.storage.dumb2.GroundDisjunctionQualificationRunner', 'GROUND_DISJUNCTION_QUALIFICATION_PASS'),
                  ('org.kanger.DmzTerminalSupportCaptureRunner', 'DMZ_TERMINAL_SUPPORT_CAPTURE_PASS'),
                  ('org.kanger.DmzCollisionProofCaptureRunner', 'DMZ_COLLISION_PROOF_CAPTURE_PASS'),
