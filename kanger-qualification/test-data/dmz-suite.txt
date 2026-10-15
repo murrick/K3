@@ -96,3 +96,4 @@ org.kanger.ContextWitnessFamilyQualificationRunner | CONTEXT_WITNESS_FAMILY_QUAL
 org.kanger.storage.dumb2.ContextProductionSnapshotRunner | CONTEXT_PRODUCTION_SNAPSHOT_PASS
 org.kanger.ContextProductionNativeBindingRunner | CONTEXT_PRODUCTION_NATIVE_BINDING_PASS
 org.kanger.ContextProductionFamilyAssemblyRunner | CONTEXT_PRODUCTION_FAMILY_ASSEMBLY_PASS
+org.kanger.ContextGroundApplicationVerifierRunner | CONTEXT_GROUND_APPLICATION_VERIFIER_PASS
