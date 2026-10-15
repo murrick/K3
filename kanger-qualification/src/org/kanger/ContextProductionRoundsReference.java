@@ -412,6 +412,7 @@ public final class ContextProductionRoundsReference {
                              TechnicalMindTransaction transaction = TechnicalMindTransaction.begin(work)) {
                             Mind participant = transaction.mind();
                             participant.setQueryPass(org.kanger.enums.QueryPass.ACCEPT);
+                            if (verifiedHorn) capture.observeResidualSubsets();
                             for (Declaration declaration : local) capture.replay(participant, declaration.source, declaration.statement);
                             for (Bucket bucket : participantState) {
                                 List<Support> supports = new ArrayList<>();

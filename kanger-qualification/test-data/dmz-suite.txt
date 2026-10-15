@@ -73,3 +73,4 @@ org.kanger.ContextVerifiedLinearCoverageRunner | CONTEXT_VERIFIED_LINEAR_COVERAG
 org.kanger.ContextHornResidualVerifierRunner | CONTEXT_HORN_RESIDUAL_VERIFIER_PASS
 org.kanger.ContextUniversalInstanceEvidenceRunner | CONTEXT_UNIVERSAL_INSTANCE_EVIDENCE_PASS
 org.kanger.ContextVerifiedHornCoverageRunner | CONTEXT_VERIFIED_HORN_COVERAGE_PASS
+org.kanger.ContextResidualSubsetCaptureRunner | CONTEXT_RESIDUAL_SUBSET_CAPTURE_PASS

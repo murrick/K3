@@ -437,6 +437,7 @@ public final class ContextProductionCapture implements AutoCloseable {
     private final List<RotationPlan> rotationPlans = new ArrayList<>();
     private int rotationVisits;
     private long rotationComparisons;
+    private boolean residualSubsets;
     private final Map<Mind, Map<Long, List<Support>>> labels = new IdentityHashMap<>();
     private Mind inputTarget;
     private Source inputSource;
@@ -451,6 +452,10 @@ public final class ContextProductionCapture implements AutoCloseable {
     }
     public static ContextProductionCapture begin(Mind boundary, int maximumEvents) {
         return new ContextProductionCapture(boundary, maximumEvents);
+    }
+    /** Opt-in observation of partial reductions at actual native database visits. */
+    public void observeResidualSubsets() {
+        check(); residualSubsets = true;
     }
     public void verifyParametersFresh(List<SemanticTermSnapshot> parameters) {
         check();
@@ -700,6 +705,43 @@ public final class ContextProductionCapture implements AutoCloseable {
         List<Support> supports = capture.sources(mind, rule.getId());
         if (supports.isEmpty()) capture.gaps.add("unlabelled-residual:" + rule.getId());
         capture.take(); capture.residuals.add(new Residual(conclusion, premises, supports));
+    }
+    /** Record only subsets of exclusions already established by native matching.
+     * Remaining literals keep their current bindings; no branch metadata is used
+     * as an asserted premise and no native rule or binding is installed. */
+    static void residualSubsets(Mind mind,List<Domain> branch) throws Exception {
+        ContextProductionCapture capture = ACTIVE.get();
+        if (capture == null || !capture.residualSubsets || !capture.visible(mind)
+                || (mind.getQueryPass() != QueryPass.CHECK && mind.getQueryPass() != QueryPass.ACCEPT)) return;
+        capture.check();
+        if (branch.isEmpty()) return;
+        Rule rule = (Rule)branch.get(0).getRule();
+        if (rule.isQuery()) return;
+        if (branch.size() > 3) { capture.gaps.add("residual-subset-scope:"+rule.getId()); return; }
+        int excluded = 0;
+        for (int i=0;i<branch.size();++i) {
+            Domain literal = branch.get(i);
+            if (literal.isSystem(mind) || literal.isCalculated(mind)) return;
+            if (literal.isExcluded(mind)) excluded |= 1 << i;
+        }
+        if (excluded == 0) return;
+        List<Support> producers = capture.sources(mind,rule.getId());
+        if (producers.isEmpty()) { capture.gaps.add("unlabelled-residual:"+rule.getId()); return; }
+        for (int subset=excluded;subset!=0;subset=(subset-1)&excluded) {
+            if (subset == (1 << branch.size())-1) continue;
+            List<Domain> remaining = new ArrayList<>(); List<Fact> premises = new ArrayList<>();
+            for (int i=0;i<branch.size();++i) {
+                if ((subset & (1 << i)) == 0) remaining.add(branch.get(i));
+                else {
+                    Fact premise = Fact.of(branch.get(i),mind,true);
+                    if (premise == null) { capture.gaps.add("residual-subset-premise:"+rule.getId()); return; }
+                    premises.add(premise);
+                }
+            }
+            Clause conclusion = Clause.of(remaining,mind,true);
+            if (conclusion == null) { capture.gaps.add("residual-subset-conclusion:"+rule.getId()); return; }
+            capture.take(); capture.residuals.add(new Residual(conclusion,premises,producers));
+        }
     }
     static void stored(Mind mind, Domain producer, IRule result) throws Exception {
         ContextProductionCapture capture = ACTIVE.get();

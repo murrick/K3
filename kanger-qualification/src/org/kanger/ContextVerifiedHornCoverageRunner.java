@@ -90,16 +90,15 @@ public final class ContextVerifiedHornCoverageRunner {
                         && p.supports.stream().anyMatch(proof -> proof.depth == 1 && proof.sources.equals(
                         new LinkedHashSet<>(Arrays.asList(rule.get(0).source,inputs.get(0).source,inputs.get(1).source))))),
                         "fully matched native rule has its valid joint unit proof");
-                require(r.products.stream().noneMatch(p -> p.clause.literals.size() == 2),
-                        "fully matched native cut does not export partial residual groups");
+                for (Declaration donor : inputs) require(r.products.stream().filter(p -> p.clause.literals.size() == 2)
+                        .anyMatch(p -> p.supports.stream().anyMatch(proof -> proof.depth == 1 && proof.sources.equals(
+                        new LinkedHashSet<>(Arrays.asList(rule.get(0).source,donor.source))))),
+                        "each native exclusion retains its partial whole-source residual");
             }
             if (mask == 7) require(r.status == Status.COLLISION && r.collision != null,"Boolean contradiction has a native witness");
             else {
                 System.out.println("HORN_BOOLEAN mask="+mask+" status="+r.status+" reason="+r.reason);
-                if (Integer.bitCount(mask) < 2) certified(r,"independent ground Boolean oracle mask="+mask);
-                else require(r.status == Status.INCOMPLETE && r.coverage == Coverage.NONE
-                        && r.reason.contains("horn-residual-proof-missing"),
-                        "missing partial proof groups must conservatively stop the certificate");
+                certified(r,"independent ground Boolean oracle mask="+mask);
             }
         }
     }

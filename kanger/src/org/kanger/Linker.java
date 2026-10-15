@@ -1162,6 +1162,8 @@ public class Linker {
                 }
             }
 
+            ContextProductionCapture.residualSubsets(mind,tree);
+
             if (candidates.size() == 1) {
                 for (Domain d : candidates) {
                     if (DmzTerminalRestriction.denies(mind, d, tree)) continue;
