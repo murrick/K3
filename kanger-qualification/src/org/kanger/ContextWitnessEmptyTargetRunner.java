@@ -5,7 +5,7 @@ import java.util.*;
 import org.kanger.ContextProductionCapture.*;
 import org.kanger.ContextProductionNativeBinding.Snapshot;
 import org.kanger.ContextProductionFamilyAssembly.*;
-import org.kanger.ContextProductionRoundsReference.Declaration;
+import org.kanger.ContextProductionInputs.Declaration;
 import org.kanger.ContextWitnessResultTransport.*;
 
 /** Native inventory absence is evidence; an absent supplied declaration list is not. */

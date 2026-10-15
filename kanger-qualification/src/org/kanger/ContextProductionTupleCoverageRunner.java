@@ -4,6 +4,7 @@ package org.kanger;
 import java.util.*;
 import org.kanger.ContextProductionCapture.Source;
 import org.kanger.ContextProductionRoundsReference.*;
+import org.kanger.ContextProductionInputs.Declaration;
 
 /** Independent tuple controls. Multi-variable closure is not certified. */
 public final class ContextProductionTupleCoverageRunner {

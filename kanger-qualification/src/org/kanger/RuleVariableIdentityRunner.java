@@ -4,6 +4,7 @@ package org.kanger;
 import java.util.*;
 import org.kanger.ContextProductionCapture.*;
 import org.kanger.ContextProductionRoundsReference.*;
+import org.kanger.ContextProductionInputs.Declaration;
 import org.kanger.units.Rule;
 
 /** A Rule's variable roles must survive canonical lookup and sourced replay. */

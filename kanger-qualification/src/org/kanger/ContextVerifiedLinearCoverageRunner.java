@@ -4,6 +4,7 @@ package org.kanger;
 import java.util.*;
 import org.kanger.ContextProductionCapture.*;
 import org.kanger.ContextProductionRoundsReference.*;
+import org.kanger.ContextProductionInputs.Declaration;
 import org.kanger.ContextLinearProofVerifier.Claim;
 import org.kanger.units.Rule;
 

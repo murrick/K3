@@ -3,7 +3,7 @@ package org.kanger;
 
 import java.util.*;
 import org.kanger.ContextProductionCapture.*;
-import org.kanger.ContextProductionRoundsReference.Declaration;
+import org.kanger.ContextProductionInputs.Declaration;
 import org.kanger.ContextWitnessResultTransport.*;
 import org.kanger.ContextWitnessFamilyFixedPoint.Branch;
 import org.kanger.ContextWitnessFamilyFixedPoint.Limits;

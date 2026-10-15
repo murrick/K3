@@ -3,7 +3,7 @@ package org.kanger;
 
 import java.util.*;
 import org.kanger.ContextProductionCapture.*;
-import org.kanger.ContextProductionRoundsReference.Declaration;
+import org.kanger.ContextProductionInputs.Declaration;
 import org.kanger.ContextWitnessBundle.*;
 import org.kanger.ContextWitnessProjection.Materialization;
 import org.kanger.ContextWitnessMaterializationVerifier.*;

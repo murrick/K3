@@ -347,14 +347,14 @@ final class ContextWitnessResultTransport {
         } catch (IllegalStateException failure) { return new Result(false,failure.getMessage(),null); }
     }
     /** Only the owning structural verifier can create an empty STEP, never an absent native event. */
-    static Result exportDisjointEmpty(Packet input,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+    static Result exportDisjointEmpty(Packet input,Cut cut,List<ContextProductionInputs.Declaration> declarations,
             int maximumDepth,int maximumWork,int maximumEvents) {
         ContextWitnessDisjointCoverage.Result checked = ContextWitnessDisjointCoverage.inspect(
                 input,cut,declarations,maximumDepth,maximumWork,maximumEvents);
         if (!checked.covered) return new Result(false,checked.reason,null);
         return new Result(true,checked.reason,new Packet(input.items,input.identity,checked.sources,false,cut));
     }
-    static Result exportDormantEmpty(Packet input,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+    static Result exportDormantEmpty(Packet input,Cut cut,List<ContextProductionInputs.Declaration> declarations,
             int maximumDepth,int maximumWork,int maximumEvents) {
         ContextWitnessDormantCoverage.Result checked = ContextWitnessDormantCoverage.inspect(
                 input,cut,declarations,maximumDepth,maximumWork,maximumEvents);
@@ -362,24 +362,24 @@ final class ContextWitnessResultTransport {
         return new Result(true,checked.reason,new Packet(input.items,input.identity,checked.sources,false,cut));
     }
     /** Sound observed proofs plus exhaustive positive Horn proof-pool closure, bound to the owning inputs. */
-    static Result exportCoveredNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+    static Result exportCoveredNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionInputs.Declaration> declarations,
             int maximumDepth,int maximumWork,int maximumEvents) {
         return exportVerifiedNext(round,cut,declarations,maximumDepth,maximumWork,maximumEvents,false);
     }
     /** Full coverage of the exact immutable round input, without claiming output saturation. */
-    static Result exportRoundNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+    static Result exportRoundNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionInputs.Declaration> declarations,
             int maximumDepth,int maximumWork,int maximumEvents) {
         return exportRoundNext(round,cut,declarations,maximumDepth,maximumWork,maximumEvents,null);
     }
-    static Result exportRoundNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+    static Result exportRoundNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionInputs.Declaration> declarations,
             int maximumDepth,int maximumWork,int maximumEvents,ContextWitnessEmptyTarget emptyTarget) {
         return exportVerifiedNext(round,cut,declarations,maximumDepth,maximumWork,maximumEvents,true,emptyTarget);
     }
-    private static Result exportVerifiedNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+    private static Result exportVerifiedNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionInputs.Declaration> declarations,
             int maximumDepth,int maximumWork,int maximumEvents,boolean roundStep) {
         return exportVerifiedNext(round,cut,declarations,maximumDepth,maximumWork,maximumEvents,roundStep,null);
     }
-    private static Result exportVerifiedNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+    private static Result exportVerifiedNext(ContextWitnessSeedReplay round,Cut cut,List<ContextProductionInputs.Declaration> declarations,
             int maximumDepth,int maximumWork,int maximumEvents,boolean roundStep,ContextWitnessEmptyTarget emptyTarget) {
         Result observed = exportNext(round,maximumDepth,maximumWork);
         if (!observed.exported) return observed;
@@ -394,11 +394,11 @@ final class ContextWitnessResultTransport {
         } catch (Exception failure) { return new Result(false,failure.getMessage(),null); }
     }
     /** An already closed sound input needs no new native event, even when rule bodies are enabled. */
-    static Result exportHornUnchanged(Packet input,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+    static Result exportHornUnchanged(Packet input,Cut cut,List<ContextProductionInputs.Declaration> declarations,
             int maximumDepth,int maximumWork,int maximumEvents) {
         return exportHornUnchanged(input,cut,declarations,maximumDepth,maximumWork,maximumEvents,null);
     }
-    static Result exportHornUnchanged(Packet input,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+    static Result exportHornUnchanged(Packet input,Cut cut,List<ContextProductionInputs.Declaration> declarations,
             int maximumDepth,int maximumWork,int maximumEvents,ContextWitnessEmptyTarget emptyTarget) {
         Runnable work = budget(maximumWork);
         try {

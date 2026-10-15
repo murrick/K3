@@ -2,6 +2,7 @@
 package org.kanger;
 
 import java.util.*;
+import org.kanger.ContextProductionInputs.Declaration;
 import org.kanger.ContextProductionCapture.*;
 import org.kanger.interfaces.IRule;
 import org.kanger.interfaces.ITerm;
@@ -16,13 +17,6 @@ import org.kanger.units.TVariable;
  * INCOMPLETE, never SATURATED.
  */
 public final class ContextProductionRoundsReference {
-    public static final class Declaration {
-        public final Source source;
-        public final String statement;
-        public Declaration(Source source, String statement) {
-            this.source = Objects.requireNonNull(source); this.statement = Objects.requireNonNull(statement);
-        }
-    }
     public static final class Limits {
         public final int rounds, events, work, depth;
         public Limits(int rounds, int events, int work, int depth) {

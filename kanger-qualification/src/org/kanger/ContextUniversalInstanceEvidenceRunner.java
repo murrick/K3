@@ -5,6 +5,7 @@ import java.util.*;
 import org.kanger.ContextProductionCapture.*;
 import org.kanger.ContextLinearProofVerifier.Claim;
 import org.kanger.ContextProductionRoundsReference.*;
+import org.kanger.ContextProductionInputs.Declaration;
 import org.kanger.units.Rule;
 
 public final class ContextUniversalInstanceEvidenceRunner {

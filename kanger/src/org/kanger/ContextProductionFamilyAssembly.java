@@ -5,7 +5,7 @@ import java.util.*;
 import org.kanger.ContextProductionCapture.*;
 import org.kanger.ContextProductionNativeBinding.Entry;
 import org.kanger.ContextProductionNativeBinding.Snapshot;
-import org.kanger.ContextProductionRoundsReference.Declaration;
+import org.kanger.ContextProductionInputs.Declaration;
 import org.kanger.ContextWitnessResultTransport.*;
 import org.kanger.ContextWitnessFamilyFixedPoint.Branch;
 

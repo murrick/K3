@@ -3,7 +3,7 @@ package org.kanger;
 
 import java.util.*;
 import org.kanger.ContextProductionCapture.*;
-import org.kanger.ContextProductionRoundsReference.Declaration;
+import org.kanger.ContextProductionInputs.Declaration;
 import org.kanger.ContextWitnessResultTransport.*;
 
 /** A conservative-extension certificate for a predicate-disjoint, fact-free definite Horn cut. */

@@ -4,6 +4,7 @@ package org.kanger;
 import java.util.*;
 import org.kanger.ContextProductionCapture.*;
 import org.kanger.ContextProductionRoundsReference.*;
+import org.kanger.ContextProductionInputs.Declaration;
 import org.kanger.ContextWitnessScopeObservation.*;
 
 /** Concrete counterexamples to lossy witness transport, not an existential certificate. */

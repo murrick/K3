@@ -4,6 +4,7 @@ package org.kanger;
 import java.util.*;
 import org.kanger.ContextProductionCapture.Source;
 import org.kanger.ContextProductionRoundsReference.*;
+import org.kanger.ContextProductionInputs.Declaration;
 
 /** Synchronous reference controls; runtime publication gate remains unchanged. */
 public final class ContextProductionRoundsReferenceRunner {

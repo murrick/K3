@@ -3,7 +3,7 @@ package org.kanger;
 
 import java.util.*;
 import org.kanger.ContextProductionCapture.Source;
-import org.kanger.ContextProductionRoundsReference.Declaration;
+import org.kanger.ContextProductionInputs.Declaration;
 import org.kanger.ContextWitnessBundle.Bundle;
 
 /** Whole-scope roundtrip controls; derived witnesses remain excluded. */
