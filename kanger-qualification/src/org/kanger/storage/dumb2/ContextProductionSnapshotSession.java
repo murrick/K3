@@ -5,6 +5,7 @@ import java.util.*;
 import org.kanger.ContextProductionInventory;
 import org.kanger.ContextProductionNativeBinding;
 import org.kanger.ContextProductionFamilyAssembly;
+import org.kanger.ContextProductionCandidate;
 import org.kanger.DmzCandidateSession;
 import org.kanger.Mind;
 import org.kanger.User;
@@ -103,6 +104,15 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
                 ContextProductionFamilyAssembly.Result assembly = ContextProductionFamilyAssembly.assemble(bound.x,bound.foreign,maximumWork);
                 if (!assembly.assembled) throw new IllegalStateException("Effective family assembly incomplete: "+assembly.reason);
                 return assembly.artifact.evaluate(maximumRounds,maximumDepth,maximumWork,maximumEvents);
+            } finally { requireCurrent(); }
+        }
+    }
+    ContextProductionCandidate.Evaluation qualifyCandidate(String statement,int rounds,int depth,int work,int events) throws Exception {
+        synchronized(provider) {
+            requireCurrent();
+            try {
+                Binding bound = bind(work,events);
+                return ContextProductionCandidate.qualify(bound.x,bound.foreign,statement,maximumRows,rounds,depth,work,events);
             } finally { requireCurrent(); }
         }
     }

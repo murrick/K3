@@ -79,6 +79,14 @@ public final class ContextProductionNativeBinding {
             if (!found) throw new IllegalStateException("Origin/native signed clause or variable sharing differs");
         }
     }
+    /** Rebuilt native IDs may differ; whole semantic shape and witness sharing may not. */
+    static void sameEntry(Entry original,Entry rebuilt,Runnable work) {
+        work.run(); if (original.kind != rebuilt.kind) throw new IllegalStateException("Candidate primary kind changed");
+        if (original.bundle != null) {
+            if (!ContextWitnessBundle.equivalent(original.bundle,rebuilt.bundle,work))
+                throw new IllegalStateException("Candidate primary witness sharing changed");
+        } else sameClauses(original.clauses,rebuilt.clauses,work);
+    }
     private static void current(Mind mind,ContextProductionInventory inventory) throws Exception {
         ContextProductionInventory now = ContextProductionInventory.inspect(mind,inventory.context,inventory.revision,inventory.localX,
                 inventory.initialization,inventory.rows.size());

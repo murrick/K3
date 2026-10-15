@@ -99,3 +99,4 @@ org.kanger.ContextProductionFamilyAssemblyRunner | CONTEXT_PRODUCTION_FAMILY_ASS
 org.kanger.ContextGroundApplicationVerifierRunner | CONTEXT_GROUND_APPLICATION_VERIFIER_PASS
 org.kanger.ContextWitnessRoundCoverageRunner | CONTEXT_WITNESS_ROUND_COVERAGE_PASS
 org.kanger.ContextWitnessEmptyTargetRunner | CONTEXT_WITNESS_EMPTY_TARGET_PASS
+org.kanger.ContextProductionCandidateRunner | CONTEXT_PRODUCTION_CANDIDATE_PASS

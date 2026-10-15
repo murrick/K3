@@ -50,7 +50,7 @@ public final class ContextProductionFamilyAssembly {
         public final Artifact artifact;
         private Result(boolean assembled,String reason,Artifact artifact) { this.assembled = assembled; this.reason = reason; this.artifact = artifact; }
     }
-    private static void identity(Snapshot snapshot,boolean localX,Runnable work) {
+    static void identity(Snapshot snapshot,boolean localX,Runnable work) {
         ContextProductionInventory inventory = snapshot.inventory;
         if (inventory.localX != localX || snapshot.primary.size() != inventory.primary.size()) throw new IllegalStateException("Bound snapshot role/primary inventory mismatch");
         Set<Long> expected = new HashSet<>(); for (ContextProductionInventory.Row row : inventory.primary) { work.run(); expected.add(row.nativeRule); }

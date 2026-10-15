@@ -48,6 +48,11 @@ public final class ContextProductionSnapshotRunner {
                     require(binding.foreign.get(0).primary.stream().allMatch(e -> e.source.context.equals(target.getContextId()) && e.source.revision == target.getRevision() && !e.source.localX),"bound foreign rule sources retain exact provider pin and role");
                     require(binding.x.excludedGenerated.size() == initial.x.generated.size(),"real generated witness caches stay outside primary replay evidence");
                     require(lease.qualify(12,16,4000000,100000).status == ContextProductionFamilyAssembly.Status.FIXED_POINT,"real provider snapshots assemble and qualify without caller-written declaration lists");
+                    ContextProductionCandidate.Evaluation safeCandidate = lease.qualifyCandidate("!@w q(w,1)->trial(w,1);",12,16,4000000,100000);
+                    require(safeCandidate.status == ContextProductionFamilyAssembly.Status.FIXED_POINT && safeCandidate.artifact != null,"provider qualifies an isolated candidate without prepublishing it");
+                    require(safeCandidate.artifact.base.inventory.fingerprint.equals(initial.x.fingerprint),"candidate receipt binds exact owning provider inventory");
+                    require(lease.qualifyCandidate("!@w q(w,1)->~flag(w,1);",12,16,4000000,100000).status == ContextProductionFamilyAssembly.Status.COLLISION,"provider proves candidate's delayed foreign collision before publication");
+                    require(db.getRevision() == revision && x.getRules().size() == count,"safe and rejected candidate trials preserve physical source");
                     require(db.getRevision() == revision && x.getRules().size() == count,"acquisition does not publish or modify X knowledge");
                     AtomicBoolean refused = new AtomicBoolean(); Thread other = new Thread(() -> { try { lease.requireCurrent(); } catch (Exception expected) { refused.set(true); } });
                     other.start(); other.join(); require(refused.get(),"lease authority cannot move to another thread");
@@ -58,7 +63,8 @@ public final class ContextProductionSnapshotRunner {
                 ContextProductionSnapshotSession old = ContextProductionSnapshotSession.open(db,x,1000);
                 db.applyConnectionCommand(x,"A","!private(4);");
                 require(db.getRevision() == revision,"private initialization changes effective view without publishing X revision");
-                reject(old::requireCurrent,"old lease rejects changed topology/initialization at the same base pin and X revision"); old.close();
+                reject(old::requireCurrent,"old lease rejects changed topology/initialization at the same base pin and X revision");
+                reject(() -> old.qualifyCandidate("!newcandidate(1);",12,16,4000000,100000),"changed private effective view revokes candidate authority"); old.close();
                 ContextProductionInventory configured;
                 try (ContextProductionSnapshotSession lease = ContextProductionSnapshotSession.open(db,x,1000)) {
                     configured = lease.inventory().foreign.get(0);
@@ -81,6 +87,7 @@ public final class ContextProductionSnapshotRunner {
                 ContextProductionSnapshotSession closed = ContextProductionSnapshotSession.open(db,x,1000); closed.close(); reject(closed::inventory,"closed lease carries no live authority");
                 reject(() -> closed.bind(4000000,10000),"historical inventory cannot bypass closed provider authority for binding");
                 reject(() -> closed.qualify(12,16,4000000,100000),"historical artifact cannot bypass closed provider authority for qualification");
+                reject(() -> closed.qualifyCandidate("!newcandidate(1);",12,16,4000000,100000),"closed provider authority cannot qualify a candidate");
                 boolean immutable = false; try { initial.x.rows.clear(); } catch (UnsupportedOperationException expected) { immutable = true; }
                 require(immutable,"detached rows are immutable");
                 immutable = false; try { configured.initialization.clear(); } catch (UnsupportedOperationException expected) { immutable = true; }
