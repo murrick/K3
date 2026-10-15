@@ -234,6 +234,34 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         storageName = "";
     }
 
+    /** Historical diagnostic on one freshly acquired complete effective family. */
+    public synchronized org.kanger.ContextProductionCandidate.Evaluation qualifyProductionCandidate(
+            Mind source,String statement,int rows,int rounds,int depth,int work,int events) throws Exception {
+        try (ContextProductionSnapshotSession lease = ContextProductionSnapshotSession.open(this,source,rows)) {
+            return lease.qualifyCandidate(statement,rounds,depth,work,events);
+        }
+    }
+
+    public enum ProductionWriteStatus { PUBLISHED, COLLISION, INCOMPLETE, NATIVE_REJECTED }
+    /** Trial Sources retain their staged identity; before/after address actual physical revisions. */
+    public static final class ProductionWriteResult {
+        public final ProductionWriteStatus status;
+        public final org.kanger.ContextProductionCandidate.Evaluation trial;
+        public final RevisionRef before,after;
+        private ProductionWriteResult(ContextProductionSnapshotSession.WriteResult result) {
+            status = ProductionWriteStatus.valueOf(result.status.name()); trial = result.trial;
+            before = result.before; after = result.after;
+        }
+    }
+    /** Explicit single-assertion authoring. INCOMPLETE never falls back to unqualified writing. */
+    public synchronized ProductionWriteResult writeProductionCandidate(
+            Mind source,String statement,int rows,int rounds,int depth,int work,int events,boolean logging) throws Exception {
+        requireInitialized(); requireWritable();
+        try (ContextProductionSnapshotSession lease = ContextProductionSnapshotSession.open(this,source,rows)) {
+            return new ProductionWriteResult(lease.writeCandidate(statement,rounds,depth,work,events,logging));
+        }
+    }
+
     private boolean validatingCommit;
 
     @Override

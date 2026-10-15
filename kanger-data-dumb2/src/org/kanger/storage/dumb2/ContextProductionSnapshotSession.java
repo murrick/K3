@@ -10,7 +10,7 @@ import org.kanger.DmzCandidateSession;
 import org.kanger.Mind;
 import org.kanger.User;
 
-/** Read-only owning lease over live X and every direct exact-pinned initialized view. No TRUST flattening. */
+/** Owning snapshot/qualification lease over exact initialized views; explicit writing consumes it. No TRUST flattening. */
 final class ContextProductionSnapshotSession implements AutoCloseable {
     static final class Binding {
         final ContextProductionNativeBinding.Snapshot x;
@@ -125,7 +125,7 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
             this.status = status; this.trial = trial; this.before = before; this.after = after;
         }
     }
-    /** Explicit qualification-plane bridge; ordinary default authoring is not redirected here. */
+    /** Explicit provider bridge; ordinary default authoring is not redirected here. */
     WriteResult writeCandidate(String statement,int rounds,int depth,int work,int events,boolean logging) throws Exception {
         synchronized(provider) {
             requireCurrent();
