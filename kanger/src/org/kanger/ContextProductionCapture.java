@@ -68,6 +68,7 @@ public final class ContextProductionCapture implements AutoCloseable {
                 if (!arguments.get(i).semanticallyEquals(other.arguments.get(i))) return false;
             return true;
         }
+        public Fact opposite() { return new Fact(predicate,!positive,arguments); }
         /** A placeholder carrier; arguments must be canonically projected into target. */
         public String assertion() {
             StringBuilder text = new StringBuilder(positive ? "!" : "!~").append(predicate).append('(');
@@ -233,6 +234,18 @@ public final class ContextProductionCapture implements AutoCloseable {
             for (Atom atom : literals) for (Slot slot : atom.arguments) if (slot.variable < 0)
                 values.add(target.getTerms().projectSemantic(slot.value.materialize()));
             return values;
+        }
+        /** Structural substitution only: this creates no assertion or proof. */
+        public Clause instantiate(Map<Integer,SemanticTermSnapshot> assignment) {
+            if (!assignment.keySet().equals(variables)) throw new IllegalArgumentException("Exact clause variable assignment required");
+            List<Atom> result = new ArrayList<>();
+            for (Atom atom : literals) {
+                List<Slot> slots = new ArrayList<>();
+                for (Slot slot : atom.arguments) slots.add(slot.variable < 0 ? slot
+                        : new Slot(Objects.requireNonNull(assignment.get(slot.variable)),-1));
+                result.add(new Atom(atom.predicate,atom.positive,slots));
+            }
+            return new Clause(result);
         }
         /** Eigenparameters absent from all primary knowledge are universally generalizable.
          * Only direct slots are generalized; structured parameter values are unsupported. */

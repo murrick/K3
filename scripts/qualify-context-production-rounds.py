@@ -28,6 +28,7 @@ def main():
                  ('org.kanger.ContextProductionTupleCoverageRunner', 'CONTEXT_PRODUCTION_TUPLE_COVERAGE_PASS'),
                  ('org.kanger.RuleVariableIdentityRunner', 'RULE_VARIABLE_IDENTITY_PASS'),
                  ('org.kanger.ContextProductionRotationAuditRunner', 'CONTEXT_PRODUCTION_ROTATION_AUDIT_PASS'),
+                 ('org.kanger.ContextVerifiedLinearCoverageRunner', 'CONTEXT_VERIFIED_LINEAR_COVERAGE_PASS'),
                  ('org.kanger.storage.dumb2.GroundDisjunctionQualificationRunner', 'GROUND_DISJUNCTION_QUALIFICATION_PASS'),
                  ('org.kanger.DmzTerminalSupportCaptureRunner', 'DMZ_TERMINAL_SUPPORT_CAPTURE_PASS'),
                  ('org.kanger.DmzCollisionProofCaptureRunner', 'DMZ_COLLISION_PROOF_CAPTURE_PASS'),
