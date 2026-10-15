@@ -36,7 +36,7 @@ final class ContextWitnessResultTransport {
         private boolean same(Atom other,Runnable work) {
             return positive == other.positive && shape(other,work);
         }
-        private boolean opposite(Atom other,Runnable work) {
+        boolean opposite(Atom other,Runnable work) {
             return positive != other.positive && shape(other,work);
         }
         private boolean shape(Atom other,Runnable work) {
@@ -60,10 +60,15 @@ final class ContextWitnessResultTransport {
         final UUID basis;
         final Set<Source> producers;
         final boolean observedStep;
+        final Cut emptyCut;
         private Packet(List<Item> items) { this(items,null,Collections.emptySet(),false); }
         private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep) {
+            this(items,basis,producers,observedStep,null);
+        }
+        private Packet(List<Item> items,UUID basis,Set<Source> producers,boolean observedStep,Cut emptyCut) {
             this.items = Collections.unmodifiableList(new ArrayList<>(items)); this.basis = basis;
             this.producers = Collections.unmodifiableSet(new LinkedHashSet<>(producers)); this.observedStep = observedStep;
+            this.emptyCut = emptyCut;
         }
     }
     static final class Result {
@@ -129,8 +134,10 @@ final class ContextWitnessResultTransport {
                 if (!snapshot.keySet().equals(new HashSet<>(expected))) throw new IllegalStateException("Unexpected witness family cut");
                 for (Cut cut : expected) {
                     work.run(); Packet output = snapshot.get(cut);
-                    if (output == null || !output.observedStep || !input.identity.equals(output.basis))
+                    if (output == null || (!output.observedStep && output.emptyCut == null) || !input.identity.equals(output.basis))
                         throw new IllegalStateException("Witness branch has a different input barrier");
+                    if (output.emptyCut != null && !cut.equals(output.emptyCut))
+                        throw new IllegalStateException("Empty witness branch has a different target cut");
                     if (!parent.equals(parentX(output.items,work))) throw new IllegalStateException("Witness branch changed parent X");
                     boolean matched = false;
                     for (Source producer : output.producers) {
@@ -271,6 +278,14 @@ final class ContextWitnessResultTransport {
             if (!packed.exported) return packed;
             return new Result(true,packed.reason,new Packet(packed.packet.items,round.inputIdentity,round.producerSources(work),true));
         } catch (IllegalStateException failure) { return new Result(false,failure.getMessage(),null); }
+    }
+    /** Only the owning structural verifier can create an empty STEP, never an absent native event. */
+    static Result exportDisjointEmpty(Packet input,Cut cut,List<ContextProductionRoundsReference.Declaration> declarations,
+            int maximumDepth,int maximumWork,int maximumEvents) {
+        ContextWitnessDisjointCoverage.Result checked = ContextWitnessDisjointCoverage.inspect(
+                input,cut,declarations,maximumDepth,maximumWork,maximumEvents);
+        if (!checked.covered) return new Result(false,checked.reason,null);
+        return new Result(true,checked.reason,new Packet(input.items,input.identity,checked.sources,false,cut));
     }
     private static Result pack(List<Item> items,Map<Root,Origin> origins,UUID namespace,List<Route> routes,Runnable work) {
         boolean product = false;
