@@ -10,7 +10,7 @@ import tempfile
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('contract', 'reference'), default='contract')
+    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract'), default='contract')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     output = root / 'target/context-production-rounds'
@@ -22,6 +22,8 @@ def main():
                'kanger-data-dumb2', 'kanger-console')
     production = sorted(p for module in modules for p in (root / module / 'src').rglob('*.java'))
     names = [('org.kanger.storage.dumb2.ContextProductionRoundsContractRunner', 'CONTEXT_PRODUCTION_ROUNDS_CONTRACT_PASS')]
+    if args.mode == 'witness-contract':
+        names = [('org.kanger.ContextWitnessForkContractRunner', 'CONTEXT_WITNESS_FORK_CONTRACT_PASS')]
     if args.mode == 'reference':
         names = [('org.kanger.ContextProductionCaptureRunner', 'CONTEXT_PRODUCTION_CAPTURE_PASS'),
                  ('org.kanger.ContextProductionRoundsReferenceRunner', 'CONTEXT_PRODUCTION_ROUNDS_REFERENCE_PASS'),
@@ -39,6 +41,7 @@ def main():
                  ('org.kanger.ContextWitnessPrimaryStepRunner', 'CONTEXT_WITNESS_PRIMARY_STEP_PASS'),
                  ('org.kanger.ContextWitnessMaterializationRunner', 'CONTEXT_WITNESS_MATERIALIZATION_PASS'),
                  ('org.kanger.ContextWitnessUnaryChainRunner', 'CONTEXT_WITNESS_UNARY_CHAIN_PASS'),
+                 ('org.kanger.ContextWitnessSharedOriginJoinRunner', 'CONTEXT_WITNESS_SHARED_ORIGIN_JOIN_PASS'),
                  ('org.kanger.storage.dumb2.GroundDisjunctionQualificationRunner', 'GROUND_DISJUNCTION_QUALIFICATION_PASS'),
                  ('org.kanger.DmzTerminalSupportCaptureRunner', 'DMZ_TERMINAL_SUPPORT_CAPTURE_PASS'),
                  ('org.kanger.DmzCollisionProofCaptureRunner', 'DMZ_COLLISION_PROOF_CAPTURE_PASS'),
@@ -80,7 +83,7 @@ def main():
     head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
     passed = all(result['passed'] for result in results)
     report = dict(head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
-                  scope='Pending runtime authoring contract' if args.mode == 'contract' else 'Capture and scoped scalar Horn reference; runtime gate unchanged',
+                  scope='Pending runtime authoring contract' if args.mode != 'reference' else 'Capture and scoped scalar Horn reference; runtime gate unchanged',
                   source_dirty=bool(subprocess.check_output(
                       ['git', 'status', '--porcelain'], cwd=root, text=True).strip()))
     (run / 'report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')

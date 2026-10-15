@@ -121,11 +121,15 @@ final class ContextWitnessPrimaryStepVerifier {
         Scope(Map<Long,Set<Source>> producers,Map<Long,List<Clause>> shapes) { this.producers = producers; this.shapes = shapes; }
     }
     static Scope scope(Session session,Snapshot snapshot,Runnable work) {
+        return scope(session,snapshot,work,false);
+    }
+    static Scope scope(Session session,Snapshot snapshot,Runnable work,boolean observedJoins) {
         for (String gap : snapshot.gaps) {
             work.run();
             if (!(gap.startsWith("cvariable-input:") || gap.startsWith("nonordinary-primary-fact:")
                 || gap.startsWith("nonordinary-conclusion:") || gap.startsWith("nonordinary-premise:")
-                || gap.startsWith("nonordinary-materialization:"))) throw new IllegalStateException("unsupported-capture-gap:"+gap);
+                || gap.startsWith("nonordinary-materialization:")
+                || observedJoins && gap.startsWith("compound-residual:"))) throw new IllegalStateException("unsupported-capture-gap:"+gap);
         }
         Map<Source,Long> sources = new HashMap<>(); Map<Long,Set<Source>> producers = new HashMap<>();
         Map<Long,List<Clause>> producerShapes = new HashMap<>();
