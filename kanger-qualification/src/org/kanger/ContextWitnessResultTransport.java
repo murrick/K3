@@ -361,7 +361,7 @@ final class ContextWitnessResultTransport {
     private static Result pack(List<Item> items,Map<Root,Origin> origins,UUID namespace,List<Route> routes,Runnable work) {
         boolean product = false;
         for (Route route : routes) {
-            work.run(); if (route.proof.depth == 0 || !usesX(route.proof)) continue;
+            work.run(); if (route.physical.root == null || route.proof.depth == 0 || !usesX(route.proof)) continue;
             if (!route.replay.equals(namespace) || !route.physical.root.equals(route.origin))
                 throw new IllegalStateException("Non-primary carrier cannot be transported");
             Origin origin = origins.get(route.origin);

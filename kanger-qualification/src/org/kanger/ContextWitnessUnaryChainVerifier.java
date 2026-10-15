@@ -28,6 +28,9 @@ final class ContextWitnessUnaryChainVerifier {
         final List<Argument> arguments;
         final Root root;
         Pattern(String predicate,boolean positive,List<Argument> arguments) {
+            this(predicate,positive,arguments,false);
+        }
+        Pattern(String predicate,boolean positive,List<Argument> arguments,boolean allowGround) {
             this.predicate = predicate; this.positive = positive;
             this.arguments = Collections.unmodifiableList(new ArrayList<>(arguments));
             Root root = null;
@@ -35,7 +38,7 @@ final class ContextWitnessUnaryChainVerifier {
                 if (root != null && !root.equals(argument.root)) throw new IllegalStateException("multiple-witness-chain-literal");
                 root = argument.root;
             }
-            if (root == null) throw new IllegalStateException("witness-free-chain-literal");
+            if (root == null && !allowGround) throw new IllegalStateException("witness-free-chain-literal");
             this.root = root;
         }
         boolean equivalent(Pattern other,Runnable work) {
@@ -82,6 +85,9 @@ final class ContextWitnessUnaryChainVerifier {
     }
     private static Result incomplete(String reason) { return new Result(false,reason,Collections.emptyList()); }
     private static Pattern pattern(Literal literal,Runnable work) {
+        return pattern(literal,work,false);
+    }
+    private static Pattern pattern(Literal literal,Runnable work,boolean allowGround) {
         List<Argument> arguments = new ArrayList<>();
         for (ContextWitnessProjection.Slot slot : literal.arguments) {
             work.run(); Root root = null;
@@ -91,12 +97,12 @@ final class ContextWitnessUnaryChainVerifier {
             }
             arguments.add(new Argument(root,slot.value));
         }
-        return new Pattern(literal.predicate,literal.positive,arguments);
+        return new Pattern(literal.predicate,literal.positive,arguments,allowGround);
     }
     private static boolean add(List<Route> pool,Route route,int maximumDepth,Runnable work) {
         for (int i=0;i<pool.size();++i) {
             work.run(); Route old = pool.get(i);
-            if (old.origin.equals(route.origin) && old.proof.sources.equals(route.proof.sources) && old.physical.equivalent(route.physical,work)) {
+            if (Objects.equals(old.origin,route.origin) && old.proof.sources.equals(route.proof.sources) && old.physical.equivalent(route.physical,work)) {
                 if (old.proof.depth <= route.proof.depth) return false;
                 if (route.proof.depth > maximumDepth) throw new IllegalStateException("Witness chain depth limit");
                 pool.set(i,route); return true;
@@ -113,13 +119,14 @@ final class ContextWitnessUnaryChainVerifier {
         if (slot < candidates.size()) {
             for (Route donor : candidates.get(slot)) {
                 work.run();
-                if (origin != null && !origin.equals(donor.origin)) continue;
+                if (origin != null && donor.origin != null && !origin.equals(donor.origin)) continue;
                 chosen.add(donor);
-                changed |= join(replay,observation,conclusion,candidates,slot+1,donor.origin,chosen,producer,application,pool,maximumDepth,work);
+                changed |= join(replay,observation,conclusion,candidates,slot+1,donor.origin == null ? origin : donor.origin,chosen,producer,application,pool,maximumDepth,work);
                 chosen.remove(chosen.size()-1);
             }
             return changed;
         }
+        if (origin == null) throw new IllegalStateException("witness-free-chain-conclusion");
         int depth = producer.depth; Set<Source> sources = new LinkedHashSet<>(producer.sources);
         for (Route donor : chosen) { work.run(); depth = Math.max(depth,donor.proof.depth); sources.addAll(donor.proof.sources); }
         if (depth == Integer.MAX_VALUE) throw new IllegalStateException("witness-chain-depth-overflow");
@@ -159,6 +166,10 @@ final class ContextWitnessUnaryChainVerifier {
     /** Shared closure accepts verified seed groups at their carried depth, never relabelled as producers. */
     static Result close(UUID replay,Snapshot snapshot,ContextWitnessPrimaryStepVerifier.Scope scope,List<Route> seeds,
             int maximumDepth,int maximumPremises,Runnable work) {
+        return close(replay,snapshot,scope,seeds,maximumDepth,maximumPremises,work,false);
+    }
+    static Result close(UUID replay,Snapshot snapshot,ContextWitnessPrimaryStepVerifier.Scope scope,List<Route> seeds,
+            int maximumDepth,int maximumPremises,Runnable work,boolean allowGround) {
         ContextWitnessMaterializationVerifier.Result correspondence = ContextWitnessMaterializationVerifier.verify(replay,snapshot,work);
         if (!correspondence.verified) return incomplete(correspondence.reason);
         Map<ContextWitnessProjection,List<Pattern>> premises = new IdentityHashMap<>();
@@ -170,8 +181,8 @@ final class ContextWitnessUnaryChainVerifier {
             ContextWitnessPrimaryStepVerifier.application(scope,observation,work);
             Pattern conclusion = pattern(observation.conclusion,work); List<Pattern> required = new ArrayList<>();
             for (Literal literal : observation.premises) {
-                Pattern premise = pattern(literal,work);
-                if (!premise.root.equals(conclusion.root)) return incomplete("non-preserving-witness-chain-step");
+                Pattern premise = pattern(literal,work,allowGround);
+                if (premise.root != null && !premise.root.equals(conclusion.root)) return incomplete("non-preserving-witness-chain-step");
                 required.add(premise);
             }
             premises.put(observation,required); conclusions.put(observation,conclusion); applications.put(observation,new ArrayList<>());

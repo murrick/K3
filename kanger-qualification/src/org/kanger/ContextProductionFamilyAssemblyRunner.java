@@ -67,7 +67,13 @@ public final class ContextProductionFamilyAssemblyRunner {
             require(!item(signedFamily.input,"scalar").atom.positive && signedFamily.evaluate(12,16,WORK,100000).status == Status.INCOMPLETE,"negative scalar fact is retained rather than dropped to fit positive inference");
             Snapshot scalarPremise = snapshot(7,false,"!@w p(w,1)&&scalar(1)->q(w,1);");
             Snapshot scalarX = snapshot(8,true,"!$w p(w,1); !@w p(w,1)->warm(w,1); !scalar(1);");
-            require(assemble(scalarX,scalarPremise).evaluate(12,16,WORK,100000).status == Status.INCOMPLETE,"current scalar/mixed native proof gap is surfaced, not silently excluded");
+            Evaluation scalarResult = assemble(scalarX,scalarPremise).evaluate(12,16,WORK,100000);
+            require(scalarResult.status == Status.FIXED_POINT,"mixed witness/scalar body closes: "+scalarResult.reason);
+            require(proof(item(scalarResult.qualification.fixedPoint.packet,"q"),1,source(scalarX,"$w"),source(scalarX,"scalar"),source(scalarPremise,"@w")),"mixed product preserves both donor sources and actual producer at depth1");
+            require(assemble(scalarX,scalarPremise).evaluate(12,0,WORK,100000).status == Status.INCOMPLETE,"mixed proof cannot bypass the depth bound");
+            Snapshot wrongScalar = snapshot(14,true,"!$w p(w,1); !@w p(w,1)->warm(w,1); !scalar(2);");
+            Evaluation mismatch = assemble(wrongScalar,scalarPremise).evaluate(12,16,WORK,100000);
+            require(mismatch.status == Status.FIXED_POINT && mismatch.qualification.fixedPoint.packet.items.stream().noneMatch(i -> i.atom.predicate.equals("q")),"scalar values match exactly and cannot enable a foreign head");
             refused(ContextProductionFamilyAssembly.assemble(snapshot(9,true,"!$w p(w,1);"),Collections.emptyList(),WORK),"no synthetic rule supplies a missing self-X producer cut");
             refused(ContextProductionFamilyAssembly.assemble(snapshot(10,true,"!@w p(w,1)->warm(w,1);"),Collections.emptyList(),WORK),"no synthetic seed supplies a missing X knowledge anchor");
             refused(ContextProductionFamilyAssembly.assemble(x,Arrays.asList(snapshot(11,false,"")),WORK),"empty foreign cut requires explicit future completion support");

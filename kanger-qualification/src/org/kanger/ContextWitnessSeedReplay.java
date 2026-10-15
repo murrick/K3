@@ -86,19 +86,18 @@ final class ContextWitnessSeedReplay implements AutoCloseable {
                     Collections.emptyList(),snapshot,work,true);
             List<Route> imported = new ArrayList<>();
             for (Item item : seeds) {
-                List<Argument> arguments = new ArrayList<>(); boolean witness = false;
+                List<Argument> arguments = new ArrayList<>();
                 for (Slot slot : item.atom.arguments) {
                     work.run(); Root root = slot.origin == null ? null : bindings.get(slot.origin);
                     if (slot.origin != null && root == null) throw new IllegalStateException("Missing carried witness binding");
-                    arguments.add(new Argument(root,slot.value)); witness |= root != null;
+                    arguments.add(new Argument(root,slot.value));
                 }
-                if (!witness) continue;
-                Pattern pattern = new Pattern(item.atom.predicate,item.atom.positive,arguments);
+                Pattern pattern = new Pattern(item.atom.predicate,item.atom.positive,arguments,true);
                 for (Support proof : item.proofs) {
                     work.run(); imported.add(new Route(namespace,pattern,pattern.root,proof,null,null,null,null));
                 }
             }
-            return ContextWitnessUnaryChainVerifier.close(namespace,snapshot,scope,imported,maximumDepth,2,work);
+            return ContextWitnessUnaryChainVerifier.close(namespace,snapshot,scope,imported,maximumDepth,2,work,true);
         } catch (IllegalStateException failure) { return new Result(false,failure.getMessage(),Collections.emptyList()); }
     }
     Set<Source> producerSources(Runnable work) {
