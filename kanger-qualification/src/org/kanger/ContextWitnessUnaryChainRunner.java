@@ -8,7 +8,7 @@ import org.kanger.ContextWitnessBundle.*;
 import org.kanger.ContextWitnessUnaryChainVerifier.*;
 import org.kanger.enums.QueryPass;
 
-/** Proof route controls for single-premise chains and alpha-reused storage. */
+/** Proof route controls for single-premise chains and independent-origin storage. */
 public final class ContextWitnessUnaryChainRunner {
     private static int checks;
     private static Source source(int id) { return new Source(new UUID(0,id == 0 ? 0 : 1),1,id,id == 0,"base"); }
@@ -22,7 +22,7 @@ public final class ContextWitnessUnaryChainRunner {
     private static void require(boolean yes,String why) { ++checks; if (!yes) throw new AssertionError(why); }
     private static boolean stored(Result r,String predicate,long origin,int depth,int... ids) {
         Set<Source> sources = new LinkedHashSet<>(); for (int id : ids) sources.add(source(id));
-        return r.routes.stream().anyMatch(p -> p.crossing != null && p.physical.predicate.equals(predicate)
+        return r.routes.stream().anyMatch(p -> p.application != null && p.physical.predicate.equals(predicate)
                 && p.origin.term == origin && p.proof.depth == depth && p.proof.sources.equals(sources));
     }
     private static void incomplete(Result r,String why) { require(!r.reconstructed && r.routes.isEmpty(),why+": "+r.reason); }
@@ -45,14 +45,14 @@ public final class ContextWitnessUnaryChainRunner {
             try (Session s = session(bundle(0,"!$x left(x,1);"),bundle(2,"!$x right(x,1);"))) {
                 rule(s,1,"!@x left(x,1) -> q(x,1);"); rule(s,4,"!@x right(x,1) -> q(x,1);");
                 rule(s,3,"!@x q(x,1) -> r(x,1);"); Result r = prove(s);
-                require(r.reconstructed,"alpha-reused chain reconstructs separate routes: "+r.reason);
+                require(r.reconstructed,"independent-origin chain reconstructs separate routes: "+r.reason);
                 long left = s.primary.get(0).witnessTerms.get(0), right = s.primary.get(1).witnessTerms.get(0);
-                require(left != right && stored(r,"r",left,2,0,1,3) && stored(r,"r",right,2,2,3,4),"both origins survive one stored representative");
+                require(left != right && stored(r,"r",left,2,0,1,3) && stored(r,"r",right,2,2,3,4),"both primary origins survive materialization");
                 require(!stored(r,"r",right,2,0,1,3) && !stored(r,"r",left,2,2,3,4),"shared physical carrier cannot exchange source-witness identities");
                 require(!stored(r,"r",left,2,0,1,2,3,4),"alternative routes never become a merged joint source group");
                 Set<Root> physical = new HashSet<>(), origins = new HashSet<>();
-                for (Route p : r.routes) if (p.crossing != null && p.physical.predicate.equals("r")) { physical.add(p.physical.root); origins.add(p.origin); }
-                require(physical.size() == 1 && origins.size() == 2,"one durable root keeps two separate proof-origin routes");
+                for (Route p : r.routes) if (p.application != null && p.physical.predicate.equals("r")) { physical.add(p.physical.root); origins.add(p.origin); }
+                require(physical.size() == 2 && origins.size() == 2,"independent primary origins retain separate durable roots");
             }
             try (Session s = session(bundle(0,"!$x p(x,1);"))) {
                 rule(s,1,"!@x p(x,1) -> q(x,1);"); rule(s,2,"!@x q(x,1) -> r(x,1);"); rule(s,3,"!@x p(x,1) -> r(x,1);");

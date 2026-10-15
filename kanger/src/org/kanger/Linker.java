@@ -31,6 +31,7 @@ import org.kanger.enums.ArgumentType;
 import org.kanger.enums.DataType;
 import org.kanger.enums.Enums;
 import org.kanger.enums.LogMode;
+import org.kanger.enums.QueryPass;
 import org.kanger.exception.RuntimeErrorException;
 import org.kanger.interfaces.*;
 import org.kanger.primitives.Cause;
@@ -1181,7 +1182,11 @@ public class Linker {
                                 term = true;
                             }
                         }
-                        boolean skip = !term && abst;
+                        // Closed primary witnesses have a finite durable identity. Keeping
+                        // their consequences is required for shared-witness joins.
+                        boolean skip = !term && abst
+                                && !(mind.getQueryPass() == QueryPass.ACCEPT
+                                    && GeneratedCVarMaterializer.hasOnlyPrimaryWitnesses(d,mind));
                         if (!skip) {
                             result = true;
                             d.setProduced(mind);

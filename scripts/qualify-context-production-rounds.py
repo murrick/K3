@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run pending authoring contract or bounded native production-round reference controls."""
+"""Run authoring/witness contracts or bounded native production-round reference controls."""
 from pathlib import Path
 import argparse
 import json
@@ -42,7 +42,8 @@ def main():
                  ('org.kanger.ContextWitnessMaterializationRunner', 'CONTEXT_WITNESS_MATERIALIZATION_PASS'),
                  ('org.kanger.ContextWitnessUnaryChainRunner', 'CONTEXT_WITNESS_UNARY_CHAIN_PASS'),
                  ('org.kanger.ContextWitnessSharedOriginJoinRunner', 'CONTEXT_WITNESS_SHARED_ORIGIN_JOIN_PASS'),
-                 ('org.kanger.ContextWitnessIdentityLossRunner', 'CONTEXT_WITNESS_IDENTITY_LOSS_DIAGNOSTIC_PASS'),
+                 ('org.kanger.ContextWitnessPrimaryIdentityRunner', 'CONTEXT_WITNESS_PRIMARY_IDENTITY_PASS'),
+                 ('org.kanger.storage.dumb2.ContextWitnessPrimaryIdentityStorageRunner', 'CONTEXT_WITNESS_PRIMARY_IDENTITY_STORAGE_PASS'),
                  ('org.kanger.storage.dumb2.GroundDisjunctionQualificationRunner', 'GROUND_DISJUNCTION_QUALIFICATION_PASS'),
                  ('org.kanger.DmzTerminalSupportCaptureRunner', 'DMZ_TERMINAL_SUPPORT_CAPTURE_PASS'),
                  ('org.kanger.DmzCollisionProofCaptureRunner', 'DMZ_COLLISION_PROOF_CAPTURE_PASS'),
@@ -84,7 +85,9 @@ def main():
     head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
     passed = all(result['passed'] for result in results)
     report = dict(head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
-                  scope='Pending runtime authoring contract' if args.mode != 'reference' else 'Capture and scoped scalar Horn reference; runtime gate unchanged',
+                  scope={'contract': 'Pending runtime authoring contract',
+                         'witness-contract': 'Native primary existential witness consistency contract',
+                         'reference': 'Capture, witness identity and scoped Horn reference; round gate unchanged'}[args.mode],
                   source_dirty=bool(subprocess.check_output(
                       ['git', 'status', '--porcelain'], cwd=root, text=True).strip()))
     (run / 'report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')

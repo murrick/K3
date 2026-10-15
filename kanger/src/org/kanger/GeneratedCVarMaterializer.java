@@ -6,6 +6,7 @@
 package org.kanger;
 
 import org.kanger.enums.QueryPass;
+import org.kanger.enums.ArgumentType;
 import org.kanger.factory.RuleFactory;
 import org.kanger.interfaces.IArgument;
 import org.kanger.interfaces.IRule;
@@ -17,6 +18,9 @@ import org.kanger.units.Rule;
 import org.kanger.units.Term;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,7 +34,10 @@ import java.util.Map;
  * fresh {@code %N} root owned by that generated Rule. Durable root C-variables
  * already present in the Domain are preserved. Repeated occurrences of the
  * same transient child in one Domain share the same new root, while different
- * materialized Rules own independent witnesses.</p>
+ * materialized Rules own independent witnesses unless they project a primary
+ * existential witness from a closed conjunction. Such a witness retains its
+ * durable primary root across conclusions; alpha lookup cannot identify it
+ * with another primary witness.</p>
  *
  * <p>CHECK/HYPOTHESIS passes deliberately use rule-scoped children as runtime
  * projections while proving or disproving a query. Rebinding those children
@@ -87,7 +94,10 @@ public final class GeneratedCVarMaterializer {
                 abstractive = true;
                 ITerm replacement = value;
                 Term original = (Term) value;
-                if (original.getParent(mind) != null) {
+                Term anchor = primaryOrigin(original,mind);
+                if (anchor != null) {
+                    replacement = anchor;
+                } else if (original.getParent(mind) != null) {
                     replacement = replacements.get(value.getId());
                     if (replacement == null) {
                         replacement = mind.getTerms().createCVar(
@@ -106,6 +116,45 @@ public final class GeneratedCVarMaterializer {
             owner.setAbstractive(true);
         }
         return result;
+    }
+
+    /** A closed primary conjunction has stable witnesses, with no universal dependency. */
+    private static Term primaryOrigin(Term term,Mind mind) throws Exception {
+        Set<Long> seen = new HashSet<>();
+        for (int depth=0;term.getParent(mind) != null;++depth) {
+            if (depth == 8 || !seen.add(term.getId())) return null;
+            term = (Term)term.getParent(mind);
+        }
+        if (term.isDomini()) return null;
+        IRule source = mind.getRules().get(term.getRuleId());
+        if (source == null || source.isGenerated() || source.isQuery() || source.isDeleted(mind)) return null;
+        if (((Rule)source).getTree().isEmpty()) return null;
+        boolean present = false;
+        for (List<Domain> branch : ((Rule)source).getTree()) {
+            if (branch.size() != 1) return null;
+            Domain domain = branch.get(0);
+            if (!domain.isComplete() || domain.isSystem(mind) || domain.isCalculated(mind)
+                    || "rule(1)".equals(domain.getPredicate(mind).toString(mind))) return null;
+            for (IArgument argument : domain.getArguments()) {
+                if (argument.getType() != ArgumentType.TERM) return null;
+                ITerm value = argument.getValue(mind);
+                if (value == null) return null;
+                if (value.getId() == term.getId()) present = true;
+                if (value.isCVariable() && (((Term)value).isDomini() || ((Term)value).getParent(mind) != null
+                        || ((Term)value).getRuleId() != source.getId())) return null;
+            }
+        }
+        return present ? term : null;
+    }
+
+    /** Only closed primary witnesses: no fresh existential dependency is introduced. */
+    public static boolean hasOnlyPrimaryWitnesses(Domain domain,Mind mind) throws Exception {
+        if (domain.getRange() == 0) return false;
+        for (IArgument argument : domain.getArguments()) {
+            ITerm value = argument.getValue(mind);
+            if (!(value instanceof Term) || !value.isCVariable() || primaryOrigin((Term)value,mind) == null) return false;
+        }
+        return true;
     }
 
     private static boolean containsCVariable(Domain domain, Mind mind) throws Exception {
@@ -151,6 +200,11 @@ public final class GeneratedCVarMaterializer {
             if (leftCVar) {
                 Term leftTerm = (Term) leftValue;
                 Term rightTerm = (Term) rightValue;
+                Term leftAnchor = primaryOrigin(leftTerm,mind), rightAnchor = primaryOrigin(rightTerm,mind);
+                if (leftAnchor != null || rightAnchor != null) {
+                    if (leftAnchor == null || rightAnchor == null || leftAnchor.getId() != rightAnchor.getId()) return false;
+                    continue;
+                }
                 if (leftTerm.isDomini() != rightTerm.isDomini()) {
                     return false;
                 }

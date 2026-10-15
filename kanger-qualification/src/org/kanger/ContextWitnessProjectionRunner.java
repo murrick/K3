@@ -60,13 +60,13 @@ public final class ContextWitnessProjectionRunner {
                     Domain domain = ((Rule)candidate).getDomain(); String name = domain.getPredicate(session.mind).getName(session.mind);
                     if (name.equals("q") || name.equals("r")) {
                         Term term = (Term)domain.get(0).getValue(session.mind);
-                        require(term.getParent(session.mind) == null && term.getRuleId() == candidate.getId(),
-                                "durable generated witness has its own root owner");
+                        require(term.getParent(session.mind) == null && term.getRuleId() == evidence.nativeRule,
+                                "durable generated projection retains the primary root owner");
                         durable.put(name,term.getId());
                     }
                 }
-                require(durable.size() == 2 && !durable.get("q").equals(durable.get("r")),
-                        "post-materialization witnesses alone lose the shared source lineage");
+                require(durable.size() == 2 && durable.get("q").equals(durable.get("r")),
+                        "materialized conclusions preserve their shared primary witness");
                 require(!snapshot.gaps.isEmpty(),"new metadata cannot erase nonordinary proof gaps");
             }
             Bundle duplicate = bundle(1,"!$x p(x,1);");

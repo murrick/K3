@@ -8,7 +8,7 @@ import org.kanger.ContextWitnessBundle.*;
 import org.kanger.ContextWitnessUnaryChainVerifier.*;
 import org.kanger.enums.QueryPass;
 
-/** Shared-origin proof joins, including a foreign mask with one alpha carrier. */
+/** Shared-origin proof joins, including a foreign mask with independent primary witnesses. */
 public final class ContextWitnessSharedOriginJoinRunner {
     private static int checks;
     private static Source source(int id) { return new Source(new UUID(0,id == 0 ? 0 : 1),1,id,id == 0,"base"); }
@@ -70,9 +70,9 @@ public final class ContextWitnessSharedOriginJoinRunner {
                     require(r.reconstructed,"masked carrier reconstructs coherent alternatives: "+r.reason);
                     require(stored(s,r,"out",foreign,1,2,3),"foreign whole bundle proves its own join");
                     require(r.routes.stream().filter(p -> p.physical.predicate.equals("out")).noneMatch(p -> p.proof.sources.stream().anyMatch(source -> source.localX)),
-                            "an X-dependent q route cannot borrow another witness's flag through alpha storage");
-                    require(r.routes.stream().anyMatch(p -> p.crossing != null && p.physical.predicate.equals("q") && p.origin.term == local),
-                            "the rejected X-dependent q route is genuinely present at the shared carrier");
+                            "an X-dependent q route cannot borrow another witness's flag through storage");
+                    require(r.routes.stream().anyMatch(p -> p.application != null && p.physical.predicate.equals("q") && p.origin.term == local),
+                            "the X-dependent q route is genuinely present with its own origin");
                     require(r.routes.stream().noneMatch(p -> p.physical.predicate.equals("out") && p.origin.term == local),
                             "reversing premise order cannot transfer the output to the wrong origin");
                 }
@@ -91,10 +91,10 @@ public final class ContextWitnessSharedOriginJoinRunner {
             try (Session s = session(bundle(0,"!$x p(x,1);"))) {
                 rule(s,1,"!@x p(x,1) -> q(x,1);"); rule(s,2,"!@x p(x,1) -> r(x,1);");
                 rule(s,3,"!@x q(x,1) && r(x,1) -> out(x,1);"); Result result = prove(s);
-                require(s.capture.snapshot().witnessProjections.stream().noneMatch(p -> p.conclusion.predicate.equals("out")),
-                        "known native fork gap: no observed out application");
-                require(result.routes.stream().noneMatch(p -> p.physical.predicate.equals("out")),
-                        "proof reconstruction cannot synthesize the missing native application");
+                require(s.capture.snapshot().witnessProjections.stream().anyMatch(p -> p.conclusion.predicate.equals("out")),
+                        "native fork now records the out application");
+                require(result.reconstructed && stored(s,result,"out",s.primary.get(0).witnessTerms.get(0),2,0,1,2,3),
+                        "both derived donors now prove out from the same primary witness");
             }
             try (Session s = session(bundle(0,"!$x p(x,1) && ~q(x,1);"))) {
                 rule(s,1,"!@x p(x,1) && ~q(x,1) -> out(x,1);"); Result r = prove(s);

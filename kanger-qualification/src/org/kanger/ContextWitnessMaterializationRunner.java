@@ -36,7 +36,7 @@ public final class ContextWitnessMaterializationRunner {
                 Relation q = relation(r,"q"), out = relation(r,"r"); positive = q.occurrence;
                 require(q.replay.equals(s.replay) && out.replay.equals(s.replay),"relations retain the owning replay namespace");
                 require(root(q.occurrence.matched.arguments.get(0)) == s.primary.get(0).witnessTerms.get(0),"q matched the primary witness");
-                require(root(q.occurrence.matched.arguments.get(0)) != root(q.occurrence.stored.arguments.get(0)),"q materialization rebinds its witness");
+                require(root(q.occurrence.matched.arguments.get(0)) == root(q.occurrence.stored.arguments.get(0)),"q materialization preserves its primary witness");
                 require(out.applications.stream().anyMatch(a -> root(a.premises.get(0).arguments.get(0)) == root(q.occurrence.stored.arguments.get(0))),
                         "r premise uses the observed stored q root");
                 require(q.applications.stream().allMatch(a -> a.nativeRule == q.occurrence.producerRule),"producer identity is exact");
@@ -47,14 +47,14 @@ public final class ContextWitnessMaterializationRunner {
             }
             try (Session s = session(bundle(0,"!$x left(x,1);"),bundle(2,"!$y right(y,1);"))) {
                 rule(s,1,"!@x left(x,1) -> q(x,1);"); rule(s,3,"!@x right(x,1) -> q(x,1);"); Result r = link(s);
-                require(r.verified,"alpha-reused storage has separately witnessed occurrences: "+r.reason);
+                require(r.verified,"independent-origin storage has separately witnessed occurrences: "+r.reason);
                 Set<Long> origins = new HashSet<>(), stored = new HashSet<>(); Set<Long> rules = new HashSet<>();
                 for (Relation relation : r.relations) if (relation.occurrence.stored.predicate.equals("q")) {
                     origins.add(root(relation.occurrence.matched.arguments.get(0)));
                     stored.add(root(relation.occurrence.stored.arguments.get(0))); rules.add(relation.occurrence.storedRule);
                 }
-                require(origins.size() == 2 && stored.size() == 1 && rules.size() == 1,
-                        "two independent source witnesses can share one stored representative without becoming equal");
+                require(origins.size() == 2 && stored.size() == 2 && rules.size() == 2,
+                        "independent primary witnesses retain separate stored representatives");
             }
             try (Session s = session(bundle(0,"!$x p(x,1);"))) {
                 rule(s,1,"!@x p(x,1) -> q(x,2);"); Result r = link(s); require(r.verified,"fixed-value variant matches its own application");

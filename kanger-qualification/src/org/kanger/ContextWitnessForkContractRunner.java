@@ -1,7 +1,7 @@
 /* MIT License. Copyright (c) 2026 Dmitry G. Quznetsov. */
 package org.kanger;
 
-/** Pending native consistency contract; deliberately red until native witness identity is preserved. */
+/** Native consistency contract for primary existential witness identity. */
 public final class ContextWitnessForkContractRunner {
     private static int checks, failures;
     private static void check(boolean value,String label) {
@@ -33,6 +33,16 @@ public final class ContextWitnessForkContractRunner {
                 "!$x out(x,1); !@x ~out(x,2);",
                 "!$x out(x,1); !@x other(x,1);"})
             check(mind().compile(independent,null,false),"independent witness/fixed/predicate control: "+independent);
+        String bareRules = "!@x p(x)->q(x); !@x p(x)->r(x); !@x q(x)&&r(x)->out(x);";
+        for (boolean reverse : new boolean[]{false,true}) {
+            Mind bare = mind();
+            check(bare.compile((reverse ? "!@x ~out(x);" : "!$x p(x);")+bareRules,null,false),"consistent bare fork prefix");
+            check(!bare.compile(reverse ? "!$x p(x);" : "!@x ~out(x);",null,false),"reject witness-only fork, reverse="+reverse);
+        }
+        check(!mind().compile("!$x p(x); !@x p(x)->q(x); !@x q(x)->out(x); !@x ~out(x);",null,false),
+                "reject witness-only unary chain denial");
+        check(mind().compile("!$x q(x); !$y r(y); !@x q(x)&&r(x)->out(x); !@x ~out(x);",null,false),
+                "independent bare witnesses cannot share a join");
         System.out.println("CONTEXT_WITNESS_FORK_CONTRACT_"+(failures == 0 ? "PASS" : "FAIL")+" checks="+checks+" failures="+failures);
         System.exit(failures == 0 ? 0 : 1);
     }
