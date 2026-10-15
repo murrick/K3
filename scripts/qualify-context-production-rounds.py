@@ -43,6 +43,7 @@ def main():
                  ('org.kanger.ContextWitnessUnaryChainRunner', 'CONTEXT_WITNESS_UNARY_CHAIN_PASS'),
                  ('org.kanger.ContextWitnessSharedOriginJoinRunner', 'CONTEXT_WITNESS_SHARED_ORIGIN_JOIN_PASS'),
                  ('org.kanger.ContextWitnessPrimaryIdentityRunner', 'CONTEXT_WITNESS_PRIMARY_IDENTITY_PASS'),
+                 ('org.kanger.ContextWitnessResultTransportRunner', 'CONTEXT_WITNESS_RESULT_TRANSPORT_PASS'),
                  ('org.kanger.storage.dumb2.ContextWitnessPrimaryIdentityStorageRunner', 'CONTEXT_WITNESS_PRIMARY_IDENTITY_STORAGE_PASS'),
                  ('org.kanger.storage.dumb2.GroundDisjunctionQualificationRunner', 'GROUND_DISJUNCTION_QUALIFICATION_PASS'),
                  ('org.kanger.DmzTerminalSupportCaptureRunner', 'DMZ_TERMINAL_SUPPORT_CAPTURE_PASS'),

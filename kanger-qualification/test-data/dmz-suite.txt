@@ -84,3 +84,4 @@ org.kanger.ContextWitnessSharedOriginJoinRunner | CONTEXT_WITNESS_SHARED_ORIGIN_
 org.kanger.ContextWitnessPrimaryIdentityRunner | CONTEXT_WITNESS_PRIMARY_IDENTITY_PASS
 org.kanger.ContextWitnessForkContractRunner | CONTEXT_WITNESS_FORK_CONTRACT_PASS
 org.kanger.storage.dumb2.ContextWitnessPrimaryIdentityStorageRunner | CONTEXT_WITNESS_PRIMARY_IDENTITY_STORAGE_PASS
+org.kanger.ContextWitnessResultTransportRunner | CONTEXT_WITNESS_RESULT_TRANSPORT_PASS
