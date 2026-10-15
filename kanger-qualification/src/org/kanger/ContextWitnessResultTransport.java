@@ -228,6 +228,35 @@ final class ContextWitnessResultTransport {
         return () -> { if (--remaining[0] < 0) throw new IllegalStateException("Witness transport work limit"); };
     }
     private static boolean usesX(Support support) { return support.sources.stream().anyMatch(s -> s.localX); }
+    /** Sound primary seeds from a completely native-bound X snapshot; no artificial productive step. */
+    static Result primarySeeds(ContextProductionNativeBinding.Snapshot snapshot,int maximumWork) {
+        Runnable work = budget(maximumWork);
+        try {
+            if (!snapshot.inventory.localX) throw new IllegalStateException("Primary seed snapshot must be local X");
+            List<Item> items = new ArrayList<>(); Set<Origin> rank = new HashSet<>();
+            for (ContextProductionNativeBinding.Entry entry : snapshot.primary) {
+                work.run(); Support proof = new Support(Collections.singleton(entry.source),0);
+                if (entry.bundle != null) {
+                    for (ContextWitnessBundle.Atom atom : entry.bundle.atoms) {
+                        List<Slot> arguments = new ArrayList<>();
+                        for (ContextWitnessBundle.Slot slot : atom.arguments) {
+                            work.run(); Origin origin = slot.witness < 0 ? null : new Origin(entry.source,slot.witness);
+                            if (origin != null) rank.add(origin); arguments.add(new Slot(origin,slot.value));
+                        }
+                        add(items,new Atom(atom.predicate,atom.positive,arguments),proof,work);
+                    }
+                } else for (Clause clause : entry.clauses) {
+                    work.run(); if (!clause.variables.isEmpty() || clause.literals.size() != 1) continue;
+                    ContextProductionCapture.Atom atom = clause.literals.get(0); List<Slot> arguments = new ArrayList<>();
+                    for (ContextProductionCapture.Slot slot : atom.arguments) { work.run(); arguments.add(new Slot(null,slot.value)); }
+                    add(items,new Atom(atom.predicate,atom.positive,arguments),proof,work);
+                }
+            }
+            if (items.isEmpty()) throw new IllegalStateException("No supported primary X literal seeds");
+            if (rank.size() > 8) throw new IllegalStateException("Primary X seed witness rank limit");
+            parentX(items,work); return new Result(true,"Whole primary X witness and ground seeds with original depth0 sources",new Packet(items));
+        } catch (Exception failure) { return new Result(false,failure.getMessage(),null); }
+    }
     private static void add(List<Item> items,Atom atom,Support proof,Runnable work) {
         for (int i=0;i<items.size();++i) {
             Item old = items.get(i); if (!old.atom.same(atom,work)) continue;

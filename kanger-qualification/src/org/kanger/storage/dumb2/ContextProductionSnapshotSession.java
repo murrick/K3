@@ -4,6 +4,7 @@ package org.kanger.storage.dumb2;
 import java.util.*;
 import org.kanger.ContextProductionInventory;
 import org.kanger.ContextProductionNativeBinding;
+import org.kanger.ContextProductionFamilyAssembly;
 import org.kanger.DmzCandidateSession;
 import org.kanger.Mind;
 import org.kanger.User;
@@ -91,6 +92,17 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
                     foreign.add(result.snapshot);
                 }
                 return new Binding(x.snapshot,foreign);
+            } finally { requireCurrent(); }
+        }
+    }
+    ContextProductionFamilyAssembly.Evaluation qualify(int maximumRounds,int maximumDepth,int maximumWork,int maximumEvents) throws Exception {
+        synchronized(provider) {
+            requireCurrent();
+            try {
+                Binding bound = bind(maximumWork,maximumEvents);
+                ContextProductionFamilyAssembly.Result assembly = ContextProductionFamilyAssembly.assemble(bound.x,bound.foreign,maximumWork);
+                if (!assembly.assembled) throw new IllegalStateException("Effective family assembly incomplete: "+assembly.reason);
+                return assembly.artifact.evaluate(maximumRounds,maximumDepth,maximumWork,maximumEvents);
             } finally { requireCurrent(); }
         }
     }
