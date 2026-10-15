@@ -3,12 +3,20 @@ package org.kanger.storage.dumb2;
 
 import java.util.*;
 import org.kanger.ContextProductionInventory;
+import org.kanger.ContextProductionNativeBinding;
 import org.kanger.DmzCandidateSession;
 import org.kanger.Mind;
 import org.kanger.User;
 
 /** Read-only owning lease over live X and every direct exact-pinned initialized view. No TRUST flattening. */
 final class ContextProductionSnapshotSession implements AutoCloseable {
+    static final class Binding {
+        final ContextProductionNativeBinding.Snapshot x;
+        final List<ContextProductionNativeBinding.Snapshot> foreign;
+        private Binding(ContextProductionNativeBinding.Snapshot x,List<ContextProductionNativeBinding.Snapshot> foreign) {
+            this.x = x; this.foreign = Collections.unmodifiableList(new ArrayList<>(foreign));
+        }
+    }
     static final class Inventory {
         final ContextProductionInventory x;
         final List<ContextProductionInventory> foreign;
@@ -70,6 +78,22 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
         }
     }
     Inventory inventory() throws Exception { synchronized(provider) { requireCurrent(); return inventory; } }
+    Binding bind(int maximumWork,int maximumEvents) throws Exception {
+        synchronized(provider) {
+            requireCurrent();
+            try {
+                ContextProductionNativeBinding.Result x = ContextProductionNativeBinding.bind(source,inventory.x,maximumWork,maximumEvents);
+                if (!x.bound) throw new IllegalStateException("X native binding incomplete: "+x.reason);
+                List<ContextProductionNativeBinding.Snapshot> foreign = new ArrayList<>();
+                for (int i=0;i<topology.size();++i) {
+                    ContextProductionNativeBinding.Result result = ContextProductionNativeBinding.bind(topology.get(i).layer(),inventory.foreign.get(i),maximumWork,maximumEvents);
+                    if (!result.bound) throw new IllegalStateException("Foreign native binding incomplete: "+result.reason);
+                    foreign.add(result.snapshot);
+                }
+                return new Binding(x.snapshot,foreign);
+            } finally { requireCurrent(); }
+        }
+    }
     public void close() {
         if (Thread.currentThread() != owner) throw new IllegalStateException("Production snapshot must close on owning thread");
         closed = true; // Borrowed Minds/layers belong to DB; never close or publish them here.

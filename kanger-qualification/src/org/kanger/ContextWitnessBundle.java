@@ -61,7 +61,7 @@ final class ContextWitnessBundle {
         return () -> { if (--remaining[0] < 0) throw new IllegalStateException("Witness bundle work limit"); };
     }
     private static Mind memory() throws Exception { User u = new User(); Mind m = new Mind(u); u.setCurrentMind(m); return m; }
-    private static Bundle extract(Source source,Rule rule,Mind mind,Runnable work) throws Exception {
+    static Bundle extract(Source source,Rule rule,Mind mind,Runnable work) throws Exception {
         List<Atom> atoms = new ArrayList<>(); Map<Long,Integer> witnesses = new LinkedHashMap<>();
         if (rule.isQuery() || rule.isGenerated() || rule.getTree().isEmpty() || rule.getTree().size() > 8)
             throw new IllegalArgumentException("Primary conjunction of at most eight atoms required");
@@ -105,7 +105,7 @@ final class ContextWitnessBundle {
             return extract(declaration.source,(Rule)mind.getRules().get(snapshot.inputs.get(0).nativeRule),mind,work);
         }
     }
-    private static boolean equivalent(Bundle left,Bundle right,Runnable work) {
+    static boolean equivalent(Bundle left,Bundle right,Runnable work) {
         if (left.witnesses != right.witnesses || left.atoms.size() != right.atoms.size()) return false;
         // Ordinals follow first occurrence across the whole conjunction, so this
         // preserves the global sharing bijection, not a per-atom renaming.

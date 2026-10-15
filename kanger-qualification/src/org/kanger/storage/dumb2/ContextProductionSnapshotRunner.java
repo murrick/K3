@@ -42,6 +42,11 @@ public final class ContextProductionSnapshotRunner {
                     require(initial.x.generated.stream().allMatch(row -> row.generated),"generated records remain explicit rather than promoted to primary evidence");
                     require(initial.inspectedRows == initial.x.rows.size()+initial.foreign.get(0).rows.size(),"budget counts the entire family inventory, including generated rows");
                     require(initial.x.fingerprint.equals(lease.inventory().x.fingerprint),"repeated guarded read is stable");
+                    ContextProductionSnapshotSession.Binding binding = lease.bind(4000000,10000);
+                    require(binding.x.primary.size() == initial.x.primary.size() && binding.foreign.size() == 1,"provider binds every primary source row before releasing any family artifact");
+                    require(binding.x.primary.stream().anyMatch(e -> e.kind == ContextProductionNativeBinding.Kind.WITNESS_BUNDLE && e.witnesses() == 1),"real stored existential bundle has native-checked whole replay binding");
+                    require(binding.foreign.get(0).primary.stream().allMatch(e -> e.source.context.equals(target.getContextId()) && e.source.revision == target.getRevision() && !e.source.localX),"bound foreign rule sources retain exact provider pin and role");
+                    require(binding.x.excludedGenerated.size() == initial.x.generated.size(),"real generated witness caches stay outside primary replay evidence");
                     require(db.getRevision() == revision && x.getRules().size() == count,"acquisition does not publish or modify X knowledge");
                     AtomicBoolean refused = new AtomicBoolean(); Thread other = new Thread(() -> { try { lease.requireCurrent(); } catch (Exception expected) { refused.set(true); } });
                     other.start(); other.join(); require(refused.get(),"lease authority cannot move to another thread");
@@ -59,6 +64,7 @@ public final class ContextProductionSnapshotRunner {
                     require(configured.revision == target.getRevision() && configured.context.equals(target.getContextId()),"initialized layer retains the exact old physical pin");
                     require(configured.primary.stream().anyMatch(row -> row.origin.contains("private(4)")) && configured.initialization.size() == 1,"full effective primary inventory includes private initialization");
                     require(!configured.fingerprint.equals(initial.foreign.get(0).fingerprint),"revision identity alone cannot identify an effective view");
+                    require(lease.bind(4000000,10000).foreign.get(0).primary.stream().anyMatch(e -> e.statement.contains("private(4)") && e.kind == ContextProductionNativeBinding.Kind.CLAUSES),"initialized scalar fact is bound from its actual native layer rather than silently omitted");
                 }
                 db.applyConnectionCommand(x,"A","!private(4);");
                 try (ContextProductionSnapshotSession lease = ContextProductionSnapshotSession.open(db,x,1000)) {
@@ -71,6 +77,7 @@ public final class ContextProductionSnapshotRunner {
                 }
                 reject(() -> ContextProductionSnapshotSession.open(db,x,1),"total row bound refuses without a prefix inventory");
                 ContextProductionSnapshotSession closed = ContextProductionSnapshotSession.open(db,x,1000); closed.close(); reject(closed::inventory,"closed lease carries no live authority");
+                reject(() -> closed.bind(4000000,10000),"historical inventory cannot bypass closed provider authority for binding");
                 boolean immutable = false; try { initial.x.rows.clear(); } catch (UnsupportedOperationException expected) { immutable = true; }
                 require(immutable,"detached rows are immutable");
                 immutable = false; try { configured.initialization.clear(); } catch (UnsupportedOperationException expected) { immutable = true; }
