@@ -100,3 +100,4 @@ org.kanger.ContextGroundApplicationVerifierRunner | CONTEXT_GROUND_APPLICATION_V
 org.kanger.ContextWitnessRoundCoverageRunner | CONTEXT_WITNESS_ROUND_COVERAGE_PASS
 org.kanger.ContextWitnessEmptyTargetRunner | CONTEXT_WITNESS_EMPTY_TARGET_PASS
 org.kanger.ContextProductionCandidateRunner | CONTEXT_PRODUCTION_CANDIDATE_PASS
+org.kanger.storage.dumb2.ContextProductionAuthoringBridgeRunner | CONTEXT_PRODUCTION_AUTHORING_BRIDGE_PASS

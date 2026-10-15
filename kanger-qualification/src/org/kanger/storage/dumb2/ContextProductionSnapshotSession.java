@@ -116,6 +116,34 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
             } finally { requireCurrent(); }
         }
     }
+    enum WriteStatus { PUBLISHED, COLLISION, INCOMPLETE, NATIVE_REJECTED }
+    static final class WriteResult {
+        final WriteStatus status;
+        final ContextProductionCandidate.Evaluation trial;
+        final RevisionRef before, after;
+        private WriteResult(WriteStatus status,ContextProductionCandidate.Evaluation trial,RevisionRef before,RevisionRef after) {
+            this.status = status; this.trial = trial; this.before = before; this.after = after;
+        }
+    }
+    /** Explicit qualification-plane bridge; ordinary default authoring is not redirected here. */
+    WriteResult writeCandidate(String statement,int rounds,int depth,int work,int events,boolean logging) throws Exception {
+        synchronized(provider) {
+            requireCurrent();
+            ContextProductionCandidate.Evaluation trial = qualifyCandidate(statement,rounds,depth,work,events);
+            requireCurrent();
+            if (trial.status != ContextProductionFamilyAssembly.Status.FIXED_POINT) {
+                WriteStatus status = trial.status == ContextProductionFamilyAssembly.Status.COLLISION ? WriteStatus.COLLISION : WriteStatus.INCOMPLETE;
+                return new WriteResult(status,trial,sourceRef,sourceRef);
+            }
+            // Never accept a caller-supplied historical Artifact as publication authority.
+            // Consume the old lease before native settlement; committed finalization failures
+            // must propagate unchanged, not be mistaken for a safe rejection or retried.
+            closed = true;
+            boolean accepted = Boolean.TRUE.equals(source.query(trial.artifact.statement,null,logging));
+            return new WriteResult(accepted ? WriteStatus.PUBLISHED : WriteStatus.NATIVE_REJECTED,trial,
+                    sourceRef,new RevisionRef(provider.getContextId(),provider.getRevision()));
+        }
+    }
     public void close() {
         if (Thread.currentThread() != owner) throw new IllegalStateException("Production snapshot must close on owning thread");
         closed = true; // Borrowed Minds/layers belong to DB; never close or publish them here.
