@@ -93,7 +93,7 @@ final class ContextHornResidualVerifier {
                     if (!present) return "horn-vocabulary-mismatch";
                 }
             }
-            if (rule.clause.literals.size() > 1 && positive != 1) return "horn-shape-mismatch";
+            if (rule.clause.literals.size() > 1 && positive > 1) return "horn-shape-mismatch";
             if (!rule.clause.variables.isEmpty() && basis.isEmpty()) return "horn-representatives-missing";
             String missing = assignments(rule,new ArrayList<>(rule.clause.variables),0,
                     new HashMap<Integer,SemanticTermSnapshot>(),basis,pool,work);

@@ -31,7 +31,7 @@ public final class ContextProductionRoundsReference {
         }
     }
     public enum Status { SATURATED, COLLISION, INCOMPLETE }
-    public enum Coverage { NONE, MONADIC_HORN, SINGLE_VARIABLE_HORN, AUDITED_LINEAR_HORN }
+    public enum Coverage { NONE, MONADIC_HORN, SINGLE_VARIABLE_HORN, AUDITED_LINEAR_HORN, AUDITED_HORN }
     public static final class Proof {
         public final Set<Source> sources;
         public final int depth;
@@ -155,6 +155,7 @@ public final class ContextProductionRoundsReference {
     private static final class HornCoverage {
         boolean covered = true;
         boolean linear = true;
+        boolean horn = true;
         int maxRank;
         boolean monadicUniform = true;
         boolean quantified;
@@ -173,7 +174,7 @@ public final class ContextProductionRoundsReference {
         }
         void constant(SemanticTermSnapshot value) {
             if (value.getType() != org.kanger.enums.DataType.NUMERIC
-                    && value.getType() != org.kanger.enums.DataType.STRING) { covered = false; linear = false; return; }
+                    && value.getType() != org.kanger.enums.DataType.STRING) { covered = false; linear = false; horn = false; return; }
             for (SemanticTermSnapshot old : constants) {
                 budget.take(); if (old.semanticallyEquals(value)) return;
             }
@@ -184,7 +185,7 @@ public final class ContextProductionRoundsReference {
             boolean fixed = false, generic = false;
             for (Atom atom : clause.literals) {
                 budget.take();
-                if (atom.arguments.isEmpty()) { covered = false; linear = false; return; }
+                if (atom.arguments.isEmpty()) { covered = false; linear = false; horn = false; return; }
                 if (atom.arguments.size() != 1) monadicUniform = false;
                 if (atom.positive) ++positive;
                 for (Slot argument : atom.arguments) {
@@ -198,8 +199,9 @@ public final class ContextProductionRoundsReference {
             }
             // Signed units and definite Horn rules with at most one variable.
             // Fixed slots do not vary; their values join the representative basis.
-            if (clause.literals.size() > 1 && positive != 1) { covered = false; linear = false; }
+            if (clause.literals.size() > 1 && positive != 1) { covered = false; linear = false; horn = false; }
             if (clause.literals.size() > 2) linear = false;
+            if (clause.literals.size() > 3) horn = false;
             if (fixed && generic) monadicUniform = false;
         }
     }
@@ -216,17 +218,17 @@ public final class ContextProductionRoundsReference {
                 for (SemanticTermSnapshot value : snapshot.primaryValues) {
                     budget.take(); result.primaryValues.add(value);
                 }
-                if (!snapshot.gaps.isEmpty() || snapshot.inputs.isEmpty()) { result.covered = false; result.linear = false; }
+                if (!snapshot.gaps.isEmpty() || snapshot.inputs.isEmpty()) { result.covered = false; result.linear = false; result.horn = false; }
                 for (Input input : snapshot.inputs) {
                     result.quantified |= input.quantified;
                     result.maxRank = Math.max(result.maxRank,input.variableCount);
-                    if (input.variableCount > 2) result.linear = false;
+                    if (input.variableCount > 2) { result.linear = false; result.horn = false; }
                     // Native rotation spans the entire rule. Do not certify
                     // multiple variables merely because separate branches are unary.
                     if (input.variableCount > 1) result.covered = false;
-                    if (input.shapes.size() != input.branches) { result.covered = false; result.linear = false; }
+                    if (input.shapes.size() != input.branches) { result.covered = false; result.linear = false; result.horn = false; }
                     List<Clause> previous = result.sourceShapes.put(input.source,input.shapes);
-                    if (previous != null && !sameShapes(previous,input.shapes,budget)) result.linear = false;
+                    if (previous != null && !sameShapes(previous,input.shapes,budget)) { result.linear = false; result.horn = false; }
                     for (Clause shape : input.shapes) { budget.take(); result.shape(shape); }
                 }
             }
@@ -251,7 +253,7 @@ public final class ContextProductionRoundsReference {
         return null;
     }
     private static String verifyLinear(Snapshot snapshot,List<Bucket> pool,HornCoverage coverage,
-                                       List<SemanticTermSnapshot> parameters,Budget budget) {
+                                       List<SemanticTermSnapshot> parameters,Budget budget,boolean horn) {
         boolean quantified = snapshot.inputs.stream().anyMatch(input -> input.variableCount > 0);
         if (quantified && (!snapshot.rotationsAudited || !snapshot.allRotationsAdmitted() || !snapshot.allRotationsVisited()))
             return "linear-rotation-coverage-missing";
@@ -265,7 +267,7 @@ public final class ContextProductionRoundsReference {
         for (Input input : snapshot.inputs) {
             budget.take();
             for (Clause shape : input.shapes) {
-                if (shape.literals.size() > 2 || shape.variables.size() > 2) return "linear-input-shape-mismatch";
+                if (shape.literals.size() > (horn ? 3 : 2) || shape.variables.size() > 2) return "linear-input-shape-mismatch";
                 List<Proof> producers;
                 if (input.source != null) producers = Collections.singletonList(new Proof(Collections.singleton(input.source),0));
                 else {
@@ -277,6 +279,12 @@ public final class ContextProductionRoundsReference {
                 for (Proof proof : producers) { budget.take(); supports.add(new Support(proof.sources,proof.depth)); }
                 rules.add(new ContextLinearProofVerifier.Claim(shape,supports));
             }
+        }
+        if (horn) {
+            for (ContextLinearProofVerifier.Claim claim : claims)
+                if (claim.clause.variables.size() > 2 || claim.clause.literals.size() > 3) return "horn-derived-scope-mismatch";
+            List<ContextLinearProofVerifier.Claim> instances = ContextUniversalInstanceEvidence.expand(claims,basis,budget::take);
+            return ContextHornResidualVerifier.verify(rules,instances,basis,budget::take);
         }
         return ContextLinearProofVerifier.verify(rules,claims,basis,budget::take);
     }
@@ -355,8 +363,16 @@ public final class ContextProductionRoundsReference {
                                   boolean parameterExperiment,boolean rotationAudit) throws Exception {
         return inspect(x,targets,limits,parameterExperiment,rotationAudit,false);
     }
+    /** Bounded multi-premise certificate, including proved universal residual instances. */
+    public static Result inspectWithVerifiedHornCoverage(List<Declaration> x,List<List<Declaration>> targets,Limits limits) throws Exception {
+        return inspect(x,targets,limits,true,true,true,true);
+    }
     private static Result inspect(List<Declaration> x, List<List<Declaration>> targets, Limits limits,
                                   boolean parameterExperiment,boolean rotationAudit,boolean verifiedLinear) throws Exception {
+        return inspect(x,targets,limits,parameterExperiment,rotationAudit,verifiedLinear,false);
+    }
+    private static Result inspect(List<Declaration> x, List<List<Declaration>> targets, Limits limits,
+                                  boolean parameterExperiment,boolean rotationAudit,boolean verifiedLinear,boolean verifiedHorn) throws Exception {
         Objects.requireNonNull(x); Objects.requireNonNull(targets); Objects.requireNonNull(limits);
         List<Declaration> local = Collections.unmodifiableList(new ArrayList<>(x));
         List<List<Declaration>> frozen = new ArrayList<>();
@@ -375,8 +391,8 @@ public final class ContextProductionRoundsReference {
         catch (IllegalStateException | org.kanger.exception.RuntimeErrorException incomplete) {
             return new Result(Status.INCOMPLETE,0,incomplete.toString(),state,observations,null);
         }
-        if (verifiedLinear && !coverage.linear)
-            return new Result(Status.INCOMPLETE,0,"outside-audited-linear-horn",state,observations,null);
+        if (verifiedLinear && !(verifiedHorn ? coverage.horn : coverage.linear))
+            return new Result(Status.INCOMPLETE,0,verifiedHorn ? "outside-audited-horn" : "outside-audited-linear-horn",state,observations,null);
         for (int round = 1; round <= limits.rounds; ++round) {
             List<Bucket> next = copy(state); boolean changed = false;
             List<String> unresolvedResiduals = new ArrayList<>();
@@ -448,7 +464,7 @@ public final class ContextProductionRoundsReference {
                         }
                         boolean verifiedCut = false;
                         if (verifiedLinear) {
-                            String missing = verifyLinear(snapshot,participantState,coverage,parameters,budget);
+                            String missing = verifyLinear(snapshot,participantState,coverage,parameters,budget,verifiedHorn);
                             verifiedCut = missing == null;
                             if (missing != null) unresolvedResiduals.add(missing);
                         }
@@ -467,10 +483,10 @@ public final class ContextProductionRoundsReference {
             state = next;
             if (!changed) return new Result(unresolvedResiduals.isEmpty() ? Status.SATURATED : Status.INCOMPLETE,
                     round, unresolvedResiduals.isEmpty() ? "No new products or source support sets"
-                            + (verifiedLinear ? "; audited linear Horn proof closure" : coverage.covered ? (coverage.monadicUniform ? "; monadic-uniform representative closure"
+                            + (verifiedLinear ? (verifiedHorn ? "; audited Horn residual proof closure" : "; audited linear Horn proof closure") : coverage.covered ? (coverage.monadicUniform ? "; monadic-uniform representative closure"
                                     : "; single-variable Horn representative closure") : "")
                             : unresolvedResiduals.toString(), state, observations, null,
-                    unresolvedResiduals.isEmpty() ? (verifiedLinear ? Coverage.AUDITED_LINEAR_HORN
+                    unresolvedResiduals.isEmpty() ? (verifiedLinear ? (verifiedHorn ? Coverage.AUDITED_HORN : Coverage.AUDITED_LINEAR_HORN)
                             : coverage.covered ? coverage.certificate() : Coverage.NONE) : Coverage.NONE);
         }
         return new Result(Status.INCOMPLETE, limits.rounds, "Round limit; qualification incomplete", state, observations, null);

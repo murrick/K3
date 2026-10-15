@@ -71,6 +71,11 @@ public final class ContextHornResidualVerifierRunner {
                     "separate whole-source alternatives discharge their obligations");
             require("horn-shape-mismatch".equals(verify(claim(clause("!a(1) && b(1) && c(1) -> r(1);"),0,X),Collections.emptyList(),basis)),
                     "larger clauses remain outside this bounded checker");
+            Claim goal = claim(clause("!(~a(1) || ~b(1));"),1,X,C);
+            require(verify(goal,Arrays.asList(donors[0],claim(clause("!~b(1);"),2,X,C,A)),basis) == null,
+                    "negative Horn residual retains its signed reduction and carried depth");
+            require("horn-residual-proof-missing".equals(verify(goal,Collections.singletonList(donors[0]),basis)),
+                    "negative residual cannot manufacture the missing opposite unit");
             int[] work = {0}; boolean stopped = false;
             try { ContextHornResidualVerifier.verify(Collections.singletonList(producer),Collections.emptyList(),basis,() -> {
                 if (++work[0] > 1) throw new IllegalStateException("bounded");
