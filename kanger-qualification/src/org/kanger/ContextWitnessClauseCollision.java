@@ -32,9 +32,12 @@ final class ContextWitnessClauseCollision {
         final UUID inputIdentity;
         final Cut cut;
         final List<Evidence> evidence;
-        private Result(Status status,String reason,Packet input,Cut cut,List<Evidence> evidence) {
+        /** Exhaustive direct-instance scan only, never consistency or inference coverage. */
+        final boolean scanned;
+        private Result(Status status,String reason,Packet input,Cut cut,List<Evidence> evidence,boolean scanned) {
             this.status = status; this.reason = reason; inputIdentity = input.identity; this.cut = cut;
             this.evidence = Collections.unmodifiableList(new ArrayList<>(evidence));
+            this.scanned = scanned;
         }
     }
     private static boolean same(Slot left,Slot right) {
@@ -101,9 +104,9 @@ final class ContextWitnessClauseCollision {
                 instances(declaration.source,clause,input,0,new LinkedHashMap<>(),new ArrayList<>(),maximumDepth,evidence,work);
             return new Result(evidence.isEmpty() ? Status.INCOMPLETE : Status.COLLISION,
                     evidence.isEmpty() ? "No falsified clause instance proved; coverage unknown" : "Sourced universal clause refuted by carried proofs",
-                    input,cut,evidence);
+                    input,cut,evidence,true);
         } catch (Exception failure) {
-            return new Result(Status.INCOMPLETE,failure.getMessage(),input,cut,Collections.emptyList());
+            return new Result(Status.INCOMPLETE,failure.getMessage(),input,cut,Collections.emptyList(),false);
         }
     }
 }

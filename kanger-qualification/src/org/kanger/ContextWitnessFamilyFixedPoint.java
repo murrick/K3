@@ -8,6 +8,7 @@ import org.kanger.ContextWitnessResultTransport.*;
 
 /** Synchronous fixed point relative to sealed positive Horn declaration snapshots; no authoring admission. */
 final class ContextWitnessFamilyFixedPoint {
+    interface BarrierCheck { void inspect(Packet packet) throws Exception; }
     enum Status { FIXED_POINT, INCOMPLETE }
     static final class Limits {
         final int rounds, depth, work, events;
@@ -75,6 +76,9 @@ final class ContextWitnessFamilyFixedPoint {
             return result;
         }
         Result run(Packet input,Limits limits) {
+            return run(input,limits,null);
+        }
+        Result run(Packet input,Limits limits,BarrierCheck check) {
             List<Round> trace = new ArrayList<>(); Packet current = input;
             try {
                 // Validate the whole plan before any native pass, including unsupported later branches.
@@ -107,6 +111,7 @@ final class ContextWitnessFamilyFixedPoint {
                     FamilyResult merged = barrier.finish(outputs,limits.work);
                     if (merged.status != FamilyStatus.MERGED) throw new IllegalStateException("Family merge incomplete: "+merged.reason);
                     trace.add(new Round(current,merged.packet,merged.changed,productive,unchanged)); current = merged.packet;
+                    if (check != null) check.inspect(current);
                     if (!merged.changed) return new Result(Status.FIXED_POINT,"Supplied positive Horn family proof pools reached a common fixed point; admission pending",current,trace,this,input);
                 }
                 throw new IllegalStateException("Family round limit before an unchanged fully covered barrier");
