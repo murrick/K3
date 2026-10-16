@@ -44,7 +44,9 @@ public final class ContextUniversalCompositionProof {
     /** Select an actual complete ledger pair; no candidate clause, constant sampling or new primary Source. */
     public static Evidence prove(Receipt receipt,Clause owner,int ownerPivot,Clause partner,int partnerPivot,int maximumDepth,int maximumWork) {
         if (maximumDepth < 0 || maximumWork < 1) throw new IllegalArgumentException("Bounded universal composition required");
-        Runnable work = ContextGroundProductionRounds.budget(maximumWork);
+        return prove(receipt,owner,ownerPivot,partner,partnerPivot,maximumDepth,ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static Evidence prove(Receipt receipt,Clause owner,int ownerPivot,Clause partner,int partnerPivot,int maximumDepth,Runnable work) {
         try {
             if (receipt == null || !receipt.verified || !receipt.collisions.isEmpty()) throw new IllegalStateException("Verified collision-free exact-input receipt required");
             List<Support> left = authenticate(owner,receipt,work),right = authenticate(partner,receipt,work);
