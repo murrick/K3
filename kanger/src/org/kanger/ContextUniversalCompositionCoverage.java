@@ -15,7 +15,7 @@ public final class ContextUniversalCompositionCoverage {
     }
     // Independent feasibility check: connected equalities on argument positions.
     // Variable labels from opposite parents are deliberately never compared.
-    private static boolean unifiable(Atom a,Atom b,Runnable work) {
+    static boolean unifiable(Atom a,Atom b,Runnable work) {
         if (a.positive==b.positive || !a.predicate.equals(b.predicate) || a.arguments.size()!=b.arguments.size()) return false;
         int n=a.arguments.size(); if(n>256) throw new IllegalStateException("Universal pivot arity audit limit");
         List<Slot> slots=new ArrayList<>(a.arguments); slots.addAll(b.arguments);

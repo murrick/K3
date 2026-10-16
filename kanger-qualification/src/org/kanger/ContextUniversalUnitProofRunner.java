@@ -120,6 +120,30 @@ public final class ContextUniversalUnitProofRunner {
             require(sf.products.isEmpty(),"detached proof creates no shared Product");
             boolean immutable=false; try { done.proofs.clear(); } catch(UnsupportedOperationException expected) { immutable=true; } require(immutable,"proof results immutable");
             require(!ContextOrdinaryResidualRounds.inspectWithUniversalCompositions(sf,sa,16,WORK,500000,256).verified,"new detached unit proof does not relax old transport gate");
+            require(!ContextUniversalUnitCoverage.auditPrimary(x,a,Collections.emptyList(),16,WORK).covered,"missing generic unit consequence refuses coverage");
+            require(ContextUniversalUnitCoverage.auditPrimary(x,a,Collections.singletonList(generic),16,WORK).covered,"generic unit evidence covers exact primary cut");
+            require(!ContextUniversalUnitCoverage.auditPrimary(x,negative,Collections.emptyList(),16,WORK).covered,"missing typed opposition refuses coverage even without result clause");
+            require(ContextUniversalUnitCoverage.auditPrimary(x,negative,Collections.singletonList(opposition),16,WORK).covered,"typed opposition discharges unit/unit obligation");
+            require(ContextUniversalUnitCoverage.auditPrimary(cx,ca,Collections.singletonList(crossed),16,WORK).covered,"apart-renamed universal opposition covered");
+            require(ContextUniversalUnitCoverage.auditPrimary(repeat,bad,Collections.emptyList(),16,WORK).covered,"independent equality graph finds no incoherent repeated-variable obligation");
+            require(ContextUniversalUnitCoverage.auditPrimary(mixedX,mixedA,Collections.emptyList(),16,WORK).covered,"independent graph rejects unequal ground constants");
+            require(!ContextUniversalUnitCoverage.auditPrimary(x,a,Collections.singletonList(opposition),16,WORK).covered,"evidence from another target refuses coverage");
+            require(!ContextUniversalUnitCoverage.auditPrimary(x,a,Collections.singletonList(generic),0,WORK).covered,"unit consequence depth bound cannot be bypassed by supplying proof");
+            require(!ContextUniversalUnitCoverage.auditPrimary(x,a,Collections.singletonList(generic),16,1).covered,"one shared audit work budget refuses without partial coverage");
+            require(ContextUniversalUnitCoverage.audit(sf,sa,Collections.singletonList(unit),Collections.singletonList(done),16,WORK).covered,"actual derived universal unit and all source recipes audited");
+            require(!ContextUniversalUnitCoverage.audit(sf,sa,Collections.singletonList(unit),Collections.emptyList(),16,WORK).covered,"derived unit consequence cannot disappear from audit");
+            require(!ContextUniversalUnitCoverage.audit(sf,sx,Collections.singletonList(unit),Collections.emptyList(),16,WORK).covered,"wrong-cut compound authority refuses before vacuous success");
+            require(!ContextUniversalUnitCoverage.auditPrimary(sx,sa,Collections.singletonList(done),16,WORK).covered,"frontier-derived evidence cannot pass as primary-only evidence");
+            Snapshot multi=snapshot(false,"!@y ~p(y)||~p(1)||q(y);"); Clause multiClause=clause(multi);
+            List<Evidence> allPivots=new ArrayList<>();
+            for(int i=0;i<multiClause.literals.size();i++) if(multiClause.literals.get(i).predicate.equals("p"))
+                allPivots.add(primary(x,multi,clause(x),0,multiClause,i));
+            require(allPivots.size()==2 && !allPivots.get(0).proofs.get(0).conclusion.equivalent(allPivots.get(1).proofs.get(0).conclusion),"one unit and one compound require two different whole-clause consequences for distinct compatible pivot positions");
+            require(!ContextUniversalUnitCoverage.auditPrimary(x,multi,Collections.singletonList(allPivots.get(0)),16,WORK).covered,"first matching pivot is not complete coverage");
+            require(!ContextUniversalUnitCoverage.auditPrimary(x,multi,Collections.singletonList(allPivots.get(1)),16,WORK).covered,"other single pivot is not complete coverage either");
+            require(ContextUniversalUnitCoverage.auditPrimary(x,multi,allPivots,16,WORK).covered,"every compatible pivot consequence closes detached obligations");
+            for(Evidence e:allPivots) oracle(e.proofs.get(0));
+            require(!ContextUniversalUnitCoverage.auditPrimary(null,a,Collections.emptyList(),16,WORK).covered,"missing snapshot refuses coverage");
             System.out.println("CONTEXT_UNIVERSAL_UNIT_PROOF_PASS checks="+checks); System.exit(0);
         } catch(Throwable failure) { failure.printStackTrace(); System.exit(1); }
     }

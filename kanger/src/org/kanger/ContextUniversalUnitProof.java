@@ -49,7 +49,7 @@ public final class ContextUniversalUnitProof {
         if(result.isEmpty()) throw new IllegalStateException("Whole unit-resolution parent absent from exact cut sources or sealed proofs");
         return result;
     }
-    private static List<Entry> declarations(Snapshot x,Snapshot target,Runnable work) {
+    static List<Entry> declarations(Snapshot x,Snapshot target,Runnable work) {
         ContextProductionFamilyAssembly.identity(x,true,work);
         List<Entry> result=new ArrayList<>(x.primary);
         if(target!=x) {
@@ -73,7 +73,10 @@ public final class ContextUniversalUnitProof {
     private static Evidence proveInternal(Snapshot x,Frontier input,Snapshot target,Clause left,int leftPivot,Clause right,int rightPivot,
             List<ContextUniversalCompositionProof.Evidence> compositions,int maximumDepth,int maximumWork) {
         if(maximumDepth<0 || maximumWork<1) throw new IllegalArgumentException("Bounded unit proof required");
-        Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        return proveBound(x,input,target,left,leftPivot,right,rightPivot,compositions,maximumDepth,ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static Evidence proveBound(Snapshot x,Frontier input,Snapshot target,Clause left,int leftPivot,Clause right,int rightPivot,
+            List<ContextUniversalCompositionProof.Evidence> compositions,int maximumDepth,Runnable work) {
         try {
             if(x==null || target==null || input!=null && !input.cuts.contains(target)) throw new IllegalStateException("Exact sealed input/cut required");
             if(left==null || right==null || left.literals.size()!=1 && right.literals.size()!=1)
