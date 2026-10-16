@@ -146,7 +146,9 @@ public final class ContextOrdinaryResidualRounds {
     /** Proof-only views: the final receipt retains the complete original owner scope. */
     public static Receipt inspectWithProbes(Frontier input,Snapshot target,int maximumDepth,int maximumWork,int maximumEvents,int maximumProbes) {
         if (input == null || maximumDepth < 0 || maximumEvents < 1 || maximumProbes < 1) throw new IllegalArgumentException("Bounded residual probes required");
-        Runnable work = ContextGroundProductionRounds.budget(maximumWork); int[] events = {maximumEvents};
+        return probes(input,target,maximumDepth,ContextGroundProductionRounds.budget(maximumWork),new int[]{maximumEvents},maximumProbes);
+    }
+    private static Receipt probes(Frontier input,Snapshot target,int maximumDepth,Runnable work,int[] events,int maximumProbes) {
         try {
             Receipt ordinary = observe(input,target,maximumDepth,work,events,false);
             if (!ordinary.verified || !ordinary.collisions.isEmpty()) return ordinary;
@@ -169,6 +171,53 @@ public final class ContextOrdinaryResidualRounds {
                     evidence.add(observed);
                 }
             return combine(input,target,evidence,basis.owners,maximumDepth,work);
+        } catch (Exception failure) { return new Receipt(false,failure.getMessage(),input,target,Collections.emptyList(),Collections.emptyList()); }
+    }
+    /** Adds checked ground resolutions from a sealed baseline; new conclusions wait for the next barrier. */
+    public static Receipt inspectWithCompositions(Frontier input,Snapshot target,int maximumDepth,int maximumWork,int maximumEvents,int maximumProbes) {
+        if (input == null || maximumDepth < 0 || maximumEvents < 1 || maximumProbes < 1)
+            throw new IllegalArgumentException("Bounded composition observation required");
+        Runnable work = ContextGroundProductionRounds.budget(maximumWork); int[] events = {maximumEvents};
+        try {
+            Receipt basis = probes(input,target,maximumDepth,work,events,maximumProbes);
+            if (!basis.verified || !basis.collisions.isEmpty()) return basis;
+            if (events[0] < 1) throw new IllegalStateException("Composition shared observation event limit");
+            User user = new User(); Mind mind = new Mind(user); user.setCurrentMind(mind);
+            mind.setQueryPass(QueryPass.ACCEPT); mind.setFloodControlLimit(maximumDepth);
+            List<Product> pool = new ArrayList<>(basis.localProofs);
+            try (ContextProductionCapture capture = ContextProductionCapture.begin(mind,events[0])) {
+                capture.observeCompositionCandidates(); List<Clause> restored = new ArrayList<>();
+                for (Product product : basis.localProofs) {
+                    boolean duplicate = false;
+                    for (Clause clause : restored) { work.run(); if (clause.equivalent(product.clause)) { duplicate = true; break; } }
+                    if (duplicate) continue;
+                    List<Support> supports = new ArrayList<>();
+                    for (Product alternative : basis.localProofs) {
+                        work.run(); if (alternative.clause.equivalent(product.clause)) supports.add(alternative.proof);
+                    }
+                    capture.replayDerived(mind,product.clause,supports); restored.add(product.clause);
+                }
+                mind.link(null,false); ContextProductionCapture.Snapshot observed = capture.snapshot();
+                events[0] -= observed.eventCount;
+                if (!observed.gaps.isEmpty() || observed.inputs.size() != restored.size())
+                    throw new IllegalStateException("Incomplete composition observation: "+observed.gaps);
+                for (int i=0;i<restored.size();++i) {
+                    work.run(); if (!restored.get(i).equivalent(observed.inputs.get(i).clause))
+                        throw new IllegalStateException("Composition whole-clause replay mismatch");
+                }
+                for (CompositionCandidate candidate : observed.compositionCandidates) {
+                    ContextGroundCompositionProof.Evidence proof = ContextGroundCompositionProof.prove(basis,candidate,maximumDepth,work);
+                    if (!proof.proved) throw new IllegalStateException(proof.reason);
+                    for (ContextGroundCompositionProof.Proof step : proof.proofs) add(pool,step.conclusion,step.support,maximumDepth,work);
+                }
+            }
+            List<Collision> opposed = collisions(pool,work);
+            if (!opposed.isEmpty()) return new Receipt(true,"Checked ground composition opposition",input,target,Collections.emptyList(),opposed);
+            List<Product> exported = new ArrayList<>();
+            for (Product product : pool) {
+                work.run(); if (product.proof.depth > 0 && product.proof.sources.stream().anyMatch(source -> source.localX)) exported.add(product);
+            }
+            return new Receipt(true,"Observed reductions and checked ground compositions; coverage/admission unknown",input,target,exported,Collections.emptyList(),basis.owners,pool);
         } catch (Exception failure) { return new Receipt(false,failure.getMessage(),input,target,Collections.emptyList(),Collections.emptyList()); }
     }
     private static Receipt combine(Frontier input,Snapshot target,List<Receipt> observations,List<Product> owners,int maximumDepth,Runnable work) {

@@ -52,7 +52,9 @@ public final class ContextGroundCompositionProof {
     /** Exact receipt-bound proof; all candidate alternatives must authenticate, with no partial success. */
     public static Evidence prove(Receipt receipt,CompositionCandidate candidate,int maximumDepth,int maximumWork) {
         if (maximumDepth < 0 || maximumWork < 1) throw new IllegalArgumentException("Bounded ground composition proof required");
-        Runnable work = ContextGroundProductionRounds.budget(maximumWork);
+        return prove(receipt,candidate,maximumDepth,ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static Evidence prove(Receipt receipt,CompositionCandidate candidate,int maximumDepth,Runnable work) {
         try {
             if (receipt == null || !receipt.verified || !receipt.collisions.isEmpty() || candidate == null)
                 throw new IllegalStateException("Complete collision-free receipt and native candidate required");
