@@ -116,6 +116,16 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
             } finally { requireCurrent(); }
         }
     }
+    /** Fresh owned read-only ground diagnostic; cannot consume or grant publication authority. */
+    org.kanger.ContextGroundClauseCandidate.Evaluation qualifyGroundCandidate(String statement,int rounds,int localRounds,int depth,int work,int events,int probes,int models) throws Exception {
+        synchronized(provider) {
+            requireCurrent();
+            try {
+                Binding bound = bind(work,events);
+                return org.kanger.ContextGroundClauseCandidate.qualify(bound.x,bound.foreign,statement,maximumRows,rounds,localRounds,depth,work,events,probes,models);
+            } finally { requireCurrent(); }
+        }
+    }
     enum WriteStatus { PUBLISHED, COLLISION, INCOMPLETE, NATIVE_REJECTED }
     static final class WriteResult {
         final WriteStatus status;

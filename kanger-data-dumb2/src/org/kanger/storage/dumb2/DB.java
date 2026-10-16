@@ -242,6 +242,14 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    /** Read-only scoped ground candidate diagnostic from fresh owned views; never permission to publish. */
+    public synchronized org.kanger.ContextGroundClauseCandidate.Evaluation qualifyGroundProductionCandidate(
+            Mind source,String statement,int rows,int rounds,int localRounds,int depth,int work,int events,int probes,int models) throws Exception {
+        try (ContextProductionSnapshotSession lease = ContextProductionSnapshotSession.open(this,source,rows)) {
+            return lease.qualifyGroundCandidate(statement,rounds,localRounds,depth,work,events,probes,models);
+        }
+    }
+
     public enum ProductionWriteStatus { PUBLISHED, COLLISION, INCOMPLETE, NATIVE_REJECTED }
     /** Trial Sources retain their staged identity; before/after address actual physical revisions. */
     public static final class ProductionWriteResult {

@@ -24,6 +24,26 @@ public final class ContextProductionCandidate {
             return family.evaluate(rounds,depth,work,events);
         }
     }
+    /** Complete private staging independent of any family evaluator; never publication authority. */
+    public static final class Staged {
+        public final UUID identity;
+        public final String statement;
+        public final Snapshot base,staged;
+        public final Source candidate;
+        public final Map<Source,Source> rebased;
+        public final List<Snapshot> foreign;
+        private Staged(UUID identity,String statement,Snapshot base,Snapshot staged,Source candidate,Map<Source,Source> rebased,List<Snapshot> foreign) {
+            this.identity = identity; this.statement = statement; this.base = base; this.staged = staged; this.candidate = candidate;
+            this.rebased = Collections.unmodifiableMap(new LinkedHashMap<>(rebased));
+            this.foreign = Collections.unmodifiableList(new ArrayList<>(foreign));
+        }
+    }
+    public static final class StagingResult {
+        public final boolean prepared;
+        public final String reason;
+        public final Staged artifact;
+        private StagingResult(boolean prepared,String reason,Staged artifact) { this.prepared = prepared; this.reason = reason; this.artifact = artifact; }
+    }
     public static final class Result {
         public final boolean prepared;
         public final String reason;
@@ -63,7 +83,7 @@ public final class ContextProductionCandidate {
             throw new IllegalStateException("Candidate duplicate/replacement is outside append-only scope");
         return added;
     }
-    public static Result prepare(Snapshot base,List<Snapshot> foreign,String statement,int maximumRows,int maximumWork,int maximumEvents) {
+    public static StagingResult stage(Snapshot base,List<Snapshot> foreign,String statement,int maximumRows,int maximumWork,int maximumEvents) {
         if (maximumRows < 1 || maximumRows > 10000 || maximumWork < 1 || maximumEvents < 1)
             throw new IllegalArgumentException("Bounded candidate preparation required");
         int[] remaining = {maximumWork}; Runnable work = () -> { if (--remaining[0] < 0) throw new IllegalStateException("Candidate preparation work limit"); };
@@ -116,11 +136,19 @@ public final class ContextProductionCandidate {
             Entry candidate = indexed.get(candidateId);
             if (candidate == null || indexed.size() != rebased.size()+1) throw new IllegalStateException("Candidate primary inventory is incomplete");
             ContextProductionNativeBinding.sameEntry(candidateShape.snapshot.primary.get(0),candidate,work);
-            ContextProductionFamilyAssembly.Result assembly = ContextProductionFamilyAssembly.assemble(staged.snapshot,sources,maximumWork);
-            if (!assembly.assembled) throw new IllegalStateException("Candidate family assembly incomplete: "+assembly.reason);
-            return new Result(true,"Detached native-bound candidate and complete original-source mapping prepared; publication pending",
-                    new Artifact(identity,statement,base,staged.snapshot,candidate.source,rebased,assembly.artifact));
-        } catch (Exception failure) { return new Result(false,failure.getMessage(),null); }
+            return new StagingResult(true,"Complete detached native staging and original-source mapping; publication pending",
+                    new Staged(identity,statement,base,staged.snapshot,candidate.source,rebased,sources));
+        } catch (Exception failure) { return new StagingResult(false,failure.getMessage(),null); }
+    }
+    /** Legacy evaluator selection is separate from complete native staging. */
+    public static Result prepare(Snapshot base,List<Snapshot> foreign,String statement,int maximumRows,int maximumWork,int maximumEvents) {
+        StagingResult staged = stage(base,foreign,statement,maximumRows,maximumWork,maximumEvents);
+        if (!staged.prepared) return new Result(false,staged.reason,null);
+        Staged a = staged.artifact;
+        ContextProductionFamilyAssembly.Result assembly = ContextProductionFamilyAssembly.assemble(a.staged,a.foreign,maximumWork);
+        if (!assembly.assembled) return new Result(false,"Candidate family assembly incomplete: "+assembly.reason,null);
+        return new Result(true,"Detached native-bound candidate and complete original-source mapping prepared; publication pending",
+                new Artifact(a.identity,a.statement,a.base,a.staged,a.candidate,a.rebased,assembly.artifact));
     }
     public static Evaluation qualify(Snapshot base,List<Snapshot> foreign,String statement,int maximumRows,int rounds,int depth,int work,int events) {
         return new Evaluation(prepare(base,foreign,statement,maximumRows,work,events),rounds,depth,work,events);
