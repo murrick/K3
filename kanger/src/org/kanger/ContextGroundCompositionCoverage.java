@@ -14,7 +14,7 @@ public final class ContextGroundCompositionCoverage {
         public final String reason;
         private Audit(boolean covered,String reason) { this.covered = covered; this.reason = reason; }
     }
-    private static void check(List<Product> basis,List<Product> output,int maximumDepth,Runnable work) {
+    static void check(List<Product> basis,List<Product> output,int maximumDepth,Runnable work) {
         for (Product product : basis) {
             work.run();
             if (!product.clause.variables.isEmpty()) throw new IllegalStateException("Nonground clause outside ground composition coverage");

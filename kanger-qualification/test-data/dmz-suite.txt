@@ -115,3 +115,4 @@ org.kanger.ContextOrdinaryHornFamilyRunner | CONTEXT_ORDINARY_HORN_FAMILY_PASS
 org.kanger.ContextCompositionCandidateRunner | CONTEXT_COMPOSITION_CANDIDATE_PASS
 org.kanger.ContextGroundCompositionProofRunner | CONTEXT_GROUND_COMPOSITION_PROOF_PASS
 org.kanger.ContextGroundCompositionRoundsRunner | CONTEXT_GROUND_COMPOSITION_ROUNDS_PASS
+org.kanger.ContextGroundLocalClosureRunner | CONTEXT_GROUND_LOCAL_CLOSURE_PASS

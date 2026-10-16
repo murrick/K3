@@ -181,6 +181,12 @@ public final class ContextOrdinaryResidualRounds {
         try {
             Receipt basis = probes(input,target,maximumDepth,work,events,maximumProbes);
             if (!basis.verified || !basis.collisions.isEmpty()) return basis;
+            return compositions(basis,maximumDepth,work,events);
+        } catch (Exception failure) { return new Receipt(false,failure.getMessage(),input,target,Collections.emptyList(),Collections.emptyList()); }
+    }
+    private static Receipt compositions(Receipt basis,int maximumDepth,Runnable work,int[] events) {
+        Frontier input = basis.input; Snapshot target = basis.target;
+        try {
             if (events[0] < 1) throw new IllegalStateException("Composition shared observation event limit");
             User user = new User(); Mind mind = new Mind(user); user.setCurrentMind(mind);
             mind.setQueryPass(QueryPass.ACCEPT); mind.setFloodControlLimit(maximumDepth);
@@ -219,6 +225,47 @@ public final class ContextOrdinaryResidualRounds {
             }
             return new Receipt(true,"Observed reductions and checked ground compositions; coverage/admission unknown",input,target,exported,Collections.emptyList(),basis.owners,pool);
         } catch (Exception failure) { return new Receipt(false,failure.getMessage(),input,target,Collections.emptyList(),Collections.emptyList()); }
+    }
+    /** Bounded private cut closure. Only X-dependent products leave the cut at a family barrier. */
+    public static Receipt inspectWithLocalCompositions(Frontier input,Snapshot target,int maximumDepth,int maximumWork,int maximumEvents,int maximumProbes,int maximumLocalRounds) {
+        if (input == null || maximumDepth < 0 || maximumEvents < 1 || maximumProbes < 1 || maximumLocalRounds < 1)
+            throw new IllegalArgumentException("Bounded local composition closure required");
+        Runnable work = ContextGroundProductionRounds.budget(maximumWork); int[] events = {maximumEvents};
+        try {
+            Receipt current = probes(input,target,maximumDepth,work,events,maximumProbes);
+            if (!current.verified || !current.collisions.isEmpty()) return current;
+            for (Product product : current.localProofs) {
+                work.run(); if (!product.clause.variables.isEmpty()) throw new IllegalStateException("Local composition closure requires ground clauses");
+            }
+            List<Product> originalOwners = current.owners;
+            for (int round=0;round<maximumLocalRounds;++round) {
+                Receipt composed = compositions(current,maximumDepth,work,events);
+                if (!composed.verified || !composed.collisions.isEmpty()) return composed;
+                // Replay actual proved carriers locally; retain every cause/depth and create no primary Source.
+                Receipt reduced = observe(input,target,maximumDepth,work,events,false,composed.localProofs);
+                if (!reduced.verified || !reduced.collisions.isEmpty()) return reduced;
+                Receipt next = combine(input,target,Arrays.asList(composed,reduced),originalOwners,maximumDepth,work);
+                if (!next.collisions.isEmpty()) return next;
+                if (sameRecipes(current.localProofs,next.localProofs,work)) {
+                    ContextOrdinaryResidualCoverage.check(next.localProofs,next.localProofs,next.localProofs,maximumDepth,work);
+                    ContextGroundCompositionCoverage.check(next.localProofs,next.localProofs,maximumDepth,work);
+                    return new Receipt(true,"Private ground reductions/compositions closed; family saturation/admission unknown",input,target,next.products,Collections.emptyList(),originalOwners,next.localProofs);
+                }
+                current = next;
+            }
+            throw new IllegalStateException("Private composition local round limit");
+        } catch (Exception failure) { return new Receipt(false,failure.getMessage(),input,target,Collections.emptyList(),Collections.emptyList()); }
+    }
+    private static boolean sameRecipes(List<Product> a,List<Product> b,Runnable work) {
+        if (a.size() != b.size()) return false;
+        for (Product left : a) {
+            boolean found = false;
+            for (Product right : b) {
+                work.run(); if (left.proof.equals(right.proof) && left.clause.equivalent(right.clause)) { found = true; break; }
+            }
+            if (!found) return false;
+        }
+        return true;
     }
     private static Receipt combine(Frontier input,Snapshot target,List<Receipt> observations,List<Product> owners,int maximumDepth,Runnable work) {
         List<Product> pool = new ArrayList<>();
