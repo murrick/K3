@@ -27,7 +27,12 @@ public final class ContextGroundCutEvidence {
         public final List<Collision> collisions;
         final Frontier input;
         final Snapshot target;
+        final List<Route> localRoutes;
         private Result(boolean verified,String reason,Snapshot x,Snapshot foreign,List<Production> productions,Frontier input,Snapshot target,List<Collision> collisions) {
+            this(verified,reason,x,foreign,productions,input,target,collisions,Collections.emptyList());
+        }
+        private Result(boolean verified,String reason,Snapshot x,Snapshot foreign,List<Production> productions,Frontier input,Snapshot target,List<Collision> collisions,List<Route> routes) {
+            this.localRoutes = Collections.unmodifiableList(new ArrayList<>(routes));
             this.input = input; this.target = target; this.collisions = Collections.unmodifiableList(new ArrayList<>(collisions));
             this.verified = verified; this.reason = reason; this.x = x; this.foreign = foreign;
             this.productions = Collections.unmodifiableList(new ArrayList<>(productions));
@@ -126,7 +131,7 @@ public final class ContextGroundCutEvidence {
                     Fact fact = clause.literals.get(0).fact(); Pattern atom = pattern(fact,work);
                     seeds.add(new Route(replay,atom,null,new Support(Collections.singleton(primary.source),0),null,null,null,null));
                 }
-                if (observed.applications.isEmpty()) return new Result(true,"No ordinary applications observed; no closure claim",x,foreign,input.productions,input,target,Collections.emptyList());
+                if (observed.applications.isEmpty()) return new Result(true,"No ordinary applications observed; no closure claim",x,foreign,input.productions,input,target,Collections.emptyList(),seeds);
                 ContextWitnessUnaryChainVerifier.Result checked = ContextWitnessUnaryChainVerifier.close(replay,observed,scope,seeds,maximumDepth,2,work,true);
                 if (!checked.reconstructed) throw new IllegalStateException(checked.reason);
                 List<Production> products = new ArrayList<>();
@@ -141,7 +146,7 @@ public final class ContextGroundCutEvidence {
                     if (conclusion == null) throw new IllegalStateException("Ground cut product lacks native observation");
                     products.add(new Production(conclusion,route.proof));
                 }
-                return new Result(true,"Observed signed X-dependent ground proofs reconstructed; coverage/admission unknown",x,foreign,products,input,target,Collections.emptyList());
+                return new Result(true,"Observed signed X-dependent ground proofs reconstructed; coverage/admission unknown",x,foreign,products,input,target,Collections.emptyList(),checked.routes);
             }
         } catch (Exception failure) { return new Result(false,failure.getMessage(),x,foreign,Collections.emptyList(),input,target,Collections.emptyList()); }
     }

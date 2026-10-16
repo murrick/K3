@@ -105,3 +105,4 @@ org.kanger.ContextProductionCoreJarRunner | CONTEXT_PRODUCTION_CORE_JAR_PASS
 org.kanger.storage.dumb2.ContextProductionProviderJarRunner | CONTEXT_PRODUCTION_PROVIDER_JAR_PASS
 org.kanger.ContextGroundCutEvidenceRunner | CONTEXT_GROUND_CUT_EVIDENCE_PASS
 org.kanger.ContextGroundProductionRoundsRunner | CONTEXT_GROUND_PRODUCTION_ROUNDS_PASS
+org.kanger.ContextGroundRoundCoverageRunner | CONTEXT_GROUND_ROUND_COVERAGE_PASS
