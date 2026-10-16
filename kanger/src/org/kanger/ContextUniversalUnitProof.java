@@ -27,10 +27,14 @@ public final class ContextUniversalUnitProof {
         public final boolean proved;
         public final String reason;
         public final Frontier input;
+        public final ContextUniversalUnitLedger ledger;
         public final Snapshot x,target;
         public final List<Proof> proofs;
         private Evidence(boolean proved,String reason,Snapshot x,Frontier input,Snapshot target,List<Proof> proofs) {
-            this.proved=proved; this.reason=reason; this.x=x; this.input=input; this.target=target;
+            this(proved,reason,x,input,target,proofs,null);
+        }
+        private Evidence(boolean proved,String reason,Snapshot x,Frontier input,Snapshot target,List<Proof> proofs,ContextUniversalUnitLedger ledger) {
+            this.proved=proved; this.reason=reason; this.x=x; this.input=input; this.target=target; this.ledger=ledger;
             this.proofs=Collections.unmodifiableList(new ArrayList<>(proofs));
         }
     }
@@ -87,6 +91,30 @@ public final class ContextUniversalUnitProof {
                     throw new IllegalStateException("Composition evidence has wrong input, cut or status");
             }
             List<Support> a=authenticate(left,x,input,target,evidence,work),b=authenticate(right,x,input,target,evidence,work);
+            return build(x,input,target,null,left,leftPivot,right,rightPivot,a,b,maximumDepth,work);
+        } catch(Exception failure) { return new Evidence(false,failure.getMessage(),x,input,target,Collections.emptyList()); }
+    }
+    public static Evidence prove(ContextUniversalUnitLedger ledger,Clause left,int leftPivot,Clause right,int rightPivot,int maximumDepth,int maximumWork) {
+        if(maximumDepth<0 || maximumWork<1) throw new IllegalArgumentException("Bounded ledger proof required");
+        return proveLedger(ledger,left,leftPivot,right,rightPivot,maximumDepth,ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static Evidence proveLedger(ContextUniversalUnitLedger ledger,Clause left,int leftPivot,Clause right,int rightPivot,int maximumDepth,Runnable work) {
+        try {
+            if(ledger==null || left==null || right==null || left.literals.size()!=1 && right.literals.size()!=1)
+                throw new IllegalStateException("Sealed ledger and unit parent required");
+            List<Support> a=new ArrayList<>(),b=new ArrayList<>();
+            for(ContextUniversalUnitLedger.Row row:ledger.rows) {
+                add(a,row.clause,row.support,left,work); add(b,row.clause,row.support,right,work);
+            }
+            if(a.isEmpty() || b.isEmpty()) throw new IllegalStateException("Whole parent absent from exact unit ledger");
+            return build(ledger.x,ledger.input,ledger.target,ledger,left,leftPivot,right,rightPivot,a,b,maximumDepth,work);
+        } catch(Exception failure) {
+            return new Evidence(false,failure.getMessage(),ledger==null?null:ledger.x,ledger==null?null:ledger.input,ledger==null?null:ledger.target,Collections.emptyList(),ledger);
+        }
+    }
+    private static Evidence build(Snapshot x,Frontier input,Snapshot target,ContextUniversalUnitLedger ledger,
+            Clause left,int leftPivot,Clause right,int rightPivot,List<Support> a,List<Support> b,int maximumDepth,Runnable work) {
+        try {
             Clause conclusion=left.resolveWithUnits(right,leftPivot,rightPivot,work);
             List<Proof> result=new ArrayList<>();
             for(Support leftProof:a) for(Support rightProof:b) {
@@ -102,7 +130,7 @@ public final class ContextUniversalUnitProof {
                     result.add(new Proof(left,leftPivot,right,rightPivot,conclusion,leftProof,rightProof,support));
                 }
             }
-            return new Evidence(true,"Checked flat unit resolution/opposition; transport, coverage and admission unknown",x,input,target,result);
-        } catch(Exception failure) { return new Evidence(false,failure.getMessage(),x,input,target,Collections.emptyList()); }
+            return new Evidence(true,"Checked flat unit resolution/opposition; transport, coverage and admission unknown",x,input,target,result,ledger);
+        } catch(Exception failure) { return new Evidence(false,failure.getMessage(),x,input,target,Collections.emptyList(),ledger); }
     }
 }

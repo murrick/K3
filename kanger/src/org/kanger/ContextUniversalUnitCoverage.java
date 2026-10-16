@@ -34,7 +34,7 @@ public final class ContextUniversalUnitCoverage {
             if(x==null || target==null || input!=null && !input.cuts.contains(target)) throw new IllegalStateException("Exact unit cut required");
             List<Evidence> evidence=new ArrayList<>(supplied);
             for(Evidence e:evidence) {
-                work.run(); if(e==null || !e.proved || e.x!=x || e.input!=input || e.target!=target)
+                work.run(); if(e==null || !e.proved || e.ledger!=null || e.x!=x || e.input!=input || e.target!=target)
                     throw new IllegalStateException("Unit evidence has wrong snapshots, input, cut or status");
             }
             List<ContextUniversalCompositionProof.Evidence> compound=new ArrayList<>(compositions);
@@ -73,4 +73,42 @@ public final class ContextUniversalUnitCoverage {
             return new Audit(true,"Detached unit-pair consequences/oppositions covered; transport, closure and admission unknown");
         } catch(Exception failure) { return new Audit(false,failure.getMessage()); }
     }
+    /** Exact historical ledger step, independent of the production sweep's MGU trials. */
+    public static Audit audit(ContextUniversalUnitLedger ledger,List<Evidence> supplied,int maximumDepth,int maximumWork) {
+        if(maximumDepth<0 || maximumWork<1) throw new IllegalArgumentException("Bounded ledger coverage required");
+        return audit(ledger,supplied,maximumDepth,ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static Audit audit(ContextUniversalUnitLedger ledger,List<Evidence> supplied,int maximumDepth,Runnable work) {
+        try {
+            if(ledger==null) throw new IllegalStateException("Sealed unit ledger required");
+            List<Evidence> evidence=new ArrayList<>(supplied);
+            for(Evidence e:evidence) {
+                work.run(); if(e==null || !e.proved || e.ledger!=ledger) throw new IllegalStateException("Wrong historical unit ledger evidence");
+            }
+            List<Clause> clauses=new ArrayList<>();
+            for(ContextUniversalUnitLedger.Row row:ledger.rows) {
+                work.run(); if(row.support.depth>maximumDepth) throw new IllegalStateException("Ledger parent depth limit");
+                add(clauses,row.clause,work);
+            }
+            for(int i=0;i<clauses.size();i++) for(int j=i;j<clauses.size();j++) {
+                Clause left=clauses.get(i),right=clauses.get(j);
+                work.run(); if(left.literals.size()!=1 && right.literals.size()!=1) continue;
+                for(int a=0;a<left.literals.size();a++) for(int b=0;b<right.literals.size();b++) {
+                    work.run(); if(!ContextUniversalCompositionCoverage.unifiable(left.literals.get(a),right.literals.get(b),work)) continue;
+                    Evidence expected=ContextUniversalUnitProof.proveLedger(ledger,left,a,right,b,maximumDepth,work);
+                    if(!expected.proved) throw new IllegalStateException(expected.reason);
+                    for(Proof required:expected.proofs) {
+                        boolean found=false;
+                        for(Evidence e:evidence) for(Proof actual:e.proofs) {
+                            work.run(); if(actual.support.equals(required.support) && actual.contradiction==required.contradiction
+                                && (required.contradiction || actual.conclusion.equivalent(required.conclusion))) found=true;
+                        }
+                        if(!found) throw new IllegalStateException("Missing checked ledger unit consequence/opposition");
+                    }
+                }
+            }
+            return new Audit(true,"Exact private ledger unit step covered; family closure/admission unknown");
+        } catch(Exception failure) { return new Audit(false,failure.getMessage()); }
+    }
+
 }

@@ -123,3 +123,4 @@ org.kanger.storage.dumb2.ContextGroundAuthoringBridgeRunner | CONTEXT_GROUND_AUT
 org.kanger.ContextUniversalCompositionProofRunner | CONTEXT_UNIVERSAL_COMPOSITION_PROOF_PASS
 org.kanger.ContextUniversalCompositionRoundsRunner | CONTEXT_UNIVERSAL_COMPOSITION_ROUNDS_PASS
 org.kanger.ContextUniversalUnitProofRunner | CONTEXT_UNIVERSAL_UNIT_PROOF_PASS
+org.kanger.ContextUniversalUnitLedgerRunner | CONTEXT_UNIVERSAL_UNIT_LEDGER_PASS
