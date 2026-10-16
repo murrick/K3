@@ -287,7 +287,14 @@ public final class ContextProductionCapture implements AutoCloseable {
         }
         /** Structural MGU resolvent only; supplies no source, proof, observation or publication authority. */
         Clause resolve(Clause other,int leftPivot,int rightPivot,Runnable work) {
-            if (other == null || literals.size() < 2 || other.literals.size() < 2
+            return resolution(other,leftPivot,rightPivot,work,false);
+        }
+        /** Null is the empty resolvent, only after successful unit/unit unification. */
+        Clause resolveWithUnits(Clause other,int leftPivot,int rightPivot,Runnable work) {
+            return resolution(other,leftPivot,rightPivot,work,true);
+        }
+        private Clause resolution(Clause other,int leftPivot,int rightPivot,Runnable work,boolean units) {
+            if (other == null || literals.size() < (units ? 1 : 2) || other.literals.size() < (units ? 1 : 2)
                     || leftPivot < 0 || leftPivot >= literals.size() || rightPivot < 0 || rightPivot >= other.literals.size())
                 throw new IllegalArgumentException("Two whole compound clauses and exact pivot indices required");
             Map<Integer,Integer> leftNames = new HashMap<>(),rightNames = new HashMap<>(); int next = 0;
@@ -322,7 +329,7 @@ public final class ContextProductionCapture implements AutoCloseable {
                     remaining.add(new Atom(atom.predicate,atom.positive,slots));
                 }
             }
-            return new Clause(remaining);
+            return remaining.isEmpty() ? null : new Clause(remaining);
         }
         /** Eigenparameters absent from all primary knowledge are universally generalizable.
          * Only direct slots are generalized; structured parameter values are unsupported. */
