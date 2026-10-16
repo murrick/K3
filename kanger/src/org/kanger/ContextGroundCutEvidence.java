@@ -43,7 +43,7 @@ public final class ContextGroundCutEvidence {
         for (SemanticTermSnapshot value : fact.arguments) { work.run(); arguments.add(new Argument(null,value)); }
         return new Pattern(fact.predicate,fact.positive,arguments,true);
     }
-    private static void sameShapes(Entry expected,Input actual,Runnable work) {
+    static void sameShapes(Entry expected,Input actual,Runnable work) {
         if (!expected.source.equals(actual.source) || expected.bundle != null || expected.clauses.size() != actual.shapes.size())
             throw new IllegalStateException("Ground cut whole declaration binding mismatch");
         boolean[] used = new boolean[actual.shapes.size()];
