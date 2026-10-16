@@ -37,7 +37,9 @@ public final class ContextUniversalCompositionCoverage {
     /** One exact receipt ledger, not a closure, family certificate or transport permission. */
     public static Audit audit(Receipt receipt,List<Evidence> supplied,int maximumDepth,int maximumWork) {
         if(maximumDepth<0 || maximumWork<1) throw new IllegalArgumentException("Bounded universal coverage required");
-        Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        return audit(receipt,supplied,maximumDepth,ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static Audit audit(Receipt receipt,List<Evidence> supplied,int maximumDepth,Runnable work) {
         try {
             if(receipt==null || !receipt.verified || !receipt.collisions.isEmpty()) throw new IllegalStateException("Verified collision-free receipt required");
             List<Evidence> evidence=new ArrayList<>(supplied);

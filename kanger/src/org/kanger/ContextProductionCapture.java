@@ -281,6 +281,10 @@ public final class ContextProductionCapture implements AutoCloseable {
             }
             return slot;
         }
+        static final class UnificationFailure extends IllegalStateException {
+            private static final long serialVersionUID = 1L;
+            UnificationFailure() { super("Composition pivots do not unify"); }
+        }
         /** Structural MGU resolvent only; supplies no source, proof, observation or publication authority. */
         Clause resolve(Clause other,int leftPivot,int rightPivot,Runnable work) {
             if (other == null || literals.size() < 2 || other.literals.size() < 2
@@ -299,7 +303,7 @@ public final class ContextProductionCapture implements AutoCloseable {
                 if (x.variable >= 0) {
                     if (y.variable != x.variable) bindings.put(x.variable,y);
                 } else if (y.variable >= 0) bindings.put(y.variable,x);
-                else if (!x.value.semanticallyEquals(y.value)) throw new IllegalStateException("Composition pivots do not unify");
+                else if (!x.value.semanticallyEquals(y.value)) throw new UnificationFailure();
             }
             List<Atom> remaining = new ArrayList<>(); Map<Integer,Integer> canonical = new HashMap<>();
             for (int side=0;side<2;++side) {

@@ -184,6 +184,48 @@ public final class ContextOrdinaryResidualRounds {
             return compositions(basis,maximumDepth,work,events);
         } catch (Exception failure) { return new Receipt(false,failure.getMessage(),input,target,Collections.emptyList(),Collections.emptyList()); }
     }
+    /** One checked flat-universal compound sweep. Universal unit results refuse the entire receipt. */
+    public static Receipt inspectWithUniversalCompositions(Frontier input,Snapshot target,int maximumDepth,int maximumWork,int maximumEvents,int maximumProbes) {
+        if (input == null || maximumDepth < 0 || maximumEvents < 1 || maximumProbes < 1)
+            throw new IllegalArgumentException("Bounded universal composition observation required");
+        Runnable work = ContextGroundProductionRounds.budget(maximumWork); int[] events = {maximumEvents};
+        try {
+            Receipt basis = probes(input,target,maximumDepth,work,events,maximumProbes);
+            if (!basis.verified || !basis.collisions.isEmpty()) return basis;
+            List<Product> pool = new ArrayList<>(basis.localProofs);
+            List<Clause> clauses = new ArrayList<>();
+            for (Product product : basis.localProofs) {
+                work.run(); if (product.clause.literals.size() < 2) continue;
+                boolean duplicate = false;
+                for (Clause old : clauses) { work.run(); if (old.equivalent(product.clause)) { duplicate = true; break; } }
+                if (!duplicate) clauses.add(product.clause);
+            }
+            List<ContextUniversalCompositionProof.Evidence> evidence = new ArrayList<>();
+            // Only the immutable baseline supplies parents; newly proved conclusions wait.
+            for (int i=0;i<clauses.size();++i) for (int j=i;j<clauses.size();++j) {
+                Clause left = clauses.get(i),right = clauses.get(j);
+                for (int a=0;a<left.literals.size();++a) for (int b=0;b<right.literals.size();++b) {
+                    work.run(); Atom x = left.literals.get(a),y = right.literals.get(b);
+                    if (x.positive == y.positive || !x.predicate.equals(y.predicate) || x.arguments.size() != y.arguments.size()) continue;
+                    try { left.resolve(right,a,b,work); } catch (Clause.UnificationFailure noMatch) { continue; }
+                    ContextUniversalCompositionProof.Evidence proof = ContextUniversalCompositionProof.prove(basis,left,a,right,b,maximumDepth,work);
+                    if (!proof.proved) throw new IllegalStateException(proof.reason);
+                    evidence.add(proof);
+                    for (ContextUniversalCompositionProof.Proof step : proof.proofs)
+                        add(pool,step.conclusion,step.support,maximumDepth,work);
+                }
+            }
+            ContextUniversalCompositionCoverage.Audit audit = ContextUniversalCompositionCoverage.audit(basis,evidence,maximumDepth,work);
+            if (!audit.covered) throw new IllegalStateException(audit.reason);
+            List<Collision> opposed = collisions(pool,work);
+            if (!opposed.isEmpty()) return new Receipt(true,"Checked flat universal composition opposition",input,target,Collections.emptyList(),opposed);
+            List<Product> exported = new ArrayList<>();
+            for (Product product : pool) {
+                work.run(); if (product.proof.depth > 0 && product.proof.sources.stream().anyMatch(source -> source.localX)) exported.add(product);
+            }
+            return new Receipt(true,"Audited flat universal compound sweep; unit transport, closure/admission unknown",input,target,exported,Collections.emptyList(),basis.owners,pool);
+        } catch (Exception failure) { return new Receipt(false,failure.getMessage(),input,target,Collections.emptyList(),Collections.emptyList()); }
+    }
     private static Receipt compositions(Receipt basis,int maximumDepth,Runnable work,int[] events) {
         Frontier input = basis.input; Snapshot target = basis.target;
         try {
