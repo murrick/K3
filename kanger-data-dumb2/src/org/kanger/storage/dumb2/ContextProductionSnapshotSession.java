@@ -135,6 +135,32 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
             this.status = status; this.trial = trial; this.before = before; this.after = after;
         }
     }
+    static final class GroundWriteResult {
+        final WriteStatus status;
+        final org.kanger.ContextGroundClauseCandidate.Evaluation trial;
+        final RevisionRef before,after;
+        private GroundWriteResult(WriteStatus status,org.kanger.ContextGroundClauseCandidate.Evaluation trial,RevisionRef before,RevisionRef after) {
+            this.status = status; this.trial = trial; this.before = before; this.after = after;
+        }
+    }
+    /** Fresh ground qualification and lease consumption before the ordinary native transaction. */
+    GroundWriteResult writeGroundCandidate(String statement,int rounds,int localRounds,int depth,int work,int events,int probes,int models,boolean logging) throws Exception {
+        synchronized(provider) {
+            requireCurrent();
+            org.kanger.ContextGroundClauseCandidate.Evaluation trial = qualifyGroundCandidate(statement,rounds,localRounds,depth,work,events,probes,models);
+            requireCurrent();
+            if (trial.status != org.kanger.ContextGroundClauseFamily.Status.GROUND_FIXED_POINT) {
+                WriteStatus status = trial.status == org.kanger.ContextGroundClauseFamily.Status.COLLISION ? WriteStatus.COLLISION : WriteStatus.INCOMPLETE;
+                return new GroundWriteResult(status,trial,sourceRef,sourceRef);
+            }
+            // No historical receipt is accepted. Native settlement owns all physical writes;
+            // post-settlement failures must propagate and this authority must never be retried.
+            closed = true;
+            boolean accepted = Boolean.TRUE.equals(source.query(trial.artifact.statement,null,logging));
+            return new GroundWriteResult(accepted ? WriteStatus.PUBLISHED : WriteStatus.NATIVE_REJECTED,trial,
+                    sourceRef,new RevisionRef(provider.getContextId(),provider.getRevision()));
+        }
+    }
     /** Explicit provider bridge; ordinary default authoring is not redirected here. */
     WriteResult writeCandidate(String statement,int rounds,int depth,int work,int events,boolean logging) throws Exception {
         synchronized(provider) {

@@ -270,6 +270,25 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    /** Scoped ground trial and actual physical settlement references; never a reusable write capability. */
+    public static final class GroundProductionWriteResult {
+        public final ProductionWriteStatus status;
+        public final org.kanger.ContextGroundClauseCandidate.Evaluation trial;
+        public final RevisionRef before,after;
+        private GroundProductionWriteResult(ContextProductionSnapshotSession.GroundWriteResult result) {
+            status = ProductionWriteStatus.valueOf(result.status.name()); trial = result.trial;
+            before = result.before; after = result.after;
+        }
+    }
+    /** Explicit ground-only authoring; every call reacquires and requalifies, with no incomplete fallback. */
+    public synchronized GroundProductionWriteResult writeGroundProductionCandidate(
+            Mind source,String statement,int rows,int rounds,int localRounds,int depth,int work,int events,int probes,int models,boolean logging) throws Exception {
+        requireInitialized(); requireWritable();
+        try (ContextProductionSnapshotSession lease = ContextProductionSnapshotSession.open(this,source,rows)) {
+            return new GroundProductionWriteResult(lease.writeGroundCandidate(statement,rounds,localRounds,depth,work,events,probes,models,logging));
+        }
+    }
+
     private boolean validatingCommit;
 
     @Override
