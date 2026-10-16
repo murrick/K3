@@ -262,6 +262,64 @@ public final class ContextProductionCapture implements AutoCloseable {
             }
             return new Clause(result);
         }
+        private static List<Atom> apart(Clause clause,Map<Integer,Integer> variables,Runnable work) {
+            List<Atom> result = new ArrayList<>();
+            for (Atom atom : clause.literals) {
+                List<Slot> slots = new ArrayList<>();
+                for (Slot slot : atom.arguments) {
+                    work.run(); slots.add(slot.variable < 0 ? slot : new Slot(null,variables.get(slot.variable)));
+                }
+                result.add(new Atom(atom.predicate,atom.positive,slots));
+            }
+            return result;
+        }
+        private static Slot dereference(Slot slot,Map<Integer,Slot> bindings,Runnable work) {
+            int steps = 0;
+            while (slot.variable >= 0 && bindings.containsKey(slot.variable)) {
+                work.run(); if (++steps > bindings.size()) throw new IllegalStateException("Cyclic flat substitution");
+                slot = bindings.get(slot.variable);
+            }
+            return slot;
+        }
+        /** Structural MGU resolvent only; supplies no source, proof, observation or publication authority. */
+        Clause resolve(Clause other,int leftPivot,int rightPivot,Runnable work) {
+            if (other == null || literals.size() < 2 || other.literals.size() < 2
+                    || leftPivot < 0 || leftPivot >= literals.size() || rightPivot < 0 || rightPivot >= other.literals.size())
+                throw new IllegalArgumentException("Two whole compound clauses and exact pivot indices required");
+            Map<Integer,Integer> leftNames = new HashMap<>(),rightNames = new HashMap<>(); int next = 0;
+            for (int variable : variables) { work.run(); leftNames.put(variable,next++); }
+            for (int variable : other.variables) { work.run(); rightNames.put(variable,next++); }
+            List<Atom> left = apart(this,leftNames,work),right = apart(other,rightNames,work);
+            Atom a = left.get(leftPivot),b = right.get(rightPivot);
+            if (a.positive == b.positive || !a.predicate.equals(b.predicate) || a.arguments.size() != b.arguments.size())
+                throw new IllegalStateException("Composition pivots are not opposite-compatible");
+            Map<Integer,Slot> bindings = new HashMap<>();
+            for (int i=0;i<a.arguments.size();++i) {
+                work.run(); Slot x = dereference(a.arguments.get(i),bindings,work),y = dereference(b.arguments.get(i),bindings,work);
+                if (x.variable >= 0) {
+                    if (y.variable != x.variable) bindings.put(x.variable,y);
+                } else if (y.variable >= 0) bindings.put(y.variable,x);
+                else if (!x.value.semanticallyEquals(y.value)) throw new IllegalStateException("Composition pivots do not unify");
+            }
+            List<Atom> remaining = new ArrayList<>(); Map<Integer,Integer> canonical = new HashMap<>();
+            for (int side=0;side<2;++side) {
+                List<Atom> parent = side == 0 ? left : right; int pivot = side == 0 ? leftPivot : rightPivot;
+                for (int i=0;i<parent.size();++i) if (i != pivot) {
+                    work.run(); Atom atom = parent.get(i); List<Slot> slots = new ArrayList<>();
+                    for (Slot original : atom.arguments) {
+                        work.run(); Slot slot = dereference(original,bindings,work);
+                        if (slot.variable >= 0) {
+                            Integer name = canonical.get(slot.variable);
+                            if (name == null) { name = canonical.size(); canonical.put(slot.variable,name); }
+                            slot = new Slot(null,name);
+                        }
+                        slots.add(slot);
+                    }
+                    remaining.add(new Atom(atom.predicate,atom.positive,slots));
+                }
+            }
+            return new Clause(remaining);
+        }
         /** Eigenparameters absent from all primary knowledge are universally generalizable.
          * Only direct slots are generalized; structured parameter values are unsupported. */
         public Clause generalize(List<SemanticTermSnapshot> parameters) {
