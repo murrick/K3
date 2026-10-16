@@ -39,6 +39,7 @@ def main():
                  ('org.kanger.ContextGroundCompositionProofRunner', 'CONTEXT_GROUND_COMPOSITION_PROOF_PASS'),
                  ('org.kanger.ContextGroundCompositionRoundsRunner', 'CONTEXT_GROUND_COMPOSITION_ROUNDS_PASS'),
                  ('org.kanger.ContextGroundLocalClosureRunner', 'CONTEXT_GROUND_LOCAL_CLOSURE_PASS'),
+                 ('org.kanger.ContextGroundClauseFamilyRunner', 'CONTEXT_GROUND_CLAUSE_FAMILY_PASS'),
                  ('org.kanger.ContextWitnessTransportBoundaryRunner', 'CONTEXT_WITNESS_TRANSPORT_BOUNDARY_PASS'),
                  ('org.kanger.ContextWitnessBundleRunner', 'CONTEXT_WITNESS_BUNDLE_PASS'),
                  ('org.kanger.ContextWitnessProjectionRunner', 'CONTEXT_WITNESS_PROJECTION_PASS'),

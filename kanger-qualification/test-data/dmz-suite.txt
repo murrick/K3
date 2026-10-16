@@ -116,3 +116,4 @@ org.kanger.ContextCompositionCandidateRunner | CONTEXT_COMPOSITION_CANDIDATE_PAS
 org.kanger.ContextGroundCompositionProofRunner | CONTEXT_GROUND_COMPOSITION_PROOF_PASS
 org.kanger.ContextGroundCompositionRoundsRunner | CONTEXT_GROUND_COMPOSITION_ROUNDS_PASS
 org.kanger.ContextGroundLocalClosureRunner | CONTEXT_GROUND_LOCAL_CLOSURE_PASS
+org.kanger.ContextGroundClauseFamilyRunner | CONTEXT_GROUND_CLAUSE_FAMILY_PASS
