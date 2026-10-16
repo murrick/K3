@@ -140,25 +140,60 @@ public final class ContextOrdinaryResidualRounds {
             if (!ordinary.verified || !ordinary.collisions.isEmpty()) return ordinary;
             Receipt parameter = observe(input,target,maximumDepth,work,events,true);
             if (!parameter.verified || !parameter.collisions.isEmpty()) return parameter;
-            List<Product> pool = new ArrayList<>();
-            for (Receipt receipt : Arrays.asList(ordinary,parameter)) for (Product product : receipt.localProofs)
-                add(pool,product.clause,product.proof,maximumDepth,work);
-            List<Collision> opposed = collisions(pool,work);
-            if (!opposed.isEmpty()) return new Receipt(true,"Combined sourced parameter proof opposition",input,target,Collections.emptyList(),opposed);
-            List<Product> products = new ArrayList<>();
-            for (Product product : pool) {
-                work.run(); if (product.proof.depth > 0 && product.proof.sources.stream().anyMatch(source -> source.localX)) products.add(product);
-            }
-            return new Receipt(true,"Observed ordinary and fresh-parameter proofs; coverage/saturation unknown",input,target,products,Collections.emptyList(),ordinary.owners,pool);
+            return combine(input,target,Arrays.asList(ordinary,parameter),ordinary.owners,maximumDepth,work);
         } catch (Exception failure) { return new Receipt(false,failure.getMessage(),input,target,Collections.emptyList(),Collections.emptyList()); }
     }
+    /** Proof-only views: the final receipt retains the complete original owner scope. */
+    public static Receipt inspectWithProbes(Frontier input,Snapshot target,int maximumDepth,int maximumWork,int maximumEvents,int maximumProbes) {
+        if (input == null || maximumDepth < 0 || maximumEvents < 1 || maximumProbes < 1) throw new IllegalArgumentException("Bounded residual probes required");
+        Runnable work = ContextGroundProductionRounds.budget(maximumWork); int[] events = {maximumEvents};
+        try {
+            Receipt ordinary = observe(input,target,maximumDepth,work,events,false);
+            if (!ordinary.verified || !ordinary.collisions.isEmpty()) return ordinary;
+            Receipt parameter = observe(input,target,maximumDepth,work,events,true);
+            if (!parameter.verified || !parameter.collisions.isEmpty()) return parameter;
+            Receipt basis = combine(input,target,Arrays.asList(ordinary,parameter),ordinary.owners,maximumDepth,work);
+            if (!basis.collisions.isEmpty()) return basis;
+            List<Receipt> evidence = new ArrayList<>(); evidence.add(basis); int probes = 0;
+            // Plan from the sealed complete baseline, not from another probe's newly learned output.
+            for (Product owner : basis.localProofs) if (owner.clause.literals.size() > 1)
+                for (Product donor : basis.localProofs) {
+                    work.run(); if (donor.clause.literals.size() != 1) continue;
+                    Fact fact = donor.clause.literals.get(0).fact(); if (fact == null) continue;
+                    boolean relevant = false;
+                    for (Atom atom : owner.clause.literals) if (ContextOrdinaryResidualCoverage.match(atom,fact,new HashMap<>(),work)) { relevant = true; break; }
+                    if (!relevant) continue;
+                    if (++probes > maximumProbes) throw new IllegalStateException("Residual isolated probe limit");
+                    Receipt observed = observe(input,target,maximumDepth,work,events,true,Arrays.asList(owner,donor));
+                    if (!observed.verified || !observed.collisions.isEmpty()) return observed;
+                    evidence.add(observed);
+                }
+            return combine(input,target,evidence,basis.owners,maximumDepth,work);
+        } catch (Exception failure) { return new Receipt(false,failure.getMessage(),input,target,Collections.emptyList(),Collections.emptyList()); }
+    }
+    private static Receipt combine(Frontier input,Snapshot target,List<Receipt> observations,List<Product> owners,int maximumDepth,Runnable work) {
+        List<Product> pool = new ArrayList<>();
+        for (Receipt receipt : observations) for (Product product : receipt.localProofs)
+            add(pool,product.clause,product.proof,maximumDepth,work);
+        List<Collision> opposed = collisions(pool,work);
+        if (!opposed.isEmpty()) return new Receipt(true,"Combined sourced parameter/probe opposition",input,target,Collections.emptyList(),opposed);
+        List<Product> products = new ArrayList<>();
+        for (Product product : pool) {
+            work.run(); if (product.proof.depth > 0 && product.proof.sources.stream().anyMatch(source -> source.localX)) products.add(product);
+        }
+        return new Receipt(true,"Observed ordinary, parameter or isolated proofs; coverage/saturation unknown",input,target,products,Collections.emptyList(),owners,pool);
+    }
     private static Receipt observe(Frontier input,Snapshot target,int maximumDepth,Runnable work,int[] remainingEvents,boolean parameterPass) {
+        return observe(input,target,maximumDepth,work,remainingEvents,parameterPass,null);
+    }
+    private static Receipt observe(Frontier input,Snapshot target,int maximumDepth,Runnable work,int[] remainingEvents,boolean parameterPass,List<Product> isolated) {
         try {
             if (!input.cuts.contains(target)) throw new IllegalStateException("Residual cut outside sealed scope");
             List<Entry> declarations = ContextGroundCutEvidence.declarations(input.x,target == input.x ? null : target,work);
-            List<Product> owners = new ArrayList<>(input.products);
-            for (Product carried : input.products) { work.run(); if (carried.proof.depth > maximumDepth) throw new IllegalStateException("Residual carried depth limit"); }
-            for (Entry entry : declarations) for (Clause clause : entry.clauses)
+            List<Product> carriers = isolated == null ? input.products : isolated;
+            List<Product> owners = new ArrayList<>();
+            for (Product carried : carriers) add(owners,carried.clause,carried.proof,maximumDepth,work);
+            if (isolated == null) for (Entry entry : declarations) for (Clause clause : entry.clauses)
                 add(owners,clause,new Support(Collections.singleton(entry.source),0),maximumDepth,work);
             List<Collision> opposed = collisions(owners,work);
             if (!opposed.isEmpty()) return new Receipt(true,"Actual sourced unit opposition",input,target,Collections.emptyList(),opposed);
@@ -168,31 +203,31 @@ public final class ContextOrdinaryResidualRounds {
                 capture.observeResidualSubsets();
                 // Replay each semantic carrier once; keep its independent original recipes together.
                 List<Clause> restored = new ArrayList<>();
-                for (Product carried : input.products) {
+                for (Product carried : carriers) {
                     boolean duplicate = false;
                     for (Clause clause : restored) { work.run(); if (clause.equivalent(carried.clause)) { duplicate = true; break; } }
                     if (duplicate) continue;
                     List<Support> supports = new ArrayList<>();
-                    for (Product alternative : input.products) { work.run(); if (alternative.clause.equivalent(carried.clause)) supports.add(alternative.proof); }
+                    for (Product alternative : carriers) { work.run(); if (alternative.clause.equivalent(carried.clause)) supports.add(alternative.proof); }
                     capture.replayDerived(mind,carried.clause,supports); restored.add(carried.clause);
                 }
-                for (Entry entry : declarations) { work.run(); capture.replay(mind,entry.source,entry.statement); }
+                if (isolated == null) for (Entry entry : declarations) { work.run(); capture.replay(mind,entry.source,entry.statement); }
                 List<SemanticTermSnapshot> parameters = Collections.emptyList();
                 if (parameterPass) {
                     List<Clause> family = new ArrayList<>(),ownerClauses = new ArrayList<>();
                     for (Snapshot cut : input.cuts) for (Entry entry : cut.primary) for (Clause clause : entry.clauses) { work.run(); family.add(clause); }
                     for (Product carried : input.products) { work.run(); family.add(carried.clause); }
-                    for (Product owner : owners) { work.run(); ownerClauses.add(owner.clause); }
+                    for (Product owner : owners) { work.run(); ownerClauses.add(owner.clause); family.add(owner.clause); }
                     parameters = ContextOrdinaryResidualParameters.seed(mind,family,ownerClauses,work);
                     capture.verifyParametersFresh(parameters);
                 }
                 mind.link(null,false);
                 ContextProductionCapture.Snapshot observed = capture.snapshot();
                 remainingEvents[0] -= observed.eventCount;
-                if (observed.inputs.size() != restored.size()+declarations.size()) throw new IllegalStateException("Residual replay input incomplete");
+                if (observed.inputs.size() != restored.size()+(isolated == null ? declarations.size() : 0)) throw new IllegalStateException("Residual replay input incomplete");
                 for (int i=0;i<restored.size();++i)
                     if (!restored.get(i).equivalent(observed.inputs.get(i).clause)) throw new IllegalStateException("Residual carrier roundtrip mismatch");
-                for (int i=0;i<declarations.size();++i) ContextGroundCutEvidence.sameShapes(declarations.get(i),observed.inputs.get(i+restored.size()),work);
+                if (isolated == null) for (int i=0;i<declarations.size();++i) ContextGroundCutEvidence.sameShapes(declarations.get(i),observed.inputs.get(i+restored.size()),work);
                 for (String gap : observed.gaps) if (!gap.startsWith("compound-residual:") && !gap.startsWith("unbound-waiter-composition:"))
                     throw new IllegalStateException("Residual observation gap: "+gap);
                 List<Residual> events = new ArrayList<>(observed.residuals);

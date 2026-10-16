@@ -14,7 +14,7 @@ public final class ContextOrdinaryResidualCoverage {
         public final String reason;
         private Audit(boolean covered,String reason) { this.covered = covered; this.reason = reason; }
     }
-    private static boolean match(Atom atom,Fact donor,Map<Integer,SemanticTermSnapshot> bindings,Runnable work) {
+    static boolean match(Atom atom,Fact donor,Map<Integer,SemanticTermSnapshot> bindings,Runnable work) {
         work.run();
         if (atom.positive == donor.positive || !atom.predicate.equals(donor.predicate) || atom.arguments.size() != donor.arguments.size()) return false;
         for (int i=0;i<atom.arguments.size();++i) {
