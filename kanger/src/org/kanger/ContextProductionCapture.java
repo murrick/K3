@@ -247,6 +247,21 @@ public final class ContextProductionCapture implements AutoCloseable {
             }
             return new Clause(result);
         }
+        /** Structural audit obligation only: no assertion, inference or proof is created. */
+        Clause remainder(Set<Integer> removed,Map<Integer,SemanticTermSnapshot> assignment) {
+            if (removed.isEmpty() || removed.size() >= literals.size() || !variables.containsAll(assignment.keySet()))
+                throw new IllegalArgumentException("Proper partial reduction required");
+            for (Integer index : removed) if (index == null || index < 0 || index >= literals.size())
+                throw new IllegalArgumentException("Reduction literal outside clause");
+            List<Atom> result = new ArrayList<>();
+            for (int i=0;i<literals.size();++i) if (!removed.contains(i)) {
+                Atom atom = literals.get(i); List<Slot> slots = new ArrayList<>();
+                for (Slot slot : atom.arguments) slots.add(slot.variable >= 0 && assignment.containsKey(slot.variable)
+                        ? new Slot(Objects.requireNonNull(assignment.get(slot.variable)),-1) : slot);
+                result.add(new Atom(atom.predicate,atom.positive,slots));
+            }
+            return new Clause(result);
+        }
         /** Eigenparameters absent from all primary knowledge are universally generalizable.
          * Only direct slots are generalized; structured parameter values are unsupported. */
         public Clause generalize(List<SemanticTermSnapshot> parameters) {

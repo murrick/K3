@@ -30,9 +30,15 @@ public final class ContextOrdinaryResidualRounds {
         public final String reason;
         public final List<Product> products;
         public final List<Collision> collisions;
-        private final Frontier input;
-        private final Snapshot target;
+        final Frontier input;
+        final Snapshot target;
+        final List<Product> owners,localProofs;
         private Receipt(boolean verified,String reason,Frontier input,Snapshot target,List<Product> products,List<Collision> collisions) {
+            this(verified,reason,input,target,products,collisions,Collections.emptyList(),Collections.emptyList());
+        }
+        private Receipt(boolean verified,String reason,Frontier input,Snapshot target,List<Product> products,List<Collision> collisions,List<Product> owners,List<Product> localProofs) {
+            this.owners = Collections.unmodifiableList(new ArrayList<>(owners));
+            this.localProofs = Collections.unmodifiableList(new ArrayList<>(localProofs));
             this.verified = verified; this.reason = reason; this.input = input; this.target = target;
             this.products = Collections.unmodifiableList(new ArrayList<>(products));
             this.collisions = Collections.unmodifiableList(new ArrayList<>(collisions));
@@ -175,7 +181,7 @@ public final class ContextOrdinaryResidualRounds {
                 for (Product product : pool) {
                     work.run(); if (product.proof.depth > 0 && product.proof.sources.stream().anyMatch(s -> s.localX)) products.add(product);
                 }
-                return new Receipt(true,"Observed signed residual proofs; coverage/saturation unknown",input,target,products,Collections.emptyList());
+                return new Receipt(true,"Observed signed residual proofs; coverage/saturation unknown",input,target,products,Collections.emptyList(),owners,pool);
             }
         } catch (Exception failure) { return new Receipt(false,failure.getMessage(),input,target,Collections.emptyList(),Collections.emptyList()); }
     }

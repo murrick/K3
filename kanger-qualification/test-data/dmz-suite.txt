@@ -108,3 +108,4 @@ org.kanger.ContextGroundProductionRoundsRunner | CONTEXT_GROUND_PRODUCTION_ROUND
 org.kanger.ContextGroundRoundCoverageRunner | CONTEXT_GROUND_ROUND_COVERAGE_PASS
 org.kanger.ContextGroundHornFamilyRunner | CONTEXT_GROUND_HORN_FAMILY_PASS
 org.kanger.ContextOrdinaryResidualRoundsRunner | CONTEXT_ORDINARY_RESIDUAL_ROUNDS_PASS
+org.kanger.ContextOrdinaryResidualCoverageRunner | CONTEXT_ORDINARY_RESIDUAL_COVERAGE_PASS
