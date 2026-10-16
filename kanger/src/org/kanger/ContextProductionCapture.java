@@ -312,6 +312,18 @@ public final class ContextProductionCapture implements AutoCloseable {
         }
     }
 
+    /** Native ground branch interaction only. Neither pivot is a proved unit and no resolvent is asserted. */
+    public static final class CompositionCandidate {
+        public final Clause owner,partner;
+        public final Fact pivot;
+        public final List<Support> ownerSupports,partnerSupports;
+        private CompositionCandidate(Clause owner,Clause partner,Fact pivot,List<Support> a,List<Support> b) {
+            this.owner = owner; this.partner = partner; this.pivot = pivot;
+            ownerSupports = Collections.unmodifiableList(new ArrayList<>(a));
+            partnerSupports = Collections.unmodifiableList(new ArrayList<>(b));
+        }
+    }
+
     public static final class Input {
         public final Source source;
         public final long nativeRule;
@@ -395,6 +407,7 @@ public final class ContextProductionCapture implements AutoCloseable {
         public final List<Input> inputs;
         public final List<Application> applications;
         public final List<Residual> residuals;
+        public final List<CompositionCandidate> compositionCandidates;
         public final List<ContextWitnessProjection> witnessProjections;
         public final List<ContextWitnessProjection.Materialization> witnessMaterializations;
         public final List<String> gaps;
@@ -421,6 +434,7 @@ public final class ContextProductionCapture implements AutoCloseable {
             inputs = Collections.unmodifiableList(new ArrayList<>(capture.inputs));
             applications = Collections.unmodifiableList(new ArrayList<>(capture.applications));
             residuals = Collections.unmodifiableList(new ArrayList<>(capture.residuals));
+            compositionCandidates = Collections.unmodifiableList(new ArrayList<>(capture.compositionCandidates));
             witnessProjections = Collections.unmodifiableList(new ArrayList<>(capture.witnessProjections));
             witnessMaterializations = Collections.unmodifiableList(new ArrayList<>(capture.witnessMaterializations));
             primaryValues = Collections.unmodifiableList(new ArrayList<>(capture.primaryValues));
@@ -457,6 +471,15 @@ public final class ContextProductionCapture implements AutoCloseable {
     private int rotationVisits;
     private long rotationComparisons;
     private boolean residualSubsets;
+    private boolean observeCompositions;
+    private final List<CompositionBranch> compositionBranches = new ArrayList<>();
+    private static final class CompositionBranch {
+        final Mind target;
+        final Clause clause;
+        final List<Support> supports;
+        CompositionBranch(Mind target,Clause clause,List<Support> supports) { this.target = target; this.clause = clause; this.supports = supports; }
+    }
+    private final List<CompositionCandidate> compositionCandidates = new ArrayList<>();
     private boolean observeWitnesses;
     private final List<ContextWitnessProjection> witnessProjections = new ArrayList<>();
     private final List<ContextWitnessProjection.Materialization> witnessMaterializations = new ArrayList<>();
@@ -481,6 +504,8 @@ public final class ContextProductionCapture implements AutoCloseable {
     public void observeResidualSubsets() {
         check(); residualSubsets = true;
     }
+    /** Opt-in ground branch metadata. Absence does not certify composition coverage. */
+    public void observeCompositionCandidates() { check(); observeCompositions = true; }
     public void verifyParametersFresh(List<SemanticTermSnapshot> parameters) {
         check();
         for (SemanticTermSnapshot value : primaryValues) for (SemanticTermSnapshot parameter : parameters)
@@ -497,7 +522,7 @@ public final class ContextProductionCapture implements AutoCloseable {
         return false;
     }
     private int eventCount() {
-        return inputs.size() + applications.size() + residuals.size() + witnessProjections.size() + witnessMaterializations.size() + stored.size() + rotationPlans.size() + rotationVisits;
+        return compositionBranches.size() + compositionCandidates.size() + inputs.size() + applications.size() + residuals.size() + witnessProjections.size() + witnessMaterializations.size() + stored.size() + rotationPlans.size() + rotationVisits;
     }
     private void take() {
         if (eventCount() >= maximumEvents) {
@@ -704,6 +729,29 @@ public final class ContextProductionCapture implements AutoCloseable {
         if (!waiter.getArguments().getTVariables(mind).isEmpty()
                 && !literal.getArguments().getTVariables(mind).isEmpty())
             capture.gaps.add("unbound-waiter-composition:" + rule.getId());
+    }
+    /** Compare whole ground branches actually visited by native traversal. Records obligations, never resolvents. */
+    static void compositionBranch(Mind mind,List<Domain> branch) throws Exception {
+        ContextProductionCapture capture = ACTIVE.get();
+        if (capture == null || !capture.observeCompositions || !capture.visible(mind)
+                || (mind.getQueryPass() != QueryPass.CHECK && mind.getQueryPass() != QueryPass.ACCEPT)) return;
+        capture.check();
+        if (branch.isEmpty()) return;
+        Rule owner = (Rule)branch.get(0).getRule();
+        if (owner == null || owner.isQuery()) return;
+        Clause clause = Clause.shapeOf(branch,mind);
+        if (clause == null || !clause.variables.isEmpty() || clause.literals.size() < 2) return;
+        List<Support> supports = capture.sources(mind,owner.getId());
+        if (supports.isEmpty()) { capture.gaps.add("unlabelled-composition-candidate"); return; }
+        for (CompositionBranch old : capture.compositionBranches)
+            if (old.target == mind && old.clause.equivalent(clause) && old.supports.equals(supports)) return;
+        for (CompositionBranch old : capture.compositionBranches) if (old.target == mind)
+            for (Atom left : clause.literals) for (Atom right : old.clause.literals) {
+                Fact pivot = left.fact();
+                if (!pivot.opposite().equivalent(right.fact())) continue;
+                capture.take(); capture.compositionCandidates.add(new CompositionCandidate(clause,old.clause,pivot,supports,old.supports));
+            }
+        capture.take(); capture.compositionBranches.add(new CompositionBranch(mind,clause,new ArrayList<>(supports)));
     }
     static void incompleteResidual(Mind mind, List<Domain> branch) throws Exception {
         ContextProductionCapture capture = ACTIVE.get();

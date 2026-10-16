@@ -112,3 +112,4 @@ org.kanger.ContextOrdinaryResidualCoverageRunner | CONTEXT_ORDINARY_RESIDUAL_COV
 org.kanger.ContextOrdinaryResidualParametersRunner | CONTEXT_ORDINARY_RESIDUAL_PARAMETERS_PASS
 org.kanger.ContextOrdinaryResidualProbesRunner | CONTEXT_ORDINARY_RESIDUAL_PROBES_PASS
 org.kanger.ContextOrdinaryHornFamilyRunner | CONTEXT_ORDINARY_HORN_FAMILY_PASS
+org.kanger.ContextCompositionCandidateRunner | CONTEXT_COMPOSITION_CANDIDATE_PASS

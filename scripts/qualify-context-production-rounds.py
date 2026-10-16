@@ -35,6 +35,7 @@ def main():
                  ('org.kanger.ContextUniversalInstanceEvidenceRunner', 'CONTEXT_UNIVERSAL_INSTANCE_EVIDENCE_PASS'),
                  ('org.kanger.ContextVerifiedHornCoverageRunner', 'CONTEXT_VERIFIED_HORN_COVERAGE_PASS'),
                  ('org.kanger.ContextResidualSubsetCaptureRunner', 'CONTEXT_RESIDUAL_SUBSET_CAPTURE_PASS'),
+                 ('org.kanger.ContextCompositionCandidateRunner', 'CONTEXT_COMPOSITION_CANDIDATE_PASS'),
                  ('org.kanger.ContextWitnessTransportBoundaryRunner', 'CONTEXT_WITNESS_TRANSPORT_BOUNDARY_PASS'),
                  ('org.kanger.ContextWitnessBundleRunner', 'CONTEXT_WITNESS_BUNDLE_PASS'),
                  ('org.kanger.ContextWitnessProjectionRunner', 'CONTEXT_WITNESS_PROJECTION_PASS'),

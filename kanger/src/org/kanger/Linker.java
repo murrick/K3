@@ -1103,6 +1103,7 @@ public class Linker {
         boolean occurs = false;
 
         if (checkSystem(tree, logging)) {
+            ContextProductionCapture.compositionBranch(mind, tree);
 
             List<TValue> solve = new ArrayList<>();
             for (TVariable t : tvars) {
