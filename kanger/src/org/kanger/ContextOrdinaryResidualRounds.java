@@ -129,7 +129,30 @@ public final class ContextOrdinaryResidualRounds {
     }
     public static Receipt inspect(Frontier input,Snapshot target,int maximumDepth,int maximumWork,int maximumEvents) {
         if (input == null || maximumDepth < 0 || maximumEvents < 1) throw new IllegalArgumentException("Bounded residual input required");
-        Runnable work = ContextGroundProductionRounds.budget(maximumWork);
+        return observe(input,target,maximumDepth,ContextGroundProductionRounds.budget(maximumWork),new int[]{maximumEvents},false);
+    }
+    /** Both private passes share one work/event allowance and the same immutable family input. */
+    public static Receipt inspectWithParameters(Frontier input,Snapshot target,int maximumDepth,int maximumWork,int maximumEvents) {
+        if (input == null || maximumDepth < 0 || maximumEvents < 1) throw new IllegalArgumentException("Bounded residual parameter input required");
+        Runnable work = ContextGroundProductionRounds.budget(maximumWork); int[] events = {maximumEvents};
+        try {
+            Receipt ordinary = observe(input,target,maximumDepth,work,events,false);
+            if (!ordinary.verified || !ordinary.collisions.isEmpty()) return ordinary;
+            Receipt parameter = observe(input,target,maximumDepth,work,events,true);
+            if (!parameter.verified || !parameter.collisions.isEmpty()) return parameter;
+            List<Product> pool = new ArrayList<>();
+            for (Receipt receipt : Arrays.asList(ordinary,parameter)) for (Product product : receipt.localProofs)
+                add(pool,product.clause,product.proof,maximumDepth,work);
+            List<Collision> opposed = collisions(pool,work);
+            if (!opposed.isEmpty()) return new Receipt(true,"Combined sourced parameter proof opposition",input,target,Collections.emptyList(),opposed);
+            List<Product> products = new ArrayList<>();
+            for (Product product : pool) {
+                work.run(); if (product.proof.depth > 0 && product.proof.sources.stream().anyMatch(source -> source.localX)) products.add(product);
+            }
+            return new Receipt(true,"Observed ordinary and fresh-parameter proofs; coverage/saturation unknown",input,target,products,Collections.emptyList(),ordinary.owners,pool);
+        } catch (Exception failure) { return new Receipt(false,failure.getMessage(),input,target,Collections.emptyList(),Collections.emptyList()); }
+    }
+    private static Receipt observe(Frontier input,Snapshot target,int maximumDepth,Runnable work,int[] remainingEvents,boolean parameterPass) {
         try {
             if (!input.cuts.contains(target)) throw new IllegalStateException("Residual cut outside sealed scope");
             List<Entry> declarations = ContextGroundCutEvidence.declarations(input.x,target == input.x ? null : target,work);
@@ -140,7 +163,8 @@ public final class ContextOrdinaryResidualRounds {
             List<Collision> opposed = collisions(owners,work);
             if (!opposed.isEmpty()) return new Receipt(true,"Actual sourced unit opposition",input,target,Collections.emptyList(),opposed);
             User user = new User(); Mind mind = new Mind(user); user.setCurrentMind(mind); mind.setQueryPass(QueryPass.ACCEPT); mind.setFloodControlLimit(maximumDepth);
-            try (ContextProductionCapture capture = ContextProductionCapture.begin(mind,maximumEvents)) {
+            if (remainingEvents[0] < 1) throw new IllegalStateException("Residual shared observation event limit");
+            try (ContextProductionCapture capture = ContextProductionCapture.begin(mind,remainingEvents[0])) {
                 capture.observeResidualSubsets();
                 // Replay each semantic carrier once; keep its independent original recipes together.
                 List<Clause> restored = new ArrayList<>();
@@ -153,8 +177,18 @@ public final class ContextOrdinaryResidualRounds {
                     capture.replayDerived(mind,carried.clause,supports); restored.add(carried.clause);
                 }
                 for (Entry entry : declarations) { work.run(); capture.replay(mind,entry.source,entry.statement); }
+                List<SemanticTermSnapshot> parameters = Collections.emptyList();
+                if (parameterPass) {
+                    List<Clause> family = new ArrayList<>(),ownerClauses = new ArrayList<>();
+                    for (Snapshot cut : input.cuts) for (Entry entry : cut.primary) for (Clause clause : entry.clauses) { work.run(); family.add(clause); }
+                    for (Product carried : input.products) { work.run(); family.add(carried.clause); }
+                    for (Product owner : owners) { work.run(); ownerClauses.add(owner.clause); }
+                    parameters = ContextOrdinaryResidualParameters.seed(mind,family,ownerClauses,work);
+                    capture.verifyParametersFresh(parameters);
+                }
                 mind.link(null,false);
                 ContextProductionCapture.Snapshot observed = capture.snapshot();
+                remainingEvents[0] -= observed.eventCount;
                 if (observed.inputs.size() != restored.size()+declarations.size()) throw new IllegalStateException("Residual replay input incomplete");
                 for (int i=0;i<restored.size();++i)
                     if (!restored.get(i).equivalent(observed.inputs.get(i).clause)) throw new IllegalStateException("Residual carrier roundtrip mismatch");
@@ -175,6 +209,11 @@ public final class ContextOrdinaryResidualRounds {
                     }
                 } while (changed);
                 for (Residual event : events) if (donors(event,pool,work) == null) throw new IllegalStateException("Residual native premise unproved");
+                if (!parameters.isEmpty()) {
+                    List<Product> generalized = new ArrayList<>();
+                    for (Product product : pool) add(generalized,product.clause.generalize(parameters),product.proof,maximumDepth,work);
+                    pool = generalized;
+                }
                 opposed = collisions(pool,work);
                 if (!opposed.isEmpty()) return new Receipt(true,"Reconstructed sourced unit opposition",input,target,Collections.emptyList(),opposed);
                 List<Product> products = new ArrayList<>();
