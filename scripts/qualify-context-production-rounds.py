@@ -65,6 +65,7 @@ def main():
                  ('org.kanger.ContextGroundCutEvidenceRunner', 'CONTEXT_GROUND_CUT_EVIDENCE_PASS'),
                  ('org.kanger.ContextGroundProductionRoundsRunner', 'CONTEXT_GROUND_PRODUCTION_ROUNDS_PASS'),
                  ('org.kanger.ContextGroundRoundCoverageRunner', 'CONTEXT_GROUND_ROUND_COVERAGE_PASS'),
+                 ('org.kanger.ContextGroundHornFamilyRunner', 'CONTEXT_GROUND_HORN_FAMILY_PASS'),
                  ('org.kanger.storage.dumb2.ContextWitnessPrimaryIdentityStorageRunner', 'CONTEXT_WITNESS_PRIMARY_IDENTITY_STORAGE_PASS'),
                  ('org.kanger.storage.dumb2.GroundDisjunctionQualificationRunner', 'GROUND_DISJUNCTION_QUALIFICATION_PASS'),
                  ('org.kanger.DmzTerminalSupportCaptureRunner', 'DMZ_TERMINAL_SUPPORT_CAPTURE_PASS'),

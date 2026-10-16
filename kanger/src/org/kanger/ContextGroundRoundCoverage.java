@@ -32,7 +32,7 @@ public final class ContextGroundRoundCoverage {
         }
         return true;
     }
-    private static void scope(Clause clause,Runnable work) {
+    static void scope(Clause clause,Runnable work) {
         // Every orientation must bind its head from donors. No finite-domain approximation of @x.
         for (int head=0;head<clause.literals.size();++head) {
             Set<Integer> donors = new HashSet<>();
