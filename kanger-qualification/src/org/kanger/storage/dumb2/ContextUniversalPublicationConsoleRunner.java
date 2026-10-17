@@ -52,7 +52,7 @@ public final class ContextUniversalPublicationConsoleRunner {
     private static void languageBoundaries(Path dir) throws Exception {
         String[][] cases={
             {"FourVariables","!@x @y @z @w quad(x,y,z,w);"},
-            {"FourLiterals","!@x a(x)&&b(x)&&c(x)->d(x);"},
+            {"FiveLiterals","!@x a(x)&&b(x)&&c(x)&&d(x)->e(x);"},
             {"VariableFunction","!@x p(x)->q(x+1);"},
             {"Witness","!$w witness(w);"}
         };
@@ -77,16 +77,16 @@ public final class ContextUniversalPublicationConsoleRunner {
                 require(x.db.getRevision()==revision && lease.inventory().x.fingerprint.equals(fingerprint) && lease.inventory().x.primary.size()==1,test[0]+": exact primary inventory survives reopen unchanged");
             }
         }
-        for(boolean foreign:new boolean[]{false,true}) {
-            String name=foreign?"Foreign":"Local";
-            if(foreign) try(Fixture a=new Fixture(dir,"UnsupportedA")) {require(a.mind.compile(cases[0][1],null,false),"native foreign four-variable knowledge");}
+        for(int boundary:new int[]{0,1}) for(boolean foreign:new boolean[]{false,true}) {
+            String name=(foreign?"Foreign":"Local")+boundary;
+            if(foreign) try(Fixture a=new Fixture(dir,"UnsupportedA"+boundary)) {require(a.mind.compile(cases[boundary][1],null,false),"native foreign unsupported declaration");}
             try(Fixture x=new Fixture(dir,"Existing"+name)) {
-                require(x.mind.compile(foreign?"!anchor(1);":cases[0][1],null,false),"existing scope fixture");
-                if(foreign) x.db.connectContext("UnsupportedA");
+                require(x.mind.compile(foreign?"!anchor(1);":cases[boundary][1],null,false),"existing scope fixture");
+                if(foreign) x.db.connectContext("UnsupportedA"+boundary);
                 long revision=x.db.getRevision();int rows=x.mind.getRules().size();
                 Exception failure=null;
                 try {write(x,"ctx candidate write \"!safe(1);\"");} catch(IllegalStateException expected) {failure=expected;}
-                require(failure!=null && failure.getMessage().contains("native binding incomplete") && failure.getMessage().contains("variable limit"),name+": whole family binding must stop, not skip unsupported knowledge");
+                require(failure!=null && failure.getMessage().contains("native binding incomplete") && failure.getMessage().contains(boundary==0?"variable limit":"width limit"),name+": whole family binding must stop, not skip unsupported knowledge");
                 require(x.db.getRevision()==revision && x.mind.getRules().size()==rows,name+": existing unsupported row never allows safe-prefix publication");
                 String[] display=console(x.mind,"ctx candidate write \"!safe(1);\"\n");
                 require(display[1].contains("Candidate write failed:") && !display[0].contains("Candidate write: PUBLISHED"),name+": Console reports binding failure without success");
@@ -108,6 +108,34 @@ public final class ContextUniversalPublicationConsoleRunner {
         try(Fixture x=new Fixture(dir,"ThreeVariableJoin")) {
             require(Boolean.TRUE.equals(x.mind.query("?path(1,2);",null,false)),"three-variable rule persists after reopen");
             try(ContextProductionSnapshotSession lease=ContextProductionSnapshotSession.open(x.db,x.mind,1000)) {require(lease.inventory().x.primary.size()==3,"join consequence is not promoted to an extra primary");}
+        }
+    }
+    private static void fourLiteralPublication(Path dir) throws Exception {
+        String rule="!@x left(x)&&mid(x)&&right(x)->p(x);";
+        try(Fixture a=new Fixture(dir,"WidthA")) {require(a.mind.compile("!left(1); !p(1);",null,false),"wide masking A fixture");}
+        try(Fixture b=new Fixture(dir,"WidthB")) {require(b.mind.compile("!mid(1)&&right(1)&&~p(1);",null,false),"wide whole-source B fixture");}
+        for(boolean reverse:new boolean[]{false,true}) {
+            long revision;
+            try(Fixture x=new Fixture(dir,"WidthX"+reverse)) {
+                require(x.mind.compile("!anchor(1);",null,false),"wide provider anchor");
+                x.db.connectContext(reverse?"WidthB":"WidthA");x.db.connectContext(reverse?"WidthA":"WidthB");
+                revision=x.db.getRevision();int rows=x.mind.getRules().size(),logs=x.mind.getLog().size();
+                ContextUniversalCandidatePublication result=write(x,"ctx candidate write \""+rule+"\"");
+                require(result.status==ContextUniversalCandidatePublication.Status.COLLISION && result.audit.verified && result.trial.qualification.completedBarriers==2,"actual writer refuses wide masked collision in both sibling orders");
+                require(x.db.getRevision()==revision && x.mind.getRules().size()==rows && x.mind.getLog().size()==logs,"wide refusal has no physical or presentation leak");
+            }
+            try(Fixture x=new Fixture(dir,"WidthX"+reverse);ContextProductionSnapshotSession lease=ContextProductionSnapshotSession.open(x.db,x.mind,1000)) {
+                require(x.db.getRevision()==revision && lease.inventory().x.primary.size()==1,"wide refused candidate absent after reopen");
+            }
+        }
+        try(Fixture x=new Fixture(dir,"WidthLocal")) {
+            require(x.mind.compile("!left(1); !mid(1); !right(1);",null,false),"three native premises");
+            ContextUniversalCandidatePublication result=write(x,"ctx candidate write \""+rule+"\"");
+            require(result.status==ContextUniversalCandidatePublication.Status.PUBLISHED && result.audit.verified,"four-literal native rule publishes only after audit");
+            require(Boolean.TRUE.equals(x.mind.query("?p(1);",null,false)),"ordinary native query sees three-premise consequence");
+        }
+        try(Fixture x=new Fixture(dir,"WidthLocal");ContextProductionSnapshotSession lease=ContextProductionSnapshotSession.open(x.db,x.mind,1000)) {
+            require(Boolean.TRUE.equals(x.mind.query("?p(1);",null,false)) && lease.inventory().x.primary.size()==4,"wide rule durable; consequence not promoted to primary");
         }
     }
     private static int count(String text,String needle) {return text.split(java.util.regex.Pattern.quote(needle),-1).length-1;}
@@ -180,6 +208,7 @@ public final class ContextUniversalPublicationConsoleRunner {
             }
             languageBoundaries(dir);
             threeVariablePublication(dir);
+            fourLiteralPublication(dir);
             User user=new User();user.setCurrentMind(new Mind(user));reject(() -> new CanonicalCommandProcessor().execute(PARSER.parse(safe),user),"write without actual provider refuses");
             System.out.println("CONTEXT_UNIVERSAL_PUBLICATION_CONSOLE_PASS checks="+checks);System.exit(0);
         } catch(Throwable failure) {failure.printStackTrace();System.exit(1);}

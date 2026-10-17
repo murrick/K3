@@ -64,7 +64,7 @@ public final class ContextProductionNativeBindingRunner {
             require(ground.bound && ground.snapshot.primary.size() == 1 && ground.snapshot.primary.get(0).clauses.size() == 2,"ground conjunction retains one source across all native clauses");
             Mind signed = mind("!~scalar(John,2);"); Result negative = bind(signed);
             require(negative.bound && !negative.snapshot.primary.get(0).clauses.get(0).literals.get(0).positive,"signed ordinary primary literal retains its sign");
-            Mind wide = mind("!scalar(1); !@x a(x,1)&&b(x,1)&&c(x,1)->d(x,1);");
+            Mind wide = mind("!scalar(1); !@x a(x,1)&&b(x,1)&&c(x,1)&&d(x,1)->e(x,1);");
             refused(bind(wide),"unsupported later native clause width suppresses any bound prefix");
             Mind function = mind("!@x p(x,1)->q(x+1,1);"); refused(bind(function),"unsupported function argument remains explicit refusal");
             ContextProductionInventory old = inventory(source); require(source.compile("!later(9);",null,false),"source changes after inventory capture");

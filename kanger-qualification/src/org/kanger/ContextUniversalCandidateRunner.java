@@ -57,6 +57,35 @@ public final class ContextUniversalCandidateRunner {
         require(ContextUniversalCandidateAudit.audit(all,x.snapshot,Collections.singletonList(universal.snapshot),rule,16,20000,WORK).verified,"all-value certificate independently checked, not just mentioned tuples");
         x.unchanged();a.unchanged();b.unchanged();edge.unchanged();different.unchanged();wideModel.unchanged();universal.unchanged();
     }
+    private static void fourLiterals() throws Exception {
+        Fixture x=new Fixture(true,""),a=new Fixture(false,"!left(1); !p(1);"),b=new Fixture(false,"!mid(1)&&right(1)&&~p(1);");
+        String rule="!@x left(x)&&mid(x)&&right(x)->p(x);";
+        for(List<Snapshot> order:Arrays.asList(Arrays.asList(a.snapshot,b.snapshot),Arrays.asList(b.snapshot,a.snapshot))) {
+            ContextUniversalCandidate.Evaluation e=qualify(x,order,rule);
+            require(e.status==Status.COLLISION && e.qualification.completedBarriers==2,"four-literal masked rule collides at barrier2: "+e.reason);
+            Set<ContextProductionCapture.Source> sources=new HashSet<>(Arrays.asList(e.artifact.candidate,
+                    a.snapshot.primary.stream().filter(p -> p.statement.contains("left")).findFirst().get().source,b.snapshot.primary.get(0).source));
+            require(b.snapshot.primary.size()==1 && b.snapshot.primary.get(0).clauses.size()==3,"foreign conjunction is one whole Source, not three invented sources");
+            require(e.qualification.collision.oppositions.stream().anyMatch(p -> p.support.sources.equals(sources) && p.support.depth==4),"four-literal collision preserves whole causes and depth4, excludes unrelated masking fact");
+            ContextUniversalCandidateAudit.Audit audit=ContextUniversalCandidateAudit.audit(e,x.snapshot,order,rule,16,20000,WORK);
+            require(audit.verified && audit.oppositions.stream().anyMatch(p -> p.usesCandidate && p.originalSources.equals(sources)),"independent audit replays exact four-literal collision");
+        }
+        incomplete(ContextUniversalCandidate.qualify(x.snapshot,Arrays.asList(a.snapshot,b.snapshot),rule,1000,1,16,16,20000,1000000,WORK,500000,WORK),"wide changed first barrier cannot approve");
+        incomplete(ContextUniversalCandidate.qualify(x.snapshot,Arrays.asList(a.snapshot,b.snapshot),rule,1000,8,16,3,20000,1000000,WORK,500000,WORK),"wide cumulative depth cap cannot emit a partial verdict");
+        Fixture compound=new Fixture(false,"!@x ~a(x)||e(x);"),opposite=new Fixture(false,"!~b(1); !~c(1); !~d(1); !~e(1);");
+        String disjunction="!@x a(x)||b(x)||c(x)||d(x);";
+        for(List<Snapshot> order:Arrays.asList(Arrays.asList(compound.snapshot,opposite.snapshot),Arrays.asList(opposite.snapshot,compound.snapshot))) {
+            ContextUniversalCandidate.Evaluation e=qualify(x,order,disjunction);
+            require(e.status==Status.COLLISION && e.qualification.completedBarriers==2,"four-literal compound resolvent crosses a full barrier: "+e.reason);
+            Set<ContextProductionCapture.Source> sources=new HashSet<>();sources.add(e.artifact.candidate);
+            compound.snapshot.primary.forEach(p -> sources.add(p.source));opposite.snapshot.primary.forEach(p -> sources.add(p.source));
+            require(e.qualification.collision.oppositions.stream().anyMatch(p -> p.support.sources.equals(sources) && p.support.depth==5),"compound four-literal proof keeps all six original Sources and depth5");
+            require(ContextUniversalCandidateAudit.audit(e,x.snapshot,order,disjunction,16,20000,WORK).verified,"independent audit covers compound wide resolution");
+        }
+        ContextUniversalCandidate.Evaluation safe=qualify(x,Collections.emptyList(),disjunction);
+        require(safe.status==Status.CONSISTENT && ContextUniversalCandidateAudit.audit(safe,x.snapshot,Collections.emptyList(),disjunction,16,20000,WORK).verified,"constant-free four-literal disjunction has an audited all-value model");
+        x.unchanged();a.unchanged();b.unchanged();compound.unchanged();opposite.unchanged();
+    }
     public static void main(String[] args) {
         try {
             System.setProperty("user.home",java.nio.file.Files.createTempDirectory("universal-candidate-").toString());
@@ -90,6 +119,7 @@ public final class ContextUniversalCandidateRunner {
             boolean immutable=false; try { safe.artifact.rebased.clear(); } catch(UnsupportedOperationException expected) { immutable=true; } require(immutable,"staged mapping immutable");
             x.unchanged(); a.unchanged(); b.unchanged(); empty.unchanged(); negative.unchanged();
             threeVariables();
+            fourLiterals();
             System.out.println("CONTEXT_UNIVERSAL_CANDIDATE_PASS checks="+checks); System.exit(0);
         } catch(Throwable failure) { failure.printStackTrace(); System.exit(1); }
     }
