@@ -59,7 +59,9 @@ public final class ContextUniversalUnitRounds {
         }
     }
     public static Frontier start(Snapshot x,List<Snapshot> foreign,int maximumWork) {
-        Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        return startBound(x,foreign,ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static Frontier startBound(Snapshot x,List<Snapshot> foreign,Runnable work) {
         ContextProductionFamilyAssembly.identity(x,true,work);
         List<Snapshot> cuts=new ArrayList<>(); cuts.add(x);
         List<Snapshot> siblings=new ArrayList<>(foreign);
@@ -85,7 +87,9 @@ public final class ContextUniversalUnitRounds {
     }
     private static Receipt inspect(Frontier input,Snapshot target,int maximumLocalRounds,int maximumDepth,int maximumWork,boolean compounds,boolean factoring) {
         if(maximumLocalRounds<1 || maximumDepth<0 || maximumWork<1) throw new IllegalArgumentException("Bounded unit round required");
-        Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        return inspectBound(input,target,maximumLocalRounds,maximumDepth,ContextGroundProductionRounds.budget(maximumWork),compounds,factoring);
+    }
+    static Receipt inspectBound(Frontier input,Snapshot target,int maximumLocalRounds,int maximumDepth,Runnable work,boolean compounds,boolean factoring) {
         try {
             if(input==null || !input.cuts.contains(target)) throw new IllegalStateException("Exact unit family cut required");
             ContextUniversalUnitLedger ledger=ContextUniversalUnitLedger.openShared(input.x,target,input.products,maximumDepth,work);

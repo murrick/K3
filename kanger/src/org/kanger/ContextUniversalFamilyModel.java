@@ -31,8 +31,9 @@ public final class ContextUniversalFamilyModel {
     /** Every exact private closure, including self, needs its own checked model. Order is irrelevant. */
     public static Result certify(Frontier input,List<Receipt> receipts,List<Model> models,int maximumDepth,int maximumInstances,int maximumWork) {
         if(maximumDepth<0 || maximumInstances<1 || maximumWork<1) throw new IllegalArgumentException("Bounded family model required");
-        Runnable work=ContextGroundProductionRounds.budget(maximumWork);
-        int[] remaining={Math.min(maximumInstances,65536)};
+        return certifyBound(input,receipts,models,maximumDepth,new int[]{Math.min(maximumInstances,65536)},ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static Result certifyBound(Frontier input,List<Receipt> receipts,List<Model> models,int maximumDepth,int[] remaining,Runnable work) {
         try {
             List<Receipt> outputs=new ArrayList<>(receipts); List<Model> witnesses=new ArrayList<>(models);
             ContextUniversalFamilyCoverage.Audit coverage=ContextUniversalFamilyCoverage.audit(input,outputs,

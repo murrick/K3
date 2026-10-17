@@ -161,7 +161,9 @@ public final class ContextUniversalQuotientModel {
     }
     public static Result find(ContextUniversalUnitLedger ledger,int maximumInstances,int maximumModels,int maximumWork) {
         if(maximumInstances<1 || maximumModels<1 || maximumWork<1) throw new IllegalArgumentException("Bounded universal model required");
-        Runnable work=ContextGroundProductionRounds.budget(maximumWork); int[] remaining={Math.min(maximumInstances,65536)};
+        return findBound(ledger,new int[]{Math.min(maximumInstances,65536)},new int[]{maximumModels},ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static Result findBound(ContextUniversalUnitLedger ledger,int[] remaining,int[] modelAssignments,Runnable work) {
         try {
             if(ledger==null) throw new IllegalStateException("Sealed flat universal ledger required");
             List<SemanticTermSnapshot> constants=constants(ledger,work); List<Profile> atoms=new ArrayList<>(); List<int[]> clauses=new ArrayList<>();
@@ -170,7 +172,7 @@ public final class ContextUniversalQuotientModel {
                 encode(row.clause,new ArrayList<>(row.clause.variables),0,new HashMap<>(),constants,atoms,clauses,remaining,work);
             }
             boolean[] values=new boolean[atoms.size()];
-            if(!search(clauses,values,0,new int[]{maximumModels},work)) throw new IllegalStateException("No quotient model found; no sourced collision proof supplied");
+            if(!search(clauses,values,0,modelAssignments,work)) throw new IllegalStateException("No quotient model found; no sourced collision proof supplied");
             List<Profile> positives=new ArrayList<>(); for(int i=0;i<values.length;i++) { work.run(); if(values[i]) positives.add(atoms.get(i)); }
             Model model=new Model(ledger,constants,positives); verify(ledger,model,remaining,work);
             return new Result(true,"Checked full-admissible-value quotient interpretation; family closure/admission unknown",model);

@@ -131,3 +131,4 @@ org.kanger.ContextUniversalFactoringProofRunner | CONTEXT_UNIVERSAL_FACTORING_PR
 org.kanger.ContextUniversalFactoredRoundsRunner | CONTEXT_UNIVERSAL_FACTORED_ROUNDS_PASS
 org.kanger.ContextUniversalQuotientModelRunner | CONTEXT_UNIVERSAL_QUOTIENT_MODEL_PASS
 org.kanger.ContextUniversalFamilyModelRunner | CONTEXT_UNIVERSAL_FAMILY_MODEL_PASS
+org.kanger.ContextUniversalFamilyInspectionRunner | CONTEXT_UNIVERSAL_FAMILY_INSPECTION_PASS
