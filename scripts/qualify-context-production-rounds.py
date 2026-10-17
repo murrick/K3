@@ -48,6 +48,7 @@ def main():
                  ('org.kanger.ContextUniversalCombinedRoundsRunner', 'CONTEXT_UNIVERSAL_COMBINED_ROUNDS_PASS'),
                  ('org.kanger.ContextUniversalFamilyCoverageRunner', 'CONTEXT_UNIVERSAL_FAMILY_COVERAGE_PASS'),
                  ('org.kanger.ContextUniversalFactoringProofRunner', 'CONTEXT_UNIVERSAL_FACTORING_PROOF_PASS'),
+                 ('org.kanger.ContextUniversalFactoredRoundsRunner', 'CONTEXT_UNIVERSAL_FACTORED_ROUNDS_PASS'),
                  ('org.kanger.ContextGroundClauseCandidateRunner', 'CONTEXT_GROUND_CLAUSE_CANDIDATE_PASS'),
                  ('org.kanger.storage.dumb2.ContextGroundCandidateSnapshotRunner', 'CONTEXT_GROUND_CANDIDATE_SNAPSHOT_PASS'),
                  ('org.kanger.storage.dumb2.ContextGroundAuthoringBridgeRunner', 'CONTEXT_GROUND_AUTHORING_BRIDGE_PASS'),

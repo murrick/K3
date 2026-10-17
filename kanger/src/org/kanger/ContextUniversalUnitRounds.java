@@ -22,7 +22,7 @@ public final class ContextUniversalUnitRounds {
         }
     }
     public static final class Receipt {
-        public final boolean verified,includesCompounds;
+        public final boolean verified,includesCompounds,includesFactoring;
         public final String reason;
         public final Frontier input;
         public final Snapshot target;
@@ -36,6 +36,10 @@ public final class ContextUniversalUnitRounds {
             this(verified,reason,input,target,products,oppositions,compounds,null);
         }
         private Receipt(boolean verified,String reason,Frontier input,Snapshot target,List<Row> products,List<Proof> oppositions,boolean compounds,Step closureStep) {
+            this(verified,reason,input,target,products,oppositions,compounds,closureStep,false);
+        }
+        private Receipt(boolean verified,String reason,Frontier input,Snapshot target,List<Row> products,List<Proof> oppositions,boolean compounds,Step closureStep,boolean factoring) {
+            includesFactoring=factoring;
             includesCompounds=compounds; this.closureStep=closureStep;
             this.verified=verified; this.reason=reason; this.input=input; this.target=target;
             this.products=Collections.unmodifiableList(new ArrayList<>(products));
@@ -71,25 +75,28 @@ public final class ContextUniversalUnitRounds {
     }
     /** Close only private unit inferences; every cut sees the same immutable common carriers. */
     public static Receipt inspect(Frontier input,Snapshot target,int maximumLocalRounds,int maximumDepth,int maximumWork) {
-        return inspect(input,target,maximumLocalRounds,maximumDepth,maximumWork,false);
+        return inspect(input,target,maximumLocalRounds,maximumDepth,maximumWork,false,false);
     }
     public static Receipt inspectCombined(Frontier input,Snapshot target,int maximumLocalRounds,int maximumDepth,int maximumWork) {
-        return inspect(input,target,maximumLocalRounds,maximumDepth,maximumWork,true);
+        return inspect(input,target,maximumLocalRounds,maximumDepth,maximumWork,true,false);
     }
-    private static Receipt inspect(Frontier input,Snapshot target,int maximumLocalRounds,int maximumDepth,int maximumWork,boolean compounds) {
+    public static Receipt inspectFactored(Frontier input,Snapshot target,int maximumLocalRounds,int maximumDepth,int maximumWork) {
+        return inspect(input,target,maximumLocalRounds,maximumDepth,maximumWork,true,true);
+    }
+    private static Receipt inspect(Frontier input,Snapshot target,int maximumLocalRounds,int maximumDepth,int maximumWork,boolean compounds,boolean factoring) {
         if(maximumLocalRounds<1 || maximumDepth<0 || maximumWork<1) throw new IllegalArgumentException("Bounded unit round required");
         Runnable work=ContextGroundProductionRounds.budget(maximumWork);
         try {
             if(input==null || !input.cuts.contains(target)) throw new IllegalStateException("Exact unit family cut required");
             ContextUniversalUnitLedger ledger=ContextUniversalUnitLedger.openShared(input.x,target,input.products,maximumDepth,work);
             for(int round=0;round<maximumLocalRounds;round++) {
-                Step step=compounds?ContextUniversalUnitLedger.stepCombinedBound(ledger,maximumDepth,work):ContextUniversalUnitLedger.stepBound(ledger,maximumDepth,work);
+                Step step=factoring?ContextUniversalUnitLedger.stepFactoredBound(ledger,maximumDepth,work):compounds?ContextUniversalUnitLedger.stepCombinedBound(ledger,maximumDepth,work):ContextUniversalUnitLedger.stepBound(ledger,maximumDepth,work);
                 if(step.status==ContextUniversalUnitLedger.Status.INCOMPLETE) throw new IllegalStateException(step.reason);
                 if(step.status==ContextUniversalUnitLedger.Status.OPPOSITION) {
                     List<Proof> relevant=new ArrayList<>();
                     for(Proof p:step.oppositions) { work.run(); if(p.dependsOnX) relevant.add(p); }
                     if(relevant.isEmpty()) throw new IllegalStateException("Foreign-only private inconsistency has no X-dependent family proof");
-                    return new Receipt(true,"Audited X-dependent private unit opposition",input,target,Collections.emptyList(),relevant,compounds);
+                    return new Receipt(true,"Audited X-dependent private unit opposition",input,target,Collections.emptyList(),relevant,compounds,null,factoring);
                 }
                 ledger=step.next;
                 if(!step.changed) {
@@ -97,7 +104,7 @@ public final class ContextUniversalUnitRounds {
                     for(Row row:ledger.rows) {
                         work.run(); if(row.support.depth>0 && row.support.sources.stream().anyMatch(s -> s.localX)) exported.add(row);
                     }
-                    return new Receipt(true,compounds?"Private binary recipes closed; factoring/family admission unknown":"Private unit recipes closed; compound/family admission unknown",input,target,exported,Collections.emptyList(),compounds,step);
+                    return new Receipt(true,factoring?"Private resolution/factoring recipes closed; family admission unknown":compounds?"Private binary recipes closed; factoring/family admission unknown":"Private unit recipes closed; compound/family admission unknown",input,target,exported,Collections.emptyList(),compounds,step,factoring);
                 }
             }
             throw new IllegalStateException("Private unit local round limit");

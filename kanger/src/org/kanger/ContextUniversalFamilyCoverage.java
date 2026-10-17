@@ -12,7 +12,7 @@ import org.kanger.ContextUniversalUnitRounds.Receipt;
 
 /** Diagnostic exact-family binary coverage and explicit factoring boundary. Never satisfiability/admission. */
 public final class ContextUniversalFamilyCoverage {
-    public enum Mode { CLOSED_CUTS, STABLE_SHARED }
+    public enum Mode { CLOSED_CUTS, STABLE_SHARED, FACTORED_CUTS, FACTORED_STABLE_SHARED }
     public static final class Audit {
         public final boolean covered;
         public final Mode mode;
@@ -28,6 +28,8 @@ public final class ContextUniversalFamilyCoverage {
     }
     public static Audit audit(Frontier input,List<Receipt> receipts,Mode mode,int maximumDepth,int maximumWork) {
         if(mode==null || maximumDepth<0 || maximumWork<1) throw new IllegalArgumentException("Bounded family coverage required");
+        boolean factoring=mode==Mode.FACTORED_CUTS || mode==Mode.FACTORED_STABLE_SHARED;
+        boolean stable=mode==Mode.STABLE_SHARED || mode==Mode.FACTORED_STABLE_SHARED;
         Runnable work=ContextGroundProductionRounds.budget(maximumWork);
         try {
             if(input==null || !input.cuts.contains(input.x)) throw new IllegalStateException("Sealed combined family input required");
@@ -44,10 +46,12 @@ public final class ContextUniversalFamilyCoverage {
                 if(receipt==null || !receipt.verified || !receipt.includesCompounds || receipt.input!=input
                     || !input.cuts.contains(receipt.target) || !seen.add(receipt.target) || !receipt.oppositions.isEmpty())
                     throw new IllegalStateException("Complete collision-free exact-input combined receipts required");
+                if(factoring && !receipt.includesFactoring) throw new IllegalStateException("Factoring-enabled receipt required");
                 Step step=receipt.closureStep;
                 if(step==null || step.status!=ContextUniversalUnitLedger.Status.ADVANCED || step.changed || step.next==null
                     || step.input.x!=input.x || step.input.target!=receipt.target)
                     throw new IllegalStateException("Sealed stable combined private step required");
+                if(factoring && !step.includesFactoring) throw new IllegalStateException("Sealed factoring closure step required");
                 List<Row> rows=step.input.rows;
                 for(Row row:rows) {
                     work.run(); if(row.support.depth>maximumDepth) throw new IllegalStateException("Private depth outside exact family");
@@ -70,6 +74,13 @@ public final class ContextUniversalFamilyCoverage {
                 for(ContextUniversalCompositionProof.Evidence e:step.compoundEvidence) for(ContextUniversalCompositionProof.Proof p:e.proofs) {
                     work.run(); if(!present(rows,p.conclusion,p.support,true,work)) throw new IllegalStateException("Compound consequence not retained in closed ledger");
                 }
+                if(factoring) {
+                    ContextUniversalFactoringCoverage.Audit factors=ContextUniversalFactoringCoverage.audit(step.input,step.factoringEvidence,maximumDepth,work);
+                    if(!factors.covered) throw new IllegalStateException(factors.reason);
+                    for(ContextUniversalFactoringProof.Evidence e:step.factoringEvidence) for(ContextUniversalFactoringProof.Proof p:e.proofs) {
+                        work.run(); if(!present(rows,p.conclusion,p.support,true,work)) throw new IllegalStateException("Factoring consequence not retained in closed ledger");
+                    }
+                }
                 for(Row row:rows) if(row.support.depth>0 && row.support.sources.stream().anyMatch(s -> s.localX)) {
                     if(!present(receipt.products,row.clause,row.support,false,work)) throw new IllegalStateException("Qualified private consequence not exported");
                 }
@@ -84,8 +95,8 @@ public final class ContextUniversalFamilyCoverage {
             }
             ContextUniversalUnitRounds.Barrier barrier=ContextUniversalUnitRounds.mergeBound(input,outputs,maximumDepth,work);
             if(barrier.status!=ContextUniversalUnitRounds.Status.MERGED) throw new IllegalStateException("Combined family has collision or incomplete merge: "+barrier.reason);
-            if(mode==Mode.STABLE_SHARED && barrier.changed) throw new IllegalStateException("New shared consequences require another common round");
-            return new Audit(true,mode,"Exact combined binary obligations covered; satisfiability and write admission unknown");
+            if(stable && barrier.changed) throw new IllegalStateException("New shared consequences require another common round");
+            return new Audit(true,mode,factoring?"Exact resolution/factoring obligations covered; satisfiability and write admission unknown":"Exact combined binary obligations covered; satisfiability and write admission unknown");
         } catch(Exception failure) { return new Audit(false,mode,failure.getMessage()); }
     }
 }
