@@ -135,3 +135,4 @@ org.kanger.ContextUniversalFamilyInspectionRunner | CONTEXT_UNIVERSAL_FAMILY_INS
 org.kanger.ContextUniversalCandidateRunner | CONTEXT_UNIVERSAL_CANDIDATE_PASS
 org.kanger.storage.dumb2.ContextUniversalCandidateSnapshotRunner | CONTEXT_UNIVERSAL_CANDIDATE_SNAPSHOT_PASS
 org.kanger.ContextUniversalCandidateAuditRunner | CONTEXT_UNIVERSAL_CANDIDATE_AUDIT_PASS
+org.kanger.storage.dumb2.ContextUniversalAuthoringBridgeRunner | CONTEXT_UNIVERSAL_AUTHORING_BRIDGE_PASS

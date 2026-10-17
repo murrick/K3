@@ -155,6 +155,47 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
             this.status = status; this.trial = trial; this.before = before; this.after = after;
         }
     }
+    static final class UniversalWriteResult {
+        final WriteStatus status;
+        final org.kanger.ContextUniversalCandidate.Evaluation trial;
+        final org.kanger.ContextUniversalCandidateAudit.Audit audit;
+        final RevisionRef before,after;
+        private UniversalWriteResult(WriteStatus status,org.kanger.ContextUniversalCandidate.Evaluation trial,
+                org.kanger.ContextUniversalCandidateAudit.Audit audit,RevisionRef before,RevisionRef after) {
+            this.status=status; this.trial=trial; this.audit=audit; this.before=before; this.after=after;
+        }
+    }
+    /** Fresh exact qualification/audit only; consume this authority BEFORE native settlement. */
+    UniversalWriteResult writeUniversalCandidate(String statement,int rounds,int localRounds,int depth,int instances,int models,
+            int preparationWork,int preparationEvents,int inspectionWork,int auditWork,boolean logging) throws Exception {
+        if(auditWork<1) throw new IllegalArgumentException("Bounded universal write audit required");
+        synchronized(provider) {
+            requireCurrent();
+            org.kanger.ContextUniversalCandidate.Evaluation trial=qualifyUniversalCandidate(statement,rounds,localRounds,depth,
+                    instances,models,preparationWork,preparationEvents,inspectionWork);
+            requireCurrent();
+            if(trial.status==org.kanger.ContextUniversalFamilyInspection.Status.INCOMPLETE)
+                return new UniversalWriteResult(WriteStatus.INCOMPLETE,trial,null,sourceRef,sourceRef);
+            // This call accepts no caller-supplied historical trial or audit. Confirm the fresh
+            // native binding used this owning lease's exact inventory objects before auditing.
+            if(trial.artifact.base.inventory!=inventory.x || trial.artifact.foreign.size()!=inventory.foreign.size())
+                throw new IllegalStateException("Universal trial is outside owning snapshot inventory");
+            for(int i=0;i<inventory.foreign.size();i++) if(trial.artifact.foreign.get(i).inventory!=inventory.foreign.get(i))
+                throw new IllegalStateException("Universal trial has another initialized view");
+            org.kanger.ContextUniversalCandidateAudit.Audit audit=org.kanger.ContextUniversalCandidateAudit.audit(trial,
+                    trial.artifact.base,trial.artifact.foreign,statement,depth,instances,auditWork);
+            requireCurrent();
+            if(!audit.verified) return new UniversalWriteResult(WriteStatus.INCOMPLETE,trial,audit,sourceRef,sourceRef);
+            if(trial.status==org.kanger.ContextUniversalFamilyInspection.Status.COLLISION)
+                return new UniversalWriteResult(WriteStatus.COLLISION,trial,audit,sourceRef,sourceRef);
+            if(trial.status!=org.kanger.ContextUniversalFamilyInspection.Status.CONSISTENT)
+                return new UniversalWriteResult(WriteStatus.INCOMPLETE,trial,audit,sourceRef,sourceRef);
+            closed=true;
+            boolean accepted=Boolean.TRUE.equals(source.query(trial.artifact.statement,null,logging));
+            return new UniversalWriteResult(accepted?WriteStatus.PUBLISHED:WriteStatus.NATIVE_REJECTED,trial,audit,
+                    sourceRef,new RevisionRef(provider.getContextId(),provider.getRevision()));
+        }
+    }
     /** Fresh ground qualification and lease consumption before the ordinary native transaction. */
     GroundWriteResult writeGroundCandidate(String statement,int rounds,int localRounds,int depth,int work,int events,int probes,int models,boolean logging) throws Exception {
         synchronized(provider) {

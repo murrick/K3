@@ -298,6 +298,28 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    /** Fresh scoped universal trial/audit plus actual physical settlement references. */
+    public static final class UniversalProductionWriteResult {
+        public final ProductionWriteStatus status;
+        public final org.kanger.ContextUniversalCandidate.Evaluation trial;
+        public final org.kanger.ContextUniversalCandidateAudit.Audit audit;
+        public final RevisionRef before,after;
+        private UniversalProductionWriteResult(ContextProductionSnapshotSession.UniversalWriteResult result) {
+            status=ProductionWriteStatus.valueOf(result.status.name()); trial=result.trial; audit=result.audit;
+            before=result.before; after=result.after;
+        }
+    }
+    /** Explicit flat universal writer; no historical receipt input or incomplete fallback. */
+    public synchronized UniversalProductionWriteResult writeUniversalProductionCandidate(
+            Mind source,String statement,int rows,int rounds,int localRounds,int depth,int instances,int models,
+            int preparationWork,int preparationEvents,int inspectionWork,int auditWork,boolean logging) throws Exception {
+        requireInitialized(); requireWritable();
+        try(ContextProductionSnapshotSession lease=ContextProductionSnapshotSession.open(this,source,rows)) {
+            return new UniversalProductionWriteResult(lease.writeUniversalCandidate(statement,rounds,localRounds,depth,
+                    instances,models,preparationWork,preparationEvents,inspectionWork,auditWork,logging));
+        }
+    }
+
     private boolean validatingCommit;
 
     @Override
