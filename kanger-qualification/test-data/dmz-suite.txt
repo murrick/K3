@@ -127,3 +127,4 @@ org.kanger.ContextUniversalUnitLedgerRunner | CONTEXT_UNIVERSAL_UNIT_LEDGER_PASS
 org.kanger.ContextUniversalUnitRoundsRunner | CONTEXT_UNIVERSAL_UNIT_ROUNDS_PASS
 org.kanger.ContextUniversalCombinedRoundsRunner | CONTEXT_UNIVERSAL_COMBINED_ROUNDS_PASS
 org.kanger.ContextUniversalFamilyCoverageRunner | CONTEXT_UNIVERSAL_FAMILY_COVERAGE_PASS
+org.kanger.ContextUniversalFactoringProofRunner | CONTEXT_UNIVERSAL_FACTORING_PROOF_PASS

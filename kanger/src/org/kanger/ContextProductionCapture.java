@@ -283,7 +283,8 @@ public final class ContextProductionCapture implements AutoCloseable {
         }
         static final class UnificationFailure extends IllegalStateException {
             private static final long serialVersionUID = 1L;
-            UnificationFailure() { super("Composition pivots do not unify"); }
+            UnificationFailure() { this("Composition pivots do not unify"); }
+            UnificationFailure(String reason) { super(reason); }
         }
         /** Structural MGU resolvent only; supplies no source, proof, observation or publication authority. */
         Clause resolve(Clause other,int leftPivot,int rightPivot,Runnable work) {
@@ -330,6 +331,36 @@ public final class ContextProductionCapture implements AutoCloseable {
                 }
             }
             return remaining.isEmpty() ? null : new Clause(remaining);
+        }
+        /** Structural same-parent MGU factor only; never creates knowledge or Source authority. */
+        Clause factor(int first,int second,Runnable work) {
+            if(literals.size()<2 || first<0 || second<0 || first>=literals.size() || second>=literals.size() || first==second)
+                throw new IllegalArgumentException("Two distinct literal positions in a whole compound required");
+            Atom a=literals.get(first),b=literals.get(second);
+            if(a.positive!=b.positive || !a.predicate.equals(b.predicate) || a.arguments.size()!=b.arguments.size())
+                throw new IllegalStateException("Factoring requires same-sign compatible literals");
+            Map<Integer,Slot> bindings=new HashMap<>();
+            for(int i=0;i<a.arguments.size();i++) {
+                work.run(); Slot x=dereference(a.arguments.get(i),bindings,work),y=dereference(b.arguments.get(i),bindings,work);
+                if(x.variable>=0) { if(y.variable!=x.variable) bindings.put(x.variable,y); }
+                else if(y.variable>=0) bindings.put(y.variable,x);
+                else if(!x.value.semanticallyEquals(y.value)) throw new UnificationFailure("Factor literals do not unify in their shared variable scope");
+            }
+            List<Atom> result=new ArrayList<>(); Map<Integer,Integer> canonical=new HashMap<>();
+            for(int i=0;i<literals.size();i++) if(i!=second) {
+                work.run(); Atom atom=literals.get(i); List<Slot> slots=new ArrayList<>();
+                for(Slot original:atom.arguments) {
+                    work.run(); Slot slot=dereference(original,bindings,work);
+                    if(slot.variable>=0) {
+                        Integer name=canonical.get(slot.variable);
+                        if(name==null) { name=canonical.size(); canonical.put(slot.variable,name); }
+                        slot=new Slot(null,name);
+                    }
+                    slots.add(slot);
+                }
+                result.add(new Atom(atom.predicate,atom.positive,slots));
+            }
+            return new Clause(result);
         }
         /** Eigenparameters absent from all primary knowledge are universally generalizable.
          * Only direct slots are generalized; structured parameter values are unsupported. */
