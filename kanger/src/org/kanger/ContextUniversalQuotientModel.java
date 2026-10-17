@@ -178,7 +178,10 @@ public final class ContextUniversalQuotientModel {
     }
     public static Check check(ContextUniversalUnitLedger ledger,Model model,int maximumInstances,int maximumWork) {
         if(maximumInstances<1 || maximumWork<1) throw new IllegalArgumentException("Bounded model check required");
-        try { verify(ledger,model,new int[]{Math.min(maximumInstances,65536)},ContextGroundProductionRounds.budget(maximumWork)); return new Check(true,"All representative valuations checked; projection extends to all admissible values"); }
+        return check(ledger,model,new int[]{Math.min(maximumInstances,65536)},ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static Check check(ContextUniversalUnitLedger ledger,Model model,int[] remaining,Runnable work) {
+        try { verify(ledger,model,remaining,work); return new Check(true,"All representative valuations checked; projection extends to all admissible values"); }
         catch(Exception failure) { return new Check(false,failure.getMessage()); }
     }
 }

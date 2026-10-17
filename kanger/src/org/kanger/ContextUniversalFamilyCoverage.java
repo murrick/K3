@@ -28,9 +28,11 @@ public final class ContextUniversalFamilyCoverage {
     }
     public static Audit audit(Frontier input,List<Receipt> receipts,Mode mode,int maximumDepth,int maximumWork) {
         if(mode==null || maximumDepth<0 || maximumWork<1) throw new IllegalArgumentException("Bounded family coverage required");
+        return audit(input,receipts,mode,maximumDepth,ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static Audit audit(Frontier input,List<Receipt> receipts,Mode mode,int maximumDepth,Runnable work) {
         boolean factoring=mode==Mode.FACTORED_CUTS || mode==Mode.FACTORED_STABLE_SHARED;
         boolean stable=mode==Mode.STABLE_SHARED || mode==Mode.FACTORED_STABLE_SHARED;
-        Runnable work=ContextGroundProductionRounds.budget(maximumWork);
         try {
             if(input==null || !input.cuts.contains(input.x)) throw new IllegalStateException("Sealed combined family input required");
             List<Receipt> outputs=new ArrayList<>(receipts);
