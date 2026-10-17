@@ -48,6 +48,55 @@ public final class ContextUniversalPublicationConsoleRunner {
         ContextUniversalCandidatePublication p=r.getCandidatePublication();
         require(r.isSuccess()==(p.status==ContextUniversalCandidatePublication.Status.PUBLISHED),"command success cannot conceal a declined publication");return p;
     }
+    /** Native-valid language outside this writer must never fall through to ordinary authoring. */
+    private static void languageBoundaries(Path dir) throws Exception {
+        String[][] cases={
+            {"ThreeVariables","!@x @y @z tri(x,y,z);"},
+            {"FourLiterals","!@x a(x)&&b(x)&&c(x)->d(x);"},
+            {"VariableFunction","!@x p(x)->q(x+1);"},
+            {"Witness","!$w witness(w);"}
+        };
+        for(String[] test:cases) {
+            User nativeUser=new User();Mind nativeMind=new Mind(nativeUser);nativeUser.setCurrentMind(nativeMind);
+            require(nativeMind.compile(test[1],null,false),test[0]+": valid native assertion, not malformed input");
+            long revision;String fingerprint;
+            try(Fixture x=new Fixture(dir,"Boundary"+test[0])) {
+                require(x.mind.compile("!anchor(1);",null,false),"boundary anchor");
+                revision=x.db.getRevision();int rows=x.mind.getRules().size(),logs=x.mind.getLog().size(),solutions=x.mind.getSolutions().size(),hypotheses=x.mind.getHypothesis().size();
+                try(ContextProductionSnapshotSession lease=ContextProductionSnapshotSession.open(x.db,x.mind,1000)) {fingerprint=lease.inventory().x.fingerprint;}
+                ContextUniversalCandidatePublication result=write(x,"ctx candidate write \""+test[1]+"\"");
+                require(result.status==ContextUniversalCandidatePublication.Status.INCOMPLETE && result.trial.status==ContextUniversalFamilyInspection.Status.INCOMPLETE && result.audit==null,
+                        test[0]+": unsupported candidate cannot acquire audited publication");
+                require(result.trial.reason!=null && !result.trial.reason.isEmpty(),test[0]+": explicit stop reason");
+                require(result.before.getRevision()==revision && result.after.getRevision()==revision && x.db.getRevision()==revision && x.mind.getRules().size()==rows,
+                        test[0]+": no fallback or partial physical publication");
+                require(x.mind.getLog().size()==logs && x.mind.getSolutions().size()==solutions && x.mind.getHypothesis().size()==hypotheses,test[0]+": no presentation leakage");
+                System.out.println("LANGUAGE_BOUNDARY "+test[0]+": "+result.trial.reason);
+            }
+            try(Fixture x=new Fixture(dir,"Boundary"+test[0]);ContextProductionSnapshotSession lease=ContextProductionSnapshotSession.open(x.db,x.mind,1000)) {
+                require(x.db.getRevision()==revision && lease.inventory().x.fingerprint.equals(fingerprint) && lease.inventory().x.primary.size()==1,test[0]+": exact primary inventory survives reopen unchanged");
+            }
+        }
+        for(boolean foreign:new boolean[]{false,true}) {
+            String name=foreign?"Foreign":"Local";
+            if(foreign) try(Fixture a=new Fixture(dir,"UnsupportedA")) {require(a.mind.compile(cases[0][1],null,false),"native foreign three-variable knowledge");}
+            try(Fixture x=new Fixture(dir,"Existing"+name)) {
+                require(x.mind.compile(foreign?"!anchor(1);":cases[0][1],null,false),"existing scope fixture");
+                if(foreign) x.db.connectContext("UnsupportedA");
+                long revision=x.db.getRevision();int rows=x.mind.getRules().size();
+                Exception failure=null;
+                try {write(x,"ctx candidate write \"!safe(1);\"");} catch(IllegalStateException expected) {failure=expected;}
+                require(failure!=null && failure.getMessage().contains("native binding incomplete") && failure.getMessage().contains("variable limit"),name+": whole family binding must stop, not skip unsupported knowledge");
+                require(x.db.getRevision()==revision && x.mind.getRules().size()==rows,name+": existing unsupported row never allows safe-prefix publication");
+                String[] display=console(x.mind,"ctx candidate write \"!safe(1);\"\n");
+                require(display[1].contains("Candidate write failed:") && !display[0].contains("Candidate write: PUBLISHED"),name+": Console reports binding failure without success");
+            }
+        }
+        try(Fixture x=new Fixture(dir,"SupportedBoundary")) {
+            ContextUniversalCandidatePublication result=write(x,"ctx candidate write \"!@x @y a(x,y)&&b(x,y)->c(x,y);\"");
+            require(result.status==ContextUniversalCandidatePublication.Status.PUBLISHED && result.audit.verified,"two variables and three literals remain supported at the boundary");
+        }
+    }
     private static int count(String text,String needle) {return text.split(java.util.regex.Pattern.quote(needle),-1).length-1;}
     public static void main(String[] args) {
         try {
@@ -116,6 +165,7 @@ public final class ContextUniversalPublicationConsoleRunner {
                 require(Boolean.TRUE.equals(x.mind.query("?durable(99);",null,false)),"Console committed failure survives reopen");
                 try(ContextProductionSnapshotSession lease=ContextProductionSnapshotSession.open(x.db,x.mind,1000)) {require(lease.inventory().x.primary.size()==1,"no duplicate primary after committed Console failure");}
             }
+            languageBoundaries(dir);
             User user=new User();user.setCurrentMind(new Mind(user));reject(() -> new CanonicalCommandProcessor().execute(PARSER.parse(safe),user),"write without actual provider refuses");
             System.out.println("CONTEXT_UNIVERSAL_PUBLICATION_CONSOLE_PASS checks="+checks);System.exit(0);
         } catch(Throwable failure) {failure.printStackTrace();System.exit(1);}
