@@ -28,11 +28,15 @@ public final class ContextUniversalUnitRounds {
         public final Snapshot target;
         public final List<Row> products;
         public final List<Proof> oppositions;
+        public final Step closureStep;
         private Receipt(boolean verified,String reason,Frontier input,Snapshot target,List<Row> products,List<Proof> oppositions) {
             this(verified,reason,input,target,products,oppositions,false);
         }
         private Receipt(boolean verified,String reason,Frontier input,Snapshot target,List<Row> products,List<Proof> oppositions,boolean compounds) {
-            includesCompounds=compounds;
+            this(verified,reason,input,target,products,oppositions,compounds,null);
+        }
+        private Receipt(boolean verified,String reason,Frontier input,Snapshot target,List<Row> products,List<Proof> oppositions,boolean compounds,Step closureStep) {
+            includesCompounds=compounds; this.closureStep=closureStep;
             this.verified=verified; this.reason=reason; this.input=input; this.target=target;
             this.products=Collections.unmodifiableList(new ArrayList<>(products));
             this.oppositions=Collections.unmodifiableList(new ArrayList<>(oppositions));
@@ -93,7 +97,7 @@ public final class ContextUniversalUnitRounds {
                     for(Row row:ledger.rows) {
                         work.run(); if(row.support.depth>0 && row.support.sources.stream().anyMatch(s -> s.localX)) exported.add(row);
                     }
-                    return new Receipt(true,compounds?"Private binary recipes closed; factoring/family admission unknown":"Private unit recipes closed; compound/family admission unknown",input,target,exported,Collections.emptyList(),compounds);
+                    return new Receipt(true,compounds?"Private binary recipes closed; factoring/family admission unknown":"Private unit recipes closed; compound/family admission unknown",input,target,exported,Collections.emptyList(),compounds,step);
                 }
             }
             throw new IllegalStateException("Private unit local round limit");
@@ -101,7 +105,9 @@ public final class ContextUniversalUnitRounds {
     }
     public static Barrier merge(Frontier input,List<Receipt> receipts,int maximumDepth,int maximumWork) {
         if(maximumDepth<0 || maximumWork<1) throw new IllegalArgumentException("Bounded unit barrier required");
-        Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        return mergeBound(input,receipts,maximumDepth,ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static Barrier mergeBound(Frontier input,List<Receipt> receipts,int maximumDepth,Runnable work) {
         try {
             if(input==null) throw new IllegalStateException("Sealed unit frontier required");
             for(Row row:input.products) { work.run(); if(row.support.depth>maximumDepth) throw new IllegalStateException("Carried unit depth limit"); }

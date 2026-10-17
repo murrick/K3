@@ -46,6 +46,7 @@ def main():
                  ('org.kanger.ContextUniversalUnitLedgerRunner', 'CONTEXT_UNIVERSAL_UNIT_LEDGER_PASS'),
                  ('org.kanger.ContextUniversalUnitRoundsRunner', 'CONTEXT_UNIVERSAL_UNIT_ROUNDS_PASS'),
                  ('org.kanger.ContextUniversalCombinedRoundsRunner', 'CONTEXT_UNIVERSAL_COMBINED_ROUNDS_PASS'),
+                 ('org.kanger.ContextUniversalFamilyCoverageRunner', 'CONTEXT_UNIVERSAL_FAMILY_COVERAGE_PASS'),
                  ('org.kanger.ContextGroundClauseCandidateRunner', 'CONTEXT_GROUND_CLAUSE_CANDIDATE_PASS'),
                  ('org.kanger.storage.dumb2.ContextGroundCandidateSnapshotRunner', 'CONTEXT_GROUND_CANDIDATE_SNAPSHOT_PASS'),
                  ('org.kanger.storage.dumb2.ContextGroundAuthoringBridgeRunner', 'CONTEXT_GROUND_AUTHORING_BRIDGE_PASS'),

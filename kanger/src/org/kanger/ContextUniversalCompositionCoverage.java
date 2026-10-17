@@ -16,14 +16,20 @@ public final class ContextUniversalCompositionCoverage {
     // Independent feasibility check: connected equalities on argument positions.
     // Variable labels from opposite parents are deliberately never compared.
     static boolean unifiable(Atom a,Atom b,Runnable work) {
-        if (a.positive==b.positive || !a.predicate.equals(b.predicate) || a.arguments.size()!=b.arguments.size()) return false;
+        return feasible(a,b,true,true,work);
+    }
+    static boolean factorable(Atom a,Atom b,Runnable work) {
+        return feasible(a,b,false,false,work);
+    }
+    private static boolean feasible(Atom a,Atom b,boolean apart,boolean opposite,Runnable work) {
+        if ((opposite ? a.positive==b.positive : a.positive!=b.positive) || !a.predicate.equals(b.predicate) || a.arguments.size()!=b.arguments.size()) return false;
         int n=a.arguments.size(); if(n>256) throw new IllegalStateException("Universal pivot arity audit limit");
         List<Slot> slots=new ArrayList<>(a.arguments); slots.addAll(b.arguments);
         boolean[][] equal=new boolean[2*n][2*n];
         for(int i=0;i<2*n;i++) for(int j=0;j<2*n;j++) {
             work.run(); Slot x=slots.get(i),y=slots.get(j);
             equal[i][j]=i==j || (i%n==j%n && i/n!=j/n)
-                || (i/n==j/n && x.variable>=0 && x.variable==y.variable);
+                || ((!apart || i/n==j/n) && x.variable>=0 && x.variable==y.variable);
         }
         for(int k=0;k<2*n;k++) for(int i=0;i<2*n;i++) for(int j=0;j<2*n;j++) {
             work.run(); equal[i][j] |= equal[i][k] && equal[k][j];
