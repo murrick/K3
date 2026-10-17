@@ -45,7 +45,7 @@ public final class ContextUniversalUnitLedger {
             this.oppositions=Collections.unmodifiableList(new ArrayList<>(oppositions));
         }
     }
-    private static boolean add(List<Row> rows,Clause clause,Support proof,int maximumDepth,Runnable work) {
+    static boolean add(List<Row> rows,Clause clause,Support proof,int maximumDepth,Runnable work) {
         work.run(); if(proof.depth>maximumDepth) throw new IllegalStateException("Unit ledger cumulative depth limit");
         boolean same=false; List<Clause> distinct=new ArrayList<>();
         for(int i=0;i<rows.size();i++) {
@@ -87,10 +87,24 @@ public final class ContextUniversalUnitLedger {
             return new Opened(true,"Sealed historical private unit ledger; no family authority",new ContextUniversalUnitLedger(x,target,input,rows,null));
         } catch(Exception failure) { return new Opened(false,failure.getMessage(),null); }
     }
+    /** Internal family path: rows originate only in a sealed family frontier. */
+    static ContextUniversalUnitLedger openShared(Snapshot x,Snapshot target,List<Row> shared,int maximumDepth,Runnable work) {
+        List<Row> rows=new ArrayList<>();
+        for(Entry entry:ContextUniversalUnitProof.declarations(x,target,work)) for(Clause clause:entry.clauses)
+            add(rows,clause,new Support(Collections.singleton(entry.source),0),maximumDepth,work);
+        for(Row row:shared) {
+            work.run(); if(row.support.depth<=0 || row.support.sources.stream().noneMatch(s -> s.localX))
+                throw new IllegalStateException("Only proved X-dependent family carriers permitted");
+            add(rows,row.clause,row.support,maximumDepth,work);
+        }
+        return new ContextUniversalUnitLedger(x,target,null,rows,null);
+    }
     /** A single immutable-input unit sweep; no newly produced row becomes a parent until next step. */
     public static Step step(ContextUniversalUnitLedger input,int maximumDepth,int maximumWork) {
         if(maximumDepth<0 || maximumWork<1) throw new IllegalArgumentException("Bounded unit ledger step required");
-        Runnable work=ContextGroundProductionRounds.budget(maximumWork);
+        return stepBound(input,maximumDepth,ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static Step stepBound(ContextUniversalUnitLedger input,int maximumDepth,Runnable work) {
         try {
             if(input==null) throw new IllegalStateException("Sealed unit ledger required");
             List<Clause> clauses=new ArrayList<>();
