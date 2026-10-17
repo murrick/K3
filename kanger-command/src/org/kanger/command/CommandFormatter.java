@@ -117,6 +117,13 @@ public final class CommandFormatter {
             case STORAGE_REINDEX:
                 return "storage reindex " + argument(invocation.getArgument("name"));
 
+            case CTX_CANDIDATE:
+                org.kanger.ContextUniversalCandidateRequest candidate=(org.kanger.ContextUniversalCandidateRequest)invocation.getArgument("request");
+                StringBuilder candidateText=new StringBuilder("ctx candidate ").append(argument(candidate.statement));
+                for(java.util.Map.Entry<String,Integer> e:candidate.limits.entrySet())
+                    if(!e.getValue().equals(org.kanger.ContextUniversalCandidateRequest.DEFAULTS.get(e.getKey())))
+                        candidateText.append(' ').append(e.getKey()).append('=').append(e.getValue());
+                return candidateText.toString();
             case CTX_DMZ_FAMILY: return "ctx dmz family"+(invocation.getArgument("number")==null?"":" "+number(invocation,"number"));
             case CTX_DMZ_BRANCH: return "ctx dmz branch "+number(invocation,"number");
             case CTX_DMZ_EXPLAIN: return "ctx dmz explain";

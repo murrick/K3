@@ -65,6 +65,7 @@ public final class CommandRegistry {
         ACCEPT,
         START,
         COMMIT,
+        CANDIDATE,
         CONNECT,
         DISCONNECT,
         EXPLAIN,
@@ -221,6 +222,7 @@ public final class CommandRegistry {
         keyword(Family.STORAGE, Keyword.DROP, "drop");
         keyword(Family.STORAGE, Keyword.REINDEX, "reindex");
 
+        keyword(Family.CONTEXT, Keyword.CANDIDATE, "candidate");
         keyword(Family.CONTEXT, Keyword.CONNECT, "connect");
         keyword(Family.CONTEXT, Keyword.CLOSE, "close");
         keyword(Family.CONTEXT, Keyword.DISCONNECT, "disconnect");
@@ -343,6 +345,9 @@ public final class CommandRegistry {
         define(CommandIntent.STORAGE_REINDEX, "storage reindex <name>", "STORAGE", "Reindex one explicitly named storage.",
                 args("name", "Storage logical name."), aliases("reindex <name>"), n++);
 
+        define(CommandIntent.CTX_CANDIDATE,"ctx candidate <assertion> [<limit>=<value> ...]","CONTEXT",
+                "Read-only flat universal candidate check over the current exact connected views. Quote the assertion. Limits: rows=1000, rounds=16, local=16, depth=16, instances=20000, models=1000000, preparation=64000000, events=500000, work=64000000, audit=64000000. Incomplete is never approval; no assertion is written.",
+                args("request","One assertion and optional bounded diagnostic limits."),n++);
         define(CommandIntent.CTX_DMZ_FAMILY,"ctx dmz family [<invocations>]","CONTEXT",
                 "Console: inspect saved family, or freshly explore the saved exact restriction request with an explicit cap.",args("number","Optional fresh invocation cap, 1..10000."),n++);
         define(CommandIntent.CTX_DMZ_BRANCH,"ctx dmz branch <N>","CONTEXT",

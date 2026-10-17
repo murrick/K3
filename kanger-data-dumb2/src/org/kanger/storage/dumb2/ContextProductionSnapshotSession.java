@@ -138,6 +138,20 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
             } finally { requireCurrent(); }
         }
     }
+    org.kanger.ContextUniversalCandidateAudit.Audit inspectUniversalCandidate(org.kanger.ContextUniversalCandidateRequest request) throws Exception {
+        synchronized(provider) {
+            requireCurrent();
+            if(request.limit("rows")!=maximumRows) throw new IllegalArgumentException("Diagnostic row limit must match owning snapshot");
+            try {
+                org.kanger.ContextUniversalCandidate.Evaluation trial=qualifyUniversalCandidate(request.statement,request.limit("rounds"),
+                        request.limit("local"),request.limit("depth"),request.limit("instances"),request.limit("models"),
+                        request.limit("preparation"),request.limit("events"),request.limit("work"));
+                return org.kanger.ContextUniversalCandidateAudit.audit(trial,trial.artifact==null?null:trial.artifact.base,
+                        trial.artifact==null?Collections.emptyList():trial.artifact.foreign,request.statement,
+                        request.limit("depth"),request.limit("instances"),request.limit("audit"));
+            } finally { requireCurrent(); }
+        }
+    }
     enum WriteStatus { PUBLISHED, COLLISION, INCOMPLETE, NATIVE_REJECTED }
     static final class WriteResult {
         final WriteStatus status;

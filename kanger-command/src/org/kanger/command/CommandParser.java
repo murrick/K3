@@ -515,7 +515,7 @@ public final class CommandParser {
         try {
             keyword = CommandRegistry.resolveKeyword(
                     Family.CONTEXT, tokens.get(1).value,
-                    Keyword.CONNECT, Keyword.DISCONNECT, Keyword.CLOSE,
+                    Keyword.CANDIDATE, Keyword.CONNECT, Keyword.DISCONNECT, Keyword.CLOSE,
                     Keyword.SWITCH, Keyword.VERSION,
                     Keyword.RULES, Keyword.PUBLISH, Keyword.FORK,
                     Keyword.EXPLAIN, Keyword.ASK, Keyword.DMZ, Keyword.TREE,
@@ -527,6 +527,19 @@ public final class CommandParser {
             return parseContextIsolatedQuery(raw);
         }
         switch (keyword) {
+            case CANDIDATE:
+                requireRequiredArgument(tokens,3);
+                Map<String,Integer> candidateLimits=new LinkedHashMap<String,Integer>();
+                try {
+                    for(int i=3;i<tokens.size();i++) {
+                        String option=tokens.get(i).value; int eq=option.indexOf('=');
+                        if(eq<1 || !option.substring(eq+1).matches("[0-9]+")) throw new IllegalArgumentException("Expected candidate limit=integer");
+                        String key=option.substring(0,eq);
+                        if(candidateLimits.put(key,Integer.valueOf(option.substring(eq+1)))!=null) throw new IllegalArgumentException("Repeated candidate limit: "+key);
+                    }
+                    return CommandInvocation.command(CommandIntent.CTX_CANDIDATE,args("request",
+                        new org.kanger.ContextUniversalCandidateRequest(tokens.get(2).value,candidateLimits)),raw);
+                } catch(IllegalArgumentException invalid) { throw error(INVALID_ARGUMENT_SHAPE,invalid.getMessage()); }
             case TREE:
                 requireRequiredArgument(tokens,3);requireSize(tokens,3);
                 long number=parseNonNegativeLong(tokens.get(2).value,"opinion number");

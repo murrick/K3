@@ -646,6 +646,12 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
         throw new UnsupportedOperationException("DMZ source preflight is not supported by this provider");
     }
 
+    /** Fresh read-only flat universal candidate diagnostic; never publication authority. */
+    default org.kanger.ContextUniversalCandidateAudit.Audit inspectUniversalCandidate(IMind sourceMind,
+            org.kanger.ContextUniversalCandidateRequest request) throws Exception {
+        throw new UnsupportedOperationException("Universal candidate diagnostics are unavailable for this provider");
+    }
+
     /** Experimental fresh exact-pinned whole-source DMZ query. No owner escapes this operation.
      * Planning refusals are typed; acquisition/phase failures propagate as exceptions.
      * A bounded stop returns partial histories with restartRequired, never a complete answer. */

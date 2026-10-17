@@ -387,6 +387,17 @@ public final class CanonicalConsole {
                 }
                 return same(mind);
 
+            case CTX_CANDIDATE:
+                try {
+                    CanonicalCommandProcessor.Result checked=COMMAND_PROCESSOR.execute(invocation,mind.getUser());
+                    if(!checked.isHandled() || checked.getCandidateAudit()==null) throw new CommandErrorException("Unsupported candidate diagnostic");
+                    mind=track(shutdownHook,checked.getMind());
+                    ConsoleCandidateView.show(checked.getCandidateAudit());
+                } catch(Exception refusal) {
+                    throw new CommandErrorException("Candidate check refused: "+(refusal.getMessage()==null?refusal.toString():refusal.getMessage()));
+                }
+                return same(mind);
+
             case CTX_DMZ_FAMILY:
             case CTX_DMZ_BRANCH:
                 try {

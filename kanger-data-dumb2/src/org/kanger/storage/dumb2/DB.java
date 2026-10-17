@@ -259,6 +259,14 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    @Override public synchronized org.kanger.ContextUniversalCandidateAudit.Audit inspectUniversalCandidate(
+            org.kanger.interfaces.IMind source,org.kanger.ContextUniversalCandidateRequest request) throws Exception {
+        if(!(source instanceof Mind) || request==null) throw new IllegalArgumentException("Actual candidate source/request required");
+        try(ContextProductionSnapshotSession lease=ContextProductionSnapshotSession.open(this,(Mind)source,request.limit("rows"))) {
+            return lease.inspectUniversalCandidate(request);
+        }
+    }
+
     public enum ProductionWriteStatus { PUBLISHED, COLLISION, INCOMPLETE, NATIVE_REJECTED }
     /** Trial Sources retain their staged identity; before/after address actual physical revisions. */
     public static final class ProductionWriteResult {
