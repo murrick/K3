@@ -38,8 +38,13 @@ public final class ContextUniversalUnitLedger {
         public final ContextUniversalUnitLedger input,next;
         public final boolean changed;
         public final List<Evidence> evidence;
+        public final List<ContextUniversalCompositionProof.Evidence> compoundEvidence;
         public final List<Proof> oppositions;
         private Step(Status status,String reason,ContextUniversalUnitLedger input,ContextUniversalUnitLedger next,boolean changed,List<Evidence> evidence,List<Proof> oppositions) {
+            this(status,reason,input,next,changed,evidence,oppositions,Collections.emptyList());
+        }
+        private Step(Status status,String reason,ContextUniversalUnitLedger input,ContextUniversalUnitLedger next,boolean changed,List<Evidence> evidence,List<Proof> oppositions,List<ContextUniversalCompositionProof.Evidence> compounds) {
+            this.compoundEvidence=Collections.unmodifiableList(new ArrayList<>(compounds));
             this.status=status; this.reason=reason; this.input=input; this.next=next; this.changed=changed;
             this.evidence=Collections.unmodifiableList(new ArrayList<>(evidence));
             this.oppositions=Collections.unmodifiableList(new ArrayList<>(oppositions));
@@ -80,7 +85,7 @@ public final class ContextUniversalUnitLedger {
                 add(rows,clause,new Support(Collections.singleton(entry.source),0),maximumDepth,work);
             for(Product p:input==null?Collections.<Product>emptyList():input.products) add(rows,p.clause,p.proof,maximumDepth,work);
             for(ContextUniversalCompositionProof.Evidence e:new ArrayList<>(compounds)) {
-                work.run(); if(input==null || e==null || !e.proved || e.input!=input || e.target!=target)
+                work.run(); if(input==null || e==null || !e.proved || e.ledger!=null || e.input!=input || e.target!=target)
                     throw new IllegalStateException("Wrong input/cut compound authority for ledger");
                 for(ContextUniversalCompositionProof.Proof p:e.proofs) add(rows,p.conclusion,p.support,maximumDepth,work);
             }
@@ -104,7 +109,17 @@ public final class ContextUniversalUnitLedger {
         if(maximumDepth<0 || maximumWork<1) throw new IllegalArgumentException("Bounded unit ledger step required");
         return stepBound(input,maximumDepth,ContextGroundProductionRounds.budget(maximumWork));
     }
+    public static Step stepCombined(ContextUniversalUnitLedger input,int maximumDepth,int maximumWork) {
+        if(maximumDepth<0 || maximumWork<1) throw new IllegalArgumentException("Bounded combined ledger step required");
+        return stepCombinedBound(input,maximumDepth,ContextGroundProductionRounds.budget(maximumWork));
+    }
     static Step stepBound(ContextUniversalUnitLedger input,int maximumDepth,Runnable work) {
+        return stepBound(input,maximumDepth,work,false);
+    }
+    static Step stepCombinedBound(ContextUniversalUnitLedger input,int maximumDepth,Runnable work) {
+        return stepBound(input,maximumDepth,work,true);
+    }
+    private static Step stepBound(ContextUniversalUnitLedger input,int maximumDepth,Runnable work,boolean compounds) {
         try {
             if(input==null) throw new IllegalStateException("Sealed unit ledger required");
             List<Clause> clauses=new ArrayList<>();
@@ -114,14 +129,23 @@ public final class ContextUniversalUnitLedger {
                 for(Clause c:clauses) { work.run(); if(c.equivalent(row.clause)) { seen=true; break; } }
                 if(!seen) clauses.add(row.clause);
             }
+            List<ContextUniversalCompositionProof.Evidence> compoundEvidence=new ArrayList<>();
             List<Row> rows=new ArrayList<>(input.rows); List<Evidence> evidence=new ArrayList<>(); List<Proof> opposed=new ArrayList<>(); boolean changed=false;
             for(int i=0;i<clauses.size();i++) for(int j=i;j<clauses.size();j++) {
                 Clause left=clauses.get(i),right=clauses.get(j);
-                work.run(); if(left.literals.size()!=1 && right.literals.size()!=1) continue;
+                work.run(); boolean compoundPair=left.literals.size()!=1 && right.literals.size()!=1;
+                if(compoundPair && !compounds) continue;
                 for(int a=0;a<left.literals.size();a++) for(int b=0;b<right.literals.size();b++) {
                     work.run(); Atom x=left.literals.get(a),y=right.literals.get(b);
                     if(x.positive==y.positive || !x.predicate.equals(y.predicate) || x.arguments.size()!=y.arguments.size()) continue;
                     try { left.resolveWithUnits(right,a,b,work); } catch(Clause.UnificationFailure impossible) { continue; }
+                    if(compoundPair) {
+                        ContextUniversalCompositionProof.Evidence e=ContextUniversalCompositionProof.proveLedger(input,left,a,right,b,maximumDepth,work);
+                        if(!e.proved) throw new IllegalStateException(e.reason);
+                        compoundEvidence.add(e);
+                        for(ContextUniversalCompositionProof.Proof p:e.proofs) changed |= add(rows,p.conclusion,p.support,maximumDepth,work);
+                        continue;
+                    }
                     Evidence e=ContextUniversalUnitProof.proveLedger(input,left,a,right,b,maximumDepth,work);
                     if(!e.proved) throw new IllegalStateException(e.reason);
                     evidence.add(e);
@@ -133,9 +157,13 @@ public final class ContextUniversalUnitLedger {
             }
             ContextUniversalUnitCoverage.Audit audit=ContextUniversalUnitCoverage.audit(input,evidence,maximumDepth,work);
             if(!audit.covered) throw new IllegalStateException(audit.reason);
-            if(!opposed.isEmpty()) return new Step(Status.OPPOSITION,"Audited private unit opposition; no family verdict",input,null,false,evidence,opposed);
+            if(compounds) {
+                ContextUniversalCompositionCoverage.Audit compoundAudit=ContextUniversalCompositionCoverage.audit(input,compoundEvidence,maximumDepth,work);
+                if(!compoundAudit.covered) throw new IllegalStateException(compoundAudit.reason);
+            }
+            if(!opposed.isEmpty()) return new Step(Status.OPPOSITION,"Audited private unit opposition; no family verdict",input,null,false,evidence,opposed,compoundEvidence);
             ContextUniversalUnitLedger next=new ContextUniversalUnitLedger(input.x,input.target,input.input,rows,input.identity);
-            return new Step(Status.ADVANCED,"Audited private unit sweep; compound closure/family admission unknown",input,next,changed,evidence,Collections.emptyList());
+            return new Step(Status.ADVANCED,compounds?"Audited private binary sweep; factoring/family admission unknown":"Audited private unit sweep; compound closure/family admission unknown",input,next,changed,evidence,Collections.emptyList(),compoundEvidence);
         } catch(Exception failure) { return new Step(Status.INCOMPLETE,failure.getMessage(),input,null,false,Collections.emptyList(),Collections.emptyList()); }
     }
 }

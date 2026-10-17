@@ -45,7 +45,7 @@ public final class ContextUniversalCompositionCoverage {
             List<Evidence> evidence=new ArrayList<>(supplied);
             for(Evidence e:evidence) {
                 work.run();
-                if(e==null || !e.proved || e.input!=receipt.input || e.target!=receipt.target)
+                if(e==null || !e.proved || e.ledger!=null || e.input!=receipt.input || e.target!=receipt.target)
                     throw new IllegalStateException("Detached evidence has wrong input, cut or status");
             }
             List<Clause> clauses=new ArrayList<>();
@@ -76,4 +76,42 @@ public final class ContextUniversalCompositionCoverage {
             return new Audit(true,"Detached compound-pair obligations covered; units, transport, closure and admission unknown");
         } catch(Exception failure) { return new Audit(false,failure.getMessage()); }
     }
+    public static Audit auditLedger(ContextUniversalUnitLedger ledger,List<Evidence> supplied,int maximumDepth,int maximumWork) {
+        if(maximumDepth<0 || maximumWork<1) throw new IllegalArgumentException("Bounded ledger composition coverage required");
+        return audit(ledger,supplied,maximumDepth,ContextGroundProductionRounds.budget(maximumWork));
+    }
+    static Audit audit(ContextUniversalUnitLedger ledger,List<Evidence> supplied,int maximumDepth,Runnable work) {
+        try {
+            if(ledger==null) throw new IllegalStateException("Sealed compound ledger required");
+            List<Evidence> evidence=new ArrayList<>(supplied);
+            for(Evidence e:evidence) {
+                work.run(); if(e==null || !e.proved || e.ledger!=ledger) throw new IllegalStateException("Wrong historical compound ledger evidence");
+            }
+            List<Clause> clauses=new ArrayList<>();
+            for(ContextUniversalUnitLedger.Row row:ledger.rows) {
+                work.run(); if(row.support.depth>maximumDepth) throw new IllegalStateException("Compound ledger parent depth limit");
+                if(row.clause.literals.size()<2) continue;
+                boolean seen=false;
+                for(Clause c:clauses) { work.run(); if(c.equivalent(row.clause)) { seen=true; break; } }
+                if(!seen) clauses.add(row.clause);
+            }
+            for(int i=0;i<clauses.size();i++) for(int j=i;j<clauses.size();j++) {
+                Clause left=clauses.get(i),right=clauses.get(j);
+                for(int a=0;a<left.literals.size();a++) for(int b=0;b<right.literals.size();b++) {
+                    work.run(); if(!unifiable(left.literals.get(a),right.literals.get(b),work)) continue;
+                    Evidence expected=ContextUniversalCompositionProof.proveLedger(ledger,left,a,right,b,maximumDepth,work);
+                    if(!expected.proved) throw new IllegalStateException(expected.reason);
+                    for(Proof required:expected.proofs) {
+                        boolean found=false;
+                        for(Evidence e:evidence) for(Proof actual:e.proofs) {
+                            work.run(); if(actual.support.equals(required.support) && actual.conclusion.equivalent(required.conclusion)) found=true;
+                        }
+                        if(!found) throw new IllegalStateException("Missing checked ledger compound consequence");
+                    }
+                }
+            }
+            return new Audit(true,"Exact ledger compound pairs covered; factoring/family admission unknown");
+        } catch(Exception failure) { return new Audit(false,failure.getMessage()); }
+    }
+
 }

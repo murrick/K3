@@ -87,7 +87,7 @@ public final class ContextUniversalUnitProof {
                 throw new IllegalStateException("At least one whole unit parent required");
             List<ContextUniversalCompositionProof.Evidence> evidence=new ArrayList<>(compositions);
             for(ContextUniversalCompositionProof.Evidence e:evidence) {
-                work.run(); if(input==null || e==null || !e.proved || e.input!=input || e.target!=target)
+                work.run(); if(input==null || e==null || !e.proved || e.ledger!=null || e.input!=input || e.target!=target)
                     throw new IllegalStateException("Composition evidence has wrong input, cut or status");
             }
             List<Support> a=authenticate(left,x,input,target,evidence,work),b=authenticate(right,x,input,target,evidence,work);

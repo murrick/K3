@@ -45,7 +45,7 @@ public final class ContextUniversalUnitCoverage {
                 add(clauses,p.clause,work);
             }
             for(ContextUniversalCompositionProof.Evidence e:compound) {
-                work.run(); if(input==null || e==null || !e.proved || e.input!=input || e.target!=target)
+                work.run(); if(input==null || e==null || !e.proved || e.ledger!=null || e.input!=input || e.target!=target)
                     throw new IllegalStateException("Compound evidence has wrong input, cut or status");
                 for(ContextUniversalCompositionProof.Proof p:e.proofs) {
                     work.run(); if(p.support.depth>maximumDepth) throw new IllegalStateException("Compound parent depth limit");
