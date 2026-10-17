@@ -29,6 +29,33 @@ public final class ContextUniversalCandidateRunner {
     private static void incomplete(ContextUniversalCandidate.Evaluation e,String why) {
         require(e.status==Status.INCOMPLETE && (e.qualification==null || e.qualification.certificate==null && e.qualification.collision==null),why+": "+e.reason);
     }
+    private static void threeVariables() throws Exception {
+        Fixture x=new Fixture(true,""),a=new Fixture(false,"!seed(1,2,3);"),b=new Fixture(false,"!~ready(3,2,1);");
+        String rule="!@x @y @z seed(x,y,z)->ready(z,y,x);";
+        for(List<Snapshot> order:Arrays.asList(Arrays.asList(a.snapshot,b.snapshot),Arrays.asList(b.snapshot,a.snapshot))) {
+            ContextUniversalCandidate.Evaluation e=qualify(x,order,rule);
+            require(e.status==Status.COLLISION && e.qualification.completedBarriers==2,"three-variable consequence qualifies the opposite sibling at barrier2: "+e.reason);
+            Set<ContextProductionCapture.Source> sources=new HashSet<>(Arrays.asList(e.artifact.candidate,a.snapshot.primary.get(0).source,b.snapshot.primary.get(0).source));
+            require(e.qualification.collision.oppositions.stream().anyMatch(p -> p.support.sources.equals(sources) && p.support.depth==2),"all three exact Sources and cumulative depth survive permutation");
+            ContextUniversalCandidateAudit.Audit audit=ContextUniversalCandidateAudit.audit(e,x.snapshot,order,rule,16,20000,WORK);
+            require(audit.verified && audit.oppositions.stream().anyMatch(p -> p.usesCandidate && p.originalSources.equals(sources)),"independent auditor replays three-variable collision and candidate attribution");
+        }
+        Fixture edge=new Fixture(false,"!edge(1,2);"),different=new Fixture(false,"!~path(2,1);");
+        String join="!@x @y @z edge(x,y)&&edge(y,z)->path(x,z);";
+        ContextUniversalCandidate.Evaluation safe=qualify(x,Arrays.asList(edge.snapshot,different.snapshot),join);
+        require(safe.status==Status.CONSISTENT && safe.qualification.certificate.cuts.size()==3,"variable positions are preserved, not collapsed: "+safe.reason);
+        require(ContextUniversalCandidateAudit.audit(safe,x.snapshot,Arrays.asList(edge.snapshot,different.snapshot),join,16,20000,WORK).verified,"three-variable all-value model independently audited");
+        incomplete(ContextUniversalCandidate.qualify(x.snapshot,Arrays.asList(edge.snapshot,different.snapshot),join,1000,8,16,16,1,1000000,WORK,500000,WORK),"three-variable grounding cap is incomplete, never approval");
+        Fixture wideModel=new Fixture(false,"!~ready(3,1,2);");
+        ContextUniversalCandidate.Evaluation capped=qualify(x,Arrays.asList(a.snapshot,wideModel.snapshot),rule);
+        incomplete(capped,"large three-variable truth table remains bounded");
+        require(capped.reason.contains("model assignment limit"),"binding extension does not silently lift model search budget");
+        Fixture universal=new Fixture(false,"!@x @y @z seed(x,y,z);");
+        ContextUniversalCandidate.Evaluation all=qualify(x,Collections.singletonList(universal.snapshot),rule);
+        require(all.status==Status.CONSISTENT,"all-value three-variable universal consequence: "+all.reason);
+        require(ContextUniversalCandidateAudit.audit(all,x.snapshot,Collections.singletonList(universal.snapshot),rule,16,20000,WORK).verified,"all-value certificate independently checked, not just mentioned tuples");
+        x.unchanged();a.unchanged();b.unchanged();edge.unchanged();different.unchanged();wideModel.unchanged();universal.unchanged();
+    }
     public static void main(String[] args) {
         try {
             System.setProperty("user.home",java.nio.file.Files.createTempDirectory("universal-candidate-").toString());
@@ -61,6 +88,7 @@ public final class ContextUniversalCandidateRunner {
             incomplete(shortInference,"separate complete-inference allowance"); require(shortInference.artifact!=null && shortInference.qualification!=null,"successful private staging is historical only, not partial qualification evidence");
             boolean immutable=false; try { safe.artifact.rebased.clear(); } catch(UnsupportedOperationException expected) { immutable=true; } require(immutable,"staged mapping immutable");
             x.unchanged(); a.unchanged(); b.unchanged(); empty.unchanged(); negative.unchanged();
+            threeVariables();
             System.out.println("CONTEXT_UNIVERSAL_CANDIDATE_PASS checks="+checks); System.exit(0);
         } catch(Throwable failure) { failure.printStackTrace(); System.exit(1); }
     }

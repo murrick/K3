@@ -51,7 +51,7 @@ public final class ContextUniversalPublicationConsoleRunner {
     /** Native-valid language outside this writer must never fall through to ordinary authoring. */
     private static void languageBoundaries(Path dir) throws Exception {
         String[][] cases={
-            {"ThreeVariables","!@x @y @z tri(x,y,z);"},
+            {"FourVariables","!@x @y @z @w quad(x,y,z,w);"},
             {"FourLiterals","!@x a(x)&&b(x)&&c(x)->d(x);"},
             {"VariableFunction","!@x p(x)->q(x+1);"},
             {"Witness","!$w witness(w);"}
@@ -79,7 +79,7 @@ public final class ContextUniversalPublicationConsoleRunner {
         }
         for(boolean foreign:new boolean[]{false,true}) {
             String name=foreign?"Foreign":"Local";
-            if(foreign) try(Fixture a=new Fixture(dir,"UnsupportedA")) {require(a.mind.compile(cases[0][1],null,false),"native foreign three-variable knowledge");}
+            if(foreign) try(Fixture a=new Fixture(dir,"UnsupportedA")) {require(a.mind.compile(cases[0][1],null,false),"native foreign four-variable knowledge");}
             try(Fixture x=new Fixture(dir,"Existing"+name)) {
                 require(x.mind.compile(foreign?"!anchor(1);":cases[0][1],null,false),"existing scope fixture");
                 if(foreign) x.db.connectContext("UnsupportedA");
@@ -93,8 +93,21 @@ public final class ContextUniversalPublicationConsoleRunner {
             }
         }
         try(Fixture x=new Fixture(dir,"SupportedBoundary")) {
-            ContextUniversalCandidatePublication result=write(x,"ctx candidate write \"!@x @y a(x,y)&&b(x,y)->c(x,y);\"");
-            require(result.status==ContextUniversalCandidatePublication.Status.PUBLISHED && result.audit.verified,"two variables and three literals remain supported at the boundary");
+            ContextUniversalCandidatePublication result=write(x,"ctx candidate write \"!@x @y @z a(x,y)&&b(y,z)->c(x,z);\"");
+            require(result.status==ContextUniversalCandidatePublication.Status.PUBLISHED && result.audit.verified,"three variables and three literals are supported at the boundary");
+        }
+    }
+    private static void threeVariablePublication(Path dir) throws Exception {
+        try(Fixture x=new Fixture(dir,"ThreeVariableJoin")) {
+            require(x.mind.compile("!edge(1,1); !edge(1,2);",null,false),"native join premises");
+            ContextUniversalCandidatePublication result=write(x,"ctx candidate write \"!@x @y @z edge(x,y)&&edge(y,z)->path(x,z);\"");
+            require(result.status==ContextUniversalCandidatePublication.Status.PUBLISHED && result.audit.verified,"three-variable native join publishes only after family model and audit");
+            require(Boolean.TRUE.equals(x.mind.query("?path(1,2);",null,false)),"ordinary native query observes correct shared middle variable");
+            require(!Boolean.TRUE.equals(x.mind.query("?path(2,1);",null,false)),"join does not reverse endpoints");
+        }
+        try(Fixture x=new Fixture(dir,"ThreeVariableJoin")) {
+            require(Boolean.TRUE.equals(x.mind.query("?path(1,2);",null,false)),"three-variable rule persists after reopen");
+            try(ContextProductionSnapshotSession lease=ContextProductionSnapshotSession.open(x.db,x.mind,1000)) {require(lease.inventory().x.primary.size()==3,"join consequence is not promoted to an extra primary");}
         }
     }
     private static int count(String text,String needle) {return text.split(java.util.regex.Pattern.quote(needle),-1).length-1;}
@@ -166,6 +179,7 @@ public final class ContextUniversalPublicationConsoleRunner {
                 try(ContextProductionSnapshotSession lease=ContextProductionSnapshotSession.open(x.db,x.mind,1000)) {require(lease.inventory().x.primary.size()==1,"no duplicate primary after committed Console failure");}
             }
             languageBoundaries(dir);
+            threeVariablePublication(dir);
             User user=new User();user.setCurrentMind(new Mind(user));reject(() -> new CanonicalCommandProcessor().execute(PARSER.parse(safe),user),"write without actual provider refuses");
             System.out.println("CONTEXT_UNIVERSAL_PUBLICATION_CONSOLE_PASS checks="+checks);System.exit(0);
         } catch(Throwable failure) {failure.printStackTrace();System.exit(1);}

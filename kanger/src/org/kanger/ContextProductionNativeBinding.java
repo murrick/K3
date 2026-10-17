@@ -68,7 +68,7 @@ public final class ContextProductionNativeBinding {
             Clause clause = Clause.shapeOf(branch,mind);
             if (clause == null) throw new IllegalStateException("Unsupported native clause semantics"); result.add(clause);
         }
-        if (variables.size() > 2) throw new IllegalStateException("Native clause variable limit"); return result;
+        if (variables.size() > 3) throw new IllegalStateException("Native clause variable limit"); return result;
     }
     private static void sameClauses(List<Clause> left,List<Clause> right,Runnable work) {
         if (left.size() != right.size()) throw new IllegalStateException("Origin/native clause count differs");
