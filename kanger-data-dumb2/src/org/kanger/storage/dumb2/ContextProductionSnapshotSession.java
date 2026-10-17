@@ -126,6 +126,18 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
             } finally { requireCurrent(); }
         }
     }
+    /** Fresh owned read-only universal diagnostic; returned evidence remains historical. */
+    org.kanger.ContextUniversalCandidate.Evaluation qualifyUniversalCandidate(String statement,int rounds,int localRounds,int depth,
+            int instances,int models,int preparationWork,int preparationEvents,int inspectionWork) throws Exception {
+        synchronized(provider) {
+            requireCurrent();
+            try {
+                Binding bound=bind(preparationWork,preparationEvents);
+                return org.kanger.ContextUniversalCandidate.qualify(bound.x,bound.foreign,statement,maximumRows,
+                        rounds,localRounds,depth,instances,models,preparationWork,preparationEvents,inspectionWork);
+            } finally { requireCurrent(); }
+        }
+    }
     enum WriteStatus { PUBLISHED, COLLISION, INCOMPLETE, NATIVE_REJECTED }
     static final class WriteResult {
         final WriteStatus status;

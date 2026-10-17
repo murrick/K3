@@ -250,6 +250,15 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    /** Read-only flat universal diagnostic from exact current pinned initialized views. No write authority. */
+    public synchronized org.kanger.ContextUniversalCandidate.Evaluation qualifyUniversalProductionCandidate(
+            Mind source,String statement,int rows,int rounds,int localRounds,int depth,int instances,int models,
+            int preparationWork,int preparationEvents,int inspectionWork) throws Exception {
+        try (ContextProductionSnapshotSession lease=ContextProductionSnapshotSession.open(this,source,rows)) {
+            return lease.qualifyUniversalCandidate(statement,rounds,localRounds,depth,instances,models,preparationWork,preparationEvents,inspectionWork);
+        }
+    }
+
     public enum ProductionWriteStatus { PUBLISHED, COLLISION, INCOMPLETE, NATIVE_REJECTED }
     /** Trial Sources retain their staged identity; before/after address actual physical revisions. */
     public static final class ProductionWriteResult {
