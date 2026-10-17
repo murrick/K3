@@ -94,19 +94,24 @@ public final class ContextUniversalQuotientModel {
         }
         clauses.add(encoded);
     }
+    private static void assignment(int[] remaining) {
+        if(remaining[0]--<=0) throw new IllegalStateException("Universal quotient model assignment limit");
+    }
     private static boolean search(List<int[]> clauses,boolean[] values,int at,int[] remaining,Runnable work) {
         work.run();
-        if(at<values.length) {
-            values[at]=false; if(search(clauses,values,at+1,remaining,work)) return true;
-            values[at]=true; return search(clauses,values,at+1,remaining,work);
-        }
-        if(remaining[0]--<=0) throw new IllegalStateException("Universal quotient model assignment limit");
+        // Only [0,at) is assigned. A false closed clause rejects every completion
+        // of this prefix; stale values in the unassigned tail are never consulted.
         for(int[] clause:clauses) {
-            boolean trueClause=false;
-            for(int literal:clause) { work.run(); if(values[Math.abs(literal)-1]==(literal>0)) { trueClause=true; break; } }
-            if(!trueClause) return false;
+            boolean possible=false;
+            for(int literal:clause) {
+                work.run(); int index=Math.abs(literal)-1;
+                if(index>=at || values[index]==(literal>0)) { possible=true; break; }
+            }
+            if(!possible) { assignment(remaining); return false; }
         }
-        return true;
+        if(at==values.length) { assignment(remaining); return true; }
+        values[at]=false; if(search(clauses,values,at+1,remaining,work)) return true;
+        values[at]=true; return search(clauses,values,at+1,remaining,work);
     }
     // Independent witness evaluation: no encoded CNF indices or search assignment array.
     private static void verifyInstances(Clause clause,List<Integer> variables,int[] valuation,int domain,Model model,int[] remaining,Runnable work) {

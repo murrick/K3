@@ -48,8 +48,9 @@ public final class ContextUniversalCandidateRunner {
         incomplete(ContextUniversalCandidate.qualify(x.snapshot,Arrays.asList(edge.snapshot,different.snapshot),join,1000,8,16,16,1,1000000,WORK,500000,WORK),"three-variable grounding cap is incomplete, never approval");
         Fixture wideModel=new Fixture(false,"!~ready(3,1,2);");
         ContextUniversalCandidate.Evaluation capped=qualify(x,Arrays.asList(a.snapshot,wideModel.snapshot),rule);
-        incomplete(capped,"large three-variable truth table remains bounded");
-        require(capped.reason.contains("model assignment limit"),"binding extension does not silently lift model search budget");
+        require(capped.status==Status.CONSISTENT,"previous ternary budget example completes with prefix pruning: "+capped.reason);
+        require(ContextUniversalCandidateAudit.audit(capped,x.snapshot,Arrays.asList(a.snapshot,wideModel.snapshot),rule,16,20000,WORK).verified,"previous budget example still needs independent all-value audit");
+        incomplete(ContextUniversalCandidate.qualify(x.snapshot,Arrays.asList(a.snapshot,wideModel.snapshot),rule,1000,8,16,16,20000,1,WORK,500000,WORK),"prefix pruning retains explicit model attempt cap");
         Fixture universal=new Fixture(false,"!@x @y @z seed(x,y,z);");
         ContextUniversalCandidate.Evaluation all=qualify(x,Collections.singletonList(universal.snapshot),rule);
         require(all.status==Status.CONSISTENT,"all-value three-variable universal consequence: "+all.reason);

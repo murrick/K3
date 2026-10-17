@@ -44,6 +44,40 @@ public final class ContextUniversalQuotientModelRunner {
         for(SemanticTermSnapshot v:domain) { values.put(vars.get(at),v); freshInstances(clause,vars,at+1,values,domain,model); }
         values.remove(vars.get(at));
     }
+    /** Independent eight-valuation oracle; each private source is satisfiable on its own. */
+    private static void prefixOracle() throws Exception {
+        String[] positive={"p(1)||q(1)","q(1)||r(1)","p(1)||r(1)"};
+        String[] negative={"~p(1)||~q(1)","~q(1)||~r(1)","~p(1)||~r(1)"};
+        int[][] pairs={{0,1},{1,2},{0,2}};
+        SemanticTermSnapshot one=value("1");
+        for(int left=0;left<8;left++) for(int right=0;right<8;right++) {
+            StringBuilder xs=new StringBuilder(),as=new StringBuilder();
+            for(int i=0;i<3;i++) {
+                if((left&(1<<i))!=0) xs.append('!').append(positive[i]).append(';');
+                if((right&(1<<i))!=0) as.append('!').append(negative[i]).append(';');
+            }
+            ContextUniversalUnitLedger ledger=open(snapshot(true,xs.toString()),snapshot(false,as.toString()));
+            Set<Integer> allowed=new HashSet<>();
+            for(int values=0;values<8;values++) {
+                boolean yes=true;
+                for(int i=0;i<3;i++) {
+                    boolean a=(values&(1<<pairs[i][0]))!=0,b=(values&(1<<pairs[i][1]))!=0;
+                    if((left&(1<<i))!=0 && !a && !b) yes=false;
+                    if((right&(1<<i))!=0 && a && b) yes=false;
+                }
+                if(yes) allowed.add(values);
+            }
+            Result result=ContextUniversalQuotientModel.find(ledger,20000,128,WORK);
+            require(result.modeled==!allowed.isEmpty(),"prefix pruning agrees with independent complete Boolean oracle: "+left+"/"+right+": "+result.reason);
+            if(result.modeled) {
+                int values=0;String[] predicates={"p","q","r"};
+                for(int i=0;i<3;i++) if(result.model.holds(predicates[i],Collections.singletonList(one))) values|=1<<i;
+                require(allowed.contains(values),"actual returned interpretation belongs to oracle solutions");
+                require(ContextUniversalQuotientModel.check(ledger,result.model,20000,WORK).valid,"oracle model also independently checks against raw ledger");
+            } else require(result.model==null && result.reason.contains("no sourced collision proof"),"exhaustive model failure is not a sourced collision");
+            require(ledger.rows.stream().allMatch(row -> row.support.depth==0),"search does not invent derived knowledge");
+        }
+    }
     public static void main(String[] args) {
         try {
             System.setProperty("user.home",java.nio.file.Files.createTempDirectory("universal-quotient-model-").toString());
@@ -90,6 +124,7 @@ public final class ContextUniversalQuotientModelRunner {
             immutable=false; try { generic.positiveProfiles.get(0).arguments.clear(); } catch(UnsupportedOperationException expected) { immutable=true; } require(immutable,"profile tuples immutable");
             require(l.rows.size()==1 && l.rows.get(0).support.depth==0,"model search creates no knowledge row or inference support");
             noArtifact(ContextUniversalQuotientModel.find(null,20000,1000000,WORK),"missing ledger refuses witness");
+            prefixOracle();
             System.out.println("CONTEXT_UNIVERSAL_QUOTIENT_MODEL_PASS checks="+checks); System.exit(0);
         } catch(Throwable failure) { failure.printStackTrace(); System.exit(1); }
     }
