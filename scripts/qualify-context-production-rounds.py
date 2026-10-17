@@ -57,6 +57,7 @@ def main():
                  ('org.kanger.storage.dumb2.ContextUniversalCandidateSnapshotRunner', 'CONTEXT_UNIVERSAL_CANDIDATE_SNAPSHOT_PASS'),
                  ('org.kanger.storage.dumb2.ContextUniversalAuthoringBridgeRunner', 'CONTEXT_UNIVERSAL_AUTHORING_BRIDGE_PASS'),
                  ('org.kanger.storage.dumb2.ContextUniversalCandidateConsoleRunner', 'CONTEXT_UNIVERSAL_CANDIDATE_CONSOLE_PASS'),
+                 ('org.kanger.storage.dumb2.ContextUniversalPublicationConsoleRunner', 'CONTEXT_UNIVERSAL_PUBLICATION_CONSOLE_PASS'),
                  ('org.kanger.ContextGroundClauseCandidateRunner', 'CONTEXT_GROUND_CLAUSE_CANDIDATE_PASS'),
                  ('org.kanger.storage.dumb2.ContextGroundCandidateSnapshotRunner', 'CONTEXT_GROUND_CANDIDATE_SNAPSHOT_PASS'),
                  ('org.kanger.storage.dumb2.ContextGroundAuthoringBridgeRunner', 'CONTEXT_GROUND_AUTHORING_BRIDGE_PASS'),

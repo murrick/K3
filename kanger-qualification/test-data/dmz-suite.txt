@@ -137,3 +137,4 @@ org.kanger.storage.dumb2.ContextUniversalCandidateSnapshotRunner | CONTEXT_UNIVE
 org.kanger.ContextUniversalCandidateAuditRunner | CONTEXT_UNIVERSAL_CANDIDATE_AUDIT_PASS
 org.kanger.storage.dumb2.ContextUniversalAuthoringBridgeRunner | CONTEXT_UNIVERSAL_AUTHORING_BRIDGE_PASS
 org.kanger.storage.dumb2.ContextUniversalCandidateConsoleRunner | CONTEXT_UNIVERSAL_CANDIDATE_CONSOLE_PASS
+org.kanger.storage.dumb2.ContextUniversalPublicationConsoleRunner | CONTEXT_UNIVERSAL_PUBLICATION_CONSOLE_PASS

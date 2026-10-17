@@ -59,6 +59,7 @@ public final class CanonicalCommandProcessor {
                 || intent == CommandIntent.STORAGE_DROP
                 || intent == CommandIntent.STORAGE_REINDEX
                 || intent == CommandIntent.CTX_CANDIDATE
+                || intent == CommandIntent.CTX_CANDIDATE_WRITE
                 || intent == CommandIntent.CTX_DMZ_EXPLAIN
                 || intent == CommandIntent.CTX_DMZ_CHOOSE
                 || intent == CommandIntent.CTX_OPINION_TREE
@@ -323,6 +324,11 @@ public final class CanonicalCommandProcessor {
                         federation.federationSnapshot(), null);
             }
 
+            case CTX_CANDIDATE_WRITE: {
+                Object request=invocation.getArgument("request");
+                if(!(request instanceof ContextUniversalCandidateRequest)) throw new IllegalArgumentException("Candidate request required");
+                return Result.candidatePublication(mind,contextFederation(user,mind).publishUniversalCandidate(mind,(ContextUniversalCandidateRequest)request));
+            }
             case CTX_CANDIDATE: {
                 Object request=invocation.getArgument("request");
                 if(!(request instanceof ContextUniversalCandidateRequest)) throw new IllegalArgumentException("Candidate request required");
@@ -815,6 +821,7 @@ public final class CanonicalCommandProcessor {
         private final java.util.Map<String, IContextFederation.Opinion> contextOpinions;
         private final org.kanger.interfaces.DmzSourcesQuery.Result dmzResult;
         private final ContextUniversalCandidateAudit.Audit candidateAudit;
+        private final ContextUniversalCandidatePublication candidatePublication;
 
         private Result(boolean handled,
                        boolean success,
@@ -888,6 +895,16 @@ public final class CanonicalCommandProcessor {
                 IContextFederation.ExplainResult contextExplainResult,List<IContextFederation.RuleBlock> contextRules,
                 java.util.Map<String,IContextFederation.Opinion> contextOpinions,org.kanger.interfaces.DmzSourcesQuery.Result dmzResult,
                 ContextUniversalCandidateAudit.Audit candidateAudit) {
+            this(handled,success,mind,description,storageStatus,rejection,transactionStatus,federationSnapshot,federationQueryResult,
+                    contextVersionHistory,contextExplainResult,contextRules,contextOpinions,dmzResult,candidateAudit,null);
+        }
+        private Result(boolean handled,boolean success,IMind mind,String description,StorageStatus storageStatus,
+                Rejection rejection,TransactionStatus transactionStatus,IContextFederation.Snapshot federationSnapshot,
+                IContextFederation.QueryResult federationQueryResult,IContextFederation.VersionHistory contextVersionHistory,
+                IContextFederation.ExplainResult contextExplainResult,List<IContextFederation.RuleBlock> contextRules,
+                java.util.Map<String,IContextFederation.Opinion> contextOpinions,org.kanger.interfaces.DmzSourcesQuery.Result dmzResult,
+                ContextUniversalCandidateAudit.Audit candidateAudit,ContextUniversalCandidatePublication candidatePublication) {
+            this.candidatePublication=candidatePublication;
             this.candidateAudit=candidateAudit;
             this.dmzResult=dmzResult;
             this.contextOpinions = contextOpinions;
@@ -958,6 +975,11 @@ public final class CanonicalCommandProcessor {
         private static Result successCandidate(IMind mind,ContextUniversalCandidateAudit.Audit audit) {
             return new Result(true,true,mind,"",null,null,null,null,null,null,null,null,null,null,audit);
         }
+        private static Result candidatePublication(IMind mind,ContextUniversalCandidatePublication publication) {
+            return new Result(true,publication.status==ContextUniversalCandidatePublication.Status.PUBLISHED,mind,"",
+                    null,null,null,null,null,null,null,null,null,null,null,publication);
+        }
+        public ContextUniversalCandidatePublication getCandidatePublication() { return candidatePublication; }
         public ContextUniversalCandidateAudit.Audit getCandidateAudit() { return candidateAudit; }
         public org.kanger.interfaces.DmzSourcesQuery.Result getDmzResult() { return dmzResult; }
         public java.util.Map<String, IContextFederation.Opinion> getContextOpinions() { return contextOpinions; }

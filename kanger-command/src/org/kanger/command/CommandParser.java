@@ -529,16 +529,19 @@ public final class CommandParser {
         switch (keyword) {
             case CANDIDATE:
                 requireRequiredArgument(tokens,3);
+                boolean candidateWrite=tokens.get(2).value.equalsIgnoreCase("write");
+                int assertionIndex=candidateWrite?3:2;
+                requireRequiredArgument(tokens,assertionIndex+1);
                 Map<String,Integer> candidateLimits=new LinkedHashMap<String,Integer>();
                 try {
-                    for(int i=3;i<tokens.size();i++) {
+                    for(int i=assertionIndex+1;i<tokens.size();i++) {
                         String option=tokens.get(i).value; int eq=option.indexOf('=');
                         if(eq<1 || !option.substring(eq+1).matches("[0-9]+")) throw new IllegalArgumentException("Expected candidate limit=integer");
                         String key=option.substring(0,eq);
                         if(candidateLimits.put(key,Integer.valueOf(option.substring(eq+1)))!=null) throw new IllegalArgumentException("Repeated candidate limit: "+key);
                     }
-                    return CommandInvocation.command(CommandIntent.CTX_CANDIDATE,args("request",
-                        new org.kanger.ContextUniversalCandidateRequest(tokens.get(2).value,candidateLimits)),raw);
+                    return CommandInvocation.command(candidateWrite?CommandIntent.CTX_CANDIDATE_WRITE:CommandIntent.CTX_CANDIDATE,args("request",
+                        new org.kanger.ContextUniversalCandidateRequest(tokens.get(assertionIndex).value,candidateLimits)),raw);
                 } catch(IllegalArgumentException invalid) { throw error(INVALID_ARGUMENT_SHAPE,invalid.getMessage()); }
             case TREE:
                 requireRequiredArgument(tokens,3);requireSize(tokens,3);

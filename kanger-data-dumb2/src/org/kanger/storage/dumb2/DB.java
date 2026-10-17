@@ -328,6 +328,17 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
         }
     }
 
+    @Override public synchronized org.kanger.ContextUniversalCandidatePublication publishUniversalCandidate(
+            org.kanger.interfaces.IMind source,org.kanger.ContextUniversalCandidateRequest request) throws Exception {
+        if(!(source instanceof Mind) || request==null) throw new IllegalArgumentException("Actual candidate source/request required");
+        UniversalProductionWriteResult written=writeUniversalProductionCandidate((Mind)source,request.statement,request.limit("rows"),
+                request.limit("rounds"),request.limit("local"),request.limit("depth"),request.limit("instances"),request.limit("models"),
+                request.limit("preparation"),request.limit("events"),request.limit("work"),request.limit("audit"),false);
+        return new org.kanger.ContextUniversalCandidatePublication(org.kanger.ContextUniversalCandidatePublication.Status.valueOf(written.status.name()),
+                written.trial,written.audit,new org.kanger.interfaces.IContextResults.Revision(written.before.getContextId(),written.before.getRevision()),
+                new org.kanger.interfaces.IContextResults.Revision(written.after.getContextId(),written.after.getRevision()));
+    }
+
     private boolean validatingCommit;
 
     @Override

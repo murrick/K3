@@ -345,8 +345,11 @@ public final class CommandRegistry {
         define(CommandIntent.STORAGE_REINDEX, "storage reindex <name>", "STORAGE", "Reindex one explicitly named storage.",
                 args("name", "Storage logical name."), aliases("reindex <name>"), n++);
 
+        define(CommandIntent.CTX_CANDIDATE_WRITE,"ctx candidate write <assertion> [<limit>=<value> ...]","CONTEXT",
+                "Console: explicit flat universal publication: freshly qualifies/audits the assertion, then runs native settlement. Uses the same limits as ctx candidate; no previous diagnostic is reused.",
+                args("request","One new assertion and optional bounded qualification limits."),n++);
         define(CommandIntent.CTX_CANDIDATE,"ctx candidate <assertion> [<limit>=<value> ...]","CONTEXT",
-                "Read-only flat universal candidate check over the current exact connected views. Quote the assertion. Limits: rows=1000, rounds=16, local=16, depth=16, instances=20000, models=1000000, preparation=64000000, events=500000, work=64000000, audit=64000000. Incomplete is never approval; no assertion is written.",
+                "Console: read-only flat universal candidate check over the current exact connected views. Quote the assertion. Limits: rows=1000, rounds=16, local=16, depth=16, instances=20000, models=1000000, preparation=64000000, events=500000, work=64000000, audit=64000000. Incomplete is never approval; no assertion is written.",
                 args("request","One assertion and optional bounded diagnostic limits."),n++);
         define(CommandIntent.CTX_DMZ_FAMILY,"ctx dmz family [<invocations>]","CONTEXT",
                 "Console: inspect saved family, or freshly explore the saved exact restriction request with an explicit cap.",args("number","Optional fresh invocation cap, 1..10000."),n++);

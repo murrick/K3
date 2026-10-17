@@ -118,8 +118,9 @@ public final class CommandFormatter {
                 return "storage reindex " + argument(invocation.getArgument("name"));
 
             case CTX_CANDIDATE:
+            case CTX_CANDIDATE_WRITE:
                 org.kanger.ContextUniversalCandidateRequest candidate=(org.kanger.ContextUniversalCandidateRequest)invocation.getArgument("request");
-                StringBuilder candidateText=new StringBuilder("ctx candidate ").append(argument(candidate.statement));
+                StringBuilder candidateText=new StringBuilder(invocation.getIntent()==CommandIntent.CTX_CANDIDATE_WRITE?"ctx candidate write ":"ctx candidate ").append(argument(candidate.statement));
                 for(java.util.Map.Entry<String,Integer> e:candidate.limits.entrySet())
                     if(!e.getValue().equals(org.kanger.ContextUniversalCandidateRequest.DEFAULTS.get(e.getKey())))
                         candidateText.append(' ').append(e.getKey()).append('=').append(e.getValue());

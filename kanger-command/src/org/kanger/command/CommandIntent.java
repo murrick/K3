@@ -59,6 +59,7 @@ public enum CommandIntent {
     STORAGE_REINDEX,
 
     CTX_CANDIDATE,
+    CTX_CANDIDATE_WRITE,
     CTX_DMZ,
     CTX_DMZ_EXPLAIN,
     CTX_DMZ_FAMILY,

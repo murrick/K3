@@ -387,6 +387,19 @@ public final class CanonicalConsole {
                 }
                 return same(mind);
 
+            case CTX_CANDIDATE_WRITE:
+                try {
+                    CanonicalCommandProcessor.Result written=COMMAND_PROCESSOR.execute(invocation,mind.getUser());
+                    if(!written.isHandled() || written.getCandidatePublication()==null) throw new CommandErrorException("Unsupported candidate publication");
+                    mind=track(shutdownHook,written.getMind());
+                    ConsoleCandidateView.write(written.getCandidatePublication());
+                } catch(org.kanger.exception.TransactionSettlementException settled) {
+                    ConsoleCandidateView.settlementFailure(settled);
+                } catch(Exception refusal) {
+                    throw new CommandErrorException("Candidate write failed: "+(refusal.getMessage()==null?refusal.toString():refusal.getMessage()));
+                }
+                return same(mind);
+
             case CTX_CANDIDATE:
                 try {
                     CanonicalCommandProcessor.Result checked=COMMAND_PROCESSOR.execute(invocation,mind.getUser());

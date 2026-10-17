@@ -2,7 +2,7 @@
 package org.kanger;
 import java.util.*;
 
-/** Immutable read-only candidate diagnostic request shared by command adapters/providers. */
+/** Immutable candidate statement/bounds shared by explicit diagnostic and write operations. */
 public final class ContextUniversalCandidateRequest {
     public static final Map<String,Integer> DEFAULTS;
     static {

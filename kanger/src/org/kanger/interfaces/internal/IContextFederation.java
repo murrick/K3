@@ -652,6 +652,12 @@ public interface IContextFederation extends org.kanger.interfaces.IContextResult
         throw new UnsupportedOperationException("Universal candidate diagnostics are unavailable for this provider");
     }
 
+    /** Explicit fresh scoped write. No caller-supplied historical result is accepted. */
+    default org.kanger.ContextUniversalCandidatePublication publishUniversalCandidate(IMind sourceMind,
+            org.kanger.ContextUniversalCandidateRequest request) throws Exception {
+        throw new UnsupportedOperationException("Universal candidate publication is unavailable for this provider");
+    }
+
     /** Experimental fresh exact-pinned whole-source DMZ query. No owner escapes this operation.
      * Planning refusals are typed; acquisition/phase failures propagate as exceptions.
      * A bounded stop returns partial histories with restartRequired, never a complete answer. */
