@@ -54,6 +54,7 @@ def main():
                  ('org.kanger.ContextUniversalFamilyInspectionRunner', 'CONTEXT_UNIVERSAL_FAMILY_INSPECTION_PASS'),
                  ('org.kanger.ContextUniversalCandidateRunner', 'CONTEXT_UNIVERSAL_CANDIDATE_PASS'),
                  ('org.kanger.ContextUniversalCandidateAuditRunner', 'CONTEXT_UNIVERSAL_CANDIDATE_AUDIT_PASS'),
+                 ('org.kanger.ContextUniversalFamilyAuditRunner', 'CONTEXT_UNIVERSAL_FAMILY_AUDIT_PASS'),
                  ('org.kanger.storage.dumb2.ContextUniversalCandidateSnapshotRunner', 'CONTEXT_UNIVERSAL_CANDIDATE_SNAPSHOT_PASS'),
                  ('org.kanger.storage.dumb2.ContextUniversalAuthoringBridgeRunner', 'CONTEXT_UNIVERSAL_AUTHORING_BRIDGE_PASS'),
                  ('org.kanger.storage.dumb2.ContextUniversalCandidateConsoleRunner', 'CONTEXT_UNIVERSAL_CANDIDATE_CONSOLE_PASS'),

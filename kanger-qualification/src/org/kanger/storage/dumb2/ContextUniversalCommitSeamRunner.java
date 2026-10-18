@@ -19,7 +19,7 @@ public final class ContextUniversalCommitSeamRunner {
         final User owner;final DB db;
         final ProbeStop stop=new ProbeStop();
         boolean armed,legacyRefused;int calls,rounds=16,primary;
-        ContextUniversalFamilyInspection.Result result;String incomplete;
+        ContextUniversalFamilyInspection.Result result;ContextUniversalFamilyAudit.Audit audit;String incomplete;
         Probe(User owner,DB db) {this.owner=owner;this.db=db;}
         void install() {
             owner.setData((org.kanger.interfaces.internal.IData)java.lang.reflect.Proxy.newProxyInstance(DB.class.getClassLoader(),DB.class.getInterfaces(),(proxy,method,args) -> {
@@ -45,7 +45,10 @@ public final class ContextUniversalCommitSeamRunner {
                 if(!f.bound) incomplete=f.reason;else foreign.add(f.snapshot);
             }
             if(!bound.bound) incomplete=bound.reason;
-            if(incomplete==null) result=ContextUniversalFamilyInspection.inspect(bound.snapshot,foreign,rounds,16,16,20000,1000000,WORK);
+            if(incomplete==null) {
+                result=ContextUniversalFamilyInspection.inspect(bound.snapshot,foreign,rounds,16,16,20000,1000000,WORK);
+                audit=ContextUniversalFamilyAudit.audit(result,bound.snapshot,foreign,16,20000,WORK);
+            }
             require(before.fingerprint.equals(inventory(parent,true,Collections.emptyList(),1000).fingerprint),"inspection leaves live physical parent unchanged");
             require(pending.fingerprint.equals(inventory(child,true,Collections.emptyList(),1000).fingerprint),"inspection leaves actual proposed child unchanged");
             require(topology.equals(db.dmzTopology()),"inspection retains exact topology");
@@ -85,6 +88,7 @@ public final class ContextUniversalCommitSeamRunner {
             if(status==null) require(x.probe.result==null && x.probe.incomplete!=null,"whole proposed unsupported scope remains incomplete");
             else {
                 require(x.probe.incomplete==null && x.probe.result.status==status,"actual proposed family status: "+(x.probe.result==null?x.probe.incomplete:x.probe.result.reason));
+                require(x.probe.audit!=null && x.probe.audit.verdict==x.probe.result && x.probe.audit.verified==(status!=ContextUniversalFamilyInspection.Status.INCOMPLETE),"whole proposed verdict independently audited, incomplete never verified");
                 if(status==ContextUniversalFamilyInspection.Status.COLLISION) {
                     require(x.probe.result.completedBarriers==2 && !x.probe.result.collision.oppositions.isEmpty(),"actual child detects masked second-barrier collision");
                     require(!x.probe.legacyRefused,"legacy hook misses this exact masked proposal, independent of order");
