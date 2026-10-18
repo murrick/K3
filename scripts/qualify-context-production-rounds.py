@@ -80,6 +80,7 @@ def main():
                  ('org.kanger.ContextWitnessResultTransportRunner', 'CONTEXT_WITNESS_RESULT_TRANSPORT_PASS'),
                  ('org.kanger.ContextWitnessSeedReplayRunner', 'CONTEXT_WITNESS_SEED_REPLAY_PASS'),
                  ('org.kanger.ContextWitnessGroundResultRunner', 'CONTEXT_WITNESS_GROUND_RESULT_PASS'),
+                 ('org.kanger.ContextWitnessMultiPremiseRunner', 'CONTEXT_WITNESS_MULTI_PREMISE_PASS'),
                  ('org.kanger.ContextWitnessFamilyBarrierRunner', 'CONTEXT_WITNESS_FAMILY_BARRIER_PASS'),
                  ('org.kanger.ContextWitnessClauseCollisionRunner', 'CONTEXT_WITNESS_CLAUSE_COLLISION_PASS'),
                  ('org.kanger.ContextWitnessDisjointCoverageRunner', 'CONTEXT_WITNESS_DISJOINT_COVERAGE_PASS'),

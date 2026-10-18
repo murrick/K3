@@ -127,6 +127,11 @@ final class ContextWitnessPrimaryStepVerifier {
         return scope(session.primary,snapshot,work,observedJoins);
     }
     static Scope scope(List<PrimaryEvidence> primary,Snapshot snapshot,Runnable work,boolean observedJoins) {
+        return scope(primary,snapshot,work,observedJoins,3);
+    }
+    /** Explicit SeedReplay bound; legacy primary and two-premise entrypoints stay narrow. */
+    static Scope scope(List<PrimaryEvidence> primary,Snapshot snapshot,Runnable work,boolean observedJoins,int maximumLiterals) {
+        if(maximumLiterals<1 || maximumLiterals>8) throw new IllegalArgumentException("Bounded producer shape required");
         for (String gap : snapshot.gaps) {
             work.run();
             if (!(gap.startsWith("cvariable-input:") || gap.startsWith("nonordinary-primary-fact:")
@@ -152,7 +157,7 @@ final class ContextWitnessPrimaryStepVerifier {
             producers.computeIfAbsent(input.nativeRule,k -> new LinkedHashSet<>()).add(input.source);
             if (!bundleSources.contains(input.source)) {
                 if (input.variableCount > 2 || input.shapes.size() != input.branches) throw new IllegalStateException("producer-scope-unproved");
-                for (Clause shape : input.shapes) { work.run(); if (shape.literals.size() > 3) throw new IllegalStateException("producer-scope-unproved"); }
+                for (Clause shape : input.shapes) { work.run(); if (shape.literals.size() > maximumLiterals) throw new IllegalStateException("producer-scope-unproved"); }
                 producerShapes.put(input.nativeRule,input.shapes);
             }
         }

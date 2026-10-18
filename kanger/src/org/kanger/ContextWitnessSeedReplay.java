@@ -83,7 +83,7 @@ final class ContextWitnessSeedReplay implements AutoCloseable {
                     throw new IllegalStateException("New producer does not match carried X cut");
             }
             ContextWitnessPrimaryStepVerifier.Scope scope = ContextWitnessPrimaryStepVerifier.scope(
-                    Collections.emptyList(),snapshot,work,true);
+                    Collections.emptyList(),snapshot,work,true,8);
             List<Route> imported = new ArrayList<>();
             for (Item item : seeds) {
                 List<Argument> arguments = new ArrayList<>();
@@ -97,7 +97,7 @@ final class ContextWitnessSeedReplay implements AutoCloseable {
                     work.run(); imported.add(new Route(namespace,pattern,pattern.root,proof,null,null,null,null));
                 }
             }
-            return ContextWitnessUnaryChainVerifier.close(namespace,snapshot,scope,imported,maximumDepth,2,work,true);
+            return ContextWitnessUnaryChainVerifier.close(namespace,snapshot,scope,imported,maximumDepth,7,work,true);
         } catch (IllegalStateException failure) { return new Result(false,failure.getMessage(),Collections.emptyList()); }
     }
     Set<Source> producerSources(Runnable work) {
