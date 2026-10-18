@@ -103,11 +103,10 @@ public final class ContextAutomaticPendingCommitRunner {
                 finally {f.guard.restore();f.db.endNativeWrite(scope);}
             }
             try(Fixture f=new Fixture(dir,"NullaryCompatibility")) {
-                f.flat(false);require(Boolean.TRUE.equals(f.root.query("!nativezero;",null,false)),"legal native nullary assertion accepted by unchanged legacy default");f.guard.install();
-                StorageLifecycleException incomplete=refuse(f,"!ordinary(1);");require(incomplete.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE && incomplete.getCause()!=null && incomplete.getCause().getMessage().contains("arity"),"concrete compatibility blocker: existing nullary primary is outside current whole binding");
-                long id=-1;for(org.kanger.interfaces.IRule item:f.root.getRules()) if(!item.isGenerated() && !item.isDeleted(f.root) && item.getOrigin().equals("!nativezero;")) {id=item.getId();break;}
-                require(id>=0 && Boolean.TRUE.equals(f.root.query("-rule("+id+");",null,false)),"unsupported existing primary can be deleted through strict whole-family policy");
-                require(Boolean.TRUE.equals(f.root.query("!ordinary(1);",null,false)),"ordinary authoring recovers after unsupported primary is removed");
+                f.flat(false);require(Boolean.TRUE.equals(f.root.query("!nativezero;",null,false)),"legal native nullary assertion accepted");
+                select(f,"!ordinary(1);",ContextPendingProductionSnapshotSession.Engine.GROUND);f.guard.install();
+                require(Boolean.TRUE.equals(f.root.query("!ordinary(1);",null,false)),"existing nullary primary participates in complete automatic ground qualification");
+                require(Boolean.TRUE.equals(f.root.query("?nativezero;",null,false)),"automatic qualification preserves native nullary truth");
             }
             System.out.println("CONTEXT_AUTOMATIC_PENDING_COMMIT_PASS checks="+checks);System.exit(0);
         } catch(Throwable failure) {failure.printStackTrace();System.exit(1);}

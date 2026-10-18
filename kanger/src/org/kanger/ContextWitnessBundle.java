@@ -69,7 +69,7 @@ final class ContextWitnessBundle {
             work.run();
             if (branch.size() != 1) throw new IllegalArgumentException("Disjunction or conditional witness bundle unsupported");
             Domain domain = branch.get(0);
-            if (domain.isSystem(mind) || domain.isCalculated(mind) || domain.getRange() < 1 || domain.getRange() > 8
+            if (domain.isSystem(mind) || domain.isCalculated(mind) || domain.getRange() < 0 || domain.getRange() > 8
                     || "rule(1)".equals(domain.getPredicate(mind).toString(mind)))
                 throw new IllegalArgumentException("Ordinary predicate atoms required");
             List<Slot> arguments = new ArrayList<>();

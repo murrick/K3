@@ -54,7 +54,7 @@ public final class ContextProductionNativeBinding {
         for (List<Domain> branch : rule.getTree()) {
             work.run(); if (branch.isEmpty() || branch.size() > 4) throw new IllegalStateException("Native clause width limit");
             for (Domain domain : branch) {
-                work.run(); if (domain.getRange() < 1 || domain.getRange() > 8) throw new IllegalStateException("Native clause arity limit");
+                work.run(); if (domain.getRange() < 0 || domain.getRange() > 8) throw new IllegalStateException("Native clause arity limit");
                 for (IArgument argument : domain.getArguments()) {
                     work.run();
                     if (argument.getType() == ArgumentType.TVARIABLE) {

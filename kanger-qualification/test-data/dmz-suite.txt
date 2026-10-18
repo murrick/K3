@@ -146,3 +146,4 @@ org.kanger.storage.dumb2.ContextPendingCommitPolicyRunner | CONTEXT_PENDING_COMM
 org.kanger.storage.dumb2.ContextPendingWitnessWriteRunner | CONTEXT_PENDING_WITNESS_WRITE_PASS
 org.kanger.storage.dumb2.ContextPendingClauseWriteRunner | CONTEXT_PENDING_CLAUSE_WRITE_PASS
 org.kanger.storage.dumb2.ContextAutomaticPendingCommitRunner | CONTEXT_AUTOMATIC_PENDING_COMMIT_PASS
+org.kanger.storage.dumb2.ContextNullaryPendingCommitRunner | CONTEXT_NULLARY_PENDING_COMMIT_PASS

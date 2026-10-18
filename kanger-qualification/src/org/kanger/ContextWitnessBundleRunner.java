@@ -40,6 +40,9 @@ public final class ContextWitnessBundleRunner {
             same(new String[]{"!$x $y pair(x,y);"},new String[]{"!@x ~pair(x,x);","!~pair(1,John);","!anchor(1);"});
             same(new String[]{"!$x p(x) && fixed(1,John);"},new String[]{"!~fixed(1,John);","!~fixed(John,1);","!~fixed(1,1);"});
             same(new String[]{"!$x p(x);","!$x p(x);"},restrictions);
+            same(new String[]{"!$x p(x) && flag;"},new String[]{"!~flag;","!~flag();","!~flag(0);","!@x ~p(x);","!anchor;"});
+            same(new String[]{"!$x p(x) && ~flag;"},new String[]{"!flag;","!flag();","!flag(0);","!@x ~p(x);"});
+            same(new String[]{"!$x flag && p(x);"},new String[]{"!~flag;","!~flag();","!~flag(0);","!@x ~p(x);","!anchor;"});
             Bundle shared = bundle(0,"!$x p(x) && q(x);");
             require(shared.witnesses == 1 && shared.atoms.size() == 2
                     && shared.atoms.get(0).arguments.get(0).witness == shared.atoms.get(1).arguments.get(0).witness,

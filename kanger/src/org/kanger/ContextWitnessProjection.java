@@ -41,7 +41,7 @@ public final class ContextWitnessProjection {
         public final List<Slot> arguments;
         private Literal(Domain domain,Mind mind,boolean premise) throws Exception {
             if (!domain.isComplete() || domain.isSystem(mind) || domain.isCalculated(mind)
-                    || domain.getRange() < 1 || domain.getRange() > 8
+                    || domain.getRange() < 0 || domain.getRange() > 8
                     || "rule(1)".equals(domain.getPredicate(mind).toString(mind)))
                 throw new IllegalStateException("Unsupported witness projection literal");
             predicate = domain.getPredicate(mind).getName(mind); positive = premise ? !domain.isAntc() : domain.isAntc();
