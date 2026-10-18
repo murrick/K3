@@ -14,6 +14,8 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
     }
     private final DB provider;
     private final Mind parent,child;
+    private Mind retained;
+    private ContextProductionInventory retainedInventory;
     private final IMind active;
     private final Thread owner=Thread.currentThread();
     private final int rows;
@@ -28,11 +30,13 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
     private ContextPendingProductionSnapshotSession(DB db,Mind proposed,int rows) throws Exception {
         if(rows<1 || rows>10000 || proposed==null || !(proposed.getNext() instanceof Mind)) throw new IllegalArgumentException("Bounded actual pending child required");
         provider=db;child=proposed;parent=(Mind)child.getNext();this.rows=rows;active=child.getUser().getCurrentMind();
+        retained=parent.requirePendingValidationChild(child);
         requireOwner();source=new RevisionRef(db.getContextId(),db.getRevision());
         topology=Collections.unmodifiableList(new ArrayList<>(db.dmzTopology()));
         Set<UUID> ids=new HashSet<>();ids.add(source.getContextId());
         for(ContextConnection c:topology) if(c.getTrustGroup()!=null || !ids.add(c.getTarget().getContextId())) throw new IllegalStateException("Distinct ordinary initialized pending cuts required");
         parentInventory=inventory(parent,rows);childInventory=inventory(child,rows);
+        retainedInventory=retained==null?null:inventory(retained,rows);
         int remaining=rows-childInventory.rows.size();List<ContextProductionInventory> views=new ArrayList<>();
         for(ContextConnection c:topology) {ContextProductionInventory i=ContextProductionInventory.inspect(c.layer(),c.getTarget().getContextId(),c.getTarget().getRevision(),false,c.getInitialization(),remaining);remaining-=i.rows.size();views.add(i);}
         foreign=Collections.unmodifiableList(views);requireCurrent();
@@ -40,7 +44,7 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
     private void requireOwner() throws Exception {
         if(closed || Thread.currentThread()!=owner || provider.isClosed() || provider.isReadOnly() || ((User)child.getUser()).getData()!=provider
                 || child.getUser().getCurrentMind()!=active) throw new IllegalStateException("Active owning writable pending-child lease required");
-        parent.requirePendingPhysicalChild(child);
+        if(parent.requirePendingValidationChild(child)!=retained) throw new IllegalStateException("Pending validation ownership scope changed");
     }
     private ContextProductionInventory inventory(Mind mind,int limit) throws Exception {
         return ContextProductionInventory.inspect(mind,source.getContextId(),source.getRevision(),true,Collections.emptyList(),limit);
@@ -48,6 +52,7 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
     void requireCurrent() throws Exception {
         synchronized(provider) {
             requireOwner();
+            if(retained!=null && !retainedInventory.fingerprint.equals(inventory(retained,rows).fingerprint)) throw new IllegalStateException("Retained rollback child inventory changed");
             List<ContextConnection> current=provider.dmzTopology();
             if(!source.getContextId().equals(provider.getContextId()) || source.getRevision()!=provider.getRevision() || !topology.equals(current)) throw new IllegalStateException("Pending physical source revision/topology changed");
             if(!parentInventory.fingerprint.equals(inventory(parent,rows).fingerprint) || !childInventory.fingerprint.equals(inventory(child,rows).fingerprint)) throw new IllegalStateException("Pending parent/child inventory changed");

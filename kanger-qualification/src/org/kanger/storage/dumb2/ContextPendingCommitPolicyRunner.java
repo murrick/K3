@@ -14,12 +14,27 @@ public final class ContextPendingCommitPolicyRunner {
     private static final int WORK=64000000;
     private static void require(boolean yes,String why) {++checks;if(!yes) throw new AssertionError(why);}
     private static final class Guard {
-        final User user;final DB db;int calls,rounds=16,work=WORK,audit=WORK;
+        final User user;final DB db;int calls,rounds=16,work=WORK,audit=WORK,refreshCalls;
+        boolean probeRefresh;Mind refreshChild;ContextPendingProductionSnapshotSession refreshLease;
         Guard(User user,DB db) {this.user=user;this.db=db;}
         void install() {
             user.setData((IData)java.lang.reflect.Proxy.newProxyInstance(DB.class.getClassLoader(),DB.class.getInterfaces(),(proxy,method,args) -> {
                 if(method.getName().equals("validateCommit")) {
                     ++calls;synchronized(db) {user.setData(db);try {
+                        Mind proposed=(Mind)args[0],parent=(Mind)proposed.getNext();
+                        Mind retained=parent.requirePendingValidationChild(proposed);
+                        if(probeRefresh && retained!=null) {
+                            ++refreshCalls;refreshChild=proposed;
+                            boolean ordinaryRejected=false;try {parent.requirePendingPhysicalChild(proposed);} catch(IllegalStateException expected) {ordinaryRejected=true;}
+                            require(ordinaryRejected,"ordinary ownership contract still refuses the rollback sibling pair");
+                            final boolean[] rejected={false};Thread foreign=new Thread(() -> {try {parent.requirePendingValidationChild(proposed);} catch(IllegalStateException expected) {rejected[0]=true;}});
+                            foreign.start();foreign.join();require(rejected[0],"rollback scope cannot be borrowed by another thread");
+                            refreshLease=ContextPendingProductionSnapshotSession.open(db,proposed,1000);refreshLease.requireCurrent();
+                            require(retained.compile("!retainedprobe(1);",null,false),"controlled retained-child mutation during acquired lease");
+                            boolean changed=false;try {refreshLease.requireCurrent();} catch(IllegalStateException expected) {changed=true;}
+                            require(changed,"retained sibling inventory change invalidates acquired refresh lease");
+                            refreshLease.close();refreshLease=ContextPendingProductionSnapshotSession.open(db,proposed,1000);refreshLease.requireCurrent();
+                        }
                         db.validatePendingUniversalCommit((Mind)args[0],1000,rounds,16,16,20000,1000000,WORK,500000,work,audit);
                         db.validateCommit((org.kanger.interfaces.IMind)args[0]);
                     } finally {user.setData((IData)proxy);}}return null;
@@ -27,7 +42,7 @@ public final class ContextPendingCommitPolicyRunner {
                 try {return method.invoke(db,args);} catch(java.lang.reflect.InvocationTargetException failure) {throw failure.getCause();}
             }));
         }
-        void restore() {user.setData(db);}
+        void restore() {if(refreshLease!=null) refreshLease.close();user.setData(db);}
     }
     private static final class Fixture implements AutoCloseable {
         final User user;final DB db=new DB();final Mind root;final Guard guard;
@@ -84,10 +99,28 @@ public final class ContextPendingCommitPolicyRunner {
                 command(f,"transaction start");Mind rollback=(Mind)f.user.getCurrentMind();require(rollback.query(rule,null,false),"rollback proposal prepared");
                 long rollbackRevision=f.db.getRevision();ContextProductionCommitException rejected=null;try {command(f,"transaction commit");} catch(ContextProductionCommitException expected) {rejected=expected;}
                 require(rejected!=null && rejected.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,"rollback starts from an actually refused conflicting user commit");
-                ContextProductionCommitException rollbackFailure=null;try {command(f,"transaction rollback");} catch(ContextProductionCommitException expected) {rollbackFailure=expected;}
-                require(rollbackFailure!=null && rollbackFailure.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE && rollbackFailure.getCollisions().isEmpty() && f.db.getRevision()==rollbackRevision && f.user.getCurrentMind()==rollback,"blanket guard concretely blocks internal rollback qualification without discarding user child");
-                f.root.requirePendingPhysicalChild(rollback);f.guard.restore();
-                command(f,"transaction rollback");require(f.user.getCurrentMind()==f.root,"original native rollback releases rejected user transaction after restoring its routing");
+                f.guard.work=1;ContextProductionCommitException boundedRollback=null;
+                try {command(f,"transaction rollback");} catch(ContextProductionCommitException expected) {boundedRollback=expected;}
+                require(boundedRollback!=null && boundedRollback.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE && f.user.getCurrentMind()==rollback && f.db.getRevision()==rollbackRevision,"incomplete rollback target check retains exact user child and revision");
+                f.root.requirePendingPhysicalChild(rollback);f.guard.work=WORK;f.guard.probeRefresh=true;
+                int beforeRollback=f.guard.calls;
+                command(f,"transaction rollback");
+                require(f.user.getCurrentMind()==f.root && f.guard.calls==beforeRollback+1,"rollback target passes the same strict guard without restoring routing");
+                require(f.db.getRevision()==rollbackRevision,"rollback refresh and discarded conflicting child do not publish a revision");
+                require(f.guard.refreshCalls==1,"only the exact rollback refresh acquired the sibling-aware lease");
+                boolean stale=false;try {f.guard.refreshLease.requireCurrent();} catch(IllegalStateException expected) {stale=true;}
+                require(stale,"captured refresh lease is invalid after its native settlement");
+                boolean scopeGone=false;try {f.root.requirePendingValidationChild(f.guard.refreshChild);} catch(IllegalStateException expected) {scopeGone=true;}
+                require(scopeGone,"settled refresh child cannot reuse the private rollback scope");
+
+            }
+            try(Fixture f=new Fixture(dir,"InvalidRollbackParent")) {
+                require(f.root.compile(rule,null,false),"legacy parent contains masked rule before federation");f.db.connectContext("A");f.db.connectContext("B");
+                command(f,"transaction start");Mind retained=(Mind)f.user.getCurrentMind();require(retained.query("!safe(1);",null,false),"retained user child over legacy invalid baseline");
+                long revision=f.db.getRevision();f.guard.install();ContextProductionCommitException failure=null;
+                try {command(f,"transaction rollback");} catch(ContextProductionCommitException expected) {failure=expected;}
+                require(failure!=null && failure.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT && failure.getFamilyAudit().verified && failure.getFamilyAudit().verdict.completedBarriers==2,"rollback refresh still performs full strict parent-family collision audit");
+                require(f.user.getCurrentMind()==retained && f.db.getRevision()==revision,"colliding rollback target preserves retained user and physical revision");f.root.requirePendingPhysicalChild(retained);
             }
             FailUser user=new FailUser();
             try(Fixture f=new Fixture(dir,"Fail",user)) {

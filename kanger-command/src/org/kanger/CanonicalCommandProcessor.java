@@ -523,7 +523,7 @@ public final class CanonicalCommandProcessor {
         }
 
         ContextQualification qualification =
-                ((Mind) parent).qualifyCurrentContext(false);
+                ((Mind) parent).qualifyRollbackTarget((Mind) mind);
         if (!qualification.isValid()) {
             TransactionCompatibilityRegistry.markIncompatible(
                     (Mind) parent, qualification);

@@ -1729,7 +1729,25 @@ public class Mind implements IMind {
         return res;
     }
 
+    // Only populated during the exact native commit of a rollback-target refresh.
+    private Mind rollbackQualificationSibling;
+    private Thread rollbackQualificationOwner;
+
+    ContextQualification qualifyRollbackTarget(Mind retained) throws Exception {
+        synchronized (locker) {
+            if (retained==null || retained.next!=this || retained.user!=user
+                    || retained.reservationParent!=this || !retained.parentReservationLive
+                    || user.getCurrentMind()!=retained || retained.pendingTransactionCount()!=0)
+                throw new IllegalStateException("Live current rollback child required");
+            return qualifyCurrentContext(false,retained);
+        }
+    }
+
     ContextQualification qualifyCurrentContext(boolean logging) throws Exception {
+        return qualifyCurrentContext(logging,null);
+    }
+
+    private ContextQualification qualifyCurrentContext(boolean logging,Mind retained) throws Exception {
         ContextQualification result;
 
         try (TechnicalMindTransaction tx = TechnicalMindTransaction.begin(this)) {
@@ -1765,7 +1783,12 @@ public class Mind implements IMind {
                 if (logging) {
                     m.getLog().add(LogMode.ANALYZER, "SUCCESS: No Collisions in Program");
                 }
-                tx.commit();
+                m.rollbackQualificationSibling=retained;
+                m.rollbackQualificationOwner=retained==null?null:Thread.currentThread();
+                try {tx.commit();} finally {
+                    m.rollbackQualificationSibling=null;
+                    m.rollbackQualificationOwner=null;
+                }
                 result = new ContextQualification(true, witnesses);
             }
             hypothesis.clear();
@@ -2756,6 +2779,26 @@ public class Mind implements IMind {
                     || !child.parentReservationLive || (user.getCurrentMind()!=this && user.getCurrentMind()!=child)
                     || pendingTransactionCount()!=1 || child.pendingTransactionCount()!=0)
                 throw new IllegalStateException("Exactly one live direct physical-root child required");
+        }
+    }
+
+    /** Exact rollback refresh scope, or the unchanged ordinary pending-child contract.
+     * The returned sibling is inventory-only; its knowledge is not a proposed X.
+     */
+    public Mind requirePendingValidationChild(Mind child) {
+        if(child!=null && child.rollbackQualificationOwner!=null
+                && child.rollbackQualificationOwner!=Thread.currentThread())
+            throw new IllegalStateException("Owning rollback qualification thread required");
+        synchronized(locker) {
+            Mind retained=child==null?null:child.rollbackQualificationSibling;
+            if(retained==null) {requirePendingPhysicalChild(child);return null;}
+            if(next!=null || child.next!=this || child.user!=user || child.reservationParent!=this
+                    || !child.parentReservationLive || child.rollbackQualificationOwner!=Thread.currentThread()
+                    || retained==child || retained.next!=this || retained.user!=user || retained.reservationParent!=this
+                    || !retained.parentReservationLive || user.getCurrentMind()!=retained
+                    || pendingTransactionCount()!=2 || child.pendingTransactionCount()!=0 || retained.pendingTransactionCount()!=0)
+                throw new IllegalStateException("Exact owning rollback qualification and retained sibling required");
+            return retained;
         }
     }
 
