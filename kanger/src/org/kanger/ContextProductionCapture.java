@@ -545,6 +545,7 @@ public final class ContextProductionCapture implements AutoCloseable {
                     if (application.nativeRule == stored.producer && application.conclusion.equivalent(stored.fact)) {
                         covered = true; break;
                     }
+                if(!covered) covered=ContextWitnessProjection.coversGround(capture.witnessProjections,capture.witnessMaterializations,stored.producer,stored.fact);
                 if (!covered) gaps.add("unobserved-materialization:" + stored.producer);
             }
             this.gaps = Collections.unmodifiableList(new ArrayList<>(gaps));
@@ -931,7 +932,7 @@ public final class ContextProductionCapture implements AutoCloseable {
         capture.check();
         if (capture.observeWitnesses) {
             ContextWitnessProjection.Materialization materialization = ContextWitnessProjection.materialized(
-                    mind,producer,(Rule)result,capture.sources(mind,producer.getRuleId()));
+                    mind,producer,(Rule)result,capture.sources(mind,producer.getRuleId()),capture.witnessProjections);
             if (materialization != null) { capture.take(); capture.witnessMaterializations.add(materialization); }
         }
         capture.take();

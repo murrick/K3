@@ -135,7 +135,7 @@ final class ContextWitnessUnaryChainVerifier {
         int depth = producer.depth; Set<Source> sources = new LinkedHashSet<>(producer.sources);
         for (Route donor : chosen) { work.run(); depth = Math.max(depth,donor.proof.depth); sources.addAll(donor.proof.sources); }
         if (depth == Integer.MAX_VALUE) throw new IllegalStateException("witness-chain-depth-overflow");
-        Route route = new Route(replay,conclusion,origin,new Support(sources,depth+1),
+        Route route = new Route(replay,conclusion,conclusion.root==null?null:origin,new Support(sources,depth+1),
                 chosen.size() == 1 ? chosen.get(0) : null,observation,producer,null,chosen);
         changed |= add(application,route,maximumDepth,work);
         changed |= add(pool,route,maximumDepth,work);
@@ -190,10 +190,10 @@ final class ContextWitnessUnaryChainVerifier {
             work.run(); if (observation.premises.isEmpty() || observation.premises.size() > maximumPremises)
                 return incomplete(maximumPremises == 1 ? "outside-single-premise-witness-chain" : "outside-shared-origin-witness-join");
             ContextWitnessPrimaryStepVerifier.application(scope,observation,work);
-            Pattern conclusion = pattern(observation.conclusion,work); List<Pattern> required = new ArrayList<>();
+            Pattern conclusion = pattern(observation.conclusion,work,allowGround); List<Pattern> required = new ArrayList<>();
             for (Literal literal : observation.premises) {
                 Pattern premise = pattern(literal,work,allowGround);
-                if (premise.root != null && !premise.root.equals(conclusion.root)) return incomplete("non-preserving-witness-chain-step");
+                if (premise.root != null && conclusion.root!=null && !premise.root.equals(conclusion.root)) return incomplete("non-preserving-witness-chain-step");
                 required.add(premise);
             }
             premises.put(observation,required); conclusions.put(observation,conclusion); applications.put(observation,new ArrayList<>());
@@ -232,7 +232,7 @@ final class ContextWitnessUnaryChainVerifier {
                             producer,groundApplications.get(observation),pool,maximumDepth,work);
             }
             for (Relation relation : correspondence.relations) {
-                Pattern stored = pattern(relation.occurrence.stored,work);
+                Pattern stored = pattern(relation.occurrence.stored,work,allowGround);
                 for (ContextWitnessProjection application : relation.applications) for (Route donor : new ArrayList<>(applications.get(application))) {
                     work.run(); Route route = new Route(replay,stored,donor.origin,donor.proof,donor,null,null,relation);
                     changed |= add(pool,route,maximumDepth,work);

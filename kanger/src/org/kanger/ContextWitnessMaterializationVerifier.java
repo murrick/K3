@@ -27,19 +27,8 @@ final class ContextWitnessMaterializationVerifier {
         }
     }
     private static Result incomplete(String reason) { return new Result(false,reason,Collections.emptyList()); }
-    private static boolean sameNode(Node left,Node right) {
-        return left.term == right.term && left.ownerRule == right.ownerRule && left.index == right.index && left.domini == right.domini;
-    }
     private static boolean sameMatch(Literal left,Literal right,Runnable work) {
-        work.run();
-        if (!left.predicate.equals(right.predicate) || left.positive != right.positive || left.arguments.size() != right.arguments.size()) return false;
-        for (int i=0;i<left.arguments.size();++i) {
-            work.run(); Slot a = left.arguments.get(i), b = right.arguments.get(i);
-            if (a.lineage.size() != b.lineage.size()) return false;
-            if (a.lineage.isEmpty()) { if (!a.value.semanticallyEquals(b.value)) return false; }
-            else for (int j=0;j<a.lineage.size();++j) { work.run(); if (!sameNode(a.lineage.get(j),b.lineage.get(j))) return false; }
-        }
-        return true;
+        return ContextWitnessProjection.sameLiteral(left,right,work);
     }
     static boolean alphaPreserving(Literal matched,Literal stored,Runnable work) {
         work.run();

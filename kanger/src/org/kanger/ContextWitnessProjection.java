@@ -86,12 +86,51 @@ public final class ContextWitnessProjection {
             producerSupports = Collections.unmodifiableList(new ArrayList<>(supports));
         }
     }
+    static boolean sameLiteral(Literal left,Literal right,Runnable work) {
+        work.run();
+        if(!left.predicate.equals(right.predicate) || left.positive!=right.positive || left.arguments.size()!=right.arguments.size()) return false;
+        for(int i=0;i<left.arguments.size();i++) {
+            work.run();Slot a=left.arguments.get(i),b=right.arguments.get(i);
+            if(a.lineage.size()!=b.lineage.size()) return false;
+            if(a.lineage.isEmpty()) {if(!a.value.semanticallyEquals(b.value)) return false;}
+            else for(int j=0;j<a.lineage.size();j++) {
+                work.run();Node x=a.lineage.get(j),y=b.lineage.get(j);
+                if(x.term!=y.term || x.ownerRule!=y.ownerRule || x.index!=y.index || x.domini!=y.domini) return false;
+            }
+        }
+        return true;
+    }
+    private static boolean ordinaryMatches(Literal literal,ContextProductionCapture.Fact fact) {
+        if(!literal.predicate.equals(fact.predicate) || literal.positive!=fact.positive || literal.arguments.size()!=fact.arguments.size()) return false;
+        for(int i=0;i<literal.arguments.size();i++) {
+            Slot slot=literal.arguments.get(i);
+            if(!slot.lineage.isEmpty() || !slot.value.semanticallyEquals(fact.arguments.get(i))) return false;
+        }
+        return true;
+    }
+    static boolean coversGround(List<ContextWitnessProjection> applications,List<Materialization> occurrences,long producer,ContextProductionCapture.Fact fact) {
+        for(Materialization occurrence:occurrences) if(occurrence.producerRule==producer && ordinaryMatches(occurrence.matched,fact) && ordinaryMatches(occurrence.stored,fact))
+            for(ContextWitnessProjection application:applications)
+                if(application.nativeRule==producer && application.producerSupports.equals(occurrence.producerSupports)
+                        && sameLiteral(application.conclusion,occurrence.matched,() -> {})) return true;
+        return false;
+    }
     static Materialization materialized(Mind mind,Domain producer,Rule result,List<Support> supports) throws Exception {
+        return materialized(mind,producer,result,supports,Collections.emptyList());
+    }
+    static Materialization materialized(Mind mind,Domain producer,Rule result,List<Support> supports,List<ContextWitnessProjection> applications) throws Exception {
         boolean witness = false;
         for (Domain domain : Arrays.asList(producer,result.getDomain())) for (IArgument argument : domain.getArguments()) {
             ITerm value = argument.getValue(mind); witness |= value != null && value.isCVariable();
         }
-        if (!witness) return null;
+        if(!witness) {
+            Literal matched=null;boolean observed=false;
+            for(ContextWitnessProjection application:applications) if(application.nativeRule==producer.getRuleId() && application.producerSupports.equals(supports)) {
+                if(matched==null) matched=new Literal(producer,mind,false);
+                if(sameLiteral(application.conclusion,matched,() -> {})) {observed=true;break;}
+            }
+            if(!observed) return null;
+        }
         if (supports.isEmpty()) throw new IllegalStateException("Unlabelled witness materialization producer");
         return new Materialization(mind,producer,result,supports);
     }

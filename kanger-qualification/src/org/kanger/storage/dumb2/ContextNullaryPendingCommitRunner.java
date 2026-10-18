@@ -24,12 +24,10 @@ public final class ContextNullaryPendingCommitRunner {
         StorageLifecycleException seen=null;try {f.root.query(text,null,false);} catch(StorageLifecycleException expected) {seen=expected;}
         require(seen!=null && seen.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_CONFLICT,"actual native nullary/mixed collision refused");return seen;
     }
-    static void erasureIncomplete(Fixture f,String text) throws Exception {
-        long revision=f.db.getRevision();f.guard.install();StorageLifecycleException seen=null;
-        try {f.root.query(text,null,false);} catch(StorageLifecycleException expected) {seen=expected;}
-        require(seen instanceof ContextWitnessProductionCommitException && seen.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE
-                && ((ContextWitnessProductionCommitException)seen).getFamilyEvaluation().reason.contains("unobserved-materialization"),"unobserved witness-erasing materialization remains incomplete, never a write permit");
-        require(f.db.getRevision()==revision,"capture-gap refusal preserves physical revision");
+    static void erasureAccepted(Fixture f,String text) throws Exception {
+        long revision=f.db.getRevision();f.guard.install();
+        require(Boolean.TRUE.equals(f.root.query(text,null,false)),"observed witness-erasing materialization permits fully checked native source write");
+        require(f.db.getRevision()>revision,"supported erasure source publishes through original native commit");
     }
     public static void main(String[] args) {
         try {
@@ -99,8 +97,8 @@ public final class ContextNullaryPendingCommitRunner {
             try(Fixture f=new Fixture(dir,"WitnessConclusion")) {
                 require(f.root.compile("!$w seed(w,1)&&gate; !@w seed(w,1)->warm(w,1);",null,false),"witness source for nullary conclusion");f.db.connectContext("WR");
                 ContextPendingProductionSnapshotSession.Decision decision=inspect(f,"!ready->out;");
-                require(decision.witness.status==ContextProductionFamilyAssembly.Status.INCOMPLETE && decision.witness.reason.contains("unobserved-materialization"),"nullary witness-erasing conclusion retains explicit capture gap");
-                erasureIncomplete(f,"!ready->out;");
+                require(decision.witness.status==ContextProductionFamilyAssembly.Status.FIXED_POINT,"nullary witness-erasing conclusion now has full observed closure: "+decision.witness.reason);
+                erasureAccepted(f,"!ready->out;");
 
 
             }
@@ -108,12 +106,21 @@ public final class ContextNullaryPendingCommitRunner {
             try(Fixture f=new Fixture(dir,"UnaryConclusionControl")) {
                 require(f.root.compile("!$w seed(w,1)&&flag(w,1); !@w seed(w,1)->warm(w,1);",null,false),"same witness source for unary conclusion");f.db.connectContext("WU");
                 ContextPendingProductionSnapshotSession.Decision decision=inspect(f,"!ready(1)->out(1);");
-                require(decision.witness.status==ContextProductionFamilyAssembly.Status.INCOMPLETE && decision.witness.reason.contains("unobserved-materialization"),"all-unary control proves witness-erasure gap is not specific to nullary atoms");
-                erasureIncomplete(f,"!ready(1)->out(1);");
+                require(decision.witness.status==ContextProductionFamilyAssembly.Status.FIXED_POINT,"all-unary witness-erasing conclusion now has full observed closure: "+decision.witness.reason);
+                erasureAccepted(f,"!ready(1)->out(1);");
+            }
+            create(dir,"NotOutZero","!~out;");create(dir,"NotOutOne","!~out(1);");
+            for(boolean unary:new boolean[]{false,true}) try(Fixture f=new Fixture(dir,"ErasureConflict"+unary)) {
+                require(f.root.compile("!$w seed(w,1)&&flag(w,1); !@w seed(w,1)->warm(w,1);",null,false),"witness-erasure cross-cut collision parent");
+                f.db.connectContext(unary?"WU":"WR");f.db.connectContext(unary?"NotOutOne":"NotOutZero");long revision=f.db.getRevision();f.guard.install();
+                StorageLifecycleException failure=refuse(f,unary?"!ready(1)->out(1);":"!ready->out;");ContextProductionFamilyAssembly.Evaluation evidence=((ContextWitnessProductionCommitException)failure).getFamilyEvaluation();
+                require(evidence.refutations.stream().anyMatch(r -> r.proofs.stream().anyMatch(p -> p.depth>=2 && p.sources.stream().anyMatch(a -> a.localX)
+                        && p.sources.stream().filter(a -> !a.localX).map(a -> a.context).distinct().count()>=2)),"erased result requalifies other cut with full X/A/B support and cumulative depth");
+                require(f.db.getRevision()==revision,"erasure conflict never publishes candidate or production");
             }
             try(Fixture f=new Fixture(dir,"NativeNullaryConclusion")) {
                 require(f.root.compile("!$w seed(w,1); !@w seed(w,1)->ready;",null,false),"native witness-elimination control setup");
-                require(Boolean.TRUE.equals(f.root.query("?ready;",null,false)),"native inference really produces nullary conclusion despite observation gap");
+                require(Boolean.TRUE.equals(f.root.query("?ready;",null,false)),"native inference independently confirms nullary witness-erasing conclusion");
             }
             System.out.println("CONTEXT_NULLARY_PENDING_COMMIT_PASS checks="+checks);System.exit(0);
         } catch(Throwable failure) {failure.printStackTrace();System.exit(1);}
