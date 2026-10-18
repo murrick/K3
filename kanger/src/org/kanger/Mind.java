@@ -118,6 +118,8 @@ public class Mind implements IMind {
     //
     private long id = 0;
     private IMind next = null;
+    private Mind reservationParent;
+    private boolean parentReservationLive;
     //
     private final Map<ITerm, ITerm> cvarChilds = new HashMap<>();
     private final Map<ITerm, Map<Long, ITerm>> cvarChildrenByRule = new HashMap<>();
@@ -294,6 +296,8 @@ public class Mind implements IMind {
         if (!isolateCanonicalFactories && user.getCurrentMind() == root) user.getContextOpinionSession().invalidate();
         operationDescription = parent.operationDescription;
         parent.incTransactionCounter();
+        reservationParent = parent;
+        parentReservationLive = true;
         boolean initialized = false;
         try {
             if (isolateCanonicalFactories) {
@@ -323,7 +327,7 @@ public class Mind implements IMind {
             initialized = true;
         } finally {
             if (!initialized) {
-                parent.abortTransactionStart();
+                parent.abortTransactionStart(this);
             }
         }
     }
@@ -495,6 +499,7 @@ public class Mind implements IMind {
 
                         if (settleRejectedChild) {
                             boolean rootQuiescent = finishTransactionReservationLocked();
+                            child.parentReservationLive = false;
                             reservationFinished = true;
                             try {
                                 finalizeTransactionRootLocked(rootQuiescent);
@@ -514,6 +519,7 @@ public class Mind implements IMind {
 
                 inheritRevisionDescription(child);
                 boolean rootQuiescent = finishTransactionReservationLocked();
+                child.parentReservationLive = false;
                 reservationFinished = true;
                 try {
                     if (rootQuiescent && isStorageUsed()
@@ -540,7 +546,7 @@ public class Mind implements IMind {
                 }
                 if (!reservationFinished) {
                     try {
-                        finishFailedTransactionLocked();
+                        finishFailedTransactionLocked(child);
                     } catch (Throwable finishFailure) {
                         propagated.addSuppressed(finishFailure);
                     }
@@ -713,11 +719,12 @@ public class Mind implements IMind {
         otherOpinionsPossible = child.otherOpinionsPossible;
     }
 
-    private void finishFailedTransactionLocked() {
+    private void finishFailedTransactionLocked(Mind child) {
         if (transactionCounter <= 0) {
             throw new IllegalStateException("Transaction counter underflow for Mind " + id);
         }
         --transactionCounter;
+        child.parentReservationLive = false;
     }
 
     private static void rethrow(Throwable failure) throws Exception {
@@ -766,7 +773,7 @@ public class Mind implements IMind {
             if (checkpoint != null && user.getData() instanceof IContextFederation) {
                 ((IContextFederation) user.getData()).restoreConnections(checkpoint);
             }
-            finishTransactionLocked();
+            finishTransactionLocked((Mind)m);
         }
     }
 
@@ -786,7 +793,7 @@ public class Mind implements IMind {
                     "ephemeral Mind must not be null");
         }
         synchronized (locker) {
-            finishTransactionLocked();
+            finishTransactionLocked((Mind)m);
         }
     }
 
@@ -2730,14 +2737,25 @@ public class Mind implements IMind {
         }
     }
 
-    private void finishTransactionLocked() throws Exception {
+    private void finishTransactionLocked(Mind child) throws Exception {
         boolean rootQuiescent = finishTransactionReservationLocked();
+        child.parentReservationLive = false;
         finalizeTransactionRootLocked(rootQuiescent);
     }
 
-    private void abortTransactionStart() throws Exception {
+    private void abortTransactionStart(Mind child) throws Exception {
         synchronized (locker) {
-            finishTransactionLocked();
+            finishTransactionLocked(child);
+        }
+    }
+
+    /** Read-only pre-settlement ownership check; this does not reserve or settle a child. */
+    public void requirePendingPhysicalChild(Mind child) {
+        synchronized(locker) {
+            if(child==null || next!=null || child.next!=this || child.user!=user || child.reservationParent!=this
+                    || !child.parentReservationLive || (user.getCurrentMind()!=this && user.getCurrentMind()!=child)
+                    || pendingTransactionCount()!=1 || child.pendingTransactionCount()!=0)
+                throw new IllegalStateException("Exactly one live direct physical-root child required");
         }
     }
 

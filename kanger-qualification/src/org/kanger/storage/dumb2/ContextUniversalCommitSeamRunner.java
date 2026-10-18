@@ -34,28 +34,18 @@ public final class ContextUniversalCommitSeamRunner {
             ContextProductionInventory before=inventory(parent,true,Collections.emptyList(),1000);
             List<ContextConnection> topology=new ArrayList<>(db.dmzTopology());
             ContextProductionInventory pending=inventory(child,true,Collections.emptyList(),1000);primary=pending.primary.size();
-            List<ContextProductionInventory> acquired=new ArrayList<>();List<Snapshot> foreign=new ArrayList<>();
-            ContextProductionNativeBinding.Result bound=ContextProductionNativeBinding.bind(child,pending,WORK,500000);
-            int remaining=1000-pending.rows.size();
-            for(ContextConnection connection:topology) {
-                require(connection.getTrustGroup()==null,"probe covers ordinary initialized cuts only");
-                ContextProductionInventory view=ContextProductionInventory.inspect(connection.layer(),connection.getTarget().getContextId(),connection.getTarget().getRevision(),false,connection.getInitialization(),remaining);
-                remaining-=view.rows.size();acquired.add(view);
-                ContextProductionNativeBinding.Result f=ContextProductionNativeBinding.bind(connection.layer(),view,WORK,500000);
-                if(!f.bound) incomplete=f.reason;else foreign.add(f.snapshot);
-            }
-            if(!bound.bound) incomplete=bound.reason;
-            if(incomplete==null) {
-                result=ContextUniversalFamilyInspection.inspect(bound.snapshot,foreign,rounds,16,16,20000,1000000,WORK);
-                audit=ContextUniversalFamilyAudit.audit(result,bound.snapshot,foreign,16,20000,WORK);
-            }
+            org.kanger.interfaces.internal.IData routed=owner.getData();
+            owner.setData(db);
+            try(ContextPendingProductionSnapshotSession lease=ContextPendingProductionSnapshotSession.open(db,child,1000)) {
+                try {
+                    ContextPendingProductionSnapshotSession.Result qualified=lease.inspect(rounds,16,16,20000,1000000,WORK,500000,WORK,WORK);
+                    result=qualified.inspection;audit=qualified.audit;
+                } catch(IllegalStateException unsupported) {incomplete=unsupported.getMessage();}
+                lease.requireCurrent();
+            } finally {owner.setData(routed);}
             require(before.fingerprint.equals(inventory(parent,true,Collections.emptyList(),1000).fingerprint),"inspection leaves live physical parent unchanged");
             require(pending.fingerprint.equals(inventory(child,true,Collections.emptyList(),1000).fingerprint),"inspection leaves actual proposed child unchanged");
             require(topology.equals(db.dmzTopology()),"inspection retains exact topology");
-            for(int i=0;i<topology.size();i++) {
-                ContextConnection c=topology.get(i);ContextProductionInventory old=acquired.get(i);
-                require(old.fingerprint.equals(ContextProductionInventory.inspect(c.layer(),old.context,old.revision,false,c.getInitialization(),old.rows.size()).fingerprint),"initialized foreign inventory unchanged");
-            }
             try {db.validateCommit(proposed);} catch(StorageLifecycleException conflict) {legacyRefused=true;}
             // Stop even a consistent proposal: this stage proves the seam without publishing it.
             throw stop;
@@ -85,7 +75,7 @@ public final class ContextUniversalCommitSeamRunner {
                 else x.mind.query(command,null,false);
             } catch(Exception expected) {seen=expected;}
             require(seen==x.probe.stop && x.probe.calls==1,"exact hook exception and one commit attempt, no recursive writer/retry");
-            if(status==null) require(x.probe.result==null && x.probe.incomplete!=null,"whole proposed unsupported scope remains incomplete");
+            if(status==null) require(x.probe.result==null && x.probe.incomplete!=null && x.probe.incomplete.contains("binding incomplete"),"whole proposed unsupported scope remains incomplete");
             else {
                 require(x.probe.incomplete==null && x.probe.result.status==status,"actual proposed family status: "+(x.probe.result==null?x.probe.incomplete:x.probe.result.reason));
                 require(x.probe.audit!=null && x.probe.audit.verdict==x.probe.result && x.probe.audit.verified==(status!=ContextUniversalFamilyInspection.Status.INCOMPLETE),"whole proposed verdict independently audited, incomplete never verified");
