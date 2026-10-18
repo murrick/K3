@@ -138,3 +138,5 @@ org.kanger.ContextUniversalCandidateAuditRunner | CONTEXT_UNIVERSAL_CANDIDATE_AU
 org.kanger.storage.dumb2.ContextUniversalAuthoringBridgeRunner | CONTEXT_UNIVERSAL_AUTHORING_BRIDGE_PASS
 org.kanger.storage.dumb2.ContextUniversalCandidateConsoleRunner | CONTEXT_UNIVERSAL_CANDIDATE_CONSOLE_PASS
 org.kanger.storage.dumb2.ContextUniversalPublicationConsoleRunner | CONTEXT_UNIVERSAL_PUBLICATION_CONSOLE_PASS
+
+org.kanger.storage.dumb2.ContextUniversalCommitSeamRunner | CONTEXT_UNIVERSAL_COMMIT_SEAM_PASS
