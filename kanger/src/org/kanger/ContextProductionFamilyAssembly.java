@@ -19,12 +19,30 @@ public final class ContextProductionFamilyAssembly {
         private RowUse(Source source,Use use,int seeds) { this.source = source; this.use = use; seedLiterals = seeds; }
     }
     public enum Status { COLLISION, FIXED_POINT, INCOMPLETE }
+    /** Detached full clause refutation, including witness assignment and all Source proofs. */
+    public static final class Refutation {
+        public final Source producer;
+        public final Clause clause;
+        public final Map<Integer,ContextWitnessResultTransport.Slot> assignment;
+        public final List<Item> opponents;
+        public final List<Support> proofs;
+        private Refutation(ContextWitnessClauseCollision.Evidence evidence) {
+            producer=evidence.producer;clause=evidence.clause;assignment=evidence.assignment;
+            opponents=evidence.opponents;proofs=evidence.proofs;
+        }
+    }
     public static final class Evaluation {
         public final Status status;
         public final String reason;
         final ContextWitnessFamilyQualification.Result qualification;
+        public final List<Refutation> refutations;
+        public final int barrier;
         private Evaluation(ContextWitnessFamilyQualification.Result qualification) {
             this.qualification = qualification; status = Status.valueOf(qualification.status.name()); reason = qualification.reason;
+            barrier=qualification.barrier;List<Refutation> evidence=new ArrayList<>();
+            for(ContextWitnessClauseCollision.Result collision:qualification.collisions)
+                for(ContextWitnessClauseCollision.Evidence proof:collision.evidence) evidence.add(new Refutation(proof));
+            refutations=Collections.unmodifiableList(evidence);
         }
     }
     public static final class Artifact {

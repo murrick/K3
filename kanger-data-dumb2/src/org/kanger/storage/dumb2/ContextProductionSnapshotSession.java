@@ -242,7 +242,7 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
             // Consume the old lease before native settlement; committed finalization failures
             // must propagate unchanged, not be mistaken for a safe rejection or retried.
             closed = true;
-            boolean accepted = Boolean.TRUE.equals(source.query(trial.artifact.statement,null,logging));
+            boolean accepted = provider.writeWitnessNative(source,trial.artifact.statement,maximumRows,rounds,depth,work,events,logging);
             return new WriteResult(accepted ? WriteStatus.PUBLISHED : WriteStatus.NATIVE_REJECTED,trial,
                     sourceRef,new RevisionRef(provider.getContextId(),provider.getRevision()));
         }

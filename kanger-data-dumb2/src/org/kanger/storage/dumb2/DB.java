@@ -339,6 +339,21 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                 new org.kanger.interfaces.IContextResults.Revision(written.after.getContextId(),written.after.getRevision()));
     }
 
+    private ContextPendingWitnessWrite pendingWitnessWrite;
+    synchronized ContextPendingWitnessWrite beginWitnessWrite(Mind source,int rows,int rounds,int depth,int work,int events) throws Exception {
+        if(pendingWitnessWrite!=null) throw new IllegalStateException("Nested witness write attempt");
+        return pendingWitnessWrite=new ContextPendingWitnessWrite(this,source,rows,rounds,depth,work,events);
+    }
+    synchronized void endWitnessWrite(ContextPendingWitnessWrite attempt) {
+        if(pendingWitnessWrite!=attempt) throw new IllegalStateException("Wrong witness write attempt");
+        try {attempt.close();} finally {pendingWitnessWrite=null;}
+    }
+    synchronized boolean writeWitnessNative(Mind source,String statement,int rows,int rounds,int depth,int work,int events,boolean logging) throws Exception {
+        ContextPendingWitnessWrite attempt=beginWitnessWrite(source,rows,rounds,depth,work,events);
+        try {return Boolean.TRUE.equals(source.query(statement,null,logging));}
+        finally {endWitnessWrite(attempt);}
+    }
+
     /** Strict pending-state decision adapter; the default validation hook is not redirected yet. */
     synchronized void validatePendingUniversalCommit(Mind proposed) throws Exception {
         java.util.Map<String,Integer> d=org.kanger.ContextUniversalCandidateRequest.DEFAULTS;
@@ -348,6 +363,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             int preparation,int events,int work,int auditWork) throws Exception {
         if(rows<1 || rows>10000 || rounds<1 || local<1 || depth<0 || instances<1 || models<1 || preparation<1 || events<1 || work<1 || auditWork<1)
             throw new IllegalArgumentException("Bounded pending commit qualification required");
+        if(pendingWitnessWrite!=null) {pendingWitnessWrite.validate(proposed);return;}
         ContextPendingProductionSnapshotSession.Result result;
         try(ContextPendingProductionSnapshotSession lease=ContextPendingProductionSnapshotSession.open(this,proposed,rows)) {
             result=lease.inspect(rounds,local,depth,instances,models,preparation,events,work,auditWork);
@@ -368,10 +384,12 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
     @Override
     public synchronized void validateCommit(IMind proposed) throws Exception {
+        if(pendingWitnessWrite!=null) pendingWitnessWrite.validate((Mind)proposed);
         if (validatingCommit || isClosed() || isReadOnly() || workingConnections.isEmpty()) return;
         validatingCommit = true;
         try {
             validateEffectiveConnections((Mind) proposed, workingConnections);
+            if(pendingWitnessWrite!=null) pendingWitnessWrite.validate((Mind)proposed);
         } finally { validatingCommit = false; }
     }
 
