@@ -66,9 +66,9 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
         synchronized(provider) {
             requireCurrent();
             if(!parentInventory.fingerprint.equals(baseline.x.fingerprint) || foreign.size()!=baseline.foreign.size() || topology.size()!=connections.size())
-                throw new IllegalStateException("Witness write baseline changed before native validation");
+                throw new IllegalStateException("Native write baseline changed before native validation");
             for(int i=0;i<foreign.size();i++) if(topology.get(i)!=connections.get(i) || !foreign.get(i).fingerprint.equals(baseline.foreign.get(i).fingerprint))
-                throw new IllegalStateException("Witness write initialized cut changed before native validation");
+                throw new IllegalStateException("Native write initialized cut changed before native validation");
         }
     }
     ContextProductionFamilyAssembly.Evaluation inspectWitness(int rounds,int depth,int work,int events) throws Exception {
@@ -85,6 +85,21 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
                 ContextProductionFamilyAssembly.Result family=ContextProductionFamilyAssembly.assemble(x.snapshot,bound,work);
                 if(!family.assembled) throw new IllegalStateException("Pending witness family incomplete: "+family.reason);
                 return family.artifact.evaluate(rounds,depth,work,events);
+            } finally {requireCurrent();}
+        }
+    }
+    ContextGroundClauseFamily.Evaluation inspectGround(int rounds,int local,int depth,int work,int events,int probes,int models) throws Exception {
+        synchronized(provider) {
+            requireCurrent();
+            try {
+                ContextProductionNativeBinding.Result x=ContextProductionNativeBinding.bind(child,childInventory,work,events);
+                if(!x.bound) throw new IllegalStateException("Pending ground X binding incomplete: "+x.reason);
+                List<Snapshot> bound=new ArrayList<>();
+                for(int n=0;n<topology.size();n++) {
+                    ContextProductionNativeBinding.Result f=ContextProductionNativeBinding.bind(topology.get(n).layer(),foreign.get(n),work,events);
+                    if(!f.bound) throw new IllegalStateException("Pending ground foreign binding incomplete: "+f.reason);bound.add(f.snapshot);
+                }
+                return ContextGroundClauseFamily.evaluate(x.snapshot,bound,rounds,local,depth,work,events,probes,models);
             } finally {requireCurrent();}
         }
     }

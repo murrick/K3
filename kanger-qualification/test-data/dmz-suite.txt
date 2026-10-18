@@ -144,3 +144,4 @@ org.kanger.ContextUniversalFamilyAuditRunner | CONTEXT_UNIVERSAL_FAMILY_AUDIT_PA
 org.kanger.storage.dumb2.ContextPendingProductionSnapshotRunner | CONTEXT_PENDING_PRODUCTION_SNAPSHOT_PASS
 org.kanger.storage.dumb2.ContextPendingCommitPolicyRunner | CONTEXT_PENDING_COMMIT_POLICY_PASS
 org.kanger.storage.dumb2.ContextPendingWitnessWriteRunner | CONTEXT_PENDING_WITNESS_WRITE_PASS
+org.kanger.storage.dumb2.ContextPendingClauseWriteRunner | CONTEXT_PENDING_CLAUSE_WRITE_PASS

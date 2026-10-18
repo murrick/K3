@@ -339,19 +339,38 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                 new org.kanger.interfaces.IContextResults.Revision(written.after.getContextId(),written.after.getRevision()));
     }
 
-    private ContextPendingWitnessWrite pendingWitnessWrite;
+    private ContextPendingNativeWrite pendingNativeWrite;
     synchronized ContextPendingWitnessWrite beginWitnessWrite(Mind source,int rows,int rounds,int depth,int work,int events) throws Exception {
-        if(pendingWitnessWrite!=null) throw new IllegalStateException("Nested witness write attempt");
-        return pendingWitnessWrite=new ContextPendingWitnessWrite(this,source,rows,rounds,depth,work,events);
+        if(pendingNativeWrite!=null) throw new IllegalStateException("Nested native write attempt");
+        ContextPendingWitnessWrite attempt=new ContextPendingWitnessWrite(this,source,rows,rounds,depth,work,events);
+        pendingNativeWrite=attempt;return attempt;
     }
-    synchronized void endWitnessWrite(ContextPendingWitnessWrite attempt) {
-        if(pendingWitnessWrite!=attempt) throw new IllegalStateException("Wrong witness write attempt");
-        try {attempt.close();} finally {pendingWitnessWrite=null;}
+    synchronized void endWitnessWrite(ContextPendingWitnessWrite attempt) {endNativeWrite(attempt);}
+    synchronized ContextPendingNativeWrite beginGroundWrite(Mind source,int rows,int rounds,int local,int depth,int work,int events,int probes,int models) throws Exception {
+        if(pendingNativeWrite!=null) throw new IllegalStateException("Nested native write attempt");
+        return pendingNativeWrite=ContextPendingClauseWrite.ground(this,source,rows,rounds,local,depth,work,events,probes,models);
+    }
+    synchronized ContextPendingNativeWrite beginUniversalWrite(Mind source,int rows,int rounds,int local,int depth,int instances,int models,int preparation,int events,int work,int audit) throws Exception {
+        if(pendingNativeWrite!=null) throw new IllegalStateException("Nested native write attempt");
+        return pendingNativeWrite=ContextPendingClauseWrite.universal(this,source,rows,rounds,local,depth,instances,models,preparation,events,work,audit);
+    }
+    synchronized void endNativeWrite(ContextPendingNativeWrite attempt) {
+        if(pendingNativeWrite!=attempt) throw new IllegalStateException("Wrong native write attempt");
+        try {attempt.close();} finally {pendingNativeWrite=null;}
     }
     synchronized boolean writeWitnessNative(Mind source,String statement,int rows,int rounds,int depth,int work,int events,boolean logging) throws Exception {
         ContextPendingWitnessWrite attempt=beginWitnessWrite(source,rows,rounds,depth,work,events);
         try {return Boolean.TRUE.equals(source.query(statement,null,logging));}
         finally {endWitnessWrite(attempt);}
+    }
+
+    synchronized boolean writeGroundNative(Mind source,String statement,int rows,int rounds,int local,int depth,int work,int events,int probes,int models,boolean logging) throws Exception {
+        ContextPendingNativeWrite attempt=beginGroundWrite(source,rows,rounds,local,depth,work,events,probes,models);
+        try {return Boolean.TRUE.equals(source.query(statement,null,logging));} finally {endNativeWrite(attempt);}
+    }
+    synchronized boolean writeUniversalNative(Mind source,String statement,int rows,int rounds,int local,int depth,int instances,int models,int preparation,int events,int work,int audit,boolean logging) throws Exception {
+        ContextPendingNativeWrite attempt=beginUniversalWrite(source,rows,rounds,local,depth,instances,models,preparation,events,work,audit);
+        try {return Boolean.TRUE.equals(source.query(statement,null,logging));} finally {endNativeWrite(attempt);}
     }
 
     /** Strict pending-state decision adapter; the default validation hook is not redirected yet. */
@@ -363,7 +382,7 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             int preparation,int events,int work,int auditWork) throws Exception {
         if(rows<1 || rows>10000 || rounds<1 || local<1 || depth<0 || instances<1 || models<1 || preparation<1 || events<1 || work<1 || auditWork<1)
             throw new IllegalArgumentException("Bounded pending commit qualification required");
-        if(pendingWitnessWrite!=null) {pendingWitnessWrite.validate(proposed);return;}
+        if(pendingNativeWrite!=null) {pendingNativeWrite.validate(proposed);return;}
         ContextPendingProductionSnapshotSession.Result result;
         try(ContextPendingProductionSnapshotSession lease=ContextPendingProductionSnapshotSession.open(this,proposed,rows)) {
             result=lease.inspect(rounds,local,depth,instances,models,preparation,events,work,auditWork);
@@ -372,6 +391,9 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             org.kanger.exception.ContextProductionCommitException failure=org.kanger.exception.ContextProductionCommitException.incomplete("Proposed Context qualification incomplete: "+unsupported.getMessage(),null);
             failure.initCause(unsupported);throw failure;
         }
+        requirePendingUniversalResult(result);
+    }
+    static void requirePendingUniversalResult(ContextPendingProductionSnapshotSession.Result result) throws Exception {
         if(!result.audit.verified || result.inspection.status==org.kanger.ContextUniversalFamilyInspection.Status.INCOMPLETE)
             throw org.kanger.exception.ContextProductionCommitException.incomplete("Proposed Context qualification incomplete: "+(result.inspection.status==org.kanger.ContextUniversalFamilyInspection.Status.INCOMPLETE?result.inspection.reason:result.audit.reason),result.audit);
         if(result.inspection.status==org.kanger.ContextUniversalFamilyInspection.Status.COLLISION)
@@ -384,12 +406,12 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
 
     @Override
     public synchronized void validateCommit(IMind proposed) throws Exception {
-        if(pendingWitnessWrite!=null) pendingWitnessWrite.validate((Mind)proposed);
+        if(pendingNativeWrite!=null) pendingNativeWrite.validate((Mind)proposed);
         if (validatingCommit || isClosed() || isReadOnly() || workingConnections.isEmpty()) return;
         validatingCommit = true;
         try {
             validateEffectiveConnections((Mind) proposed, workingConnections);
-            if(pendingWitnessWrite!=null) pendingWitnessWrite.validate((Mind)proposed);
+            if(pendingNativeWrite!=null) pendingNativeWrite.validate((Mind)proposed);
         } finally { validatingCommit = false; }
     }
 

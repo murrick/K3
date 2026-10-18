@@ -205,7 +205,7 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
             if(trial.status!=org.kanger.ContextUniversalFamilyInspection.Status.CONSISTENT)
                 return new UniversalWriteResult(WriteStatus.INCOMPLETE,trial,audit,sourceRef,sourceRef);
             closed=true;
-            boolean accepted=Boolean.TRUE.equals(source.query(trial.artifact.statement,null,logging));
+            boolean accepted=provider.writeUniversalNative(source,trial.artifact.statement,maximumRows,rounds,localRounds,depth,instances,models,preparationWork,preparationEvents,inspectionWork,auditWork,logging);
             return new UniversalWriteResult(accepted?WriteStatus.PUBLISHED:WriteStatus.NATIVE_REJECTED,trial,audit,
                     sourceRef,new RevisionRef(provider.getContextId(),provider.getRevision()));
         }
@@ -223,7 +223,7 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
             // No historical receipt is accepted. Native settlement owns all physical writes;
             // post-settlement failures must propagate and this authority must never be retried.
             closed = true;
-            boolean accepted = Boolean.TRUE.equals(source.query(trial.artifact.statement,null,logging));
+            boolean accepted = provider.writeGroundNative(source,trial.artifact.statement,maximumRows,rounds,localRounds,depth,work,events,probes,models,logging);
             return new GroundWriteResult(accepted ? WriteStatus.PUBLISHED : WriteStatus.NATIVE_REJECTED,trial,
                     sourceRef,new RevisionRef(provider.getContextId(),provider.getRevision()));
         }
