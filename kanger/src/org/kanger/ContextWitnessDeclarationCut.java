@@ -62,7 +62,7 @@ final class ContextWitnessDeclarationCut {
                         throw new IllegalStateException("Non-universal declaration argument");
                 }
                 for (Clause clause : declaration.shapes) {
-                    work.run(); if (clause.literals.size() > 3) throw new IllegalStateException("Declaration clause size limit");
+                    work.run(); if (clause.literals.size() > 4) throw new IllegalStateException("Declaration clause size limit");
                 }
             }
         }

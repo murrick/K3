@@ -149,3 +149,4 @@ org.kanger.storage.dumb2.ContextAutomaticPendingCommitRunner | CONTEXT_AUTOMATIC
 org.kanger.storage.dumb2.ContextNullaryPendingCommitRunner | CONTEXT_NULLARY_PENDING_COMMIT_PASS
 org.kanger.ContextWitnessGroundResultRunner | CONTEXT_WITNESS_GROUND_RESULT_PASS
 org.kanger.ContextWitnessMultiPremiseRunner | CONTEXT_WITNESS_MULTI_PREMISE_PASS
+org.kanger.storage.dumb2.ContextWideWitnessFamilyRunner | CONTEXT_WIDE_WITNESS_FAMILY_PASS

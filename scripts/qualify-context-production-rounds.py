@@ -66,6 +66,7 @@ def main():
                  ('org.kanger.storage.dumb2.ContextPendingClauseWriteRunner', 'CONTEXT_PENDING_CLAUSE_WRITE_PASS'),
                  ('org.kanger.storage.dumb2.ContextAutomaticPendingCommitRunner', 'CONTEXT_AUTOMATIC_PENDING_COMMIT_PASS'),
                  ('org.kanger.storage.dumb2.ContextNullaryPendingCommitRunner', 'CONTEXT_NULLARY_PENDING_COMMIT_PASS'),
+                 ('org.kanger.storage.dumb2.ContextWideWitnessFamilyRunner', 'CONTEXT_WIDE_WITNESS_FAMILY_PASS'),
                  ('org.kanger.ContextGroundClauseCandidateRunner', 'CONTEXT_GROUND_CLAUSE_CANDIDATE_PASS'),
                  ('org.kanger.storage.dumb2.ContextGroundCandidateSnapshotRunner', 'CONTEXT_GROUND_CANDIDATE_SNAPSHOT_PASS'),
                  ('org.kanger.storage.dumb2.ContextGroundAuthoringBridgeRunner', 'CONTEXT_GROUND_AUTHORING_BRIDGE_PASS'),
