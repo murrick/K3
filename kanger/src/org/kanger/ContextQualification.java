@@ -48,6 +48,9 @@ public final class ContextQualification {
         }
     }
 
+    /** Detached diagnostic statement pair; contains no live native object. */
+    public static CollisionWitness witness(String left,String right) {return new CollisionWitness(left,right);}
+
     private final boolean valid;
     private final List<CollisionWitness> collisions;
 

@@ -339,6 +339,31 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
                 new org.kanger.interfaces.IContextResults.Revision(written.after.getContextId(),written.after.getRevision()));
     }
 
+    /** Strict pending-state decision adapter; the default validation hook is not redirected yet. */
+    synchronized void validatePendingUniversalCommit(Mind proposed) throws Exception {
+        java.util.Map<String,Integer> d=org.kanger.ContextUniversalCandidateRequest.DEFAULTS;
+        validatePendingUniversalCommit(proposed,d.get("rows"),d.get("rounds"),d.get("local"),d.get("depth"),d.get("instances"),d.get("models"),d.get("preparation"),d.get("events"),d.get("work"),d.get("audit"));
+    }
+    synchronized void validatePendingUniversalCommit(Mind proposed,int rows,int rounds,int local,int depth,int instances,int models,
+            int preparation,int events,int work,int auditWork) throws Exception {
+        if(rows<1 || rows>10000 || rounds<1 || local<1 || depth<0 || instances<1 || models<1 || preparation<1 || events<1 || work<1 || auditWork<1)
+            throw new IllegalArgumentException("Bounded pending commit qualification required");
+        ContextPendingProductionSnapshotSession.Result result;
+        try(ContextPendingProductionSnapshotSession lease=ContextPendingProductionSnapshotSession.open(this,proposed,rows)) {
+            result=lease.inspect(rounds,local,depth,instances,models,preparation,events,work,auditWork);
+            lease.requireCurrent();
+        } catch(IllegalStateException unsupported) {
+            org.kanger.exception.ContextProductionCommitException failure=org.kanger.exception.ContextProductionCommitException.incomplete("Proposed Context qualification incomplete: "+unsupported.getMessage(),null);
+            failure.initCause(unsupported);throw failure;
+        }
+        if(!result.audit.verified || result.inspection.status==org.kanger.ContextUniversalFamilyInspection.Status.INCOMPLETE)
+            throw org.kanger.exception.ContextProductionCommitException.incomplete("Proposed Context qualification incomplete: "+(result.inspection.status==org.kanger.ContextUniversalFamilyInspection.Status.INCOMPLETE?result.inspection.reason:result.audit.reason),result.audit);
+        if(result.inspection.status==org.kanger.ContextUniversalFamilyInspection.Status.COLLISION)
+            throw org.kanger.exception.ContextProductionCommitException.collision(result.audit);
+        if(result.inspection.status!=org.kanger.ContextUniversalFamilyInspection.Status.CONSISTENT)
+            throw org.kanger.exception.ContextProductionCommitException.incomplete("No complete proposed Context consistency verdict",result.audit);
+    }
+
     private boolean validatingCommit;
 
     @Override

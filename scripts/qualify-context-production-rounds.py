@@ -61,6 +61,7 @@ def main():
                  ('org.kanger.storage.dumb2.ContextUniversalPublicationConsoleRunner', 'CONTEXT_UNIVERSAL_PUBLICATION_CONSOLE_PASS'),
                  ('org.kanger.storage.dumb2.ContextUniversalCommitSeamRunner', 'CONTEXT_UNIVERSAL_COMMIT_SEAM_PASS'),
                  ('org.kanger.storage.dumb2.ContextPendingProductionSnapshotRunner', 'CONTEXT_PENDING_PRODUCTION_SNAPSHOT_PASS'),
+                 ('org.kanger.storage.dumb2.ContextPendingCommitPolicyRunner', 'CONTEXT_PENDING_COMMIT_POLICY_PASS'),
                  ('org.kanger.ContextGroundClauseCandidateRunner', 'CONTEXT_GROUND_CLAUSE_CANDIDATE_PASS'),
                  ('org.kanger.storage.dumb2.ContextGroundCandidateSnapshotRunner', 'CONTEXT_GROUND_CANDIDATE_SNAPSHOT_PASS'),
                  ('org.kanger.storage.dumb2.ContextGroundAuthoringBridgeRunner', 'CONTEXT_GROUND_AUTHORING_BRIDGE_PASS'),
