@@ -12,6 +12,17 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
         final ContextUniversalFamilyAudit.Audit audit;
         private Result(ContextUniversalFamilyInspection.Result inspection,ContextUniversalFamilyAudit.Audit audit) {this.inspection=inspection;this.audit=audit;}
     }
+    enum Engine { GROUND, UNIVERSAL, WITNESS }
+    /** A detached diagnostic; no later native write may reuse it as authority. */
+    static final class Decision {
+        final Engine engine;
+        final ContextGroundClauseFamily.Evaluation ground;
+        final ContextProductionFamilyAssembly.Evaluation witness;
+        final Result universal;
+        private Decision(Engine engine,ContextGroundClauseFamily.Evaluation ground,ContextProductionFamilyAssembly.Evaluation witness,Result universal) {
+            this.engine=engine;this.ground=ground;this.witness=witness;this.universal=universal;
+        }
+    }
     private final DB provider;
     private final Mind parent,child;
     private Mind retained;
@@ -116,6 +127,41 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
                 ContextUniversalFamilyInspection.Result result=ContextUniversalFamilyInspection.inspect(x.snapshot,bound,rounds,local,depth,instances,models,work);
                 ContextUniversalFamilyAudit.Audit checked=ContextUniversalFamilyAudit.audit(result,x.snapshot,bound,depth,instances,auditWork);
                 return new Result(result,checked);
+            } finally {requireCurrent();}
+        }
+    }
+    Decision inspectAutomatic(int rounds,int local,int depth,int instances,int models,int preparation,int events,int work,int audit,int probes) throws Exception {
+        if(rounds<1 || local<1 || depth<0 || instances<1 || models<1 || preparation<1 || events<1 || work<1 || audit<1 || probes<1)
+            throw new IllegalArgumentException("Bounded automatic pending qualification required");
+        synchronized(provider) {
+            requireCurrent();
+            try {
+                ContextProductionNativeBinding.Result x=ContextProductionNativeBinding.bind(child,childInventory,preparation,events);
+                if(!x.bound) throw new IllegalStateException("Pending X binding incomplete: "+x.reason);
+                List<Snapshot> bound=new ArrayList<>();
+                for(int n=0;n<topology.size();n++) {
+                    ContextProductionNativeBinding.Result f=ContextProductionNativeBinding.bind(topology.get(n).layer(),foreign.get(n),preparation,events);
+                    if(!f.bound) throw new IllegalStateException("Pending foreign binding incomplete: "+f.reason);bound.add(f.snapshot);
+                }
+                List<Snapshot> complete=new ArrayList<>(bound);complete.add(x.snapshot);
+                boolean witnesses=false,variables=false;int remaining=work;
+                for(Snapshot snapshot:complete) for(ContextProductionNativeBinding.Entry entry:snapshot.primary) {
+                    if(--remaining<0) throw new IllegalStateException("Pending engine selection work limit");
+                    witnesses|=entry.kind==ContextProductionNativeBinding.Kind.WITNESS_BUNDLE;
+                    for(ContextProductionCapture.Clause clause:entry.clauses) {
+                        if(--remaining<0) throw new IllegalStateException("Pending engine selection work limit");
+                        variables|=!clause.variables.isEmpty();
+                    }
+                }
+                if(witnesses) {
+                    ContextProductionFamilyAssembly.Result family=ContextProductionFamilyAssembly.assemble(x.snapshot,bound,work);
+                    if(!family.assembled) throw new IllegalStateException("Pending witness family incomplete: "+family.reason);
+                    return new Decision(Engine.WITNESS,null,family.artifact.evaluate(rounds,depth,work,events),null);
+                }
+                if(!variables) return new Decision(Engine.GROUND,ContextGroundClauseFamily.evaluate(x.snapshot,bound,rounds,local,depth,work,events,probes,models),null,null);
+                ContextUniversalFamilyInspection.Result inspected=ContextUniversalFamilyInspection.inspect(x.snapshot,bound,rounds,local,depth,instances,models,work);
+                ContextUniversalFamilyAudit.Audit checked=ContextUniversalFamilyAudit.audit(inspected,x.snapshot,bound,depth,instances,audit);
+                return new Decision(Engine.UNIVERSAL,null,null,new Result(inspected,checked));
             } finally {requireCurrent();}
         }
     }

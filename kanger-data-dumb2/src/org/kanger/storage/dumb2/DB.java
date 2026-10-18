@@ -402,6 +402,38 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
             throw org.kanger.exception.ContextProductionCommitException.incomplete("No complete proposed Context consistency verdict",result.audit);
     }
 
+    /** Whole-family engine policy. Native default route remains unchanged until its compatibility gate. */
+    synchronized void validatePendingProductionCommit(Mind proposed) throws Exception {
+        java.util.Map<String,Integer> d=org.kanger.ContextUniversalCandidateRequest.DEFAULTS;
+        validatePendingProductionCommit(proposed,d.get("rows"),d.get("rounds"),d.get("local"),d.get("depth"),d.get("instances"),d.get("models"),d.get("preparation"),d.get("events"),d.get("work"),d.get("audit"),100000);
+    }
+    synchronized void validatePendingProductionCommit(Mind proposed,int rows,int rounds,int local,int depth,int instances,int models,
+            int preparation,int events,int work,int audit,int probes) throws Exception {
+        if(rows<1 || rows>10000 || rounds<1 || local<1 || depth<0 || instances<1 || models<1 || preparation<1 || events<1 || work<1 || audit<1 || probes<1)
+            throw new IllegalArgumentException("Bounded whole-family policy required");
+        if(pendingNativeWrite!=null) {pendingNativeWrite.validate(proposed);return;}
+        ContextPendingProductionSnapshotSession.Decision decision;
+        try(ContextPendingProductionSnapshotSession lease=ContextPendingProductionSnapshotSession.open(this,proposed,rows)) {
+            decision=lease.inspectAutomatic(rounds,local,depth,instances,models,preparation,events,work,audit,probes);
+            lease.requireCurrent();
+        } catch(IllegalStateException unsupported) {
+            org.kanger.exception.ContextProductionCommitException failure=org.kanger.exception.ContextProductionCommitException.incomplete("Pending whole-family policy incomplete: "+unsupported.getMessage(),null);
+            failure.initCause(unsupported);throw failure;
+        }
+        switch(decision.engine) {
+            case UNIVERSAL: requirePendingUniversalResult(decision.universal);return;
+            case GROUND:
+                if(decision.ground.status!=org.kanger.ContextGroundClauseFamily.Status.GROUND_FIXED_POINT)
+                    throw new org.kanger.exception.ContextGroundProductionCommitException("Pending ground family: "+decision.ground.reason,decision.ground);
+                return;
+            case WITNESS:
+                if(decision.witness.status!=org.kanger.ContextProductionFamilyAssembly.Status.FIXED_POINT)
+                    throw new org.kanger.exception.ContextWitnessProductionCommitException("Pending witness family: "+decision.witness.reason,decision.witness);
+                return;
+            default: throw new IllegalStateException("No complete pending engine decision");
+        }
+    }
+
     private boolean validatingCommit;
 
     @Override
