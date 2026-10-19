@@ -91,7 +91,7 @@ public final class ContextWitnessClauseCollisionRunner {
             incomplete(inspect(merged,d(s(3,3),"!@w q(w,1)->~flag(w+1,1);")),"function argument outside proof scope");
             ContextWitnessClauseCollision.Result wide=inspect(merged,rule,d(s(3,4),"!@w q(w,1)&&r(w,1)&&p(w,1)->~flag(w,1);"));
             require(wide.status==ContextWitnessClauseCollision.Status.COLLISION&&wide.evidence.stream().anyMatch(v->v.clause.literals.size()==4&&proof(v,2,s(0,0),s(1,1),s(2,2),s(3,4))),"three-premise signed clause has checked full refutation");
-            incomplete(inspect(merged,rule,d(s(3,4),"!@w q(w,1)&&r(w,1)&&p(w,1)&&extra(w,1)->~flag(w,1);")),"unsupported later five-literal rule suppresses any earlier evidence prefix");
+            incomplete(inspect(merged,rule,d(s(3,4),"!@w q(w,1)&&r(w,1)&&p(w,1)&&extra(w,1)&&extra2(w,1)&&extra3(w,1)&&extra4(w,1)&&extra5(w,1)->~flag(w,1);")),"unsupported later nine-literal rule suppresses any earlier evidence prefix");
             incomplete(inspect(merged,rule,d(s(4,4),"!@w ~q(w,1);")),"raw sibling rule cannot enter the target cut");
             incomplete(inspect(merged,d(new Source(new UUID(0,3),2,3,false,"base"),RULE)),"target revision mismatch");
             incomplete(inspect(merged,d(new Source(new UUID(0,3),1,3,false,"changed"),RULE)),"target view mismatch");

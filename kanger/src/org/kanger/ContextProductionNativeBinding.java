@@ -52,7 +52,7 @@ public final class ContextProductionNativeBinding {
             throw new IllegalStateException("Whole primary universal/ordinary clauses required");
         Set<Long> variables = new HashSet<>(); List<Clause> result = new ArrayList<>();
         for (List<Domain> branch : rule.getTree()) {
-            work.run(); if (branch.isEmpty() || branch.size() > 4) throw new IllegalStateException("Native clause width limit");
+            work.run(); if (branch.isEmpty() || branch.size() > 8) throw new IllegalStateException("Native clause width limit");
             for (Domain domain : branch) {
                 work.run(); if (domain.getRange() < 0 || domain.getRange() > 8) throw new IllegalStateException("Native clause arity limit");
                 for (IArgument argument : domain.getArguments()) {

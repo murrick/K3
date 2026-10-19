@@ -23,7 +23,7 @@ public final class ContextWideWitnessFamilyRunner {
         Path dir=Files.createTempDirectory("wide-witness-family-");System.setProperty("user.home",dir.toString());
         create(dir,"A","!@w seed(w,1)->q(w,1);");create(dir,"Safe","!@w seed(w,1)->safe(w,1);");
         create(dir,"DenyGround","!~out;");create(dir,"DenyWitness","!@w out(w,1)->~flag1(w,1);");
-        for(int n:new int[]{3})for(boolean ground:new boolean[]{false,true})for(boolean reverse:new boolean[]{false,true}){
+        for(int n:new int[]{3,7})for(boolean ground:new boolean[]{false,true})for(boolean reverse:new boolean[]{false,true}){
             String name="Accept"+n+ground+reverse;
             try(Fixture f=new Fixture(dir,name)){
                 require(f.root.compile(base(n),null,false),"native witness source");f.db.connectContext(reverse?"Safe":"A");f.db.connectContext(reverse?"A":"Safe");
@@ -44,8 +44,8 @@ public final class ContextWideWitnessFamilyRunner {
             }
         }
         try(Fixture f=new Fixture(dir,"Outside")){
-            require(f.root.compile(base(3),null,false),"boundary source");f.db.connectContext("A");String tooWide=rule(3,true).replace("->out","&&seed(w,1)->out");
-            boolean incomplete=false;try{inspect(f,tooWide);}catch(IllegalStateException expected){incomplete=expected.getMessage().contains("Native clause width limit");}require(incomplete,"four premises retain native binding INCOMPLETE");
+            require(f.root.compile(base(7),null,false),"boundary source");f.db.connectContext("A");String tooWide=rule(7,true).replace("->out","&&seed(w,1)->out");
+            boolean incomplete=false;try{inspect(f,tooWide);}catch(IllegalStateException expected){incomplete=expected.getMessage().contains("Native clause width limit");}require(incomplete,"eight premises retain native binding INCOMPLETE");
             long revision=f.db.getRevision();f.guard.install();StorageLifecycleException failure=null;try{f.root.query(tooWide,null,false);}catch(StorageLifecycleException expected){failure=expected;}
             require(failure!=null&&failure.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE,"outside bound cannot fall through to ordinary publication");require(f.db.getRevision()==revision,"unsupported write leaves revision unchanged");
         }

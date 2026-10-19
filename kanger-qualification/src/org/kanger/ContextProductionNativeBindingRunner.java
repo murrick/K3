@@ -65,7 +65,9 @@ public final class ContextProductionNativeBindingRunner {
             Mind signed = mind("!~scalar(John,2);"); Result negative = bind(signed);
             require(negative.bound && !negative.snapshot.primary.get(0).clauses.get(0).literals.get(0).positive,"signed ordinary primary literal retains its sign");
             Mind wide = mind("!scalar(1); !@x a(x,1)&&b(x,1)&&c(x,1)&&d(x,1)->e(x,1);");
-            refused(bind(wide),"unsupported later native clause width suppresses any bound prefix");
+            require(bind(wide).bound,"five-literal native clause now binds as a whole source");
+            Mind tooWide=mind("!scalar(1); !@x a(x,1)&&b(x,1)&&c(x,1)&&d(x,1)&&f(x,1)&&g(x,1)&&h(x,1)&&i(x,1)->e(x,1);");
+            refused(bind(tooWide),"unsupported later nine-literal native clause suppresses any bound prefix");
             Mind function = mind("!@x p(x,1)->q(x+1,1);"); refused(bind(function),"unsupported function argument remains explicit refusal");
             ContextProductionInventory old = inventory(source); require(source.compile("!later(9);",null,false),"source changes after inventory capture");
             refused(ContextProductionNativeBinding.bind(source,old,4000000,10000),"stale inventory cannot authorize native binding");

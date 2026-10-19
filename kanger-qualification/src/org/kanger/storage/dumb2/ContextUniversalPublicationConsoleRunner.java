@@ -52,7 +52,7 @@ public final class ContextUniversalPublicationConsoleRunner {
     private static void languageBoundaries(Path dir) throws Exception {
         String[][] cases={
             {"FourVariables","!@x @y @z @w quad(x,y,z,w);"},
-            {"FiveLiterals","!@x a(x)&&b(x)&&c(x)&&d(x)->e(x);"},
+            {"NineLiterals","!@x a(x)&&b(x)&&c(x)&&d(x)&&f(x)&&g(x)&&h(x)&&i(x)->e(x);"},
             {"VariableFunction","!@x p(x)->q(x+1);"},
             {"Witness","!$w witness(w);"}
         };
