@@ -1,0 +1,29 @@
+{
+  "flag": "verify",
+  "rep": 1,
+  "mode": "candidate",
+  "profile": "timing",
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx512m",
+    "-Duser.home=/tmp/resident-warmup-ysbrqd9m",
+    "-Dresult.path=/workspace/scratch/fe58fcae83c2/K3/docs/tvalue-resident-warmup/timing-verify-1-candidate",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-Dkanger.experiment.verifyTValueIndex=true",
+    "-Dkanger.experiment.verifySolveSync=true",
+    "-cp",
+    "../build/tvalue-resident-inference-tests:../build/tvalue-journal-touch-strings.jar:../build/tvalue-observer-fast-disabled-hooked:../K3-observer-native/kanger/resources:../K3-observer-native/kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ResidentInferenceRunner",
+    "attached",
+    "48"
+  ],
+  "exit_code": 0
+}
