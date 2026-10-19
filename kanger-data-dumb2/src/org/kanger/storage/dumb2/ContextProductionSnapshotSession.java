@@ -118,11 +118,15 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
     }
     /** Fresh owned read-only ground diagnostic; cannot consume or grant publication authority. */
     org.kanger.ContextGroundClauseCandidate.Evaluation qualifyGroundCandidate(String statement,int rounds,int localRounds,int depth,int work,int events,int probes,int models) throws Exception {
+        return qualifyGroundCandidate(statement,rounds,localRounds,depth,work,events,probes,models,org.kanger.ContextOrdinaryResidualRounds.LedgerLimits.DEFAULT);
+    }
+    org.kanger.ContextGroundClauseCandidate.Evaluation qualifyGroundCandidate(String statement,int rounds,int localRounds,int depth,int work,int events,int probes,int models,org.kanger.ContextOrdinaryResidualRounds.LedgerLimits limits) throws Exception {
+        if(limits==null) throw new IllegalArgumentException("Ledger limits required");
         synchronized(provider) {
             requireCurrent();
             try {
                 Binding bound = bind(work,events);
-                return org.kanger.ContextGroundClauseCandidate.qualify(bound.x,bound.foreign,statement,maximumRows,rounds,localRounds,depth,work,events,probes,models);
+                return org.kanger.ContextGroundClauseCandidate.qualify(bound.x,bound.foreign,statement,maximumRows,rounds,localRounds,depth,work,events,probes,models,limits);
             } finally { requireCurrent(); }
         }
     }
@@ -212,9 +216,13 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
     }
     /** Fresh ground qualification and lease consumption before the ordinary native transaction. */
     GroundWriteResult writeGroundCandidate(String statement,int rounds,int localRounds,int depth,int work,int events,int probes,int models,boolean logging) throws Exception {
+        return writeGroundCandidate(statement,rounds,localRounds,depth,work,events,probes,models,logging,org.kanger.ContextOrdinaryResidualRounds.LedgerLimits.DEFAULT);
+    }
+    GroundWriteResult writeGroundCandidate(String statement,int rounds,int localRounds,int depth,int work,int events,int probes,int models,boolean logging,org.kanger.ContextOrdinaryResidualRounds.LedgerLimits limits) throws Exception {
+        if(limits==null) throw new IllegalArgumentException("Ledger limits required");
         synchronized(provider) {
             requireCurrent();
-            org.kanger.ContextGroundClauseCandidate.Evaluation trial = qualifyGroundCandidate(statement,rounds,localRounds,depth,work,events,probes,models);
+            org.kanger.ContextGroundClauseCandidate.Evaluation trial = qualifyGroundCandidate(statement,rounds,localRounds,depth,work,events,probes,models,limits);
             requireCurrent();
             if (trial.status != org.kanger.ContextGroundClauseFamily.Status.GROUND_FIXED_POINT) {
                 WriteStatus status = trial.status == org.kanger.ContextGroundClauseFamily.Status.COLLISION ? WriteStatus.COLLISION : WriteStatus.INCOMPLETE;
@@ -223,7 +231,7 @@ final class ContextProductionSnapshotSession implements AutoCloseable {
             // No historical receipt is accepted. Native settlement owns all physical writes;
             // post-settlement failures must propagate and this authority must never be retried.
             closed = true;
-            boolean accepted = provider.writeGroundNative(source,trial.artifact.statement,maximumRows,rounds,localRounds,depth,work,events,probes,models,logging);
+            boolean accepted = provider.writeGroundNative(source,trial.artifact.statement,maximumRows,rounds,localRounds,depth,work,events,probes,models,logging,limits);
             return new GroundWriteResult(accepted ? WriteStatus.PUBLISHED : WriteStatus.NATIVE_REJECTED,trial,
                     sourceRef,new RevisionRef(provider.getContextId(),provider.getRevision()));
         }

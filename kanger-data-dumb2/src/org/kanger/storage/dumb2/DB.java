@@ -245,8 +245,13 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     /** Read-only scoped ground candidate diagnostic from fresh owned views; never permission to publish. */
     public synchronized org.kanger.ContextGroundClauseCandidate.Evaluation qualifyGroundProductionCandidate(
             Mind source,String statement,int rows,int rounds,int localRounds,int depth,int work,int events,int probes,int models) throws Exception {
+        return qualifyGroundProductionCandidate(source,statement,rows,rounds,localRounds,depth,work,events,probes,models,org.kanger.ContextOrdinaryResidualRounds.LedgerLimits.DEFAULT);
+    }
+    public synchronized org.kanger.ContextGroundClauseCandidate.Evaluation qualifyGroundProductionCandidate(
+            Mind source,String statement,int rows,int rounds,int localRounds,int depth,int work,int events,int probes,int models,org.kanger.ContextOrdinaryResidualRounds.LedgerLimits limits) throws Exception {
+        if(limits==null) throw new IllegalArgumentException("Ledger limits required");
         try (ContextProductionSnapshotSession lease = ContextProductionSnapshotSession.open(this,source,rows)) {
-            return lease.qualifyGroundCandidate(statement,rounds,localRounds,depth,work,events,probes,models);
+            return lease.qualifyGroundCandidate(statement,rounds,localRounds,depth,work,events,probes,models,limits);
         }
     }
 
@@ -300,9 +305,14 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     /** Explicit ground-only authoring; every call reacquires and requalifies, with no incomplete fallback. */
     public synchronized GroundProductionWriteResult writeGroundProductionCandidate(
             Mind source,String statement,int rows,int rounds,int localRounds,int depth,int work,int events,int probes,int models,boolean logging) throws Exception {
+        return writeGroundProductionCandidate(source,statement,rows,rounds,localRounds,depth,work,events,probes,models,logging,org.kanger.ContextOrdinaryResidualRounds.LedgerLimits.DEFAULT);
+    }
+    public synchronized GroundProductionWriteResult writeGroundProductionCandidate(
+            Mind source,String statement,int rows,int rounds,int localRounds,int depth,int work,int events,int probes,int models,boolean logging,org.kanger.ContextOrdinaryResidualRounds.LedgerLimits limits) throws Exception {
+        if(limits==null) throw new IllegalArgumentException("Ledger limits required");
         requireInitialized(); requireWritable();
         try (ContextProductionSnapshotSession lease = ContextProductionSnapshotSession.open(this,source,rows)) {
-            return new GroundProductionWriteResult(lease.writeGroundCandidate(statement,rounds,localRounds,depth,work,events,probes,models,logging));
+            return new GroundProductionWriteResult(lease.writeGroundCandidate(statement,rounds,localRounds,depth,work,events,probes,models,logging,limits));
         }
     }
 
@@ -347,8 +357,12 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     }
     synchronized void endWitnessWrite(ContextPendingWitnessWrite attempt) {endNativeWrite(attempt);}
     synchronized ContextPendingNativeWrite beginGroundWrite(Mind source,int rows,int rounds,int local,int depth,int work,int events,int probes,int models) throws Exception {
+        return beginGroundWrite(source,rows,rounds,local,depth,work,events,probes,models,org.kanger.ContextOrdinaryResidualRounds.LedgerLimits.DEFAULT);
+    }
+    synchronized ContextPendingNativeWrite beginGroundWrite(Mind source,int rows,int rounds,int local,int depth,int work,int events,int probes,int models,org.kanger.ContextOrdinaryResidualRounds.LedgerLimits limits) throws Exception {
+        if(limits==null) throw new IllegalArgumentException("Ledger limits required");
         if(pendingNativeWrite!=null) throw new IllegalStateException("Nested native write attempt");
-        return pendingNativeWrite=ContextPendingClauseWrite.ground(this,source,rows,rounds,local,depth,work,events,probes,models);
+        return pendingNativeWrite=ContextPendingClauseWrite.ground(this,source,rows,rounds,local,depth,work,events,probes,models,limits);
     }
     synchronized ContextPendingNativeWrite beginUniversalWrite(Mind source,int rows,int rounds,int local,int depth,int instances,int models,int preparation,int events,int work,int audit) throws Exception {
         if(pendingNativeWrite!=null) throw new IllegalStateException("Nested native write attempt");
@@ -365,7 +379,11 @@ public final class DB implements IData, IContextFederation, org.kanger.interface
     }
 
     synchronized boolean writeGroundNative(Mind source,String statement,int rows,int rounds,int local,int depth,int work,int events,int probes,int models,boolean logging) throws Exception {
-        ContextPendingNativeWrite attempt=beginGroundWrite(source,rows,rounds,local,depth,work,events,probes,models);
+        return writeGroundNative(source,statement,rows,rounds,local,depth,work,events,probes,models,logging,org.kanger.ContextOrdinaryResidualRounds.LedgerLimits.DEFAULT);
+    }
+    synchronized boolean writeGroundNative(Mind source,String statement,int rows,int rounds,int local,int depth,int work,int events,int probes,int models,boolean logging,org.kanger.ContextOrdinaryResidualRounds.LedgerLimits limits) throws Exception {
+        if(limits==null) throw new IllegalArgumentException("Ledger limits required");
+        ContextPendingNativeWrite attempt=beginGroundWrite(source,rows,rounds,local,depth,work,events,probes,models,limits);
         try {return Boolean.TRUE.equals(source.query(statement,null,logging));} finally {endNativeWrite(attempt);}
     }
     synchronized boolean writeUniversalNative(Mind source,String statement,int rows,int rounds,int local,int depth,int instances,int models,int preparation,int events,int work,int audit,boolean logging) throws Exception {

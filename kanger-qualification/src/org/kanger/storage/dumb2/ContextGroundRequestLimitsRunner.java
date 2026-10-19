@@ -29,6 +29,26 @@ public final class ContextGroundRequestLimitsRunner {
             if(n==4){require(Boolean.TRUE.equals(f.root.query(rule,null,false)),"later actual native write independently qualifies with default budget");require(f.db.getRevision()>revision,"native publication advances revision");}
             else{StorageLifecycleException failure=null;try{f.root.query(rule,null,false);}catch(StorageLifecycleException expected){failure=expected;}require(failure instanceof ContextGroundProductionCommitException&&failure.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE&&((ContextGroundProductionCommitException)failure).getFamilyEvaluation().reason.contains("Residual clause limit: clauses=64, proofs=64"),"native write retains own original default and fresh full refusal");require(f.db.getRevision()==revision,"read-only override never permits wider native write");}
         }
+        LedgerLimits roomy=new LedgerLimits(256,1024),tiny=new LedgerLimits(1,8);
+        for(boolean limited:new boolean[]{true,false})try(Fixture f=new Fixture(dir,"ExplicitWrite"+limited)){
+            require(f.root.compile(ContextNativeClauseWidthRunner.base(4),null,false),"explicit writer base");f.db.connectContext("A");f.db.connectContext("Safe");long rev=f.db.getRevision();String rule=ContextNativeClauseWidthRunner.rule(4,false);
+            DB.GroundProductionWriteResult result=f.db.writeGroundProductionCandidate(f.root,rule,1000,16,16,16,WORK,500000,100000,1000000,false,limited?tiny:roomy);
+            require(result.status==(limited?DB.ProductionWriteStatus.INCOMPLETE:DB.ProductionWriteStatus.PUBLISHED),"explicit public writer owns requested budget");
+            require(limited?f.db.getRevision()==rev:f.db.getRevision()>rev,"publication only after complete custom qualification");
+            if(!limited)require(result.trial.qualification.certificate.frontier.ledgerLimits==roomy,"pretrial retains exact immutable policy");
+        }
+        try(Fixture f=new Fixture(dir,"ActualTiny")){
+            require(f.root.compile(ContextNativeClauseWidthRunner.base(4),null,false),"actual custom source");f.db.connectContext("A");f.db.connectContext("Safe");long rev=f.db.getRevision();String rule=ContextNativeClauseWidthRunner.rule(4,false);
+            require(f.db.qualifyGroundProductionCandidate(f.root,rule,1000,16,16,16,WORK,500000,100000,1000000,roomy).status==ContextGroundClauseFamily.Status.GROUND_FIXED_POINT,"roomy historical pretrial is complete");
+            ContextPendingNativeWrite attempt=f.db.beginGroundWrite(f.root,1000,16,16,16,WORK,500000,100000,1000000,tiny);
+            try{
+                ContextGroundProductionCommitException failure=null;try{f.root.query(rule,null,false);}catch(ContextGroundProductionCommitException expected){failure=expected;}
+                require(failure!=null&&failure.getFamilyEvaluation().reason.contains("Residual clause limit: clauses=1, proofs=1"),"actual pending native phase enforces its own tiny policy despite complete historical pretrial");
+                require(f.db.getRevision()==rev,"actual custom refusal leaves revision unchanged");
+                boolean refused=false;try{attempt.validate(null);}catch(Exception expected){refused=true;}require(refused,"failed custom attempt cannot be reused");
+            }finally{f.db.endNativeWrite(attempt);}
+            require(f.db.writeGroundProductionCandidate(f.root,rule,1000,16,16,16,WORK,500000,100000,1000000,false).status==DB.ProductionWriteStatus.PUBLISHED,"later default writer unaffected by tiny attempt");
+        }
         System.out.println("CONTEXT_GROUND_REQUEST_LIMITS_PASS checks="+checks);System.exit(0);
     }catch(Throwable failure){failure.printStackTrace();System.exit(1);}}
 }
