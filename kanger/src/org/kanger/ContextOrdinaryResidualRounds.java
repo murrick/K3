@@ -78,7 +78,7 @@ public final class ContextOrdinaryResidualRounds {
     private static boolean add(List<Product> pool,Clause clause,Support proof,int maximumDepth,Runnable work,LedgerLimits ledgerLimits) {
         work.run();
         if (clause.literals.size() == 1 && !clause.variables.isEmpty()) throw new IllegalStateException("Universal residual unit needs separate support");
-        boolean sameClause = false; int distinct = 0;
+        boolean sameClause = false;
         for (int i=0;i<pool.size();++i) {
             work.run(); Product old = pool.get(i);
             if (old.clause.equivalent(clause)) {
@@ -89,11 +89,16 @@ public final class ContextOrdinaryResidualRounds {
                     pool.set(i,new Product(clause,proof)); return true;
                 }
             }
-            boolean first = true;
-            for (int j=0;j<i;++j) { work.run(); if (pool.get(j).clause.equivalent(old.clause)) { first = false; break; } }
-            if (first) ++distinct;
         }
         if (proof.depth > maximumDepth) throw new IllegalStateException("Residual cumulative depth limit");
+        // Known recipes have already returned. Count distinct clauses only when an
+        // insertion needs the clause cap or a proof-cap diagnostic needs the count.
+        int distinct = 0;
+        if (!sameClause || pool.size() >= ledgerLimits.proofs) for (int i=0;i<pool.size();++i) {
+            boolean first = true;
+            for (int j=0;j<i;++j) { work.run(); if (pool.get(j).clause.equivalent(pool.get(i).clause)) { first = false; break; } }
+            if (first) ++distinct;
+        }
         if (pool.size() >= ledgerLimits.proofs) throw new IllegalStateException("Residual proof limit: proofs="+pool.size()+", clauses="+distinct);
         if (!sameClause && distinct >= ledgerLimits.clauses) throw new IllegalStateException("Residual clause limit: clauses="+distinct+", proofs="+pool.size());
         pool.add(new Product(clause,proof)); return true;
