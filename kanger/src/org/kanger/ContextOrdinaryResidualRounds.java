@@ -79,7 +79,8 @@ public final class ContextOrdinaryResidualRounds {
             if (first) ++distinct;
         }
         if (proof.depth > maximumDepth) throw new IllegalStateException("Residual cumulative depth limit");
-        if (pool.size() >= 256 || !sameClause && distinct >= 64) throw new IllegalStateException("Residual proof/clause limit");
+        if (pool.size() >= 256) throw new IllegalStateException("Residual proof limit: proofs="+pool.size()+", clauses="+distinct);
+        if (!sameClause && distinct >= 64) throw new IllegalStateException("Residual clause limit: clauses="+distinct+", proofs="+pool.size());
         pool.add(new Product(clause,proof)); return true;
     }
     private static List<Collision> collisions(List<Product> pool,Runnable work) {
@@ -402,11 +403,14 @@ public final class ContextOrdinaryResidualRounds {
         try {
             List<Receipt> outputs = new ArrayList<>(receipts);
             if (outputs.size() != input.cuts.size()) throw new IllegalStateException("Incomplete residual family barrier");
-            Set<Snapshot> seen = new HashSet<>();
+            Set<Snapshot> seen = new HashSet<>(); Receipt failed = null;
             for (Receipt output : outputs) {
-                work.run(); if (output == null || !output.verified || output.input != input || !input.cuts.contains(output.target) || !seen.add(output.target))
+                work.run(); if (output == null || output.input != input || !input.cuts.contains(output.target) || !seen.add(output.target))
                     throw new IllegalStateException("Residual receipt scope/input/evidence mismatch");
+                if (!output.verified && failed == null) failed = output;
             }
+            // Report a failure only after binding every receipt to the complete same-input family.
+            if (failed != null) throw new IllegalStateException("Residual receipt incomplete: "+failed.reason);
             List<Collision> opposed = new ArrayList<>();
             for (Receipt output : outputs) { work.run(); opposed.addAll(output.collisions); }
             if (!opposed.isEmpty()) return new Barrier(Status.COLLISION,"Proved residual cut collision",null,false,opposed);

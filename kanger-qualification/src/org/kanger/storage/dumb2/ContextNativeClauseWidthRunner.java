@@ -13,9 +13,9 @@ public final class ContextNativeClauseWidthRunner {
     static void create(Path dir,String name,String text)throws Exception{try(Fixture f=new Fixture(dir,name)){require(f.root.compile(text,null,false),"fixture "+name);}}
     static String base(int n){StringBuilder s=new StringBuilder();for(int i=1;i<n;i++)s.append("!p").append(i).append("(1); ");return s.toString();}
     static String rule(int n,boolean universal){String arg=universal?"x":"1";StringBuilder s=new StringBuilder(universal?"!@x q(x)":"!q(1)");for(int i=1;i<n;i++)s.append("&&p").append(i).append('(').append(arg).append(')');return s+"->out("+arg+");";}
-    static void refused(Fixture f,String rule)throws Exception{
+    static StorageLifecycleException refused(Fixture f,String rule)throws Exception{
         long rev=f.db.getRevision();f.guard.install();StorageLifecycleException failure=null;try{f.root.query(rule,null,false);}catch(StorageLifecycleException expected){failure=expected;}
-        require(failure!=null&&failure.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE,"selected incomplete engine cannot fall through to native commit");require(f.db.getRevision()==rev,"incomplete engine never publishes");
+        require(failure!=null&&failure.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE,"selected incomplete engine cannot fall through to native commit");require(f.db.getRevision()==rev,"incomplete engine never publishes");return failure;
     }
     public static void main(String[] args){try{
         Path dir=Files.createTempDirectory("native-width-");System.setProperty("user.home",dir.toString());create(dir,"A","!q(1);");create(dir,"Safe","!safe(1);");
@@ -36,8 +36,8 @@ public final class ContextNativeClauseWidthRunner {
                     require(d.engine==ContextPendingProductionSnapshotSession.Engine.GROUND&&d.ground.status==ContextGroundClauseFamily.Status.GROUND_FIXED_POINT&&d.ground.certificate!=null&&d.ground.certificate.models.size()==3,"wide ground capture now closes with all separate models: "+d.ground.reason);
                     long rev=f.db.getRevision();f.guard.install();require(Boolean.TRUE.equals(f.root.query(rule(n,false),null,false)),"fresh wide ground native qualification publishes");require(f.db.getRevision()>rev,"ground publication advances revision");
                 }else{
-                    require(d.engine==ContextPendingProductionSnapshotSession.Engine.GROUND&&d.ground.status==ContextGroundClauseFamily.Status.INCOMPLETE&&d.ground.certificate==null,"seven-premise ground proof growth remains bounded: "+d.ground.reason);
-                    refused(f,rule(n,false));
+                    require(d.engine==ContextPendingProductionSnapshotSession.Engine.GROUND&&d.ground.status==ContextGroundClauseFamily.Status.INCOMPLETE&&d.ground.certificate==null&&d.ground.reason.contains("Residual clause limit: clauses=64, proofs=64"),"seven-premise ground clause limit is preserved through family qualification: "+d.ground.reason);
+                    StorageLifecycleException failure=refused(f,rule(n,false));require(failure instanceof ContextGroundProductionCommitException&&((ContextGroundProductionCommitException)failure).getFamilyEvaluation().reason.contains("Residual clause limit: clauses=64, proofs=64"),"actual native typed refusal retains exact exhausted resource");
                 }
             }
         }

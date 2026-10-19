@@ -107,6 +107,7 @@ def main():
                  ('org.kanger.ContextGroundRoundCoverageRunner', 'CONTEXT_GROUND_ROUND_COVERAGE_PASS'),
                  ('org.kanger.ContextGroundHornFamilyRunner', 'CONTEXT_GROUND_HORN_FAMILY_PASS'),
                  ('org.kanger.ContextOrdinaryResidualRoundsRunner', 'CONTEXT_ORDINARY_RESIDUAL_ROUNDS_PASS'),
+                 ('org.kanger.ContextResidualLedgerLimitsRunner', 'CONTEXT_RESIDUAL_LEDGER_LIMITS_PASS'),
                  ('org.kanger.ContextOrdinaryResidualCoverageRunner', 'CONTEXT_ORDINARY_RESIDUAL_COVERAGE_PASS'),
                  ('org.kanger.ContextOrdinaryResidualParametersRunner', 'CONTEXT_ORDINARY_RESIDUAL_PARAMETERS_PASS'),
                  ('org.kanger.ContextOrdinaryResidualProbesRunner', 'CONTEXT_ORDINARY_RESIDUAL_PROBES_PASS'),
