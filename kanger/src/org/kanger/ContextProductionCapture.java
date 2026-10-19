@@ -899,7 +899,7 @@ public final class ContextProductionCapture implements AutoCloseable {
         if (branch.isEmpty()) return;
         Rule rule = (Rule)branch.get(0).getRule();
         if (rule.isQuery()) return;
-        if (branch.size() > 3) { capture.gaps.add("residual-subset-scope:"+rule.getId()); return; }
+        if (branch.size() > 8) { capture.gaps.add("residual-subset-scope:"+rule.getId()); return; }
         int excluded = 0;
         for (int i=0;i<branch.size();++i) {
             Domain literal = branch.get(i);

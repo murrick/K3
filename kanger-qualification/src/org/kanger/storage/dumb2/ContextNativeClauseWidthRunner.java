@@ -32,8 +32,11 @@ public final class ContextNativeClauseWidthRunner {
                     try{published=Boolean.TRUE.equals(f.root.query(rule(n,true),null,false));}catch(StorageLifecycleException expected){failure=expected;}
                     require(published&&failure==null&&f.db.getRevision()>rev || !published&&failure!=null&&failure.getErrorCode()==StorageLifecycleErrorCode.STORAGE_CONTEXT_INCOMPLETE&&f.db.getRevision()==rev,"fresh universal attempt either qualifies or conservatively refuses, never reuses old success");
                     System.out.println("WIDTH_UNIVERSAL n="+n+" reverse="+reverse+" inspection="+d.universal.inspection.status+" published="+published);
+                }else if(n==4){
+                    require(d.engine==ContextPendingProductionSnapshotSession.Engine.GROUND&&d.ground.status==ContextGroundClauseFamily.Status.GROUND_FIXED_POINT&&d.ground.certificate!=null&&d.ground.certificate.models.size()==3,"wide ground capture now closes with all separate models: "+d.ground.reason);
+                    long rev=f.db.getRevision();f.guard.install();require(Boolean.TRUE.equals(f.root.query(rule(n,false),null,false)),"fresh wide ground native qualification publishes");require(f.db.getRevision()>rev,"ground publication advances revision");
                 }else{
-                    require(d.engine==ContextPendingProductionSnapshotSession.Engine.GROUND&&d.ground.status==ContextGroundClauseFamily.Status.INCOMPLETE&&d.ground.certificate==null&&d.ground.reason.contains("Residual receipt scope/input/evidence mismatch"),"wide binding retains independent residual observation scope");
+                    require(d.engine==ContextPendingProductionSnapshotSession.Engine.GROUND&&d.ground.status==ContextGroundClauseFamily.Status.INCOMPLETE&&d.ground.certificate==null,"seven-premise ground proof growth remains bounded: "+d.ground.reason);
                     refused(f,rule(n,false));
                 }
             }

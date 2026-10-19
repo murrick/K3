@@ -31,7 +31,7 @@ final class ContextOrdinaryResidualVerifier {
     }
     static boolean instance(Clause owner,Residual event,Runnable work) {
         work.run();
-        if (event.steps != 1 || event.premises.isEmpty() || event.premises.size() > 2 || event.conclusion.literals.isEmpty()) return false;
+        if (event.steps != 1 || event.premises.isEmpty() || event.premises.size() > 7 || event.conclusion.literals.isEmpty()) return false;
         List<Atom> actual = new ArrayList<>(event.conclusion.literals);
         for (Fact premise : event.premises) actual.addAll(new Clause(Collections.singletonList(premise.opposite())).literals);
         return actual.size() == owner.literals.size() && instance(owner.literals,actual,0,new boolean[actual.size()],new HashMap<>(),work);
