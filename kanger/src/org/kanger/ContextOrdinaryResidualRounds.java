@@ -10,6 +10,15 @@ import org.kanger.enums.QueryPass;
 
 /** Sealed transport of observed ordinary signed clauses. No saturation/admission authority. */
 public final class ContextOrdinaryResidualRounds {
+    /** Immutable per-run capacity policy; never inferred from a partial result. */
+    public static final class LedgerLimits {
+        public static final LedgerLimits DEFAULT = new LedgerLimits(64,256);
+        public final int clauses,proofs;
+        public LedgerLimits(int clauses,int proofs) {
+            if(clauses<1 || proofs<1) throw new IllegalArgumentException("Positive residual ledger limits required");
+            this.clauses=clauses; this.proofs=proofs;
+        }
+    }
     public static final class Product {
         public final Clause clause;
         public final Support proof;
@@ -20,7 +29,9 @@ public final class ContextOrdinaryResidualRounds {
         public final Snapshot x;
         public final List<Snapshot> cuts;
         public final List<Product> products;
-        private Frontier(Snapshot x,List<Snapshot> cuts,List<Product> products,UUID basis) {
+        public final LedgerLimits ledgerLimits;
+        private Frontier(Snapshot x,List<Snapshot> cuts,List<Product> products,UUID basis,LedgerLimits ledgerLimits) {
+            this.ledgerLimits=ledgerLimits;
             this.x = x; this.cuts = Collections.unmodifiableList(new ArrayList<>(cuts));
             this.products = Collections.unmodifiableList(new ArrayList<>(products)); this.basis = basis;
         }
@@ -57,10 +68,14 @@ public final class ContextOrdinaryResidualRounds {
         }
     }
     public static Frontier start(Snapshot x,List<Snapshot> foreign,int maximumWork) {
-        ContextGroundProductionRounds.Frontier scope = ContextGroundProductionRounds.start(x,foreign,maximumWork);
-        return new Frontier(x,scope.cuts,Collections.emptyList(),null);
+        return start(x,foreign,maximumWork,LedgerLimits.DEFAULT);
     }
-    private static boolean add(List<Product> pool,Clause clause,Support proof,int maximumDepth,Runnable work) {
+    public static Frontier start(Snapshot x,List<Snapshot> foreign,int maximumWork,LedgerLimits ledgerLimits) {
+        if(ledgerLimits==null) throw new IllegalArgumentException("Explicit residual ledger limits required");
+        ContextGroundProductionRounds.Frontier scope = ContextGroundProductionRounds.start(x,foreign,maximumWork);
+        return new Frontier(x,scope.cuts,Collections.emptyList(),null,ledgerLimits);
+    }
+    private static boolean add(List<Product> pool,Clause clause,Support proof,int maximumDepth,Runnable work,LedgerLimits ledgerLimits) {
         work.run();
         if (clause.literals.size() == 1 && !clause.variables.isEmpty()) throw new IllegalStateException("Universal residual unit needs separate support");
         boolean sameClause = false; int distinct = 0;
@@ -79,8 +94,8 @@ public final class ContextOrdinaryResidualRounds {
             if (first) ++distinct;
         }
         if (proof.depth > maximumDepth) throw new IllegalStateException("Residual cumulative depth limit");
-        if (pool.size() >= 256) throw new IllegalStateException("Residual proof limit: proofs="+pool.size()+", clauses="+distinct);
-        if (!sameClause && distinct >= 64) throw new IllegalStateException("Residual clause limit: clauses="+distinct+", proofs="+pool.size());
+        if (pool.size() >= ledgerLimits.proofs) throw new IllegalStateException("Residual proof limit: proofs="+pool.size()+", clauses="+distinct);
+        if (!sameClause && distinct >= ledgerLimits.clauses) throw new IllegalStateException("Residual clause limit: clauses="+distinct+", proofs="+pool.size());
         pool.add(new Product(clause,proof)); return true;
     }
     private static List<Collision> collisions(List<Product> pool,Runnable work) {
@@ -96,16 +111,16 @@ public final class ContextOrdinaryResidualRounds {
         }
         return result;
     }
-    private static boolean derive(Residual event,List<List<Support>> donors,int index,Set<Source> sources,int depth,List<Product> pool,int maximumDepth,Runnable work) {
+    private static boolean derive(Residual event,List<List<Support>> donors,int index,Set<Source> sources,int depth,List<Product> pool,int maximumDepth,Runnable work,LedgerLimits ledgerLimits) {
         work.run();
         if (index == donors.size()) {
             if (depth == Integer.MAX_VALUE) throw new IllegalStateException("Residual depth overflow");
-            return add(pool,event.conclusion,new Support(sources,depth+1),maximumDepth,work);
+            return add(pool,event.conclusion,new Support(sources,depth+1),maximumDepth,work,ledgerLimits);
         }
         boolean changed = false;
         for (Support donor : donors.get(index)) {
             Set<Source> next = new LinkedHashSet<>(sources); next.addAll(donor.sources);
-            changed |= derive(event,donors,index+1,next,Math.max(depth,donor.depth),pool,maximumDepth,work);
+            changed |= derive(event,donors,index+1,next,Math.max(depth,donor.depth),pool,maximumDepth,work,ledgerLimits);
         }
         return changed;
     }
@@ -213,7 +228,7 @@ public final class ContextOrdinaryResidualRounds {
                     if (!proof.proved) throw new IllegalStateException(proof.reason);
                     evidence.add(proof);
                     for (ContextUniversalCompositionProof.Proof step : proof.proofs)
-                        add(pool,step.conclusion,step.support,maximumDepth,work);
+                        add(pool,step.conclusion,step.support,maximumDepth,work,input.ledgerLimits);
                 }
             }
             ContextUniversalCompositionCoverage.Audit audit = ContextUniversalCompositionCoverage.audit(basis,evidence,maximumDepth,work);
@@ -257,7 +272,7 @@ public final class ContextOrdinaryResidualRounds {
                 for (CompositionCandidate candidate : observed.compositionCandidates) {
                     ContextGroundCompositionProof.Evidence proof = ContextGroundCompositionProof.prove(basis,candidate,maximumDepth,work);
                     if (!proof.proved) throw new IllegalStateException(proof.reason);
-                    for (ContextGroundCompositionProof.Proof step : proof.proofs) add(pool,step.conclusion,step.support,maximumDepth,work);
+                    for (ContextGroundCompositionProof.Proof step : proof.proofs) add(pool,step.conclusion,step.support,maximumDepth,work,input.ledgerLimits);
                 }
             }
             List<Collision> opposed = collisions(pool,work);
@@ -313,7 +328,7 @@ public final class ContextOrdinaryResidualRounds {
     private static Receipt combine(Frontier input,Snapshot target,List<Receipt> observations,List<Product> owners,int maximumDepth,Runnable work) {
         List<Product> pool = new ArrayList<>();
         for (Receipt receipt : observations) for (Product product : receipt.localProofs)
-            add(pool,product.clause,product.proof,maximumDepth,work);
+            add(pool,product.clause,product.proof,maximumDepth,work,input.ledgerLimits);
         List<Collision> opposed = collisions(pool,work);
         if (!opposed.isEmpty()) return new Receipt(true,"Combined sourced parameter/probe opposition",input,target,Collections.emptyList(),opposed);
         List<Product> products = new ArrayList<>();
@@ -331,9 +346,9 @@ public final class ContextOrdinaryResidualRounds {
             List<Entry> declarations = ContextGroundCutEvidence.declarations(input.x,target == input.x ? null : target,work);
             List<Product> carriers = isolated == null ? input.products : isolated;
             List<Product> owners = new ArrayList<>();
-            for (Product carried : carriers) add(owners,carried.clause,carried.proof,maximumDepth,work);
+            for (Product carried : carriers) add(owners,carried.clause,carried.proof,maximumDepth,work,input.ledgerLimits);
             if (isolated == null) for (Entry entry : declarations) for (Clause clause : entry.clauses)
-                add(owners,clause,new Support(Collections.singleton(entry.source),0),maximumDepth,work);
+                add(owners,clause,new Support(Collections.singleton(entry.source),0),maximumDepth,work,input.ledgerLimits);
             List<Collision> opposed = collisions(owners,work);
             if (!opposed.isEmpty()) return new Receipt(true,"Actual sourced unit opposition",input,target,Collections.emptyList(),opposed);
             User user = new User(); Mind mind = new Mind(user); user.setCurrentMind(mind); mind.setQueryPass(QueryPass.ACCEPT); mind.setFloodControlLimit(maximumDepth);
@@ -379,13 +394,13 @@ public final class ContextOrdinaryResidualRounds {
                         List<List<Support>> donorProofs = donors(event,pool,work);
                         if (donorProofs == null) continue;
                         for (Support producer : event.producerSupports)
-                            changed |= derive(event,donorProofs,0,new LinkedHashSet<>(producer.sources),producer.depth,pool,maximumDepth,work);
+                            changed |= derive(event,donorProofs,0,new LinkedHashSet<>(producer.sources),producer.depth,pool,maximumDepth,work,input.ledgerLimits);
                     }
                 } while (changed);
                 for (Residual event : events) if (donors(event,pool,work) == null) throw new IllegalStateException("Residual native premise unproved");
                 if (!parameters.isEmpty()) {
                     List<Product> generalized = new ArrayList<>();
-                    for (Product product : pool) add(generalized,product.clause.generalize(parameters),product.proof,maximumDepth,work);
+                    for (Product product : pool) add(generalized,product.clause.generalize(parameters),product.proof,maximumDepth,work,input.ledgerLimits);
                     pool = generalized;
                 }
                 opposed = collisions(pool,work);
@@ -415,10 +430,10 @@ public final class ContextOrdinaryResidualRounds {
             for (Receipt output : outputs) { work.run(); opposed.addAll(output.collisions); }
             if (!opposed.isEmpty()) return new Barrier(Status.COLLISION,"Proved residual cut collision",null,false,opposed);
             List<Product> pool = new ArrayList<>(input.products); boolean changed = false;
-            for (Receipt output : outputs) for (Product product : output.products) changed |= add(pool,product.clause,product.proof,Integer.MAX_VALUE,work);
+            for (Receipt output : outputs) for (Product product : output.products) changed |= add(pool,product.clause,product.proof,Integer.MAX_VALUE,work,input.ledgerLimits);
             opposed = collisions(pool,work);
             if (!opposed.isEmpty()) return new Barrier(Status.COLLISION,"Opposite shared residual unit proofs",null,false,opposed);
-            return new Barrier(Status.MERGED,"Observed residual barrier; coverage/saturation unknown",new Frontier(input.x,input.cuts,pool,input.identity),changed,Collections.emptyList());
+            return new Barrier(Status.MERGED,"Observed residual barrier; coverage/saturation unknown",new Frontier(input.x,input.cuts,pool,input.identity,input.ledgerLimits),changed,Collections.emptyList());
         } catch (Exception failure) { return new Barrier(Status.INCOMPLETE,failure.getMessage(),null,false,Collections.emptyList()); }
     }
 }

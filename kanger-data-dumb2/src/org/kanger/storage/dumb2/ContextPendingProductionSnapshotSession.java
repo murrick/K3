@@ -100,6 +100,10 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
         }
     }
     ContextGroundClauseFamily.Evaluation inspectGround(int rounds,int local,int depth,int work,int events,int probes,int models) throws Exception {
+        return inspectGround(rounds,local,depth,work,events,probes,models,ContextOrdinaryResidualRounds.LedgerLimits.DEFAULT);
+    }
+    ContextGroundClauseFamily.Evaluation inspectGround(int rounds,int local,int depth,int work,int events,int probes,int models,ContextOrdinaryResidualRounds.LedgerLimits ledgerLimits) throws Exception {
+        if(ledgerLimits==null) throw new IllegalArgumentException("Explicit ground ledger limits required");
         synchronized(provider) {
             requireCurrent();
             try {
@@ -110,7 +114,7 @@ final class ContextPendingProductionSnapshotSession implements AutoCloseable {
                     ContextProductionNativeBinding.Result f=ContextProductionNativeBinding.bind(topology.get(n).layer(),foreign.get(n),work,events);
                     if(!f.bound) throw new IllegalStateException("Pending ground foreign binding incomplete: "+f.reason);bound.add(f.snapshot);
                 }
-                return ContextGroundClauseFamily.evaluate(x.snapshot,bound,rounds,local,depth,work,events,probes,models);
+                return ContextGroundClauseFamily.evaluate(x.snapshot,bound,rounds,local,depth,work,events,probes,models,ledgerLimits);
             } finally {requireCurrent();}
         }
     }

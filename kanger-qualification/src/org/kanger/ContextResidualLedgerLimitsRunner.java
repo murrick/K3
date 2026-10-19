@@ -12,7 +12,7 @@ public final class ContextResidualLedgerLimitsRunner {
     static Source source(int n){return new Source(new UUID(0,0),1,n,true,"base");}
     static Support proof(int depth,int... ids){Set<Source>s=new LinkedHashSet<>();for(int id:ids)s.add(source(id));return new Support(s,depth);}
     static boolean put(List<Product> pool,Clause clause,Support proof)throws Exception{
-        try{return (Boolean)add.invoke(null,pool,clause,proof,16,ContextGroundProductionRounds.budget(8000000));}
+        try{return (Boolean)add.invoke(null,pool,clause,proof,16,ContextGroundProductionRounds.budget(8000000),LedgerLimits.DEFAULT);}
         catch(InvocationTargetException failure){Throwable cause=failure.getCause();if(cause instanceof IllegalStateException)throw (IllegalStateException)cause;throw failure;}
     }
     static void limit(List<Product> pool,Clause clause,Support proof,String reason)throws Exception{
@@ -43,7 +43,7 @@ public final class ContextResidualLedgerLimitsRunner {
     }
     public static void main(String[] args){try{
         System.setProperty("user.home",java.nio.file.Files.createTempDirectory("residual-ledger-").toString());
-        add=ContextOrdinaryResidualRounds.class.getDeclaredMethod("add",List.class,Clause.class,Support.class,int.class,Runnable.class);add.setAccessible(true);List<Clause> clauses=clauses();
+        add=ContextOrdinaryResidualRounds.class.getDeclaredMethod("add",List.class,Clause.class,Support.class,int.class,Runnable.class,LedgerLimits.class);add.setAccessible(true);List<Clause> clauses=clauses();
         List<Product> distinct=new ArrayList<>();for(int i=0;i<64;i++)require(put(distinct,clauses.get(i),proof(5,0)),"distinct logical row inserted");
         limit(distinct,clauses.get(64),proof(5,0),"Residual clause limit: clauses=64, proofs=64");
         require(put(distinct,clauses.get(0),proof(4,1))&&distinct.size()==65,"new Source alternative for an existing clause is allowed at clause cap");

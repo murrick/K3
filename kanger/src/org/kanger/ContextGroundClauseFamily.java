@@ -120,11 +120,14 @@ public final class ContextGroundClauseFamily {
         } catch (Exception failure) { return incomplete(failure.getMessage(),0); }
     }
     public static Evaluation evaluate(Snapshot x,List<Snapshot> foreign,int maximumRounds,int maximumLocalRounds,int maximumDepth,int maximumWork,int maximumEvents,int maximumProbes,int maximumModels) {
-        if (maximumRounds < 1 || maximumLocalRounds < 1 || maximumDepth < 0 || maximumWork < 1 || maximumEvents < 1 || maximumProbes < 1 || maximumModels < 1)
+        return evaluate(x,foreign,maximumRounds,maximumLocalRounds,maximumDepth,maximumWork,maximumEvents,maximumProbes,maximumModels,LedgerLimits.DEFAULT);
+    }
+    public static Evaluation evaluate(Snapshot x,List<Snapshot> foreign,int maximumRounds,int maximumLocalRounds,int maximumDepth,int maximumWork,int maximumEvents,int maximumProbes,int maximumModels,LedgerLimits ledgerLimits) {
+        if (ledgerLimits == null || maximumRounds < 1 || maximumLocalRounds < 1 || maximumDepth < 0 || maximumWork < 1 || maximumEvents < 1 || maximumProbes < 1 || maximumModels < 1)
             throw new IllegalArgumentException("Bounded ground family required");
         int completed = 0;
         try {
-            Frontier input = ContextOrdinaryResidualRounds.start(x,foreign,maximumWork);
+            Frontier input = ContextOrdinaryResidualRounds.start(x,foreign,maximumWork,ledgerLimits);
             scope(input,ContextGroundProductionRounds.budget(maximumWork));
             for (int step=0;step<maximumRounds;++step) {
                 List<Receipt> outputs = new ArrayList<>();

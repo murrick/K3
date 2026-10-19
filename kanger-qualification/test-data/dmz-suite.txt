@@ -154,3 +154,5 @@ org.kanger.storage.dumb2.ContextNativeClauseWidthRunner | CONTEXT_NATIVE_CLAUSE_
 org.kanger.ContextWideResidualSubsetRunner | CONTEXT_WIDE_RESIDUAL_SUBSET_PASS
 org.kanger.storage.dumb2.ContextWideGroundFamilyRunner | CONTEXT_WIDE_GROUND_FAMILY_PASS
 org.kanger.ContextResidualLedgerLimitsRunner | CONTEXT_RESIDUAL_LEDGER_LIMITS_PASS
+org.kanger.ContextResidualRequestLimitsRunner | CONTEXT_RESIDUAL_REQUEST_LIMITS_PASS
+org.kanger.storage.dumb2.ContextGroundRequestLimitsRunner | CONTEXT_GROUND_REQUEST_LIMITS_PASS
