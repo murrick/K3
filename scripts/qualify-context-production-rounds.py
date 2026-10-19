@@ -111,6 +111,8 @@ def main():
                  ('org.kanger.ContextResidualLedgerLimitsRunner', 'CONTEXT_RESIDUAL_LEDGER_LIMITS_PASS'),
                  ('org.kanger.ContextResidualDuplicateWorkRunner', 'CONTEXT_RESIDUAL_DUPLICATE_WORK_PASS'),
                  ('org.kanger.ContextSevenPremiseClosureRunner', 'CONTEXT_SEVEN_PREMISE_CLOSURE_PASS'),
+                 ('org.kanger.storage.dumb2.ContextSevenPremiseNativeWriteRunner', 'CONTEXT_SEVEN_PREMISE_NATIVE_WRITE_PASS'),
+                 ('org.kanger.storage.dumb2.ContextSevenPremiseNativeRefusalRunner', 'CONTEXT_SEVEN_PREMISE_NATIVE_REFUSAL_PASS'),
                  ('org.kanger.ContextResidualRequestLimitsRunner', 'CONTEXT_RESIDUAL_REQUEST_LIMITS_PASS'),
                  ('org.kanger.ContextOrdinaryResidualCoverageRunner', 'CONTEXT_ORDINARY_RESIDUAL_COVERAGE_PASS'),
                  ('org.kanger.ContextOrdinaryResidualParametersRunner', 'CONTEXT_ORDINARY_RESIDUAL_PARAMETERS_PASS'),
