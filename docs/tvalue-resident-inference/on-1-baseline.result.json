@@ -1,0 +1,26 @@
+{
+  "flag": "on",
+  "rep": 1,
+  "mode": "baseline",
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx512m",
+    "-Duser.home=/tmp/resident-inference-vrn_1gxh",
+    "-Dresult.path=/workspace/scratch/fe58fcae83c2/K3/docs/tvalue-resident-inference/on-1-baseline",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/tvalue-resident-inference-tests:../build/tvalue-journal-context-snapshots.jar:../build/tvalue-observer-fast-disabled-hooked:../K3-observer-native/kanger/resources:../K3-observer-native/kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ResidentInferenceRunner",
+    "attached",
+    "9"
+  ],
+  "exit_code": 0
+}

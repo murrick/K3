@@ -1,0 +1,671 @@
+{
+  "JVMs": 36,
+  "queries_all": 2268,
+  "queries_measured": 1512,
+  "trace_replays": 162,
+  "candidate_baseline_traces_identical": 81,
+  "native_control_JVMs": 9,
+  "disabled_JVMs": 9,
+  "attached_JVMs": 18,
+  "ground_queries_per_cycle": 5,
+  "variable_queries_per_cycle": 2,
+  "expected_variable_value": "[{x=Tom}]",
+  "full_inference_corpus_qualified": false,
+  "SMART_qualified": false,
+  "production_changed": false,
+  "metrics": [
+    {
+      "flag": "on",
+      "clean": {
+        "qualified_cycle_ns": 22764022.0,
+        "qualified_cycle_bytes": 3897912.0,
+        "queries_ns": 21787340.0,
+        "queries_bytes": 3792884.0
+      },
+      "disabled": {
+        "qualified_cycle_ns": 26817196.0,
+        "qualified_cycle_bytes": 3895272.0,
+        "queries_ns": 25882891.0,
+        "queries_bytes": 3790244.0
+      },
+      "baseline": {
+        "qualified_cycle_ns": 31167981.5,
+        "qualified_cycle_bytes": 9244036.0,
+        "queries_ns": 30364849.0,
+        "queries_bytes": 8859440.0
+      },
+      "candidate": {
+        "qualified_cycle_ns": 33350785.5,
+        "qualified_cycle_bytes": 9180492.0,
+        "queries_ns": 32373687.0,
+        "queries_bytes": 8796352.0
+      },
+      "qualified_cycle_ns_paired_ratios": [
+        1.1821719696902457,
+        0.990775959386094,
+        1.0745793403400217
+      ],
+      "qualified_cycle_ns_paired_ratio": 1.0745793403400217,
+      "qualified_cycle_ns_paired_savings": -2324487.5,
+      "qualified_cycle_bytes_paired_ratios": [
+        0.9898343787356243,
+        0.993137549318861,
+        0.9925149577522199
+      ],
+      "qualified_cycle_bytes_paired_ratio": 0.9925149577522199,
+      "qualified_cycle_bytes_paired_savings": 69192.0,
+      "queries_ns_paired_ratios": [
+        1.1811038542841428,
+        0.9883125733737367,
+        1.0748261748312993
+      ],
+      "queries_ns_paired_ratio": 1.0748261748312993,
+      "queries_ns_paired_savings": -2272085.5,
+      "queries_bytes_paired_ratios": [
+        0.9894409044920496,
+        0.99289111188067,
+        0.9923864262301003
+      ],
+      "queries_bytes_paired_ratio": 0.9923864262301003,
+      "queries_bytes_paired_savings": 67452.0
+    },
+    {
+      "flag": "off",
+      "clean": {
+        "qualified_cycle_ns": 25008998.5,
+        "qualified_cycle_bytes": 4292432.0,
+        "queries_ns": 23880329.5,
+        "queries_bytes": 4187560.0
+      },
+      "disabled": {
+        "qualified_cycle_ns": 25728742.0,
+        "qualified_cycle_bytes": 4287292.0,
+        "queries_ns": 24675285.5,
+        "queries_bytes": 4182264.0
+      },
+      "baseline": {
+        "qualified_cycle_ns": 27515437.0,
+        "qualified_cycle_bytes": 9631964.0,
+        "queries_ns": 26283728.5,
+        "queries_bytes": 9247604.0
+      },
+      "candidate": {
+        "qualified_cycle_ns": 31093827.5,
+        "qualified_cycle_bytes": 9565372.0,
+        "queries_ns": 30296314.0,
+        "queries_bytes": 9181268.0
+      },
+      "qualified_cycle_ns_paired_ratios": [
+        1.1512834958790588,
+        1.0422992516951117,
+        1.1452245495663853
+      ],
+      "qualified_cycle_ns_paired_ratio": 1.1452245495663853,
+      "qualified_cycle_ns_paired_savings": -3892386.0,
+      "qualified_cycle_bytes_paired_ratios": [
+        0.9935572848901844,
+        0.9925099608214614,
+        0.9920629751397546
+      ],
+      "qualified_cycle_bytes_paired_ratio": 0.9925099608214614,
+      "qualified_cycle_bytes_paired_savings": 72112.0,
+      "queries_ns_paired_ratios": [
+        1.1661801711275477,
+        1.0477622789810728,
+        1.1359697244542444
+      ],
+      "queries_ns_paired_ratio": 1.1359697244542444,
+      "queries_ns_paired_savings": -3560362.0,
+      "queries_bytes_paired_ratios": [
+        0.9933457358251933,
+        0.992307199706463,
+        0.9917053896820717
+      ],
+      "queries_bytes_paired_ratio": 0.992307199706463,
+      "queries_bytes_paired_savings": 71116.0
+    },
+    {
+      "flag": "verify",
+      "clean": {
+        "qualified_cycle_ns": 22906392.5,
+        "qualified_cycle_bytes": 4250152.0,
+        "queries_ns": 21861263.5,
+        "queries_bytes": 4145280.0
+      },
+      "disabled": {
+        "qualified_cycle_ns": 24518289.0,
+        "qualified_cycle_bytes": 4255916.0,
+        "queries_ns": 23417923.0,
+        "queries_bytes": 4150888.0
+      },
+      "baseline": {
+        "qualified_cycle_ns": 29582346.5,
+        "qualified_cycle_bytes": 9593972.0,
+        "queries_ns": 28746276.0,
+        "queries_bytes": 9210132.0
+      },
+      "candidate": {
+        "qualified_cycle_ns": 28822073.5,
+        "qualified_cycle_bytes": 9523640.0,
+        "queries_ns": 27466706.5,
+        "queries_bytes": 9139348.0
+      },
+      "qualified_cycle_ns_paired_ratios": [
+        0.8114571763708517,
+        1.0168905972350772,
+        1.1646700060900343
+      ],
+      "qualified_cycle_ns_paired_ratio": 1.0168905972350772,
+      "qualified_cycle_ns_paired_savings": -499663.5,
+      "qualified_cycle_bytes_paired_ratios": [
+        0.9925786733586465,
+        0.9933342706602355,
+        0.9921589397129681
+      ],
+      "qualified_cycle_bytes_paired_ratio": 0.9925786733586465,
+      "qualified_cycle_bytes_paired_savings": 71200.0,
+      "queries_ns_paired_ratios": [
+        0.8105570076013149,
+        0.9554874690551222,
+        1.1698473241585112
+      ],
+      "queries_ns_paired_ratio": 0.9554874690551222,
+      "queries_ns_paired_savings": 1279569.5,
+      "queries_bytes_paired_ratios": [
+        0.9922537483719017,
+        0.9930837094958083,
+        0.9917244779836651
+      ],
+      "queries_bytes_paired_ratio": 0.9922537483719017,
+      "queries_bytes_paired_savings": 71344.0
+    }
+  ],
+  "trace_examples": [
+    {
+      "label": "off-0-baseline",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    },
+    {
+      "label": "off-0-candidate",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    },
+    {
+      "label": "off-1-baseline",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    },
+    {
+      "label": "off-1-candidate",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    },
+    {
+      "label": "off-2-baseline",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    },
+    {
+      "label": "off-2-candidate",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    },
+    {
+      "label": "on-0-baseline",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    },
+    {
+      "label": "on-0-candidate",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    },
+    {
+      "label": "on-1-baseline",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    },
+    {
+      "label": "on-1-candidate",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    },
+    {
+      "label": "on-2-baseline",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    },
+    {
+      "label": "on-2-candidate",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    },
+    {
+      "label": "verify-0-baseline",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    },
+    {
+      "label": "verify-0-candidate",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    },
+    {
+      "label": "verify-1-baseline",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    },
+    {
+      "label": "verify-1-candidate",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    },
+    {
+      "label": "verify-2-baseline",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    },
+    {
+      "label": "verify-2-candidate",
+      "replay": {
+        "contexts": 27,
+        "observations": 87,
+        "changes": 0,
+        "resets": 0,
+        "seed_buckets": 108,
+        "authority_buckets": 348,
+        "deferred": 26,
+        "touches": 181,
+        "bucketReads": 40,
+        "seeds": 27,
+        "mapChanges": 0,
+        "retired": 26,
+        "transitions": {
+          "added": 0,
+          "removed": 0,
+          "deleted": 0,
+          "resurrected": 0,
+          "order_changes": 0,
+          "term_changes": 0
+        },
+        "replay_matches_every_authority_view": true
+      },
+      "events": "{add=12, beginSettlement=26, complete=76, constructed=26, endSettlement=26, mark=76, metadata=9, promoted=10, reset=52, retire=26, visibility=9}"
+    }
+  ]
+}

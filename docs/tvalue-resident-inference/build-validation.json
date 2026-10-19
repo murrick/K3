@@ -1,0 +1,23 @@
+{
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-journal-touch-strings.jar:../build/tvalue-observer-fast-disabled-hooked:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-resident-inference-tests",
+    "/workspace/scratch/fe58fcae83c2/K3/docs/tvalue-resident-inference/ResidentInferenceRunner.java"
+  ],
+  "source_sha256": "4e9a67642d90e754a1add448be06207ebc22072ae1f4ec36333e9745265fdc6c",
+  "compiler_sha256": "f7686c4960cf70c2ebc5c500a73a8cfc04541b730c18f1c5c21329889b137f45",
+  "classes": {
+    "../build/tvalue-resident-inference-tests/org/kanger/ResidentInferenceRunner.class": "2aad5bcad1ef5b255bca428e172b488363145ccd0a5fd74deaa247ac2ca35473"
+  },
+  "jars": {
+    "../build/tvalue-journal-context-snapshots.jar": "164eacfb151e6a2f9f8646eb5bfdb91654082d1a1720497d0584d8302cdbedc1",
+    "../build/tvalue-journal-touch-strings.jar": "51cb2973a4eba52e2167e6a6f8934907470908181d367a5d139c9c0ce34d97f6"
+  }
+}
