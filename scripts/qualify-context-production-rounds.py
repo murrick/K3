@@ -119,6 +119,8 @@ def main():
                  ('org.kanger.storage.dumb2.ContextSevenPositiveNullaryRefusalRunner', 'CONTEXT_SEVEN_POSITIVE_NULLARY_REFUSAL_PASS'),
                  ('org.kanger.storage.dumb2.ContextSevenNegativeNullaryWriteRunner', 'CONTEXT_SEVEN_NEGATIVE_NULLARY_WRITE_PASS'),
                  ('org.kanger.storage.dumb2.ContextSevenNegativeNullaryRefusalRunner', 'CONTEXT_SEVEN_NEGATIVE_NULLARY_REFUSAL_PASS'),
+                 ('org.kanger.storage.dumb2.ContextAuthorityProofBoundaryRunner', 'CONTEXT_AUTHORITY_PROOF_BOUNDARY_PASS'),
+                 ('org.kanger.storage.dumb2.ContextAuthorityProofReverseRunner', 'CONTEXT_AUTHORITY_PROOF_REVERSE_PASS'),
                  ('org.kanger.ContextResidualRequestLimitsRunner', 'CONTEXT_RESIDUAL_REQUEST_LIMITS_PASS'),
                  ('org.kanger.ContextOrdinaryResidualCoverageRunner', 'CONTEXT_ORDINARY_RESIDUAL_COVERAGE_PASS'),
                  ('org.kanger.ContextOrdinaryResidualParametersRunner', 'CONTEXT_ORDINARY_RESIDUAL_PARAMETERS_PASS'),
