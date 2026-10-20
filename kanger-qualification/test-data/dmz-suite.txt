@@ -180,3 +180,5 @@ org.kanger.storage.dumb2.ContextAuthorityNegativeNullaryRefutationRunner | CONTE
 org.kanger.storage.dumb2.ContextAuthorityNegativeNullaryRefutationReverseRunner | CONTEXT_AUTHORITY_NEGATIVE_NULLARY_REFUTATION_REVERSE_PASS
 org.kanger.storage.dumb2.ContextAuthorityChainRunner | CONTEXT_AUTHORITY_CHAIN_PASS
 org.kanger.storage.dumb2.ContextAuthorityChainReverseRunner | CONTEXT_AUTHORITY_CHAIN_REVERSE_PASS
+org.kanger.storage.dumb2.ContextAuthorityBridgeProductRunner | CONTEXT_AUTHORITY_BRIDGE_PRODUCT_PASS
+org.kanger.storage.dumb2.ContextAuthorityBridgeProductReverseRunner | CONTEXT_AUTHORITY_BRIDGE_PRODUCT_REVERSE_PASS

@@ -133,6 +133,8 @@ def main():
                  ('org.kanger.storage.dumb2.ContextAuthorityNegativeNullaryRefutationReverseRunner', 'CONTEXT_AUTHORITY_NEGATIVE_NULLARY_REFUTATION_REVERSE_PASS'),
                  ('org.kanger.storage.dumb2.ContextAuthorityChainRunner', 'CONTEXT_AUTHORITY_CHAIN_PASS'),
                  ('org.kanger.storage.dumb2.ContextAuthorityChainReverseRunner', 'CONTEXT_AUTHORITY_CHAIN_REVERSE_PASS'),
+                 ('org.kanger.storage.dumb2.ContextAuthorityBridgeProductRunner', 'CONTEXT_AUTHORITY_BRIDGE_PRODUCT_PASS'),
+                 ('org.kanger.storage.dumb2.ContextAuthorityBridgeProductReverseRunner', 'CONTEXT_AUTHORITY_BRIDGE_PRODUCT_REVERSE_PASS'),
                  ('org.kanger.ContextResidualRequestLimitsRunner', 'CONTEXT_RESIDUAL_REQUEST_LIMITS_PASS'),
                  ('org.kanger.ContextOrdinaryResidualCoverageRunner', 'CONTEXT_ORDINARY_RESIDUAL_COVERAGE_PASS'),
                  ('org.kanger.ContextOrdinaryResidualParametersRunner', 'CONTEXT_ORDINARY_RESIDUAL_PARAMETERS_PASS'),
