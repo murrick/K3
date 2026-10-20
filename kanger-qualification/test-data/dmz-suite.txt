@@ -168,3 +168,7 @@ org.kanger.storage.dumb2.ContextAuthorityProofBoundaryRunner | CONTEXT_AUTHORITY
 org.kanger.storage.dumb2.ContextAuthorityProofReverseRunner | CONTEXT_AUTHORITY_PROOF_REVERSE_PASS
 org.kanger.ContextResidualRequestLimitsRunner | CONTEXT_RESIDUAL_REQUEST_LIMITS_PASS
 org.kanger.storage.dumb2.ContextGroundRequestLimitsRunner | CONTEXT_GROUND_REQUEST_LIMITS_PASS
+org.kanger.storage.dumb2.ContextAuthorityRefutationRunner | CONTEXT_AUTHORITY_REFUTATION_PASS
+org.kanger.storage.dumb2.ContextAuthorityRefutationReverseRunner | CONTEXT_AUTHORITY_REFUTATION_REVERSE_PASS
+org.kanger.storage.dumb2.ContextAuthorityRefutationWorkRunner | CONTEXT_AUTHORITY_REFUTATION_WORK_PASS
+org.kanger.storage.dumb2.ContextAuthorityRefutationProofRunner | CONTEXT_AUTHORITY_REFUTATION_PROOF_PASS
