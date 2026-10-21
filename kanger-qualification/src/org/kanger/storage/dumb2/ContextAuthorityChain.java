@@ -17,12 +17,12 @@ final class ContextAuthorityChain {
     static void require(boolean value,String why){++checks;if(!value)throw new AssertionError(why);}
     static void create(Path dir,String name,String text)throws Exception{try(ContextSevenPremiseNativeWriteRunner.Fixture f=new ContextSevenPremiseNativeWriteRunner.Fixture(dir,name)){require(f.root.compile(text,null,false),"private source "+name);}}
     static final class Expected {
-        final Set<Source> locals=new HashSet<>(),authorities=new HashSet<>(),bridges=new HashSet<>();final boolean negativeOut,negative,nullary;Source deny;
-        Expected(ContextProductionCandidate.Staged a,int bridgeCount,boolean negativeOut,boolean negative,boolean nullary){
-            this.negativeOut=negativeOut;this.negative=negative;this.nullary=nullary;
+        final Set<Source> locals=new HashSet<>(),authorities=new HashSet<>(),bridges=new HashSet<>();final boolean negativeQ,negativeOut,negative,nullary;Source deny;
+        Expected(ContextProductionCandidate.Staged a,int bridgeCount,boolean negativeQ,boolean negativeOut,boolean negative,boolean nullary){
+            this.negativeQ=negativeQ;this.negativeOut=negativeOut;this.negative=negative;this.nullary=nullary;
             for(Entry e:a.staged.primary)locals.add(e.source);
             for(Snapshot cut:a.foreign)for(Entry e:cut.primary){Clause c=e.clauses.get(0);if(c.literals.size()==2&&c.literals.stream().anyMatch(l->l.predicate.equals("mid")&&l.positive!=negative)&&c.literals.stream().anyMatch(l->l.predicate.equals("out")&&l.positive==negativeOut))bridges.add(e.source);
-                else if(c.literals.size()==1){Atom atom=c.literals.get(0);if(atom.predicate.equals("q")&&atom.positive)authorities.add(e.source);else if(atom.predicate.equals("mid")&&atom.positive==negative)deny=e.source;}}
+                else if(c.literals.size()==1){Atom atom=c.literals.get(0);if(atom.predicate.equals("q")&&atom.positive!=negativeQ)authorities.add(e.source);else if(atom.predicate.equals("mid")&&atom.positive==negative)deny=e.source;}}
             require(locals.size()==3&&locals.contains(a.candidate)&&authorities.size()==3&&authorities.stream().map(s->s.context).distinct().count()==3&&bridges.size()==bridgeCount&&bridges.stream().map(s->s.context).distinct().count()==bridgeCount&&deny!=null,"whole three-source X, three independent q authorities, independent private bridges and deny");
         }
         Set<Source> set(Source... extra){Set<Source> s=new HashSet<>(locals);s.addAll(Arrays.asList(extra));return s;}
@@ -42,7 +42,7 @@ final class ContextAuthorityChain {
             Set<Source> pair=new HashSet<>(foreign);pair.remove(e.deny);
             require(union.size()==6&&local.size()==3&&foreign.size()==3&&foreign.contains(e.deny)&&pairs.contains(pair),"refutation keeps whole X, deny, exactly one q authority and exactly one bridge");if(exactLocal)require(local.equals(e.locals),"exact detached whole local primary Sources");
             Source authority=pair.stream().filter(e.authorities::contains).findFirst().get();require(pair.stream().filter(e.bridges::contains).count()==1,"one independent pinned Bridge Source per refutation, never a flattened union");
-            String route=c.left.predicate;require((route.equals("q")&&!c.left.positive&&c.rightProof.sources.contains(authority))||(route.equals("mid")&&c.left.positive!=e.negative&&c.rightProof.sources.contains(e.deny)),"opposition reaches the authority or deny endpoint with requested conclusion sign");
+            String route=c.left.predicate;require((route.equals("q")&&c.left.positive==e.negativeQ&&c.rightProof.sources.contains(authority))||(route.equals("mid")&&c.left.positive!=e.negative&&c.rightProof.sources.contains(e.deny)),"opposition reaches the signed authority or deny endpoint with requested conclusion sign");
             require(routes.computeIfAbsent(pair,k->new HashSet<>()).add(route),"no duplicate endpoint replaces a donor/bridge alternative");unions.add(union);
         }
         require(unions.size()==pairs.size()&&routes.keySet().equals(pairs)&&routes.values().stream().allMatch(r->r.equals(new HashSet<>(Arrays.asList("q","mid")))),"every independently enumerated donor/bridge pair occurs at both refutation endpoints");
@@ -53,12 +53,12 @@ final class ContextAuthorityChain {
         Frontier initial=ContextOrdinaryResidualRounds.start(a.staged,a.foreign,WORK,LedgerLimits.DEFAULT);Barrier first=ContextOrdinaryResidualRounds.merge(initial,pass(initial,3),WORK);
         int firstCount=15+4*e.bridges.size(),secondCount=15+20*e.bridges.size();
         require(first.status==Status.MERGED&&first.changed&&first.frontier.products.size()==firstCount&&first.frontier.ledgerLimits==LedgerLimits.DEFAULT&&initial.products.isEmpty(),"first immutable DEFAULT barrier with expected shared recipe count");
-        List<Set<Source>> out=new ArrayList<>(),mid=new ArrayList<>(),notQ=new ArrayList<>();for(Source q:e.authorities){out.add(e.set(q));for(Source b:e.bridges)mid.add(e.set(q,b));}for(Source b:e.bridges)notQ.add(e.set(b,e.deny));
+        List<Set<Source>> out=new ArrayList<>(),mid=new ArrayList<>(),oppositeQ=new ArrayList<>();for(Source q:e.authorities){out.add(e.set(q));for(Source b:e.bridges)mid.add(e.set(q,b));}for(Source b:e.bridges)oppositeQ.add(e.set(b,e.deny));
         units(first.frontier,"out",!e.negativeOut,1,out,e.nullary);require(first.frontier.products.stream().filter(p->p.clause.literals.size()==1).count()==3,"first round shares only the three signed out units; private facts are not imported");
         List<Receipt> secondPass=pass(first.frontier,3);Barrier second=ContextOrdinaryResidualRounds.merge(first.frontier,secondPass,WORK);
         require(second.status==Status.MERGED&&second.changed&&second.frontier.products.size()==secondCount&&second.frontier.products.stream().allMatch(p->p.proof.depth<=2)&&first.frontier.products.size()==firstCount&&second.frontier.ledgerLimits==LedgerLimits.DEFAULT,"second immutable DEFAULT barrier at depth<=2, previous input unchanged");
-        units(second.frontier,"out",!e.negativeOut,1,out,e.nullary);units(second.frontier,"mid",!e.negative,2,mid,e.nullary);units(second.frontier,"q",false,2,notQ,e.nullary);
-        require(second.frontier.products.stream().filter(p->p.clause.literals.size()==1).count()==out.size()+mid.size()+notQ.size(),"exact expected shared units, no raw q/bridge/deny import");
+        units(second.frontier,"out",!e.negativeOut,1,out,e.nullary);units(second.frontier,"mid",!e.negative,2,mid,e.nullary);units(second.frontier,"q",e.negativeQ,2,oppositeQ,e.nullary);
+        require(second.frontier.products.stream().filter(p->p.clause.literals.size()==1).count()==out.size()+mid.size()+oppositeQ.size(),"exact expected shared units, no raw q/bridge/deny import");
         ContextGroundClauseFamily.Evaluation premature=ContextGroundClauseFamily.certify(first.frontier,secondPass,3,WORK,1000000);
         require(premature.status==ContextGroundClauseFamily.Status.INCOMPLETE&&premature.certificate==null&&premature.collisions.isEmpty()&&premature.reason.equals("Ground certificate requires unchanged shared recipes"),"changed second barrier is not saturation or admission");
         List<Receipt> low=pass(second.frontier,1);for(Receipt r:low)require(!r.verified&&r.products.isEmpty()&&r.collisions.isEmpty()&&r.reason.equals("Residual cumulative depth limit"),"carried depth2 recipes refuse depth1 before exposing any collision prefix");
@@ -76,21 +76,23 @@ final class ContextAuthorityChain {
     static void run(boolean reverse,String marker){run(reverse,1,marker);}
     static void run(boolean reverse,int bridgeCount,String marker){run(reverse,bridgeCount,false,false,marker);}
     static void run(boolean reverse,int bridgeCount,boolean negative,boolean nullary,String marker){run(reverse,bridgeCount,false,negative,nullary,marker);}
-    static void run(boolean reverse,int bridgeCount,boolean negativeOut,boolean negative,boolean nullary,String marker){try{
+    static void run(boolean reverse,int bridgeCount,boolean negativeOut,boolean negative,boolean nullary,String marker){run(reverse,bridgeCount,false,negativeOut,negative,nullary,marker);}
+    static void run(boolean reverse,int bridgeCount,boolean negativeQ,boolean negativeOut,boolean negative,boolean nullary,String marker){try{
         if(bridgeCount!=1&&bridgeCount!=2)throw new IllegalArgumentException("Qualified one/two-bridge fixtures only");
         String arg=nullary?"":"(1)",text=ContextWideGroundFamilyRunner.rule(3,negativeOut,nullary);
-        Path dir=Files.createTempDirectory("authority-chain-");System.setProperty("user.home",dir.toString());for(String name:new String[]{"A1","A2","A3"})create(dir,name,"!q"+arg+";");List<String> names=new ArrayList<>(Arrays.asList("A1","A2","A3"));for(int i=1;i<=bridgeCount;i++){String name=bridgeCount==1?"Bridge":"Bridge"+i;create(dir,name,"!"+(negativeOut?"~":"")+"out"+arg+"->"+(negative?"~":"")+"mid"+arg+";");names.add(name);}create(dir,"Deny","!"+(negative?"":"~")+"mid"+arg+";");names.add("Deny");
+        if(negativeQ)text="!~"+text.substring(1);
+        Path dir=Files.createTempDirectory("authority-chain-");System.setProperty("user.home",dir.toString());for(String name:new String[]{"A1","A2","A3"})create(dir,name,"!"+(negativeQ?"~":"")+"q"+arg+";");List<String> names=new ArrayList<>(Arrays.asList("A1","A2","A3"));for(int i=1;i<=bridgeCount;i++){String name=bridgeCount==1?"Bridge":"Bridge"+i;create(dir,name,"!"+(negativeOut?"~":"")+"out"+arg+"->"+(negative?"~":"")+"mid"+arg+";");names.add(name);}create(dir,"Deny","!"+(negative?"":"~")+"mid"+arg+";");names.add("Deny");
         Set<String> original;List<RevisionRef> pins;
         try(ContextSevenPremiseNativeWriteRunner.Fixture f=new ContextSevenPremiseNativeWriteRunner.Fixture(dir,"X")){
             require(f.root.compile(ContextWideGroundFamilyRunner.base(3,nullary),null,false),"two local p assertions");if(reverse)Collections.reverse(names);for(String name:names)f.db.connectContext(name);f.db.saveConnections(f.root);
             ContextProductionInventory baseline=ContextSevenPremiseNativeWriteRunner.inventory(f);original=ContextSevenPremiseNativeWriteRunner.origins(baseline);pins=ContextSevenPremiseNativeWriteRunner.pins(f);long revision=f.db.getRevision();int rows=f.root.getRules().size();require(original.size()==2&&pins.size()==4+bridgeCount,"durable two-source baseline and all private pins");
             DB.GroundProductionWriteResult early=write(f,text,2,3);require(early.status==DB.ProductionWriteStatus.INCOMPLETE&&early.before.getRevision()==revision&&early.after.getRevision()==revision,"two-round public request cannot settle");incomplete(early.trial.qualification,"Ground family common round limit");
             DB.GroundProductionWriteResult shallow=write(f,text,3,2);require(shallow.status==DB.ProductionWriteStatus.INCOMPLETE&&shallow.before.getRevision()==revision&&shallow.after.getRevision()==revision,"depth2 public request cannot settle");incomplete(shallow.trial.qualification,"Residual cumulative depth limit");
-            DB.GroundProductionWriteResult full=write(f,text,3,3);require(full.status==DB.ProductionWriteStatus.COLLISION&&full.before.getRevision()==revision&&full.after.getRevision()==revision,"fresh complete public request rejects third-round conflict");Expected expected=new Expected(full.trial.artifact,bridgeCount,negativeOut,negative,nullary);collision(full.trial.qualification,expected,true);barriers(full.trial.artifact,expected);
+            DB.GroundProductionWriteResult full=write(f,text,3,3);require(full.status==DB.ProductionWriteStatus.COLLISION&&full.before.getRevision()==revision&&full.after.getRevision()==revision,"fresh complete public request rejects third-round conflict");Expected expected=new Expected(full.trial.artifact,bridgeCount,negativeQ,negativeOut,negative,nullary);collision(full.trial.qualification,expected,true);barriers(full.trial.artifact,expected);
             nativeRefusal(f,text,2,3,expected,"Ground family common round limit");nativeRefusal(f,text,3,2,expected,"Residual cumulative depth limit");nativeRefusal(f,text,3,3,expected,null);
             require(f.db.getRevision()==revision&&f.root.getRules().size()==rows&&ContextSevenPremiseNativeWriteRunner.inventory(f).fingerprint.equals(baseline.fingerprint)&&ContextSevenPremiseNativeWriteRunner.pins(f).equals(pins),"all public/native refusals preserve exact parent inventory, physical revision, rules and ordered pins");
         }
         try(ContextSevenPremiseNativeWriteRunner.Fixture f=new ContextSevenPremiseNativeWriteRunner.Fixture(dir,"X")){ContextProductionInventory inv=ContextSevenPremiseNativeWriteRunner.inventory(f);require(inv.primary.size()==2&&ContextSevenPremiseNativeWriteRunner.origins(inv).equals(original)&&ContextSevenPremiseNativeWriteRunner.pins(f).equals(pins),"reopen keeps exactly original two primary facts and all saved pins");}
-        System.out.println("AUTHORITY_CHAIN reverse="+reverse+" bridges="+bridgeCount+" negativeOut="+negativeOut+" negative="+negative+" nullary="+nullary+" rounds=3 alternatives="+(3*bridgeCount)+" depth=2 settled=false");System.out.println(marker+" checks="+checks);System.exit(0);
+        System.out.println("AUTHORITY_CHAIN reverse="+reverse+" bridges="+bridgeCount+" negativeQ="+negativeQ+" negativeOut="+negativeOut+" negative="+negative+" nullary="+nullary+" rounds=3 alternatives="+(3*bridgeCount)+" depth=2 settled=false");System.out.println(marker+" checks="+checks);System.exit(0);
     }catch(Throwable failure){failure.printStackTrace();System.exit(1);}}
 }
