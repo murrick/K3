@@ -1,0 +1,22 @@
+--- a/kanger/src/org/kanger/OptimizationOptions.java
++++ b/kanger/src/org/kanger/OptimizationOptions.java
+@@ -32,6 +32,10 @@
+         "resolvedCauseWeights", "compactCauseWeights", "candidateMembershipFilter",
+         "compactFindSnapshots", "preserveTValueIndex"
+     };
++    private static final String[] PROPERTY_KEYS = new String[NAMES.length];
++    static {
++        for (int i = 0; i < NAMES.length; i++) PROPERTY_KEYS[i] = "kanger.experiment." + NAMES[i];
++    }
+     private OptimizationOptions() { }
+
+     public static String[] names() { return NAMES.clone(); }
+@@ -41,7 +45,7 @@
+         int overrides = session == null ? 0 : session.overrides;
+         int bit = bit(name);
+         if ((overrides & bit) != 0) return (overrides & (bit << 8)) != 0;
+-        return Boolean.parseBoolean(System.getProperty("kanger.experiment." + name, "true"));
++        return Boolean.parseBoolean(System.getProperty(PROPERTY_KEYS[Integer.numberOfTrailingZeros(bit)], "true"));
+     }
+
+     public static void set(IMind mind, String name, boolean enabled) {

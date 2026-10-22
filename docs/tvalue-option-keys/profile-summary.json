@@ -1,0 +1,6796 @@
+[
+  {
+    "label": "current-off-0-candidate-profile",
+    "base": "current",
+    "mode": "candidate",
+    "rep": 0,
+    "session_override": false,
+    "custom_query_events": 3584,
+    "sample_events": {
+      "jdk.ObjectAllocationSample": 1876,
+      "jdk.ExecutionSample": 205
+    },
+    "excluded": {
+      "outside_query": 229
+    },
+    "groups": {
+      "early_0_127/ground": {
+        "cpu_samples": 25,
+        "allocation_samples": 363,
+        "allocation_sample_weight": 510687160,
+        "cpu_leaf": [
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 2
+          },
+          {
+            "method": "java.util.GregorianCalendar.computeTime",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.retainCVariableNames",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.isPromoted",
+            "value": 1
+          },
+          {
+            "method": "java.util.TreeMap.getEntry",
+            "value": 1
+          },
+          {
+            "method": "java.text.DecimalFormat.equals",
+            "value": 1
+          },
+          {
+            "method": "java.util.GregorianCalendar.monthLength",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$PositionKey.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.PredicateFactory.pack",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.branchEquals",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.find",
+            "value": 1
+          },
+          {
+            "method": "java.lang.Integer.getChars",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.TValueObservation.lambda$7",
+            "value": 1
+          },
+          {
+            "method": "java.lang.StringBuilder.append",
+            "value": 1
+          },
+          {
+            "method": "java.util.TreeMap.getFirstEntry",
+            "value": 1
+          },
+          {
+            "method": "java.lang.invoke.Invokers$Holder.invokeExact_MT",
+            "value": 1
+          },
+          {
+            "method": "java.util.ArrayList$Itr.next",
+            "value": 1
+          },
+          {
+            "method": "java.lang.AbstractStringBuilder.ensureCapacityInternal",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.setMind",
+            "value": 1
+          },
+          {
+            "method": "java.util.Arrays.copyOf",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.findByDomain",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.containsTerm",
+            "value": 1
+          }
+        ],
+        "cpu_nearest_kanger": [
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.observe",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.retainCVariableNames",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.isPromoted",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$PositionKey.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.PredicateFactory.pack",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.branchEquals",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.find",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.compiler.Compiller.functionSignature",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.TValueObservation.lambda$7",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.toString",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.observe",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.field",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.authority",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.scope",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.setMind",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.findByDomain",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.containsTerm",
+            "value": 1
+          }
+        ],
+        "cpu_inclusive_kanger": [
+          {
+            "method": "org.kanger.Mind.query",
+            "value": 25
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalseCanonical",
+            "value": 16
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalse",
+            "value": 16
+          },
+          {
+            "method": "org.kanger.Mind.compileLine",
+            "value": 14
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrue",
+            "value": 9
+          },
+          {
+            "method": "org.kanger.TValueObservation.dispatch",
+            "value": 9
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrueCanonical",
+            "value": 9
+          },
+          {
+            "method": "org.kanger.Mind.release",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.rollback",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.compiler.Compiller.compileLine",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.<init>",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Mind.<init>",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.begin",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.observe",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.safely",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.ConsumerHooks.constructed",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.TValueObservation$$Lambda.0x00007f73f00e8aa0.call",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.TValueObservation.lambda$0",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.TValueObservation.constructed",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.ConsumerHooks$1.constructed",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.TValueObservation.beginSettlement",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.TValueObservation$$Lambda.0x00007f73f00e8cc8.call",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.TValueObservation.lambda$7",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.add",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.StreamAuthorityRead.authority",
+            "value": 3
+          }
+        ],
+        "allocation_nearest_kanger_weight": [
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 161845584
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 134432168
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.field",
+            "value": 128917000
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.authority",
+            "value": 7516728
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.validateMind",
+            "value": 7067552
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 4937304
+          },
+          {
+            "method": "org.kanger.StreamAuthorityRead.authority",
+            "value": 4300656
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.encode",
+            "value": 4112392
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.bucket",
+            "value": 3440280
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.bucket",
+            "value": 3366256
+          },
+          {
+            "method": "org.kanger.storage.Escalera.<init>",
+            "value": 3253408
+          },
+          {
+            "method": "org.kanger.ObservationLayers.bucket",
+            "value": 2618384
+          },
+          {
+            "method": "org.kanger.units.Operation.<init>",
+            "value": 2094840
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectTermIds",
+            "value": 1965552
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.encode",
+            "value": 1795192
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.observe",
+            "value": 1660392
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTerms",
+            "value": 1645504
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectDomainIds",
+            "value": 1571032
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.indexRuleLocked",
+            "value": 1571008
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.touchRow",
+            "value": 1458288
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 1272416
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.copyTermIndexLocked",
+            "value": 1047424
+          },
+          {
+            "method": "org.kanger.StreamAuthorityRead.encodeRoutes",
+            "value": 1047416
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.containsPromotion",
+            "value": 1047416
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.scope",
+            "value": 1047416
+          }
+        ],
+        "per_query_cpu_samples": {
+          "0": 6,
+          "4": 9,
+          "1": 5,
+          "2": 3,
+          "3": 2
+        },
+        "truncated_samples": 0
+      },
+      "early_0_127/variable": {
+        "cpu_samples": 51,
+        "allocation_samples": 328,
+        "allocation_sample_weight": 504123296,
+        "cpu_leaf": [
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 3
+          },
+          {
+            "method": "java.lang.Math.ceil",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.compiler.Parser.getOp",
+            "value": 2
+          },
+          {
+            "method": "java.util.HashMap.putVal",
+            "value": 2
+          },
+          {
+            "method": "java.util.Properties.getProperty",
+            "value": 2
+          },
+          {
+            "method": "java.util.regex.Pattern.compile",
+            "value": 1
+          },
+          {
+            "method": "java.util.TreeMap.fixAfterInsertion",
+            "value": 1
+          },
+          {
+            "method": "java.util.LinkedHashMap$LinkedKeyIterator.<init>",
+            "value": 1
+          },
+          {
+            "method": "java.text.DigitList.isZero",
+            "value": 1
+          },
+          {
+            "method": "java.util.ArrayList.addAll",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.TValueObservation$$Lambda.0x00007f73f00f4aa8.<init>",
+            "value": 1
+          },
+          {
+            "method": "java.lang.StrictMath.floorOrCeil",
+            "value": 1
+          },
+          {
+            "method": "java.util.Collections.unmodifiableList",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.toString",
+            "value": 1
+          },
+          {
+            "method": "java.lang.AbstractStringBuilder.append",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.isDeleted",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.PredicateFactory.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.synchronizeSolveIndexReference",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.findByDomain",
+            "value": 1
+          },
+          {
+            "method": "java.util.TreeMap.getFirstEntry",
+            "value": 1
+          },
+          {
+            "method": "java.util.TimSort.reverseRange",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap$HashIterator.<init>",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap$HashIterator.nextNode",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Mind.isUnitDeleted",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.setProduced",
+            "value": 1
+          }
+        ],
+        "cpu_nearest_kanger": [
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.collectResolvedLocal",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$IdIndex.get",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.compiler.Parser.getOp",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Linker.isValidFor",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Linker.link",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.OptimizationOptions.enabled",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectDomainIds",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.authority",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.Solve.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.TValueObservation$$Lambda.0x00007f73f00f4aa8.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.FrontierDomain.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.toString",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.isDeleted",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.PredicateFactory.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.synchronizeSolveIndexReference",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.findByDomain",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Escalera.find",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.collectDynamicRuleTerms",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Mind.isUnitDeleted",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.setProduced",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker$4.run",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.getHash",
+            "value": 1
+          }
+        ],
+        "cpu_inclusive_kanger": [
+          {
+            "method": "org.kanger.Mind.query",
+            "value": 51
+          },
+          {
+            "method": "org.kanger.Mind.link",
+            "value": 33
+          },
+          {
+            "method": "org.kanger.Linker.link",
+            "value": 33
+          },
+          {
+            "method": "org.kanger.Linker.rotator",
+            "value": 30
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrue",
+            "value": 26
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrueCanonical",
+            "value": 26
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalseCanonical",
+            "value": 25
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalse",
+            "value": 25
+          },
+          {
+            "method": "org.kanger.Linker.rotateVariables",
+            "value": 24
+          },
+          {
+            "method": "org.kanger.Linker$3.run",
+            "value": 19
+          },
+          {
+            "method": "org.kanger.Linker$4.run",
+            "value": 18
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.forEach",
+            "value": 18
+          },
+          {
+            "method": "org.kanger.Linker.access$6",
+            "value": 16
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.Linker.access$4",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.Mind.compileLine",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.Analyzer.analyze",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.Mind.analyze",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.Analyzer.checkDatabase",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.TValueObservation.dispatch",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.findByResolvedDomain",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Linker.access$2",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Linker.selectDomainCandidates",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.observe",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.safely",
+            "value": 5
+          }
+        ],
+        "allocation_nearest_kanger_weight": [
+          {
+            "method": "org.kanger.OptimizationOptions.enabled",
+            "value": 153488720
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 94901792
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 89789536
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.validateMind",
+            "value": 45107280
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.field",
+            "value": 14814040
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 11633120
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 6356856
+          },
+          {
+            "method": "org.kanger.units.Predicate.getName",
+            "value": 5946128
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 5050328
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.collectResolvedLocal",
+            "value": 4189600
+          },
+          {
+            "method": "org.kanger.ObservationLayers.bucket",
+            "value": 3254384
+          },
+          {
+            "method": "org.kanger.primitives.TVariableSet.hashCode",
+            "value": 3254176
+          },
+          {
+            "method": "org.kanger.storage.Escalera.find",
+            "value": 3029352
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$IdIndex.get",
+            "value": 2843392
+          },
+          {
+            "method": "org.kanger.StreamAuthorityRead.authority",
+            "value": 2529624
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.touchRow",
+            "value": 2280072
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.observe",
+            "value": 2020960
+          },
+          {
+            "method": "org.kanger.primitives.Solve.getTerms",
+            "value": 1571128
+          },
+          {
+            "method": "org.kanger.storage.Escalera.<init>",
+            "value": 1571104
+          },
+          {
+            "method": "org.kanger.Linker.linkDomains",
+            "value": 1571088
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.findByDomain",
+            "value": 1571080
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.authority",
+            "value": 1458304
+          },
+          {
+            "method": "org.kanger.Linker$4.run",
+            "value": 1458272
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.collectIds",
+            "value": 1458256
+          },
+          {
+            "method": "org.kanger.units.Predicate.toString",
+            "value": 1272304
+          }
+        ],
+        "per_query_cpu_samples": {
+          "5": 32,
+          "6": 19
+        },
+        "truncated_samples": 0
+      },
+      "late_128_511/ground": {
+        "cpu_samples": 28,
+        "allocation_samples": 536,
+        "allocation_sample_weight": 1689263168,
+        "cpu_leaf": [
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTerms",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 1
+          },
+          {
+            "method": "java.util.LinkedHashMap.newNode",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap.put",
+            "value": 1
+          },
+          {
+            "method": "java.util.LinkedHashSet.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.PredicateFactory.pack",
+            "value": 1
+          },
+          {
+            "method": "java.lang.Long.valueOf",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap.getNode",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap.putVal",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.TValueObservation.dispatch",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.getTree",
+            "value": 1
+          },
+          {
+            "method": "java.util.TreeMap.getFirstEntry",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.LibraryFactory.transaction",
+            "value": 1
+          },
+          {
+            "method": "java.lang.Math.ceil",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap$HashIterator.<init>",
+            "value": 1
+          },
+          {
+            "method": "java.util.Objects.checkIndex",
+            "value": 1
+          },
+          {
+            "method": "java.util.ArrayList.addAll",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.updateDatabase",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.get",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.CachedDomain.setMind",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.stores.LogStore.add",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectDomainIds",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap.resize",
+            "value": 1
+          }
+        ],
+        "cpu_nearest_kanger": [
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTerms",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectTermIds",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectDomainIds",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.PortableMindLayer.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.PredicateFactory.pack",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.containsPromotion",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.containsTerm",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.TValueObservation.dispatch",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.getTree",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.changedKeys",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.LibraryFactory.transaction",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Escalera.find",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.getDomain",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.Solve.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.updateDatabase",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.get",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.CachedDomain.setMind",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.stores.LogStore.add",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.TVariable.isDeleted",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.indexRule",
+            "value": 1
+          }
+        ],
+        "cpu_inclusive_kanger": [
+          {
+            "method": "org.kanger.Mind.query",
+            "value": 28
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrue",
+            "value": 15
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrueCanonical",
+            "value": 15
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalseCanonical",
+            "value": 13
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalse",
+            "value": 13
+          },
+          {
+            "method": "org.kanger.Mind.release",
+            "value": 10
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.rollback",
+            "value": 10
+          },
+          {
+            "method": "org.kanger.Mind.journalReleaseBody",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.Mind.pack",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.Mind.finishTransactionLocked",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.Mind.finalizeTransactionRootLocked",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.Mind.compileLine",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.Analyzer.analyze",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Mind.analyze",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Analyzer.checkDatabase",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Analyzer.checkRight",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.Analyzer.candidatesFor",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.begin",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.<init>",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.Mind.<init>",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.get",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.units.Rule.containsTerm",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.collectDynamicRuleTerms",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.pack",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.Mind.link",
+            "value": 3
+          }
+        ],
+        "allocation_nearest_kanger_weight": [
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 699623048
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.field",
+            "value": 453980312
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.indexRuleLocked",
+            "value": 134585784
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 66505824
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.validateMind",
+            "value": 37686664
+          },
+          {
+            "method": "org.kanger.StreamAuthorityRead.authority",
+            "value": 20944136
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.encode",
+            "value": 17279272
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 14662624
+          },
+          {
+            "method": "org.kanger.ObservationLayers.bucket",
+            "value": 12568104
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.authority",
+            "value": 11519024
+          },
+          {
+            "method": "org.kanger.storage.Escalera.<init>",
+            "value": 10997240
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.bucket",
+            "value": 10473464
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.observe",
+            "value": 10473136
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.bucket",
+            "value": 9950088
+          },
+          {
+            "method": "org.kanger.units.Operation.<init>",
+            "value": 7855392
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 7855208
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.encode",
+            "value": 7331736
+          },
+          {
+            "method": "org.kanger.StreamAuthorityRead.encodeRoutes",
+            "value": 7331592
+          },
+          {
+            "method": "org.kanger.storage.Escalera.find",
+            "value": 6808096
+          },
+          {
+            "method": "org.kanger.primitives.Solve.toString",
+            "value": 6808040
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.lambda$10",
+            "value": 6807888
+          },
+          {
+            "method": "org.kanger.units.TVariable.setMind",
+            "value": 6284192
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.touchRow",
+            "value": 5760408
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 5236968
+          },
+          {
+            "method": "org.kanger.PortableMindLayer.<init>",
+            "value": 5236800
+          }
+        ],
+        "per_query_cpu_samples": {
+          "4": 12,
+          "3": 1,
+          "0": 10,
+          "1": 4,
+          "2": 1
+        },
+        "truncated_samples": 0
+      },
+      "late_128_511/variable": {
+        "cpu_samples": 62,
+        "allocation_samples": 459,
+        "allocation_sample_weight": 1639918344,
+        "cpu_leaf": [
+          {
+            "method": "java.util.concurrent.ConcurrentHashMap.get",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.primitives.Argument.isEmpty",
+            "value": 4
+          },
+          {
+            "method": "java.util.Properties.getProperty",
+            "value": 4
+          },
+          {
+            "method": "java.lang.String.equals",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.units.Predicate.equalsTo",
+            "value": 2
+          },
+          {
+            "method": "java.lang.String.split",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.Domain.isExcluded",
+            "value": 2
+          },
+          {
+            "method": "java.util.HashMap.putVal",
+            "value": 2
+          },
+          {
+            "method": "java.lang.ThreadLocal$ThreadLocalMap.getEntry",
+            "value": 2
+          },
+          {
+            "method": "java.lang.ThreadLocal$ThreadLocalMap.set",
+            "value": 2
+          },
+          {
+            "method": "java.util.HashMap.getNode",
+            "value": 2
+          },
+          {
+            "method": "java.lang.StringLatin1.hashCode",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.Rule.$SWITCH_TABLE$org$kanger$enums$ArgumentType",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.ensureDomainIndex",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.TVariable.isDeleted",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 1
+          },
+          {
+            "method": "java.util.TreeMap.compare",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.isDeleted",
+            "value": 1
+          },
+          {
+            "method": "java.lang.CharacterDataLatin1.isDigit",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.LibraryFactory$1.hasNext",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.mergeFrom",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.TValue.hashCode",
+            "value": 1
+          },
+          {
+            "method": "java.util.ArrayDeque.<init>",
+            "value": 1
+          },
+          {
+            "method": "java.util.AbstractCollection.retainAll",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.getTree",
+            "value": 1
+          }
+        ],
+        "cpu_nearest_kanger": [
+          {
+            "method": "org.kanger.OptimizationOptions.enabled",
+            "value": 15
+          },
+          {
+            "method": "org.kanger.primitives.Argument.isEmpty",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.units.Predicate.equalsTo",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.enums.Tools.isPeriod",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.Domain.isExcluded",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.TVariable.setMind",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.Rule.$SWITCH_TABLE$org$kanger$enums$ArgumentType",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.ensureDomainIndex",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.TVariable.isDeleted",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.rotateVariables",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.isDeleted",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.enums.Tools.isNum",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.LibraryFactory$1.hasNext",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.mergeFrom",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.TValue.hashCode",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.retainCVariableNames",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.collectResolvedLocal",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.getTree",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.synchronizeSolveIndexReference",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Analyzer.analyze",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Predicate.getName",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Mind.isUnitDeleted",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.TVariable.getVarName",
+            "value": 1
+          }
+        ],
+        "cpu_inclusive_kanger": [
+          {
+            "method": "org.kanger.Mind.query",
+            "value": 62
+          },
+          {
+            "method": "org.kanger.Mind.link",
+            "value": 48
+          },
+          {
+            "method": "org.kanger.Linker.link",
+            "value": 48
+          },
+          {
+            "method": "org.kanger.Linker.rotator",
+            "value": 46
+          },
+          {
+            "method": "org.kanger.Linker.rotateVariables",
+            "value": 37
+          },
+          {
+            "method": "org.kanger.Linker$3.run",
+            "value": 33
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrue",
+            "value": 33
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrueCanonical",
+            "value": 33
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalseCanonical",
+            "value": 29
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalse",
+            "value": 29
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.forEach",
+            "value": 28
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 27
+          },
+          {
+            "method": "org.kanger.Linker.access$4",
+            "value": 27
+          },
+          {
+            "method": "org.kanger.Linker.access$6",
+            "value": 27
+          },
+          {
+            "method": "org.kanger.Linker$4.run",
+            "value": 27
+          },
+          {
+            "method": "org.kanger.OptimizationOptions.enabled",
+            "value": 15
+          },
+          {
+            "method": "org.kanger.units.Domain.isStored",
+            "value": 14
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.find",
+            "value": 13
+          },
+          {
+            "method": "org.kanger.primitives.Argument.isEmpty",
+            "value": 11
+          },
+          {
+            "method": "org.kanger.primitives.Argument.getValue",
+            "value": 11
+          },
+          {
+            "method": "org.kanger.units.TVariable.getValue",
+            "value": 11
+          },
+          {
+            "method": "org.kanger.units.Rule.equalsTo",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.add",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.Linker.updateDatabase",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.storage.Step.getData",
+            "value": 6
+          }
+        ],
+        "allocation_nearest_kanger_weight": [
+          {
+            "method": "org.kanger.OptimizationOptions.enabled",
+            "value": 319881864
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 218839456
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 217315328
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 180145256
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.encode",
+            "value": 177000744
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.findByDomain",
+            "value": 142441392
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.field",
+            "value": 64936632
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 46607712
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.collectResolvedLocal",
+            "value": 17281456
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.authority",
+            "value": 15186936
+          },
+          {
+            "method": "org.kanger.storage.Escalera.find",
+            "value": 11521088
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$IdIndex.get",
+            "value": 10997288
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.collectIds",
+            "value": 10473640
+          },
+          {
+            "method": "org.kanger.units.TVariable.setMind",
+            "value": 9950088
+          },
+          {
+            "method": "org.kanger.ObservationLayers.bucket",
+            "value": 9949008
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.validateMind",
+            "value": 8901992
+          },
+          {
+            "method": "org.kanger.units.Predicate.getName",
+            "value": 8379160
+          },
+          {
+            "method": "org.kanger.primitives.TVariableSet.hashCode",
+            "value": 7331424
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.touchRow",
+            "value": 6284304
+          },
+          {
+            "method": "org.kanger.units.Predicate.toString",
+            "value": 6284296
+          },
+          {
+            "method": "org.kanger.StreamAuthorityRead.authority",
+            "value": 6284280
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.touchRow",
+            "value": 6284112
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.bucket",
+            "value": 5760712
+          },
+          {
+            "method": "org.kanger.Linker.isValidFor",
+            "value": 5760648
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.bucket",
+            "value": 5760616
+          }
+        ],
+        "per_query_cpu_samples": {
+          "6": 23,
+          "5": 39
+        },
+        "truncated_samples": 0
+      }
+    },
+    "exact_profiled_intervals": {
+      "early_0_127": {
+        "per_query_median_ns": {
+          "0": 1069208.0,
+          "1": 975134.0,
+          "2": 964508.0,
+          "3": 529939.5,
+          "4": 1243049.5,
+          "5": 3340980.0,
+          "6": 2551702.0
+        },
+        "per_query_median_allocated_bytes": {
+          "0": 1051680.0,
+          "1": 1052368.0,
+          "2": 1053344.0,
+          "3": 571728.0,
+          "4": 1226920.0,
+          "5": 2399752.0,
+          "6": 2024608.0
+        },
+        "variable_time_share": 0.5393939141803011,
+        "median_query_cycle_bytes": 9380000.0
+      },
+      "late_128_511": {
+        "per_query_median_ns": {
+          "0": 758457.0,
+          "1": 714277.0,
+          "2": 717362.0,
+          "3": 397908.5,
+          "4": 903837.5,
+          "5": 2223105.5,
+          "6": 1737601.5
+        },
+        "per_query_median_allocated_bytes": {
+          "0": 1029712.0,
+          "1": 1030336.0,
+          "2": 1031960.0,
+          "3": 560544.0,
+          "4": 1200104.0,
+          "5": 2308512.0,
+          "6": 1954104.0
+        },
+        "variable_time_share": 0.5220942147042081,
+        "median_query_cycle_bytes": 9113616.0
+      }
+    },
+    "jfr_sha256": "98f6addb3b0a64b7b6c6d8820a39a9069c4a788ff8602ded542e351dfc633e62",
+    "sampling_ms": 5,
+    "speedup_claim": false
+  },
+  {
+    "label": "current-off-0-clean-profile",
+    "base": "current",
+    "mode": "clean",
+    "rep": 0,
+    "session_override": false,
+    "custom_query_events": 3584,
+    "sample_events": {
+      "jdk.ObjectAllocationSample": 1320,
+      "jdk.ExecutionSample": 252
+    },
+    "excluded": {
+      "outside_query": 159,
+      "without_Mind_query_stack": 2
+    },
+    "groups": {
+      "early_0_127/ground": {
+        "cpu_samples": 17,
+        "allocation_samples": 148,
+        "allocation_sample_weight": 234425576,
+        "cpu_leaf": [
+          {
+            "method": "org.kanger.Analyzer.checkRight",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Term.construct",
+            "value": 1
+          },
+          {
+            "method": "java.util.LinkedHashMap$LinkedKeySet.iterator",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashSet.<init>",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap.resize",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.add",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.PortableMindLayer.capture",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.SemanticTermSnapshot.isOrdinaryValue",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.LibraryFactory.commit",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.CachedDomain.setMind",
+            "value": 1
+          },
+          {
+            "method": "java.util.Calendar.set",
+            "value": 1
+          },
+          {
+            "method": "java.text.MessageFormat.format",
+            "value": 1
+          },
+          {
+            "method": "java.lang.String.indexOf",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.setDeleted",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTerms",
+            "value": 1
+          },
+          {
+            "method": "java.util.ArrayList.iterator",
+            "value": 1
+          }
+        ],
+        "cpu_nearest_kanger": [
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.Analyzer.checkRight",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Term.construct",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectTermIds",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.hasActiveRuleWithTerm",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.add",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.PortableMindLayer.capture",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.SemanticTermSnapshot.isOrdinaryValue",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.LibraryFactory.commit",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.CachedDomain.setMind",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.setDeleted",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTerms",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.isQuery",
+            "value": 1
+          }
+        ],
+        "cpu_inclusive_kanger": [
+          {
+            "method": "org.kanger.Mind.query",
+            "value": 17
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalseCanonical",
+            "value": 11
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalse",
+            "value": 11
+          },
+          {
+            "method": "org.kanger.Mind.compileLine",
+            "value": 9
+          },
+          {
+            "method": "org.kanger.compiler.Compiller.compileLine",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrue",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrueCanonical",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.units.Term.<init>",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.add",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.find",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.units.Term.construct",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.Mind.release",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.rollback",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.Mind.pack",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.Mind.finishTransactionLocked",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.Mind.finalizeTransactionRootLocked",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.Analyzer.analyze",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.Mind.analyze",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.Analyzer.checkDatabase",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.compiler.Compiller.compilePredicate",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.compiler.Compiller.construct",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.Analyzer.checkRight",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.compiler.Compiller.parseArgs",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.pack",
+            "value": 2
+          }
+        ],
+        "allocation_nearest_kanger_weight": [
+          {
+            "method": "org.kanger.Mind.formatTree",
+            "value": 92169016
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 61943352
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.<init>",
+            "value": 24599296
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 16361488
+          },
+          {
+            "method": "org.kanger.units.Operation.<init>",
+            "value": 3141624
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 2760992
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 2475112
+          },
+          {
+            "method": "org.kanger.Mind.init",
+            "value": 1795552
+          },
+          {
+            "method": "org.kanger.calculator.Predicates$1.<init>",
+            "value": 1571120
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTerms",
+            "value": 1571120
+          },
+          {
+            "method": "org.kanger.Mind.<init>",
+            "value": 1499448
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.<init>",
+            "value": 1190176
+          },
+          {
+            "method": "org.kanger.units.Predicate.getName",
+            "value": 1047408
+          },
+          {
+            "method": "org.kanger.units.TVariable.setMind",
+            "value": 1047400
+          },
+          {
+            "method": "org.kanger.units.Rule.<init>",
+            "value": 1047400
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$IdIndex.snapshot",
+            "value": 1047360
+          },
+          {
+            "method": "org.kanger.PortableMindLayer.<init>",
+            "value": 1047360
+          },
+          {
+            "method": "org.kanger.LinkerStatistics.<init>",
+            "value": 1047280
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.collectDynamicRuleTerms",
+            "value": 975776
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.findByDomain",
+            "value": 975728
+          },
+          {
+            "method": "org.kanger.storage.Escalera.find",
+            "value": 975696
+          },
+          {
+            "method": "org.kanger.storage.Escalera.add",
+            "value": 975696
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectTermIds",
+            "value": 666496
+          },
+          {
+            "method": "org.kanger.units.Rule.containsTerm",
+            "value": 594528
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.snapshotIndex",
+            "value": 523712
+          }
+        ],
+        "per_query_cpu_samples": {
+          "0": 5,
+          "3": 4,
+          "2": 3,
+          "1": 2,
+          "4": 3
+        },
+        "truncated_samples": 0
+      },
+      "early_0_127/variable": {
+        "cpu_samples": 45,
+        "allocation_samples": 278,
+        "allocation_sample_weight": 249842520,
+        "cpu_leaf": [
+          {
+            "method": "java.util.Properties.getProperty",
+            "value": 6
+          },
+          {
+            "method": "java.lang.ThreadLocal$ThreadLocalMap.getEntry",
+            "value": 4
+          },
+          {
+            "method": "java.util.HashMap.putVal",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.primitives.Argument.isEmpty",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.compiler.Parser.parse",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.computeBatchSummary",
+            "value": 1
+          },
+          {
+            "method": "java.lang.String.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.pack",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.copyInferenceView",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap$HashIterator.nextNode",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.equalsBase",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.PortableMindLayer.capture",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.indexSolve",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Mind.isUnitDeleted",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.find",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.access$4",
+            "value": 1
+          },
+          {
+            "method": "java.lang.StringBuilder.append",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.CachedDomain.setMind",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.add",
+            "value": 1
+          },
+          {
+            "method": "java.util.TreeMap.compare",
+            "value": 1
+          },
+          {
+            "method": "java.lang.AbstractStringBuilder.insert",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.compiler.Parser.getOp",
+            "value": 1
+          },
+          {
+            "method": "java.lang.StringLatin1.hashCode",
+            "value": 1
+          },
+          {
+            "method": "java.util.GregorianCalendar.monthLength",
+            "value": 1
+          }
+        ],
+        "cpu_nearest_kanger": [
+          {
+            "method": "org.kanger.OptimizationOptions.enabled",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.units.TVariable.activeMind",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.primitives.Argument.isEmpty",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.Domain.isUsed",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.compiler.Parser.parse",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.computeBatchSummary",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Predicate.getName",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.pack",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.copyInferenceView",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.equalsBase",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.PortableMindLayer.capture",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.User.nextId",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.indexSolve",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Mind.isUnitDeleted",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.find",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.access$4",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Escalera.ensureIndex",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.CachedDomain.setMind",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.add",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker$4.run",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.compiler.Parser.getOp",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.clear",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.rotator",
+            "value": 1
+          }
+        ],
+        "cpu_inclusive_kanger": [
+          {
+            "method": "org.kanger.Mind.query",
+            "value": 45
+          },
+          {
+            "method": "org.kanger.Linker.link",
+            "value": 32
+          },
+          {
+            "method": "org.kanger.Mind.link",
+            "value": 32
+          },
+          {
+            "method": "org.kanger.Linker.rotator",
+            "value": 32
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrue",
+            "value": 27
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrueCanonical",
+            "value": 27
+          },
+          {
+            "method": "org.kanger.Linker.rotateVariables",
+            "value": 27
+          },
+          {
+            "method": "org.kanger.Linker$3.run",
+            "value": 24
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalse",
+            "value": 18
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalseCanonical",
+            "value": 18
+          },
+          {
+            "method": "org.kanger.Linker.access$4",
+            "value": 17
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.forEach",
+            "value": 17
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 16
+          },
+          {
+            "method": "org.kanger.Linker$4.run",
+            "value": 16
+          },
+          {
+            "method": "org.kanger.Linker.access$6",
+            "value": 14
+          },
+          {
+            "method": "org.kanger.primitives.Argument.isEmpty",
+            "value": 10
+          },
+          {
+            "method": "org.kanger.units.TVariable.getValue",
+            "value": 9
+          },
+          {
+            "method": "org.kanger.primitives.Argument.getValue",
+            "value": 9
+          },
+          {
+            "method": "org.kanger.units.Domain.isStored",
+            "value": 9
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.find",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.OptimizationOptions.enabled",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.Mind.compileLine",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getHash",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.Linker.linkDomains",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.Linker.access$3",
+            "value": 5
+          }
+        ],
+        "allocation_nearest_kanger_weight": [
+          {
+            "method": "org.kanger.OptimizationOptions.enabled",
+            "value": 137723784
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 16323696
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 15263472
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 4532024
+          },
+          {
+            "method": "org.kanger.units.Predicate.getName",
+            "value": 4117368
+          },
+          {
+            "method": "org.kanger.storage.Escalera.find",
+            "value": 3522512
+          },
+          {
+            "method": "org.kanger.storage.Escalera.<init>",
+            "value": 3450880
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 3071560
+          },
+          {
+            "method": "org.kanger.units.Predicate.toString",
+            "value": 3070592
+          },
+          {
+            "method": "org.kanger.Linker.rotator",
+            "value": 2998856
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.collectIds",
+            "value": 2247104
+          },
+          {
+            "method": "org.kanger.primitives.Hypothesis.<init>",
+            "value": 2023064
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectDomainIds",
+            "value": 1927592
+          },
+          {
+            "method": "org.kanger.Linker.buildDomainIndex",
+            "value": 1571096
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.convertBase",
+            "value": 1571080
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.find",
+            "value": 1571080
+          },
+          {
+            "method": "org.kanger.units.TVariable.setMind",
+            "value": 1570536
+          },
+          {
+            "method": "org.kanger.units.Operation.<init>",
+            "value": 1499448
+          },
+          {
+            "method": "org.kanger.Linker.<init>",
+            "value": 1499312
+          },
+          {
+            "method": "org.kanger.primitives.TVariableSet.hashCode",
+            "value": 1427768
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.collectResolvedLocal",
+            "value": 1427744
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTerms",
+            "value": 1427720
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 1339416
+          },
+          {
+            "method": "org.kanger.PortableMindLayer.<init>",
+            "value": 1271448
+          },
+          {
+            "method": "org.kanger.Linker.selectDomainCandidates",
+            "value": 1190032
+          }
+        ],
+        "per_query_cpu_samples": {
+          "6": 20,
+          "5": 25
+        },
+        "truncated_samples": 0
+      },
+      "late_128_511/variable": {
+        "cpu_samples": 117,
+        "allocation_samples": 474,
+        "allocation_sample_weight": 839874232,
+        "cpu_leaf": [
+          {
+            "method": "java.lang.StringLatin1.hashCode",
+            "value": 10
+          },
+          {
+            "method": "java.util.HashMap.getNode",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.compiler.Parser.getOp",
+            "value": 6
+          },
+          {
+            "method": "java.util.Properties.getProperty",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.Mind.isUnitDeleted",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.Linker.synchronizeSolveIndexReference",
+            "value": 4
+          },
+          {
+            "method": "java.lang.ThreadLocal$ThreadLocalMap.getEntry",
+            "value": 4
+          },
+          {
+            "method": "java.util.HashSet.iterator",
+            "value": 3
+          },
+          {
+            "method": "java.util.HashMap.putVal",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.equalsBase",
+            "value": 2
+          },
+          {
+            "method": "java.util.HashMap$HashIterator.<init>",
+            "value": 2
+          },
+          {
+            "method": "java.lang.StringBuilder.append",
+            "value": 2
+          },
+          {
+            "method": "java.lang.String.valueOf",
+            "value": 2
+          },
+          {
+            "method": "java.util.GregorianCalendar.computeFields",
+            "value": 2
+          },
+          {
+            "method": "java.util.Formatter.format",
+            "value": 2
+          },
+          {
+            "method": "java.util.AbstractCollection.retainAll",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.CachedDomain.setMind",
+            "value": 2
+          },
+          {
+            "method": "java.util.LinkedHashSet.<init>",
+            "value": 2
+          },
+          {
+            "method": "java.util.ArrayList.<init>",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashSet.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.stores.HypothesisStore.find",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.TVariableSet.contains",
+            "value": 1
+          },
+          {
+            "method": "java.util.ArrayList.indexOfRange",
+            "value": 1
+          },
+          {
+            "method": "java.lang.Character.toUpperCase",
+            "value": 1
+          }
+        ],
+        "cpu_nearest_kanger": [
+          {
+            "method": "org.kanger.OptimizationOptions.enabled",
+            "value": 17
+          },
+          {
+            "method": "org.kanger.compiler.Parser.getOp",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Linker.synchronizeSolveIndexReference",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.Mind.isUnitDeleted",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.units.TVariable.activeMind",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.collectResolvedLocal",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.indexRuleLocked",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.containsPromotion",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.primitives.Solve.toString",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.equalsBase",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.stores.LogStore.commit",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.Predicate.getName",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.Domain.isExcluded",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Linker.rotateVariables",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.CachedDomain.setMind",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.mark",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.Rule.copyInferenceView",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.findByDomain",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.stores.HypothesisStore.find",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Escalera.find",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.find",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.TVariableSet.contains",
+            "value": 1
+          }
+        ],
+        "cpu_inclusive_kanger": [
+          {
+            "method": "org.kanger.Mind.query",
+            "value": 117
+          },
+          {
+            "method": "org.kanger.Mind.link",
+            "value": 84
+          },
+          {
+            "method": "org.kanger.Linker.link",
+            "value": 84
+          },
+          {
+            "method": "org.kanger.Linker.rotator",
+            "value": 79
+          },
+          {
+            "method": "org.kanger.Linker.rotateVariables",
+            "value": 75
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrue",
+            "value": 66
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrueCanonical",
+            "value": 66
+          },
+          {
+            "method": "org.kanger.Linker$3.run",
+            "value": 60
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalseCanonical",
+            "value": 51
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalse",
+            "value": 51
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.forEach",
+            "value": 47
+          },
+          {
+            "method": "org.kanger.Linker$4.run",
+            "value": 45
+          },
+          {
+            "method": "org.kanger.Linker.access$6",
+            "value": 41
+          },
+          {
+            "method": "org.kanger.Linker.access$4",
+            "value": 36
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 35
+          },
+          {
+            "method": "org.kanger.OptimizationOptions.enabled",
+            "value": 17
+          },
+          {
+            "method": "org.kanger.units.TVariable.getValue",
+            "value": 16
+          },
+          {
+            "method": "org.kanger.primitives.Argument.getValue",
+            "value": 16
+          },
+          {
+            "method": "org.kanger.Mind.compileLine",
+            "value": 15
+          },
+          {
+            "method": "org.kanger.Linker.linkDomains",
+            "value": 13
+          },
+          {
+            "method": "org.kanger.Linker.access$3",
+            "value": 13
+          },
+          {
+            "method": "org.kanger.Analyzer.analyze",
+            "value": 13
+          },
+          {
+            "method": "org.kanger.Mind.analyze",
+            "value": 13
+          },
+          {
+            "method": "org.kanger.units.Domain.isStored",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.Analyzer.checkDatabase",
+            "value": 12
+          }
+        ],
+        "allocation_nearest_kanger_weight": [
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 135110624
+          },
+          {
+            "method": "org.kanger.OptimizationOptions.enabled",
+            "value": 124637576
+          },
+          {
+            "method": "org.kanger.units.Predicate.getName",
+            "value": 89951704
+          },
+          {
+            "method": "org.kanger.Linker$4.run",
+            "value": 88503136
+          },
+          {
+            "method": "org.kanger.primitives.Solve.<init>",
+            "value": 64937856
+          },
+          {
+            "method": "org.kanger.units.TSolve.containsTValue",
+            "value": 64414096
+          },
+          {
+            "method": "org.kanger.stores.LogStore.add",
+            "value": 51321664
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 25137016
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 14139344
+          },
+          {
+            "method": "org.kanger.storage.Escalera.<init>",
+            "value": 12044960
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 10473880
+          },
+          {
+            "method": "org.kanger.storage.Escalera.find",
+            "value": 10473832
+          },
+          {
+            "method": "org.kanger.Linker.buildDomainIndex",
+            "value": 8902768
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$IdIndex.get",
+            "value": 6807976
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 6807968
+          },
+          {
+            "method": "org.kanger.Linker.rotator",
+            "value": 5236952
+          },
+          {
+            "method": "org.kanger.storage.Escalera.ensureIndex",
+            "value": 4713296
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.collectResolvedLocal",
+            "value": 4713288
+          },
+          {
+            "method": "org.kanger.units.TVariable.setMind",
+            "value": 4189616
+          },
+          {
+            "method": "org.kanger.Linker.linkDomains",
+            "value": 4189568
+          },
+          {
+            "method": "org.kanger.units.Predicate.toString",
+            "value": 4189544
+          },
+          {
+            "method": "org.kanger.Linker.markExcluded",
+            "value": 4189496
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.collectIds",
+            "value": 3665816
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectDomainIds",
+            "value": 3665776
+          },
+          {
+            "method": "org.kanger.units.TSolve.<init>",
+            "value": 3142168
+          }
+        ],
+        "per_query_cpu_samples": {
+          "5": 76,
+          "6": 41
+        },
+        "truncated_samples": 0
+      },
+      "late_128_511/ground": {
+        "cpu_samples": 44,
+        "allocation_samples": 288,
+        "allocation_sample_weight": 903096328,
+        "cpu_leaf": [
+          {
+            "method": "java.util.HashMap.putVal",
+            "value": 3
+          },
+          {
+            "method": "java.util.HashMap.getNode",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Mind.isUnitDeleted",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.compiler.Parser.getOp",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Analyzer.checkRight",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.isQuery",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap.resize",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap$HashIterator.<init>",
+            "value": 1
+          },
+          {
+            "method": "java.text.DigitList.clone",
+            "value": 1
+          },
+          {
+            "method": "java.lang.Long.hashCode",
+            "value": 1
+          },
+          {
+            "method": "java.util.LinkedHashSet.<init>",
+            "value": 1
+          },
+          {
+            "method": "java.text.MessageFormat.makeFormat",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.PortableMindLayer.<init>",
+            "value": 1
+          },
+          {
+            "method": "java.util.Properties.getProperty",
+            "value": 1
+          },
+          {
+            "method": "java.lang.Character.isUpperCase",
+            "value": 1
+          },
+          {
+            "method": "java.util.regex.Pattern.atom",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.link",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap.tableSizeFor",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTerms",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.canMutateDirectly",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.stores.ValuesStore.clear",
+            "value": 1
+          },
+          {
+            "method": "java.lang.String.regionMatches",
+            "value": 1
+          },
+          {
+            "method": "java.util.ArrayList$Itr.hasNext",
+            "value": 1
+          }
+        ],
+        "cpu_nearest_kanger": [
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.containsPromotion",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Mind.isUnitDeleted",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.collectDynamicRuleTerms",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.primitives.Solve.toString",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.compiler.Parser.getOp",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Analyzer.checkRight",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.isQuery",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Escalera.find",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory$DomainKey.hashCode",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.findByDomain",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.PortableMindLayer.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.OptimizationOptions.enabled",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.link",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTerms",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.canMutateDirectly",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectTermIds",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.stores.ValuesStore.clear",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.containsTerm",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.branchEquals",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.calculator.Predicates$1.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.TVariable.isDeleted",
+            "value": 1
+          }
+        ],
+        "cpu_inclusive_kanger": [
+          {
+            "method": "org.kanger.Mind.query",
+            "value": 44
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalseCanonical",
+            "value": 23
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalse",
+            "value": 23
+          },
+          {
+            "method": "org.kanger.Mind.compileLine",
+            "value": 22
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrue",
+            "value": 21
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrueCanonical",
+            "value": 21
+          },
+          {
+            "method": "org.kanger.compiler.Compiller.compileLine",
+            "value": 10
+          },
+          {
+            "method": "org.kanger.Mind.release",
+            "value": 9
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.rollback",
+            "value": 9
+          },
+          {
+            "method": "org.kanger.Mind.pack",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.Mind.finishTransactionLocked",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.Mind.finalizeTransactionRootLocked",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.begin",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.Mind.init",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.<init>",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.Mind.<init>",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.Analyzer.analyze",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Mind.analyze",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Analyzer.checkRight",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Analyzer.checkDatabase",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Mind.commit",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.commit",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.calculator.Calculator.<init>",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.add",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.find",
+            "value": 5
+          }
+        ],
+        "allocation_nearest_kanger_weight": [
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 292659432
+          },
+          {
+            "method": "org.kanger.storage.Escalera.<init>",
+            "value": 157629928
+          },
+          {
+            "method": "org.kanger.units.Operation.<init>",
+            "value": 139824280
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 103165944
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$IdIndex.<init>",
+            "value": 101413368
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 10473776
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 8379096
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectTermIds",
+            "value": 6284184
+          },
+          {
+            "method": "org.kanger.Linker.<init>",
+            "value": 5760544
+          },
+          {
+            "method": "org.kanger.calculator.Predicates$1.<init>",
+            "value": 5236936
+          },
+          {
+            "method": "org.kanger.primitives.Solve.getTerms",
+            "value": 4713272
+          },
+          {
+            "method": "org.kanger.PortableMindLayer.<init>",
+            "value": 3665840
+          },
+          {
+            "method": "org.kanger.Mind.<init>",
+            "value": 3665792
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$IdIndex.addInternal",
+            "value": 3142216
+          },
+          {
+            "method": "org.kanger.units.TVariable.setMind",
+            "value": 3142168
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.pack",
+            "value": 3141896
+          },
+          {
+            "method": "org.kanger.compiler.Token.getToken",
+            "value": 2618528
+          },
+          {
+            "method": "org.kanger.factory.CommentFactory.transaction",
+            "value": 2618504
+          },
+          {
+            "method": "org.kanger.stores.LogStore.add",
+            "value": 2618432
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.collectDynamicRuleTerms",
+            "value": 2618368
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.<init>",
+            "value": 2094792
+          },
+          {
+            "method": "org.kanger.stores.LogStore.commit",
+            "value": 2094752
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTerms",
+            "value": 2094728
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.findByDomain",
+            "value": 2094696
+          },
+          {
+            "method": "org.kanger.primitives.Solve.toString",
+            "value": 2094656
+          }
+        ],
+        "per_query_cpu_samples": {
+          "1": 10,
+          "4": 12,
+          "2": 12,
+          "3": 4,
+          "0": 6
+        },
+        "truncated_samples": 0
+      }
+    },
+    "exact_profiled_intervals": {
+      "early_0_127": {
+        "per_query_median_ns": {
+          "0": 441974.0,
+          "1": 399200.5,
+          "2": 386532.5,
+          "3": 216781.0,
+          "4": 536474.0,
+          "5": 2195079.0,
+          "6": 1677647.5
+        },
+        "per_query_median_allocated_bytes": {
+          "0": 325528.0,
+          "1": 325896.0,
+          "2": 326392.0,
+          "3": 173640.0,
+          "4": 428632.0,
+          "5": 1556512.0,
+          "6": 1207896.0
+        },
+        "variable_time_share": 0.6310611296382151,
+        "median_query_cycle_bytes": 4344496.0
+      },
+      "late_128_511": {
+        "per_query_median_ns": {
+          "0": 345100.5,
+          "1": 327946.0,
+          "2": 324245.0,
+          "3": 183000.5,
+          "4": 460532.0,
+          "5": 1639626.5,
+          "6": 1214062.0
+        },
+        "per_query_median_allocated_bytes": {
+          "0": 318520.0,
+          "1": 318888.0,
+          "2": 319384.0,
+          "3": 171112.0,
+          "4": 418952.0,
+          "5": 1503320.0,
+          "6": 1168800.0
+        },
+        "variable_time_share": 0.6343474755857806,
+        "median_query_cycle_bytes": 4218976.0
+      }
+    },
+    "jfr_sha256": "4d61be88ea6d9d3afc6337742d7b4eb408110e6216781734d6f2ccd37a7ec609",
+    "sampling_ms": 5,
+    "speedup_claim": false
+  },
+  {
+    "label": "keys-off-0-candidate-profile",
+    "base": "keys",
+    "mode": "candidate",
+    "rep": 0,
+    "session_override": false,
+    "custom_query_events": 3584,
+    "sample_events": {
+      "jdk.ObjectAllocationSample": 1872,
+      "jdk.ExecutionSample": 380
+    },
+    "excluded": {
+      "outside_query": 218
+    },
+    "groups": {
+      "early_0_127/ground": {
+        "cpu_samples": 45,
+        "allocation_samples": 410,
+        "allocation_sample_weight": 397637800,
+        "cpu_leaf": [
+          {
+            "method": "java.lang.invoke.Invokers$Holder.invokeExact_MT",
+            "value": 10
+          },
+          {
+            "method": "java.lang.AbstractStringBuilder.ensureCapacityInternal",
+            "value": 2
+          },
+          {
+            "method": "java.util.Arrays.copyOfRangeByte",
+            "value": 1
+          },
+          {
+            "method": "jdk.internal.org.objectweb.asm.AnnotationWriter.create",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Mind.update",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.StreamAuthorityRead.authority",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.<init>",
+            "value": 1
+          },
+          {
+            "method": "java.util.AbstractMap.equals",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Mind.copyCommitResult",
+            "value": 1
+          },
+          {
+            "method": "java.lang.String.contains",
+            "value": 1
+          },
+          {
+            "method": "java.util.Objects.requireNonNull",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Step.getData",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.find",
+            "value": 1
+          },
+          {
+            "method": "java.util.IdentityHashMap.put",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Term.construct",
+            "value": 1
+          },
+          {
+            "method": "java.util.IdentityHashMap.get",
+            "value": 1
+          },
+          {
+            "method": "java.util.Calendar$Builder.build",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.getTree",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.equalsTo",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.compiler.Parser.parse",
+            "value": 1
+          },
+          {
+            "method": "java.text.SimpleDateFormat.applyPatternImpl",
+            "value": 1
+          },
+          {
+            "method": "sun.util.locale.LocaleUtils.isAlphaNumericString",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap.getNode",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.findByDomain",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.mergeDomainIndex",
+            "value": 1
+          }
+        ],
+        "cpu_nearest_kanger": [
+          {
+            "method": "org.kanger.ResidentTValueRead.field",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.bucket",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Mind.update",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.StreamAuthorityRead.authority",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.observe",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Mind.copyCommitResult",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.enums.Tools.isInterval",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Step.getData",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.find",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.bucket",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.encode",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Term.construct",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.safely",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.getTree",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.equalsTo",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.compiler.Parser.parse",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.ObservationLayers.bucket",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.findByDomain",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.mergeDomainIndex",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.authority",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Rule.branchEquals",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.retainCVariableNames",
+            "value": 1
+          }
+        ],
+        "cpu_inclusive_kanger": [
+          {
+            "method": "org.kanger.Mind.query",
+            "value": 45
+          },
+          {
+            "method": "org.kanger.Mind.compileLine",
+            "value": 32
+          },
+          {
+            "method": "org.kanger.TValueObservation.dispatch",
+            "value": 26
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrue",
+            "value": 25
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrueCanonical",
+            "value": 25
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalseCanonical",
+            "value": 20
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalse",
+            "value": 20
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 14
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.safely",
+            "value": 13
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.safely",
+            "value": 13
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.<init>",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.observe",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.Mind.<init>",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.begin",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.ConsumerHooks.constructed",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.TValueObservation$$Lambda.0x00007fa87c0e7000.call",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.TValueObservation.lambda$0",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.TValueObservation.constructed",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.ConsumerHooks$1.constructed",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.observe",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.field",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.capture",
+            "value": 10
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.capture",
+            "value": 10
+          },
+          {
+            "method": "org.kanger.Mind.release",
+            "value": 10
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.rollback",
+            "value": 10
+          }
+        ],
+        "allocation_nearest_kanger_weight": [
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 64464848
+          },
+          {
+            "method": "org.kanger.factory.PredicateFactory.pack",
+            "value": 63701968
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.observe",
+            "value": 63156104
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.encode",
+            "value": 57264832
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 23804776
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.field",
+            "value": 9415824
+          },
+          {
+            "method": "org.kanger.StreamAuthorityRead.authority",
+            "value": 8567888
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.validateMind",
+            "value": 7853768
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.authority",
+            "value": 6974528
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 6340232
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.bucket",
+            "value": 5984232
+          },
+          {
+            "method": "org.kanger.ObservationLayers.bucket",
+            "value": 4136120
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 4097344
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.observe",
+            "value": 3849464
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.bucket",
+            "value": 3142200
+          },
+          {
+            "method": "org.kanger.PortableMindLayer.<init>",
+            "value": 3142112
+          },
+          {
+            "method": "org.kanger.units.Operation.<init>",
+            "value": 3049992
+          },
+          {
+            "method": "org.kanger.ObservationLayers.collect",
+            "value": 3033488
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectTermIds",
+            "value": 2951376
+          },
+          {
+            "method": "org.kanger.storage.Escalera.<init>",
+            "value": 2618464
+          },
+          {
+            "method": "org.kanger.StreamAuthorityRead.lambda$0",
+            "value": 2278344
+          },
+          {
+            "method": "org.kanger.ObservationLayers.<init>",
+            "value": 2150272
+          },
+          {
+            "method": "org.kanger.Linker.<init>",
+            "value": 2094632
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.touchRow",
+            "value": 2002424
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.<init>",
+            "value": 1571104
+          }
+        ],
+        "per_query_cpu_samples": {
+          "0": 9,
+          "1": 10,
+          "3": 3,
+          "4": 14,
+          "2": 9
+        },
+        "truncated_samples": 0
+      },
+      "early_0_127/variable": {
+        "cpu_samples": 56,
+        "allocation_samples": 349,
+        "allocation_sample_weight": 515868320,
+        "cpu_leaf": [
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.storage.Step.getData",
+            "value": 2
+          },
+          {
+            "method": "java.util.HashMap.getNode",
+            "value": 2
+          },
+          {
+            "method": "java.lang.ThreadLocal.get",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.primitives.Argument.isEmpty",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.authority",
+            "value": 2
+          },
+          {
+            "method": "java.util.LinkedHashMap.<init>",
+            "value": 1
+          },
+          {
+            "method": "java.util.TreeMap$NavigableSubMap.lastKey",
+            "value": 1
+          },
+          {
+            "method": "java.util.regex.Pattern.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.isCalculated",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Escalera.setRoot",
+            "value": 1
+          },
+          {
+            "method": "java.util.ArrayList.indexOfRange",
+            "value": 1
+          },
+          {
+            "method": "java.lang.AbstractStringBuilder.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.$SWITCH_TABLE$org$kanger$enums$ArgumentType",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.add",
+            "value": 1
+          },
+          {
+            "method": "java.util.ArrayList.grow",
+            "value": 1
+          },
+          {
+            "method": "java.util.TreeMap$NavigableSubMap$EntrySetView.isEmpty",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.synchronizeSolveIndexReference",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.SemanticTermSnapshot.capture",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.TValue.compareTo",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.isStored",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.setSolves",
+            "value": 1
+          },
+          {
+            "method": "java.util.ArrayList.set",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap.resize",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.get",
+            "value": 1
+          }
+        ],
+        "cpu_nearest_kanger": [
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.Linker.rotateVariables",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.Predicate.getName",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.storage.Step.getData",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.primitives.Argument.isEmpty",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.authority",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$IdIndex.get",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.isCalculated",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Escalera.setRoot",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.$SWITCH_TABLE$org$kanger$enums$ArgumentType",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.add",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.findByDomain",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.synchronizeSolveIndexReference",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.SemanticTermSnapshot.capture",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.TValue.compareTo",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.isStored",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.selectDomainCandidates",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.QueryTaint.recordHypothesis",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.setSolves",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Mind.formatTree",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.get",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.safely",
+            "value": 1
+          }
+        ],
+        "cpu_inclusive_kanger": [
+          {
+            "method": "org.kanger.Mind.query",
+            "value": 56
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrue",
+            "value": 41
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrueCanonical",
+            "value": 41
+          },
+          {
+            "method": "org.kanger.Linker.link",
+            "value": 33
+          },
+          {
+            "method": "org.kanger.Mind.link",
+            "value": 33
+          },
+          {
+            "method": "org.kanger.Linker.rotator",
+            "value": 32
+          },
+          {
+            "method": "org.kanger.Linker.rotateVariables",
+            "value": 28
+          },
+          {
+            "method": "org.kanger.Linker$3.run",
+            "value": 21
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalseCanonical",
+            "value": 15
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalse",
+            "value": 15
+          },
+          {
+            "method": "org.kanger.Linker.access$6",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.forEach",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.Linker$4.run",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.Linker.access$4",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.Mind.compileLine",
+            "value": 11
+          },
+          {
+            "method": "org.kanger.TValueObservation.dispatch",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.Mind.release",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.rollback",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Linker.linkDomains",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Linker.access$3",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Mind.commit",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.commit",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.safely",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.add",
+            "value": 4
+          }
+        ],
+        "allocation_nearest_kanger_weight": [
+          {
+            "method": "org.kanger.primitives.ArgumentsList.convertBase",
+            "value": 148725472
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 75082496
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.collectResolvedLocal",
+            "value": 69124840
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.touchRow",
+            "value": 59163680
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 27345512
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 16092928
+          },
+          {
+            "method": "org.kanger.storage.Escalera.find",
+            "value": 7357728
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.authority",
+            "value": 5144744
+          },
+          {
+            "method": "org.kanger.units.Predicate.getName",
+            "value": 4713320
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.field",
+            "value": 4423536
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 4372848
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.validateMind",
+            "value": 4188848
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.encode",
+            "value": 4097408
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 4081704
+          },
+          {
+            "method": "org.kanger.primitives.TVariableSet.hashCode",
+            "value": 4054760
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 4032992
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.bucket",
+            "value": 3142200
+          },
+          {
+            "method": "org.kanger.ObservationLayers.bucket",
+            "value": 2767600
+          },
+          {
+            "method": "org.kanger.units.TVariable.setMind",
+            "value": 2526224
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.bucket",
+            "value": 2318888
+          },
+          {
+            "method": "org.kanger.storage.Escalera.ensureIndex",
+            "value": 2186312
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.collectIds",
+            "value": 2094816
+          },
+          {
+            "method": "org.kanger.Linker$3.run",
+            "value": 2094784
+          },
+          {
+            "method": "org.kanger.primitives.TVariableSet.equals",
+            "value": 2002576
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.observe",
+            "value": 1909968
+          }
+        ],
+        "per_query_cpu_samples": {
+          "5": 30,
+          "6": 26
+        },
+        "truncated_samples": 0
+      },
+      "late_128_511/ground": {
+        "cpu_samples": 95,
+        "allocation_samples": 511,
+        "allocation_sample_weight": 1812156808,
+        "cpu_leaf": [
+          {
+            "method": "java.lang.invoke.Invokers$Holder.invokeExact_MT",
+            "value": 11
+          },
+          {
+            "method": "java.lang.AbstractStringBuilder.ensureCapacityInternal",
+            "value": 6
+          },
+          {
+            "method": "java.util.HashMap.putVal",
+            "value": 5
+          },
+          {
+            "method": "java.lang.StringBuilder.append",
+            "value": 4
+          },
+          {
+            "method": "java.util.Arrays.copyOf",
+            "value": 3
+          },
+          {
+            "method": "java.util.LinkedHashMap.newNode",
+            "value": 2
+          },
+          {
+            "method": "java.util.HashMap$HashIterator.nextNode",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.changedKeys",
+            "value": 2
+          },
+          {
+            "method": "java.util.IdentityHashMap.put",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.compiler.Parser.getOp",
+            "value": 2
+          },
+          {
+            "method": "java.lang.Long.getChars",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Mind.journalCommitBody",
+            "value": 1
+          },
+          {
+            "method": "java.lang.String.split",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.StreamAuthorityRead.authority",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap.computeIfAbsent",
+            "value": 1
+          },
+          {
+            "method": "java.util.TreeMap.entrySet",
+            "value": 1
+          },
+          {
+            "method": "java.util.regex.Pattern.newCharProperty",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.dependsOn",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.find",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap.newNode",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.find",
+            "value": 1
+          },
+          {
+            "method": "java.text.DecimalFormat.subparse",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.bucket",
+            "value": 1
+          },
+          {
+            "method": "sun.util.locale.provider.LocaleServiceProviderPool.getPool",
+            "value": 1
+          }
+        ],
+        "cpu_nearest_kanger": [
+          {
+            "method": "org.kanger.ResidentTValueRead.field",
+            "value": 11
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.bucket",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.authority",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.stores.LogStore.add",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.StreamAuthorityRead.authority",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.encode",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.encode",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.Rule.containsTerm",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.changedKeys",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.safely",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.compiler.Parser.getOp",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.bucket",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Mind.journalCommitBody",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.enums.Tools.isPeriod",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.dependsOn",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.find",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.scope",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.ObservationLayers.bucket",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.find",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.lambda$1",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.LogEntry.<init>",
+            "value": 1
+          }
+        ],
+        "cpu_inclusive_kanger": [
+          {
+            "method": "org.kanger.Mind.query",
+            "value": 95
+          },
+          {
+            "method": "org.kanger.Mind.compileLine",
+            "value": 63
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalseCanonical",
+            "value": 56
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalse",
+            "value": 56
+          },
+          {
+            "method": "org.kanger.TValueObservation.dispatch",
+            "value": 53
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrue",
+            "value": 39
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrueCanonical",
+            "value": 39
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.<init>",
+            "value": 30
+          },
+          {
+            "method": "org.kanger.Mind.<init>",
+            "value": 30
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.begin",
+            "value": 30
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.safely",
+            "value": 29
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.observe",
+            "value": 27
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.safely",
+            "value": 24
+          },
+          {
+            "method": "org.kanger.ConsumerHooks.constructed",
+            "value": 24
+          },
+          {
+            "method": "org.kanger.TValueObservation$$Lambda.0x00007fa87c0e7000.call",
+            "value": 24
+          },
+          {
+            "method": "org.kanger.TValueObservation.lambda$0",
+            "value": 24
+          },
+          {
+            "method": "org.kanger.TValueObservation.constructed",
+            "value": 24
+          },
+          {
+            "method": "org.kanger.ConsumerHooks$1.constructed",
+            "value": 24
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.observe",
+            "value": 23
+          },
+          {
+            "method": "org.kanger.Mind.commit",
+            "value": 19
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.commit",
+            "value": 19
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 19
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.capture",
+            "value": 17
+          },
+          {
+            "method": "org.kanger.Mind.release",
+            "value": 16
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.rollback",
+            "value": 16
+          }
+        ],
+        "allocation_nearest_kanger_weight": [
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 411582752
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.validateMind",
+            "value": 345977144
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 236695368
+          },
+          {
+            "method": "org.kanger.units.TVariable.setMind",
+            "value": 153955576
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 135629920
+          },
+          {
+            "method": "org.kanger.ObservationLayers.bucket",
+            "value": 93207904
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.<init>",
+            "value": 85334184
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.authority",
+            "value": 28777792
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.encode",
+            "value": 23042424
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.bucket",
+            "value": 18852584
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 18852008
+          },
+          {
+            "method": "org.kanger.storage.Escalera.<init>",
+            "value": 18329328
+          },
+          {
+            "method": "org.kanger.StreamAuthorityRead.authority",
+            "value": 16757472
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.bucket",
+            "value": 13615768
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.observe",
+            "value": 10473392
+          },
+          {
+            "method": "org.kanger.ObservationLayers.collect",
+            "value": 9426456
+          },
+          {
+            "method": "org.kanger.StreamAuthorityRead.encodeRoutes",
+            "value": 9426104
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectTermIds",
+            "value": 8902696
+          },
+          {
+            "method": "org.kanger.Mind.<init>",
+            "value": 8376704
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.touchRow",
+            "value": 7855104
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.lambda$1",
+            "value": 7330688
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.touchRow",
+            "value": 6807816
+          },
+          {
+            "method": "org.kanger.ObservationLayers.<init>",
+            "value": 6807432
+          },
+          {
+            "method": "org.kanger.units.Operation.<init>",
+            "value": 6284424
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectDomainIds",
+            "value": 6283920
+          }
+        ],
+        "per_query_cpu_samples": {
+          "0": 26,
+          "4": 22,
+          "2": 20,
+          "1": 20,
+          "3": 7
+        },
+        "truncated_samples": 0
+      },
+      "late_128_511/variable": {
+        "cpu_samples": 145,
+        "allocation_samples": 423,
+        "allocation_sample_weight": 1037169816,
+        "cpu_leaf": [
+          {
+            "method": "org.kanger.compiler.Parser.getOp",
+            "value": 7
+          },
+          {
+            "method": "java.util.HashMap.getNode",
+            "value": 7
+          },
+          {
+            "method": "java.util.HashMap.putVal",
+            "value": 6
+          },
+          {
+            "method": "java.lang.invoke.Invokers$Holder.invokeExact_MT",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.primitives.Argument.isEmpty",
+            "value": 5
+          },
+          {
+            "method": "java.util.concurrent.ConcurrentHashMap.get",
+            "value": 4
+          },
+          {
+            "method": "java.lang.ThreadLocal$ThreadLocalMap.getEntry",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 3
+          },
+          {
+            "method": "java.util.Properties.getProperty",
+            "value": 3
+          },
+          {
+            "method": "java.util.HashMap.resize",
+            "value": 3
+          },
+          {
+            "method": "java.util.IdentityHashMap.get",
+            "value": 3
+          },
+          {
+            "method": "java.lang.String.hashCode",
+            "value": 3
+          },
+          {
+            "method": "java.lang.String.<init>",
+            "value": 2
+          },
+          {
+            "method": "java.util.LinkedHashSet.<init>",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Linker$3.run",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.primitives.Argument.getObject",
+            "value": 2
+          },
+          {
+            "method": "java.util.TreeMap.getFirstEntry",
+            "value": 2
+          },
+          {
+            "method": "java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire",
+            "value": 2
+          },
+          {
+            "method": "java.util.IdentityHashMap.init",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.Rule.getTree",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.changedKeys",
+            "value": 2
+          },
+          {
+            "method": "java.util.HashMap$HashIterator.nextNode",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.compiler.Parser.nextToken",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Analyzer.checkDatabase",
+            "value": 2
+          },
+          {
+            "method": "java.lang.AbstractStringBuilder.ensureCapacityInternal",
+            "value": 2
+          }
+        ],
+        "cpu_nearest_kanger": [
+          {
+            "method": "org.kanger.OptimizationOptions.enabled",
+            "value": 9
+          },
+          {
+            "method": "org.kanger.compiler.Parser.getOp",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.field",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.primitives.Argument.isEmpty",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.Linker.synchronizeSolveIndexReference",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.collectResolvedLocal",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.units.TVariable.activeMind",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.authority",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$IdIndex.get",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.storage.Escalera.find",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.StreamAuthorityRead.authority",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Linker.linkDomains",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.encode",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Linker$3.run",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.ObservationLayers.get",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Linker.markExcluded",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.primitives.Argument.getObject",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Linker.isValidFor",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.Rule.getTree",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.changedKeys",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.bucket",
+            "value": 2
+          }
+        ],
+        "cpu_inclusive_kanger": [
+          {
+            "method": "org.kanger.Mind.query",
+            "value": 145
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrue",
+            "value": 81
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrueCanonical",
+            "value": 81
+          },
+          {
+            "method": "org.kanger.Mind.link",
+            "value": 77
+          },
+          {
+            "method": "org.kanger.Linker.link",
+            "value": 77
+          },
+          {
+            "method": "org.kanger.Linker.rotator",
+            "value": 77
+          },
+          {
+            "method": "org.kanger.Linker.rotateVariables",
+            "value": 71
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalseCanonical",
+            "value": 64
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalse",
+            "value": 64
+          },
+          {
+            "method": "org.kanger.Linker$3.run",
+            "value": 59
+          },
+          {
+            "method": "org.kanger.Mind.compileLine",
+            "value": 46
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.forEach",
+            "value": 38
+          },
+          {
+            "method": "org.kanger.Linker$4.run",
+            "value": 37
+          },
+          {
+            "method": "org.kanger.TValueObservation.dispatch",
+            "value": 36
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 33
+          },
+          {
+            "method": "org.kanger.Linker.access$4",
+            "value": 33
+          },
+          {
+            "method": "org.kanger.Linker.access$6",
+            "value": 33
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.<init>",
+            "value": 22
+          },
+          {
+            "method": "org.kanger.Mind.<init>",
+            "value": 22
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.begin",
+            "value": 22
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.safely",
+            "value": 19
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.observe",
+            "value": 18
+          },
+          {
+            "method": "org.kanger.Mind.commit",
+            "value": 17
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.commit",
+            "value": 17
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.observe",
+            "value": 16
+          }
+        ],
+        "allocation_nearest_kanger_weight": [
+          {
+            "method": "org.kanger.ResidentTValueRead.layer",
+            "value": 207895840
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.bucket",
+            "value": 125534064
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.forEach",
+            "value": 120960704
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 77503192
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTerms",
+            "value": 51243088
+          },
+          {
+            "method": "org.kanger.units.TVariable.setMind",
+            "value": 46082840
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.lambda$1",
+            "value": 29325488
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 25137096
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$IdIndex.get",
+            "value": 15186952
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.encode",
+            "value": 14139488
+          },
+          {
+            "method": "org.kanger.storage.Escalera.find",
+            "value": 12568256
+          },
+          {
+            "method": "org.kanger.ResidentTValueRead.validateMind",
+            "value": 11520240
+          },
+          {
+            "method": "org.kanger.BeforeAuthorityJournal.observe",
+            "value": 10997112
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 10473912
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 9426160
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.collectResolvedLocal",
+            "value": 8379112
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.findByResolvedDomain",
+            "value": 8378952
+          },
+          {
+            "method": "org.kanger.units.Predicate.getName",
+            "value": 7855448
+          },
+          {
+            "method": "org.kanger.ObservationLayers.bucket",
+            "value": 7855304
+          },
+          {
+            "method": "org.kanger.StreamAuthorityJournal.observe",
+            "value": 7855256
+          },
+          {
+            "method": "org.kanger.Linker.rotator",
+            "value": 6808008
+          },
+          {
+            "method": "org.kanger.Linker.buildDomainIndex",
+            "value": 6807944
+          },
+          {
+            "method": "org.kanger.storage.Escalera.<init>",
+            "value": 6807936
+          },
+          {
+            "method": "org.kanger.Mind.formatTree",
+            "value": 6807528
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 6284344
+          }
+        ],
+        "per_query_cpu_samples": {
+          "5": 79,
+          "6": 66
+        },
+        "truncated_samples": 0
+      }
+    },
+    "exact_profiled_intervals": {
+      "early_0_127": {
+        "per_query_median_ns": {
+          "0": 892215.5,
+          "1": 870153.0,
+          "2": 868561.0,
+          "3": 479425.0,
+          "4": 1080294.0,
+          "5": 2977782.0,
+          "6": 2285122.0
+        },
+        "per_query_median_allocated_bytes": {
+          "0": 809152.0,
+          "1": 809776.0,
+          "2": 810752.0,
+          "3": 438448.0,
+          "4": 961400.0,
+          "5": 1847464.0,
+          "6": 1566752.0
+        },
+        "variable_time_share": 0.5230074551356776,
+        "median_query_cycle_bytes": 7243744.0
+      },
+      "late_128_511": {
+        "per_query_median_ns": {
+          "0": 725163.5,
+          "1": 679796.0,
+          "2": 666722.0,
+          "3": 370383.5,
+          "4": 862647.0,
+          "5": 2120438.5,
+          "6": 1633222.5
+        },
+        "per_query_median_allocated_bytes": {
+          "0": 788392.0,
+          "1": 789016.0,
+          "2": 791288.0,
+          "3": 429616.0,
+          "4": 938024.0,
+          "5": 1769808.0,
+          "6": 1505088.0
+        },
+        "variable_time_share": 0.5333349385505183,
+        "median_query_cycle_bytes": 7007680.0
+      }
+    },
+    "jfr_sha256": "70b5b7b1e60595fadd5372090fad243053757708735b8e56b2852503f8ea456f",
+    "sampling_ms": 5,
+    "speedup_claim": false
+  },
+  {
+    "label": "keys-off-0-clean-profile",
+    "base": "keys",
+    "mode": "clean",
+    "rep": 0,
+    "session_override": false,
+    "custom_query_events": 3584,
+    "sample_events": {
+      "jdk.ObjectAllocationSample": 1174,
+      "jdk.ExecutionSample": 218
+    },
+    "excluded": {
+      "outside_query": 172,
+      "without_Mind_query_stack": 1
+    },
+    "groups": {
+      "early_0_127/ground": {
+        "cpu_samples": 18,
+        "allocation_samples": 168,
+        "allocation_sample_weight": 200971448,
+        "cpu_leaf": [
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Analyzer.checkRight",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Predicate.toString",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1$52.<init>",
+            "value": 1
+          },
+          {
+            "method": "java.util.ArrayList$Itr.next",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap.newNode",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Mind.setUnitDeleted",
+            "value": 1
+          },
+          {
+            "method": "java.util.LinkedHashMap$LinkedKeySet.iterator",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Operation.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.User.isClosed",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.FrontierDomain.capture",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.isCalculated",
+            "value": 1
+          },
+          {
+            "method": "java.util.Formatter$FormatSpecifier.printCharacter",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.Solve.getPredicate",
+            "value": 1
+          },
+          {
+            "method": "java.lang.AbstractStringBuilder.ensureCapacityInternal",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap.resize",
+            "value": 1
+          }
+        ],
+        "cpu_nearest_kanger": [
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.Analyzer.checkRight",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Predicate.toString",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1$52.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.setMind",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.collectDynamicRuleTerms",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Mind.setUnitDeleted",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectTermIds",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Operation.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.User.isClosed",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.FrontierDomain.capture",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.isCalculated",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.Solve.toString",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.Solve.getPredicate",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.FrontierDomain.renderQuery",
+            "value": 1
+          }
+        ],
+        "cpu_inclusive_kanger": [
+          {
+            "method": "org.kanger.Mind.query",
+            "value": 18
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrue",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrueCanonical",
+            "value": 12
+          },
+          {
+            "method": "org.kanger.Analyzer.analyze",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.Mind.analyze",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.begin",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalse",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalseCanonical",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Mind.init",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.<init>",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Mind.<init>",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Analyzer.checkDatabase",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.calculator.Calculator.<init>",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.Mind.queryTransaction",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.calculator.Functions.<init>",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.Analyzer.checkRight",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.Mind.release",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.rollback",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.Mind.pack",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.Mind.finishTransactionLocked",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.Mind.finalizeTransactionRootLocked",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.Mind.compileLine",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.FrontierDomain.capture",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.Analyzer.addFrontier",
+            "value": 3
+          }
+        ],
+        "allocation_nearest_kanger_weight": [
+          {
+            "method": "org.kanger.factory.RuleFactory.containsPromotion",
+            "value": 72268176
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectTermIds",
+            "value": 58488424
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 14395392
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 10957648
+          },
+          {
+            "method": "org.kanger.storage.Escalera.<init>",
+            "value": 6805456
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 5148152
+          },
+          {
+            "method": "org.kanger.units.Operation.<init>",
+            "value": 3180680
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTerms",
+            "value": 3029328
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 2207128
+          },
+          {
+            "method": "org.kanger.primitives.Solve.getTerms",
+            "value": 2206080
+          },
+          {
+            "method": "org.kanger.Linker.<init>",
+            "value": 1569888
+          },
+          {
+            "method": "org.kanger.Mind.<init>",
+            "value": 1458232
+          },
+          {
+            "method": "org.kanger.compiler.Token.getToken",
+            "value": 1047400
+          },
+          {
+            "method": "org.kanger.storage.Escalera.add",
+            "value": 1047384
+          },
+          {
+            "method": "org.kanger.primitives.Solve.toString",
+            "value": 1047376
+          },
+          {
+            "method": "org.kanger.units.Rule.setMind",
+            "value": 859176
+          },
+          {
+            "method": "org.kanger.PortableMindLayer.<init>",
+            "value": 821808
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.hasActiveRuleWithTerm",
+            "value": 635856
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.copyTermIndexLocked",
+            "value": 560256
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectDomainIds",
+            "value": 523712
+          },
+          {
+            "method": "org.kanger.Mind.init",
+            "value": 523712
+          },
+          {
+            "method": "org.kanger.Mind.formatTree",
+            "value": 523712
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$IdIndex.addInternal",
+            "value": 523712
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.iterator",
+            "value": 523712
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.<init>",
+            "value": 523704
+          }
+        ],
+        "per_query_cpu_samples": {
+          "0": 2,
+          "2": 5,
+          "4": 5,
+          "1": 5,
+          "3": 1
+        },
+        "truncated_samples": 0
+      },
+      "early_0_127/variable": {
+        "cpu_samples": 46,
+        "allocation_samples": 255,
+        "allocation_sample_weight": 247496256,
+        "cpu_leaf": [
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 4
+          },
+          {
+            "method": "java.lang.ThreadLocal$ThreadLocalMap.getEntry",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.primitives.Argument.isEmpty",
+            "value": 2
+          },
+          {
+            "method": "java.util.HashMap.putVal",
+            "value": 2
+          },
+          {
+            "method": "java.text.DecimalFormat.toPattern",
+            "value": 1
+          },
+          {
+            "method": "java.util.LinkedHashSet.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.updateDatabase",
+            "value": 1
+          },
+          {
+            "method": "java.lang.String.equals",
+            "value": 1
+          },
+          {
+            "method": "jdk.internal.util.ArraysSupport.newLength",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.pack",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.Argument.getObject",
+            "value": 1
+          },
+          {
+            "method": "java.lang.ThreadLocal$ThreadLocalMap.set",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap.newNode",
+            "value": 1
+          },
+          {
+            "method": "java.util.ArrayList$Itr.hasNext",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.Solve.toString",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Mind.<init>",
+            "value": 1
+          },
+          {
+            "method": "java.util.concurrent.CopyOnWriteArrayList.addAllAbsent",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap$HashIterator.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Term.equalsTo",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.applyStamp",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.collectResolvedLocal",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.stores.HypothesisStore.equalsBase",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.convertBase",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap$Values.<init>",
+            "value": 1
+          }
+        ],
+        "cpu_nearest_kanger": [
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.units.TVariable.activeMind",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.primitives.Argument.isEmpty",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Linker.rotator",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$IdIndex.get",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.updateDatabase",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.OptimizationOptions.enabled",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.pack",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.Argument.getObject",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.TVariable.setMind",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.collectIds",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.Solve.toString",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Mind.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.FValueFactory.release",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.find",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Term.equalsTo",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.applyStamp",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.collectResolvedLocal",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.stores.HypothesisStore.equalsBase",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.convertBase",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.compiler.Compiller.compileQuainter",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.rotateVariables",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.effectiveView",
+            "value": 1
+          }
+        ],
+        "cpu_inclusive_kanger": [
+          {
+            "method": "org.kanger.Mind.query",
+            "value": 46
+          },
+          {
+            "method": "org.kanger.Mind.link",
+            "value": 35
+          },
+          {
+            "method": "org.kanger.Linker.link",
+            "value": 35
+          },
+          {
+            "method": "org.kanger.Linker.rotator",
+            "value": 33
+          },
+          {
+            "method": "org.kanger.Linker.rotateVariables",
+            "value": 27
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrue",
+            "value": 24
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrueCanonical",
+            "value": 24
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalseCanonical",
+            "value": 22
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalse",
+            "value": 22
+          },
+          {
+            "method": "org.kanger.Linker$3.run",
+            "value": 20
+          },
+          {
+            "method": "org.kanger.Linker.access$6",
+            "value": 18
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.forEach",
+            "value": 18
+          },
+          {
+            "method": "org.kanger.Linker$4.run",
+            "value": 18
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 14
+          },
+          {
+            "method": "org.kanger.Linker.access$4",
+            "value": 14
+          },
+          {
+            "method": "org.kanger.Mind.compileLine",
+            "value": 5
+          },
+          {
+            "method": "org.kanger.Linker.updateDatabase",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.primitives.Argument.isEmpty",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.Mind.release",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.rollback",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.units.Domain.isStored",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.Linker.linkDomains",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.Linker.access$3",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.units.TVariable.activeMind",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.Linker.isValidFor",
+            "value": 3
+          }
+        ],
+        "allocation_nearest_kanger_weight": [
+          {
+            "method": "org.kanger.storage.Escalera.ensureIndex",
+            "value": 79019000
+          },
+          {
+            "method": "org.kanger.Linker.synchronizeSolveIndexReference",
+            "value": 34322488
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 22280800
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 15521576
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 8116624
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 4749800
+          },
+          {
+            "method": "org.kanger.storage.Escalera.find",
+            "value": 4414400
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.createCVar",
+            "value": 3775744
+          },
+          {
+            "method": "org.kanger.units.Predicate.getName",
+            "value": 3479360
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$IdIndex.get",
+            "value": 3478376
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 3439720
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.collectIds",
+            "value": 3254256
+          },
+          {
+            "method": "org.kanger.primitives.TVariableSet.hashCode",
+            "value": 3028008
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.convertBase",
+            "value": 2730736
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.collectResolvedLocal",
+            "value": 2392912
+          },
+          {
+            "method": "org.kanger.Linker.markExcluded",
+            "value": 2392912
+          },
+          {
+            "method": "org.kanger.Linker.buildDomainIndex",
+            "value": 2355016
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getFunctions",
+            "value": 2020208
+          },
+          {
+            "method": "org.kanger.Linker.rotator",
+            "value": 1869288
+          },
+          {
+            "method": "org.kanger.units.TSolve.<init>",
+            "value": 1869256
+          },
+          {
+            "method": "org.kanger.units.Domain.isUsed",
+            "value": 1869240
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectTermIds",
+            "value": 1795144
+          },
+          {
+            "method": "org.kanger.units.Predicate.toString",
+            "value": 1770440
+          },
+          {
+            "method": "org.kanger.units.TVariable.setMind",
+            "value": 1683224
+          },
+          {
+            "method": "org.kanger.Linker.rotateVariables",
+            "value": 1571104
+          }
+        ],
+        "per_query_cpu_samples": {
+          "5": 28,
+          "6": 18
+        },
+        "truncated_samples": 0
+      },
+      "late_128_511/variable": {
+        "cpu_samples": 81,
+        "allocation_samples": 365,
+        "allocation_sample_weight": 1045677584,
+        "cpu_leaf": [
+          {
+            "method": "java.util.HashMap.getNode",
+            "value": 6
+          },
+          {
+            "method": "java.lang.ThreadLocal$ThreadLocalMap.getEntry",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Linker.updateDatabase",
+            "value": 4
+          },
+          {
+            "method": "java.util.HashMap.resize",
+            "value": 3
+          },
+          {
+            "method": "java.util.HashMap.putVal",
+            "value": 3
+          },
+          {
+            "method": "java.util.HashMap$HashIterator.<init>",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.primitives.Argument.getObject",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.compiler.Parser.getOp",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Linker.access$5",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Linker.rotator",
+            "value": 2
+          },
+          {
+            "method": "java.util.HashMap.keySet",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.Rule.getTree",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.factory.FValueFactory.release",
+            "value": 2
+          },
+          {
+            "method": "java.util.Properties.getProperty",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.primitives.Argument.isEmpty",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.Rule.setMind",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getStamp",
+            "value": 1
+          },
+          {
+            "method": "java.util.ArrayList$Itr.next",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Step.getData",
+            "value": 1
+          },
+          {
+            "method": "java.util.AbstractCollection.retainAll",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.isUsed",
+            "value": 1
+          },
+          {
+            "method": "java.util.LinkedHashMap.sequencedKeySet",
+            "value": 1
+          },
+          {
+            "method": "java.text.DecimalFormat.subparseNumber",
+            "value": 1
+          },
+          {
+            "method": "java.util.Arrays.copyOf",
+            "value": 1
+          }
+        ],
+        "cpu_nearest_kanger": [
+          {
+            "method": "org.kanger.units.TVariable.activeMind",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Linker.updateDatabase",
+            "value": 4
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.collectResolvedLocal",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.OptimizationOptions.enabled",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.Domain.isUsed",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.primitives.Solve.toString",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.primitives.Argument.getObject",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.compiler.Parser.getOp",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Linker.access$5",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Linker.rotator",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.Rule.getTree",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.containsPromotion",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.collectIds",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.factory.FValueFactory.release",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$IdIndex.get",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.primitives.Argument.isEmpty",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.Rule.setMind",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getStamp",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.linkDomains",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Escalera.find",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.storage.Step.getData",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.computeBatchSummary",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 1
+          }
+        ],
+        "cpu_inclusive_kanger": [
+          {
+            "method": "org.kanger.Mind.query",
+            "value": 81
+          },
+          {
+            "method": "org.kanger.Mind.link",
+            "value": 61
+          },
+          {
+            "method": "org.kanger.Linker.link",
+            "value": 61
+          },
+          {
+            "method": "org.kanger.Linker.rotator",
+            "value": 59
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrue",
+            "value": 57
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrueCanonical",
+            "value": 57
+          },
+          {
+            "method": "org.kanger.Linker.rotateVariables",
+            "value": 44
+          },
+          {
+            "method": "org.kanger.Linker$3.run",
+            "value": 36
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.forEach",
+            "value": 28
+          },
+          {
+            "method": "org.kanger.Linker$4.run",
+            "value": 26
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalse",
+            "value": 24
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalseCanonical",
+            "value": 24
+          },
+          {
+            "method": "org.kanger.Linker.access$6",
+            "value": 22
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 18
+          },
+          {
+            "method": "org.kanger.Linker.access$4",
+            "value": 18
+          },
+          {
+            "method": "org.kanger.Linker.updateDatabase",
+            "value": 13
+          },
+          {
+            "method": "org.kanger.Linker.linkDomains",
+            "value": 10
+          },
+          {
+            "method": "org.kanger.Linker.access$3",
+            "value": 10
+          },
+          {
+            "method": "org.kanger.primitives.Argument.getValue",
+            "value": 9
+          },
+          {
+            "method": "org.kanger.units.TVariable.getValue",
+            "value": 9
+          },
+          {
+            "method": "org.kanger.Linker.access$2",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.Linker.selectDomainCandidates",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.add",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.findByResolvedDomain",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.Mind.compileLine",
+            "value": 7
+          }
+        ],
+        "allocation_nearest_kanger_weight": [
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 161818192
+          },
+          {
+            "method": "org.kanger.stores.ValuesStore.add",
+            "value": 138776472
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 121495256
+          },
+          {
+            "method": "org.kanger.Linker.linkDatabase",
+            "value": 105261456
+          },
+          {
+            "method": "org.kanger.units.Domain.isUsed",
+            "value": 92165648
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 83266608
+          },
+          {
+            "method": "org.kanger.stores.LogStore.add",
+            "value": 80525032
+          },
+          {
+            "method": "org.kanger.primitives.Solve.toString",
+            "value": 73839808
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex.collectResolvedLocal",
+            "value": 13615976
+          },
+          {
+            "method": "org.kanger.storage.Escalera.find",
+            "value": 8378960
+          },
+          {
+            "method": "org.kanger.primitives.TVariableSet.hashCode",
+            "value": 8378960
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$IdIndex.get",
+            "value": 7331704
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 7331648
+          },
+          {
+            "method": "org.kanger.Linker.buildDomainIndex",
+            "value": 6807992
+          },
+          {
+            "method": "org.kanger.Linker.linkDomains",
+            "value": 6284184
+          },
+          {
+            "method": "org.kanger.units.TVariable.setMind",
+            "value": 5760696
+          },
+          {
+            "method": "org.kanger.Linker.rotator",
+            "value": 5760680
+          },
+          {
+            "method": "org.kanger.Mind.formatTree",
+            "value": 5760656
+          },
+          {
+            "method": "org.kanger.units.Predicate.getName",
+            "value": 4713352
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.convertBase",
+            "value": 4713304
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.collectIds",
+            "value": 4713216
+          },
+          {
+            "method": "org.kanger.units.Predicate.toString",
+            "value": 4713008
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.pack",
+            "value": 3665592
+          },
+          {
+            "method": "org.kanger.units.Operation.<init>",
+            "value": 3142208
+          },
+          {
+            "method": "org.kanger.Linker.isValidFor",
+            "value": 3142200
+          }
+        ],
+        "per_query_cpu_samples": {
+          "5": 41,
+          "6": 40
+        },
+        "truncated_samples": 0
+      },
+      "late_128_511/ground": {
+        "cpu_samples": 33,
+        "allocation_samples": 253,
+        "allocation_sample_weight": 488414200,
+        "cpu_leaf": [
+          {
+            "method": "java.util.HashMap$HashIterator.nextNode",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 2
+          },
+          {
+            "method": "java.util.HashMap.put",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Mind.isUnitDeleted",
+            "value": 2
+          },
+          {
+            "method": "java.lang.ThreadLocal$ThreadLocalMap.set",
+            "value": 1
+          },
+          {
+            "method": "java.util.AbstractCollection.addAll",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.iterator",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap.hash",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Mind.copyUnitState",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap$HashIterator.<init>",
+            "value": 1
+          },
+          {
+            "method": "java.util.Formatter.ensureOpen",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.CommentFactory.rawGet",
+            "value": 1
+          },
+          {
+            "method": "java.lang.StringBuilder.<init>",
+            "value": 1
+          },
+          {
+            "method": "java.util.Formatter.format",
+            "value": 1
+          },
+          {
+            "method": "java.util.Vector.removeAllElements",
+            "value": 1
+          },
+          {
+            "method": "java.util.HashMap.putVal",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.User.isClosed",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.SemanticTermSnapshot.castMembers",
+            "value": 1
+          },
+          {
+            "method": "java.util.Collections.newSetFromMap",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.compiler.Parser.getOp",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.compiler.Parser.nextToken",
+            "value": 1
+          },
+          {
+            "method": "java.util.Vector.<init>",
+            "value": 1
+          },
+          {
+            "method": "java.lang.AbstractStringBuilder.inflateIfNeededFor",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.isPromoted",
+            "value": 1
+          },
+          {
+            "method": "java.util.Formatter.<init>",
+            "value": 1
+          }
+        ],
+        "cpu_nearest_kanger": [
+          {
+            "method": "org.kanger.factory.DictionaryFactory.collectDynamicRuleTerms",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.primitives.Solve.getTerms",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.primitives.Solve.toString",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.Mind.isUnitDeleted",
+            "value": 2
+          },
+          {
+            "method": "org.kanger.units.TVariable.setMind",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.iterator",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Mind.copyUnitState",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrueCanonical",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.CommentFactory.rawGet",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Domain.toString",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.transaction",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectTermIds",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.User.isClosed",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.SemanticTermSnapshot.castMembers",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Linker.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.compiler.Parser.getOp",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.compiler.Parser.nextToken",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.Mind.<init>",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.units.Predicate.getName",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.isPromoted",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.CommentFactory.transaction",
+            "value": 1
+          },
+          {
+            "method": "org.kanger.factory.TValueFactory.transaction",
+            "value": 1
+          }
+        ],
+        "cpu_inclusive_kanger": [
+          {
+            "method": "org.kanger.Mind.query",
+            "value": 33
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalse",
+            "value": 20
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckFalseCanonical",
+            "value": 20
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrue",
+            "value": 13
+          },
+          {
+            "method": "org.kanger.Mind.queryCheckTrueCanonical",
+            "value": 13
+          },
+          {
+            "method": "org.kanger.Mind.compileLine",
+            "value": 11
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.begin",
+            "value": 9
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.<init>",
+            "value": 9
+          },
+          {
+            "method": "org.kanger.Mind.<init>",
+            "value": 9
+          },
+          {
+            "method": "org.kanger.Mind.release",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.rollback",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.Mind.pack",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.Mind.finishTransactionLocked",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.Mind.finalizeTransactionRootLocked",
+            "value": 8
+          },
+          {
+            "method": "org.kanger.Mind.queryTransaction",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.collectDynamicRuleTerms",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.factory.DictionaryFactory.pack",
+            "value": 7
+          },
+          {
+            "method": "org.kanger.Mind.init",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Analyzer.analyze",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Mind.analyze",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.Analyzer.checkDatabase",
+            "value": 6
+          },
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.calculator.Calculator.<init>",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.calculator.Functions.<init>",
+            "value": 3
+          },
+          {
+            "method": "org.kanger.compiler.Compiller.compileLine",
+            "value": 3
+          }
+        ],
+        "allocation_nearest_kanger_weight": [
+          {
+            "method": "org.kanger.calculator.Functions$1.<init>",
+            "value": 127255184
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTerms",
+            "value": 101935544
+          },
+          {
+            "method": "org.kanger.storage.Escalera.<init>",
+            "value": 94787328
+          },
+          {
+            "method": "org.kanger.enums.Tools.parseDate",
+            "value": 58126968
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectTermIds",
+            "value": 9426472
+          },
+          {
+            "method": "org.kanger.storage.Escalera.indexStep",
+            "value": 7331624
+          },
+          {
+            "method": "org.kanger.Linker.<init>",
+            "value": 6807904
+          },
+          {
+            "method": "org.kanger.units.TVariable.setMind",
+            "value": 6284312
+          },
+          {
+            "method": "org.kanger.units.Predicate.getName",
+            "value": 5237000
+          },
+          {
+            "method": "org.kanger.storage.Escalera.find",
+            "value": 4713264
+          },
+          {
+            "method": "org.kanger.Mind.<init>",
+            "value": 4713160
+          },
+          {
+            "method": "org.kanger.units.Operation.<init>",
+            "value": 4189624
+          },
+          {
+            "method": "org.kanger.PortableMindLayer.<init>",
+            "value": 4189520
+          },
+          {
+            "method": "org.kanger.primitives.Solve.toString",
+            "value": 3665864
+          },
+          {
+            "method": "org.kanger.Mind.init",
+            "value": 3142160
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.collectDomainIds",
+            "value": 3142016
+          },
+          {
+            "method": "org.kanger.primitives.ArgumentsList.getTVariables",
+            "value": 3142000
+          },
+          {
+            "method": "org.kanger.factory.RuleFactory.hasActiveRuleWithTerm",
+            "value": 2618504
+          },
+          {
+            "method": "org.kanger.TechnicalMindTransaction.<init>",
+            "value": 2618336
+          },
+          {
+            "method": "org.kanger.factory.RuleCandidateIndex$IdIndex.snapshot",
+            "value": 2094768
+          },
+          {
+            "method": "org.kanger.calculator.Predicates$1.<init>",
+            "value": 2094760
+          },
+          {
+            "method": "org.kanger.compiler.Token.getToken",
+            "value": 2094752
+          },
+          {
+            "method": "org.kanger.units.Rule.containsTerm",
+            "value": 2094736
+          },
+          {
+            "method": "org.kanger.primitives.Solve.getTerms",
+            "value": 1571128
+          },
+          {
+            "method": "org.kanger.Mind.formatTree",
+            "value": 1571120
+          }
+        ],
+        "per_query_cpu_samples": {
+          "1": 8,
+          "3": 4,
+          "2": 4,
+          "0": 5,
+          "4": 12
+        },
+        "truncated_samples": 0
+      }
+    },
+    "exact_profiled_intervals": {
+      "early_0_127": {
+        "per_query_median_ns": {
+          "0": 436991.5,
+          "1": 395455.0,
+          "2": 401244.0,
+          "3": 216125.0,
+          "4": 531892.0,
+          "5": 2064666.0,
+          "6": 1611164.5
+        },
+        "per_query_median_allocated_bytes": {
+          "0": 325048.0,
+          "1": 325416.0,
+          "2": 325912.0,
+          "3": 173320.0,
+          "4": 427512.0,
+          "5": 1276576.0,
+          "6": 1019016.0
+        },
+        "variable_time_share": 0.616245306883861,
+        "median_query_cycle_bytes": 3872800.0
+      },
+      "late_128_511": {
+        "per_query_median_ns": {
+          "0": 361986.0,
+          "1": 342337.0,
+          "2": 338225.5,
+          "3": 190101.5,
+          "4": 470877.0,
+          "5": 1601700.5,
+          "6": 1206035.5
+        },
+        "per_query_median_allocated_bytes": {
+          "0": 318576.0,
+          "1": 318944.0,
+          "2": 319440.0,
+          "3": 170984.0,
+          "4": 418296.0,
+          "5": 1227944.0,
+          "6": 982592.0
+        },
+        "variable_time_share": 0.5991762384648889,
+        "median_query_cycle_bytes": 3756776.0
+      }
+    },
+    "jfr_sha256": "e988a03c0aa79ee3479bd634ef1e80062c8c0f3dac5b78089897553389ccfab6",
+    "sampling_ms": 5,
+    "speedup_claim": false
+  }
+]

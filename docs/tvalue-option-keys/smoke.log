@@ -1,0 +1,7 @@
+START smoke-old-off-0-candidate
+DONE smoke-old-off-0-candidate
+START smoke-current-off-0-candidate
+DONE smoke-current-off-0-candidate
+START smoke-keys-off-0-candidate
+DONE smoke-keys-off-0-candidate
+OPTION_KEYS_RUN_OK 3

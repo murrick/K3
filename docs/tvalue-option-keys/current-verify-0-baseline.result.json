@@ -1,0 +1,31 @@
+{
+  "impl": "current",
+  "flag": "verify",
+  "rep": 0,
+  "mode": "baseline",
+  "profile": false,
+  "repeats": 24,
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx512m",
+    "-Duser.home=/tmp/option-keys-ih4hgi8k",
+    "-Dresult.path=/workspace/K3/docs/tvalue-option-keys/current-verify-0-baseline",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-Dkanger.experiment.verifyTValueIndex=true",
+    "-Dkanger.experiment.verifySolveSync=true",
+    "-cp",
+    "../build/option-keys/fixture:../build/option-keys/baseline.jar:../build/option-keys/current-hooked:../K3-current-native/kanger/resources:../K3-current-native/kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ResidentCurrentRunner",
+    "attached",
+    "24"
+  ],
+  "exit_code": 0
+}

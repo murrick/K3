@@ -1,0 +1,64 @@
+{
+  "JVMs": 43,
+  "queries": 20426,
+  "exact_variable_rows": 5836,
+  "trace_replays": 1606,
+  "distinct_trace_event_comparisons": 948,
+  "native_rows_identical": true,
+  "metrics": {
+    "current-off-0-candidate-profile/early": {
+      "query_cycle_allocated_bytes": 9380000.0,
+      "query_cycle_wall_ns": 11797438.0
+    },
+    "current-off-0-candidate-profile/late": {
+      "query_cycle_allocated_bytes": 9113616.0,
+      "query_cycle_wall_ns": 7617959.0
+    },
+    "current-off-0-clean-profile/early": {
+      "query_cycle_allocated_bytes": 4344496.0,
+      "query_cycle_wall_ns": 6042481.0
+    },
+    "current-off-0-clean-profile/late": {
+      "query_cycle_allocated_bytes": 4218976.0,
+      "query_cycle_wall_ns": 4557249.5
+    },
+    "keys-off-0-candidate-profile/early": {
+      "query_cycle_allocated_bytes": 7243744.0,
+      "query_cycle_wall_ns": 10313810.0
+    },
+    "keys-off-0-candidate-profile/late": {
+      "query_cycle_allocated_bytes": 7007680.0,
+      "query_cycle_wall_ns": 7246555.0
+    },
+    "keys-off-0-clean-profile/early": {
+      "query_cycle_allocated_bytes": 3872800.0,
+      "query_cycle_wall_ns": 5785492.5
+    },
+    "keys-off-0-clean-profile/late": {
+      "query_cycle_allocated_bytes": 3756776.0,
+      "query_cycle_wall_ns": 4569508.0
+    }
+  },
+  "candidate_over_baseline_ratios": {
+    "keys-off-0-candidate-profile/early": {
+      "query_cycle_allocated_bytes": 0.7722541577825159,
+      "query_cycle_wall_ns": 0.8742415090462862
+    },
+    "keys-off-0-candidate-profile/late": {
+      "query_cycle_allocated_bytes": 0.7689242118605831,
+      "query_cycle_wall_ns": 0.9512462590045444
+    },
+    "keys-off-0-clean-profile/early": {
+      "query_cycle_allocated_bytes": 0.8914267615852334,
+      "query_cycle_wall_ns": 0.9574697049109463
+    },
+    "keys-off-0-clean-profile/late": {
+      "query_cycle_allocated_bytes": 0.8904473502575032,
+      "query_cycle_wall_ns": 1.0026898900312569
+    }
+  },
+  "time_ratios_diagnostic_only": true,
+  "inference_speedup_qualified": false,
+  "SMART_qualified": false,
+  "full_corpus_qualified": false
+}

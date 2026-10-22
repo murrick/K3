@@ -1,0 +1,12 @@
+{
+  "runtime": "openjdk version \"21.0.12.1\" 2026-08-18\nOpenJDK Runtime Environment (build 21.0.12.1+1-1-deb13u1-Debian)\nOpenJDK 64-Bit Server VM (build 21.0.12.1+1-1-deb13u1-Debian, mixed mode, sharing)\n",
+  "jfr": "21.0.2\n",
+  "jdk_download": "https://download.oracle.com/java/21/archive/jdk-21.0.2_linux-x64_bin.tar.gz",
+  "jdk_archive_sha256": "9f1f4a7f25ef6a73255657c40a6d7714f2d269cf15fb2ff1dc9c0c8b56623a6f",
+  "ecj_download": "https://repo.maven.apache.org/maven2/org/eclipse/jdt/ecj/3.33.0/ecj-3.33.0.jar",
+  "ecj_sha256": "f7686c4960cf70c2ebc5c500a73a8cfc04541b730c18f1c5c21329889b137f45",
+  "git": "git version 2.52.0\n",
+  "python": "Python 3.12.14\n",
+  "native_tree_restoration": "git archive exact pin | tar -x -C sibling",
+  "available_AGENTS": []
+}

@@ -1,0 +1,29 @@
+{
+  "impl": "old",
+  "flag": "off",
+  "rep": 0,
+  "mode": "candidate",
+  "profile": false,
+  "repeats": 2,
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx512m",
+    "-Duser.home=/tmp/option-keys-3gy67wt0",
+    "-Dresult.path=/workspace/K3/docs/tvalue-option-keys/smoke-old-off-0-candidate",
+    "-Dkanger.experiment.preserveTValueIndex=false",
+    "-Dkanger.experiment.versionedSolveSync=false",
+    "-Dkanger.experiment.resolvedCauseWeights=false",
+    "-Dkanger.experiment.compactCauseWeights=false",
+    "-Dkanger.experiment.candidateMembershipFilter=false",
+    "-Dkanger.experiment.singleTValueLookup=false",
+    "-Dkanger.experiment.residentBaseComparison=false",
+    "-Dkanger.experiment.compactFindSnapshots=false",
+    "-cp",
+    "../build/option-keys/fixture:../build/option-keys/candidate.jar:../build/option-keys/old-hooked:../K3-observer-native/kanger/resources:../K3-observer-native/kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ResidentCurrentRunner",
+    "attached",
+    "2"
+  ],
+  "exit_code": 0
+}
