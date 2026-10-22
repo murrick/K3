@@ -1,0 +1,1567 @@
+{
+  "executed_JVMs": 80,
+  "archived_unaligned_logged_JVMs": 4,
+  "archived_trace_replays": 240,
+  "executed_queries": 33600,
+  "JVMs": 76,
+  "unlogged_JVMs": 72,
+  "diagnostic_logged_JVMs": 4,
+  "queries": 31920,
+  "trace_replays": 2400,
+  "identical_trace_pairs": 1200,
+  "metrics": [
+    {
+      "profile": "default",
+      "flag": "on",
+      "windows": {
+        "0:3": {
+          "wall_ns": {
+            "paired_ratios": [
+              0.9711298608337268,
+              1.0451184024668427,
+              0.9377404567510723
+            ],
+            "median_ratio": 0.9711298608337268,
+            "slower_pairs": 1,
+            "median_ns_saved": 857792
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              0.9712051110524762,
+              1.0449873618211234,
+              0.9403888656520217
+            ],
+            "median_ratio": 0.9712051110524762,
+            "slower_pairs": 1,
+            "median_ns_saved": 830375
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9949308983781767,
+              0.9940697364918818,
+              1.002720487201972
+            ],
+            "median_ratio": 0.9949308983781767,
+            "slower_pairs": 1,
+            "median_bytes_saved": 53272
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9941719584241621,
+              0.993843870514445,
+              1.0022501469044953
+            ],
+            "median_ratio": 0.9941719584241621,
+            "slower_pairs": 1,
+            "median_bytes_saved": 59032
+          }
+        },
+        "3:9": {
+          "wall_ns": {
+            "paired_ratios": [
+              0.9971969286476363,
+              1.0903822067067295,
+              1.1071702722285477
+            ],
+            "median_ratio": 1.0903822067067295,
+            "slower_pairs": 2,
+            "median_ns_saved": -1370729.0
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              0.9947356210184579,
+              1.091967012838753,
+              1.1111673877585482
+            ],
+            "median_ratio": 1.091967012838753,
+            "slower_pairs": 2,
+            "median_ns_saved": -1349374.5
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9954338963999284,
+              0.9905540715034082,
+              0.9923143825693774
+            ],
+            "median_ratio": 0.9923143825693774,
+            "slower_pairs": 0,
+            "median_bytes_saved": 72532.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9952383636741582,
+              0.9902030079779021,
+              0.9920040446603788
+            ],
+            "median_ratio": 0.9920040446603788,
+            "slower_pairs": 0,
+            "median_bytes_saved": 72624.0
+          }
+        },
+        "12:24": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.0771470178043625,
+              1.2115161814200774,
+              0.9511871987423071
+            ],
+            "median_ratio": 1.0771470178043625,
+            "slower_pairs": 2,
+            "median_ns_saved": -876957.5
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.0821595338582344,
+              1.2014665102422133,
+              0.951540181532947
+            ],
+            "median_ratio": 1.0821595338582344,
+            "slower_pairs": 2,
+            "median_ns_saved": -898770.5
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              1.0005650592361377,
+              1.0866106786835996,
+              0.9707633802683318
+            ],
+            "median_ratio": 1.0005650592361377,
+            "slower_pairs": 2,
+            "median_bytes_saved": -4992.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              1.0002268520497233,
+              1.0845323811733432,
+              0.9684787148838898
+            ],
+            "median_ratio": 1.0002268520497233,
+            "slower_pairs": 2,
+            "median_bytes_saved": -1932.0
+          }
+        },
+        "24:36": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.0781895641301655,
+              0.9744581462685836,
+              1.2560751759602924
+            ],
+            "median_ratio": 1.0781895641301655,
+            "slower_pairs": 2,
+            "median_ns_saved": -575895.5
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.0782970558318339,
+              0.9704495165985447,
+              1.2474067463674694
+            ],
+            "median_ratio": 1.0782970558318339,
+            "slower_pairs": 2,
+            "median_ns_saved": -553565.0
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9919233999961617,
+              0.991410855840013,
+              1.0515335334517775
+            ],
+            "median_ratio": 0.9919233999961617,
+            "slower_pairs": 1,
+            "median_bytes_saved": 65652.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9916154755853663,
+              0.9910835155082284,
+              1.0480368325968892
+            ],
+            "median_ratio": 0.9916154755853663,
+            "slower_pairs": 1,
+            "median_bytes_saved": 65652.0
+          }
+        },
+        "36:48": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.1225472114326172,
+              0.9900131845642206,
+              1.0477772680657018
+            ],
+            "median_ratio": 1.0477772680657018,
+            "slower_pairs": 2,
+            "median_ns_saved": -303958.0
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.1220279940184759,
+              0.9926839915822766,
+              1.0483702741673229
+            ],
+            "median_ratio": 1.0483702741673229,
+            "slower_pairs": 2,
+            "median_ns_saved": -295624.0
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9911790006208658,
+              0.9911790006208658,
+              0.9911790006208658
+            ],
+            "median_ratio": 0.9911790006208658,
+            "slower_pairs": 0,
+            "median_bytes_saved": 68992.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9908289564215915,
+              0.9908289564215915,
+              0.9908289564215915
+            ],
+            "median_ratio": 0.9908289564215915,
+            "slower_pairs": 0,
+            "median_bytes_saved": 68992.0
+          }
+        },
+        "48:60": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.0322299877355519,
+              0.9611442335972832,
+              0.9738363246792903
+            ],
+            "median_ratio": 0.9738363246792903,
+            "slower_pairs": 1,
+            "median_ns_saved": 151104.5
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.0290574841012754,
+              0.9636133877233614,
+              0.9768070331197093
+            ],
+            "median_ratio": 0.9768070331197093,
+            "slower_pairs": 1,
+            "median_ns_saved": 128605.5
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9911791810671513,
+              0.9911791810671513,
+              0.9777730500661255
+            ],
+            "median_ratio": 0.9911791810671513,
+            "slower_pairs": 0,
+            "median_bytes_saved": 68992.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9908291075873077,
+              0.9908291075873077,
+              0.9776230863179409
+            ],
+            "median_ratio": 0.9908291075873077,
+            "slower_pairs": 0,
+            "median_bytes_saved": 68992.0
+          }
+        }
+      }
+    },
+    {
+      "profile": "default",
+      "flag": "off",
+      "windows": {
+        "0:3": {
+          "wall_ns": {
+            "paired_ratios": [
+              0.8914300318893157,
+              1.0267303509016374,
+              1.0144692416948844
+            ],
+            "median_ratio": 1.0144692416948844,
+            "slower_pairs": 2,
+            "median_ns_saved": -412541
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              0.8926571762525198,
+              1.0264616174461836,
+              1.0107845603248562
+            ],
+            "median_ratio": 1.0107845603248562,
+            "slower_pairs": 2,
+            "median_ns_saved": -298500
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.993888358950707,
+              0.9937609691448077,
+              0.9961102783668389
+            ],
+            "median_ratio": 0.993888358950707,
+            "slower_pairs": 0,
+            "median_bytes_saved": 63712
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9936533842507662,
+              0.9935210966799007,
+              0.9959607101753759
+            ],
+            "median_ratio": 0.9936533842507662,
+            "slower_pairs": 0,
+            "median_bytes_saved": 63712
+          }
+        },
+        "3:9": {
+          "wall_ns": {
+            "paired_ratios": [
+              0.9446792728991135,
+              1.05434551745731,
+              0.9728889039658206
+            ],
+            "median_ratio": 0.9728889039658206,
+            "slower_pairs": 1,
+            "median_ns_saved": 424771.0
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              0.9447472594755619,
+              1.0529801322308483,
+              0.974136903257199
+            ],
+            "median_ratio": 0.974136903257199,
+            "slower_pairs": 1,
+            "median_ns_saved": 392104.5
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9932845433635679,
+              0.9932897870672869,
+              0.9932897870672869
+            ],
+            "median_ratio": 0.9932897870672869,
+            "slower_pairs": 0,
+            "median_bytes_saved": 66096.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9930336325117931,
+              0.9930390707639708,
+              0.9930390707639708
+            ],
+            "median_ratio": 0.9930390707639708,
+            "slower_pairs": 0,
+            "median_bytes_saved": 66096.0
+          }
+        },
+        "12:24": {
+          "wall_ns": {
+            "paired_ratios": [
+              0.9703010299533271,
+              0.9531890882055459,
+              1.0471239049772618
+            ],
+            "median_ratio": 0.9703010299533271,
+            "slower_pairs": 1,
+            "median_ns_saved": 377021.0
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              0.9768422752445526,
+              0.9536684823749354,
+              1.0394767097050788
+            ],
+            "median_ratio": 0.9768422752445526,
+            "slower_pairs": 1,
+            "median_ns_saved": 279644.0
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9931236034457875,
+              0.9105021622903856,
+              1.043604580896013
+            ],
+            "median_ratio": 0.9931236034457875,
+            "slower_pairs": 1,
+            "median_bytes_saved": 66324.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9928713550659338,
+              0.9118158664974497,
+              1.0420560726776995
+            ],
+            "median_ratio": 0.9928713550659338,
+            "slower_pairs": 1,
+            "median_bytes_saved": 66324.0
+          }
+        },
+        "24:36": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.0465532462722615,
+              1.1138150799750828,
+              0.9380679439041507
+            ],
+            "median_ratio": 1.0465532462722615,
+            "slower_pairs": 2,
+            "median_ns_saved": -341646.5
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.0479640956827079,
+              1.1097538910816107,
+              0.936718111431107
+            ],
+            "median_ratio": 1.0479640956827079,
+            "slower_pairs": 2,
+            "median_ns_saved": -338604.5
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9922643020761014,
+              0.9922615149172993,
+              0.9922643129404692
+            ],
+            "median_ratio": 0.9922643020761014,
+            "slower_pairs": 0,
+            "median_bytes_saved": 66096.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9919842401351677,
+              0.9919827965084634,
+              0.9919842518004387
+            ],
+            "median_ratio": 0.9919842401351677,
+            "slower_pairs": 0,
+            "median_bytes_saved": 66096.0
+          }
+        },
+        "36:48": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.036391138331254,
+              1.1137161231051906,
+              0.963822477501714
+            ],
+            "median_ratio": 1.036391138331254,
+            "slower_pairs": 2,
+            "median_ns_saved": -240645.5
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.034625148500902,
+              1.1163450615141677,
+              0.9663983240619667
+            ],
+            "median_ratio": 1.034625148500902,
+            "slower_pairs": 2,
+            "median_ns_saved": -220938.0
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9921290593341856,
+              0.9916233040516331,
+              0.9916247605305856
+            ],
+            "median_ratio": 0.9916247605305856,
+            "slower_pairs": 0,
+            "median_bytes_saved": 69004.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9918329906052176,
+              0.9913083777888602,
+              0.9913098890249001
+            ],
+            "median_ratio": 0.9913098890249001,
+            "slower_pairs": 0,
+            "median_bytes_saved": 69004.0
+          }
+        },
+        "48:60": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.0082465446433575,
+              1.091085878381628,
+              1.024208874622246
+            ],
+            "median_ratio": 1.024208874622246,
+            "slower_pairs": 3,
+            "median_ns_saved": -140645.5
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.004653488773449,
+              1.0877809662084197,
+              1.0216443886611881
+            ],
+            "median_ratio": 1.0216443886611881,
+            "slower_pairs": 3,
+            "median_ns_saved": -120938.0
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9914809472369459,
+              0.9916263552312947,
+              1.0059369818068813
+            ],
+            "median_ratio": 0.9916263552312947,
+            "slower_pairs": 1,
+            "median_bytes_saved": 68992.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.991161389253687,
+              0.9913115096806043,
+              1.005694092034557
+            ],
+            "median_ratio": 0.9913115096806043,
+            "slower_pairs": 1,
+            "median_bytes_saved": 68992.0
+          }
+        }
+      }
+    },
+    {
+      "profile": "default",
+      "flag": "verify",
+      "windows": {
+        "0:3": {
+          "wall_ns": {
+            "paired_ratios": [
+              0.9902307089639676,
+              1.0143920045102777,
+              0.981898589044163
+            ],
+            "median_ratio": 0.9902307089639676,
+            "slower_pairs": 1,
+            "median_ns_saved": 297168
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              0.9937812912172965,
+              1.0153216406813854,
+              0.9813707270046551
+            ],
+            "median_ratio": 0.9937812912172965,
+            "slower_pairs": 1,
+            "median_ns_saved": 183291
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9942532208640951,
+              0.9942598153914181,
+              0.9942532208640951
+            ],
+            "median_ratio": 0.9942532208640951,
+            "slower_pairs": 0,
+            "median_bytes_saved": 62384
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9940413650607592,
+              0.9940482012409451,
+              0.9940413650607592
+            ],
+            "median_ratio": 0.9940413650607592,
+            "slower_pairs": 0,
+            "median_bytes_saved": 62384
+          }
+        },
+        "3:9": {
+          "wall_ns": {
+            "paired_ratios": [
+              0.9934516170658327,
+              0.997041590741984,
+              1.0305201643907667
+            ],
+            "median_ratio": 0.997041590741984,
+            "slower_pairs": 1,
+            "median_ns_saved": 46271.0
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              0.9942878089094402,
+              0.9946661390967749,
+              1.0328909804619772
+            ],
+            "median_ratio": 0.9946661390967749,
+            "slower_pairs": 1,
+            "median_ns_saved": 80855.0
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9933276389959249,
+              0.9908749348763753,
+              0.9955909130161994
+            ],
+            "median_ratio": 0.9933276389959249,
+            "slower_pairs": 0,
+            "median_bytes_saved": 65212.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9929824531600833,
+              0.9905484323996857,
+              0.9953309785791549
+            ],
+            "median_ratio": 0.9929824531600833,
+            "slower_pairs": 0,
+            "median_bytes_saved": 66096.0
+          }
+        },
+        "12:24": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.1171559628019534,
+              0.9890269569292565,
+              1.087615274683191
+            ],
+            "median_ratio": 1.087615274683191,
+            "slower_pairs": 2,
+            "median_ns_saved": -951396.0
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.1064910354851538,
+              0.991890709377509,
+              1.0986883960997182
+            ],
+            "median_ratio": 1.0986883960997182,
+            "slower_pairs": 2,
+            "median_ns_saved": -1018750.0
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              1.0890687243729116,
+              1.0361035817478057,
+              1.0832501896951745
+            ],
+            "median_ratio": 1.0832501896951745,
+            "slower_pairs": 3,
+            "median_bytes_saved": -730268.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              1.0868903302554807,
+              1.0347583218201155,
+              1.0811358786986158
+            ],
+            "median_ratio": 1.0811358786986158,
+            "slower_pairs": 3,
+            "median_bytes_saved": -687500.0
+          }
+        },
+        "24:36": {
+          "wall_ns": {
+            "paired_ratios": [
+              0.9583704320156652,
+              0.9352553344995981,
+              1.0163087875924308
+            ],
+            "median_ratio": 0.9583704320156652,
+            "slower_pairs": 1,
+            "median_ns_saved": 318895.5
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              0.9604189466799572,
+              0.9361900848529237,
+              1.0208286746083888
+            ],
+            "median_ratio": 0.9604189466799572,
+            "slower_pairs": 1,
+            "median_ns_saved": 291937.5
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9891038858646762,
+              0.9920658277430549,
+              0.9921914931206723
+            ],
+            "median_ratio": 0.9920658277430549,
+            "slower_pairs": 0,
+            "median_bytes_saved": 67184.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9887069328254097,
+              0.9917758865428806,
+              0.9919061445730039
+            ],
+            "median_ratio": 0.9917758865428806,
+            "slower_pairs": 0,
+            "median_bytes_saved": 67184.0
+          }
+        },
+        "36:48": {
+          "wall_ns": {
+            "paired_ratios": [
+              0.9217714480854133,
+              0.9600116867459276,
+              0.9638335194540459
+            ],
+            "median_ratio": 0.9600116867459276,
+            "slower_pairs": 0,
+            "median_ns_saved": 283999.5
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              0.9225553811491477,
+              0.9599375935258218,
+              0.9639567112384523
+            ],
+            "median_ratio": 0.9599375935258218,
+            "slower_pairs": 0,
+            "median_ns_saved": 274001.0
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.983742117895046,
+              0.9915485697541893,
+              0.9915471121954136
+            ],
+            "median_ratio": 0.9915471121954136,
+            "slower_pairs": 0,
+            "median_bytes_saved": 69004.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9831300529004979,
+              0.9912277757264498,
+              0.9912262633321279
+            ],
+            "median_ratio": 0.9912262633321279,
+            "slower_pairs": 0,
+            "median_bytes_saved": 69004.0
+          }
+        },
+        "48:60": {
+          "wall_ns": {
+            "paired_ratios": [
+              0.9727533665375392,
+              0.9996745548336461,
+              0.9824932061157249
+            ],
+            "median_ratio": 0.9824932061157249,
+            "slower_pairs": 0,
+            "median_ns_saved": 106478.5
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              0.973976894550662,
+              0.9995204603580563,
+              0.9817442555566237
+            ],
+            "median_ratio": 0.9817442555566237,
+            "slower_pairs": 0,
+            "median_ns_saved": 106626.5
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9915487353972163,
+              0.9915487353972163,
+              0.9915487353972163
+            ],
+            "median_ratio": 0.9915487353972163,
+            "slower_pairs": 0,
+            "median_bytes_saved": 68992.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9912279140307094,
+              0.9912279140307094,
+              0.9912279140307094
+            ],
+            "median_ratio": 0.9912279140307094,
+            "slower_pairs": 0,
+            "median_bytes_saved": 68992.0
+          }
+        }
+      }
+    },
+    {
+      "profile": "batch",
+      "flag": "on",
+      "windows": {
+        "0:3": {
+          "wall_ns": {
+            "paired_ratios": [
+              0.9231200076220224,
+              1.3813047533930582,
+              0.992399383214977
+            ],
+            "median_ratio": 0.992399383214977,
+            "slower_pairs": 1,
+            "median_ns_saved": 1911291
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              0.9257118984745508,
+              1.4421345905503302,
+              0.9920347358635893
+            ],
+            "median_ratio": 0.9920347358635893,
+            "slower_pairs": 1,
+            "median_ns_saved": 1874376
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9924932935438932,
+              0.9924932935438932,
+              0.9924932935438932
+            ],
+            "median_ratio": 0.9924932935438932,
+            "slower_pairs": 0,
+            "median_bytes_saved": 63712
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.992193159505985,
+              0.992193159505985,
+              0.992193159505985
+            ],
+            "median_ratio": 0.992193159505985,
+            "slower_pairs": 0,
+            "median_bytes_saved": 63712
+          }
+        },
+        "3:9": {
+          "wall_ns": {
+            "paired_ratios": [
+              0.9604824888912155,
+              0.9883615638953827,
+              0.5196827230491067
+            ],
+            "median_ratio": 0.9604824888912155,
+            "slower_pairs": 0,
+            "median_ns_saved": 1527896.0
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              0.9615478363576523,
+              0.9888201105550691,
+              0.5161884511143217
+            ],
+            "median_ratio": 0.9615478363576523,
+            "slower_pairs": 0,
+            "median_ns_saved": 1460500.5
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9914837769768956,
+              0.9914837769768956,
+              0.9914837769768956
+            ],
+            "median_ratio": 0.9914837769768956,
+            "slower_pairs": 0,
+            "median_bytes_saved": 66032.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9911428027224024,
+              0.9911428027224024,
+              0.9911428027224024
+            ],
+            "median_ratio": 0.9911428027224024,
+            "slower_pairs": 0,
+            "median_bytes_saved": 66032.0
+          }
+        },
+        "12:24": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.0070820111447392,
+              0.9781452759692092,
+              0.9091291773101841
+            ],
+            "median_ratio": 0.9781452759692092,
+            "slower_pairs": 1,
+            "median_ns_saved": 874708.0
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.0087784978126124,
+              0.9801415893411958,
+              0.912399007568882
+            ],
+            "median_ratio": 0.9801415893411958,
+            "slower_pairs": 1,
+            "median_ns_saved": 785312.0
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9922654494306332,
+              0.9922654494306332,
+              0.9922654494306332
+            ],
+            "median_ratio": 0.9922654494306332,
+            "slower_pairs": 0,
+            "median_bytes_saved": 57408.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9919626716724498,
+              0.9919626716724498,
+              0.9919626716724498
+            ],
+            "median_ratio": 0.9919626716724498,
+            "slower_pairs": 0,
+            "median_bytes_saved": 57408.0
+          }
+        },
+        "24:36": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.004574442839384,
+              1.0933049958024594,
+              0.9724011784556249
+            ],
+            "median_ratio": 1.004574442839384,
+            "slower_pairs": 2,
+            "median_ns_saved": -94270.5
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.0046959375247406,
+              1.093184044703426,
+              0.9723159140251211
+            ],
+            "median_ratio": 1.0046959375247406,
+            "slower_pairs": 2,
+            "median_ns_saved": -95852.5
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9921714342443023,
+              0.9921714342443023,
+              0.9921714342443023
+            ],
+            "median_ratio": 0.9921714342443023,
+            "slower_pairs": 0,
+            "median_bytes_saved": 57408.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9918627185278506,
+              0.9918627185278506,
+              0.9918627185278506
+            ],
+            "median_ratio": 0.9918627185278506,
+            "slower_pairs": 0,
+            "median_bytes_saved": 57408.0
+          }
+        },
+        "36:48": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.1106978700492378,
+              0.9359988573145673,
+              1.0164889032529354
+            ],
+            "median_ratio": 1.0164889032529354,
+            "slower_pairs": 2,
+            "median_ns_saved": -263666.5
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.1106427250253648,
+              0.9363976238093341,
+              1.0152671335771275
+            ],
+            "median_ratio": 1.0152671335771275,
+            "slower_pairs": 2,
+            "median_ns_saved": -241437.0
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9919100061029585,
+              0.9919100061029585,
+              0.9919100061029585
+            ],
+            "median_ratio": 0.9919100061029585,
+            "slower_pairs": 0,
+            "median_bytes_saved": 58856.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.991589731630474,
+              0.991589731630474,
+              0.991589731630474
+            ],
+            "median_ratio": 0.991589731630474,
+            "slower_pairs": 0,
+            "median_bytes_saved": 58856.0
+          }
+        },
+        "48:60": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.0271675829691131,
+              0.6724375931394955,
+              1.0250948434726572
+            ],
+            "median_ratio": 1.0250948434726572,
+            "slower_pairs": 2,
+            "median_ns_saved": -277458.0
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.0274794101705076,
+              0.6750352758693282,
+              1.025564572936385
+            ],
+            "median_ratio": 1.025564572936385,
+            "slower_pairs": 2,
+            "median_ns_saved": -278542.0
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9916503099287983,
+              0.9916503099287983,
+              0.9916503099287983
+            ],
+            "median_ratio": 0.9916503099287983,
+            "slower_pairs": 0,
+            "median_bytes_saved": 60304.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9913190385760368,
+              0.9913190385760368,
+              0.9913190385760368
+            ],
+            "median_ratio": 0.9913190385760368,
+            "slower_pairs": 0,
+            "median_bytes_saved": 60304.0
+          }
+        }
+      }
+    },
+    {
+      "profile": "batch",
+      "flag": "off",
+      "windows": {
+        "0:3": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.0000957145120786,
+              1.370049740483203,
+              0.9990715044130978
+            ],
+            "median_ratio": 1.0000957145120786,
+            "slower_pairs": 2,
+            "median_ns_saved": -24917
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.0031728671840685,
+              1.446366760273376,
+              0.9986723366333158
+            ],
+            "median_ratio": 1.0031728671840685,
+            "slower_pairs": 2,
+            "median_ns_saved": -773540
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9928400032006013,
+              0.9928400032006013,
+              0.9928400032006013
+            ],
+            "median_ratio": 0.9928400032006013,
+            "slower_pairs": 0,
+            "median_bytes_saved": 63712
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9925674565843898,
+              0.9925674565843898,
+              0.9925674565843898
+            ],
+            "median_ratio": 0.9925674565843898,
+            "slower_pairs": 0,
+            "median_bytes_saved": 63712
+          }
+        },
+        "3:9": {
+          "wall_ns": {
+            "paired_ratios": [
+              0.8655911345874837,
+              0.818149871810418,
+              1.0370202987492865
+            ],
+            "median_ratio": 0.8655911345874837,
+            "slower_pairs": 1,
+            "median_ns_saved": 6674229.0
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              0.86649918533829,
+              0.8128066768021623,
+              1.0358518255427507
+            ],
+            "median_ratio": 0.86649918533829,
+            "slower_pairs": 1,
+            "median_ns_saved": 6497020.0
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9919232547569041,
+              0.9919145097032741,
+              0.9919145097032741
+            ],
+            "median_ratio": 0.9919145097032741,
+            "slower_pairs": 0,
+            "median_bytes_saved": 66032.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9916168498775572,
+              0.9916077758725081,
+              0.9916077758725081
+            ],
+            "median_ratio": 0.9916077758725081,
+            "slower_pairs": 0,
+            "median_bytes_saved": 66032.0
+          }
+        },
+        "12:24": {
+          "wall_ns": {
+            "paired_ratios": [
+              0.9739647750767447,
+              0.9704836308926341,
+              0.928137233903131
+            ],
+            "median_ratio": 0.9704836308926341,
+            "slower_pairs": 0,
+            "median_ns_saved": 1051271.0
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              0.9764693437151036,
+              0.9706690935879934,
+              0.920966496053962
+            ],
+            "median_ratio": 0.9706690935879934,
+            "slower_pairs": 0,
+            "median_ns_saved": 1036916.0
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9926661161484437,
+              0.9926661161484437,
+              0.992036563131086
+            ],
+            "median_ratio": 0.9926661161484437,
+            "slower_pairs": 0,
+            "median_bytes_saved": 57408.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9923944459105839,
+              0.9923944459105839,
+              0.991741572259653
+            ],
+            "median_ratio": 0.9923944459105839,
+            "slower_pairs": 0,
+            "median_bytes_saved": 57408.0
+          }
+        },
+        "24:36": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.0156447376113868,
+              1.0068889640961463,
+              0.8138778093490419
+            ],
+            "median_ratio": 1.0068889640961463,
+            "slower_pairs": 2,
+            "median_ns_saved": -140687.0
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.016007390925385,
+              1.0076206627396096,
+              0.8200935108525806
+            ],
+            "median_ratio": 1.0076206627396096,
+            "slower_pairs": 2,
+            "median_ns_saved": -154082.5
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9925829610688143,
+              0.9925829610688143,
+              0.9919462698785119
+            ],
+            "median_ratio": 0.9925829610688143,
+            "slower_pairs": 0,
+            "median_bytes_saved": 57408.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9923064222504787,
+              0.9923064222504787,
+              0.991645992499405
+            ],
+            "median_ratio": 0.9923064222504787,
+            "slower_pairs": 0,
+            "median_bytes_saved": 57408.0
+          }
+        },
+        "36:48": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.0401048611974442,
+              1.0322334106035267,
+              0.7146686697197342
+            ],
+            "median_ratio": 1.0322334106035267,
+            "slower_pairs": 2,
+            "median_ns_saved": -418021.0
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.0400832402022846,
+              1.031381519209759,
+              0.7139556685847622
+            ],
+            "median_ratio": 1.031381519209759,
+            "slower_pairs": 2,
+            "median_ns_saved": -401543.5
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9923407507042928,
+              0.9923407507042928,
+              0.9916994434369072
+            ],
+            "median_ratio": 0.9923407507042928,
+            "slower_pairs": 0,
+            "median_bytes_saved": 58856.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9920542775894339,
+              0.9920542775894339,
+              0.9913889839908328
+            ],
+            "median_ratio": 0.9920542775894339,
+            "slower_pairs": 0,
+            "median_bytes_saved": 58856.0
+          }
+        },
+        "48:60": {
+          "wall_ns": {
+            "paired_ratios": [
+              0.9734296106842912,
+              1.0817589333344684,
+              0.7984799588932447
+            ],
+            "median_ratio": 0.9734296106842912,
+            "slower_pairs": 1,
+            "median_ns_saved": 332937.5
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              0.9733031456641041,
+              1.0836790948251622,
+              0.7953082918584357
+            ],
+            "median_ratio": 0.9733031456641041,
+            "slower_pairs": 1,
+            "median_ns_saved": 330085.5
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9916034235579576,
+              0.9921021171732327,
+              0.991456707804529
+            ],
+            "median_ratio": 0.9916034235579576,
+            "slower_pairs": 0,
+            "median_bytes_saved": 64144.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9913580863930604,
+              0.9918063614288105,
+              0.9911367831109739
+            ],
+            "median_ratio": 0.9913580863930604,
+            "slower_pairs": 0,
+            "median_bytes_saved": 63632.0
+          }
+        }
+      }
+    },
+    {
+      "profile": "batch",
+      "flag": "verify",
+      "windows": {
+        "0:3": {
+          "wall_ns": {
+            "paired_ratios": [
+              0.974867493259084,
+              1.0659558146915369,
+              0.9865523334326317
+            ],
+            "median_ratio": 0.9865523334326317,
+            "slower_pairs": 1,
+            "median_ns_saved": 3325000
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              0.9753541043463343,
+              1.0640245913277029,
+              0.9865363816010984
+            ],
+            "median_ratio": 0.9865363816010984,
+            "slower_pairs": 1,
+            "median_ns_saved": 3112958
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9927776357004623,
+              0.9927776357004623,
+              0.9927776357004623
+            ],
+            "median_ratio": 0.9927776357004623,
+            "slower_pairs": 0,
+            "median_bytes_saved": 63712
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9925002283644678,
+              0.9925002283644678,
+              0.9925002283644678
+            ],
+            "median_ratio": 0.9925002283644678,
+            "slower_pairs": 0,
+            "median_bytes_saved": 63712
+          }
+        },
+        "3:9": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.0056763730922778,
+              1.0170502630612674,
+              0.9958793643067222
+            ],
+            "median_ratio": 1.0056763730922778,
+            "slower_pairs": 2,
+            "median_ns_saved": -264812.5
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.00560890151195,
+              1.017698616914055,
+              0.9956760500670081
+            ],
+            "median_ratio": 1.00560890151195,
+            "slower_pairs": 2,
+            "median_ns_saved": -257978.5
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9918374370303856,
+              0.9918374370303856,
+              0.9918374370303856
+            ],
+            "median_ratio": 0.9918374370303856,
+            "slower_pairs": 0,
+            "median_bytes_saved": 66032.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9915247145341288,
+              0.9915247145341288,
+              0.9915247145341288
+            ],
+            "median_ratio": 0.9915247145341288,
+            "slower_pairs": 0,
+            "median_bytes_saved": 66032.0
+          }
+        },
+        "12:24": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.0061455207602479,
+              0.958918456477494,
+              0.9839582526548473
+            ],
+            "median_ratio": 0.9839582526548473,
+            "slower_pairs": 1,
+            "median_ns_saved": 651062.0
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.0028787610976218,
+              0.9579028914933108,
+              0.9832155634195233
+            ],
+            "median_ratio": 0.9832155634195233,
+            "slower_pairs": 1,
+            "median_ns_saved": 669834.0
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9925940680301315,
+              0.9925940680301315,
+              0.9925940680301315
+            ],
+            "median_ratio": 0.9925940680301315,
+            "slower_pairs": 0,
+            "median_bytes_saved": 57408.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9923168013225038,
+              0.9923168013225038,
+              0.9923168013225038
+            ],
+            "median_ratio": 0.9923168013225038,
+            "slower_pairs": 0,
+            "median_bytes_saved": 57408.0
+          }
+        },
+        "24:36": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.0957864714657022,
+              1.017587519849233,
+              1.016679641674857
+            ],
+            "median_ratio": 1.017587519849233,
+            "slower_pairs": 3,
+            "median_ns_saved": -377958.0
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.077997505727535,
+              1.0180791327346752,
+              1.0169749119256797
+            ],
+            "median_ratio": 1.0180791327346752,
+            "slower_pairs": 3,
+            "median_ns_saved": -385021.5
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9925105594223863,
+              0.9925105594223863,
+              0.9925105594223863
+            ],
+            "median_ratio": 0.9925105594223863,
+            "slower_pairs": 0,
+            "median_bytes_saved": 57408.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9922278866805083,
+              0.9922278866805083,
+              0.9922278866805083
+            ],
+            "median_ratio": 0.9922278866805083,
+            "slower_pairs": 0,
+            "median_bytes_saved": 57408.0
+          }
+        },
+        "36:48": {
+          "wall_ns": {
+            "paired_ratios": [
+              0.9408264106652967,
+              0.987655875856809,
+              0.9687167383698526
+            ],
+            "median_ratio": 0.9687167383698526,
+            "slower_pairs": 0,
+            "median_ns_saved": 525207.5
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              0.9413139987908885,
+              0.9875669056491784,
+              0.968956480846002
+            ],
+            "median_ratio": 0.968956480846002,
+            "slower_pairs": 0,
+            "median_ns_saved": 515124.5
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.9922661690888545,
+              0.9922661690888545,
+              0.9922661690888545
+            ],
+            "median_ratio": 0.9922661690888545,
+            "slower_pairs": 0,
+            "median_bytes_saved": 58856.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9919733528844433,
+              0.9919733528844433,
+              0.9919733528844433
+            ],
+            "median_ratio": 0.9919733528844433,
+            "slower_pairs": 0,
+            "median_bytes_saved": 58856.0
+          }
+        },
+        "48:60": {
+          "wall_ns": {
+            "paired_ratios": [
+              1.0323916025480901,
+              0.9956011176517838,
+              0.8318741788748617
+            ],
+            "median_ratio": 0.9956011176517838,
+            "slower_pairs": 1,
+            "median_ns_saved": 49916.5
+          },
+          "query_wall_ns": {
+            "paired_ratios": [
+              1.0323272350518722,
+              0.9953290611491611,
+              0.833758287885728
+            ],
+            "median_ratio": 0.9953290611491611,
+            "slower_pairs": 1,
+            "median_ns_saved": 52228.0
+          },
+          "allocated_bytes": {
+            "paired_ratios": [
+              0.99202371932973,
+              0.992531627889259,
+              0.992531627889259
+            ],
+            "median_ratio": 0.992531627889259,
+            "slower_pairs": 0,
+            "median_bytes_saved": 56464.0
+          },
+          "query_allocated_bytes": {
+            "paired_ratios": [
+              0.9917212960817283,
+              0.9921781733475815,
+              0.9921781733475815
+            ],
+            "median_ratio": 0.9921781733475815,
+            "slower_pairs": 0,
+            "median_bytes_saved": 56976.0
+          }
+        }
+      }
+    }
+  ],
+  "limitations": [
+    "new host and Java 21; not pooled with Java 17 results",
+    "shared host; three pairs per cell",
+    "bounded resident fixture; no SMART/full corpus qualification"
+  ]
+}

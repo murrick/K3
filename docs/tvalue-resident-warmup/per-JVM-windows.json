@@ -1,0 +1,3578 @@
+[
+  {
+    "profile": "batch",
+    "flag": "off",
+    "rep": 0,
+    "mode": "baseline",
+    "logging": true,
+    "exit_code": 0,
+    "clock_alignment": true,
+    "label": "batch-off-0-baseline-jit",
+    "windows": {
+      "0:3": {
+        "wall_ns": 386199250,
+        "query_wall_ns": 361396456,
+        "allocated_bytes": 8898328,
+        "query_allocated_bytes": 8572032
+      },
+      "3:9": {
+        "wall_ns": 52850396.5,
+        "query_wall_ns": 51798166.5,
+        "allocated_bytes": 8166656.0,
+        "query_allocated_bytes": 7868164.0
+      },
+      "12:24": {
+        "wall_ns": 35204083.0,
+        "query_wall_ns": 34914792.0,
+        "allocated_bytes": 7863992.0,
+        "query_allocated_bytes": 7582440.0
+      },
+      "24:36": {
+        "wall_ns": 20672938.0,
+        "query_wall_ns": 20482540.5,
+        "allocated_bytes": 7776232.0,
+        "query_allocated_bytes": 7496080.0
+      },
+      "36:48": {
+        "wall_ns": 15548853.5,
+        "query_wall_ns": 15348668.5,
+        "allocated_bytes": 7720520.0,
+        "query_allocated_bytes": 7441528.0
+      },
+      "48:60": {
+        "wall_ns": 13959771.0,
+        "query_wall_ns": 13619167.5,
+        "allocated_bytes": 7671680.0,
+        "query_allocated_bytes": 7394128.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "off",
+    "rep": 0,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-off-0-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 260326250,
+        "query_wall_ns": 243798418,
+        "allocated_bytes": 8898328,
+        "query_allocated_bytes": 8572032
+      },
+      "3:9": {
+        "wall_ns": 49656166.5,
+        "query_wall_ns": 48666519.5,
+        "allocated_bytes": 8166656.0,
+        "query_allocated_bytes": 7868164.0
+      },
+      "12:24": {
+        "wall_ns": 37124396.0,
+        "query_wall_ns": 36758792.0,
+        "allocated_bytes": 7827776.0,
+        "query_allocated_bytes": 7548168.0
+      },
+      "24:36": {
+        "wall_ns": 20319708.0,
+        "query_wall_ns": 20114396.0,
+        "allocated_bytes": 7740016.0,
+        "query_allocated_bytes": 7461808.0
+      },
+      "36:48": {
+        "wall_ns": 13404958.5,
+        "query_wall_ns": 13215249.0,
+        "allocated_bytes": 7684304.0,
+        "query_allocated_bytes": 7407256.0
+      },
+      "48:60": {
+        "wall_ns": 12530396.0,
+        "query_wall_ns": 12364209.5,
+        "allocated_bytes": 7639304.0,
+        "query_allocated_bytes": 7363184.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "off",
+    "rep": 0,
+    "mode": "candidate",
+    "logging": true,
+    "exit_code": 0,
+    "clock_alignment": true,
+    "label": "batch-off-0-candidate-jit",
+    "windows": {
+      "0:3": {
+        "wall_ns": 319908750,
+        "query_wall_ns": 299119375,
+        "allocated_bytes": 8834616,
+        "query_allocated_bytes": 8508320
+      },
+      "3:9": {
+        "wall_ns": 50565750.0,
+        "query_wall_ns": 49830938.0,
+        "allocated_bytes": 8100624.0,
+        "query_allocated_bytes": 7802132.0
+      },
+      "12:24": {
+        "wall_ns": 43390437.0,
+        "query_wall_ns": 42702374.5,
+        "allocated_bytes": 7806584.0,
+        "query_allocated_bytes": 7525032.0
+      },
+      "24:36": {
+        "wall_ns": 36108854.0,
+        "query_wall_ns": 35768688.0,
+        "allocated_bytes": 7744848.0,
+        "query_allocated_bytes": 7463744.0
+      },
+      "36:48": {
+        "wall_ns": 15823500.0,
+        "query_wall_ns": 15624604.0,
+        "allocated_bytes": 7661664.0,
+        "query_allocated_bytes": 7382672.0
+      },
+      "48:60": {
+        "wall_ns": 13818562.0,
+        "query_wall_ns": 13467271.0,
+        "allocated_bytes": 7615216.0,
+        "query_allocated_bytes": 7337152.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "off",
+    "rep": 0,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-off-0-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 260351167,
+        "query_wall_ns": 244571958,
+        "allocated_bytes": 8834616,
+        "query_allocated_bytes": 8508320
+      },
+      "3:9": {
+        "wall_ns": 42981937.5,
+        "query_wall_ns": 42169499.5,
+        "allocated_bytes": 8100696.0,
+        "query_allocated_bytes": 7802204.0
+      },
+      "12:24": {
+        "wall_ns": 36157854.0,
+        "query_wall_ns": 35893833.5,
+        "allocated_bytes": 7770368.0,
+        "query_allocated_bytes": 7490760.0
+      },
+      "24:36": {
+        "wall_ns": 20637604.5,
+        "query_wall_ns": 20436375.0,
+        "allocated_bytes": 7682608.0,
+        "query_allocated_bytes": 7404400.0
+      },
+      "36:48": {
+        "wall_ns": 13942562.5,
+        "query_wall_ns": 13744959.0,
+        "allocated_bytes": 7625448.0,
+        "query_allocated_bytes": 7348400.0
+      },
+      "48:60": {
+        "wall_ns": 12197458.5,
+        "query_wall_ns": 12034124.0,
+        "allocated_bytes": 7575160.0,
+        "query_allocated_bytes": 7299552.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "off",
+    "rep": 0,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-off-0-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 119081500,
+        "query_wall_ns": 115912375,
+        "allocated_bytes": 4679552,
+        "query_allocated_bytes": 4548216
+      },
+      "3:9": {
+        "wall_ns": 33365437.5,
+        "query_wall_ns": 32251729.5,
+        "allocated_bytes": 4431304.0,
+        "query_allocated_bytes": 4325800.0
+      },
+      "12:24": {
+        "wall_ns": 33055229.0,
+        "query_wall_ns": 26705209.0,
+        "allocated_bytes": 4328496.0,
+        "query_allocated_bytes": 4223856.0
+      },
+      "24:36": {
+        "wall_ns": 17388875.0,
+        "query_wall_ns": 17194729.0,
+        "allocated_bytes": 4256000.0,
+        "query_allocated_bytes": 4151848.0
+      },
+      "36:48": {
+        "wall_ns": 12469937.5,
+        "query_wall_ns": 10553062.0,
+        "allocated_bytes": 4234064.0,
+        "query_allocated_bytes": 4129912.0
+      },
+      "48:60": {
+        "wall_ns": 6532062.0,
+        "query_wall_ns": 5496332.5,
+        "allocated_bytes": 4183928.0,
+        "query_allocated_bytes": 4087840.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "off",
+    "rep": 0,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-off-0-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 115973250,
+        "query_wall_ns": 113509834,
+        "allocated_bytes": 4679552,
+        "query_allocated_bytes": 4548216
+      },
+      "3:9": {
+        "wall_ns": 36520854.0,
+        "query_wall_ns": 35255520.5,
+        "allocated_bytes": 4431328.0,
+        "query_allocated_bytes": 4325824.0
+      },
+      "12:24": {
+        "wall_ns": 33826583.5,
+        "query_wall_ns": 29393977.0,
+        "allocated_bytes": 4328496.0,
+        "query_allocated_bytes": 4223856.0
+      },
+      "24:36": {
+        "wall_ns": 18285708.5,
+        "query_wall_ns": 18046917.5,
+        "allocated_bytes": 4256000.0,
+        "query_allocated_bytes": 4151848.0
+      },
+      "36:48": {
+        "wall_ns": 14401333.0,
+        "query_wall_ns": 11778687.5,
+        "allocated_bytes": 4234064.0,
+        "query_allocated_bytes": 4129912.0
+      },
+      "48:60": {
+        "wall_ns": 6679562.5,
+        "query_wall_ns": 5509291.5,
+        "allocated_bytes": 4183928.0,
+        "query_allocated_bytes": 4087840.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "off",
+    "rep": 1,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-off-1-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 262807459,
+        "query_wall_ns": 246298584,
+        "allocated_bytes": 8898328,
+        "query_allocated_bytes": 8572032
+      },
+      "3:9": {
+        "wall_ns": 51731583.0,
+        "query_wall_ns": 51073312.0,
+        "allocated_bytes": 8166728.0,
+        "query_allocated_bytes": 7868236.0
+      },
+      "12:24": {
+        "wall_ns": 35616542.0,
+        "query_wall_ns": 35352334.0,
+        "allocated_bytes": 7827776.0,
+        "query_allocated_bytes": 7548168.0
+      },
+      "24:36": {
+        "wall_ns": 20422083.5,
+        "query_wall_ns": 20219042.0,
+        "allocated_bytes": 7740016.0,
+        "query_allocated_bytes": 7461808.0
+      },
+      "36:48": {
+        "wall_ns": 12968562.5,
+        "query_wall_ns": 12795540.5,
+        "allocated_bytes": 7684304.0,
+        "query_allocated_bytes": 7407256.0
+      },
+      "48:60": {
+        "wall_ns": 11277312.0,
+        "query_wall_ns": 11113875.0,
+        "allocated_bytes": 7635464.0,
+        "query_allocated_bytes": 7359856.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "off",
+    "rep": 1,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-off-1-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 360059291,
+        "query_wall_ns": 356238085,
+        "allocated_bytes": 8834616,
+        "query_allocated_bytes": 8508320
+      },
+      "3:9": {
+        "wall_ns": 42324188.0,
+        "query_wall_ns": 41512729.0,
+        "allocated_bytes": 8100696.0,
+        "query_allocated_bytes": 7802204.0
+      },
+      "12:24": {
+        "wall_ns": 34565271.0,
+        "query_wall_ns": 34315418.0,
+        "allocated_bytes": 7770368.0,
+        "query_allocated_bytes": 7490760.0
+      },
+      "24:36": {
+        "wall_ns": 20562770.5,
+        "query_wall_ns": 20373124.5,
+        "allocated_bytes": 7682608.0,
+        "query_allocated_bytes": 7404400.0
+      },
+      "36:48": {
+        "wall_ns": 13386583.5,
+        "query_wall_ns": 13197084.0,
+        "allocated_bytes": 7625448.0,
+        "query_allocated_bytes": 7348400.0
+      },
+      "48:60": {
+        "wall_ns": 12199333.0,
+        "query_wall_ns": 12043874.0,
+        "allocated_bytes": 7575160.0,
+        "query_allocated_bytes": 7299552.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "off",
+    "rep": 1,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-off-1-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 115349667,
+        "query_wall_ns": 112545623,
+        "allocated_bytes": 4679552,
+        "query_allocated_bytes": 4548216
+      },
+      "3:9": {
+        "wall_ns": 33417000.0,
+        "query_wall_ns": 32295605.0,
+        "allocated_bytes": 4431304.0,
+        "query_allocated_bytes": 4325800.0
+      },
+      "12:24": {
+        "wall_ns": 34659749.5,
+        "query_wall_ns": 28844291.5,
+        "allocated_bytes": 4328496.0,
+        "query_allocated_bytes": 4223856.0
+      },
+      "24:36": {
+        "wall_ns": 27618125.0,
+        "query_wall_ns": 27157854.0,
+        "allocated_bytes": 4256000.0,
+        "query_allocated_bytes": 4151848.0
+      },
+      "36:48": {
+        "wall_ns": 12810958.0,
+        "query_wall_ns": 10257853.5,
+        "allocated_bytes": 4234064.0,
+        "query_allocated_bytes": 4129912.0
+      },
+      "48:60": {
+        "wall_ns": 6733645.5,
+        "query_wall_ns": 5592144.5,
+        "allocated_bytes": 4183928.0,
+        "query_allocated_bytes": 4087840.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "off",
+    "rep": 1,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-off-1-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 116402542,
+        "query_wall_ns": 113893626,
+        "allocated_bytes": 4679552,
+        "query_allocated_bytes": 4548216
+      },
+      "3:9": {
+        "wall_ns": 33420312.0,
+        "query_wall_ns": 32296687.0,
+        "allocated_bytes": 4431328.0,
+        "query_allocated_bytes": 4325824.0
+      },
+      "12:24": {
+        "wall_ns": 33016812.5,
+        "query_wall_ns": 27354270.5,
+        "allocated_bytes": 4328496.0,
+        "query_allocated_bytes": 4223856.0
+      },
+      "24:36": {
+        "wall_ns": 17757167.0,
+        "query_wall_ns": 17565063.5,
+        "allocated_bytes": 4256000.0,
+        "query_allocated_bytes": 4151848.0
+      },
+      "36:48": {
+        "wall_ns": 12538979.0,
+        "query_wall_ns": 10924208.5,
+        "allocated_bytes": 4234064.0,
+        "query_allocated_bytes": 4129912.0
+      },
+      "48:60": {
+        "wall_ns": 6890187.5,
+        "query_wall_ns": 5615312.5,
+        "allocated_bytes": 4183928.0,
+        "query_allocated_bytes": 4087840.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "off",
+    "rep": 2,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-off-2-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 257585500,
+        "query_wall_ns": 241839165,
+        "allocated_bytes": 8898328,
+        "query_allocated_bytes": 8572032
+      },
+      "3:9": {
+        "wall_ns": 42748520.5,
+        "query_wall_ns": 41945772.0,
+        "allocated_bytes": 8166728.0,
+        "query_allocated_bytes": 7868236.0
+      },
+      "12:24": {
+        "wall_ns": 49055021.0,
+        "query_wall_ns": 48561936.5,
+        "allocated_bytes": 7827776.0,
+        "query_allocated_bytes": 7548168.0
+      },
+      "24:36": {
+        "wall_ns": 25002166.5,
+        "query_wall_ns": 24597145.0,
+        "allocated_bytes": 7740016.0,
+        "query_allocated_bytes": 7461808.0
+      },
+      "36:48": {
+        "wall_ns": 17564520.5,
+        "query_wall_ns": 17338291.5,
+        "allocated_bytes": 7684304.0,
+        "query_allocated_bytes": 7407256.0
+      },
+      "48:60": {
+        "wall_ns": 12631500.5,
+        "query_wall_ns": 12463563.0,
+        "allocated_bytes": 7635464.0,
+        "query_allocated_bytes": 7359856.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "off",
+    "rep": 2,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-off-2-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 257346333,
+        "query_wall_ns": 241518084,
+        "allocated_bytes": 8834616,
+        "query_allocated_bytes": 8508320
+      },
+      "3:9": {
+        "wall_ns": 44331083.5,
+        "query_wall_ns": 43449604.5,
+        "allocated_bytes": 8100696.0,
+        "query_allocated_bytes": 7802204.0
+      },
+      "12:24": {
+        "wall_ns": 45529791.5,
+        "query_wall_ns": 44723916.5,
+        "allocated_bytes": 7765440.0,
+        "query_allocated_bytes": 7485832.0
+      },
+      "24:36": {
+        "wall_ns": 20348708.5,
+        "query_wall_ns": 20171959.0,
+        "allocated_bytes": 7677680.0,
+        "query_allocated_bytes": 7399472.0
+      },
+      "36:48": {
+        "wall_ns": 12552812.5,
+        "query_wall_ns": 12378771.5,
+        "allocated_bytes": 7620520.0,
+        "query_allocated_bytes": 7343472.0
+      },
+      "48:60": {
+        "wall_ns": 10086000.0,
+        "query_wall_ns": 9912375.0,
+        "allocated_bytes": 7570232.0,
+        "query_allocated_bytes": 7294624.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "off",
+    "rep": 2,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-off-2-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 114983417,
+        "query_wall_ns": 112491789,
+        "allocated_bytes": 4679552,
+        "query_allocated_bytes": 4548216
+      },
+      "3:9": {
+        "wall_ns": 33333458.0,
+        "query_wall_ns": 32233644.5,
+        "allocated_bytes": 4431304.0,
+        "query_allocated_bytes": 4325800.0
+      },
+      "12:24": {
+        "wall_ns": 33098521.0,
+        "query_wall_ns": 26709271.5,
+        "allocated_bytes": 4328496.0,
+        "query_allocated_bytes": 4223856.0
+      },
+      "24:36": {
+        "wall_ns": 17560666.5,
+        "query_wall_ns": 17359188.0,
+        "allocated_bytes": 4256000.0,
+        "query_allocated_bytes": 4151848.0
+      },
+      "36:48": {
+        "wall_ns": 12420437.5,
+        "query_wall_ns": 10310187.0,
+        "allocated_bytes": 4234064.0,
+        "query_allocated_bytes": 4129912.0
+      },
+      "48:60": {
+        "wall_ns": 6543354.0,
+        "query_wall_ns": 5465373.5,
+        "allocated_bytes": 4183928.0,
+        "query_allocated_bytes": 4087840.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "off",
+    "rep": 2,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-off-2-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 115078125,
+        "query_wall_ns": 112640792,
+        "allocated_bytes": 4679552,
+        "query_allocated_bytes": 4548216
+      },
+      "3:9": {
+        "wall_ns": 33581708.5,
+        "query_wall_ns": 32460708.0,
+        "allocated_bytes": 4431328.0,
+        "query_allocated_bytes": 4325824.0
+      },
+      "12:24": {
+        "wall_ns": 32860333.5,
+        "query_wall_ns": 26938063.0,
+        "allocated_bytes": 4328496.0,
+        "query_allocated_bytes": 4223856.0
+      },
+      "24:36": {
+        "wall_ns": 18527437.5,
+        "query_wall_ns": 18299416.5,
+        "allocated_bytes": 4256000.0,
+        "query_allocated_bytes": 4151848.0
+      },
+      "36:48": {
+        "wall_ns": 12580479.0,
+        "query_wall_ns": 10794604.5,
+        "allocated_bytes": 4234064.0,
+        "query_allocated_bytes": 4129912.0
+      },
+      "48:60": {
+        "wall_ns": 6360500.0,
+        "query_wall_ns": 5195729.0,
+        "allocated_bytes": 4183928.0,
+        "query_allocated_bytes": 4087840.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "on",
+    "rep": 0,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-on-0-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 267645500,
+        "query_wall_ns": 249770833,
+        "allocated_bytes": 8487344,
+        "query_allocated_bytes": 8161048
+      },
+      "3:9": {
+        "wall_ns": 38663771.0,
+        "query_wall_ns": 37982271.0,
+        "allocated_bytes": 7753672.0,
+        "query_allocated_bytes": 7455180.0
+      },
+      "12:24": {
+        "wall_ns": 37315812.5,
+        "query_wall_ns": 36894125.5,
+        "allocated_bytes": 7422280.0,
+        "query_allocated_bytes": 7142672.0
+      },
+      "24:36": {
+        "wall_ns": 20608083.5,
+        "query_wall_ns": 20411792.0,
+        "allocated_bytes": 7333144.0,
+        "query_allocated_bytes": 7054936.0
+      },
+      "36:48": {
+        "wall_ns": 16414417.0,
+        "query_wall_ns": 16227709.5,
+        "allocated_bytes": 7275160.0,
+        "query_allocated_bytes": 6998112.0
+      },
+      "48:60": {
+        "wall_ns": 11115416.5,
+        "query_wall_ns": 10955166.0,
+        "allocated_bytes": 7222304.0,
+        "query_allocated_bytes": 6946696.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "on",
+    "rep": 0,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-on-0-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 247068916,
+        "query_wall_ns": 231215832,
+        "allocated_bytes": 8423632,
+        "query_allocated_bytes": 8097336
+      },
+      "3:9": {
+        "wall_ns": 37135875.0,
+        "query_wall_ns": 36521770.5,
+        "allocated_bytes": 7687640.0,
+        "query_allocated_bytes": 7389148.0
+      },
+      "12:24": {
+        "wall_ns": 37580083.5,
+        "query_wall_ns": 37218000.5,
+        "allocated_bytes": 7364872.0,
+        "query_allocated_bytes": 7085264.0
+      },
+      "24:36": {
+        "wall_ns": 20702354.0,
+        "query_wall_ns": 20507644.5,
+        "allocated_bytes": 7275736.0,
+        "query_allocated_bytes": 6997528.0
+      },
+      "36:48": {
+        "wall_ns": 18231458.0,
+        "query_wall_ns": 18023187.5,
+        "allocated_bytes": 7216304.0,
+        "query_allocated_bytes": 6939256.0
+      },
+      "48:60": {
+        "wall_ns": 11417395.5,
+        "query_wall_ns": 11256207.5,
+        "allocated_bytes": 7162000.0,
+        "query_allocated_bytes": 6886392.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "on",
+    "rep": 0,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-on-0-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 119852917,
+        "query_wall_ns": 117140666,
+        "allocated_bytes": 4266568,
+        "query_allocated_bytes": 4135232
+      },
+      "3:9": {
+        "wall_ns": 29982312.5,
+        "query_wall_ns": 28708645.0,
+        "allocated_bytes": 4018248.0,
+        "query_allocated_bytes": 3912744.0
+      },
+      "12:24": {
+        "wall_ns": 37257958.5,
+        "query_wall_ns": 30101187.0,
+        "allocated_bytes": 3922276.0,
+        "query_allocated_bytes": 3818096.0
+      },
+      "24:36": {
+        "wall_ns": 24289270.5,
+        "query_wall_ns": 23693667.0,
+        "allocated_bytes": 3851016.0,
+        "query_allocated_bytes": 3746864.0
+      },
+      "36:48": {
+        "wall_ns": 11322166.0,
+        "query_wall_ns": 10290916.5,
+        "allocated_bytes": 3826904.0,
+        "query_allocated_bytes": 3722752.0
+      },
+      "48:60": {
+        "wall_ns": 6845125.0,
+        "query_wall_ns": 5053647.0,
+        "allocated_bytes": 3772752.0,
+        "query_allocated_bytes": 3676664.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "on",
+    "rep": 0,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-on-0-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 119739708,
+        "query_wall_ns": 116727708,
+        "allocated_bytes": 4266568,
+        "query_allocated_bytes": 4135232
+      },
+      "3:9": {
+        "wall_ns": 32786958.0,
+        "query_wall_ns": 31365749.5,
+        "allocated_bytes": 4018248.0,
+        "query_allocated_bytes": 3912744.0
+      },
+      "12:24": {
+        "wall_ns": 38919729.0,
+        "query_wall_ns": 30564188.5,
+        "allocated_bytes": 3922276.0,
+        "query_allocated_bytes": 3818096.0
+      },
+      "24:36": {
+        "wall_ns": 20359167.0,
+        "query_wall_ns": 20158249.0,
+        "allocated_bytes": 3851032.0,
+        "query_allocated_bytes": 3746880.0
+      },
+      "36:48": {
+        "wall_ns": 10817312.5,
+        "query_wall_ns": 10457250.0,
+        "allocated_bytes": 3826904.0,
+        "query_allocated_bytes": 3722752.0
+      },
+      "48:60": {
+        "wall_ns": 6572083.5,
+        "query_wall_ns": 5354313.0,
+        "allocated_bytes": 3772752.0,
+        "query_allocated_bytes": 3676664.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "on",
+    "rep": 1,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-on-1-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 255609958,
+        "query_wall_ns": 239760042,
+        "allocated_bytes": 8487344,
+        "query_allocated_bytes": 8161048
+      },
+      "3:9": {
+        "wall_ns": 39341583.0,
+        "query_wall_ns": 38691125.0,
+        "allocated_bytes": 7753672.0,
+        "query_allocated_bytes": 7455180.0
+      },
+      "12:24": {
+        "wall_ns": 40023749.5,
+        "query_wall_ns": 39545561.5,
+        "allocated_bytes": 7422280.0,
+        "query_allocated_bytes": 7142672.0
+      },
+      "24:36": {
+        "wall_ns": 20569188.0,
+        "query_wall_ns": 20369624.5,
+        "allocated_bytes": 7333144.0,
+        "query_allocated_bytes": 7054936.0
+      },
+      "36:48": {
+        "wall_ns": 17474625.5,
+        "query_wall_ns": 17272688.0,
+        "allocated_bytes": 7275160.0,
+        "query_allocated_bytes": 6998112.0
+      },
+      "48:60": {
+        "wall_ns": 16734979.0,
+        "query_wall_ns": 16437936.5,
+        "allocated_bytes": 7222304.0,
+        "query_allocated_bytes": 6946696.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "on",
+    "rep": 1,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-on-1-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 353075250,
+        "query_wall_ns": 345766250,
+        "allocated_bytes": 8423632,
+        "query_allocated_bytes": 8097336
+      },
+      "3:9": {
+        "wall_ns": 38883708.5,
+        "query_wall_ns": 38258562.5,
+        "allocated_bytes": 7687640.0,
+        "query_allocated_bytes": 7389148.0
+      },
+      "12:24": {
+        "wall_ns": 39149041.5,
+        "query_wall_ns": 38760249.5,
+        "allocated_bytes": 7364872.0,
+        "query_allocated_bytes": 7085264.0
+      },
+      "24:36": {
+        "wall_ns": 22488396.0,
+        "query_wall_ns": 22267748.5,
+        "allocated_bytes": 7275736.0,
+        "query_allocated_bytes": 6997528.0
+      },
+      "36:48": {
+        "wall_ns": 16356229.5,
+        "query_wall_ns": 16174104.0,
+        "allocated_bytes": 7216304.0,
+        "query_allocated_bytes": 6939256.0
+      },
+      "48:60": {
+        "wall_ns": 11253229.0,
+        "query_wall_ns": 11096187.0,
+        "allocated_bytes": 7162000.0,
+        "query_allocated_bytes": 6886392.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "on",
+    "rep": 1,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-on-1-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 123670250,
+        "query_wall_ns": 120501000,
+        "allocated_bytes": 4266568,
+        "query_allocated_bytes": 4135232
+      },
+      "3:9": {
+        "wall_ns": 31369291.5,
+        "query_wall_ns": 30025916.5,
+        "allocated_bytes": 4018248.0,
+        "query_allocated_bytes": 3912744.0
+      },
+      "12:24": {
+        "wall_ns": 37600354.5,
+        "query_wall_ns": 31106480.0,
+        "allocated_bytes": 3922276.0,
+        "query_allocated_bytes": 3818096.0
+      },
+      "24:36": {
+        "wall_ns": 22649917.0,
+        "query_wall_ns": 22380396.0,
+        "allocated_bytes": 3851016.0,
+        "query_allocated_bytes": 3746864.0
+      },
+      "36:48": {
+        "wall_ns": 10866542.0,
+        "query_wall_ns": 10467312.5,
+        "allocated_bytes": 3826904.0,
+        "query_allocated_bytes": 3722752.0
+      },
+      "48:60": {
+        "wall_ns": 6854770.5,
+        "query_wall_ns": 5719916.0,
+        "allocated_bytes": 3772752.0,
+        "query_allocated_bytes": 3676664.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "on",
+    "rep": 1,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-on-1-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 168053333,
+        "query_wall_ns": 163404750,
+        "allocated_bytes": 4266568,
+        "query_allocated_bytes": 4135232
+      },
+      "3:9": {
+        "wall_ns": 42353229.5,
+        "query_wall_ns": 41474896.0,
+        "allocated_bytes": 4018248.0,
+        "query_allocated_bytes": 3912744.0
+      },
+      "12:24": {
+        "wall_ns": 48030520.5,
+        "query_wall_ns": 43733791.0,
+        "allocated_bytes": 3922276.0,
+        "query_allocated_bytes": 3818096.0
+      },
+      "24:36": {
+        "wall_ns": 20482062.5,
+        "query_wall_ns": 20272270.5,
+        "allocated_bytes": 3851016.0,
+        "query_allocated_bytes": 3746864.0
+      },
+      "36:48": {
+        "wall_ns": 11037208.5,
+        "query_wall_ns": 10677458.0,
+        "allocated_bytes": 3826904.0,
+        "query_allocated_bytes": 3722752.0
+      },
+      "48:60": {
+        "wall_ns": 6430479.0,
+        "query_wall_ns": 5062207.5,
+        "allocated_bytes": 3772752.0,
+        "query_allocated_bytes": 3676664.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "on",
+    "rep": 2,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-on-2-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 251465250,
+        "query_wall_ns": 235318750,
+        "allocated_bytes": 8487344,
+        "query_allocated_bytes": 8161048
+      },
+      "3:9": {
+        "wall_ns": 72061396.0,
+        "query_wall_ns": 71318188.0,
+        "allocated_bytes": 7753672.0,
+        "query_allocated_bytes": 7455180.0
+      },
+      "12:24": {
+        "wall_ns": 40933562.5,
+        "query_wall_ns": 40414291.0,
+        "allocated_bytes": 7422280.0,
+        "query_allocated_bytes": 7142672.0
+      },
+      "24:36": {
+        "wall_ns": 20899896.0,
+        "query_wall_ns": 20711375.5,
+        "allocated_bytes": 7333144.0,
+        "query_allocated_bytes": 7054936.0
+      },
+      "36:48": {
+        "wall_ns": 15990542.0,
+        "query_wall_ns": 15814167.0,
+        "allocated_bytes": 7275160.0,
+        "query_allocated_bytes": 6998112.0
+      },
+      "48:60": {
+        "wall_ns": 11056375.0,
+        "query_wall_ns": 10895625.0,
+        "allocated_bytes": 7222304.0,
+        "query_allocated_bytes": 6946696.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "on",
+    "rep": 2,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-on-2-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 249553959,
+        "query_wall_ns": 233444374,
+        "allocated_bytes": 8423632,
+        "query_allocated_bytes": 8097336
+      },
+      "3:9": {
+        "wall_ns": 37449062.5,
+        "query_wall_ns": 36813625.0,
+        "allocated_bytes": 7687640.0,
+        "query_allocated_bytes": 7389148.0
+      },
+      "12:24": {
+        "wall_ns": 37213896.0,
+        "query_wall_ns": 36873959.0,
+        "allocated_bytes": 7364872.0,
+        "query_allocated_bytes": 7085264.0
+      },
+      "24:36": {
+        "wall_ns": 20323083.5,
+        "query_wall_ns": 20138000.0,
+        "allocated_bytes": 7275736.0,
+        "query_allocated_bytes": 6997528.0
+      },
+      "36:48": {
+        "wall_ns": 16254208.5,
+        "query_wall_ns": 16055604.0,
+        "allocated_bytes": 7216304.0,
+        "query_allocated_bytes": 6939256.0
+      },
+      "48:60": {
+        "wall_ns": 11333833.0,
+        "query_wall_ns": 11174167.0,
+        "allocated_bytes": 7162000.0,
+        "query_allocated_bytes": 6886392.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "on",
+    "rep": 2,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-on-2-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 121754792,
+        "query_wall_ns": 118622333,
+        "allocated_bytes": 4266568,
+        "query_allocated_bytes": 4135232
+      },
+      "3:9": {
+        "wall_ns": 30258729.0,
+        "query_wall_ns": 28972605.5,
+        "allocated_bytes": 4018248.0,
+        "query_allocated_bytes": 3912744.0
+      },
+      "12:24": {
+        "wall_ns": 36631521.0,
+        "query_wall_ns": 28885166.5,
+        "allocated_bytes": 3922276.0,
+        "query_allocated_bytes": 3818096.0
+      },
+      "24:36": {
+        "wall_ns": 20346938.0,
+        "query_wall_ns": 20135166.5,
+        "allocated_bytes": 3851016.0,
+        "query_allocated_bytes": 3746864.0
+      },
+      "36:48": {
+        "wall_ns": 9929937.5,
+        "query_wall_ns": 9576834.0,
+        "allocated_bytes": 3826904.0,
+        "query_allocated_bytes": 3722752.0
+      },
+      "48:60": {
+        "wall_ns": 6539875.0,
+        "query_wall_ns": 4963187.0,
+        "allocated_bytes": 3772752.0,
+        "query_allocated_bytes": 3676664.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "on",
+    "rep": 2,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-on-2-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 121113917,
+        "query_wall_ns": 118332126,
+        "allocated_bytes": 4266568,
+        "query_allocated_bytes": 4135232
+      },
+      "3:9": {
+        "wall_ns": 30327020.5,
+        "query_wall_ns": 29023937.0,
+        "allocated_bytes": 4018248.0,
+        "query_allocated_bytes": 3912744.0
+      },
+      "12:24": {
+        "wall_ns": 36526083.5,
+        "query_wall_ns": 29093063.0,
+        "allocated_bytes": 3922276.0,
+        "query_allocated_bytes": 3818096.0
+      },
+      "24:36": {
+        "wall_ns": 20581437.5,
+        "query_wall_ns": 20365395.5,
+        "allocated_bytes": 3851016.0,
+        "query_allocated_bytes": 3746864.0
+      },
+      "36:48": {
+        "wall_ns": 10908437.5,
+        "query_wall_ns": 10542603.0,
+        "allocated_bytes": 3826904.0,
+        "query_allocated_bytes": 3722752.0
+      },
+      "48:60": {
+        "wall_ns": 6260062.5,
+        "query_wall_ns": 4878084.5,
+        "allocated_bytes": 3772752.0,
+        "query_allocated_bytes": 3676664.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "verify",
+    "rep": 0,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-verify-0-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 256047917,
+        "query_wall_ns": 239417917,
+        "allocated_bytes": 8821488,
+        "query_allocated_bytes": 8495192
+      },
+      "3:9": {
+        "wall_ns": 46651708.0,
+        "query_wall_ns": 45994478.5,
+        "allocated_bytes": 8089616.0,
+        "query_allocated_bytes": 7791124.0
+      },
+      "12:24": {
+        "wall_ns": 40886771.0,
+        "query_wall_ns": 40309875.0,
+        "allocated_bytes": 7751624.0,
+        "query_allocated_bytes": 7471888.0
+      },
+      "24:36": {
+        "wall_ns": 21252354.0,
+        "query_wall_ns": 21061853.0,
+        "allocated_bytes": 7665192.0,
+        "query_allocated_bytes": 7386408.0
+      },
+      "36:48": {
+        "wall_ns": 17519437.5,
+        "query_wall_ns": 17316020.5,
+        "allocated_bytes": 7610200.0,
+        "query_allocated_bytes": 7332576.0
+      },
+      "48:60": {
+        "wall_ns": 11421417.0,
+        "query_wall_ns": 11255958.0,
+        "allocated_bytes": 7560416.0,
+        "query_allocated_bytes": 7284232.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "verify",
+    "rep": 0,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-verify-0-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 249612791,
+        "query_wall_ns": 233517248,
+        "allocated_bytes": 8757776,
+        "query_allocated_bytes": 8431480
+      },
+      "3:9": {
+        "wall_ns": 46916520.5,
+        "query_wall_ns": 46252457.0,
+        "allocated_bytes": 8023584.0,
+        "query_allocated_bytes": 7725092.0
+      },
+      "12:24": {
+        "wall_ns": 41138041.5,
+        "query_wall_ns": 40425917.5,
+        "allocated_bytes": 7694216.0,
+        "query_allocated_bytes": 7414480.0
+      },
+      "24:36": {
+        "wall_ns": 23288042.0,
+        "query_wall_ns": 22704625.0,
+        "allocated_bytes": 7607784.0,
+        "query_allocated_bytes": 7329000.0
+      },
+      "36:48": {
+        "wall_ns": 16482749.5,
+        "query_wall_ns": 16299812.5,
+        "allocated_bytes": 7551344.0,
+        "query_allocated_bytes": 7273720.0
+      },
+      "48:60": {
+        "wall_ns": 11791375.0,
+        "query_wall_ns": 11619832.0,
+        "allocated_bytes": 7500112.0,
+        "query_allocated_bytes": 7223928.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "verify",
+    "rep": 0,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-verify-0-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 127254917,
+        "query_wall_ns": 124389123,
+        "allocated_bytes": 4602440,
+        "query_allocated_bytes": 4471104
+      },
+      "3:9": {
+        "wall_ns": 32014833.5,
+        "query_wall_ns": 30949771.0,
+        "allocated_bytes": 4354120.0,
+        "query_allocated_bytes": 4248616.0
+      },
+      "12:24": {
+        "wall_ns": 41046041.5,
+        "query_wall_ns": 35154791.0,
+        "allocated_bytes": 4240868.0,
+        "query_allocated_bytes": 4136688.0
+      },
+      "24:36": {
+        "wall_ns": 21116104.5,
+        "query_wall_ns": 20892000.5,
+        "allocated_bytes": 4165944.0,
+        "query_allocated_bytes": 4061792.0
+      },
+      "36:48": {
+        "wall_ns": 10117270.5,
+        "query_wall_ns": 9738103.5,
+        "allocated_bytes": 4144728.0,
+        "query_allocated_bytes": 4040576.0
+      },
+      "48:60": {
+        "wall_ns": 6571479.5,
+        "query_wall_ns": 4878082.5,
+        "allocated_bytes": 4093648.0,
+        "query_allocated_bytes": 3997560.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "verify",
+    "rep": 0,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-verify-0-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 125361792,
+        "query_wall_ns": 122083792,
+        "allocated_bytes": 4602440,
+        "query_allocated_bytes": 4471104
+      },
+      "3:9": {
+        "wall_ns": 32212937.5,
+        "query_wall_ns": 31075311.5,
+        "allocated_bytes": 4354120.0,
+        "query_allocated_bytes": 4248616.0
+      },
+      "12:24": {
+        "wall_ns": 37382125.0,
+        "query_wall_ns": 31695271.0,
+        "allocated_bytes": 4240868.0,
+        "query_allocated_bytes": 4136688.0
+      },
+      "24:36": {
+        "wall_ns": 20833979.0,
+        "query_wall_ns": 20624042.0,
+        "allocated_bytes": 4165944.0,
+        "query_allocated_bytes": 4061792.0
+      },
+      "36:48": {
+        "wall_ns": 11109021.5,
+        "query_wall_ns": 10761500.5,
+        "allocated_bytes": 4144728.0,
+        "query_allocated_bytes": 4040576.0
+      },
+      "48:60": {
+        "wall_ns": 6543250.0,
+        "query_wall_ns": 4771416.5,
+        "allocated_bytes": 4093648.0,
+        "query_allocated_bytes": 3997560.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "verify",
+    "rep": 1,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-verify-1-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 247119334,
+        "query_wall_ns": 231110417,
+        "allocated_bytes": 8821488,
+        "query_allocated_bytes": 8495192
+      },
+      "3:9": {
+        "wall_ns": 45523520.5,
+        "query_wall_ns": 44884665.5,
+        "allocated_bytes": 8089616.0,
+        "query_allocated_bytes": 7791124.0
+      },
+      "12:24": {
+        "wall_ns": 41057062.5,
+        "query_wall_ns": 40358627.0,
+        "allocated_bytes": 7751624.0,
+        "query_allocated_bytes": 7471888.0
+      },
+      "24:36": {
+        "wall_ns": 21490125.0,
+        "query_wall_ns": 21296458.5,
+        "allocated_bytes": 7665192.0,
+        "query_allocated_bytes": 7386408.0
+      },
+      "36:48": {
+        "wall_ns": 16531104.0,
+        "query_wall_ns": 16350917.5,
+        "allocated_bytes": 7610200.0,
+        "query_allocated_bytes": 7332576.0
+      },
+      "48:60": {
+        "wall_ns": 11347541.5,
+        "query_wall_ns": 11181478.0,
+        "allocated_bytes": 7560416.0,
+        "query_allocated_bytes": 7284232.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "verify",
+    "rep": 1,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-verify-1-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 263418291,
+        "query_wall_ns": 245907167,
+        "allocated_bytes": 8757776,
+        "query_allocated_bytes": 8431480
+      },
+      "3:9": {
+        "wall_ns": 46299708.5,
+        "query_wall_ns": 45679062.0,
+        "allocated_bytes": 8023584.0,
+        "query_allocated_bytes": 7725092.0
+      },
+      "12:24": {
+        "wall_ns": 39370375.0,
+        "query_wall_ns": 38659645.5,
+        "allocated_bytes": 7694216.0,
+        "query_allocated_bytes": 7414480.0
+      },
+      "24:36": {
+        "wall_ns": 21868083.0,
+        "query_wall_ns": 21681480.0,
+        "allocated_bytes": 7607784.0,
+        "query_allocated_bytes": 7329000.0
+      },
+      "36:48": {
+        "wall_ns": 16327042.0,
+        "query_wall_ns": 16147625.0,
+        "allocated_bytes": 7551344.0,
+        "query_allocated_bytes": 7273720.0
+      },
+      "48:60": {
+        "wall_ns": 11297625.0,
+        "query_wall_ns": 11129250.0,
+        "allocated_bytes": 7503952.0,
+        "query_allocated_bytes": 7227256.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "verify",
+    "rep": 1,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-verify-1-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 121345708,
+        "query_wall_ns": 118606752,
+        "allocated_bytes": 4602440,
+        "query_allocated_bytes": 4471104
+      },
+      "3:9": {
+        "wall_ns": 31289229.5,
+        "query_wall_ns": 30284520.0,
+        "allocated_bytes": 4354120.0,
+        "query_allocated_bytes": 4248616.0
+      },
+      "12:24": {
+        "wall_ns": 37370729.0,
+        "query_wall_ns": 31813229.5,
+        "allocated_bytes": 4240868.0,
+        "query_allocated_bytes": 4136688.0
+      },
+      "24:36": {
+        "wall_ns": 20547667.0,
+        "query_wall_ns": 20348228.0,
+        "allocated_bytes": 4165944.0,
+        "query_allocated_bytes": 4061792.0
+      },
+      "36:48": {
+        "wall_ns": 10122708.5,
+        "query_wall_ns": 9769792.5,
+        "allocated_bytes": 4144728.0,
+        "query_allocated_bytes": 4040576.0
+      },
+      "48:60": {
+        "wall_ns": 6442063.0,
+        "query_wall_ns": 4689355.0,
+        "allocated_bytes": 4093648.0,
+        "query_allocated_bytes": 3997560.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "verify",
+    "rep": 1,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-verify-1-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 122852208,
+        "query_wall_ns": 120095250,
+        "allocated_bytes": 4602440,
+        "query_allocated_bytes": 4471104
+      },
+      "3:9": {
+        "wall_ns": 31633729.0,
+        "query_wall_ns": 30558501.0,
+        "allocated_bytes": 4354120.0,
+        "query_allocated_bytes": 4248616.0
+      },
+      "12:24": {
+        "wall_ns": 68952083.5,
+        "query_wall_ns": 62152667.0,
+        "allocated_bytes": 4240868.0,
+        "query_allocated_bytes": 4136688.0
+      },
+      "24:36": {
+        "wall_ns": 27449375.0,
+        "query_wall_ns": 27196979.5,
+        "allocated_bytes": 4165944.0,
+        "query_allocated_bytes": 4061792.0
+      },
+      "36:48": {
+        "wall_ns": 11807708.5,
+        "query_wall_ns": 11429271.0,
+        "allocated_bytes": 4144728.0,
+        "query_allocated_bytes": 4040576.0
+      },
+      "48:60": {
+        "wall_ns": 6428438.0,
+        "query_wall_ns": 4781208.0,
+        "allocated_bytes": 4093648.0,
+        "query_allocated_bytes": 3997560.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "verify",
+    "rep": 2,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-verify-2-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 247254792,
+        "query_wall_ns": 231212584,
+        "allocated_bytes": 8821488,
+        "query_allocated_bytes": 8495192
+      },
+      "3:9": {
+        "wall_ns": 45709937.5,
+        "query_wall_ns": 45102395.5,
+        "allocated_bytes": 8089616.0,
+        "query_allocated_bytes": 7791124.0
+      },
+      "12:24": {
+        "wall_ns": 40585479.0,
+        "query_wall_ns": 39908042.0,
+        "allocated_bytes": 7751624.0,
+        "query_allocated_bytes": 7471888.0
+      },
+      "24:36": {
+        "wall_ns": 21357083.5,
+        "query_wall_ns": 21167208.5,
+        "allocated_bytes": 7665192.0,
+        "query_allocated_bytes": 7386408.0
+      },
+      "36:48": {
+        "wall_ns": 16788770.5,
+        "query_wall_ns": 16593624.5,
+        "allocated_bytes": 7610200.0,
+        "query_allocated_bytes": 7332576.0
+      },
+      "48:60": {
+        "wall_ns": 13987667.0,
+        "query_wall_ns": 13758334.0,
+        "allocated_bytes": 7560416.0,
+        "query_allocated_bytes": 7284232.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "verify",
+    "rep": 2,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-verify-2-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 243929792,
+        "query_wall_ns": 228099626,
+        "allocated_bytes": 8757776,
+        "query_allocated_bytes": 8431480
+      },
+      "3:9": {
+        "wall_ns": 45521583.5,
+        "query_wall_ns": 44907375.0,
+        "allocated_bytes": 8023584.0,
+        "query_allocated_bytes": 7725092.0
+      },
+      "12:24": {
+        "wall_ns": 39934417.0,
+        "query_wall_ns": 39238208.0,
+        "allocated_bytes": 7694216.0,
+        "query_allocated_bytes": 7414480.0
+      },
+      "24:36": {
+        "wall_ns": 21713312.0,
+        "query_wall_ns": 21526520.0,
+        "allocated_bytes": 7607784.0,
+        "query_allocated_bytes": 7329000.0
+      },
+      "36:48": {
+        "wall_ns": 16263563.0,
+        "query_wall_ns": 16078500.0,
+        "allocated_bytes": 7551344.0,
+        "query_allocated_bytes": 7273720.0
+      },
+      "48:60": {
+        "wall_ns": 11635979.0,
+        "query_wall_ns": 11471125.0,
+        "allocated_bytes": 7503952.0,
+        "query_allocated_bytes": 7227256.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "verify",
+    "rep": 2,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-verify-2-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 122211167,
+        "query_wall_ns": 119106083,
+        "allocated_bytes": 4602440,
+        "query_allocated_bytes": 4471104
+      },
+      "3:9": {
+        "wall_ns": 34073979.5,
+        "query_wall_ns": 32980332.5,
+        "allocated_bytes": 4354120.0,
+        "query_allocated_bytes": 4248616.0
+      },
+      "12:24": {
+        "wall_ns": 39063583.0,
+        "query_wall_ns": 33531332.5,
+        "allocated_bytes": 4240868.0,
+        "query_allocated_bytes": 4136688.0
+      },
+      "24:36": {
+        "wall_ns": 24770583.5,
+        "query_wall_ns": 24561103.5,
+        "allocated_bytes": 4165944.0,
+        "query_allocated_bytes": 4061792.0
+      },
+      "36:48": {
+        "wall_ns": 10184396.0,
+        "query_wall_ns": 9817624.0,
+        "allocated_bytes": 4144728.0,
+        "query_allocated_bytes": 4040576.0
+      },
+      "48:60": {
+        "wall_ns": 6514896.0,
+        "query_wall_ns": 4801874.5,
+        "allocated_bytes": 4093648.0,
+        "query_allocated_bytes": 3997560.0
+      }
+    }
+  },
+  {
+    "profile": "batch",
+    "flag": "verify",
+    "rep": 2,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "batch-verify-2-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 124751917,
+        "query_wall_ns": 121798626,
+        "allocated_bytes": 4602440,
+        "query_allocated_bytes": 4471104
+      },
+      "3:9": {
+        "wall_ns": 31489875.0,
+        "query_wall_ns": 30397542.0,
+        "allocated_bytes": 4354120.0,
+        "query_allocated_bytes": 4248616.0
+      },
+      "12:24": {
+        "wall_ns": 36686208.5,
+        "query_wall_ns": 31165645.5,
+        "allocated_bytes": 4240868.0,
+        "query_allocated_bytes": 4136688.0
+      },
+      "24:36": {
+        "wall_ns": 20530083.5,
+        "query_wall_ns": 20328937.5,
+        "allocated_bytes": 4165944.0,
+        "query_allocated_bytes": 4061792.0
+      },
+      "36:48": {
+        "wall_ns": 11280104.5,
+        "query_wall_ns": 10917062.5,
+        "allocated_bytes": 4144728.0,
+        "query_allocated_bytes": 4040576.0
+      },
+      "48:60": {
+        "wall_ns": 6389125.0,
+        "query_wall_ns": 4683708.0,
+        "allocated_bytes": 4093648.0,
+        "query_allocated_bytes": 3997560.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "off",
+    "rep": 0,
+    "mode": "baseline",
+    "logging": true,
+    "exit_code": 0,
+    "clock_alignment": true,
+    "label": "default-off-0-baseline-jit",
+    "windows": {
+      "0:3": {
+        "wall_ns": 33420500,
+        "query_wall_ns": 32378791,
+        "allocated_bytes": 11108544,
+        "query_allocated_bytes": 10722584
+      },
+      "3:9": {
+        "wall_ns": 17749645.5,
+        "query_wall_ns": 17229207.5,
+        "allocated_bytes": 9872728.0,
+        "query_allocated_bytes": 9517796.0
+      },
+      "12:24": {
+        "wall_ns": 11377520.5,
+        "query_wall_ns": 10975291.5,
+        "allocated_bytes": 8846396.0,
+        "query_allocated_bytes": 8547868.0
+      },
+      "24:36": {
+        "wall_ns": 8049771.0,
+        "query_wall_ns": 7738646.5,
+        "allocated_bytes": 8544296.0,
+        "query_allocated_bytes": 8245768.0
+      },
+      "36:48": {
+        "wall_ns": 7492917.0,
+        "query_wall_ns": 7017146.5,
+        "allocated_bytes": 8239024.0,
+        "query_allocated_bytes": 7940496.0
+      },
+      "48:60": {
+        "wall_ns": 5943792.0,
+        "query_wall_ns": 5708125.5,
+        "allocated_bytes": 8180872.0,
+        "query_allocated_bytes": 7885032.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "off",
+    "rep": 0,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-off-0-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 32181625,
+        "query_wall_ns": 31183957,
+        "allocated_bytes": 10424696,
+        "query_allocated_bytes": 10038736
+      },
+      "3:9": {
+        "wall_ns": 16446521.0,
+        "query_wall_ns": 15924187.5,
+        "allocated_bytes": 9850112.0,
+        "query_allocated_bytes": 9495336.0
+      },
+      "12:24": {
+        "wall_ns": 12694750.0,
+        "query_wall_ns": 12075625.0,
+        "allocated_bytes": 9645168.0,
+        "query_allocated_bytes": 9303872.0
+      },
+      "24:36": {
+        "wall_ns": 7338833.0,
+        "query_wall_ns": 7059541.0,
+        "allocated_bytes": 8544284.0,
+        "query_allocated_bytes": 8245756.0
+      },
+      "36:48": {
+        "wall_ns": 6612750.0,
+        "query_wall_ns": 6380853.5,
+        "allocated_bytes": 8234848.0,
+        "query_allocated_bytes": 7936320.0
+      },
+      "48:60": {
+        "wall_ns": 5648729.5,
+        "query_wall_ns": 5435062.0,
+        "allocated_bytes": 8105596.0,
+        "query_allocated_bytes": 7812540.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "off",
+    "rep": 0,
+    "mode": "candidate",
+    "logging": true,
+    "exit_code": 0,
+    "clock_alignment": true,
+    "label": "default-off-0-candidate-jit",
+    "windows": {
+      "0:3": {
+        "wall_ns": 39105333,
+        "query_wall_ns": 38012750,
+        "allocated_bytes": 11044760,
+        "query_allocated_bytes": 10658872
+      },
+      "3:9": {
+        "wall_ns": 20535374.5,
+        "query_wall_ns": 19944584.0,
+        "allocated_bytes": 9806928.0,
+        "query_allocated_bytes": 9451996.0
+      },
+      "12:24": {
+        "wall_ns": 11211000.5,
+        "query_wall_ns": 10881250.0,
+        "allocated_bytes": 8782080.0,
+        "query_allocated_bytes": 8483552.0
+      },
+      "24:36": {
+        "wall_ns": 7987500.0,
+        "query_wall_ns": 7697333.0,
+        "allocated_bytes": 8477436.0,
+        "query_allocated_bytes": 8178908.0
+      },
+      "36:48": {
+        "wall_ns": 7201167.0,
+        "query_wall_ns": 6947374.0,
+        "allocated_bytes": 8159668.0,
+        "query_allocated_bytes": 7861140.0
+      },
+      "48:60": {
+        "wall_ns": 6037083.0,
+        "query_wall_ns": 5797062.5,
+        "allocated_bytes": 8141988.0,
+        "query_allocated_bytes": 7843588.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "off",
+    "rep": 0,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-off-0-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 28687667,
+        "query_wall_ns": 27836583,
+        "allocated_bytes": 10360984,
+        "query_allocated_bytes": 9975024
+      },
+      "3:9": {
+        "wall_ns": 15536687.5,
+        "query_wall_ns": 15044332.5,
+        "allocated_bytes": 9783964.0,
+        "query_allocated_bytes": 9429188.0
+      },
+      "12:24": {
+        "wall_ns": 12317729.0,
+        "query_wall_ns": 11795981.0,
+        "allocated_bytes": 9578844.0,
+        "query_allocated_bytes": 9237548.0
+      },
+      "24:36": {
+        "wall_ns": 7680479.5,
+        "query_wall_ns": 7398145.5,
+        "allocated_bytes": 8478188.0,
+        "query_allocated_bytes": 8179660.0
+      },
+      "36:48": {
+        "wall_ns": 6853395.5,
+        "query_wall_ns": 6601791.5,
+        "allocated_bytes": 8170032.0,
+        "query_allocated_bytes": 7871504.0
+      },
+      "48:60": {
+        "wall_ns": 5695312.0,
+        "query_wall_ns": 5460354.0,
+        "allocated_bytes": 8036544.0,
+        "query_allocated_bytes": 7743488.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "off",
+    "rep": 0,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-off-0-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 19463042,
+        "query_wall_ns": 17997834,
+        "allocated_bytes": 5754672,
+        "query_allocated_bytes": 5623336
+      },
+      "3:9": {
+        "wall_ns": 11550166.5,
+        "query_wall_ns": 11039063.5,
+        "allocated_bytes": 5062580.0,
+        "query_allocated_bytes": 4957260.0
+      },
+      "12:24": {
+        "wall_ns": 7403229.0,
+        "query_wall_ns": 6892147.0,
+        "allocated_bytes": 4801868.0,
+        "query_allocated_bytes": 4697352.0
+      },
+      "24:36": {
+        "wall_ns": 5258771.0,
+        "query_wall_ns": 5004936.5,
+        "allocated_bytes": 4485824.0,
+        "query_allocated_bytes": 4381672.0
+      },
+      "36:48": {
+        "wall_ns": 4346770.5,
+        "query_wall_ns": 4141084.5,
+        "allocated_bytes": 4469052.0,
+        "query_allocated_bytes": 4364900.0
+      },
+      "48:60": {
+        "wall_ns": 3861542.0,
+        "query_wall_ns": 3674479.5,
+        "allocated_bytes": 4445056.0,
+        "query_allocated_bytes": 4340904.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "off",
+    "rep": 0,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-off-0-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 20725333,
+        "query_wall_ns": 19093001,
+        "allocated_bytes": 5488224,
+        "query_allocated_bytes": 5356888
+      },
+      "3:9": {
+        "wall_ns": 12281166.5,
+        "query_wall_ns": 11787396.0,
+        "allocated_bytes": 5062632.0,
+        "query_allocated_bytes": 4957312.0
+      },
+      "12:24": {
+        "wall_ns": 7573562.5,
+        "query_wall_ns": 7032895.0,
+        "allocated_bytes": 4801968.0,
+        "query_allocated_bytes": 4697452.0
+      },
+      "24:36": {
+        "wall_ns": 5228625.0,
+        "query_wall_ns": 4992042.0,
+        "allocated_bytes": 4462700.0,
+        "query_allocated_bytes": 4358436.0
+      },
+      "36:48": {
+        "wall_ns": 4388229.5,
+        "query_wall_ns": 4176834.0,
+        "allocated_bytes": 4446960.0,
+        "query_allocated_bytes": 4342808.0
+      },
+      "48:60": {
+        "wall_ns": 3894792.0,
+        "query_wall_ns": 3703833.0,
+        "allocated_bytes": 4423532.0,
+        "query_allocated_bytes": 4319380.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "off",
+    "rep": 1,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-off-1-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 29633917,
+        "query_wall_ns": 28780667,
+        "allocated_bytes": 10424696,
+        "query_allocated_bytes": 10038736
+      },
+      "3:9": {
+        "wall_ns": 15570125.0,
+        "query_wall_ns": 15086646.0,
+        "allocated_bytes": 9850060.0,
+        "query_allocated_bytes": 9495284.0
+      },
+      "12:24": {
+        "wall_ns": 11908270.5,
+        "query_wall_ns": 11443376.5,
+        "allocated_bytes": 9645328.0,
+        "query_allocated_bytes": 9304032.0
+      },
+      "24:36": {
+        "wall_ns": 7358792.0,
+        "query_wall_ns": 7085562.0,
+        "allocated_bytes": 8544308.0,
+        "query_allocated_bytes": 8245768.0
+      },
+      "36:48": {
+        "wall_ns": 6803125.0,
+        "query_wall_ns": 6513499.5,
+        "allocated_bytes": 8239048.0,
+        "query_allocated_bytes": 7940520.0
+      },
+      "48:60": {
+        "wall_ns": 5936249.5,
+        "query_wall_ns": 5705001.0,
+        "allocated_bytes": 8239184.0,
+        "query_allocated_bytes": 7940620.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "off",
+    "rep": 1,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-off-1-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 30426042,
+        "query_wall_ns": 29542250,
+        "allocated_bytes": 10359656,
+        "query_allocated_bytes": 9973696
+      },
+      "3:9": {
+        "wall_ns": 16416291.5,
+        "query_wall_ns": 15885938.5,
+        "allocated_bytes": 9783964.0,
+        "query_allocated_bytes": 9429188.0
+      },
+      "12:24": {
+        "wall_ns": 11350833.5,
+        "query_wall_ns": 10913187.5,
+        "allocated_bytes": 8782092.0,
+        "query_allocated_bytes": 8483564.0
+      },
+      "24:36": {
+        "wall_ns": 8196333.5,
+        "query_wall_ns": 7863230.0,
+        "allocated_bytes": 8478188.0,
+        "query_allocated_bytes": 8179660.0
+      },
+      "36:48": {
+        "wall_ns": 7576750.0,
+        "query_wall_ns": 7271313.0,
+        "allocated_bytes": 8170032.0,
+        "query_allocated_bytes": 7871504.0
+      },
+      "48:60": {
+        "wall_ns": 6476958.0,
+        "query_wall_ns": 6205791.5,
+        "allocated_bytes": 8170192.0,
+        "query_allocated_bytes": 7871628.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "off",
+    "rep": 1,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-off-1-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 19355417,
+        "query_wall_ns": 17775959,
+        "allocated_bytes": 5674872,
+        "query_allocated_bytes": 5543536
+      },
+      "3:9": {
+        "wall_ns": 11632541.5,
+        "query_wall_ns": 11183999.5,
+        "allocated_bytes": 5061260.0,
+        "query_allocated_bytes": 4955940.0
+      },
+      "12:24": {
+        "wall_ns": 6739916.5,
+        "query_wall_ns": 6278312.0,
+        "allocated_bytes": 4802116.0,
+        "query_allocated_bytes": 4697816.0
+      },
+      "24:36": {
+        "wall_ns": 4627125.0,
+        "query_wall_ns": 4403395.5,
+        "allocated_bytes": 4485824.0,
+        "query_allocated_bytes": 4381672.0
+      },
+      "36:48": {
+        "wall_ns": 4045833.5,
+        "query_wall_ns": 3849249.0,
+        "allocated_bytes": 4480996.0,
+        "query_allocated_bytes": 4376844.0
+      },
+      "48:60": {
+        "wall_ns": 3439291.5,
+        "query_wall_ns": 3282771.0,
+        "allocated_bytes": 4459752.0,
+        "query_allocated_bytes": 4355600.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "off",
+    "rep": 1,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-off-1-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 19069333,
+        "query_wall_ns": 17593291,
+        "allocated_bytes": 5488320,
+        "query_allocated_bytes": 5356984
+      },
+      "3:9": {
+        "wall_ns": 10782291.5,
+        "query_wall_ns": 10305647.0,
+        "allocated_bytes": 5062580.0,
+        "query_allocated_bytes": 4957260.0
+      },
+      "12:24": {
+        "wall_ns": 6739063.0,
+        "query_wall_ns": 6274148.0,
+        "allocated_bytes": 4802116.0,
+        "query_allocated_bytes": 4697588.0
+      },
+      "24:36": {
+        "wall_ns": 4810604.0,
+        "query_wall_ns": 4513666.0,
+        "allocated_bytes": 4463836.0,
+        "query_allocated_bytes": 4358944.0
+      },
+      "36:48": {
+        "wall_ns": 3978104.0,
+        "query_wall_ns": 3802646.0,
+        "allocated_bytes": 4451840.0,
+        "query_allocated_bytes": 4347688.0
+      },
+      "48:60": {
+        "wall_ns": 3417103.5,
+        "query_wall_ns": 3257001.0,
+        "allocated_bytes": 4415928.0,
+        "query_allocated_bytes": 4311776.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "off",
+    "rep": 2,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-off-2-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 28511584,
+        "query_wall_ns": 27678458,
+        "allocated_bytes": 10423368,
+        "query_allocated_bytes": 10037408
+      },
+      "3:9": {
+        "wall_ns": 15667791.5,
+        "query_wall_ns": 15160771.5,
+        "allocated_bytes": 9850060.0,
+        "query_allocated_bytes": 9495284.0
+      },
+      "12:24": {
+        "wall_ns": 11505583.0,
+        "query_wall_ns": 11122583.5,
+        "allocated_bytes": 9267008.0,
+        "query_allocated_bytes": 8949100.0
+      },
+      "24:36": {
+        "wall_ns": 7828458.0,
+        "query_wall_ns": 7549229.5,
+        "allocated_bytes": 8544296.0,
+        "query_allocated_bytes": 8245768.0
+      },
+      "36:48": {
+        "wall_ns": 6925916.5,
+        "query_wall_ns": 6669459.0,
+        "allocated_bytes": 8239048.0,
+        "query_allocated_bytes": 7940520.0
+      },
+      "48:60": {
+        "wall_ns": 5809667.0,
+        "query_wall_ns": 5587499.0,
+        "allocated_bytes": 8121972.0,
+        "query_allocated_bytes": 7827060.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "off",
+    "rep": 2,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-off-2-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 28924125,
+        "query_wall_ns": 27976958,
+        "allocated_bytes": 10382824,
+        "query_allocated_bytes": 9996864
+      },
+      "3:9": {
+        "wall_ns": 15243020.5,
+        "query_wall_ns": 14768667.0,
+        "allocated_bytes": 9783964.0,
+        "query_allocated_bytes": 9429188.0
+      },
+      "12:24": {
+        "wall_ns": 12047771.0,
+        "query_wall_ns": 11561666.5,
+        "allocated_bytes": 9671092.0,
+        "query_allocated_bytes": 9325464.0
+      },
+      "24:36": {
+        "wall_ns": 7343625.5,
+        "query_wall_ns": 7071500.0,
+        "allocated_bytes": 8478200.0,
+        "query_allocated_bytes": 8179672.0
+      },
+      "36:48": {
+        "wall_ns": 6675354.0,
+        "query_wall_ns": 6445354.0,
+        "allocated_bytes": 8170044.0,
+        "query_allocated_bytes": 7871516.0
+      },
+      "48:60": {
+        "wall_ns": 5950312.5,
+        "query_wall_ns": 5708437.0,
+        "allocated_bytes": 8170192.0,
+        "query_allocated_bytes": 7871628.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "off",
+    "rep": 2,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-off-2-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 19347292,
+        "query_wall_ns": 17780042,
+        "allocated_bytes": 5672184,
+        "query_allocated_bytes": 5540848
+      },
+      "3:9": {
+        "wall_ns": 11134375.0,
+        "query_wall_ns": 10634459.0,
+        "allocated_bytes": 5062580.0,
+        "query_allocated_bytes": 4957260.0
+      },
+      "12:24": {
+        "wall_ns": 6675687.5,
+        "query_wall_ns": 6168291.0,
+        "allocated_bytes": 4929492.0,
+        "query_allocated_bytes": 4825212.0
+      },
+      "24:36": {
+        "wall_ns": 4762646.0,
+        "query_wall_ns": 4553041.5,
+        "allocated_bytes": 4481436.0,
+        "query_allocated_bytes": 4377284.0
+      },
+      "36:48": {
+        "wall_ns": 3982958.0,
+        "query_wall_ns": 3791187.0,
+        "allocated_bytes": 4457372.0,
+        "query_allocated_bytes": 4353220.0
+      },
+      "48:60": {
+        "wall_ns": 3451458.5,
+        "query_wall_ns": 3293686.5,
+        "allocated_bytes": 4436472.0,
+        "query_allocated_bytes": 4332308.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "off",
+    "rep": 2,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-off-2-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 19618208,
+        "query_wall_ns": 18015374,
+        "allocated_bytes": 5767176,
+        "query_allocated_bytes": 5635840
+      },
+      "3:9": {
+        "wall_ns": 10819375.0,
+        "query_wall_ns": 10342292.5,
+        "allocated_bytes": 5056512.0,
+        "query_allocated_bytes": 4951008.0
+      },
+      "12:24": {
+        "wall_ns": 6343853.5,
+        "query_wall_ns": 6002125.0,
+        "allocated_bytes": 4487660.0,
+        "query_allocated_bytes": 4381716.0
+      },
+      "24:36": {
+        "wall_ns": 4528208.5,
+        "query_wall_ns": 4320001.0,
+        "allocated_bytes": 4485744.0,
+        "query_allocated_bytes": 4381592.0
+      },
+      "36:48": {
+        "wall_ns": 3856625.5,
+        "query_wall_ns": 3673958.5,
+        "allocated_bytes": 4451840.0,
+        "query_allocated_bytes": 4347688.0
+      },
+      "48:60": {
+        "wall_ns": 3520916.5,
+        "query_wall_ns": 3357207.5,
+        "allocated_bytes": 4421752.0,
+        "query_allocated_bytes": 4317600.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "on",
+    "rep": 0,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-on-0-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 29712084,
+        "query_wall_ns": 28837583,
+        "allocated_bytes": 10509160,
+        "query_allocated_bytes": 10128960
+      },
+      "3:9": {
+        "wall_ns": 15541167.0,
+        "query_wall_ns": 15034062.0,
+        "allocated_bytes": 9437368.0,
+        "query_allocated_bytes": 9082592.0
+      },
+      "12:24": {
+        "wall_ns": 11367354.5,
+        "query_wall_ns": 10939333.0,
+        "allocated_bytes": 8834472.0,
+        "query_allocated_bytes": 8516564.0
+      },
+      "24:36": {
+        "wall_ns": 7365375.5,
+        "query_wall_ns": 7070061.5,
+        "allocated_bytes": 8128668.0,
+        "query_allocated_bytes": 7830140.0
+      },
+      "36:48": {
+        "wall_ns": 6526729.5,
+        "query_wall_ns": 6264624.0,
+        "allocated_bytes": 7821336.0,
+        "query_allocated_bytes": 7522808.0
+      },
+      "48:60": {
+        "wall_ns": 5864104.0,
+        "query_wall_ns": 5637480.5,
+        "allocated_bytes": 7821496.0,
+        "query_allocated_bytes": 7522932.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "on",
+    "rep": 0,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-on-0-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 28854292,
+        "query_wall_ns": 28007208,
+        "allocated_bytes": 10455888,
+        "query_allocated_bytes": 10069928
+      },
+      "3:9": {
+        "wall_ns": 15497604.0,
+        "query_wall_ns": 14954917.0,
+        "allocated_bytes": 9394276.0,
+        "query_allocated_bytes": 9039344.0
+      },
+      "12:24": {
+        "wall_ns": 12244312.0,
+        "query_wall_ns": 11838103.5,
+        "allocated_bytes": 8839464.0,
+        "query_allocated_bytes": 8518496.0
+      },
+      "24:36": {
+        "wall_ns": 7941271.0,
+        "query_wall_ns": 7623626.5,
+        "allocated_bytes": 8063016.0,
+        "query_allocated_bytes": 7764488.0
+      },
+      "36:48": {
+        "wall_ns": 7326562.0,
+        "query_wall_ns": 7029083.5,
+        "allocated_bytes": 7752344.0,
+        "query_allocated_bytes": 7453816.0
+      },
+      "48:60": {
+        "wall_ns": 6053104.0,
+        "query_wall_ns": 5801291.5,
+        "allocated_bytes": 7752504.0,
+        "query_allocated_bytes": 7453940.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "on",
+    "rep": 0,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-on-0-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 18129333,
+        "query_wall_ns": 16727168,
+        "allocated_bytes": 5048360,
+        "query_allocated_bytes": 4917024
+      },
+      "3:9": {
+        "wall_ns": 10606416.5,
+        "query_wall_ns": 10143458.5,
+        "allocated_bytes": 4568884.0,
+        "query_allocated_bytes": 4463564.0
+      },
+      "12:24": {
+        "wall_ns": 5888917.0,
+        "query_wall_ns": 5238604.0,
+        "allocated_bytes": 4110868.0,
+        "query_allocated_bytes": 3968868.0
+      },
+      "24:36": {
+        "wall_ns": 4074062.5,
+        "query_wall_ns": 3845791.5,
+        "allocated_bytes": 4044036.0,
+        "query_allocated_bytes": 3939884.0
+      },
+      "36:48": {
+        "wall_ns": 3927250.5,
+        "query_wall_ns": 3748042.0,
+        "allocated_bytes": 4016012.0,
+        "query_allocated_bytes": 3911860.0
+      },
+      "48:60": {
+        "wall_ns": 3303354.5,
+        "query_wall_ns": 3151229.5,
+        "allocated_bytes": 3998240.0,
+        "query_allocated_bytes": 3894088.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "on",
+    "rep": 0,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-on-0-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 19483708,
+        "query_wall_ns": 18018083,
+        "allocated_bytes": 5153104,
+        "query_allocated_bytes": 5047680
+      },
+      "3:9": {
+        "wall_ns": 10291666.5,
+        "query_wall_ns": 9833896.0,
+        "allocated_bytes": 4650032.0,
+        "query_allocated_bytes": 4544668.0
+      },
+      "12:24": {
+        "wall_ns": 5652958.5,
+        "query_wall_ns": 5319770.5,
+        "allocated_bytes": 4137336.0,
+        "query_allocated_bytes": 3968856.0
+      },
+      "24:36": {
+        "wall_ns": 4314521.5,
+        "query_wall_ns": 4083959.5,
+        "allocated_bytes": 4050728.0,
+        "query_allocated_bytes": 3945836.0
+      },
+      "36:48": {
+        "wall_ns": 3957583.5,
+        "query_wall_ns": 3769291.5,
+        "allocated_bytes": 4018772.0,
+        "query_allocated_bytes": 3914620.0
+      },
+      "48:60": {
+        "wall_ns": 3370687.5,
+        "query_wall_ns": 3208521.0,
+        "allocated_bytes": 3998240.0,
+        "query_allocated_bytes": 3894088.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "on",
+    "rep": 1,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-on-1-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 29986833,
+        "query_wall_ns": 29110998,
+        "allocated_bytes": 10519600,
+        "query_allocated_bytes": 10133640
+      },
+      "3:9": {
+        "wall_ns": 15165916.5,
+        "query_wall_ns": 14672375.0,
+        "allocated_bytes": 9460584.0,
+        "query_allocated_bytes": 9105652.0
+      },
+      "12:24": {
+        "wall_ns": 10050354.0,
+        "query_wall_ns": 9679646.0,
+        "allocated_bytes": 8436096.0,
+        "query_allocated_bytes": 8137568.0
+      },
+      "24:36": {
+        "wall_ns": 7517896.0,
+        "query_wall_ns": 7229188.0,
+        "allocated_bytes": 8131660.0,
+        "query_allocated_bytes": 7833132.0
+      },
+      "36:48": {
+        "wall_ns": 6352125.0,
+        "query_wall_ns": 6090958.0,
+        "allocated_bytes": 7821336.0,
+        "query_allocated_bytes": 7522808.0
+      },
+      "48:60": {
+        "wall_ns": 5997604.0,
+        "query_wall_ns": 5750686.5,
+        "allocated_bytes": 7821496.0,
+        "query_allocated_bytes": 7522932.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "on",
+    "rep": 1,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-on-1-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 31339791,
+        "query_wall_ns": 30420625,
+        "allocated_bytes": 10457216,
+        "query_allocated_bytes": 10071256
+      },
+      "3:9": {
+        "wall_ns": 16536645.5,
+        "query_wall_ns": 16021749.5,
+        "allocated_bytes": 9371220.0,
+        "query_allocated_bytes": 9016444.0
+      },
+      "12:24": {
+        "wall_ns": 12176166.5,
+        "query_wall_ns": 11629770.5,
+        "allocated_bytes": 9166752.0,
+        "query_allocated_bytes": 8825456.0
+      },
+      "24:36": {
+        "wall_ns": 7325875.0,
+        "query_wall_ns": 7015562.0,
+        "allocated_bytes": 8061816.0,
+        "query_allocated_bytes": 7763288.0
+      },
+      "36:48": {
+        "wall_ns": 6288687.5,
+        "query_wall_ns": 6046396.5,
+        "allocated_bytes": 7752344.0,
+        "query_allocated_bytes": 7453816.0
+      },
+      "48:60": {
+        "wall_ns": 5764562.5,
+        "query_wall_ns": 5541438.5,
+        "allocated_bytes": 7752504.0,
+        "query_allocated_bytes": 7453940.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "on",
+    "rep": 1,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-on-1-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 18617291,
+        "query_wall_ns": 17058042,
+        "allocated_bytes": 5182992,
+        "query_allocated_bytes": 5051656
+      },
+      "3:9": {
+        "wall_ns": 10237416.5,
+        "query_wall_ns": 9780999.5,
+        "allocated_bytes": 4650172.0,
+        "query_allocated_bytes": 4544852.0
+      },
+      "12:24": {
+        "wall_ns": 5969333.5,
+        "query_wall_ns": 5500061.5,
+        "allocated_bytes": 4150464.0,
+        "query_allocated_bytes": 3969436.0
+      },
+      "24:36": {
+        "wall_ns": 4243853.5,
+        "query_wall_ns": 4043519.5,
+        "allocated_bytes": 4050740.0,
+        "query_allocated_bytes": 3945848.0
+      },
+      "36:48": {
+        "wall_ns": 3949895.5,
+        "query_wall_ns": 3735646.5,
+        "allocated_bytes": 4031380.0,
+        "query_allocated_bytes": 3927228.0
+      },
+      "48:60": {
+        "wall_ns": 3275937.5,
+        "query_wall_ns": 3112645.0,
+        "allocated_bytes": 4004064.0,
+        "query_allocated_bytes": 3899900.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "on",
+    "rep": 1,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-on-1-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 20042167,
+        "query_wall_ns": 18611042,
+        "allocated_bytes": 5183056,
+        "query_allocated_bytes": 5051720
+      },
+      "3:9": {
+        "wall_ns": 10386584.0,
+        "query_wall_ns": 9892311.5,
+        "allocated_bytes": 4650328.0,
+        "query_allocated_bytes": 4544900.0
+      },
+      "12:24": {
+        "wall_ns": 5985416.5,
+        "query_wall_ns": 5566813.5,
+        "allocated_bytes": 4073380.0,
+        "query_allocated_bytes": 3968480.0
+      },
+      "24:36": {
+        "wall_ns": 4529479.0,
+        "query_wall_ns": 4326541.5,
+        "allocated_bytes": 4072840.0,
+        "query_allocated_bytes": 3968688.0
+      },
+      "36:48": {
+        "wall_ns": 3882104.0,
+        "query_wall_ns": 3674436.5,
+        "allocated_bytes": 4042088.0,
+        "query_allocated_bytes": 3937936.0
+      },
+      "48:60": {
+        "wall_ns": 3280541.5,
+        "query_wall_ns": 3097959.0,
+        "allocated_bytes": 4034824.0,
+        "query_allocated_bytes": 3930672.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "on",
+    "rep": 2,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-on-2-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 30191500,
+        "query_wall_ns": 29287750,
+        "allocated_bytes": 10427544,
+        "query_allocated_bytes": 10047344
+      },
+      "3:9": {
+        "wall_ns": 15699125.0,
+        "query_wall_ns": 15183918.0,
+        "allocated_bytes": 9437368.0,
+        "query_allocated_bytes": 9082592.0
+      },
+      "12:24": {
+        "wall_ns": 11871896.0,
+        "query_wall_ns": 11384875.5,
+        "allocated_bytes": 9278364.0,
+        "query_allocated_bytes": 8934788.0
+      },
+      "24:36": {
+        "wall_ns": 7257958.5,
+        "query_wall_ns": 6985626.0,
+        "allocated_bytes": 8129852.0,
+        "query_allocated_bytes": 7831324.0
+      },
+      "36:48": {
+        "wall_ns": 6361979.5,
+        "query_wall_ns": 6111687.5,
+        "allocated_bytes": 7821336.0,
+        "query_allocated_bytes": 7522808.0
+      },
+      "48:60": {
+        "wall_ns": 5775354.5,
+        "query_wall_ns": 5545021.5,
+        "allocated_bytes": 7821496.0,
+        "query_allocated_bytes": 7522932.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "on",
+    "rep": 2,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-on-2-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 28311791,
+        "query_wall_ns": 27541874,
+        "allocated_bytes": 10455912,
+        "query_allocated_bytes": 10069952
+      },
+      "3:9": {
+        "wall_ns": 17381604.5,
+        "query_wall_ns": 16871874.5,
+        "allocated_bytes": 9364836.0,
+        "query_allocated_bytes": 9009968.0
+      },
+      "12:24": {
+        "wall_ns": 11292395.5,
+        "query_wall_ns": 10833166.5,
+        "allocated_bytes": 9007096.0,
+        "query_allocated_bytes": 8653152.0
+      },
+      "24:36": {
+        "wall_ns": 9116541.5,
+        "query_wall_ns": 8713917.0,
+        "allocated_bytes": 8548812.0,
+        "query_allocated_bytes": 8207516.0
+      },
+      "36:48": {
+        "wall_ns": 6665937.5,
+        "query_wall_ns": 6407311.5,
+        "allocated_bytes": 7752344.0,
+        "query_allocated_bytes": 7453816.0
+      },
+      "48:60": {
+        "wall_ns": 5624250.0,
+        "query_wall_ns": 5416416.0,
+        "allocated_bytes": 7647648.0,
+        "query_allocated_bytes": 7354592.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "on",
+    "rep": 2,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-on-2-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 19353417,
+        "query_wall_ns": 17677042,
+        "allocated_bytes": 5182992,
+        "query_allocated_bytes": 5051656
+      },
+      "3:9": {
+        "wall_ns": 10857063.0,
+        "query_wall_ns": 10395625.5,
+        "allocated_bytes": 4650100.0,
+        "query_allocated_bytes": 4544780.0
+      },
+      "12:24": {
+        "wall_ns": 6251374.5,
+        "query_wall_ns": 5705938.0,
+        "allocated_bytes": 4150256.0,
+        "query_allocated_bytes": 3968732.0
+      },
+      "24:36": {
+        "wall_ns": 4600312.5,
+        "query_wall_ns": 4393812.0,
+        "allocated_bytes": 4072840.0,
+        "query_allocated_bytes": 3968688.0
+      },
+      "36:48": {
+        "wall_ns": 4071979.0,
+        "query_wall_ns": 3879562.0,
+        "allocated_bytes": 4065148.0,
+        "query_allocated_bytes": 3960996.0
+      },
+      "48:60": {
+        "wall_ns": 3252750.0,
+        "query_wall_ns": 3075937.0,
+        "allocated_bytes": 4027368.0,
+        "query_allocated_bytes": 3923204.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "on",
+    "rep": 2,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-on-2-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 19055833,
+        "query_wall_ns": 17715168,
+        "allocated_bytes": 5182888,
+        "query_allocated_bytes": 5051552
+      },
+      "3:9": {
+        "wall_ns": 10310333.5,
+        "query_wall_ns": 9857062.5,
+        "allocated_bytes": 4650416.0,
+        "query_allocated_bytes": 4544988.0
+      },
+      "12:24": {
+        "wall_ns": 6276583.5,
+        "query_wall_ns": 5718354.0,
+        "allocated_bytes": 4150256.0,
+        "query_allocated_bytes": 3968732.0
+      },
+      "24:36": {
+        "wall_ns": 4704083.5,
+        "query_wall_ns": 4445438.5,
+        "allocated_bytes": 4049536.0,
+        "query_allocated_bytes": 3945384.0
+      },
+      "36:48": {
+        "wall_ns": 4010250.0,
+        "query_wall_ns": 3793417.0,
+        "allocated_bytes": 4017620.0,
+        "query_allocated_bytes": 3913468.0
+      },
+      "48:60": {
+        "wall_ns": 3417979.0,
+        "query_wall_ns": 3249459.0,
+        "allocated_bytes": 3998240.0,
+        "query_allocated_bytes": 3894076.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "verify",
+    "rep": 0,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-verify-0-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 30418584,
+        "query_wall_ns": 29474125,
+        "allocated_bytes": 10855472,
+        "query_allocated_bytes": 10469512
+      },
+      "3:9": {
+        "wall_ns": 15398229.0,
+        "query_wall_ns": 14906189.0,
+        "allocated_bytes": 9773452.0,
+        "query_allocated_bytes": 9418676.0
+      },
+      "12:24": {
+        "wall_ns": 10808417.0,
+        "query_wall_ns": 10485230.0,
+        "allocated_bytes": 8771968.0,
+        "query_allocated_bytes": 8473440.0
+      },
+      "24:36": {
+        "wall_ns": 7660312.5,
+        "query_wall_ns": 7375688.0,
+        "allocated_bytes": 8492936.0,
+        "query_allocated_bytes": 8194408.0
+      },
+      "36:48": {
+        "wall_ns": 7140666.5,
+        "query_wall_ns": 6871562.0,
+        "allocated_bytes": 8228132.0,
+        "query_allocated_bytes": 7929604.0
+      },
+      "48:60": {
+        "wall_ns": 6098625.0,
+        "query_wall_ns": 5848187.5,
+        "allocated_bytes": 8163512.0,
+        "query_allocated_bytes": 7864948.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "verify",
+    "rep": 0,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-verify-0-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 30121416,
+        "query_wall_ns": 29290834,
+        "allocated_bytes": 10793088,
+        "query_allocated_bytes": 10407128
+      },
+      "3:9": {
+        "wall_ns": 15297395.5,
+        "query_wall_ns": 14821042.0,
+        "allocated_bytes": 9708240.0,
+        "query_allocated_bytes": 9352580.0
+      },
+      "12:24": {
+        "wall_ns": 12074687.5,
+        "query_wall_ns": 11601813.0,
+        "allocated_bytes": 9553276.0,
+        "query_allocated_bytes": 9209700.0
+      },
+      "24:36": {
+        "wall_ns": 7341417.0,
+        "query_wall_ns": 7083750.5,
+        "allocated_bytes": 8400396.0,
+        "query_allocated_bytes": 8101868.0
+      },
+      "36:48": {
+        "wall_ns": 6582062.5,
+        "query_wall_ns": 6339396.5,
+        "allocated_bytes": 8094360.0,
+        "query_allocated_bytes": 7795832.0
+      },
+      "48:60": {
+        "wall_ns": 5932458.0,
+        "query_wall_ns": 5695999.5,
+        "allocated_bytes": 8094520.0,
+        "query_allocated_bytes": 7795956.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "verify",
+    "rep": 0,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-verify-0-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 28349667,
+        "query_wall_ns": 26013709,
+        "allocated_bytes": 5513856,
+        "query_allocated_bytes": 5382520
+      },
+      "3:9": {
+        "wall_ns": 15440166.5,
+        "query_wall_ns": 14745082.5,
+        "allocated_bytes": 4980300.0,
+        "query_allocated_bytes": 4874872.0
+      },
+      "12:24": {
+        "wall_ns": 8718417.0,
+        "query_wall_ns": 7618708.0,
+        "allocated_bytes": 4486128.0,
+        "query_allocated_bytes": 4304804.0
+      },
+      "24:36": {
+        "wall_ns": 7577542.0,
+        "query_wall_ns": 7164562.0,
+        "allocated_bytes": 4405564.0,
+        "query_allocated_bytes": 4301412.0
+      },
+      "36:48": {
+        "wall_ns": 7021896.0,
+        "query_wall_ns": 6613854.5,
+        "allocated_bytes": 4382724.0,
+        "query_allocated_bytes": 4278572.0
+      },
+      "48:60": {
+        "wall_ns": 6780104.0,
+        "query_wall_ns": 6410771.5,
+        "allocated_bytes": 4374440.0,
+        "query_allocated_bytes": 4270276.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "verify",
+    "rep": 0,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-verify-0-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 20613000,
+        "query_wall_ns": 19029292,
+        "allocated_bytes": 5518928,
+        "query_allocated_bytes": 5387592
+      },
+      "3:9": {
+        "wall_ns": 10454646.0,
+        "query_wall_ns": 10006833.5,
+        "allocated_bytes": 4986104.0,
+        "query_allocated_bytes": 4880676.0
+      },
+      "12:24": {
+        "wall_ns": 6504291.5,
+        "query_wall_ns": 6064105.5,
+        "allocated_bytes": 4662696.0,
+        "query_allocated_bytes": 4557036.0
+      },
+      "24:36": {
+        "wall_ns": 4690667.0,
+        "query_wall_ns": 4480875.0,
+        "allocated_bytes": 4344392.0,
+        "query_allocated_bytes": 4240240.0
+      },
+      "36:48": {
+        "wall_ns": 4264458.5,
+        "query_wall_ns": 4067333.0,
+        "allocated_bytes": 4325512.0,
+        "query_allocated_bytes": 4221360.0
+      },
+      "48:60": {
+        "wall_ns": 3490875.5,
+        "query_wall_ns": 3333625.0,
+        "allocated_bytes": 4312460.0,
+        "query_allocated_bytes": 4208308.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "verify",
+    "rep": 1,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-verify-1-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 29591083,
+        "query_wall_ns": 28750250,
+        "allocated_bytes": 10855400,
+        "query_allocated_bytes": 10469440
+      },
+      "3:9": {
+        "wall_ns": 15640500.0,
+        "query_wall_ns": 15158813.0,
+        "allocated_bytes": 9796752.0,
+        "query_allocated_bytes": 9441820.0
+      },
+      "12:24": {
+        "wall_ns": 11729563.0,
+        "query_wall_ns": 11298645.5,
+        "allocated_bytes": 9171500.0,
+        "query_allocated_bytes": 8853592.0
+      },
+      "24:36": {
+        "wall_ns": 7835271.0,
+        "query_wall_ns": 7550417.5,
+        "allocated_bytes": 8467676.0,
+        "query_allocated_bytes": 8169148.0
+      },
+      "36:48": {
+        "wall_ns": 7102062.5,
+        "query_wall_ns": 6839354.5,
+        "allocated_bytes": 8163352.0,
+        "query_allocated_bytes": 7864824.0
+      },
+      "48:60": {
+        "wall_ns": 6016374.5,
+        "query_wall_ns": 5777416.0,
+        "allocated_bytes": 8163512.0,
+        "query_allocated_bytes": 7864948.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "verify",
+    "rep": 1,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-verify-1-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 30016958,
+        "query_wall_ns": 29190751,
+        "allocated_bytes": 10793088,
+        "query_allocated_bytes": 10407128
+      },
+      "3:9": {
+        "wall_ns": 15594229.0,
+        "query_wall_ns": 15077958.0,
+        "allocated_bytes": 9707356.0,
+        "query_allocated_bytes": 9352580.0
+      },
+      "12:24": {
+        "wall_ns": 11600854.0,
+        "query_wall_ns": 11207021.5,
+        "allocated_bytes": 9502624.0,
+        "query_allocated_bytes": 9161328.0
+      },
+      "24:36": {
+        "wall_ns": 7327979.0,
+        "query_wall_ns": 7068626.0,
+        "allocated_bytes": 8400492.0,
+        "query_allocated_bytes": 8101964.0
+      },
+      "36:48": {
+        "wall_ns": 6818063.0,
+        "query_wall_ns": 6565353.5,
+        "allocated_bytes": 8094360.0,
+        "query_allocated_bytes": 7795832.0
+      },
+      "48:60": {
+        "wall_ns": 6014416.5,
+        "query_wall_ns": 5774645.5,
+        "allocated_bytes": 8094520.0,
+        "query_allocated_bytes": 7795956.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "verify",
+    "rep": 1,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-verify-1-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 20577083,
+        "query_wall_ns": 19094165,
+        "allocated_bytes": 5513928,
+        "query_allocated_bytes": 5382592
+      },
+      "3:9": {
+        "wall_ns": 10599396.0,
+        "query_wall_ns": 10134896.5,
+        "allocated_bytes": 4986060.0,
+        "query_allocated_bytes": 4880740.0
+      },
+      "12:24": {
+        "wall_ns": 6283771.0,
+        "query_wall_ns": 5920874.5,
+        "allocated_bytes": 4486128.0,
+        "query_allocated_bytes": 4304604.0
+      },
+      "24:36": {
+        "wall_ns": 4787645.5,
+        "query_wall_ns": 4576833.5,
+        "allocated_bytes": 4385504.0,
+        "query_allocated_bytes": 4281256.0
+      },
+      "36:48": {
+        "wall_ns": 4075728.5,
+        "query_wall_ns": 3896645.5,
+        "allocated_bytes": 4360800.0,
+        "query_allocated_bytes": 4256648.0
+      },
+      "48:60": {
+        "wall_ns": 3570208.5,
+        "query_wall_ns": 3402126.0,
+        "allocated_bytes": 4336416.0,
+        "query_allocated_bytes": 4232264.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "verify",
+    "rep": 1,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-verify-1-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 19585292,
+        "query_wall_ns": 18148251,
+        "allocated_bytes": 5518832,
+        "query_allocated_bytes": 5387496
+      },
+      "3:9": {
+        "wall_ns": 10684937.5,
+        "query_wall_ns": 10212143.5,
+        "allocated_bytes": 4986068.0,
+        "query_allocated_bytes": 4880748.0
+      },
+      "12:24": {
+        "wall_ns": 6184375.0,
+        "query_wall_ns": 5789313.0,
+        "allocated_bytes": 4488016.0,
+        "query_allocated_bytes": 4307768.0
+      },
+      "24:36": {
+        "wall_ns": 4529375.5,
+        "query_wall_ns": 4320209.0,
+        "allocated_bytes": 4385860.0,
+        "query_allocated_bytes": 4281256.0
+      },
+      "36:48": {
+        "wall_ns": 4232813.0,
+        "query_wall_ns": 4039479.5,
+        "allocated_bytes": 4366528.0,
+        "query_allocated_bytes": 4262376.0
+      },
+      "48:60": {
+        "wall_ns": 3627063.0,
+        "query_wall_ns": 3468166.0,
+        "allocated_bytes": 4336416.0,
+        "query_allocated_bytes": 4232264.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "verify",
+    "rep": 2,
+    "mode": "baseline",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-verify-2-baseline",
+    "windows": {
+      "0:3": {
+        "wall_ns": 30603084,
+        "query_wall_ns": 29740291,
+        "allocated_bytes": 10855472,
+        "query_allocated_bytes": 10469512
+      },
+      "3:9": {
+        "wall_ns": 15236500.5,
+        "query_wall_ns": 14738083.0,
+        "allocated_bytes": 9773452.0,
+        "query_allocated_bytes": 9418676.0
+      },
+      "12:24": {
+        "wall_ns": 10858791.5,
+        "query_wall_ns": 10322895.5,
+        "allocated_bytes": 8771968.0,
+        "query_allocated_bytes": 8473440.0
+      },
+      "24:36": {
+        "wall_ns": 7816583.5,
+        "query_wall_ns": 7501605.5,
+        "allocated_bytes": 8467688.0,
+        "query_allocated_bytes": 8169160.0
+      },
+      "36:48": {
+        "wall_ns": 7051875.0,
+        "query_wall_ns": 6785271.5,
+        "allocated_bytes": 8163364.0,
+        "query_allocated_bytes": 7864836.0
+      },
+      "48:60": {
+        "wall_ns": 6082124.5,
+        "query_wall_ns": 5840709.5,
+        "allocated_bytes": 8163512.0,
+        "query_allocated_bytes": 7864948.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "verify",
+    "rep": 2,
+    "mode": "candidate",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-verify-2-candidate",
+    "windows": {
+      "0:3": {
+        "wall_ns": 30049125,
+        "query_wall_ns": 29186251,
+        "allocated_bytes": 10793088,
+        "query_allocated_bytes": 10407128
+      },
+      "3:9": {
+        "wall_ns": 15701521.0,
+        "query_wall_ns": 15222833.0,
+        "allocated_bytes": 9730360.0,
+        "query_allocated_bytes": 9374700.0
+      },
+      "12:24": {
+        "wall_ns": 11810187.5,
+        "query_wall_ns": 11341645.5,
+        "allocated_bytes": 9502236.0,
+        "query_allocated_bytes": 9160940.0
+      },
+      "24:36": {
+        "wall_ns": 7944062.5,
+        "query_wall_ns": 7657854.0,
+        "allocated_bytes": 8401568.0,
+        "query_allocated_bytes": 8103040.0
+      },
+      "36:48": {
+        "wall_ns": 6796833.5,
+        "query_wall_ns": 6540708.0,
+        "allocated_bytes": 8094360.0,
+        "query_allocated_bytes": 7795832.0
+      },
+      "48:60": {
+        "wall_ns": 5975646.0,
+        "query_wall_ns": 5734083.0,
+        "allocated_bytes": 8094520.0,
+        "query_allocated_bytes": 7795956.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "verify",
+    "rep": 2,
+    "mode": "clean",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-verify-2-clean",
+    "windows": {
+      "0:3": {
+        "wall_ns": 19268458,
+        "query_wall_ns": 17703042,
+        "allocated_bytes": 5518864,
+        "query_allocated_bytes": 5387528
+      },
+      "3:9": {
+        "wall_ns": 10982687.5,
+        "query_wall_ns": 10487041.5,
+        "allocated_bytes": 4983772.0,
+        "query_allocated_bytes": 4878452.0
+      },
+      "12:24": {
+        "wall_ns": 6590625.5,
+        "query_wall_ns": 6109790.5,
+        "allocated_bytes": 4486756.0,
+        "query_allocated_bytes": 4305728.0
+      },
+      "24:36": {
+        "wall_ns": 4619604.0,
+        "query_wall_ns": 4413458.0,
+        "allocated_bytes": 4385984.0,
+        "query_allocated_bytes": 4281368.0
+      },
+      "36:48": {
+        "wall_ns": 3990479.0,
+        "query_wall_ns": 3787167.0,
+        "allocated_bytes": 4380788.0,
+        "query_allocated_bytes": 4276636.0
+      },
+      "48:60": {
+        "wall_ns": 3576354.5,
+        "query_wall_ns": 3411833.0,
+        "allocated_bytes": 4347168.0,
+        "query_allocated_bytes": 4243016.0
+      }
+    }
+  },
+  {
+    "profile": "default",
+    "flag": "verify",
+    "rep": 2,
+    "mode": "disabled",
+    "logging": false,
+    "exit_code": 0,
+    "label": "default-verify-2-disabled",
+    "windows": {
+      "0:3": {
+        "wall_ns": 20564792,
+        "query_wall_ns": 19104915,
+        "allocated_bytes": 5518928,
+        "query_allocated_bytes": 5387592
+      },
+      "3:9": {
+        "wall_ns": 10922562.5,
+        "query_wall_ns": 10452500.5,
+        "allocated_bytes": 4980300.0,
+        "query_allocated_bytes": 4874872.0
+      },
+      "12:24": {
+        "wall_ns": 6414479.0,
+        "query_wall_ns": 5958500.5,
+        "allocated_bytes": 4410284.0,
+        "query_allocated_bytes": 4304856.0
+      },
+      "24:36": {
+        "wall_ns": 4818937.5,
+        "query_wall_ns": 4597520.5,
+        "allocated_bytes": 4408712.0,
+        "query_allocated_bytes": 4304560.0
+      },
+      "36:48": {
+        "wall_ns": 4062166.5,
+        "query_wall_ns": 3884604.0,
+        "allocated_bytes": 4385792.0,
+        "query_allocated_bytes": 4281640.0
+      },
+      "48:60": {
+        "wall_ns": 3486646.0,
+        "query_wall_ns": 3328729.5,
+        "allocated_bytes": 4359720.0,
+        "query_allocated_bytes": 4255568.0
+      }
+    }
+  }
+]

@@ -1,0 +1,30 @@
+{
+  "profile": "default",
+  "flag": "verify",
+  "rep": 0,
+  "mode": "baseline",
+  "logging": false,
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx512m",
+    "-Duser.home=/var/folders/sv/wdy64gbs3hx3hnftjc21xvrc0000gn/T/resident-warmup-d8qo123a",
+    "-Dresult.path=/Users/murray/Documents/Codex/2026-10-22/new-chat/work/K3-resident/docs/tvalue-resident-warmup/default-verify-0-baseline",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-Dkanger.experiment.verifyTValueIndex=true",
+    "-Dkanger.experiment.verifySolveSync=true",
+    "-cp",
+    "../build/tvalue-resident-warmup-tests:../build/tvalue-journal-context-snapshots.jar:../build/tvalue-observer-fast-disabled-hooked:../K3-observer-native/kanger/resources:../K3-observer-native/kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ResidentWarmupRunner",
+    "attached",
+    "60"
+  ],
+  "exit_code": 0
+}
