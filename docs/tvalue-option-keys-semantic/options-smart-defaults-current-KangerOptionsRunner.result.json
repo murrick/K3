@@ -1,0 +1,24 @@
+{
+  "impl": "current",
+  "state": "defaults",
+  "gate": "KangerOptionsRunner",
+  "kind": "options-smart",
+  "args": [
+    "smart"
+  ],
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx768m",
+    "-Duser.home=/tmp/option-keys-semantic-i3nxzlgh",
+    "-Djava.io.tmpdir=/tmp/option-keys-semantic-i3nxzlgh/tmp",
+    "-cp",
+    "../build/option-keys-semantic/launcher:../build/option-keys-semantic/classes:../build/option-keys/current-clean:../K3-current-native/kanger/resources:../K3-current-native/kanger-udf/src:../K3-current-native/kanger-data-dumb2/resources:lib/jline-3.13.0.jar",
+    "org.kanger.SemanticLaunch",
+    "KangerOptionsRunner",
+    "smart"
+  ],
+  "exit_code": 0,
+  "timeout": false,
+  "disposable_home_removed": true
+}

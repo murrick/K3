@@ -1,0 +1,5 @@
+START smoke-off-current-SingleTValueLookupRunner
+DONE smoke-off-current-SingleTValueLookupRunner exit=0 stderr_bytes=0
+START smoke-off-keys-SingleTValueLookupRunner
+DONE smoke-off-keys-SingleTValueLookupRunner exit=0 stderr_bytes=0
+SEMANTIC_RUNS_FINISHED 2

@@ -1,0 +1,49 @@
+{
+  "parent": "8d7a41ef0e8511ce964969cdcfe0bbab15cb9b37",
+  "build_manifest_sha256": "ad9e0498ed2a360f5b27c71da3e5e70728811f1c533148d46156af238bc1b12b",
+  "previous_manifest_sha256": "b2453849103c0c634acc5a5ddb50ed3085e30df00dac8ca527a37bf96b471a4e",
+  "native_current": "60fdc34736c51fa4e5659982630347fb1d1b59fc",
+  "native_old": "2422f7f6d9e1af7608203b1566df64b5f29fe344",
+  "runtime": "openjdk version \"21.0.12.1\" 2026-08-18\nOpenJDK Runtime Environment (build 21.0.12.1+1-1-deb13u1-Debian)\nOpenJDK 64-Bit Server VM (build 21.0.12.1+1-1-deb13u1-Debian, mixed mode, sharing)\n",
+  "verified": {
+    "old-clean": {
+      "classes": 712,
+      "sources": 394
+    },
+    "old-hooked": {
+      "classes": 712,
+      "sources": 394
+    },
+    "current-clean": {
+      "classes": 930,
+      "sources": 436
+    },
+    "current-hooked": {
+      "classes": 930,
+      "sources": 436
+    },
+    "baseline": {
+      "classes": 26,
+      "sources": 9
+    },
+    "candidate": {
+      "classes": 26,
+      "sources": 9
+    },
+    "fixture": {
+      "classes": 2,
+      "sources": 1
+    },
+    "keys-clean": {
+      "classes": 930,
+      "sources": 436
+    },
+    "keys-hooked": {
+      "classes": 930,
+      "sources": 436
+    }
+  },
+  "previous_repeat_manifest_sha256": "ab7d9ee5ff303372524adbdb7ff244b5276a057da1cd4fe987e9c94bd593d3cd",
+  "reused_same_cloud_build": true,
+  "all_saved_source_class_and_jar_hashes_match": true
+}

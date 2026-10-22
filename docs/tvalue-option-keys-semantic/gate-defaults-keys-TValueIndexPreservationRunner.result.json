@@ -1,0 +1,21 @@
+{
+  "impl": "keys",
+  "state": "defaults",
+  "gate": "TValueIndexPreservationRunner",
+  "kind": "gate",
+  "args": [],
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx768m",
+    "-Duser.home=/tmp/option-keys-semantic-de5phqdp",
+    "-Djava.io.tmpdir=/tmp/option-keys-semantic-de5phqdp/tmp",
+    "-cp",
+    "../build/option-keys-semantic/launcher:../build/option-keys-semantic/classes:../build/option-keys/keys-clean:../K3-current-native/kanger/resources:../K3-current-native/kanger-udf/src:../K3-current-native/kanger-data-dumb2/resources:lib/jline-3.13.0.jar",
+    "org.kanger.SemanticLaunch",
+    "TValueIndexPreservationRunner"
+  ],
+  "exit_code": 0,
+  "timeout": false,
+  "disposable_home_removed": true
+}

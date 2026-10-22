@@ -1,0 +1,21 @@
+{
+  "impl": "current",
+  "state": "defaults",
+  "gate": "LatentSolveSyncSafetyRunner",
+  "kind": "gate",
+  "args": [],
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx768m",
+    "-Duser.home=/tmp/option-keys-semantic-utn_7mzr",
+    "-Djava.io.tmpdir=/tmp/option-keys-semantic-utn_7mzr/tmp",
+    "-cp",
+    "../build/option-keys-semantic/launcher:../build/option-keys-semantic/classes:../build/option-keys/current-clean:../K3-current-native/kanger/resources:../K3-current-native/kanger-udf/src:../K3-current-native/kanger-data-dumb2/resources:lib/jline-3.13.0.jar",
+    "org.kanger.SemanticLaunch",
+    "LatentSolveSyncSafetyRunner"
+  ],
+  "exit_code": 0,
+  "timeout": false,
+  "disposable_home_removed": true
+}

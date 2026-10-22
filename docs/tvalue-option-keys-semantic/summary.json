@@ -1,0 +1,212 @@
+{
+  "JVMs": 56,
+  "pairs": 28,
+  "test_method_runs": 2108,
+  "corpus_method_runs": 1260,
+  "options_method_runs": 848,
+  "failures": [],
+  "diagnostic_warnings": [
+    {
+      "label": "options-smart-defaults-current-KangerOptionsRunner",
+      "watchdogs": [
+        "set_06_0F",
+        "set_06_0F"
+      ]
+    },
+    {
+      "label": "options-smart-defaults-keys-KangerOptionsRunner",
+      "watchdogs": [
+        "set_06_0F",
+        "set_06_0F"
+      ]
+    }
+  ],
+  "mismatches": [],
+  "pair_checks": [
+    {
+      "candidate": "corpus-defaults-keys-LatentSubstitutionCorpusRunner",
+      "baseline": "corpus-defaults-current-LatentSubstitutionCorpusRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "corpus-mixed-keys-LatentSubstitutionCorpusRunner",
+      "baseline": "corpus-mixed-current-LatentSubstitutionCorpusRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "corpus-off-keys-LatentSubstitutionCorpusRunner",
+      "baseline": "corpus-off-current-LatentSubstitutionCorpusRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "corpus-on-keys-LatentSubstitutionCorpusRunner",
+      "baseline": "corpus-on-current-LatentSubstitutionCorpusRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "corpus-verify-keys-LatentSubstitutionCorpusRunner",
+      "baseline": "corpus-verify-current-LatentSubstitutionCorpusRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "gate-defaults-keys-CauseWeightFallbackRunner",
+      "baseline": "gate-defaults-current-CauseWeightFallbackRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "gate-defaults-keys-CauseWeightShadowSafetyRunner",
+      "baseline": "gate-defaults-current-CauseWeightShadowSafetyRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "gate-defaults-keys-CompactFindSnapshotsRunner",
+      "baseline": "gate-defaults-current-CompactFindSnapshotsRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "gate-defaults-keys-LatentSolveSyncSafetyRunner",
+      "baseline": "gate-defaults-current-LatentSolveSyncSafetyRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "gate-defaults-keys-ResidentBaseComparisonRunner",
+      "baseline": "gate-defaults-current-ResidentBaseComparisonRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "gate-defaults-keys-SingleTValueLookupRunner",
+      "baseline": "gate-defaults-current-SingleTValueLookupRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "gate-defaults-keys-TValueIndexBoundaryRunner",
+      "baseline": "gate-defaults-current-TValueIndexBoundaryRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "gate-defaults-keys-TValueIndexPreservationRunner",
+      "baseline": "gate-defaults-current-TValueIndexPreservationRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "gate-defaults-keys-TValueIndexReopenRunner",
+      "baseline": "gate-defaults-current-TValueIndexReopenRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "gate-off-keys-CompactFindSnapshotsRunner",
+      "baseline": "gate-off-current-CompactFindSnapshotsRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "gate-off-keys-LatentSolveSyncTransactionRunner",
+      "baseline": "gate-off-current-LatentSolveSyncTransactionRunner",
+      "same_assertion_projection": true,
+      "both_pass": true,
+      "states_identical": true,
+      "work_identical": true
+    },
+    {
+      "candidate": "gate-off-keys-ResidentBaseComparisonRunner",
+      "baseline": "gate-off-current-ResidentBaseComparisonRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "gate-off-keys-SingleTValueLookupRunner",
+      "baseline": "gate-off-current-SingleTValueLookupRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "gate-off-keys-TValueIndexBoundaryRunner",
+      "baseline": "gate-off-current-TValueIndexBoundaryRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "gate-off-keys-TValueIndexReopenRunner",
+      "baseline": "gate-off-current-TValueIndexReopenRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "gate-on-keys-LatentSolveSyncTransactionRunner",
+      "baseline": "gate-on-current-LatentSolveSyncTransactionRunner",
+      "same_assertion_projection": true,
+      "both_pass": true,
+      "states_identical": true,
+      "work_identical": true
+    },
+    {
+      "candidate": "gate-verify-keys-LatentSolveSyncTransactionRunner",
+      "baseline": "gate-verify-current-LatentSolveSyncTransactionRunner",
+      "same_assertion_projection": true,
+      "both_pass": true,
+      "states_identical": true,
+      "work_identical": true
+    },
+    {
+      "candidate": "gate-verify-keys-TValueIndexBoundaryRunner",
+      "baseline": "gate-verify-current-TValueIndexBoundaryRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "gate-verify-keys-TValueIndexPreservationRunner",
+      "baseline": "gate-verify-current-TValueIndexPreservationRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "gate-verify-keys-TValueIndexReopenRunner",
+      "baseline": "gate-verify-current-TValueIndexReopenRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "options-offline-defaults-keys-KangerOptionsRunner",
+      "baseline": "options-offline-defaults-current-KangerOptionsRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "options-smart-defaults-keys-KangerOptionsRunner",
+      "baseline": "options-smart-defaults-current-KangerOptionsRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    },
+    {
+      "candidate": "smoke-off-keys-SingleTValueLookupRunner",
+      "baseline": "smoke-off-current-SingleTValueLookupRunner",
+      "same_assertion_projection": true,
+      "both_pass": true
+    }
+  ],
+  "kinds": {
+    "corpus": 10,
+    "gate": 40,
+    "options-offline": 2,
+    "options-smart": 2,
+    "smoke": 2
+  },
+  "production_changed": false,
+  "speedup_claim": false,
+  "all_qualification_inventory_covered": false,
+  "SMART_scope": "Not qualified: argument smart in the pinned runner opens local org.kanger.storage.dumb2.DB; SMART ownership/ACL are outside this gate."
+}

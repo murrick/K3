@@ -1,0 +1,109 @@
+START corpus-defaults-current-LatentSubstitutionCorpusRunner
+DONE corpus-defaults-current-LatentSubstitutionCorpusRunner exit=0 stderr_bytes=0
+START corpus-defaults-keys-LatentSubstitutionCorpusRunner
+DONE corpus-defaults-keys-LatentSubstitutionCorpusRunner exit=0 stderr_bytes=0
+START corpus-off-current-LatentSubstitutionCorpusRunner
+DONE corpus-off-current-LatentSubstitutionCorpusRunner exit=0 stderr_bytes=0
+START corpus-off-keys-LatentSubstitutionCorpusRunner
+DONE corpus-off-keys-LatentSubstitutionCorpusRunner exit=0 stderr_bytes=0
+START corpus-on-current-LatentSubstitutionCorpusRunner
+DONE corpus-on-current-LatentSubstitutionCorpusRunner exit=0 stderr_bytes=0
+START corpus-on-keys-LatentSubstitutionCorpusRunner
+DONE corpus-on-keys-LatentSubstitutionCorpusRunner exit=0 stderr_bytes=0
+START corpus-verify-current-LatentSubstitutionCorpusRunner
+DONE corpus-verify-current-LatentSubstitutionCorpusRunner exit=0 stderr_bytes=0
+START corpus-verify-keys-LatentSubstitutionCorpusRunner
+DONE corpus-verify-keys-LatentSubstitutionCorpusRunner exit=0 stderr_bytes=0
+START corpus-mixed-current-LatentSubstitutionCorpusRunner
+DONE corpus-mixed-current-LatentSubstitutionCorpusRunner exit=0 stderr_bytes=0
+START corpus-mixed-keys-LatentSubstitutionCorpusRunner
+DONE corpus-mixed-keys-LatentSubstitutionCorpusRunner exit=0 stderr_bytes=0
+START options-offline-defaults-keys-KangerOptionsRunner
+DONE options-offline-defaults-keys-KangerOptionsRunner exit=0 stderr_bytes=0
+START options-offline-defaults-current-KangerOptionsRunner
+DONE options-offline-defaults-current-KangerOptionsRunner exit=0 stderr_bytes=0
+START options-smart-defaults-keys-KangerOptionsRunner
+DONE options-smart-defaults-keys-KangerOptionsRunner exit=0 stderr_bytes=13978
+START options-smart-defaults-current-KangerOptionsRunner
+DONE options-smart-defaults-current-KangerOptionsRunner exit=0 stderr_bytes=13021
+START gate-defaults-current-LatentSolveSyncSafetyRunner
+DONE gate-defaults-current-LatentSolveSyncSafetyRunner exit=0 stderr_bytes=0
+START gate-defaults-keys-LatentSolveSyncSafetyRunner
+DONE gate-defaults-keys-LatentSolveSyncSafetyRunner exit=0 stderr_bytes=0
+START gate-defaults-current-CauseWeightFallbackRunner
+DONE gate-defaults-current-CauseWeightFallbackRunner exit=0 stderr_bytes=0
+START gate-defaults-keys-CauseWeightFallbackRunner
+DONE gate-defaults-keys-CauseWeightFallbackRunner exit=0 stderr_bytes=0
+START gate-defaults-current-CauseWeightShadowSafetyRunner
+DONE gate-defaults-current-CauseWeightShadowSafetyRunner exit=0 stderr_bytes=0
+START gate-defaults-keys-CauseWeightShadowSafetyRunner
+DONE gate-defaults-keys-CauseWeightShadowSafetyRunner exit=0 stderr_bytes=0
+START gate-defaults-current-SingleTValueLookupRunner
+DONE gate-defaults-current-SingleTValueLookupRunner exit=0 stderr_bytes=0
+START gate-defaults-keys-SingleTValueLookupRunner
+DONE gate-defaults-keys-SingleTValueLookupRunner exit=0 stderr_bytes=0
+START gate-defaults-current-ResidentBaseComparisonRunner
+DONE gate-defaults-current-ResidentBaseComparisonRunner exit=0 stderr_bytes=0
+START gate-defaults-keys-ResidentBaseComparisonRunner
+DONE gate-defaults-keys-ResidentBaseComparisonRunner exit=0 stderr_bytes=0
+START gate-defaults-current-CompactFindSnapshotsRunner
+DONE gate-defaults-current-CompactFindSnapshotsRunner exit=0 stderr_bytes=0
+START gate-defaults-keys-CompactFindSnapshotsRunner
+DONE gate-defaults-keys-CompactFindSnapshotsRunner exit=0 stderr_bytes=0
+START gate-defaults-current-TValueIndexPreservationRunner
+DONE gate-defaults-current-TValueIndexPreservationRunner exit=0 stderr_bytes=0
+START gate-defaults-keys-TValueIndexPreservationRunner
+DONE gate-defaults-keys-TValueIndexPreservationRunner exit=0 stderr_bytes=0
+START gate-defaults-current-TValueIndexBoundaryRunner
+DONE gate-defaults-current-TValueIndexBoundaryRunner exit=0 stderr_bytes=0
+START gate-defaults-keys-TValueIndexBoundaryRunner
+DONE gate-defaults-keys-TValueIndexBoundaryRunner exit=0 stderr_bytes=0
+START gate-defaults-current-TValueIndexReopenRunner
+DONE gate-defaults-current-TValueIndexReopenRunner exit=0 stderr_bytes=0
+START gate-defaults-keys-TValueIndexReopenRunner
+DONE gate-defaults-keys-TValueIndexReopenRunner exit=0 stderr_bytes=0
+START gate-off-current-ResidentBaseComparisonRunner
+DONE gate-off-current-ResidentBaseComparisonRunner exit=0 stderr_bytes=0
+START gate-off-keys-ResidentBaseComparisonRunner
+DONE gate-off-keys-ResidentBaseComparisonRunner exit=0 stderr_bytes=0
+START gate-off-current-SingleTValueLookupRunner
+DONE gate-off-current-SingleTValueLookupRunner exit=0 stderr_bytes=0
+START gate-off-keys-SingleTValueLookupRunner
+DONE gate-off-keys-SingleTValueLookupRunner exit=0 stderr_bytes=0
+START gate-off-current-CompactFindSnapshotsRunner
+DONE gate-off-current-CompactFindSnapshotsRunner exit=0 stderr_bytes=0
+START gate-off-keys-CompactFindSnapshotsRunner
+DONE gate-off-keys-CompactFindSnapshotsRunner exit=0 stderr_bytes=0
+START gate-off-current-TValueIndexBoundaryRunner
+DONE gate-off-current-TValueIndexBoundaryRunner exit=0 stderr_bytes=0
+START gate-off-keys-TValueIndexBoundaryRunner
+DONE gate-off-keys-TValueIndexBoundaryRunner exit=0 stderr_bytes=0
+START gate-off-current-TValueIndexReopenRunner
+DONE gate-off-current-TValueIndexReopenRunner exit=0 stderr_bytes=0
+START gate-off-keys-TValueIndexReopenRunner
+DONE gate-off-keys-TValueIndexReopenRunner exit=0 stderr_bytes=0
+START gate-verify-current-TValueIndexBoundaryRunner
+DONE gate-verify-current-TValueIndexBoundaryRunner exit=0 stderr_bytes=0
+START gate-verify-keys-TValueIndexBoundaryRunner
+DONE gate-verify-keys-TValueIndexBoundaryRunner exit=0 stderr_bytes=0
+START gate-verify-current-TValueIndexPreservationRunner
+DONE gate-verify-current-TValueIndexPreservationRunner exit=0 stderr_bytes=0
+START gate-verify-keys-TValueIndexPreservationRunner
+DONE gate-verify-keys-TValueIndexPreservationRunner exit=0 stderr_bytes=0
+START gate-verify-current-TValueIndexReopenRunner
+DONE gate-verify-current-TValueIndexReopenRunner exit=0 stderr_bytes=0
+START gate-verify-keys-TValueIndexReopenRunner
+DONE gate-verify-keys-TValueIndexReopenRunner exit=0 stderr_bytes=0
+START gate-off-current-LatentSolveSyncTransactionRunner
+DONE gate-off-current-LatentSolveSyncTransactionRunner exit=0 stderr_bytes=0
+START gate-off-keys-LatentSolveSyncTransactionRunner
+DONE gate-off-keys-LatentSolveSyncTransactionRunner exit=0 stderr_bytes=0
+START gate-on-current-LatentSolveSyncTransactionRunner
+DONE gate-on-current-LatentSolveSyncTransactionRunner exit=0 stderr_bytes=0
+START gate-on-keys-LatentSolveSyncTransactionRunner
+DONE gate-on-keys-LatentSolveSyncTransactionRunner exit=0 stderr_bytes=0
+START gate-verify-current-LatentSolveSyncTransactionRunner
+DONE gate-verify-current-LatentSolveSyncTransactionRunner exit=0 stderr_bytes=0
+START gate-verify-keys-LatentSolveSyncTransactionRunner
+DONE gate-verify-keys-LatentSolveSyncTransactionRunner exit=0 stderr_bytes=0
+SEMANTIC_RUNS_FINISHED 54

@@ -1,0 +1,29 @@
+{
+  "impl": "keys",
+  "state": "mixed",
+  "gate": "LatentSubstitutionCorpusRunner",
+  "kind": "corpus",
+  "args": [],
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx768m",
+    "-Duser.home=/tmp/option-keys-semantic-9g0rljx2",
+    "-Djava.io.tmpdir=/tmp/option-keys-semantic-9g0rljx2/tmp",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=false",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=false",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=false",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=false",
+    "-cp",
+    "../build/option-keys-semantic/launcher:../build/option-keys-semantic/classes:../build/option-keys/keys-clean:../K3-current-native/kanger/resources:../K3-current-native/kanger-udf/src:../K3-current-native/kanger-data-dumb2/resources:lib/jline-3.13.0.jar",
+    "org.kanger.SemanticLaunch",
+    "LatentSubstitutionCorpusRunner"
+  ],
+  "exit_code": 0,
+  "timeout": false,
+  "disposable_home_removed": true
+}

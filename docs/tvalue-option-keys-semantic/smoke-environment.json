@@ -1,0 +1,23 @@
+{
+  "java": "openjdk version \"21.0.12.1\" 2026-08-18\nOpenJDK Runtime Environment (build 21.0.12.1+1-1-deb13u1-Debian)\nOpenJDK 64-Bit Server VM (build 21.0.12.1+1-1-deb13u1-Debian, mixed mode, sharing)\n",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "plans": [
+    [
+      "current",
+      "off",
+      "SingleTValueLookupRunner",
+      "smoke",
+      []
+    ],
+    [
+      "keys",
+      "off",
+      "SingleTValueLookupRunner",
+      "smoke",
+      []
+    ]
+  ],
+  "timing_claim": false,
+  "native": "60fdc34736c51fa4e5659982630347fb1d1b59fc",
+  "safety": "Only disposable per-process homes/tmp/database directories; no shared database."
+}

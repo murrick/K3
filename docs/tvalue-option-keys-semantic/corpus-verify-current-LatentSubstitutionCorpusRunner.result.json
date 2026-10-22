@@ -1,0 +1,32 @@
+{
+  "impl": "current",
+  "state": "verify",
+  "gate": "LatentSubstitutionCorpusRunner",
+  "kind": "corpus",
+  "args": [],
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx768m",
+    "-Duser.home=/tmp/option-keys-semantic-vydu7zx3",
+    "-Djava.io.tmpdir=/tmp/option-keys-semantic-vydu7zx3/tmp",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-Dkanger.experiment.verifyTValueIndex=true",
+    "-Dkanger.experiment.verifySolveSync=true",
+    "-Dkanger.experiment.shadowCauseWeights=true",
+    "-cp",
+    "../build/option-keys-semantic/launcher:../build/option-keys-semantic/classes:../build/option-keys/current-clean:../K3-current-native/kanger/resources:../K3-current-native/kanger-udf/src:../K3-current-native/kanger-data-dumb2/resources:lib/jline-3.13.0.jar",
+    "org.kanger.SemanticLaunch",
+    "LatentSubstitutionCorpusRunner"
+  ],
+  "exit_code": 0,
+  "timeout": false,
+  "disposable_home_removed": true
+}

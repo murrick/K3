@@ -1,0 +1,31 @@
+{
+  "impl": "keys",
+  "state": "on",
+  "gate": "LatentSolveSyncTransactionRunner",
+  "kind": "gate",
+  "args": [],
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx768m",
+    "-Duser.home=/tmp/option-keys-semantic-h59klqh4",
+    "-Djava.io.tmpdir=/tmp/option-keys-semantic-h59klqh4/tmp",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-cp",
+    "../build/option-keys-semantic/launcher:../build/option-keys-semantic/classes:../build/option-keys/keys-clean:../K3-current-native/kanger/resources:../K3-current-native/kanger-udf/src:../K3-current-native/kanger-data-dumb2/resources:lib/jline-3.13.0.jar",
+    "org.kanger.SemanticLaunch",
+    "LatentSolveSyncTransactionRunner",
+    "/workspace/K3/docs/tvalue-option-keys-semantic/gate-on-keys-LatentSolveSyncTransactionRunner.states.txt",
+    "/workspace/K3/docs/tvalue-option-keys-semantic/gate-on-keys-LatentSolveSyncTransactionRunner.work.txt"
+  ],
+  "exit_code": 0,
+  "timeout": false,
+  "disposable_home_removed": true
+}
