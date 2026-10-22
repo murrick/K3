@@ -1,0 +1,258 @@
+{
+  "constant": {
+    "status": "stable",
+    "cutoff": 64,
+    "end": 112,
+    "gates": [
+      {
+        "passed": true,
+        "comparisons": [
+          {
+            "passed": true,
+            "ratios": {
+              "query_wall_ns": 1.0,
+              "q0": 1.0,
+              "q1": 1.0,
+              "q2": 1.0,
+              "q3": 1.0,
+              "q4": 1.0,
+              "q5": 1.0,
+              "q6": 1.0
+            }
+          },
+          {
+            "passed": true,
+            "ratios": {
+              "query_wall_ns": 1.0,
+              "q0": 1.0,
+              "q1": 1.0,
+              "q2": 1.0,
+              "q3": 1.0,
+              "q4": 1.0,
+              "q5": 1.0,
+              "q6": 1.0
+            }
+          },
+          {
+            "passed": true,
+            "ratios": {
+              "query_wall_ns": 1.0,
+              "q0": 1.0,
+              "q1": 1.0,
+              "q2": 1.0,
+              "q3": 1.0,
+              "q4": 1.0,
+              "q5": 1.0,
+              "q6": 1.0
+            }
+          }
+        ]
+      },
+      {
+        "passed": true,
+        "comparisons": [
+          {
+            "passed": true,
+            "ratios": {
+              "query_wall_ns": 1.0,
+              "q0": 1.0,
+              "q1": 1.0,
+              "q2": 1.0,
+              "q3": 1.0,
+              "q4": 1.0,
+              "q5": 1.0,
+              "q6": 1.0
+            }
+          },
+          {
+            "passed": true,
+            "ratios": {
+              "query_wall_ns": 1.0,
+              "q0": 1.0,
+              "q1": 1.0,
+              "q2": 1.0,
+              "q3": 1.0,
+              "q4": 1.0,
+              "q5": 1.0,
+              "q6": 1.0
+            }
+          },
+          {
+            "passed": true,
+            "ratios": {
+              "query_wall_ns": 1.0,
+              "q0": 1.0,
+              "q1": 1.0,
+              "q2": 1.0,
+              "q3": 1.0,
+              "q4": 1.0,
+              "q5": 1.0,
+              "q6": 1.0
+            }
+          }
+        ]
+      }
+    ],
+    "holdouts": [
+      {
+        "passed": true,
+        "ratios": {
+          "query_wall_ns": 1.0,
+          "q0": 1.0,
+          "q1": 1.0,
+          "q2": 1.0,
+          "q3": 1.0,
+          "q4": 1.0,
+          "q5": 1.0,
+          "q6": 1.0
+        }
+      },
+      {
+        "passed": true,
+        "ratios": {
+          "query_wall_ns": 1.0,
+          "q0": 1.0,
+          "q1": 1.0,
+          "q2": 1.0,
+          "q3": 1.0,
+          "q4": 1.0,
+          "q5": 1.0,
+          "q6": 1.0
+        }
+      }
+    ]
+  },
+  "trend": {
+    "status": "no_joint_gate",
+    "cutoff": null,
+    "end": null
+  },
+  "late_break": {
+    "status": "holdout_unstable",
+    "cutoff": 64,
+    "end": 112,
+    "gates": [
+      {
+        "passed": true,
+        "comparisons": [
+          {
+            "passed": true,
+            "ratios": {
+              "query_wall_ns": 1.0,
+              "q0": 1.0,
+              "q1": 1.0,
+              "q2": 1.0,
+              "q3": 1.0,
+              "q4": 1.0,
+              "q5": 1.0,
+              "q6": 1.0
+            }
+          },
+          {
+            "passed": true,
+            "ratios": {
+              "query_wall_ns": 1.0,
+              "q0": 1.0,
+              "q1": 1.0,
+              "q2": 1.0,
+              "q3": 1.0,
+              "q4": 1.0,
+              "q5": 1.0,
+              "q6": 1.0
+            }
+          },
+          {
+            "passed": true,
+            "ratios": {
+              "query_wall_ns": 1.0,
+              "q0": 1.0,
+              "q1": 1.0,
+              "q2": 1.0,
+              "q3": 1.0,
+              "q4": 1.0,
+              "q5": 1.0,
+              "q6": 1.0
+            }
+          }
+        ]
+      },
+      {
+        "passed": true,
+        "comparisons": [
+          {
+            "passed": true,
+            "ratios": {
+              "query_wall_ns": 1.0,
+              "q0": 1.0,
+              "q1": 1.0,
+              "q2": 1.0,
+              "q3": 1.0,
+              "q4": 1.0,
+              "q5": 1.0,
+              "q6": 1.0
+            }
+          },
+          {
+            "passed": true,
+            "ratios": {
+              "query_wall_ns": 1.0,
+              "q0": 1.0,
+              "q1": 1.0,
+              "q2": 1.0,
+              "q3": 1.0,
+              "q4": 1.0,
+              "q5": 1.0,
+              "q6": 1.0
+            }
+          },
+          {
+            "passed": true,
+            "ratios": {
+              "query_wall_ns": 1.0,
+              "q0": 1.0,
+              "q1": 1.0,
+              "q2": 1.0,
+              "q3": 1.0,
+              "q4": 1.0,
+              "q5": 1.0,
+              "q6": 1.0
+            }
+          }
+        ]
+      }
+    ],
+    "holdouts": [
+      {
+        "passed": false,
+        "ratios": {
+          "query_wall_ns": 1.3749406785310974,
+          "q0": 1.3749406785310971,
+          "q1": 1.3749406785310971,
+          "q2": 1.3749406785310971,
+          "q3": 1.3749406785310971,
+          "q4": 1.3749406785310971,
+          "q5": 1.3749406785310971,
+          "q6": 1.3749406785310971
+        }
+      },
+      {
+        "passed": true,
+        "ratios": {
+          "query_wall_ns": 1.0,
+          "q0": 1.0,
+          "q1": 1.0,
+          "q2": 1.0,
+          "q3": 1.0,
+          "q4": 1.0,
+          "q5": 1.0,
+          "q6": 1.0
+        }
+      }
+    ]
+  },
+  "per_query_oscillation_constant_sum": {
+    "status": "no_joint_gate",
+    "cutoff": null,
+    "end": null
+  }
+}

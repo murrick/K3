@@ -1,0 +1,30 @@
+{
+  "command": [
+    "java",
+    "-jar",
+    "../tooling/ecj.jar",
+    "-1.8",
+    "-nowarn",
+    "-cp",
+    "../build/tvalue-journal-touch-strings.jar:../build/tvalue-observer-fast-disabled-hooked:lib/jline-3.13.0.jar",
+    "-d",
+    "../build/tvalue-resident-stability-tests",
+    "/Users/murray/Documents/Codex/2026-10-22/new-chat/work/K3-resident/docs/tvalue-resident-stability/ResidentStabilityRunner.java"
+  ],
+  "unchanged_runtime_and_modules": {
+    "clean": true,
+    "hooked": true,
+    "baseline": true,
+    "candidate": true
+  },
+  "compiler_sha256": "f7686c4960cf70c2ebc5c500a73a8cfc04541b730c18f1c5c21329889b137f45",
+  "source_sha256": "b9d776bf430f2c44fc80842404369f77c03f1294d43657580484b383fafccb5d",
+  "plan_sha256": "0f9efb37a861a9d25e8f9bf45d3756180c9a61da38ff10cca800b3622efbe07c",
+  "class_sha256": {
+    "../build/tvalue-resident-stability-tests/org/kanger/ResidentStabilityRunner.class": "9e6831e361eaeaa22b10202ff7bd21dfc66148438926ba5acfc8125a33eb45bf"
+  },
+  "jar_sha256": {
+    "../build/tvalue-journal-context-snapshots.jar": "164eacfb151e6a2f9f8646eb5bfdb91654082d1a1720497d0584d8302cdbedc1",
+    "../build/tvalue-journal-touch-strings.jar": "51cb2973a4eba52e2167e6a6f8934907470908181d367a5d139c9c0ce34d97f6"
+  }
+}

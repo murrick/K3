@@ -1,0 +1,7 @@
+from pathlib import Path
+import json,hashlib,subprocess
+p=Path(__file__).parent;sha=lambda f:hashlib.sha256(Path(f).read_bytes()).hexdigest();prior=json.loads(Path('docs/tvalue-resident-warmup/build-validation.json').read_text());checks={}
+for mode in ('clean','hooked','baseline','candidate'):
+ out=Path('../build')/({'clean':'tvalue-observer-fast-disabled-clean','hooked':'tvalue-observer-fast-disabled-hooked','baseline':'warmup-baseline','candidate':'warmup-candidate'}[mode]);actual={str(x.relative_to(out)):sha(x) for x in out.rglob('*.class')};assert actual==prior['classes'][mode];checks[mode]=True
+out=Path('../build/tvalue-resident-stability-tests');cmd=['java','-jar','../tooling/ecj.jar','-1.8','-nowarn','-cp','../build/tvalue-journal-touch-strings.jar:../build/tvalue-observer-fast-disabled-hooked:lib/jline-3.13.0.jar','-d',str(out),str(p/'ResidentStabilityRunner.java')];subprocess.run(cmd,check=True)
+(p/'build-validation.json').write_text(json.dumps({'command':cmd,'unchanged_runtime_and_modules':checks,'compiler_sha256':sha('../tooling/ecj.jar'),'source_sha256':sha(p/'ResidentStabilityRunner.java'),'plan_sha256':sha(p/'plan.json'),'class_sha256':{str(x):sha(x) for x in out.rglob('*.class')},'jar_sha256':{str(x):sha(x) for x in [Path('../build/tvalue-journal-context-snapshots.jar'),Path('../build/tvalue-journal-touch-strings.jar')]}},indent=2)+'\n');print('STABILITY_BUILD_OK')

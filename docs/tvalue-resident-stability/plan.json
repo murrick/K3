@@ -1,0 +1,16 @@
+{
+  "parent": "303be970c719cea70991791a4286cda9460b9802",
+  "flags": "off",
+  "profiles": ["default", "batch"],
+  "repetitions": 3,
+  "modes": ["clean", "disabled", "baseline", "candidate"],
+  "cycles_per_JVM": 256,
+  "window_cycles": 16,
+  "first_eligible_cutoff": 64,
+  "last_eligible_cutoff": 208,
+  "gate": "Three consecutive adjacent-window comparisons: median query sum ratio within [1/1.05,1.05], and every individual-query median ratio within [1/1.10,1.10]. Both attached modules must pass at the same cutoff in a repetition. Select the first jointly passing cutoff without inspecting holdout timings.",
+  "holdout_cycles": 48,
+  "holdout_validation": "Compare the first and last 16-cycle windows of the following 48 cycles with the same sum and individual-query ratio limits. If this fails, label the pair unstable; do not search for a later cutoff. If no eligible gate passes, label the pair unstable. Report an aggregate timing ratio only if all three pairs in a profile pass.",
+  "diagnostics": "Four separate off compilation-logging JVMs: default/batch times baseline/candidate; excluded from timing comparisons.",
+  "production_changes": false
+}

@@ -1,0 +1,28 @@
+{
+  "profile": "default",
+  "flag": "off",
+  "rep": 0,
+  "mode": "candidate",
+  "logging": false,
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx512m",
+    "-Duser.home=/var/folders/sv/wdy64gbs3hx3hnftjc21xvrc0000gn/T/resident-stability-10scurc0",
+    "-Dresult.path=/Users/murray/Documents/Codex/2026-10-22/new-chat/work/K3-resident/docs/tvalue-resident-stability/default-off-0-candidate",
+    "-Dkanger.experiment.preserveTValueIndex=false",
+    "-Dkanger.experiment.versionedSolveSync=false",
+    "-Dkanger.experiment.resolvedCauseWeights=false",
+    "-Dkanger.experiment.compactCauseWeights=false",
+    "-Dkanger.experiment.candidateMembershipFilter=false",
+    "-Dkanger.experiment.singleTValueLookup=false",
+    "-Dkanger.experiment.residentBaseComparison=false",
+    "-Dkanger.experiment.compactFindSnapshots=false",
+    "-cp",
+    "../build/tvalue-resident-stability-tests:../build/tvalue-journal-touch-strings.jar:../build/tvalue-observer-fast-disabled-hooked:../K3-observer-native/kanger/resources:../K3-observer-native/kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ResidentStabilityRunner",
+    "attached",
+    "256"
+  ],
+  "exit_code": 0
+}
