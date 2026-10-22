@@ -35,16 +35,25 @@ final class ContextUniversalAuthorityChain {
         }
         require(endpoints.keySet().equals(expected)&&endpoints.values().stream().allMatch(v->v.equals(new HashSet<>(Arrays.asList("q","mid")))),"every exact pair occurs at both endpoints, never duplicate substitutes");
     }
+    static void schemas(ContextUniversalUnitRounds.Frontier f,String head,boolean qSign,boolean headSign,int depth,List<Set<Source>> expected){
+        Set<Set<Source>> actual=new HashSet<>();int count=0;
+        for(ContextUniversalUnitLedger.Row row:f.products){Clause c=row.clause;if(c.literals.size()!=2||c.variables.size()!=1)continue;Atom q=null,h=null;for(Atom atom:c.literals){if(atom.predicate.equals("q")&&atom.positive==qSign)q=atom;if(atom.predicate.equals(head)&&atom.positive==headSign)h=atom;}if(q==null||h==null)continue;++count;
+            require(q.arguments.size()==1&&h.arguments.size()==1&&q.arguments.get(0).variable>=0&&q.arguments.get(0).variable==h.arguments.get(0).variable&&row.support.depth==depth&&actual.add(row.support.sources),"genuine shared-variable schema with exact cumulative depth and unique support");}
+        require(count==expected.size()&&actual.equals(new HashSet<>(expected)),"all and only exact Source alternatives for universal q->"+head);
+    }
     static List<ContextUniversalUnitRounds.Receipt> pass(ContextUniversalUnitRounds.Frontier f,int depth){List<ContextUniversalUnitRounds.Receipt> rs=new ArrayList<>();for(Snapshot cut:f.cuts)rs.add(ContextUniversalUnitRounds.inspectFactored(f,cut,16,depth,WORK));return rs;}
     static void units(ContextUniversalUnitRounds.Frontier f,String predicate,boolean sign,int depth,List<Set<Source>> expected){Set<Set<Source>> actual=new HashSet<>();int count=0;for(ContextUniversalUnitLedger.Row row:f.products)if(row.clause.literals.size()==1){Atom a=row.clause.literals.get(0);if(a.predicate.equals(predicate)&&a.positive==sign){++count;require(row.clause.variables.isEmpty()&&a.arguments.size()==1&&row.support.depth==depth&&actual.add(row.support.sources),"exact unique ground carrier and cumulative resolution depth");}}require(count==expected.size()&&actual.equals(new HashSet<>(expected)),"all and only exact Source alternatives for "+predicate);}
-    static void barriers(ContextProductionCandidate.Staged a,ContextAuthorityChain.Expected e){
+    static void barriers(ContextProductionCandidate.Staged a,ContextAuthorityChain.Expected e){barriers(a,e,false);}
+    static void barriers(ContextProductionCandidate.Staged a,ContextAuthorityChain.Expected e,boolean parameterized){
         ContextUniversalUnitRounds.Frontier initial=ContextUniversalUnitRounds.start(a.staged,a.foreign,WORK);
         ContextUniversalUnitRounds.Barrier first=ContextUniversalUnitRounds.merge(initial,pass(initial,8),8,WORK);
         require(first.status==ContextUniversalUnitRounds.Status.MERGED&&first.changed&&initial.products.isEmpty()&&first.frontier.previous.equals(initial.identity),"first immutable universal common barrier");
+        if(parameterized){schemas(first.frontier,"out",e.negativeQ,!e.negativeOut,2,Collections.singletonList(e.set()));List<Set<Source>> bridges=new ArrayList<>();for(Source b:e.bridges)bridges.add(e.set(b));schemas(first.frontier,"mid",e.negativeQ,!e.negative,3,bridges);}
         int saved=first.frontier.products.size();List<Set<Source>> out=new ArrayList<>(),mid=new ArrayList<>(),q=new ArrayList<>();for(Source donor:e.authorities){out.add(e.set(donor));for(Source b:e.bridges)mid.add(e.set(donor,b));}for(Source b:e.bridges)q.add(e.set(b,e.deny));
         units(first.frontier,"out",!e.negativeOut,3,out);require(first.frontier.products.stream().filter(row->row.clause.literals.size()==1).count()==3,"first round has only three out units, no private import");
         ContextUniversalUnitRounds.Barrier second=ContextUniversalUnitRounds.merge(first.frontier,pass(first.frontier,8),8,WORK);
         require(second.status==ContextUniversalUnitRounds.Status.MERGED&&second.changed&&first.frontier.products.size()==saved&&second.frontier.previous.equals(first.frontier.identity),"second immutable barrier preserves prior common input");
+        if(parameterized){schemas(second.frontier,"out",e.negativeQ,!e.negativeOut,2,Collections.singletonList(e.set()));List<Set<Source>> bridges=new ArrayList<>();for(Source b:e.bridges)bridges.add(e.set(b));schemas(second.frontier,"mid",e.negativeQ,!e.negative,3,bridges);}
         units(second.frontier,"out",!e.negativeOut,3,out);units(second.frontier,"mid",!e.negative,4,mid);units(second.frontier,"q",e.negativeQ,4,q);
         require(second.frontier.products.stream().filter(row->row.clause.literals.size()==1).count()==11,"exact eleven derived units, never raw private rows");
         List<ContextUniversalUnitRounds.Receipt> low=pass(second.frontier,0);for(ContextUniversalUnitRounds.Receipt receipt:low)require(!receipt.verified&&receipt.products.isEmpty()&&receipt.oppositions.isEmpty(),"carried depth cannot reset at another cut");
@@ -58,12 +67,13 @@ final class ContextUniversalAuthorityChain {
             if(cause==null){require(audit.verified,"actual native collision independently audited");collision(audit.verdict,e,false);}else{require(!audit.verified,"incomplete cannot have verified audit");incomplete(audit.verdict,cause);}
         }finally{f.db.endNativeWrite(attempt);}
     }
-    static void run(boolean reverse,boolean negative,String marker){try{
+    static void run(boolean reverse,boolean negative,String marker){run(reverse,negative,false,marker);}
+    static void run(boolean reverse,boolean negative,boolean parameterized,String marker){try{
         Path dir=Files.createTempDirectory("universal-authority-chain-");System.setProperty("user.home",dir.toString());String sign=negative?"~":"";
         for(String name:new String[]{"A1","A2","A3"})ContextAuthorityChain.create(dir,name,"!"+sign+"q(1);");
         for(String name:new String[]{"Bridge1","Bridge2"})ContextAuthorityChain.create(dir,name,"!@x "+sign+"out(x)->"+sign+"mid(x);");
         ContextAuthorityChain.create(dir,"Deny","!"+(negative?"":"~")+"mid(1);");
-        String text="!"+sign+"q(1)&&~p1(1)&&~p2(1)->"+sign+"out(1);";
+        String text=parameterized?"!@x "+sign+"q(x)&&~p1(1)&&~p2(1)->"+sign+"out(x);":"!"+sign+"q(1)&&~p1(1)&&~p2(1)->"+sign+"out(1);";
         Set<String> original;List<RevisionRef> pins;
         try(ContextSevenPremiseNativeWriteRunner.Fixture f=new ContextSevenPremiseNativeWriteRunner.Fixture(dir,"X")){
             require(f.root.compile("!~p1(1); !~p2(1);",null,false),"two original signed local facts");
@@ -76,8 +86,9 @@ final class ContextUniversalAuthorityChain {
             require(full.status==DB.ProductionWriteStatus.COLLISION&&full.audit!=null&&full.audit.verified&&full.audit.evaluation==full.trial,"universal writer returns independently audited conflict");
             ContextAuthorityChain.Expected expected=new ContextAuthorityChain.Expected(full.trial.artifact,2,negative,negative,negative,false);
             for(String predicate:new String[]{"p1","p2"})require(full.trial.artifact.staged.primary.stream().anyMatch(e->e.clauses.size()==1&&e.clauses.get(0).literals.size()==1&&e.clauses.get(0).literals.get(0).predicate.equals(predicate)&&!e.clauses.get(0).literals.get(0).positive&&e.clauses.get(0).variables.isEmpty()),"exact original negative ground premise "+predicate);
+            if(parameterized){Entry candidate=full.trial.artifact.staged.primary.stream().filter(e->e.source.equals(full.trial.artifact.candidate)).findFirst().get();require(candidate.clauses.size()==1&&candidate.clauses.get(0).variables.size()==1,"actual candidate retains universal declaration rather than one sampled ground rule");}
             int bridgeCount=0;for(Snapshot cut:full.trial.artifact.foreign)for(Entry e:cut.primary)if(expected.bridges.contains(e.source)){++bridgeCount;Clause c=e.clauses.get(0);require(c.variables.size()==1&&c.literals.stream().allMatch(l->l.arguments.size()==1&&l.arguments.get(0).variable>=0)&&c.literals.get(0).arguments.get(0).variable==c.literals.get(1).arguments.get(0).variable,"whole private Bridge remains universal with one shared variable");}require(bridgeCount==2,"both exact universal Bridge declarations checked");
-            collision(full.trial.qualification,expected,true);require(full.audit.oppositions.size()==12&&full.audit.oppositions.stream().allMatch(x->x.usesCandidate),"all twelve audited oppositions retain candidate attribution");barriers(full.trial.artifact,expected);
+            collision(full.trial.qualification,expected,true);require(full.audit.oppositions.size()==12&&full.audit.oppositions.stream().allMatch(x->x.usesCandidate),"all twelve audited oppositions retain candidate attribution");barriers(full.trial.artifact,expected,parameterized);
             DB.UniversalProductionWriteResult early=write(f,text,2,8);require(early.status==DB.ProductionWriteStatus.INCOMPLETE&&early.before.getRevision()==revision&&early.after.getRevision()==revision,"round cutoff cannot write");incomplete(early.trial.qualification,"common round limit");
             DB.UniversalProductionWriteResult shallow=write(f,text,3,0);require(shallow.status==DB.ProductionWriteStatus.INCOMPLETE&&shallow.before.getRevision()==revision&&shallow.after.getRevision()==revision,"depth cutoff cannot write");incomplete(shallow.trial.qualification,"depth");
             nativeRefusal(f,text,3,8,expected,null);nativeRefusal(f,text,2,8,expected,"common round limit");nativeRefusal(f,text,3,0,expected,"depth");
