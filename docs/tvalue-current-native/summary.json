@@ -1,0 +1,17 @@
+{
+  "JVMs": 57,
+  "correctness_JVMs": 48,
+  "profile_JVMs": 9,
+  "queries": 40320,
+  "variable_rows": 11520,
+  "trace_replays": 2624,
+  "identical_baseline_candidate_trace_pairs": 1824,
+  "identical_cross_native_traces": 288,
+  "all_current_native_rows_match_old": true,
+  "native_old": "2422f7f6d9e1af7608203b1566df64b5f29fe344",
+  "native_current": "60fdc34736c51fa4e5659982630347fb1d1b59fc",
+  "performance_comparison_qualified": false,
+  "production_changed": false,
+  "SMART_qualified": false,
+  "prior_temporary_dataset_lost": true
+}

@@ -1,0 +1,32 @@
+{
+  "base": "current",
+  "flag": "verify",
+  "rep": 0,
+  "mode": "clean",
+  "profile": false,
+  "override": false,
+  "repeats": 24,
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx512m",
+    "-Duser.home=/var/folders/sv/wdy64gbs3hx3hnftjc21xvrc0000gn/T/current-native-e15l0fmu",
+    "-Dresult.path=/Users/murray/Documents/Codex/2026-10-22/new-chat/work/K3-current-study/docs/tvalue-current-native/current-verify-0-clean",
+    "-Dkanger.experiment.preserveTValueIndex=true",
+    "-Dkanger.experiment.versionedSolveSync=true",
+    "-Dkanger.experiment.resolvedCauseWeights=true",
+    "-Dkanger.experiment.compactCauseWeights=true",
+    "-Dkanger.experiment.candidateMembershipFilter=true",
+    "-Dkanger.experiment.singleTValueLookup=true",
+    "-Dkanger.experiment.residentBaseComparison=true",
+    "-Dkanger.experiment.compactFindSnapshots=true",
+    "-Dkanger.experiment.verifyTValueIndex=true",
+    "-Dkanger.experiment.verifySolveSync=true",
+    "-cp",
+    "../build/current-native/fixture:../build/current-native/baseline.jar:../build/current-native/current-clean:../K3-current-native/kanger/resources:../K3-current-native/kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ResidentCurrentRunner",
+    "disabled",
+    "24"
+  ],
+  "exit_code": 0
+}
