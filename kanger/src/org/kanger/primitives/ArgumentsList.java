@@ -382,8 +382,11 @@ public class ArgumentsList extends ArrayList<IArgument> implements IList {
     public void applyStamp(Mind mind, List<ITerm> list) throws Exception {
         List<TVariable> curr = getTVariables(mind);
         for (int i = 0; i < curr.size(); ++i) {
-            if (curr.get(i).find(list.get(i)) != null) {
-                curr.get(i).setValue(list.get(i));
+            // Cached variables can retain another execution view. Restore the
+            // stamp in the materializing Mind, never in that stale view.
+            TVariable variable = curr.get(i).setMind(mind);
+            if (variable.find(list.get(i)) != null) {
+                variable.setValue(list.get(i));
             }
         }
     }
