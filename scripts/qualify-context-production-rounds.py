@@ -10,7 +10,7 @@ import tempfile
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract'), default='contract')
+    parser.add_argument('--mode', choices=('contract', 'reference', 'witness-contract', 'independent-reopen-contract'), default='contract')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     output = root / 'target/context-production-rounds'
@@ -24,6 +24,8 @@ def main():
     names = [('org.kanger.storage.dumb2.ContextProductionRoundsContractRunner', 'CONTEXT_PRODUCTION_ROUNDS_CONTRACT_PASS')]
     if args.mode == 'witness-contract':
         names = [('org.kanger.ContextWitnessForkContractRunner', 'CONTEXT_WITNESS_FORK_CONTRACT_PASS')]
+    if args.mode == 'independent-reopen-contract':
+        names = [('org.kanger.storage.dumb2.ContextIndependentReopenContractRunner', 'CONTEXT_INDEPENDENT_REOPEN_CONTRACT_PASS')]
     if args.mode == 'reference':
         names = [('org.kanger.ContextProductionCaptureRunner', 'CONTEXT_PRODUCTION_CAPTURE_PASS'),
                  ('org.kanger.ContextProductionRoundsReferenceRunner', 'CONTEXT_PRODUCTION_ROUNDS_REFERENCE_PASS'),
@@ -341,6 +343,14 @@ def main():
                  ('org.kanger.storage.dumb2.ContextAuthorityFreeConflictPositiveReverseRunner', 'CONTEXT_AUTHORITY_FREE_CONFLICT_POSITIVE_REVERSE_PASS'),
                  ('org.kanger.storage.dumb2.ContextAuthorityFreeConflictNegativeRunner', 'CONTEXT_AUTHORITY_FREE_CONFLICT_NEGATIVE_PASS'),
                  ('org.kanger.storage.dumb2.ContextAuthorityFreeConflictNegativeReverseRunner', 'CONTEXT_AUTHORITY_FREE_CONFLICT_NEGATIVE_REVERSE_PASS'),
+                 ('org.kanger.storage.dumb2.ContextAuthorityIndependentCompatiblePositiveRunner', 'CONTEXT_AUTHORITY_INDEPENDENT_COMPATIBLE_POSITIVE_PASS'),
+                 ('org.kanger.storage.dumb2.ContextAuthorityIndependentCompatiblePositiveReverseRunner', 'CONTEXT_AUTHORITY_INDEPENDENT_COMPATIBLE_POSITIVE_REVERSE_PASS'),
+                 ('org.kanger.storage.dumb2.ContextAuthorityIndependentCompatibleNegativeRunner', 'CONTEXT_AUTHORITY_INDEPENDENT_COMPATIBLE_NEGATIVE_PASS'),
+                 ('org.kanger.storage.dumb2.ContextAuthorityIndependentCompatibleNegativeReverseRunner', 'CONTEXT_AUTHORITY_INDEPENDENT_COMPATIBLE_NEGATIVE_REVERSE_PASS'),
+                 ('org.kanger.storage.dumb2.ContextAuthorityIndependentConflictPositiveRunner', 'CONTEXT_AUTHORITY_INDEPENDENT_CONFLICT_POSITIVE_PASS'),
+                 ('org.kanger.storage.dumb2.ContextAuthorityIndependentConflictPositiveReverseRunner', 'CONTEXT_AUTHORITY_INDEPENDENT_CONFLICT_POSITIVE_REVERSE_PASS'),
+                 ('org.kanger.storage.dumb2.ContextAuthorityIndependentConflictNegativeRunner', 'CONTEXT_AUTHORITY_INDEPENDENT_CONFLICT_NEGATIVE_PASS'),
+                 ('org.kanger.storage.dumb2.ContextAuthorityIndependentConflictNegativeReverseRunner', 'CONTEXT_AUTHORITY_INDEPENDENT_CONFLICT_NEGATIVE_REVERSE_PASS'),
                  ('org.kanger.ContextResidualRequestLimitsRunner', 'CONTEXT_RESIDUAL_REQUEST_LIMITS_PASS'),
                  ('org.kanger.ContextOrdinaryResidualCoverageRunner', 'CONTEXT_ORDINARY_RESIDUAL_COVERAGE_PASS'),
                  ('org.kanger.ContextOrdinaryResidualParametersRunner', 'CONTEXT_ORDINARY_RESIDUAL_PARAMETERS_PASS'),
@@ -390,6 +400,7 @@ def main():
     report = dict(head=head, production_sources=len(production), mode=args.mode, passed=passed, results=results,
                   scope={'contract': 'Pending runtime authoring contract',
                          'witness-contract': 'Native primary existential witness consistency contract',
+                         'independent-reopen-contract': 'Certified independent-coordinate source must reopen after publication',
                          'reference': 'Capture, witness identity and scoped Horn reference; round gate unchanged'}[args.mode],
                   source_dirty=bool(subprocess.check_output(
                       ['git', 'status', '--porcelain'], cwd=root, text=True).strip()))
