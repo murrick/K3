@@ -1,0 +1,39 @@
+{
+  "impl": "current",
+  "flag": "off",
+  "rep": 1,
+  "mode": "clean",
+  "profile": true,
+  "repeats": 512,
+  "command": [
+    "java",
+    "-Xms128m",
+    "-Xmx512m",
+    "-Duser.home=/tmp/option-keys-pajy8x_s",
+    "-Dresult.path=/workspace/K3/docs/tvalue-option-keys-repeat/current-off-1-clean-profile",
+    "-Dkanger.experiment.preserveTValueIndex=false",
+    "-Dkanger.experiment.versionedSolveSync=false",
+    "-Dkanger.experiment.resolvedCauseWeights=false",
+    "-Dkanger.experiment.compactCauseWeights=false",
+    "-Dkanger.experiment.candidateMembershipFilter=false",
+    "-Dkanger.experiment.singleTValueLookup=false",
+    "-Dkanger.experiment.residentBaseComparison=false",
+    "-Dkanger.experiment.compactFindSnapshots=false",
+    "-Dresident.profile=true",
+    "-XX:FlightRecorderOptions=stackdepth=128",
+    "-XX:StartFlightRecording=settings=/workspace/K3/docs/tvalue-option-keys-repeat/profile.jfc,filename=/workspace/K3/docs/tvalue-option-keys-repeat/current-off-1-clean-profile.jfr,dumponexit=true",
+    "-cp",
+    "../build/option-keys/fixture:../build/option-keys/baseline.jar:../build/option-keys/current-clean:../K3-current-native/kanger/resources:../K3-current-native/kanger-udf/src:lib/jline-3.13.0.jar",
+    "org.kanger.ResidentCurrentRunner",
+    "disabled",
+    "512"
+  ],
+  "exit_code": 0,
+  "raw_recording_sha256": "2d1439418e9fce0639ab3979a46161a84ca00832d2a1a6bae60015524ef3328d",
+  "retained_export_sha256": "bc8664e54eacc372c27c5793dbd6435ecbf661f9fcf3454b936f139c8123fb78",
+  "retained_event_types": [
+    "jdk.ExecutionSample",
+    "jdk.ObjectAllocationSample",
+    "org.kanger.ResidentQuery"
+  ]
+}

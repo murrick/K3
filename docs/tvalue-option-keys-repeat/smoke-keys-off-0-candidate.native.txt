@@ -1,0 +1,14 @@
+0 ?father(John,Tom); result=true query= reservations=0 values=[] bindings={} authority={0=[0:8:0,4:9:0], 1=[1:9:0,5:13:0], 2=[2:8:0,6:9:0], 3=[3:9:0,7:13:0]}
+0 ?parent(John,Tom); result=true query= reservations=0 values=[] bindings={} authority={0=[0:8:0,4:9:0], 1=[1:9:0,5:13:0], 2=[2:8:0,6:9:0], 3=[3:9:0,7:13:0]}
+0 ?related(John,Tom); result=true query= reservations=0 values=[] bindings={} authority={0=[0:8:0,4:9:0], 1=[1:9:0,5:13:0], 2=[2:8:0,6:9:0], 3=[3:9:0,7:13:0]}
+0 ?male(Mary); result=false query= reservations=0 values=[] bindings={} authority={0=[0:8:0,4:9:0], 1=[1:9:0,5:13:0], 2=[2:8:0,6:9:0], 3=[3:9:0,7:13:0]}
+0 ?unknown(John); result=null query= reservations=0 values=[] bindings={} authority={0=[0:8:0,4:9:0], 1=[1:9:0,5:13:0], 2=[2:8:0,6:9:0], 3=[3:9:0,7:13:0]}
+0 ?$x parent(John,x); result=true query= reservations=0 values=[{x=Tom}] bindings={} authority={0=[0:8:0,4:9:0], 1=[1:9:0,5:13:0], 2=[2:8:0,6:9:0], 3=[3:9:0,7:13:0]}
+0 ?$x related(x,Sam); result=true query= reservations=0 values=[{x=Tom}] bindings={} authority={0=[0:8:0,4:9:0], 1=[1:9:0,5:13:0], 2=[2:8:0,6:9:0], 3=[3:9:0,7:13:0]}
+1 ?father(John,Tom); result=true query= reservations=0 values=[] bindings={} authority={0=[0:8:0,4:9:0], 1=[1:9:0,5:13:0], 2=[2:8:0,6:9:0], 3=[3:9:0,7:13:0]}
+1 ?parent(John,Tom); result=true query= reservations=0 values=[] bindings={} authority={0=[0:8:0,4:9:0], 1=[1:9:0,5:13:0], 2=[2:8:0,6:9:0], 3=[3:9:0,7:13:0]}
+1 ?related(John,Tom); result=true query= reservations=0 values=[] bindings={} authority={0=[0:8:0,4:9:0], 1=[1:9:0,5:13:0], 2=[2:8:0,6:9:0], 3=[3:9:0,7:13:0]}
+1 ?male(Mary); result=false query= reservations=0 values=[] bindings={} authority={0=[0:8:0,4:9:0], 1=[1:9:0,5:13:0], 2=[2:8:0,6:9:0], 3=[3:9:0,7:13:0]}
+1 ?unknown(John); result=null query= reservations=0 values=[] bindings={} authority={0=[0:8:0,4:9:0], 1=[1:9:0,5:13:0], 2=[2:8:0,6:9:0], 3=[3:9:0,7:13:0]}
+1 ?$x parent(John,x); result=true query= reservations=0 values=[{x=Tom}] bindings={} authority={0=[0:8:0,4:9:0], 1=[1:9:0,5:13:0], 2=[2:8:0,6:9:0], 3=[3:9:0,7:13:0]}
+1 ?$x related(x,Sam); result=true query= reservations=0 values=[{x=Tom}] bindings={} authority={0=[0:8:0,4:9:0], 1=[1:9:0,5:13:0], 2=[2:8:0,6:9:0], 3=[3:9:0,7:13:0]}

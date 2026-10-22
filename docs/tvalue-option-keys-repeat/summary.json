@@ -1,0 +1,478 @@
+{
+  "inference_JVMs": 26,
+  "unprofiled_measurement_JVMs": 16,
+  "profile_measurement_JVMs": 8,
+  "smoke_JVMs": 2,
+  "queries": 86044,
+  "exact_variable_rows": 24584,
+  "trace_replays": 6148,
+  "frozen_trace_event_comparisons": 6148,
+  "native_rows_identical": true,
+  "group_summary": {
+    "profile/candidate/early_0_127": {
+      "JVM_pairs": 2,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.9571679914494247,
+        "min_ratio": 0.9515873749987153,
+        "max_ratio": 0.9627486079001342,
+        "individual_pair_ratios": [
+          0.9515873749987153,
+          0.9627486079001342
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 1.0110451418028807,
+        "min_ratio": 1.0008419584549892,
+        "max_ratio": 1.0212483251507725,
+        "individual_pair_ratios": [
+          1.0008419584549892,
+          1.0212483251507725
+        ]
+      }
+    },
+    "profile/candidate/late_128_511": {
+      "JVM_pairs": 2,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.9537783756232283,
+        "min_ratio": 0.9476223354819894,
+        "max_ratio": 0.9599344157644674,
+        "individual_pair_ratios": [
+          0.9476223354819894,
+          0.9599344157644674
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 1.0056991842133671,
+        "min_ratio": 1.00472612355968,
+        "max_ratio": 1.0066722448670542,
+        "individual_pair_ratios": [
+          1.00472612355968,
+          1.0066722448670542
+        ]
+      }
+    },
+    "profile/candidate/window_128_255": {
+      "JVM_pairs": 2,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.9540914455497224,
+        "min_ratio": 0.9488274037045383,
+        "max_ratio": 0.9593554873949064,
+        "individual_pair_ratios": [
+          0.9488274037045383,
+          0.9593554873949064
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 0.9499408422234261,
+        "min_ratio": 0.9283760757763722,
+        "max_ratio": 0.9715056086704801,
+        "individual_pair_ratios": [
+          0.9283760757763722,
+          0.9715056086704801
+        ]
+      }
+    },
+    "profile/candidate/window_256_383": {
+      "JVM_pairs": 2,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.9537783756232283,
+        "min_ratio": 0.9476223354819894,
+        "max_ratio": 0.9599344157644674,
+        "individual_pair_ratios": [
+          0.9476223354819894,
+          0.9599344157644674
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 1.0077975732304285,
+        "min_ratio": 1.000090815366713,
+        "max_ratio": 1.0155043310941443,
+        "individual_pair_ratios": [
+          1.0155043310941443,
+          1.000090815366713
+        ]
+      }
+    },
+    "profile/candidate/window_384_511": {
+      "JVM_pairs": 2,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.9546746740051231,
+        "min_ratio": 0.9442451855579984,
+        "max_ratio": 0.9651041624522478,
+        "individual_pair_ratios": [
+          0.9442451855579984,
+          0.9651041624522478
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 0.9779316814826653,
+        "min_ratio": 0.9631167206795377,
+        "max_ratio": 0.9927466422857929,
+        "individual_pair_ratios": [
+          0.9631167206795377,
+          0.9927466422857929
+        ]
+      }
+    },
+    "unprofiled/candidate/early_0_127": {
+      "JVM_pairs": 4,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.9363341612180925,
+        "min_ratio": 0.9343152339376571,
+        "max_ratio": 0.9510554668897945,
+        "individual_pair_ratios": [
+          0.9510554668897945,
+          0.9344571598068606,
+          0.9343152339376571,
+          0.9382111626293245
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 1.1065592377699311,
+        "min_ratio": 1.010783956299603,
+        "max_ratio": 1.1649843371809232,
+        "individual_pair_ratios": [
+          1.070357424384542,
+          1.010783956299603,
+          1.1427610511553206,
+          1.1649843371809232
+        ]
+      }
+    },
+    "unprofiled/candidate/late_128_511": {
+      "JVM_pairs": 4,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.9356928527215984,
+        "min_ratio": 0.9341825135067052,
+        "max_ratio": 0.9415376738919615,
+        "individual_pair_ratios": [
+          0.9415376738919615,
+          0.9341825135067052,
+          0.9352917883693403,
+          0.9360939170738565
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 0.9907774786041439,
+        "min_ratio": 0.9131378900110622,
+        "max_ratio": 1.0400759725029491,
+        "individual_pair_ratios": [
+          1.0400759725029491,
+          0.984485928175216,
+          0.9131378900110622,
+          0.9970690290330719
+        ]
+      }
+    },
+    "unprofiled/candidate/window_128_255": {
+      "JVM_pairs": 4,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.9362255497499343,
+        "min_ratio": 0.9259262705109955,
+        "max_ratio": 0.9374154813756449,
+        "individual_pair_ratios": [
+          0.9259262705109955,
+          0.9362582556322397,
+          0.936192843867629,
+          0.9374154813756449
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 0.9625862761580082,
+        "min_ratio": 0.9456596257450879,
+        "max_ratio": 1.0133362607674463,
+        "individual_pair_ratios": [
+          1.0133362607674463,
+          0.9602453433703833,
+          0.9456596257450879,
+          0.9649272089456332
+        ]
+      }
+    },
+    "unprofiled/candidate/window_256_383": {
+      "JVM_pairs": 4,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.9356928527215984,
+        "min_ratio": 0.9341825135067052,
+        "max_ratio": 0.9415376738919615,
+        "individual_pair_ratios": [
+          0.9415376738919615,
+          0.9341825135067052,
+          0.9352917883693403,
+          0.9360939170738565
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 0.965598775002386,
+        "min_ratio": 0.9402895076586661,
+        "max_ratio": 1.0097445666329559,
+        "individual_pair_ratios": [
+          1.0097445666329559,
+          0.9731045552894986,
+          0.9402895076586661,
+          0.9580929947152735
+        ]
+      }
+    },
+    "unprofiled/candidate/window_384_511": {
+      "JVM_pairs": 4,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.9358190718487014,
+        "min_ratio": 0.9323994828562575,
+        "max_ratio": 0.9369084970406074,
+        "individual_pair_ratios": [
+          0.9368174560482253,
+          0.9348206876491775,
+          0.9323994828562575,
+          0.9369084970406074
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 0.9942418986284797,
+        "min_ratio": 0.9659537028824288,
+        "max_ratio": 1.0150494698789592,
+        "individual_pair_ratios": [
+          1.0150494698789592,
+          1.0017863629410604,
+          0.9659537028824288,
+          0.986697434315899
+        ]
+      }
+    },
+    "profile/clean/early_0_127": {
+      "JVM_pairs": 2,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.8957501827451765,
+        "min_ratio": 0.8879655575759121,
+        "max_ratio": 0.9035348079144409,
+        "individual_pair_ratios": [
+          0.8879655575759121,
+          0.9035348079144409
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 0.9413080109660226,
+        "min_ratio": 0.9246253031394842,
+        "max_ratio": 0.9579907187925608,
+        "individual_pair_ratios": [
+          0.9579907187925608,
+          0.9246253031394842
+        ]
+      }
+    },
+    "profile/clean/late_128_511": {
+      "JVM_pairs": 2,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.8985075640758413,
+        "min_ratio": 0.8844387272520904,
+        "max_ratio": 0.9125764008995924,
+        "individual_pair_ratios": [
+          0.8844387272520904,
+          0.9125764008995924
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 0.9299535839980377,
+        "min_ratio": 0.8968274769730536,
+        "max_ratio": 0.9630796910230217,
+        "individual_pair_ratios": [
+          0.8968274769730536,
+          0.9630796910230217
+        ]
+      }
+    },
+    "profile/clean/window_128_255": {
+      "JVM_pairs": 2,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.8967260286205998,
+        "min_ratio": 0.8880808050631068,
+        "max_ratio": 0.9053712521780929,
+        "individual_pair_ratios": [
+          0.8880808050631068,
+          0.9053712521780929
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 0.909903972487685,
+        "min_ratio": 0.8394717283589559,
+        "max_ratio": 0.9803362166164141,
+        "individual_pair_ratios": [
+          0.8394717283589559,
+          0.9803362166164141
+        ]
+      }
+    },
+    "profile/clean/window_256_383": {
+      "JVM_pairs": 2,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.8934266757957441,
+        "min_ratio": 0.8844387272520904,
+        "max_ratio": 0.9024146243393979,
+        "individual_pair_ratios": [
+          0.8844387272520904,
+          0.9024146243393979
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 0.9235814073642292,
+        "min_ratio": 0.8981411840222326,
+        "max_ratio": 0.9490216307062258,
+        "individual_pair_ratios": [
+          0.8981411840222326,
+          0.9490216307062258
+        ]
+      }
+    },
+    "profile/clean/window_384_511": {
+      "JVM_pairs": 2,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.8941965066263579,
+        "min_ratio": 0.8842057427413781,
+        "max_ratio": 0.9041872705113376,
+        "individual_pair_ratios": [
+          0.8842057427413781,
+          0.9041872705113376
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 0.9527038841965926,
+        "min_ratio": 0.9417167695604919,
+        "max_ratio": 0.9636909988326933,
+        "individual_pair_ratios": [
+          0.9417167695604919,
+          0.9636909988326933
+        ]
+      }
+    },
+    "unprofiled/clean/early_0_127": {
+      "JVM_pairs": 4,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.9012814394920843,
+        "min_ratio": 0.8839580011122119,
+        "max_ratio": 0.9051487749336206,
+        "individual_pair_ratios": [
+          0.8839580011122119,
+          0.9014617860930868,
+          0.9011010928910819,
+          0.9051487749336206
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 0.936450854627775,
+        "min_ratio": 0.7964135382519139,
+        "max_ratio": 1.006308677747375,
+        "individual_pair_ratios": [
+          1.006308677747375,
+          0.7964135382519139,
+          0.9624131619187509,
+          0.9104885473367991
+        ]
+      }
+    },
+    "unprofiled/clean/late_128_511": {
+      "JVM_pairs": 4,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.8899632820356178,
+        "min_ratio": 0.8888642055476759,
+        "max_ratio": 0.9033298502801224,
+        "individual_pair_ratios": [
+          0.8888642055476759,
+          0.8906947045641279,
+          0.8892318595071076,
+          0.9033298502801224
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 0.9710899228331733,
+        "min_ratio": 0.8648859214034479,
+        "max_ratio": 1.0672540573258482,
+        "individual_pair_ratios": [
+          0.969664813192931,
+          1.0672540573258482,
+          0.9725150324734156,
+          0.8648859214034479
+        ]
+      }
+    },
+    "unprofiled/clean/window_128_255": {
+      "JVM_pairs": 4,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.8952422296660942,
+        "min_ratio": 0.8800071054267697,
+        "max_ratio": 0.9022256942562548,
+        "individual_pair_ratios": [
+          0.8800071054267697,
+          0.8898440302523019,
+          0.9022256942562548,
+          0.9006404290798865
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 0.9536250982098018,
+        "min_ratio": 0.882605020929817,
+        "max_ratio": 1.0076596583161812,
+        "individual_pair_ratios": [
+          1.0076596583161812,
+          0.9467857739172237,
+          0.9604644225023797,
+          0.882605020929817
+        ]
+      }
+    },
+    "unprofiled/clean/window_256_383": {
+      "JVM_pairs": 4,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.8899632820356178,
+        "min_ratio": 0.8888642055476759,
+        "max_ratio": 0.9052114701697699,
+        "individual_pair_ratios": [
+          0.8888642055476759,
+          0.8906947045641279,
+          0.8892318595071076,
+          0.9052114701697699
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 0.9728165538784669,
+        "min_ratio": 0.777044638922118,
+        "max_ratio": 1.1952671916852684,
+        "individual_pair_ratios": [
+          0.9699415485498757,
+          1.1952671916852684,
+          0.9756915592070581,
+          0.777044638922118
+        ]
+      }
+    },
+    "unprofiled/clean/window_384_511": {
+      "JVM_pairs": 4,
+      "query_cycle_allocated_bytes": {
+        "median_ratio": 0.8897125588706436,
+        "min_ratio": 0.8871311481671034,
+        "max_ratio": 0.905931905931906,
+        "individual_pair_ratios": [
+          0.8874082820274943,
+          0.8871311481671034,
+          0.8920168357137929,
+          0.905931905931906
+        ]
+      },
+      "query_cycle_wall_ns": {
+        "median_ratio": 0.986323472757608,
+        "min_ratio": 0.8970317004958085,
+        "max_ratio": 1.0603971393084908,
+        "individual_pair_ratios": [
+          1.0073297336247762,
+          1.0603971393084908,
+          0.9653172118904397,
+          0.8970317004958085
+        ]
+      }
+    }
+  },
+  "JVM_is_repetition_unit": true,
+  "time_ratios_diagnostic_only": true,
+  "inference_speedup_qualified": false,
+  "SMART_qualified": false,
+  "full_corpus_qualified": false
+}
