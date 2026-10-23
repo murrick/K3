@@ -177,6 +177,8 @@ def main():
                  ('org.kanger.storage.dumb2.ContextAuthorityQuantifiedConjunctionDiagonalNegativeRunner', 'CONTEXT_AUTHORITY_QUANTIFIED_CONJUNCTION_DIAGONAL_NEGATIVE_PASS'),
                  ('org.kanger.storage.dumb2.ContextAuthorityQuantifiedConjunctionDiagonalNegativeReverseRunner', 'CONTEXT_AUTHORITY_QUANTIFIED_CONJUNCTION_DIAGONAL_NEGATIVE_REVERSE_PASS'),
                  ('org.kanger.ContextConjunctiveQuantifierScopeRunner', 'CONTEXT_CONJUNCTIVE_QUANTIFIER_SCOPE_PASS'),
+                 ('org.kanger.ContextAntecedentQuantifierScopeRunner', 'CONTEXT_ANTECEDENT_QUANTIFIER_SCOPE_PASS'),
+                 ('org.kanger.storage.dumb2.ContextAntecedentQuantifierWriteRunner', 'CONTEXT_ANTECEDENT_QUANTIFIER_WRITE_PASS'),
                  ('org.kanger.ArgumentStampContextRunner', 'ARGUMENT_STAMP_CONTEXT_PASS'),
                  ('org.kanger.storage.dumb2.ContextIndependentReopenContractRunner', 'CONTEXT_INDEPENDENT_REOPEN_CONTRACT_PASS'),
                  ('org.kanger.ContextProductionRotationAuditRunner', 'CONTEXT_PRODUCTION_ROTATION_AUDIT_PASS'),
