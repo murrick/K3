@@ -1,0 +1,18 @@
+/* MIT License. Copyright (c) 2026 Dmitry G. Quznetsov. */
+package org.kanger;
+import java.nio.file.*;
+import java.util.*;
+import org.kanger.ContextProductionCapture.*;
+import org.kanger.ContextProductionNativeBinding.*;
+
+/** Shared common conjunct must retain its binding across both disjunctive branches. */
+public final class ContextMixedExistentialScopeRunner {
+    static int checks;
+    static void require(boolean value,String why){++checks;if(!value)throw new AssertionError(why);}
+    static Map<String,Clause> capture(String text,boolean shared,boolean negative,boolean groundHead)throws Exception{
+        Result r=ContextAntecedentQuantifierScopeRunner.capture(text);require(r.bound,"mixed negative existential binds: "+r.reason);require(r.snapshot.primary.size()==1,"one whole Source");Entry e=r.snapshot.primary.get(0);require(e.kind==Kind.CLAUSES&&e.witnesses()==0&&e.clauses.size()==2,"two clauses under one Source, zero witnesses");Map<String,Clause> result=new HashMap<>();for(Clause c:e.clauses){require(c.variables.size()==(shared?1:2)&&c.literals.size()==3,"exact shared/independent variables per mixed branch");Atom a=c.literals.stream().filter(v->v.predicate.equals("a")).findFirst().get(),branch=c.literals.stream().filter(v->v.predicate.equals("b")||v.predicate.equals("c")).findFirst().get(),q=c.literals.stream().filter(v->v.predicate.equals("q")).findFirst().get();require(a.positive==negative&&branch.positive==negative&&q.positive!=negative&&a.arguments.size()==1&&branch.arguments.size()==1,"exact common and alternative antecedent signs");require(a.arguments.get(0).variable>=0&&branch.arguments.get(0).variable>=0&&((a.arguments.get(0).variable==branch.arguments.get(0).variable)==shared),"common input sharing preserved in every branch");require(q.arguments.size()==(groundHead?1:0)&&(!groundHead||q.arguments.get(0).variable<0),"head independent of input variables");require(result.put(branch.predicate,c)==null,"each branch retained once");}require(result.keySet().equals(new HashSet<>(Arrays.asList("b","c"))),"both mixed branches captured");return result;
+    }
+    static void equivalent(Map<String,Clause> a,Map<String,Clause> b){for(String k:a.keySet())require(a.get(k).equivalent(b.get(k)),"corresponding whole-source branch alpha-equivalent: "+k);}
+    static void one(boolean negative,boolean groundHead)throws Exception{String s=negative?"~":"",q=s+(groundHead?"q(1)":"q()");Map<String,Clause> shared=capture("!($x ("+s+"a(x)&&("+s+"b(x)||"+s+"c(x))))->"+q+";",true,negative,groundHead),independent=capture("!(($x "+s+"a(x))&&(($y "+s+"b(y))||($z "+s+"c(z))))->"+q+";",false,negative,groundHead);for(String k:shared.keySet())require(!shared.get(k).equivalent(independent.get(k)),"shared versus independent mixed branch differs");equivalent(shared,capture("!@x "+s+"a(x)&&("+s+"b(x)||"+s+"c(x))->"+q+";",true,negative,groundHead));equivalent(independent,capture("!@x @y @z "+s+"a(x)&&("+s+"b(y)||"+s+"c(z))->"+q+";",false,negative,groundHead));equivalent(shared,capture("!($u ("+s+"a(u)&&("+s+"b(u)||"+s+"c(u))))->"+q+";",true,negative,groundHead));equivalent(independent,capture("!(($u "+s+"a(u))&&(($v "+s+"b(v))||($w "+s+"c(w))))->"+q+";",false,negative,groundHead));}
+    public static void main(String[] args){try{System.setProperty("user.home",Files.createTempDirectory("mixed-existential-scope-").toString());for(boolean n:new boolean[]{false,true})for(boolean g:new boolean[]{false,true})one(n,g);System.out.println("CONTEXT_MIXED_EXISTENTIAL_SCOPE_PASS checks="+(checks+ContextAntecedentQuantifierScopeRunner.checks));System.exit(0);}catch(Throwable e){e.printStackTrace();System.exit(1);}}
+}
