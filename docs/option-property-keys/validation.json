@@ -1,0 +1,65 @@
+{
+  "base": "60fdc34736c51fa4e5659982630347fb1d1b59fc",
+  "qualified_experiment": "d01146e0d602868246afff056de832c476da567f",
+  "source_matches_qualified_candidate": true,
+  "ecj": {
+    "base": "60fdc34736c51fa4e5659982630347fb1d1b59fc",
+    "experiment": "d01146e0d602868246afff056de832c476da567f",
+    "compiler_sha256": "f7686c4960cf70c2ebc5c500a73a8cfc04541b730c18f1c5c21329889b137f45",
+    "source_sha256": "2a29eb4f67d2aab99645aabfd504df1ff9e5d9223e92f65515c94a0bc27f3d61",
+    "command": [
+      "java",
+      "-jar",
+      "/workspace/tooling/ecj.jar",
+      "-1.8",
+      "-nowarn",
+      "-cp",
+      "/workspace/build/option-keys/current-clean",
+      "-d",
+      "/workspace/build/option-keys-integration/ecj",
+      "kanger/src/org/kanger/OptimizationOptions.java"
+    ],
+    "classes": {
+      "org/kanger/OptimizationOptions.class": "c7d7b5be3667848babf9c3ce50586cdb7cba6a106d5660ec9da6e57bce516785",
+      "org/kanger/OptimizationOptions$Session.class": "32467db63d74b437d90f901c770b8e863f9f55a2dd86ccc4e7866c12a3336025"
+    },
+    "matches_qualified_candidate_bytecode": true,
+    "contract_source_sha256": "21a8f907a51041c9fda6a823a26aa92ff395aef6dc53c9f1433934f8c5461c1f",
+    "contract_stdout": "OPTIONS_CONTRACT_OK checks=24467 atomic_reads=24314\n",
+    "contract_exit": 0
+  },
+  "maven": {
+    "command": "JAVA_HOME=/workspace/tooling/jdk-21.0.2 mvn --batch-mode --no-transfer-progress -s /workspace/tooling/maven-cloud-settings.xml -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Dmaven.repo.local=/workspace/.cache/m2 -pl kanger-qualification -am test -Dtest=OptimizationOptionsTest -Dsurefire.failIfNoSpecifiedTests=false -Dexec.skip=true",
+    "build_success": true,
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "test_names": [
+      "propertyChangesAfterFirstReadRemainVisible",
+      "unknownNamesAreRejectedEvenWhenAllOverridesAreSet",
+      "individualOverridesAreLiveSharedByUserAndIsolatedFromOtherUsers",
+      "setAllReplacesIndividualOverridesAndAppliesToChildTransactions"
+    ],
+    "exec_regression_corpus_skipped": true,
+    "network_retry": "Initial direct Maven request failed DNS; successful retry uses session proxy and system CA trust."
+  },
+  "sources": {
+    "kanger/src/org/kanger/OptimizationOptions.java": "2a29eb4f67d2aab99645aabfd504df1ff9e5d9223e92f65515c94a0bc27f3d61",
+    "kanger-qualification/src/org/kanger/OptimizationOptionsTest.java": "150b92dccc36f1f374848e33c17eda80d48f8a28103fdf036ffc5af3281fee52"
+  },
+  "files": {
+    "docs/option-property-keys/maven.log.gz": "054132659def9f20cde1a79da3d22266ccb6218996835ac6a484a0d4c0dd49d6",
+    "docs/option-property-keys/initial-network-failure.log.gz": "0828ee73114b913b6c43264f4d5572e9524b7fe48dbfde600e1c93f45ce9ab07",
+    "docs/option-property-keys/contract.log": "06d86b231ab155f297a41aff195cc0249bd926c51d8b97b63392de9279beac3f"
+  },
+  "speedup_qualified": false,
+  "SMART_ownership_ACL_qualified": false,
+  "develop_changed": false,
+  "toolchain": {
+    "ecj_runtime": "openjdk version \"21.0.12.1\" 2026-08-18\nOpenJDK Runtime Environment (build 21.0.12.1+1-1-deb13u1-Debian)\nOpenJDK 64-Bit Server VM (build 21.0.12.1+1-1-deb13u1-Debian, mixed mode, sharing)\n",
+    "maven_JDK": "java version \"21.0.2\" 2024-01-16 LTS\nJava(TM) SE Runtime Environment (build 21.0.2+13-LTS-58)\nJava HotSpot(TM) 64-Bit Server VM (build 21.0.2+13-LTS-58, mixed mode, sharing)\n",
+    "ECJ": "3.33.0",
+    "Maven": "3.9.9"
+  }
+}
